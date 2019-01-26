@@ -8,6 +8,7 @@ import (
 )
 
 func init() {
+	// assetto seems to take very unkindly to 'pretty formatted' ini files. disable them.
 	ini.PrettyFormat = false
 }
 
