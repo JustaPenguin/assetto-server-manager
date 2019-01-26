@@ -16,6 +16,8 @@ var (
 
 	// ServerInstallPath is where the assetto corsa server should be/is installed
 	ServerInstallPath = "assetto"
+
+	ServerConfigPath = "cfg"
 )
 
 func init() {
