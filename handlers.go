@@ -16,6 +16,7 @@ func Router() *mux.Router {
 
 	r.HandleFunc("/", homeHandler)
 	r.HandleFunc("/server-options", globalServerOptionsHandler)
+	r.HandleFunc("/race-options", raceOptionsHandler)
 
 	return r
 }
@@ -32,11 +33,41 @@ func globalServerOptionsHandler(w http.ResponseWriter, r *http.Request) {
 		err := form.Submit(r)
 
 		if err != nil {
-			logrus.Errorf("Couldn't submit form, err: %s", err)
+			logrus.Errorf("couldn't submit form, err: %s", err)
+		}
+
+		// save the config
+		err = ConfigIniDefault.Write()
+
+		if err != nil {
+			logrus.Errorf("couldn't save config, err: %s", err)
 		}
 	}
 
 	ViewRenderer.MustLoadTemplate(w, r, "global_server_options.html", map[string]interface{}{
+		"form": form,
+	})
+}
+
+func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
+	form := NewForm(&ConfigIniDefault.Server.CurrentRaceConfig, nil)
+
+	if r.Method == http.MethodPost {
+		err := form.Submit(r)
+
+		if err != nil {
+			logrus.Errorf("couldn't submit form, err: %s", err)
+		}
+
+		// save the config
+		err = ConfigIniDefault.Write()
+
+		if err != nil {
+			logrus.Errorf("couldn't save config, err: %s", err)
+		}
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "current_race_options.html", map[string]interface{}{
 		"form": form,
 	})
 }
