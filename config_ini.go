@@ -115,67 +115,86 @@ func (sc ServerConfig) RemoveWeather(weather WeatherConfig) {
 }
 
 type ServerSetupConfig struct {
-	Name                    string `ini:"NAME"`
-	Cars                    string `ini:"CARS"`
-	TrackConfig             string `ini:"CONFIG_TRACK"`
-	Track                   string `ini:"TRACK"`
-	SunAngle                int    `ini:"SUN_ANGLE"`
-	LegalTyres              string `ini:"LEGAL_TYRES"`
-	FuelRate                int    `ini:"FUEL_RATE"`
-	DamageMultiplier        int    `ini:"DAMAGE_MULTIPLIER"`
-	TyreWearRate            int    `ini:"TYRE_WEAR_RATE"`
-	AllowedTyresOut         int    `ini:"ALLOWED_TYRES_OUT"`
-	ABSAllowed              int    `ini:"ABS_ALLOWED"`
-	TractionControlAllowed  int    `ini:"TC_ALLOWED"`
-	StabilityControlAllowed int    `ini:"STABILITY_ALLOWED"`
-	AutoClutchAllowed       int    `ini:"AUTOCLUTCH_ALLOWED"`
-	TyreBlanketsAllowed     int    `ini:"TYRE_BLANKETS_ALLOWED"`
-	ForceVirtualMirror      int    `ini:"FORCE_VIRTUAL_MIRROR"`
+	Name                      string `ini:"NAME" help:"Server Name"`
+	Cars                      string `ini:"CARS" help:"Models of cars allowed in the server"`
+	TrackConfig               string `ini:"CONFIG_TRACK" help:"Track layout. Some tracks don't have this."`
+	Track                     string `ini:"TRACK" help:"Track name"`
+	SunAngle                  int    `ini:"SUN_ANGLE" help:"Angle of the position of the sun"`
+	LegalTyres                string `ini:"LEGAL_TYRES" help:"List of tyres short names that are allowed"`
+	FuelRate                  int    `ini:"FUEL_RATE" help:"Fuel usage from 0 (no fuel usage) to XXX (100 is the realistic one)"`
+	DamageMultiplier          int    `ini:"DAMAGE_MULTIPLIER" help:"Damage from 0 (no damage) to 100 (full damage)"`
+	TyreWearRate              int    `ini:"TYRE_WEAR_RATE" help:"Tyre wear from 0 (no tyre wear) to XXX (100 is the realistic one)"`
+	AllowedTyresOut           int    `ini:"ALLOWED_TYRES_OUT" help:"TODO: I have no idea"`
+	ABSAllowed                int    `ini:"ABS_ALLOWED" help:"0 -> no car can use ABS, 1 -> only car provided with ABS can use it; 2-> any car can use ABS"`
+	TractionControlAllowed    int    `ini:"TC_ALLOWED" help:"0 -> no car can use TC, 1 -> only car provided with TC can use it; 2-> any car can use TC"`
+	StabilityControlAllowed   int    `ini:"STABILITY_ALLOWED" formtype:"checkbox" help:"Stability assist 0 -> OFF; 1 -> ON"`
+	AutoClutchAllowed         int    `ini:"AUTOCLUTCH_ALLOWED" formtype:"checkbox" help:"Autoclutch assist 0 -> OFF; 1 -> ON"`
+	TyreBlanketsAllowed       int    `ini:"TYRE_BLANKETS_ALLOWED" formtype:"checkbox" help:"at the start of the session or after the pitstop the tyre will have the the optimal temperature"`
+	ForceVirtualMirror        int    `ini:"FORCE_VIRTUAL_MIRROR" formtype:"checkbox" help:"1 virtual mirror will be enabled for every client, 0 for mirror as optional"`
+	LockedEntryList           int    `ini:"LOCKED_ENTRY_LIST" formtype:"checkbox" help:"Only players already included in the entry list can join the server"`
+	RacePitWindowStart        int    `ini:"RACE_PIT_WINDOW_START" help:"pit window opens at lap/minute specified"`
+	RacePitWindowEnd          int    `ini:"RACE_PIT_WINDOW_END" help:"pit window closes at lap/minute specified"`
+	ReversedGridRacePositions int    `ini:"REVERSED_GRID_RACE_POSITIONS" help:" 0 = no additional race, 1toX = only those position will be reversed for the next race, -1 = all the position will be reversed (Retired players will be on the last positions)"`
+	TimeOfDayMultiplier       int    `ini:"TIME_OF_DAY_MULT" help:"multiplier for the time of day"`
+	QualifyMaxWaitPercentage  int    `ini:"QUALIFY_MAX_WAIT_PERC" help:"The factor to calculate the remaining time in a qualify session after the session is ended: 120 means that 120% of the session fastest lap remains to end the current lap."`
+	RaceGasPenaltyDisabled    int    `ini:"RACE_GAS_PENALTY_DISABLED" help:"0 = any cut will be penalized with the gas cut message; 1 = no penalization will be forced, but cuts will be saved in the race result json."`
+	MaxBallastKilograms       int    `ini:"MAX_BALLAST_KG" help:"the max total of ballast that can be added through the admin command"`
 
-	Password                  string `ini:"PASSWORD"`
-	AdminPassword             string `ini:"ADMIN_PASSWORD"`
-	UDPPort                   int    `ini:"UDP_PORT"`
-	TCPPort                   int    `ini:"TCP_PORT"`
-	HTTPPort                  int    `ini:"HTTP_PORT"`
-	UDPPluginLocalPort        int    `ini:"UDP_PLUGIN_LOCAL_PORT"`
-	UDPPluginAddress          string `ini:"UDP_PLUGIN_ADDRESS"`
-	AuthPluginAddress         string `ini:"AUTH_PLUGIN_ADDRESS"`
-	RegisterToLobby           int    `ini:"REGISTER_TO_LOBBY"`
-	ClientSendIntervalInHertz int    `ini:"CLIENT_SEND_INTERVAL_HZ"`
-	SendBufferSize            int    `ini:"SEND_BUFFER_SIZE"`
-	ReceiveBufferSize         int    `ini:"RECV_BUFFER_SIZE"`
-	MaxClients                int    `ini:"MAX_CLIENTS"`
+	// This stuff can be specific to just the server.
+	Password                  string `ini:"PASSWORD" help:"server password"`
+	AdminPassword             string `ini:"ADMIN_PASSWORD" help:"the password needed to be recognized as server administrator: you can join the server using it to be recognized automatically. Write on the game's chat /help to see the command list"`
+	UDPPort                   int    `ini:"UDP_PORT" help:"UDP port number -> open this port on your server's firewall"`
+	TCPPort                   int    `ini:"TCP_PORT" help:"TCP port number -> open this port on your server's firewall"`
+	HTTPPort                  int    `ini:"HTTP_PORT" help:"Lobby port number -> open this ports (both UDP and TCP) on your server's firewall"`
+	UDPPluginLocalPort        int    `ini:"UDP_PLUGIN_LOCAL_PORT" help:"TODO"`
+	UDPPluginAddress          string `ini:"UDP_PLUGIN_ADDRESS" help:"TODO"`
+	AuthPluginAddress         string `ini:"AUTH_PLUGIN_ADDRESS" help:"TODO"`
+	RegisterToLobby           int    `ini:"REGISTER_TO_LOBBY" formtype:"checkbox" help:"TODO"`
+	ClientSendIntervalInHertz int    `ini:"CLIENT_SEND_INTERVAL_HZ" help:"refresh rate of packet sending by the server. 10Hz = ~100ms. Higher number = higher MP quality = higher bandwidth resources needed. Really high values can create connection issues"`
+	SendBufferSize            int    `ini:"SEND_BUFFER_SIZE" help:"TODO"`
+	ReceiveBufferSize         int    `ini:"RECV_BUFFER_SIZE" help:"TODO"`
+	MaxClients                int    `ini:"MAX_CLIENTS" help:"max number of clients (must be <= track's number of pits)"`
+	KickQuorum                int    `ini:"KICK_QUORUM" help:"TODO"`
+	VotingQuorum              int    `ini:"VOTING_QUORUM" help:"percentage of vote that is required for the SESSION vote to pass"`
+	VoteDuration              int    `ini:"VOTE_DURATION" help:"vote length in seconds"`
+	BlacklistMode             int    `ini:"BLACKLIST_MODE" help:"ban player -> 0 = normal kick, rejoin possible, 1 = until server restart WARNING: 2 is not more valid since kick_id and ban_id are two different commands."`
+	NumThreads                int    `ini:"NUM_THREADS" help:"Number of threads to run on"`
+	WelcomeMessage            string `ini:"WELCOME_MESSAGE" help:"path to the file that contains the server welcome message"`
+	ResultScreenTime          int    `ini:"RESULT_SCREEN_TIME" help:"seconds of result screen between racing sessions"`
+	// end stuff that is specific to just the server.
 
-	PickupModeEnabled int `ini:"PICKUP_MODE_ENABLED"`
-	LoopMode          int `ini:"LOOP_MODE"`
+	PickupModeEnabled int `ini:"PICKUP_MODE_ENABLED" help:"if 0 the server start in booking mode (do not use it). Warning: in pickup mode you have to list only a circuit under TRACK and you need to list a least one car in the entry_list"`
+	LoopMode          int `ini:"LOOP_MODE" formtype:"checkbox" help:"the server restarts from the first track, to disable this set it to 0"`
 
-	SleepTime     int `ini:"SLEEP_TIME"`
-	RaceOverTime  int `ini:"RACE_OVER_TIME"`
-	KickQuorum    int `ini:"KICK_QUORUM"`
-	VotingQuorum  int `ini:"VOTING_QUORUM"`
-	VoteDuration  int `ini:"VOTE_DURATION"`
-	BlacklistMode int `ini:"BLACKLIST_MODE"`
+	SleepTime    int `ini:"SLEEP_TIME" help:"TODO"`
+	RaceOverTime int `ini:"RACE_OVER_TIME" help:"time remaining in seconds to finish the race from the moment the first one passes on the finish line"`
+	StartRule    int `ini:"START_RULE" help:"0 is car locked until start;   1 is teleport   ; 2 is drive-through (if race has 3 or less laps then the Teleport penalty is enabled)"`
+
+	WindBaseSpeedMin       int `ini:"WIND_BASE_SPEED_MIN" help:"Min speed of the session possible"`
+	WindBaseSpeedMax       int `ini:"WIND_BASE_SPEED_MAX" help:"Max speed of session possible (max 40)"`
+	WindBaseDirection      int `ini:"WIND_BASE_DIRECTION" help:"base direction of the wind (wind is pointing at); 0 = North, 90 = East etc"`
+	WindVariationDirection int `ini:"WIND_VARIATION_DIRECTION" help:"variation (+ or -) of the base direction"`
 }
 
 type SessionConfig struct {
 	Name     string `ini:"NAME"`
-	Time     int    `ini:"TIME"`
-	Laps     int    `ini:"LAPS"`
-	IsOpen   int    `ini:"IS_OPEN"`
-	WaitTime int    `ini:"WAIT_TIME"`
+	Time     int    `ini:"TIME" help:"session length in minutes"`
+	Laps     int    `ini:"LAPS" help:"length of the lap races"`
+	IsOpen   int    `ini:"IS_OPEN" formtype:"checkbox" help:"0 = no join, 1 = free join, 2 = free join until 20 seconds to the green light"`
+	WaitTime int    `ini:"WAIT_TIME" help:"seconds before the start of the session"`
 }
 
 type DynamicTrackConfig struct {
-	SessionStart    int `ini:"SESSION_START"`
-	Randomness      int `ini:"RANDOMNESS"`
-	SessionTransfer int `ini:"SESSION_TRANSFER"`
-	LapGain         int `ini:"LAP_GAIN"`
+	SessionStart    int `ini:"SESSION_START" help:"% level of grip at session start"`
+	Randomness      int `ini:"RANDOMNESS" help:"level of randomness added to the start grip"`
+	SessionTransfer int `ini:"SESSION_TRANSFER" help:"how many laps are needed to add 1% grip"`
+	LapGain         int `ini:"LAP_GAIN" help:"how much of the gained grip is to be added to the next session 100 -> all the gained grip. Example: difference between starting (90) and ending (96) grip in the session = 6%, with session_transfer = 50 then the next session is going to start with 93."`
 }
 
 type WeatherConfig struct {
-	Graphics               string `ini:"GRAPHICS"`
-	BaseTemperatureAmbient int    `ini:"BASE_TEMPERATURE_AMBIENT"` // 0-36
-	BaseTemperatureRoad    int    `ini:"BASE_TEMPERATURE_ROAD"`    // 0-36
-	VariationAmbient       int    `ini:"VARIATION_AMBIENT"`
-	VariationRoad          int    `ini:"VARIATION_ROAD"`
+	Graphics               string `ini:"GRAPHICS" help:"exactly one of the folder names that you find in the 'content\\weather'' directory"`
+	BaseTemperatureAmbient int    `ini:"BASE_TEMPERATURE_AMBIENT" help:"ambient temperature"`                                                                                                                                                               // 0-36
+	BaseTemperatureRoad    int    `ini:"BASE_TEMPERATURE_ROAD" help:"Relative road temperature: this value will be added to the final ambient temp. In this example the road temperature will be between 22 (16 + 6) and 26 (20 + 6). It can be negative."` // 0-36
+	VariationAmbient       int    `ini:"VARIATION_AMBIENT" help:"variation of the ambient's temperature. In this example final ambient's temperature can be 16 or 20"`
+	VariationRoad          int    `ini:"VARIATION_ROAD" help:"variation of the road's temperature. Like the ambient one"`
 }
