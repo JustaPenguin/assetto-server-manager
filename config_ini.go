@@ -138,9 +138,7 @@ type GlobalServerConfig struct {
 	ResultScreenTime          int    `ini:"RESULT_SCREEN_TIME" help:"seconds of result screen between racing sessions"`
 }
 
-type ServerSetupConfig struct {
-	GlobalServerConfig
-
+type CurrentRaceConfig struct {
 	Cars                      string `ini:"CARS" help:"Models of cars allowed in the server"`
 	TrackConfig               string `ini:"CONFIG_TRACK" input:"dropdown" formopts:"TestTrackOpts" help:"Track layout. Some tracks don't have this."`
 	Track                     string `ini:"TRACK" input:"dropdown" formopts:"TestTrackOpts" help:"Track name"`
@@ -176,6 +174,11 @@ type ServerSetupConfig struct {
 	WindBaseSpeedMax       int `ini:"WIND_BASE_SPEED_MAX" help:"Max speed of session possible (max 40)"`
 	WindBaseDirection      int `ini:"WIND_BASE_DIRECTION" help:"base direction of the wind (wind is pointing at); 0 = North, 90 = East etc"`
 	WindVariationDirection int `ini:"WIND_VARIATION_DIRECTION" help:"variation (+ or -) of the base direction"`
+}
+
+type ServerSetupConfig struct {
+	GlobalServerConfig GlobalServerConfig `ini:"SERVER"`
+	CurrentRaceConfig  CurrentRaceConfig  `ini:"SERVER"`
 }
 
 type SessionConfig struct {

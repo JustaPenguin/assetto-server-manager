@@ -1,0 +1,15 @@
+{{ define "title" }}Current Race Options{{ end }}
+
+{{ define "content" }}
+    <h1>Current Race Options</h1>
+
+    <form method="post" action="/race-options">
+        {{ range $k, $v := .form.Fields }}
+            {{ $v.HTML }}
+        {{ end }}
+
+        <button class="btn btn-success float-right" type="submit">Save</button>
+
+        <div class="clearfix"></div>
+    </form>
+{{ end }}
