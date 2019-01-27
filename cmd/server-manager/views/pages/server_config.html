@@ -1,9 +1,0 @@
-{{ define "title" }}Server Config{{ end }}
-
-{{ define "content" }}
-    <h1>Server Config</h1>
-
-    {{ range $k, $v := .config.Fields }}
-        {{ $v.HTML }}
-    {{ end }}
-{{ end }}
