@@ -215,6 +215,25 @@ func (f FormOption) renderTextInput() template.HTML {
 	return tmpl
 }
 
+func (f FormOption) renderPasswordInput() template.HTML {
+	const inputTextTemplate = `
+		<div class="form-group">
+			<label for="{{ .Key }}">{{ .Name }}</label>
+			<input type="password" id="{{ .Key }}" name="{{ .Key }}" class="form-control" value="{{ .Value }}">
+
+			<small>{{ .HelpText }}</small>
+		</div>
+	`
+
+	tmpl, err := f.render(inputTextTemplate)
+
+	if err != nil {
+		return template.HTML(fmt.Sprintf("err: %s", err))
+	}
+
+	return tmpl
+}
+
 func (f FormOption) renderNumberInput() template.HTML {
 	const numberInputTemplate = `
 		<div class="form-group">
@@ -255,6 +274,8 @@ func (f FormOption) HTML() template.HTML {
 		}
 
 		return f.renderNumberInput()
+	case "password":
+		return f.renderPasswordInput()
 	case "string":
 		return f.renderTextInput()
 	default:
