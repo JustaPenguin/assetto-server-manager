@@ -52,18 +52,29 @@ func globalServerOptionsHandler(w http.ResponseWriter, r *http.Request) {
 func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
 	var dataMap = make(map[string][]string)
 
-	var carNames []string
+	var carNames, trackNames []string
 	cars, err := ListCars()
 
 	if err != nil {
 		logrus.Fatalf("could not get car list, err: %s", err)
 	}
 
+	tracks, err := ListTracks()
+
+	if err != nil {
+		logrus.Fatalf("could not get track list, err: %s", err)
+	}
+
 	for _, car := range cars {
 		carNames = append(carNames, car.Name)
 	}
 
+	for _, track := range tracks {
+		trackNames = append(trackNames, track.Name)
+	}
+
 	dataMap["CarOpts"] = carNames
+	dataMap["TrackOpts"] = trackNames
 
 	form := NewForm(&ConfigIniDefault.Server.CurrentRaceConfig, dataMap)
 
