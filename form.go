@@ -46,16 +46,12 @@ func (f Form) Submit(r *http.Request) error {
 	val := reflect.ValueOf(f.data).Elem()
 
 	for name, vals := range r.Form {
-		if len(vals) != 1 {
-			continue
-		}
-
 		f := val.FieldByName(name)
 
 		if f.IsValid() && f.CanSet() {
 			switch f.Kind() {
 			case reflect.String:
-				f.SetString(vals[0])
+				f.SetString(strings.Join(vals, ";"))
 			case reflect.Int:
 				if vals[0] == "on" {
 					f.SetInt(1)
@@ -104,13 +100,16 @@ func (f Form) Fields() []FormOption {
 			Value:    val.Field(i).Interface(),
 			HelpText: field.Tag.Get("help"),
 			Type:     formType,
+			Opts:     make(map[string]bool),
 		}
 
-		if formType == "dropdown" {
+		if formType == "dropdown" || formType == "multiSelect" {
 			optsKey := field.Tag.Get(formOptsTagName)
 
-			if o, ok := f.dropdownOptions[optsKey]; ok {
-				formOpt.Opts = o
+			if options, ok := f.dropdownOptions[optsKey]; ok {
+				for _, o := range options {
+					formOpt.Opts[o] = strings.Contains(formOpt.Value.(string), o)
+				}
 			} else {
 				logrus.Warnf("dropdown opts for field: %s specified, but none found", field.Name)
 			}
@@ -132,7 +131,7 @@ type FormOption struct {
 	Value    interface{}
 	Min, Max string
 
-	Opts []string
+	Opts map[string]bool
 }
 
 func (f FormOption) render(templ string) (template.HTML, error) {
@@ -158,9 +157,9 @@ func (f FormOption) renderDropdown() template.HTML {
 		<div class="form-group">
 			<label>
 				{{ .Name }}
-				<select class="form-control" name="{{ .Key }}">
-					{{ range $i, $opt := .Opts }}
-						<option value="{{ $i }}">{{ $opt }}</option>
+				<select {{ if eq .Type "multiSelect" }} multiple {{ end }} class="form-control" name="{{ .Key }}">
+					{{ range $opt, $selected := .Opts }}
+						<option {{ if $selected }} selected {{ end }} value="{{ $opt }}">{{ $opt }}</option>
 					{{ end }}
 				</select>
 
@@ -245,19 +244,20 @@ func (f FormOption) renderNumberInput() template.HTML {
 }
 
 func (f FormOption) HTML() template.HTML {
-	if f.Type == "dropdown" {
+	switch f.Type {
+	case "dropdown", "multiSelect":
 		return f.renderDropdown()
-	} else if f.Type == "checkbox" {
+	case "checkbox":
 		return f.renderCheckbox()
-	} else if f.Type == "int" {
+	case "int":
 		if f.Value == nil {
 			f.Value = 0
 		}
 
 		return f.renderNumberInput()
-	} else if f.Type == "string" {
+	case "string":
 		return f.renderTextInput()
-	} else {
+	default:
 		logrus.Errorf("Unknown type: %s", f.Type)
 		return ""
 	}
