@@ -157,7 +157,7 @@ func (f FormOption) renderDropdown() template.HTML {
 		<div class="form-group">
 			<label>
 				{{ .Name }}
-				<select {{ if eq .Type "multiSelect" }} multiple {{ end }} class="form-control" name="{{ .Key }}">
+				<select {{ if eq .Type "multiSelect" }} multiple {{ end }} class="form-control" name="{{ .Key }}" id="{{ .Key }}">
 					{{ range $opt, $selected := .Opts }}
 						<option {{ if $selected }} selected {{ end }} value="{{ $opt }}">{{ $opt }}</option>
 					{{ end }}
@@ -200,7 +200,7 @@ func (f FormOption) renderTextInput() template.HTML {
 	const inputTextTemplate = `
 		<div class="form-group">
 			<label for="{{ .Key }}">{{ .Name }}</label>
-			<input type="{{ if eq .Type "password" }}password{{ else }}text{{ end }}" id="{{ .Key }}" name="{{ .Key }}" class="form-control" value="{{ .Value }}">
+			<input type="{{ if eq .Type "password" }}password{{ else }}text{{ end }}" id="{{ .Key }}" name="{{ .Key }}" id="{{ .Key }}" class="form-control" value="{{ .Value }}">
 
 			<small>{{ .HelpText }}</small>
 		</div>
