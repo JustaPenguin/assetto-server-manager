@@ -51,9 +51,7 @@ func (f Form) Submit(r *http.Request) error {
 		if f.IsValid() && f.CanSet() {
 			switch f.Kind() {
 			case reflect.String:
-				vals[0] = strings.Join(vals, ";")
-
-				f.SetString(vals[0])
+				f.SetString(strings.Join(vals, ";"))
 			case reflect.Int:
 				if vals[0] == "on" {
 					f.SetInt(1)
@@ -110,11 +108,7 @@ func (f Form) Fields() []FormOption {
 
 			if options, ok := f.dropdownOptions[optsKey]; ok {
 				for _, o := range options {
-					if strings.Contains(formOpt.Value.(string), o) {
-						formOpt.Opts[o] = true
-					} else {
-						formOpt.Opts[o] = false
-					}
+					formOpt.Opts[o] = strings.Contains(formOpt.Value.(string), o)
 				}
 			} else {
 				logrus.Warnf("dropdown opts for field: %s specified, but none found", field.Name)
@@ -250,7 +244,7 @@ func (f FormOption) renderNumberInput() template.HTML {
 }
 
 func (f FormOption) HTML() template.HTML {
-	switch formType := f.Type; formType {
+	switch f.Type {
 	case "dropdown", "multiSelect":
 		return f.renderDropdown()
 	case "checkbox":

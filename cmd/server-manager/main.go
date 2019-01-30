@@ -28,16 +28,6 @@ func main() {
 		logrus.Fatalf("could not initialise view renderer, err: %s", err)
 	}
 
-	cars, err := servermanager.ListCars()
-
-	if err != nil {
-		logrus.Fatalf("could not get car list, err: %s", err)
-	}
-
-	for _, car := range cars {
-		println(car.Name)
-	}
-
 	logrus.Infof("starting assetto server manager on: %s", serverAddress)
 	logrus.Fatal(http.ListenAndServe(serverAddress, servermanager.Router()))
 }
