@@ -28,7 +28,7 @@ var ConfigIniDefault = ServerConfig{
 
 		CurrentRaceConfig: CurrentRaceConfig{
 			Cars:                      "bmw_m3_e30",
-			TrackConfig:               "",
+			TrackLayout:               "",
 			Track:                     "magione",
 			SunAngle:                  48,
 			PickupModeEnabled:         1,
