@@ -15,6 +15,8 @@ func Router() *mux.Router {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/", homeHandler)
+	r.HandleFunc("/cars", carsHandler)
+	r.HandleFunc("/tracks", tracksHandler)
 	r.HandleFunc("/server-options", globalServerOptionsHandler)
 	r.HandleFunc("/race-options", raceOptionsHandler)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
@@ -96,5 +98,29 @@ func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ViewRenderer.MustLoadTemplate(w, r, "current_race_options.html", map[string]interface{}{
 		"form": form,
+	})
+}
+
+func carsHandler(w http.ResponseWriter, r *http.Request) {
+	cars, err := ListCars()
+
+	if err != nil {
+		logrus.Fatalf("could not get car list, err: %s", err)
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "cars.html", map[string]interface{}{
+		"cars": cars,
+	})
+}
+
+func tracksHandler(w http.ResponseWriter, r *http.Request) {
+	tracks, err := ListTracks()
+
+	if err != nil {
+		logrus.Fatalf("could not get track list, err: %s", err)
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "tracks.html", map[string]interface{}{
+		"tracks": tracks,
 	})
 }

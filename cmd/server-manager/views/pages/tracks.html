@@ -1,0 +1,32 @@
+{{ define "title" }}Tracks{{ end }}
+
+{{ define "content" }}
+    <h1>Track List</h1>
+
+    <table class="table">
+        <tr>
+            <th>#</th>
+            <th>Track Name</th>
+            <th>Layouts</th>
+            <th>Delete</th>
+        </tr>
+        {{ range $i, $track := .tracks }}
+            <tr>
+                <td>
+                    {{ $i }}
+                </td>
+                <td>
+                    {{ $track.Name }}
+                </td>
+                <td>
+                    {{ $track.LayoutsCSV }}
+                </td>
+                <td>
+                    <a href= {{ print "/track/delete/" $track.Name }}>Delete</a>
+                </td>
+            </tr>
+        {{ end }}
+    </table>
+
+    <div class="clearfix"></div>
+{{ end }}
