@@ -139,7 +139,7 @@ type GlobalServerConfig struct {
 }
 
 type CurrentRaceConfig struct {
-	Cars                      string `ini:"CARS" help:"Models of cars allowed in the server"`
+	Cars                      string `ini:"CARS" input:"multiSelect" formopts:"CarOpts" help:"Models of cars allowed in the server"`
 	TrackConfig               string `ini:"CONFIG_TRACK" input:"dropdown" formopts:"TestTrackOpts" help:"Track layout. Some tracks don't have this."`
 	Track                     string `ini:"TRACK" input:"dropdown" formopts:"TestTrackOpts" help:"Track name"`
 	SunAngle                  int    `ini:"SUN_ANGLE" help:"Angle of the position of the sun"`
