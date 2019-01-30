@@ -8,14 +8,15 @@ type Track struct {
 }
 
 func ListTracks() ([]Track, error) {
-	var tracks []Track
-	var tracksPath = ServerInstallPath + "/content/tracks"
+	tracksPath := ServerInstallPath + "/content/tracks"
 
 	trackFiles, err := ioutil.ReadDir(tracksPath)
 
 	if err != nil {
 		return nil, err
 	}
+
+	var tracks []Track
 
 	for _, trackFile := range trackFiles {
 		var layouts []string
