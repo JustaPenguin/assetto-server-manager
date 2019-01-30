@@ -62,18 +62,18 @@ var ConfigIniDefault = ServerConfig{
 		},
 	},
 
-	Sessions: map[string]SessionConfig{
-		"PRACTICE": {
+	Sessions: map[SessionType]SessionConfig{
+		SessionTypePractice: {
 			Name:   "Practice",
 			Time:   10,
 			IsOpen: 1,
 		},
-		"QUALIFY": {
+		SessionTypeQualifying: {
 			Name:   "Qualify",
 			Time:   10,
 			IsOpen: 1,
 		},
-		"RACE": {
+		SessionTypeRace: {
 			Name:     "Race",
 			IsOpen:   1,
 			WaitTime: 60,

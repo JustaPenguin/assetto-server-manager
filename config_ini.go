@@ -31,7 +31,7 @@ type ServerConfig struct {
 	Server       ServerSetupConfig  `ini:"SERVER"`
 	DynamicTrack DynamicTrackConfig `ini:"DYNAMIC_TRACK"`
 
-	Sessions map[string]SessionConfig
+	Sessions map[SessionType]SessionConfig
 	Weather  map[string]WeatherConfig
 }
 
@@ -51,7 +51,7 @@ func (sc ServerConfig) Write() error {
 	}
 
 	for k, v := range sc.Sessions {
-		sess, err := f.NewSection(k)
+		sess, err := f.NewSection(k.String())
 
 		if err != nil {
 			return err
@@ -94,11 +94,11 @@ func (sc ServerConfig) Write() error {
 }
 
 func (sc ServerConfig) AddSession(sessionType SessionType, config SessionConfig) {
-	sc.Sessions[sessionType.String()] = config
+	sc.Sessions[sessionType] = config
 }
 
 func (sc ServerConfig) RemoveSession(sessionType SessionType) {
-	delete(sc.Sessions, sessionType.String())
+	delete(sc.Sessions, sessionType)
 }
 
 func (sc ServerConfig) AddWeather(weather WeatherConfig) {
