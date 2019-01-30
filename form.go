@@ -200,26 +200,7 @@ func (f FormOption) renderTextInput() template.HTML {
 	const inputTextTemplate = `
 		<div class="form-group">
 			<label for="{{ .Key }}">{{ .Name }}</label>
-			<input type="text" id="{{ .Key }}" name="{{ .Key }}" class="form-control" value="{{ .Value }}">
-
-			<small>{{ .HelpText }}</small>
-		</div>
-	`
-
-	tmpl, err := f.render(inputTextTemplate)
-
-	if err != nil {
-		return template.HTML(fmt.Sprintf("err: %s", err))
-	}
-
-	return tmpl
-}
-
-func (f FormOption) renderPasswordInput() template.HTML {
-	const inputTextTemplate = `
-		<div class="form-group">
-			<label for="{{ .Key }}">{{ .Name }}</label>
-			<input type="password" id="{{ .Key }}" name="{{ .Key }}" class="form-control" value="{{ .Value }}">
+			<input type="{{ if eq .Type "password" }}password{{ else }}text{{ end }}" id="{{ .Key }}" name="{{ .Key }}" class="form-control" value="{{ .Value }}">
 
 			<small>{{ .HelpText }}</small>
 		</div>
@@ -274,9 +255,7 @@ func (f FormOption) HTML() template.HTML {
 		}
 
 		return f.renderNumberInput()
-	case "password":
-		return f.renderPasswordInput()
-	case "string":
+	case "string", "password":
 		return f.renderTextInput()
 	default:
 		logrus.Errorf("Unknown type: %s", f.Type)
