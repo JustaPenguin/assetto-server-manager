@@ -1,0 +1,32 @@
+{{ define "title" }}Cars{{ end }}
+
+{{ define "content" }}
+    <h1>Car List</h1>
+
+    <table class="table">
+        <tr>
+            <th>#</th>
+            <th>Car Name</th>
+            <th>Skins</th>
+            <th>Delete</th>
+        </tr>
+        {{ range $i, $car := .cars }}
+            <tr>
+                <td>
+                    {{ $i }}
+                </td>
+                <td>
+                    {{ $car.Name }}
+                </td>
+                <td>
+                    {{ $car.Skins }}
+                </td>
+                <td>
+                    <a href= {{ print "/car/delete/" $car.Name }}>Delete</a>
+                </td>
+            </tr>
+        {{ end }}
+    </table>
+
+    <div class="clearfix"></div>
+{{ end }}

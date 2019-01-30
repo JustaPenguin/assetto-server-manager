@@ -50,3 +50,21 @@ func ListTracks() ([]Track, error) {
 
 	return tracks, nil
 }
+
+func (t *Track) LayoutsCSV() string {
+	var layoutsCSV string
+
+	if t.Layouts == nil {
+		layoutsCSV = "Default"
+	} else {
+		for i, layout := range t.Layouts {
+			if i == len(t.Layouts)-1 {
+				layoutsCSV = layoutsCSV + layout
+			} else {
+				layoutsCSV = layoutsCSV + layout + ", "
+			}
+		}
+	}
+
+	return layoutsCSV
+}
