@@ -50,7 +50,22 @@ func globalServerOptionsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
-	form := NewForm(&ConfigIniDefault.Server.CurrentRaceConfig, nil)
+	var dataMap = make(map[string][]string)
+
+	var carNames []string
+	cars, err := ListCars()
+
+	if err != nil {
+		logrus.Fatalf("could not get car list, err: %s", err)
+	}
+
+	for _, car := range cars {
+		carNames = append(carNames, car.Name)
+	}
+
+	dataMap["CarOpts"] = carNames
+
+	form := NewForm(&ConfigIniDefault.Server.CurrentRaceConfig, dataMap)
 
 	if r.Method == http.MethodPost {
 		err := form.Submit(r)
