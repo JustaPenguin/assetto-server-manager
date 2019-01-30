@@ -116,8 +116,8 @@ func (sc ServerConfig) RemoveWeather(weather WeatherConfig) {
 
 type GlobalServerConfig struct {
 	Name                      string `ini:"NAME" help:"Server Name"`
-	Password                  string `ini:"PASSWORD" help:"server password"`
-	AdminPassword             string `ini:"ADMIN_PASSWORD" help:"the password needed to be recognized as server administrator: you can join the server using it to be recognized automatically. Write on the game's chat /help to see the command list"`
+	Password                  string `ini:"PASSWORD" input:"password" help:"server password"`
+	AdminPassword             string `ini:"ADMIN_PASSWORD" input:"password" help:"the password needed to be recognized as server administrator: you can join the server using it to be recognized automatically. Write on the game's chat /help to see the command list"`
 	UDPPort                   int    `ini:"UDP_PORT" min:"0" max:"65535" help:"UDP port number -> open this port on your server's firewall"`
 	TCPPort                   int    `ini:"TCP_PORT" min:"0" max:"65535" help:"TCP port number -> open this port on your server's firewall"`
 	HTTPPort                  int    `ini:"HTTP_PORT" min:"0" max:"65535" help:"Lobby port number -> open this ports (both UDP and TCP) on your server's firewall"`

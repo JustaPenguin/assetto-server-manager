@@ -17,6 +17,7 @@ func Router() *mux.Router {
 	r.HandleFunc("/", homeHandler)
 	r.HandleFunc("/server-options", globalServerOptionsHandler)
 	r.HandleFunc("/race-options", raceOptionsHandler)
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
 
 	return r
 }
