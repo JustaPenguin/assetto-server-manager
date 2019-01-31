@@ -1,6 +1,9 @@
 package servermanager
 
-import "io/ioutil"
+import (
+	"io/ioutil"
+	"path/filepath"
+)
 
 type Track struct {
 	Name    string
@@ -8,7 +11,7 @@ type Track struct {
 }
 
 func ListTracks() ([]Track, error) {
-	tracksPath := ServerInstallPath + "/content/tracks"
+	tracksPath := filepath.Join(ServerInstallPath, "content", "tracks")
 
 	trackFiles, err := ioutil.ReadDir(tracksPath)
 

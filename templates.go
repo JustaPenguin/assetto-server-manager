@@ -99,6 +99,16 @@ func (tr *Renderer) LoadTemplate(w io.Writer, r *http.Request, view string, data
 		data = make(map[string]interface{})
 	}
 
+	session, err := getSession(r)
+
+	if err != nil {
+		return err
+	}
+
+	if flashes := session.Flashes(); len(flashes) > 0 {
+		data["messages"] = flashes
+	}
+
 	return t.ExecuteTemplate(w, "base", data)
 }
 

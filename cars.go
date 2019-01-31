@@ -1,6 +1,9 @@
 package servermanager
 
-import "io/ioutil"
+import (
+	"io/ioutil"
+	"path/filepath"
+)
 
 type Car struct {
 	Name  string
@@ -10,7 +13,7 @@ type Car struct {
 func ListCars() ([]Car, error) {
 	var cars []Car
 
-	carFiles, err := ioutil.ReadDir(ServerInstallPath + "/content/cars")
+	carFiles, err := ioutil.ReadDir(filepath.Join(ServerInstallPath, "content", "cars"))
 
 	if err != nil {
 		return nil, err

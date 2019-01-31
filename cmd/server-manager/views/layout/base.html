@@ -13,6 +13,14 @@
     </head>
     <body>
 
+    {{ range $i, $message := .messages }}
+
+        <div class="alert alert-primary" role="alert">
+            {{ $message }}
+        </div>
+
+    {{ end }}
+
     <nav class="navbar navbar-expand-lg bg-dark navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="/">Assetto Server Manager</a>
