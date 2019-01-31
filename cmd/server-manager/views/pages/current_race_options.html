@@ -1,7 +1,7 @@
 {{ define "title" }}Current Race Options{{ end }}
 
 {{ define "content" }}
-    <h1>Current Race Options</h1>
+    <h1 class="text-center">Current Race Options</h1>
 
     <form method="post" action="/race-options">
         {{ range $k, $v := .form.Fields }}
