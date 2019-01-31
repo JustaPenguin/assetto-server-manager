@@ -70,6 +70,9 @@ func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
 		carNames = append(carNames, car.Name)
 	}
 
+	// @TODO eventually this will be loaded from somewhere
+	currentRaceConfig := &ConfigIniDefault.Server.CurrentRaceConfig
+
 	for _, track := range tracks {
 		trackNames = append(trackNames, track.Name)
 
@@ -78,7 +81,7 @@ func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	form := NewForm(&ConfigIniDefault.Server.CurrentRaceConfig, map[string][]string{
+	form := NewForm(currentRaceConfig, map[string][]string{
 		"CarOpts":         carNames,
 		"TrackOpts":       trackNames,
 		"TrackLayoutOpts": trackLayouts,
@@ -96,6 +99,13 @@ func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			logrus.Errorf("couldn't save config, err: %s", err)
+		}
+	}
+
+	for i, layout := range trackLayouts {
+		if layout == fmt.Sprintf("%s:%s", currentRaceConfig.Track, currentRaceConfig.TrackLayout) {
+			// mark the current track layout so the javascript can correctly set it up.
+			trackLayouts[i] += ":current"
 		}
 	}
 
