@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"net/http"
 
@@ -51,9 +52,6 @@ func globalServerOptionsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
-	var dataMap = make(map[string][]string)
-
-	var carNames, trackNames []string
 	cars, err := ListCars()
 
 	if err != nil {
@@ -66,18 +64,28 @@ func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
 		logrus.Fatalf("could not get track list, err: %s", err)
 	}
 
+	var carNames, trackNames, trackLayouts []string
+
 	for _, car := range cars {
 		carNames = append(carNames, car.Name)
 	}
 
+	// @TODO eventually this will be loaded from somewhere
+	currentRaceConfig := &ConfigIniDefault.Server.CurrentRaceConfig
+
 	for _, track := range tracks {
 		trackNames = append(trackNames, track.Name)
+
+		for _, layout := range track.Layouts {
+			trackLayouts = append(trackLayouts, fmt.Sprintf("%s:%s", track.Name, layout))
+		}
 	}
 
-	dataMap["CarOpts"] = carNames
-	dataMap["TrackOpts"] = trackNames
-
-	form := NewForm(&ConfigIniDefault.Server.CurrentRaceConfig, dataMap)
+	form := NewForm(currentRaceConfig, map[string][]string{
+		"CarOpts":         carNames,
+		"TrackOpts":       trackNames,
+		"TrackLayoutOpts": trackLayouts,
+	})
 
 	if r.Method == http.MethodPost {
 		err := form.Submit(r)
@@ -91,6 +99,14 @@ func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			logrus.Errorf("couldn't save config, err: %s", err)
+		}
+	}
+
+	for i, layout := range trackLayouts {
+		if layout == fmt.Sprintf("%s:%s", currentRaceConfig.Track, currentRaceConfig.TrackLayout) {
+			// mark the current track layout so the javascript can correctly set it up.
+			trackLayouts[i] += ":current"
+			break
 		}
 	}
 
