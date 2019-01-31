@@ -1,7 +1,13 @@
 {{ define "title" }}Tracks{{ end }}
 
 {{ define "content" }}
-    <h1>Track List</h1>
+    <h2>Upload New Track</h2>
+
+    <form action="/track/upload" class="button">
+        <input type="file" multiple value="Choose Folder"/>
+    </form>
+
+    <h2>Track List</h2>
 
     <table class="table">
         <tr>

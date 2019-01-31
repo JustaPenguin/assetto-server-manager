@@ -2,13 +2,18 @@ package servermanager
 
 import (
 	"github.com/sirupsen/logrus"
+	"io/ioutil"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 )
 
 var (
 	ViewRenderer *Renderer
+	store        = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
 )
 
 func Router() *mux.Router {
@@ -17,6 +22,7 @@ func Router() *mux.Router {
 	r.HandleFunc("/", homeHandler)
 	r.HandleFunc("/cars", carsHandler)
 	r.HandleFunc("/tracks", tracksHandler)
+	r.HandleFunc("/track/delete/{name}", trackDeleteHandler)
 	r.HandleFunc("/server-options", globalServerOptionsHandler)
 	r.HandleFunc("/race-options", raceOptionsHandler)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
@@ -123,4 +129,64 @@ func tracksHandler(w http.ResponseWriter, r *http.Request) {
 	ViewRenderer.MustLoadTemplate(w, r, "tracks.html", map[string]interface{}{
 		"tracks": tracks,
 	})
+}
+
+func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	trackName := mux.Vars(r)["name"]
+	tracksPath := filepath.Join(ServerInstallPath, "content", "tracks")
+
+	existingTracks, err := ioutil.ReadDir(tracksPath)
+
+	if err != nil {
+		logrus.Fatalf("could not get track list, err: %s", err)
+	}
+
+	var found bool
+
+	for _, track := range existingTracks {
+		if track.Name() == trackName {
+			// Delete track
+			found = true
+
+			err := os.RemoveAll(filepath.Join(tracksPath, trackName))
+
+			if err != nil {
+				found = false
+			}
+
+			break
+		}
+	}
+
+	session, err := getSession(r)
+
+	if err != nil {
+		logrus.Fatalf("could not get session, err: %s", err)
+	}
+
+	if found {
+		// send flash, confirm deletion
+		session.AddFlash("Track successfully deleted!")
+	} else {
+		// send flash, inform track wasn't found
+		session.AddFlash("Sorry, track could not be deleted.")
+	}
+
+	err = session.Save(r, w)
+
+	if err != nil {
+		logrus.Fatalf("could not save session, err: %s", err)
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func getSession(r *http.Request) (*sessions.Session, error) {
+	session, err := store.Get(r, "messages")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return session, nil
 }
