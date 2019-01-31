@@ -97,8 +97,6 @@ let serverLogs = {
         let $serverLog = $document.find("#server-logs");
         let $managerLog = $document.find("#manager-logs");
 
-        console.log($serverLog);
-
         if ($serverLog.length && $managerLog.length) {
 
             setInterval(function() {
