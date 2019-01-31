@@ -9,6 +9,7 @@ $(document).ready(function () {
     $document = $(document);
 
     tracks.init();
+    serverLogs.init();
 });
 
 let tracks = {
@@ -30,7 +31,7 @@ let tracks = {
         tracks.$trackLayoutDropdownParent = tracks.$trackLayoutDropdown.closest(".form-group");
 
         // restrict loading track layouts to pages which have track dropdown and layout dropdown on them.
-        if (tracks.$trackDropdown && tracks.$trackLayoutDropdown) {
+        if (tracks.$trackDropdown.length && tracks.$trackLayoutDropdown.length) {
             // build a map of track => available layouts
             tracks.$trackLayoutDropdown.find("option").each(function (index, opt) {
                 let $optValSplit = $(opt).val().split(":");
@@ -87,5 +88,23 @@ let tracks = {
         }
 
         return $opt;
+    },
+};
+
+
+let serverLogs = {
+    init: function() {
+        let $serverLog = $document.find("#server-logs");
+        let $managerLog = $document.find("#manager-logs");
+
+        if ($serverLog.length && $managerLog.length) {
+
+            setInterval(function() {
+                $.get("/api/logs", function (data) {
+                    $serverLog.text(data.ServerLog);
+                    $managerLog.text(data.ManagerLog);
+                });
+            }, 1000);
+        }
     },
 };

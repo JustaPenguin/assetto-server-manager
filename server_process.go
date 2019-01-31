@@ -8,6 +8,8 @@ import (
 	"sync"
 )
 
+var AssettoProcess = &AssettoServerProcess{}
+
 const serverExecutablePath = "acServer"
 
 var ErrServerAlreadyRunning = errors.New("servermanager: assetto corsa server is already running")

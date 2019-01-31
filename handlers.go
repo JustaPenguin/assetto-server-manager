@@ -1,23 +1,38 @@
 package servermanager
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
-	"github.com/sirupsen/logrus"
+	"io"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 var (
 	ViewRenderer *Renderer
+	logOutput    = new(bytes.Buffer)
 )
+
+func init() {
+	logrus.SetOutput(io.MultiWriter(os.Stdout, logOutput))
+}
 
 func Router() *mux.Router {
 	r := mux.NewRouter()
 
+	// pages
 	r.HandleFunc("/", homeHandler)
 	r.HandleFunc("/server-options", globalServerOptionsHandler)
 	r.HandleFunc("/race-options", raceOptionsHandler)
+	r.HandleFunc("/logs", serverLogsHandler)
+
+	// endpoints
+	r.HandleFunc("/api/logs", apiServerLogHandler)
+
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
 
 	return r
@@ -112,5 +127,22 @@ func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ViewRenderer.MustLoadTemplate(w, r, "current_race_options.html", map[string]interface{}{
 		"form": form,
+	})
+}
+
+func serverLogsHandler(w http.ResponseWriter, r *http.Request) {
+	ViewRenderer.MustLoadTemplate(w, r, "server_logs.html", nil)
+}
+
+type logData struct {
+	ServerLog, ManagerLog string
+}
+
+func apiServerLogHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	_ = json.NewEncoder(w).Encode(logData{
+		ServerLog:  AssettoProcess.Logs(),
+		ManagerLog: logOutput.String(),
 	})
 }
