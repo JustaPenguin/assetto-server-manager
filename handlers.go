@@ -1,30 +1,46 @@
 package servermanager
 
 import (
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
-	"net/http"
-	"os"
 	"path/filepath"
 
-	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+
+	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 var (
 	ViewRenderer *Renderer
 	store        = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+	logOutput    = new(bytes.Buffer)
 )
+
+func init() {
+	logrus.SetOutput(io.MultiWriter(os.Stdout, logOutput))
+}
 
 func Router() *mux.Router {
 	r := mux.NewRouter()
 
+	// pages
 	r.HandleFunc("/", homeHandler)
 	r.HandleFunc("/cars", carsHandler)
 	r.HandleFunc("/tracks", tracksHandler)
 	r.HandleFunc("/track/delete/{name}", trackDeleteHandler)
 	r.HandleFunc("/server-options", globalServerOptionsHandler)
 	r.HandleFunc("/race-options", raceOptionsHandler)
+	r.HandleFunc("/logs", serverLogsHandler)
+
+	// endpoints
+	r.HandleFunc("/api/logs", apiServerLogHandler)
+
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
 
 	return r
@@ -59,9 +75,6 @@ func globalServerOptionsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
-	var dataMap = make(map[string][]string)
-
-	var carNames, trackNames []string
 	cars, err := ListCars()
 
 	if err != nil {
@@ -74,18 +87,28 @@ func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
 		logrus.Fatalf("could not get track list, err: %s", err)
 	}
 
+	var carNames, trackNames, trackLayouts []string
+
 	for _, car := range cars {
 		carNames = append(carNames, car.Name)
 	}
 
+	// @TODO eventually this will be loaded from somewhere
+	currentRaceConfig := &ConfigIniDefault.Server.CurrentRaceConfig
+
 	for _, track := range tracks {
 		trackNames = append(trackNames, track.Name)
+
+		for _, layout := range track.Layouts {
+			trackLayouts = append(trackLayouts, fmt.Sprintf("%s:%s", track.Name, layout))
+		}
 	}
 
-	dataMap["CarOpts"] = carNames
-	dataMap["TrackOpts"] = trackNames
-
-	form := NewForm(&ConfigIniDefault.Server.CurrentRaceConfig, dataMap)
+	form := NewForm(currentRaceConfig, map[string][]string{
+		"CarOpts":         carNames,
+		"TrackOpts":       trackNames,
+		"TrackLayoutOpts": trackLayouts,
+	})
 
 	if r.Method == http.MethodPost {
 		err := form.Submit(r)
@@ -99,6 +122,14 @@ func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			logrus.Errorf("couldn't save config, err: %s", err)
+		}
+	}
+
+	for i, layout := range trackLayouts {
+		if layout == fmt.Sprintf("%s:%s", currentRaceConfig.Track, currentRaceConfig.TrackLayout) {
+			// mark the current track layout so the javascript can correctly set it up.
+			trackLayouts[i] += ":current"
+			break
 		}
 	}
 
@@ -189,4 +220,22 @@ func getSession(r *http.Request) (*sessions.Session, error) {
 	}
 
 	return session, nil
+}
+
+func serverLogsHandler(w http.ResponseWriter, r *http.Request) {
+	ViewRenderer.MustLoadTemplate(w, r, "server_logs.html", nil)
+}
+
+type logData struct {
+	ServerLog, ManagerLog string
+}
+
+func apiServerLogHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	_ = json.NewEncoder(w).Encode(logData{
+		ServerLog:  AssettoProcess.Logs(),
+		ManagerLog: logOutput.String(),
+	})
+
 }
