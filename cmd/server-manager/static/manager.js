@@ -102,7 +102,7 @@ let serverLogs = {
             setInterval(function() {
                 $.get("/api/logs", function (data) {
                     $serverLog.text(data.ServerLog);
-                    $managerLog.html(data.ManagerLog);
+                    $managerLog.text(data.ManagerLog);
                 });
             }, 1000);
         }
