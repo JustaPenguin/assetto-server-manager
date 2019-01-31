@@ -34,15 +34,17 @@ let tracks = {
             // build a map of track => available layouts
             tracks.$trackLayoutDropdown.find("option").each(function (index, opt) {
                 let $optValSplit = $(opt).val().split(":");
+                let trackName = $optValSplit[0];
+                let trackLayout = $optValSplit[1];
 
-                if (!tracks.trackLayoutOpts[$optValSplit[0]]) {
-                    tracks.trackLayoutOpts[$optValSplit[0]] = [];
+                if (!tracks.trackLayoutOpts[trackName]) {
+                    tracks.trackLayoutOpts[trackName] = [];
                 }
 
-                tracks.trackLayoutOpts[$optValSplit[0]].push($optValSplit[1]);
+                tracks.trackLayoutOpts[trackName].push(trackLayout);
 
                 if ($optValSplit.length > 2) {
-                    tracks.currentLayout = $optValSplit[1];
+                    tracks.currentLayout = trackLayout;
                 }
             });
 
