@@ -1,0 +1,131 @@
+{{ define "title" }}Quick Race{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">Quick Race</h1>
+
+    <form method="post" action="/quick">
+        <div class="form-group row">
+            <label for="Cars" class="col-sm-2 col-form-label">
+                Cars
+            </label>
+
+            <div class="col-sm-10">
+                <select multiple class="form-control" name="Cars" id="Cars">
+                    {{ range $index, $car := .CarOpts }}
+                        <option value="{{ $car }}">{{ $car }}</option>
+                    {{ end }}
+                </select>
+
+                <small>Models of cars allowed in the server</small>
+            </div>
+        </div>
+
+
+        <div class="form-group row">
+            <label for="Track" class="col-sm-2 col-form-label">
+                Track
+            </label>
+
+            <div class="col-sm-10">
+                <select class="form-control" name="Track" id="Track">
+                    {{ range $index, $track := .TrackOpts }}
+                        <option value="{{ $track }}">{{ $track }}</option>
+                    {{ end }}
+                </select>
+
+                <small>Track name</small>
+            </div>
+        </div>
+
+
+        <div class="form-group row" style="display: none;">
+            <label for="TrackLayout" class="col-sm-2 col-form-label">
+                Track Layout
+            </label>
+
+            <div class="col-sm-10">
+                <select class="form-control" name="TrackLayout" id="TrackLayout">
+                    {{ range $index, $layout := .TrackLayoutOpts }}
+                        <option value="{{ $layout }}">{{ $layout }}</option>
+                    {{ end }}
+                </select>
+
+                <small>Track layout. Some tracks don&#39;t have this.</small>
+            </div>
+        </div>
+
+        <hr>
+
+        <h2>Qualifying</h2>
+
+
+        <div class="form-group row">
+            <label for="Time" class="col-sm-2 col-form-label">Time</label>
+
+            <div class="col-sm-10">
+                <input
+                        type="number"
+                        id="Time"
+                        name="Time"
+                        class="form-control"
+                        value="10"
+
+
+                        step="1"
+                >
+
+                <small>session length in minutes</small>
+            </div>
+        </div>
+
+
+        <hr>
+
+
+        <h2>Race</h2>
+
+
+        <div class="form-group row">
+            <label for="Time" class="col-sm-2 col-form-label">Time</label>
+
+            <div class="col-sm-10">
+                <input
+                        type="number"
+                        id="Time"
+                        name="Time"
+                        class="form-control"
+                        value="0"
+
+
+                        step="1"
+                >
+
+                <small>session length in minutes</small>
+            </div>
+        </div>
+
+
+        <div class="form-group row">
+            <label for="Laps" class="col-sm-2 col-form-label">Laps</label>
+
+            <div class="col-sm-10">
+                <input
+                        type="number"
+                        id="Laps"
+                        name="Laps"
+                        class="form-control"
+                        value="5"
+
+
+                        step="1"
+                >
+
+                <small>number of laps in the race</small>
+            </div>
+        </div>
+
+        <button class="btn btn-success float-right" type="submit">Save</button>
+
+        <div class="clearfix"></div>
+    </form>
+{{ end }}

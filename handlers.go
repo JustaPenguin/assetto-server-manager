@@ -27,6 +27,7 @@ func Router() *mux.Router {
 	// pages
 	r.HandleFunc("/", homeHandler)
 	r.HandleFunc("/server-options", globalServerOptionsHandler)
+	r.HandleFunc("/quick", quickRaceHandler)
 	r.HandleFunc("/race-options", raceOptionsHandler)
 	r.HandleFunc("/logs", serverLogsHandler)
 
@@ -44,7 +45,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func globalServerOptionsHandler(w http.ResponseWriter, r *http.Request) {
-	form := NewForm(&ConfigIniDefault.Server.GlobalServerConfig, nil)
+	form := NewForm(&ConfigIniDefault.Server.GlobalServerConfig, nil, "")
 
 	if r.Method == http.MethodPost {
 		err := form.Submit(r)
@@ -100,7 +101,7 @@ func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
 		"CarOpts":         carNames,
 		"TrackOpts":       trackNames,
 		"TrackLayoutOpts": trackLayouts,
-	})
+	}, "")
 
 	if r.Method == http.MethodPost {
 		err := form.Submit(r)
@@ -128,6 +129,18 @@ func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
 	ViewRenderer.MustLoadTemplate(w, r, "current_race_options.html", map[string]interface{}{
 		"form": form,
 	})
+}
+
+func quickRaceHandler(w http.ResponseWriter, r *http.Request) {
+	quickRaceData, err := raceManager.QuickRace(r)
+
+	if err != nil {
+		logrus.Errorf("couldn't build quick race, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "quick_race.html", quickRaceData)
 }
 
 func serverLogsHandler(w http.ResponseWriter, r *http.Request) {
