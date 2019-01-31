@@ -3,6 +3,7 @@
     <html lang="en">
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="shortcut icon" href="/static/favicon.ico">
         <meta charset="UTF-8">
         <title>{{ block "title" . }}{{ end }} / Assetto Server Manager</title>
 
@@ -28,6 +29,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/server-options">Global Server Options</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logs">Server Logs</a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -47,7 +51,7 @@
 
     {{ block "javascript" . }}
         <script defer src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
-        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.bundle.min.js" integrity="sha384-zDnhMsjVZfS3hiP7oCBRmfjkQC4fzxVxFhBx8Hkz2aZX8gEvA/jsP3eXRCvzTofP" crossorigin="anonymous"></script>
         <script src="/static/manager.js"></script>
