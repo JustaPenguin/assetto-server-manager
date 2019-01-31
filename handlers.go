@@ -106,6 +106,7 @@ func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
 		if layout == fmt.Sprintf("%s:%s", currentRaceConfig.Track, currentRaceConfig.TrackLayout) {
 			// mark the current track layout so the javascript can correctly set it up.
 			trackLayouts[i] += ":current"
+			break
 		}
 	}
 
