@@ -3,16 +3,18 @@
 {{ define "content" }}
     <h1 class="text-center">Quick Race</h1>
 
-    <form method="post" action="/quick">
+    <p>Set up a quick race with sensible defaults, and start the server.</p>
+
+    <form method="post" action="/quick/submit">
         <div class="form-group row">
             <label for="Cars" class="col-sm-2 col-form-label">
                 Cars
             </label>
 
             <div class="col-sm-10">
-                <select multiple class="form-control" name="Cars" id="Cars">
+                <select multiple class="form-control" name="Cars" id="Cars" size="15">
                     {{ range $index, $car := .CarOpts }}
-                        <option value="{{ $car }}">{{ $car }}</option>
+                        <option value="{{ $car }}">{{ prettify $car true }}</option>
                     {{ end }}
                 </select>
 
@@ -29,7 +31,7 @@
             <div class="col-sm-10">
                 <select class="form-control" name="Track" id="Track">
                     {{ range $index, $track := .TrackOpts }}
-                        <option value="{{ $track }}">{{ $track }}</option>
+                        <option value="{{ $track }}">{{ prettify $track false }}</option>
                     {{ end }}
                 </select>
 
@@ -58,15 +60,16 @@
 
         <h2>Qualifying</h2>
 
+        <p>Practice is disabled on Quick Races. Perhaps you want <a href="/custom">Custom Race</a> instead?</p>
 
         <div class="form-group row">
-            <label for="Time" class="col-sm-2 col-form-label">Time</label>
+            <label for="Qualifying.Time" class="col-sm-2 col-form-label">Time</label>
 
             <div class="col-sm-10">
                 <input
                         type="number"
-                        id="Time"
-                        name="Time"
+                        id="Qualifying.Time"
+                        name="Qualifying.Time"
                         class="form-control"
                         value="10"
 
@@ -86,15 +89,20 @@
 
 
         <div class="form-group row">
-            <label for="Time" class="col-sm-2 col-form-label">Time</label>
+            <div class="col-sm-2">
+                <select id="TimeOrLaps" class="form-control">
+                    <option value="Time">Time</option>
+                    <option value="Laps">Laps</option>
+                </select>
+            </div>
 
-            <div class="col-sm-10">
+            <div class="col-sm-10" id="RaceTime">
                 <input
                         type="number"
-                        id="Time"
-                        name="Time"
+                        id="Race.Time"
+                        name="Race.Time"
                         class="form-control"
-                        value="0"
+                        value="15"
 
 
                         step="1"
@@ -102,17 +110,13 @@
 
                 <small>session length in minutes</small>
             </div>
-        </div>
 
 
-        <div class="form-group row">
-            <label for="Laps" class="col-sm-2 col-form-label">Laps</label>
-
-            <div class="col-sm-10">
+            <div class="col-sm-10" id="RaceLaps" style="display: none;">
                 <input
                         type="number"
-                        id="Laps"
-                        name="Laps"
+                        id="Race.Laps"
+                        name="Race.Laps"
                         class="form-control"
                         value="5"
 
@@ -124,7 +128,9 @@
             </div>
         </div>
 
-        <button class="btn btn-success float-right" type="submit">Save</button>
+
+
+        <button class="btn btn-success float-right" type="submit">Start Race</button>
 
         <div class="clearfix"></div>
     </form>

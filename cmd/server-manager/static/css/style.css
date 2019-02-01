@@ -1,0 +1,30 @@
+body {
+    padding-top: 60px;
+}
+
+.navbar {
+    background: white;
+    border-bottom: 1px solid rgba(0,0,0,0.125);
+}
+
+a.card {
+    padding-top: 40px;
+    padding-bottom: 40px;
+}
+
+a.card h2 {
+    color: black;
+}
+
+
+a.card:hover {
+    text-decoration: none;
+}
+
+footer {
+    margin-top: 20px;
+}
+
+.ms-container {
+    width: 100% !important;
+}

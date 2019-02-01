@@ -28,8 +28,10 @@ func Router() *mux.Router {
 	r.HandleFunc("/", homeHandler)
 	r.HandleFunc("/server-options", globalServerOptionsHandler)
 	r.HandleFunc("/quick", quickRaceHandler)
+	r.Methods(http.MethodPost).Path("/quick/submit").HandlerFunc(quickRaceSubmitHandler)
 	r.HandleFunc("/race-options", raceOptionsHandler)
 	r.HandleFunc("/logs", serverLogsHandler)
+	r.HandleFunc("/process/{action}", serverProcessHandler)
 
 	// endpoints
 	r.HandleFunc("/api/logs", apiServerLogHandler)
@@ -41,7 +43,30 @@ func Router() *mux.Router {
 
 // homeHandler serves content to /
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	ViewRenderer.MustLoadTemplate(w, r, "home.html", nil)
+	ViewRenderer.MustLoadTemplate(w, r, "home.html", map[string]interface{}{
+		"CurrentRace": raceManager.CurrentRace(),
+	})
+}
+
+// serverProcessHandler modifies the server process.
+func serverProcessHandler(w http.ResponseWriter, r *http.Request) {
+	var err error
+
+	switch mux.Vars(r)["action"] {
+	case "start":
+		err = AssettoProcess.Start()
+	case "stop":
+		err = AssettoProcess.Stop()
+	case "restart":
+		err = AssettoProcess.Restart()
+	}
+
+	if err != nil {
+		// @TODO err
+		panic(err)
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
 func globalServerOptionsHandler(w http.ResponseWriter, r *http.Request) {
@@ -132,7 +157,7 @@ func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func quickRaceHandler(w http.ResponseWriter, r *http.Request) {
-	quickRaceData, err := raceManager.QuickRace(r)
+	quickRaceData, err := raceManager.QuickRaceForm()
 
 	if err != nil {
 		logrus.Errorf("couldn't build quick race, err: %s", err)
@@ -141,6 +166,18 @@ func quickRaceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ViewRenderer.MustLoadTemplate(w, r, "quick_race.html", quickRaceData)
+}
+
+func quickRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
+	err := raceManager.SetupQuickRace(r)
+
+	if err != nil {
+		logrus.Errorf("couldn't apply quick race, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func serverLogsHandler(w http.ResponseWriter, r *http.Request) {

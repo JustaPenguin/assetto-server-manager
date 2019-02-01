@@ -24,7 +24,7 @@ func NewForm(i interface{}, dropdownOpts map[string][]string, visibility string)
 	return &Form{
 		data:            i,
 		dropdownOptions: dropdownOpts,
-		visibility: visibility,
+		visibility:      visibility,
 	}
 }
 
