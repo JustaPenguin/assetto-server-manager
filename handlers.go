@@ -3,7 +3,6 @@ package servermanager
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -29,7 +28,6 @@ func Router() *mux.Router {
 	r.HandleFunc("/server-options", globalServerOptionsHandler)
 	r.HandleFunc("/quick", quickRaceHandler)
 	r.Methods(http.MethodPost).Path("/quick/submit").HandlerFunc(quickRaceSubmitHandler)
-	r.HandleFunc("/race-options", raceOptionsHandler)
 	r.HandleFunc("/logs", serverLogsHandler)
 	r.HandleFunc("/process/{action}", serverProcessHandler)
 
@@ -88,70 +86,6 @@ func globalServerOptionsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ViewRenderer.MustLoadTemplate(w, r, "global_server_options.html", map[string]interface{}{
-		"form": form,
-	})
-}
-
-func raceOptionsHandler(w http.ResponseWriter, r *http.Request) {
-	cars, err := ListCars()
-
-	if err != nil {
-		logrus.Fatalf("could not get car list, err: %s", err)
-	}
-
-	tracks, err := ListTracks()
-
-	if err != nil {
-		logrus.Fatalf("could not get track list, err: %s", err)
-	}
-
-	var carNames, trackNames, trackLayouts []string
-
-	for _, car := range cars {
-		carNames = append(carNames, car.Name)
-	}
-
-	// @TODO eventually this will be loaded from somewhere
-	currentRaceConfig := &ConfigIniDefault.Server.CurrentRaceConfig
-
-	for _, track := range tracks {
-		trackNames = append(trackNames, track.Name)
-
-		for _, layout := range track.Layouts {
-			trackLayouts = append(trackLayouts, fmt.Sprintf("%s:%s", track.Name, layout))
-		}
-	}
-
-	form := NewForm(currentRaceConfig, map[string][]string{
-		"CarOpts":         carNames,
-		"TrackOpts":       trackNames,
-		"TrackLayoutOpts": trackLayouts,
-	}, "")
-
-	if r.Method == http.MethodPost {
-		err := form.Submit(r)
-
-		if err != nil {
-			logrus.Errorf("couldn't submit form, err: %s", err)
-		}
-
-		// save the config
-		err = ConfigIniDefault.Write()
-
-		if err != nil {
-			logrus.Errorf("couldn't save config, err: %s", err)
-		}
-	}
-
-	for i, layout := range trackLayouts {
-		if layout == fmt.Sprintf("%s:%s", currentRaceConfig.Track, currentRaceConfig.TrackLayout) {
-			// mark the current track layout so the javascript can correctly set it up.
-			trackLayouts[i] += ":current"
-			break
-		}
-	}
-
-	ViewRenderer.MustLoadTemplate(w, r, "current_race_options.html", map[string]interface{}{
 		"form": form,
 	})
 }
