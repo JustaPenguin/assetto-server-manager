@@ -10,16 +10,19 @@
                         {{ prettify .Server.CurrentRaceConfig.Track false }}
 
                         {{ with .Server.CurrentRaceConfig.TrackLayout }}
-                            ({{ prettify . false }})
+                            ({{ prettify . true }})
                         {{ end }}
                     </h5>
                     <p class="card-text">{{ carList .Server.CurrentRaceConfig.Cars }}</p>
 
-                    <a href="#" class="btn btn-primary disabled">Live Timings</a>
 
-                    <div class="float-right">
-                        <a href="/process/restart" class="btn btn-info">Restart Event</a>
-                        <a href="/process/stop" class="btn btn-danger">Stop Event</a>
+                    <div class="button-bar">
+                        <a href="#" class="btn btn-primary disabled">Live Timings</a>
+
+                        <div class="float-right">
+                            <a href="/process/restart" class="btn btn-info">Restart Event</a>
+                            <a href="/process/stop" class="btn btn-danger">Stop Event</a>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4">
