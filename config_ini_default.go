@@ -17,7 +17,7 @@ var ConfigIniDefault = ServerConfig{
 			VotingQuorum:              80,
 			VoteDuration:              20,
 			BlacklistMode:             1,
-			RegisterToLobby:           1,
+			RegisterToLobby:           0, // @TODO UNDOME
 			MaxClients:                18,
 			UDPPluginLocalPort:        0,
 			UDPPluginAddress:          "",

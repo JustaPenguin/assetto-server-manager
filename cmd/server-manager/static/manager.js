@@ -8,11 +8,11 @@ $(document).ready(function () {
 
     $document = $(document);
 
-    tracks.init();
+    raceSetup.init();
     serverLogs.init();
 });
 
-let tracks = {
+let raceSetup = {
     // jQuery elements
     $trackDropdown: null,
     $trackLayoutDropdown: null,
@@ -24,56 +24,84 @@ let tracks = {
     // all available track layout options
     trackLayoutOpts: {},
 
-    // init: entrypoint for tracks functions. looks for track + layout dropdowns and populates them.
+    // init: entrypoint for raceSetup functions. looks for track + layout dropdowns and populates them.
     init: function () {
-        tracks.$trackDropdown = $document.find("#Track");
-        tracks.$trackLayoutDropdown = $document.find("#TrackLayout");
-        tracks.$trackLayoutDropdownParent = tracks.$trackLayoutDropdown.closest(".form-group");
+        $document.find("#Cars").multiSelect();
+
+        raceSetup.$trackDropdown = $document.find("#Track");
+        raceSetup.$trackLayoutDropdown = $document.find("#TrackLayout");
+        raceSetup.$trackLayoutDropdownParent = raceSetup.$trackLayoutDropdown.closest(".form-group");
 
         // restrict loading track layouts to pages which have track dropdown and layout dropdown on them.
-        if (tracks.$trackDropdown.length && tracks.$trackLayoutDropdown.length) {
+        if (raceSetup.$trackDropdown.length && raceSetup.$trackLayoutDropdown.length) {
             // build a map of track => available layouts
-            tracks.$trackLayoutDropdown.find("option").each(function (index, opt) {
+            raceSetup.$trackLayoutDropdown.find("option").each(function (index, opt) {
                 let $optValSplit = $(opt).val().split(":");
                 let trackName = $optValSplit[0];
                 let trackLayout = $optValSplit[1];
 
-                if (!tracks.trackLayoutOpts[trackName]) {
-                    tracks.trackLayoutOpts[trackName] = [];
+                if (!raceSetup.trackLayoutOpts[trackName]) {
+                    raceSetup.trackLayoutOpts[trackName] = [];
                 }
 
-                tracks.trackLayoutOpts[trackName].push(trackLayout);
+                raceSetup.trackLayoutOpts[trackName].push(trackLayout);
 
                 if ($optValSplit.length > 2) {
-                    tracks.currentLayout = trackLayout;
+                    raceSetup.currentLayout = trackLayout;
                 }
             });
 
-            tracks.$trackLayoutDropdownParent.hide();
-            tracks.loadTrackLayouts();
+            raceSetup.$trackLayoutDropdownParent.hide();
+            raceSetup.loadTrackLayouts();
 
-            tracks.$trackDropdown.change(tracks.loadTrackLayouts);
+            raceSetup.$trackDropdown.change(raceSetup.loadTrackLayouts);
+        }
+
+        raceSetup.raceLaps();
+    },
+
+    raceLaps: function() {
+        let $timeOrLaps = $document.find("#TimeOrLaps");
+        let $raceLaps = $document.find("#RaceLaps");
+        let $raceTime = $document.find("#RaceTime");
+
+        if ($timeOrLaps.length) {
+            $timeOrLaps.change(function() {
+                let selected = $timeOrLaps.find("option:selected").val();
+
+                if (selected === "Time") {
+                    $raceLaps.find("input").val(0);
+                    $raceTime.find("input").val(15);
+                    $raceLaps.hide();
+                    $raceTime.show();
+                } else {
+                    $raceTime.find("input").val(0);
+                    $raceLaps.find("input").val(15);
+                    $raceLaps.show();
+                    $raceTime.hide();
+                }
+            });
         }
     },
 
     // loadTrackLayouts: looks at the selected track and loads in the correct layouts for it into the
     // track layout dropdown
     loadTrackLayouts: function () {
-        tracks.$trackLayoutDropdown.empty();
+        raceSetup.$trackLayoutDropdown.empty();
 
-        let selectedTrack = tracks.$trackDropdown.find("option:selected").val();
-        let availableLayouts = tracks.trackLayoutOpts[selectedTrack];
+        let selectedTrack = raceSetup.$trackDropdown.find("option:selected").val();
+        let availableLayouts = raceSetup.trackLayoutOpts[selectedTrack];
 
         if (availableLayouts) {
             for (let i = 0; i < availableLayouts.length; i++) {
-                tracks.$trackLayoutDropdown.append(tracks.buildTrackLayoutOption(availableLayouts[i]));
+                raceSetup.$trackLayoutDropdown.append(raceSetup.buildTrackLayoutOption(availableLayouts[i]));
             }
 
-            tracks.$trackLayoutDropdownParent.show();
+            raceSetup.$trackLayoutDropdownParent.show();
         } else {
             // add an option with an empty value
-            tracks.$trackLayoutDropdown.append(tracks.buildTrackLayoutOption(""));
-            tracks.$trackLayoutDropdownParent.hide();
+            raceSetup.$trackLayoutDropdown.append(raceSetup.buildTrackLayoutOption(""));
+            raceSetup.$trackLayoutDropdownParent.hide();
         }
     },
 
@@ -83,7 +111,7 @@ let tracks = {
         $opt.attr({'value': layout});
         $opt.text(layout);
 
-        if (layout === tracks.currentLayout) {
+        if (layout === raceSetup.currentLayout) {
             $opt.prop("selected", true);
         }
 

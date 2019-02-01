@@ -4,6 +4,8 @@ github.com/Masterminds/sprig v2.17.1+incompatible h1:PChbxFGKTWsg9IWh+pSZRCSj3zQ
 github.com/Masterminds/sprig v2.17.1+incompatible/go.mod h1:y6hNFY5UBTIWBxnzTeuNhlNS5hqE0NB0E6fgfo2Br3o=
 github.com/aokoli/goutils v1.1.0 h1:jy4ghdcYvs5EIoGssZNslIASX5m+KNMfyyKvRQ0TEVE=
 github.com/aokoli/goutils v1.1.0/go.mod h1:SijmP0QR8LtwsmDs8Yii5Z/S4trXFGFC2oO5g9DP+DQ=
+github.com/cj123/ini v1.42.0 h1:Bq9DGc91zoEOzXMMMRXwwGDhei3W5iA9rzlCOe1BLls=
+github.com/cj123/ini v1.42.0/go.mod h1:tgCpjdB9zHO3U/5Gnh3eDcjqfeevlVH2kmheMOnPiFc=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fatih/camelcase v1.0.0 h1:hxNvNX/xYBp0ovncs8WyWZrOrpBNub/JfaMvbURyft8=
