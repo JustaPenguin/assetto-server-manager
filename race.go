@@ -56,8 +56,9 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 
 	// load default config values
 	quickRace := ConfigIniDefault
+	cars := r.Form["Cars"]
 
-	quickRace.Server.CurrentRaceConfig.Cars = strings.Join(r.Form["Cars"], ";")
+	quickRace.Server.CurrentRaceConfig.Cars = strings.Join(cars, ";")
 	quickRace.Server.CurrentRaceConfig.Track = r.Form.Get("Track")
 	quickRace.Server.CurrentRaceConfig.TrackLayout = r.Form.Get("TrackLayout")
 
@@ -96,6 +97,13 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 	})
 
 	entryList := EntryList{}
+
+	// @TODO this should work to the number of grid slots on the track rather than MaxClients.
+	for i := 0; i < quickRace.Server.GlobalServerConfig.MaxClients; i++ {
+		entryList.Add(Entrant{
+			Model: cars[i%len(cars)],
+		})
+	}
 
 	return rm.applyConfigAndStart(quickRace, entryList)
 }
@@ -143,5 +151,6 @@ func (rm *RaceManager) QuickRaceForm() (map[string]interface{}, error) {
 		"CarOpts":         carNames,
 		"TrackOpts":       trackNames,
 		"TrackLayoutOpts": trackLayouts,
+		"MaxClients":      currentRaceConfig.Server.GlobalServerConfig.MaxClients,
 	}, nil
 }
