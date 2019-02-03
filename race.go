@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"net/http"
 	"strconv"
 	"strings"
@@ -108,8 +109,14 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 	return rm.applyConfigAndStart(quickRace, entryList)
 }
 
-// QuickRaceForm builds a quick race form
-func (rm *RaceManager) QuickRaceForm() (map[string]interface{}, error) {
+func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
+	spew.Dump(r.Form)
+
+	return nil // @TODO
+}
+
+// BuildRaceOpts builds a quick race form
+func (rm *RaceManager) BuildRaceOpts() (map[string]interface{}, error) {
 	cars, err := ListCars()
 
 	if err != nil {
@@ -148,9 +155,10 @@ func (rm *RaceManager) QuickRaceForm() (map[string]interface{}, error) {
 	}
 
 	return map[string]interface{}{
-		"CarOpts":         carNames,
-		"TrackOpts":       trackNames,
-		"TrackLayoutOpts": trackLayouts,
-		"MaxClients":      currentRaceConfig.Server.GlobalServerConfig.MaxClients,
+		"CarOpts":           carNames,
+		"TrackOpts":         trackNames,
+		"TrackLayoutOpts":   trackLayouts,
+		"MaxClients":        currentRaceConfig.Server.GlobalServerConfig.MaxClients,
+		"AvailableSessions": AvailableSessions,
 	}, nil
 }

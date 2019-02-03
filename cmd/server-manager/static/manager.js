@@ -8,6 +8,12 @@ $(document).ready(function () {
 
     $document = $(document);
 
+    // init bootstrap-switch
+    $.fn.bootstrapSwitch.defaults.size = 'small';
+    $.fn.bootstrapSwitch.defaults.animate = false;
+    $.fn.bootstrapSwitch.defaults.onColor = "success";
+    $document.find("input[type='checkbox']").bootstrapSwitch();
+
     raceSetup.init();
     serverLogs.init();
 });
@@ -58,6 +64,28 @@ let raceSetup = {
         }
 
         raceSetup.raceLaps();
+        raceSetup.showEnabledSessions();
+    },
+
+    showEnabledSessions: function() {
+        console.log("HI");
+        $(".session-enabler").each(function(index, elem) {
+
+            console.log(elem);
+
+            $(elem).click(function() {
+                let $this = $(this);
+                let $elem = $this.closest(".tab-pane").find(".session-details");
+
+                if ($this.val()) {
+                    console.log("HI");
+                    $elem.show();
+                } else {
+                    console.log("HO");
+                    $elem.hide();
+                }
+            });
+        });
     },
 
     raceLaps: function() {
