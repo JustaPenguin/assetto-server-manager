@@ -3,6 +3,7 @@ package servermanager
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/cj123/ini"
 )
@@ -24,7 +25,14 @@ const (
 )
 
 func (s SessionType) String() string {
-	return string(s)
+	return strings.Title(strings.ToLower(string(s)))
+}
+
+var AvailableSessions = []SessionType{
+	SessionTypeRace,
+	SessionTypeQualifying,
+	SessionTypePractice,
+	SessionTypeBooking,
 }
 
 type ServerConfig struct {
@@ -142,7 +150,7 @@ type GlobalServerConfig struct {
 	VotingQuorum              int    `ini:"VOTING_QUORUM" min:"0" max:"100" help:"percentage of vote that is required for the SESSION vote to pass"`
 	VoteDuration              int    `ini:"VOTE_DURATION" min:"0" help:"vote length in seconds"`
 	BlacklistMode             int    `ini:"BLACKLIST_MODE" min:"0" max:"2" help:"ban player -> 0 = normal kick, rejoin possible, 1 = until server restart WARNING: 2 is not more valid since kick_id and ban_id are two different commands."`
-	NumThreads                int    `ini:"NUM_THREADS" min:"1" help:"Number of threads to run on"`
+	NumberOfThreads           int    `ini:"NUM_THREADS" min:"1" help:"Number of threads to run on"`
 	WelcomeMessage            string `ini:"WELCOME_MESSAGE" help:"path to the file that contains the server welcome message"`
 	ResultScreenTime          int    `ini:"RESULT_SCREEN_TIME" help:"seconds of result screen between racing sessions"`
 }

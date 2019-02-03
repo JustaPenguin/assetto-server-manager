@@ -204,9 +204,12 @@ func (f FormOption) render(templ string) (template.HTML, error) {
 
 func (f FormOption) renderDropdown() template.HTML {
 	const dropdownTemplate = `
-		<div class="form-group">
-			<label>
+		<div class="form-group row">
+			<label for="{{ .Key }}" class="col-sm-3 col-form-label">
 				{{ .Name }}
+			</label>
+
+            <div class="col-sm-9">
 				<select {{ if eq .Type "multiSelect" }} multiple {{ end }} class="form-control" name="{{ .Key }}" id="{{ .Key }}">
 					{{ range $opt, $selected := .Opts }}
 						<option {{ if $selected }} selected {{ end }} value="{{ $opt }}">{{ $opt }}</option>
@@ -214,7 +217,7 @@ func (f FormOption) renderDropdown() template.HTML {
 				</select>
 
 				<small>{{ .HelpText }}</small>
-			</label>
+			</div>
 		</div>
 	`
 
@@ -229,11 +232,15 @@ func (f FormOption) renderDropdown() template.HTML {
 
 func (f FormOption) renderCheckbox() template.HTML {
 	const checkboxTemplate = `
-		<div class="form-group">
-			<label for="{{ .Key }}">{{ .Name }}</label>
-			<input type="checkbox" id="{{ .Key }}" name="{{ .Key }}" {{ if eq .Value 1 }}checked="checked"{{ end }}><br>
+		<div class="form-group row">
+			<label for="{{ .Key }}" class="col-sm-3 col-form-label">{{ .Name }}</label>
 
-			<small>{{ .HelpText }}</small>
+
+            <div class="col-sm-9">
+				<input type="checkbox" id="{{ .Key }}" name="{{ .Key }}" {{ if eq .Value 1 }}checked="checked"{{ end }}><br>
+
+				<small>{{ .HelpText }}</small>
+			</div>
 		</div>
 	`
 
@@ -248,11 +255,14 @@ func (f FormOption) renderCheckbox() template.HTML {
 
 func (f FormOption) renderTextInput() template.HTML {
 	const inputTextTemplate = `
-		<div class="form-group">
-			<label for="{{ .Key }}">{{ .Name }}</label>
-			<input type="{{ if eq .Type "password" }}password{{ else }}text{{ end }}" id="{{ .Key }}" name="{{ .Key }}" class="form-control" value="{{ .Value }}">
+		<div class="form-group row">
+			<label for="{{ .Key }}" class="col-sm-3 col-form-label">{{ .Name }}</label>
 
-			<small>{{ .HelpText }}</small>
+			<div class="col-sm-9">
+				<input type="{{ if eq .Type "password" }}password{{ else }}text{{ end }}" id="{{ .Key }}" name="{{ .Key }}" class="form-control" value="{{ .Value }}">
+
+				<small>{{ .HelpText }}</small>
+			</div>
 		</div>
 	`
 
@@ -267,20 +277,23 @@ func (f FormOption) renderTextInput() template.HTML {
 
 func (f FormOption) renderNumberInput() template.HTML {
 	const numberInputTemplate = `
-		<div class="form-group">
-			<label for="{{ .Key }}">{{ .Name }}</label>
-			<input 
-				type="number" 
-				id="{{ .Key }}" 
-				name="{{ .Key }}" 
-				class="form-control" 
-				value="{{ .Value }}"
-				{{ with .Min }}min="{{ . }}"{{ end }}
-				{{ with .Max }}min="{{ . }}"{{ end }}
-				step="1"
-			>
+		<div class="form-group row">
+			<label for="{{ .Key }}" class="col-sm-3 col-form-label">{{ .Name }}</label>
 
-			<small>{{ .HelpText }}</small>
+			<div class="col-sm-9">
+				<input 
+					type="number" 
+					id="{{ .Key }}" 
+					name="{{ .Key }}" 
+					class="form-control" 
+					value="{{ .Value }}"
+					{{ with .Min }}min="{{ . }}"{{ end }}
+					{{ with .Max }}min="{{ . }}"{{ end }}
+					step="1"
+				>
+
+				<small>{{ .HelpText }}</small>
+			</div>
 		</div>
 	`
 

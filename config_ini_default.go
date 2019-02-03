@@ -22,7 +22,7 @@ var ConfigIniDefault = ServerConfig{
 			UDPPluginLocalPort:        0,
 			UDPPluginAddress:          "",
 			AuthPluginAddress:         "",
-			NumThreads:                2,
+			NumberOfThreads:           2,
 			ResultScreenTime:          10,
 		},
 
