@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"errors"
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
 	"net/http"
@@ -35,6 +36,8 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		return err
 	}
 
+	rm.currentRace = &config
+
 	if AssettoProcess.IsRunning() {
 		return AssettoProcess.Restart()
 	}
@@ -44,8 +47,6 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 	if err != nil {
 		return err
 	}
-
-	rm.currentRace = &config
 
 	return nil
 }
@@ -57,6 +58,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 
 	// load default config values
 	quickRace := ConfigIniDefault
+
 	cars := r.Form["Cars"]
 
 	quickRace.Server.CurrentRaceConfig.Cars = strings.Join(cars, ";")
@@ -96,6 +98,10 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		IsOpen:   1,
 		WaitTime: 60,
 	})
+
+	if len(cars) == 0 {
+		return errors.New("you must submit a car")
+	}
 
 	entryList := EntryList{}
 
