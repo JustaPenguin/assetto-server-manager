@@ -26,7 +26,11 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <img class="img img-responsive float-right" style="max-height: 180px" src="http://placekitten.com/400/300">
+                    <img class="img img-fluid pl-2"
+                         id="trackImage"
+                         src="/content/tracks/{{ .CurrentRaceConfig.Track }}/ui{{ with .CurrentRaceConfig.TrackLayout }}/{{.}}{{ end }}/preview.png"
+                         alt="{{ .CurrentRaceConfig.Track }} {{ .CurrentRaceConfig.TrackLayout }}"
+                    >
                 </div>
             </div>
         </div>
