@@ -59,6 +59,15 @@ let raceSetup = {
 
         raceSetup.$addWeatherButton.click(raceSetup.addWeather);
 
+        $document.find(".weather-graphics").change(function() {
+            let $this = $(this);
+
+            $this.parent().parent().find(".weather-preview").attr({
+                'src': '/content/weather/' + $this.val() + '/preview.jpg',
+                'alt': $this.val(),
+            });
+        });
+
         // restrict loading track layouts to pages which have track dropdown and layout dropdown on them.
         if (raceSetup.$trackDropdown.length && raceSetup.$trackLayoutDropdown.length) {
             // build a map of track => available layouts
@@ -82,6 +91,7 @@ let raceSetup = {
             raceSetup.loadTrackLayouts();
 
             raceSetup.$trackDropdown.change(raceSetup.loadTrackLayouts);
+            raceSetup.$trackLayoutDropdown.change(raceSetup.showTrackImage());
         }
 
         raceSetup.raceLaps();
@@ -96,7 +106,7 @@ let raceSetup = {
 
         let $oldWeather = $document.find(".weather").last();
 
-        let $newWeather = $oldWeather.clone();
+        let $newWeather = $oldWeather.clone(true, true);
         $newWeather.find(".weather-num").text($document.find(".weather").length);
 
         $oldWeather.after($newWeather);
@@ -183,6 +193,23 @@ let raceSetup = {
         }
     },
 
+    showTrackImage: function() {
+        let track = raceSetup.$trackDropdown.val();
+        let layout = raceSetup.$trackLayoutDropdown.val();
+
+        let src = '/content/tracks/' + track + '/ui';
+
+        if (layout) {
+            src += '/' + layout;
+        }
+
+        src += '/preview.png';
+
+        $document.find("#trackImage").attr({
+            'src': src,
+            'alt': track + ' ' + layout,
+        })
+    },
 
     /**
      * loadTrackLayouts: looks at the selected track and loads in the correct layouts for it into the
@@ -205,6 +232,10 @@ let raceSetup = {
             raceSetup.$trackLayoutDropdown.append(raceSetup.buildTrackLayoutOption(""));
             raceSetup.$trackLayoutDropdownParent.hide();
         }
+
+
+        raceSetup.showTrackImage();
+
     },
 
     /**
