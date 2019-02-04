@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/Masterminds/sprig"
@@ -56,6 +58,8 @@ func (tr *Renderer) init() error {
 
 	funcs := sprig.FuncMap()
 	funcs["ordinal"] = ordinal
+	funcs["prettify"] = prettifyName
+	funcs["carList"] = carList
 
 	for _, page := range pages {
 		var templateList []string
@@ -73,6 +77,38 @@ func (tr *Renderer) init() error {
 	}
 
 	return nil
+}
+
+func carList(cars string) string {
+	var out []string
+
+	split := strings.Split(cars, ";")
+
+	for _, s := range split {
+		out = append(out, prettifyName(s, true))
+	}
+
+	return strings.Join(out, ", ")
+}
+
+var nameRegex = regexp.MustCompile(`^[A-Za-z]{0,5}[0-9]+`)
+
+func prettifyName(s string, acronyms bool) string {
+	parts := strings.Split(s, "_")
+
+	if parts[0] == "ks" {
+		parts = parts[1:]
+	}
+
+	for i := range parts {
+		if (acronyms && len(parts[i]) <= 3) || (acronyms && nameRegex.MatchString(parts[i])) {
+			parts[i] = strings.ToUpper(parts[i])
+		} else {
+			parts[i] = strings.Title(parts[i])
+		}
+	}
+
+	return strings.Join(parts, " ")
 }
 
 // LoadTemplate reads a template from templates and renders it with data to the given io.Writer
@@ -114,6 +150,8 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 	if err != nil {
 		logrus.Fatalf("could not save session, err: %s", err)
 	}
+
+	data["server_status"] = AssettoProcess.IsRunning()
 
 	return t.ExecuteTemplate(w, "base", data)
 }

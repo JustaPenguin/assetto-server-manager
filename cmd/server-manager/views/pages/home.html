@@ -1,13 +1,93 @@
 {{ define "title" }}Home{{ end }}
 
 {{ define "content" }}
-    <h1 class="text-center">Home</h1>
+    {{ with .CurrentRace }}
+        <div class="card">
+            <h5 class="card-header">Event in Progress</h5>
+            <div class="card-body row">
+                <div class="col-md-8">
+                    <h5 class="card-title">
+                        {{ prettify .Server.CurrentRaceConfig.Track false }}
 
-    <form action="/cars">
-        <input type="submit" value="Cars" class="btn btn-default"/>
-    </form>
+                        {{ with .Server.CurrentRaceConfig.TrackLayout }}
+                            ({{ prettify . true }})
+                        {{ end }}
+                    </h5>
+                    <p class="card-text">{{ carList .Server.CurrentRaceConfig.Cars }}</p>
 
-    <form action="/tracks">
-        <input type="submit" value="Tracks" class="btn btn-default"/>
-    </form>
+
+                    <div class="button-bar">
+                        <a href="#" class="btn btn-primary disabled">Live Timings</a>
+
+                        <div class="float-right">
+                            <a href="/process/restart" class="btn btn-info">Restart Event</a>
+                            <a href="/process/stop" class="btn btn-danger">Stop Event</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <img class="img img-responsive float-right" style="max-height: 180px" src="http://placekitten.com/400/300">
+                </div>
+            </div>
+        </div>
+    {{ end }}
+
+    <div class="row">
+        <div class="col-md-6 col-lg-4 mt-4">
+            <a class="card" href="/quick">
+                <div class="card-body text-center">
+                    <h1 class="text-center"><i class="fas fa-fighter-jet fa-2x"></i></h1>
+                    <h2>Quick Race</h2>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-4 mt-4">
+            <a class="card" href="/custom">
+                <div class="card-body text-center">
+                    <h1 class="text-center"><i class="fas fa-palette fa-2x"></i></h1>
+                    <h2>Custom Race</h2>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-4 mt-4">
+            <a class="card" href="/championships">
+                <div class="card-body text-center">
+                    <h1 class="text-center"><i class="fas fa-flag-checkered fa-2x"></i></h1>
+                    <h2>Championships</h2>
+                </div>
+            </a>
+        </div>
+
+
+        <div class="col-md-6 col-lg-4 mt-4">
+            <a class="card" href="/server-options">
+                <div class="card-body text-center">
+                    <h1 class="text-center"><i class="fas fa-cog fa-2x"></i></h1>
+                    <h2>Server Options</h2>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-4 mt-4">
+            <a class="card" href="/tracks">
+                <div class="card-body text-center">
+                    <h1 class="text-center"><i class="fas fa-car fa-2x"></i></h1>
+                    <h2>Upload Tracks</h2>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-4 mt-4">
+            <a class="card" href="/logs">
+                <div class="card-body text-center">
+                    <h1 class="text-center"><i class="fas fa-file-alt fa-2x"></i></h1>
+                    <h2>Logs</h2>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="clearfix"></div>
 {{ end }}

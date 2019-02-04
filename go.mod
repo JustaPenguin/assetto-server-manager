@@ -4,6 +4,8 @@ require (
 	github.com/Masterminds/semver v1.4.2 // indirect
 	github.com/Masterminds/sprig v2.17.1+incompatible
 	github.com/aokoli/goutils v1.1.0 // indirect
+	github.com/cj123/ini v1.42.0
+	github.com/davecgh/go-spew v1.1.1
 	github.com/fatih/camelcase v1.0.0
 	github.com/google/uuid v1.1.0 // indirect
 	github.com/gorilla/mux v1.6.2
