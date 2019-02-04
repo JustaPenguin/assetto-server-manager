@@ -34,3 +34,7 @@ footer {
     bottom: 0;
     width: 100%
 }
+
+.nav-tabs .nav-link {
+    color: #495057;
+}

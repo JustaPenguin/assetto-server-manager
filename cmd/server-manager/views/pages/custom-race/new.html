@@ -70,7 +70,6 @@
         </div>
 
 
-
         <div class="card mt-3 border-secondary">
             <div class="card-header">
                 <strong>Sessions</strong>
@@ -81,7 +80,8 @@
 
                     {{ range $index, $sessionType := .AvailableSessions }}
                         <li class="nav-item">
-                            <a class="nav-link {{ if eq $index 0 }}active{{ end }}" id="session-{{ $sessionType }}-tab" data-toggle="tab" href="#session-{{ $sessionType }}"
+                            <a class="nav-link {{ if eq $index 0 }}active{{ end }}" id="session-{{ $sessionType }}-tab"
+                               data-toggle="tab" href="#session-{{ $sessionType }}"
                                role="tab"
                                aria-controls="{{ $sessionType }}" aria-selected="true">{{ $sessionType.String }}</a>
                         </li>
@@ -91,15 +91,17 @@
 
 
                     {{ range $index, $sessionType := .AvailableSessions }}
-                        <div class="tab-pane fade {{ if eq $index 0 }}show active{{ end }} pt-5" id="session-{{ $sessionType }}" role="tabpanel"
+                        <div class="tab-pane fade {{ if eq $index 0 }}show active{{ end }} pt-5"
+                             id="session-{{ $sessionType }}" role="tabpanel"
                              aria-labelledby="session-{{ $sessionType }}-tab">
 
 
                             <div class="form-group row">
-                                <label for="{{ $sessionType }}.Enabled" class="col-sm-3 col-form-label">Enabled</label>
+                                <label class="col-sm-3 col-form-label">Enabled</label>
 
                                 <div class="col-sm-9">
-                                    <input type="checkbox" class="session-enabler" name="{{ $sessionType }}.Enabled" id="{{ $sessionType }}.Enabled">
+                                    <input type="checkbox" class="session-enabler" name="{{ $sessionType }}.Enabled"
+                                           id="{{ $sessionType }}.Enabled">
                                 </div>
                             </div>
 
@@ -109,7 +111,8 @@
                                     <label for="{{ $sessionType }}.Name" class="col-sm-3 col-form-label">Name</label>
 
                                     <div class="col-sm-9">
-                                        <input type="text" id="{{ $sessionType }}.Name" name="{{ $sessionType }}.Name" class="form-control" value="{{ $sessionType.String }}">
+                                        <input type="text" id="{{ $sessionType }}.Name" name="{{ $sessionType }}.Name"
+                                               class="form-control" value="{{ $sessionType.String }}">
 
                                         <small></small>
                                     </div>
@@ -158,7 +161,8 @@
                                     </div>
                                 {{ else }}
                                     <div class="form-group row">
-                                        <label for="{{ $sessionType }}.Time" class="col-sm-3 col-form-label">Time</label>
+                                        <label for="{{ $sessionType }}.Time"
+                                               class="col-sm-3 col-form-label">Time</label>
 
 
                                         <div class="col-sm-9">
@@ -178,14 +182,18 @@
                                 {{ end }}
 
                                 <div class="form-group row">
-                                    <label for="{{ $sessionType }}.IsOpen" class="col-sm-3 col-form-label">Is Open</label>
+                                    <label for="{{ $sessionType }}.IsOpen" class="col-sm-3 col-form-label">Is
+                                        Open</label>
 
 
                                     <div class="col-sm-9">
-                                        <select class="form-control" id="{{ $sessionType }}.IsOpen" name="{{ $sessionType }}.IsOpen">
+                                        <select class="form-control" id="{{ $sessionType }}.IsOpen"
+                                                name="{{ $sessionType }}.IsOpen">
                                             <option value="0">No join</option>
                                             <option value="1" selected>Free join</option>
-                                            {{ if eq $sessionType "RACE" }}<option value="2">Free join until 20 seconds to the green light</option>{{ end }}
+                                            {{ if eq $sessionType "RACE" }}
+                                            <option value="2">Free join until 20 seconds to the green light
+                                            </option>{{ end }}
                                         </select>
 
                                         <small>Join options for the current session</small>
@@ -194,7 +202,8 @@
 
 
                                 <div class="form-group row">
-                                    <label for="{{ $sessionType }}.WaitTime" class="col-sm-3 col-form-label">Wait Time</label>
+                                    <label for="{{ $sessionType }}.WaitTime" class="col-sm-3 col-form-label">Wait
+                                        Time</label>
 
                                     <div class="col-sm-9">
                                         <input
@@ -211,7 +220,6 @@
                                         <small>Seconds before the start of the session</small>
                                     </div>
                                 </div>
-
 
 
                             </div>
@@ -256,7 +264,8 @@
 
 
                 <div class="form-group row">
-                    <label for="StabilityControlAllowed" class="col-sm-3 col-form-label">Stability Control Allowed</label>
+                    <label for="StabilityControlAllowed" class="col-sm-3 col-form-label">Stability Control
+                        Allowed</label>
 
 
                     <div class="col-sm-9">
@@ -280,7 +289,8 @@
 
 
                     <div class="col-sm-9">
-                        <input type="checkbox" id="TyreBlanketsAllowed" name="TyreBlanketsAllowed" checked="checked"><br>
+                        <input type="checkbox" id="TyreBlanketsAllowed" name="TyreBlanketsAllowed"
+                               checked="checked"><br>
 
                         <small>
                             At the start of the session or after a pitstop, tyres will have the the optimal temperature.
@@ -294,7 +304,7 @@
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">
-                <strong>Realism</strong>
+                <strong>Weather</strong>
             </div>
 
             <div class="card-body">
@@ -318,13 +328,208 @@
                     </div>
                 </div>
 
-            <!-- @TODO make this a multiselect populated by car choice -->
+
+                <div class="form-group row">
+                    <label for="WindBaseSpeedMin" class="col-sm-3 col-form-label">Wind Base Speed Min</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="WindBaseSpeedMin"
+                                name="WindBaseSpeedMin"
+                                class="form-control"
+                                value="3"
+                                min="0"
+                                step="1"
+                        >
+
+                        <small>Min speed of the session possible</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="WindBaseSpeedMax" class="col-sm-3 col-form-label">Wind Base Speed Max</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="WindBaseSpeedMax"
+                                name="WindBaseSpeedMax"
+                                class="form-control"
+                                value="15"
+                                max="40"
+
+                                step="1"
+                        >
+
+                        <small>Max speed of session possible (max 40)</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="WindBaseDirection" class="col-sm-3 col-form-label">Wind Base Direction</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="WindBaseDirection"
+                                name="WindBaseDirection"
+                                class="form-control"
+                                value="30"
+
+
+                                step="1"
+                        >
+
+                        <small>base direction of the wind (wind is pointing at); 0 = North, 90 = East etc</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="WindVariationDirection" class="col-sm-3 col-form-label">Wind Variation Direction</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="WindVariationDirection"
+                                name="WindVariationDirection"
+                                class="form-control"
+                                value="15"
+
+
+                                step="1"
+                        >
+
+                        <small>variation (&#43; or -) of the base direction</small>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row">
+                    <div class="col-sm-12 col-md-6 weather">
+                        <div class="card mb-5 border-info">
+                            <div class="card-header">
+                                <strong class="weather-num">0</strong>
+                            </div>
+
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="Graphics">Graphics</label>
+
+                                    <select name="Graphics" id="Graphics" class="form-control">
+                                        {{ range $weatherKey, $weatherName := .Weather }}
+                                            <option value="{{ $weatherKey }}">{{ $weatherName }}</option>
+                                        {{ end }}
+                                    </select>
+                                </div>
+
+
+                                <div class="form-group">
+                                    <label for="BaseTemperatureAmbient">Base Temperature Ambient</label>
+                                    <input
+                                            type="number"
+                                            id="BaseTemperatureAmbient"
+                                            name="BaseTemperatureAmbient"
+                                            class="form-control"
+                                            value="0"
+
+
+                                            step="1"
+                                    >
+
+                                    <small>ambient temperature</small>
+                                </div>
+
+
+                                <div class="form-group">
+                                    <label for="BaseTemperatureRoad">Base Temperature Road</label>
+                                    <input
+                                            type="number"
+                                            id="BaseTemperatureRoad"
+                                            name="BaseTemperatureRoad"
+                                            class="form-control"
+                                            value="0"
+
+
+                                            step="1"
+                                    >
+
+                                    <small>Relative road temperature: this value will be added to the final ambient
+                                        temp. In this example the road temperature will be between 22 (16 &#43; 6) and
+                                        26 (20 &#43; 6). It can be negative.
+                                    </small>
+                                </div>
+
+
+                                <div class="form-group">
+                                    <label for="VariationAmbient">Variation Ambient</label>
+
+                                    <input
+                                            type="number"
+                                            id="VariationAmbient"
+                                            name="VariationAmbient"
+                                            class="form-control"
+                                            value="0"
+
+
+                                            step="1"
+                                    >
+
+                                    <small>variation of the ambient&#39;s temperature. In this example final ambient&#39;s
+                                        temperature can be 16 or 20
+                                    </small>
+                                </div>
+
+
+                                <div class="form-group">
+                                    <label for="VariationRoad">Variation Road</label>
+
+                                    <input
+                                            type="number"
+                                            id="VariationRoad"
+                                            name="VariationRoad"
+                                            class="form-control"
+                                            value="0"
+
+
+                                            step="1"
+                                    >
+
+                                    <small>variation of the road&#39;s temperature. Like the ambient one</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <button class="btn btn-info float-right" id="addWeather">Add Weather</button>
+
+                <div class="clearfix mb-5"></div>
+
+
+            </div>
+
+        </div>
+
+
+        <div class="card mt-3 border-secondary">
+            <div class="card-header">
+                <strong>Realism</strong>
+            </div>
+
+            <div class="card-body">
+
 
                 <div class="form-group row">
                     <label for="LegalTyres" class="col-sm-3 col-form-label">Legal Tyres</label>
 
                     <div class="col-sm-9">
-                        <select multiple class="form-control" id="LegalTyres" name="LegalTyres" >
+                        <select multiple class="form-control" id="LegalTyres" name="LegalTyres">
 
                         </select>
 
@@ -405,7 +610,6 @@
                 </div>
 
 
-
                 <div class="form-group row">
                     <label for="TimeOfDayMultiplier" class="col-sm-3 col-form-label">Time Of Day Multiplier</label>
 
@@ -425,84 +629,90 @@
                 </div>
 
 
+                <h4>Dynamic Track</h4>
 
                 <div class="form-group row">
-                    <label for="WindBaseSpeedMin" class="col-sm-3 col-form-label">Wind Base Speed Min</label>
+                    <label for="SessionStart" class="col-sm-3 col-form-label">Session Start</label>
 
                     <div class="col-sm-9">
                         <input
                                 type="number"
-                                id="WindBaseSpeedMin"
-                                name="WindBaseSpeedMin"
+                                id="SessionStart"
+                                name="SessionStart"
                                 class="form-control"
-                                value="3"
-                                min="0"
-                                step="1"
-                        >
-
-                        <small>Min speed of the session possible</small>
-                    </div>
-                </div>
-
-
-                <div class="form-group row">
-                    <label for="WindBaseSpeedMax" class="col-sm-3 col-form-label">Wind Base Speed Max</label>
-
-                    <div class="col-sm-9">
-                        <input
-                                type="number"
-                                id="WindBaseSpeedMax"
-                                name="WindBaseSpeedMax"
-                                class="form-control"
-                                value="15"
-                                max="40"
-
-                                step="1"
-                        >
-
-                        <small>Max speed of session possible (max 40)</small>
-                    </div>
-                </div>
-
-
-                <div class="form-group row">
-                    <label for="WindBaseDirection" class="col-sm-3 col-form-label">Wind Base Direction</label>
-
-                    <div class="col-sm-9">
-                        <input
-                                type="number"
-                                id="WindBaseDirection"
-                                name="WindBaseDirection"
-                                class="form-control"
-                                value="30"
+                                value="0"
 
 
                                 step="1"
                         >
 
-                        <small>base direction of the wind (wind is pointing at); 0 = North, 90 = East etc</small>
+                        <small>% level of grip at session start</small>
                     </div>
                 </div>
 
 
                 <div class="form-group row">
-                    <label for="WindVariationDirection" class="col-sm-3 col-form-label">Wind Variation Direction</label>
+                    <label for="Randomness" class="col-sm-3 col-form-label">Randomness</label>
 
                     <div class="col-sm-9">
                         <input
                                 type="number"
-                                id="WindVariationDirection"
-                                name="WindVariationDirection"
+                                id="Randomness"
+                                name="Randomness"
                                 class="form-control"
-                                value="15"
+                                value="0"
 
 
                                 step="1"
                         >
 
-                        <small>variation (&#43; or -) of the base direction</small>
+                        <small>level of randomness added to the start grip</small>
                     </div>
                 </div>
+
+
+                <div class="form-group row">
+                    <label for="SessionTransfer" class="col-sm-3 col-form-label">Session Transfer</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="SessionTransfer"
+                                name="SessionTransfer"
+                                class="form-control"
+                                value="0"
+
+
+                                step="1"
+                        >
+
+                        <small>how many laps are needed to add 1% grip</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="LapGain" class="col-sm-3 col-form-label">Lap Gain</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="LapGain"
+                                name="LapGain"
+                                class="form-control"
+                                value="0"
+
+
+                                step="1"
+                        >
+
+                        <small>how much of the gained grip is to be added to the next session 100 -&gt; all the gained
+                            grip. Example: difference between starting (90) and ending (96) grip in the session = 6%,
+                            with session_transfer = 50 then the next session is going to start with 93.
+                        </small>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -568,7 +778,8 @@
 
 
                 <div class="form-group row">
-                    <label for="ReversedGridRacePositions" class="col-sm-3 col-form-label">Reversed Grid Race Positions</label>
+                    <label for="ReversedGridRacePositions" class="col-sm-3 col-form-label">Reversed Grid Race
+                        Positions</label>
 
                     <div class="col-sm-9">
                         <input
@@ -582,7 +793,8 @@
                                 step="1"
                         >
 
-                        <small> 0 = no additional race, 1toX = only those position will be reversed for the next race, -1 = all
+                        <small> 0 = no additional race, 1toX = only those position will be reversed for the next race,
+                            -1 = all
                             the position will be reversed (Retired players will be on the last positions)
                         </small>
                     </div>
@@ -590,7 +802,8 @@
 
 
                 <div class="form-group row">
-                    <label for="QualifyMaxWaitPercentage" class="col-sm-3 col-form-label">Qualify Max Wait Percentage</label>
+                    <label for="QualifyMaxWaitPercentage" class="col-sm-3 col-form-label">Qualify Max Wait
+                        Percentage</label>
 
                     <div class="col-sm-9">
                         <input
@@ -604,7 +817,8 @@
                                 step="1"
                         >
 
-                        <small>The factor to calculate the remaining time in a qualify session after the session is ended: 120
+                        <small>The factor to calculate the remaining time in a qualify session after the session is
+                            ended: 120
                             means that 120% of the session fastest lap remains to end the current lap.
                         </small>
                     </div>
@@ -612,13 +826,15 @@
 
 
                 <div class="form-group row">
-                    <label for="RaceGasPenaltyDisabled" class="col-sm-3 col-form-label">Race Gas Penalty Disabled</label>
+                    <label for="RaceGasPenaltyDisabled" class="col-sm-3 col-form-label">Race Gas Penalty
+                        Disabled</label>
 
 
                     <div class="col-sm-9">
                         <input type="checkbox" id="RaceGasPenaltyDisabled" name="RaceGasPenaltyDisabled"><br>
 
-                        <small>Off = any cut will be penalized with the gas cut message; On = no penalization will be forced, but
+                        <small>Off = any cut will be penalized with the gas cut message; On = no penalization will be
+                            forced, but
                             cuts will be saved in the race result json.
                         </small>
                     </div>
@@ -645,7 +861,6 @@
                 </div>
 
 
-
                 <div class="form-group row">
                     <label for="AllowedTyresOut" class="col-sm-3 col-form-label">Allowed Tyres Out</label>
 
@@ -666,7 +881,6 @@
                 </div>
 
 
-
                 <div class="form-group row">
                     <label for="PickupModeEnabled" class="col-sm-3 col-form-label">Pickup Mode Enabled</label>
 
@@ -680,7 +894,8 @@
                         ><br>
 
                         <small>If 0 the server starts in booking mode (<strong>do not use it</strong>).
-                            Warning: in pickup mode you have to list only a circuit under TRACK and you need to list a least one car in the entry_list
+                            Warning: in pickup mode you have to list only a circuit under TRACK and you need to list a
+                            least one car in the entry_list
                         </small>
                     </div>
                 </div>
@@ -733,7 +948,8 @@
                                 step="1"
                         >
 
-                        <small>Time remaining in seconds to finish the race from the moment the first one passes on the finish
+                        <small>Time remaining in seconds to finish the race from the moment the first one passes on the
+                            finish
                             line
                         </small>
                     </div>

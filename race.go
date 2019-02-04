@@ -148,6 +148,12 @@ func (rm *RaceManager) BuildRaceOpts() (map[string]interface{}, error) {
 		return nil, err
 	}
 
+	weather, err := ListWeather()
+
+	if err != nil {
+		return nil, err
+	}
+
 	// @TODO eventually this will be loaded from somewhere
 	currentRaceConfig := &ConfigIniDefault
 
@@ -174,6 +180,7 @@ func (rm *RaceManager) BuildRaceOpts() (map[string]interface{}, error) {
 		"MaxClients":        currentRaceConfig.GlobalServerConfig.MaxClients,
 		"AvailableSessions": AvailableSessions,
 		"Tyres":             tyres,
+		"Weather":           weather,
 	}, nil
 }
 
