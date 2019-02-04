@@ -17,6 +17,13 @@ func (e EntryList) Write() error {
 		IgnoreInlineComment: true,
 	})
 
+	// making and throwing away a default section due to the utter insanity of ini or assetto. i don't know which.
+	_, err := f.NewSection("DEFAULT")
+
+	if err != nil {
+		return err
+	}
+
 	for k, v := range e {
 		s, err := f.NewSection(k)
 

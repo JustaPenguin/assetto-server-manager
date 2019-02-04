@@ -10,8 +10,6 @@ import (
 
 var AssettoProcess = &AssettoServerProcess{}
 
-const serverExecutablePath = "acServer"
-
 var ErrServerAlreadyRunning = errors.New("servermanager: assetto corsa server is already running")
 
 // AssettoServerProcess manages the assetto corsa server process.
