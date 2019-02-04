@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"gopkg.in/ini.v1"
+	"github.com/cj123/ini"
 )
 
 const entryListFilename = "entry_list.ini"
@@ -13,7 +13,16 @@ type EntryList map[string]Entrant
 
 // Write the EntryList to the server location
 func (e EntryList) Write() error {
-	f := ini.Empty()
+	f := ini.NewFile([]ini.DataSource{nil}, ini.LoadOptions{
+		IgnoreInlineComment: true,
+	})
+
+	// making and throwing away a default section due to the utter insanity of ini or assetto. i don't know which.
+	_, err := f.NewSection("DEFAULT")
+
+	if err != nil {
+		return err
+	}
 
 	for k, v := range e {
 		s, err := f.NewSection(k)

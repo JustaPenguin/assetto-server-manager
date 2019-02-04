@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"gopkg.in/ini.v1"
+	"github.com/cj123/ini"
 )
 
 func init() {
@@ -36,7 +36,16 @@ type ServerConfig struct {
 }
 
 func (sc ServerConfig) Write() error {
-	f := ini.Empty()
+	f := ini.NewFile([]ini.DataSource{nil}, ini.LoadOptions{
+		IgnoreInlineComment: true,
+	})
+
+	// making and throwing away a default section due to the utter insanity of ini or assetto. i don't know which.
+	_, err := f.NewSection("DEFAULT")
+
+	if err != nil {
+		return err
+	}
 
 	server, err := f.NewSection("SERVER")
 
@@ -139,9 +148,9 @@ type GlobalServerConfig struct {
 }
 
 type CurrentRaceConfig struct {
-	Cars                      string `ini:"CARS" input:"multiSelect" formopts:"CarOpts" help:"Models of cars allowed in the server"`
-	Track                     string `ini:"TRACK" input:"dropdown" formopts:"TrackOpts" help:"Track name"`
-	TrackLayout               string `ini:"CONFIG_TRACK" input:"dropdown" formopts:"TrackLayoutOpts" help:"Track layout. Some tracks don't have this."`
+	Cars                      string `ini:"CARS" show:"quick" input:"multiSelect" formopts:"CarOpts" help:"Models of cars allowed in the server"`
+	Track                     string `ini:"TRACK" show:"quick" input:"dropdown" formopts:"TrackOpts" help:"Track name"`
+	TrackLayout               string `ini:"CONFIG_TRACK" show:"quick" input:"dropdown" formopts:"TrackLayoutOpts" help:"Track layout. Some raceSetup don't have this."`
 	SunAngle                  int    `ini:"SUN_ANGLE" help:"Angle of the position of the sun"`
 	LegalTyres                string `ini:"LEGAL_TYRES" help:"List of tyres short names that are allowed"`
 	FuelRate                  int    `ini:"FUEL_RATE" min:"0" help:"Fuel usage from 0 (no fuel usage) to XXX (100 is the realistic one)"`
@@ -182,9 +191,9 @@ type ServerSetupConfig struct {
 }
 
 type SessionConfig struct {
-	Name     string `ini:"NAME"`
-	Time     int    `ini:"TIME" help:"session length in minutes"`
-	Laps     int    `ini:"LAPS" help:"length of the lap races"`
+	Name     string `ini:"NAME" show:"quick"`
+	Time     int    `ini:"TIME" show:"quick" help:"session length in minutes"`
+	Laps     int    `ini:"LAPS" show:"quick" help:"number of laps in the race"`
 	IsOpen   int    `ini:"IS_OPEN" input:"checkbox" help:"0 = no join, 1 = free join, 2 = free join until 20 seconds to the green light"`
 	WaitTime int    `ini:"WAIT_TIME" help:"seconds before the start of the session"`
 }
