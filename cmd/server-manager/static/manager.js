@@ -144,7 +144,7 @@ const layout = {
 
 let filesToUpload = [];
 
-function submitFiles() {
+function submitFiles(path) {
     //JSON encode filestoUpload, JQUERY post request to api endpoint (/api/track/upload)
     let newFiles = [];
     let count = 0;
@@ -167,7 +167,7 @@ function submitFiles() {
             count++;
 
             if (count === filesToUpload.length) {
-                jQuery.post("/api/track/upload", JSON.stringify(newFiles), onSuccess).fail(onFail)
+                jQuery.post(path, JSON.stringify(newFiles), onSuccess).fail(onFail)
             }
         });
     }
@@ -183,18 +183,138 @@ function onFail(data) {
     location.reload(); // reload for flashes
 }
 
-function handleFiles(fileList) {
+function handleCarFiles(fileList) {
+    let filesToUploadLocal = [];
+
+    for (let x = 0; x < fileList.length; x++) {
+        if (fileList[x].webkitRelativePath.startsWith("cars/") && !fileList[x].newPath) {
+            let splitList = {};
+
+            for (let y = 0; y < fileList.length; y++) {
+                let splitPath = fileList[y].webkitRelativePath.split("/");
+
+                let carIdentifier = splitPath.slice(0, 2).join(":");
+
+                fileList[y].newPath = splitPath.slice(1, splitPath.length - 1).join("/");
+
+                if (!splitList[carIdentifier]) {
+                    splitList[carIdentifier] = []
+                }
+
+                splitList[carIdentifier].push(fileList[y]);
+            }
+
+            for (let car in splitList) {
+                handleCarFiles(splitList[car]);
+            }
+
+            return
+        }
+
+        if (fileList[x].name === "data.acd" || fileList[x].name === "ui_car.json"
+            || fileList[x].name.startsWith("livery.") || fileList[x].name.startsWith("preview.")
+            || fileList[x].name === "ui_skin.json") {
+
+            filesToUploadLocal.push(fileList[x])
+        }
+    }
+
+    let $carPanel = $("#car-info-panel");
+    let $row = $("<div/>");
+    let $title = $("<h3/>");
+    let previewDone = false;
+
+    let entrySplit = fileList[0].webkitRelativePath.replace('\\', '/').split("/");
+    let carName = entrySplit[entrySplit.length-2];
+
+    if (fileList[0].webkitRelativePath.startsWith("cars/")) {
+        carName = fileList[0].webkitRelativePath.split("/")[1];
+    } else {
+        carName = fileList[0].webkitRelativePath.split("/")[0];
+    }
+
+    $carPanel.attr({'class': "card p-3 mt-2"});
+    $title.text("Preview: " + carName);
+    $row.attr({'class': "card-deck"});
+
+    $carPanel.append($title);
+
+    $carPanel.append($row);
+
+    for (let x = 0; x < filesToUploadLocal.length; x++) {
+
+        if (filesToUploadLocal[x].name.startsWith("preview.") && !previewDone) {
+            previewDone = true;
+
+            let filePathCorrected = filesToUploadLocal[x].webkitRelativePath.replace('\\', '/');
+            let filePathSplit = filePathCorrected.split("/");
+
+            let skinName = filePathSplit[filePathSplit.length-2];
+
+            // Set preview to base64 encoded image
+            let reader = new FileReader();
+
+            reader.readAsDataURL(filesToUploadLocal[x]);
+
+            reader.addEventListener("load", function () {
+                $row.append(buildInfoPanel(reader.result.toString(), "Livery: " + skinName));
+            });
+        }
+
+        if (filesToUploadLocal[x].name === "ui_car.json") {
+            let reader = new FileReader();
+
+            reader.readAsText(filesToUploadLocal[x]);
+
+            reader.addEventListener("load", function () {
+                let parsed = "";
+                let badJSONnoDonut = false;
+
+                try {
+                    parsed = JSON.parse(reader.result.toString());
+                }
+
+                catch(error) {
+                    badJSONnoDonut = true;
+                }
+
+                if (!badJSONnoDonut) {
+                    $carPanel.append(buildHtmlTable([parsed]));
+                }
+            });
+        }
+    }
+
+    let $uploadButton = $("#upload-button");
+    $uploadButton.attr({'class': "d-inline"});
+
+    if (filesToUploadLocal.length === 0) {
+        $uploadButton.text("Sorry, the files you uploaded don't seem to be a compatible car!");
+    } else {
+        if (!$("#car-upload-button").length) {
+            let $button = $("<button/>");
+            $button.attr({'class': "btn btn-primary", 'onclick': "submitFiles(\"/api/car/upload\")", 'id': "car-upload-button"});
+            $button.text("Upload Car(s)");
+
+            $uploadButton.append($button);
+        }
+
+        for (let x = 0; x < filesToUploadLocal.length; x++) {
+            filesToUpload.push(filesToUploadLocal[x])
+        }
+    }
+}
+
+function handleTrackFiles(fileList) {
     let layouts = {};
     let layoutNum = 0;
     let filesToUploadLocal = [];
-    let group = false;
     let trackName = "";
 
     if (fileList[0].webkitRelativePath.startsWith("tracks/")) {
-        group = true;
-        trackName = fileList[0].webkitRelativePath.split("/").slice(1, 2).join("")
+        trackName = fileList[0].webkitRelativePath.split("/")[1];
     } else {
-        trackName = fileList[0].webkitRelativePath.split("/").slice(0, 1).join("")
+        trackName = fileList[0].webkitRelativePath.split("/")[0];
     }
 
     for (let x = 0; x < fileList.length; x++) {
@@ -216,7 +336,7 @@ function handleFiles(fileList) {
             }
 
             for (let track in splitList) {
-                handleFiles(splitList[track]);
+                handleTrackFiles(splitList[track]);
             }
 
             return
@@ -260,11 +380,7 @@ function handleFiles(fileList) {
 
                     let fileListSplit = fileListCorrected.split("/");
 
-                    if (!group) {
-                        layoutName = fileListSplit[2];
-                    } else {
-                        layoutName = fileListSplit[3];
-                    }
+                    layoutName = fileListSplit[fileListSplit.length-2];
                 } else {
                     layoutName = "Default";
                 }
@@ -283,7 +399,7 @@ function handleFiles(fileList) {
 
                     let layoutInfo = layouts[layoutName];
 
-                    $row.append(buildTrackLayoutPanel(layoutInfo.preview, layoutName));
+                    $row.append(buildInfoPanel(layoutInfo.preview, "Layout: " + layoutName));
                 });
             }
 
@@ -309,7 +425,7 @@ function handleFiles(fileList) {
     } else {
         if (!$("#track-upload-button").length) {
             let $button = $("<button/>");
-            $button.attr({'class': "btn btn-primary", 'onclick': "submitFiles()", 'id': "track-upload-button"});
+            $button.attr({'class': "btn btn-primary", 'onclick': "submitFiles(\"/api/track/upload\")", 'id': "track-upload-button"});
             $button.text("Upload Track(s)");
 
             $uploadButton.append($button);
@@ -321,20 +437,20 @@ function handleFiles(fileList) {
     }
 }
 
-function buildTrackLayoutPanel(img, layoutName) {
+function buildInfoPanel(img, info) {
     let $panel = $("<div/>");
     let $img = $("<img/>");
     let $cardBody = $("<div/>");
     let $cardText = $("<h5/>");
 
     $img.attr({'src': img});
-    $img.attr({'alt': "Track Preview"});
+    $img.attr({'alt': "Content Preview"});
     $img.attr({'class': "card-img-top"});
 
     $cardBody.attr({'class': "card-body"});
 
     $cardText.attr({'class': "card-title"});
-    $cardText.text("Layout: " + layoutName);
+    $cardText.text(info);
 
     $cardBody.append($cardText);
 
@@ -385,7 +501,7 @@ function addAllColumnHeaders(json, table)
         let rowHash = json[i];
         for (let key in rowHash) {
             if ($.inArray(key, columnSet) === -1){
-                if (key === "tags" || key === "run" || key === "url") {
+                if (key === "tags" || key === "run" || key === "url" || key === "torqueCurve" || key === "powerCurve") {
                     continue
                 }
 
