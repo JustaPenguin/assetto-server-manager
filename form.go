@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/fatih/camelcase"
 	"github.com/sirupsen/logrus"
 )
@@ -86,8 +85,6 @@ func (f Form) Fields() []FormElement {
 	t := reflect.TypeOf(f.data)
 
 	opts := f.buildOpts(val.Elem(), t.Elem(), "")
-
-	spew.Dump(opts)
 
 	return opts
 }

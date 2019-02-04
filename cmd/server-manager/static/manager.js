@@ -104,7 +104,7 @@ let raceSetup = {
                     $raceTime.show();
                 } else {
                     $raceTime.find("input").val(0);
-                    $raceLaps.find("input").val(15);
+                    $raceLaps.find("input").val(10);
                     $raceLaps.show();
                     $raceTime.hide();
                 }
