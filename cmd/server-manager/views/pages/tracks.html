@@ -3,9 +3,13 @@
 {{ define "content" }}
     <h2>Upload New Track</h2>
 
-    <form action="/track/upload" class="button">
-        <input type="file" multiple value="Choose Folder"/>
+    <form class="d-inline">
+        <input id="input-folder-track" class="btn btn-secondary" name="input-folder-track[]" type="file" multiple webkitdirectory value="Choose Folder" onchange="handleFiles(this.files)"/>
     </form>
+
+    <div id="upload-button"></div>
+
+    <div id="track-info-panel"></div>
 
     <h2>Track List</h2>
 
