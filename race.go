@@ -35,6 +35,8 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		return err
 	}
 
+	rm.currentRace = &config
+
 	if AssettoProcess.IsRunning() {
 		return AssettoProcess.Restart()
 	}
@@ -44,8 +46,6 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 	if err != nil {
 		return err
 	}
-
-	rm.currentRace = &config
 
 	return nil
 }
