@@ -10,8 +10,6 @@ import (
 
 var AssettoProcess = &AssettoServerProcess{}
 
-const serverExecutablePath = "acServer"
-
 var ErrServerAlreadyRunning = errors.New("servermanager: assetto corsa server is already running")
 
 // AssettoServerProcess manages the assetto corsa server process.
@@ -29,7 +27,7 @@ func (as *AssettoServerProcess) Logs() string {
 
 // Start the assetto server. If it's already running, an ErrServerAlreadyRunning is returned.
 func (as *AssettoServerProcess) Start() error {
-	if as.Status() {
+	if as.IsRunning() {
 		return ErrServerAlreadyRunning
 	}
 
@@ -58,7 +56,7 @@ func (as *AssettoServerProcess) Start() error {
 
 // Restart the assetto server.
 func (as *AssettoServerProcess) Restart() error {
-	if as.Status() {
+	if as.IsRunning() {
 		err := as.Stop()
 
 		if err != nil {
@@ -69,8 +67,8 @@ func (as *AssettoServerProcess) Restart() error {
 	return as.Start()
 }
 
-// Status of the server. returns true if running
-func (as *AssettoServerProcess) Status() bool {
+// IsRunning of the server. returns true if running
+func (as *AssettoServerProcess) IsRunning() bool {
 	as.mutex.Lock()
 	defer as.mutex.Unlock()
 
@@ -79,7 +77,7 @@ func (as *AssettoServerProcess) Status() bool {
 
 // Stop the assetto server.
 func (as *AssettoServerProcess) Stop() error {
-	if !as.Status() {
+	if !as.IsRunning() {
 		return nil
 	}
 

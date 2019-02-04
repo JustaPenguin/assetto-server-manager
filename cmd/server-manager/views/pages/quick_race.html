@@ -1,0 +1,137 @@
+{{ define "title" }}Quick Race{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">Quick Race</h1>
+
+    <p>Set up a quick race with sensible defaults, and start the server.</p>
+
+    <form method="post" action="/quick/submit">
+        <div class="form-group row">
+            <label for="Cars" class="col-sm-2 col-form-label">
+                Cars
+            </label>
+
+            <div class="col-sm-10">
+                <select multiple class="form-control" name="Cars" id="Cars" size="15">
+                    {{ range $index, $car := .CarOpts }}
+                        <option value="{{ $car }}">{{ prettify $car true }}</option>
+                    {{ end }}
+                </select>
+
+                <small>Models of cars allowed in the server. The current Max Clients size is <strong>{{ .MaxClients }}</strong>, so any cars you choose will be evenly distributed across this number in the Entry List.</small>
+
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label for="Track" class="col-sm-2 col-form-label">
+                Track
+            </label>
+
+            <div class="col-sm-10">
+                <select class="form-control" name="Track" id="Track">
+                    {{ range $index, $track := .TrackOpts }}
+                        <option value="{{ $track }}">{{ prettify $track false }}</option>
+                    {{ end }}
+                </select>
+
+                <small>Track name</small>
+            </div>
+        </div>
+
+
+        <div class="form-group row" style="display: none;">
+            <label for="TrackLayout" class="col-sm-2 col-form-label">
+                Track Layout
+            </label>
+
+            <div class="col-sm-10">
+                <select class="form-control" name="TrackLayout" id="TrackLayout">
+                    {{ range $index, $layout := .TrackLayoutOpts }}
+                        <option value="{{ $layout }}">{{ $layout }}</option>
+                    {{ end }}
+                </select>
+
+                <small>Track layout. Some tracks don&#39;t have this.</small>
+            </div>
+        </div>
+
+        <hr>
+
+        <h2>Qualifying</h2>
+
+        <p>Practice is disabled on Quick Races. Perhaps you want <a href="/custom">Custom Race</a> instead?</p>
+
+        <div class="form-group row">
+            <label for="Qualifying.Time" class="col-sm-2 col-form-label">Time</label>
+
+            <div class="col-sm-10">
+                <input
+                        type="number"
+                        id="Qualifying.Time"
+                        name="Qualifying.Time"
+                        class="form-control"
+                        value="10"
+
+
+                        step="1"
+                >
+
+                <small>session length in minutes</small>
+            </div>
+        </div>
+
+
+        <hr>
+
+
+        <h2>Race</h2>
+
+
+        <div class="form-group row">
+            <div class="col-sm-2">
+                <select id="TimeOrLaps" class="form-control">
+                    <option value="Time">Time</option>
+                    <option value="Laps">Laps</option>
+                </select>
+            </div>
+
+            <div class="col-sm-10" id="RaceTime">
+                <input
+                        type="number"
+                        id="Race.Time"
+                        name="Race.Time"
+                        class="form-control"
+                        value="15"
+
+
+                        step="1"
+                >
+
+                <small>session length in minutes</small>
+            </div>
+
+
+            <div class="col-sm-10" id="RaceLaps" style="display: none;">
+                <input
+                        type="number"
+                        id="Race.Laps"
+                        name="Race.Laps"
+                        class="form-control"
+                        value="10"
+
+
+                        step="1"
+                >
+
+                <small>number of laps in the race</small>
+            </div>
+        </div>
+
+
+
+        <button class="btn btn-success float-right" type="submit">Start Race</button>
+
+        <div class="clearfix"></div>
+    </form>
+{{ end }}

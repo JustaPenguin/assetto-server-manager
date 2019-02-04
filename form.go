@@ -16,12 +16,14 @@ import (
 const (
 	formTypeTagName = "input"
 	formOptsTagName = "formopts"
+	formShowTagName = "show"
 )
 
-func NewForm(i interface{}, dropdownOpts map[string][]string) *Form {
+func NewForm(i interface{}, dropdownOpts map[string][]string, visibility string) *Form {
 	return &Form{
 		data:            i,
 		dropdownOptions: dropdownOpts,
+		visibility:      visibility,
 	}
 }
 
@@ -29,9 +31,10 @@ type Form struct {
 	// the data on which the form is based
 	data interface{}
 
-	// dropdownOptions is accessed when forms specify a type 'dropdown' with formopts.
-	// the formopts value becomes the key in this map.
 	dropdownOptions map[string][]string
+
+	// visibility is used to filter out fields by their 'show' tag.
+	visibility string
 }
 
 func (f Form) Submit(r *http.Request) error {
@@ -73,51 +76,95 @@ func (f Form) Submit(r *http.Request) error {
 	return nil
 }
 
-func (f Form) Fields() []FormOption {
-
+func (f Form) Fields() []FormElement {
 	if reflect.ValueOf(f.data).Kind() != reflect.Ptr {
 		panic("form data must be a pointer to a type")
 	}
-	val := reflect.ValueOf(f.data).Elem()
 
-	t := reflect.TypeOf(f.data).Elem()
+	val := reflect.ValueOf(f.data)
+	t := reflect.TypeOf(f.data)
 
-	var opts []FormOption
+	opts := f.buildOpts(val.Elem(), t.Elem(), "")
+
+	return opts
+}
+
+type FormHeader struct {
+	Name string
+}
+
+func (fh FormHeader) HTML() template.HTML {
+	return template.HTML("<h2>" + fh.Name + "</h2>")
+}
+
+type FormElement interface {
+	HTML() template.HTML
+}
+
+func (f Form) buildOpts(val reflect.Value, t reflect.Type, parentName string) []FormElement {
+	var opts []FormElement
 
 	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
+		typeField := t.Field(i)
+		valField := val.Field(i)
 
-		// formType can be e.g. dropdown
-		formType := field.Tag.Get(formTypeTagName)
+		switch valField.Kind() {
+		case reflect.Struct:
+			opts = append(opts, f.buildOpts(valField, typeField.Type, fmt.Sprintf("%s%s.", parentName, typeField.Name))...)
+		case reflect.Map:
+			for _, k := range valField.MapKeys() {
+				elem := valField.MapIndex(k)
 
-		if formType == "" {
-			formType = field.Type.String()
-		}
-
-		formOpt := FormOption{
-			Name:     strings.Join(camelcase.Split(field.Name), " "),
-			Key:      field.Name,
-			Value:    val.Field(i).Interface(),
-			HelpText: field.Tag.Get("help"),
-			Type:     formType,
-			Opts:     make(map[string]bool),
-		}
-
-		if formType == "dropdown" || formType == "multiSelect" {
-			optsKey := field.Tag.Get(formOptsTagName)
-
-			if options, ok := f.dropdownOptions[optsKey]; ok {
-				for _, o := range options {
-					formOpt.Opts[o] = strings.Contains(formOpt.Value.(string), o)
-				}
-			} else {
-				logrus.Warnf("dropdown opts for field: %s specified, but none found", field.Name)
+				opts = append(opts, FormHeader{Name: k.String()})
+				opts = append(opts, f.buildOpts(elem, elem.Type(), fmt.Sprintf("%s%s[%s].", parentName, typeField.Name, k.String()))...)
 			}
-		} else if formType == "int" || formType == "number" {
-			formOpt.Min, formOpt.Max = field.Tag.Get("min"), field.Tag.Get("max")
-		}
+		case reflect.Slice, reflect.Array:
+			for i := 0; i < valField.Len(); i++ {
+				elem := valField.Index(i)
 
-		opts = append(opts, formOpt)
+				opts = append(opts, f.buildOpts(elem, elem.Type(), fmt.Sprintf("%s%s[%d].", parentName, typeField.Name, i))...)
+			}
+
+		default:
+			formShow := typeField.Tag.Get(formShowTagName)
+
+			// check to see if we should be showing this tag
+			if f.visibility != "" && formShow != f.visibility {
+				continue
+			}
+
+			// formType can be e.g. dropdown
+			formType := typeField.Tag.Get(formTypeTagName)
+
+			if formType == "" {
+				formType = typeField.Type.String()
+			}
+
+			formOpt := FormOption{
+				Name:     strings.Join(camelcase.Split(typeField.Name), " "),
+				Key:      typeField.Name,
+				Value:    valField.Interface(),
+				HelpText: typeField.Tag.Get("help"),
+				Type:     formType,
+				Opts:     make(map[string]bool),
+			}
+
+			if formType == "dropdown" || formType == "multiSelect" {
+				optsKey := typeField.Tag.Get(formOptsTagName)
+
+				if options, ok := f.dropdownOptions[optsKey]; ok {
+					for _, o := range options {
+						formOpt.Opts[o] = strings.Contains(formOpt.Value.(string), o)
+					}
+				} else {
+					logrus.Warnf("dropdown opts for field: %s specified, but none found", typeField.Name)
+				}
+			} else if formType == "int" || formType == "number" {
+				formOpt.Min, formOpt.Max = typeField.Tag.Get("min"), typeField.Tag.Get("max")
+			}
+
+			opts = append(opts, formOpt)
+		}
 	}
 
 	return opts
