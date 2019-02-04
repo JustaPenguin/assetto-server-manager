@@ -1,6 +1,8 @@
 package servermanager
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -60,6 +62,7 @@ func (tr *Renderer) init() error {
 	funcs["ordinal"] = ordinal
 	funcs["prettify"] = prettifyName
 	funcs["carList"] = carList
+	funcs["jsonEncode"] = jsonEncode
 
 	for _, page := range pages {
 		var templateList []string
@@ -109,6 +112,14 @@ func prettifyName(s string, acronyms bool) string {
 	}
 
 	return strings.Join(parts, " ")
+}
+
+func jsonEncode(v interface{}) template.JS {
+	buf := new(bytes.Buffer)
+
+	_ = json.NewEncoder(buf).Encode(v)
+
+	return template.JS(buf.String())
 }
 
 // LoadTemplate reads a template from templates and renders it with data to the given io.Writer

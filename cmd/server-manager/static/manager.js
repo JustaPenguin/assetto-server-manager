@@ -23,6 +23,8 @@ let raceSetup = {
     $trackDropdown: null,
     $trackLayoutDropdown: null,
     $trackLayoutDropdownParent: null,
+    $carsDropdown: null,
+    $tyresDropdown: null,
 
     // the current layout as specified by the server
     currentLayout: "",
@@ -30,13 +32,51 @@ let raceSetup = {
     // all available track layout options
     trackLayoutOpts: {},
 
+    // current tyres present in tyres multiselect.
+    carTyres: {},
+
     // init: entrypoint for raceSetup functions. looks for track + layout dropdowns and populates them.
     init: function () {
-        $document.find("#Cars").multiSelect();
+        raceSetup.$carsDropdown = $document.find("#Cars");
 
         raceSetup.$trackDropdown = $document.find("#Track");
         raceSetup.$trackLayoutDropdown = $document.find("#TrackLayout");
         raceSetup.$trackLayoutDropdownParent = raceSetup.$trackLayoutDropdown.closest(".form-group");
+
+        if (raceSetup.$carsDropdown) {
+            raceSetup.$carsDropdown.multiSelect();
+            raceSetup.$tyresDropdown = $document.find("#LegalTyres");
+
+            if (raceSetup.$tyresDropdown) {
+                raceSetup.$tyresDropdown.multiSelect();
+
+                raceSetup.$carsDropdown.change(function(evt) {
+                    let cars = raceSetup.$carsDropdown.val();
+
+                    for (let index = 0; index < cars.length; index++) {
+                        let car = cars[index];
+                        let carTyres = availableTyres[car];
+
+                        for (let tyre in carTyres) {
+                            if (raceSetup.carTyres[tyre]) {
+                                continue; // this has already been added
+                            }
+
+                            let $opt = $("<option/>");
+
+                            $opt.attr({'value': tyre});
+                            $opt.text(carTyres[tyre] + " (" + tyre + ")");
+
+                            raceSetup.$tyresDropdown.append($opt);
+
+                            raceSetup.carTyres[tyre] = true;
+                        }
+                    }
+
+                    raceSetup.$tyresDropdown.multiSelect('refresh');
+                })
+            }
+        }
 
         // restrict loading track layouts to pages which have track dropdown and layout dropdown on them.
         if (raceSetup.$trackDropdown.length && raceSetup.$trackLayoutDropdown.length) {
@@ -68,20 +108,14 @@ let raceSetup = {
     },
 
     showEnabledSessions: function() {
-        console.log("HI");
         $(".session-enabler").each(function(index, elem) {
-
-            console.log(elem);
-
-            $(elem).click(function() {
+            $(elem).on('switchChange.bootstrapSwitch',function(event, state) {
                 let $this = $(this);
                 let $elem = $this.closest(".tab-pane").find(".session-details");
 
-                if ($this.val()) {
-                    console.log("HI");
+                if (state) {
                     $elem.show();
                 } else {
-                    console.log("HO");
                     $elem.hide();
                 }
             });

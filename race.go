@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var raceManager = &RaceManager{}
@@ -61,11 +62,11 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 
 	cars := r.Form["Cars"]
 
-	quickRace.Server.CurrentRaceConfig.Cars = strings.Join(cars, ";")
-	quickRace.Server.CurrentRaceConfig.Track = r.Form.Get("Track")
-	quickRace.Server.CurrentRaceConfig.TrackLayout = r.Form.Get("TrackLayout")
+	quickRace.CurrentRaceConfig.Cars = strings.Join(cars, ";")
+	quickRace.CurrentRaceConfig.Track = r.Form.Get("Track")
+	quickRace.CurrentRaceConfig.TrackLayout = r.Form.Get("TrackLayout")
 
-	quickRace.Sessions = make(map[SessionType]SessionConfig)
+	quickRace.CurrentRaceConfig.Sessions = make(map[SessionType]SessionConfig)
 
 	qualifyingTime, err := strconv.ParseInt(r.Form.Get("Qualifying.Time"), 10, 0)
 
@@ -106,7 +107,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 	entryList := EntryList{}
 
 	// @TODO this should work to the number of grid slots on the track rather than MaxClients.
-	for i := 0; i < quickRace.Server.GlobalServerConfig.MaxClients; i++ {
+	for i := 0; i < quickRace.GlobalServerConfig.MaxClients; i++ {
 		entryList.Add(Entrant{
 			Model: cars[i%len(cars)],
 		})
@@ -141,6 +142,12 @@ func (rm *RaceManager) BuildRaceOpts() (map[string]interface{}, error) {
 		carNames = append(carNames, car.Name)
 	}
 
+	tyres, err := ListTyres()
+
+	if err != nil {
+		return nil, err
+	}
+
 	// @TODO eventually this will be loaded from somewhere
 	currentRaceConfig := &ConfigIniDefault
 
@@ -153,7 +160,7 @@ func (rm *RaceManager) BuildRaceOpts() (map[string]interface{}, error) {
 	}
 
 	for i, layout := range trackLayouts {
-		if layout == fmt.Sprintf("%s:%s", currentRaceConfig.Server.CurrentRaceConfig.Track, currentRaceConfig.Server.CurrentRaceConfig.TrackLayout) {
+		if layout == fmt.Sprintf("%s:%s", currentRaceConfig.CurrentRaceConfig.Track, currentRaceConfig.CurrentRaceConfig.TrackLayout) {
 			// mark the current track layout so the javascript can correctly set it up.
 			trackLayouts[i] += ":current"
 			break
@@ -164,7 +171,20 @@ func (rm *RaceManager) BuildRaceOpts() (map[string]interface{}, error) {
 		"CarOpts":           carNames,
 		"TrackOpts":         trackNames,
 		"TrackLayoutOpts":   trackLayouts,
-		"MaxClients":        currentRaceConfig.Server.GlobalServerConfig.MaxClients,
+		"MaxClients":        currentRaceConfig.GlobalServerConfig.MaxClients,
 		"AvailableSessions": AvailableSessions,
+		"Tyres":             tyres,
 	}, nil
+}
+
+type CustomRace struct {
+	Name    string
+	Created time.Time
+	Deleted time.Time
+
+	ServerSetup CurrentRaceConfig
+}
+
+func (rm *RaceManager) ListCustomRaces() ([]CustomRace, error) {
+	return nil, nil
 }
