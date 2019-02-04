@@ -3,7 +3,7 @@
 {{ define "content" }}
     <h1 class="text-center">Custom Race</h1>
 
-    <form method="post" action="/custom/submit">
+    <form method="post" action="/custom/new/submit">
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">
@@ -182,12 +182,15 @@
 
 
                                     <div class="col-sm-9">
-                                        <input type="checkbox" id="{{ $sessionType }}.IsOpen" name="{{ $sessionType }}.IsOpen" ><br>
+                                        <select class="form-control" id="{{ $sessionType }}.IsOpen" name="{{ $sessionType }}.IsOpen">
+                                            <option value="0">No join</option>
+                                            <option value="1" selected>Free join</option>
+                                            {{ if eq $sessionType "RACE" }}<option value="2">Free join until 20 seconds to the green light</option>{{ end }}
+                                        </select>
 
-                                        <small>0 = no join, 1 = free join, 2 = free join until 20 seconds to the green light</small>
+                                        <small>Join options for the current session</small>
                                     </div>
                                 </div>
-
 
 
                                 <div class="form-group row">
@@ -205,7 +208,7 @@
                                                 step="1"
                                         >
 
-                                        <small>seconds before the start of the session</small>
+                                        <small>Seconds before the start of the session</small>
                                     </div>
                                 </div>
 
@@ -230,20 +233,11 @@
                     <label for="ABSAllowed" class="col-sm-3 col-form-label">ABS Allowed</label>
 
                     <div class="col-sm-9">
-                        <input
-                                type="number"
-                                id="ABSAllowed"
-                                name="ABSAllowed"
-                                class="form-control"
-                                value="1"
-                                min="0"
-                                min="2"
-                                step="1"
-                        >
-
-                        <small>0 -&gt; no car can use ABS, 1 -&gt; only car provided with ABS can use it; 2-&gt; any car can use
-                            ABS
-                        </small>
+                        <select class="form-control" id="ABSAllowed" name="ABSAllowed">
+                            <option value="0">Off</option>
+                            <option value="1">Factory</option>
+                            <option value="2">On</option>
+                        </select>
                     </div>
                 </div>
 
@@ -252,20 +246,11 @@
                     <label for="TractionControlAllowed" class="col-sm-3 col-form-label">Traction Control Allowed</label>
 
                     <div class="col-sm-9">
-                        <input
-                                type="number"
-                                id="TractionControlAllowed"
-                                name="TractionControlAllowed"
-                                class="form-control"
-                                value="1"
-                                min="0"
-                                min="2"
-                                step="1"
-                        >
-
-                        <small>0 -&gt; no car can use TC, 1 -&gt; only car provided with TC can use it; 2-&gt; any car can use
-                            TC
-                        </small>
+                        <select class="form-control" id="TractionControlAllowed" name="TractionControlAllowed">
+                            <option value="0">Off</option>
+                            <option value="1">Factory</option>
+                            <option value="2">On</option>
+                        </select>
                     </div>
                 </div>
 
@@ -276,8 +261,6 @@
 
                     <div class="col-sm-9">
                         <input type="checkbox" id="StabilityControlAllowed" name="StabilityControlAllowed"><br>
-
-                        <small>Stability assist 0 -&gt; OFF; 1 -&gt; ON</small>
                     </div>
                 </div>
 
@@ -288,8 +271,6 @@
 
                     <div class="col-sm-9">
                         <input type="checkbox" id="AutoClutchAllowed" name="AutoClutchAllowed"><br>
-
-                        <small>Autoclutch assist 0 -&gt; OFF; 1 -&gt; ON</small>
                     </div>
                 </div>
 
@@ -301,7 +282,8 @@
                     <div class="col-sm-9">
                         <input type="checkbox" id="TyreBlanketsAllowed" name="TyreBlanketsAllowed" checked="checked"><br>
 
-                        <small>at the start of the session or after the pitstop the tyre will have the the optimal temperature
+                        <small>
+                            At the start of the session or after a pitstop, tyres will have the the optimal temperature.
                         </small>
                     </div>
                 </div>
@@ -342,7 +324,9 @@
                     <label for="LegalTyres" class="col-sm-3 col-form-label">Legal Tyres</label>
 
                     <div class="col-sm-9">
-                        <input type="text" id="LegalTyres" name="LegalTyres" class="form-control" value="SV">
+                        <select multiple class="form-control" id="LegalTyres" name="LegalTyres" >
+
+                        </select>
 
                         <small>List of tyres short names that are allowed</small>
                     </div>
@@ -432,12 +416,11 @@
                                 name="TimeOfDayMultiplier"
                                 class="form-control"
                                 value="1"
-
-
+                                min="1"
                                 step="1"
                         >
 
-                        <small>multiplier for the time of day</small>
+                        <small>Multiplier for the time of day</small>
                     </div>
                 </div>
 
@@ -453,8 +436,7 @@
                                 name="WindBaseSpeedMin"
                                 class="form-control"
                                 value="3"
-
-
+                                min="0"
                                 step="1"
                         >
 
@@ -473,7 +455,7 @@
                                 name="WindBaseSpeedMax"
                                 class="form-control"
                                 value="15"
-
+                                max="40"
 
                                 step="1"
                         >
@@ -521,9 +503,6 @@
                         <small>variation (&#43; or -) of the base direction</small>
                     </div>
                 </div>
-
-
-
             </div>
         </div>
 
@@ -563,7 +542,7 @@
                                 step="1"
                         >
 
-                        <small>pit window opens at lap/minute specified</small>
+                        <small>Pit window opens at lap/minute specified</small>
                     </div>
                 </div>
 
@@ -583,7 +562,7 @@
                                 step="1"
                         >
 
-                        <small>pit window closes at lap/minute specified</small>
+                        <small>Pit window closes at lap/minute specified</small>
                     </div>
                 </div>
 
@@ -639,7 +618,7 @@
                     <div class="col-sm-9">
                         <input type="checkbox" id="RaceGasPenaltyDisabled" name="RaceGasPenaltyDisabled"><br>
 
-                        <small>0 = any cut will be penalized with the gas cut message; 1 = no penalization will be forced, but
+                        <small>Off = any cut will be penalized with the gas cut message; On = no penalization will be forced, but
                             cuts will be saved in the race result json.
                         </small>
                     </div>
@@ -656,12 +635,12 @@
                                 name="MaxBallastKilograms"
                                 class="form-control"
                                 value="50"
-
+                                min="0"
 
                                 step="1"
                         >
 
-                        <small>the max total of ballast that can be added through the admin command</small>
+                        <small>The max total of ballast that can be added through the admin command</small>
                     </div>
                 </div>
 
@@ -693,18 +672,15 @@
 
                     <div class="col-sm-9">
                         <input
-                                type="number"
+                                type="checkbox"
                                 id="PickupModeEnabled"
                                 name="PickupModeEnabled"
                                 class="form-control"
-                                value="1"
+                                checked="checked"
+                        ><br>
 
-
-                                step="1"
-                        >
-
-                        <small>if 0 the server start in booking mode (do not use it). Warning: in pickup mode you have to list
-                            only a circuit under TRACK and you need to list a least one car in the entry_list
+                        <small>If 0 the server starts in booking mode (<strong>do not use it</strong>).
+                            Warning: in pickup mode you have to list only a circuit under TRACK and you need to list a least one car in the entry_list
                         </small>
                     </div>
                 </div>
@@ -715,9 +691,9 @@
 
 
                     <div class="col-sm-9">
-                        <input type="checkbox" id="LoopMode" name="LoopMode" checked="checked"><br>
+                        <input type="checkbox" id="LoopMode" name="LoopMode"><br>
 
-                        <small>the server restarts from the first track, to disable this set it to 0</small>
+                        <small>The server restarts from the first event after the previous event has finished</small>
                     </div>
                 </div>
 
@@ -752,12 +728,12 @@
                                 name="RaceOverTime"
                                 class="form-control"
                                 value="180"
-
+                                min="0"
 
                                 step="1"
                         >
 
-                        <small>time remaining in seconds to finish the race from the moment the first one passes on the finish
+                        <small>Time remaining in seconds to finish the race from the moment the first one passes on the finish
                             line
                         </small>
                     </div>
@@ -768,20 +744,14 @@
                     <label for="StartRule" class="col-sm-3 col-form-label">Start Rule</label>
 
                     <div class="col-sm-9">
-                        <input
-                                type="number"
-                                id="StartRule"
-                                name="StartRule"
-                                class="form-control"
-                                value="0"
-                                min="0"
-                                min="2"
-                                step="1"
-                        >
 
-                        <small>0 is car locked until start; 1 is teleport ; 2 is drive-through (if race has 3 or less laps then
-                            the Teleport penalty is enabled)
-                        </small>
+                        <select class="form-control" id="StartRule" name="StartRule">
+                            <option value="0">Car is Locked Until Start</option>
+                            <option value="1">Teleport</option>
+                            <option value="2">Drive Through</option>
+                        </select>
+
+                        <small>If race has 3 or less laps then the Teleport penalty is enabled.</small>
                     </div>
                 </div>
             </div>
@@ -791,4 +761,9 @@
 
         <div class="clearfix"></div>
     </form>
+
+
+    <script type="text/javascript">
+        var availableTyres = {{ jsonEncode .Tyres }};
+    </script>
 {{ end }}

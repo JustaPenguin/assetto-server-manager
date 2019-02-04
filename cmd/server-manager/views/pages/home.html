@@ -7,13 +7,13 @@
             <div class="card-body row">
                 <div class="col-md-8">
                     <h5 class="card-title">
-                        {{ prettify .Server.CurrentRaceConfig.Track false }}
+                        {{ prettify .CurrentRaceConfig.Track false }}
 
-                        {{ with .Server.CurrentRaceConfig.TrackLayout }}
+                        {{ with .CurrentRaceConfig.TrackLayout }}
                             ({{ prettify . true }})
                         {{ end }}
                     </h5>
-                    <p class="card-text">{{ carList .Server.CurrentRaceConfig.Cars }}</p>
+                    <p class="card-text">{{ carList .CurrentRaceConfig.Cars }}</p>
 
 
                     <div class="button-bar">

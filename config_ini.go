@@ -36,11 +36,8 @@ var AvailableSessions = []SessionType{
 }
 
 type ServerConfig struct {
-	Server       ServerSetupConfig  `ini:"SERVER"`
-	DynamicTrack DynamicTrackConfig `ini:"DYNAMIC_TRACK"`
-
-	Sessions map[SessionType]SessionConfig
-	Weather  map[string]WeatherConfig
+	GlobalServerConfig GlobalServerConfig `ini:"SERVER"`
+	CurrentRaceConfig  CurrentRaceConfig  `ini:"SERVER"`
 }
 
 func (sc ServerConfig) Write() error {
@@ -61,14 +58,14 @@ func (sc ServerConfig) Write() error {
 		return err
 	}
 
-	err = server.ReflectFrom(&sc.Server)
+	err = server.ReflectFrom(&sc)
 
 	if err != nil {
 		return err
 	}
 
-	for k, v := range sc.Sessions {
-		sess, err := f.NewSection(k.String())
+	for k, v := range sc.CurrentRaceConfig.Sessions {
+		sess, err := f.NewSection(string(k))
 
 		if err != nil {
 			return err
@@ -87,13 +84,13 @@ func (sc ServerConfig) Write() error {
 		return err
 	}
 
-	err = dynamicTrack.ReflectFrom(&sc.Server)
+	err = dynamicTrack.ReflectFrom(&sc.CurrentRaceConfig.DynamicTrack)
 
 	if err != nil {
 		return err
 	}
 
-	for k, v := range sc.Weather {
+	for k, v := range sc.CurrentRaceConfig.Weather {
 		weather, err := f.NewSection(k)
 
 		if err != nil {
@@ -111,21 +108,21 @@ func (sc ServerConfig) Write() error {
 }
 
 func (sc ServerConfig) AddSession(sessionType SessionType, config SessionConfig) {
-	sc.Sessions[sessionType] = config
+	sc.CurrentRaceConfig.Sessions[sessionType] = config
 }
 
 func (sc ServerConfig) RemoveSession(sessionType SessionType) {
-	delete(sc.Sessions, sessionType)
+	delete(sc.CurrentRaceConfig.Sessions, sessionType)
 }
 
 func (sc ServerConfig) AddWeather(weather WeatherConfig) {
-	sc.Weather[fmt.Sprintf("WEATHER_%d", len(sc.Weather))] = weather
+	sc.CurrentRaceConfig.Weather[fmt.Sprintf("WEATHER_%d", len(sc.CurrentRaceConfig.Weather))] = weather
 }
 
 func (sc ServerConfig) RemoveWeather(weather WeatherConfig) {
-	for k, v := range sc.Weather {
+	for k, v := range sc.CurrentRaceConfig.Weather {
 		if v == weather {
-			delete(sc.Weather, k)
+			delete(sc.CurrentRaceConfig.Weather, k)
 			return
 		}
 	}
@@ -191,11 +188,11 @@ type CurrentRaceConfig struct {
 	WindBaseSpeedMax       int `ini:"WIND_BASE_SPEED_MAX" help:"Max speed of session possible (max 40)"`
 	WindBaseDirection      int `ini:"WIND_BASE_DIRECTION" help:"base direction of the wind (wind is pointing at); 0 = North, 90 = East etc"`
 	WindVariationDirection int `ini:"WIND_VARIATION_DIRECTION" help:"variation (+ or -) of the base direction"`
-}
 
-type ServerSetupConfig struct {
-	GlobalServerConfig GlobalServerConfig `ini:"SERVER"`
-	CurrentRaceConfig  CurrentRaceConfig  `ini:"SERVER"`
+	DynamicTrack DynamicTrackConfig `ini:"-"`
+
+	Sessions map[SessionType]SessionConfig `ini:"-"`
+	Weather  map[string]WeatherConfig      `ini:"-"`
 }
 
 type SessionConfig struct {

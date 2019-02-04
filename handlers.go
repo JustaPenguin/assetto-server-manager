@@ -28,8 +28,9 @@ func Router() *mux.Router {
 	r.HandleFunc("/server-options", serverOptionsHandler)
 	r.HandleFunc("/quick", quickRaceHandler)
 	r.Methods(http.MethodPost).Path("/quick/submit").HandlerFunc(quickRaceSubmitHandler)
-	r.HandleFunc("/custom", customRaceHandler)
-	r.Methods(http.MethodPost).Path("/custom/submit").HandlerFunc(customRaceSubmitHandler)
+	r.HandleFunc("/custom", customRaceListHandler)
+	r.HandleFunc("/custom/new", customRaceNewHandler)
+	r.Methods(http.MethodPost).Path("/custom/new/submit").HandlerFunc(customRaceSubmitHandler)
 	r.HandleFunc("/logs", serverLogsHandler)
 	r.HandleFunc("/process/{action}", serverProcessHandler)
 
@@ -70,7 +71,7 @@ func serverProcessHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
-	form := NewForm(&ConfigIniDefault.Server.GlobalServerConfig, nil, "")
+	form := NewForm(&ConfigIniDefault.GlobalServerConfig, nil, "")
 
 	if r.Method == http.MethodPost {
 		err := form.Submit(r)
@@ -116,7 +117,21 @@ func quickRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
-func customRaceHandler(w http.ResponseWriter, r *http.Request) {
+func customRaceListHandler(w http.ResponseWriter, r *http.Request) {
+	races, err := raceManager.ListCustomRaces()
+
+	if err != nil {
+		logrus.Errorf("couldn't apply quick race, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "custom-race/index.html", map[string]interface{}{
+		"Races": races,
+	})
+}
+
+func customRaceNewHandler(w http.ResponseWriter, r *http.Request) {
 	quickRaceData, err := raceManager.BuildRaceOpts()
 
 	if err != nil {
@@ -125,7 +140,7 @@ func customRaceHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "custom_race.html", quickRaceData)
+	ViewRenderer.MustLoadTemplate(w, r, "custom-race/new.html", quickRaceData)
 }
 
 func customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
