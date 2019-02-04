@@ -1,8 +1,11 @@
 package servermanager
 
 import (
+	"encoding/base64"
 	"io/ioutil"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/gorilla/sessions"
 	"bytes"
@@ -40,6 +43,7 @@ func Router() *mux.Router {
 
 	// endpoints
 	r.HandleFunc("/api/logs", apiServerLogHandler)
+	r.HandleFunc("/api/track/upload", apiTrackUploadHandler)
 
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
 
@@ -160,6 +164,63 @@ func tracksHandler(w http.ResponseWriter, r *http.Request) {
 	ViewRenderer.MustLoadTemplate(w, r, "tracks.html", map[string]interface{}{
 		"tracks": tracks,
 	})
+}
+
+type trackFile struct {
+	Name string `json:"name"`
+	FileType string `json:"type"`
+	FilePath string `json:"webkitRelativePath"`
+	Data string `json:"dataBase64"`
+	Size int `json:"size"`
+}
+
+var base64HeaderRegex = regexp.MustCompile("^(data:.+;base64,)")
+
+func apiTrackUploadHandler(w http.ResponseWriter, r *http.Request) {
+	var trackFiles []trackFile
+
+	decoder := json.NewDecoder(r.Body)
+
+	err := decoder.Decode(&trackFiles)
+
+	if err != nil {
+		// will this call onFail in manager.js?
+		logrus.Fatalf("could not decode track json, err: %s", err)
+	}
+
+	tracksPath := filepath.Join(ServerInstallPath, "content", "tracks")
+
+	existingTracks, err := ioutil.ReadDir(tracksPath)
+
+	for _, existingTrack := range existingTracks {
+		if strings.Contains(trackFiles[0].FilePath, existingTrack.Name()) {
+			// @TODO track already exists - replace?
+			// @TODO this check needs to be more stronk, actually check data content or something
+			// @TODO otherwise names with similar bits will clash
+		}
+	}
+
+	for _, file := range trackFiles {
+		fileDecoded, err := base64.StdEncoding.DecodeString(base64HeaderRegex.ReplaceAllString(file.Data, ""))
+
+		if err != nil {
+			logrus.Fatalf("could not decode track file data, err: %s", err)
+		}
+
+		path := filepath.Join(tracksPath, file.FilePath)
+
+		err = os.MkdirAll(filepath.Dir(path), 0755)
+
+		if err != nil {
+			logrus.Fatalf("could not create track file directory, err: %s", err)
+		}
+
+		err = ioutil.WriteFile(path, fileDecoded, 0644)
+
+		if err != nil {
+			logrus.Fatalf("could not decode write file, err: %s", err)
+		}
+	}
 }
 
 func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {

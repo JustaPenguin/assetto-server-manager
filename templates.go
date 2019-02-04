@@ -2,8 +2,8 @@ package servermanager
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"html/template"
-	"io"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -76,7 +76,7 @@ func (tr *Renderer) init() error {
 }
 
 // LoadTemplate reads a template from templates and renders it with data to the given io.Writer
-func (tr *Renderer) LoadTemplate(w io.Writer, r *http.Request, view string, data map[string]interface{}) error {
+func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view string, data map[string]interface{}) error {
 	if tr.reload {
 		// reload templates on every request if enabled, so
 		// that we don't have to constantly restart the website
@@ -107,6 +107,12 @@ func (tr *Renderer) LoadTemplate(w io.Writer, r *http.Request, view string, data
 
 	if flashes := session.Flashes(); len(flashes) > 0 {
 		data["messages"] = flashes
+	}
+
+	err = session.Save(r, w)
+
+	if err != nil {
+		logrus.Fatalf("could not save session, err: %s", err)
 	}
 
 	return t.ExecuteTemplate(w, "base", data)
