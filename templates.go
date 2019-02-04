@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -90,6 +91,8 @@ func carList(cars string) string {
 	return strings.Join(out, ", ")
 }
 
+var nameRegex = regexp.MustCompile(`^[A-Za-z]{0,5}[0-9]+`)
+
 func prettifyName(s string, acronyms bool) string {
 	parts := strings.Split(s, "_")
 
@@ -98,7 +101,7 @@ func prettifyName(s string, acronyms bool) string {
 	}
 
 	for i := range parts {
-		if acronyms && len(parts[i]) <= 3 {
+		if (acronyms && len(parts[i]) <= 3) || (acronyms && nameRegex.MatchString(parts[i])) {
 			parts[i] = strings.ToUpper(parts[i])
 		} else {
 			parts[i] = strings.Title(parts[i])

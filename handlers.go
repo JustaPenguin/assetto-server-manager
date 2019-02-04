@@ -85,7 +85,7 @@ func globalServerOptionsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "global_server_options.html", map[string]interface{}{
+	ViewRenderer.MustLoadTemplate(w, r, "server_options.html", map[string]interface{}{
 		"form": form,
 	})
 }
