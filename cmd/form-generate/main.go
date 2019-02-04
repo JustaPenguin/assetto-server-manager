@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	data := &servermanager.SessionConfig{}
+	data := &servermanager.WeatherConfig{}
 
 	formElems := servermanager.NewForm(data, nil, "").Fields()
 
