@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -96,6 +97,10 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		IsOpen:   1,
 		WaitTime: 60,
 	})
+
+	if len(cars) == 0 {
+		return errors.New("you must submit a car")
+	}
 
 	entryList := EntryList{}
 
