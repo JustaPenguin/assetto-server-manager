@@ -160,11 +160,11 @@ func tracksHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type contentFile struct {
-	Name string `json:"name"`
+	Name     string `json:"name"`
 	FileType string `json:"type"`
 	FilePath string `json:"webkitRelativePath"`
-	Data string `json:"dataBase64"`
-	Size int `json:"size"`
+	Data     string `json:"dataBase64"`
+	Size     int    `json:"size"`
 }
 
 var base64HeaderRegex = regexp.MustCompile("^(data:.+;base64,)")
@@ -177,14 +177,14 @@ func uploadHandler(w http.ResponseWriter, r *http.Request, contentType string) {
 	err := decoder.Decode(&Files)
 
 	if err != nil {
-		logrus.Errorf("could not decode " + strings.ToLower(contentType) + " json, err: %s", err)
+		logrus.Errorf("could not decode "+strings.ToLower(contentType)+" json, err: %s", err)
 		return
 	}
 
 	err = addFiles(Files, contentType)
 
 	if err != nil {
-		err = AddFlashQuick(w, r, contentType + "(s) could not be added")
+		err = AddFlashQuick(w, r, contentType+"(s) could not be added")
 
 		if err != nil {
 			logrus.Errorf("could not add flash, err: %s", err)
@@ -193,7 +193,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request, contentType string) {
 		return
 	}
 
-	err = AddFlashQuick(w, r, contentType + "(s) added successfully!")
+	err = AddFlashQuick(w, r, contentType+"(s) added successfully!")
 
 	if err != nil {
 		logrus.Errorf("could not add flash, err: %s", err)
@@ -213,7 +213,7 @@ func addFiles(Files []contentFile, contentType string) error {
 		fileDecoded, err := base64.StdEncoding.DecodeString(base64HeaderRegex.ReplaceAllString(file.Data, ""))
 
 		if err != nil {
-			logrus.Errorf("could not decode " + contentType + " file data, err: %s", err)
+			logrus.Errorf("could not decode "+contentType+" file data, err: %s", err)
 			return err
 		}
 
@@ -234,7 +234,7 @@ func addFiles(Files []contentFile, contentType string) error {
 		err = os.MkdirAll(filepath.Dir(path), 0755)
 
 		if err != nil {
-			logrus.Errorf("could not create " + contentType + " file directory, err: %s", err)
+			logrus.Errorf("could not create "+contentType+" file directory, err: %s", err)
 			return err
 		}
 
