@@ -38,6 +38,9 @@ func ListTracks() ([]Track, error) {
 						// track only has one layout
 						layouts = nil
 						break
+					} else if layout.Name() == "ui" {
+						// ui folder, not a layout
+						continue
 					} else {
 						layouts = append(layouts, layout.Name())
 					}
