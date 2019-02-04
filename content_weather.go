@@ -70,7 +70,7 @@ func getWeatherName(folder, weather string) (string, error) {
 
 	defer f.Close()
 
-	i, err := ini.InsensitiveLoad(f)
+	i, err := ini.Load(f)
 
 	if err != nil {
 		return "", err

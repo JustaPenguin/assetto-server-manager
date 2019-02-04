@@ -1,6 +1,9 @@
 {{ define "title" }}Custom Race{{ end }}
 
 {{ define "content" }}
+
+    {{ $f := .Current }}
+
     <h1 class="text-center">Custom Race</h1>
 
     <form method="post" action="/custom/new/submit">
@@ -19,7 +22,15 @@
                     <div class="col-sm-9">
                         <select multiple class="form-control" name="Cars" id="Cars" size="15">
                             {{ range $index, $car := .CarOpts }}
-                                <option value="{{ $car }}">{{ prettify $car true }}</option>
+                                {{ $selected := false }}
+
+                                {{ range $j, $selectedCar := varSplit $f.Cars }}
+                                    {{ if eq $selectedCar $car }}
+                                        {{ $selected = true }}
+                                    {{ end }}
+                                {{ end }}
+
+                                <option value="{{ $car }}" {{ if $selected }} selected="selected" {{ end }}>{{ prettify $car true }}</option>
                             {{ end }}
                         </select>
 
@@ -31,41 +42,52 @@
                     </div>
                 </div>
 
+                <div class="row">
+                    <div class="col-sm-8">
+                        <div class="form-group row">
+                            <label for="Track" class="col-sm-3 col-form-label">
+                                Track
+                            </label>
 
-                <div class="form-group row">
-                    <label for="Track" class="col-sm-3 col-form-label">
-                        Track
-                    </label>
+                            <div class="col-sm-9">
+                                <select class="form-control" name="Track" id="Track">
+                                    {{ range $index, $track := .TrackOpts }}
+                                        <option value="{{ $track }}" {{ if eq $track $f.Track }}selected="selected" {{ end }}>
+                                            {{ prettify $track false }}
+                                        </option>
+                                    {{ end }}
+                                </select>
 
-                    <div class="col-sm-9">
-                        <select class="form-control" name="Track" id="Track">
-                            {{ range $index, $track := .TrackOpts }}
-                                <option value="{{ $track }}">{{ prettify $track false }}</option>
-                            {{ end }}
-                        </select>
+                                <small>Track name</small>
+                            </div>
+                        </div>
 
-                        <small>Track name</small>
+
+                        <div class="form-group row" style="display: none;">
+                            <label for="TrackLayout" class="col-sm-3 col-form-label">
+                                Track Layout
+                            </label>
+
+                            <div class="col-sm-9">
+                                <select class="form-control" name="TrackLayout" id="TrackLayout">
+                                    {{ range $index, $layout := .TrackLayoutOpts }}
+                                        <option value="{{ $layout }}">{{ $layout }}</option>
+                                    {{ end }}
+                                </select>
+
+                                <small>Track layout. Some tracks don&#39;t have this.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-4">
+                        <img class="img img-fluid"
+                             id="trackImage"
+                             src="/content/tracks/{{ $f.Track }}/ui{{ with $f.TrackLayout }}/{{.}}{{ end }}/preview.png"
+                             alt="{{ $f.Track }} {{ $f.TrackLayout }}"
+                        >
                     </div>
                 </div>
-
-
-                <div class="form-group row" style="display: none;">
-                    <label for="TrackLayout" class="col-sm-3 col-form-label">
-                        Track Layout
-                    </label>
-
-                    <div class="col-sm-9">
-                        <select class="form-control" name="TrackLayout" id="TrackLayout">
-                            {{ range $index, $layout := .TrackLayoutOpts }}
-                                <option value="{{ $layout }}">{{ $layout }}</option>
-                            {{ end }}
-                        </select>
-
-                        <small>Track layout. Some tracks don&#39;t have this.</small>
-                    </div>
-                </div>
-
-
             </div>
         </div>
 
@@ -79,8 +101,11 @@
                 <ul class="nav nav-tabs" role="tablist">
 
                     {{ range $index, $sessionType := .AvailableSessions }}
+
+                        {{ $hasSession := $f.HasSession $sessionType }}
+
                         <li class="nav-item">
-                            <a class="nav-link {{ if eq $index 0 }}active{{ end }}" id="session-{{ $sessionType }}-tab"
+                            <a class="nav-link {{ if eq $index 0 }}active{{ end }} {{ if $hasSession }} text-success {{ end }}" id="session-{{ $sessionType }}-tab"
                                data-toggle="tab" href="#session-{{ $sessionType }}"
                                role="tab"
                                aria-controls="{{ $sessionType }}" aria-selected="true">{{ $sessionType.String }}</a>
@@ -96,23 +121,33 @@
                              aria-labelledby="session-{{ $sessionType }}-tab">
 
 
+                            {{ $hasSession := $f.HasSession $sessionType }}
+                            {{ $session := index $f.Sessions $sessionType }}
+
                             <div class="form-group row">
                                 <label class="col-sm-3 col-form-label">Enabled</label>
 
                                 <div class="col-sm-9">
-                                    <input type="checkbox" class="session-enabler" name="{{ $sessionType }}.Enabled"
-                                           id="{{ $sessionType }}.Enabled">
+                                    <input
+                                            type="checkbox"
+                                            class="session-enabler"
+                                            name="{{ $sessionType }}.Enabled"
+                                            id="{{ $sessionType }}.Enabled"
+
+                                            {{ if $hasSession }}
+                                            checked="checked"
+                                            {{ end }}
+                                    >
                                 </div>
                             </div>
 
-
-                            <div class="session-details" style="display: none;">
+                            <div class="session-details" {{ if not $hasSession }} style="display: none;" {{ end }}>
                                 <div class="form-group row">
                                     <label for="{{ $sessionType }}.Name" class="col-sm-3 col-form-label">Name</label>
 
                                     <div class="col-sm-9">
                                         <input type="text" id="{{ $sessionType }}.Name" name="{{ $sessionType }}.Name"
-                                               class="form-control" value="{{ $sessionType.String }}">
+                                               class="form-control" value="{{ $session.Name }}">
 
                                         <small></small>
                                     </div>
@@ -134,7 +169,7 @@
                                                     id="Race.Time"
                                                     name="Race.Time"
                                                     class="form-control"
-                                                    value="15"
+                                                    value="{{ $session.Time }}"
 
 
                                                     step="1"
@@ -150,7 +185,7 @@
                                                     id="Race.Laps"
                                                     name="Race.Laps"
                                                     class="form-control"
-                                                    value="5"
+                                                    value="{{ $session.Laps }}"
 
 
                                                     step="1"
@@ -171,7 +206,7 @@
                                                     id="{{ $sessionType }}.Time"
                                                     name="{{ $sessionType }}.Time"
                                                     class="form-control"
-                                                    value="15"
+                                                    value="{{ $session.Time }}"
                                                     step="1"
                                             >
 
@@ -182,18 +217,24 @@
                                 {{ end }}
 
                                 <div class="form-group row">
-                                    <label for="{{ $sessionType }}.IsOpen" class="col-sm-3 col-form-label">Is
-                                        Open</label>
+                                    <label for="{{ $sessionType }}.IsOpen" class="col-sm-3 col-form-label">
+                                        Is Open
+                                    </label>
 
 
                                     <div class="col-sm-9">
-                                        <select class="form-control" id="{{ $sessionType }}.IsOpen"
-                                                name="{{ $sessionType }}.IsOpen">
-                                            <option value="0">No join</option>
-                                            <option value="1" selected>Free join</option>
+                                        <select class="form-control"
+                                                id="{{ $sessionType }}.IsOpen"
+                                                name="{{ $sessionType }}.IsOpen"
+                                        >
+                                            <option value="0" {{ if eq $session.IsOpen 0 }} selected="selected" {{ end }}>No join</option>
+                                            <option value="1" {{ if eq $session.IsOpen 1 }} selected="selected" {{ end }}>Free join</option>
+
                                             {{ if eq $sessionType "RACE" }}
-                                            <option value="2">Free join until 20 seconds to the green light
-                                            </option>{{ end }}
+                                                <option value="2" {{ if eq $session.IsOpen 2 }} selected="selected" {{ end }}>
+                                                    Free join until 20 seconds to the green light
+                                                </option>
+                                            {{ end }}
                                         </select>
 
                                         <small>Join options for the current session</small>
@@ -202,8 +243,9 @@
 
 
                                 <div class="form-group row">
-                                    <label for="{{ $sessionType }}.WaitTime" class="col-sm-3 col-form-label">Wait
-                                        Time</label>
+                                    <label for="{{ $sessionType }}.WaitTime" class="col-sm-3 col-form-label">
+                                        Wait Time
+                                    </label>
 
                                     <div class="col-sm-9">
                                         <input
@@ -211,7 +253,7 @@
                                                 id="{{ $sessionType }}.WaitTime"
                                                 name="{{ $sessionType }}.WaitTime"
                                                 class="form-control"
-                                                value="0"
+                                                value="{{ $session.WaitTime }}"
 
 
                                                 step="1"
@@ -242,34 +284,43 @@
 
                     <div class="col-sm-9">
                         <select class="form-control" id="ABSAllowed" name="ABSAllowed">
-                            <option value="0">Off</option>
-                            <option value="1">Factory</option>
-                            <option value="2">On</option>
+                            <option value="0" {{ if eq $f.ABSAllowed 0 }} selected="selected" {{ end }}>Off</option>
+                            <option value="1" {{ if eq $f.ABSAllowed 1 }} selected="selected" {{ end }}>Factory</option>
+                            <option value="2" {{ if eq $f.ABSAllowed 2 }} selected="selected" {{ end }}>On</option>
                         </select>
                     </div>
                 </div>
 
 
                 <div class="form-group row">
-                    <label for="TractionControlAllowed" class="col-sm-3 col-form-label">Traction Control Allowed</label>
+                    <label for="TractionControlAllowed" class="col-sm-3 col-form-label">
+                        Traction Control Allowed
+                    </label>
 
                     <div class="col-sm-9">
                         <select class="form-control" id="TractionControlAllowed" name="TractionControlAllowed">
-                            <option value="0">Off</option>
-                            <option value="1">Factory</option>
-                            <option value="2">On</option>
+                            <option value="0" {{ if eq $f.TractionControlAllowed 0 }} selected="selected" {{ end }}>Off</option>
+                            <option value="1" {{ if eq $f.TractionControlAllowed 1 }} selected="selected" {{ end }}>Factory</option>
+                            <option value="2" {{ if eq $f.TractionControlAllowed 2 }} selected="selected" {{ end }}>On</option>
                         </select>
                     </div>
                 </div>
 
 
                 <div class="form-group row">
-                    <label for="StabilityControlAllowed" class="col-sm-3 col-form-label">Stability Control
-                        Allowed</label>
-
+                    <label for="StabilityControlAllowed" class="col-sm-3 col-form-label">
+                        Stability Control Allowed
+                    </label>
 
                     <div class="col-sm-9">
-                        <input type="checkbox" id="StabilityControlAllowed" name="StabilityControlAllowed"><br>
+                        <input type="checkbox"
+                               id="StabilityControlAllowed"
+                               name="StabilityControlAllowed"
+                            {{ if $f.StabilityControlAllowed }}
+                                checked="checked"
+                            {{ end }}
+                        >
+                        <br>
                     </div>
                 </div>
 
@@ -279,7 +330,14 @@
 
 
                     <div class="col-sm-9">
-                        <input type="checkbox" id="AutoClutchAllowed" name="AutoClutchAllowed"><br>
+                        <input type="checkbox"
+                               id="AutoClutchAllowed"
+                               name="AutoClutchAllowed"
+                               {{ if $f.AutoClutchAllowed }}
+                                   checked="checked"
+                               {{ end }}
+                        >
+                        <br>
                     </div>
                 </div>
 
@@ -289,8 +347,15 @@
 
 
                     <div class="col-sm-9">
-                        <input type="checkbox" id="TyreBlanketsAllowed" name="TyreBlanketsAllowed"
-                               checked="checked"><br>
+                        <input type="checkbox"
+                               id="TyreBlanketsAllowed"
+                               name="TyreBlanketsAllowed"
+
+                               {{ if $f.TyreBlanketsAllowed }}
+                                   checked="checked"
+                               {{ end }}
+                        >
+                        <br>
 
                         <small>
                             At the start of the session or after a pitstop, tyres will have the the optimal temperature.
@@ -318,7 +383,7 @@
                                 id="SunAngle"
                                 name="SunAngle"
                                 class="form-control"
-                                value="48"
+                                value="{{ $f.SunAngle }}"
 
 
                                 step="1"
@@ -338,7 +403,7 @@
                                 id="WindBaseSpeedMin"
                                 name="WindBaseSpeedMin"
                                 class="form-control"
-                                value="3"
+                                value="{{ $f.WindBaseSpeedMin }}"
                                 min="0"
                                 step="1"
                         >
@@ -357,7 +422,7 @@
                                 id="WindBaseSpeedMax"
                                 name="WindBaseSpeedMax"
                                 class="form-control"
-                                value="15"
+                                value="{{ $f.WindBaseSpeedMax }}"
                                 max="40"
 
                                 step="1"
@@ -377,7 +442,7 @@
                                 id="WindBaseDirection"
                                 name="WindBaseDirection"
                                 class="form-control"
-                                value="30"
+                                value="{{ $f.WindBaseDirection }}"
 
 
                                 step="1"
@@ -397,7 +462,7 @@
                                 id="WindVariationDirection"
                                 name="WindVariationDirection"
                                 class="form-control"
-                                value="15"
+                                value="{{ $f.WindVariationDirection }}"
 
 
                                 step="1"
@@ -410,107 +475,117 @@
                 <hr>
 
                 <div class="row">
-                    <div class="col-sm-12 col-md-6 weather">
-                        <div class="card mb-5 border-info">
-                            <div class="card-header">
-                                <strong class="weather-num">0</strong>
-                            </div>
 
-                            <div class="card-body">
-                                <div class="form-group">
-                                    <label for="Graphics">Graphics</label>
+                    {{ $weatherIndex := 0 }}
+                    {{ $weatherOptions := .Weather }}
 
-                                    <select name="Graphics" id="Graphics" class="form-control">
-                                        {{ range $weatherKey, $weatherName := .Weather }}
-                                            <option value="{{ $weatherKey }}">{{ $weatherName }}</option>
-                                        {{ end }}
-                                    </select>
+                    {{ range $index, $weather := $f.Weather }}
+
+                        <div class="col-sm-12 col-md-6 weather">
+                            <div class="card mb-5 border-info">
+                                <div class="card-header">
+                                    <strong class="weather-num">{{ $weatherIndex }}</strong>
                                 </div>
 
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="Graphics">Graphics</label>
 
-                                <div class="form-group">
-                                    <label for="BaseTemperatureAmbient">Base Temperature Ambient</label>
-                                    <input
-                                            type="number"
-                                            id="BaseTemperatureAmbient"
-                                            name="BaseTemperatureAmbient"
-                                            class="form-control"
-                                            value="0"
+                                        <select name="Graphics" id="Graphics" class="form-control weather-graphics">
+                                            {{ range $weatherKey, $weatherName := $weatherOptions }}
+                                                <option value="{{ $weatherKey }}" {{ if eq $weatherKey $weather.Graphics }} selected="selected" {{ end }}>
+                                                    {{ $weatherName }}
+                                                </option>
+                                            {{ end }}
+                                        </select>
+                                    </div>
 
+                                    <img class="img img-fluid weather-preview mb-3" src="/content/weather/{{ $weather.Graphics }}/preview.jpg" alt="{{ $weather.Graphics }}">
 
-                                            step="1"
-                                    >
-
-                                    <small>ambient temperature</small>
-                                </div>
-
-
-                                <div class="form-group">
-                                    <label for="BaseTemperatureRoad">Base Temperature Road</label>
-                                    <input
-                                            type="number"
-                                            id="BaseTemperatureRoad"
-                                            name="BaseTemperatureRoad"
-                                            class="form-control"
-                                            value="0"
+                                    <div class="form-group">
+                                        <label for="BaseTemperatureAmbient">Base Temperature Ambient</label>
+                                        <input
+                                                type="number"
+                                                id="BaseTemperatureAmbient"
+                                                name="BaseTemperatureAmbient"
+                                                class="form-control"
+                                                value="{{ $weather.BaseTemperatureAmbient }}"
 
 
-                                            step="1"
-                                    >
+                                                step="1"
+                                        >
 
-                                    <small>Relative road temperature: this value will be added to the final ambient
-                                        temp. In this example the road temperature will be between 22 (16 &#43; 6) and
-                                        26 (20 &#43; 6). It can be negative.
-                                    </small>
-                                </div>
+                                        <small>ambient temperature</small>
+                                    </div>
 
 
-                                <div class="form-group">
-                                    <label for="VariationAmbient">Variation Ambient</label>
-
-                                    <input
-                                            type="number"
-                                            id="VariationAmbient"
-                                            name="VariationAmbient"
-                                            class="form-control"
-                                            value="0"
-
-
-                                            step="1"
-                                    >
-
-                                    <small>variation of the ambient&#39;s temperature. In this example final ambient&#39;s
-                                        temperature can be 16 or 20
-                                    </small>
-                                </div>
+                                    <div class="form-group">
+                                        <label for="BaseTemperatureRoad">Base Temperature Road</label>
+                                        <input
+                                                type="number"
+                                                id="BaseTemperatureRoad"
+                                                name="BaseTemperatureRoad"
+                                                class="form-control"
+                                                value="{{ $weather.BaseTemperatureRoad }}"
 
 
-                                <div class="form-group">
-                                    <label for="VariationRoad">Variation Road</label>
+                                                step="1"
+                                        >
 
-                                    <input
-                                            type="number"
-                                            id="VariationRoad"
-                                            name="VariationRoad"
-                                            class="form-control"
-                                            value="0"
+                                        <small>Relative road temperature: this value will be added to the final ambient
+                                            temp. In this example the road temperature will be between 22 (16 &#43; 6) and
+                                            26 (20 &#43; 6). It can be negative.
+                                        </small>
+                                    </div>
 
 
-                                            step="1"
-                                    >
+                                    <div class="form-group">
+                                        <label for="VariationAmbient">Variation Ambient</label>
 
-                                    <small>variation of the road&#39;s temperature. Like the ambient one</small>
+                                        <input
+                                                type="number"
+                                                id="VariationAmbient"
+                                                name="VariationAmbient"
+                                                class="form-control"
+                                                value="{{ $weather.VariationAmbient }}"
+
+
+                                                step="1"
+                                        >
+
+                                        <small>variation of the ambient&#39;s temperature. In this example final ambient&#39;s
+                                            temperature can be 16 or 20
+                                        </small>
+                                    </div>
+
+
+                                    <div class="form-group">
+                                        <label for="VariationRoad">Variation Road</label>
+
+                                        <input
+                                                type="number"
+                                                id="VariationRoad"
+                                                name="VariationRoad"
+                                                class="form-control"
+                                                value="{{ $weather.VariationRoad }}"
+
+
+                                                step="1"
+                                        >
+
+                                        <small>variation of the road&#39;s temperature. Like the ambient one</small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
+                        {{ $weatherIndex = add $weatherIndex 1 }}
+                    {{ end }}
                 </div>
 
                 <button class="btn btn-info float-right" id="addWeather">Add Weather</button>
 
                 <div class="clearfix mb-5"></div>
-
 
             </div>
 
@@ -528,9 +603,17 @@
                 <div class="form-group row">
                     <label for="LegalTyres" class="col-sm-3 col-form-label">Legal Tyres</label>
 
+                    {{ $allTyres := .Tyres }}
+
                     <div class="col-sm-9">
                         <select multiple class="form-control" id="LegalTyres" name="LegalTyres">
+                            {{ range $index, $car := varSplit $f.Cars }}
+                                {{ range $index, $tyre := varSplit $f.LegalTyres }}
+                                    {{ $carTyres := index $allTyres $car }}
 
+                                    <option value="{{ $tyre }}" selected="selected">{{ index $carTyres $tyre }} ({{ $tyre }})</option>
+                                {{ end }}
+                            {{ end }}
                         </select>
 
                         <small>List of tyres short names that are allowed</small>
@@ -547,7 +630,7 @@
                                 id="FuelRate"
                                 name="FuelRate"
                                 class="form-control"
-                                value="100"
+                                value="{{ $f.FuelRate }}"
                                 min="0"
 
                                 step="1"
@@ -567,7 +650,7 @@
                                 id="DamageMultiplier"
                                 name="DamageMultiplier"
                                 class="form-control"
-                                value="100"
+                                value="{{ $f.DamageMultiplier }}"
                                 min="0"
                                 min="100"
                                 step="1"
@@ -587,7 +670,7 @@
                                 id="TyreWearRate"
                                 name="TyreWearRate"
                                 class="form-control"
-                                value="100"
+                                value="{{ $f.TyreWearRate }}"
                                 min="0"
 
                                 step="1"
@@ -603,7 +686,14 @@
 
 
                     <div class="col-sm-9">
-                        <input type="checkbox" id="ForceVirtualMirror" name="ForceVirtualMirror" checked="checked"><br>
+                        <input type="checkbox"
+                               id="ForceVirtualMirror"
+                               name="ForceVirtualMirror"
+                               {{ if $f.ForceVirtualMirror }}
+                                   checked="checked"
+                               {{ end }}
+                        >
+                        <br>
 
                         <small>1 virtual mirror will be enabled for every client, 0 for mirror as optional</small>
                     </div>
@@ -619,7 +709,7 @@
                                 id="TimeOfDayMultiplier"
                                 name="TimeOfDayMultiplier"
                                 class="form-control"
-                                value="1"
+                                value="{{ $f.TimeOfDayMultiplier }}"
                                 min="1"
                                 step="1"
                         >
@@ -640,7 +730,7 @@
                                 id="SessionStart"
                                 name="SessionStart"
                                 class="form-control"
-                                value="0"
+                                value="{{ $f.DynamicTrack.SessionStart }}"
 
 
                                 step="1"
@@ -660,7 +750,7 @@
                                 id="Randomness"
                                 name="Randomness"
                                 class="form-control"
-                                value="0"
+                                value="{{ $f.DynamicTrack.Randomness }}"
 
 
                                 step="1"
@@ -680,7 +770,7 @@
                                 id="SessionTransfer"
                                 name="SessionTransfer"
                                 class="form-control"
-                                value="0"
+                                value="{{ $f.DynamicTrack.SessionTransfer }}"
 
 
                                 step="1"
@@ -700,7 +790,7 @@
                                 id="LapGain"
                                 name="LapGain"
                                 class="form-control"
-                                value="0"
+                                value="{{ $f.DynamicTrack.LapGain }}"
 
 
                                 step="1"
@@ -730,7 +820,13 @@
 
 
                     <div class="col-sm-9">
-                        <input type="checkbox" id="LockedEntryList" name="LockedEntryList"><br>
+                        <input type="checkbox"
+                               id="LockedEntryList"
+                               name="LockedEntryList"
+                               value="{{ $f.LockedEntryList }}"
+                        >
+
+                        <br>
 
                         <small>Only players already included in the entry list can join the server</small>
                     </div>
@@ -746,7 +842,7 @@
                                 id="RacePitWindowStart"
                                 name="RacePitWindowStart"
                                 class="form-control"
-                                value="25"
+                                value="{{ $f.RacePitWindowStart }}"
 
 
                                 step="1"
@@ -766,7 +862,7 @@
                                 id="RacePitWindowEnd"
                                 name="RacePitWindowEnd"
                                 class="form-control"
-                                value="35"
+                                value="{{ $f.RacePitWindowEnd }}"
 
 
                                 step="1"
@@ -787,7 +883,7 @@
                                 id="ReversedGridRacePositions"
                                 name="ReversedGridRacePositions"
                                 class="form-control"
-                                value="8"
+                                value="{{ $f.ReversedGridRacePositions }}"
 
 
                                 step="1"
@@ -811,7 +907,7 @@
                                 id="QualifyMaxWaitPercentage"
                                 name="QualifyMaxWaitPercentage"
                                 class="form-control"
-                                value="120"
+                                value="{{ $f.QualifyMaxWaitPercentage }}"
 
 
                                 step="1"
@@ -831,7 +927,15 @@
 
 
                     <div class="col-sm-9">
-                        <input type="checkbox" id="RaceGasPenaltyDisabled" name="RaceGasPenaltyDisabled"><br>
+                        <input
+                                type="checkbox"
+                                id="RaceGasPenaltyDisabled"
+                                name="RaceGasPenaltyDisabled"
+                                {{ if $f.RaceGasPenaltyDisabled }}
+                                    checked="checked"
+                                {{ end }}
+                        >
+                        <br>
 
                         <small>Off = any cut will be penalized with the gas cut message; On = no penalization will be
                             forced, but
@@ -850,7 +954,7 @@
                                 id="MaxBallastKilograms"
                                 name="MaxBallastKilograms"
                                 class="form-control"
-                                value="50"
+                                value="{{ $f.MaxBallastKilograms }}"
                                 min="0"
 
                                 step="1"
@@ -870,7 +974,7 @@
                                 id="AllowedTyresOut"
                                 name="AllowedTyresOut"
                                 class="form-control"
-                                value="2"
+                                value="{{ $f.AllowedTyresOut }}"
 
 
                                 step="1"
@@ -890,7 +994,9 @@
                                 id="PickupModeEnabled"
                                 name="PickupModeEnabled"
                                 class="form-control"
-                                checked="checked"
+                                {{ if $f.PickupModeEnabled }}
+                                    checked="checked"
+                                {{ end }}
                         ><br>
 
                         <small>If 0 the server starts in booking mode (<strong>do not use it</strong>).
@@ -906,7 +1012,15 @@
 
 
                     <div class="col-sm-9">
-                        <input type="checkbox" id="LoopMode" name="LoopMode"><br>
+                        <input
+                                type="checkbox"
+                                id="LoopMode"
+                                name="LoopMode"
+                                {{ if $f.LoopMode }}
+                                    checked="checked"
+                                {{ end }}
+                        >
+                        <br>
 
                         <small>The server restarts from the first event after the previous event has finished</small>
                     </div>
@@ -922,7 +1036,7 @@
                                 id="SleepTime"
                                 name="SleepTime"
                                 class="form-control"
-                                value="1"
+                                value="{{ $f.SleepTime }}"
 
 
                                 step="1"
@@ -942,7 +1056,7 @@
                                 id="RaceOverTime"
                                 name="RaceOverTime"
                                 class="form-control"
-                                value="180"
+                                value="{{ $f.RaceOverTime }}"
                                 min="0"
 
                                 step="1"
@@ -962,9 +1076,9 @@
                     <div class="col-sm-9">
 
                         <select class="form-control" id="StartRule" name="StartRule">
-                            <option value="0">Car is Locked Until Start</option>
-                            <option value="1">Teleport</option>
-                            <option value="2">Drive Through</option>
+                            <option value="0" {{ if eq $f.StartRule 0 }} selected="selected" {{ end }}>Car is Locked Until Start</option>
+                            <option value="1" {{ if eq $f.StartRule 1 }} selected="selected" {{ end }}>Teleport</option>
+                            <option value="2" {{ if eq $f.StartRule 2 }} selected="selected" {{ end }}>Drive Through</option>
                         </select>
 
                         <small>If race has 3 or less laps then the Teleport penalty is enabled.</small>
@@ -980,6 +1094,6 @@
 
 
     <script type="text/javascript">
-        var availableTyres = {{ jsonEncode .Tyres }};
+        const availableTyres = {{ jsonEncode .Tyres }};
     </script>
 {{ end }}

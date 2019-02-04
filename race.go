@@ -155,7 +155,7 @@ func (rm *RaceManager) BuildRaceOpts() (map[string]interface{}, error) {
 	}
 
 	// @TODO eventually this will be loaded from somewhere
-	currentRaceConfig := &ConfigIniDefault
+	race := &ConfigIniDefault
 
 	for _, track := range tracks {
 		trackNames = append(trackNames, track.Name)
@@ -166,7 +166,7 @@ func (rm *RaceManager) BuildRaceOpts() (map[string]interface{}, error) {
 	}
 
 	for i, layout := range trackLayouts {
-		if layout == fmt.Sprintf("%s:%s", currentRaceConfig.CurrentRaceConfig.Track, currentRaceConfig.CurrentRaceConfig.TrackLayout) {
+		if layout == fmt.Sprintf("%s:%s", race.CurrentRaceConfig.Track, race.CurrentRaceConfig.TrackLayout) {
 			// mark the current track layout so the javascript can correctly set it up.
 			trackLayouts[i] += ":current"
 			break
@@ -177,10 +177,11 @@ func (rm *RaceManager) BuildRaceOpts() (map[string]interface{}, error) {
 		"CarOpts":           carNames,
 		"TrackOpts":         trackNames,
 		"TrackLayoutOpts":   trackLayouts,
-		"MaxClients":        currentRaceConfig.GlobalServerConfig.MaxClients,
+		"MaxClients":        race.GlobalServerConfig.MaxClients,
 		"AvailableSessions": AvailableSessions,
 		"Tyres":             tyres,
 		"Weather":           weather,
+		"Current":           race.CurrentRaceConfig,
 	}, nil
 }
 

@@ -63,6 +63,7 @@ func (tr *Renderer) init() error {
 	funcs["prettify"] = prettifyName
 	funcs["carList"] = carList
 	funcs["jsonEncode"] = jsonEncode
+	funcs["varSplit"] = varSplit
 
 	for _, page := range pages {
 		var templateList []string
@@ -92,6 +93,10 @@ func carList(cars string) string {
 	}
 
 	return strings.Join(out, ", ")
+}
+
+func varSplit(str string) []string {
+	return strings.Split(str, ";")
 }
 
 var nameRegex = regexp.MustCompile(`^[A-Za-z]{0,5}[0-9]+`)

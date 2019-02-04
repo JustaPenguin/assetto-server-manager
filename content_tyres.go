@@ -49,7 +49,7 @@ func loadTyresFromFile(name string) (map[string]map[string]string, error) {
 
 	defer f.Close()
 
-	i, err := ini.InsensitiveLoad(f)
+	i, err := ini.Load(f)
 
 	if err != nil {
 		return nil, err

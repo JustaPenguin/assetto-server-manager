@@ -195,6 +195,12 @@ type CurrentRaceConfig struct {
 	Weather  map[string]WeatherConfig      `ini:"-"`
 }
 
+func (c CurrentRaceConfig) HasSession(sess SessionType) bool {
+	_, ok := c.Sessions[sess]
+
+	return ok
+}
+
 type SessionConfig struct {
 	Name     string `ini:"NAME" show:"quick"`
 	Time     int    `ini:"TIME" show:"quick" help:"session length in minutes"`
