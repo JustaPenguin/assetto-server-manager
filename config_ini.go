@@ -107,27 +107,6 @@ func (sc ServerConfig) Write() error {
 	return f.SaveTo(filepath.Join(ServerInstallPath, ServerConfigPath, serverConfigIniPath))
 }
 
-func (sc ServerConfig) AddSession(sessionType SessionType, config SessionConfig) {
-	sc.CurrentRaceConfig.Sessions[sessionType] = config
-}
-
-func (sc ServerConfig) RemoveSession(sessionType SessionType) {
-	delete(sc.CurrentRaceConfig.Sessions, sessionType)
-}
-
-func (sc ServerConfig) AddWeather(weather WeatherConfig) {
-	sc.CurrentRaceConfig.Weather[fmt.Sprintf("WEATHER_%d", len(sc.CurrentRaceConfig.Weather))] = weather
-}
-
-func (sc ServerConfig) RemoveWeather(weather WeatherConfig) {
-	for k, v := range sc.CurrentRaceConfig.Weather {
-		if v == weather {
-			delete(sc.CurrentRaceConfig.Weather, k)
-			return
-		}
-	}
-}
-
 type GlobalServerConfig struct {
 	Name                      string `ini:"NAME" help:"Server Name"`
 	Password                  string `ini:"PASSWORD" input:"password" help:"server password"`
@@ -199,6 +178,35 @@ func (c CurrentRaceConfig) HasSession(sess SessionType) bool {
 	_, ok := c.Sessions[sess]
 
 	return ok
+}
+
+func (c *CurrentRaceConfig) AddSession(sessionType SessionType, config SessionConfig) {
+	if c.Sessions == nil {
+		c.Sessions = make(map[SessionType]SessionConfig)
+	}
+
+	c.Sessions[sessionType] = config
+}
+
+func (c *CurrentRaceConfig) RemoveSession(sessionType SessionType) {
+	delete(c.Sessions, sessionType)
+}
+
+func (c *CurrentRaceConfig) AddWeather(weather WeatherConfig) {
+	if c.Weather == nil {
+		c.Weather = make(map[string]WeatherConfig)
+	}
+
+	c.Weather[fmt.Sprintf("WEATHER_%d", len(c.Weather))] = weather
+}
+
+func (c *CurrentRaceConfig) RemoveWeather(weather WeatherConfig) {
+	for k, v := range c.Weather {
+		if v == weather {
+			delete(c.Weather, k)
+			return
+		}
+	}
 }
 
 type SessionConfig struct {
