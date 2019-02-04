@@ -1,18 +1,17 @@
 package servermanager
 
 import (
+	"bytes"
 	"encoding/base64"
+	"encoding/json"
+	"github.com/gorilla/sessions"
+	"io"
 	"io/ioutil"
+	"net/http"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"github.com/gorilla/sessions"
-	"bytes"
-	"encoding/json"
-	"io"
-	"net/http"
-	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -168,27 +167,50 @@ func apiTrackUploadHandler(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&trackFiles)
 
 	if err != nil {
-		// will this call onFail in manager.js?
-		logrus.Fatalf("could not decode track json, err: %s", err)
+		logrus.Errorf("could not decode track json, err: %s", err)
+		return
 	}
 
-	tracksPath := filepath.Join(ServerInstallPath, "content", "tracks")
+	err = addTrackFiles(trackFiles)
 
-	existingTracks, err := ioutil.ReadDir(tracksPath)
+	if err != nil {
+		err = AddFlashQuick(w, r, "Track(s) could not be added")
 
-	for _, existingTrack := range existingTracks {
-		if strings.Contains(trackFiles[0].FilePath, existingTrack.Name()) {
-			// @TODO track already exists - replace?
-			// @TODO this check needs to be more stronk, actually check data content or something
-			// @TODO otherwise names with similar bits will clash
+		if err != nil {
+			logrus.Errorf("could not add flash, err: %s", err)
 		}
+
+		return
 	}
+
+	err = AddFlashQuick(w, r, "Track(s) added successfully!")
+
+	if err != nil {
+		logrus.Errorf("could not add flash, err: %s", err)
+	}
+}
+
+func addTrackFiles(trackFiles []trackFile) error {
+	tracksPath := filepath.Join(ServerInstallPath, "content", "tracks")
 
 	for _, file := range trackFiles {
 		fileDecoded, err := base64.StdEncoding.DecodeString(base64HeaderRegex.ReplaceAllString(file.Data, ""))
 
 		if err != nil {
-			logrus.Fatalf("could not decode track file data, err: %s", err)
+			logrus.Errorf("could not decode track file data, err: %s", err)
+			return err
+		}
+
+		// If user uploaded a "tracks" folder containing multiple tracks
+		parts := strings.Split(file.FilePath, string(os.PathSeparator))
+
+		if parts[0] == "tracks" {
+			parts = parts[1:]
+			file.FilePath = ""
+
+			for _, part := range parts {
+				file.FilePath = filepath.Join(file.FilePath, part)
+			}
 		}
 
 		path := filepath.Join(tracksPath, file.FilePath)
@@ -196,15 +218,19 @@ func apiTrackUploadHandler(w http.ResponseWriter, r *http.Request) {
 		err = os.MkdirAll(filepath.Dir(path), 0755)
 
 		if err != nil {
-			logrus.Fatalf("could not create track file directory, err: %s", err)
+			logrus.Errorf("could not create track file directory, err: %s", err)
+			return err
 		}
 
 		err = ioutil.WriteFile(path, fileDecoded, 0644)
 
 		if err != nil {
-			logrus.Fatalf("could not decode write file, err: %s", err)
+			logrus.Errorf("could not decode write file, err: %s", err)
+			return err
 		}
 	}
+
+	return nil
 }
 
 func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -234,24 +260,20 @@ func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	session, err := getSession(r)
-
-	if err != nil {
-		logrus.Fatalf("could not get session, err: %s", err)
-	}
+	var message string
 
 	if found {
-		// send flash, confirm deletion
-		session.AddFlash("Track successfully deleted!")
+		// confirm deletion
+		message = "Track successfully deleted!"
 	} else {
-		// send flash, inform track wasn't found
-		session.AddFlash("Sorry, track could not be deleted.")
+		// inform track wasn't found
+		message = "Sorry, track could not be deleted."
 	}
 
-	err = session.Save(r, w)
+	err = AddFlashQuick(w, r, message)
 
 	if err != nil {
-		logrus.Fatalf("could not save session, err: %s", err)
+		logrus.Fatalf("could not add flash, err: %s", err)
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
@@ -265,6 +287,24 @@ func getSession(r *http.Request) (*sessions.Session, error) {
 	}
 
 	return session, nil
+}
+
+func AddFlashQuick(w http.ResponseWriter, r *http.Request, message string) error {
+	session, err := store.Get(r, "messages")
+
+	if err != nil {
+		return err
+	}
+
+	session.AddFlash(message)
+
+	err = session.Save(r, w)
+
+	if err != nil {
+		logrus.Fatalf("could not save session, err: %s", err)
+	}
+
+	return nil
 }
 
 func serverLogsHandler(w http.ResponseWriter, r *http.Request) {

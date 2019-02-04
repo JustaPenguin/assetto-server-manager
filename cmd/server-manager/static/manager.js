@@ -175,22 +175,52 @@ function submitFiles() {
 
 function onSuccess(data) {
     console.log("Track Successfully Added");
-
-    let $trackPanel = $("#track-info-panel");
-    $trackPanel.attr({'class': "card p-3 mt-2"});
-    $trackPanel.text("Track(s) Successfully Added");
+    location.reload(); // reload for flashes
 }
 
 function onFail(data) {
-    console.log("Track Could Not be Added")
+    console.log("Track Could Not be Added");
+    location.reload(); // reload for flashes
 }
 
 function handleFiles(fileList) {
     let layouts = {};
     let layoutNum = 0;
     let filesToUploadLocal = [];
+    let group = false;
+    let trackName = "";
+
+    if (fileList[0].webkitRelativePath.startsWith("tracks/")) {
+        group = true;
+        trackName = fileList[0].webkitRelativePath.split("/").slice(1, 2).join("")
+    } else {
+        trackName = fileList[0].webkitRelativePath.split("/").slice(0, 1).join("")
+    }
 
     for (let x = 0; x < fileList.length; x++) {
+        if (fileList[x].webkitRelativePath.startsWith("tracks/") && !fileList[x].newPath) {
+            let splitList = {};
+
+            for (let y = 0; y < fileList.length; y++) {
+                let splitPath = fileList[y].webkitRelativePath.split("/");
+
+                let trackIdentifier = splitPath.slice(0, 2).join(":");
+
+                fileList[y].newPath = splitPath.slice(1, splitPath.length - 1).join("/");
+
+                if (!splitList[trackIdentifier]) {
+                    splitList[trackIdentifier] = []
+                }
+
+                splitList[trackIdentifier].push(fileList[y]);
+            }
+
+            for (let track in splitList) {
+                handleFiles(splitList[track]);
+            }
+
+            return
+        }
 
         // get model/surfaces and drs zones and ui folder
         if ((fileList[x].name.startsWith("models") && fileList[x].name.endsWith(".ini")) ||
@@ -211,7 +241,7 @@ function handleFiles(fileList) {
     let $title = $("<h3/>");
 
     $trackPanel.attr({'class': "card p-3 mt-2"});
-    $title.text("Track Preview");
+    $title.text("Preview: " + trackName);
     $row.attr({'class': "card-deck"});
 
     $trackPanel.append($title);
@@ -230,7 +260,11 @@ function handleFiles(fileList) {
 
                     let fileListSplit = fileListCorrected.split("/");
 
-                    layoutName = fileListSplit[2];
+                    if (!group) {
+                        layoutName = fileListSplit[2];
+                    } else {
+                        layoutName = fileListSplit[3];
+                    }
                 } else {
                     layoutName = "Default";
                 }
@@ -345,12 +379,12 @@ function addAllColumnHeaders(json, table)
     let headerTr$ = $('<tr/>');
     let header$ = $('<thead/>');
 
-    header$.attr({'class': "thead-dark"});
+    header$.attr({'class': "table-secondary"});
 
     for (let i = 0 ; i < json.length ; i++) {
         let rowHash = json[i];
         for (let key in rowHash) {
-            if ($.inArray(key, columnSet) == -1){
+            if ($.inArray(key, columnSet) === -1){
                 if (key === "tags" || key === "run" || key === "url") {
                     continue
                 }
