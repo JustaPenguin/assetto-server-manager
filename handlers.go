@@ -169,6 +169,7 @@ type contentFile struct {
 
 var base64HeaderRegex = regexp.MustCompile("^(data:.+;base64,)")
 
+// Stores Files encoded into r.Body
 func uploadHandler(w http.ResponseWriter, r *http.Request, contentType string) {
 	var Files []contentFile
 
@@ -200,6 +201,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request, contentType string) {
 	}
 }
 
+// Stores files in the correct location
 func addFiles(Files []contentFile, contentType string) error {
 	var tracksPath string
 
@@ -231,6 +233,7 @@ func addFiles(Files []contentFile, contentType string) error {
 
 		path := filepath.Join(tracksPath, file.FilePath)
 
+		// Makes any directories in the path that don't exist (there can be multiple)
 		err = os.MkdirAll(filepath.Dir(path), 0755)
 
 		if err != nil {
@@ -329,7 +332,7 @@ func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, car := range existingCars {
 		if car.Name() == carName {
-			// Delete track
+			// Delete car
 			found = true
 
 			err := os.RemoveAll(filepath.Join(carsPath, carName))
@@ -348,7 +351,7 @@ func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		// confirm deletion
 		message = "Car successfully deleted!"
 	} else {
-		// inform track wasn't found
+		// inform car wasn't found
 		message = "Sorry, car could not be deleted. Are you sure it was installed?"
 	}
 
@@ -371,6 +374,7 @@ func getSession(r *http.Request) (*sessions.Session, error) {
 	return session, nil
 }
 
+// Helper function to get message session and add a flash
 func AddFlashQuick(w http.ResponseWriter, r *http.Request, message string) error {
 	session, err := store.Get(r, "messages")
 

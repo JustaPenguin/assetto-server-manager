@@ -145,12 +145,12 @@ const layout = {
 let filesToUpload = [];
 
 function submitFiles(path) {
-    //JSON encode filestoUpload, JQUERY post request to api endpoint (/api/track/upload)
+    //JSON encode filestoUpload, JQUERY post request to api endpoint (/api/track/car/upload)
     let newFiles = [];
     let count = 0;
 
     for (let x = 0; x < filesToUpload.length; x++) {
-        // Set preview to base64 encoded image
+        // Encode and upload, don't post until all files are read
         let reader = new FileReader();
 
         reader.readAsDataURL(filesToUpload[x]);
@@ -187,6 +187,7 @@ function handleCarFiles(fileList) {
     let filesToUploadLocal = [];
 
     for (let x = 0; x < fileList.length; x++) {
+        // check for multiple cars inside "cars" folder, if so recall this function for each car
         if (fileList[x].webkitRelativePath.startsWith("cars/") && !fileList[x].newPath) {
             let splitList = {};
 
@@ -211,6 +212,7 @@ function handleCarFiles(fileList) {
             return
         }
 
+        // Find the files that the server is interested in
         if (fileList[x].name === "data.acd" || fileList[x].name === "ui_car.json"
             || fileList[x].name.startsWith("livery.") || fileList[x].name.startsWith("preview.")
             || fileList[x].name === "ui_skin.json") {
@@ -219,6 +221,7 @@ function handleCarFiles(fileList) {
         }
     }
 
+    // Preview panel for the car
     let $carPanel = $("#car-info-panel");
     let $row = $("<div/>");
     let $title = $("<h3/>");
@@ -243,6 +246,7 @@ function handleCarFiles(fileList) {
 
     for (let x = 0; x < filesToUploadLocal.length; x++) {
 
+        // Get a preview image, display livery name
         if (filesToUploadLocal[x].name.startsWith("preview.") && !previewDone) {
             previewDone = true;
 
@@ -261,6 +265,7 @@ function handleCarFiles(fileList) {
             });
         }
 
+        // Get info about the car to display in the preview, this often fails due to bad JSON encoding
         if (filesToUploadLocal[x].name === "ui_car.json") {
             let reader = new FileReader();
 
@@ -285,11 +290,13 @@ function handleCarFiles(fileList) {
         }
     }
 
+    // Create an upload button that sends queued files to the server
     let $uploadButton = $("#upload-button");
     $uploadButton.attr({'class': "d-inline"});
 
     if (filesToUploadLocal.length === 0) {
         $uploadButton.text("Sorry, the files you uploaded don't seem to be a compatible car!");
+        $uploadButton.empty()
     } else {
         if (!$("#car-upload-button").length) {
             let $button = $("<button/>");
@@ -375,6 +382,7 @@ function handleTrackFiles(fileList) {
 
                 let layoutName = "";
 
+                // For multiple layouts get the layout name and store in map
                 if (layoutNum > 1) {
                     let fileListCorrected = filesToUploadLocal[x].webkitRelativePath.replace('\\', '/');
 
@@ -422,6 +430,7 @@ function handleTrackFiles(fileList) {
 
     if (filesToUploadLocal.length === 0) {
         $uploadButton.text("Sorry, the files you uploaded don't seem to be a compatible track!");
+        $uploadButton.empty()
     } else {
         if (!$("#track-upload-button").length) {
             let $button = $("<button/>");
@@ -462,7 +471,7 @@ function buildInfoPanel(img, info) {
     return $panel;
 }
 
-// Builds the HTML Table out of myList json data from Ivy restful service.
+// Builds a HTML table from JSON input.
 function buildHtmlTable(json) {
     let $cardTable = $("<table/>");
 
@@ -487,8 +496,6 @@ function buildHtmlTable(json) {
 }
 
 // Adds a header row to the table and returns the set of columns.
-// Need to do union of keys from all records as some records may not contain
-// all records
 function addAllColumnHeaders(json, table)
 {
     let columnSet = [];
