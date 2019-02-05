@@ -59,7 +59,7 @@ let raceSetup = {
 
         raceSetup.$addWeatherButton.click(raceSetup.addWeather);
 
-        $document.find(".weather-graphics").change(function() {
+        $document.find(".weather-graphics").change(function () {
             let $this = $(this);
 
             $this.parent().parent().find(".weather-preview").attr({
@@ -101,7 +101,7 @@ let raceSetup = {
     /**
      * add weather elements to the form when the 'new weather' button is clicked
      */
-    addWeather: function(e) {
+    addWeather: function (e) {
         e.preventDefault();
 
         let $oldWeather = $document.find(".weather").last();
@@ -115,9 +115,9 @@ let raceSetup = {
     /**
      * when a session 'enabled' checkbox is modified, toggle the state of the session-details element
      */
-    showEnabledSessions: function() {
-        $(".session-enabler").each(function(index, elem) {
-            $(elem).on('switchChange.bootstrapSwitch',function(event, state) {
+    showEnabledSessions: function () {
+        $(".session-enabler").each(function (index, elem) {
+            $(elem).on('switchChange.bootstrapSwitch', function (event, state) {
                 let $this = $(this);
                 let $elem = $this.closest(".tab-pane").find(".session-details");
                 let $panelLabel = $document.find("#" + $this.closest(".tab-pane").attr("aria-labelledby"));
@@ -133,49 +133,62 @@ let raceSetup = {
         });
     },
 
-    // current tyres present in tyres multiselect.
-    carTyres: {},
 
     /**
      * populate the tyre dropdown for all currently selected cars.
      */
-    populateTyreDropdown: function() {
+    populateTyreDropdown: function () {
+        // quick race doesn't have tyre set up.
+        if (typeof availableTyres === "undefined") {
+            return
+        }
+
         let cars = raceSetup.$carsDropdown.val();
+        let allValidTyres = new Set();
 
         for (let index = 0; index < cars.length; index++) {
             let car = cars[index];
             let carTyres = availableTyres[car];
 
             for (let tyre in carTyres) {
-                if (raceSetup.carTyres[tyre]) {
+                allValidTyres.add(tyre);
+
+                if (raceSetup.$tyresDropdown.find("option[value='" + tyre + "']").length) {
                     continue; // this has already been added
                 }
 
-                let $opt = $("<option/>");
+                raceSetup.$tyresDropdown.multiSelect('addOption', {
+                    'value': tyre,
+                    'text': carTyres[tyre] + " (" + tyre + ")",
+                });
 
-                $opt.attr({'value': tyre});
-                $opt.text(carTyres[tyre] + " (" + tyre + ")");
-
-                raceSetup.$tyresDropdown.append($opt);
-
-                raceSetup.carTyres[tyre] = true;
+                raceSetup.$tyresDropdown.multiSelect('select', tyre);
             }
         }
 
-        raceSetup.$tyresDropdown.multiSelect('refresh');
+        raceSetup.$tyresDropdown.find("option").each(function (index, elem) {
+            let $elem = $(elem);
+
+            if (!allValidTyres.has($elem.val())) {
+                $elem.remove();
+
+                raceSetup.$tyresDropdown.multiSelect('refresh');
+            }
+        });
+
     },
 
     /**
      * given a dropdown input which specifies 'laps'/'time', raceLaps will show the correct input element
      * and empty the unneeded one for either laps or race time.
      */
-    raceLaps: function() {
+    raceLaps: function () {
         let $timeOrLaps = $document.find("#TimeOrLaps");
         let $raceLaps = $document.find("#RaceLaps");
         let $raceTime = $document.find("#RaceTime");
 
         if ($timeOrLaps.length) {
-            $timeOrLaps.change(function() {
+            $timeOrLaps.change(function () {
                 let selected = $timeOrLaps.find("option:selected").val();
 
                 if (selected === "Time") {
@@ -196,7 +209,7 @@ let raceSetup = {
     /**
      * show track image shows the correct image for the track/layout combo
      */
-    showTrackImage: function() {
+    showTrackImage: function () {
         let track = raceSetup.$trackDropdown.val();
         let layout = raceSetup.$trackLayoutDropdown.val();
 
@@ -262,13 +275,13 @@ let raceSetup = {
 
 
 let serverLogs = {
-    init: function() {
+    init: function () {
         let $serverLog = $document.find("#server-logs");
         let $managerLog = $document.find("#manager-logs");
 
         if ($serverLog.length && $managerLog.length) {
 
-            setInterval(function() {
+            setInterval(function () {
                 $.get("/api/logs", function (data) {
                     $serverLog.text(data.ServerLog);
                     $managerLog.text(data.ManagerLog);
@@ -298,11 +311,11 @@ function submitFiles(path) {
 
         reader.addEventListener("load", function () {
             newFiles.push({
-                'name'                  : filesToUpload[x].name,
-                'size'                  : filesToUpload[x].size,
-                'type'                  : filesToUpload[x].type,
-                'webkitRelativePath'    : filesToUpload[x].webkitRelativePath,
-                'dataBase64'            : reader.result.toString()
+                'name': filesToUpload[x].name,
+                'size': filesToUpload[x].size,
+                'type': filesToUpload[x].type,
+                'webkitRelativePath': filesToUpload[x].webkitRelativePath,
+                'dataBase64': reader.result.toString()
             });
 
             count++;
@@ -369,7 +382,7 @@ function handleCarFiles(fileList) {
     let previewDone = false;
 
     let entrySplit = fileList[0].webkitRelativePath.replace('\\', '/').split("/");
-    let carName = entrySplit[entrySplit.length-2];
+    let carName = entrySplit[entrySplit.length - 2];
 
     if (fileList[0].webkitRelativePath.startsWith("cars/")) {
         carName = fileList[0].webkitRelativePath.split("/")[1];
@@ -394,7 +407,7 @@ function handleCarFiles(fileList) {
             let filePathCorrected = filesToUploadLocal[x].webkitRelativePath.replace('\\', '/');
             let filePathSplit = filePathCorrected.split("/");
 
-            let skinName = filePathSplit[filePathSplit.length-2];
+            let skinName = filePathSplit[filePathSplit.length - 2];
 
             // Set preview to base64 encoded image
             let reader = new FileReader();
@@ -418,9 +431,7 @@ function handleCarFiles(fileList) {
 
                 try {
                     parsed = JSON.parse(reader.result.toString());
-                }
-
-                catch(error) {
+                } catch (error) {
                     badJSONnoDonut = true;
                 }
 
@@ -441,7 +452,11 @@ function handleCarFiles(fileList) {
     } else {
         if (!$("#car-upload-button").length) {
             let $button = $("<button/>");
-            $button.attr({'class': "btn btn-primary", 'onclick': "submitFiles(\"/api/car/upload\")", 'id': "car-upload-button"});
+            $button.attr({
+                'class': "btn btn-primary",
+                'onclick': "submitFiles(\"/api/car/upload\")",
+                'id': "car-upload-button"
+            });
             $button.text("Upload Car(s)");
 
             $uploadButton.append($button);
@@ -529,7 +544,7 @@ function handleTrackFiles(fileList) {
 
                     let fileListSplit = fileListCorrected.split("/");
 
-                    layoutName = fileListSplit[fileListSplit.length-2];
+                    layoutName = fileListSplit[fileListSplit.length - 2];
                 } else {
                     layoutName = "Default";
                 }
@@ -575,7 +590,11 @@ function handleTrackFiles(fileList) {
     } else {
         if (!$("#track-upload-button").length) {
             let $button = $("<button/>");
-            $button.attr({'class': "btn btn-primary", 'onclick': "submitFiles(\"/api/track/upload\")", 'id': "track-upload-button"});
+            $button.attr({
+                'class': "btn btn-primary",
+                'onclick': "submitFiles(\"/api/track/upload\")",
+                'id': "track-upload-button"
+            });
             $button.text("Upload Track(s)");
 
             $uploadButton.append($button);
@@ -621,12 +640,14 @@ function buildHtmlTable(json) {
 
     let columns = addAllColumnHeaders(json, $cardTable);
 
-    for (let i = 0 ; i < json.length ; i++) {
+    for (let i = 0; i < json.length; i++) {
         let $row = $('<tr/>');
-        for (let colIndex = 0 ; colIndex < columns.length ; colIndex++) {
+        for (let colIndex = 0; colIndex < columns.length; colIndex++) {
             let cellValue = json[i][columns[colIndex]] + "<br>";
 
-            if (cellValue == null) { cellValue = ""; }
+            if (cellValue == null) {
+                cellValue = "";
+            }
 
             $row.append($('<td/>').html(cellValue));
         }
@@ -637,18 +658,17 @@ function buildHtmlTable(json) {
 }
 
 // Adds a header row to the table and returns the set of columns.
-function addAllColumnHeaders(json, table)
-{
+function addAllColumnHeaders(json, table) {
     let columnSet = [];
     let headerTr$ = $('<tr/>');
     let header$ = $('<thead/>');
 
     header$.attr({'class': "table-secondary"});
 
-    for (let i = 0 ; i < json.length ; i++) {
+    for (let i = 0; i < json.length; i++) {
         let rowHash = json[i];
         for (let key in rowHash) {
-            if ($.inArray(key, columnSet) === -1){
+            if ($.inArray(key, columnSet) === -1) {
                 if (key === "tags" || key === "run" || key === "url" || key === "torqueCurve" || key === "powerCurve") {
                     continue
                 }

@@ -128,6 +128,7 @@ func quickRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	AddFlashQuick(w, r, "Quick race successfully started!")
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
@@ -164,11 +165,24 @@ func customRaceNewHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logrus.Errorf("couldn't build quick race, err: %s", err)
-
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
+
 	ViewRenderer.MustLoadTemplate(w, r, "custom-race/new.html", quickRaceData)
+}
+
+func customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
+	err := raceManager.SetupCustomRace(r)
+
+	if err != nil {
+		logrus.Errorf("couldn't apply quick race, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	AddFlashQuick(w, r, "Custom race started!")
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func apiCarUploadHandler(w http.ResponseWriter, r *http.Request) {
@@ -191,17 +205,6 @@ func tracksHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.SetupCustomRace(r)
-
-	if err != nil {
-		logrus.Errorf("couldn't apply quick race, err: %s", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	http.Redirect(w, r, "/", http.StatusFound)
-}
 
 type contentFile struct {
 	Name     string `json:"name"`
