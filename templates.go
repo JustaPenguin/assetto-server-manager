@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"log"
 	"net/http"
 	"path/filepath"
 	"regexp"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/Masterminds/sprig"
 	"github.com/mattn/go-zglob"
+	"github.com/sirupsen/logrus"
 )
 
 // Renderer is the template engine.
@@ -161,7 +161,7 @@ func (tr *Renderer) MustLoadTemplate(w http.ResponseWriter, r *http.Request, vie
 	err := tr.LoadTemplate(w, r, view, data)
 
 	if err != nil {
-		log.Printf("Unable to load template: %s, err: %s", view, err)
+		logrus.Errorf("Unable to load template: %s, err: %s", view, err)
 		http.Error(w, "unable to load template", http.StatusInternalServerError)
 		return
 	}
@@ -183,7 +183,7 @@ func (tr *Renderer) MustLoadPartial(w http.ResponseWriter, partial string, data 
 	err := tr.LoadPartial(w, partial, data)
 
 	if err != nil {
-		log.Printf("Unable to load partial: %s, err: %s", partial, err)
+		logrus.Errorf("Unable to load partial: %s, err: %s", partial, err)
 		http.Error(w, "unable to load partial", http.StatusInternalServerError)
 		return
 	}
