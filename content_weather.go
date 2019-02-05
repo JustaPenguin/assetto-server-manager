@@ -1,10 +1,11 @@
 package servermanager
 
 import (
-	"gopkg.in/ini.v1"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"gopkg.in/ini.v1"
 )
 
 const weatherInfoFile = "weather.ini"
