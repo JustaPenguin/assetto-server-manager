@@ -1,10 +1,11 @@
 package servermanager
 
 import (
-	"github.com/sirupsen/logrus"
 	"gopkg.in/ini.v1"
 	"os"
 	"path/filepath"
+
+	"github.com/sirupsen/logrus"
 )
 
 var tyreFiles = []string{
