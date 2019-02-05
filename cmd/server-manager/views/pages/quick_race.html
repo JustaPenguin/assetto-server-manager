@@ -7,11 +7,11 @@
 
     <form method="post" action="/quick/submit">
         <div class="form-group row">
-            <label for="Cars" class="col-sm-2 col-form-label">
+            <label for="Cars" class="col-sm-3 col-form-label">
                 Cars
             </label>
 
-            <div class="col-sm-10">
+            <div class="col-sm-9">
                 <select multiple class="form-control" name="Cars" id="Cars" size="15">
                     {{ range $index, $car := .CarOpts }}
                         <option value="{{ $car }}">{{ prettify $car true }}</option>
@@ -24,11 +24,11 @@
         </div>
 
         <div class="form-group row">
-            <label for="Track" class="col-sm-2 col-form-label">
+            <label for="Track" class="col-sm-3 col-form-label">
                 Track
             </label>
 
-            <div class="col-sm-10">
+            <div class="col-sm-9">
                 <select class="form-control" name="Track" id="Track">
                     {{ range $index, $track := .TrackOpts }}
                         <option value="{{ $track }}">{{ prettify $track false }}</option>
@@ -41,11 +41,11 @@
 
 
         <div class="form-group row" style="display: none;">
-            <label for="TrackLayout" class="col-sm-2 col-form-label">
+            <label for="TrackLayout" class="col-sm-3 col-form-label">
                 Track Layout
             </label>
 
-            <div class="col-sm-10">
+            <div class="col-sm-9">
                 <select class="form-control" name="TrackLayout" id="TrackLayout">
                     {{ range $index, $layout := .TrackLayoutOpts }}
                         <option value="{{ $layout }}">{{ $layout }}</option>
@@ -63,9 +63,9 @@
         <p>Practice is disabled on Quick Races. Perhaps you want <a href="/custom">Custom Race</a> instead?</p>
 
         <div class="form-group row">
-            <label for="Qualifying.Time" class="col-sm-2 col-form-label">Time</label>
+            <label for="Qualifying.Time" class="col-sm-3 col-form-label">Time</label>
 
-            <div class="col-sm-10">
+            <div class="col-sm-9">
                 <input
                         type="number"
                         id="Qualifying.Time"
@@ -89,14 +89,14 @@
 
 
         <div class="form-group row">
-            <div class="col-sm-2">
+            <div class="col-sm-3">
                 <select id="TimeOrLaps" class="form-control">
                     <option value="Time">Time</option>
                     <option value="Laps">Laps</option>
                 </select>
             </div>
 
-            <div class="col-sm-10" id="RaceTime">
+            <div class="col-sm-9" id="RaceTime">
                 <input
                         type="number"
                         id="Race.Time"
@@ -112,7 +112,7 @@
             </div>
 
 
-            <div class="col-sm-10" id="RaceLaps" style="display: none;">
+            <div class="col-sm-9" id="RaceLaps" style="display: none;">
                 <input
                         type="number"
                         id="Race.Laps"

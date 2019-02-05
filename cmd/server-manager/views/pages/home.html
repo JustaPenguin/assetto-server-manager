@@ -7,13 +7,13 @@
             <div class="card-body row">
                 <div class="col-md-8">
                     <h5 class="card-title">
-                        {{ prettify .Server.CurrentRaceConfig.Track false }}
+                        {{ prettify .CurrentRaceConfig.Track false }}
 
-                        {{ with .Server.CurrentRaceConfig.TrackLayout }}
+                        {{ with .CurrentRaceConfig.TrackLayout }}
                             ({{ prettify . true }})
                         {{ end }}
                     </h5>
-                    <p class="card-text">{{ carList .Server.CurrentRaceConfig.Cars }}</p>
+                    <p class="card-text">{{ carList .CurrentRaceConfig.Cars }}</p>
 
 
                     <div class="button-bar">
@@ -26,7 +26,11 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <img class="img img-responsive float-right" style="max-height: 180px" src="http://placekitten.com/400/300">
+                    <img class="img img-fluid pl-2"
+                         id="trackImage"
+                         src="/content/tracks/{{ .CurrentRaceConfig.Track }}/ui{{ with .CurrentRaceConfig.TrackLayout }}/{{.}}{{ end }}/preview.png"
+                         alt="{{ .CurrentRaceConfig.Track }} {{ .CurrentRaceConfig.TrackLayout }}"
+                    >
                 </div>
             </div>
         </div>

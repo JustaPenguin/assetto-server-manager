@@ -8,6 +8,12 @@ $(document).ready(function () {
 
     $document = $(document);
 
+    // init bootstrap-switch
+    $.fn.bootstrapSwitch.defaults.size = 'small';
+    $.fn.bootstrapSwitch.defaults.animate = false;
+    $.fn.bootstrapSwitch.defaults.onColor = "success";
+    $document.find("input[type='checkbox']").bootstrapSwitch();
+
     raceSetup.init();
     serverLogs.init();
 });
@@ -17,6 +23,9 @@ let raceSetup = {
     $trackDropdown: null,
     $trackLayoutDropdown: null,
     $trackLayoutDropdownParent: null,
+    $carsDropdown: null,
+    $tyresDropdown: null,
+    $addWeatherButton: null,
 
     // the current layout as specified by the server
     currentLayout: "",
@@ -24,13 +33,40 @@ let raceSetup = {
     // all available track layout options
     trackLayoutOpts: {},
 
-    // init: entrypoint for raceSetup functions. looks for track + layout dropdowns and populates them.
+
+    /**
+     * init: entrypoint for raceSetup functions. looks for track + layout dropdowns and populates them.
+     */
     init: function () {
-        $document.find("#Cars").multiSelect();
+        raceSetup.$carsDropdown = $document.find("#Cars");
 
         raceSetup.$trackDropdown = $document.find("#Track");
         raceSetup.$trackLayoutDropdown = $document.find("#TrackLayout");
         raceSetup.$trackLayoutDropdownParent = raceSetup.$trackLayoutDropdown.closest(".form-group");
+
+        raceSetup.$addWeatherButton = $document.find("#addWeather");
+
+        if (raceSetup.$carsDropdown) {
+            raceSetup.$carsDropdown.multiSelect();
+            raceSetup.$tyresDropdown = $document.find("#LegalTyres");
+
+            if (raceSetup.$tyresDropdown) {
+                raceSetup.$tyresDropdown.multiSelect();
+
+                raceSetup.$carsDropdown.change(raceSetup.populateTyreDropdown)
+            }
+        }
+
+        raceSetup.$addWeatherButton.click(raceSetup.addWeather);
+
+        $document.find(".weather-graphics").change(function() {
+            let $this = $(this);
+
+            $this.parent().parent().find(".weather-preview").attr({
+                'src': '/content/weather/' + $this.val() + '/preview.jpg',
+                'alt': $this.val(),
+            });
+        });
 
         // restrict loading track layouts to pages which have track dropdown and layout dropdown on them.
         if (raceSetup.$trackDropdown.length && raceSetup.$trackLayoutDropdown.length) {
@@ -55,11 +91,84 @@ let raceSetup = {
             raceSetup.loadTrackLayouts();
 
             raceSetup.$trackDropdown.change(raceSetup.loadTrackLayouts);
+            raceSetup.$trackLayoutDropdown.change(raceSetup.showTrackImage);
         }
 
         raceSetup.raceLaps();
+        raceSetup.showEnabledSessions();
     },
 
+    /**
+     * add weather elements to the form when the 'new weather' button is clicked
+     */
+    addWeather: function(e) {
+        e.preventDefault();
+
+        let $oldWeather = $document.find(".weather").last();
+
+        let $newWeather = $oldWeather.clone(true, true);
+        $newWeather.find(".weather-num").text($document.find(".weather").length);
+
+        $oldWeather.after($newWeather);
+    },
+
+    /**
+     * when a session 'enabled' checkbox is modified, toggle the state of the session-details element
+     */
+    showEnabledSessions: function() {
+        $(".session-enabler").each(function(index, elem) {
+            $(elem).on('switchChange.bootstrapSwitch',function(event, state) {
+                let $this = $(this);
+                let $elem = $this.closest(".tab-pane").find(".session-details");
+                let $panelLabel = $document.find("#" + $this.closest(".tab-pane").attr("aria-labelledby"));
+
+                if (state) {
+                    $elem.show();
+                    $panelLabel.addClass("text-success")
+                } else {
+                    $elem.hide();
+                    $panelLabel.removeClass("text-success")
+                }
+            });
+        });
+    },
+
+    // current tyres present in tyres multiselect.
+    carTyres: {},
+
+    /**
+     * populate the tyre dropdown for all currently selected cars.
+     */
+    populateTyreDropdown: function() {
+        let cars = raceSetup.$carsDropdown.val();
+
+        for (let index = 0; index < cars.length; index++) {
+            let car = cars[index];
+            let carTyres = availableTyres[car];
+
+            for (let tyre in carTyres) {
+                if (raceSetup.carTyres[tyre]) {
+                    continue; // this has already been added
+                }
+
+                let $opt = $("<option/>");
+
+                $opt.attr({'value': tyre});
+                $opt.text(carTyres[tyre] + " (" + tyre + ")");
+
+                raceSetup.$tyresDropdown.append($opt);
+
+                raceSetup.carTyres[tyre] = true;
+            }
+        }
+
+        raceSetup.$tyresDropdown.multiSelect('refresh');
+    },
+
+    /**
+     * given a dropdown input which specifies 'laps'/'time', raceLaps will show the correct input element
+     * and empty the unneeded one for either laps or race time.
+     */
     raceLaps: function() {
         let $timeOrLaps = $document.find("#TimeOrLaps");
         let $raceLaps = $document.find("#RaceLaps");
@@ -84,8 +193,32 @@ let raceSetup = {
         }
     },
 
-    // loadTrackLayouts: looks at the selected track and loads in the correct layouts for it into the
-    // track layout dropdown
+    /**
+     * show track image shows the correct image for the track/layout combo
+     */
+    showTrackImage: function() {
+        let track = raceSetup.$trackDropdown.val();
+        let layout = raceSetup.$trackLayoutDropdown.val();
+
+        let src = '/content/tracks/' + track + '/ui';
+
+        if (layout) {
+            src += '/' + layout;
+        }
+
+        // @TODO jpg
+        src += '/preview.png';
+
+        $document.find("#trackImage").attr({
+            'src': src,
+            'alt': track + ' ' + layout,
+        })
+    },
+
+    /**
+     * loadTrackLayouts: looks at the selected track and loads in the correct layouts for it into the
+     * track layout dropdown
+     */
     loadTrackLayouts: function () {
         raceSetup.$trackLayoutDropdown.empty();
 
@@ -103,9 +236,17 @@ let raceSetup = {
             raceSetup.$trackLayoutDropdown.append(raceSetup.buildTrackLayoutOption(""));
             raceSetup.$trackLayoutDropdownParent.hide();
         }
+
+
+        raceSetup.showTrackImage();
+
     },
 
-    // buildTrackLayoutOption: builds an <option> containing track layout information
+    /**
+     * buildTrackLayoutOption: builds an <option> containing track layout information
+     * @param layout
+     * @returns {HTMLElement}
+     */
     buildTrackLayoutOption: function (layout) {
         let $opt = $("<option/>");
         $opt.attr({'value': layout});
