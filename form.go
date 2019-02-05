@@ -204,10 +204,14 @@ func (f FormOption) renderDropdown() template.HTML {
 		<div class="form-group row">
 			<label for="{{ .Key }}" class="col-sm-3 col-form-label">
 				{{ .Name }}
+<<<<<<< HEAD
 			</label>
 
             <div class="col-sm-9">
 				<select {{ if eq .Type "multiSelect" }} multiple {{ end }} class="form-control" name="{{ .Key }}" id="{{ .Key }}">
+=======
+				<select {{ if eq .Type "multiSelect" }} multiple size="8" {{ end }} class="form-control" name="{{ .Key }}" id="{{ .Key }}">
+>>>>>>> master
 					{{ range $opt, $selected := .Opts }}
 						<option {{ if $selected }} selected {{ end }} value="{{ $opt }}">{{ $opt }}</option>
 					{{ end }}
