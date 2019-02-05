@@ -107,6 +107,7 @@ func (sc ServerConfig) Write() error {
 	return f.SaveTo(filepath.Join(ServerInstallPath, ServerConfigPath, serverConfigIniPath))
 }
 
+// @TODO consider rename
 type GlobalServerConfig struct {
 	Name                      string `ini:"NAME" help:"Server Name"`
 	Password                  string `ini:"PASSWORD" input:"password" help:"server password"`

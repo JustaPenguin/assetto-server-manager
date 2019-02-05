@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"gopkg.in/ini.v1"
+	"github.com/cj123/ini"
 )
 
 const weatherInfoFile = "weather.ini"

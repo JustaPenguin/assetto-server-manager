@@ -1,10 +1,10 @@
 package servermanager
 
 import (
-	"gopkg.in/ini.v1"
 	"os"
 	"path/filepath"
 
+	"github.com/cj123/ini"
 	"github.com/sirupsen/logrus"
 )
 
