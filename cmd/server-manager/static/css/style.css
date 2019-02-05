@@ -38,3 +38,7 @@ footer {
 .nav-tabs .nav-link {
     color: #495057;
 }
+
+abbr[title] {
+    text-decoration: none !important;
+}

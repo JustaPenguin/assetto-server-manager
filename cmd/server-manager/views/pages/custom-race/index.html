@@ -1,0 +1,105 @@
+{{ define "title" }}Custom Races{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">Custom Races</h1>
+
+    <a class="btn btn-success float-right" href="/custom/new">Create a new Custom Race</a>
+
+
+    <div class="clearfix mb-5"></div>
+
+
+    <h2>Starred</h2>
+
+
+    <table class="table table-striped table-bordered">
+        <tr>
+            <td></td>
+            <th>Name</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+
+        {{ range $index, $race := .Races }}
+            <tr>
+                <td>
+                    <i class="far fa-star"></i>
+                </td>
+                <td>
+                    <strong>
+                        {{ prettify $race.RaceConfig.Track false }} {{ with $race.RaceConfig.TrackLayout }}({{ prettify . true }}){{ end }}
+                    </strong>
+
+                    <div class="float-right text-right">
+                        {{ range $sessionName, $session := $race.RaceConfig.Sessions }}
+                            <span class="badge badge-primary">{{ trunc 1 $sessionName.String }}</span>
+                        {{ end }}
+
+                        <br>
+
+                        <small class="mr-1">{{ len $race.EntryList }} <i class="fa fa-user"></i></small>
+                    </div>
+
+                    <br>
+                    <small>{{ carList $race.RaceConfig.Cars }}</small>
+
+                </td>
+                <td>{{ timeFormat $race.Created }}</td>
+                <td>
+                    <a class="btn btn-sm btn-success" href="/custom/load/{{ $race.UUID.String }}">Start Race</a>
+                    <a class="btn btn-sm btn-info" href="/custom/new?from={{ $race.UUID.String }}">Use as Template</a>
+                    <a onClick="return confirm('I understand that this will delete this race setup permanently');"
+                       class="btn btn-sm btn-danger" href="/custom/delete/{{ $race.UUID.String }}">Delete</a>
+                </td>
+            </tr>
+        {{ end }}
+    </table>
+
+    <h2>Recent</h2>
+
+    <table class="table table-striped table-bordered">
+        <tr>
+            <td></td>
+            <th>Name</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+
+        {{ range $index, $race := .Races }}
+            <tr>
+                <td>
+                    <i class="far fa-star"></i>
+                </td>
+                <td>
+                    <strong>
+                        {{ prettify $race.RaceConfig.Track false }} {{ with $race.RaceConfig.TrackLayout }}({{ prettify . true }}){{ end }}
+                    </strong>
+
+                    <div class="float-right text-right">
+                        {{ range $sessionName, $session := $race.RaceConfig.Sessions }}
+                            <span class="badge badge-primary">{{ trunc 1 $sessionName.String }}</span>
+                        {{ end }}
+
+                        <br>
+
+                        <small class="mr-1">{{ len $race.EntryList }} <i class="fa fa-user"></i></small>
+                    </div>
+
+                    <br>
+                    <small>{{ carList $race.RaceConfig.Cars }}</small>
+
+                </td>
+                <td>{{ timeFormat $race.Created }}</td>
+                <td>
+                    <a class="btn btn-sm btn-success" href="/custom/load/{{ $race.UUID.String }}">Start Race</a>
+                    <a class="btn btn-sm btn-info" href="/custom/new?from={{ $race.UUID.String }}">Use as Template</a>
+                    <a onClick="return confirm('I understand that this will delete this race setup permanently');"
+                        class="btn btn-sm btn-danger" href="/custom/delete/{{ $race.UUID.String }}">Delete</a>
+                </td>
+            </tr>
+
+
+
+        {{ end }}
+    </table>
+{{ end }}

@@ -57,13 +57,24 @@
                     </li>
                 </ul>
 
-                <div class="navbar-text">
+                <ul class="navbar-nav">
                     {{ if .server_status  }}
-                        <span class="badge badge-success">Server Running</span>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navBarStatusDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="badge badge-success">Server Running</span>
+                            </a>
+
+                            <div class="dropdown-menu" aria-labelledby="navBarStatusDropdown">
+                                <a class="dropdown-item" href="/process/restart">Restart</a>
+                                <a class="dropdown-item" href="/process/stop">Stop</a>
+                            </div>
+                        </li>
                     {{ else }}
-                        <span class="badge badge-danger">Server Offline</span>
+                        <li class="nav-item">
+                            <span class="badge badge-danger">Server Offline</span>
+                        </li>
                     {{ end }}
-                </div>
+                </ul>
             </div>
 
 

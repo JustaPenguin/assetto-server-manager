@@ -1,8 +1,9 @@
 {{ define "title" }}Tracks{{ end }}
 
 {{ define "content" }}
+    <h1 class="text-center">Tracks</h1>
 
-    <div class="card text-white bg-info mb-3">
+    <div class="card mb-3">
         <div class="card-header"><strong>Upload a New Track</strong></div>
         <div class="card-body">
             <p class="card-text">You can upload multiple tracks at once by placing them in a folder named "tracks" and uploading
@@ -24,9 +25,7 @@
 
     <div id="track-info-panel"></div>
 
-    <h2>Track List</h2>
-
-    <table class="table table-striped">
+    <table class="table table-bordered table-striped">
         <tr>
             <th>#</th>
             <th>Track Name</th>
@@ -39,7 +38,7 @@
                     {{ $i }}
                 </td>
                 <td>
-                    {{ $track.Name }}
+                    <abbr title="{{ $track.Name }}">{{ prettify $track.Name false }}</abbr>
                 </td>
                 <td>
                     {{ $track.LayoutsCSV }}

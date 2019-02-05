@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/Masterminds/sprig"
 	"github.com/mattn/go-zglob"
@@ -63,6 +64,7 @@ func (tr *Renderer) init() error {
 	funcs["carList"] = carList
 	funcs["jsonEncode"] = jsonEncode
 	funcs["varSplit"] = varSplit
+	funcs["timeFormat"] = timeFormat
 
 	for _, page := range pages {
 		var templateList []string
@@ -80,6 +82,10 @@ func (tr *Renderer) init() error {
 	}
 
 	return nil
+}
+
+func timeFormat(t time.Time) string {
+	return t.Format(time.RFC850)
 }
 
 func carList(cars string) string {
