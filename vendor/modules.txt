@@ -4,6 +4,8 @@ github.com/Masterminds/semver
 github.com/Masterminds/sprig
 # github.com/aokoli/goutils v1.1.0
 github.com/aokoli/goutils
+# github.com/cj123/ini v1.42.0
+github.com/cj123/ini
 # github.com/fatih/camelcase v1.0.0
 github.com/fatih/camelcase
 # github.com/google/uuid v1.1.0

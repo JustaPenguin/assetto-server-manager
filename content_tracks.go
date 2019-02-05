@@ -3,11 +3,16 @@ package servermanager
 import (
 	"io/ioutil"
 	"path/filepath"
+	"sort"
 )
 
 type Track struct {
 	Name    string
 	Layouts []string
+}
+
+func (t Track) PrettyName() string {
+	return prettifyName(t.Name, false)
 }
 
 func ListTracks() ([]Track, error) {
@@ -53,6 +58,10 @@ func ListTracks() ([]Track, error) {
 			Layouts: layouts,
 		})
 	}
+
+	sort.Slice(tracks, func(i, j int) bool {
+		return tracks[i].PrettyName() < tracks[j].PrettyName()
+	})
 
 	return tracks, nil
 }

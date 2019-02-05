@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"github.com/gorilla/sessions"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -14,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
 )
 
@@ -36,9 +36,12 @@ func Router() *mux.Router {
 	r.HandleFunc("/tracks", tracksHandler)
 	r.HandleFunc("/track/delete/{name}", trackDeleteHandler)
 	r.HandleFunc("/car/delete/{name}", carDeleteHandler)
-	r.HandleFunc("/server-options", globalServerOptionsHandler)
+	r.HandleFunc("/server-options", serverOptionsHandler)
 	r.HandleFunc("/quick", quickRaceHandler)
 	r.Methods(http.MethodPost).Path("/quick/submit").HandlerFunc(quickRaceSubmitHandler)
+	r.HandleFunc("/custom", customRaceListHandler)
+	r.HandleFunc("/custom/new", customRaceNewHandler)
+	r.Methods(http.MethodPost).Path("/custom/new/submit").HandlerFunc(customRaceSubmitHandler)
 	r.HandleFunc("/logs", serverLogsHandler)
 	r.HandleFunc("/process/{action}", serverProcessHandler)
 
@@ -48,6 +51,7 @@ func Router() *mux.Router {
 	r.HandleFunc("/api/car/upload", apiCarUploadHandler)
 
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
+	r.PathPrefix("/content/").Handler(http.StripPrefix("/content", http.FileServer(http.Dir(filepath.Join(ServerInstallPath, "content")))))
 
 	return r
 }
@@ -80,8 +84,8 @@ func serverProcessHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-func globalServerOptionsHandler(w http.ResponseWriter, r *http.Request) {
-	form := NewForm(&ConfigIniDefault.Server.GlobalServerConfig, nil, "")
+func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
+	form := NewForm(&ConfigIniDefault.GlobalServerConfig, nil, "")
 
 	if r.Method == http.MethodPost {
 		err := form.Submit(r)
@@ -104,7 +108,7 @@ func globalServerOptionsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func quickRaceHandler(w http.ResponseWriter, r *http.Request) {
-	quickRaceData, err := raceManager.QuickRaceForm()
+	quickRaceData, err := raceManager.BuildRaceOpts()
 
 	if err != nil {
 		logrus.Errorf("couldn't build quick race, err: %s", err)
@@ -141,6 +145,32 @@ func carsHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func customRaceListHandler(w http.ResponseWriter, r *http.Request) {
+	races, err := raceManager.ListCustomRaces()
+
+	if err != nil {
+		logrus.Errorf("couldn't list custom races, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "custom-race/index.html", map[string]interface{}{
+		"Races": races,
+	})
+}
+
+func customRaceNewHandler(w http.ResponseWriter, r *http.Request) {
+	quickRaceData, err := raceManager.BuildRaceOpts()
+
+	if err != nil {
+		logrus.Errorf("couldn't build quick race, err: %s", err)
+
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	ViewRenderer.MustLoadTemplate(w, r, "custom-race/new.html", quickRaceData)
+}
+
 func apiCarUploadHandler(w http.ResponseWriter, r *http.Request) {
 	uploadHandler(w, r, "Car")
 }
@@ -154,13 +184,23 @@ func tracksHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logrus.Errorf("could not get track list, err: %s", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
 	}
 
 	ViewRenderer.MustLoadTemplate(w, r, "tracks.html", map[string]interface{}{
 		"tracks": tracks,
 	})
+}
+
+func customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
+	err := raceManager.SetupCustomRace(r)
+
+	if err != nil {
+		logrus.Errorf("couldn't apply quick race, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 type contentFile struct {
@@ -388,5 +428,4 @@ func apiServerLogHandler(w http.ResponseWriter, r *http.Request) {
 		ServerLog:  AssettoProcess.Logs(),
 		ManagerLog: logOutput.String(),
 	})
-
 }

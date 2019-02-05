@@ -1,0 +1,1099 @@
+{{ define "title" }}Custom Race{{ end }}
+
+{{ define "content" }}
+
+    {{ $f := .Current }}
+
+    <h1 class="text-center">Custom Race</h1>
+
+    <form method="post" action="/custom/new/submit">
+
+        <div class="card mt-3 border-secondary">
+            <div class="card-header">
+                <strong>Car &amp; Track</strong>
+            </div>
+
+            <div class="card-body">
+                <div class="form-group row">
+                    <label for="Cars" class="col-sm-2 col-form-label">
+                        Cars
+                    </label>
+
+                    <div class="col-sm-10">
+                        <select multiple class="form-control" name="Cars" id="Cars" size="15">
+                            {{ range $index, $car := .CarOpts }}
+                                {{ $selected := false }}
+
+                                {{ range $j, $selectedCar := varSplit $f.Cars }}
+                                    {{ if eq $selectedCar $car }}
+                                        {{ $selected = true }}
+                                    {{ end }}
+                                {{ end }}
+
+                                <option value="{{ $car }}" {{ if $selected }} selected="selected" {{ end }}>{{ prettify $car true }}</option>
+                            {{ end }}
+                        </select>
+
+                        <small>Models of cars allowed in the server. The current Max Clients size is
+                            <strong>{{ .MaxClients }}</strong>, so any cars you choose will be evenly distributed across
+                            this
+                            number in the Entry List.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-8">
+                        <div class="form-group row">
+                            <label for="Track" class="col-sm-3 col-form-label">
+                                Track
+                            </label>
+
+                            <div class="col-sm-9">
+                                <select class="form-control" name="Track" id="Track">
+                                    {{ range $index, $track := .TrackOpts }}
+                                        <option value="{{ $track }}" {{ if eq $track $f.Track }}selected="selected" {{ end }}>
+                                            {{ prettify $track false }}
+                                        </option>
+                                    {{ end }}
+                                </select>
+
+                                <small>Track name</small>
+                            </div>
+                        </div>
+
+
+                        <div class="form-group row" style="display: none;">
+                            <label for="TrackLayout" class="col-sm-3 col-form-label">
+                                Track Layout
+                            </label>
+
+                            <div class="col-sm-9">
+                                <select class="form-control" name="TrackLayout" id="TrackLayout">
+                                    {{ range $index, $layout := .TrackLayoutOpts }}
+                                        <option value="{{ $layout }}">{{ $layout }}</option>
+                                    {{ end }}
+                                </select>
+
+                                <small>Track layout. Some tracks don&#39;t have this.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-4">
+                        <img class="img img-fluid"
+                             id="trackImage"
+                             src="/content/tracks/{{ $f.Track }}/ui{{ with $f.TrackLayout }}/{{.}}{{ end }}/preview.png"
+                             alt="{{ $f.Track }} {{ $f.TrackLayout }}"
+                        >
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="card mt-3 border-secondary">
+            <div class="card-header">
+                <strong>Sessions</strong>
+            </div>
+
+            <div class="card-body">
+                <ul class="nav nav-tabs" role="tablist">
+
+                    {{ range $index, $sessionType := .AvailableSessions }}
+
+                        {{ $hasSession := $f.HasSession $sessionType }}
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ if eq $index 0 }}active{{ end }} {{ if $hasSession }} text-success {{ end }}" id="session-{{ $sessionType }}-tab"
+                               data-toggle="tab" href="#session-{{ $sessionType }}"
+                               role="tab"
+                               aria-controls="{{ $sessionType }}" aria-selected="true">{{ $sessionType.String }}</a>
+                        </li>
+                    {{ end }}
+                </ul>
+                <div class="tab-content">
+
+
+                    {{ range $index, $sessionType := .AvailableSessions }}
+                        <div class="tab-pane fade {{ if eq $index 0 }}show active{{ end }} pt-5"
+                             id="session-{{ $sessionType }}" role="tabpanel"
+                             aria-labelledby="session-{{ $sessionType }}-tab">
+
+
+                            {{ $hasSession := $f.HasSession $sessionType }}
+                            {{ $session := index $f.Sessions $sessionType }}
+
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">Enabled</label>
+
+                                <div class="col-sm-9">
+                                    <input
+                                            type="checkbox"
+                                            class="session-enabler"
+                                            name="{{ $sessionType }}.Enabled"
+                                            id="{{ $sessionType }}.Enabled"
+
+                                            {{ if $hasSession }}
+                                            checked="checked"
+                                            {{ end }}
+                                    >
+                                </div>
+                            </div>
+
+                            <div class="session-details" {{ if not $hasSession }} style="display: none;" {{ end }}>
+                                <div class="form-group row">
+                                    <label for="{{ $sessionType }}.Name" class="col-sm-3 col-form-label">Name</label>
+
+                                    <div class="col-sm-9">
+                                        <input type="text" id="{{ $sessionType }}.Name" name="{{ $sessionType }}.Name"
+                                               class="form-control" value="{{ $session.Name }}">
+
+                                        <small></small>
+                                    </div>
+                                </div>
+
+
+                                {{ if eq $sessionType "RACE" }}
+                                    <div class="form-group row">
+                                        <div class="col-sm-3">
+                                            <select id="TimeOrLaps" class="form-control">
+                                                <option value="Time">Time</option>
+                                                <option value="Laps">Laps</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-sm-9" id="RaceTime">
+                                            <input
+                                                    type="number"
+                                                    id="Race.Time"
+                                                    name="Race.Time"
+                                                    class="form-control"
+                                                    value="{{ $session.Time }}"
+
+
+                                                    step="1"
+                                            >
+
+                                            <small>session length in minutes</small>
+                                        </div>
+
+
+                                        <div class="col-sm-9" id="RaceLaps" style="display: none;">
+                                            <input
+                                                    type="number"
+                                                    id="Race.Laps"
+                                                    name="Race.Laps"
+                                                    class="form-control"
+                                                    value="{{ $session.Laps }}"
+
+
+                                                    step="1"
+                                            >
+
+                                            <small>number of laps in the race</small>
+                                        </div>
+                                    </div>
+                                {{ else }}
+                                    <div class="form-group row">
+                                        <label for="{{ $sessionType }}.Time"
+                                               class="col-sm-3 col-form-label">Time</label>
+
+
+                                        <div class="col-sm-9">
+                                            <input
+                                                    type="number"
+                                                    id="{{ $sessionType }}.Time"
+                                                    name="{{ $sessionType }}.Time"
+                                                    class="form-control"
+                                                    value="{{ $session.Time }}"
+                                                    step="1"
+                                            >
+
+                                            <small>session length in minutes</small>
+                                        </div>
+                                    </div>
+
+                                {{ end }}
+
+                                <div class="form-group row">
+                                    <label for="{{ $sessionType }}.IsOpen" class="col-sm-3 col-form-label">
+                                        Is Open
+                                    </label>
+
+
+                                    <div class="col-sm-9">
+                                        <select class="form-control"
+                                                id="{{ $sessionType }}.IsOpen"
+                                                name="{{ $sessionType }}.IsOpen"
+                                        >
+                                            <option value="0" {{ if eq $session.IsOpen 0 }} selected="selected" {{ end }}>No join</option>
+                                            <option value="1" {{ if eq $session.IsOpen 1 }} selected="selected" {{ end }}>Free join</option>
+
+                                            {{ if eq $sessionType "RACE" }}
+                                                <option value="2" {{ if eq $session.IsOpen 2 }} selected="selected" {{ end }}>
+                                                    Free join until 20 seconds to the green light
+                                                </option>
+                                            {{ end }}
+                                        </select>
+
+                                        <small>Join options for the current session</small>
+                                    </div>
+                                </div>
+
+
+                                <div class="form-group row">
+                                    <label for="{{ $sessionType }}.WaitTime" class="col-sm-3 col-form-label">
+                                        Wait Time
+                                    </label>
+
+                                    <div class="col-sm-9">
+                                        <input
+                                                type="number"
+                                                id="{{ $sessionType }}.WaitTime"
+                                                name="{{ $sessionType }}.WaitTime"
+                                                class="form-control"
+                                                value="{{ $session.WaitTime }}"
+
+
+                                                step="1"
+                                        >
+
+                                        <small>Seconds before the start of the session</small>
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        </div>
+                    {{ end }}
+                </div>
+            </div>
+        </div>
+
+
+        <div class="card mt-3 border-secondary">
+            <div class="card-header">
+                <strong>Assists</strong>
+            </div>
+
+            <div class="card-body">
+
+                <div class="form-group row">
+                    <label for="ABSAllowed" class="col-sm-3 col-form-label">ABS Allowed</label>
+
+                    <div class="col-sm-9">
+                        <select class="form-control" id="ABSAllowed" name="ABSAllowed">
+                            <option value="0" {{ if eq $f.ABSAllowed 0 }} selected="selected" {{ end }}>Off</option>
+                            <option value="1" {{ if eq $f.ABSAllowed 1 }} selected="selected" {{ end }}>Factory</option>
+                            <option value="2" {{ if eq $f.ABSAllowed 2 }} selected="selected" {{ end }}>On</option>
+                        </select>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="TractionControlAllowed" class="col-sm-3 col-form-label">
+                        Traction Control Allowed
+                    </label>
+
+                    <div class="col-sm-9">
+                        <select class="form-control" id="TractionControlAllowed" name="TractionControlAllowed">
+                            <option value="0" {{ if eq $f.TractionControlAllowed 0 }} selected="selected" {{ end }}>Off</option>
+                            <option value="1" {{ if eq $f.TractionControlAllowed 1 }} selected="selected" {{ end }}>Factory</option>
+                            <option value="2" {{ if eq $f.TractionControlAllowed 2 }} selected="selected" {{ end }}>On</option>
+                        </select>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="StabilityControlAllowed" class="col-sm-3 col-form-label">
+                        Stability Control Allowed
+                    </label>
+
+                    <div class="col-sm-9">
+                        <input type="checkbox"
+                               id="StabilityControlAllowed"
+                               name="StabilityControlAllowed"
+                            {{ if $f.StabilityControlAllowed }}
+                                checked="checked"
+                            {{ end }}
+                        >
+                        <br>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="AutoClutchAllowed" class="col-sm-3 col-form-label">Auto Clutch Allowed</label>
+
+
+                    <div class="col-sm-9">
+                        <input type="checkbox"
+                               id="AutoClutchAllowed"
+                               name="AutoClutchAllowed"
+                               {{ if $f.AutoClutchAllowed }}
+                                   checked="checked"
+                               {{ end }}
+                        >
+                        <br>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="TyreBlanketsAllowed" class="col-sm-3 col-form-label">Tyre Blankets Allowed</label>
+
+
+                    <div class="col-sm-9">
+                        <input type="checkbox"
+                               id="TyreBlanketsAllowed"
+                               name="TyreBlanketsAllowed"
+
+                               {{ if $f.TyreBlanketsAllowed }}
+                                   checked="checked"
+                               {{ end }}
+                        >
+                        <br>
+
+                        <small>
+                            At the start of the session or after a pitstop, tyres will have the the optimal temperature.
+                        </small>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+        <div class="card mt-3 border-secondary">
+            <div class="card-header">
+                <strong>Weather</strong>
+            </div>
+
+            <div class="card-body">
+
+                <div class="form-group row">
+                    <label for="SunAngle" class="col-sm-3 col-form-label">Sun Angle</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="SunAngle"
+                                name="SunAngle"
+                                class="form-control"
+                                value="{{ $f.SunAngle }}"
+
+
+                                step="1"
+                        >
+
+                        <small>Angle of the position of the sun</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="WindBaseSpeedMin" class="col-sm-3 col-form-label">Wind Base Speed Min</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="WindBaseSpeedMin"
+                                name="WindBaseSpeedMin"
+                                class="form-control"
+                                value="{{ $f.WindBaseSpeedMin }}"
+                                min="0"
+                                step="1"
+                        >
+
+                        <small>Min speed of the session possible</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="WindBaseSpeedMax" class="col-sm-3 col-form-label">Wind Base Speed Max</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="WindBaseSpeedMax"
+                                name="WindBaseSpeedMax"
+                                class="form-control"
+                                value="{{ $f.WindBaseSpeedMax }}"
+                                max="40"
+
+                                step="1"
+                        >
+
+                        <small>Max speed of session possible (max 40)</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="WindBaseDirection" class="col-sm-3 col-form-label">Wind Base Direction</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="WindBaseDirection"
+                                name="WindBaseDirection"
+                                class="form-control"
+                                value="{{ $f.WindBaseDirection }}"
+
+
+                                step="1"
+                        >
+
+                        <small>base direction of the wind (wind is pointing at); 0 = North, 90 = East etc</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="WindVariationDirection" class="col-sm-3 col-form-label">Wind Variation Direction</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="WindVariationDirection"
+                                name="WindVariationDirection"
+                                class="form-control"
+                                value="{{ $f.WindVariationDirection }}"
+
+
+                                step="1"
+                        >
+
+                        <small>variation (&#43; or -) of the base direction</small>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row">
+
+                    {{ $weatherIndex := 0 }}
+                    {{ $weatherOptions := .Weather }}
+
+                    {{ range $index, $weather := $f.Weather }}
+
+                        <div class="col-sm-12 col-md-6 weather">
+                            <div class="card mb-5 border-info">
+                                <div class="card-header">
+                                    <strong class="weather-num">{{ $weatherIndex }}</strong>
+                                </div>
+
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="Graphics">Graphics</label>
+
+                                        <select name="Graphics" id="Graphics" class="form-control weather-graphics">
+                                            {{ range $weatherKey, $weatherName := $weatherOptions }}
+                                                <option value="{{ $weatherKey }}" {{ if eq $weatherKey $weather.Graphics }} selected="selected" {{ end }}>
+                                                    {{ $weatherName }}
+                                                </option>
+                                            {{ end }}
+                                        </select>
+                                    </div>
+
+                                    <img class="img img-fluid weather-preview mb-3" src="/content/weather/{{ $weather.Graphics }}/preview.jpg" alt="{{ $weather.Graphics }}">
+
+                                    <div class="form-group">
+                                        <label for="BaseTemperatureAmbient">Base Temperature Ambient</label>
+                                        <input
+                                                type="number"
+                                                id="BaseTemperatureAmbient"
+                                                name="BaseTemperatureAmbient"
+                                                class="form-control"
+                                                value="{{ $weather.BaseTemperatureAmbient }}"
+
+
+                                                step="1"
+                                        >
+
+                                        <small>ambient temperature</small>
+                                    </div>
+
+
+                                    <div class="form-group">
+                                        <label for="BaseTemperatureRoad">Base Temperature Road</label>
+                                        <input
+                                                type="number"
+                                                id="BaseTemperatureRoad"
+                                                name="BaseTemperatureRoad"
+                                                class="form-control"
+                                                value="{{ $weather.BaseTemperatureRoad }}"
+
+
+                                                step="1"
+                                        >
+
+                                        <small>Relative road temperature: this value will be added to the final ambient
+                                            temp. In this example the road temperature will be between 22 (16 &#43; 6) and
+                                            26 (20 &#43; 6). It can be negative.
+                                        </small>
+                                    </div>
+
+
+                                    <div class="form-group">
+                                        <label for="VariationAmbient">Variation Ambient</label>
+
+                                        <input
+                                                type="number"
+                                                id="VariationAmbient"
+                                                name="VariationAmbient"
+                                                class="form-control"
+                                                value="{{ $weather.VariationAmbient }}"
+
+
+                                                step="1"
+                                        >
+
+                                        <small>variation of the ambient&#39;s temperature. In this example final ambient&#39;s
+                                            temperature can be 16 or 20
+                                        </small>
+                                    </div>
+
+
+                                    <div class="form-group">
+                                        <label for="VariationRoad">Variation Road</label>
+
+                                        <input
+                                                type="number"
+                                                id="VariationRoad"
+                                                name="VariationRoad"
+                                                class="form-control"
+                                                value="{{ $weather.VariationRoad }}"
+
+
+                                                step="1"
+                                        >
+
+                                        <small>variation of the road&#39;s temperature. Like the ambient one</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{ $weatherIndex = add $weatherIndex 1 }}
+                    {{ end }}
+                </div>
+
+                <button class="btn btn-info float-right" id="addWeather">Add Weather</button>
+
+                <div class="clearfix mb-5"></div>
+
+            </div>
+
+        </div>
+
+
+        <div class="card mt-3 border-secondary">
+            <div class="card-header">
+                <strong>Realism</strong>
+            </div>
+
+            <div class="card-body">
+
+
+                <div class="form-group row">
+                    <label for="LegalTyres" class="col-sm-3 col-form-label">Legal Tyres</label>
+
+                    {{ $allTyres := .Tyres }}
+
+                    <div class="col-sm-9">
+                        <select multiple class="form-control" id="LegalTyres" name="LegalTyres">
+                            {{ range $index, $car := varSplit $f.Cars }}
+                                {{ range $index, $tyre := varSplit $f.LegalTyres }}
+                                    {{ $carTyres := index $allTyres $car }}
+
+                                    <option value="{{ $tyre }}" selected="selected">{{ index $carTyres $tyre }} ({{ $tyre }})</option>
+                                {{ end }}
+                            {{ end }}
+                        </select>
+
+                        <small>List of tyres short names that are allowed</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="FuelRate" class="col-sm-3 col-form-label">Fuel Rate</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="FuelRate"
+                                name="FuelRate"
+                                class="form-control"
+                                value="{{ $f.FuelRate }}"
+                                min="0"
+
+                                step="1"
+                        >
+
+                        <small>Fuel usage from 0 (no fuel usage) to XXX (100 is the realistic one)</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="DamageMultiplier" class="col-sm-3 col-form-label">Damage Multiplier</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="DamageMultiplier"
+                                name="DamageMultiplier"
+                                class="form-control"
+                                value="{{ $f.DamageMultiplier }}"
+                                min="0"
+                                min="100"
+                                step="1"
+                        >
+
+                        <small>Damage from 0 (no damage) to 100 (full damage)</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="TyreWearRate" class="col-sm-3 col-form-label">Tyre Wear Rate</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="TyreWearRate"
+                                name="TyreWearRate"
+                                class="form-control"
+                                value="{{ $f.TyreWearRate }}"
+                                min="0"
+
+                                step="1"
+                        >
+
+                        <small>Tyre wear from 0 (no tyre wear) to XXX (100 is the realistic one)</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="ForceVirtualMirror" class="col-sm-3 col-form-label">Force Virtual Mirror</label>
+
+
+                    <div class="col-sm-9">
+                        <input type="checkbox"
+                               id="ForceVirtualMirror"
+                               name="ForceVirtualMirror"
+                               {{ if $f.ForceVirtualMirror }}
+                                   checked="checked"
+                               {{ end }}
+                        >
+                        <br>
+
+                        <small>1 virtual mirror will be enabled for every client, 0 for mirror as optional</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="TimeOfDayMultiplier" class="col-sm-3 col-form-label">Time Of Day Multiplier</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="TimeOfDayMultiplier"
+                                name="TimeOfDayMultiplier"
+                                class="form-control"
+                                value="{{ $f.TimeOfDayMultiplier }}"
+                                min="1"
+                                step="1"
+                        >
+
+                        <small>Multiplier for the time of day</small>
+                    </div>
+                </div>
+
+
+                <h4>Dynamic Track</h4>
+
+                <div class="form-group row">
+                    <label for="SessionStart" class="col-sm-3 col-form-label">Session Start</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="SessionStart"
+                                name="SessionStart"
+                                class="form-control"
+                                value="{{ $f.DynamicTrack.SessionStart }}"
+
+
+                                step="1"
+                        >
+
+                        <small>% level of grip at session start</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="Randomness" class="col-sm-3 col-form-label">Randomness</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="Randomness"
+                                name="Randomness"
+                                class="form-control"
+                                value="{{ $f.DynamicTrack.Randomness }}"
+
+
+                                step="1"
+                        >
+
+                        <small>level of randomness added to the start grip</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="SessionTransfer" class="col-sm-3 col-form-label">Session Transfer</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="SessionTransfer"
+                                name="SessionTransfer"
+                                class="form-control"
+                                value="{{ $f.DynamicTrack.SessionTransfer }}"
+
+
+                                step="1"
+                        >
+
+                        <small>how many laps are needed to add 1% grip</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="LapGain" class="col-sm-3 col-form-label">Lap Gain</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="LapGain"
+                                name="LapGain"
+                                class="form-control"
+                                value="{{ $f.DynamicTrack.LapGain }}"
+
+
+                                step="1"
+                        >
+
+                        <small>how much of the gained grip is to be added to the next session 100 -&gt; all the gained
+                            grip. Example: difference between starting (90) and ending (96) grip in the session = 6%,
+                            with session_transfer = 50 then the next session is going to start with 93.
+                        </small>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+        <div class="card mt-3 border-secondary">
+            <div class="card-header">
+                <strong>Rules</strong>
+            </div>
+
+            <div class="card-body">
+
+
+                <div class="form-group row">
+                    <label for="LockedEntryList" class="col-sm-3 col-form-label">Locked Entry List</label>
+
+
+                    <div class="col-sm-9">
+                        <input type="checkbox"
+                               id="LockedEntryList"
+                               name="LockedEntryList"
+                               value="{{ $f.LockedEntryList }}"
+                        >
+
+                        <br>
+
+                        <small>Only players already included in the entry list can join the server</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="RacePitWindowStart" class="col-sm-3 col-form-label">Race Pit Window Start</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="RacePitWindowStart"
+                                name="RacePitWindowStart"
+                                class="form-control"
+                                value="{{ $f.RacePitWindowStart }}"
+
+
+                                step="1"
+                        >
+
+                        <small>Pit window opens at lap/minute specified</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="RacePitWindowEnd" class="col-sm-3 col-form-label">Race Pit Window End</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="RacePitWindowEnd"
+                                name="RacePitWindowEnd"
+                                class="form-control"
+                                value="{{ $f.RacePitWindowEnd }}"
+
+
+                                step="1"
+                        >
+
+                        <small>Pit window closes at lap/minute specified</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="ReversedGridRacePositions" class="col-sm-3 col-form-label">Reversed Grid Race
+                        Positions</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="ReversedGridRacePositions"
+                                name="ReversedGridRacePositions"
+                                class="form-control"
+                                value="{{ $f.ReversedGridRacePositions }}"
+
+
+                                step="1"
+                        >
+
+                        <small> 0 = no additional race, 1toX = only those position will be reversed for the next race,
+                            -1 = all
+                            the position will be reversed (Retired players will be on the last positions)
+                        </small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="QualifyMaxWaitPercentage" class="col-sm-3 col-form-label">Qualify Max Wait
+                        Percentage</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="QualifyMaxWaitPercentage"
+                                name="QualifyMaxWaitPercentage"
+                                class="form-control"
+                                value="{{ $f.QualifyMaxWaitPercentage }}"
+
+
+                                step="1"
+                        >
+
+                        <small>The factor to calculate the remaining time in a qualify session after the session is
+                            ended: 120
+                            means that 120% of the session fastest lap remains to end the current lap.
+                        </small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="RaceGasPenaltyDisabled" class="col-sm-3 col-form-label">Race Gas Penalty
+                        Disabled</label>
+
+
+                    <div class="col-sm-9">
+                        <input
+                                type="checkbox"
+                                id="RaceGasPenaltyDisabled"
+                                name="RaceGasPenaltyDisabled"
+                                {{ if $f.RaceGasPenaltyDisabled }}
+                                    checked="checked"
+                                {{ end }}
+                        >
+                        <br>
+
+                        <small>Off = any cut will be penalized with the gas cut message; On = no penalization will be
+                            forced, but
+                            cuts will be saved in the race result json.
+                        </small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="MaxBallastKilograms" class="col-sm-3 col-form-label">Max Ballast Kilograms</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="MaxBallastKilograms"
+                                name="MaxBallastKilograms"
+                                class="form-control"
+                                value="{{ $f.MaxBallastKilograms }}"
+                                min="0"
+
+                                step="1"
+                        >
+
+                        <small>The max total of ballast that can be added through the admin command</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="AllowedTyresOut" class="col-sm-3 col-form-label">Allowed Tyres Out</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="AllowedTyresOut"
+                                name="AllowedTyresOut"
+                                class="form-control"
+                                value="{{ $f.AllowedTyresOut }}"
+
+
+                                step="1"
+                        >
+
+                        <small>TODO: I have no idea</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="PickupModeEnabled" class="col-sm-3 col-form-label">Pickup Mode Enabled</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="checkbox"
+                                id="PickupModeEnabled"
+                                name="PickupModeEnabled"
+                                class="form-control"
+                                {{ if $f.PickupModeEnabled }}
+                                    checked="checked"
+                                {{ end }}
+                        ><br>
+
+                        <small>If 0 the server starts in booking mode (<strong>do not use it</strong>).
+                            Warning: in pickup mode you have to list only a circuit under TRACK and you need to list a
+                            least one car in the entry_list
+                        </small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="LoopMode" class="col-sm-3 col-form-label">Loop Mode</label>
+
+
+                    <div class="col-sm-9">
+                        <input
+                                type="checkbox"
+                                id="LoopMode"
+                                name="LoopMode"
+                                {{ if $f.LoopMode }}
+                                    checked="checked"
+                                {{ end }}
+                        >
+                        <br>
+
+                        <small>The server restarts from the first event after the previous event has finished</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="SleepTime" class="col-sm-3 col-form-label">Sleep Time</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="SleepTime"
+                                name="SleepTime"
+                                class="form-control"
+                                value="{{ $f.SleepTime }}"
+
+
+                                step="1"
+                        >
+
+                        <small>TODO</small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="RaceOverTime" class="col-sm-3 col-form-label">Race Over Time</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="RaceOverTime"
+                                name="RaceOverTime"
+                                class="form-control"
+                                value="{{ $f.RaceOverTime }}"
+                                min="0"
+
+                                step="1"
+                        >
+
+                        <small>Time remaining in seconds to finish the race from the moment the first one passes on the
+                            finish
+                            line
+                        </small>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="StartRule" class="col-sm-3 col-form-label">Start Rule</label>
+
+                    <div class="col-sm-9">
+
+                        <select class="form-control" id="StartRule" name="StartRule">
+                            <option value="0" {{ if eq $f.StartRule 0 }} selected="selected" {{ end }}>Car is Locked Until Start</option>
+                            <option value="1" {{ if eq $f.StartRule 1 }} selected="selected" {{ end }}>Teleport</option>
+                            <option value="2" {{ if eq $f.StartRule 2 }} selected="selected" {{ end }}>Drive Through</option>
+                        </select>
+
+                        <small>If race has 3 or less laps then the Teleport penalty is enabled.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn-success float-right mt-5" type="submit">Start Race</button>
+
+        <div class="clearfix"></div>
+    </form>
+
+
+    <script type="text/javascript">
+        const availableTyres = {{ jsonEncode .Tyres }};
+    </script>
+{{ end }}

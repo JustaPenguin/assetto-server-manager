@@ -3,6 +3,7 @@ package servermanager
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/cj123/ini"
 )
@@ -24,15 +25,19 @@ const (
 )
 
 func (s SessionType) String() string {
-	return string(s)
+	return strings.Title(strings.ToLower(string(s)))
+}
+
+var AvailableSessions = []SessionType{
+	SessionTypeRace,
+	SessionTypeQualifying,
+	SessionTypePractice,
+	SessionTypeBooking,
 }
 
 type ServerConfig struct {
-	Server       ServerSetupConfig  `ini:"SERVER"`
-	DynamicTrack DynamicTrackConfig `ini:"DYNAMIC_TRACK"`
-
-	Sessions map[SessionType]SessionConfig
-	Weather  map[string]WeatherConfig
+	GlobalServerConfig GlobalServerConfig `ini:"SERVER"`
+	CurrentRaceConfig  CurrentRaceConfig  `ini:"SERVER"`
 }
 
 func (sc ServerConfig) Write() error {
@@ -53,14 +58,14 @@ func (sc ServerConfig) Write() error {
 		return err
 	}
 
-	err = server.ReflectFrom(&sc.Server)
+	err = server.ReflectFrom(&sc)
 
 	if err != nil {
 		return err
 	}
 
-	for k, v := range sc.Sessions {
-		sess, err := f.NewSection(k.String())
+	for k, v := range sc.CurrentRaceConfig.Sessions {
+		sess, err := f.NewSection(string(k))
 
 		if err != nil {
 			return err
@@ -79,13 +84,13 @@ func (sc ServerConfig) Write() error {
 		return err
 	}
 
-	err = dynamicTrack.ReflectFrom(&sc.Server)
+	err = dynamicTrack.ReflectFrom(&sc.CurrentRaceConfig.DynamicTrack)
 
 	if err != nil {
 		return err
 	}
 
-	for k, v := range sc.Weather {
+	for k, v := range sc.CurrentRaceConfig.Weather {
 		weather, err := f.NewSection(k)
 
 		if err != nil {
@@ -102,27 +107,7 @@ func (sc ServerConfig) Write() error {
 	return f.SaveTo(filepath.Join(ServerInstallPath, ServerConfigPath, serverConfigIniPath))
 }
 
-func (sc ServerConfig) AddSession(sessionType SessionType, config SessionConfig) {
-	sc.Sessions[sessionType] = config
-}
-
-func (sc ServerConfig) RemoveSession(sessionType SessionType) {
-	delete(sc.Sessions, sessionType)
-}
-
-func (sc ServerConfig) AddWeather(weather WeatherConfig) {
-	sc.Weather[fmt.Sprintf("WEATHER_%d", len(sc.Weather))] = weather
-}
-
-func (sc ServerConfig) RemoveWeather(weather WeatherConfig) {
-	for k, v := range sc.Weather {
-		if v == weather {
-			delete(sc.Weather, k)
-			return
-		}
-	}
-}
-
+// @TODO consider rename
 type GlobalServerConfig struct {
 	Name                      string `ini:"NAME" help:"Server Name"`
 	Password                  string `ini:"PASSWORD" input:"password" help:"server password"`
@@ -142,7 +127,7 @@ type GlobalServerConfig struct {
 	VotingQuorum              int    `ini:"VOTING_QUORUM" min:"0" max:"100" help:"percentage of vote that is required for the SESSION vote to pass"`
 	VoteDuration              int    `ini:"VOTE_DURATION" min:"0" help:"vote length in seconds"`
 	BlacklistMode             int    `ini:"BLACKLIST_MODE" min:"0" max:"2" help:"ban player -> 0 = normal kick, rejoin possible, 1 = until server restart WARNING: 2 is not more valid since kick_id and ban_id are two different commands."`
-	NumThreads                int    `ini:"NUM_THREADS" min:"1" help:"Number of threads to run on"`
+	NumberOfThreads           int    `ini:"NUM_THREADS" min:"1" help:"Number of threads to run on"`
 	WelcomeMessage            string `ini:"WELCOME_MESSAGE" help:"path to the file that contains the server welcome message"`
 	ResultScreenTime          int    `ini:"RESULT_SCREEN_TIME" help:"seconds of result screen between racing sessions"`
 }
@@ -183,11 +168,46 @@ type CurrentRaceConfig struct {
 	WindBaseSpeedMax       int `ini:"WIND_BASE_SPEED_MAX" help:"Max speed of session possible (max 40)"`
 	WindBaseDirection      int `ini:"WIND_BASE_DIRECTION" help:"base direction of the wind (wind is pointing at); 0 = North, 90 = East etc"`
 	WindVariationDirection int `ini:"WIND_VARIATION_DIRECTION" help:"variation (+ or -) of the base direction"`
+
+	DynamicTrack DynamicTrackConfig `ini:"-"`
+
+	Sessions map[SessionType]SessionConfig `ini:"-"`
+	Weather  map[string]WeatherConfig      `ini:"-"`
 }
 
-type ServerSetupConfig struct {
-	GlobalServerConfig GlobalServerConfig `ini:"SERVER"`
-	CurrentRaceConfig  CurrentRaceConfig  `ini:"SERVER"`
+func (c CurrentRaceConfig) HasSession(sess SessionType) bool {
+	_, ok := c.Sessions[sess]
+
+	return ok
+}
+
+func (c *CurrentRaceConfig) AddSession(sessionType SessionType, config SessionConfig) {
+	if c.Sessions == nil {
+		c.Sessions = make(map[SessionType]SessionConfig)
+	}
+
+	c.Sessions[sessionType] = config
+}
+
+func (c *CurrentRaceConfig) RemoveSession(sessionType SessionType) {
+	delete(c.Sessions, sessionType)
+}
+
+func (c *CurrentRaceConfig) AddWeather(weather WeatherConfig) {
+	if c.Weather == nil {
+		c.Weather = make(map[string]WeatherConfig)
+	}
+
+	c.Weather[fmt.Sprintf("WEATHER_%d", len(c.Weather))] = weather
+}
+
+func (c *CurrentRaceConfig) RemoveWeather(weather WeatherConfig) {
+	for k, v := range c.Weather {
+		if v == weather {
+			delete(c.Weather, k)
+			return
+		}
+	}
 }
 
 type SessionConfig struct {

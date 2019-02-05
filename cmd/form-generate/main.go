@@ -6,9 +6,9 @@ import (
 )
 
 func main() {
-	data := &servermanager.ConfigIniDefault
+	data := &servermanager.WeatherConfig{}
 
-	formElems := servermanager.NewForm(data, nil, "quick").Fields()
+	formElems := servermanager.NewForm(data, nil, "").Fields()
 
 	for _, formElem := range formElems {
 		fmt.Println(formElem.HTML())

@@ -1,9 +1,10 @@
 package servermanager
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"path/filepath"
 	"regexp"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/Masterminds/sprig"
 	"github.com/mattn/go-zglob"
+	"github.com/sirupsen/logrus"
 )
 
 // Renderer is the template engine.
@@ -59,6 +61,8 @@ func (tr *Renderer) init() error {
 	funcs["ordinal"] = ordinal
 	funcs["prettify"] = prettifyName
 	funcs["carList"] = carList
+	funcs["jsonEncode"] = jsonEncode
+	funcs["varSplit"] = varSplit
 
 	for _, page := range pages {
 		var templateList []string
@@ -90,6 +94,10 @@ func carList(cars string) string {
 	return strings.Join(out, ", ")
 }
 
+func varSplit(str string) []string {
+	return strings.Split(str, ";")
+}
+
 var nameRegex = regexp.MustCompile(`^[A-Za-z]{0,5}[0-9]+`)
 
 func prettifyName(s string, acronyms bool) string {
@@ -108,6 +116,14 @@ func prettifyName(s string, acronyms bool) string {
 	}
 
 	return strings.Join(parts, " ")
+}
+
+func jsonEncode(v interface{}) template.JS {
+	buf := new(bytes.Buffer)
+
+	_ = json.NewEncoder(buf).Encode(v)
+
+	return template.JS(buf.String())
 }
 
 // LoadTemplate reads a template from templates and renders it with data to the given io.Writer
@@ -160,7 +176,7 @@ func (tr *Renderer) MustLoadTemplate(w http.ResponseWriter, r *http.Request, vie
 	err := tr.LoadTemplate(w, r, view, data)
 
 	if err != nil {
-		log.Printf("Unable to load template: %s, err: %s", view, err)
+		logrus.Errorf("Unable to load template: %s, err: %s", view, err)
 		http.Error(w, "unable to load template", http.StatusInternalServerError)
 		return
 	}
@@ -182,7 +198,7 @@ func (tr *Renderer) MustLoadPartial(w http.ResponseWriter, partial string, data 
 	err := tr.LoadPartial(w, partial, data)
 
 	if err != nil {
-		log.Printf("Unable to load partial: %s, err: %s", partial, err)
+		logrus.Errorf("Unable to load partial: %s, err: %s", partial, err)
 		http.Error(w, "unable to load partial", http.StatusInternalServerError)
 		return
 	}

@@ -10,6 +10,7 @@
         {{ block "stylesheets" . }}
             <link rel="stylesheet" type="text/css" href="/static/css/style.css">
             <link rel="stylesheet" type="text/css" href="/static/css/multi-select.dist.css">
+            <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-switch.min.css">
             <link rel="stylesheet" type="text/css"
                   href="https://stackpath.bootstrapcdn.com/bootswatch/4.1.3/united/bootstrap.min.css">
         {{ end }}
@@ -25,16 +26,29 @@
 
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav mr-auto">
-
+                    <li class="nav-item">
+                        <a class="nav-link" href="/quick">Quick Race</a>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Race
+                            Custom Race
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="/quick">Quick</a>
-                            <a class="dropdown-item" href="/custom">Custom</a>
+                            <a class="dropdown-item" href="/custom">Existing</a>
+                            <a class="dropdown-item" href="/custom/new">New</a>
                         </div>
                     </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navBarContentDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Content
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navBarContentDropdown">
+                            <a class="dropdown-item" href="/tracks">Tracks</a>
+                            <a class="dropdown-item" href="/cars">Cars</a>
+                        </div>
+                    </li>
+
                     <li class="nav-item">
                         <a class="nav-link" href="/server-options">Server Options</a>
                     </li>
@@ -87,6 +101,7 @@
         <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/all.js"></script>
         <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
         <script src="/static/js/jquery.multi-select.js"></script>
+        <script src="/static/js/bootstrap-switch.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.bundle.min.js" integrity="sha384-zDnhMsjVZfS3hiP7oCBRmfjkQC4fzxVxFhBx8Hkz2aZX8gEvA/jsP3eXRCvzTofP" crossorigin="anonymous"></script>
         <script src="/static/manager.js"></script>
