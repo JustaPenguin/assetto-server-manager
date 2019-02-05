@@ -2,7 +2,6 @@ package servermanager
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"html/template"
 	"log"
 	"net/http"
@@ -148,7 +147,7 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 	err = session.Save(r, w)
 
 	if err != nil {
-		logrus.Fatalf("could not save session, err: %s", err)
+		return err
 	}
 
 	data["server_status"] = AssettoProcess.IsRunning()
