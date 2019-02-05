@@ -42,3 +42,7 @@ footer {
 abbr[title] {
     text-decoration: none !important;
 }
+
+.card-logs {
+    max-height: 600px;
+}

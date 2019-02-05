@@ -112,13 +112,13 @@ type GlobalServerConfig struct {
 	Name                      string `ini:"NAME" help:"Server Name"`
 	Password                  string `ini:"PASSWORD" input:"password" help:"server password"`
 	AdminPassword             string `ini:"ADMIN_PASSWORD" input:"password" help:"the password needed to be recognized as server administrator: you can join the server using it to be recognized automatically. Write on the game's chat /help to see the command list"`
-	UDPPort                   int    `ini:"UDP_PORT" min:"0" max:"65535" help:"UDP port number -> open this port on your server's firewall"`
-	TCPPort                   int    `ini:"TCP_PORT" min:"0" max:"65535" help:"TCP port number -> open this port on your server's firewall"`
-	HTTPPort                  int    `ini:"HTTP_PORT" min:"0" max:"65535" help:"Lobby port number -> open this ports (both UDP and TCP) on your server's firewall"`
+	UDPPort                   int    `ini:"UDP_PORT" min:"0" max:"65535" help:"UDP port number: open this port on your server's firewall"`
+	TCPPort                   int    `ini:"TCP_PORT" min:"0" max:"65535" help:"TCP port number: open this port on your server's firewall"`
+	HTTPPort                  int    `ini:"HTTP_PORT" min:"0" max:"65535" help:"Lobby port number: open these ports (both UDP and TCP) on your server's firewall"`
 	UDPPluginLocalPort        int    `ini:"UDP_PLUGIN_LOCAL_PORT" min:"0" max:"65535" help:"TODO"`
 	UDPPluginAddress          string `ini:"UDP_PLUGIN_ADDRESS" help:"TODO"`
 	AuthPluginAddress         string `ini:"AUTH_PLUGIN_ADDRESS" help:"TODO"`
-	RegisterToLobby           int    `ini:"REGISTER_TO_LOBBY" input:"checkbox" help:"TODO"`
+	RegisterToLobby           int    `ini:"REGISTER_TO_LOBBY" input:"checkbox" help:"Register the AC Server to the main lobby"`
 	ClientSendIntervalInHertz int    `ini:"CLIENT_SEND_INTERVAL_HZ" help:"refresh rate of packet sending by the server. 10Hz = ~100ms. Higher number = higher MP quality = higher bandwidth resources needed. Really high values can create connection issues"`
 	SendBufferSize            int    `ini:"SEND_BUFFER_SIZE" help:"TODO"`
 	ReceiveBufferSize         int    `ini:"RECV_BUFFER_SIZE" help:"TODO"`

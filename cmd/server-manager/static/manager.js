@@ -59,6 +59,19 @@ let raceSetup = {
 
         raceSetup.$addWeatherButton.click(raceSetup.addWeather);
 
+        $document.find(".weather-delete").click(function(e) {
+            e.preventDefault();
+            let $this = $(this);
+
+            $this.closest(".weather").remove();
+
+            // go through all .weather divs and update their numbers
+            $document.find(".weather").each(function(index, elem) {
+                $(elem).find(".weather-num").text(index);
+
+            });
+        });
+
         $document.find(".weather-graphics").change(function () {
             let $this = $(this);
 
@@ -108,6 +121,7 @@ let raceSetup = {
 
         let $newWeather = $oldWeather.clone(true, true);
         $newWeather.find(".weather-num").text($document.find(".weather").length);
+        $newWeather.find(".weather-delete").show();
 
         $oldWeather.after($newWeather);
     },
@@ -279,12 +293,42 @@ let serverLogs = {
         let $serverLog = $document.find("#server-logs");
         let $managerLog = $document.find("#manager-logs");
 
+        let disableServerLogRefresh = false;
+        let disableManagerLogRefresh = false;
+
+        $serverLog.on("mousedown", function() {
+            disableServerLogRefresh = true;
+        });
+
+        $serverLog.on("mouseup", function() {
+            disableServerLogRefresh = false;
+        });
+
+        $managerLog.on("mousedown", function() {
+            disableManagerLogRefresh = true;
+        });
+
+        $managerLog.on("mouseup", function() {
+            disableManagerLogRefresh = false;
+        });
+
         if ($serverLog.length && $managerLog.length) {
 
             setInterval(function () {
                 $.get("/api/logs", function (data) {
-                    $serverLog.text(data.ServerLog);
-                    $managerLog.text(data.ManagerLog);
+
+                    if (!window.getSelection().toString()) {
+                        if (!disableServerLogRefresh) {
+
+                            $serverLog.text(data.ServerLog);
+                            $serverLog.scrollTop(1E10);
+                        }
+
+                        if (!disableManagerLogRefresh) {
+                            $managerLog.text(data.ManagerLog);
+                            $managerLog.scrollTop(1E10);
+                        }
+                    }
                 });
             }, 1000);
         }
