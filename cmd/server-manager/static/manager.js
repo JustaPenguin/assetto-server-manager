@@ -91,7 +91,7 @@ let raceSetup = {
             raceSetup.loadTrackLayouts();
 
             raceSetup.$trackDropdown.change(raceSetup.loadTrackLayouts);
-            raceSetup.$trackLayoutDropdown.change(raceSetup.showTrackImage());
+            raceSetup.$trackLayoutDropdown.change(raceSetup.showTrackImage);
         }
 
         raceSetup.raceLaps();
@@ -193,6 +193,9 @@ let raceSetup = {
         }
     },
 
+    /**
+     * show track image shows the correct image for the track/layout combo
+     */
     showTrackImage: function() {
         let track = raceSetup.$trackDropdown.val();
         let layout = raceSetup.$trackLayoutDropdown.val();
@@ -203,6 +206,7 @@ let raceSetup = {
             src += '/' + layout;
         }
 
+        // @TODO jpg
         src += '/preview.png';
 
         $document.find("#trackImage").attr({

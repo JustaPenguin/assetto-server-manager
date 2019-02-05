@@ -156,8 +156,6 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		WindBaseDirection:      formValueAsInt(r.FormValue("WindBaseDirection")),
 		WindVariationDirection: formValueAsInt(r.FormValue("WindVariationDirection")),
 
-		// @TODO specific weather setups
-
 		// realism
 		LegalTyres:          strings.Join(r.Form["LegalTyres"], ";"),
 		FuelRate:            formValueAsInt(r.FormValue("FuelRate")),
