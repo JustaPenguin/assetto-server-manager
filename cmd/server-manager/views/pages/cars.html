@@ -1,7 +1,9 @@
 {{ define "title" }}Cars{{ end }}
 
 {{ define "content" }}
-    <div class="card text-white bg-info mb-3">
+    <h1 class="text-center">Cars</h1>
+
+    <div class="card mb-3">
         <div class="card-header"><strong>Upload a New Car</strong></div>
         <div class="card-body">
             <p class="card-text">You can upload multiple cars at once by placing them in a folder named "cars" and uploading
@@ -23,9 +25,7 @@
 
     <div id="car-info-panel"></div>
 
-    <h2>Car List</h2>
-
-    <table class="table table-striped">
+    <table class="table table-bordered table-striped">
         <tr>
             <th>#</th>
             <th>Car Name</th>
@@ -38,7 +38,7 @@
                     {{ $i }}
                 </td>
                 <td>
-                    {{ $car.Name }}
+                    <abbr title="{{ $car.Name }}">{{ prettify $car.Name true }}</abbr>
                 </td>
                 <td>
                     {{ $car.Skins }}

@@ -3,16 +3,44 @@ package servermanager
 import (
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"net/http"
+	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/etcd-io/bbolt"
+	"github.com/sirupsen/logrus"
 )
 
-var raceManager = &RaceManager{}
+var (
+	raceManager *RaceManager
+
+	ErrCustomRaceNotFound = errors.New("servermanager: custom race not found")
+)
+
+func init() {
+	storeFileLocation := os.Getenv("STORE_LOCATION")
+
+	bb, err := bbolt.Open(storeFileLocation, 0644, nil)
+
+	if err != nil {
+		logrus.Fatalf("could not open bbolt store at: '%s', err: %s", storeFileLocation, err)
+	}
+
+	raceManager = NewRaceManager(NewRaceStore(bb))
+}
 
 type RaceManager struct {
 	currentRace *ServerConfig
+
+	raceStore *RaceStore
+}
+
+func NewRaceManager(raceStore *RaceStore) *RaceManager {
+	return &RaceManager{raceStore: raceStore}
 }
 
 func (rm *RaceManager) CurrentRace() *ServerConfig {
@@ -226,11 +254,16 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		})
 	}
 
+	// save the custom race preset
+	if err := rm.SaveCustomRace(raceConfig, entryList); err != nil {
+		return err
+	}
+
 	return rm.applyConfigAndStart(completeConfig, entryList)
 }
 
 // BuildRaceOpts builds a quick race form
-func (rm *RaceManager) BuildRaceOpts() (map[string]interface{}, error) {
+func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, error) {
 	cars, err := ListCars()
 
 	if err != nil {
@@ -264,6 +297,20 @@ func (rm *RaceManager) BuildRaceOpts() (map[string]interface{}, error) {
 	// @TODO eventually this will be loaded from somewhere
 	race := &ConfigIniDefault
 
+	templateID := r.URL.Query().Get("from")
+
+	if templateID != "" {
+		// load a from a custom race template
+		customRace, err := rm.raceStore.FindCustomRaceByID(templateID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		// @TODO loading entrylist
+		race.CurrentRaceConfig = customRace.RaceConfig
+	}
+
 	for _, track := range tracks {
 		trackNames = append(trackNames, track.Name)
 
@@ -293,13 +340,60 @@ func (rm *RaceManager) BuildRaceOpts() (map[string]interface{}, error) {
 }
 
 type CustomRace struct {
-	Name    string
 	Created time.Time
 	Deleted time.Time
+	UUID    uuid.UUID
 
-	ServerSetup CurrentRaceConfig
+	RaceConfig CurrentRaceConfig
+	EntryList  EntryList
 }
 
 func (rm *RaceManager) ListCustomRaces() ([]CustomRace, error) {
-	return nil, nil
+	races, err := rm.raceStore.ListCustomRaces()
+
+	if err == bbolt.ErrBucketNotFound {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	sort.Slice(races, func(i, j int) bool {
+		return races[i].Created.After(races[j].Created)
+	})
+
+	return races, nil
+}
+
+func (rm *RaceManager) SaveCustomRace(config CurrentRaceConfig, entryList EntryList) error {
+	return rm.raceStore.UpsertCustomRace(CustomRace{
+		Created: time.Now(),
+		UUID:    uuid.New(),
+
+		RaceConfig: config,
+		EntryList:  entryList,
+	})
+}
+
+func (rm *RaceManager) StartCustomRace(uuid string) error {
+	race, err := rm.raceStore.FindCustomRaceByID(uuid)
+
+	if err != nil {
+		return err
+	}
+
+	// @TODO eventually this will be loaded from somewhere
+	cfg := ConfigIniDefault
+	cfg.CurrentRaceConfig = race.RaceConfig
+
+	return rm.applyConfigAndStart(cfg, race.EntryList)
+}
+
+func (rm *RaceManager) DeleteCustomRace(uuid string) error {
+	race, err := rm.raceStore.FindCustomRaceByID(uuid)
+
+	if err != nil {
+		return err
+	}
+
+	return rm.raceStore.DeleteCustomRace(*race)
 }

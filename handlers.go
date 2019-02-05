@@ -41,6 +41,8 @@ func Router() *mux.Router {
 	r.Methods(http.MethodPost).Path("/quick/submit").HandlerFunc(quickRaceSubmitHandler)
 	r.HandleFunc("/custom", customRaceListHandler)
 	r.HandleFunc("/custom/new", customRaceNewHandler)
+	r.HandleFunc("/custom/load/{uuid}", customRaceLoadHandler)
+	r.HandleFunc("/custom/delete/{uuid}", customRaceDeleteHandler)
 	r.Methods(http.MethodPost).Path("/custom/new/submit").HandlerFunc(customRaceSubmitHandler)
 	r.HandleFunc("/logs", serverLogsHandler)
 	r.HandleFunc("/process/{action}", serverProcessHandler)
@@ -108,7 +110,7 @@ func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func quickRaceHandler(w http.ResponseWriter, r *http.Request) {
-	quickRaceData, err := raceManager.BuildRaceOpts()
+	quickRaceData, err := raceManager.BuildRaceOpts(r)
 
 	if err != nil {
 		logrus.Errorf("couldn't build quick race, err: %s", err)
@@ -161,7 +163,7 @@ func customRaceListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func customRaceNewHandler(w http.ResponseWriter, r *http.Request) {
-	quickRaceData, err := raceManager.BuildRaceOpts()
+	quickRaceData, err := raceManager.BuildRaceOpts(r)
 
 	if err != nil {
 		logrus.Errorf("couldn't build quick race, err: %s", err)
@@ -185,6 +187,32 @@ func customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
+func customRaceLoadHandler(w http.ResponseWriter, r *http.Request) {
+	err := raceManager.StartCustomRace(mux.Vars(r)["uuid"])
+
+	if err != nil {
+		logrus.Errorf("couldn't apply quick race, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	AddFlashQuick(w, r, "Custom race started!")
+	http.Redirect(w, r, "/", http.StatusFound)
+}
+
+func customRaceDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	err := raceManager.DeleteCustomRace(mux.Vars(r)["uuid"])
+
+	if err != nil {
+		logrus.Errorf("couldn't apply quick race, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	AddFlashQuick(w, r, "Custom race deleted!")
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
 func apiCarUploadHandler(w http.ResponseWriter, r *http.Request) {
 	uploadHandler(w, r, "Car")
 }
@@ -204,7 +232,6 @@ func tracksHandler(w http.ResponseWriter, r *http.Request) {
 		"tracks": tracks,
 	})
 }
-
 
 type contentFile struct {
 	Name     string `json:"name"`
