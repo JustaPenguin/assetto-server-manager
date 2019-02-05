@@ -131,7 +131,9 @@ func carsHandler(w http.ResponseWriter, r *http.Request) {
 	cars, err := ListCars()
 
 	if err != nil {
-		logrus.Fatalf("could not get car list, err: %s", err)
+		logrus.Errorf("could not get car list, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	ViewRenderer.MustLoadTemplate(w, r, "cars.html", map[string]interface{}{
@@ -151,7 +153,9 @@ func tracksHandler(w http.ResponseWriter, r *http.Request) {
 	tracks, err := ListTracks()
 
 	if err != nil {
-		logrus.Fatalf("could not get track list, err: %s", err)
+		logrus.Errorf("could not get track list, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	ViewRenderer.MustLoadTemplate(w, r, "tracks.html", map[string]interface{}{
@@ -171,47 +175,39 @@ var base64HeaderRegex = regexp.MustCompile("^(data:.+;base64,)")
 
 // Stores Files encoded into r.Body
 func uploadHandler(w http.ResponseWriter, r *http.Request, contentType string) {
-	var Files []contentFile
+	var files []contentFile
 
 	decoder := json.NewDecoder(r.Body)
 
-	err := decoder.Decode(&Files)
+	err := decoder.Decode(&files)
 
 	if err != nil {
 		logrus.Errorf("could not decode "+strings.ToLower(contentType)+" json, err: %s", err)
 		return
 	}
 
-	err = addFiles(Files, contentType)
+	err = addFiles(files, contentType)
 
 	if err != nil {
-		err = AddFlashQuick(w, r, contentType+"(s) could not be added")
-
-		if err != nil {
-			logrus.Errorf("could not add flash, err: %s", err)
-		}
+		AddFlashQuick(w, r, contentType+"(s) could not be added")
 
 		return
 	}
 
-	err = AddFlashQuick(w, r, contentType+"(s) added successfully!")
-
-	if err != nil {
-		logrus.Errorf("could not add flash, err: %s", err)
-	}
+	AddFlashQuick(w, r, contentType+"(s) added successfully!")
 }
 
 // Stores files in the correct location
-func addFiles(Files []contentFile, contentType string) error {
-	var tracksPath string
+func addFiles(files []contentFile, contentType string) error {
+	var contentPath string
 
 	if contentType == "Track" {
-		tracksPath = filepath.Join(ServerInstallPath, "content", "tracks")
+		contentPath = filepath.Join(ServerInstallPath, "content", "tracks")
 	} else if contentType == "Car" {
-		tracksPath = filepath.Join(ServerInstallPath, "content", "cars")
+		contentPath = filepath.Join(ServerInstallPath, "content", "cars")
 	}
 
-	for _, file := range Files {
+	for _, file := range files {
 		fileDecoded, err := base64.StdEncoding.DecodeString(base64HeaderRegex.ReplaceAllString(file.Data, ""))
 
 		if err != nil {
@@ -231,7 +227,7 @@ func addFiles(Files []contentFile, contentType string) error {
 			}
 		}
 
-		path := filepath.Join(tracksPath, file.FilePath)
+		path := filepath.Join(contentPath, file.FilePath)
 
 		// Makes any directories in the path that don't exist (there can be multiple)
 		err = os.MkdirAll(filepath.Dir(path), 0755)
@@ -256,16 +252,12 @@ func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	trackName := mux.Vars(r)["name"]
 	tracksPath := filepath.Join(ServerInstallPath, "content", "tracks")
 
-	existingTracks, err := ioutil.ReadDir(tracksPath)
+	existingTracks, err := ListTracks()
 
 	if err != nil {
 		logrus.Errorf("could not get track list, err: %s", err)
 
-		err = AddFlashQuick(w, r, "couldn't get track list")
-
-		if err != nil {
-			logrus.Fatalf("could not add flash, err: %s", err)
-		}
+		AddFlashQuick(w, r, "couldn't get track list")
 
 		http.Redirect(w, r, r.Referer(), http.StatusFound)
 
@@ -275,7 +267,7 @@ func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	var found bool
 
 	for _, track := range existingTracks {
-		if track.Name() == trackName {
+		if track.Name == trackName {
 			// Delete track
 			found = true
 
@@ -283,6 +275,7 @@ func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 			if err != nil {
 				found = false
+				logrus.Errorf("could not remove track files, err: %s", err)
 			}
 
 			break
@@ -299,11 +292,7 @@ func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		message = "Sorry, track could not be deleted."
 	}
 
-	err = AddFlashQuick(w, r, message)
-
-	if err != nil {
-		logrus.Fatalf("could not add flash, err: %s", err)
-	}
+	AddFlashQuick(w, r, message)
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
@@ -312,16 +301,12 @@ func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	carName := mux.Vars(r)["name"]
 	carsPath := filepath.Join(ServerInstallPath, "content", "cars")
 
-	existingCars, err := ioutil.ReadDir(carsPath)
+	existingCars, err := ListCars()
 
 	if err != nil {
 		logrus.Errorf("could not get car list, err: %s", err)
 
-		err = AddFlashQuick(w, r, "couldn't get track list")
-
-		if err != nil {
-			logrus.Fatalf("could not add flash, err: %s", err)
-		}
+		AddFlashQuick(w, r, "couldn't get track list")
 
 		http.Redirect(w, r, r.Referer(), http.StatusFound)
 
@@ -331,7 +316,7 @@ func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	var found bool
 
 	for _, car := range existingCars {
-		if car.Name() == carName {
+		if car.Name == carName {
 			// Delete car
 			found = true
 
@@ -339,6 +324,7 @@ func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 			if err != nil {
 				found = false
+				logrus.Errorf("could not remove car files, err: %s", err)
 			}
 
 			break
@@ -355,11 +341,7 @@ func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		message = "Sorry, car could not be deleted. Are you sure it was installed?"
 	}
 
-	err = AddFlashQuick(w, r, message)
-
-	if err != nil {
-		logrus.Fatalf("could not add flash, err: %s", err)
-	}
+	AddFlashQuick(w, r, message)
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
@@ -375,11 +357,11 @@ func getSession(r *http.Request) (*sessions.Session, error) {
 }
 
 // Helper function to get message session and add a flash
-func AddFlashQuick(w http.ResponseWriter, r *http.Request, message string) error {
-	session, err := store.Get(r, "messages")
+func AddFlashQuick(w http.ResponseWriter, r *http.Request, message string) {
+	session, err := getSession(r)
 
 	if err != nil {
-		return err
+		logrus.Errorf("could not get session, err: %s", err)
 	}
 
 	session.AddFlash(message)
@@ -387,10 +369,8 @@ func AddFlashQuick(w http.ResponseWriter, r *http.Request, message string) error
 	err = session.Save(r, w)
 
 	if err != nil {
-		logrus.Fatalf("could not save session, err: %s", err)
+		logrus.Errorf("could not save session, err: %s", err)
 	}
-
-	return nil
 }
 
 func serverLogsHandler(w http.ResponseWriter, r *http.Request) {
