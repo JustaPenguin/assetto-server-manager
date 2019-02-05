@@ -43,6 +43,7 @@ func Router() *mux.Router {
 	r.HandleFunc("/custom/new", customRaceNewHandler)
 	r.HandleFunc("/custom/load/{uuid}", customRaceLoadHandler)
 	r.HandleFunc("/custom/delete/{uuid}", customRaceDeleteHandler)
+	r.HandleFunc("/custom/star/{uuid}", customRaceStarHandler)
 	r.Methods(http.MethodPost).Path("/custom/new/submit").HandlerFunc(customRaceSubmitHandler)
 	r.HandleFunc("/logs", serverLogsHandler)
 	r.HandleFunc("/process/{action}", serverProcessHandler)
@@ -109,31 +110,6 @@ func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func quickRaceHandler(w http.ResponseWriter, r *http.Request) {
-	quickRaceData, err := raceManager.BuildRaceOpts(r)
-
-	if err != nil {
-		logrus.Errorf("couldn't build quick race, err: %s", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	ViewRenderer.MustLoadTemplate(w, r, "quick_race.html", quickRaceData)
-}
-
-func quickRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.SetupQuickRace(r)
-
-	if err != nil {
-		logrus.Errorf("couldn't apply quick race, err: %s", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	AddFlashQuick(w, r, "Quick race successfully started!")
-	http.Redirect(w, r, "/", http.StatusFound)
-}
-
 func carsHandler(w http.ResponseWriter, r *http.Request) {
 	cars, err := ListCars()
 
@@ -146,71 +122,6 @@ func carsHandler(w http.ResponseWriter, r *http.Request) {
 	ViewRenderer.MustLoadTemplate(w, r, "cars.html", map[string]interface{}{
 		"cars": cars,
 	})
-}
-
-func customRaceListHandler(w http.ResponseWriter, r *http.Request) {
-	races, err := raceManager.ListCustomRaces()
-
-	if err != nil {
-		logrus.Errorf("couldn't list custom races, err: %s", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	ViewRenderer.MustLoadTemplate(w, r, "custom-race/index.html", map[string]interface{}{
-		"Races": races,
-	})
-}
-
-func customRaceNewHandler(w http.ResponseWriter, r *http.Request) {
-	quickRaceData, err := raceManager.BuildRaceOpts(r)
-
-	if err != nil {
-		logrus.Errorf("couldn't build quick race, err: %s", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	ViewRenderer.MustLoadTemplate(w, r, "custom-race/new.html", quickRaceData)
-}
-
-func customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.SetupCustomRace(r)
-
-	if err != nil {
-		logrus.Errorf("couldn't apply quick race, err: %s", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	AddFlashQuick(w, r, "Custom race started!")
-	http.Redirect(w, r, "/", http.StatusFound)
-}
-
-func customRaceLoadHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.StartCustomRace(mux.Vars(r)["uuid"])
-
-	if err != nil {
-		logrus.Errorf("couldn't apply quick race, err: %s", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	AddFlashQuick(w, r, "Custom race started!")
-	http.Redirect(w, r, "/", http.StatusFound)
-}
-
-func customRaceDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.DeleteCustomRace(mux.Vars(r)["uuid"])
-
-	if err != nil {
-		logrus.Errorf("couldn't apply quick race, err: %s", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	AddFlashQuick(w, r, "Custom race deleted!")
-	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
 func apiCarUploadHandler(w http.ResponseWriter, r *http.Request) {

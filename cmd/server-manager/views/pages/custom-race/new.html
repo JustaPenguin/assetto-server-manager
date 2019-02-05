@@ -485,6 +485,16 @@
                             <div class="card mb-5 border-info">
                                 <div class="card-header">
                                     <strong class="weather-num">{{ $weatherIndex }}</strong>
+
+                                    <a href="#"
+                                       class="float-right text-danger weather-delete"
+                                       title="Delete this Weather"
+                                       {{ if eq $weatherIndex 0 }}
+                                           style="display: none;"
+                                       {{ end }}
+                                    >
+                                        <i class="fa fa-trash"></i>
+                                    </a>
                                 </div>
 
                                 <div class="card-body">
@@ -1087,8 +1097,10 @@
             </div>
         </div>
 
-        <button class="btn btn-success float-right mt-5" type="submit">Start Race</button>
-
+        <div class="float-right">
+            <button class="btn btn-info mt-5" name="action" value="justSave" type="submit">Save Custom Race</button>
+            <button class="btn btn-success mt-5" name="action" value="startRace" type="submit">Start Race</button>
+        </div>
         <div class="clearfix"></div>
     </form>
 

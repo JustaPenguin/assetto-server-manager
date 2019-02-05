@@ -3,7 +3,6 @@ package servermanager
 import (
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
 	"net/http"
 	"os"
 	"sort"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/etcd-io/bbolt"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -259,6 +259,10 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		return err
 	}
 
+	if r.FormValue("action") == "justSave" {
+		return nil
+	}
+
 	return rm.applyConfigAndStart(completeConfig, entryList)
 }
 
@@ -339,29 +343,36 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 	}, nil
 }
 
-type CustomRace struct {
-	Created time.Time
-	Deleted time.Time
-	UUID    uuid.UUID
+const maxRecentRaces = 30
 
-	RaceConfig CurrentRaceConfig
-	EntryList  EntryList
-}
-
-func (rm *RaceManager) ListCustomRaces() ([]CustomRace, error) {
-	races, err := rm.raceStore.ListCustomRaces()
+func (rm *RaceManager) ListCustomRaces() (recent, starred []CustomRace, err error) {
+	recent, err = rm.raceStore.ListCustomRaces()
 
 	if err == bbolt.ErrBucketNotFound {
-		return nil, nil
+		return nil, nil, nil
 	} else if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	sort.Slice(races, func(i, j int) bool {
-		return races[i].Created.After(races[j].Created)
+	sort.Slice(recent, func(i, j int) bool {
+		return recent[i].Created.After(recent[j].Created)
 	})
 
-	return races, nil
+	var filteredRecent []CustomRace
+
+	for _, race := range recent {
+		if race.Starred {
+			starred = append(starred, race)
+		} else {
+			filteredRecent = append(filteredRecent, race)
+		}
+	}
+
+	if len(filteredRecent) > maxRecentRaces {
+		filteredRecent = filteredRecent[:maxRecentRaces]
+	}
+
+	return filteredRecent, starred, nil
 }
 
 func (rm *RaceManager) SaveCustomRace(config CurrentRaceConfig, entryList EntryList) error {
@@ -396,4 +407,16 @@ func (rm *RaceManager) DeleteCustomRace(uuid string) error {
 	}
 
 	return rm.raceStore.DeleteCustomRace(*race)
+}
+
+func (rm *RaceManager) ToggleStarCustomRace(uuid string) error {
+	race, err := rm.raceStore.FindCustomRaceByID(uuid)
+
+	if err != nil {
+		return err
+	}
+
+	race.Starred = !race.Starred
+
+	return rm.raceStore.UpsertCustomRace(*race)
 }
