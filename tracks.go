@@ -1,6 +1,9 @@
 package servermanager
 
-import "io/ioutil"
+import (
+	"io/ioutil"
+	"path/filepath"
+)
 
 type Track struct {
 	Name    string
@@ -8,7 +11,7 @@ type Track struct {
 }
 
 func ListTracks() ([]Track, error) {
-	tracksPath := ServerInstallPath + "/content/tracks"
+	tracksPath := filepath.Join(ServerInstallPath, "content", "tracks")
 
 	trackFiles, err := ioutil.ReadDir(tracksPath)
 
@@ -35,6 +38,9 @@ func ListTracks() ([]Track, error) {
 						// track only has one layout
 						layouts = nil
 						break
+					} else if layout.Name() == "ui" {
+						// ui folder, not a layout
+						continue
 					} else {
 						layouts = append(layouts, layout.Name())
 					}
@@ -49,4 +55,22 @@ func ListTracks() ([]Track, error) {
 	}
 
 	return tracks, nil
+}
+
+func (t *Track) LayoutsCSV() string {
+	var layoutsCSV string
+
+	if t.Layouts == nil {
+		layoutsCSV = "Default"
+	} else {
+		for i, layout := range t.Layouts {
+			if i == len(t.Layouts)-1 {
+				layoutsCSV = layoutsCSV + layout
+			} else {
+				layoutsCSV = layoutsCSV + layout + ", "
+			}
+		}
+	}
+
+	return layoutsCSV
 }

@@ -1,0 +1,54 @@
+{{ define "title" }}Cars{{ end }}
+
+{{ define "content" }}
+    <div class="card text-white bg-info mb-3">
+        <div class="card-header"><strong>Upload a New Car</strong></div>
+        <div class="card-body">
+            <p class="card-text">You can upload multiple cars at once by placing them in a folder named "cars" and uploading
+                the whole folder. The upload process will only take the files that the server requires, and so should
+                not take too long.</p>
+
+            <p class="card-text mb-0">First choose the correct car folder (or containing folder) using the Choose
+                Files button below then use the Upload Cars button to upload your cars if the preview information appears
+                correctly.</p>
+
+            <form class="d-inline">
+                <input id="input-folder-car" class="btn btn-light mb-3 mt-3" name="input-folder-car[]" type="file"
+                       multiple webkitdirectory value="Choose Folder" onchange="handleCarFiles(this.files)"/>
+            </form>
+        </div>
+    </div>
+
+    <div id="upload-button"></div>
+
+    <div id="car-info-panel"></div>
+
+    <h2>Car List</h2>
+
+    <table class="table table-striped">
+        <tr>
+            <th>#</th>
+            <th>Car Name</th>
+            <th>Skins</th>
+            <th>Delete</th>
+        </tr>
+        {{ range $i, $car := .cars }}
+            <tr>
+                <td>
+                    {{ $i }}
+                </td>
+                <td>
+                    {{ $car.Name }}
+                </td>
+                <td>
+                    {{ $car.Skins }}
+                </td>
+                <td>
+                    <a href= {{ print "/car/delete/" $car.Name }}>Delete</a>
+                </td>
+            </tr>
+        {{ end }}
+    </table>
+
+    <div class="clearfix"></div>
+{{ end }}
