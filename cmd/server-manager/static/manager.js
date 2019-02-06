@@ -288,23 +288,53 @@ let raceSetup = {
         return $opt;
     },
 
-    $entrantsTable: null,
+    $entrantsDiv: null,
     $entrantTemplate: null,
 
+
+    driverNames: [],
+
+    autoCompleteDrivers: function () {
+        let opts = {
+            source: raceSetup.driverNames,
+            select: function (event, ui) {
+                // find item.value in our entrants list
+                let $row = $(event.target).closest(".entrant");
+
+                for (let entrant of possibleEntrants) {
+                    if (entrant.Name === ui.item.value) {
+                        // populate
+                        let $team = $row.find("input[name='EntryList.Team']");
+                        let $guid = $row.find("input[name='EntryList.GUID']");
+
+                        $team.val(entrant.Team);
+                        $guid.val(entrant.GUID);
+
+                        break;
+                    }
+                }
+            }
+        };
+
+        $(document).on('keydown.autocomplete', ".entryListName", function () {
+            $(this).autocomplete(opts);
+        });
+    },
+
     initEntrantsList: function () {
-        let driverNames = [];
+        raceSetup.$entrantsDiv = $document.find("#entrants");
 
-        for (let entrant of possibleEntrants) {
-            driverNames.push(entrant.Name);
-        }
-
-        raceSetup.$entrantsTable = $document.find("#entrants");
-
-        if (!raceSetup.$entrantsTable.length) {
+        if (!raceSetup.$entrantsDiv.length) {
             return;
         }
 
-        function onEntryListCarChange () {
+        if (possibleEntrants) {
+            for (let entrant of possibleEntrants) {
+                raceSetup.driverNames.push(entrant.Name);
+            }
+        }
+
+        function onEntryListCarChange() {
             let $this = $(this);
             let val = $this.val();
 
@@ -312,9 +342,7 @@ let raceSetup = {
         }
 
         $document.find(".entryListCar").change(onEntryListCarChange);
-        $document.find(".entryListName").autocomplete({
-            source: driverNames,
-        });
+        raceSetup.autoCompleteDrivers();
 
         let $tmpl = $document.find("#entrantTemplate");
         let $entrantTemplate = $tmpl.prop("id", "").clone(true, true);
@@ -322,7 +350,7 @@ let raceSetup = {
 
         function populateEntryListSkins($elem, val) {
             // populate skins
-            let $skinsDropdown = $elem.closest("tr").find(".entryListSkin");
+            let $skinsDropdown = $elem.closest(".entrant").find(".entryListSkin");
 
             let selected = $skinsDropdown.val();
             console.log(val, selected);
@@ -344,7 +372,7 @@ let raceSetup = {
 
         function deleteEntrant(e) {
             e.preventDefault();
-            $(this).closest("tr").remove();
+            $(this).closest(".entrant").remove();
         }
 
         function populateEntryListCars() {
@@ -387,7 +415,7 @@ let raceSetup = {
 
             let $elem = $entrantTemplate.clone();
             $elem.find("input[type='checkbox']").bootstrapSwitch();
-            $elem.appendTo(raceSetup.$entrantsTable);
+            $elem.insertBefore($(this));
             $elem.find(".entryListCar").change(onEntryListCarChange);
             $elem.find(".btn-delete-entrant").click(deleteEntrant);
             populateEntryListCars();
