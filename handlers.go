@@ -34,6 +34,8 @@ func Router() *mux.Router {
 	r.HandleFunc("/", homeHandler)
 	r.HandleFunc("/cars", carsHandler)
 	r.HandleFunc("/tracks", tracksHandler)
+	r.HandleFunc("/results", resultsHandler)
+	r.HandleFunc("/results/{fileName}", resultHandler)
 	r.HandleFunc("/track/delete/{name}", trackDeleteHandler)
 	r.HandleFunc("/car/delete/{name}", carDeleteHandler)
 	r.HandleFunc("/server-options", serverOptionsHandler)
