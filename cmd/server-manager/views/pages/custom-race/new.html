@@ -1,38 +1,112 @@
 {{ define "title" }}Custom Race{{ end }}
 
-{{ define "entrant-row" }}
-    <td>
-        <input class="form-control entryListName" type="text" name="EntryList.Name" {{ with .Name }}value="{{ . }}"{{ end }}>
-    </td>
-    <td>
-        <input class="form-control" type="text" name="EntryList.Team" {{ with .Team }}value="{{ . }}"{{ end }}>
-    </td>
-    <td>
-        <input class="form-control" type="text" name="EntryList.GUID" {{ with .GUID }}value="{{ . }}"{{ end }}>
-    </td>
-    <td>
-        <select class="form-control entryListCar" name="EntryList.Car">
-            {{ with .Model }}<option value="{{ . }}">{{ prettify . true }}</option>{{ end }}
-        </select>
-    </td>
-    <td>
-        <select class="form-control entryListSkin" name="EntryList.Skin">
-            {{ with .Skin }}<option value="{{ . }}">{{ prettify . true }}</option>{{ end }}
-        </select>
-    </td>
-    <td>
-        <input class="form-control" type="number" name="EntryList.Spectator" value="0" min="0" max="1" {{ with .SpectatorMode }}value="{{ . }}"{{ end }}>
-    </td>
-    <td>
-        <input class="form-control" type="number" min="0" value="0" name="EntryList.Ballast" {{ with .Ballast }}value="{{ . }}"{{ end }}>
-    </td>
-    <td>
-        <input class="form-control" type="number" min="0" max="100" value="0" name="EntryList.Restrictor" {{ with .Restrictor }}value="{{ . }}"{{ end }}>
-    </td>
+{{ define "entrant" }}
 
-    <td>
-        <a class="text-danger btn-delete-entrant" href="#"><i class="fas fa-trash"></i></a>
-    </td>
+    <div class="card mt-2 mb-2 border-success">
+        <div class="card-header">
+            Entrant
+
+            <a class="text-danger btn-delete-entrant float-right" href="#"><i class="fas fa-trash"></i></a>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="form-group row col-md-4">
+                    <label for="Name" class="col-sm-4 col-form-label col-form-label-sm">Name</label>
+
+                    <div class="col-sm-8">
+                        <input class="form-control form-control-sm entryListName" type="text" name="EntryList.Name" {{ with .Name }}value="{{ . }}"{{ end }}>
+                    </div>
+                </div>
+
+
+
+                <div class="form-group row col-md-4">
+                    <label for="Team" class="col-sm-4 col-form-label col-form-label-sm">Team</label>
+
+                    <div class="col-sm-8">
+                        <input class="form-control form-control-sm" type="text" name="EntryList.Team" {{ with .Team }}value="{{ . }}"{{ end }}>
+                    </div>
+                </div>
+
+
+                <div class="form-group row col-md-4">
+                    <label for="GUID" class="col-sm-4 col-form-label col-form-label-sm">GUID</label>
+
+                    <div class="col-sm-8">
+                        <input class="form-control form-control-sm" type="text" name="EntryList.GUID" {{ with .GUID }}value="{{ . }}"{{ end }}>
+                    </div>
+                </div>
+
+            </div>
+
+
+
+
+
+            <div class="row">
+
+                <div class="form-group row col-md-4">
+                    <label for="Model" class="col-sm-4 col-form-label col-form-label-sm">Car</label>
+
+                    <div class="col-sm-8">
+                        <select class="form-control form-control-sm entryListCar" name="EntryList.Car">
+                            {{ with .Model }}<option value="{{ . }}">{{ prettify . true }}</option>{{ end }}
+                        </select>
+                    </div>
+                </div>
+
+
+
+                <div class="form-group row col-md-4">
+                    <label for="Skin" class="col-sm-4 col-form-label col-form-label-sm">Skin</label>
+
+                    <div class="col-sm-8">
+                        <select class="form-control form-control-sm entryListSkin" name="EntryList.Skin">
+                            {{ with .Skin }}<option value="{{ . }}">{{ prettify . true }}</option>{{ end }}
+                        </select>
+                    </div>
+                </div>
+
+
+                <div class="form-group row col-md-4">
+                    <label for="Ballast" class="col-sm-4 col-form-label col-form-label-sm">Ballast</label>
+
+                    <div class="col-sm-8">
+                        <input class="form-control form-control-sm" type="number" min="0" value="0" name="EntryList.Ballast" {{ with .Ballast }}value="{{ . }}"{{ end }}>
+                    </div>
+                </div>
+
+
+            </div>
+
+
+            <div class="row">
+
+                <div class="form-group col-md-4 row">
+                    <label for="SpectatorMode" class="col-sm-4 col-form-label col-form-label-sm">Spectator Mode</label>
+
+                    <div class="col-sm-8">
+                        <input class="form-control form-control-sm" type="number" name="EntryList.Spectator" value="0" min="0" max="1" {{ with .SpectatorMode }}value="{{ . }}"{{ end }}>
+
+                    </div>
+                </div>
+
+
+
+                <div class="form-group col-md-4 row">
+                    <label for="Restrictor" class="col-sm-4 col-form-label col-form-label-sm">Restrictor</label>
+
+                    <div class="col-sm-8">
+                        <input class="form-control form-control-sm" type="number" min="0" max="100" value="0" name="EntryList.Restrictor" {{ with .Restrictor }}value="{{ . }}"{{ end }}>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
 {{ end }}
 
 {{ define "content" }}
@@ -311,41 +385,26 @@
                 <strong>Entry List</strong>
             </div>
 
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-bordered" id="entrants">
-                        <tr>
-                            <th>Name</th>
-                            <th>Team</th>
-                            <th>GUID</th>
-                            <th>Car</th>
-                            <th>Skin</th>
-                            <th>Spectator</th>
-                            <th>Ballast</th>
-                            <th>Restrictor</th>
-                            <th></th>
-                        </tr>
+            <div class="card-body" id="entrants">
 
+                <p>If you add an Entrant once, the next time you add it, the 'name' input will give you suggestions and auto-populate the Name, Team and GUID.</p>
 
-
-                        {{ range $index, $entrant := .CurrentEntrants }}
-                            <tr class="entrant">
-                                {{ template "entrant-row" $entrant }}
-                            </tr>
-                        {{ else }}
-                            <tr id="entrantTemplate" class="entrant">
-                                {{ template "entrant-row" }}
-                            </tr>
-                            <tr class="entrant">
-                                {{ template "entrant-row" }}
-                            </tr>
-                        {{ end }}
-                    </table>
-
-                    <button class="btn btn-success float-right" id="addEntrant">Add Entrant</button>
-
-                    <div class="clearfix"></div>
+                <div id="entrantTemplate" class="entrant">
+                    {{ template "entrant" }}
                 </div>
+
+                {{ range $index, $entrant := .CurrentEntrants }}
+                    <div class="entrant">
+                        {{ template "entrant" $entrant }}
+                    </div>
+                {{ else }}
+                    <div class="entrant">
+                        {{ template "entrant" }}
+                    </div>
+                {{ end }}
+                <button class="btn btn-success float-right" id="addEntrant">Add Entrant</button>
+
+                <div class="clearfix"></div>
             </div>
         </div>
 
@@ -1176,7 +1235,7 @@
 
         <div class="card mt-3 border-info">
             <div class="card-header text-white bg-info">
-                Save Custom Race
+                <strong>Save Custom Race</strong>
             </div>
             <div class="card-body">
                 <div class="form-group row">

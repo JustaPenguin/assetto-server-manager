@@ -260,12 +260,14 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		})
 	}
 
+	saveAsPresetWithoutStartingRace := r.FormValue("action") == "justSave"
+
 	// save the custom race preset
-	if err := rm.SaveCustomRace(r.FormValue("CustomRaceName"), raceConfig, entryList); err != nil {
+	if err := rm.SaveCustomRace(r.FormValue("CustomRaceName"), raceConfig, entryList, saveAsPresetWithoutStartingRace); err != nil {
 		return err
 	}
 
-	if r.FormValue("action") == "justSave" {
+	if saveAsPresetWithoutStartingRace {
 		return nil
 	}
 
@@ -388,7 +390,7 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred []CustomRace, err erro
 	return filteredRecent, starred, nil
 }
 
-func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, entryList EntryList) error {
+func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, entryList EntryList, starred bool) error {
 	if name == "" {
 		name = fmt.Sprintf("%s (%s) in %s (%d entrants)",
 			prettifyName(config.Track, false),
@@ -399,8 +401,8 @@ func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, ent
 	}
 
 	for _, entrant := range entryList {
-		if entrant.Name == "" || entrant.GUID == "" {
-			continue // only save entrants that have a name and guid
+		if entrant.Name == "" {
+			continue // only save entrants that have a name
 		}
 
 		err := rm.raceStore.UpsertEntrant(entrant)
@@ -414,6 +416,7 @@ func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, ent
 		Name:    name,
 		Created: time.Now(),
 		UUID:    uuid.New(),
+		Starred: starred,
 
 		RaceConfig: config,
 		EntryList:  entryList,
