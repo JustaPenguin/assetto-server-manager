@@ -65,6 +65,7 @@ func (tr *Renderer) init() error {
 	funcs["jsonEncode"] = jsonEncode
 	funcs["varSplit"] = varSplit
 	funcs["timeFormat"] = timeFormat
+	funcs["dateFormat"] = dateFormat
 
 	for _, page := range pages {
 		var templateList []string
@@ -85,7 +86,11 @@ func (tr *Renderer) init() error {
 }
 
 func timeFormat(t time.Time) string {
-	return t.Format(time.RFC1123)
+	return t.Format(time.Kitchen)
+}
+
+func dateFormat(t time.Time) string {
+	return t.Format("02/01/2006")
 }
 
 func carList(cars string) string {
