@@ -255,7 +255,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 	}
 
 	// save the custom race preset
-	if err := rm.SaveCustomRace(raceConfig, entryList); err != nil {
+	if err := rm.SaveCustomRace(r.FormValue("CustomRaceName"), raceConfig, entryList); err != nil {
 		return err
 	}
 
@@ -375,8 +375,18 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred []CustomRace, err erro
 	return filteredRecent, starred, nil
 }
 
-func (rm *RaceManager) SaveCustomRace(config CurrentRaceConfig, entryList EntryList) error {
+func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, entryList EntryList) error {
+	if name == "" {
+		name = fmt.Sprintf("%s (%s) in %s (%d entrants)",
+			prettifyName(config.Track, false),
+			prettifyName(config.TrackLayout, true),
+			carList(config.Cars),
+			len(entryList),
+		)
+	}
+
 	return rm.raceStore.UpsertCustomRace(CustomRace{
+		Name:    name,
 		Created: time.Now(),
 		UUID:    uuid.New(),
 

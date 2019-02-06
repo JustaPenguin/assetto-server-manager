@@ -1097,10 +1097,38 @@
             </div>
         </div>
 
-        <div class="float-right">
-            <button class="btn btn-info mt-5" name="action" value="justSave" type="submit">Save Custom Race</button>
-            <button class="btn btn-success mt-5" name="action" value="startRace" type="submit">Start Race</button>
+        <div class="card mt-3 border-info">
+            <div class="card-header text-white bg-info">
+                Save Custom Race
+            </div>
+            <div class="card-body">
+                <div class="form-group row">
+                    <label for="CustomRaceName" class="col-sm-3 col-form-label">Custom Race Name</label>
+
+                    <div class="col-sm-9">
+
+                        <input
+                                class="form-control"
+                                type="text"
+                                id="CustomRaceName"
+                                name="CustomRaceName"
+                                value=""
+                                placeholder="Something to identify this Custom Race"
+                        >
+
+                        <small>The name above will be used on the Custom Races page.</small>
+                    </div>
+                </div>
+
+
+
+                <div class="float-right">
+                    <button class="btn btn-info mt-5" data-toggle="tooltip" name="action" value="justSave" type="submit" title="Save this setup without starting the race">Save Custom Race</button>
+                    <button class="btn btn-success mt-5" data-toggle="tooltip" name="action" value="startRace" type="submit" title="Save this setup and begin the race">Start Race</button>
+                </div>
+            </div>
         </div>
+
         <div class="clearfix"></div>
     </form>
 

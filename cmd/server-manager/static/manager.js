@@ -13,6 +13,7 @@ $(document).ready(function () {
     $.fn.bootstrapSwitch.defaults.animate = false;
     $.fn.bootstrapSwitch.defaults.onColor = "success";
     $document.find("input[type='checkbox']").bootstrapSwitch();
+    $document.find('[data-toggle="tooltip"]').tooltip();
 
     raceSetup.init();
     serverLogs.init();

@@ -10,6 +10,7 @@ import (
 )
 
 type CustomRace struct {
+	Name    string
 	Created time.Time
 	Deleted time.Time
 	UUID    uuid.UUID
