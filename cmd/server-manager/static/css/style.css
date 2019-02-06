@@ -38,3 +38,15 @@ footer {
 .nav-tabs .nav-link {
     color: #495057;
 }
+
+.row-link:hover {
+    cursor: pointer;
+    color: #E95420;
+}
+
+.driver-link:hover {
+    cursor: pointer;
+    color: #E95420;
+}
+
+span[data-toggle=tooltip] { cursor: default; }
