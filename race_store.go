@@ -16,6 +16,7 @@ func NewRaceStore(db *bbolt.DB) *RaceStore {
 
 var (
 	customRaceBucketName = []byte("customRaces")
+	entrantsBucketName   = []byte("entrants")
 )
 
 func (rs *RaceStore) customRaceBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
@@ -86,7 +87,9 @@ func (rs *RaceStore) ListCustomRaces() ([]CustomRace, error) {
 	err := rs.db.View(func(tx *bbolt.Tx) error {
 		bkt, err := rs.customRaceBucket(tx)
 
-		if err != nil {
+		if err == bbolt.ErrBucketNotFound {
+			return nil
+		} else if err != nil {
 			return err
 		}
 
@@ -117,4 +120,71 @@ func (rs *RaceStore) DeleteCustomRace(race CustomRace) error {
 	race.Deleted = time.Now()
 
 	return rs.UpsertCustomRace(race)
+}
+
+func (rs *RaceStore) entrantsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+	if !tx.Writable() {
+		bkt := tx.Bucket(entrantsBucketName)
+
+		if bkt == nil {
+			return nil, bbolt.ErrBucketNotFound
+		}
+
+		return bkt, nil
+	}
+
+	return tx.CreateBucketIfNotExists(entrantsBucketName)
+}
+
+func (rs *RaceStore) UpsertEntrant(entrant Entrant) error {
+	return rs.db.Update(func(tx *bbolt.Tx) error {
+		bkt, err := rs.entrantsBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		// clear out some race specific values
+		entrant.Model = ""
+		entrant.Skin = ""
+		entrant.SpectatorMode = 0
+
+		encoded, err := rs.encode(entrant)
+
+		if err != nil {
+			return err
+		}
+
+		return bkt.Put([]byte(entrant.ID()), encoded)
+	})
+}
+
+func (rs *RaceStore) ListEntrants() ([]Entrant, error) {
+	var entrants []Entrant
+
+	err := rs.db.View(func(tx *bbolt.Tx) error {
+		bkt, err := rs.entrantsBucket(tx)
+
+		if err == bbolt.ErrBucketNotFound {
+			return nil
+		} else if err != nil {
+			return err
+		}
+
+		return bkt.ForEach(func(k, v []byte) error {
+			var entrant Entrant
+
+			err := rs.decode(v, &entrant)
+
+			if err != nil {
+				return err
+			}
+
+			entrants = append(entrants, entrant)
+
+			return nil
+		})
+	})
+
+	return entrants, err
 }

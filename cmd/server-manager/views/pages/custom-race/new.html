@@ -1,5 +1,40 @@
 {{ define "title" }}Custom Race{{ end }}
 
+{{ define "entrant-row" }}
+    <td>
+        <input class="form-control entryListName" type="text" name="EntryList.Name" {{ with .Name }}value="{{ . }}"{{ end }}>
+    </td>
+    <td>
+        <input class="form-control" type="text" name="EntryList.Team" {{ with .Team }}value="{{ . }}"{{ end }}>
+    </td>
+    <td>
+        <input class="form-control" type="text" name="EntryList.GUID" {{ with .GUID }}value="{{ . }}"{{ end }}>
+    </td>
+    <td>
+        <select class="form-control entryListCar" name="EntryList.Car">
+            {{ with .Model }}<option value="{{ . }}">{{ prettify . true }}</option>{{ end }}
+        </select>
+    </td>
+    <td>
+        <select class="form-control entryListSkin" name="EntryList.Skin">
+            {{ with .Skin }}<option value="{{ . }}">{{ prettify . true }}</option>{{ end }}
+        </select>
+    </td>
+    <td>
+        <input class="form-control" type="number" name="EntryList.Spectator" value="0" min="0" max="1" {{ with .SpectatorMode }}value="{{ . }}"{{ end }}>
+    </td>
+    <td>
+        <input class="form-control" type="number" min="0" value="0" name="EntryList.Ballast" {{ with .Ballast }}value="{{ . }}"{{ end }}>
+    </td>
+    <td>
+        <input class="form-control" type="number" min="0" max="100" value="0" name="EntryList.Restrictor" {{ with .Restrictor }}value="{{ . }}"{{ end }}>
+    </td>
+
+    <td>
+        <a class="text-danger btn-delete-entrant" href="#"><i class="fas fa-trash"></i></a>
+    </td>
+{{ end }}
+
 {{ define "content" }}
 
     {{ $f := .Current }}
@@ -68,7 +103,7 @@
 
                     <div class="col-sm-10">
                         <select multiple class="form-control" name="Cars" id="Cars" size="15">
-                            {{ range $index, $car := .CarOpts }}
+                            {{ range $car, $skins := .CarOpts }}
                                 {{ $selected := false }}
 
                                 {{ range $j, $selectedCar := varSplit $f.Cars }}
@@ -271,6 +306,48 @@
             </div>
         </div>
 
+        <div class="card mt-3 border-secondary">
+            <div class="card-header">
+                <strong>Entry List</strong>
+            </div>
+
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered" id="entrants">
+                        <tr>
+                            <th>Name</th>
+                            <th>Team</th>
+                            <th>GUID</th>
+                            <th>Car</th>
+                            <th>Skin</th>
+                            <th>Spectator</th>
+                            <th>Ballast</th>
+                            <th>Restrictor</th>
+                            <th></th>
+                        </tr>
+
+
+
+                        {{ range $index, $entrant := .CurrentEntrants }}
+                            <tr class="entrant">
+                                {{ template "entrant-row" $entrant }}
+                            </tr>
+                        {{ else }}
+                            <tr id="entrantTemplate" class="entrant">
+                                {{ template "entrant-row" }}
+                            </tr>
+                            <tr class="entrant">
+                                {{ template "entrant-row" }}
+                            </tr>
+                        {{ end }}
+                    </table>
+
+                    <button class="btn btn-success float-right" id="addEntrant">Add Entrant</button>
+
+                    <div class="clearfix"></div>
+                </div>
+            </div>
+        </div>
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">
@@ -1120,8 +1197,6 @@
                     </div>
                 </div>
 
-
-
                 <div class="float-right">
                     <button class="btn btn-info mt-5" data-toggle="tooltip" name="action" value="justSave" type="submit" title="Save this setup without starting the race">Save Custom Race</button>
                     <button class="btn btn-success mt-5" data-toggle="tooltip" name="action" value="startRace" type="submit" title="Save this setup and begin the race">Start Race</button>
@@ -1135,5 +1210,7 @@
 
     <script type="text/javascript">
         const availableTyres = {{ jsonEncode .Tyres }};
+        const possibleEntrants = {{ jsonEncode .PossibleEntrants }};
+        const availableCars = {{ jsonEncode .CarOpts }};
     </script>
 {{ end }}

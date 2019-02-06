@@ -247,10 +247,16 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 
 	entryList := EntryList{}
 
-	// @TODO custom race needs an actual entry list.
-	for i := 0; i < completeConfig.GlobalServerConfig.MaxClients; i++ {
+	for i := 0; i < len(r.Form["EntryList.Name"]); i++ {
 		entryList.Add(Entrant{
-			Model: cars[i%len(cars)],
+			Name:          r.Form["EntryList.Name"][i],
+			Team:          r.Form["EntryList.Team"][i],
+			GUID:          r.Form["EntryList.GUID"][i],
+			Model:         r.Form["EntryList.Car"][i],
+			Skin:          r.Form["EntryList.Skin"][i],
+			SpectatorMode: formValueAsInt(r.Form["EntryList.Spectator"][i]),
+			Ballast:       formValueAsInt(r.Form["EntryList.Ballast"][i]),
+			Restrictor:    formValueAsInt(r.Form["EntryList.Restrictor"][i]),
 		})
 	}
 
@@ -280,11 +286,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		return nil, err
 	}
 
-	var carNames, trackNames, trackLayouts []string
-
-	for _, car := range cars {
-		carNames = append(carNames, car.Name)
-	}
+	var trackNames, trackLayouts []string
 
 	tyres, err := ListTyres()
 
@@ -303,6 +305,8 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 
 	templateID := r.URL.Query().Get("from")
 
+	var entrants EntryList
+
 	if templateID != "" {
 		// load a from a custom race template
 		customRace, err := rm.raceStore.FindCustomRaceByID(templateID)
@@ -313,6 +317,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 
 		// @TODO loading entrylist
 		race.CurrentRaceConfig = customRace.RaceConfig
+		entrants = customRace.EntryList
 	}
 
 	for _, track := range tracks {
@@ -331,8 +336,14 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		}
 	}
 
+	possibleEntrants, err := rm.raceStore.ListEntrants()
+
+	if err != nil {
+		return nil, err
+	}
+
 	return map[string]interface{}{
-		"CarOpts":           carNames,
+		"CarOpts":           cars.AsMap(),
 		"TrackOpts":         trackNames,
 		"TrackLayoutOpts":   trackLayouts,
 		"MaxClients":        race.GlobalServerConfig.MaxClients,
@@ -340,6 +351,8 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		"Tyres":             tyres,
 		"Weather":           weather,
 		"Current":           race.CurrentRaceConfig,
+		"CurrentEntrants":   entrants,
+		"PossibleEntrants":  possibleEntrants,
 	}, nil
 }
 
@@ -383,6 +396,18 @@ func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, ent
 			carList(config.Cars),
 			len(entryList),
 		)
+	}
+
+	for _, entrant := range entryList {
+		if entrant.Name == "" || entrant.GUID == "" {
+			continue // only save entrants that have a name and guid
+		}
+
+		err := rm.raceStore.UpsertEntrant(entrant)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return rm.raceStore.UpsertCustomRace(CustomRace{
