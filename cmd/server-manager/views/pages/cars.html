@@ -41,7 +41,7 @@
                     <abbr title="{{ $car.Name }}">{{ prettify $car.Name true }}</abbr>
                 </td>
                 <td>
-                    {{ $car.Skins }}
+                    {{ carList ($car.Skins | join ";")}}
                 </td>
                 <td>
                     <a href= {{ print "/car/delete/" $car.Name }}>Delete</a>
