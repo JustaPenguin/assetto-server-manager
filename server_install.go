@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/sirupsen/logrus"
 )
 
 // assettoServerSteamID is the ID of the server on steam.
@@ -37,15 +39,26 @@ func init() {
 func InstallAssettoCorsaServer(login, password string, force bool) error {
 	_, err := os.Stat(ServerInstallPath)
 
-	if !force && !os.IsNotExist(err) {
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	} else if !force && !os.IsNotExist(err) {
 		return nil // server is installed
 	}
 
-	if !isCommandAvailable("steamcmd") {
-		return ErrNoSteamCMD
+	logrus.Infof("Attempting to install the Assetto Corsa Server (steamid: %s) to %s", assettoServerSteamID, ServerInstallPath)
+
+	commandToUse := "steamcmd.sh"
+
+	if !isCommandAvailable(commandToUse) {
+		if isCommandAvailable("steamcmd") {
+			logrus.Infof("WARNING using steamcmd instead of steamcmd.sh. You must have run steamcmd before using this tool or Assetto Corsa Server will not install correctly.")
+			commandToUse = "steamcmd"
+		} else {
+			return ErrNoSteamCMD
+		}
 	}
 
-	cmd := exec.Command("steamcmd",
+	cmd := exec.Command(commandToUse,
 		"+@sSteamCmdForcePlatformType windows",
 		fmt.Sprintf("+login %s %s", login, password),
 		"+force_install_dir "+ServerInstallPath,
