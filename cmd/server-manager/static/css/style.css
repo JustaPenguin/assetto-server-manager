@@ -50,3 +50,5 @@ abbr[title] {
 .table-custom-race tr td:nth-child(2) {
     max-width: 250px;
 }
+
+span[data-toggle=tooltip] { cursor: default; }

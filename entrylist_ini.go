@@ -66,4 +66,13 @@ type Entrant struct {
 
 	Ballast       int `ini:"BALLAST"`
 	SpectatorMode int `ini:"SPECTATOR_MODE"`
+	Restrictor    int `ini:"RESTRICTOR"`
+}
+
+func (e Entrant) ID() string {
+	if e.GUID != "" {
+		return e.GUID
+	} else {
+		return e.Name
+	}
 }

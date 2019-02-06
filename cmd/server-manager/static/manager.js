@@ -7,6 +7,8 @@ $(document).ready(function () {
     console.log("initialising server manager javascript");
 
     $document = $(document);
+    raceSetup.init();
+    serverLogs.init();
 
     // init bootstrap-switch
     $.fn.bootstrapSwitch.defaults.size = 'small';
@@ -14,9 +16,6 @@ $(document).ready(function () {
     $.fn.bootstrapSwitch.defaults.onColor = "success";
     $document.find("input[type='checkbox']").bootstrapSwitch();
     $document.find('[data-toggle="tooltip"]').tooltip();
-
-    raceSetup.init();
-    serverLogs.init();
 });
 
 let raceSetup = {
@@ -60,14 +59,14 @@ let raceSetup = {
 
         raceSetup.$addWeatherButton.click(raceSetup.addWeather);
 
-        $document.find(".weather-delete").click(function(e) {
+        $document.find(".weather-delete").click(function (e) {
             e.preventDefault();
             let $this = $(this);
 
             $this.closest(".weather").remove();
 
             // go through all .weather divs and update their numbers
-            $document.find(".weather").each(function(index, elem) {
+            $document.find(".weather").each(function (index, elem) {
                 $(elem).find(".weather-num").text(index);
 
             });
@@ -110,6 +109,8 @@ let raceSetup = {
 
         raceSetup.raceLaps();
         raceSetup.showEnabledSessions();
+
+        raceSetup.initEntrantsList();
     },
 
     /**
@@ -286,6 +287,113 @@ let raceSetup = {
 
         return $opt;
     },
+
+    $entrantsTable: null,
+    $entrantTemplate: null,
+
+    initEntrantsList: function () {
+        let driverNames = [];
+
+        for (let entrant of possibleEntrants) {
+            driverNames.push(entrant.Name);
+        }
+
+        raceSetup.$entrantsTable = $document.find("#entrants");
+
+        if (!raceSetup.$entrantsTable.length) {
+            return;
+        }
+
+        function onEntryListCarChange () {
+            let $this = $(this);
+            let val = $this.val();
+
+            populateEntryListSkins($this, val);
+        }
+
+        $document.find(".entryListCar").change(onEntryListCarChange);
+        $document.find(".entryListName").autocomplete({
+            source: driverNames,
+        });
+
+        let $tmpl = $document.find("#entrantTemplate");
+        let $entrantTemplate = $tmpl.prop("id", "").clone(true, true);
+        $tmpl.remove();
+
+        function populateEntryListSkins($elem, val) {
+            // populate skins
+            let $skinsDropdown = $elem.closest("tr").find(".entryListSkin");
+
+            let selected = $skinsDropdown.val();
+            console.log(val, selected);
+
+            $skinsDropdown.empty();
+
+            for (let skin of availableCars[val]) {
+                let $opt = $("<option/>");
+                $opt.attr({'value': skin});
+                $opt.text(skin);
+
+                if (skin === selected) {
+                    $opt.attr({'selected': 'selected'});
+                }
+
+                $opt.appendTo($skinsDropdown);
+            }
+        }
+
+        function deleteEntrant(e) {
+            e.preventDefault();
+            $(this).closest("tr").remove();
+        }
+
+        function populateEntryListCars() {
+            // populate list of cars in entry list
+            let cars = new Set(raceSetup.$carsDropdown.val());
+
+            $document.find(".entryListCar").each(function (index, val) {
+                console.log(val);
+                let $val = $(val);
+                let selected = $val.find("option:selected").val();
+
+                if (!selected) {
+                    selected = raceSetup.$carsDropdown.val()[0];
+                }
+
+                $val.empty();
+
+                for (let val of cars.values()) {
+                    let $opt = $("<option />");
+                    $opt.attr({'value': val});
+                    $opt.text(val);
+
+                    if (val === selected) {
+                        $opt.attr({"selected": "selected"});
+                    }
+
+                    $val.append($opt);
+                }
+
+                populateEntryListSkins($val, selected);
+            });
+        }
+
+        populateEntryListCars();
+        raceSetup.$carsDropdown.change(populateEntryListCars);
+        $document.find(".btn-delete-entrant").click(deleteEntrant);
+
+        $document.find("#addEntrant").click(function (e) {
+            e.preventDefault();
+
+            let $elem = $entrantTemplate.clone();
+            $elem.find("input[type='checkbox']").bootstrapSwitch();
+            $elem.appendTo(raceSetup.$entrantsTable);
+            $elem.find(".entryListCar").change(onEntryListCarChange);
+            $elem.find(".btn-delete-entrant").click(deleteEntrant);
+            populateEntryListCars();
+        })
+
+    },
 };
 
 
@@ -297,19 +405,19 @@ let serverLogs = {
         let disableServerLogRefresh = false;
         let disableManagerLogRefresh = false;
 
-        $serverLog.on("mousedown", function() {
+        $serverLog.on("mousedown", function () {
             disableServerLogRefresh = true;
         });
 
-        $serverLog.on("mouseup", function() {
+        $serverLog.on("mouseup", function () {
             disableServerLogRefresh = false;
         });
 
-        $managerLog.on("mousedown", function() {
+        $managerLog.on("mousedown", function () {
             disableManagerLogRefresh = true;
         });
 
-        $managerLog.on("mouseup", function() {
+        $managerLog.on("mouseup", function () {
             disableManagerLogRefresh = false;
         });
 
