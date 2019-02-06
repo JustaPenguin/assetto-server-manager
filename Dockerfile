@@ -1,0 +1,56 @@
+FROM golang:1.11.5
+
+MAINTAINER Callum Jones <cj@icj.me>
+
+ENV STEAMROOT=/opt/steamcmd
+ENV DEBIAN_FRONTEND noninteractive
+ENV SERVER_USER assetto
+ENV BUILD_DIR ${GOPATH}/src/github.com/cj123/assetto-server-manager
+ENV SERVER_MANAGER_DIR /home/${SERVER_USER}/server-manager/
+ENV SERVER_INSTALL_DIR ${SERVER_MANAGER_DIR}/assetto
+ENV GO111MODULE on
+
+# steamcmd
+RUN apt-get update && apt-get install -y curl lib32gcc1 lib32stdc++6
+RUN mkdir -p ${STEAMROOT}
+WORKDIR ${STEAMROOT}
+RUN curl -s "http://media.steampowered.com/installer/steamcmd_linux.tar.gz" | tar -vxz
+ENV PATH "${STEAMROOT}:${PATH}"
+
+
+# update steam?
+RUN steamcmd.sh +login anonymous +quit; exit 0
+
+# build
+ADD . ${BUILD_DIR}
+WORKDIR ${BUILD_DIR}/cmd/server-manager
+RUN go build
+RUN mv server-manager /usr/bin/
+
+RUN useradd -ms /bin/bash ${SERVER_USER}
+
+# install
+RUN mkdir -p ${SERVER_MANAGER_DIR}
+RUN mv ${BUILD_DIR}/cmd/server-manager/views ${SERVER_MANAGER_DIR}
+RUN mv ${BUILD_DIR}/cmd/server-manager/static ${SERVER_MANAGER_DIR}
+
+RUN ${BUILD_DIR}/scripts/content-structure.sh ${SERVER_INSTALL_DIR}
+
+RUN chown -R ${SERVER_USER}:${SERVER_USER} ${SERVER_MANAGER_DIR}
+
+# cleanup
+RUN rm -rf ${BUILD_DIR}
+
+USER ${SERVER_USER}
+WORKDIR ${SERVER_MANAGER_DIR}
+
+# recommend volume mounting the entire assetto corsa directory
+VOLUME ["${SERVER_INSTALL_DIR}"]
+EXPOSE 8772
+
+# defaults
+ENV SERVER_ADDRESS "0.0.0.0:8772"
+ENV STORE_LOCATION ${SERVER_MANAGER_DIR}/store.db
+
+
+ENTRYPOINT ["server-manager"]
