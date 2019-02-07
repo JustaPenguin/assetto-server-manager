@@ -261,36 +261,13 @@ func listResults(page int) ([]SessionResults, []int, error) {
 	}
 
 	for _, resultFile := range resultFiles {
-		var result SessionResults
-
-		data, err := ioutil.ReadFile(filepath.Join(resultsPath, resultFile.Name()))
+		result, err := getResult(resultFile.Name())
 
 		if err != nil {
 			return nil, nil, err
 		}
 
-		err = json.Unmarshal(data, &result)
-
-		if err != nil {
-			return nil, nil, err
-		}
-
-		dateSplit := strings.Split(resultFile.Name(), "_")
-		dateSplit = dateSplit[0 : len(dateSplit)-1]
-		date := strings.Join(dateSplit, "_")
-
-		var year, month, day, hour, minute int
-
-		_, err = fmt.Sscanf(date, "%d_%d_%d_%d_%d", &year, &month, &day, &hour, &minute)
-
-		if err != nil {
-			return nil, nil, err
-		}
-
-		result.Date = time.Date(year, time.Month(month), day, hour, minute, 0, 0, time.Local)
-		result.SessionFile = strings.Trim(resultFile.Name(), ".json")
-
-		results = append(results, result)
+		results = append(results, *result)
 	}
 
 	return results, pagesSlice, nil
@@ -312,13 +289,12 @@ func getResultDate(name string) (time.Time, error) {
 	return time.Date(year, time.Month(month), day, hour, minute, 0, 0, time.Local), nil
 }
 
-func getResult(r *http.Request) (*SessionResults, error) {
+func getResult(fileName string) (*SessionResults, error) {
 	var result *SessionResults
-	fileName := mux.Vars(r)["fileName"]
 
 	resultsPath := filepath.Join(ServerInstallPath, "results")
 
-	data, err := ioutil.ReadFile(filepath.Join(resultsPath, fileName+".json"))
+	data, err := ioutil.ReadFile(filepath.Join(resultsPath, fileName))
 
 	if err != nil {
 		return nil, err
@@ -337,7 +313,7 @@ func getResult(r *http.Request) (*SessionResults, error) {
 	}
 
 	result.Date = date
-	result.SessionFile = fileName
+	result.SessionFile = strings.Trim(fileName, ".json")
 
 	return result, nil
 }
@@ -365,7 +341,10 @@ func resultsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func resultHandler(w http.ResponseWriter, r *http.Request) {
-	result, err := getResult(r)
+	var result *SessionResults
+	fileName := mux.Vars(r)["fileName"]
+
+	result, err := getResult(fileName+".json")
 
 	if err != nil {
 		logrus.Errorf("could not get result, err: %s", err)
