@@ -30,7 +30,7 @@
             <th>#</th>
             <th>Car Name</th>
             <th>Skins</th>
-            <th>Delete</th>
+            <th class="text-center">Delete</th>
         </tr>
         {{ range $i, $car := .cars }}
             <tr>
@@ -43,8 +43,8 @@
                 <td>
                     {{ carList ($car.Skins | join ";")}}
                 </td>
-                <td>
-                    <a href= {{ print "/car/delete/" $car.Name }}>Delete</a>
+                <td class="text-center">
+                    <a href="{{ print "/car/delete/" $car.Name }}"><i class="fas fa-trash"></i></a>
                 </td>
             </tr>
         {{ end }}

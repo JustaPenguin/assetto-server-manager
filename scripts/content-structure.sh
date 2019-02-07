@@ -3,6 +3,8 @@
 # this script was lifted from https://github.com/Pringlez/ACServerManager
 SERVER_INSTALL=$1
 
+echo "Building content structure"
+
 mkdir -p $SERVER_INSTALL/content/cars/
 mkdir -p $SERVER_INSTALL/content/cars/lotus_exos_125_s1
 mkdir -p $SERVER_INSTALL/content/cars/lotus_exos_125_s1/skins

@@ -2,6 +2,7 @@ FROM golang:1.11.5
 
 MAINTAINER Callum Jones <cj@icj.me>
 
+ENV STEAMCMD_URL="http://media.steampowered.com/installer/steamcmd_linux.tar.gz"
 ENV STEAMROOT=/opt/steamcmd
 ENV DEBIAN_FRONTEND noninteractive
 ENV SERVER_USER assetto
@@ -14,11 +15,10 @@ ENV GO111MODULE on
 RUN apt-get update && apt-get install -y curl lib32gcc1 lib32stdc++6
 RUN mkdir -p ${STEAMROOT}
 WORKDIR ${STEAMROOT}
-RUN curl -s "http://media.steampowered.com/installer/steamcmd_linux.tar.gz" | tar -vxz
+RUN curl -s ${STEAMCMD_URL} | tar -vxz
 ENV PATH "${STEAMROOT}:${PATH}"
 
-
-# update steam?
+# update steam
 RUN steamcmd.sh +login anonymous +quit; exit 0
 
 # build
@@ -34,9 +34,10 @@ RUN mkdir -p ${SERVER_MANAGER_DIR}
 RUN mv ${BUILD_DIR}/cmd/server-manager/views ${SERVER_MANAGER_DIR}
 RUN mv ${BUILD_DIR}/cmd/server-manager/static ${SERVER_MANAGER_DIR}
 
-RUN ${BUILD_DIR}/scripts/content-structure.sh ${SERVER_INSTALL_DIR}
+RUN mkdir ${SERVER_INSTALL_DIR}
 
 RUN chown -R ${SERVER_USER}:${SERVER_USER} ${SERVER_MANAGER_DIR}
+RUN chown -R ${SERVER_USER}:${SERVER_USER} ${SERVER_INSTALL_DIR}
 
 # cleanup
 RUN rm -rf ${BUILD_DIR}
@@ -44,13 +45,16 @@ RUN rm -rf ${BUILD_DIR}
 USER ${SERVER_USER}
 WORKDIR ${SERVER_MANAGER_DIR}
 
+ADD scripts/* ${SERVER_MANAGER_DIR}
+
 # recommend volume mounting the entire assetto corsa directory
 VOLUME ["${SERVER_INSTALL_DIR}"]
 EXPOSE 8772
+EXPOSE 9600
+EXPOSE 8081
 
 # defaults
 ENV SERVER_ADDRESS "0.0.0.0:8772"
-ENV STORE_LOCATION ${SERVER_MANAGER_DIR}/store.db
+ENV STORE_LOCATION ${SERVER_INSTALL_DIR}/store.db
 
-
-ENTRYPOINT ["server-manager"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
