@@ -34,10 +34,12 @@ func Router() *mux.Router {
 	r.HandleFunc("/", homeHandler)
 	r.HandleFunc("/cars", carsHandler)
 	r.HandleFunc("/tracks", tracksHandler)
+	r.HandleFunc("/weather", weatherHandler)
 	r.HandleFunc("/results", resultsHandler)
 	r.HandleFunc("/results/{fileName}", resultHandler)
 	r.HandleFunc("/track/delete/{name}", trackDeleteHandler)
 	r.HandleFunc("/car/delete/{name}", carDeleteHandler)
+	r.HandleFunc("/weather/delete/{key}", weatherDeleteHandler)
 	r.HandleFunc("/server-options", serverOptionsHandler)
 	r.HandleFunc("/quick", quickRaceHandler)
 	r.Methods(http.MethodPost).Path("/quick/submit").HandlerFunc(quickRaceSubmitHandler)
@@ -54,6 +56,7 @@ func Router() *mux.Router {
 	r.HandleFunc("/api/logs", apiServerLogHandler)
 	r.HandleFunc("/api/track/upload", apiTrackUploadHandler)
 	r.HandleFunc("/api/car/upload", apiCarUploadHandler)
+	r.HandleFunc("/api/weather/upload", apiWeatherUploadHandler)
 
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
 	r.PathPrefix("/content/").Handler(http.StripPrefix("/content", http.FileServer(http.Dir(filepath.Join(ServerInstallPath, "content")))))
@@ -141,8 +144,26 @@ func carsHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func weatherHandler(w http.ResponseWriter, r *http.Request) {
+	weather, err := ListWeather()
+
+	if err != nil {
+		logrus.Errorf("could not get weather list, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "weather.html", map[string]interface{}{
+		"weathers": weather,
+	})
+}
+
 func apiCarUploadHandler(w http.ResponseWriter, r *http.Request) {
 	uploadHandler(w, r, "Car")
+}
+
+func apiWeatherUploadHandler(w http.ResponseWriter, r *http.Request) {
+	uploadHandler(w, r, "Weather")
 }
 
 func apiTrackUploadHandler(w http.ResponseWriter, r *http.Request) {
@@ -199,10 +220,13 @@ func uploadHandler(w http.ResponseWriter, r *http.Request, contentType string) {
 func addFiles(files []contentFile, contentType string) error {
 	var contentPath string
 
-	if contentType == "Track" {
+	switch contentType {
+	case "Track":
 		contentPath = filepath.Join(ServerInstallPath, "content", "tracks")
-	} else if contentType == "Car" {
+	case "Car":
 		contentPath = filepath.Join(ServerInstallPath, "content", "cars")
+	case "Weather":
+		contentPath = filepath.Join(ServerInstallPath, "content", "weather")
 	}
 
 	for _, file := range files {
@@ -216,7 +240,7 @@ func addFiles(files []contentFile, contentType string) error {
 		// If user uploaded a "tracks" or "cars" folder containing multiple tracks
 		parts := strings.Split(file.FilePath, string(os.PathSeparator))
 
-		if parts[0] == "tracks" || parts[0] == "cars" {
+		if parts[0] == "tracks" || parts[0] == "cars" || parts[0] == "weather" {
 			parts = parts[1:]
 			file.FilePath = ""
 
@@ -295,6 +319,57 @@ func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+func weatherDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	weatherKey := mux.Vars(r)["key"]
+	weatherPath := filepath.Join(ServerInstallPath, "content", "weather")
+
+	existingWeather, err := ListWeather()
+
+	if err != nil {
+		logrus.Errorf("could not get weather list, err: %s", err)
+
+		AddFlashQuick(w, r, "couldn't get weather list")
+
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+
+		return
+	}
+
+	var found bool
+
+	for key := range existingWeather {
+		if weatherKey == key {
+			// Delete car
+			found = true
+
+			err := os.RemoveAll(filepath.Join(weatherPath, weatherKey))
+
+			if err != nil {
+				found = false
+				logrus.Errorf("could not remove weather files, err: %s", err)
+			}
+
+			delete(existingWeather, key)
+
+			break
+		}
+	}
+
+	var message string
+
+	if found {
+		// confirm deletion
+		message = "Weather preset successfully deleted!"
+	} else {
+		// inform weather wasn't found
+		message = "Sorry, weather preset could not be deleted. Are you sure it was installed?"
+	}
+
+	AddFlashQuick(w, r, message)
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
 func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	carName := mux.Vars(r)["name"]
 	carsPath := filepath.Join(ServerInstallPath, "content", "cars")
@@ -304,7 +379,7 @@ func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logrus.Errorf("could not get car list, err: %s", err)
 
-		AddFlashQuick(w, r, "couldn't get track list")
+		AddFlashQuick(w, r, "couldn't get car list")
 
 		http.Redirect(w, r, r.Referer(), http.StatusFound)
 
