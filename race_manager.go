@@ -456,7 +456,6 @@ func (rm *RaceManager) StartCustomRace(uuid string) error {
 		return err
 	}
 
-	// @TODO eventually this will be loaded from somewhere
 	cfg := ConfigIniDefault
 	cfg.CurrentRaceConfig = race.RaceConfig
 
