@@ -57,3 +57,7 @@ span[data-toggle=tooltip] { cursor: default; }
     cursor: pointer;
     color: #158CBA;
 }
+
+.home-race-info .race-info, .home-race-info .race-info small {
+    font-size: 1.1em;
+}

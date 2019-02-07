@@ -366,20 +366,21 @@ let raceSetup = {
             let $skinsDropdown = $elem.closest(".entrant").find(".entryListSkin");
 
             let selected = $skinsDropdown.val();
-            console.log(val, selected);
 
             $skinsDropdown.empty();
 
-            for (let skin of availableCars[val]) {
-                let $opt = $("<option/>");
-                $opt.attr({'value': skin});
-                $opt.text(skin);
+            if (val in availableCars) {
+                for (let skin of availableCars[val]) {
+                    let $opt = $("<option/>");
+                    $opt.attr({'value': skin});
+                    $opt.text(skin);
 
-                if (skin === selected) {
-                    $opt.attr({'selected': 'selected'});
+                    if (skin === selected) {
+                        $opt.attr({'selected': 'selected'});
+                    }
+
+                    $opt.appendTo($skinsDropdown);
                 }
-
-                $opt.appendTo($skinsDropdown);
             }
         }
 
@@ -393,7 +394,6 @@ let raceSetup = {
             let cars = new Set(raceSetup.$carsDropdown.val());
 
             $document.find(".entryListCar").each(function (index, val) {
-                console.log(val);
                 let $val = $(val);
                 let selected = $val.find("option:selected").val();
 

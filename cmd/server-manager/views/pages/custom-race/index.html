@@ -24,23 +24,7 @@
                     </td>
                     <td>{{ $race.Name }}</td>
                     <td>
-                        <strong>
-                            {{ prettify $race.RaceConfig.Track false }} {{ with $race.RaceConfig.TrackLayout }}({{ prettify . true }}){{ end }}
-                        </strong>
-
-                        <div class="float-right text-right">
-                            {{ range $sessionName, $session := $race.RaceConfig.Sessions }}
-                                <span data-toggle="tooltip" title="{{ $sessionName.String }}" class="badge badge-primary">{{ trunc 1 $sessionName.String }}</span>
-                            {{ end }}
-
-                            <br>
-
-                            <small class="mr-1">{{ len $race.EntryList }} <i class="fa fa-user"></i></small>
-                        </div>
-
-                        <br>
-                        <small>{{ carList $race.RaceConfig.Cars }}</small>
-
+                        {{ template "race-card" $race }}
                     </td>
                     <td>{{ timeFormat $race.Created }}<br> {{ dateFormat $race.Created }}</td>
                     <td>

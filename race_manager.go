@@ -35,6 +35,7 @@ func init() {
 
 type RaceManager struct {
 	currentRace *ServerConfig
+	currentEntryList EntryList
 
 	raceStore *RaceStore
 }
@@ -43,12 +44,12 @@ func NewRaceManager(raceStore *RaceStore) *RaceManager {
 	return &RaceManager{raceStore: raceStore}
 }
 
-func (rm *RaceManager) CurrentRace() *ServerConfig {
+func (rm *RaceManager) CurrentRace() (*ServerConfig, EntryList) {
 	if !AssettoProcess.IsRunning() {
-		return nil
+		return nil, nil
 	}
 
-	return rm.currentRace
+	return rm.currentRace, rm.currentEntryList
 }
 
 func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList) error {
@@ -65,6 +66,7 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 	}
 
 	rm.currentRace = &config
+	rm.currentEntryList = entryList
 
 	if AssettoProcess.IsRunning() {
 		return AssettoProcess.Restart()
@@ -133,12 +135,29 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 
 	entryList := EntryList{}
 
-	// @TODO this should work to the number of grid slots on the track rather than MaxClients.
-	for i := 0; i < quickRace.GlobalServerConfig.MaxClients; i++ {
+	var numPitboxes int
+
+	trackInfo, err := GetTrackInfo(quickRace.CurrentRaceConfig.Track, quickRace.CurrentRaceConfig.TrackLayout)
+
+	if err == nil {
+		boxes, err := trackInfo.Pitboxes.Int64()
+
+		if err != nil {
+			numPitboxes = quickRace.CurrentRaceConfig.MaxClients
+		}
+
+		numPitboxes = int(boxes)
+	} else {
+		numPitboxes = quickRace.CurrentRaceConfig.MaxClients
+	}
+
+	for i := 0; i < numPitboxes; i++ {
 		entryList.Add(Entrant{
 			Model: cars[i%len(cars)],
 		})
 	}
+
+	quickRace.CurrentRaceConfig.MaxClients = numPitboxes
 
 	return rm.applyConfigAndStart(quickRace, entryList)
 }
@@ -213,6 +232,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		SleepTime:                 formValueAsInt(r.FormValue("SleepTime")),
 		RaceOverTime:              formValueAsInt(r.FormValue("RaceOverTime")),
 		StartRule:                 formValueAsInt(r.FormValue("StartRule")),
+		MaxClients:                 formValueAsInt(r.FormValue("MaxClients")),
 	}
 
 	for _, session := range AvailableSessions {
@@ -348,7 +368,6 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		"CarOpts":           cars.AsMap(),
 		"TrackOpts":         trackNames,
 		"TrackLayoutOpts":   trackLayouts,
-		"MaxClients":        race.GlobalServerConfig.MaxClients,
 		"AvailableSessions": AvailableSessions,
 		"Tyres":             tyres,
 		"Weather":           weather,

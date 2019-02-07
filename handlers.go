@@ -64,8 +64,16 @@ func Router() *mux.Router {
 
 // homeHandler serves content to /
 func homeHandler(w http.ResponseWriter, r *http.Request) {
+	currentRace, entryList := raceManager.CurrentRace()
+
+	var customRace *CustomRace
+
+	if currentRace != nil {
+		customRace = &CustomRace{EntryList: entryList, RaceConfig: currentRace.CurrentRaceConfig}
+	}
+
 	ViewRenderer.MustLoadTemplate(w, r, "home.html", map[string]interface{}{
-		"CurrentRace": raceManager.CurrentRace(),
+		"RaceDetails": customRace,
 	})
 }
 
@@ -330,31 +338,20 @@ func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-func getSession(r *http.Request) (*sessions.Session, error) {
-	session, err := store.Get(r, "messages")
+func getSession(r *http.Request) *sessions.Session {
+	session, _ := store.Get(r, "messages")
 
-	if err != nil {
-		return nil, err
-	}
-
-	return session, nil
+	return session
 }
 
 // Helper function to get message session and add a flash
 func AddFlashQuick(w http.ResponseWriter, r *http.Request, message string) {
-	session, err := getSession(r)
-
-	if err != nil {
-		logrus.Errorf("could not get session, err: %s", err)
-	}
+	session := getSession(r)
 
 	session.AddFlash(message)
 
-	err = session.Save(r, w)
-
-	if err != nil {
-		logrus.Errorf("could not save session, err: %s", err)
-	}
+	// gorilla sessions is dumb and errors weirdly
+	_ = session.Save(r, w)
 }
 
 func serverLogsHandler(w http.ResponseWriter, r *http.Request) {
