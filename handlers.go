@@ -54,6 +54,7 @@ func Router() *mux.Router {
 
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
 	r.PathPrefix("/content/").Handler(http.StripPrefix("/content", http.FileServer(http.Dir(filepath.Join(ServerInstallPath, "content")))))
+	r.PathPrefix("/results/download").Handler(http.StripPrefix("/results/download", http.FileServer(http.Dir(filepath.Join(ServerInstallPath, "results")))))
 
 	return r
 }
