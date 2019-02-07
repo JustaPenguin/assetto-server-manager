@@ -34,7 +34,7 @@ func init() {
 }
 
 type RaceManager struct {
-	currentRace *ServerConfig
+	currentRace      *ServerConfig
 	currentEntryList EntryList
 
 	raceStore *RaceStore
@@ -53,7 +53,16 @@ func (rm *RaceManager) CurrentRace() (*ServerConfig, EntryList) {
 }
 
 func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList) error {
-	err := config.Write()
+	// load server opts
+	serverOpts, err := rm.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	config.GlobalServerConfig = *serverOpts
+
+	err = config.Write()
 
 	if err != nil {
 		return err
@@ -232,7 +241,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		SleepTime:                 formValueAsInt(r.FormValue("SleepTime")),
 		RaceOverTime:              formValueAsInt(r.FormValue("RaceOverTime")),
 		StartRule:                 formValueAsInt(r.FormValue("StartRule")),
-		MaxClients:                 formValueAsInt(r.FormValue("MaxClients")),
+		MaxClients:                formValueAsInt(r.FormValue("MaxClients")),
 	}
 
 	for _, session := range AvailableSessions {
@@ -476,4 +485,12 @@ func (rm *RaceManager) ToggleStarCustomRace(uuid string) error {
 	race.Starred = !race.Starred
 
 	return rm.raceStore.UpsertCustomRace(*race)
+}
+
+func (rm *RaceManager) SaveServerOptions(so *GlobalServerConfig) error {
+	return rm.raceStore.UpsertServerOptions(so)
+}
+
+func (rm *RaceManager) LoadServerOptions() (*GlobalServerConfig, error) {
+	return rm.raceStore.LoadServerOptions()
 }
