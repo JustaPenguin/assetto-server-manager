@@ -15,7 +15,20 @@ $(document).ready(function () {
     $.fn.bootstrapSwitch.defaults.animate = false;
     $.fn.bootstrapSwitch.defaults.onColor = "success";
     $document.find("input[type='checkbox']").bootstrapSwitch();
+
+    raceSetup.init();
+    serverLogs.init();
+
     $document.find('[data-toggle="tooltip"]').tooltip();
+
+    $(".row-link").click(function() {
+        window.location = $(this).data("href");
+    });
+
+    $(".driver-link").click(function() {
+        window.location = $(this).data("href");
+        window.scrollBy(0, -100);
+    });
 });
 
 let raceSetup = {

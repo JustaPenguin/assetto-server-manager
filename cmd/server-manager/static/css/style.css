@@ -2,11 +2,6 @@ body {
     padding-top: 60px;
 }
 
-.navbar {
-    background: white;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
-}
-
 a.card {
     padding-top: 40px;
     padding-bottom: 40px;
@@ -52,3 +47,13 @@ abbr[title] {
 }
 
 span[data-toggle=tooltip] { cursor: default; }
+
+.row-link:hover {
+    cursor: pointer;
+    color: #158CBA;
+}
+
+.driver-link:hover {
+    cursor: pointer;
+    color: #158CBA;
+}
