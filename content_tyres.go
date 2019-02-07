@@ -13,9 +13,21 @@ var tyreFiles = []string{
 	"mod_tyres.ini",
 }
 
+type Tyres map[string]map[string]string
+
+func (t Tyres) Name(search string) string {
+	for _, car := range t {
+		if name, ok := car[search]; ok {
+			return name
+		}
+	}
+
+	return search
+}
+
 // ListTyres reads tyres from the TyreFiles and returns them as a map of car => tyre short name => tyre long name
-func ListTyres() (map[string]map[string]string, error) {
-	out := make(map[string]map[string]string)
+func ListTyres() (Tyres, error) {
+	out := make(Tyres)
 
 	for _, file := range tyreFiles {
 		tyres, err := loadTyresFromFile(file)

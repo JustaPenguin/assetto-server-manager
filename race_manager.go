@@ -90,6 +90,8 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 	return nil
 }
 
+var ErrMustSubmitCar = errors.New("servermanager: you must set a car!")
+
 func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 	if err := r.ParseForm(); err != nil {
 		return err
@@ -139,7 +141,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 	})
 
 	if len(cars) == 0 {
-		return errors.New("you must submit a car")
+		return ErrMustSubmitCar
 	}
 
 	entryList := EntryList{}
@@ -247,7 +249,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 	for _, session := range AvailableSessions {
 		sessName := session.String()
 
-		if r.FormValue(sessName+".Enabled") != "on" {
+		if r.FormValue(sessName+".Enabled") != "1" {
 			continue
 		}
 
@@ -331,7 +333,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		return nil, err
 	}
 
-	race := &ConfigIniDefault
+	race := ConfigIniDefault
 
 	templateID := r.URL.Query().Get("from")
 

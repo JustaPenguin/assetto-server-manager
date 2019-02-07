@@ -16,9 +16,6 @@ $(document).ready(function () {
     $.fn.bootstrapSwitch.defaults.onColor = "success";
     $document.find("input[type='checkbox']").bootstrapSwitch();
 
-    raceSetup.init();
-    serverLogs.init();
-
     $document.find('[data-toggle="tooltip"]').tooltip();
 
     $(".row-link").click(function () {
@@ -29,7 +26,41 @@ $(document).ready(function () {
         window.location = $(this).data("href");
         window.scrollBy(0, -100);
     });
+
+    $('form').submit(function () {
+        $(this).find('input[type="checkbox"]').each(function () {
+            let $checkbox = $(this);
+            if ($checkbox.is(':checked')) {
+                $checkbox.attr('value', '1');
+            } else {
+                $checkbox.after().append($checkbox.clone().attr({type: 'hidden', value: 0}));
+                $checkbox.prop('disabled', true);
+            }
+        })
+    });
 });
+
+const nameRegex = /^[A-Za-z]{0,5}[0-9]+/;
+
+function prettifyName(name, acronyms) {
+    let parts = name.split("_");
+
+    if (parts[0] === "ks") {
+        parts.shift();
+    }
+
+    for (let i = 0; i < parts.length; i++) {
+        if ((acronyms && parts[i].length <= 3) || (acronyms && parts[i].match(nameRegex))) {
+            parts[i] = parts[i].toUpperCase();
+        } else {
+            parts[i] = parts[i].split(' ')
+                .map(w => w[0].toUpperCase() + w.substr(1).toLowerCase())
+                .join(' ');
+        }
+    }
+
+    return parts.join(" ")
+}
 
 let raceSetup = {
     // jQuery elements
@@ -85,14 +116,7 @@ let raceSetup = {
             });
         });
 
-        $document.find(".weather-graphics").change(function () {
-            let $this = $(this);
-
-            $this.parent().parent().find(".weather-preview").attr({
-                'src': '/content/weather/' + $this.val() + '/preview.jpg',
-                'alt': $this.val(),
-            });
-        });
+        $document.find(".weather-graphics").change(raceSetup.updateWeatherGraphics);
 
         // restrict loading track layouts to pages which have track dropdown and layout dropdown on them.
         if (raceSetup.$trackDropdown.length && raceSetup.$trackLayoutDropdown.length) {
@@ -124,6 +148,15 @@ let raceSetup = {
         raceSetup.showEnabledSessions();
 
         raceSetup.initEntrantsList();
+    },
+
+    updateWeatherGraphics: function () {
+        let $this = $(this);
+
+        $this.closest(".weather").find(".weather-preview").attr({
+            'src': '/content/weather/' + $this.val() + '/preview.jpg',
+            'alt': $this.val(),
+        });
     },
 
     /**
@@ -281,7 +314,6 @@ let raceSetup = {
 
 
         raceSetup.showTrackImage();
-
     },
 
     /**
@@ -292,7 +324,7 @@ let raceSetup = {
     buildTrackLayoutOption: function (layout) {
         let $opt = $("<option/>");
         $opt.attr({'value': layout});
-        $opt.text(layout);
+        $opt.text(prettifyName(layout, true));
 
         if (layout === raceSetup.currentLayout) {
             $opt.prop("selected", true);
@@ -373,7 +405,7 @@ let raceSetup = {
                 for (let skin of availableCars[val]) {
                     let $opt = $("<option/>");
                     $opt.attr({'value': skin});
-                    $opt.text(skin);
+                    $opt.text(prettifyName(skin, true));
 
                     if (skin === selected) {
                         $opt.attr({'selected': 'selected'});
@@ -406,7 +438,7 @@ let raceSetup = {
                 for (let val of cars.values()) {
                     let $opt = $("<option />");
                     $opt.attr({'value': val});
-                    $opt.text(val);
+                    $opt.text(prettifyName(val, true));
 
                     if (val === selected) {
                         $opt.attr({"selected": "selected"});
