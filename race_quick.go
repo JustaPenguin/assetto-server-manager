@@ -21,7 +21,11 @@ func quickRaceHandler(w http.ResponseWriter, r *http.Request) {
 func quickRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	err := raceManager.SetupQuickRace(r)
 
-	if err != nil {
+	if err == ErrMustSubmitCar {
+		AddFlashQuick(w, r, "You must choose at least one car!")
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+		return
+	} else if err != nil {
 		logrus.Errorf("couldn't apply quick race, err: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return

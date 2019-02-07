@@ -89,7 +89,7 @@
                     <label for="SpectatorMode" class="col-sm-4 col-form-label col-form-label-sm">Spectator Mode</label>
 
                     <div class="col-sm-8">
-                        <input class="form-control form-control-sm" type="number" name="EntryList.Spectator" value="0" min="0" max="1" {{ with .SpectatorMode }}value="{{ . }}"{{ end }}>
+                        <input class="form-control" type="checkbox" name="EntryList.Spectator" {{ with .SpectatorMode }}{{ if eq . 1 }}checked="checked"{{ end }}{{ end }}>
 
                     </div>
                 </div>
@@ -920,12 +920,9 @@
 
                     <div class="col-sm-9">
                         <select multiple class="form-control" id="LegalTyres" name="LegalTyres">
-                            {{ range $index, $car := varSplit $f.Cars }}
-                                {{ range $index, $tyre := varSplit $f.LegalTyres }}
-                                    {{ $carTyres := index $allTyres $car }}
+                            {{ range $index, $tyre := varSplit $f.LegalTyres }}
 
-                                    <option value="{{ $tyre }}" selected="selected">{{ index $carTyres $tyre }} ({{ $tyre }})</option>
-                                {{ end }}
+                                <option value="{{ $tyre }}" selected="selected">{{ prettify ($allTyres.Name $tyre) false }} ({{ $tyre }})</option>
                             {{ end }}
                         </select>
 
@@ -1137,6 +1134,10 @@
                                id="LockedEntryList"
                                name="LockedEntryList"
                                value="{{ $f.LockedEntryList }}"
+
+                               {{ if eq $f.LockedEntryList 1 }}
+                                    checked="checked"
+                               {{ end }}
                         >
 
                         <br>
