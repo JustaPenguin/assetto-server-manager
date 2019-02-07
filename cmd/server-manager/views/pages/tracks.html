@@ -30,7 +30,7 @@
             <th>#</th>
             <th>Track Name</th>
             <th>Layouts</th>
-            <th>Delete</th>
+            <th class="text-center">Delete</th>
         </tr>
         {{ range $i, $track := .tracks }}
             <tr>
@@ -43,8 +43,8 @@
                 <td>
                     {{ $track.LayoutsCSV }}
                 </td>
-                <td>
-                    <a href= {{ print "/track/delete/" $track.Name }}>Delete</a>
+                <td class="text-center">
+                    <a href="{{ print "/track/delete/" $track.Name }}"><i class="fas fa-trash"></i></a>
                 </td>
             </tr>
         {{ end }}
