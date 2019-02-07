@@ -12,6 +12,8 @@
         <div class="card-header">
             <strong>{{ prettify $sessionResults.TrackName false }} {{ with $sessionResults.TrackConfig }} - {{ prettify . true }} {{ end }}</strong>
             on {{ $sessionResults.GetDate }}
+
+            <a class="btn btn-info btn-sm float-right" href="/results/download/{{ $sessionResults.SessionFile }}.json">Download as JSON</a>
         </div>
         <div class="card-body">
             <div class="row">
