@@ -21,11 +21,11 @@ $(document).ready(function () {
 
     $document.find('[data-toggle="tooltip"]').tooltip();
 
-    $(".row-link").click(function() {
+    $(".row-link").click(function () {
         window.location = $(this).data("href");
     });
 
-    $(".driver-link").click(function() {
+    $(".driver-link").click(function () {
         window.location = $(this).data("href");
         window.scrollBy(0, -100);
     });
@@ -624,7 +624,11 @@ function handleWeatherFilesLoop(fileList) {
     } else {
         if (!$("#weather-upload-button").length) {
             let $button = $("<button/>");
-            $button.attr({'class': "btn btn-primary", 'onclick': "submitFiles(\"/api/weather/upload\")", 'id': "weather-upload-button"});
+            $button.attr({
+                'class': "btn btn-primary",
+                'onclick': "submitFiles(\"/api/weather/upload\")",
+                'id': "weather-upload-button"
+            });
             $button.text("Upload Weather Preset(s)");
 
             $uploadButton.append($button);
