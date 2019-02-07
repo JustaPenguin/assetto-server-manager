@@ -1,0 +1,50 @@
+{{ define "title" }}Weather{{ end }}
+
+{{ define "content" }}
+    <div class="card text-white bg-info mb-3">
+        <div class="card-header"><strong>Upload a New Weather Preset</strong></div>
+        <div class="card-body">
+            <p class="card-text">You can upload multiple weather presets at once by placing them in a folder named "weather" and uploading
+                the whole folder. The upload process will only take the files that the server requires, and so should
+                not take too long.</p>
+
+            <p class="card-text mb-0">First choose the correct weather folder (or containing folder) using the Choose
+                Files button below then use the Upload Weather Preset button to upload your weather presets if the preview information appears
+                correctly.</p>
+
+            <form class="d-inline">
+                <input id="input-folder-weather" class="btn btn-light mb-3 mt-3" name="input-folder-weather[]" type="file"
+                       multiple webkitdirectory value="Choose Folder" onchange="handleWeatherFiles(this.files)"/>
+            </form>
+        </div>
+    </div>
+
+    <div id="upload-button"></div>
+
+    <div id="weather-info-panel"></div>
+
+    <h2>Weather List</h2>
+
+    <table class="table table-striped">
+        <tr>
+            <th>Weather Key</th>
+            <th>Weather Name</th>
+            <th class="text-center">Delete</th>
+        </tr>
+        {{ range $i, $weather := .weathers }}
+            <tr>
+                <td>
+                    {{ $i }}
+                </td>
+                <td>
+                    {{ $weather }}
+                </td>
+                <td class="text-center">
+                    <a href="{{ print "/weather/delete/" $i }}"><i class="fas fa-trash fa text-danger"></i></a>
+                </td>
+            </tr>
+        {{ end }}
+    </table>
+
+    <div class="clearfix"></div>
+{{ end }}
