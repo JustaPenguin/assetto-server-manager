@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	data := &servermanager.WeatherConfig{}
+	data := &servermanager.Entrant{}
 
 	formElems := servermanager.NewForm(data, nil, "").Fields()
 

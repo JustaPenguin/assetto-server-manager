@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/Masterminds/sprig"
 	"github.com/mattn/go-zglob"
@@ -63,6 +64,8 @@ func (tr *Renderer) init() error {
 	funcs["carList"] = carList
 	funcs["jsonEncode"] = jsonEncode
 	funcs["varSplit"] = varSplit
+	funcs["timeFormat"] = timeFormat
+	funcs["dateFormat"] = dateFormat
 
 	for _, page := range pages {
 		var templateList []string
@@ -80,6 +83,14 @@ func (tr *Renderer) init() error {
 	}
 
 	return nil
+}
+
+func timeFormat(t time.Time) string {
+	return t.Format(time.Kitchen)
+}
+
+func dateFormat(t time.Time) string {
+	return t.Format("02/01/2006")
 }
 
 func carList(cars string) string {
@@ -150,21 +161,13 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 		data = make(map[string]interface{})
 	}
 
-	session, err := getSession(r)
-
-	if err != nil {
-		return err
-	}
+	session := getSession(r)
 
 	if flashes := session.Flashes(); len(flashes) > 0 {
 		data["messages"] = flashes
 	}
 
-	err = session.Save(r, w)
-
-	if err != nil {
-		return err
-	}
+	_ = session.Save(r, w)
 
 	data["server_status"] = AssettoProcess.IsRunning()
 

@@ -1,9 +1,12 @@
 package servermanager
 
 import (
+	"encoding/json"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 type Track struct {
@@ -67,19 +70,48 @@ func ListTracks() ([]Track, error) {
 }
 
 func (t *Track) LayoutsCSV() string {
-	var layoutsCSV string
-
 	if t.Layouts == nil {
-		layoutsCSV = "Default"
-	} else {
-		for i, layout := range t.Layouts {
-			if i == len(t.Layouts)-1 {
-				layoutsCSV = layoutsCSV + layout
-			} else {
-				layoutsCSV = layoutsCSV + layout + ", "
-			}
-		}
+		return "Default"
 	}
 
-	return layoutsCSV
+	return strings.Join(t.Layouts, ", ")
+}
+
+const trackInfoJSONName = "ui_track.json"
+
+type TrackInfo struct {
+	Name        string      `json:"name"`
+	City        string      `json:"city"`
+	Country     string      `json:"country"`
+	Description string      `json:"description"`
+	Geotags     []string    `json:"geotags"`
+	Length      json.Number `json:"length"`
+	Pitboxes    json.Number `json:"pitboxes"`
+	Run         string      `json:"run"`
+	Tags        []string    `json:"tags"`
+	Width       json.Number `json:"width"`
+}
+
+func GetTrackInfo(name, layout string) (*TrackInfo, error) {
+	uiDataFile := filepath.Join(ServerInstallPath, "content", "tracks", name, "ui")
+
+	if layout != "" {
+		uiDataFile = filepath.Join(uiDataFile, layout)
+	}
+
+	uiDataFile = filepath.Join(uiDataFile, trackInfoJSONName)
+
+	f, err := os.Open(uiDataFile)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+
+	var trackInfo *TrackInfo
+
+	err = json.NewDecoder(f).Decode(&trackInfo)
+
+	return trackInfo, err
 }

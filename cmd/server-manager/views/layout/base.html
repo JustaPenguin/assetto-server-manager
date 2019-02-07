@@ -11,6 +11,7 @@
             <link rel="stylesheet" type="text/css" href="/static/css/style.css">
             <link rel="stylesheet" type="text/css" href="/static/css/multi-select.dist.css">
             <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-switch.min.css">
+            <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
             <link rel="stylesheet" type="text/css"
                   href="https://stackpath.bootstrapcdn.com/bootswatch/4.1.3/lumen/bootstrap.min.css">
         {{ end }}
@@ -34,9 +35,13 @@
                             Custom Race
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="/custom">Existing</a>
-                            <a class="dropdown-item" href="/custom/new">New</a>
+                            <a class="dropdown-item" href="/custom">View Existing</a>
+                            <a class="dropdown-item" href="/custom/new">Create New</a>
                         </div>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/results">Results</a>
                     </li>
 
                     <li class="nav-item dropdown">
@@ -58,13 +63,24 @@
                     </li>
                 </ul>
 
-                <div class="navbar-text">
+                <ul class="navbar-nav">
                     {{ if .server_status  }}
-                        <span class="badge badge-success">Server Running</span>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navBarStatusDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="badge badge-success">Server Running</span>
+                            </a>
+
+                            <div class="dropdown-menu" aria-labelledby="navBarStatusDropdown">
+                                <a class="dropdown-item" href="/process/restart">Restart</a>
+                                <a class="dropdown-item" href="/process/stop">Stop</a>
+                            </div>
+                        </li>
                     {{ else }}
-                        <span class="badge badge-danger">Server Offline</span>
+                        <li class="nav-item">
+                            <span class="badge badge-danger">Server Offline</span>
+                        </li>
                     {{ end }}
-                </div>
+                </ul>
             </div>
 
 
@@ -99,8 +115,9 @@
     </div>
 
     {{ block "javascript" . }}
-        <script defer src="https://use.fontawesome.com/releases/v5.7.0/js/all.js"></script>
+        <script defer src="https://use.fontawesome.com/releases/v5.7.1/js/all.js"></script>
         <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" crossorigin="anonymous"></script>
         <script src="/static/js/jquery.multi-select.js"></script>
         <script src="/static/js/bootstrap-switch.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>

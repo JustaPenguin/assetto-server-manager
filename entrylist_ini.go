@@ -3,6 +3,7 @@ package servermanager
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/cj123/ini"
 )
@@ -56,6 +57,16 @@ func (e EntryList) Delete(entrant Entrant) {
 	}
 }
 
+func (e EntryList) Entrants() string {
+	var entrants []string
+
+	for _, x := range e {
+		entrants = append(entrants, x.Name)
+	}
+
+	return strings.Join(entrants, ", ")
+}
+
 type Entrant struct {
 	Name string `ini:"DRIVERNAME"`
 	Team string `ini:"TEAM"`
@@ -66,4 +77,13 @@ type Entrant struct {
 
 	Ballast       int `ini:"BALLAST"`
 	SpectatorMode int `ini:"SPECTATOR_MODE"`
+	Restrictor    int `ini:"RESTRICTOR"`
+}
+
+func (e Entrant) ID() string {
+	if e.GUID != "" {
+		return e.GUID
+	} else {
+		return e.Name
+	}
 }
