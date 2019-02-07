@@ -3,6 +3,7 @@ package servermanager
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/cj123/ini"
 )
@@ -54,6 +55,16 @@ func (e EntryList) Delete(entrant Entrant) {
 			return
 		}
 	}
+}
+
+func (e EntryList) Entrants() string {
+	var entrants []string
+
+	for _, x := range e {
+		entrants = append(entrants, x.Name)
+	}
+
+	return strings.Join(entrants, ", ")
 }
 
 type Entrant struct {

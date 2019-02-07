@@ -1,0 +1,21 @@
+{{ define "race-card" }}
+    <div class="race-info">
+        <strong>
+            {{ prettify .RaceConfig.Track false }} {{ with .RaceConfig.TrackLayout }}({{ prettify . true }}){{ end }}
+        </strong>
+
+        <div class="float-right text-right">
+            {{ range $sessionName, $session := .RaceConfig.Sessions }}
+                <span data-toggle="tooltip" title="{{ $sessionName.String }}" class="badge badge-primary">{{ trunc 1 $sessionName.String }}</span>
+            {{ end }}
+
+            <br>
+
+
+            <small class="mr-1" data-toggle="tooltip" title="{{ .EntryList.Entrants }}" >{{ len .EntryList }} <i class="fa fa-user"></i></small>
+        </div>
+
+        <br>
+        <small>{{ carList .RaceConfig.Cars }}</small>
+    </div>
+{{ end }}

@@ -1,20 +1,13 @@
 {{ define "title" }}Home{{ end }}
 
 {{ define "content" }}
-    {{ with .CurrentRace }}
+    {{ with .RaceDetails }}
         <div class="card">
             <h5 class="card-header">Event in Progress</h5>
-            <div class="card-body row">
+            <div class="card-body row home-race-info">
                 <div class="col-md-8">
-                    <h5 class="card-title">
-                        {{ prettify .CurrentRaceConfig.Track false }}
 
-                        {{ with .CurrentRaceConfig.TrackLayout }}
-                            ({{ prettify . true }})
-                        {{ end }}
-                    </h5>
-                    <p class="card-text">{{ carList .CurrentRaceConfig.Cars }}</p>
-
+                    {{ template "race-card" . }}
 
                     <div class="button-bar">
                         <a href="#" class="btn btn-primary disabled">Live Timings</a>
@@ -28,8 +21,8 @@
                 <div class="col-md-4">
                     <img class="img img-fluid pl-2"
                          id="trackImage"
-                         src="/content/tracks/{{ .CurrentRaceConfig.Track }}/ui{{ with .CurrentRaceConfig.TrackLayout }}/{{.}}{{ end }}/preview.png"
-                         alt="{{ .CurrentRaceConfig.Track }} {{ .CurrentRaceConfig.TrackLayout }}"
+                         src="/content/tracks/{{ .RaceConfig.Track }}/ui{{ with .RaceConfig.TrackLayout }}/{{.}}{{ end }}/preview.png"
+                         alt="{{ .RaceConfig.Track }} {{ .RaceConfig.TrackLayout }}"
                     >
                 </div>
             </div>

@@ -107,7 +107,6 @@ func (sc ServerConfig) Write() error {
 	return f.SaveTo(filepath.Join(ServerInstallPath, ServerConfigPath, serverConfigIniPath))
 }
 
-// @TODO consider rename
 type GlobalServerConfig struct {
 	Name                      string `ini:"NAME" help:"Server Name"`
 	Password                  string `ini:"PASSWORD" input:"password" help:"server password"`
@@ -122,7 +121,6 @@ type GlobalServerConfig struct {
 	ClientSendIntervalInHertz int    `ini:"CLIENT_SEND_INTERVAL_HZ" help:"refresh rate of packet sending by the server. 10Hz = ~100ms. Higher number = higher MP quality = higher bandwidth resources needed. Really high values can create connection issues"`
 	SendBufferSize            int    `ini:"SEND_BUFFER_SIZE" help:"TODO"`
 	ReceiveBufferSize         int    `ini:"RECV_BUFFER_SIZE" help:"TODO"`
-	MaxClients                int    `ini:"MAX_CLIENTS" help:"max number of clients (must be <= track's number of pits)"`
 	KickQuorum                int    `ini:"KICK_QUORUM" help:"TODO"`
 	VotingQuorum              int    `ini:"VOTING_QUORUM" min:"0" max:"100" help:"percentage of vote that is required for the SESSION vote to pass"`
 	VoteDuration              int    `ini:"VOTE_DURATION" min:"0" help:"vote length in seconds"`
@@ -160,6 +158,7 @@ type CurrentRaceConfig struct {
 	PickupModeEnabled int `ini:"PICKUP_MODE_ENABLED" help:"if 0 the server start in booking mode (do not use it). Warning: in pickup mode you have to list only a circuit under TRACK and you need to list a least one car in the entry_list"`
 	LoopMode          int `ini:"LOOP_MODE" input:"checkbox" help:"the server restarts from the first track, to disable this set it to 0"`
 
+	MaxClients   int `ini:"MAX_CLIENTS" help:"max number of clients (must be <= track's number of pits)"`
 	SleepTime    int `ini:"SLEEP_TIME" help:"TODO"`
 	RaceOverTime int `ini:"RACE_OVER_TIME" help:"time remaining in seconds to finish the race from the moment the first one passes on the finish line"`
 	StartRule    int `ini:"START_RULE" min:"0" max:"2" help:"0 is car locked until start;   1 is teleport   ; 2 is drive-through (if race has 3 or less laps then the Teleport penalty is enabled)"`
