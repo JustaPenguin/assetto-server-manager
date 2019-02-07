@@ -36,15 +36,15 @@ func customRaceListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func customRaceNewHandler(w http.ResponseWriter, r *http.Request) {
-	quickRaceData, err := raceManager.BuildRaceOpts(r)
+	customRaceData, err := raceManager.BuildRaceOpts(r)
 
 	if err != nil {
-		logrus.Errorf("couldn't build quick race, err: %s", err)
+		logrus.Errorf("couldn't build custom race, err: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "custom-race/new.html", quickRaceData)
+	ViewRenderer.MustLoadTemplate(w, r, "custom-race/new.html", customRaceData)
 }
 
 func customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +69,7 @@ func customRaceLoadHandler(w http.ResponseWriter, r *http.Request) {
 	err := raceManager.StartCustomRace(mux.Vars(r)["uuid"])
 
 	if err != nil {
-		logrus.Errorf("couldn't apply quick race, err: %s", err)
+		logrus.Errorf("couldn't apply custom race, err: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -82,7 +82,7 @@ func customRaceDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	err := raceManager.DeleteCustomRace(mux.Vars(r)["uuid"])
 
 	if err != nil {
-		logrus.Errorf("couldn't apply quick race, err: %s", err)
+		logrus.Errorf("couldn't delete custom race, err: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -95,7 +95,7 @@ func customRaceStarHandler(w http.ResponseWriter, r *http.Request) {
 	err := raceManager.ToggleStarCustomRace(mux.Vars(r)["uuid"])
 
 	if err != nil {
-		logrus.Errorf("couldn't apply quick race, err: %s", err)
+		logrus.Errorf("couldn't star custom race, err: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
