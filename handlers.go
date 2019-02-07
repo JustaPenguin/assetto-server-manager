@@ -45,6 +45,9 @@ func Router() *mux.Router {
 	r.Methods(http.MethodPost).Path("/quick/submit").HandlerFunc(quickRaceSubmitHandler)
 	r.HandleFunc("/custom", customRaceListHandler)
 	r.HandleFunc("/custom/new", customRaceNewHandler)
+	r.HandleFunc("/custom/load/{uuid}", customRaceLoadHandler)
+	r.HandleFunc("/custom/delete/{uuid}", customRaceDeleteHandler)
+	r.HandleFunc("/custom/star/{uuid}", customRaceStarHandler)
 	r.Methods(http.MethodPost).Path("/custom/new/submit").HandlerFunc(customRaceSubmitHandler)
 	r.HandleFunc("/logs", serverLogsHandler)
 	r.HandleFunc("/process/{action}", serverProcessHandler)
@@ -64,8 +67,16 @@ func Router() *mux.Router {
 
 // homeHandler serves content to /
 func homeHandler(w http.ResponseWriter, r *http.Request) {
+	currentRace, entryList := raceManager.CurrentRace()
+
+	var customRace *CustomRace
+
+	if currentRace != nil {
+		customRace = &CustomRace{EntryList: entryList, RaceConfig: currentRace.CurrentRaceConfig}
+	}
+
 	ViewRenderer.MustLoadTemplate(w, r, "home.html", map[string]interface{}{
-		"CurrentRace": raceManager.CurrentRace(),
+		"RaceDetails": customRace,
 	})
 }
 
@@ -91,7 +102,13 @@ func serverProcessHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
-	form := NewForm(&ConfigIniDefault.GlobalServerConfig, nil, "")
+	serverOpts, err := raceManager.LoadServerOptions()
+
+	if err != nil {
+		logrus.Errorf("couldn't load server options, err: %s", err)
+	}
+
+	form := NewForm(serverOpts, nil, "")
 
 	if r.Method == http.MethodPost {
 		err := form.Submit(r)
@@ -101,7 +118,7 @@ func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// save the config
-		err = ConfigIniDefault.Write()
+		err = raceManager.SaveServerOptions(serverOpts)
 
 		if err != nil {
 			logrus.Errorf("couldn't save config, err: %s", err)
@@ -111,30 +128,6 @@ func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
 	ViewRenderer.MustLoadTemplate(w, r, "server_options.html", map[string]interface{}{
 		"form": form,
 	})
-}
-
-func quickRaceHandler(w http.ResponseWriter, r *http.Request) {
-	quickRaceData, err := raceManager.BuildRaceOpts()
-
-	if err != nil {
-		logrus.Errorf("couldn't build quick race, err: %s", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	ViewRenderer.MustLoadTemplate(w, r, "quick_race.html", quickRaceData)
-}
-
-func quickRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.SetupQuickRace(r)
-
-	if err != nil {
-		logrus.Errorf("couldn't apply quick race, err: %s", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func carsHandler(w http.ResponseWriter, r *http.Request) {
@@ -165,32 +158,6 @@ func weatherHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func customRaceListHandler(w http.ResponseWriter, r *http.Request) {
-	races, err := raceManager.ListCustomRaces()
-
-	if err != nil {
-		logrus.Errorf("couldn't list custom races, err: %s", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	ViewRenderer.MustLoadTemplate(w, r, "custom-race/index.html", map[string]interface{}{
-		"Races": races,
-	})
-}
-
-func customRaceNewHandler(w http.ResponseWriter, r *http.Request) {
-	quickRaceData, err := raceManager.BuildRaceOpts()
-
-	if err != nil {
-		logrus.Errorf("couldn't build quick race, err: %s", err)
-
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-	ViewRenderer.MustLoadTemplate(w, r, "custom-race/new.html", quickRaceData)
-}
-
 func apiCarUploadHandler(w http.ResponseWriter, r *http.Request) {
 	uploadHandler(w, r, "Car")
 }
@@ -213,18 +180,6 @@ func tracksHandler(w http.ResponseWriter, r *http.Request) {
 	ViewRenderer.MustLoadTemplate(w, r, "tracks.html", map[string]interface{}{
 		"tracks": tracks,
 	})
-}
-
-func customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.SetupCustomRace(r)
-
-	if err != nil {
-		logrus.Errorf("couldn't apply quick race, err: %s", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 type contentFile struct {
@@ -464,31 +419,20 @@ func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-func getSession(r *http.Request) (*sessions.Session, error) {
-	session, err := store.Get(r, "messages")
+func getSession(r *http.Request) *sessions.Session {
+	session, _ := store.Get(r, "messages")
 
-	if err != nil {
-		return nil, err
-	}
-
-	return session, nil
+	return session
 }
 
 // Helper function to get message session and add a flash
 func AddFlashQuick(w http.ResponseWriter, r *http.Request, message string) {
-	session, err := getSession(r)
-
-	if err != nil {
-		logrus.Errorf("could not get session, err: %s", err)
-	}
+	session := getSession(r)
 
 	session.AddFlash(message)
 
-	err = session.Save(r, w)
-
-	if err != nil {
-		logrus.Errorf("could not save session, err: %s", err)
-	}
+	// gorilla sessions is dumb and errors weirdly
+	_ = session.Save(r, w)
 }
 
 func serverLogsHandler(w http.ResponseWriter, r *http.Request) {

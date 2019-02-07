@@ -34,6 +34,20 @@ footer {
     color: #495057;
 }
 
+abbr[title] {
+    text-decoration: none !important;
+}
+
+.card-logs {
+    max-height: 600px;
+}
+
+.table-custom-race tr td:nth-child(2) {
+    max-width: 250px;
+}
+
+span[data-toggle=tooltip] { cursor: default; }
+
 .row-link:hover {
     cursor: pointer;
     color: #158CBA;
@@ -44,4 +58,6 @@ footer {
     color: #158CBA;
 }
 
-span[data-toggle=tooltip] { cursor: default; }
+.home-race-info .race-info, .home-race-info .race-info small {
+    font-size: 1.1em;
+}

@@ -1,7 +1,9 @@
 {{ define "title" }}Weather{{ end }}
 
 {{ define "content" }}
-    <div class="card text-white bg-info mb-3">
+    <h1 class="text-center">Weather</h1>
+
+    <div class="card mb-3">
         <div class="card-header"><strong>Upload a New Weather Preset</strong></div>
         <div class="card-body">
             <p class="card-text">You can upload multiple weather presets at once by placing them in a folder named "weather" and uploading
@@ -13,7 +15,7 @@
                 correctly.</p>
 
             <form class="d-inline">
-                <input id="input-folder-weather" class="btn btn-light mb-3 mt-3" name="input-folder-weather[]" type="file"
+                <input id="input-folder-weather" class="mb-3 mt-3" name="input-folder-weather[]" type="file"
                        multiple webkitdirectory value="Choose Folder" onchange="handleWeatherFiles(this.files)"/>
             </form>
         </div>
@@ -22,8 +24,6 @@
     <div id="upload-button"></div>
 
     <div id="weather-info-panel"></div>
-
-    <h2>Weather List</h2>
 
     <table class="table table-striped">
         <tr>

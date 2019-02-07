@@ -16,7 +16,7 @@ var (
 )
 
 func main() {
-	err := servermanager.InstallAssettoCorsaServer(steamUsername, steamPassword, false)
+	err := servermanager.InstallAssettoCorsaServer(steamUsername, steamPassword, os.Getenv("FORCE_UPDATE") == "true")
 
 	if err != nil {
 		logrus.Fatalf("could not install assetto corsa server, err: %s", err)

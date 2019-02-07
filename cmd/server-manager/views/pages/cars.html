@@ -1,7 +1,9 @@
 {{ define "title" }}Cars{{ end }}
 
 {{ define "content" }}
-    <div class="card text-white bg-info mb-3">
+    <h1 class="text-center">Cars</h1>
+
+    <div class="card mb-3">
         <div class="card-header"><strong>Upload a New Car</strong></div>
         <div class="card-body">
             <p class="card-text">You can upload multiple cars at once by placing them in a folder named "cars" and uploading
@@ -13,7 +15,7 @@
                 correctly.</p>
 
             <form class="d-inline">
-                <input id="input-folder-car" class="btn btn-light mb-3 mt-3" name="input-folder-car[]" type="file"
+                <input id="input-folder-car" class="mb-3 mt-3" name="input-folder-car[]" type="file"
                        multiple webkitdirectory value="Choose Folder" onchange="handleCarFiles(this.files)"/>
             </form>
         </div>
@@ -23,14 +25,12 @@
 
     <div id="car-info-panel"></div>
 
-    <h2>Car List</h2>
-
-    <table class="table table-striped">
+    <table class="table table-bordered table-striped">
         <tr>
             <th>#</th>
             <th>Car Name</th>
             <th>Skins</th>
-            <th>Delete</th>
+            <th class="text-center">Delete</th>
         </tr>
         {{ range $i, $car := .cars }}
             <tr>
@@ -38,13 +38,13 @@
                     {{ $i }}
                 </td>
                 <td>
-                    {{ $car.Name }}
+                    <abbr title="{{ $car.Name }}">{{ prettify $car.Name true }}</abbr>
                 </td>
                 <td>
-                    {{ $car.Skins }}
+                    {{ carList ($car.Skins | join ";")}}
                 </td>
-                <td>
-                    <a href= {{ print "/car/delete/" $car.Name }}>Delete</a>
+                <td class="text-center">
+                    <a href="{{ print "/car/delete/" $car.Name }}"><i class="fas fa-trash"></i></a>
                 </td>
             </tr>
         {{ end }}
