@@ -331,7 +331,6 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		return nil, err
 	}
 
-	// @TODO eventually this will be loaded from somewhere
 	race := &ConfigIniDefault
 
 	templateID := r.URL.Query().Get("from")
@@ -346,7 +345,6 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 			return nil, err
 		}
 
-		// @TODO loading entrylist
 		race.CurrentRaceConfig = customRace.RaceConfig
 		entrants = customRace.EntryList
 	}
