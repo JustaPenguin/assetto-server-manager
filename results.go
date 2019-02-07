@@ -344,7 +344,7 @@ func resultHandler(w http.ResponseWriter, r *http.Request) {
 	var result *SessionResults
 	fileName := mux.Vars(r)["fileName"]
 
-	result, err := getResult(fileName+".json")
+	result, err := getResult(fileName + ".json")
 
 	if err != nil {
 		logrus.Errorf("could not get result, err: %s", err)
