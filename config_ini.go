@@ -121,8 +121,8 @@ type GlobalServerConfig struct {
 	ClientSendIntervalInHertz int    `ini:"CLIENT_SEND_INTERVAL_HZ" help:"refresh rate of packet sending by the server. 10Hz = ~100ms. Higher number = higher MP quality = higher bandwidth resources needed. Really high values can create connection issues"`
 	SendBufferSize            int    `ini:"SEND_BUFFER_SIZE" help:"TODO"`
 	ReceiveBufferSize         int    `ini:"RECV_BUFFER_SIZE" help:"TODO"`
-	KickQuorum                int    `ini:"KICK_QUORUM" help:"TODO"`
-	VotingQuorum              int    `ini:"VOTING_QUORUM" min:"0" max:"100" help:"percentage of vote that is required for the SESSION vote to pass"`
+	KickQuorum                int    `ini:"KICK_QUORUM" help:"percentage that is required for the kick vote to pass"`
+	VotingQuorum              int    `ini:"VOTING_QUORUM" min:"0" max:"100" help:"percentage that is required for the session vote to pass"`
 	VoteDuration              int    `ini:"VOTE_DURATION" min:"0" help:"vote length in seconds"`
 	BlacklistMode             int    `ini:"BLACKLIST_MODE" min:"0" max:"2" help:"ban player -> 0 = normal kick, rejoin possible, 1 = until server restart WARNING: 2 is not more valid since kick_id and ban_id are two different commands."`
 	NumberOfThreads           int    `ini:"NUM_THREADS" min:"1" help:"Number of threads to run on"`
