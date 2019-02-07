@@ -15,8 +15,11 @@ func NewRaceStore(db *bbolt.DB) *RaceStore {
 }
 
 var (
-	customRaceBucketName = []byte("customRaces")
-	entrantsBucketName   = []byte("entrants")
+	customRaceBucketName    = []byte("customRaces")
+	serverOptionsBucketName = []byte("serverOptions")
+	entrantsBucketName      = []byte("entrants")
+
+	serverOptionsKey = []byte("serverOptions")
 )
 
 func (rs *RaceStore) customRaceBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
@@ -187,4 +190,59 @@ func (rs *RaceStore) ListEntrants() ([]Entrant, error) {
 	})
 
 	return entrants, err
+}
+
+func (rs *RaceStore) serverOptionsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+	if !tx.Writable() {
+		bkt := tx.Bucket(serverOptionsBucketName)
+
+		if bkt == nil {
+			return nil, bbolt.ErrBucketNotFound
+		}
+
+		return bkt, nil
+	}
+
+	return tx.CreateBucketIfNotExists(serverOptionsBucketName)
+}
+
+func (rs *RaceStore) UpsertServerOptions(so *GlobalServerConfig) error {
+	return rs.db.Update(func(tx *bbolt.Tx) error {
+		bkt, err := rs.serverOptionsBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		encoded, err := rs.encode(so)
+
+		if err != nil {
+			return err
+		}
+
+		return bkt.Put(serverOptionsKey, encoded)
+	})
+}
+
+func (rs *RaceStore) LoadServerOptions() (*GlobalServerConfig, error) {
+	// start with defaults
+	so := &ConfigIniDefault.GlobalServerConfig
+
+	err := rs.db.View(func(tx *bbolt.Tx) error {
+		bkt, err := rs.serverOptionsBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		data := bkt.Get(serverOptionsKey)
+
+		if data == nil {
+			return nil
+		}
+
+		return rs.decode(data, &so)
+	})
+
+	return so, err
 }

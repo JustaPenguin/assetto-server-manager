@@ -99,7 +99,13 @@ func serverProcessHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
-	form := NewForm(&ConfigIniDefault.GlobalServerConfig, nil, "")
+	serverOpts, err := raceManager.LoadServerOptions()
+
+	if err != nil {
+		logrus.Errorf("couldn't load server options, err: %s", err)
+	}
+
+	form := NewForm(serverOpts, nil, "")
 
 	if r.Method == http.MethodPost {
 		err := form.Submit(r)
@@ -109,7 +115,7 @@ func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// save the config
-		err = ConfigIniDefault.Write()
+		err = raceManager.SaveServerOptions(serverOpts)
 
 		if err != nil {
 			logrus.Errorf("couldn't save config, err: %s", err)
