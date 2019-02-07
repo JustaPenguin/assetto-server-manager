@@ -1,0 +1,46 @@
+{{ define "title" }}Results{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">Results</h1>
+
+    <table class="table table-striped">
+        <tr>
+            <th>Date</th>
+            <th>Session Type</th>
+            <th>Track Name</th>
+            <th style="width: 50%">Entrants</th>
+        </tr>
+        {{ range $i, $result := .results }}
+            <tr class="row-link" data-href="/results/{{ $result.SessionFile }}">
+                <td>
+                    {{ $result.GetDate }}
+                </td>
+                <td>
+                    {{ $result.Type }}
+                </td>
+                <td>
+                    {{ prettify $result.TrackName false }}
+                </td>
+
+                <td>
+                    {{ $result.GetDrivers }}
+                </td>
+            </tr>
+        {{ end }}
+    </table>
+
+    <div class="clearfix"></div>
+
+    <nav aria-label="Page Navigation">
+        <ul class="pagination justify-content-center pagination-sm">
+            {{ $currentPage := .currentPage }}
+            <li class="page-item {{ if eq $currentPage 0 }}disabled{{ end }}"><a class="page-link"
+                {{ if eq $currentPage 0 }}tabindex="-1"{{ end }} href="?page={{ add $currentPage -1 }}">Previous</a></li>
+            {{ range $i, $null := .pages }}
+            <li class="page-item {{ if eq $currentPage $i }}active{{ end }}"><a class="page-link" href="?page={{ $i }}">{{ $i }}</a></li>
+            {{ end }}
+            <li class="page-item {{ if eq $currentPage (add (len .pages) -1) }}disabled{{ end }}"><a class="page-link"
+                {{ if eq $currentPage (add (len .pages) -1) }}tabindex="-1"{{ end }} href="?page={{ add $currentPage 1 }}">Next</a></li>
+        </ul>
+    </nav>
+{{ end }}
