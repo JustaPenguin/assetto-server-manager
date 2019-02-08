@@ -39,7 +39,7 @@
             {{ range $i, $null := .pages }}
             <li class="page-item {{ if eq $currentPage $i }}active{{ end }}"><a class="page-link" href="?page={{ $i }}">{{ $i }}</a></li>
             {{ end }}
-            <li class="page-item {{ if eq $currentPage (add (len .pages) -1) }}disabled{{ end }}"><a class="page-link"
+            <li class="page-item {{ if or (eq $currentPage (add (len .pages) -1)) (eq (len .pages) 0) }}disabled{{ end }}"><a class="page-link"
                 {{ if eq $currentPage (add (len .pages) -1) }}tabindex="-1"{{ end }} href="?page={{ add $currentPage 1 }}">Next</a></li>
         </ul>
     </nav>

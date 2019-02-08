@@ -90,7 +90,7 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 	return nil
 }
 
-var ErrMustSubmitCar = errors.New("servermanager: you must set a car!")
+var ErrMustSubmitCar = errors.New("servermanager: you must set a car")
 
 func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 	if err := r.ParseForm(); err != nil {
