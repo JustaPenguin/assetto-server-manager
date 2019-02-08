@@ -69,7 +69,22 @@ func InstallAssettoCorsaServer(login, password string, force bool) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	return cmd.Run()
+	err = cmd.Run()
+
+	if err != nil {
+		return err
+	}
+
+	// create default skins
+	for _, f := range defaultSkinsLayout {
+		err := os.MkdirAll(filepath.Join(ServerInstallPath, filepath.FromSlash(f)), 0755)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func isCommandAvailable(name string) bool {
