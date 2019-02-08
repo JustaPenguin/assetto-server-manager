@@ -7,6 +7,7 @@
     </a>
 
     {{ $sessionResults := .result }}
+
     <a name={{ $sessionResults.GetDate }}></a>
     <div class="card mt-3 border-secondary">
         <div class="card-header">
@@ -18,27 +19,6 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
-
-                    {{ if eq "BOOKING" $sessionResults.Type }}
-                        <h3><strong>Booking</strong></h3>
-                    {{ end }}
-
-                    {{ if eq "PRACTICE" $sessionResults.Type }}
-                        <h3><strong>Practice</strong></h3>
-                    {{ end }}
-
-                    {{ if eq "QUALIFY" $sessionResults.Type }}
-                        <h3><strong>Qualifying</strong></h3>
-                    {{ end }}
-
-                    {{ if eq "RACE" $sessionResults.Type }}
-                        <h3><strong>Race</strong></h3>
-                    {{ end }}
-
-
-                </div>
-
-                <div class="col-md-6">
                     <img class="img-fluid float-right"
                          src="/content/tracks/{{ $sessionResults.TrackName }}/ui{{ with $sessionResults.TrackConfig }}/{{.}}{{ end }}/preview.png"
                          alt="{{ $sessionResults.TrackName }} {{ $sessionResults.TrackConfig }}"
@@ -48,88 +28,153 @@
 
             <div class="row mt-3">
                 <div class="col-md-12">
-                    {{ if eq "RACE" $sessionResults.Type }}
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
-                                <tr>
-                                    <th>Position</th>
-                                    <th>Name</th>
-                                    <th>Team</th>
-                                    <th>Car</th>
-                                    <th>Total Race Time</th>
-                                    <th>Num Laps</th>
-                                    <th>Best Lap</th>
-                                </tr>
 
-                                {{ range $pos, $result := $sessionResults.Result}}
-                                    <tr>
-                                        <td>{{ add $pos 1 }}</td>
-                                        <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ $result.DriverName }}</td>
-                                        <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
-                                        <td>{{ prettify $result.CarModel true }}</td>
-                                        <td>{{ $sessionResults.GetTime $result.TotalTime $result.DriverGUID }}</td>
-                                        <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
-                                            {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
-                                        <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID }}</td>
-                                    </tr>
-                                {{ end }}
-                            </table>
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="session-main-tab"
+                               data-toggle="tab" href="#session-main"
+                               role="tab"
+                               aria-controls="main" aria-selected="true"><strong>{{ prettify $sessionResults.Type false }}</strong></a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" id="session-event-tab"
+                               data-toggle="tab" href="#session-event"
+                               role="tab"
+                               aria-controls="main" aria-selected="true"><strong>Events</strong></a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content pt-2">
+                        <div class="tab-pane fade show active"
+                             id="session-main" role="tabpanel"
+                             aria-labelledby="session-main-tab">
+                            {{ if eq "RACE" $sessionResults.Type }}
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped">
+                                        <tr>
+                                            <th>Position</th>
+                                            <th>Name</th>
+                                            <th>Team</th>
+                                            <th>Car</th>
+                                            <th>Total Race Time</th>
+                                            <th>Num Laps</th>
+                                            <th>Best Lap</th>
+                                            <th>Average Lap</th>
+                                            <th>Crashes</th>
+                                        </tr>
+
+                                        {{ range $pos, $result := $sessionResults.Result}}
+
+                                            <tr>
+                                                <td>{{ add $pos 1 }}</td>
+                                                <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ $result.DriverName }}</td>
+                                                <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
+                                                <td>{{ prettify $result.CarModel true }}</td>
+                                                <td>{{ $sessionResults.GetTime $result.TotalTime $result.DriverGUID }}</td>
+                                                <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
+                                                    {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
+                                                <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID }}</td>
+                                                <td>{{ $sessionResults.GetAverageLapTime $result.DriverGUID }}</td>
+                                                <td>{{ $sessionResults.GetCrashes $result.DriverGUID }}</td>
+                                            </tr>
+                                        {{ end }}
+                                    </table>
+                                </div>
+                            {{ end }}
+
+                            {{ if eq "QUALIFY" $sessionResults.Type }}
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped">
+                                        <tr>
+                                            <th>Position</th>
+                                            <th>Name</th>
+                                            <th>Team</th>
+                                            <th>Car</th>
+                                            <th>Qualifying Time</th>
+                                            <th>Average Lap</th>
+                                            <th>Laps</th>
+                                        </tr>
+
+                                        {{ range $pos, $result := $sessionResults.Result }}
+                                            <tr>
+                                                <td>{{ add $pos 1 }}</td>
+                                                <td>{{ $result.DriverName }}</td>
+                                                <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
+                                                <td>{{ prettify $result.CarModel true }}</td>
+                                                <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID }}</td>
+                                                <td>{{ $sessionResults.GetAverageLapTime $result.DriverGUID }}</td>
+                                                <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
+                                                    {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
+                                            </tr>
+                                        {{ end }}
+                                    </table>
+                                </div>
+                            {{ end }}
+
+                            {{ if eq "PRACTICE" $sessionResults.Type }}
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped">
+                                        <tr>
+                                            <th>Position</th>
+                                            <th>Name</th>
+                                            <th>Team</th>
+                                            <th>Car</th>
+                                            <th>Best Practice Lap</th>
+                                            <th>Average Lap</th>
+                                            <th>Laps</th>
+                                        </tr>
+
+                                        {{ range $pos, $result := $sessionResults.Result }}
+                                            <tr>
+                                                <td>{{ add $pos 1 }}</td>
+                                                <td>{{ $result.DriverName }}</td>
+                                                <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
+                                                <td>{{ prettify $result.CarModel true }}</td>
+                                                <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID }}</td>
+                                                <td>{{ $sessionResults.GetAverageLapTime $result.DriverGUID }}</td>
+                                                <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
+                                                    {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
+                                            </tr>
+                                        {{ end }}
+                                    </table>
+                                </div>
+                            {{ end }}
                         </div>
-                    {{ end }}
 
-                    {{ if eq "QUALIFY" $sessionResults.Type }}
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
-                                <tr>
-                                    <th>Position</th>
-                                    <th>Name</th>
-                                    <th>Team</th>
-                                    <th>Car</th>
-                                    <th>Qualifying Time</th>
-                                    <th>Laps</th>
-                                </tr>
+                        <div class="tab-pane fade"
+                             id="session-event" role="tabpanel"
+                             aria-labelledby="session-event-tab">
 
-                                {{ range $pos, $result := $sessionResults.Result }}
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped">
                                     <tr>
-                                        <td>{{ add $pos 1 }}</td>
-                                        <td>{{ $result.DriverName }}</td>
-                                        <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
-                                        <td>{{ prettify $result.CarModel true }}</td>
-                                        <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID }}</td>
-                                        <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
-                                            {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
+                                        <th>#</th>
+                                        <th>Driver</th>
+                                        <th>Other Driver</th>
+                                        <th>Type</th>
+                                        <th>Impact Speed</th>
+                                        <th>Relative Position</th>
+                                        <th>World Position</th>
                                     </tr>
-                                {{ end }}
-                            </table>
-                        </div>
-                    {{ end }}
 
-                    {{ if eq "PRACTICE" $sessionResults.Type }}
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
-                                <tr>
-                                    <th>Position</th>
-                                    <th>Name</th>
-                                    <th>Team</th>
-                                    <th>Car</th>
-                                    <th>Best Practice Lap</th>
-                                    <th>Laps</th>
-                                </tr>
+                                    {{ range $pos, $event := $sessionResults.Events}}
+                                        <tr>
+                                            <td>{{ add $pos 1 }}</td>
+                                            <td class="driver-link" data-href="#{{ $event.Driver.GUID }}">{{ $event.Driver.Name }}</td>
+                                            <td class="driver-link" data-href="#{{ $event.OtherDriver.GUID }}">{{ $event.OtherDriver.Name }}</td>
+                                            <td>{{ $event.Type }}</td>
+                                            <td>{{ printf "%.1f" $event.ImpactSpeed }}</td>
+                                            <td>{{ $event.GetRelPosition }}</td>
+                                            <td>{{ $event.GetWorldPosition }}</td>
+                                        </tr>
+                                    {{ end }}
+                                </table>
+                            </div>
 
-                                {{ range $pos, $result := $sessionResults.Result }}
-                                    <tr>
-                                        <td>{{ add $pos 1 }}</td>
-                                        <td>{{ $result.DriverName }}</td>
-                                        <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
-                                        <td>{{ prettify $result.CarModel true }}</td>
-                                        <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID }}</td>
-                                        <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
-                                            {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
-                                    </tr>
-                                {{ end }}
-                            </table>
                         </div>
-                    {{ end }}
+
+                    </div>
                 </div>
             </div>
         </div>
@@ -166,6 +211,8 @@
                                 </tr>
 
                                 {{ $lapCount := 0}}
+                                {{ $averageLapTime := $sessionResults.GetAverageLapTime $sessionResult.DriverGUID }}
+
                                 {{ range $y, $sessionLap := $sessionResults.Laps }}
                                     {{ if eq $sessionLap.DriverGUID $sessionResult.DriverGUID }}
                                         {{ $lapCount = add $lapCount 1 }}
@@ -179,13 +226,19 @@
 
                                                 {{ if $sessionResults.IsFastestLap $sessionLap.LapTime }}
                                                     <div class="float-right mr-1">
-                                                        <span data-toggle="tooltip" title="Fastest Lap" class="badge badge-success">L</span>
+                                                        <span data-toggle="tooltip" title="Fastest Lap" class="badge badge-best">L</span>
                                                     </div>
                                                 {{ end }}
 
                                                 {{ if $sessionResults.IsDriversFastestLap $sessionLap.DriverGUID $sessionLap.LapTime }}
                                                     <div class="float-right mr-1">
-                                                        <span data-toggle="tooltip" title="Driver's Fastest Lap" class="badge badge-info">L</span>
+                                                        <span data-toggle="tooltip" title="Driver's Fastest Lap" class="badge badge-success">L</span>
+                                                    </div>
+                                                {{ end }}
+
+                                                {{ if $sessionLap.DidCheat $averageLapTime }}
+                                                    <div class="float-right mr-1">
+                                                        <span data-toggle="tooltip" title="Probably Cheated" class="badge badge-danger">C</span>
                                                     </div>
                                                 {{ end }}
                                             </td>
@@ -196,13 +249,13 @@
 
                                                     {{ if $sessionResults.IsFastestSector $x (index $sessionLap.Sectors $x) }}
                                                         <div class="float-right mr-1">
-                                                            <span data-toggle="tooltip" title="Fastest Sector" class="badge badge-success">S</span>
+                                                            <span data-toggle="tooltip" title="Fastest Sector" class="badge badge-best">S</span>
                                                         </div>
                                                     {{ end }}
 
                                                     {{ if $sessionResults.IsDriversFastestSector $sessionLap.DriverGUID $x (index $sessionLap.Sectors $x) }}
                                                         <div class="float-right mr-1">
-                                                            <span data-toggle="tooltip" title="Driver's Fastest Sector" class="badge badge-info">S</span>
+                                                            <span data-toggle="tooltip" title="Driver's Fastest Sector" class="badge badge-success">S</span>
                                                         </div>
                                                     {{ end }}
                                                 </td>
