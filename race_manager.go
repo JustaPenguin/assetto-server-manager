@@ -304,14 +304,15 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 
 	for i := 0; i < len(r.Form["EntryList.Name"]); i++ {
 		entryList.Add(Entrant{
-			Name:          r.Form["EntryList.Name"][i],
-			Team:          r.Form["EntryList.Team"][i],
-			GUID:          r.Form["EntryList.GUID"][i],
-			Model:         r.Form["EntryList.Car"][i],
-			Skin:          r.Form["EntryList.Skin"][i],
-			SpectatorMode: formValueAsInt(r.Form["EntryList.Spectator"][i]),
-			Ballast:       formValueAsInt(r.Form["EntryList.Ballast"][i]),
-			Restrictor:    formValueAsInt(r.Form["EntryList.Restrictor"][i]),
+			Name:  r.Form["EntryList.Name"][i],
+			Team:  r.Form["EntryList.Team"][i],
+			GUID:  r.Form["EntryList.GUID"][i],
+			Model: r.Form["EntryList.Car"][i],
+			Skin:  r.Form["EntryList.Skin"][i],
+			// Despite having the option for SpectatorMode, the server does not support it, and panics if set to 1
+			// SpectatorMode: formValueAsInt(r.Form["EntryList.Spectator"][i]),
+			Ballast:    formValueAsInt(r.Form["EntryList.Ballast"][i]),
+			Restrictor: formValueAsInt(r.Form["EntryList.Restrictor"][i]),
 		})
 	}
 
@@ -397,12 +398,38 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		return nil, err
 	}
 
+	deselectedTyres := make(map[string]bool)
+
+	for _, car := range varSplit(race.CurrentRaceConfig.Cars) {
+		tyresForCar, ok := tyres[car]
+
+		if !ok {
+			continue
+		}
+
+		for carTyre := range tyresForCar {
+			found := false
+
+			for _, t := range varSplit(race.CurrentRaceConfig.LegalTyres) {
+				if carTyre == t {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				deselectedTyres[carTyre] = true
+			}
+		}
+	}
+
 	return map[string]interface{}{
-		"CarOpts":           cars.AsMap(),
+		"CarOpts":           cars,
 		"TrackOpts":         trackNames,
 		"TrackLayoutOpts":   trackLayouts,
 		"AvailableSessions": AvailableSessions,
 		"Tyres":             tyres,
+		"DeselectedTyres":   deselectedTyres,
 		"Weather":           weather,
 		"Current":           race.CurrentRaceConfig,
 		"CurrentEntrants":   entrants,

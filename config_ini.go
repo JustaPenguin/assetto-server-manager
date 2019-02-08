@@ -220,8 +220,8 @@ type SessionConfig struct {
 type DynamicTrackConfig struct {
 	SessionStart    int `ini:"SESSION_START" help:"% level of grip at session start"`
 	Randomness      int `ini:"RANDOMNESS" help:"level of randomness added to the start grip"`
-	SessionTransfer int `ini:"SESSION_TRANSFER" help:"how many laps are needed to add 1% grip"`
-	LapGain         int `ini:"LAP_GAIN" help:"how much of the gained grip is to be added to the next session 100 -> all the gained grip. Example: difference between starting (90) and ending (96) grip in the session = 6%, with session_transfer = 50 then the next session is going to start with 93."`
+	SessionTransfer int `ini:"SESSION_TRANSFER"  help:"how much of the gained grip is to be added to the next session 100 -> all the gained grip. Example: difference between starting (90) and ending (96) grip in the session = 6%, with session_transfer = 50 then the next session is going to start with 93."`
+	LapGain         int `ini:"LAP_GAIN" help:"how many laps are needed to add 1% grip"`
 }
 
 type WeatherConfig struct {
