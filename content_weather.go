@@ -2,10 +2,13 @@ package servermanager
 
 import (
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/cj123/ini"
+	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 const weatherInfoFile = "weather.ini"
@@ -90,4 +93,73 @@ func getWeatherName(folder, weather string) (string, error) {
 	}
 
 	return k.String(), nil
+}
+
+func weatherHandler(w http.ResponseWriter, r *http.Request) {
+	weather, err := ListWeather()
+
+	if err != nil {
+		logrus.Errorf("could not get weather list, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("content", "weather.html"), map[string]interface{}{
+		"weathers": weather,
+	})
+}
+
+func apiWeatherUploadHandler(w http.ResponseWriter, r *http.Request) {
+	uploadHandler(w, r, "Weather")
+}
+
+func weatherDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	weatherKey := mux.Vars(r)["key"]
+	weatherPath := filepath.Join(ServerInstallPath, "content", "weather")
+
+	existingWeather, err := ListWeather()
+
+	if err != nil {
+		logrus.Errorf("could not get weather list, err: %s", err)
+
+		AddFlashQuick(w, r, "couldn't get weather list")
+
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+
+		return
+	}
+
+	var found bool
+
+	for key := range existingWeather {
+		if weatherKey == key {
+			// Delete car
+			found = true
+
+			err := os.RemoveAll(filepath.Join(weatherPath, weatherKey))
+
+			if err != nil {
+				found = false
+				logrus.Errorf("could not remove weather files, err: %s", err)
+			}
+
+			delete(existingWeather, key)
+
+			break
+		}
+	}
+
+	var message string
+
+	if found {
+		// confirm deletion
+		message = "Weather preset successfully deleted!"
+	} else {
+		// inform weather wasn't found
+		message = "Sorry, weather preset could not be deleted. Are you sure it was installed?"
+	}
+
+	AddFlashQuick(w, r, message)
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }

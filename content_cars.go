@@ -2,10 +2,12 @@ package servermanager
 
 import (
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
 
+	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
@@ -72,4 +74,71 @@ func ListCars() (Cars, error) {
 	})
 
 	return cars, nil
+}
+
+func carsHandler(w http.ResponseWriter, r *http.Request) {
+	cars, err := ListCars()
+
+	if err != nil {
+		logrus.Errorf("could not get car list, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("content", "cars.html"), map[string]interface{}{
+		"cars": cars,
+	})
+}
+
+func apiCarUploadHandler(w http.ResponseWriter, r *http.Request) {
+	uploadHandler(w, r, "Car")
+}
+
+func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	carName := mux.Vars(r)["name"]
+	carsPath := filepath.Join(ServerInstallPath, "content", "cars")
+
+	existingCars, err := ListCars()
+
+	if err != nil {
+		logrus.Errorf("could not get car list, err: %s", err)
+
+		AddFlashQuick(w, r, "couldn't get car list")
+
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+
+		return
+	}
+
+	var found bool
+
+	for _, car := range existingCars {
+		if car.Name == carName {
+			// Delete car
+			found = true
+
+			err := os.RemoveAll(filepath.Join(carsPath, carName))
+
+			if err != nil {
+				found = false
+				logrus.Errorf("could not remove car files, err: %s", err)
+			}
+
+			break
+		}
+	}
+
+	var message string
+
+	if found {
+		// confirm deletion
+		message = "Car successfully deleted!"
+	} else {
+		// inform car wasn't found
+		message = "Sorry, car could not be deleted. Are you sure it was installed?"
+	}
+
+	AddFlashQuick(w, r, message)
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }

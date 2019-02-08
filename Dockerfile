@@ -45,8 +45,6 @@ RUN rm -rf ${BUILD_DIR}
 USER ${SERVER_USER}
 WORKDIR ${SERVER_MANAGER_DIR}
 
-ADD scripts/* ${SERVER_MANAGER_DIR}
-
 # recommend volume mounting the entire assetto corsa directory
 VOLUME ["${SERVER_INSTALL_DIR}"]
 EXPOSE 8772
@@ -57,4 +55,4 @@ EXPOSE 8081
 ENV SERVER_ADDRESS "0.0.0.0:8772"
 ENV STORE_LOCATION ${SERVER_INSTALL_DIR}/store.db
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
+ENTRYPOINT ["server-manager"]

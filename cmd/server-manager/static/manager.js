@@ -494,19 +494,22 @@ let serverLogs = {
             disableManagerLogRefresh = false;
         });
 
-        if ($serverLog.length && $managerLog.length) {
+        function isAtBottom($elem) {
+            let node = $elem[0];
+            return node.scrollTop + node.offsetHeight >= node.scrollHeight - 40;
+        }
 
+        if ($serverLog.length && $managerLog.length) {
             setInterval(function () {
                 $.get("/api/logs", function (data) {
-
                     if (!window.getSelection().toString()) {
-                        if (!disableServerLogRefresh) {
+                        if (isAtBottom($serverLog) && !disableServerLogRefresh) {
 
                             $serverLog.text(data.ServerLog);
                             $serverLog.scrollTop(1E10);
                         }
 
-                        if (!disableManagerLogRefresh) {
+                        if (isAtBottom($managerLog) && !disableManagerLogRefresh) {
                             $managerLog.text(data.ManagerLog);
                             $managerLog.scrollTop(1E10);
                         }
