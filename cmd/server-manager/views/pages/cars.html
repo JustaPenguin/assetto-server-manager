@@ -44,7 +44,7 @@
                     {{ carList ($car.Skins | join ";")}}
                 </td>
                 <td class="text-center">
-                    <a href="{{ print "/car/delete/" $car.Name }}"><i class="fas fa-trash"></i></a>
+                    <a href="{{ print "/car/delete/" $car.Name }}"><i class="fas fa-trash text-danger"></i></a>
                 </td>
             </tr>
         {{ end }}
