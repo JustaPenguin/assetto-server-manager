@@ -15,9 +15,19 @@ var tyreFiles = []string{
 
 type Tyres map[string]map[string]string
 
-func (t Tyres) Name(search string) string {
-	for _, car := range t {
-		if name, ok := car[search]; ok {
+func (t Tyres) Name(search string, cars []string) string {
+	carExists := make(map[string]bool)
+
+	for _, car := range cars {
+		carExists[car] = true
+	}
+
+	for car, carTyres := range t {
+		if _, ok := carExists[car]; !ok {
+			continue
+		}
+
+		if name, ok := carTyres[search]; ok {
 			return name
 		}
 	}
