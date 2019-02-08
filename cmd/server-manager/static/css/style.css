@@ -58,6 +58,15 @@ span[data-toggle=tooltip] { cursor: default; }
     color: #158CBA;
 }
 
+.badge-best {
+    color: #fff;
+    background-color: rgba(99, 24, 165, 0.86);
+}
+
 .home-race-info .race-info, .home-race-info .race-info small {
     font-size: 1.1em;
+}
+
+.nav-tabs .nav-link:not(.disabled):hover, .nav-tabs .nav-link:not(.disabled):focus, .nav-tabs .nav-link.active {
+    padding-bottom: calc(0.5em + 7px) !important;
 }

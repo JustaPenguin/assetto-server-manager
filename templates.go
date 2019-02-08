@@ -122,7 +122,7 @@ func prettifyName(s string, acronyms bool) string {
 		if (acronyms && len(parts[i]) <= 3) || (acronyms && nameRegex.MatchString(parts[i])) {
 			parts[i] = strings.ToUpper(parts[i])
 		} else {
-			parts[i] = strings.Title(parts[i])
+			parts[i] = strings.Title(strings.ToLower(parts[i]))
 		}
 	}
 

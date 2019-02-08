@@ -28,8 +28,34 @@ type SessionResults struct {
 	SessionFile string
 }
 
+func (s *SessionResults) GetCrashes(guid string) int {
+	var num int
+
+	for _, event := range s.Events {
+		if event.Driver.GUID == guid {
+			num++
+		}
+	}
+
+	return num
+}
+
+func (s *SessionResults) GetAverageLapTime(guid string) time.Duration {
+	var totalTime int
+	var laps int
+
+	for _, lap := range s.Laps {
+		if lap.DriverGUID == guid {
+			totalTime += lap.LapTime
+			laps++
+		}
+	}
+
+	return s.GetTime(int(float64(totalTime)/float64(laps)), guid)
+}
+
 // lapNum is the drivers current lap
-func(s *SessionResults) GetPosForLap(guid string, lapNum int64) int {
+func (s *SessionResults) GetPosForLap(guid string, lapNum int64) int {
 	var driverLap map[string]int
 	var pos int
 
@@ -40,7 +66,7 @@ func(s *SessionResults) GetPosForLap(guid string, lapNum int64) int {
 		driverLap[lap.DriverGUID]++
 
 		if driverLap[lap.DriverGUID] == int(lapNum) && lap.DriverGUID == guid {
-			return pos+1
+			return pos + 1
 		} else if driverLap[lap.DriverGUID] == int(lapNum) {
 			pos++
 		}
@@ -210,6 +236,12 @@ func (sl *SessionLaps) GetLapTime() time.Duration {
 	return d
 }
 
+func (sl *SessionLaps) DidCheat(averageTime time.Duration) bool {
+	d, _ := time.ParseDuration(fmt.Sprintf("%dms", sl.LapTime))
+
+	return d < averageTime && sl.Cuts > 0
+}
+
 type SessionCars struct {
 	BallastKG  int           `json:"BallastKG"`
 	CarID      int           `json:"CarId"`
@@ -228,6 +260,14 @@ type SessionEvents struct {
 	RelPosition   SessionPos    `json:"RelPosition"`
 	Type          string        `json:"Type"`
 	WorldPosition SessionPos    `json:"WorldPosition"`
+}
+
+func (se *SessionEvents) GetRelPosition() string {
+	return fmt.Sprintf("X: %.1f Y: %.1f Z: %.1f", se.RelPosition.X, se.RelPosition.Y, se.RelPosition.Z)
+}
+
+func (se *SessionEvents) GetWorldPosition() string {
+	return fmt.Sprintf("X: %.1f Y: %.1f Z: %.1f", se.WorldPosition.X, se.WorldPosition.Y, se.WorldPosition.Z)
 }
 
 type SessionDriver struct {
