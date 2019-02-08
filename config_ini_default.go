@@ -81,8 +81,8 @@ var ConfigIniDefault = ServerConfig{
 		DynamicTrack: DynamicTrackConfig{
 			SessionStart:    100,
 			Randomness:      0,
-			SessionTransfer: 100,
-			LapGain:         10,
+			SessionTransfer: 10,
+			LapGain:         100,
 		},
 
 		Weather: map[string]WeatherConfig{
