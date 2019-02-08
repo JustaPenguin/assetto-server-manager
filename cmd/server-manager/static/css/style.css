@@ -44,8 +44,8 @@ abbr[title] {
     max-height: 600px;
 }
 
-.table-custom-race tr td:nth-child(2) {
-    max-width: 250px;
+.table-custom-race tr td:nth-child(3) {
+    max-width: 620px;
 }
 
 span[data-toggle=tooltip] { cursor: default; }
@@ -58,6 +58,11 @@ span[data-toggle=tooltip] { cursor: default; }
 .driver-link:hover {
     cursor: pointer;
     color: #158CBA;
+}
+
+.badge-best {
+    color: #fff;
+    background-color: rgba(99, 24, 165, 0.86);
 }
 
 .home-race-info {
@@ -91,6 +96,11 @@ span[data-toggle=tooltip] { cursor: default; }
 
 .home-race-info .race-info, .home-race-info .race-info small {
     font-size: 1.1em;
+}
+
+
+.nav-tabs .nav-link:not(.disabled):hover, .nav-tabs .nav-link:not(.disabled):focus, .nav-tabs .nav-link.active {
+    padding-bottom: calc(0.5em + 7px) !important;
 }
 
 .search-input {

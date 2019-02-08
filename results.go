@@ -29,11 +29,61 @@ type SessionResults struct {
 	SessionFile string
 }
 
-func (s *SessionResults) IsFastestLap(time int) bool {
+func (s *SessionResults) GetCrashes(guid string) int {
+	var num int
+
+	for _, event := range s.Events {
+		if event.Driver.GUID == guid {
+			num++
+		}
+	}
+
+	return num
+}
+
+func (s *SessionResults) GetAverageLapTime(guid string) time.Duration {
+	var totalTime int
+	var laps int
+
+	for _, lap := range s.Laps {
+		if lap.DriverGUID == guid {
+			totalTime += lap.LapTime
+			laps++
+		}
+	}
+
+	return s.GetTime(int(float64(totalTime)/float64(laps)), guid)
+}
+
+// lapNum is the drivers current lap
+func (s *SessionResults) GetPosForLap(guid string, lapNum int64) int {
+	var pos int
+
+	driverLap := make(map[string]int)
+
+	for overallLapNum, lap := range s.Laps {
+		overallLapNum++
+		driverLap[lap.DriverGUID]++
+
+		if driverLap[lap.DriverGUID] == int(lapNum) && lap.DriverGUID == guid {
+			return pos + 1
+		} else if driverLap[lap.DriverGUID] == int(lapNum) {
+			pos++
+		}
+	}
+
+	return 0
+}
+
+func (s *SessionResults) IsFastestLap(time, cuts int) bool {
+	if cuts != 0 {
+		return false
+	}
+
 	var fastest = true
 
 	for _, lap := range s.Laps {
-		if lap.LapTime < time {
+		if lap.LapTime < time && lap.Cuts == 0 {
 			fastest = false
 			break
 		}
@@ -42,11 +92,15 @@ func (s *SessionResults) IsFastestLap(time int) bool {
 	return fastest
 }
 
-func (s *SessionResults) IsDriversFastestLap(guid string, time int) bool {
+func (s *SessionResults) IsDriversFastestLap(guid string, time, cuts int) bool {
+	if cuts != 0 {
+		return false
+	}
+
 	var fastest = true
 
 	for _, lap := range s.Laps {
-		if lap.LapTime < time && lap.DriverGUID == guid {
+		if lap.LapTime < time && lap.DriverGUID == guid && lap.Cuts == 0 {
 			fastest = false
 			break
 		}
@@ -55,11 +109,15 @@ func (s *SessionResults) IsDriversFastestLap(guid string, time int) bool {
 	return fastest
 }
 
-func (s *SessionResults) IsFastestSector(sector, time int) bool {
+func (s *SessionResults) IsFastestSector(sector, time, cuts int) bool {
+	if cuts != 0 {
+		return false
+	}
+
 	var fastest = true
 
 	for _, lap := range s.Laps {
-		if lap.Sectors[sector] < time {
+		if lap.Sectors[sector] < time && lap.Cuts == 0 {
 			fastest = false
 			break
 		}
@@ -68,11 +126,15 @@ func (s *SessionResults) IsFastestSector(sector, time int) bool {
 	return fastest
 }
 
-func (s *SessionResults) IsDriversFastestSector(guid string, sector, time int) bool {
+func (s *SessionResults) IsDriversFastestSector(guid string, sector, time, cuts int) bool {
+	if cuts != 0 {
+		return false
+	}
+
 	var fastest = true
 
 	for _, lap := range s.Laps {
-		if lap.Sectors[sector] < time && lap.DriverGUID == guid {
+		if lap.Sectors[sector] < time && lap.DriverGUID == guid && lap.Cuts == 0 {
 			fastest = false
 			break
 		}
@@ -190,6 +252,12 @@ func (sl *SessionLaps) GetLapTime() time.Duration {
 	return d
 }
 
+func (sl *SessionLaps) DidCheat(averageTime time.Duration) bool {
+	d, _ := time.ParseDuration(fmt.Sprintf("%dms", sl.LapTime))
+
+	return d < averageTime && sl.Cuts > 0
+}
+
 type SessionCars struct {
 	BallastKG  int           `json:"BallastKG"`
 	CarID      int           `json:"CarId"`
@@ -208,6 +276,14 @@ type SessionEvents struct {
 	RelPosition   SessionPos    `json:"RelPosition"`
 	Type          string        `json:"Type"`
 	WorldPosition SessionPos    `json:"WorldPosition"`
+}
+
+func (se *SessionEvents) GetRelPosition() string {
+	return fmt.Sprintf("X: %.1f Y: %.1f Z: %.1f", se.RelPosition.X, se.RelPosition.Y, se.RelPosition.Z)
+}
+
+func (se *SessionEvents) GetWorldPosition() string {
+	return fmt.Sprintf("X: %.1f Y: %.1f Z: %.1f", se.WorldPosition.X, se.WorldPosition.Y, se.WorldPosition.Z)
 }
 
 type SessionDriver struct {
