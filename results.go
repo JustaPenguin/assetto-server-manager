@@ -338,7 +338,7 @@ func resultsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "results/index.html", map[string]interface{}{
+	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("results", "index.html"), map[string]interface{}{
 		"results":     results,
 		"pages":       pages,
 		"currentPage": page,
@@ -357,7 +357,7 @@ func resultHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "results/result.html", map[string]interface{}{
+	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("results", "result.html"), map[string]interface{}{
 		"result": result,
 	})
 }
