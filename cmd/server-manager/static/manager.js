@@ -695,8 +695,12 @@ function handleWeatherFilesLoop(fileList) {
             let $button = $("<button/>");
             $button.attr({
                 'class': "btn btn-primary",
-                'onclick': "submitFiles(\"/api/weather/upload\")",
                 'id': "weather-upload-button"
+            });
+
+            $button.click(function(e) {
+                e.preventDefault();
+                submitFiles("/api/weather/upload")
             });
             $button.text("Upload Weather Preset(s)");
 
@@ -834,8 +838,13 @@ function handleCarFilesLoop(fileList) {
             let $button = $("<button/>");
             $button.attr({
                 'class': "btn btn-primary",
-                'onclick': "submitFiles(\"/api/car/upload\")",
                 'id': "car-upload-button"
+            });
+
+            $button.click(function(e) {
+                e.preventDefault();
+
+                submitFiles("/api/car/upload")
             });
             $button.text("Upload Car(s)");
 
@@ -980,9 +989,14 @@ function handleTrackFilesLoop(fileList) {
             let $button = $("<button/>");
             $button.attr({
                 'class': "btn btn-primary",
-                'onclick': "submitFiles(\"/api/track/upload\")",
                 'id': "track-upload-button"
             });
+            $button.click(function(e) {
+                e.preventDefault();
+
+                submitFiles("/api/track/upload")
+            });
+
             $button.text("Upload Track(s)");
 
             $uploadButton.append($button);

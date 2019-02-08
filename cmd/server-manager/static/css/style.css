@@ -65,7 +65,7 @@ span[data-toggle=tooltip] { cursor: default; }
 }
 
 
-@media screen and (max-width: 400px) {
+@media screen and (max-width: 768px) {
     .home-race-info .race-info {
         min-height: 200px;
     }
@@ -85,6 +85,7 @@ span[data-toggle=tooltip] { cursor: default; }
 
     #trackImage {
         padding-left: 0 !important;
+        width: 100%;
     }
 }
 

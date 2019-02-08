@@ -16,17 +16,19 @@
 
             <form class="d-inline">
                 <div class="mt-3 mb-3">
-                    <div class="btn-file btn btn-lg btn-primary">
+                    <div class="btn-file btn btn-secondary">
                         Choose a Folder
                         <input id="input-folder-track" name="input-folder-track[]" type="file"
                                 multiple webkitdirectory value="Choose Folder" onchange="handleTrackFiles(this.files)"/>
                     </div>
+
+
+                    <div id="upload-button"></div>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="upload-button"></div>
 
     <div id="track-info-panel"></div>
 
