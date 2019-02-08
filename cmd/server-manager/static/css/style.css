@@ -92,3 +92,6 @@ span[data-toggle=tooltip] { cursor: default; }
     font-size: 1.1em;
 }
 
+.search-input {
+    margin-bottom: 5px;
+}
