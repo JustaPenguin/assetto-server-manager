@@ -42,8 +42,8 @@ abbr[title] {
     max-height: 600px;
 }
 
-.table-custom-race tr td:nth-child(2) {
-    max-width: 250px;
+.table-custom-race tr td:nth-child(3) {
+    max-width: 620px;
 }
 
 span[data-toggle=tooltip] { cursor: default; }

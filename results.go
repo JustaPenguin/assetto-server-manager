@@ -28,6 +28,27 @@ type SessionResults struct {
 	SessionFile string
 }
 
+// lapNum is the drivers current lap
+func(s *SessionResults) GetPosForLap(guid string, lapNum int64) int {
+	var driverLap map[string]int
+	var pos int
+
+	driverLap = make(map[string]int)
+
+	for overallLapNum, lap := range s.Laps {
+		overallLapNum++
+		driverLap[lap.DriverGUID]++
+
+		if driverLap[lap.DriverGUID] == int(lapNum) && lap.DriverGUID == guid {
+			return pos+1
+		} else if driverLap[lap.DriverGUID] == int(lapNum) {
+			pos++
+		}
+	}
+
+	return 0
+}
+
 func (s *SessionResults) IsFastestLap(time int) bool {
 	var fastest = true
 
