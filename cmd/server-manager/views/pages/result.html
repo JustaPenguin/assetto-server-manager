@@ -17,14 +17,6 @@
             <a class="btn btn-info btn-sm float-right" href="/results/download/{{ $sessionResults.SessionFile }}.json">Download as JSON</a>
         </div>
         <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <img class="img-fluid float-right"
-                         src="/content/tracks/{{ $sessionResults.TrackName }}/ui{{ with $sessionResults.TrackConfig }}/{{.}}{{ end }}/preview.png"
-                         alt="{{ $sessionResults.TrackName }} {{ $sessionResults.TrackConfig }}"
-                    >
-                </div>
-            </div>
 
             <div class="row mt-3">
                 <div class="col-md-12">
@@ -224,13 +216,13 @@
                                             <td>
                                                 {{ $sessionLap.GetLapTime }}
 
-                                                {{ if $sessionResults.IsFastestLap $sessionLap.LapTime }}
+                                                {{ if $sessionResults.IsFastestLap $sessionLap.LapTime $sessionLap.Cuts }}
                                                     <div class="float-right mr-1">
                                                         <span data-toggle="tooltip" title="Fastest Lap" class="badge badge-best">L</span>
                                                     </div>
                                                 {{ end }}
 
-                                                {{ if $sessionResults.IsDriversFastestLap $sessionLap.DriverGUID $sessionLap.LapTime }}
+                                                {{ if $sessionResults.IsDriversFastestLap $sessionLap.DriverGUID $sessionLap.LapTime $sessionLap.Cuts }}
                                                     <div class="float-right mr-1">
                                                         <span data-toggle="tooltip" title="Driver's Fastest Lap" class="badge badge-success">L</span>
                                                     </div>
@@ -247,13 +239,13 @@
                                                 <td>
                                                     {{ $sessionLap.GetSector $x }}
 
-                                                    {{ if $sessionResults.IsFastestSector $x (index $sessionLap.Sectors $x) }}
+                                                    {{ if $sessionResults.IsFastestSector $x (index $sessionLap.Sectors $x) $sessionLap.Cuts }}
                                                         <div class="float-right mr-1">
                                                             <span data-toggle="tooltip" title="Fastest Sector" class="badge badge-best">S</span>
                                                         </div>
                                                     {{ end }}
 
-                                                    {{ if $sessionResults.IsDriversFastestSector $sessionLap.DriverGUID $x (index $sessionLap.Sectors $x) }}
+                                                    {{ if $sessionResults.IsDriversFastestSector $sessionLap.DriverGUID $x (index $sessionLap.Sectors $x) $sessionLap.Cuts }}
                                                         <div class="float-right mr-1">
                                                             <span data-toggle="tooltip" title="Driver's Fastest Sector" class="badge badge-success">S</span>
                                                         </div>

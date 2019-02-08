@@ -75,11 +75,15 @@ func (s *SessionResults) GetPosForLap(guid string, lapNum int64) int {
 	return 0
 }
 
-func (s *SessionResults) IsFastestLap(time int) bool {
+func (s *SessionResults) IsFastestLap(time, cuts int) bool {
+	if cuts != 0 {
+		return false
+	}
+
 	var fastest = true
 
 	for _, lap := range s.Laps {
-		if lap.LapTime < time {
+		if lap.LapTime < time && lap.Cuts == 0 {
 			fastest = false
 			break
 		}
@@ -88,11 +92,15 @@ func (s *SessionResults) IsFastestLap(time int) bool {
 	return fastest
 }
 
-func (s *SessionResults) IsDriversFastestLap(guid string, time int) bool {
+func (s *SessionResults) IsDriversFastestLap(guid string, time, cuts int) bool {
+	if cuts != 0 {
+		return false
+	}
+
 	var fastest = true
 
 	for _, lap := range s.Laps {
-		if lap.LapTime < time && lap.DriverGUID == guid {
+		if lap.LapTime < time && lap.DriverGUID == guid && lap.Cuts == 0 {
 			fastest = false
 			break
 		}
@@ -101,11 +109,15 @@ func (s *SessionResults) IsDriversFastestLap(guid string, time int) bool {
 	return fastest
 }
 
-func (s *SessionResults) IsFastestSector(sector, time int) bool {
+func (s *SessionResults) IsFastestSector(sector, time, cuts int) bool {
+	if cuts != 0 {
+		return false
+	}
+
 	var fastest = true
 
 	for _, lap := range s.Laps {
-		if lap.Sectors[sector] < time {
+		if lap.Sectors[sector] < time && lap.Cuts == 0 {
 			fastest = false
 			break
 		}
@@ -114,11 +126,15 @@ func (s *SessionResults) IsFastestSector(sector, time int) bool {
 	return fastest
 }
 
-func (s *SessionResults) IsDriversFastestSector(guid string, sector, time int) bool {
+func (s *SessionResults) IsDriversFastestSector(guid string, sector, time, cuts int) bool {
+	if cuts != 0 {
+		return false
+	}
+
 	var fastest = true
 
 	for _, lap := range s.Laps {
-		if lap.Sectors[sector] < time && lap.DriverGUID == guid {
+		if lap.Sectors[sector] < time && lap.DriverGUID == guid && lap.Cuts == 0 {
 			fastest = false
 			break
 		}
