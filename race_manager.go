@@ -90,7 +90,7 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 	return nil
 }
 
-var ErrMustSubmitCar = errors.New("servermanager: you must set a car!")
+var ErrMustSubmitCar = errors.New("servermanager: you must set a car")
 
 func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 	if err := r.ParseForm(); err != nil {
@@ -105,6 +105,30 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 	quickRace.CurrentRaceConfig.Cars = strings.Join(cars, ";")
 	quickRace.CurrentRaceConfig.Track = r.Form.Get("Track")
 	quickRace.CurrentRaceConfig.TrackLayout = r.Form.Get("TrackLayout")
+
+	tyres, err := ListTyres()
+
+	if err != nil {
+		return err
+	}
+
+	quickRaceTyresMap := make(map[string]bool)
+
+	for _, car := range cars {
+		if available, ok := tyres[car]; ok {
+			for tyre := range available {
+				quickRaceTyresMap[tyre] = true
+			}
+		}
+	}
+
+	var quickRaceTyres []string
+
+	for tyre := range quickRaceTyresMap {
+		quickRaceTyres = append(quickRaceTyres, tyre)
+	}
+
+	quickRace.CurrentRaceConfig.LegalTyres = strings.Join(quickRaceTyres, ";")
 
 	quickRace.CurrentRaceConfig.Sessions = make(map[SessionType]SessionConfig)
 

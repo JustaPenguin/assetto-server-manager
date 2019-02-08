@@ -63,6 +63,10 @@ span[data-toggle=tooltip] { cursor: default; }
     background-color: rgba(99, 24, 165, 0.86);
 }
 
+.home-race-info {
+    min-height: 200px;
+}
+
 .home-race-info .race-info, .home-race-info .race-info small {
     font-size: 1.1em;
 }

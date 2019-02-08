@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -302,11 +303,10 @@ type SessionPos struct {
 
 const pageSize = 10
 
+var ErrResultsPageNotFound = errors.New("servermanager: results page not found")
+
 func listResults(page int) ([]SessionResults, []int, error) {
-	var results []SessionResults
-
 	resultsPath := filepath.Join(ServerInstallPath, "results")
-
 	resultFiles, err := ioutil.ReadDir(resultsPath)
 
 	if err != nil {
@@ -318,10 +318,10 @@ func listResults(page int) ([]SessionResults, []int, error) {
 	})
 
 	pages := float64(len(resultFiles)) / float64(pageSize)
-	pagesRound := math.Round(pages)
+	pagesRound := math.Ceil(pages)
 
-	if pagesRound < pages {
-		pagesRound++
+	if page > int(pages) || page < 0 {
+		return nil, nil, ErrResultsPageNotFound
 	}
 
 	var pagesSlice []int
@@ -336,6 +336,8 @@ func listResults(page int) ([]SessionResults, []int, error) {
 	} else {
 		resultFiles = resultFiles[page*pageSize:]
 	}
+
+	var results []SessionResults
 
 	for _, resultFile := range resultFiles {
 		result, err := getResult(resultFile.Name())
@@ -404,13 +406,16 @@ func resultsHandler(w http.ResponseWriter, r *http.Request) {
 
 	results, pages, err := listResults(page)
 
-	if err != nil {
+	if err == ErrResultsPageNotFound {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	} else if err != nil {
 		logrus.Errorf("could not get result list, err: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "results.html", map[string]interface{}{
+	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("results", "index.html"), map[string]interface{}{
 		"results":     results,
 		"pages":       pages,
 		"currentPage": page,
@@ -429,7 +434,7 @@ func resultHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "result.html", map[string]interface{}{
+	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("results", "result.html"), map[string]interface{}{
 		"result": result,
 	})
 }

@@ -244,5 +244,10 @@ func (rs *RaceStore) LoadServerOptions() (*GlobalServerConfig, error) {
 		return rs.decode(data, &so)
 	})
 
+	if err == bbolt.ErrBucketNotFound {
+		// no server options created yet, apply defaults
+		return so, rs.UpsertServerOptions(so)
+	}
+
 	return so, err
 }
