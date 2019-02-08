@@ -57,10 +57,9 @@ func (s *SessionResults) GetAverageLapTime(guid string) time.Duration {
 
 // lapNum is the drivers current lap
 func (s *SessionResults) GetPosForLap(guid string, lapNum int64) int {
-	var driverLap map[string]int
 	var pos int
 
-	driverLap = make(map[string]int)
+	driverLap := make(map[string]int)
 
 	for overallLapNum, lap := range s.Laps {
 		overallLapNum++
