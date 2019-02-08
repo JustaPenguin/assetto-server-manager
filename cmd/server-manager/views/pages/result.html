@@ -152,6 +152,9 @@
                             <table class="table table-bordered table-striped">
                                 <tr>
                                     <th>Lap #</th>
+                                    {{ if eq "RACE" $sessionResults.Type }}
+                                        <th>Race Position</th>
+                                    {{ end }}
                                     <th>Lap Time</th>
 
                                     {{ range $z, $null := $sessionResults.GetNumSectors }}
@@ -168,6 +171,9 @@
                                         {{ $lapCount = add $lapCount 1 }}
                                         <tr>
                                             <td>{{ $lapCount }}</td>
+                                            {{ if eq "RACE" $sessionResults.Type }}
+                                                <td>{{ $sessionResults.GetPosForLap $sessionResult.DriverGUID $lapCount }}</td>
+                                            {{ end }}
                                             <td>
                                                 {{ $sessionLap.GetLapTime }}
 
