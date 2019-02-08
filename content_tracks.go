@@ -3,10 +3,14 @@ package servermanager
 import (
 	"encoding/json"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 type Track struct {
@@ -114,4 +118,69 @@ func GetTrackInfo(name, layout string) (*TrackInfo, error) {
 	err = json.NewDecoder(f).Decode(&trackInfo)
 
 	return trackInfo, err
+}
+
+func tracksHandler(w http.ResponseWriter, r *http.Request) {
+	tracks, err := ListTracks()
+
+	if err != nil {
+		logrus.Errorf("could not get track list, err: %s", err)
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("content", "tracks.html"), map[string]interface{}{
+		"tracks": tracks,
+	})
+}
+
+func apiTrackUploadHandler(w http.ResponseWriter, r *http.Request) {
+	uploadHandler(w, r, "Track")
+}
+
+func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	trackName := mux.Vars(r)["name"]
+	tracksPath := filepath.Join(ServerInstallPath, "content", "tracks")
+
+	existingTracks, err := ListTracks()
+
+	if err != nil {
+		logrus.Errorf("could not get track list, err: %s", err)
+
+		AddFlashQuick(w, r, "couldn't get track list")
+
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+
+		return
+	}
+
+	var found bool
+
+	for _, track := range existingTracks {
+		if track.Name == trackName {
+			// Delete track
+			found = true
+
+			err := os.RemoveAll(filepath.Join(tracksPath, trackName))
+
+			if err != nil {
+				found = false
+				logrus.Errorf("could not remove track files, err: %s", err)
+			}
+
+			break
+		}
+	}
+
+	var message string
+
+	if found {
+		// confirm deletion
+		message = "Track successfully deleted!"
+	} else {
+		// inform track wasn't found
+		message = "Sorry, track could not be deleted."
+	}
+
+	AddFlashQuick(w, r, message)
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
