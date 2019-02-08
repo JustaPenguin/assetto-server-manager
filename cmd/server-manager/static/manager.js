@@ -91,7 +91,41 @@ let raceSetup = {
         raceSetup.$addWeatherButton = $document.find("#addWeather");
 
         if (raceSetup.$carsDropdown) {
-            raceSetup.$carsDropdown.multiSelect();
+            raceSetup.$carsDropdown.multiSelect({
+                selectableHeader: "<input type='search' class='form-control search-input' autocomplete='off' placeholder='search'>",
+                selectionHeader: "<input type='search' class='form-control search-input' autocomplete='off' placeholder='search'>",
+                afterInit: function(ms){
+                    let that = this,
+                        $selectableSearch = that.$selectableUl.prev(),
+                        $selectionSearch = that.$selectionUl.prev(),
+                        selectableSearchString = '#'+that.$container.attr('id')+' .ms-elem-selectable:not(.ms-selected)',
+                        selectionSearchString = '#'+that.$container.attr('id')+' .ms-elem-selection.ms-selected';
+
+                    that.qs1 = $selectableSearch.quicksearch(selectableSearchString)
+                        .on('keydown', function(e){
+                            if (e.which === 40){
+                                that.$selectableUl.focus();
+                                return false;
+                            }
+                        });
+
+                    that.qs2 = $selectionSearch.quicksearch(selectionSearchString)
+                        .on('keydown', function(e){
+                            if (e.which === 40){
+                                that.$selectionUl.focus();
+                                return false;
+                            }
+                        });
+                },
+                afterSelect: function(){
+                    this.qs1.cache();
+                    this.qs2.cache();
+                },
+                afterDeselect: function(){
+                    this.qs1.cache();
+                    this.qs2.cache();
+                }
+            });
             raceSetup.$tyresDropdown = $document.find("#LegalTyres");
 
             if (raceSetup.$tyresDropdown) {
@@ -661,8 +695,12 @@ function handleWeatherFilesLoop(fileList) {
             let $button = $("<button/>");
             $button.attr({
                 'class': "btn btn-primary",
-                'onclick': "submitFiles(\"/api/weather/upload\")",
                 'id': "weather-upload-button"
+            });
+
+            $button.click(function(e) {
+                e.preventDefault();
+                submitFiles("/api/weather/upload")
             });
             $button.text("Upload Weather Preset(s)");
 
@@ -800,8 +838,13 @@ function handleCarFilesLoop(fileList) {
             let $button = $("<button/>");
             $button.attr({
                 'class': "btn btn-primary",
-                'onclick': "submitFiles(\"/api/car/upload\")",
                 'id': "car-upload-button"
+            });
+
+            $button.click(function(e) {
+                e.preventDefault();
+
+                submitFiles("/api/car/upload")
             });
             $button.text("Upload Car(s)");
 
@@ -946,9 +989,14 @@ function handleTrackFilesLoop(fileList) {
             let $button = $("<button/>");
             $button.attr({
                 'class': "btn btn-primary",
-                'onclick': "submitFiles(\"/api/track/upload\")",
                 'id': "track-upload-button"
             });
+            $button.click(function(e) {
+                e.preventDefault();
+
+                submitFiles("/api/track/upload")
+            });
+
             $button.text("Upload Track(s)");
 
             $uploadButton.append($button);

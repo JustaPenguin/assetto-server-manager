@@ -60,8 +60,8 @@
 
             <div class="col-sm-10">
                 <select multiple class="form-control" name="Cars" id="Cars" size="15">
-                    {{ range $car, $skins := .CarOpts }}
-                        <option value="{{ $car }}">{{ prettify $car true }}</option>
+                    {{ range $index, $car := .CarOpts }}
+                        <option value="{{ $car.Name }}">{{ prettify $car.Name true }}</option>
                     {{ end }}
                 </select>
 
