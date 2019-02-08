@@ -2,9 +2,11 @@ body {
     padding-top: 60px;
 }
 
-a.card {
-    padding-top: 40px;
-    padding-bottom: 40px;
+@media screen and (min-width: 400px) {
+    a.card {
+        padding-top: 40px;
+        padding-bottom: 40px;
+    }
 }
 
 a.card h2 {
@@ -62,6 +64,56 @@ span[data-toggle=tooltip] { cursor: default; }
     min-height: 200px;
 }
 
+
+@media screen and (max-width: 768px) {
+    .home-race-info .race-info {
+        min-height: 200px;
+    }
+
+    .home-race-info .button-bar {
+        position: relative;
+        width: auto;
+        margin-bottom: 10px;
+    }
+    .home-race-info .float-right {
+        float: unset !important;
+    }
+
+    .home-race-info .btn {
+        width: 100%;
+    }
+
+    #trackImage {
+        padding-left: 0 !important;
+        width: 100%;
+    }
+}
+
 .home-race-info .race-info, .home-race-info .race-info small {
     font-size: 1.1em;
+}
+
+.search-input {
+    margin-bottom: 5px;
+}
+
+.btn-file {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 100px;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: white;
+    cursor: inherit;
+    display: block;
 }
