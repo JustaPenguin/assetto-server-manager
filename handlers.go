@@ -24,6 +24,12 @@ var (
 )
 
 func init() {
+	if os.Getenv("DEBUG") != "true" {
+		logrus.SetLevel(logrus.InfoLevel)
+	} else {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
+
 	logrus.SetOutput(io.MultiWriter(os.Stdout, logOutput))
 }
 
