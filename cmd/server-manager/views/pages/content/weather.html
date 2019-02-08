@@ -15,8 +15,13 @@
                 correctly.</p>
 
             <form class="d-inline">
-                <input id="input-folder-weather" class="mb-3 mt-3" name="input-folder-weather[]" type="file"
-                       multiple webkitdirectory value="Choose Folder" onchange="handleWeatherFiles(this.files)"/>
+                <div class="mt-3 mb-3">
+                    <div class="btn-file btn btn-lg btn-primary">
+                        Choose a Folder
+                        <input id="input-folder-weather" name="input-folder-weather[]" type="file"
+                            multiple webkitdirectory value="Choose Folder" onchange="handleWeatherFiles(this.files)"/>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
