@@ -430,7 +430,6 @@ let raceSetup = {
         function populateEntryListSkins($elem, val) {
             // populate skins
             let $skinsDropdown = $elem.closest(".entrant").find(".entryListSkin");
-
             let selected = $skinsDropdown.val();
 
             $skinsDropdown.empty();
@@ -463,9 +462,10 @@ let raceSetup = {
                 let $val = $(val);
                 let selected = $val.find("option:selected").val();
 
-                if (!selected) {
+                if (!selected || !cars.has(selected)) {
                     selected = raceSetup.$carsDropdown.val()[0];
                 }
+
 
                 $val.empty();
 
