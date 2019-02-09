@@ -18,9 +18,9 @@ import (
 )
 
 type SessionResults struct {
-	Cars        []SessionCars   `json:"Cars"`
-	Events      []SessionEvents `json:"Events"`
-	Laps        []SessionLaps   `json:"Laps"`
+	Cars        []SessionCar    `json:"Cars"`
+	Events      []SessionEvent  `json:"Events"`
+	Laps        []SessionLap    `json:"Laps"`
 	Result      []SessionResult `json:"Result"`
 	TrackConfig string          `json:"TrackConfig"`
 	TrackName   string          `json:"TrackName"`
@@ -226,7 +226,7 @@ type SessionResult struct {
 	TotalTime  int    `json:"TotalTime"`
 }
 
-type SessionLaps struct {
+type SessionLap struct {
 	BallastKG  int    `json:"BallastKG"`
 	CarID      int    `json:"CarId"`
 	CarModel   string `json:"CarModel"`
@@ -240,25 +240,25 @@ type SessionLaps struct {
 	Tyre       string `json:"Tyre"`
 }
 
-func (sl *SessionLaps) GetSector(x int) time.Duration {
+func (sl *SessionLap) GetSector(x int) time.Duration {
 	d, _ := time.ParseDuration(fmt.Sprintf("%dms", sl.Sectors[x]))
 
 	return d
 }
 
-func (sl *SessionLaps) GetLapTime() time.Duration {
+func (sl *SessionLap) GetLapTime() time.Duration {
 	d, _ := time.ParseDuration(fmt.Sprintf("%dms", sl.LapTime))
 
 	return d
 }
 
-func (sl *SessionLaps) DidCheat(averageTime time.Duration) bool {
+func (sl *SessionLap) DidCheat(averageTime time.Duration) bool {
 	d, _ := time.ParseDuration(fmt.Sprintf("%dms", sl.LapTime))
 
 	return d < averageTime && sl.Cuts > 0
 }
 
-type SessionCars struct {
+type SessionCar struct {
 	BallastKG  int           `json:"BallastKG"`
 	CarID      int           `json:"CarId"`
 	Driver     SessionDriver `json:"Driver"`
@@ -267,7 +267,7 @@ type SessionCars struct {
 	Skin       string        `json:"Skin"`
 }
 
-type SessionEvents struct {
+type SessionEvent struct {
 	CarID         int           `json:"CarId"`
 	Driver        SessionDriver `json:"Driver"`
 	ImpactSpeed   float64       `json:"ImpactSpeed"`
@@ -278,11 +278,11 @@ type SessionEvents struct {
 	WorldPosition SessionPos    `json:"WorldPosition"`
 }
 
-func (se *SessionEvents) GetRelPosition() string {
+func (se *SessionEvent) GetRelPosition() string {
 	return fmt.Sprintf("X: %.1f Y: %.1f Z: %.1f", se.RelPosition.X, se.RelPosition.Y, se.RelPosition.Z)
 }
 
-func (se *SessionEvents) GetWorldPosition() string {
+func (se *SessionEvent) GetWorldPosition() string {
 	return fmt.Sprintf("X: %.1f Y: %.1f Z: %.1f", se.WorldPosition.X, se.WorldPosition.Y, se.WorldPosition.Z)
 }
 
@@ -313,7 +313,10 @@ func listResults(page int) ([]SessionResults, []int, error) {
 	}
 
 	sort.Slice(resultFiles, func(i, j int) bool {
-		return resultFiles[i].ModTime().After(resultFiles[j].ModTime())
+		d1, _ := getResultDate(resultFiles[i].Name())
+		d2, _ := getResultDate(resultFiles[j].Name())
+
+		return d1.After(d2)
 	})
 
 	pages := float64(len(resultFiles)) / float64(pageSize)
