@@ -60,8 +60,18 @@ func (e EntryList) Delete(entrant Entrant) {
 func (e EntryList) Entrants() string {
 	var entrants []string
 
+	numOpenSlots := 0
+
 	for _, x := range e {
-		entrants = append(entrants, x.Name)
+		if x.Name == "" {
+			numOpenSlots++
+		} else {
+			entrants = append(entrants, x.Name)
+		}
+	}
+
+	if numOpenSlots > 0 {
+		entrants = append(entrants, fmt.Sprintf("%d open slots", numOpenSlots))
 	}
 
 	return strings.Join(entrants, ", ")
