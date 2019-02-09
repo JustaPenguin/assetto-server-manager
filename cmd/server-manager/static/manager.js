@@ -554,6 +554,37 @@ let serverLogs = {
     },
 };
 
+function postWithProgressBar(path, data, onSuccess, onFail, $progressBar) {
+    $progressBar.closest(".progress").show();
+    $progressBar.removeClass("bg-success");
+
+    function showProgress(evt) {
+        if (evt.lengthComputable) {
+            let percentComplete = Math.round((evt.loaded / evt.total) * 100);
+            $progressBar.css('width', percentComplete+'%').attr('aria-valuenow', percentComplete);
+            $progressBar.text(percentComplete + "%");
+
+            if (percentComplete === 100) {
+                $progressBar.addClass("bg-success");
+            }
+        }
+    }
+
+    $.ajax({
+        xhr: function () {
+            let xhr = new window.XMLHttpRequest();
+            xhr.upload.addEventListener("progress", showProgress, false);
+            xhr.addEventListener("progress", showProgress, false);
+            return xhr;
+        },
+        type: 'POST',
+        url: path,
+        data: data,
+        success: onSuccess,
+        fail: onFail,
+    });
+}
+
 const layout = {
     preview: "",
     details: "",
@@ -584,7 +615,7 @@ function submitFiles(path) {
             count++;
 
             if (count === filesToUpload.length) {
-                jQuery.post(path, JSON.stringify(newFiles), onSuccess).fail(onFail)
+                postWithProgressBar(path, JSON.stringify(newFiles), onSuccess, onFail, $("#progress-bar"));
             }
         });
     }
