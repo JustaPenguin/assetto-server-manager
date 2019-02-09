@@ -207,15 +207,21 @@ func (tr *Renderer) MustLoadPartial(w http.ResponseWriter, partial string, data 
 	}
 }
 
-func ordinal(num int64) string {
+func ordinal(x int64) string {
 	suffix := "th"
-	switch num {
-	case 1, 21, 31:
-		suffix = "st"
-	case 2, 22:
-		suffix = "nd"
-	case 3, 23:
-		suffix = "rd"
+	switch x % 10 {
+	case 1:
+		if x%100 != 11 {
+			suffix = "st"
+		}
+	case 2:
+		if x%100 != 12 {
+			suffix = "nd"
+		}
+	case 3:
+		if x%100 != 13 {
+			suffix = "rd"
+		}
 	}
 
 	return suffix
