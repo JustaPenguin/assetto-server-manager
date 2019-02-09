@@ -3,6 +3,7 @@ package servermanager
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"os"
 	"sort"
@@ -186,9 +187,26 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		numPitboxes = quickRace.CurrentRaceConfig.MaxClients
 	}
 
+	allCars, err := ListCars()
+
+	if err != nil {
+		return err
+	}
+
+	carMap := allCars.AsMap()
+
 	for i := 0; i < numPitboxes; i++ {
+		model := cars[i%len(cars)]
+
+		var skin string
+
+		if skins, ok := carMap[model]; ok && len(skins) > 0 {
+			skin = carMap[model][rand.Intn(len(carMap[model]))]
+		}
+
 		entryList.Add(Entrant{
-			Model: cars[i%len(cars)],
+			Model: model,
+			Skin:  skin,
 		})
 	}
 
