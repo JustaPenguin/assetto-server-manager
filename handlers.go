@@ -128,6 +128,9 @@ func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			logrus.Errorf("couldn't save config, err: %s", err)
+			AddFlashQuick(w, r, "Failed to save server options")
+		} else {
+			AddFlashQuick(w, r, "Server options successfully saved!")
 		}
 	}
 
