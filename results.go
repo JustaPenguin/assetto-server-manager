@@ -158,17 +158,23 @@ func (s *SessionResults) GetNumSectors() []int {
 }
 
 func (s *SessionResults) GetDrivers() string {
-	var drivers string
+	var drivers []string
 
-	for i, car := range s.Cars {
-		drivers += car.Driver.Name
+	numOpenSlots := 0
 
-		if i != len(s.Cars)-1 {
-			drivers += ", "
+	for _, car := range s.Cars {
+		if car.Driver.Name != "" {
+			drivers = append(drivers, car.Driver.Name)
+		} else {
+			numOpenSlots++
 		}
 	}
 
-	return drivers
+	if numOpenSlots > 0 {
+		drivers = append(drivers, fmt.Sprintf("%d open slots", numOpenSlots))
+	}
+
+	return strings.Join(drivers, ", ")
 }
 
 func (s *SessionResults) GetTime(timeINT int, driverGUID string) time.Duration {
