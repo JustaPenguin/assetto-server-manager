@@ -434,6 +434,8 @@ let raceSetup = {
 
             $skinsDropdown.empty();
 
+            $("<option value='random_skin'>&lt;random skin&gt;</option>").appendTo($skinsDropdown);
+
             if (val in availableCars) {
                 for (let skin of availableCars[val]) {
                     let $opt = $("<option/>");
