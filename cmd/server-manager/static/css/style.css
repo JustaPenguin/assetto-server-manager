@@ -1,5 +1,6 @@
 body {
     padding-top: 60px;
+    font-size: 1rem !important;
 }
 
 @media screen and (min-width: 400px) {
