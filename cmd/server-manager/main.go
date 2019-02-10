@@ -13,10 +13,18 @@ var (
 	steamPassword = os.Getenv("STEAM_PASSWORD")
 
 	serverAddress = os.Getenv("SERVER_ADDRESS")
+
+	storeLocation = os.Getenv("STORE_LOCATION")
 )
 
 func main() {
-	err := servermanager.InstallAssettoCorsaServer(steamUsername, steamPassword, os.Getenv("FORCE_UPDATE") == "true")
+	err := servermanager.SetupRaceManager(storeLocation)
+
+	if err != nil {
+		logrus.Fatalf("could not open bbolt store at: '%s', err: %s", storeLocation, err)
+	}
+
+	err = servermanager.InstallAssettoCorsaServer(steamUsername, steamPassword, os.Getenv("FORCE_UPDATE") == "true")
 
 	if err != nil {
 		logrus.Fatalf("could not install assetto corsa server, err: %s", err)
