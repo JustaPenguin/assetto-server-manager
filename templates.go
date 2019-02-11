@@ -167,7 +167,14 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 		data["messages"] = flashes
 	}
 
+	errSession := getErrSession(r)
+
+	if flashes := errSession.Flashes(); len(flashes) > 0 {
+		data["errors"] = flashes
+	}
+
 	_ = session.Save(r, w)
+	_ = errSession.Save(r, w)
 
 	data["server_status"] = AssettoProcess.IsRunning()
 
