@@ -3,8 +3,8 @@ package servermanager
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"net/http"
-	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -12,7 +12,6 @@ import (
 
 	"github.com/etcd-io/bbolt"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -22,15 +21,19 @@ var (
 )
 
 func init() {
-	storeFileLocation := os.Getenv("STORE_LOCATION")
+	rand.Seed(time.Now().UnixNano())
+}
 
+func SetupRaceManager(storeFileLocation string) error {
 	bb, err := bbolt.Open(storeFileLocation, 0644, nil)
 
 	if err != nil {
-		logrus.Fatalf("could not open bbolt store at: '%s', err: %s", storeFileLocation, err)
+		return err
 	}
 
 	raceManager = NewRaceManager(NewRaceStore(bb))
+
+	return nil
 }
 
 type RaceManager struct {
@@ -186,9 +189,26 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		numPitboxes = quickRace.CurrentRaceConfig.MaxClients
 	}
 
+	allCars, err := ListCars()
+
+	if err != nil {
+		return err
+	}
+
+	carMap := allCars.AsMap()
+
 	for i := 0; i < numPitboxes; i++ {
+		model := cars[i%len(cars)]
+
+		var skin string
+
+		if skins, ok := carMap[model]; ok && len(skins) > 0 {
+			skin = carMap[model][rand.Intn(len(carMap[model]))]
+		}
+
 		entryList.Add(Entrant{
-			Model: cars[i%len(cars)],
+			Model: model,
+			Skin:  skin,
 		})
 	}
 
@@ -302,13 +322,30 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 
 	entryList := EntryList{}
 
+	allCars, err := ListCars()
+
+	if err != nil {
+		return err
+	}
+
+	carMap := allCars.AsMap()
+
 	for i := 0; i < len(r.Form["EntryList.Name"]); i++ {
+		model := r.Form["EntryList.Car"][i]
+		skin := r.Form["EntryList.Skin"][i]
+
+		if skin == "random_skin" {
+			if skins, ok := carMap[model]; ok && len(skins) > 0 {
+				skin = carMap[model][rand.Intn(len(carMap[model]))]
+			}
+		}
+
 		entryList.Add(Entrant{
 			Name:  r.Form["EntryList.Name"][i],
 			Team:  r.Form["EntryList.Team"][i],
 			GUID:  r.Form["EntryList.GUID"][i],
-			Model: r.Form["EntryList.Car"][i],
-			Skin:  r.Form["EntryList.Skin"][i],
+			Model: model,
+			Skin:  skin,
 			// Despite having the option for SpectatorMode, the server does not support it, and panics if set to 1
 			// SpectatorMode: formValueAsInt(r.Form["EntryList.Spectator"][i]),
 			Ballast:    formValueAsInt(r.Form["EntryList.Ballast"][i]),

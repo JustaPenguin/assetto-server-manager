@@ -434,18 +434,26 @@ let raceSetup = {
 
             $skinsDropdown.empty();
 
-            if (val in availableCars) {
-                for (let skin of availableCars[val]) {
-                    let $opt = $("<option/>");
-                    $opt.attr({'value': skin});
-                    $opt.text(prettifyName(skin, true));
+            $("<option value='random_skin'>&lt;random skin&gt;</option>").appendTo($skinsDropdown);
 
-                    if (skin === selected) {
-                        $opt.attr({'selected': 'selected'});
+
+            try {
+
+                if (val in availableCars && availableCars[val] != null) {
+                    for (let skin of availableCars[val]) {
+                        let $opt = $("<option/>");
+                        $opt.attr({'value': skin});
+                        $opt.text(prettifyName(skin, true));
+
+                        if (skin === selected) {
+                            $opt.attr({'selected': 'selected'});
+                        }
+
+                        $opt.appendTo($skinsDropdown);
                     }
-
-                    $opt.appendTo($skinsDropdown);
                 }
+            } catch (e) {
+                console.error(e);
             }
         }
 
