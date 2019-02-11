@@ -511,6 +511,8 @@ let raceSetup = {
     },
 };
 
+let logCharLimit = 500000;
+
 
 let serverLogs = {
     init: function () {
@@ -545,6 +547,14 @@ let serverLogs = {
             setInterval(function () {
                 $.get("/api/logs", function (data) {
                     if (!window.getSelection().toString()) {
+                        if (data.ServerLog.length > logCharLimit) {
+                            data.ServerLog = data.ServerLog.slice(data.ServerLog.length - logCharLimit, data.ServerLog.length);
+                        }
+
+                        if (data.ManagerLog.length > logCharLimit) {
+                            data.ManagerLog = data.ManagerLog.slice(data.ManagerLog.length - logCharLimit, data.ManagerLog.length);
+                        }
+
                         if (isAtBottom($serverLog) && !disableServerLogRefresh) {
 
                             $serverLog.text(data.ServerLog);
