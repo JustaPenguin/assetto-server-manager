@@ -90,7 +90,18 @@
     <div class="container">
         <br><br>
 
-        <div style="position: fixed; right: 10px; z-index: 1;">
+        {{ block "content" . }}{{ end }}
+
+        <footer class="pt-4 my-md-5 pt-md-5 border-top">
+            <div>
+                &copy; Just a Penguin 2010-2019
+            </div>
+        </footer>
+    </div>
+
+    <div class="messages">
+
+        <div class="col-md-8 mx-auto">
 
             {{ range $i, $message := .messages }}
 
@@ -103,15 +114,19 @@
 
             {{ end }}
 
+            {{ range $i, $error := .errors }}
+
+                <div class="alert alert-danger alert-dismissible col-md-6 mx-auto" role="alert">
+                    {{ $error }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+            {{ end }}
+
         </div>
 
-        {{ block "content" . }}{{ end }}
-
-        <footer class="pt-4 my-md-5 pt-md-5 border-top">
-            <div>
-                &copy; Just a Penguin 2010-2019
-            </div>
-        </footer>
     </div>
 
     {{ block "javascript" . }}

@@ -122,7 +122,7 @@ func weatherDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logrus.Errorf("could not get weather list, err: %s", err)
 
-		AddFlashQuick(w, r, "couldn't get weather list")
+		AddErrFlashQuick(w, r, "Couldn't get weather list")
 
 		http.Redirect(w, r, r.Referer(), http.StatusFound)
 
@@ -149,17 +149,13 @@ func weatherDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var message string
-
 	if found {
 		// confirm deletion
-		message = "Weather preset successfully deleted!"
+		AddFlashQuick(w, r, "Weather preset successfully deleted!")
 	} else {
 		// inform weather wasn't found
-		message = "Sorry, weather preset could not be deleted. Are you sure it was installed?"
+		AddErrFlashQuick(w, r, "Sorry, weather preset could not be deleted. Are you sure it was installed?")
 	}
-
-	AddFlashQuick(w, r, message)
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }

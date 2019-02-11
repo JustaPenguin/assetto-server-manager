@@ -145,7 +145,7 @@ func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logrus.Errorf("could not get track list, err: %s", err)
 
-		AddFlashQuick(w, r, "couldn't get track list")
+		AddErrFlashQuick(w, r, "couldn't get track list")
 
 		http.Redirect(w, r, r.Referer(), http.StatusFound)
 
@@ -170,17 +170,13 @@ func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var message string
-
 	if found {
 		// confirm deletion
-		message = "Track successfully deleted!"
+		AddFlashQuick(w, r, "Track successfully deleted!")
 	} else {
 		// inform track wasn't found
-		message = "Sorry, track could not be deleted."
+		AddErrFlashQuick(w, r, "Sorry, track could not be deleted.")
 	}
-
-	AddFlashQuick(w, r, message)
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }

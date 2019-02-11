@@ -134,7 +134,7 @@ func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			logrus.Errorf("couldn't save config, err: %s", err)
-			AddFlashQuick(w, r, "Failed to save server options")
+			AddErrFlashQuick(w, r, "Failed to save server options")
 		} else {
 			AddFlashQuick(w, r, "Server options successfully saved!")
 		}
@@ -171,7 +171,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request, contentType string) {
 	err = addFiles(files, contentType)
 
 	if err != nil {
-		AddFlashQuick(w, r, contentType+"(s) could not be added")
+		AddErrFlashQuick(w, r, contentType+"(s) could not be added")
 
 		return
 	}
@@ -249,9 +249,24 @@ func getSession(r *http.Request) *sessions.Session {
 	return session
 }
 
+func getErrSession(r *http.Request) *sessions.Session {
+	session, _ := store.Get(r, "errors")
+
+	return session
+}
+
 // Helper function to get message session and add a flash
 func AddFlashQuick(w http.ResponseWriter, r *http.Request, message string) {
 	session := getSession(r)
+
+	session.AddFlash(message)
+
+	// gorilla sessions is dumb and errors weirdly
+	_ = session.Save(r, w)
+}
+
+func AddErrFlashQuick(w http.ResponseWriter, r *http.Request, message string) {
+	session := getErrSession(r)
 
 	session.AddFlash(message)
 
