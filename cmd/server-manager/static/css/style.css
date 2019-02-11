@@ -128,3 +128,11 @@ span[data-toggle=tooltip] { cursor: default; }
     cursor: inherit;
     display: block;
 }
+
+.messages {
+    position: fixed;
+    width: 100%;
+    margin-top: 50px;
+    z-index: 1;
+    bottom: 0;
+}
