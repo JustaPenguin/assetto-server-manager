@@ -24,6 +24,9 @@ to set up a docker environment for the server manager. This docker image has ste
 
 See [Manual](#Manual) to set up server manager without Docker.
 
+**Note**: if you are using a directory volume for the server install (as is shown below), be sure to make 
+the directory before running `docker-compose up` - otherwise its permissions may be incorrect. 
+
 An example docker-compose.yml looks like this:
 
 ```yaml
@@ -39,21 +42,22 @@ services:
     - 9600:9600
     # the port that the assetto server HTTP API runs on.
     - 8081:8081
+    # you may also wish to bind your configured UDP plugin ports here. 
     volumes: 
     # volume mount the entire server install so that 
     # content etc persists across restarts
     - ./server-install:/home/assetto/server-manager/assetto
     environment:
-    # see cmd/server-manager/env.example for a full list of these options
+      # see cmd/server-manager/env.example for a full list of these options
     
-    # steam username and password. we recommend creating a separate account with
-    # steamguard disabled to use this application.
-    # server-manager uses this information ONLY to install the assetto corsa server.
-    - STEAM_USERNAME=steamuser
-    - STEAM_PASSWORD=hunter2
+      # steam username and password. we recommend creating a separate account with
+      # steamguard disabled to use this application.
+      # server-manager uses this information ONLY to install the assetto corsa server.
+      STEAM_USERNAME: steamuser
+      STEAM_PASSWORD: hunter2
 
-    # a key to be used to encrypt session values. we recommend randomly generating this!
-    - SESSION_KEY=super_secret_session_value
+      # a key to be used to encrypt session values. we recommend randomly generating this!
+      SESSION_KEY: super_secret_session_value
 ```
 
 ### Manual
