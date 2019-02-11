@@ -105,7 +105,7 @@ func serverProcessHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logrus.Errorf("could not change server process status, err: %s", err)
-		AddFlashQuick(w, r, "Unable to change server status")
+		AddErrFlashQuick(w, r, "Unable to change server status")
 	} else {
 		AddFlashQuick(w, r, "Server successfully "+txt)
 	}
