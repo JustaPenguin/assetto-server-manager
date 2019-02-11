@@ -89,19 +89,25 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 // serverProcessHandler modifies the server process.
 func serverProcessHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
+	var txt string
 
 	switch mux.Vars(r)["action"] {
 	case "start":
 		err = AssettoProcess.Start()
+		txt = "started"
 	case "stop":
 		err = AssettoProcess.Stop()
+		txt = "stopped"
 	case "restart":
 		err = AssettoProcess.Restart()
+		txt = "restarted"
 	}
 
 	if err != nil {
-		// @TODO err
-		panic(err)
+		logrus.Errorf("could not change server process status, err: %s", err)
+		AddFlashQuick(w, r, "Unable to change server status")
+	} else {
+		AddFlashQuick(w, r, "Server successfully " + txt)
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
