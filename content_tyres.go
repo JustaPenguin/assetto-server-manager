@@ -112,6 +112,12 @@ func addTyresForNewCar(filename string, dataACD []byte) error {
 		return err
 	}
 
+	currentTyres, err := ListTyres()
+
+	if err != nil {
+		return err
+	}
+
 	r, err := acd.NewReader(bytes.NewReader(dataACD), carName)
 
 	if err != nil {
@@ -123,13 +129,28 @@ func addTyresForNewCar(filename string, dataACD []byte) error {
 			continue
 		}
 
-		t, err := LoadTyresFromACDINI(file.Bytes())
+		newTyres, err := LoadTyresFromACDINI(file.Bytes())
 
 		if err != nil {
 			return err
 		}
 
-		return addModTyres(carName, t)
+		if carTyres, ok := currentTyres[carName]; ok {
+			hasNew := false
+
+			for newTyre := range newTyres {
+				if _, ok := carTyres[newTyre]; !ok {
+					hasNew = true
+				}
+			}
+
+			if !hasNew {
+				logrus.Infof("New car: %s already has all of its tyres configured", carName)
+				return nil
+			}
+		}
+
+		return addModTyres(carName, newTyres)
 	}
 
 	logrus.Warnf("Couldn't find tyres.ini within filepath: '%s'. Cannot add mod_tyres.ini", filename)
