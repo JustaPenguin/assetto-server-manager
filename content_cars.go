@@ -14,6 +14,7 @@ import (
 type Car struct {
 	Name  string
 	Skins []string
+	Tyres map[string]string
 }
 
 func (c Car) PrettyName() string {
@@ -36,6 +37,12 @@ func ListCars() (Cars, error) {
 	var cars Cars
 
 	carFiles, err := ioutil.ReadDir(filepath.Join(ServerInstallPath, "content", "cars"))
+
+	if err != nil {
+		return nil, err
+	}
+
+	tyres, err := ListTyres()
 
 	if err != nil {
 		return nil, err
@@ -66,6 +73,7 @@ func ListCars() (Cars, error) {
 		cars = append(cars, Car{
 			Name:  carFile.Name(),
 			Skins: skins,
+			Tyres: tyres[carFile.Name()],
 		})
 	}
 
