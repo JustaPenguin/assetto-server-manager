@@ -73,7 +73,7 @@
                     {{ range $i, $pts := $championship.Points.Places }}
 
                         <tr>
-                            <td>{{ add $i 1 }}</td>
+                            <td>{{ add $i 1 }}{{ ordinal (add $i 1) }}</td>
                             <td>{{ $pts }}</td>
                         </tr>
                     {{ end }}
