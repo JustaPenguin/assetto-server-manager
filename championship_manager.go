@@ -26,6 +26,10 @@ func (cm *ChampionshipManager) UpsertChampionship(c *Championship) error {
 	return cm.raceStore.UpsertChampionship(c)
 }
 
+func (cm *ChampionshipManager) DeleteChampionship(id string) error {
+	return cm.raceStore.DeleteChampionship(id)
+}
+
 func (cm *ChampionshipManager) ListChampionships() ([]*Championship, error) {
 	championships, err := cm.raceStore.ListChampionships()
 
