@@ -237,6 +237,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 	}
 
 	cars := r.Form["Cars"]
+	isSol := r.FormValue("Sol.Enabled") == "1"
 
 	raceConfig := CurrentRaceConfig{
 		// general race config
@@ -252,6 +253,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		TyreBlanketsAllowed:     formValueAsInt(r.FormValue("TyreBlanketsAllowed")),
 
 		// weather
+		IsSol:                  formValueAsInt(r.FormValue("Sol.Enabled")),
 		SunAngle:               formValueAsInt(r.FormValue("SunAngle")),
 		WindBaseSpeedMin:       formValueAsInt(r.FormValue("WindBaseSpeedMin")),
 		WindBaseSpeedMax:       formValueAsInt(r.FormValue("WindBaseSpeedMax")),
@@ -290,6 +292,10 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		MaxClients:                formValueAsInt(r.FormValue("MaxClients")),
 	}
 
+	if isSol {
+		raceConfig.SunAngle = 0
+	}
+
 	for _, session := range AvailableSessions {
 		sessName := session.String()
 
@@ -308,13 +314,48 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 
 	// weather
 	for i := 0; i < len(r.Form["Graphics"]); i++ {
-		raceConfig.AddWeather(WeatherConfig{
-			Graphics:               r.Form["Graphics"][i],
-			BaseTemperatureAmbient: formValueAsInt(r.Form["BaseTemperatureAmbient"][i]),
-			BaseTemperatureRoad:    formValueAsInt(r.Form["BaseTemperatureRoad"][i]),
-			VariationAmbient:       formValueAsInt(r.Form["VariationAmbient"][i]),
-			VariationRoad:          formValueAsInt(r.Form["VariationRoad"][i]),
-		})
+		if !isSol {
+			raceConfig.AddWeather(WeatherConfig{
+				Graphics:               r.Form["Graphics"][i],
+				BaseTemperatureAmbient: formValueAsInt(r.Form["BaseTemperatureAmbient"][i]),
+				BaseTemperatureRoad:    formValueAsInt(r.Form["BaseTemperatureRoad"][i]),
+				VariationAmbient:       formValueAsInt(r.Form["VariationAmbient"][i]),
+				VariationRoad:          formValueAsInt(r.Form["VariationRoad"][i]),
+			})
+		} else {
+			weatherName := r.Form["Graphics"][i]
+			WFXType, err := getWeatherType(weatherName)
+
+			if err != nil {
+				return err
+			}
+
+			startTime, err := time.Parse("2006-01-02T15:04", r.Form["DateUnix"][i])
+
+			if err != nil {
+				return err
+			}
+
+			startTimeZoned := startTime.In(time.FixedZone("UTC+10", 10*60*60))
+			timeMulti := r.Form["TimeMulti"][i]
+
+			raceConfig.AddWeather(WeatherConfig{
+				Graphics: weatherName + "_type=" + strconv.Itoa(WFXType) + "_time=0_mult=" +
+					timeMulti + "_start=" + strconv.Itoa(int(startTimeZoned.Unix())),
+				BaseTemperatureAmbient: formValueAsInt(r.Form["BaseTemperatureAmbient"][i]),
+				BaseTemperatureRoad:    formValueAsInt(r.Form["BaseTemperatureRoad"][i]),
+				VariationAmbient:       formValueAsInt(r.Form["VariationAmbient"][i]),
+				VariationRoad:          formValueAsInt(r.Form["VariationRoad"][i]),
+
+				CMGraphics:         weatherName,
+				CMWFXType:          WFXType,
+				CMWFXUseCustomTime: 1,
+				CMWFXTime:          0,
+				CMWFXTimeMulti:     formValueAsInt(timeMulti),
+				CMWFXUseCustomDate: 1,
+				CMWFXDate:          int(startTimeZoned.Unix()),
+			})
+		}
 	}
 
 	completeConfig := ConfigIniDefault
