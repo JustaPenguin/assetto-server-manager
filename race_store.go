@@ -77,6 +77,8 @@ func (rs *BoltRaceStore) UpsertCustomRace(race *CustomRace) error {
 			return err
 		}
 
+		race.Updated = time.Now()
+
 		encoded, err := rs.encode(race)
 
 		if err != nil {

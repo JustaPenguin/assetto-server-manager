@@ -13,6 +13,7 @@ import (
 type CustomRace struct {
 	Name    string
 	Created time.Time
+	Updated time.Time
 	Deleted time.Time
 	UUID    uuid.UUID
 	Starred bool
