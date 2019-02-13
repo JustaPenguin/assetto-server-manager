@@ -6,7 +6,7 @@
 
     <h1 class="text-center">{{ $championship.Name }}</h1>
 
-    {{ range $index, $race := $championship.Races }}
+    {{ range $raceIndex, $race := $championship.Races }}
         {{ $raceSetup := $race.RaceSetup }}
 
         <div class="card mt-3 border-secondary">
@@ -25,8 +25,7 @@
 
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-6">
-
+                    <div class="col-md-6 mb-3">
                         <ul class="list-unstyled">
                             {{ range $sessionName, $session := $raceSetup.Sessions }}
                                 <li>
@@ -42,11 +41,38 @@
                                 </li>
                             {{ end }}
                         </ul>
+
+                        {{/* fastest lap + qualifying awards */}}
+                        {{ range $sessionName, $session := $race.Results }}
+                            {{ if eq $sessionName "RACE" }}
+                                <span class="badge badge-best">Fastest Lap: {{ $session.FastestLap.DriverName }}</span><br>
+                            {{ else if eq $sessionName "QUALIFY" }}
+                                <span class="badge badge-success">Best Qualifying: {{ $session.FastestLap.DriverName }}</span><br>
+                            {{ end }}
+                        {{ end }}
+
+                        {{/* race controls buttons */}}
+                        {{ if not $race.Completed }}
+
+                            <div class="mt-5 pt-5">
+                                <a class="btn btn-success" href="#">Start Event</a>
+
+                                <a class="btn btn-info"
+                                   href="#"
+                                   data-toggle="tooltip"
+                                   title="Load the configured session onto the server, but don't track its progress as a championship event. This can be useful for practicing events">
+                                    Start Practice Event
+                                </a>
+
+                                <a  class="btn btn-warning" href="#">
+                                    Edit Event
+                                </a>
+                            </div>
+                        {{ end }}
                     </div>
 
                     <div class="col-md-6">
-                        <img class="img img-fluid pl-2 float-right"
-                             id="trackImage"
+                        <img class="img img-fluid pl-2 float-right image-track"
                              src="/content/tracks/{{ $raceSetup.Track }}/ui{{ with $raceSetup.TrackLayout }}/{{.}}{{ end }}/preview.png"
                              alt="{{ $raceSetup.Track }} {{ $raceSetup.TrackLayout }}"
                         >
@@ -57,25 +83,44 @@
                 <div class="row mt-3">
                     <div class="col-md-12">
                         {{ if not $race.Completed }}
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Team</th>
-                                    <th>Car</th>
-                                </tr>
-
-                                {{ range $entrantIndex, $entrant := $championship.Entrants }}
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped">
                                     <tr>
-                                        <td>{{ $entrant.Name }}</td>
-                                        <td>{{ $entrant.Team }}</td>
-                                        <td>{{ prettify $entrant.Model true }}</td>
+                                        <th>Name</th>
+                                        <th>Team</th>
+                                        <th>Car</th>
                                     </tr>
-                                {{ end }}
-                            </table>
-                        </div>
+
+                                    {{ range $entrantIndex, $entrant := $championship.Entrants }}
+                                        <tr>
+                                            <td>{{ $entrant.Name }}</td>
+                                            <td>{{ $entrant.Team }}</td>
+                                            <td>{{ prettify $entrant.Model true }}</td>
+                                        </tr>
+                                    {{ end }}
+                                </table>
+                            </div>
                         {{ else }}
-                            <!-- show results here -->
+                            <ul class="nav nav-tabs" role="tablist">
+                                {{ range $sessionName, $sessionResults := $race.Results }}
+                                    <li class="nav-item">
+                                        <a class="nav-link  {{ if eq $sessionName "RACE" }} active {{ end }}"
+                                           id="{{ $sessionName }}-{{ $raceIndex}}-tab" data-toggle="tab"
+                                           href="#{{ $sessionName }}-{{ $raceIndex}}"
+                                           role="tab"
+                                           {{ if eq $sessionName "RACE" }}aria-selected="true" {{ end }}>{{ $sessionName.String }}</a>
+                                    </li>
+                                {{ end }}
+                            </ul>
+                            <div class="tab-content">
+                                {{ range $sessionName, $sessionResults := $race.Results }}
+                                    <div class="tab-pane fade {{ if eq $sessionName "RACE" }} show active {{ end }}"
+                                         id="{{ $sessionName }}-{{ $raceIndex}}" role="tabpanel"
+                                         aria-labelledby="{{ $sessionName }}-{{ $raceIndex}}-tab">
+                                        {{ template "session-overall" $sessionResults }}
+                                    </div>
+                                {{ end }}
+                            </div>
                         {{ end }}
                     </div>
                 </div>
