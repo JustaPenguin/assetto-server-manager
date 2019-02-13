@@ -1293,6 +1293,7 @@
                     <strong>Save Custom Race</strong>
                 </div>
                 <div class="card-body">
+
                     <div class="form-group row">
                         <label for="CustomRaceName" class="col-sm-3 col-form-label">Custom Race Name</label>
 
@@ -1303,7 +1304,7 @@
                                     type="text"
                                     id="CustomRaceName"
                                     name="CustomRaceName"
-                                    value=""
+                                    value="{{ .CustomRaceName }}"
                                     placeholder="Something to identify this Custom Race"
                             >
 
@@ -1311,9 +1312,15 @@
                         </div>
                     </div>
 
+
                     <div class="float-right">
-                        <button class="btn btn-info mt-5" data-toggle="tooltip" name="action" value="justSave" type="submit" title="Save this setup without starting the race">Save Custom Race</button>
-                        <button class="btn btn-success mt-5" data-toggle="tooltip" name="action" value="startRace" type="submit" title="Save this setup and begin the race">Start Race</button>
+                        {{ if not .IsEditing }}
+                            <button class="btn btn-info mt-5" data-toggle="tooltip" name="action" value="justSave" type="submit" title="Save this setup without starting the race">Save Custom Race</button>
+                            <button class="btn btn-success mt-5" data-toggle="tooltip" name="action" value="startRace" type="submit" title="Save this setup and begin the race">Start Race</button>
+                        {{ else }}
+                            <input type="hidden" name="Editing" id="Editing" value="{{ .EditingID }}">
+                            <button class="btn btn-info mt-5" data-toggle="tooltip" name="action" value="justSave" type="submit">Edit Race</button>
+                        {{ end }}
                     </div>
                 </div>
             </div>

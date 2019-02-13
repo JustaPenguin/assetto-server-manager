@@ -36,7 +36,7 @@ func customRaceListHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func customRaceNewHandler(w http.ResponseWriter, r *http.Request) {
+func customRaceNewOrEditHandler(w http.ResponseWriter, r *http.Request) {
 	customRaceData, err := raceManager.BuildRaceOpts(r)
 
 	if err != nil {
