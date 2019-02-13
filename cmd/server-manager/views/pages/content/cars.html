@@ -38,6 +38,7 @@
         <tr>
             <th>#</th>
             <th>Car Name</th>
+            <th>Tyres</th>
             <th>Skins</th>
             <th class="text-center">Delete</th>
         </tr>
@@ -49,8 +50,17 @@
                 <td>
                     <abbr title="{{ $car.Name }}">{{ prettify $car.Name true }}</abbr>
                 </td>
+                <td style="min-width: 120px;">
+                    <small>
+                    {{ range $tyreShort, $tyreLong := $car.Tyres }}
+                        {{ $tyreLong }} ({{ $tyreShort }})<br>
+                    {{ end }}
+                    </small>
+                </td>
                 <td>
-                    {{ carList ($car.Skins | join ";")}}
+                    <small>
+                        {{ carList ($car.Skins | join ";")}}
+                    </small>
                 </td>
                 <td class="text-center">
                     <a href="{{ print "/car/delete/" $car.Name }}"><i class="fas fa-trash text-danger"></i></a>
