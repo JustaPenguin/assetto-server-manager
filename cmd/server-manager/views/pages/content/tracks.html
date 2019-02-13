@@ -16,12 +16,14 @@
 
             <form class="d-inline">
                 <div class="mt-3 mb-3">
-                    <div class="btn-file btn btn-secondary">
+                    <div class="btn-file btn btn-secondary d-inline-block align-top">
                         Choose a Folder
                         <input id="input-folder-track" name="input-folder-track[]" type="file"
                                 multiple webkitdirectory value="Choose Folder" onchange="handleTrackFiles(this.files)"/>
                     </div>
 
+                    <div id="drop-zone" ondrop="handleTrackDropFiles(event);" ondragover="dragOverHandler(event);" ondragleave="dragOutHandler(event);"
+                         class="ml-2 mr-2 drop-zone d-inline-block">Or Drag & Drop a Folder Here</div>
 
                     <div id="upload-button"></div>
                 </div>
