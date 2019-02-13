@@ -22,6 +22,10 @@ func (cm *ChampionshipManager) LoadChampionship(id string) (*Championship, error
 	return cm.raceStore.LoadChampionship(id)
 }
 
+func (cm *ChampionshipManager) UpsertChampionship(c *Championship) error {
+	return cm.raceStore.UpsertChampionship(c)
+}
+
 func (cm *ChampionshipManager) ListChampionships() ([]*Championship, error) {
 	championships, err := cm.raceStore.ListChampionships()
 
@@ -117,7 +121,7 @@ func (cm *ChampionshipManager) SaveChampionshipRace(r *http.Request) (*Champions
 
 	raceConfig.Cars = strings.Join(championship.ValidCarIDs(), ";")
 
-	championship.Races = append(championship.Races, ChampionshipRace{
+	championship.Races = append(championship.Races, &ChampionshipRace{
 		RaceSetup: *raceConfig,
 	})
 

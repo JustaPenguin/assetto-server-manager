@@ -140,3 +140,7 @@ span[data-toggle=tooltip] { cursor: default; }
 #entrantTemplate {
     display: none;
 }
+
+.image-track {
+    max-height: 200px;
+}

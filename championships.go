@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"net/http"
 	"path/filepath"
 	"time"
@@ -54,7 +55,7 @@ type Championship struct {
 
 	Entrants EntryList
 
-	Races  []ChampionshipRace
+	Races  []*ChampionshipRace
 	Points ChampionshipPoints
 }
 
@@ -94,7 +95,7 @@ func (c *Championship) Progress() float64 {
 
 type ChampionshipRace struct {
 	RaceSetup CurrentRaceConfig
-	Results   map[SessionType]SessionResults
+	Results   map[SessionType]*SessionResults
 
 	CompletedTime time.Time
 }
@@ -131,6 +132,8 @@ func viewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+
+	spew.Dump(championship)
 
 	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("championships", "view.html"), map[string]interface{}{
 		"Championship": championship,
