@@ -181,6 +181,7 @@ let raceSetup = {
 
         raceSetup.raceLaps();
         raceSetup.showEnabledSessions();
+        raceSetup.showSolSettings();
 
         raceSetup.initEntrantsList();
     },
@@ -225,6 +226,27 @@ let raceSetup = {
                 } else {
                     $elem.hide();
                     $panelLabel.removeClass("text-success")
+                }
+            });
+        });
+    },
+
+    /**
+     * when a Sol 'enabled' checkbox is modified, toggle the state of the sol-settings and not-sol-settings elements
+     */
+    showSolSettings: function () {
+        $(".sol-enabler").each(function (index, elem) {
+            $(elem).on('switchChange.bootstrapSwitch', function (event, state) {
+                let $this = $(this);
+                let $solElem = $this.closest(".card-body").find(".sol-settings");
+                let $notSolElem = $this.closest(".card-body").find(".not-sol-settings");
+
+                if (state) {
+                    $solElem.show();
+                    $notSolElem.hide();
+                } else {
+                    $solElem.hide();
+                    $notSolElem.show();
                 }
             });
         });

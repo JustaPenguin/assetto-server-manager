@@ -636,24 +636,45 @@
             <div class="card-body">
 
                 <div class="form-group row">
-                    <label for="SunAngle" class="col-sm-3 col-form-label">Sun Angle</label>
+                    <label class="col-sm-3 col-form-label">Sol Integration</label>
 
                     <div class="col-sm-9">
                         <input
-                                type="number"
-                                id="SunAngle"
-                                name="SunAngle"
-                                class="form-control"
-                                value="{{ $f.SunAngle }}"
+                                type="checkbox"
+                                class="sol-enabler"
+                                name="Sol.Enabled"
+                                id="Sol.Enabled"
 
-
-                                step="1"
+                                {{ if $f.IsSol }}
+                                    checked="checked"
+                                {{ end }}
                         >
 
-                        <small>Angle of the position of the sun</small>
+                        <br>
+                        <small>Allows for 24 hour time cycles. The server treats time differently if enabled. Clients also require Sol and Content Manager</small>
                     </div>
                 </div>
 
+                <div class="not-sol-settings" {{ if $f.IsSol }} style="display: none;" {{ end }}>
+                    <div class="form-group row">
+                        <label for="SunAngle" class="col-sm-3 col-form-label">Sun Angle</label>
+
+                        <div class="col-sm-9">
+                            <input
+                                    type="number"
+                                    id="SunAngle"
+                                    name="SunAngle"
+                                    class="form-control"
+                                    value="{{ $f.SunAngle }}"
+
+
+                                    step="1"
+                            >
+
+                            <small>Angle of the position of the sun</small>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="form-group row">
                     <label for="WindBaseSpeedMin" class="col-sm-3 col-form-label">Wind Base Speed Min</label>
@@ -761,12 +782,48 @@
                                 <div class="card-body row">
 
                                     <div class="col-sm-7">
+
+                                        <div class="sol-settings" {{ if not $f.IsSol }} style="display: none;" {{ end }}>
+
+                                            <div class="form-group row">
+                                                <label for="DateUnix" class="col-sm-3 col-form-label col-form-label-sm">Session Start Date/Time</label>
+
+                                                <div class="col-sm-9 p-0" id='date-time-picker'>
+                                                    <input
+                                                            type='datetime-local'
+                                                            id="DateUnix"
+                                                            name="DateUnix"
+                                                            class="form-control"
+                                                            value="{{ ($weather.UnixToTime $weather.CMWFXDate) | date "2006-01-02T15:04" }}"
+                                                    >
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group row">
+                                                <label for="TimeMulti" class="col-sm-3 col-form-label col-form-label-sm">Time Progression Multiplier</label>
+
+                                                <div class="col-sm-9 p-0">
+                                                    <input
+                                                            type="number"
+                                                            id="TimeMulti"
+                                                            name="TimeMulti"
+                                                            class="form-control"
+                                                            value="{{ $weather.CMWFXTimeMulti }}"
+                                                            step="1"
+                                                    >
+
+                                                    <small>E.g. at 60x 24 hours in game will pass in 24 minutes real time</small>
+                                                </div>
+                                            </div>
+
+                                        </div>
+
                                         <div class="form-group row">
                                             <label class="col-sm-3 col-form-label col-form-label-sm" for="Graphics">Graphics</label>
 
                                             <select name="Graphics" id="Graphics" class="form-control form-control-sm weather-graphics col-sm-9">
                                                 {{ range $weatherKey, $weatherName := $weatherOptions }}
-                                                    <option value="{{ $weatherKey }}" {{ if eq $weatherKey $weather.Graphics }} selected="selected" {{ end }}>
+                                                    <option value="{{ $weatherKey }}" {{ if eq $weatherKey ($weather.TrimName $weather.Graphics) }} selected="selected" {{ end }}>
                                                         {{ $weatherName }}
                                                     </option>
                                                 {{ end }}
@@ -851,7 +908,7 @@
 
 
                                     <div class="col-sm-5">
-                                        <img class="img img-fluid weather-preview mb-3" src="/content/weather/{{ $weather.Graphics }}/preview.jpg" alt="{{ $weather.Graphics }}">
+                                        <img class="img img-fluid weather-preview mb-3" src="/content/weather/{{ $weather.TrimName $weather.Graphics }}/preview.jpg" alt="{{ $weather.TrimName $weather.Graphics }}">
                                     </div>
 
                                 </div>
