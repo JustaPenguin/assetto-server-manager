@@ -1,9 +1,11 @@
 package servermanager
 
 import (
+	"net/http"
+	"strings"
+
 	"github.com/etcd-io/bbolt"
 	"github.com/gorilla/mux"
-	"net/http"
 )
 
 type ChampionshipManager struct {
@@ -14,6 +16,10 @@ func NewChampionshipManager(rm *RaceManager) *ChampionshipManager {
 	return &ChampionshipManager{
 		RaceManager: rm,
 	}
+}
+
+func (cm *ChampionshipManager) LoadChampionship(id string) (*Championship, error) {
+	return cm.raceStore.LoadChampionship(id)
 }
 
 func (cm *ChampionshipManager) ListChampionships() ([]*Championship, error) {
@@ -82,7 +88,7 @@ func (cm *ChampionshipManager) BuildChampionshipRaceOpts(r *http.Request) (map[s
 
 	// override Current race config if there is a previous championship race configured
 	if len(championship.Races) > 0 {
-		opts["Current"] = championship.Races[len(championship.Races)-1].RaceSetup.RaceConfig
+		opts["Current"] = championship.Races[len(championship.Races)-1].RaceSetup
 		opts["ChampionshipHasAtLeastOnceRace"] = true
 	} else {
 		opts["Current"] = ConfigIniDefault.CurrentRaceConfig
@@ -90,4 +96,30 @@ func (cm *ChampionshipManager) BuildChampionshipRaceOpts(r *http.Request) (map[s
 	}
 
 	return opts, nil
+}
+
+func (cm *ChampionshipManager) SaveChampionshipRace(r *http.Request) (*Championship, error) {
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+
+	championship, err := cm.raceStore.LoadChampionship(mux.Vars(r)["championshipID"])
+
+	if err != nil {
+		return nil, err
+	}
+
+	raceConfig, err := cm.BuildCustomRaceFromForm(r)
+
+	if err != nil {
+		return nil, err
+	}
+
+	raceConfig.Cars = strings.Join(championship.ValidCarIDs(), ";")
+
+	championship.Races = append(championship.Races, ChampionshipRace{
+		RaceSetup: *raceConfig,
+	})
+
+	return championship, cm.raceStore.UpsertChampionship(championship)
 }

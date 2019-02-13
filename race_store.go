@@ -293,6 +293,8 @@ func (rs *BoltRaceStore) championshipsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error
 }
 
 func (rs *BoltRaceStore) UpsertChampionship(c *Championship) error {
+	c.Updated = time.Now()
+
 	return rs.db.Update(func(tx *bbolt.Tx) error {
 		b, err := rs.championshipsBucket(tx)
 
@@ -327,6 +329,11 @@ func (rs *BoltRaceStore) ListChampionships() ([]*Championship, error) {
 
 			if err != nil {
 				return err
+			}
+
+			if !championship.Deleted.IsZero() {
+				// championship deleted
+				return nil // continue
 			}
 
 			championships = append(championships, championship)
@@ -367,13 +374,13 @@ func (rs *BoltRaceStore) LoadChampionship(id string) (*Championship, error) {
 }
 
 func (rs *BoltRaceStore) DeleteChampionship(id string) error {
-	return rs.db.Update(func(tx *bbolt.Tx) error {
-		b, err := rs.championshipsBucket(tx)
+	championship, err := rs.LoadChampionship(id)
 
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
-		return b.Delete([]byte(id))
-	})
+	championship.Deleted = time.Now()
+
+	return rs.UpsertChampionship(championship)
 }

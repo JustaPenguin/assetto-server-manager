@@ -1,0 +1,85 @@
+{{ define "title" }}{{ .Championship.Name }}{{ end }}
+
+{{ define "content" }}
+    {{ $championship := .Championship }}
+    {{ $entrants := .Championship.Entrants }}
+
+    <h1 class="text-center">{{ $championship.Name }}</h1>
+
+    {{ range $index, $race := $championship.Races }}
+        {{ $raceSetup := $race.RaceSetup }}
+
+        <div class="card mt-3 border-secondary">
+            <div class="card-header">
+                <strong>{{ prettify $raceSetup.Track false }} {{ with $raceSetup.TrackLayout }}({{ prettify . true }}){{ end }}</strong>
+                in {{ carList $raceSetup.Cars }}
+
+                <div class="float-right">
+                    {{ if $race.Completed }}
+                        <span class="text-success">Complete</span>
+                    {{ else }}
+                        <span class="text-danger">Not started</span>
+                    {{ end }}
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+
+                        <ul class="list-unstyled">
+                            {{ range $sessionName, $session := $raceSetup.Sessions }}
+                                <li>
+                                    <strong>{{ $sessionName.String }}</strong>:
+
+                                    {{ if ne $session.Time 0 }}
+                                        {{ $session.Time }} minutes
+                                    {{ else }}
+                                        {{ with $session.Laps }}
+                                            {{ . }} laps
+                                        {{ end }}
+                                    {{ end }}
+                                </li>
+                            {{ end }}
+                        </ul>
+                    </div>
+
+                    <div class="col-md-6">
+                        <img class="img img-fluid pl-2 float-right"
+                             id="trackImage"
+                             src="/content/tracks/{{ $raceSetup.Track }}/ui{{ with $raceSetup.TrackLayout }}/{{.}}{{ end }}/preview.png"
+                             alt="{{ $raceSetup.Track }} {{ $raceSetup.TrackLayout }}"
+                        >
+                    </div>
+                </div>
+
+
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        {{ if not $race.Completed }}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Team</th>
+                                    <th>Car</th>
+                                </tr>
+
+                                {{ range $entrantIndex, $entrant := $championship.Entrants }}
+                                    <tr>
+                                        <td>{{ $entrant.Name }}</td>
+                                        <td>{{ $entrant.Team }}</td>
+                                        <td>{{ prettify $entrant.Model true }}</td>
+                                    </tr>
+                                {{ end }}
+                            </table>
+                        </div>
+                        {{ else }}
+                            <!-- show results here -->
+                        {{ end }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {{ end }}
+{{ end }}

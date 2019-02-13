@@ -308,15 +308,11 @@ func (rm *RaceManager) BuildEntryList(r *http.Request) (EntryList, error) {
 	return entryList, nil
 }
 
-func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
-	if err := r.ParseForm(); err != nil {
-		return err
-	}
-
+func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceConfig, error) {
 	cars := r.Form["Cars"]
 	isSol := r.FormValue("Sol.Enabled") == "1"
 
-	raceConfig := CurrentRaceConfig{
+	raceConfig := &CurrentRaceConfig{
 		// general race config
 		Cars:        strings.Join(cars, ";"),
 		Track:       r.FormValue("Track"),
@@ -404,13 +400,13 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 			WFXType, err := getWeatherType(weatherName)
 
 			if err != nil {
-				return err
+				return nil, err
 			}
 
 			startTime, err := time.Parse("2006-01-02T15:04", r.Form["DateUnix"][i])
 
 			if err != nil {
-				return err
+				return nil, err
 			}
 
 			startTimeZoned := startTime.In(time.FixedZone("UTC+10", 10*60*60))
@@ -435,8 +431,22 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		}
 	}
 
+	return raceConfig, nil
+}
+
+func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
+	if err := r.ParseForm(); err != nil {
+		return err
+	}
+
+	raceConfig, err := rm.BuildCustomRaceFromForm(r)
+
+	if err != nil {
+		return err
+	}
+
 	completeConfig := ConfigIniDefault
-	completeConfig.CurrentRaceConfig = raceConfig
+	completeConfig.CurrentRaceConfig = *raceConfig
 
 	entryList, err := rm.BuildEntryList(r)
 
@@ -447,7 +457,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 	saveAsPresetWithoutStartingRace := r.FormValue("action") == "justSave"
 
 	// save the custom race preset
-	if err := rm.SaveCustomRace(r.FormValue("CustomRaceName"), raceConfig, entryList, saveAsPresetWithoutStartingRace); err != nil {
+	if err := rm.SaveCustomRace(r.FormValue("CustomRaceName"), *raceConfig, entryList, saveAsPresetWithoutStartingRace); err != nil {
 		return err
 	}
 
