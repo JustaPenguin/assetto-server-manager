@@ -340,7 +340,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 			timeMulti := r.Form["TimeMulti"][i]
 
 			raceConfig.AddWeather(WeatherConfig{
-				Graphics: r.Form["Graphics"][i] + "_type=" + strconv.Itoa(WFXType) + "_time=0_mult=" +
+				Graphics: weatherName + "_type=" + strconv.Itoa(WFXType) + "_time=0_mult=" +
 					timeMulti + "_start=" + strconv.Itoa(int(startTimeZoned.Unix())),
 				BaseTemperatureAmbient: formValueAsInt(r.Form["BaseTemperatureAmbient"][i]),
 				BaseTemperatureRoad:    formValueAsInt(r.Form["BaseTemperatureRoad"][i]),
