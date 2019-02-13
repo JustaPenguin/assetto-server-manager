@@ -210,6 +210,18 @@ func newChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("championships", "new.html"), opts)
 }
 
+func submitNewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
+	championship, err := championshipManager.HandleCreateChampionship(r)
+
+	if err != nil {
+		logrus.Errorf("couldn't create championship, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/championship/"+championship.ID.String()+"/race", http.StatusFound)
+}
+
 func viewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 	championship, err := championshipManager.LoadChampionship(mux.Vars(r)["championshipID"])
 
@@ -234,16 +246,15 @@ func exportChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(championship)
 }
 
-func submitNewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
-	championship, err := championshipManager.HandleCreateChampionship(r)
+func deleteChampionshipHandler(w http.ResponseWriter, r *http.Request) {
+	err := championshipManager.DeleteChampionship(mux.Vars(r)["championshipID"])
 
 	if err != nil {
-		logrus.Errorf("couldn't create championship, err: %s", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
+		panic(err)
 	}
 
-	http.Redirect(w, r, "/championship/"+championship.ID.String()+"/race", http.StatusFound)
+	AddFlashQuick(w, r, "Championship deleted!")
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
 func championshipRaceConfigurationHandler(w http.ResponseWriter, r *http.Request) {
