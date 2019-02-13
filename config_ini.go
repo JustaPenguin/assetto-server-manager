@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/cj123/ini"
 )
@@ -163,6 +164,8 @@ type CurrentRaceConfig struct {
 	RaceOverTime int `ini:"RACE_OVER_TIME" help:"time remaining in seconds to finish the race from the moment the first one passes on the finish line"`
 	StartRule    int `ini:"START_RULE" min:"0" max:"2" help:"0 is car locked until start;   1 is teleport   ; 2 is drive-through (if race has 3 or less laps then the Teleport penalty is enabled)"`
 
+	IsSol int `ini:"-" help:"Allows for 24 hour time cycles. The server treats time differently if enabled. Clients also require Sol and Content Manager"`
+
 	WindBaseSpeedMin       int `ini:"WIND_BASE_SPEED_MIN" help:"Min speed of the session possible"`
 	WindBaseSpeedMax       int `ini:"WIND_BASE_SPEED_MAX" help:"Max speed of session possible (max 40)"`
 	WindBaseDirection      int `ini:"WIND_BASE_DIRECTION" help:"base direction of the wind (wind is pointing at); 0 = North, 90 = East etc"`
@@ -230,4 +233,21 @@ type WeatherConfig struct {
 	BaseTemperatureRoad    int    `ini:"BASE_TEMPERATURE_ROAD" help:"Relative road temperature: this value will be added to the final ambient temp. In this example the road temperature will be between 22 (16 + 6) and 26 (20 + 6). It can be negative."` // 0-36
 	VariationAmbient       int    `ini:"VARIATION_AMBIENT" help:"variation of the ambient's temperature. In this example final ambient's temperature can be 16 or 20"`
 	VariationRoad          int    `ini:"VARIATION_ROAD" help:"variation of the road's temperature. Like the ambient one"`
+
+	CMGraphics         string `ini:"__CM_GRAPHICS" help:"Graphics folder name"`
+	CMWFXType          int    `ini:"__CM_WFX_TYPE" help:"Weather ini file number, inside weather.ini"`
+	CMWFXUseCustomTime int    `ini:"__CM_WFX_USE_CUSTOM_TIME" help:"If Sol is active then this should be too"`
+	CMWFXTime          int    `ini:"__CM_WFX_TIME" help:"Seconds after 12 noon, usually leave at 0 and use unix timestamp instead"`
+	CMWFXTimeMulti     int    `ini:"__CM_WFX_TIME_MULT" help:"Time speed multiplier, default to 1x"`
+	CMWFXUseCustomDate int    `ini:"__CM_WFX_USE_CUSTOM_DATE" help:"If Sol is active then this should be too"`
+	CMWFXDate          int    `ini:"__CM_WFX_DATE" help:"Unix timestamp (UTC + 10)"`
+}
+
+func (w WeatherConfig) UnixToTime(unix int) time.Time {
+	return time.Unix(int64(unix), 0)
+}
+
+func (w WeatherConfig) TrimName(name string) string {
+	// Should not clash with normal weathers, but required for Sol weather setup
+	return strings.TrimSuffix(strings.Split(name, "=")[0], "_type")
 }

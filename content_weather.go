@@ -1,14 +1,13 @@
 package servermanager
 
 import (
+	"github.com/cj123/ini"
+	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
-
-	"github.com/cj123/ini"
-	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 )
 
 const weatherInfoFile = "weather.ini"
@@ -93,6 +92,44 @@ func getWeatherName(folder, weather string) (string, error) {
 	}
 
 	return k.String(), nil
+}
+
+func getWeatherType(weather string) (int, error) {
+	baseDir := filepath.Join(ServerInstallPath, "content", "weather")
+
+	f, err := os.Open(filepath.Join(baseDir, weather, weatherInfoFile))
+
+	if err != nil {
+		return 0, err
+	}
+
+	defer f.Close()
+
+	i, err := ini.Load(f)
+
+	if err != nil {
+		return 0, err
+	}
+
+	s, err := i.GetSection("__LAUNCHER_CM")
+
+	if err != nil {
+		return 0, err
+	}
+
+	k, err := s.GetKey("WEATHER_TYPE")
+
+	if err != nil {
+		return 0, nil
+	}
+
+	weatherType, err := k.Int()
+
+	if err != nil {
+		return 0, nil
+	}
+
+	return weatherType, nil
 }
 
 func weatherHandler(w http.ResponseWriter, r *http.Request) {
