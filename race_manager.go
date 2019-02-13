@@ -330,11 +330,13 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 				return err
 			}
 
-			date := r.Form["DateUnix"][i]
-			startTime, err := time.Parse("2006-01-02T15:04", date)
-			loc := time.FixedZone("UTC+10", 10*60*60)
-			startTimeZoned := startTime.In(loc)
+			startTime, err := time.Parse("2006-01-02T15:04", r.Form["DateUnix"][i])
 
+			if err != nil {
+				return err
+			}
+
+			startTimeZoned := startTime.In(time.FixedZone("UTC+10", 10*60*60))
 			timeMulti := r.Form["TimeMulti"][i]
 
 			raceConfig.AddWeather(WeatherConfig{
