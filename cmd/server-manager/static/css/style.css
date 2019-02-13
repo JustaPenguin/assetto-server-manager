@@ -136,3 +136,7 @@ span[data-toggle=tooltip] { cursor: default; }
     z-index: 1;
     bottom: 0;
 }
+
+#entrantTemplate {
+    display: none;
+}

@@ -193,7 +193,7 @@ func (s SessionInfo) Event() Event {
 }
 
 type SectorCompleted struct {
-	Num uint8
+	Num        uint8
 	Anothernum uint8
-	Time uint16
+	Time       uint16
 }

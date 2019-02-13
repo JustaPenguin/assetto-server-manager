@@ -2,16 +2,39 @@ package servermanager
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/etcd-io/bbolt"
 	"time"
 )
 
-type RaceStore struct {
+type RaceStore interface {
+	// Custom Races
+	UpsertCustomRace(race CustomRace) error
+	FindCustomRaceByID(uuid string) (*CustomRace, error)
+	ListCustomRaces() ([]CustomRace, error)
+	DeleteCustomRace(race CustomRace) error
+
+	// Entrants
+	UpsertEntrant(entrant Entrant) error
+	ListEntrants() ([]Entrant, error)
+
+	// Server Options
+	UpsertServerOptions(so *GlobalServerConfig) error
+	LoadServerOptions() (*GlobalServerConfig, error)
+
+	// Championships
+	UpsertChampionship(c *Championship) error
+	ListChampionships() ([]*Championship, error)
+	LoadChampionship(id string) (*Championship, error)
+	DeleteChampionship(id string) error
+}
+
+type BoltRaceStore struct {
 	db *bbolt.DB
 }
 
-func NewRaceStore(db *bbolt.DB) *RaceStore {
-	return &RaceStore{db: db}
+func NewRaceStore(db *bbolt.DB) RaceStore {
+	return &BoltRaceStore{db: db}
 }
 
 var (
@@ -20,9 +43,12 @@ var (
 	entrantsBucketName      = []byte("entrants")
 
 	serverOptionsKey = []byte("serverOptions")
+
+	championshipsBucket = []byte("championships")
+	championshipInfoKey = []byte("info")
 )
 
-func (rs *RaceStore) customRaceBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+func (rs *BoltRaceStore) customRaceBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	if !tx.Writable() {
 		bkt := tx.Bucket(customRaceBucketName)
 
@@ -36,15 +62,15 @@ func (rs *RaceStore) customRaceBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	return tx.CreateBucketIfNotExists(customRaceBucketName)
 }
 
-func (rs *RaceStore) encode(data interface{}) ([]byte, error) {
+func (rs *BoltRaceStore) encode(data interface{}) ([]byte, error) {
 	return json.Marshal(data)
 }
 
-func (rs *RaceStore) decode(data []byte, out interface{}) error {
+func (rs *BoltRaceStore) decode(data []byte, out interface{}) error {
 	return json.Unmarshal(data, out)
 }
 
-func (rs *RaceStore) UpsertCustomRace(race CustomRace) error {
+func (rs *BoltRaceStore) UpsertCustomRace(race CustomRace) error {
 	return rs.db.Update(func(tx *bbolt.Tx) error {
 		bkt, err := rs.customRaceBucket(tx)
 
@@ -62,7 +88,7 @@ func (rs *RaceStore) UpsertCustomRace(race CustomRace) error {
 	})
 }
 
-func (rs *RaceStore) FindCustomRaceByID(uuid string) (*CustomRace, error) {
+func (rs *BoltRaceStore) FindCustomRaceByID(uuid string) (*CustomRace, error) {
 	var customRace *CustomRace
 
 	err := rs.db.View(func(tx *bbolt.Tx) error {
@@ -84,7 +110,7 @@ func (rs *RaceStore) FindCustomRaceByID(uuid string) (*CustomRace, error) {
 	return customRace, err
 }
 
-func (rs *RaceStore) ListCustomRaces() ([]CustomRace, error) {
+func (rs *BoltRaceStore) ListCustomRaces() ([]CustomRace, error) {
 	var customRaces []CustomRace
 
 	err := rs.db.View(func(tx *bbolt.Tx) error {
@@ -119,13 +145,13 @@ func (rs *RaceStore) ListCustomRaces() ([]CustomRace, error) {
 	return customRaces, err
 }
 
-func (rs *RaceStore) DeleteCustomRace(race CustomRace) error {
+func (rs *BoltRaceStore) DeleteCustomRace(race CustomRace) error {
 	race.Deleted = time.Now()
 
 	return rs.UpsertCustomRace(race)
 }
 
-func (rs *RaceStore) entrantsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+func (rs *BoltRaceStore) entrantsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	if !tx.Writable() {
 		bkt := tx.Bucket(entrantsBucketName)
 
@@ -139,7 +165,7 @@ func (rs *RaceStore) entrantsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	return tx.CreateBucketIfNotExists(entrantsBucketName)
 }
 
-func (rs *RaceStore) UpsertEntrant(entrant Entrant) error {
+func (rs *BoltRaceStore) UpsertEntrant(entrant Entrant) error {
 	return rs.db.Update(func(tx *bbolt.Tx) error {
 		bkt, err := rs.entrantsBucket(tx)
 
@@ -162,7 +188,7 @@ func (rs *RaceStore) UpsertEntrant(entrant Entrant) error {
 	})
 }
 
-func (rs *RaceStore) ListEntrants() ([]Entrant, error) {
+func (rs *BoltRaceStore) ListEntrants() ([]Entrant, error) {
 	var entrants []Entrant
 
 	err := rs.db.View(func(tx *bbolt.Tx) error {
@@ -192,7 +218,7 @@ func (rs *RaceStore) ListEntrants() ([]Entrant, error) {
 	return entrants, err
 }
 
-func (rs *RaceStore) serverOptionsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+func (rs *BoltRaceStore) serverOptionsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	if !tx.Writable() {
 		bkt := tx.Bucket(serverOptionsBucketName)
 
@@ -206,7 +232,7 @@ func (rs *RaceStore) serverOptionsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	return tx.CreateBucketIfNotExists(serverOptionsBucketName)
 }
 
-func (rs *RaceStore) UpsertServerOptions(so *GlobalServerConfig) error {
+func (rs *BoltRaceStore) UpsertServerOptions(so *GlobalServerConfig) error {
 	return rs.db.Update(func(tx *bbolt.Tx) error {
 		bkt, err := rs.serverOptionsBucket(tx)
 
@@ -224,7 +250,7 @@ func (rs *RaceStore) UpsertServerOptions(so *GlobalServerConfig) error {
 	})
 }
 
-func (rs *RaceStore) LoadServerOptions() (*GlobalServerConfig, error) {
+func (rs *BoltRaceStore) LoadServerOptions() (*GlobalServerConfig, error) {
 	// start with defaults
 	so := &ConfigIniDefault.GlobalServerConfig
 
@@ -250,4 +276,104 @@ func (rs *RaceStore) LoadServerOptions() (*GlobalServerConfig, error) {
 	}
 
 	return so, err
+}
+
+func (rs *BoltRaceStore) championshipsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+	if !tx.Writable() {
+		bkt := tx.Bucket(championshipsBucket)
+
+		if bkt == nil {
+			return nil, bbolt.ErrBucketNotFound
+		}
+
+		return bkt, nil
+	}
+
+	return tx.CreateBucketIfNotExists(championshipsBucket)
+}
+
+func (rs *BoltRaceStore) UpsertChampionship(c *Championship) error {
+	return rs.db.Update(func(tx *bbolt.Tx) error {
+		b, err := rs.championshipsBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		data, err := rs.encode(c)
+
+		if err != nil {
+			return err
+		}
+
+		return b.Put([]byte(c.ID.String()), data)
+	})
+}
+
+func (rs *BoltRaceStore) ListChampionships() ([]*Championship, error) {
+	var championships []*Championship
+
+	err := rs.db.View(func(tx *bbolt.Tx) error {
+		b, err := rs.championshipsBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		return b.ForEach(func(k, v []byte) error {
+			var championship *Championship
+
+			err := rs.decode(v, &championship)
+
+			if err != nil {
+				return err
+			}
+
+			championships = append(championships, championship)
+
+			return nil
+		})
+	})
+
+	return championships, err
+}
+
+var ErrChampionshipNotFound = errors.New("servermanager: championship not found")
+
+func (rs *BoltRaceStore) LoadChampionship(id string) (*Championship, error) {
+	var championship *Championship
+
+	err := rs.db.View(func(tx *bbolt.Tx) error {
+		b, err := rs.championshipsBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		data := b.Get([]byte(id))
+
+		if data == nil {
+			return ErrChampionshipNotFound
+		}
+
+		return rs.decode(data, &championship)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return championship, err
+}
+
+func (rs *BoltRaceStore) DeleteChampionship(id string) error {
+	return rs.db.Update(func(tx *bbolt.Tx) error {
+		b, err := rs.championshipsBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		return b.Delete([]byte(id))
+	})
 }

@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"net"
+
+	"golang.org/x/text/encoding/unicode/utf32"
 )
 
 func NewServerClient(ctx context.Context, addr string, receivePort, sendPort int, callback CallbackFunc) (*AssettoServerUDP, error) {
@@ -77,21 +79,10 @@ func (asu *AssettoServerUDP) listen(hostname string, receivePort, sendPort int) 
 }
 
 func readStringW(r io.Reader) string {
-	var size uint8
-	err := binary.Read(r, binary.LittleEndian, &size)
-
-	if err != nil {
-		return ""
-	}
-
-	s := make([]byte, size*4)
-
-	err = binary.Read(r, binary.LittleEndian, &s)
-
-	return string(bytes.Replace(s, []byte("\x00"), nil, -1))
+	return readString(r, 4)
 }
 
-func readString(r io.Reader) string {
+func readString(r io.Reader, sizeMultiplier int) string {
 	var size uint8
 	err := binary.Read(r, binary.LittleEndian, &size)
 
@@ -99,11 +90,21 @@ func readString(r io.Reader) string {
 		return ""
 	}
 
-	s := make([]byte, size)
+	s := make([]byte, int(size)*sizeMultiplier)
 
 	err = binary.Read(r, binary.LittleEndian, &s)
 
-	return string(bytes.Replace(s, []byte("\x00"), nil, -1))
+	if err != nil {
+		return ""
+	}
+
+	decoded, err := utf32.UTF32(utf32.LittleEndian, utf32.IgnoreBOM).NewDecoder().Bytes(s)
+
+	if err != nil {
+		return ""
+	}
+
+	return string(decoded)
 }
 
 func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
@@ -132,7 +133,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 			return nil, err
 		}
 
-		carMode := readString(r)
+		carMode := readString(r, 1)
 		carSkin := readStringW(r)
 
 		response = SessionCarInfo{
@@ -243,9 +244,9 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 		}
 
 		sessionInfo.ServerName = readStringW(r)
-		sessionInfo.Track = readString(r)
-		sessionInfo.TrackConfig = readString(r)
-		sessionInfo.Name = readString(r)
+		sessionInfo.Track = readString(r, 1)
+		sessionInfo.TrackConfig = readString(r, 1)
+		sessionInfo.Name = readString(r, 1)
 
 		err = binary.Read(r, binary.LittleEndian, &sessionInfo.Type)
 
@@ -283,7 +284,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 			return nil, err
 		}
 
-		sessionInfo.WeatherGraphics = readString(r)
+		sessionInfo.WeatherGraphics = readString(r, 1)
 
 		err = binary.Read(r, binary.LittleEndian, &sessionInfo.ElapsedMilliseconds)
 

@@ -1,127 +1,31 @@
-{{ define "title" }}Custom Race{{ end }}
-
-{{ define "entrant" }}
-
-    <div class="card mt-2 mb-2 border-warning">
-        <div class="card-header">
-            Entrant
-
-            <a class="text-danger btn-delete-entrant float-right" href="#"><i class="fas fa-trash"></i></a>
-        </div>
-
-        <div class="card-body">
-
-            <div class="row">
-
-                <div class="form-group row col-md-4">
-                    <label for="Name" class="col-sm-4 col-form-label col-form-label-sm">Name</label>
-
-                    <div class="col-sm-8">
-                        <input class="form-control form-control-sm entryListName" type="text" name="EntryList.Name" {{ with .Name }}value="{{ . }}"{{ end }}>
-                    </div>
-                </div>
-
-
-
-                <div class="form-group row col-md-4">
-                    <label for="Team" class="col-sm-4 col-form-label col-form-label-sm">Team</label>
-
-                    <div class="col-sm-8">
-                        <input class="form-control form-control-sm" type="text" name="EntryList.Team" {{ with .Team }}value="{{ . }}"{{ end }}>
-                    </div>
-                </div>
-
-
-                <div class="form-group row col-md-4">
-                    <label for="GUID" class="col-sm-4 col-form-label col-form-label-sm">GUID</label>
-
-                    <div class="col-sm-8">
-                        <input class="form-control form-control-sm" type="text" name="EntryList.GUID" {{ with .GUID }}value="{{ . }}"{{ end }}>
-                    </div>
-                </div>
-
-            </div>
-
-
-
-
-
-            <div class="row">
-
-                <div class="form-group row col-md-4">
-                    <label for="Model" class="col-sm-4 col-form-label col-form-label-sm">Car</label>
-
-                    <div class="col-sm-8">
-                        <select class="form-control form-control-sm entryListCar" name="EntryList.Car">
-                            {{ with .Model }}<option value="{{ . }}">{{ prettify . true }}</option>{{ end }}
-                        </select>
-                    </div>
-                </div>
-
-
-
-                <div class="form-group row col-md-4">
-                    <label for="Skin" class="col-sm-4 col-form-label col-form-label-sm">Skin</label>
-
-                    <div class="col-sm-8">
-                        <select class="form-control form-control-sm entryListSkin" name="EntryList.Skin">
-                            {{ with .Skin }}<option value="{{ . }}">{{ prettify . true }}</option>{{ end }}
-                        </select>
-                    </div>
-                </div>
-
-
-                <div class="form-group row col-md-4">
-                    <label for="Ballast" class="col-sm-4 col-form-label col-form-label-sm">Ballast</label>
-
-                    <div class="col-sm-8">
-                        <input class="form-control form-control-sm" type="number" min="0" name="EntryList.Ballast" value="{{ with .Ballast }}{{ . }}{{ else }}0{{ end }}">
-                    </div>
-                </div>
-
-
-            </div>
-
-
-            <div class="row">
-
-                <!--
-                Despite having the option for SpectatorMode, the server does not support it, and panics if set to 1
-                <div class="form-group col-md-4 row">
-                    <label for="SpectatorMode" class="col-sm-4 col-form-label col-form-label-sm">Spectator Mode</label>
-
-                    <div class="col-sm-8">
-                        <input class="form-control" type="checkbox" name="EntryList.Spectator" {{ with .SpectatorMode }}{{ if eq . 1 }}checked="checked"{{ end }}{{ end }}>
-
-                    </div>
-                </div>
-
-                -->
-
-                <div class="form-group col-md-4 row">
-                    <label for="Restrictor" class="col-sm-4 col-form-label col-form-label-sm">Restrictor</label>
-
-                    <div class="col-sm-8">
-                        <input class="form-control form-control-sm" type="number" min="0" max="100" name="EntryList.Restrictor" value="{{ with .Restrictor }}{{ . }}{{ else }}0{{ end }}">
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
+{{ define "title" }}
+    {{ if .IsChampionship }}
+        Championship Race
+    {{ else }}
+        Custom Race
+    {{ end }}
 {{ end }}
 
 {{ define "content" }}
-
     {{ $f := .Current }}
 
-    <h1 class="text-center">Custom Race</h1>
+    <h1 class="text-center">
+        {{ if .IsChampionship }}
+            Championship Race
+        {{ else }}
+            Custom Race
+        {{ end }}
+    </h1>
+
+    {{ if .IsChampionship }}
+        <p>Configure a race for the <strong>{{ .Championship.Name }}</strong> Championship.</p>
+    {{ end }}
 
     <form method="post" action="/custom/new/submit">
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">
-                <strong>Track & Cars</strong>
+                <strong>Track{{ if not .IsChampionship }} & Cars {{ end }}</strong>
             </div>
 
             <div class="card-body">
@@ -172,30 +76,60 @@
                     </div>
                 </div>
 
-                <div class="form-group row">
-                    <label for="Cars" class="col-sm-2 col-form-label">
-                        Cars
-                    </label>
+                {{ if not .IsChampionship }}
 
-                    <div class="col-sm-10">
-                        <select multiple class="form-control" name="Cars" id="Cars" size="15">
-                            {{ range $index, $car := .CarOpts }}
+                    <div class="form-group row">
+                        <label for="Cars" class="col-sm-2 col-form-label">
+                            Cars
+                        </label>
 
-                                {{ $selected := false }}
+                        <div class="col-sm-10">
+                            <select multiple class="form-control" name="Cars" id="Cars" size="15">
+                                {{ range $index, $car := .CarOpts }}
 
-                                {{ range $j, $selectedCar := varSplit $f.Cars }}
-                                    {{ if eq $selectedCar $car.Name }}
-                                        {{ $selected = true }}
+                                    {{ $selected := false }}
+
+                                    {{ range $j, $selectedCar := varSplit $f.Cars }}
+                                        {{ if eq $selectedCar $car.Name }}
+                                            {{ $selected = true }}
+                                        {{ end }}
                                     {{ end }}
-                                {{ end }}
 
-                                <option value="{{ $car.Name }}" {{ if $selected }} selected="selected" {{ end }}>{{ prettify $car.Name true }}</option>
-                            {{ end }}
-                        </select>
+                                    <option value="{{ $car.Name }}" {{ if $selected }} selected="selected" {{ end }}>{{ prettify $car.Name true }}</option>
+                                {{ end }}
+                            </select>
+                        </div>
+                    </div>
+
+                {{ end }}
+            </div>
+        </div>
+
+        {{ if and .IsChampionship .ChampionshipHasAtLeastOnceRace }}
+            <div class="card mt-3 border-info">
+                <div class="card-header text-white bg-info">
+                    <strong>Save Championship Race</strong>
+                </div>
+                <div class="card-body">
+                    <p>
+                        The setup below this panel is identical to the previous race setup that you just configured.
+                        This means that if you are happy with those settings, you can go on to create another race.
+
+                        If not, feel free to scroll down and change the configuration of this race.
+                    </p>
+
+                    <p>
+                        When this race is saved, it will be added to the <strong>{{ .Championship.Name }}</strong> Championship.
+                        You can add more races below, or, if you're done creating the championship, you can complete its setup here.
+                    </p>
+
+                    <div class="float-right">
+                        <button class="btn btn-info mt-5" data-toggle="tooltip" name="action" value="addAnotherRace" type="submit" title="Save this setup and then configure another">Add another Race</button>
+                        <button class="btn btn-success mt-5" data-toggle="tooltip" name="action" value="saveChampionship" type="submit" title="Save this race setup and finish creating the championship">Finish Creating Championship</button>
                     </div>
                 </div>
             </div>
-        </div>
+        {{ end }}
 
 
         <div class="card mt-3 border-secondary">
@@ -523,7 +457,10 @@
             </div>
         </div>
 
-        <div class="card mt-3 border-secondary">
+
+        {{ if not .IsChampionship }}
+
+            <div class="card mt-3 border-secondary">
             <div class="card-header">
                 <strong>Entry List</strong>
             </div>
@@ -593,6 +530,8 @@
                 <div class="clearfix"></div>
             </div>
         </div>
+
+        {{ end }}
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">
@@ -1274,38 +1213,58 @@
             </div>
         </div>
 
-        <div class="card mt-3 border-info">
-            <div class="card-header text-white bg-info">
-                <strong>Save Custom Race</strong>
-            </div>
-            <div class="card-body">
-                <div class="form-group row">
-                    <label for="CustomRaceName" class="col-sm-3 col-form-label">Custom Race Name</label>
+        {{ if .IsChampionship }}
+            <div class="card mt-3 border-info">
+                <div class="card-header text-white bg-info">
+                    <strong>Save Championship Race</strong>
+                </div>
+                <div class="card-body">
+                    <p>
+                        When this race is saved, it will be added to the <strong>{{ .Championship.Name }}</strong> Championship.
+                        You can add more races below, or, if you're done creating the championship, you can complete its setup here.
+                    </p>
 
-                    <div class="col-sm-9">
-
-                        <input
-                                class="form-control"
-                                type="text"
-                                id="CustomRaceName"
-                                name="CustomRaceName"
-                                value=""
-                                placeholder="Something to identify this Custom Race"
-                        >
-
-                        <small>The name above will be used on the Custom Races page.</small>
+                    <div class="float-right">
+                        <button class="btn btn-info mt-5" data-toggle="tooltip" name="action" value="addAnotherRace" type="submit" title="Save this setup and then configure another">Add another Race</button>
+                        <button class="btn btn-success mt-5" data-toggle="tooltip" name="action" value="saveChampionship" type="submit" title="Save this race setup and finish creating the championship">Finish Creating Championship</button>
                     </div>
                 </div>
+            </div>
+        {{ else }}
+            <div class="card mt-3 border-info">
+                <div class="card-header text-white bg-info">
+                    <strong>Save Custom Race</strong>
+                </div>
+                <div class="card-body">
+                    <div class="form-group row">
+                        <label for="CustomRaceName" class="col-sm-3 col-form-label">Custom Race Name</label>
 
-                <div class="float-right">
-                    <button class="btn btn-info mt-5" data-toggle="tooltip" name="action" value="justSave" type="submit" title="Save this setup without starting the race">Save Custom Race</button>
-                    <button class="btn btn-success mt-5" data-toggle="tooltip" name="action" value="startRace" type="submit" title="Save this setup and begin the race">Start Race</button>
+                        <div class="col-sm-9">
+
+                            <input
+                                    class="form-control"
+                                    type="text"
+                                    id="CustomRaceName"
+                                    name="CustomRaceName"
+                                    value=""
+                                    placeholder="Something to identify this Custom Race"
+                            >
+
+                            <small>The name above will be used on the Custom Races page.</small>
+                        </div>
+                    </div>
+
+                    <div class="float-right">
+                        <button class="btn btn-info mt-5" data-toggle="tooltip" name="action" value="justSave" type="submit" title="Save this setup without starting the race">Save Custom Race</button>
+                        <button class="btn btn-success mt-5" data-toggle="tooltip" name="action" value="startRace" type="submit" title="Save this setup and begin the race">Start Race</button>
+                    </div>
                 </div>
             </div>
-        </div>
+        {{ end }}
 
         <div class="clearfix"></div>
     </form>
+
 
 
     <script type="text/javascript">

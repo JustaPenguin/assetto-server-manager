@@ -9,6 +9,7 @@ $(document).ready(function () {
     $document = $(document);
     raceSetup.init();
     serverLogs.init();
+    championships.init();
 
     // init bootstrap-switch
     $.fn.bootstrapSwitch.defaults.size = 'small';
@@ -506,6 +507,7 @@ let raceSetup = {
             $elem.find(".entryListCar").change(onEntryListCarChange);
             $elem.find(".btn-delete-entrant").click(deleteEntrant);
             populateEntryListCars();
+            $elem.css("display", "block");
         })
 
     },
@@ -1135,4 +1137,66 @@ function addAllColumnHeaders(json, table) {
     table.append(header$);
 
     return columnSet;
+}
+
+
+let championships = {
+    init: function() {
+        let $pointsParent = $document.find("#points");
+
+        if (!$pointsParent.length) {
+            return;
+        }
+
+        let $pointsTemplate = $document.find(".points-place").last().clone();
+
+        $document.find("#addEntrant").click(function() {
+            let $points = $document.find(".points-place");
+            let numEntrants = $document.find(".entrant").length;
+            let numPoints = $points.length;
+
+            for (let i = numPoints; i < numEntrants; i++) {
+                // add points up to the numEntrants we have
+                let $newPoints = $pointsTemplate.clone();
+                $newPoints.find("label").text(ordinalSuffix(numPoints+1) + " Place");
+
+                let pointsVal = 0 ;
+
+                // load the default points value for this position
+                if (numPoints+1 < defaultPoints.Places.length) {
+                    pointsVal = defaultPoints.Places[numPoints+1];
+                }
+
+                $newPoints.find("input").attr({"value": pointsVal});
+                $pointsParent.append($newPoints);
+            }
+        });
+
+        $document.on("click", ".btn-delete-entrant", function() {
+            let numEntrants = $document.find(".entrant").length;
+            let $points = $document.find(".points-place");
+            let numPoints = $points.length;
+
+            for (let i = numPoints; i >= numEntrants; i--) {
+                // remove any extras we don't need
+                $points.last().remove();
+            }
+        });
+    },
+};
+
+function ordinalSuffix(i) {
+    let j = i % 10,
+        k = i % 100;
+    if (j === 1 && k !== 11) {
+        return i + "st";
+    }
+    if (j === 2 && k !== 12) {
+        return i + "nd";
+    }
+    if (j === 3 && k !== 13) {
+        return i + "rd";
+    }
+
+    return i + "th";
 }
