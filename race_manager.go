@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/cj123/assetto-server-manager/pkg/udp"
-	"github.com/davecgh/go-spew/spew"
 	"math/rand"
 	"net/http"
 	"sort"
@@ -13,8 +11,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cj123/assetto-server-manager/pkg/udp"
+
+	"github.com/davecgh/go-spew/spew"
 	"github.com/etcd-io/bbolt"
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 )
 
 var (
@@ -454,18 +456,33 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		return err
 	}
 
-	saveAsPresetWithoutStartingRace := r.FormValue("action") == "justSave"
+	if customRaceID := r.FormValue("Editing"); customRaceID != "" {
+		// we are editing the race. load the previous one and overwrite it with this one
+		customRace, err := rm.raceStore.FindCustomRaceByID(customRaceID)
 
-	// save the custom race preset
-	if err := rm.SaveCustomRace(r.FormValue("CustomRaceName"), *raceConfig, entryList, saveAsPresetWithoutStartingRace); err != nil {
-		return err
+		if err != nil {
+			return err
+		}
+
+		customRace.Name = r.FormValue("CustomRaceName")
+		customRace.EntryList = entryList
+		customRace.RaceConfig = *raceConfig
+
+		return rm.raceStore.UpsertCustomRace(customRace)
+	} else {
+		saveAsPresetWithoutStartingRace := r.FormValue("action") == "justSave"
+
+		// save the custom race preset
+		if err := rm.SaveCustomRace(r.FormValue("CustomRaceName"), *raceConfig, entryList, saveAsPresetWithoutStartingRace); err != nil {
+			return err
+		}
+
+		if saveAsPresetWithoutStartingRace {
+			return nil
+		}
+
+		return rm.applyConfigAndStart(completeConfig, entryList)
 	}
-
-	if saveAsPresetWithoutStartingRace {
-		return nil
-	}
-
-	return rm.applyConfigAndStart(completeConfig, entryList)
 }
 
 // BuildRaceOpts builds a quick race form
@@ -561,6 +578,20 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		}
 	}
 
+	templateIDForEditing := mux.Vars(r)["uuid"]
+	isEditing := templateIDForEditing != ""
+	var customRaceName string
+
+	if isEditing {
+		customRace, err := rm.raceStore.FindCustomRaceByID(templateIDForEditing)
+
+		if err != nil {
+			return nil, err
+		}
+
+		customRaceName = customRace.Name
+	}
+
 	return map[string]interface{}{
 		"CarOpts":           cars,
 		"TrackOpts":         trackNames,
@@ -573,12 +604,15 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		"CurrentEntrants":   entrants,
 		"PossibleEntrants":  possibleEntrants,
 		"IsChampionship":    false, // this flag is overridden by championship setup
+		"IsEditing":         isEditing,
+		"EditingID":         templateIDForEditing,
+		"CustomRaceName":    customRaceName,
 	}, nil
 }
 
 const maxRecentRaces = 30
 
-func (rm *RaceManager) ListCustomRaces() (recent, starred []CustomRace, err error) {
+func (rm *RaceManager) ListCustomRaces() (recent, starred []*CustomRace, err error) {
 	recent, err = rm.raceStore.ListCustomRaces()
 
 	if err == bbolt.ErrBucketNotFound {
@@ -591,7 +625,7 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred []CustomRace, err erro
 		return recent[i].Created.After(recent[j].Created)
 	})
 
-	var filteredRecent []CustomRace
+	var filteredRecent []*CustomRace
 
 	for _, race := range recent {
 		if race.Starred {
@@ -613,7 +647,7 @@ func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, ent
 		var trackLayout string
 
 		if config.TrackLayout != "" {
-			trackLayout = "(" + prettifyName(config.TrackLayout, true) + ")"
+			trackLayout = prettifyName(config.TrackLayout, true)
 		}
 
 		name = fmt.Sprintf("%s (%s) in %s (%d entrants)",
@@ -636,7 +670,7 @@ func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, ent
 		}
 	}
 
-	return rm.raceStore.UpsertCustomRace(CustomRace{
+	return rm.raceStore.UpsertCustomRace(&CustomRace{
 		Name:    name,
 		Created: time.Now(),
 		UUID:    uuid.New(),
@@ -667,7 +701,7 @@ func (rm *RaceManager) DeleteCustomRace(uuid string) error {
 		return err
 	}
 
-	return rm.raceStore.DeleteCustomRace(*race)
+	return rm.raceStore.DeleteCustomRace(race)
 }
 
 func (rm *RaceManager) ToggleStarCustomRace(uuid string) error {
@@ -679,7 +713,7 @@ func (rm *RaceManager) ToggleStarCustomRace(uuid string) error {
 
 	race.Starred = !race.Starred
 
-	return rm.raceStore.UpsertCustomRace(*race)
+	return rm.raceStore.UpsertCustomRace(race)
 }
 
 func (rm *RaceManager) SaveServerOptions(so *GlobalServerConfig) error {

@@ -10,10 +10,10 @@ import (
 
 type RaceStore interface {
 	// Custom Races
-	UpsertCustomRace(race CustomRace) error
+	UpsertCustomRace(race *CustomRace) error
 	FindCustomRaceByID(uuid string) (*CustomRace, error)
-	ListCustomRaces() ([]CustomRace, error)
-	DeleteCustomRace(race CustomRace) error
+	ListCustomRaces() ([]*CustomRace, error)
+	DeleteCustomRace(race *CustomRace) error
 
 	// Entrants
 	UpsertEntrant(entrant Entrant) error
@@ -69,7 +69,7 @@ func (rs *BoltRaceStore) decode(data []byte, out interface{}) error {
 	return json.Unmarshal(data, out)
 }
 
-func (rs *BoltRaceStore) UpsertCustomRace(race CustomRace) error {
+func (rs *BoltRaceStore) UpsertCustomRace(race *CustomRace) error {
 	return rs.db.Update(func(tx *bbolt.Tx) error {
 		bkt, err := rs.customRaceBucket(tx)
 
@@ -109,8 +109,8 @@ func (rs *BoltRaceStore) FindCustomRaceByID(uuid string) (*CustomRace, error) {
 	return customRace, err
 }
 
-func (rs *BoltRaceStore) ListCustomRaces() ([]CustomRace, error) {
-	var customRaces []CustomRace
+func (rs *BoltRaceStore) ListCustomRaces() ([]*CustomRace, error) {
+	var customRaces []*CustomRace
 
 	err := rs.db.View(func(tx *bbolt.Tx) error {
 		bkt, err := rs.customRaceBucket(tx)
@@ -122,7 +122,7 @@ func (rs *BoltRaceStore) ListCustomRaces() ([]CustomRace, error) {
 		}
 
 		return bkt.ForEach(func(k, v []byte) error {
-			var race CustomRace
+			var race *CustomRace
 
 			err := rs.decode(v, &race)
 
@@ -144,7 +144,7 @@ func (rs *BoltRaceStore) ListCustomRaces() ([]CustomRace, error) {
 	return customRaces, err
 }
 
-func (rs *BoltRaceStore) DeleteCustomRace(race CustomRace) error {
+func (rs *BoltRaceStore) DeleteCustomRace(race *CustomRace) error {
 	race.Deleted = time.Now()
 
 	return rs.UpsertCustomRace(race)
