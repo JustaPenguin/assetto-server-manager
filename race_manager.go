@@ -547,9 +547,15 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred []CustomRace, err erro
 
 func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, entryList EntryList, starred bool) error {
 	if name == "" {
+		var trackLayout string
+
+		if config.TrackLayout != "" {
+			trackLayout = "(" + prettifyName(config.TrackLayout, true) + ")"
+		}
+
 		name = fmt.Sprintf("%s (%s) in %s (%d entrants)",
 			prettifyName(config.Track, false),
-			prettifyName(config.TrackLayout, true),
+			trackLayout,
 			carList(config.Cars),
 			len(entryList),
 		)

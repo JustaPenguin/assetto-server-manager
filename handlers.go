@@ -89,19 +89,25 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 // serverProcessHandler modifies the server process.
 func serverProcessHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
+	var txt string
 
 	switch mux.Vars(r)["action"] {
 	case "start":
 		err = AssettoProcess.Start()
+		txt = "started"
 	case "stop":
 		err = AssettoProcess.Stop()
+		txt = "stopped"
 	case "restart":
 		err = AssettoProcess.Restart()
+		txt = "restarted"
 	}
 
 	if err != nil {
-		// @TODO err
-		panic(err)
+		logrus.Errorf("could not change server process status, err: %s", err)
+		AddErrFlashQuick(w, r, "Unable to change server status")
+	} else {
+		AddFlashQuick(w, r, "Server successfully "+txt)
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
@@ -214,6 +220,16 @@ func addFiles(files []contentFile, contentType string) error {
 		if err != nil {
 			logrus.Errorf("could not create "+contentType+" file directory, err: %s", err)
 			return err
+		}
+
+		if contentType == "Car" {
+			if _, name := filepath.Split(file.FilePath); name == "data.acd" {
+				err := addTyresForNewCar(file.FilePath, fileDecoded)
+
+				if err != nil {
+					logrus.Errorf("Could not create tyres for new car, err: %s", err)
+				}
+			}
 		}
 
 		err = ioutil.WriteFile(path, fileDecoded, 0644)
