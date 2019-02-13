@@ -1,13 +1,14 @@
 package servermanager
 
 import (
-	"github.com/cj123/ini"
-	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/cj123/ini"
+	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 const weatherInfoFile = "weather.ini"

@@ -21,7 +21,7 @@
         <p>Configure a race for the <strong>{{ .Championship.Name }}</strong> Championship.</p>
     {{ end }}
 
-    <form method="post" action="/custom/new/submit">
+    <form method="post" {{ if .IsChampionship }} action="/championship/{{ .Championship.ID.String }}/race/submit" {{ else }} action="/custom/new/submit" {{ end}}>
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">
