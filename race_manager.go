@@ -34,7 +34,7 @@ func SetupRaceManager(storeFileLocation string) error {
 		return err
 	}
 
-	raceManager = NewRaceManager(NewRaceStore(bb))
+	raceManager = NewRaceManager(NewBoltRaceStore(bb))
 	championshipManager = NewChampionshipManager(raceManager)
 
 	return nil

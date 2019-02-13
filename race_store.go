@@ -3,8 +3,9 @@ package servermanager
 import (
 	"encoding/json"
 	"errors"
-	"github.com/etcd-io/bbolt"
 	"time"
+
+	"github.com/etcd-io/bbolt"
 )
 
 type RaceStore interface {
@@ -33,7 +34,7 @@ type BoltRaceStore struct {
 	db *bbolt.DB
 }
 
-func NewRaceStore(db *bbolt.DB) RaceStore {
+func NewBoltRaceStore(db *bbolt.DB) RaceStore {
 	return &BoltRaceStore{db: db}
 }
 
@@ -41,11 +42,9 @@ var (
 	customRaceBucketName    = []byte("customRaces")
 	serverOptionsBucketName = []byte("serverOptions")
 	entrantsBucketName      = []byte("entrants")
+	championshipsBucketName = []byte("championships")
 
 	serverOptionsKey = []byte("serverOptions")
-
-	championshipsBucket = []byte("championships")
-	championshipInfoKey = []byte("info")
 )
 
 func (rs *BoltRaceStore) customRaceBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
@@ -280,7 +279,7 @@ func (rs *BoltRaceStore) LoadServerOptions() (*GlobalServerConfig, error) {
 
 func (rs *BoltRaceStore) championshipsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	if !tx.Writable() {
-		bkt := tx.Bucket(championshipsBucket)
+		bkt := tx.Bucket(championshipsBucketName)
 
 		if bkt == nil {
 			return nil, bbolt.ErrBucketNotFound
@@ -289,7 +288,7 @@ func (rs *BoltRaceStore) championshipsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error
 		return bkt, nil
 	}
 
-	return tx.CreateBucketIfNotExists(championshipsBucket)
+	return tx.CreateBucketIfNotExists(championshipsBucketName)
 }
 
 func (rs *BoltRaceStore) UpsertChampionship(c *Championship) error {

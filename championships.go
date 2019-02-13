@@ -1,10 +1,11 @@
 package servermanager
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"net/http"
 	"path/filepath"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -55,7 +56,7 @@ type Championship struct {
 
 	Entrants EntryList
 
-	Races  []*ChampionshipRace
+	Events []*ChampionshipEvent
 	Points ChampionshipPoints
 }
 
@@ -76,7 +77,7 @@ func (c *Championship) ValidCarIDs() []string {
 }
 
 func (c *Championship) Progress() float64 {
-	numRaces := float64(len(c.Races))
+	numRaces := float64(len(c.Events))
 
 	if numRaces == 0 {
 		return 0
@@ -84,7 +85,7 @@ func (c *Championship) Progress() float64 {
 
 	numCompletedRaces := float64(0)
 
-	for _, race := range c.Races {
+	for _, race := range c.Events {
 		if race.Completed() {
 			numCompletedRaces++
 		}
@@ -93,14 +94,97 @@ func (c *Championship) Progress() float64 {
 	return (numCompletedRaces / numRaces) * 100
 }
 
-type ChampionshipRace struct {
+type ChampionshipStanding struct {
+	Entrant Entrant
+	Points  int
+}
+
+func (c *Championship) PointForPos(i int) int {
+	if i >= len(c.Points.Places) {
+		return 0
+	}
+
+	return c.Points.Places[i]
+}
+
+func (c *Championship) Standings() []*ChampionshipStanding {
+	var out []*ChampionshipStanding
+
+	entrants := make(map[string]*ChampionshipStanding)
+
+	if len(c.Events) > 0 {
+		for _, entrant := range c.Entrants {
+			if entrants[entrant.GUID] == nil {
+				entrants[entrant.GUID] = &ChampionshipStanding{
+					Entrant: entrant,
+				}
+			}
+		}
+	}
+
+	for _, event := range c.Events {
+		race, ok := event.Results[SessionTypeRace]
+
+		if !ok {
+			continue
+		}
+
+		for pos, driver := range race.Result {
+			entrants[driver.DriverGUID].Points += c.PointForPos(pos)
+		}
+	}
+
+	for _, entrant := range entrants {
+		out = append(out, entrant)
+	}
+
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Points > out[j].Points
+	})
+
+	return out
+}
+
+type TeamStanding struct {
+	Team   string
+	Points int
+}
+
+func (c *Championship) TeamStandings() []*TeamStanding {
+	teams := make(map[string]int)
+
+	for _, driver := range c.Standings() {
+		if _, ok := teams[driver.Entrant.Team]; !ok {
+			teams[driver.Entrant.Team] = driver.Points
+		} else {
+			teams[driver.Entrant.Team] += driver.Points
+		}
+	}
+
+	var out []*TeamStanding
+
+	for name, pts := range teams {
+		out = append(out, &TeamStanding{
+			Team:   name,
+			Points: pts,
+		})
+	}
+
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Points > out[j].Points
+	})
+
+	return out
+}
+
+type ChampionshipEvent struct {
 	RaceSetup CurrentRaceConfig
 	Results   map[SessionType]*SessionResults
 
 	CompletedTime time.Time
 }
 
-func (cr *ChampionshipRace) Completed() bool {
+func (cr *ChampionshipEvent) Completed() bool {
 	return !cr.CompletedTime.IsZero()
 }
 
@@ -133,11 +217,21 @@ func viewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	spew.Dump(championship)
-
 	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("championships", "view.html"), map[string]interface{}{
 		"Championship": championship,
 	})
+}
+
+func exportChampionshipHandler(w http.ResponseWriter, r *http.Request) {
+	championship, err := championshipManager.LoadChampionship(mux.Vars(r)["championshipID"])
+
+	if err != nil {
+		panic(err)
+	}
+
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	enc.Encode(championship)
 }
 
 func submitNewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
@@ -176,7 +270,7 @@ func championshipSubmitRaceConfigurationHandler(w http.ResponseWriter, r *http.R
 	AddFlashQuick(w, r,
 		fmt.Sprintf(
 			"Championship race at %s was successfully added!",
-			prettifyName(championship.Races[len(championship.Races)-1].RaceSetup.Track, false),
+			prettifyName(championship.Events[len(championship.Events)-1].RaceSetup.Track, false),
 		),
 	)
 
