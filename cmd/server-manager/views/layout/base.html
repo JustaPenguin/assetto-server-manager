@@ -111,33 +111,31 @@
     </div>
 
     <div class="messages">
+        <div class="container">
+            <div class="col-md-10 mx-auto">
+                {{ range $i, $message := .messages }}
 
-        <div class="col-md-8 mx-auto">
+                    <div class="alert alert-success alert-dismissible" role="alert">
+                        {{ $message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
 
-            {{ range $i, $message := .messages }}
+                {{ end }}
 
-                <div class="alert alert-success alert-dismissible" role="alert">
-                    {{ $message }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
+                {{ range $i, $error := .errors }}
 
-            {{ end }}
+                    <div class="alert alert-danger alert-dismissible col-md-6 mx-auto" role="alert">
+                        {{ $error }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
 
-            {{ range $i, $error := .errors }}
-
-                <div class="alert alert-danger alert-dismissible col-md-6 mx-auto" role="alert">
-                    {{ $error }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-
-            {{ end }}
-
+                {{ end }}
+            </div>
         </div>
-
     </div>
 
     {{ block "javascript" . }}
