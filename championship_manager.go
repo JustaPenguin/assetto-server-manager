@@ -91,8 +91,8 @@ func (cm *ChampionshipManager) BuildChampionshipRaceOpts(r *http.Request) (map[s
 	opts["Championship"] = championship
 
 	// override Current race config if there is a previous championship race configured
-	if len(championship.Races) > 0 {
-		opts["Current"] = championship.Races[len(championship.Races)-1].RaceSetup
+	if len(championship.Events) > 0 {
+		opts["Current"] = championship.Events[len(championship.Events)-1].RaceSetup
 		opts["ChampionshipHasAtLeastOnceRace"] = true
 	} else {
 		opts["Current"] = ConfigIniDefault.CurrentRaceConfig
@@ -121,7 +121,7 @@ func (cm *ChampionshipManager) SaveChampionshipRace(r *http.Request) (*Champions
 
 	raceConfig.Cars = strings.Join(championship.ValidCarIDs(), ";")
 
-	championship.Races = append(championship.Races, &ChampionshipRace{
+	championship.Events = append(championship.Events, &ChampionshipEvent{
 		RaceSetup: *raceConfig,
 	})
 

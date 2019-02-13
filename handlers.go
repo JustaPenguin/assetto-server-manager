@@ -71,6 +71,7 @@ func Router() *mux.Router {
 	r.HandleFunc("/championships/new", newChampionshipHandler)
 	r.HandleFunc("/championships/new/submit", submitNewChampionshipHandler)
 	r.HandleFunc("/championship/{championshipID}", viewChampionshipHandler)
+	r.HandleFunc("/championship/{championshipID}/export", exportChampionshipHandler)
 	r.HandleFunc("/championship/{championshipID}/race", championshipRaceConfigurationHandler)
 	r.HandleFunc("/championship/{championshipID}/race/submit", championshipSubmitRaceConfigurationHandler)
 

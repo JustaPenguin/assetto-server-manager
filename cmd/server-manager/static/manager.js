@@ -1185,8 +1185,8 @@ let championships = {
                 let pointsVal = 0 ;
 
                 // load the default points value for this position
-                if (numPoints+1 < defaultPoints.Places.length) {
-                    pointsVal = defaultPoints.Places[numPoints+1];
+                if (numPoints < defaultPoints.Places.length) {
+                    pointsVal = defaultPoints.Places[numPoints];
                 }
 
                 $newPoints.find("input").attr({"value": pointsVal});
