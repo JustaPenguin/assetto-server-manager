@@ -94,34 +94,34 @@ let raceSetup = {
             raceSetup.$carsDropdown.multiSelect({
                 selectableHeader: "<input type='search' class='form-control search-input' autocomplete='off' placeholder='search'>",
                 selectionHeader: "<input type='search' class='form-control search-input' autocomplete='off' placeholder='search'>",
-                afterInit: function(ms){
+                afterInit: function (ms) {
                     let that = this,
                         $selectableSearch = that.$selectableUl.prev(),
                         $selectionSearch = that.$selectionUl.prev(),
-                        selectableSearchString = '#'+that.$container.attr('id')+' .ms-elem-selectable:not(.ms-selected)',
-                        selectionSearchString = '#'+that.$container.attr('id')+' .ms-elem-selection.ms-selected';
+                        selectableSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selectable:not(.ms-selected)',
+                        selectionSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selection.ms-selected';
 
                     that.qs1 = $selectableSearch.quicksearch(selectableSearchString)
-                        .on('keydown', function(e){
-                            if (e.which === 40){
+                        .on('keydown', function (e) {
+                            if (e.which === 40) {
                                 that.$selectableUl.focus();
                                 return false;
                             }
                         });
 
                     that.qs2 = $selectionSearch.quicksearch(selectionSearchString)
-                        .on('keydown', function(e){
-                            if (e.which === 40){
+                        .on('keydown', function (e) {
+                            if (e.which === 40) {
                                 that.$selectionUl.focus();
                                 return false;
                             }
                         });
                 },
-                afterSelect: function(){
+                afterSelect: function () {
                     this.qs1.cache();
                     this.qs2.cache();
                 },
-                afterDeselect: function(){
+                afterDeselect: function () {
                     this.qs1.cache();
                     this.qs2.cache();
                 }
@@ -601,7 +601,7 @@ function postWithProgressBar(path, data, onSuccess, onFail, $progressBar) {
     function showProgress(evt) {
         if (evt.lengthComputable) {
             let percentComplete = Math.round((evt.loaded / evt.total) * 100);
-            $progressBar.css('width', percentComplete+'%').attr('aria-valuenow', percentComplete);
+            $progressBar.css('width', percentComplete + '%').attr('aria-valuenow', percentComplete);
             $progressBar.text(percentComplete + "%");
 
             if (percentComplete === 100) {
@@ -648,7 +648,7 @@ function submitFiles(path) {
                 'name': filesToUpload[x].name,
                 'size': filesToUpload[x].size,
                 'type': filesToUpload[x].type,
-                'webkitRelativePath': filesToUpload[x].webkitRelativePath,
+                'filepath': filesToUpload[x].filepath,
                 'dataBase64': reader.result.toString()
             });
 
@@ -672,12 +672,19 @@ function onFail(data) {
 }
 
 function handleWeatherFiles(fileList) {
+    // Correct filepath
+    for (let x = 0; x < fileList.length; x++) {
+        if (!fileList[x].filepath) {
+            fileList[x].filepath = fileList[x].webkitRelativePath;
+        }
+    }
+
     // check for multiple weathers inside "weather" folder, if so call loop function for each weather
-    if (fileList[0].webkitRelativePath.startsWith("weather/") && !fileList[0].newPath) {
+    if (fileList[0].filepath.startsWith("weather/") && !fileList[0].newPath) {
         let splitList = {};
 
         for (let y = 0; y < fileList.length; y++) {
-            let splitPath = fileList[y].webkitRelativePath.split("/");
+            let splitPath = fileList[y].filepath.split("/");
 
             let weatherIdentifier = splitPath.slice(0, 2).join(":");
 
@@ -723,10 +730,10 @@ function handleWeatherFilesLoop(fileList) {
 
     let weatherName = "";
 
-    if (fileList[0].webkitRelativePath.startsWith("weather/")) {
-        weatherName = fileList[0].webkitRelativePath.replace('\\', '/').split("/")[1];
+    if (fileList[0].filepath.startsWith("weather/")) {
+        weatherName = fileList[0].filepath.replace('\\', '/').split("/")[1];
     } else {
-        weatherName = fileList[0].webkitRelativePath.replace('\\', '/').split("/")[0];
+        weatherName = fileList[0].filepath.replace('\\', '/').split("/")[0];
     }
 
     $weatherPanel.attr({'class': "card p-3 mt-2"});
@@ -769,7 +776,7 @@ function handleWeatherFilesLoop(fileList) {
                 'id': "weather-upload-button"
             });
 
-            $button.click(function(e) {
+            $button.click(function (e) {
                 e.preventDefault();
                 submitFiles("/api/weather/upload")
             });
@@ -785,12 +792,19 @@ function handleWeatherFilesLoop(fileList) {
 }
 
 function handleCarFiles(fileList) {
+    // Correct filepath
+    for (let x = 0; x < fileList.length; x++) {
+        if (!fileList[x].filepath) {
+            fileList[x].filepath = fileList[x].webkitRelativePath;
+        }
+    }
+
     // check for multiple cars inside "cars" folder, if so recall this function for each car
-    if (fileList[0].webkitRelativePath.startsWith("cars/") && !fileList[0].newPath) {
+    if (fileList[0].filepath.startsWith("cars/") && !fileList[0].newPath) {
         let splitList = {};
 
         for (let y = 0; y < fileList.length; y++) {
-            let splitPath = fileList[y].webkitRelativePath.split("/");
+            let splitPath = fileList[y].filepath.split("/");
 
             let carIdentifier = splitPath.slice(0, 2).join(":");
 
@@ -836,13 +850,13 @@ function handleCarFilesLoop(fileList) {
     let $title = $("<h3/>");
     let previewDone = false;
 
-    let entrySplit = fileList[0].webkitRelativePath.replace('\\', '/').split("/");
+    let entrySplit = fileList[0].filepath.replace('\\', '/').split("/");
     let carName = entrySplit[entrySplit.length - 2];
 
-    if (fileList[0].webkitRelativePath.startsWith("cars/")) {
-        carName = fileList[0].webkitRelativePath.split("/")[1];
+    if (fileList[0].filepath.startsWith("cars/")) {
+        carName = fileList[0].filepath.split("/")[1];
     } else {
-        carName = fileList[0].webkitRelativePath.split("/")[0];
+        carName = fileList[0].filepath.split("/")[0];
     }
 
     $carPanel.attr({'class': "card p-3 mt-2"});
@@ -859,7 +873,7 @@ function handleCarFilesLoop(fileList) {
         if (filesToUploadLocal[x].name.startsWith("preview.") && !previewDone) {
             previewDone = true;
 
-            let filePathCorrected = filesToUploadLocal[x].webkitRelativePath.replace('\\', '/');
+            let filePathCorrected = filesToUploadLocal[x].filepath.replace('\\', '/');
             let filePathSplit = filePathCorrected.split("/");
 
             let skinName = filePathSplit[filePathSplit.length - 2];
@@ -912,7 +926,7 @@ function handleCarFilesLoop(fileList) {
                 'id': "car-upload-button"
             });
 
-            $button.click(function(e) {
+            $button.click(function (e) {
                 e.preventDefault();
 
                 submitFiles("/api/car/upload")
@@ -928,12 +942,105 @@ function handleCarFilesLoop(fileList) {
     }
 }
 
+function getFilesWebkitDataTransferItems(dataTransferItems) {
+    function traverseFileTreePromise(item, path = '') {
+        return new Promise(resolve => {
+            if (item.isFile) {
+                item.file(file => {
+                    file.filepath = path + file.name; //save full path
+                    files.push(file);
+                    resolve(file)
+                })
+            } else if (item.isDirectory) {
+                let dirReader = item.createReader();
+                dirReader.readEntries(entries => {
+                    let entriesPromises = [];
+                    for (let entr of entries)
+                        entriesPromises.push(traverseFileTreePromise(entr, path + item.name + "/"));
+                    resolve(Promise.all(entriesPromises))
+                })
+            }
+        })
+    }
+
+    let files = [];
+    return new Promise((resolve, reject) => {
+        let entriesPromises = [];
+        for (let it of dataTransferItems)
+            entriesPromises.push(traverseFileTreePromise(it.webkitGetAsEntry()));
+        Promise.all(entriesPromises)
+            .then(entries => {
+                resolve(files)
+            })
+    })
+}
+
+function handleTrackDropFiles(ev) {
+    // Prevent default behavior (Prevent file from being opened)
+    ev.preventDefault();
+
+    dragOutHandler(ev);
+
+    let items = event.dataTransfer.items;
+    getFilesWebkitDataTransferItems(items)
+        .then(files => {
+            handleTrackFiles(files);
+        })
+}
+
+function handleCarDropFiles(ev) {
+    // Prevent default behavior (Prevent file from being opened)
+    ev.preventDefault();
+
+    dragOutHandler(ev);
+
+    let items = event.dataTransfer.items;
+    getFilesWebkitDataTransferItems(items)
+        .then(files => {
+            handleCarFiles(files);
+        })
+}
+
+function handleWeatherDropFiles(ev) {
+    // Prevent default behavior (Prevent file from being opened)
+    ev.preventDefault();
+
+    dragOutHandler(ev);
+
+    let items = event.dataTransfer.items;
+    getFilesWebkitDataTransferItems(items)
+        .then(files => {
+            handleWeatherFiles(files);
+        })
+}
+
+function dragOverHandler(ev) {
+    // Prevent default behavior (Prevent file from being opened)
+    ev.preventDefault();
+
+    document.getElementById("drop-zone").classList.add('drop-zone-hovered');
+}
+
+function dragOutHandler(ev) {
+    // Prevent default behavior (Prevent file from being opened)
+    ev.preventDefault();
+
+    document.getElementById("drop-zone").classList.remove('drop-zone-hovered');
+}
+
 function handleTrackFiles(fileList) {
-    if (fileList[0].webkitRelativePath.startsWith("tracks/") && !fileList[0].newPath) {
+    // Correct filepath
+    for (let x = 0; x < fileList.length; x++) {
+        if (!fileList[x].filepath) {
+            fileList[x].filepath = fileList[x].webkitRelativePath;
+        }
+    }
+
+    if (fileList[0].filepath.startsWith("tracks/") && !fileList[0].newPath) {
         let splitList = {};
 
         for (let y = 0; y < fileList.length; y++) {
-            let splitPath = fileList[y].webkitRelativePath.split("/");
+            let splitPath = fileList[y].filepath.split("/");
 
             let trackIdentifier = splitPath.slice(0, 2).join(":");
 
@@ -965,7 +1072,7 @@ function handleTrackFilesLoop(fileList) {
         // get model/surfaces and drs zones and ui folder
         if ((fileList[x].name.startsWith("models") && fileList[x].name.endsWith(".ini")) ||
             (fileList[x].name === "surfaces.ini" || fileList[x].name === "drs_zones.ini") ||
-            (fileList[x].webkitRelativePath.includes("/ui/"))) {
+            (fileList[x].filepath.includes("/ui/"))) {
 
             filesToUploadLocal.push(fileList[x]);
             goodFile = true;
@@ -980,10 +1087,10 @@ function handleTrackFilesLoop(fileList) {
         return
     }
 
-    if (fileList[0].webkitRelativePath.startsWith("tracks/")) {
-        trackName = fileList[0].webkitRelativePath.split("/")[1];
+    if (fileList[0].filepath.startsWith("tracks/")) {
+        trackName = fileList[0].filepath.split("/")[1];
     } else {
-        trackName = fileList[0].webkitRelativePath.split("/")[0];
+        trackName = fileList[0].filepath.split("/")[0];
     }
 
     let tableDone = false;
@@ -1000,7 +1107,7 @@ function handleTrackFilesLoop(fileList) {
     $trackPanel.append($row);
 
     for (let x = 0; x < filesToUploadLocal.length; x++) {
-        if (filesToUploadLocal[x].webkitRelativePath.includes("/ui/")) {
+        if (filesToUploadLocal[x].filepath.includes("/ui/")) {
 
             if (filesToUploadLocal[x].name === "preview.png") {
 
@@ -1008,7 +1115,7 @@ function handleTrackFilesLoop(fileList) {
 
                 // For multiple layouts get the layout name and store in map
                 if (layoutNum > 1) {
-                    let fileListCorrected = filesToUploadLocal[x].webkitRelativePath.replace('\\', '/');
+                    let fileListCorrected = filesToUploadLocal[x].filepath.replace('\\', '/');
 
                     let fileListSplit = fileListCorrected.split("/");
 
@@ -1062,7 +1169,7 @@ function handleTrackFilesLoop(fileList) {
                 'class': "btn btn-primary",
                 'id': "track-upload-button"
             });
-            $button.click(function(e) {
+            $button.click(function (e) {
                 e.preventDefault();
 
                 submitFiles("/api/track/upload")

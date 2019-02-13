@@ -136,3 +136,53 @@ span[data-toggle=tooltip] { cursor: default; }
     z-index: 1;
     bottom: 0;
 }
+
+/*.drop-zone {
+    background: #f0f0f0;
+    width: 210px;
+    height: 33px;
+    padding: 6px;
+    text-align: center;
+    border-style: dashed;
+    border-color: black;
+    border-width: 2px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-radius: 0.25rem;
+}*/
+
+.drop-zone {
+    background: #f0f0f0;
+    width: 210px;
+    height: 33px;
+    padding: 8px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-radius: 0.25rem;
+
+    background: linear-gradient(90deg, black 50%, transparent 50%), linear-gradient(90deg, black 50%, transparent 50%),
+    linear-gradient(0deg, black 50%, transparent 50%), linear-gradient(0deg, black 50%, transparent 50%);
+    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    background-size: 15px 2px, 15px 2px, 2px 15px, 2px 15px;
+    background-position: 0px 0px, 208px 31px, 0px 31px, 208px 0px;
+}
+
+.drop-zone-hovered {
+    background: linear-gradient(90deg, black 50%, transparent 50%), linear-gradient(90deg, black 50%, transparent 50%),
+    linear-gradient(0deg, black 50%, transparent 50%), linear-gradient(0deg, black 50%, transparent 50%);
+    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    background-size: 15px 2px, 15px 2px, 2px 15px, 2px 15px;
+    background-position: 0px 0px, 208px 31px, 0px 31px, 208px 0px;
+    animation: border-dance 4s infinite linear;
+}
+@keyframes border-dance {
+    0% {
+        background-position: 0px 0px, 208px 31px, 0px 104px, 208px 0px;
+    }
+    100% {
+        background-position: 208px 0px, 0px 31px, 0px 0px, 208px 104px;
+    }
+}
