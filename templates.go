@@ -52,7 +52,7 @@ func (tr *Renderer) init() error {
 		return err
 	}
 
-	partials, err := zglob.Glob(filepath.Join(tr.dir, "partials", "*.html"))
+	partials, err := zglob.Glob(filepath.Join(tr.dir, "partials", "**", "*.html"))
 
 	if err != nil {
 		return err

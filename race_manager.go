@@ -35,6 +35,7 @@ func SetupRaceManager(storeFileLocation string) error {
 	}
 
 	raceManager = NewRaceManager(NewRaceStore(bb))
+	championshipManager = NewChampionshipManager(raceManager)
 
 	return nil
 }
@@ -43,20 +44,20 @@ type RaceManager struct {
 	currentRace      *ServerConfig
 	currentEntryList EntryList
 
-	raceStore *RaceStore
+	raceStore RaceStore
 
 	udpListenerContext context.Context
 	udpListenerCfn     func()
-	udpServerConn *udp.AssettoServerUDP
+	udpServerConn      *udp.AssettoServerUDP
 }
 
-func NewRaceManager(raceStore *RaceStore) *RaceManager {
+func NewRaceManager(raceStore RaceStore) *RaceManager {
 	ctx, cfn := context.WithCancel(context.Background())
 
 	return &RaceManager{
-		raceStore: raceStore,
+		raceStore:          raceStore,
 		udpListenerContext: ctx,
-		udpListenerCfn: cfn,
+		udpListenerCfn:     cfn,
 	}
 }
 
@@ -270,6 +271,43 @@ func formValueAsInt(val string) int {
 	return int(i)
 }
 
+func (rm *RaceManager) BuildEntryList(r *http.Request) (EntryList, error) {
+	entryList := EntryList{}
+
+	allCars, err := ListCars()
+
+	if err != nil {
+		return nil, err
+	}
+
+	carMap := allCars.AsMap()
+
+	for i := 0; i < len(r.Form["EntryList.Name"]); i++ {
+		model := r.Form["EntryList.Car"][i]
+		skin := r.Form["EntryList.Skin"][i]
+
+		if skin == "random_skin" {
+			if skins, ok := carMap[model]; ok && len(skins) > 0 {
+				skin = carMap[model][rand.Intn(len(carMap[model]))]
+			}
+		}
+
+		entryList.Add(Entrant{
+			Name:  r.Form["EntryList.Name"][i],
+			Team:  r.Form["EntryList.Team"][i],
+			GUID:  r.Form["EntryList.GUID"][i],
+			Model: model,
+			Skin:  skin,
+			// Despite having the option for SpectatorMode, the server does not support it, and panics if set to 1
+			// SpectatorMode: formValueAsInt(r.Form["EntryList.Spectator"][i]),
+			Ballast:    formValueAsInt(r.Form["EntryList.Ballast"][i]),
+			Restrictor: formValueAsInt(r.Form["EntryList.Restrictor"][i]),
+		})
+	}
+
+	return entryList, nil
+}
+
 func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 	if err := r.ParseForm(); err != nil {
 		return err
@@ -359,37 +397,10 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 	completeConfig := ConfigIniDefault
 	completeConfig.CurrentRaceConfig = raceConfig
 
-	entryList := EntryList{}
-
-	allCars, err := ListCars()
+	entryList, err := rm.BuildEntryList(r)
 
 	if err != nil {
 		return err
-	}
-
-	carMap := allCars.AsMap()
-
-	for i := 0; i < len(r.Form["EntryList.Name"]); i++ {
-		model := r.Form["EntryList.Car"][i]
-		skin := r.Form["EntryList.Skin"][i]
-
-		if skin == "random_skin" {
-			if skins, ok := carMap[model]; ok && len(skins) > 0 {
-				skin = carMap[model][rand.Intn(len(carMap[model]))]
-			}
-		}
-
-		entryList.Add(Entrant{
-			Name:  r.Form["EntryList.Name"][i],
-			Team:  r.Form["EntryList.Team"][i],
-			GUID:  r.Form["EntryList.GUID"][i],
-			Model: model,
-			Skin:  skin,
-			// Despite having the option for SpectatorMode, the server does not support it, and panics if set to 1
-			// SpectatorMode: formValueAsInt(r.Form["EntryList.Spectator"][i]),
-			Ballast:    formValueAsInt(r.Form["EntryList.Ballast"][i]),
-			Restrictor: formValueAsInt(r.Form["EntryList.Restrictor"][i]),
-		})
 	}
 
 	saveAsPresetWithoutStartingRace := r.FormValue("action") == "justSave"
@@ -510,6 +521,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		"Current":           race.CurrentRaceConfig,
 		"CurrentEntrants":   entrants,
 		"PossibleEntrants":  possibleEntrants,
+		"IsChampionship":    false, // this flag is overridden by championship setup
 	}, nil
 }
 
@@ -629,26 +641,26 @@ func (rm *RaceManager) LoadServerOptions() (*GlobalServerConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-/*
-	udpListenPort, udpSendPort := 0, 0
+	/*
+		udpListenPort, udpSendPort := 0, 0
 
-	for udpListenPort == udpSendPort {
-		udpListenPort, err = FreeUDPPort()
+		for udpListenPort == udpSendPort {
+			udpListenPort, err = FreeUDPPort()
 
-		if err != nil {
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
+
+			udpSendPort, err = FreeUDPPort()
+
+			if err != nil {
+				return nil, err
+			}
 		}
 
-		udpSendPort, err = FreeUDPPort()
-
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	serverOpts.UDPPluginAddress = fmt.Sprintf("127.0.0.1:%d", udpSendPort)
-	serverOpts.UDPPluginRemotePort = udpSendPort
-	serverOpts.UDPPluginLocalPort = udpListenPort
-*/
+		serverOpts.UDPPluginAddress = fmt.Sprintf("127.0.0.1:%d", udpSendPort)
+		serverOpts.UDPPluginRemotePort = udpSendPort
+		serverOpts.UDPPluginLocalPort = udpListenPort
+	*/
 	return serverOpts, nil
 }
