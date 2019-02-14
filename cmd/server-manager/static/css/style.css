@@ -137,6 +137,14 @@ span[data-toggle=tooltip] { cursor: default; }
     bottom: 0;
 }
 
+#entrantTemplate {
+    display: none;
+}
+
+.image-track {
+    max-height: 200px;
+}
+
 .drop-zone {
     background: #f0f0f0;
     width: 210px;
@@ -163,6 +171,7 @@ span[data-toggle=tooltip] { cursor: default; }
     background-position: 0px 0px, 208px 31px, 0px 31px, 208px 0px;
     animation: border-dance 4s infinite linear;
 }
+
 @keyframes border-dance {
     0% {
         background-position: 0px 0px, 208px 31px, 0px 104px, 208px 0px;

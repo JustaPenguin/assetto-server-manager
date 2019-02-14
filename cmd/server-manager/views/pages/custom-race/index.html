@@ -30,6 +30,7 @@
                     <td class="align-middle">
                         <a class="btn btn-sm btn-success" href="/custom/load/{{ $race.UUID.String }}">Start Race</a>
                         <a class="btn btn-sm btn-info" href="/custom/new?from={{ $race.UUID.String }}">Use as Template</a>
+                        <a class="btn btn-sm btn-warning" href="/custom/edit/{{ $race.UUID.String }}">Edit Race</a>
                         <a onClick="return confirm('I understand that this will delete this race setup permanently');"
                            class="btn btn-sm btn-danger" href="/custom/delete/{{ $race.UUID.String }}">Delete</a>
                     </td>

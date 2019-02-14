@@ -55,6 +55,17 @@
                         </div>
                     </li>
 
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navBarChampionshipsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Championships
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navBarChampionshipsDropdown">
+                            <a class="dropdown-item" href="/championships">View Existing</a>
+                            <a class="dropdown-item" href="/championships/new">New</a>
+                        </div>
+                    </li>
+
+
                     <li class="nav-item">
                         <a class="nav-link" href="/server-options">Server Options</a>
                     </li>
@@ -100,33 +111,31 @@
     </div>
 
     <div class="messages">
+        <div class="container">
+            <div class="col-md-10 mx-auto">
+                {{ range $i, $message := .messages }}
 
-        <div class="col-md-8 mx-auto">
+                    <div class="alert alert-success alert-dismissible" role="alert">
+                        {{ $message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
 
-            {{ range $i, $message := .messages }}
+                {{ end }}
 
-                <div class="alert alert-secondary alert-dismissible" role="alert">
-                    {{ $message }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
+                {{ range $i, $error := .errors }}
 
-            {{ end }}
+                    <div class="alert alert-danger alert-dismissible col-md-6 mx-auto" role="alert">
+                        {{ $error }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
 
-            {{ range $i, $error := .errors }}
-
-                <div class="alert alert-danger alert-dismissible col-md-6 mx-auto" role="alert">
-                    {{ $error }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-
-            {{ end }}
-
+                {{ end }}
+            </div>
         </div>
-
     </div>
 
     {{ block "javascript" . }}

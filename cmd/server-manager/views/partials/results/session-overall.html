@@ -1,0 +1,89 @@
+{{ define "session-overall" }}
+
+    {{ $sessionResults := . }}
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            {{ if eq "RACE" $sessionResults.Type }}
+                <tr>
+                    <th>Position</th>
+                    <th>Name</th>
+                    <th>Team</th>
+                    <th>Car</th>
+                    <th>Total Race Time</th>
+                    <th>Num Laps</th>
+                    <th>Best Lap</th>
+                    <th>Average Lap</th>
+                    <th>Crashes</th>
+                </tr>
+
+                {{ range $pos, $result := $sessionResults.Result}}
+                    {{ with $result.DriverGUID }}
+                        <tr>
+                            <td>{{ add $pos 1 }}</td>
+                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ $result.DriverName }}</td>
+                            <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
+                            <td>{{ prettify $result.CarModel true }}</td>
+                            <td>{{ $sessionResults.GetTime $result.TotalTime $result.DriverGUID }}</td>
+                            <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
+                                {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
+                            <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID }}</td>
+                            <td>{{ $sessionResults.GetAverageLapTime $result.DriverGUID }}</td>
+                            <td>{{ $sessionResults.GetCrashes $result.DriverGUID }}</td>
+                        </tr>
+                    {{ end }}
+                {{ end }}
+            {{ else if eq "QUALIFY" $sessionResults.Type }}
+                <tr>
+                    <th>Position</th>
+                    <th>Name</th>
+                    <th>Team</th>
+                    <th>Car</th>
+                    <th>Qualifying Time</th>
+                    <th>Average Lap</th>
+                    <th>Laps</th>
+                </tr>
+
+                {{ range $pos, $result := $sessionResults.Result }}
+                    {{ with $result.DriverGUID }}
+                        <tr>
+                            <td>{{ add $pos 1 }}</td>
+                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ $result.DriverName }}</td>
+                            <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
+                            <td>{{ prettify $result.CarModel true }}</td>
+                            <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID }}</td>
+                            <td>{{ $sessionResults.GetAverageLapTime $result.DriverGUID }}</td>
+                            <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
+                                {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
+                        </tr>
+                    {{ end }}
+                {{ end }}
+            {{ else if eq "PRACTICE" $sessionResults.Type }}
+                <tr>
+                    <th>Position</th>
+                    <th>Name</th>
+                    <th>Team</th>
+                    <th>Car</th>
+                    <th>Best Practice Lap</th>
+                    <th>Average Lap</th>
+                    <th>Laps</th>
+                </tr>
+
+                {{ range $pos, $result := $sessionResults.Result }}
+                    {{ with $result.DriverGUID }}
+                        <tr>
+                            <td>{{ add $pos 1 }}</td>
+                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ $result.DriverName }}</td>
+                            <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
+                            <td>{{ prettify $result.CarModel true }}</td>
+                            <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID }}</td>
+                            <td>{{ $sessionResults.GetAverageLapTime $result.DriverGUID }}</td>
+                            <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
+                                {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
+                        </tr>
+                    {{ end }}
+                {{ end }}
+            {{ end }}
+        </table>
+    </div>
+{{ end }}
