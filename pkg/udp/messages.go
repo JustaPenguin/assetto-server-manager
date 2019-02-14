@@ -6,10 +6,10 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io"
 	"net"
 
+	"github.com/sirupsen/logrus"
 	"golang.org/x/text/encoding/unicode/utf32"
 )
 
