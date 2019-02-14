@@ -1,6 +1,6 @@
 {{ define "title" }}
     {{ if .IsChampionship }}
-        Championship Race
+        Championship Event
     {{ else }}
         Custom Race
     {{ end }}
@@ -18,7 +18,7 @@
     </h1>
 
     {{ if .IsChampionship }}
-        <p>Configure a race for the <strong>{{ .Championship.Name }}</strong> Championship.</p>
+        <p>Configure an Event for the <strong>{{ .Championship.Name }}</strong> Championship.</p>
     {{ end }}
 
     <form method="post" {{ if .IsChampionship }} action="/championship/{{ .Championship.ID.String }}/event/submit" {{ else }} action="/custom/new/submit" {{ end}}>

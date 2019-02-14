@@ -207,7 +207,9 @@ func listChampionshipsHandler(w http.ResponseWriter, r *http.Request) {
 	championships, err := championshipManager.ListChampionships()
 
 	if err != nil {
-		panic(err)
+		logrus.Errorf("couldn't list championships, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("championships", "index.html"), map[string]interface{}{
@@ -220,7 +222,9 @@ func newChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 	opts, err := championshipManager.BuildChampionshipOpts(r)
 
 	if err != nil {
-		panic(err)
+		logrus.Errorf("couldn't build championship form, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("championships", "new.html"), opts)
@@ -260,7 +264,9 @@ func exportChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 	championship, err := championshipManager.LoadChampionship(mux.Vars(r)["championshipID"])
 
 	if err != nil {
-		panic(err)
+		logrus.Errorf("couldn't export championship, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	enc := json.NewEncoder(w)
@@ -273,7 +279,9 @@ func deleteChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 	err := championshipManager.DeleteChampionship(mux.Vars(r)["championshipID"])
 
 	if err != nil {
-		panic(err)
+		logrus.Errorf("couldn't delete championship, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	AddFlashQuick(w, r, "Championship deleted!")
