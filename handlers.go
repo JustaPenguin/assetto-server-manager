@@ -38,25 +38,47 @@ func Router() *mux.Router {
 
 	// pages
 	r.HandleFunc("/", homeHandler)
+
+	// content
 	r.HandleFunc("/cars", carsHandler)
 	r.HandleFunc("/tracks", tracksHandler)
 	r.HandleFunc("/weather", weatherHandler)
-	r.HandleFunc("/results", resultsHandler)
-	r.HandleFunc("/results/{fileName}", resultHandler)
 	r.HandleFunc("/track/delete/{name}", trackDeleteHandler)
 	r.HandleFunc("/car/delete/{name}", carDeleteHandler)
 	r.HandleFunc("/weather/delete/{key}", weatherDeleteHandler)
+
+	// results
+	r.HandleFunc("/results", resultsHandler)
+	r.HandleFunc("/results/{fileName}", resultHandler)
 	r.HandleFunc("/server-options", serverOptionsHandler)
+
+	// races
 	r.HandleFunc("/quick", quickRaceHandler)
 	r.Methods(http.MethodPost).Path("/quick/submit").HandlerFunc(quickRaceSubmitHandler)
 	r.HandleFunc("/custom", customRaceListHandler)
-	r.HandleFunc("/custom/new", customRaceNewHandler)
+	r.HandleFunc("/custom/new", customRaceNewOrEditHandler)
 	r.HandleFunc("/custom/load/{uuid}", customRaceLoadHandler)
+	r.HandleFunc("/custom/edit/{uuid}", customRaceNewOrEditHandler)
 	r.HandleFunc("/custom/delete/{uuid}", customRaceDeleteHandler)
 	r.HandleFunc("/custom/star/{uuid}", customRaceStarHandler)
 	r.Methods(http.MethodPost).Path("/custom/new/submit").HandlerFunc(customRaceSubmitHandler)
+
+	// server management
 	r.HandleFunc("/logs", serverLogsHandler)
 	r.HandleFunc("/process/{action}", serverProcessHandler)
+
+	// championships
+	r.HandleFunc("/championships", listChampionshipsHandler)
+	r.HandleFunc("/championships/new", newChampionshipHandler)
+	r.HandleFunc("/championships/new/submit", submitNewChampionshipHandler)
+	r.HandleFunc("/championship/{championshipID}", viewChampionshipHandler)
+	r.HandleFunc("/championship/{championshipID}/export", exportChampionshipHandler)
+	r.HandleFunc("/championship/{championshipID}/delete", deleteChampionshipHandler)
+	r.HandleFunc("/championship/{championshipID}/event", championshipEventConfigurationHandler)
+	r.HandleFunc("/championship/{championshipID}/event/submit", championshipSubmitEventConfigurationHandler)
+	r.HandleFunc("/championship/{championshipID}/event/{eventID}/edit", championshipEventConfigurationHandler)
+	r.HandleFunc("/championship/{championshipID}/event/{eventID}/delete", championshipDeleteEventHandler)
+	r.HandleFunc("/championship/{championshipID}/event/{eventID}/practice", championshipStartPracticeEventHandler)
 
 	// endpoints
 	r.HandleFunc("/api/logs", apiServerLogHandler)

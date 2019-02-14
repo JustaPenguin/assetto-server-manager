@@ -221,6 +221,22 @@ func (s *SessionResults) GetCuts(driverGuid string) int {
 	return i
 }
 
+func (s *SessionResults) FastestLap() *SessionLap {
+	if len(s.Laps) == 0 {
+		return nil
+	}
+
+	laps := make([]SessionLap, len(s.Laps))
+
+	copy(laps, s.Laps)
+
+	sort.Slice(laps, func(i, j int) bool {
+		return laps[i].Cuts == 0 && laps[i].LapTime < laps[j].LapTime
+	})
+
+	return &laps[0]
+}
+
 type SessionResult struct {
 	BallastKG  int    `json:"BallastKG"`
 	BestLap    int    `json:"BestLap"`
@@ -348,7 +364,7 @@ func listResults(page int) ([]SessionResults, []int, error) {
 	var results []SessionResults
 
 	for _, resultFile := range resultFiles {
-		result, err := getResult(resultFile.Name())
+		result, err := LoadResult(resultFile.Name())
 
 		if err != nil {
 			return nil, nil, err
@@ -376,7 +392,7 @@ func getResultDate(name string) (time.Time, error) {
 	return time.Date(year, time.Month(month), day, hour, minute, 0, 0, time.Local), nil
 }
 
-func getResult(fileName string) (*SessionResults, error) {
+func LoadResult(fileName string) (*SessionResults, error) {
 	var result *SessionResults
 
 	resultsPath := filepath.Join(ServerInstallPath, "results")
@@ -434,7 +450,7 @@ func resultHandler(w http.ResponseWriter, r *http.Request) {
 	var result *SessionResults
 	fileName := mux.Vars(r)["fileName"]
 
-	result, err := getResult(fileName + ".json")
+	result, err := LoadResult(fileName + ".json")
 
 	if err != nil {
 		logrus.Errorf("could not get result, err: %s", err)

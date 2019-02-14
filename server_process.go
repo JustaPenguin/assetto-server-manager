@@ -3,6 +3,7 @@ package servermanager
 import (
 	"bytes"
 	"errors"
+	"net"
 	"os/exec"
 	"path/filepath"
 	"sync"
@@ -93,4 +94,22 @@ func (as *AssettoServerProcess) Stop() error {
 	as.cmd = nil
 
 	return nil
+}
+
+func FreeUDPPort() (int, error) {
+	addr, err := net.ResolveUDPAddr("udp", "localhost:0")
+
+	if err != nil {
+		return 0, err
+	}
+
+	l, err := net.ListenUDP("udp", addr)
+
+	if err != nil {
+		return 0, err
+	}
+
+	defer l.Close()
+
+	return l.LocalAddr().(*net.UDPAddr).Port, nil
 }

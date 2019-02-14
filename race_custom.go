@@ -13,6 +13,7 @@ import (
 type CustomRace struct {
 	Name    string
 	Created time.Time
+	Updated time.Time
 	Deleted time.Time
 	UUID    uuid.UUID
 	Starred bool
@@ -36,7 +37,7 @@ func customRaceListHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func customRaceNewHandler(w http.ResponseWriter, r *http.Request) {
+func customRaceNewOrEditHandler(w http.ResponseWriter, r *http.Request) {
 	customRaceData, err := raceManager.BuildRaceOpts(r)
 
 	if err != nil {
