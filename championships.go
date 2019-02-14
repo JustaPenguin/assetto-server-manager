@@ -133,14 +133,34 @@ func (c *Championship) Standings() []*ChampionshipStanding {
 	}
 
 	for _, event := range c.Events {
-		race, ok := event.Results[SessionTypeRace]
+		qualifying, qualifyingOK := event.Results[SessionTypeQualifying]
 
-		if !ok {
-			continue
+		if qualifyingOK {
+			for pos, driver := range qualifying.Result {
+				if pos != 0 {
+					continue
+				}
+
+				entrants[driver.DriverGUID].Points += c.Points.PolePosition
+			}
 		}
 
-		for pos, driver := range race.Result {
-			entrants[driver.DriverGUID].Points += c.PointForPos(pos)
+		race, raceOK := event.Results[SessionTypeRace]
+
+		if raceOK {
+			fastestLap := race.FastestLap()
+
+			for pos, driver := range race.Result {
+				if driver.TotalTime <= 0 {
+					continue
+				}
+
+				entrants[driver.DriverGUID].Points += c.PointForPos(pos)
+
+				if fastestLap.DriverGUID == driver.DriverGUID {
+					entrants[driver.DriverGUID].Points += c.Points.BestLap
+				}
+			}
 		}
 	}
 
@@ -211,7 +231,12 @@ type ChampionshipEvent struct {
 	RaceSetup CurrentRaceConfig
 	Results   map[SessionType]*SessionResults
 
+	StartedTime   time.Time
 	CompletedTime time.Time
+}
+
+func (cr *ChampionshipEvent) InProgress() bool {
+	return !cr.StartedTime.IsZero() && cr.CompletedTime.IsZero()
 }
 
 // Completed ChampionshipEvents have a non-zero CompletedTime

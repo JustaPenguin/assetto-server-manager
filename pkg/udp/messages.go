@@ -8,20 +8,25 @@ import (
 	"fmt"
 	"io"
 	"net"
-
-	"github.com/sirupsen/logrus"
 )
 
-func NewServerClient(ctx context.Context, addr string, receivePort, sendPort int, callback CallbackFunc) (*AssettoServerUDP, error) {
-	u := &AssettoServerUDP{
-		ctx:      ctx,
-		callback: callback,
-	}
-	err := u.listen(addr, receivePort, sendPort)
+func NewServerClient(addr string, receivePort, sendPort int, callback CallbackFunc) (*AssettoServerUDP, error) {
+	listener, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP(addr), Port: receivePort, Zone: ""})
 
 	if err != nil {
 		return nil, err
 	}
+
+	ctx, cfn := context.WithCancel(context.Background())
+
+	u := &AssettoServerUDP{
+		ctx:      ctx,
+		cfn:      cfn,
+		callback: callback,
+		listener: listener,
+	}
+
+	go u.serve()
 
 	return u, nil
 }
@@ -29,54 +34,52 @@ func NewServerClient(ctx context.Context, addr string, receivePort, sendPort int
 type CallbackFunc func(response Message)
 
 type AssettoServerUDP struct {
+	listener *net.UDPConn
+
+	cfn      func()
 	ctx      context.Context
 	callback CallbackFunc
 }
 
-func (asu *AssettoServerUDP) listen(hostname string, receivePort, sendPort int) error {
-	errCh := make(chan error)
+func (asu *AssettoServerUDP) Close() error {
+	asu.cfn()
+	err := asu.listener.Close()
 
-	go func() {
-		serverConn, err := net.ListenUDP("udp", &net.UDPAddr{IP: []byte{0, 0, 0, 0}, Port: receivePort, Zone: ""})
+	if err != nil {
+		return err
+	}
 
-		if err != nil {
-			errCh <- err
+	return nil
+}
+
+func (asu *AssettoServerUDP) serve() {
+	buf := make([]byte, 1024)
+
+	for {
+		select {
+		case <-asu.ctx.Done():
+			asu.listener.Close()
 			return
-		} else {
-			errCh <- nil
-		}
-
-		defer serverConn.Close()
-
-		buf := make([]byte, 1024)
-
-		for {
-			_, _, err := serverConn.ReadFromUDP(buf)
+		default:
+			_, _, err := asu.listener.ReadFromUDP(buf)
 
 			if err != nil {
 				asu.callback(ServerError{err})
 				continue
 			}
 
-			msg, err := asu.handleMessage(bytes.NewReader(buf))
+			go func() {
+				msg, err := asu.handleMessage(bytes.NewReader(buf))
 
-			if err != nil {
-				asu.callback(ServerError{err})
-				continue
-			}
+				if err != nil {
+					asu.callback(ServerError{err})
+					return
+				}
 
-			asu.callback(msg)
-
-			select {
-			case <-asu.ctx.Done():
-				logrus.Infof("received done message, closing")
-				return
-			default:
-			}
+				asu.callback(msg)
+			}()
 		}
-	}()
-
-	return <-errCh
+	}
 }
 
 func readStringW(r io.Reader) string {
