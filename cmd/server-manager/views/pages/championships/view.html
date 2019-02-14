@@ -97,8 +97,13 @@
 
     <hr>
 
-    <h2>Races</h2>
+    <h2>Events</h2>
 
+    <div class="float-right">
+        <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event">Add more Events</a>
+    </div>
+
+    <div class="clearfix"></div>
 
     {{ range $eventIndex, $event := $championship.Events }}
         {{ $eventSetup := $event.RaceSetup }}
@@ -152,14 +157,19 @@
                                 <a class="btn btn-success" href="#">Start Event</a>
 
                                 <a class="btn btn-info"
-                                   href="#"
+                                   href="/championship/{{ $championship.ID.String }}/event/{{ $eventIndex }}/practice"
                                    data-toggle="tooltip"
                                    title="Loads the configured event onto the server as a 2 hour looping practice, but don't track its progress as a championship event.">
                                     Start Practice Event
                                 </a>
 
-                                <a  class="btn btn-warning" href="#">
+                                <a class="btn btn-warning" href="/championship/{{ $championship.ID.String }}/event/{{ $eventIndex }}/edit">
                                     Edit Event
+                                </a>
+
+                                <a onClick="return confirm('I understand that this will delete this entire event permanently.') "
+                                   class="btn btn-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $eventIndex }}/delete">
+                                    Delete Event
                                 </a>
                             </div>
                         {{ end }}
