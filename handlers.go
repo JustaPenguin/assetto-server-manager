@@ -148,7 +148,7 @@ func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
 type contentFile struct {
 	Name     string `json:"name"`
 	FileType string `json:"type"`
-	FilePath string `json:"webkitRelativePath"`
+	FilePath string `json:"filepath"`
 	Data     string `json:"dataBase64"`
 	Size     int    `json:"size"`
 }
