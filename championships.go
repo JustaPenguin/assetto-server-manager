@@ -149,6 +149,10 @@ func (c *Championship) Standings() []*ChampionshipStanding {
 	}
 
 	sort.Slice(out, func(i, j int) bool {
+		return out[i].Entrant.Name < out[j].Entrant.Name
+	})
+
+	sort.Slice(out, func(i, j int) bool {
 		return out[i].Points > out[j].Points
 	})
 
@@ -183,14 +187,27 @@ func (c *Championship) TeamStandings() []*TeamStanding {
 	}
 
 	sort.Slice(out, func(i, j int) bool {
+		return out[i].Team < out[j].Team
+	})
+
+	sort.Slice(out, func(i, j int) bool {
 		return out[i].Points > out[j].Points
 	})
 
 	return out
 }
 
+// NewChampionshipEvent creates a ChampionshipEvent with an ID
+func NewChampionshipEvent() *ChampionshipEvent {
+	return &ChampionshipEvent{
+		ID: uuid.New(),
+	}
+}
+
 // A ChampionshipEvent is a given RaceSetup with Results.
 type ChampionshipEvent struct {
+	ID uuid.UUID
+
 	RaceSetup CurrentRaceConfig
 	Results   map[SessionType]*SessionResults
 
@@ -337,6 +354,22 @@ func championshipSubmitEventConfigurationHandler(w http.ResponseWriter, r *http.
 		// add another event
 		http.Redirect(w, r, "/championship/"+championship.ID.String()+"/event", http.StatusFound)
 	}
+}
+
+func championshipStartEventHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	err := championshipManager.StartEvent(vars["championshipID"], formValueAsInt(vars["eventID"]))
+
+	if err != nil {
+		logrus.Errorf("Could not start championship event, err: %s", err)
+
+		AddErrFlashQuick(w, r, "Couldn't start the Event")
+	} else {
+		AddFlashQuick(w, r, "Event started successfully!")
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
 func championshipDeleteEventHandler(w http.ResponseWriter, r *http.Request) {

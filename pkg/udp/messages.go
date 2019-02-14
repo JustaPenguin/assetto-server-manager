@@ -10,7 +10,6 @@ import (
 	"net"
 
 	"github.com/sirupsen/logrus"
-	"golang.org/x/text/encoding/unicode/utf32"
 )
 
 func NewServerClient(ctx context.Context, addr string, receivePort, sendPort int, callback CallbackFunc) (*AssettoServerUDP, error) {
@@ -96,17 +95,7 @@ func readString(r io.Reader, sizeMultiplier int) string {
 
 	err = binary.Read(r, binary.LittleEndian, &s)
 
-	if err != nil {
-		return ""
-	}
-
-	decoded, err := utf32.UTF32(utf32.LittleEndian, utf32.IgnoreBOM).NewDecoder().Bytes(s)
-
-	if err != nil {
-		return ""
-	}
-
-	return string(decoded)
+	return string(bytes.Replace(s, []byte("\x00"), nil, -1))
 }
 
 func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {

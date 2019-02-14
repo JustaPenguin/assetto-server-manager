@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"math/rand"
 	"net/http"
 	"sort"
@@ -13,7 +14,6 @@ import (
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/etcd-io/bbolt"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -90,6 +90,8 @@ func (rm *RaceManager) startUDPListener(cfg ServerConfig) error {
 
 func (rm *RaceManager) UDPCallback(message udp.Message) {
 	spew.Dump(message)
+
+	championshipManager.ChampionshipEventCallback(message)
 }
 
 func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList) error {
@@ -582,6 +584,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 	templateIDForEditing := mux.Vars(r)["uuid"]
 	isEditing := templateIDForEditing != ""
 	var customRaceName string
+	currentRaceConfig := race.CurrentRaceConfig
 
 	if isEditing {
 		customRace, err := rm.raceStore.FindCustomRaceByID(templateIDForEditing)
@@ -591,6 +594,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		}
 
 		customRaceName = customRace.Name
+		currentRaceConfig = customRace.RaceConfig
 	}
 
 	return map[string]interface{}{
@@ -601,7 +605,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		"Tyres":             tyres,
 		"DeselectedTyres":   deselectedTyres,
 		"Weather":           weather,
-		"Current":           race.CurrentRaceConfig,
+		"Current":           currentRaceConfig,
 		"CurrentEntrants":   entrants,
 		"PossibleEntrants":  possibleEntrants,
 		"IsChampionship":    false, // this flag is overridden by championship setup

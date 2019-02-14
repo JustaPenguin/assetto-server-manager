@@ -3,14 +3,27 @@ package servermanager
 import (
 	"errors"
 	"net/http"
+	"path/filepath"
 	"strings"
+	"time"
+
+	"github.com/cj123/assetto-server-manager/pkg/udp"
 
 	"github.com/etcd-io/bbolt"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 type ChampionshipManager struct {
 	*RaceManager
+
+	activeChampionship *ActiveChampionship
+}
+
+type ActiveChampionship struct {
+	ChampionshipID, EventID uuid.UUID
+	SessionType             SessionType
 }
 
 func NewChampionshipManager(rm *RaceManager) *ChampionshipManager {
@@ -159,9 +172,8 @@ func (cm *ChampionshipManager) SaveChampionshipEvent(r *http.Request) (champions
 		edited = true
 	} else {
 		// creating a new event
-		event = &ChampionshipEvent{
-			RaceSetup: *raceConfig,
-		}
+		event = NewChampionshipEvent()
+		event.RaceSetup = *raceConfig
 
 		championship.Events = append(championship.Events, event)
 	}
@@ -197,7 +209,7 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 		return ErrInvalidChampionshipEvent
 	}
 
-	defaults := ConfigIniDefault
+	config := ConfigIniDefault
 
 	raceSetup := championship.Events[eventID].RaceSetup
 
@@ -212,8 +224,139 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 	}
 
 	raceSetup.LoopMode = 1
+	raceSetup.MaxClients = len(championship.Entrants)
 
-	defaults.CurrentRaceConfig = raceSetup
+	config.CurrentRaceConfig = raceSetup
 
-	return cm.applyConfigAndStart(defaults, championship.Entrants)
+	return cm.applyConfigAndStart(config, championship.Entrants)
+}
+
+func (cm *ChampionshipManager) StartEvent(championshipID string, eventID int) error {
+	championship, err := cm.LoadChampionship(championshipID)
+
+	if err != nil {
+		return err
+	}
+
+	if eventID > len(championship.Events) || eventID < 0 {
+		return ErrInvalidChampionshipEvent
+	}
+
+	event := championship.Events[eventID]
+
+	// championship events always have locked entry lists
+	event.RaceSetup.LockedEntryList = 1
+	event.RaceSetup.MaxClients = len(championship.Entrants)
+
+	config := ConfigIniDefault
+	config.CurrentRaceConfig = event.RaceSetup
+
+	// track that this is the current event
+	cm.activeChampionship = &ActiveChampionship{
+		ChampionshipID: championship.ID,
+		EventID:        event.ID,
+	}
+
+	err = cm.applyConfigAndStart(config, championship.Entrants)
+
+	if err != nil {
+		return err
+	}
+
+	// @TODO UDP tracking here
+	return nil
+}
+
+func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
+	if cm.activeChampionship == nil {
+		logrus.Debugf("No active championship set up, not performing championship callbacks")
+		return
+	}
+
+	championship, err := cm.LoadChampionship(cm.activeChampionship.ChampionshipID.String())
+
+	if err != nil {
+		logrus.Errorf("Couldn't load championship with ID: %s, err: %s", cm.activeChampionship.ChampionshipID.String(), err)
+		return
+	}
+
+	var currentEvent *ChampionshipEvent
+
+	for _, event := range championship.Events {
+		if event.ID == cm.activeChampionship.EventID {
+			currentEvent = event
+			break
+		}
+	}
+
+	if currentEvent == nil {
+		logrus.Errorf("Couldn't load championship event with ID: %s, err: %s", cm.activeChampionship.EventID.String(), err)
+		return
+	}
+
+	switch a := message.(type) {
+	case udp.SessionInfo:
+		if a.Event() == udp.EventNewSession {
+			// new session created
+			logrus.Infof("New Session: %s at %s (%s) - %d laps | %d minutes", a.Name, a.Track, a.TrackConfig, a.Laps, a.Time)
+			sessionType, err := cm.findSessionWithName(currentEvent, a.Name)
+
+			if err != nil {
+				logrus.Errorf("Unexpected session: %s. Cannot track championship progress for this session", a.Name)
+				return
+			}
+
+			cm.activeChampionship.SessionType = sessionType
+		}
+	case udp.EndSession:
+		filename := string(a)
+		logrus.Infof("End Session, file outputted at: %s", filename)
+
+		results, err := LoadResult(filepath.Base(filename))
+
+		if err != nil {
+			logrus.Errorf("Could not read session results for %s, err: %s", cm.activeChampionship.SessionType.String(), err)
+			return
+		}
+
+		if currentEvent.Results == nil {
+			currentEvent.Results = make(map[SessionType]*SessionResults)
+		}
+
+		currentEvent.Results[cm.activeChampionship.SessionType] = results
+
+		if cm.activeChampionship.SessionType == SessionTypeRace {
+			logrus.Infof("End of Race Session detected. Marking championship event %s complete", cm.activeChampionship.EventID.String())
+			currentEvent.CompletedTime = time.Now()
+
+			// clear out all current session stuff
+			cm.activeChampionship = nil
+
+			// stop the server
+			err := AssettoProcess.Stop()
+
+			if err != nil {
+				logrus.Errorf("Could not stop Assetto Process, err: %s", err)
+			}
+		}
+
+		err = cm.UpsertChampionship(championship)
+
+		if err != nil {
+			logrus.Errorf("Could not save session results to championship %s, err: %s", cm.activeChampionship.ChampionshipID.String(), err)
+			return
+		}
+	}
+}
+
+var ErrSessionNotFound = errors.New("servermanager: session not found")
+
+func (cm *ChampionshipManager) findSessionWithName(event *ChampionshipEvent, name string) (SessionType, error) {
+	for t, sess := range event.RaceSetup.Sessions {
+		if sess.Name == name {
+			return t, nil
+		}
+	}
+
+	return "", ErrSessionNotFound
 }
