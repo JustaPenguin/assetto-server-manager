@@ -137,21 +137,6 @@ span[data-toggle=tooltip] { cursor: default; }
     bottom: 0;
 }
 
-/*.drop-zone {
-    background: #f0f0f0;
-    width: 210px;
-    height: 33px;
-    padding: 6px;
-    text-align: center;
-    border-style: dashed;
-    border-color: black;
-    border-width: 2px;
-    font-size: 12px;
-    font-weight: bold;
-    text-transform: uppercase;
-    border-radius: 0.25rem;
-}*/
-
 .drop-zone {
     background: #f0f0f0;
     width: 210px;

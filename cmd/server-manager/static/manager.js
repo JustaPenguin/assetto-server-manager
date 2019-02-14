@@ -955,8 +955,11 @@ function getFilesWebkitDataTransferItems(dataTransferItems) {
                 let dirReader = item.createReader();
                 dirReader.readEntries(entries => {
                     let entriesPromises = [];
-                    for (let entr of entries)
+
+                    for (let entr of entries) {
                         entriesPromises.push(traverseFileTreePromise(entr, path + item.name + "/"));
+                    }
+
                     resolve(Promise.all(entriesPromises))
                 })
             }
@@ -966,8 +969,11 @@ function getFilesWebkitDataTransferItems(dataTransferItems) {
     let files = [];
     return new Promise((resolve, reject) => {
         let entriesPromises = [];
-        for (let it of dataTransferItems)
+
+        for (let it of dataTransferItems) {
             entriesPromises.push(traverseFileTreePromise(it.webkitGetAsEntry()));
+        }
+
         Promise.all(entriesPromises)
             .then(entries => {
                 resolve(files)
