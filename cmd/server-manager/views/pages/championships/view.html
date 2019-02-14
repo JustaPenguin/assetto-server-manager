@@ -99,6 +99,8 @@
 
     <h2>Events</h2>
 
+    <p>This Championship currently has {{ len $championship.Events }} events configured.</p>
+
     <div class="float-right">
         <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event">Add more Events</a>
     </div>
