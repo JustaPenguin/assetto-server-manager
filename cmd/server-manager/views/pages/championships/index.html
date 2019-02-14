@@ -20,7 +20,7 @@
                     <a href="/championship/{{ $championship.ID }}">{{ $championship.Name }}</a>
                 </td>
                 <td>
-                    {{ $championship.Progress }}%
+                    {{ int $championship.Progress }}%
                 </td>
                 <td>
                     {{ len $championship.Events }}

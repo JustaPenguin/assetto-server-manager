@@ -2,12 +2,14 @@ package servermanager
 
 import (
 	"errors"
+	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"io/ioutil"
 	"net/http"
 	"path/filepath"
+	"sort"
 	"strings"
+	"sync"
 	"time"
-
-	"github.com/cj123/assetto-server-manager/pkg/udp"
 
 	"github.com/etcd-io/bbolt"
 	"github.com/google/uuid"
@@ -19,6 +21,7 @@ type ChampionshipManager struct {
 	*RaceManager
 
 	activeChampionship *ActiveChampionship
+	mutex              sync.Mutex
 }
 
 type ActiveChampionship struct {
@@ -213,14 +216,11 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 
 	raceSetup := championship.Events[eventID].RaceSetup
 
-	for sessionName, sess := range raceSetup.Sessions {
-		if sessionName != SessionTypePractice {
-			// remove non-practice sessions
-			delete(raceSetup.Sessions, sessionName)
-			continue
-		}
-
-		sess.Time = 120 // 2hrs
+	raceSetup.Sessions = make(map[SessionType]*SessionConfig)
+	raceSetup.Sessions[SessionTypePractice] = &SessionConfig{
+		Name:   "Practice",
+		Time:   120,
+		IsOpen: 1,
 	}
 
 	raceSetup.LoopMode = 1
@@ -257,17 +257,13 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID int) er
 		EventID:        event.ID,
 	}
 
-	err = cm.applyConfigAndStart(config, championship.Entrants)
-
-	if err != nil {
-		return err
-	}
-
-	// @TODO UDP tracking here
-	return nil
+	return cm.applyConfigAndStart(config, championship.Entrants)
 }
 
 func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
+	cm.mutex.Lock()
+	defer cm.mutex.Unlock()
+
 	if cm.activeChampionship == nil {
 		logrus.Debugf("No active championship set up, not performing championship callbacks")
 		return
@@ -290,13 +286,28 @@ func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
 	}
 
 	if currentEvent == nil {
-		logrus.Errorf("Couldn't load championship event with ID: %s, err: %s", cm.activeChampionship.EventID.String(), err)
+		logrus.Errorf("Couldn't load championship event with given id")
 		return
 	}
 
+	cm.handleSessionChanges(message, championship, currentEvent)
+}
+
+func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, championship *Championship, currentEvent *ChampionshipEvent) {
 	switch a := message.(type) {
 	case udp.SessionInfo:
 		if a.Event() == udp.EventNewSession {
+			if currentEvent.StartedTime.IsZero() {
+				currentEvent.StartedTime = time.Now()
+
+				err := cm.UpsertChampionship(championship)
+
+				if err != nil {
+					logrus.Errorf("Could not save session results to championship %s, err: %s", cm.activeChampionship.ChampionshipID.String(), err)
+					return
+				}
+			}
+
 			// new session created
 			logrus.Infof("New Session: %s at %s (%s) - %d laps | %d minutes", a.Name, a.Track, a.TrackConfig, a.Laps, a.Time)
 			sessionType, err := cm.findSessionWithName(currentEvent, a.Name)
@@ -304,6 +315,15 @@ func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
 			if err != nil {
 				logrus.Errorf("Unexpected session: %s. Cannot track championship progress for this session", a.Name)
 				return
+			}
+
+			if cm.activeChampionship.SessionType != "" && cm.activeChampionship.SessionType != sessionType && !currentEvent.StartedTime.IsZero() && currentEvent.CompletedTime.IsZero() {
+				resultsFile, err := cm.findLastWrittenSessionFile()
+
+				if err == nil {
+					logrus.Infof("Assetto Server didn't give us a results file, but we found it at %s", resultsFile)
+					cm.handleSessionChanges(udp.EndSession(resultsFile), championship, currentEvent)
+				}
 			}
 
 			cm.activeChampionship.SessionType = sessionType
@@ -359,4 +379,26 @@ func (cm *ChampionshipManager) findSessionWithName(event *ChampionshipEvent, nam
 	}
 
 	return "", ErrSessionNotFound
+}
+
+func (cm *ChampionshipManager) findLastWrittenSessionFile() (string, error) {
+	resultsPath := filepath.Join(ServerInstallPath, "results")
+	resultFiles, err := ioutil.ReadDir(resultsPath)
+
+	if err != nil {
+		return "", err
+	}
+
+	sort.Slice(resultFiles, func(i, j int) bool {
+		d1, _ := getResultDate(resultFiles[i].Name())
+		d2, _ := getResultDate(resultFiles[j].Name())
+
+		return d1.After(d2)
+	})
+
+	if len(resultFiles) == 0 {
+		return "", errors.New("servermanager: results files not found")
+	}
+
+	return resultFiles[0].Name(), nil
 }
