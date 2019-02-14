@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"io"
 	"net"
 
@@ -69,6 +70,7 @@ func (asu *AssettoServerUDP) listen(hostname string, receivePort, sendPort int) 
 
 			select {
 			case <-asu.ctx.Done():
+				logrus.Infof("received done message, closing")
 				return
 			default:
 			}

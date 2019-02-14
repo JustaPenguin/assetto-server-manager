@@ -74,6 +74,7 @@ func (rm *RaceManager) CurrentRace() (*ServerConfig, EntryList) {
 func (rm *RaceManager) startUDPListener(cfg ServerConfig) error {
 	// close old udp listener
 	rm.udpListenerCfn()
+
 	rm.udpListenerContext, rm.udpListenerCfn = context.WithCancel(context.Background())
 
 	var err error

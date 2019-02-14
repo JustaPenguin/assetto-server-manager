@@ -11,7 +11,7 @@
 
     <h1 class="text-center">
         {{ if .IsChampionship }}
-            Championship Race
+            Championship Event
         {{ else }}
             Custom Race
         {{ end }}
@@ -21,7 +21,7 @@
         <p>Configure a race for the <strong>{{ .Championship.Name }}</strong> Championship.</p>
     {{ end }}
 
-    <form method="post" {{ if .IsChampionship }} action="/championship/{{ .Championship.ID.String }}/race/submit" {{ else }} action="/custom/new/submit" {{ end}}>
+    <form method="post" {{ if .IsChampionship }} action="/championship/{{ .Championship.ID.String }}/event/submit" {{ else }} action="/custom/new/submit" {{ end}}>
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">
@@ -1273,18 +1273,32 @@
         {{ if .IsChampionship }}
             <div class="card mt-3 border-info">
                 <div class="card-header text-white bg-info">
-                    <strong>Save Championship Race</strong>
+                    <strong>Save Championship Event</strong>
                 </div>
                 <div class="card-body">
-                    <p>
-                        When this race is saved, it will be added to the <strong>{{ .Championship.Name }}</strong> Championship.
-                        You can add more races below, or, if you're done creating the championship, you can complete its setup here.
-                    </p>
+
+                    {{ if .IsEditing }}
+                        <p>
+                            This edited setup will overwrite the {{ add .EditingID 1 }}{{ ordinal (add .EditingID 1) }}
+                            Event in the <strong>{{ .Championship.Name }}</strong> Championship.
+                        </p>
+                    {{ else }}
+                        <p>
+                            When this event is saved, it will be added to the <strong>{{ .Championship.Name }}</strong> Championship.
+                            You can add more events below, or, if you're done creating the championship, you can complete its setup here.
+                        </p>
+                    {{ end }}
 
                     <div class="float-right">
-                        <button class="btn btn-info mt-5" data-toggle="tooltip" name="action" value="addAnotherRace" type="submit" title="Save this setup and then configure another">Add another Race</button>
-                        <button class="btn btn-success mt-5" data-toggle="tooltip" name="action" value="saveChampionship" type="submit" title="Save this race setup and finish creating the championship">Finish Creating Championship</button>
-                    </div>
+
+                        {{ if not .IsEditing }}
+                            <button class="btn btn-info mt-5" data-toggle="tooltip" name="action" value="addAnotherRace" type="submit" title="Save this setup and then configure another">Add another Event</button>
+                            <button class="btn btn-success mt-5" data-toggle="tooltip" name="action" value="saveChampionship" type="submit" title="Save this event setup and finish creating the championship">Finish Creating Championship</button>
+                        {{ else }}
+                            <input type="hidden" name="Editing" id="Editing" value="{{ .EditingID }}">
+                            <button class="btn btn-info mt-5" data-toggle="tooltip" name="action" value="saveChampionship" type="submit">Edit Event</button>
+                        {{ end }}
+                   </div>
                 </div>
             </div>
         {{ else }}
