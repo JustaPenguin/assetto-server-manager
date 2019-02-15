@@ -142,7 +142,10 @@ func (c *Championship) Standings() []*ChampionshipStanding {
 					continue
 				}
 
-				entrants[driver.DriverGUID].Points += c.Points.PolePosition
+				if _, ok := entrants[driver.DriverGUID]; ok {
+					// if an entrant is removed from a championship this can panic, hence the ok check
+					entrants[driver.DriverGUID].Points += c.Points.PolePosition
+				}
 			}
 		}
 
@@ -156,10 +159,13 @@ func (c *Championship) Standings() []*ChampionshipStanding {
 					continue
 				}
 
-				entrants[driver.DriverGUID].Points += c.PointForPos(pos)
+				if _, ok := entrants[driver.DriverGUID]; ok {
+					// if an entrant is removed from a championship this can panic, hence the ok check
+					entrants[driver.DriverGUID].Points += c.PointForPos(pos)
 
-				if fastestLap.DriverGUID == driver.DriverGUID {
-					entrants[driver.DriverGUID].Points += c.Points.BestLap
+					if fastestLap.DriverGUID == driver.DriverGUID {
+						entrants[driver.DriverGUID].Points += c.Points.BestLap
+					}
 				}
 			}
 		}
@@ -276,8 +282,8 @@ func listChampionshipsHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// newChampionshipHandler builds a Championship form for the user to create a Championship.
-func newChampionshipHandler(w http.ResponseWriter, r *http.Request) {
+// newOrEditChampionshipHandler builds a Championship form for the user to create a Championship.
+func newOrEditChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 	opts, err := championshipManager.BuildChampionshipOpts(r)
 
 	if err != nil {
@@ -292,7 +298,7 @@ func newChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 // submitNewChampionshipHandler creates a given Championship and redirects the user to begin
 // the flow of adding events to the new Championship
 func submitNewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
-	championship, err := championshipManager.HandleCreateChampionship(r)
+	championship, edited, err := championshipManager.HandleCreateChampionship(r)
 
 	if err != nil {
 		logrus.Errorf("couldn't create championship, err: %s", err)
@@ -300,7 +306,13 @@ func submitNewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/championship/"+championship.ID.String()+"/event", http.StatusFound)
+	if edited {
+		AddFlashQuick(w, r, "Championship successfully edited!")
+		http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
+	} else {
+		AddFlashQuick(w, r, "We've created the Championship. Now you need to add some Events!")
+		http.Redirect(w, r, "/championship/"+championship.ID.String()+"/event", http.StatusFound)
+	}
 }
 
 // viewChampionshipHandler shows details of a given Championship

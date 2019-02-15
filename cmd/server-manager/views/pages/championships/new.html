@@ -1,8 +1,22 @@
-{{ define "title" }}Create a new Championship{{ end }}
+{{ define "title" }}
+    {{ if .IsEditing }}
+        Edit the {{ .Current.Name }} Championship
+    {{ else }}
+        Create a new Championship
+    {{ end }}
+{{ end }}
 
 {{ define "content" }}
 
-    <h1 class="text-center">Create a Championship</h1>
+    {{ $f := .Current }}
+
+    <h1 class="text-center">
+        {{ if .IsEditing }}
+            Edit the {{ .Current.Name }} Championship
+        {{ else }}
+            Create a new Championship
+        {{ end }}
+    </h1>
 
     <form action="/championships/new/submit" method="post">
 
@@ -17,7 +31,7 @@
 
                     <div class="col-sm-9">
                         <input type="text" class="form-control" id="ChampionshipName" name="ChampionshipName"
-                               placeholder="My awesome championship">
+                               placeholder="My awesome championship" {{ with $f.Name }} value="{{.}}" {{ end }}>
                     </div>
                 </div>
             </div>
@@ -38,8 +52,18 @@
 
                     <div class="col-sm-9">
                         <select multiple class="form-control" name="Cars" id="Cars" size="15">
+
                             {{ range $index, $car := .CarOpts }}
-                                <option value="{{ $car.Name }}">{{ prettify $car.Name true }}</option>
+
+                                {{ $selected := false }}
+
+                                {{ range $j, $selectedCar := $f.ValidCarIDs }}
+                                    {{ if eq $selectedCar $car.Name }}
+                                        {{ $selected = true }}
+                                    {{ end }}
+                                {{ end }}
+
+                                <option value="{{ $car.Name }}" {{ if $selected }} selected="selected" {{ end }}>{{ prettify $car.Name true }}</option>
                             {{ end }}
                         </select>
                     </div>
@@ -51,9 +75,15 @@
                     {{ template "entrant" }}
                 </div>
 
-                <div class="entrant">
-                    {{ template "entrant" }}
-                </div>
+                {{ range $index, $entrant := $f.Entrants }}
+                    <div class="entrant">
+                        {{ template "entrant" $entrant }}
+                    </div>
+                {{ else }}
+                    <div class="entrant">
+                        {{ template "entrant" }}
+                    </div>
+                {{ end }}
 
                 <button class="btn btn-warning float-right" id="addEntrant">Add Entrant</button>
 
@@ -68,16 +98,37 @@
 
             <div class="card-body">
                 <div id="points">
-                    <div class="form-group row points-place">
-                        <label for="Points.Place" class="col-sm-3 col-form-label">
-                            1st Place
-                        </label>
 
-                        <div class="col-sm-9">
-                            <input type="number" class="form-control" id="Points.Place" name="Points.Place"
-                                   placeholder="Points" value="{{ index .DefaultPoints.Places 0 }}">
+                    {{ if .IsEditing }}
+
+                        {{ $entrantCount := int64 1 }}
+
+                        {{ range $index, $entrant := $f.Entrants }}
+                            <div class="form-group row points-place">
+                                <label for="Points.Place" class="col-sm-3 col-form-label">
+                                    {{ $entrantCount }}{{ ordinal $entrantCount }} Place
+                                </label>
+
+                                <div class="col-sm-9">
+                                    <input type="number" class="form-control" id="Points.Place" name="Points.Place"
+                                           placeholder="Points" value="{{ index $f.Points.Places (sub $entrantCount 1) }}">
+                                </div>
+                            </div>
+
+                            {{ $entrantCount = add $entrantCount 1 }}
+                        {{ end }}
+                    {{ else }}
+                        <div class="form-group row points-place">
+                            <label for="Points.Place" class="col-sm-3 col-form-label">
+                                1st Place
+                            </label>
+
+                            <div class="col-sm-9">
+                                <input type="number" class="form-control" id="Points.Place" name="Points.Place"
+                                       placeholder="Points" value="{{ index .DefaultPoints.Places 0 }}">
+                            </div>
                         </div>
-                    </div>
+                    {{ end }}
                 </div>
 
                 <hr>
@@ -87,23 +138,28 @@
 
                     <div class="col-sm-9">
                         <input type="number" class="form-control" id="Points.BestLap" name="Points.BestLap"
-                               placeholder="Points" value="0">
+                               placeholder="Points" value="{{ with $f.Points.BestLap }}{{ . }}{{ else }}0{{ end }}">
                     </div>
                 </div>
                 <div class="form-group row">
-                    <label for="Points.Pole" class="col-sm-3 col-form-label">Pole Position</label>
+                    <label for="Points.PolePosition" class="col-sm-3 col-form-label">Pole Position</label>
 
 
                     <div class="col-sm-9">
-                        <input type="number" class="form-control" id="Points.Pole" name="Points.Pole"
-                               placeholder="Points" value="0">
+                        <input type="number" class="form-control" id="Points.PolePosition" name="Points.PolePosition"
+                               placeholder="Points" value="{{ with $f.Points.PolePosition }}{{ . }}{{ else }}0{{ end }}">
                     </div>
                 </div>
             </div>
         </div>
 
 
-        <button type="submit" class="btn btn-success mt-5 float-right">Add an Event</button>
+        {{ if .IsEditing }}
+            <input type="hidden" name="Editing" id="Editing" value="{{ $f.ID.String }}">
+            <button type="submit" class="btn btn-success mt-5 float-right">Edit Championship</button>
+        {{ else }}
+            <button type="submit" class="btn btn-success mt-5 float-right">Add an Event</button>
+        {{ end }}
 
         <div class="clearfix"></div>
     </form>
