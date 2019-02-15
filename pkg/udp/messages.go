@@ -6,13 +6,12 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"io"
 	"net"
 )
 
-func NewServerClient(addr string, receivePort, sendPort int, callback CallbackFunc) (*AssettoServerUDP, error) {
-	listener, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP(addr), Port: receivePort, Zone: ""})
+func NewServerClient(addr string, receivePort, sendPort int, forward bool, forwardAddrStr string, callback CallbackFunc) (*AssettoServerUDP, error) {
+	listener, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP(addr), Port: receivePort})
 
 	if err != nil {
 		return nil, err
@@ -24,7 +23,16 @@ func NewServerClient(addr string, receivePort, sendPort int, callback CallbackFu
 		ctx:      ctx,
 		cfn:      cfn,
 		callback: callback,
+		forward:  forward,
 		listener: listener,
+	}
+
+	if forward {
+		u.forwardAddr, err = net.ResolveUDPAddr("udp", forwardAddrStr)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	go u.serve()
@@ -35,7 +43,9 @@ func NewServerClient(addr string, receivePort, sendPort int, callback CallbackFu
 type CallbackFunc func(response Message)
 
 type AssettoServerUDP struct {
-	listener *net.UDPConn
+	listener    *net.UDPConn
+	forwardAddr *net.UDPAddr
+	forward     bool
 
 	cfn      func()
 	ctx      context.Context
@@ -70,8 +80,6 @@ func (asu *AssettoServerUDP) serve() {
 			}
 
 			go func() {
-				spew.Dump(string(buf))
-
 				msg, err := asu.handleMessage(bytes.NewReader(buf))
 
 				if err != nil {
@@ -81,6 +89,12 @@ func (asu *AssettoServerUDP) serve() {
 
 				asu.callback(msg)
 			}()
+
+			if asu.forward {
+				go func() {
+					asu.listener.WriteTo(buf, asu.forwardAddr)
+				}()
+			}
 		}
 	}
 }
@@ -139,7 +153,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 			DriverGUID: driverGUID,
 			CarMode:    carMode,
 			CarSkin:    carSkin,
-			event:      eventType,
+			EventType:  eventType,
 		}
 
 	case EventCarUpdate:
