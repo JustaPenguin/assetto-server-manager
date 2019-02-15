@@ -59,7 +59,7 @@ var ConfigIniDefault = ServerConfig{
 		WindVariationDirection:    15,
 		StartRule:                 0,
 
-		Sessions: map[SessionType]*SessionConfig{
+		Sessions: map[SessionType]SessionConfig{
 			SessionTypePractice: {
 				Name:   "Practice",
 				Time:   10,
@@ -85,7 +85,7 @@ var ConfigIniDefault = ServerConfig{
 			LapGain:         10,
 		},
 
-		Weather: map[string]*WeatherConfig{
+		Weather: map[string]WeatherConfig{
 			"WEATHER_0": {
 				Graphics:               "3_clear",
 				BaseTemperatureAmbient: 26,

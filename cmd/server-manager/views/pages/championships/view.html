@@ -151,18 +151,18 @@
                         </ul>
 
                         {{/* fastest lap + qualifying awards */}}
-                        {{ range $sessionName, $session := $event.Results }}
+                        {{ range $sessionName, $session := $event.Sessions }}
                             {{ if eq $sessionName "RACE" }}
-                                <span class="badge badge-best">Fastest Lap: {{ $session.FastestLap.DriverName }}</span><br>
+                                <span class="badge badge-best">Fastest Lap: {{ $session.Results.FastestLap.DriverName }}</span><br>
                             {{ else if eq $sessionName "QUALIFY" }}
-                                <span class="badge badge-success">Best Qualifying: {{ $session.FastestLap.DriverName }}</span><br>
+                                <span class="badge badge-success">Best Qualifying: {{ $session.Results.FastestLap.DriverName }}</span><br>
                             {{ end }}
                         {{ end }}
 
                         {{/* race controls buttons */}}
-                        {{ if not (or $event.InProgress $event.Completed) }}
 
-                            <div class="mt-5 pt-5">
+                        <div class="mt-5 pt-5">
+                            {{ if not (or $event.InProgress $event.Completed) }}
                                 <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event/{{ $eventIndex }}/start">Start Event</a>
 
                                 <a class="btn btn-info"
@@ -180,8 +180,18 @@
                                    class="btn btn-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $eventIndex }}/delete">
                                     Delete Event
                                 </a>
-                            </div>
-                        {{ end }}
+                            {{ else if $event.InProgress }}
+                                <a onClick="return confirm('I understand that this will restart this entire event and any current results will be lost.') "
+                                   class="btn btn-warning" href="/championship/{{ $championship.ID.String }}/event/{{ $eventIndex }}/restart">
+                                    Restart Event
+                                </a>
+
+                                <a onClick="return confirm('I understand that this will cancel this entire event and any current results will be lost.') "
+                                   class="btn btn-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $eventIndex }}/cancel">
+                                    Cancel Event
+                                </a>
+                            {{ end }}
+                        </div>
                     </div>
 
                     <div class="col-md-6">
@@ -216,9 +226,9 @@
                         {{ else }}
                             <ul class="nav nav-tabs" role="tablist">
                                 {{ $sessionCount := 1 }}
-                                {{ $sessionsLen := len $event.Results }}
+                                {{ $sessionsLen := len $event.Sessions }}
 
-                                {{ range $sessionName, $sessionResults := $event.Results }}
+                                {{ range $sessionName, $sessionDetails := $event.Sessions }}
                                     <li class="nav-item">
                                         <a class="nav-link  {{ if eq $sessionCount $sessionsLen }} active {{ end }}"
                                            id="{{ $sessionName }}-{{ $eventIndex}}-tab" data-toggle="tab"
@@ -231,20 +241,24 @@
                                 {{ end }}
                             </ul>
                             <div class="tab-content">
-
                                 {{ $sessionCount = 1 }}
 
-                                {{ range $sessionName, $sessionResults := $event.Results }}
+                                {{ range $sessionName, $sessionDetails := $event.Sessions }}
                                     <div class="tab-pane fade {{ if eq $sessionCount $sessionsLen }} show active {{ end }}"
                                          id="{{ $sessionName }}-{{ $eventIndex}}" role="tabpanel"
                                          aria-labelledby="{{ $sessionName }}-{{ $eventIndex}}-tab">
 
-                                        {{ template "session-overall" $sessionResults }}
+                                        {{ if $sessionDetails.Completed }}
+                                            {{ template "session-overall" $sessionDetails.Results }}
+                                        {{ else if $sessionDetails.InProgress }}
+                                            <p class="text-center mt-5 pb-2"><strong>Session in Progress</strong>: Looks like there aren't any results yet. Check back later.</p>
+                                        {{ else }}
+                                            <p class="text-center mt-5 pb-2"><strong>Awaiting Start</strong>: Looks like this session hasn't started yet. Check back later.</p>
+                                        {{ end }}
                                     </div>
 
                                     {{ $sessionCount = add $sessionCount 1 }}
                                 {{ else }}
-                                    <p class="text-center mt-5 pb-2"><strong>Event in Progress</strong>: Looks like there aren't any results yet. Check back later.</p>
                                 {{ end }}
                             </div>
                         {{ end }}

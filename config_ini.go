@@ -173,8 +173,8 @@ type CurrentRaceConfig struct {
 
 	DynamicTrack DynamicTrackConfig `ini:"-"`
 
-	Sessions map[SessionType]*SessionConfig `ini:"-"`
-	Weather  map[string]*WeatherConfig      `ini:"-"`
+	Sessions map[SessionType]SessionConfig `ini:"-"`
+	Weather  map[string]WeatherConfig      `ini:"-"`
 }
 
 func (c CurrentRaceConfig) HasSession(sess SessionType) bool {
@@ -183,9 +183,9 @@ func (c CurrentRaceConfig) HasSession(sess SessionType) bool {
 	return ok
 }
 
-func (c *CurrentRaceConfig) AddSession(sessionType SessionType, config *SessionConfig) {
+func (c *CurrentRaceConfig) AddSession(sessionType SessionType, config SessionConfig) {
 	if c.Sessions == nil {
-		c.Sessions = make(map[SessionType]*SessionConfig)
+		c.Sessions = make(map[SessionType]SessionConfig)
 	}
 
 	c.Sessions[sessionType] = config
@@ -195,15 +195,15 @@ func (c *CurrentRaceConfig) RemoveSession(sessionType SessionType) {
 	delete(c.Sessions, sessionType)
 }
 
-func (c *CurrentRaceConfig) AddWeather(weather *WeatherConfig) {
+func (c *CurrentRaceConfig) AddWeather(weather WeatherConfig) {
 	if c.Weather == nil {
-		c.Weather = make(map[string]*WeatherConfig)
+		c.Weather = make(map[string]WeatherConfig)
 	}
 
 	c.Weather[fmt.Sprintf("WEATHER_%d", len(c.Weather))] = weather
 }
 
-func (c *CurrentRaceConfig) RemoveWeather(weather *WeatherConfig) {
+func (c *CurrentRaceConfig) RemoveWeather(weather WeatherConfig) {
 	for k, v := range c.Weather {
 		if v == weather {
 			delete(c.Weather, k)

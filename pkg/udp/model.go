@@ -185,11 +185,11 @@ type SessionInfo struct {
 	WeatherGraphics     string
 	ElapsedMilliseconds int32
 
-	event Event
+	EventType Event
 }
 
 func (s SessionInfo) Event() Event {
-	return s.event
+	return s.EventType
 }
 
 type SectorCompleted struct {
