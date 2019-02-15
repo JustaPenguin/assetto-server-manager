@@ -106,11 +106,11 @@ type SessionCarInfo struct {
 	CarMode    string
 	CarSkin    string
 
-	event Event
+	EventType Event
 }
 
 func (s SessionCarInfo) Event() Event {
-	return s.event
+	return s.EventType
 }
 
 type Chat struct {

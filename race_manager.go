@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"net"
 	"net/http"
 	"sort"
 	"strconv"
@@ -66,7 +67,7 @@ func (rm *RaceManager) CurrentRace() (*ServerConfig, EntryList) {
 	return rm.currentRace, rm.currentEntryList
 }
 
-func (rm *RaceManager) startUDPListener(cfg ServerConfig) error {
+func (rm *RaceManager) startUDPListener(cfg ServerConfig, forwardingAddress string) error {
 	var err error
 
 	if rm.udpServerConn != nil {
@@ -77,7 +78,19 @@ func (rm *RaceManager) startUDPListener(cfg ServerConfig) error {
 		}
 	}
 
-	rm.udpServerConn, err = udp.NewServerClient("127.0.0.1", 12000, 11000, rm.UDPCallback)
+	host, portStr, err := net.SplitHostPort(cfg.GlobalServerConfig.FreeUDPPluginAddress)
+
+	if err != nil {
+		return err
+	}
+
+	port, err := strconv.ParseInt(portStr, 10, 0)
+
+	if err != nil {
+		return err
+	}
+
+	rm.udpServerConn, err = udp.NewServerClient(host, int(port), cfg.GlobalServerConfig.FreeUDPPluginLocalPort, true, forwardingAddress, rm.UDPCallback)
 
 	if err != nil {
 		return err
@@ -108,6 +121,10 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 	}
 
 	config.GlobalServerConfig = *serverOpts
+	forwardingAddress := config.GlobalServerConfig.UDPPluginAddress
+
+	config.GlobalServerConfig.UDPPluginAddress = config.GlobalServerConfig.FreeUDPPluginAddress
+	config.GlobalServerConfig.UDPPluginLocalPort = config.GlobalServerConfig.FreeUDPPluginLocalPort
 
 	err = config.Write()
 
@@ -121,7 +138,7 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		return err
 	}
 
-	err = rm.startUDPListener(config)
+	err = rm.startUDPListener(config, forwardingAddress)
 
 	if err != nil {
 		return err
@@ -736,26 +753,25 @@ func (rm *RaceManager) LoadServerOptions() (*GlobalServerConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	/*
-		udpListenPort, udpSendPort := 0, 0
 
-		for udpListenPort == udpSendPort {
-			udpListenPort, err = FreeUDPPort()
+	udpListenPort, udpSendPort := 0, 0
 
-			if err != nil {
-				return nil, err
-			}
+	for udpListenPort == udpSendPort {
+		udpListenPort, err = FreeUDPPort()
 
-			udpSendPort, err = FreeUDPPort()
-
-			if err != nil {
-				return nil, err
-			}
+		if err != nil {
+			return nil, err
 		}
 
-		serverOpts.UDPPluginAddress = fmt.Sprintf("127.0.0.1:%d", udpSendPort)
-		serverOpts.UDPPluginRemotePort = udpSendPort
-		serverOpts.UDPPluginLocalPort = udpListenPort
-	*/
+		udpSendPort, err = FreeUDPPort()
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	serverOpts.FreeUDPPluginAddress = fmt.Sprintf("127.0.0.1:%d", udpSendPort)
+	serverOpts.FreeUDPPluginLocalPort = udpListenPort
+
 	return serverOpts, nil
 }
