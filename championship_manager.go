@@ -30,6 +30,8 @@ type ChampionshipManager struct {
 type ActiveChampionship struct {
 	ChampionshipID, EventID uuid.UUID
 	SessionType             SessionType
+
+	NumLapsCompleted int
 }
 
 func NewChampionshipManager(rm *RaceManager) *ChampionshipManager {
@@ -380,7 +382,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 
 			previousSession, ok := currentEvent.Sessions[cm.activeChampionship.SessionType]
 
-			if ok && cm.activeChampionship.SessionType != sessionType && !previousSession.StartedTime.IsZero() && previousSession.CompletedTime.IsZero() {
+			if ok && cm.activeChampionship.SessionType != sessionType && cm.activeChampionship.NumLapsCompleted > 0 && !previousSession.StartedTime.IsZero() && previousSession.CompletedTime.IsZero() {
 				resultsFile, err := cm.findLastWrittenSessionFile()
 
 				if err == nil {
@@ -391,7 +393,11 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			}
 
 			cm.activeChampionship.SessionType = sessionType
+			cm.activeChampionship.NumLapsCompleted = 0
 		}
+	case udp.LapCompleted:
+		cm.activeChampionship.NumLapsCompleted++
+
 	case udp.EndSession:
 		filename := string(a)
 		logrus.Infof("End Session, file outputted at: %s", filename)

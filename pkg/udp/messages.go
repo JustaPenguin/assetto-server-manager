@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"io"
 	"net"
 )
@@ -53,14 +54,14 @@ func (asu *AssettoServerUDP) Close() error {
 }
 
 func (asu *AssettoServerUDP) serve() {
-	buf := make([]byte, 1024)
-
 	for {
 		select {
 		case <-asu.ctx.Done():
 			asu.listener.Close()
 			return
 		default:
+			buf := make([]byte, 1024)
+
 			_, _, err := asu.listener.ReadFromUDP(buf)
 
 			if err != nil {
@@ -69,6 +70,8 @@ func (asu *AssettoServerUDP) serve() {
 			}
 
 			go func() {
+				spew.Dump(string(buf))
+
 				msg, err := asu.handleMessage(bytes.NewReader(buf))
 
 				if err != nil {
