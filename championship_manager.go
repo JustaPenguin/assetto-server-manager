@@ -79,32 +79,62 @@ func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (map[strin
 
 	raceOpts["DefaultPoints"] = DefaultChampionshipPoints
 
+	championshipID, isEditingChampionship := mux.Vars(r)["championshipID"]
+	raceOpts["IsEditing"] = isEditingChampionship
+
+	if isEditingChampionship {
+		current, err := cm.LoadChampionship(championshipID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		raceOpts["Current"] = current
+	} else {
+		raceOpts["Current"] = NewChampionship("")
+	}
+
 	return raceOpts, nil
 }
 
-func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (*Championship, error) {
+func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (championship *Championship, edited bool, err error) {
 	if err := r.ParseForm(); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
-	championship := NewChampionship(r.FormValue("ChampionshipName"))
+	if championshipID := r.FormValue("Editing"); championshipID != "" {
+		// championship is being edited. find the current version
+		edited = true
 
-	var err error
+		var err error
 
+		championship, err = cm.LoadChampionship(championshipID)
+
+		if err != nil {
+			return nil, edited, err
+		}
+	} else {
+		// new championship
+		championship = NewChampionship("")
+	}
+
+	championship.Name = r.FormValue("ChampionshipName")
 	championship.Entrants, err = cm.BuildEntryList(r)
 
 	if err != nil {
-		return nil, err
+		return nil, edited, err
 	}
 
+	championship.Points.Places = make([]int, len(r.Form["Points.Place"]))
+
 	for i := 0; i < len(r.Form["Points.Place"]); i++ {
-		championship.Points.Places = append(championship.Points.Places, formValueAsInt(r.Form["Points.Place"][i]))
+		championship.Points.Places[i] = formValueAsInt(r.Form["Points.Place"][i])
 	}
 
 	championship.Points.PolePosition = formValueAsInt(r.FormValue("Points.PolePosition"))
 	championship.Points.BestLap = formValueAsInt(r.FormValue("Points.BestLap"))
 
-	return championship, cm.UpsertChampionship(championship)
+	return championship, edited, cm.UpsertChampionship(championship)
 }
 
 var ErrInvalidChampionshipEvent = errors.New("servermanager: invalid championship event")
