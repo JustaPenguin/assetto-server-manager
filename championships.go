@@ -46,6 +46,7 @@ func NewChampionship(name string) *Championship {
 		ID:      uuid.New(),
 		Name:    name,
 		Created: time.Now(),
+		Points:  DefaultChampionshipPoints,
 	}
 }
 
@@ -133,10 +134,10 @@ func (c *Championship) Standings() []*ChampionshipStanding {
 	}
 
 	for _, event := range c.Events {
-		qualifying, qualifyingOK := event.Results[SessionTypeQualifying]
+		qualifying, qualifyingOK := event.Sessions[SessionTypeQualifying]
 
 		if qualifyingOK {
-			for pos, driver := range qualifying.Result {
+			for pos, driver := range qualifying.Results.Result {
 				if pos != 0 {
 					continue
 				}
@@ -145,12 +146,12 @@ func (c *Championship) Standings() []*ChampionshipStanding {
 			}
 		}
 
-		race, raceOK := event.Results[SessionTypeRace]
+		race, raceOK := event.Sessions[SessionTypeRace]
 
 		if raceOK {
-			fastestLap := race.FastestLap()
+			fastestLap := race.Results.FastestLap()
 
-			for pos, driver := range race.Result {
+			for pos, driver := range race.Results.Result {
 				if driver.TotalTime <= 0 {
 					continue
 				}
@@ -224,12 +225,12 @@ func NewChampionshipEvent() *ChampionshipEvent {
 	}
 }
 
-// A ChampionshipEvent is a given RaceSetup with Results.
+// A ChampionshipEvent is a given RaceSetup with Sessions.
 type ChampionshipEvent struct {
 	ID uuid.UUID
 
 	RaceSetup CurrentRaceConfig
-	Results   map[SessionType]*SessionResults
+	Sessions  map[SessionType]*ChampionshipSession
 
 	StartedTime   time.Time
 	CompletedTime time.Time
@@ -242,6 +243,22 @@ func (cr *ChampionshipEvent) InProgress() bool {
 // Completed ChampionshipEvents have a non-zero CompletedTime
 func (cr *ChampionshipEvent) Completed() bool {
 	return !cr.CompletedTime.IsZero()
+}
+
+type ChampionshipSession struct {
+	StartedTime   time.Time
+	CompletedTime time.Time
+
+	Results *SessionResults
+}
+
+func (ce *ChampionshipSession) InProgress() bool {
+	return !ce.StartedTime.IsZero() && ce.CompletedTime.IsZero()
+}
+
+// Completed ChampionshipEvents have a non-zero CompletedTime
+func (ce *ChampionshipSession) Completed() bool {
+	return !ce.CompletedTime.IsZero()
 }
 
 // listChampionshipsHandler lists all available Championships known to Server Manager
@@ -384,7 +401,9 @@ func championshipSubmitEventConfigurationHandler(w http.ResponseWriter, r *http.
 func championshipStartEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	err := championshipManager.StartEvent(vars["championshipID"], formValueAsInt(vars["eventID"]))
+	doneCh := make(chan struct{})
+
+	err := championshipManager.StartEvent(vars["championshipID"], formValueAsInt(vars["eventID"]), doneCh)
 
 	if err != nil {
 		logrus.Errorf("Could not start championship event, err: %s", err)
@@ -393,6 +412,9 @@ func championshipStartEventHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		AddFlashQuick(w, r, "Event started successfully!")
 	}
+
+	<-doneCh
+	close(doneCh)
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
@@ -425,6 +447,43 @@ func championshipStartPracticeEventHandler(w http.ResponseWriter, r *http.Reques
 	} else {
 		AddFlashQuick(w, r, "Practice Event started successfully!")
 	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func championshipCancelEventHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	err := championshipManager.CancelEvent(vars["championshipID"], formValueAsInt(vars["eventID"]))
+
+	if err != nil {
+		logrus.Errorf("Could not cancel championship event, err: %s", err)
+
+		AddErrFlashQuick(w, r, "Couldn't cancel the Championship Event")
+	} else {
+		AddFlashQuick(w, r, "Event cancelled successfully!")
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func championshipRestartEventHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	doneCh := make(chan struct{})
+
+	err := championshipManager.RestartEvent(vars["championshipID"], formValueAsInt(vars["eventID"]), doneCh)
+
+	if err != nil {
+		logrus.Errorf("Could not restart championship event, err: %s", err)
+
+		AddErrFlashQuick(w, r, "Couldn't restart the Championship Event")
+	} else {
+		AddFlashQuick(w, r, "Event restarted successfully!")
+	}
+
+	<-doneCh
+	close(doneCh)
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }

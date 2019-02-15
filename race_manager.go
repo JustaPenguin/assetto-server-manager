@@ -3,7 +3,6 @@ package servermanager
 import (
 	"errors"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"math/rand"
 	"net/http"
 	"sort"
@@ -13,9 +12,11 @@ import (
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/etcd-io/bbolt"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -37,6 +38,7 @@ func SetupRaceManager(storeFileLocation string) error {
 
 	raceManager = NewRaceManager(NewBoltRaceStore(bb))
 	championshipManager = NewChampionshipManager(raceManager)
+	AssettoProcess = &AssettoServerProcess{}
 
 	return nil
 }
@@ -85,6 +87,13 @@ func (rm *RaceManager) startUDPListener(cfg ServerConfig) error {
 }
 
 func (rm *RaceManager) UDPCallback(message udp.Message) {
+	// recover from panics that may occur while handling UDP messages
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("recovered from panic: %s", r)
+		}
+	}()
+
 	spew.Dump(message)
 
 	championshipManager.ChampionshipEventCallback(message)
@@ -174,7 +183,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 
 	quickRace.CurrentRaceConfig.LegalTyres = strings.Join(quickRaceTyres, ";")
 
-	quickRace.CurrentRaceConfig.Sessions = make(map[SessionType]*SessionConfig)
+	quickRace.CurrentRaceConfig.Sessions = make(map[SessionType]SessionConfig)
 
 	qualifyingTime, err := strconv.ParseInt(r.Form.Get("Qualifying.Time"), 10, 0)
 
@@ -182,7 +191,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		return err
 	}
 
-	quickRace.CurrentRaceConfig.AddSession(SessionTypeQualifying, &SessionConfig{
+	quickRace.CurrentRaceConfig.AddSession(SessionTypeQualifying, SessionConfig{
 		Name:   "Qualify",
 		Time:   int(qualifyingTime),
 		IsOpen: 1,
@@ -200,7 +209,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		return err
 	}
 
-	quickRace.CurrentRaceConfig.AddSession(SessionTypeRace, &SessionConfig{
+	quickRace.CurrentRaceConfig.AddSession(SessionTypeRace, SessionConfig{
 		Name:     "Race",
 		Time:     int(raceTime),
 		Laps:     int(raceLaps),
@@ -377,7 +386,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 			continue
 		}
 
-		raceConfig.AddSession(session, &SessionConfig{
+		raceConfig.AddSession(session, SessionConfig{
 			Name:     r.FormValue(sessName + ".Name"),
 			Time:     formValueAsInt(r.FormValue(sessName + ".Time")),
 			Laps:     formValueAsInt(r.FormValue(sessName + ".Laps")),
@@ -389,7 +398,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 	// weather
 	for i := 0; i < len(r.Form["Graphics"]); i++ {
 		if !isSol {
-			raceConfig.AddWeather(&WeatherConfig{
+			raceConfig.AddWeather(WeatherConfig{
 				Graphics:               r.Form["Graphics"][i],
 				BaseTemperatureAmbient: formValueAsInt(r.Form["BaseTemperatureAmbient"][i]),
 				BaseTemperatureRoad:    formValueAsInt(r.Form["BaseTemperatureRoad"][i]),
@@ -413,7 +422,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 			startTimeZoned := startTime.In(time.FixedZone("UTC+10", 10*60*60))
 			timeMulti := r.Form["TimeMulti"][i]
 
-			raceConfig.AddWeather(&WeatherConfig{
+			raceConfig.AddWeather(WeatherConfig{
 				Graphics: weatherName + "_type=" + strconv.Itoa(WFXType) + "_time=0_mult=" +
 					timeMulti + "_start=" + strconv.Itoa(int(startTimeZoned.Unix())),
 				BaseTemperatureAmbient: formValueAsInt(r.Form["BaseTemperatureAmbient"][i]),

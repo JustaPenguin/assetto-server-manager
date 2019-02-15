@@ -80,6 +80,8 @@ func Router() *mux.Router {
 	r.HandleFunc("/championship/{championshipID}/event/{eventID}/edit", championshipEventConfigurationHandler)
 	r.HandleFunc("/championship/{championshipID}/event/{eventID}/delete", championshipDeleteEventHandler)
 	r.HandleFunc("/championship/{championshipID}/event/{eventID}/practice", championshipStartPracticeEventHandler)
+	r.HandleFunc("/championship/{championshipID}/event/{eventID}/cancel", championshipCancelEventHandler)
+	r.HandleFunc("/championship/{championshipID}/event/{eventID}/restart", championshipRestartEventHandler)
 
 	// endpoints
 	r.HandleFunc("/api/logs", apiServerLogHandler)
