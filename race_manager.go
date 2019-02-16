@@ -415,7 +415,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 	// weather
 	for i := 0; i < len(r.Form["Graphics"]); i++ {
 		if !isSol {
-			raceConfig.AddWeather(WeatherConfig{
+			raceConfig.AddWeather(&WeatherConfig{
 				Graphics:               r.Form["Graphics"][i],
 				BaseTemperatureAmbient: formValueAsInt(r.Form["BaseTemperatureAmbient"][i]),
 				BaseTemperatureRoad:    formValueAsInt(r.Form["BaseTemperatureRoad"][i]),
@@ -439,7 +439,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 			startTimeZoned := startTime.In(time.FixedZone("UTC+10", 10*60*60))
 			timeMulti := r.Form["TimeMulti"][i]
 
-			raceConfig.AddWeather(WeatherConfig{
+			raceConfig.AddWeather(&WeatherConfig{
 				Graphics: weatherName + "_type=" + strconv.Itoa(WFXType) + "_time=0_mult=" +
 					timeMulti + "_start=" + strconv.Itoa(int(startTimeZoned.Unix())),
 				BaseTemperatureAmbient: formValueAsInt(r.Form["BaseTemperatureAmbient"][i]),
@@ -597,6 +597,13 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 			if !found {
 				deselectedTyres[carTyre] = true
 			}
+		}
+	}
+
+	// default sol time to now
+	for _, weather := range race.CurrentRaceConfig.Weather {
+		if weather.CMWFXDate == 0 {
+			weather.CMWFXDate = int(time.Now().Unix())
 		}
 	}
 
