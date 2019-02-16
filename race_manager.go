@@ -414,22 +414,20 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 
 	// weather
 	for i := 0; i < len(r.Form["Graphics"]); i++ {
-		if !isSol {
+		weatherName := r.Form["Graphics"][i]
+
+		WFXType, err := getWeatherType(weatherName)
+
+		// if WFXType can't be found due to an error, default to non-sol weather.
+		if !isSol || err != nil {
 			raceConfig.AddWeather(&WeatherConfig{
-				Graphics:               r.Form["Graphics"][i],
+				Graphics:               weatherName,
 				BaseTemperatureAmbient: formValueAsInt(r.Form["BaseTemperatureAmbient"][i]),
 				BaseTemperatureRoad:    formValueAsInt(r.Form["BaseTemperatureRoad"][i]),
 				VariationAmbient:       formValueAsInt(r.Form["VariationAmbient"][i]),
 				VariationRoad:          formValueAsInt(r.Form["VariationRoad"][i]),
 			})
 		} else {
-			weatherName := r.Form["Graphics"][i]
-			WFXType, err := getWeatherType(weatherName)
-
-			if err != nil {
-				return nil, err
-			}
-
 			startTime, err := time.Parse("2006-01-02T15:04", r.Form["DateUnix"][i])
 
 			if err != nil {
