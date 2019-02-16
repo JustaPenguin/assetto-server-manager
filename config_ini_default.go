@@ -85,7 +85,7 @@ var ConfigIniDefault = ServerConfig{
 			LapGain:         10,
 		},
 
-		Weather: map[string]WeatherConfig{
+		Weather: map[string]*WeatherConfig{
 			"WEATHER_0": {
 				Graphics:               "3_clear",
 				BaseTemperatureAmbient: 26,

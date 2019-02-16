@@ -491,6 +491,10 @@ func (cm *ChampionshipManager) CancelEvent(championshipID string, eventID int) e
 
 	event.Sessions = make(map[SessionType]*ChampionshipSession)
 
+	if err := AssettoProcess.Stop(); err != nil {
+		return err
+	}
+
 	return cm.UpsertChampionship(championship)
 }
 
