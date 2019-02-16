@@ -3,6 +3,7 @@ package servermanager
 import (
 	"errors"
 	"fmt"
+	"github.com/gorilla/mux"
 	"math/rand"
 	"net"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/etcd-io/bbolt"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
@@ -524,8 +524,6 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		return nil, err
 	}
 
-	var trackNames, trackLayouts []string
-
 	tyres, err := ListTyres()
 
 	if err != nil {
@@ -556,20 +554,19 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		entrants = customRace.EntryList
 	}
 
-	for _, track := range tracks {
-		trackNames = append(trackNames, track.Name)
+	templateIDForEditing := mux.Vars(r)["uuid"]
+	isEditing := templateIDForEditing != ""
+	var customRaceName string
 
-		for _, layout := range track.Layouts {
-			trackLayouts = append(trackLayouts, fmt.Sprintf("%s:%s", track.Name, layout))
-		}
-	}
+	if isEditing {
+		customRace, err := rm.raceStore.FindCustomRaceByID(templateIDForEditing)
 
-	for i, layout := range trackLayouts {
-		if layout == fmt.Sprintf("%s:%s", race.CurrentRaceConfig.Track, race.CurrentRaceConfig.TrackLayout) {
-			// mark the current track layout so the javascript can correctly set it up.
-			trackLayouts[i] += ":current"
-			break
+		if err != nil {
+			return nil, err
 		}
+
+		customRaceName = customRace.Name
+		race.CurrentRaceConfig = customRace.RaceConfig
 	}
 
 	possibleEntrants, err := rm.raceStore.ListEntrants()
@@ -603,31 +600,14 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		}
 	}
 
-	templateIDForEditing := mux.Vars(r)["uuid"]
-	isEditing := templateIDForEditing != ""
-	var customRaceName string
-	currentRaceConfig := race.CurrentRaceConfig
-
-	if isEditing {
-		customRace, err := rm.raceStore.FindCustomRaceByID(templateIDForEditing)
-
-		if err != nil {
-			return nil, err
-		}
-
-		customRaceName = customRace.Name
-		currentRaceConfig = customRace.RaceConfig
-	}
-
 	return map[string]interface{}{
 		"CarOpts":           cars,
-		"TrackOpts":         trackNames,
-		"TrackLayoutOpts":   trackLayouts,
+		"TrackOpts":         tracks,
 		"AvailableSessions": AvailableSessions,
 		"Tyres":             tyres,
 		"DeselectedTyres":   deselectedTyres,
 		"Weather":           weather,
-		"Current":           currentRaceConfig,
+		"Current":           race.CurrentRaceConfig,
 		"CurrentEntrants":   entrants,
 		"PossibleEntrants":  possibleEntrants,
 		"IsChampionship":    false, // this flag is overridden by championship setup
