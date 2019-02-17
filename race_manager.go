@@ -30,18 +30,10 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func SetupRaceManager(storeFileLocation string) error {
-	bb, err := bbolt.Open(storeFileLocation, 0644, nil)
-
-	if err != nil {
-		return err
-	}
-
-	raceManager = NewRaceManager(NewBoltRaceStore(bb))
+func SetupRaceManager(store RaceStore) {
+	raceManager = NewRaceManager(store)
 	championshipManager = NewChampionshipManager(raceManager)
 	AssettoProcess = &AssettoServerProcess{}
-
-	return nil
 }
 
 type RaceManager struct {

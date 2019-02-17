@@ -79,16 +79,14 @@ func (asu *AssettoServerUDP) serve() {
 				continue
 			}
 
-			go func() {
-				msg, err := asu.handleMessage(bytes.NewReader(buf))
+			msg, err := asu.handleMessage(bytes.NewReader(buf))
 
-				if err != nil {
-					asu.callback(ServerError{err})
-					return
-				}
+			if err != nil {
+				asu.callback(ServerError{err})
+				return
+			}
 
-				asu.callback(msg)
-			}()
+			asu.callback(msg)
 
 			if asu.forward {
 				go func() {

@@ -325,6 +325,10 @@ func viewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sort.Slice(championship.Events, func(i, j int) bool {
+		return championship.Events[i].StartedTime.Before(championship.Events[j].StartedTime) && championship.Events[i].CompletedTime.Before(championship.Events[j].CompletedTime)
+	})
+
 	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("championships", "view.html"), map[string]interface{}{
 		"Championship": championship,
 	})
@@ -413,9 +417,7 @@ func championshipSubmitEventConfigurationHandler(w http.ResponseWriter, r *http.
 func championshipStartEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	doneCh := make(chan struct{})
-
-	err := championshipManager.StartEvent(vars["championshipID"], formValueAsInt(vars["eventID"]), doneCh)
+	err := championshipManager.StartEvent(vars["championshipID"], formValueAsInt(vars["eventID"]))
 
 	if err != nil {
 		logrus.Errorf("Could not start championship event, err: %s", err)
@@ -424,9 +426,6 @@ func championshipStartEventHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		AddFlashQuick(w, r, "Event started successfully!")
 	}
-
-	<-doneCh
-	close(doneCh)
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
@@ -482,9 +481,7 @@ func championshipCancelEventHandler(w http.ResponseWriter, r *http.Request) {
 func championshipRestartEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	doneCh := make(chan struct{})
-
-	err := championshipManager.RestartEvent(vars["championshipID"], formValueAsInt(vars["eventID"]), doneCh)
+	err := championshipManager.RestartEvent(vars["championshipID"], formValueAsInt(vars["eventID"]))
 
 	if err != nil {
 		logrus.Errorf("Could not restart championship event, err: %s", err)
@@ -493,9 +490,6 @@ func championshipRestartEventHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		AddFlashQuick(w, r, "Event restarted successfully!")
 	}
-
-	<-doneCh
-	close(doneCh)
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
