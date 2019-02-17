@@ -23,8 +23,6 @@ type ChampionshipManager struct {
 
 	activeChampionship *ActiveChampionship
 	mutex              sync.Mutex
-
-	startCh chan<- struct{}
 }
 
 type ActiveChampionship struct {
@@ -46,10 +44,6 @@ func (cm *ChampionshipManager) LoadChampionship(id string) (*Championship, error
 	if err != nil {
 		return nil, err
 	}
-
-	sort.Slice(championship.Events, func(i, j int) bool {
-		return championship.Events[i].StartedTime.Before(championship.Events[j].StartedTime)
-	})
 
 	return championship, nil
 }
@@ -276,18 +270,18 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 	return cm.applyConfigAndStart(config, championship.Entrants)
 }
 
-func (cm *ChampionshipManager) StartEvent(championshipID string, eventID int, ch chan<- struct{}) error {
+func (cm *ChampionshipManager) StartEvent(championshipID string, eventIndex int) error {
 	championship, err := cm.LoadChampionship(championshipID)
 
 	if err != nil {
 		return err
 	}
 
-	if eventID > len(championship.Events) || eventID < 0 {
+	if eventIndex > len(championship.Events) || eventIndex < 0 {
 		return ErrInvalidChampionshipEvent
 	}
 
-	event := championship.Events[eventID]
+	event := championship.Events[eventIndex]
 
 	// championship events always have locked entry lists
 	event.RaceSetup.LockedEntryList = 1
@@ -301,8 +295,6 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID int, ch
 		ChampionshipID: championship.ID,
 		EventID:        event.ID,
 	}
-
-	cm.startCh = ch
 
 	return cm.applyConfigAndStart(config, championship.Entrants)
 }
@@ -323,77 +315,96 @@ func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
 		return
 	}
 
-	var currentEvent *ChampionshipEvent
+	currentEventIndex := -1
 
-	for _, event := range championship.Events {
+	for index, event := range championship.Events {
 		if event.ID == cm.activeChampionship.EventID {
-			currentEvent = event
+			currentEventIndex = index
 			break
 		}
 	}
 
-	if currentEvent == nil {
+	if currentEventIndex < 0 {
 		logrus.Errorf("Couldn't load championship event with given id")
 		return
 	}
 
-	cm.handleSessionChanges(message, championship, currentEvent)
+	cm.handleSessionChanges(message, championship, currentEventIndex)
 }
 
-func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, championship *Championship, currentEvent *ChampionshipEvent) {
-	if currentEvent.Completed() {
+func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, championship *Championship, currentEventIndex int) {
+	if championship.Events[currentEventIndex].Completed() {
 		logrus.Infof("Event is complete. Ignoring messages")
 		return
 	}
 
+	saveChampionship := true
+
+	defer func() {
+		if !saveChampionship {
+			return
+		}
+
+		err := cm.UpsertChampionship(championship)
+
+		if err != nil {
+			logrus.Errorf("Could not save session results to championship %s, err: %s", cm.activeChampionship.ChampionshipID.String(), err)
+			return
+		}
+	}()
+
 	switch a := message.(type) {
 	case udp.SessionInfo:
 		if a.Event() == udp.EventNewSession {
-			if currentEvent.StartedTime.IsZero() {
-				currentEvent.StartedTime = time.Now()
-
-				if cm.startCh != nil {
-					cm.startCh <- struct{}{}
-				}
+			if championship.Events[currentEventIndex].StartedTime.IsZero() {
+				championship.Events[currentEventIndex].StartedTime = time.Now()
 			}
 
-			if currentEvent.Sessions == nil {
-				currentEvent.Sessions = make(map[SessionType]*ChampionshipSession)
+			if championship.Events[currentEventIndex].Sessions == nil {
+				championship.Events[currentEventIndex].Sessions = make(map[SessionType]*ChampionshipSession)
 			}
 
 			// new session created
 			logrus.Infof("New Session: %s at %s (%s) - %d laps | %d minutes", a.Name, a.Track, a.TrackConfig, a.Laps, a.Time)
-			sessionType, err := cm.findSessionWithName(currentEvent, a.Name)
+			sessionType, err := cm.findSessionWithName(championship.Events[currentEventIndex], a.Name)
 
 			if err != nil {
 				logrus.Errorf("Unexpected session: %s. Cannot track championship progress for this session", a.Name)
 				return
 			}
 
-			currentSession, ok := currentEvent.Sessions[sessionType]
+			currentSession, ok := championship.Events[currentEventIndex].Sessions[sessionType]
 
 			if !ok {
 				currentSession = &ChampionshipSession{
 					StartedTime: time.Now(),
 				}
 
-				currentEvent.Sessions[sessionType] = currentSession
+				championship.Events[currentEventIndex].Sessions[sessionType] = currentSession
 			}
 
-			previousSession, ok := currentEvent.Sessions[cm.activeChampionship.SessionType]
+			previousSessionType := cm.activeChampionship.SessionType
+			previousSession, hasPreviousSession := championship.Events[currentEventIndex].Sessions[previousSessionType]
+			previousSessionNumLaps := cm.activeChampionship.NumLapsCompleted
 
-			if ok && cm.activeChampionship.SessionType != sessionType && cm.activeChampionship.NumLapsCompleted > 0 && !previousSession.StartedTime.IsZero() && previousSession.CompletedTime.IsZero() {
+			defer func() {
+				if cm.activeChampionship == nil {
+					return
+				}
+
+				cm.activeChampionship.NumLapsCompleted = 0
+				cm.activeChampionship.SessionType = sessionType
+			}()
+
+			if hasPreviousSession && previousSessionType != sessionType && previousSessionNumLaps > 0 && !previousSession.StartedTime.IsZero() && previousSession.CompletedTime.IsZero() {
 				resultsFile, err := cm.findLastWrittenSessionFile()
 
 				if err == nil {
 					logrus.Infof("Assetto Server didn't give us a results file for the session: %s, but we found it at %s", cm.activeChampionship.SessionType.String(), resultsFile)
-					cm.handleSessionChanges(udp.EndSession(resultsFile), championship, currentEvent)
+					cm.handleSessionChanges(udp.EndSession(resultsFile), championship, currentEventIndex)
 					return
 				}
 			}
-
-			cm.activeChampionship.SessionType = sessionType
-			cm.activeChampionship.NumLapsCompleted = 0
 		}
 	case udp.LapCompleted:
 		cm.activeChampionship.NumLapsCompleted++
@@ -409,7 +420,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			return
 		}
 
-		currentSession, ok := currentEvent.Sessions[cm.activeChampionship.SessionType]
+		currentSession, ok := championship.Events[currentEventIndex].Sessions[cm.activeChampionship.SessionType]
 
 		if ok {
 			currentSession.CompletedTime = time.Now()
@@ -420,7 +431,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 
 		if cm.activeChampionship.SessionType == SessionTypeRace {
 			logrus.Infof("End of Race Session detected. Marking championship event %s complete", cm.activeChampionship.EventID.String())
-			currentEvent.CompletedTime = time.Now()
+			championship.Events[currentEventIndex].CompletedTime = time.Now()
 
 			// clear out all current session stuff
 			cm.activeChampionship = nil
@@ -432,14 +443,11 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 				logrus.Errorf("Could not stop Assetto Process, err: %s", err)
 			}
 		}
-	}
-
-	err := cm.UpsertChampionship(championship)
-
-	if err != nil {
-		logrus.Errorf("Could not save session results to championship %s, err: %s", cm.activeChampionship.ChampionshipID.String(), err)
+	default:
+		saveChampionship = false
 		return
 	}
+
 }
 
 var ErrSessionNotFound = errors.New("servermanager: session not found")
@@ -498,12 +506,12 @@ func (cm *ChampionshipManager) CancelEvent(championshipID string, eventID int) e
 	return cm.UpsertChampionship(championship)
 }
 
-func (cm *ChampionshipManager) RestartEvent(championshipID string, eventID int, doneCh chan<- struct{}) error {
+func (cm *ChampionshipManager) RestartEvent(championshipID string, eventID int) error {
 	err := cm.CancelEvent(championshipID, eventID)
 
 	if err != nil {
 		return err
 	}
 
-	return cm.StartEvent(championshipID, eventID, doneCh)
+	return cm.StartEvent(championshipID, eventID)
 }

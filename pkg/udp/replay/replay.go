@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 	"time"
 
@@ -177,7 +178,7 @@ func RecordUDPMessages(filename string) (callbackFunc udp.CallbackFunc) {
 	}
 }
 
-func ReplayUDPMessages(filename string, multiplier int, callbackFunc udp.CallbackFunc) error {
+func ReplayUDPMessages(filename string, multiplier int, callbackFunc udp.CallbackFunc, async bool) error {
 	var loadedEntries []*Entry
 
 	f, err := os.Open(filename)
@@ -201,15 +202,18 @@ func ReplayUDPMessages(filename string, multiplier int, callbackFunc udp.Callbac
 	for _, entry := range loadedEntries {
 		tickDuration := entry.Received.Sub(timeStart) / time.Duration(multiplier)
 
-		fmt.Println("next tick occurs in", tickDuration)
+		logrus.Debugf("next tick occurs in: %s", tickDuration)
 
 		if tickDuration > 0 {
 			tickWhenEventOccurs := time.Tick(entry.Received.Sub(timeStart) / time.Duration(multiplier))
-
 			<-tickWhenEventOccurs
 		}
 
-		callbackFunc(entry.Data)
+		if async {
+			go callbackFunc(entry.Data)
+		} else {
+			callbackFunc(entry.Data)
+		}
 
 		timeStart = entry.Received
 	}

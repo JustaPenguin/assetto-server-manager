@@ -161,6 +161,31 @@
                                 {{ end }}
                             </ul>
 
+
+                            {{ if $event.Completed }}
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <table class="table table-bordered">
+                                            {{ range $sessionName, $sessionDetails := $event.Sessions }}
+                                                {{ if eq $sessionName "RACE" }}
+                                                    {{ range $pos, $result := (slice $sessionDetails.Results.Result 0 3) }}
+                                                        {{ if gt $result.TotalTime 0 }}
+                                                            {{ $posInt := int64 (add $pos 1) }}
+
+                                                            <tr>
+                                                                <td><strong>{{ $posInt }}{{ ordinal $posInt }}</strong></td>
+                                                                <td>{{ $result.DriverName }}</td>
+                                                            </tr>
+                                                        {{ end }}
+                                                    {{ end }}
+                                                {{ end }}
+                                            {{ end }}
+                                        </table>
+                                    </div>
+                                </div>
+                            {{ end }}
+
+
                             {{/* fastest lap + qualifying awards */}}
                             {{ range $sessionName, $session := $event.Sessions }}
                                 {{ with $session.Results }}
@@ -237,7 +262,21 @@
                                     </table>
                                 </div>
                             {{ else }}
-                                <ul class="nav nav-tabs" role="tablist">
+
+                            {{ if $event.Completed }}
+                                <a class="btn btn-primary"
+                                   data-toggle="collapse"
+                                   href="#event-{{ $eventIndex }}"
+                                   role="button"
+                                   aria-expanded="false"
+                                   aria-controls="event-{{ $eventIndex }}">
+                                    View Results
+                                </a>
+                            {{ end }}
+
+                            <div {{ if $event.Completed }} class="collapse" id="event-{{ $eventIndex }}" {{ end }}>
+
+                                <ul class="nav nav-tabs mt-3" role="tablist">
                                     {{ $sessionCount := 1 }}
                                     {{ $sessionsLen := len $event.Sessions }}
 
@@ -279,6 +318,8 @@
                                     {{ else }}
                                     {{ end }}
                                 </div>
+
+                            </div>
                             {{ end }}
                         </div>
                     </div>
