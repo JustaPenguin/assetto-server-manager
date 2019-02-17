@@ -32,6 +32,7 @@
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped">
                         <tr>
+                            <th>#</th>
                             <th>Driver</th>
                             <th>Team</th>
                             <th>Points</th>
@@ -40,6 +41,7 @@
                         {{ range $i, $entrant := $championship.Standings }}
 
                             <tr>
+                                <td>{{ add $i 1 }}</td>
                                 <td>{{ $entrant.Entrant.Name }}</td>
                                 <td>{{ $entrant.Entrant.Team }}</td>
                                 <td>{{ $entrant.Points }}</td>
@@ -53,6 +55,7 @@
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped">
                         <tr>
+                            <th>#</th>
                             <th>Team</th>
                             <th>Points</th>
                         </tr>
@@ -60,6 +63,7 @@
                         {{ range $i, $team := $championship.TeamStandings }}
 
                             <tr>
+                                <td>{{ add $i 1 }}</td>
                                 <td>{{ $team.Team }}</td>
                                 <td>{{ $team.Points }}</td>
                             </tr>
@@ -144,28 +148,43 @@
 
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <ul class="list-unstyled">
-                                {{ range $sessionName, $session := $eventSetup.Sessions }}
-                                    <li>
-                                        <strong>{{ $sessionName.String }}</strong>:
+                        <div class="col-md-8 mb-3">
+                            <div class="row">
 
-                                        {{ if ne $session.Time 0 }}
-                                            {{ $session.Time }} minutes
-                                        {{ else }}
-                                            {{ with $session.Laps }}
-                                                {{ . }} laps
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+                                        {{ range $sessionName, $session := $eventSetup.Sessions }}
+                                            <li>
+                                                <strong>{{ $sessionName.String }}</strong>:
+
+                                                {{ if ne $session.Time 0 }}
+                                                    {{ $session.Time }} minutes
+                                                {{ else }}
+                                                    {{ with $session.Laps }}
+                                                        {{ . }} laps
+                                                    {{ end }}
+                                                {{ end }}
+                                            </li>
+                                        {{ end }}
+                                    </ul>
+
+
+                                    {{/* fastest lap + qualifying awards */}}
+                                    {{ range $sessionName, $session := $event.Sessions }}
+                                        {{ with $session.Results }}
+                                            {{ if eq $sessionName "RACE" }}
+                                                <span class="badge badge-best">Fastest Lap: {{ $session.Results.FastestLap.DriverName }}</span><br>
+                                            {{ else if eq $sessionName "QUALIFY" }}
+                                                <span class="badge badge-success">Best Qualifying: {{ $session.Results.FastestLap.DriverName }}</span><br>
                                             {{ end }}
                                         {{ end }}
-                                    </li>
-                                {{ end }}
-                            </ul>
+                                    {{ end }}
 
+                                </div>
 
-                            {{ if $event.Completed }}
-                                <div class="row">
+                                {{ if $event.Completed }}
                                     <div class="col-sm-6">
-                                        <table class="table table-bordered">
+                                        <table class="table table-sm table-bordered" style="right: 0;">
                                             {{ range $sessionName, $sessionDetails := $event.Sessions }}
                                                 {{ if eq $sessionName "RACE" }}
                                                     {{ range $pos, $result := (slice $sessionDetails.Results.Result 0 3) }}
@@ -182,20 +201,10 @@
                                             {{ end }}
                                         </table>
                                     </div>
-                                </div>
-                            {{ end }}
-
-
-                            {{/* fastest lap + qualifying awards */}}
-                            {{ range $sessionName, $session := $event.Sessions }}
-                                {{ with $session.Results }}
-                                    {{ if eq $sessionName "RACE" }}
-                                        <span class="badge badge-best">Fastest Lap: {{ $session.Results.FastestLap.DriverName }}</span><br>
-                                    {{ else if eq $sessionName "QUALIFY" }}
-                                        <span class="badge badge-success">Best Qualifying: {{ $session.Results.FastestLap.DriverName }}</span><br>
-                                    {{ end }}
                                 {{ end }}
-                            {{ end }}
+
+                            </div>
+
 
                             {{/* race controls buttons */}}
 
@@ -229,10 +238,22 @@
                                         Cancel Event
                                     </a>
                                 {{ end }}
+
+
+                                {{ if $event.Completed }}
+                                    <a class="btn btn-primary"
+                                       data-toggle="collapse"
+                                       href="#event-{{ $eventIndex }}"
+                                       role="button"
+                                       aria-expanded="false"
+                                       aria-controls="event-{{ $eventIndex }}">
+                                        View Results
+                                    </a>
+                                {{ end }}
                             </div>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <img class="img img-fluid pl-2 float-right image-track"
                                  src="/content/tracks/{{ $eventSetup.Track }}/ui{{ with $eventSetup.TrackLayout }}/{{.}}{{ end }}/preview.png"
                                  alt="{{ $eventSetup.Track }} {{ $eventSetup.TrackLayout }}"
@@ -241,7 +262,7 @@
                     </div>
 
 
-                    <div class="row mt-3">
+                    <div class="row">
                         <div class="col-md-12">
                             {{ if not (or $event.InProgress $event.Completed) }}
                                 <div class="table-responsive">
@@ -263,16 +284,6 @@
                                 </div>
                             {{ else }}
 
-                            {{ if $event.Completed }}
-                                <a class="btn btn-primary"
-                                   data-toggle="collapse"
-                                   href="#event-{{ $eventIndex }}"
-                                   role="button"
-                                   aria-expanded="false"
-                                   aria-controls="event-{{ $eventIndex }}">
-                                    View Results
-                                </a>
-                            {{ end }}
 
                             <div {{ if $event.Completed }} class="collapse" id="event-{{ $eventIndex }}" {{ end }}>
 
