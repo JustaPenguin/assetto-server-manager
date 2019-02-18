@@ -252,6 +252,8 @@ let raceSetup = {
      */
     showSolSettings: function () {
         $(".sol-enabler").each(function (index, elem) {
+            raceSetup.showSolWeathers($(elem).val() === "on");
+
             $(elem).on('switchChange.bootstrapSwitch', function (event, state) {
                 let $this = $(this);
                 let $solElem = $this.closest(".card-body").find(".sol-settings");
@@ -264,7 +266,38 @@ let raceSetup = {
                     $solElem.hide();
                     $notSolElem.show();
                 }
+
+                raceSetup.showSolWeathers(state);
             });
+        });
+    },
+
+    /**
+     * hide non-sol weather if sol is enabled.
+     *
+     * @param state
+     */
+    showSolWeathers: function(state) {
+        $document.find(".weather-graphics").each(function(graphicsIndex, graphicsElement) {
+            let $elem = $(graphicsElement);
+            let $opts = $elem.find("option");
+            let $selectedOpt = $elem.find("option:selected");
+
+            if (state) {
+                if (!/sol/i.test($selectedOpt.val())) {
+                    $elem.val("sol_01_CLear");
+                }
+            }
+
+            for (let i = 0; i < $opts.length; i++) {
+                let $opt = $($opts[i]);
+
+                if (state && !/sol/i.test($opt.val())) {
+                    $opt.hide();
+                } else {
+                    $opt.show();
+                }
+            }
         });
     },
 
