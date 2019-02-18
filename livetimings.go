@@ -4,118 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/sirupsen/logrus"
 	"os"
+	"sort"
 	"strconv"
 	"time"
 )
-
-func CreateDummy() {
-	println("Create Dummy")
-
-	time.Sleep(20 * time.Second)
-
-	sessionStarted := udp.SessionInfo {
-		Version: 10,
-		ServerName: "That's a bloomin test server if I ever saw one!",
-		Track: "Goomba Beach",
-		TrackConfig: "Drift",
-		Name: "Pizza Bab",
-		Type: 3, // Is type an indicator of race/quali/etc. 0 book 1 prac 2 qual 3 race
-		Time: 25,
-		Laps: 0,
-		WaitTime: 2,
-		WeatherGraphics: "sol_23_Sand_type=24_time=0_mult=60_start=10458000",
-		ElapsedMilliseconds: 267,
-		EventType: udp.EventNewSession,
-	}
-
-	CallbackFunc(sessionStarted)
-
-	time.Sleep(2 * time.Second)
-
-	newConnectionCarInfo := udp.SessionCarInfo{
-		CarID: 0,
-		DriverName: "Kalom",
-		DriverGUID: "101983210957",
-		CarMode: "Submarine",
-		CarSkin: "Blue",
-
-		EventType: udp.EventNewConnection,
-	}
-
-	CallbackFunc(newConnectionCarInfo)
-
-	time.Sleep(1 * time.Second)
-
-	newConnectionCarInfo2 := udp.SessionCarInfo{
-		CarID: 1,
-		DriverName: "Henry",
-		DriverGUID: "12309150710571",
-		CarMode: "Jet Plane",
-		CarSkin: "Greenish",
-
-		EventType: udp.EventNewConnection,
-	}
-
-	CallbackFunc(newConnectionCarInfo2)
-
-	time.Sleep(2 * time.Second)
-	CallbackFunc(udp.ClientLoaded(0))
-	time.Sleep(1 * time.Second)
-	CallbackFunc(udp.ClientLoaded(1))
-
-	time.Sleep(5 * time.Second)
-
-	lapCompleted := udp.LapCompleted{
-		LapCompletedInternal: udp.LapCompletedInternal{
-			CarID: 0,
-			LapTime: 200000,
-			Cuts: 2,
-			CarsCount: 2,
-		},
-	}
-
-	CallbackFunc(lapCompleted)
-
-	time.Sleep(5 * time.Second)
-
-	lapCompleted2 := udp.LapCompleted{
-		LapCompletedInternal: udp.LapCompletedInternal{
-			CarID: 1,
-			LapTime: 200500,
-			Cuts: 1,
-			CarsCount: 2,
-		},
-	}
-
-	CallbackFunc(lapCompleted2)
-
-	time.Sleep(5 * time.Second)
-
-	lapCompleted3 := udp.LapCompleted{
-		LapCompletedInternal: udp.LapCompletedInternal{
-			CarID: 1,
-			LapTime: 190200,
-			Cuts: 1,
-			CarsCount: 2,
-		},
-	}
-
-	CallbackFunc(lapCompleted3)
-
-	time.Sleep(5 * time.Second)
-
-	lapCompleted4 := udp.LapCompleted{
-		LapCompletedInternal: udp.LapCompletedInternal{
-			CarID: 0,
-			LapTime: 201000,
-			Cuts: 2,
-			CarsCount: 2,
-		},
-	}
-
-	CallbackFunc(lapCompleted4)
-}
 
 // Live timing output format
 type LiveTiming struct {
@@ -125,6 +19,7 @@ type LiveTiming struct {
 	Time, Laps, WaitTime uint16
 	WeatherGraphics string
 	ElapsedMilliseconds int32
+	SessionStarted int64
 
 	Cars map[uint8]*LiveCar // map[carID]LiveCar
 
@@ -137,16 +32,36 @@ type LiveCar struct {
 	DriverName, DriverGUID string
 	CarMode, CarSkin string
 
+	// On disconnect
+	Delete bool
+
 	// Live Info
 	LapNum int
+
 	Loaded bool
+	LoadedTime int64
+
 	LastLap string
 	BestLap string
 	BestLapTime         time.Duration
 	LastLapCompleteTime time.Time
+	LastLapCompleteTimeUnix int64
 	Pos     int
-	Crash   bool
 	Split   string
+
+	Collisions []Collision
+}
+
+type LiveCarWID struct {
+	Car *LiveCar
+	ID uint8
+}
+
+type Collision struct {
+	Type string
+	Time int64
+	OtherCar uint8
+	Speed float32
 }
 
 var liveInfo LiveTiming
@@ -162,7 +77,21 @@ func CallbackFunc (response udp.Message) {
 	switch a := response.(type) {
 	case udp.SessionInfo:
 		if a.Event() == udp.EventNewSession {
-			// New session, clear old data and create new
+			// New session, clear old data and create new - keep cars if necessary
+			var oldCars map[uint8]*LiveCar
+
+			if len(liveInfo.Cars) != 0 {
+				oldCars = make(map[uint8]*LiveCar)
+				oldCars = liveInfo.Cars
+			}
+
+			sessionT, err := time.ParseDuration(fmt.Sprintf("%dms", a.ElapsedMilliseconds))
+
+			if err != nil {
+				//@TODO
+				logrus.Error(err)
+			}
+
 			liveInfo = LiveTiming {
 				ServerName: a.ServerName,
 				Track: a.Track,
@@ -174,8 +103,28 @@ func CallbackFunc (response udp.Message) {
 				WaitTime: a.WaitTime,
 				WeatherGraphics: a.WeatherGraphics,
 				ElapsedMilliseconds: a.ElapsedMilliseconds,
+				SessionStarted: unixNanoToMilli(time.Now().Add(-sessionT).UnixNano()),
+			}
 
-				Cars: make(map[uint8]*LiveCar),
+			if len(oldCars) == 0 {
+				liveInfo.Cars = make(map[uint8]*LiveCar)
+			} else {
+				for id, liveCar := range oldCars {
+					if liveCar.Delete {
+						delete(oldCars, id)
+					}
+
+					liveCar.LapNum = 0
+					liveCar.BestLapTime = time.Duration(0)
+					liveCar.BestLap = ""
+					liveCar.LastLapCompleteTime = time.Now()
+					liveCar.LastLapCompleteTimeUnix = unixNanoToMilli(time.Now().UnixNano())
+					liveCar.LastLap = ""
+					liveCar.Split = ""
+					liveCar.Pos = 0
+				}
+
+				liveInfo.Cars = oldCars
 			}
 		}
 
@@ -186,12 +135,38 @@ func CallbackFunc (response udp.Message) {
 				DriverName: a.DriverName,
 				CarMode: a.CarMode,
 				CarSkin: a.CarSkin,
+				Delete: false,
+			}
+		} else if a.Event() == udp.EventConnectionClosed {
+			_, ok := liveInfo.Cars[uint8(a.CarID)]; if ok {
+				liveInfo.Cars[uint8(a.CarID)].Delete = true
 			}
 		}
 
 	case udp.ClientLoaded:
 		if _, ok := liveInfo.Cars[uint8(a)]; ok {
 			liveInfo.Cars[uint8(a)].Loaded = true
+			liveInfo.Cars[uint8(a)].LoadedTime = unixNanoToMilli(time.Now().UnixNano())
+		}
+
+	case udp.CollisionWithCar:
+		if _, ok := liveInfo.Cars[uint8(a.CarID)]; ok {
+			liveInfo.Cars[uint8(a.CarID)].Collisions = append(liveInfo.Cars[uint8(a.CarID)].Collisions, Collision{
+				Type: "with other car",
+				Time: unixNanoToMilli(time.Now().UnixNano()),
+				OtherCar: uint8(a.OtherCarID),
+				Speed: a.ImpactSpeed,
+			})
+		}
+
+	case udp.CollisionWithEnvironment:
+		if _, ok := liveInfo.Cars[uint8(a.CarID)]; ok {
+			liveInfo.Cars[uint8(a.CarID)].Collisions = append(liveInfo.Cars[uint8(a.CarID)].Collisions, Collision{
+				Type: "with environment",
+				Time: unixNanoToMilli(time.Now().UnixNano()),
+				OtherCar: 255,
+				Speed: a.ImpactSpeed,
+			})
 		}
 
 	case udp.LapCompleted:
@@ -201,6 +176,7 @@ func CallbackFunc (response udp.Message) {
 			liveInfo.Cars[ID].LastLap = lapToDuration(int(a.LapCompletedInternal.LapTime)).String()
 			liveInfo.Cars[ID].LapNum ++
 			liveInfo.Cars[ID].LastLapCompleteTime = time.Now()
+			liveInfo.Cars[ID].LastLapCompleteTimeUnix = unixNanoToMilli(time.Now().UnixNano())
 
 			if lapToDuration(int(a.LapCompletedInternal.LapTime)) < liveInfo.Cars[ID].BestLapTime || liveInfo.Cars[ID].BestLapTime == 0 {
 				liveInfo.Cars[ID].BestLapTime = lapToDuration(int(a.LapCompletedInternal.LapTime))
@@ -246,13 +222,12 @@ func CallbackFunc (response udp.Message) {
 				}
 			// Qualification, Practice
 			case 2, 1:
-				// @TODO no point doing this, just sort the map by bestlaptime in js
 				for carID, liveCar := range liveInfo.Cars {
 					if carID == ID {
-						return
+						continue
 					}
 
-					if liveCar.BestLapTime > liveInfo.Cars[ID].BestLapTime {
+					if liveCar.BestLapTime < liveInfo.Cars[ID].BestLapTime && liveCar.BestLapTime != time.Duration(0) {
 						pos++
 					}
 				}
@@ -268,6 +243,39 @@ func CallbackFunc (response udp.Message) {
 						}
 					}
 				}
+
+				// @TODO this could be simplified
+				// Create an array that can be sorted by position
+				var carArray []*LiveCarWID
+
+				for carID, liveCar := range liveInfo.Cars {
+					carArray = append(carArray, &LiveCarWID{
+						Car: liveCar,
+						ID: carID,
+					})
+				}
+
+				sort.Slice(carArray, func(i, j int) bool {
+					return carArray[i].Car.Pos > carArray[j].Car.Pos
+				})
+
+				// Calculate splits for all other cars, they may have changed
+				for _, liveCar := range carArray {
+					if liveCar.Car.Pos == 1 {
+						liveInfo.Cars[liveCar.ID].Split = time.Duration(0).String()
+						continue
+					}
+
+					if liveCar.ID == ID {
+						continue
+					}
+
+					for _, newLiveCar := range liveInfo.Cars {
+						if liveCar.Car.Pos == newLiveCar.Pos+1 {
+							liveInfo.Cars[liveCar.ID].Split = (liveCar.Car.BestLapTime - newLiveCar.BestLapTime).String()
+						}
+					}
+				}
 		}
 
 	}
@@ -276,9 +284,13 @@ func CallbackFunc (response udp.Message) {
 
 	if err != nil {
 		//@TODO
-		panic(err)
+		logrus.Error(err)
 	}
 
+}
+
+func unixNanoToMilli(i int64) int64 {
+	return int64(float64(i)/1000000)
 }
 
 func lapToDuration(i int) time.Duration {
