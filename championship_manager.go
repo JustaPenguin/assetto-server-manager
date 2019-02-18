@@ -143,15 +143,15 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (map[
 
 	if editEventID, ok := vars["eventID"]; ok {
 		// editing a championship event
-		toEdit := formValueAsInt(editEventID)
+		event, err := championship.EventByID(editEventID)
 
-		if toEdit > len(championship.Events) || toEdit < 0 {
-			return nil, ErrInvalidChampionshipEvent
+		if err != nil {
+			return nil, err
 		}
 
-		opts["Current"] = championship.Events[toEdit].RaceSetup
+		opts["Current"] = event.RaceSetup
 		opts["IsEditing"] = true
-		opts["EditingID"] = toEdit
+		opts["EditingID"] = editEventID
 	} else {
 		// creating a new championship event
 		opts["IsEditing"] = false
@@ -188,17 +188,17 @@ func (cm *ChampionshipManager) SaveChampionshipEvent(r *http.Request) (champions
 
 	raceConfig.Cars = strings.Join(championship.ValidCarIDs(), ";")
 
-	if eventIDStr := r.FormValue("Editing"); eventIDStr != "" {
-		eventID := formValueAsInt(eventIDStr)
+	if eventID := r.FormValue("Editing"); eventID != "" {
+		edited = true
 
-		if eventID > len(championship.Events) || eventID < 0 {
-			return nil, nil, true, ErrInvalidChampionshipEvent
+		event, err = championship.EventByID(eventID)
+
+		if err != nil {
+			return nil, nil, true, err
 		}
 
 		// we're editing an existing event
-		championship.Events[eventID].RaceSetup = *raceConfig
-		event = championship.Events[eventID]
-		edited = true
+		event.RaceSetup = *raceConfig
 	} else {
 		// creating a new event
 		event = NewChampionshipEvent()
