@@ -623,6 +623,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		"IsEditing":         isEditing,
 		"EditingID":         templateIDForEditing,
 		"CustomRaceName":    customRaceName,
+		"SurfacePresets":    DefaultTrackSurfacePresets,
 	}, nil
 }
 
