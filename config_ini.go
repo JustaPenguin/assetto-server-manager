@@ -26,7 +26,18 @@ const (
 )
 
 func (s SessionType) String() string {
-	return strings.Title(strings.ToLower(string(s)))
+	switch s {
+	case SessionTypeBooking:
+		return "Booking"
+	case SessionTypePractice:
+		return "Practice"
+	case SessionTypeQualifying:
+		return "Qualifying"
+	case SessionTypeRace:
+		return "Race"
+	default:
+		return strings.Title(strings.ToLower(string(s)))
+	}
 }
 
 var AvailableSessions = []SessionType{
