@@ -63,6 +63,10 @@ func Router() *mux.Router {
 	r.HandleFunc("/custom/star/{uuid}", customRaceStarHandler)
 	r.Methods(http.MethodPost).Path("/custom/new/submit").HandlerFunc(customRaceSubmitHandler)
 
+	// live timing
+	r.HandleFunc("/livetiming", liveTimingHandler)
+	r.HandleFunc("/livetiming/get", liveTimingGetHandler)
+
 	// server management
 	r.HandleFunc("/logs", serverLogsHandler)
 	r.HandleFunc("/process/{action}", serverProcessHandler)
@@ -311,4 +315,24 @@ func apiServerLogHandler(w http.ResponseWriter, r *http.Request) {
 		ServerLog:  AssettoProcess.Logs(),
 		ManagerLog: logOutput.String(),
 	})
+}
+
+func liveTimingHandler(w http.ResponseWriter, r *http.Request) {
+	currentRace, entryList := raceManager.CurrentRace()
+
+	var customRace *CustomRace
+
+	if currentRace != nil {
+		customRace = &CustomRace{EntryList: entryList, RaceConfig: currentRace.CurrentRaceConfig}
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "live-timing.html", map[string]interface{}{
+		"RaceDetails": customRace,
+	})
+}
+
+func liveTimingGetHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	_ = json.NewEncoder(w).Encode(liveInfo)
 }

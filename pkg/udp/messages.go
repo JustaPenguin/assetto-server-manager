@@ -144,7 +144,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 			DriverGUID: driverGUID,
 			CarMode:    carMode,
 			CarSkin:    carSkin,
-			event:      eventType,
+			EventType:  eventType,
 		}
 
 	case EventCarUpdate:
@@ -294,7 +294,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 			return nil, err
 		}
 
-		sessionInfo.event = eventType
+		sessionInfo.EventType = eventType
 
 		response = sessionInfo
 	case EventError:

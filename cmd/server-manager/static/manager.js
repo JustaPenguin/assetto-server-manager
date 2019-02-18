@@ -9,6 +9,7 @@ $(document).ready(function () {
     $document = $(document);
     raceSetup.init();
     serverLogs.init();
+    liveTiming.init();
     championships.init();
 
     // init bootstrap-switch
@@ -535,8 +536,124 @@ let raceSetup = {
     },
 };
 
-let logCharLimit = 500000;
+let $drivers = [];
 
+let liveTiming = {
+    init: function () {
+        let $liveTimingTable = $document.find("#live-table");
+
+        let $raceCompletion = 0;
+        let $total = 0;
+        let $sessionType = "";
+
+        if ($liveTimingTable.length) {
+            setInterval(function () {
+                $.getJSON("/livetiming/get", function (liveTiming) {
+
+                    // Get lap/laps or time/totalTime
+                    if (liveTiming.Time > 0) {
+                        $raceCompletion = liveTiming.ElapsedMilliseconds / 60000;
+                        $total = liveTiming.Time;
+                    } else if (liveTiming.Laps > 0) {
+                        $raceCompletion = liveTiming.LapNum;
+                        $total = liveTiming.Laps;
+                    }
+
+                    let $raceTime = $document.find("#race-time");
+                    $raceTime.text("Event Completion: " + $raceCompletion + "/" + $total);
+
+                    // Get the session type
+                    let $currentSession = $document.find("#current-session");
+
+                    switch (liveTiming.Type) {
+                        case 0:
+                            $sessionType = "Booking";
+                            break;
+                        case 1:
+                            $sessionType = "Practice";
+                            break;
+                        case 2:
+                            $sessionType = "Qualification";
+                            break;
+                        case 3:
+                            $sessionType = "Race";
+                            break;
+                    }
+
+                    $currentSession.text("Current Session: " + $sessionType);
+
+                    // Get active cars
+                    let sorted = Object.keys(liveTiming.Cars)
+                        .sort(function (a, b) {
+                            if (liveTiming.Cars[a].Pos < liveTiming.Cars[b].Pos) {
+                                return -1
+                            } else if (liveTiming.Cars[a].Pos === liveTiming.Cars[b].Pos) {
+                                return 0
+                            } else if (liveTiming.Cars[a].Pos > liveTiming.Cars[b].Pos) {
+                                return 1
+                            }
+                        });
+
+                    for (let car of sorted) {
+                        let $driverRow = $document.find("#"+liveTiming.Cars[car].DriverGUID);
+                        let $tr;
+
+                        if ($driverRow.length) {
+                            $driverRow.remove()
+                        } else {
+                            $drivers.push(liveTiming.Cars[car].DriverGUID);
+
+                           // $tr = $("<tr/>");
+
+                           // $tr.attr({'id': liveTiming.Cars[car].DriverGUID});
+                        }
+
+                        $tr = $("<tr/>");
+                        $tr.attr({'id': liveTiming.Cars[car].DriverGUID});
+                        $tr.empty();
+
+                        let $tdPos = $("<td/>");
+                        let $tdName = $("<td/>");
+                        let $tdLapTime = $("<td/>");
+                        let $tdGap = $("<td/>");
+                        let $tdPosDiff = $("<td/>");
+                        let $tdEvents = $("<td/>");
+
+                        console.log(liveTiming.Cars[car].DriverName);
+                        console.log(liveTiming.Cars[car].Pos);
+
+                        $tdPos.text(liveTiming.Cars[car].Pos);
+                        $tr.append($tdPos);
+
+                        $tdName.text(liveTiming.Cars[car].DriverName);
+                        $tr.append($tdName);
+
+                        $tdLapTime.text(liveTiming.Cars[car].LastLap);
+                        $tr.append($tdLapTime);
+
+                        $tdGap.text(liveTiming.Cars[car].Split);
+                        $tr.append($tdGap);
+
+                        $tdPosDiff.text(0);
+                        $tr.append($tdPosDiff);
+
+                        // @TODO events should append an event tag for a certain number of refreshes after the event
+                        if (liveTiming.Cars[car].Loaded) {
+                            $tdEvents.text("loaded");
+                        }
+
+                        $tr.append($tdEvents);
+
+                        $liveTimingTable.append($tr)
+                    }
+                });
+            }, 1000);
+        }
+    }
+};
+
+
+let logCharLimit = 500000;
 
 let serverLogs = {
     init: function () {

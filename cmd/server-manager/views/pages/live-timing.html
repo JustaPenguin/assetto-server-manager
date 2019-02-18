@@ -1,0 +1,43 @@
+{{ define "title" }}Live Timing{{ end }}
+
+{{ define "content" }}
+    {{ with .RaceDetails }}
+        <div class="card">
+            <h5 class="card-header">Event in Progress</h5>
+            <div class="card-body row home-race-info">
+                <div class="col-md-8">
+
+                    {{ template "race-card" . }}
+
+                    <div id="current-session" class="mt-2 font-weight-bold"></div>
+                    <div id="race-time" class="mt-2 font-weight-bold"></div>
+
+                </div>
+                <div class="col-md-4">
+                    <img class="img img-fluid pl-2"
+                         id="trackImage"
+                         src="/content/tracks/{{ .RaceConfig.Track }}/ui{{ with .RaceConfig.TrackLayout }}/{{.}}{{ end }}/preview.png"
+                         alt="{{ .RaceConfig.Track }} {{ .RaceConfig.TrackLayout }}"
+                    >
+                </div>
+
+                <div class="table-responsive p-3">
+                    <table id="live-table" class="table table-bordered table-striped">
+                        <tr>
+                            <th>Pos</th>
+                            <th>Driver</th>
+                            <!--<th>Team</th>-->
+                            <th>Lap Time</th>
+                            <th>Gap</th>
+                            <th>Pos Diff</th>
+                            <th>Events</th>
+                        </tr>
+
+                        <!-- trs for drivers are appended by javascript -->
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    {{ end }}
+{{ end }}
