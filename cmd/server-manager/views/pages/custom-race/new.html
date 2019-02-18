@@ -21,7 +21,7 @@
         <p>Configure an Event for the <strong>{{ .Championship.Name }}</strong> Championship.</p>
     {{ end }}
 
-    <form method="post" {{ if .IsChampionship }} action="/championship/{{ .Championship.ID.String }}/event/submit" {{ else }} action="/custom/new/submit" {{ end}}>
+    <form method="post" {{ if .IsChampionship }} action="/championship/{{ .Championship.ID.String }}/event/submit" {{ else }} action="/custom/new/submit" {{ end}} data-safe-submit>
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">
@@ -221,7 +221,7 @@
                                                     step="1"
                                             >
 
-                                            <small>session length in minutes</small>
+                                            <small>Session length in minutes</small>
                                         </div>
 
 
@@ -237,7 +237,7 @@
                                                     step="1"
                                             >
 
-                                            <small>number of laps in the race</small>
+                                            <small>Number of laps in the race</small>
                                         </div>
                                     </div>
                                 {{ else }}
@@ -256,7 +256,7 @@
                                                     step="1"
                                             >
 
-                                            <small>session length in minutes</small>
+                                            <small>Session length in minutes</small>
                                         </div>
                                     </div>
 
@@ -407,7 +407,7 @@
 
                                     <div class="row">
                                         <div class="form-group row col-md-6">
-                                            <label for="ReversedGridRacePositions" class="col-sm-6 col-form-label">
+                                            <label for="ReversedGridRacePositions" class="col-sm-6 col-form-label" data-toggle="tooltip" title="The race session will be restarted in reversed grid order based on the standings of the previous race. Players disqualified in the first race will start from the back of the grid in the second race, regardless of their position being within the reversed grid range.">
                                                 Reversed Grid Race Positions
                                             </label>
 
@@ -555,7 +555,12 @@
                         {{ template "entrant" }}
                     </div>
                 {{ end }}
-                <button class="btn btn-warning float-right" id="addEntrant">Add Entrant</button>
+
+                <div class="float-right">
+                    <input id="numEntrantsToAdd" class="form-control" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
+
+                    <button class="btn btn-warning" id="addEntrant">Add Entrant(s)</button>
+                </div>
 
                 <div class="clearfix"></div>
             </div>
@@ -807,6 +812,8 @@
                 </div>
 
                 <hr>
+
+                <p>Each new session will be <strong>randomly selected</strong> from the below weather configurations.</p>
 
                 <div class="row">
 
