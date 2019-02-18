@@ -18,7 +18,7 @@
         {{ end }}
     </h1>
 
-    <form action="/championships/new/submit" method="post">
+    <form action="/championships/new/submit" method="post" data-safe-submit>
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">
@@ -85,7 +85,11 @@
                     </div>
                 {{ end }}
 
-                <button class="btn btn-warning float-right" id="addEntrant">Add Entrant</button>
+                <div class="float-right">
+                    <input id="numEntrantsToAdd" class="form-control" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
+
+                    <button class="btn btn-warning" id="addEntrant">Add Entrant(s)</button>
+                </div>
 
                 <div class="clearfix"></div>
             </div>
