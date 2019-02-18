@@ -380,8 +380,9 @@
 
 
                                         <div class="form-group row col-md-6">
-                                            <label for="RaceGasPenaltyDisabled" class="col-sm-6 col-form-label">Race Gas Penalty
-                                                Disabled</label>
+                                            <label for="RaceGasPenaltyDisabled" class="col-sm-6 col-form-label">
+                                                Race Gas Penalty
+                                            </label>
 
 
                                             <div class="col-sm-6">
@@ -389,15 +390,15 @@
                                                         type="checkbox"
                                                         id="RaceGasPenaltyDisabled"
                                                         name="RaceGasPenaltyDisabled"
-                                                        {{ if $f.RaceGasPenaltyDisabled }}
+                                                        {{ if not $f.RaceGasPenaltyDisabled }}
                                                             checked="checked"
                                                         {{ end }}
                                                 >
                                                 <br>
 
-                                                <small>Off = any cut will be penalized with the gas cut message; On = no penalization will be
-                                                    forced, but
-                                                    cuts will be saved in the race result json.
+                                                <small>
+                                                    OFF: no penalization will be  forced, but cuts will be saved in the race result json.<br>
+                                                    ON: any cut will be penalized with the gas cut message.
                                                 </small>
                                             </div>
                                         </div>
