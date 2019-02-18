@@ -36,6 +36,8 @@ func main() {
 		logrus.Fatalf("could not initialise view renderer, err: %s", err)
 	}
 
+	go servermanager.CreateDummy()
+
 	logrus.Infof("starting assetto server manager on: %s", serverAddress)
 	logrus.Fatal(http.ListenAndServe(serverAddress, servermanager.Router()))
 }
