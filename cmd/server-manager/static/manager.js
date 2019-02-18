@@ -354,6 +354,7 @@ let raceSetup = {
         let $timeOrLaps = $document.find("#TimeOrLaps");
         let $raceLaps = $document.find("#RaceLaps");
         let $raceTime = $document.find("#RaceTime");
+        let $extraLap = $document.find(".race-extra-lap");
 
         if ($timeOrLaps.length) {
             $timeOrLaps.change(function () {
@@ -364,11 +365,19 @@ let raceSetup = {
                     $raceTime.find("input").val(15);
                     $raceLaps.hide();
                     $raceTime.show();
+
+                    if ($extraLap.length > 0) {
+                        $extraLap.show();
+                    }
                 } else {
                     $raceTime.find("input").val(0);
                     $raceLaps.find("input").val(10);
                     $raceLaps.show();
                     $raceTime.hide();
+
+                    if ($extraLap.length > 0) {
+                        $extraLap.hide();
+                    }
                 }
             });
         }

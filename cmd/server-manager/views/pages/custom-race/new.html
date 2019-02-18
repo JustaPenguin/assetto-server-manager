@@ -405,30 +405,53 @@
 
                                     </div>
 
+                                    <div class="row">
+                                        <div class="form-group row col-md-6">
+                                            <label for="ReversedGridRacePositions" class="col-sm-6 col-form-label">
+                                                Reversed Grid Race Positions
+                                            </label>
 
-                                    <div class="form-group row">
-                                        <label for="ReversedGridRacePositions" class="col-sm-3 col-form-label">Reversed Grid Race
-                                            Positions</label>
-
-                                        <div class="col-sm-9">
-                                            <input
-                                                    type="number"
-                                                    id="ReversedGridRacePositions"
-                                                    name="ReversedGridRacePositions"
-                                                    class="form-control"
-                                                    value="{{ $f.ReversedGridRacePositions }}"
+                                            <div class="col-sm-6">
+                                                <input
+                                                        type="number"
+                                                        id="ReversedGridRacePositions"
+                                                        name="ReversedGridRacePositions"
+                                                        class="form-control"
+                                                        value="{{ $f.ReversedGridRacePositions }}"
 
 
-                                                    step="1"
-                                            >
+                                                        step="1"
+                                                >
 
-                                            <small> 0 = no additional race, 1toX = only those position will be reversed for the next race,
-                                                -1 = all
-                                                the position will be reversed (Retired players will be on the last positions)
-                                            </small>
+                                                <small> 0 = no additional race<br/>
+                                                    1toX = only those position will be reversed for the next race,<br/>
+                                                    -1 = all the positions will be reversed (Retired players will be on the last positions)
+                                                </small>
+                                            </div>
+                                        </div>
+
+
+                                        <div class="form-group row col-md-6 race-extra-lap" {{ if and (eq $session.Time 0) (ne $session.Laps 0) }} style="display: none;" {{ end }}>
+                                            <label for="RaceExtraLap" class="col-sm-6 col-form-label">Extra Lap</label>
+
+
+                                            <div class="col-sm-6">
+                                                <input
+                                                        type="checkbox"
+                                                        id="RaceExtraLap"
+                                                        name="RaceExtraLap"
+                                                        {{ if $f.RaceExtraLap }}
+                                                            checked="checked"
+                                                        {{ end }}
+                                                >
+                                                <br>
+
+                                                <small>
+                                                    If the race is timed, force an extra lap after the leader has crossed the line
+                                                </small>
+                                            </div>
                                         </div>
                                     </div>
-
                                 {{ else if eq $sessionType "QUALIFY" }}
                                     <hr>
 
