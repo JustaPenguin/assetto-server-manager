@@ -51,14 +51,14 @@ abbr[title] {
 
 span[data-toggle=tooltip] { cursor: default; }
 
-.row-link:hover {
+.driver-link:hover, .row-link:hover {
     cursor: pointer;
     color: #158CBA;
 }
 
-.driver-link:hover {
-    cursor: pointer;
-    color: #158CBA;
+.championship .driver-link:hover, .championship .row-link:hover {
+    cursor: initial;
+    color: initial;
 }
 
 .badge-best {
@@ -179,4 +179,8 @@ span[data-toggle=tooltip] { cursor: default; }
     100% {
         background-position: 208px 0px, 0px 31px, 0px 0px, 208px 104px;
     }
+}
+
+a.detailed-results:hover {
+    text-decoration: none;
 }

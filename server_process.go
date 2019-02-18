@@ -9,7 +9,15 @@ import (
 	"sync"
 )
 
-var AssettoProcess = &AssettoServerProcess{}
+type ServerProcess interface {
+	Logs() string
+	Start() error
+	Stop() error
+	Restart() error
+	IsRunning() bool
+}
+
+var AssettoProcess ServerProcess
 
 var ErrServerAlreadyRunning = errors.New("servermanager: assetto corsa server is already running")
 

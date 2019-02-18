@@ -39,8 +39,8 @@
                             <div class="col-sm-9">
                                 <select class="form-control" name="Track" id="Track">
                                     {{ range $index, $track := .TrackOpts }}
-                                        <option value="{{ $track }}" {{ if eq $track $f.Track }}selected="selected" {{ end }}>
-                                            {{ prettify $track false }}
+                                        <option value="{{ $track.Name }}" {{ if eq $track.Name $f.Track }}selected="selected" {{ end }}>
+                                            {{ prettify $track.Name false }}
                                         </option>
                                     {{ end }}
                                 </select>
@@ -57,8 +57,14 @@
 
                             <div class="col-sm-9">
                                 <select class="form-control" name="TrackLayout" id="TrackLayout">
-                                    {{ range $index, $layout := .TrackLayoutOpts }}
-                                        <option value="{{ $layout }}">{{ $layout }}</option>
+                                    {{ range $index, $track := .TrackOpts }}
+                                        {{ range $layoutIndex, $layout := $track.Layouts }}
+                                            {{ if and (eq $track.Name $f.Track) (eq $layout $f.TrackLayout) }}
+                                                <option value="{{ $track.Name }}:{{ $layout }}:current">{{ $layout }}</option>
+                                            {{ else }}
+                                                <option value="{{ $track.Name }}:{{ $layout }}">{{ $layout }}</option>
+                                            {{ end }}
+                                        {{ end }}
                                     {{ end }}
                                 </select>
 

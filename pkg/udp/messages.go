@@ -8,21 +8,34 @@ import (
 	"fmt"
 	"io"
 	"net"
-
-	"github.com/sirupsen/logrus"
-	"golang.org/x/text/encoding/unicode/utf32"
 )
 
-func NewServerClient(ctx context.Context, addr string, receivePort, sendPort int, callback CallbackFunc) (*AssettoServerUDP, error) {
-	u := &AssettoServerUDP{
-		ctx:      ctx,
-		callback: callback,
-	}
-	err := u.listen(addr, receivePort, sendPort)
+func NewServerClient(addr string, receivePort, sendPort int, forward bool, forwardAddrStr string, callback CallbackFunc) (*AssettoServerUDP, error) {
+	listener, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP(addr), Port: receivePort})
 
 	if err != nil {
 		return nil, err
 	}
+
+	ctx, cfn := context.WithCancel(context.Background())
+
+	u := &AssettoServerUDP{
+		ctx:      ctx,
+		cfn:      cfn,
+		callback: callback,
+		forward:  forward,
+		listener: listener,
+	}
+
+	if forward {
+		u.forwardAddr, err = net.ResolveUDPAddr("udp", forwardAddrStr)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	go u.serve()
 
 	return u, nil
 }
@@ -30,29 +43,36 @@ func NewServerClient(ctx context.Context, addr string, receivePort, sendPort int
 type CallbackFunc func(response Message)
 
 type AssettoServerUDP struct {
+	listener    *net.UDPConn
+	forwardAddr *net.UDPAddr
+	forward     bool
+
+	cfn      func()
 	ctx      context.Context
 	callback CallbackFunc
 }
 
-func (asu *AssettoServerUDP) listen(hostname string, receivePort, sendPort int) error {
-	errCh := make(chan error)
+func (asu *AssettoServerUDP) Close() error {
+	asu.cfn()
+	err := asu.listener.Close()
 
-	go func() {
-		serverConn, err := net.ListenUDP("udp", &net.UDPAddr{IP: []byte{0, 0, 0, 0}, Port: receivePort, Zone: ""})
+	if err != nil {
+		return err
+	}
 
-		if err != nil {
-			errCh <- err
+	return nil
+}
+
+func (asu *AssettoServerUDP) serve() {
+	for {
+		select {
+		case <-asu.ctx.Done():
+			asu.listener.Close()
 			return
-		} else {
-			errCh <- nil
-		}
+		default:
+			buf := make([]byte, 1024)
 
-		defer serverConn.Close()
-
-		buf := make([]byte, 1024)
-
-		for {
-			_, _, err := serverConn.ReadFromUDP(buf)
+			_, _, err := asu.listener.ReadFromUDP(buf)
 
 			if err != nil {
 				asu.callback(ServerError{err})
@@ -63,21 +83,18 @@ func (asu *AssettoServerUDP) listen(hostname string, receivePort, sendPort int) 
 
 			if err != nil {
 				asu.callback(ServerError{err})
-				continue
+				return
 			}
 
 			asu.callback(msg)
 
-			select {
-			case <-asu.ctx.Done():
-				logrus.Infof("received done message, closing")
-				return
-			default:
+			if asu.forward {
+				go func() {
+					asu.listener.WriteTo(buf, asu.forwardAddr)
+				}()
 			}
 		}
-	}()
-
-	return <-errCh
+	}
 }
 
 func readStringW(r io.Reader) string {
@@ -96,17 +113,7 @@ func readString(r io.Reader, sizeMultiplier int) string {
 
 	err = binary.Read(r, binary.LittleEndian, &s)
 
-	if err != nil {
-		return ""
-	}
-
-	decoded, err := utf32.UTF32(utf32.LittleEndian, utf32.IgnoreBOM).NewDecoder().Bytes(s)
-
-	if err != nil {
-		return ""
-	}
-
-	return string(decoded)
+	return string(bytes.Replace(s, []byte("\x00"), nil, -1))
 }
 
 func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
@@ -144,7 +151,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 			DriverGUID: driverGUID,
 			CarMode:    carMode,
 			CarSkin:    carSkin,
-			event:      eventType,
+			EventType:  eventType,
 		}
 
 	case EventCarUpdate:
@@ -294,7 +301,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 			return nil, err
 		}
 
-		sessionInfo.event = eventType
+		sessionInfo.EventType = eventType
 
 		response = sessionInfo
 	case EventError:
