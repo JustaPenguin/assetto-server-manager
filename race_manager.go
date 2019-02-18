@@ -386,6 +386,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 
 	if isSol {
 		raceConfig.SunAngle = 0
+		raceConfig.TimeOfDayMultiplier = 0
 	}
 
 	for _, session := range AvailableSessions {
@@ -590,6 +591,15 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		}
 	}
 
+	solIsInstalled := false
+
+	for availableWeather := range weather {
+		if strings.HasPrefix(availableWeather, "sol_") {
+			solIsInstalled = true
+			break
+		}
+	}
+
 	// default sol time to now
 	for _, weather := range race.CurrentRaceConfig.Weather {
 		if weather.CMWFXDate == 0 {
@@ -604,6 +614,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		"Tyres":             tyres,
 		"DeselectedTyres":   deselectedTyres,
 		"Weather":           weather,
+		"SolIsInstalled":    solIsInstalled,
 		"Current":           race.CurrentRaceConfig,
 		"CurrentEntrants":   entrants,
 		"PossibleEntrants":  possibleEntrants,

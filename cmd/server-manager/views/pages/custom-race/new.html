@@ -646,19 +646,23 @@
                     <label class="col-sm-3 col-form-label">Sol Integration</label>
 
                     <div class="col-sm-9">
-                        <input
-                                type="checkbox"
-                                class="sol-enabler"
-                                name="Sol.Enabled"
-                                id="Sol.Enabled"
+                        {{ if .SolIsInstalled }}
+                            <input
+                                    type="checkbox"
+                                    class="sol-enabler"
+                                    name="Sol.Enabled"
+                                    id="Sol.Enabled"
 
-                                {{ if $f.IsSol }}
-                                    checked="checked"
-                                {{ end }}
-                        >
+                                    {{ if $f.IsSol }}
+                                        checked="checked"
+                                    {{ end }}
+                            >
 
-                        <br>
-                        <small>Allows for 24 hour time cycles. The server treats time differently if enabled. Clients also require Sol and Content Manager</small>
+                            <br>
+                            <small>Allows for 24 hour time cycles. The server treats time differently if enabled. Clients also require Sol and Content Manager</small>
+                        {{ else }}
+                            <p class="text-danger">Sol isn't installed. Please <a href="/weather">upload your Sol weathers</a> if you want to use Sol.</p>
+                        {{ end }}
                     </div>
                 </div>
 
@@ -679,6 +683,24 @@
                             >
 
                             <small>Angle of the position of the sun</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="TimeOfDayMultiplier" class="col-sm-3 col-form-label">Time Of Day Multiplier</label>
+
+                        <div class="col-sm-9">
+                            <input
+                                    type="number"
+                                    id="TimeOfDayMultiplier"
+                                    name="TimeOfDayMultiplier"
+                                    class="form-control"
+                                    value="{{ $f.TimeOfDayMultiplier }}"
+                                    min="0"
+                                    step="1"
+                            >
+
+                            <small>Multiplier for the time of day</small>
                         </div>
                     </div>
                 </div>
@@ -737,7 +759,7 @@
                                 step="1"
                         >
 
-                        <small>base direction of the wind (wind is pointing at); 0 = North, 90 = East etc</small>
+                        <small>Base direction of the wind (wind is pointing at); 0 = North, 90 = East etc</small>
                     </div>
                 </div>
 
@@ -757,7 +779,7 @@
                                 step="1"
                         >
 
-                        <small>variation (&#43; or -) of the base direction</small>
+                        <small>Variation (&#43; or -) of the base direction</small>
                     </div>
                 </div>
 
@@ -888,7 +910,7 @@
                                                         step="1"
                                                 >
 
-                                                <small>variation of the ambient&#39;s temperature. In this example final ambient&#39;s
+                                                <small>Variation of the ambient&#39;s temperature. In this example final ambient&#39;s
                                                     temperature can be 16 or 20
                                                 </small>
                                             </div>
@@ -908,7 +930,7 @@
                                                         step="1"
                                                 >
 
-                                                <small>variation of the road&#39;s temperature. Like the ambient one</small>
+                                                <small>Variation of the road&#39;s temperature. Like the ambient one</small>
                                             </div>
                                         </div>
                                     </div>
@@ -1043,24 +1065,6 @@
                 </div>
 
 
-                <div class="form-group row">
-                    <label for="TimeOfDayMultiplier" class="col-sm-3 col-form-label">Time Of Day Multiplier</label>
-
-                    <div class="col-sm-9">
-                        <input
-                                type="number"
-                                id="TimeOfDayMultiplier"
-                                name="TimeOfDayMultiplier"
-                                class="form-control"
-                                value="{{ $f.TimeOfDayMultiplier }}"
-                                min="0"
-                                step="1"
-                        >
-
-                        <small>Multiplier for the time of day</small>
-                    </div>
-                </div>
-
 
                 <h4>Dynamic Track</h4>
 
@@ -1099,7 +1103,7 @@
                                 step="1"
                         >
 
-                        <small>level of randomness added to the start grip</small>
+                        <small>Level of randomness added to the start grip</small>
                     </div>
                 </div>
 
@@ -1119,7 +1123,7 @@
                                 step="1"
                         >
 
-                        <small>how much of the gained grip is to be added to the next session 100 -&gt; all the gained
+                        <small>How much of the gained grip is to be added to the next session 100 -&gt; all the gained
                             grip. Example: difference between starting (90) and ending (96) grip in the session = 6%,
                             with session_transfer = 50 then the next session is going to start with 93.
                         </small>
@@ -1142,7 +1146,7 @@
                                 step="1"
                         >
 
-                        <small>how many laps are needed to add 1% grip</small>
+                        <small>How many laps are needed to add 1% grip</small>
                     </div>
                 </div>
 
