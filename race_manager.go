@@ -382,6 +382,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		RaceOverTime:              formValueAsInt(r.FormValue("RaceOverTime")),
 		StartRule:                 formValueAsInt(r.FormValue("StartRule")),
 		MaxClients:                formValueAsInt(r.FormValue("MaxClients")),
+		RaceExtraLap:              formValueAsInt(r.FormValue("RaceExtraLap")),
 	}
 
 	if isSol {
