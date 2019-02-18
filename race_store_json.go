@@ -2,7 +2,6 @@ package servermanager
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -48,8 +47,6 @@ func (rs *JSONRaceStore) listFiles(dir string) ([]string, error) {
 
 		list = append(list, strings.TrimSuffix(file.Name(), ".json"))
 	}
-
-	fmt.Println(list)
 
 	return list, nil
 }

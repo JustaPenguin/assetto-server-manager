@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"os"
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
+
+	"github.com/sirupsen/logrus"
 )
 
 var entries []Entry

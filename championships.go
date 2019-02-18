@@ -262,7 +262,7 @@ func (ce *ChampionshipSession) InProgress() bool {
 	return !ce.StartedTime.IsZero() && ce.CompletedTime.IsZero()
 }
 
-// Completed ChampionshipEvents have a non-zero CompletedTime
+// Completed ChampionshipSessions have a non-zero CompletedTime
 func (ce *ChampionshipSession) Completed() bool {
 	return !ce.CompletedTime.IsZero()
 }
