@@ -17,7 +17,7 @@
                     <div class="col-sm-9">
                         <select class="form-control" name="Track" id="Track">
                             {{ range $index, $track := .TrackOpts }}
-                                <option value="{{ $track }}">{{ prettify $track false }}</option>
+                                <option value="{{ $track.Name }}">{{ prettify $track.Name false }}</option>
                             {{ end }}
                         </select>
 
@@ -33,8 +33,10 @@
 
                     <div class="col-sm-9">
                         <select class="form-control" name="TrackLayout" id="TrackLayout">
-                            {{ range $index, $layout := .TrackLayoutOpts }}
-                                <option value="{{ $layout }}">{{ $layout }}</option>
+                            {{ range $index, $track := .TrackOpts }}
+                                {{ range $layoutIndex, $layout := $track.Layouts }}
+                                    <option value="{{ $track.Name }}:{{ $layout }}">{{ $layout }}</option>
+                                {{ end }}
                             {{ end }}
                         </select>
 

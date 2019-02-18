@@ -19,11 +19,11 @@ $(document).ready(function () {
 
     $document.find('[data-toggle="tooltip"]').tooltip();
 
-    $(".row-link").click(function () {
+    $document.find(".row-link").click(function () {
         window.location = $(this).data("href");
     });
 
-    $(".driver-link").click(function () {
+    $document.find(".results .driver-link").click(function () {
         window.location = $(this).data("href");
         window.scrollBy(0, -100);
     });
@@ -177,6 +177,22 @@ let raceSetup = {
 
             raceSetup.$trackDropdown.change(raceSetup.loadTrackLayouts);
             raceSetup.$trackLayoutDropdown.change(raceSetup.showTrackImage);
+
+            let canSubmit = false;
+
+            $document.find("button[type='submit']").click(function() {
+                canSubmit = true;
+            });
+
+            // ask the user before they close the webpage
+            window.onbeforeunload = function() {
+                if (canSubmit) {
+                    return;
+                }
+
+                return "Are you sure you want to navigate away? You'll lose unsaved changes to this setup if you do.";
+            };
+
         }
 
         raceSetup.raceLaps();

@@ -1,10 +1,10 @@
 package servermanager
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"math/rand"
+	"net"
 	"net/http"
 	"sort"
 	"strconv"
@@ -17,6 +17,7 @@ import (
 	"github.com/etcd-io/bbolt"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -29,17 +30,10 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func SetupRaceManager(storeFileLocation string) error {
-	bb, err := bbolt.Open(storeFileLocation, 0644, nil)
-
-	if err != nil {
-		return err
-	}
-
-	raceManager = NewRaceManager(NewBoltRaceStore(bb))
+func SetupRaceManager(store RaceStore) {
+	raceManager = NewRaceManager(store)
 	championshipManager = NewChampionshipManager(raceManager)
-
-	return nil
+	AssettoProcess = &AssettoServerProcess{}
 }
 
 type RaceManager struct {
@@ -48,18 +42,12 @@ type RaceManager struct {
 
 	raceStore RaceStore
 
-	udpListenerContext context.Context
-	udpListenerCfn     func()
-	udpServerConn      *udp.AssettoServerUDP
+	udpServerConn *udp.AssettoServerUDP
 }
 
 func NewRaceManager(raceStore RaceStore) *RaceManager {
-	ctx, cfn := context.WithCancel(context.Background())
-
 	return &RaceManager{
-		raceStore:          raceStore,
-		udpListenerContext: ctx,
-		udpListenerCfn:     cfn,
+		raceStore: raceStore,
 	}
 }
 
@@ -71,15 +59,30 @@ func (rm *RaceManager) CurrentRace() (*ServerConfig, EntryList) {
 	return rm.currentRace, rm.currentEntryList
 }
 
-func (rm *RaceManager) startUDPListener(cfg ServerConfig) error {
-	// close old udp listener
-	rm.udpListenerCfn()
-
-	rm.udpListenerContext, rm.udpListenerCfn = context.WithCancel(context.Background())
-
+func (rm *RaceManager) startUDPListener(cfg ServerConfig, forwardingAddress string) error {
 	var err error
 
-	rm.udpServerConn, err = udp.NewServerClient(rm.udpListenerContext, "127.0.0.1", 12000, 11000, rm.UDPCallback)
+	if rm.udpServerConn != nil {
+		err := rm.udpServerConn.Close()
+
+		if err != nil {
+			return err
+		}
+	}
+
+	host, portStr, err := net.SplitHostPort(cfg.GlobalServerConfig.FreeUDPPluginAddress)
+
+	if err != nil {
+		return err
+	}
+
+	port, err := strconv.ParseInt(portStr, 10, 0)
+
+	if err != nil {
+		return err
+	}
+
+	rm.udpServerConn, err = udp.NewServerClient(host, int(port), cfg.GlobalServerConfig.FreeUDPPluginLocalPort, true, forwardingAddress, rm.UDPCallback)
 
 	if err != nil {
 		return err
@@ -89,7 +92,16 @@ func (rm *RaceManager) startUDPListener(cfg ServerConfig) error {
 }
 
 func (rm *RaceManager) UDPCallback(message udp.Message) {
+	// recover from panics that may occur while handling UDP messages
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("recovered from panic: %s", r)
+		}
+	}()
+
 	spew.Dump(message)
+
+	championshipManager.ChampionshipEventCallback(message)
 }
 
 func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList) error {
@@ -101,6 +113,10 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 	}
 
 	config.GlobalServerConfig = *serverOpts
+	forwardingAddress := config.GlobalServerConfig.UDPPluginAddress
+
+	config.GlobalServerConfig.UDPPluginAddress = config.GlobalServerConfig.FreeUDPPluginAddress
+	config.GlobalServerConfig.UDPPluginLocalPort = config.GlobalServerConfig.FreeUDPPluginLocalPort
 
 	err = config.Write()
 
@@ -114,7 +130,7 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		return err
 	}
 
-	err = rm.startUDPListener(config)
+	err = rm.startUDPListener(config, forwardingAddress)
 
 	if err != nil {
 		return err
@@ -390,22 +406,20 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 
 	// weather
 	for i := 0; i < len(r.Form["Graphics"]); i++ {
-		if !isSol {
-			raceConfig.AddWeather(WeatherConfig{
-				Graphics:               r.Form["Graphics"][i],
+		weatherName := r.Form["Graphics"][i]
+
+		WFXType, err := getWeatherType(weatherName)
+
+		// if WFXType can't be found due to an error, default to non-sol weather.
+		if !isSol || err != nil {
+			raceConfig.AddWeather(&WeatherConfig{
+				Graphics:               weatherName,
 				BaseTemperatureAmbient: formValueAsInt(r.Form["BaseTemperatureAmbient"][i]),
 				BaseTemperatureRoad:    formValueAsInt(r.Form["BaseTemperatureRoad"][i]),
 				VariationAmbient:       formValueAsInt(r.Form["VariationAmbient"][i]),
 				VariationRoad:          formValueAsInt(r.Form["VariationRoad"][i]),
 			})
 		} else {
-			weatherName := r.Form["Graphics"][i]
-			WFXType, err := getWeatherType(weatherName)
-
-			if err != nil {
-				return nil, err
-			}
-
 			startTime, err := time.Parse("2006-01-02T15:04", r.Form["DateUnix"][i])
 
 			if err != nil {
@@ -415,7 +429,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 			startTimeZoned := startTime.In(time.FixedZone("UTC+10", 10*60*60))
 			timeMulti := r.Form["TimeMulti"][i]
 
-			raceConfig.AddWeather(WeatherConfig{
+			raceConfig.AddWeather(&WeatherConfig{
 				Graphics: weatherName + "_type=" + strconv.Itoa(WFXType) + "_time=0_mult=" +
 					timeMulti + "_start=" + strconv.Itoa(int(startTimeZoned.Unix())),
 				BaseTemperatureAmbient: formValueAsInt(r.Form["BaseTemperatureAmbient"][i]),
@@ -500,8 +514,6 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		return nil, err
 	}
 
-	var trackNames, trackLayouts []string
-
 	tyres, err := ListTyres()
 
 	if err != nil {
@@ -532,20 +544,19 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		entrants = customRace.EntryList
 	}
 
-	for _, track := range tracks {
-		trackNames = append(trackNames, track.Name)
+	templateIDForEditing := mux.Vars(r)["uuid"]
+	isEditing := templateIDForEditing != ""
+	var customRaceName string
 
-		for _, layout := range track.Layouts {
-			trackLayouts = append(trackLayouts, fmt.Sprintf("%s:%s", track.Name, layout))
-		}
-	}
+	if isEditing {
+		customRace, err := rm.raceStore.FindCustomRaceByID(templateIDForEditing)
 
-	for i, layout := range trackLayouts {
-		if layout == fmt.Sprintf("%s:%s", race.CurrentRaceConfig.Track, race.CurrentRaceConfig.TrackLayout) {
-			// mark the current track layout so the javascript can correctly set it up.
-			trackLayouts[i] += ":current"
-			break
+		if err != nil {
+			return nil, err
 		}
+
+		customRaceName = customRace.Name
+		race.CurrentRaceConfig = customRace.RaceConfig
 	}
 
 	possibleEntrants, err := rm.raceStore.ListEntrants()
@@ -579,24 +590,16 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		}
 	}
 
-	templateIDForEditing := mux.Vars(r)["uuid"]
-	isEditing := templateIDForEditing != ""
-	var customRaceName string
-
-	if isEditing {
-		customRace, err := rm.raceStore.FindCustomRaceByID(templateIDForEditing)
-
-		if err != nil {
-			return nil, err
+	// default sol time to now
+	for _, weather := range race.CurrentRaceConfig.Weather {
+		if weather.CMWFXDate == 0 {
+			weather.CMWFXDate = int(time.Now().Unix())
 		}
-
-		customRaceName = customRace.Name
 	}
 
 	return map[string]interface{}{
 		"CarOpts":           cars,
-		"TrackOpts":         trackNames,
-		"TrackLayoutOpts":   trackLayouts,
+		"TrackOpts":         tracks,
 		"AvailableSessions": AvailableSessions,
 		"Tyres":             tyres,
 		"DeselectedTyres":   deselectedTyres,
@@ -727,26 +730,25 @@ func (rm *RaceManager) LoadServerOptions() (*GlobalServerConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	/*
-		udpListenPort, udpSendPort := 0, 0
 
-		for udpListenPort == udpSendPort {
-			udpListenPort, err = FreeUDPPort()
+	udpListenPort, udpSendPort := 0, 0
 
-			if err != nil {
-				return nil, err
-			}
+	for udpListenPort == udpSendPort {
+		udpListenPort, err = FreeUDPPort()
 
-			udpSendPort, err = FreeUDPPort()
-
-			if err != nil {
-				return nil, err
-			}
+		if err != nil {
+			return nil, err
 		}
 
-		serverOpts.UDPPluginAddress = fmt.Sprintf("127.0.0.1:%d", udpSendPort)
-		serverOpts.UDPPluginRemotePort = udpSendPort
-		serverOpts.UDPPluginLocalPort = udpListenPort
-	*/
+		udpSendPort, err = FreeUDPPort()
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	serverOpts.FreeUDPPluginAddress = fmt.Sprintf("127.0.0.1:%d", udpSendPort)
+	serverOpts.FreeUDPPluginLocalPort = udpListenPort
+
 	return serverOpts, nil
 }
