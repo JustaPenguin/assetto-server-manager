@@ -148,10 +148,11 @@
 
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-8 mb-3">
+                        <div class="col-md-6 mb-3">
                             <div class="row">
 
-                                <div class="col-md-6">
+                                <div class="col-sm-4">
+
                                     <ul class="list-unstyled">
                                         {{ range $sessionName, $session := $eventSetup.Sessions }}
                                             <li>
@@ -168,6 +169,33 @@
                                         {{ end }}
                                     </ul>
 
+                                </div>
+
+                                {{ if $event.Completed }}
+                                    <div class="col-sm-4">
+
+                                        <ul class="list-unstyled">
+                                            {{ range $sessionName, $sessionDetails := $event.Sessions }}
+                                                {{ if eq $sessionName "RACE" }}
+                                                    {{ range $pos, $result := (slice $sessionDetails.Results.Result 0 3) }}
+                                                        {{ if gt $result.TotalTime 0 }}
+                                                            {{ $posInt := int64 (add $pos 1) }}
+
+                                                            <li>
+                                                                <strong>{{ $posInt }}{{ ordinal $posInt }}</strong>:
+                                                                {{ $result.DriverName }}
+                                                            </li>
+                                                        {{ end }}
+                                                    {{ end }}
+                                                {{ end }}
+                                            {{ end }}
+                                        </ul>
+                                    </div>
+                                {{ end }}
+
+
+                                <div class="col-sm-4">
+
 
                                     {{/* fastest lap + qualifying awards */}}
                                     {{ range $sessionName, $session := $event.Sessions }}
@@ -180,35 +208,15 @@
                                         {{ end }}
                                     {{ end }}
 
+
                                 </div>
-
-                                {{ if $event.Completed }}
-                                    <div class="col-sm-6">
-                                        <table class="table table-sm table-bordered" style="right: 0;">
-                                            {{ range $sessionName, $sessionDetails := $event.Sessions }}
-                                                {{ if eq $sessionName "RACE" }}
-                                                    {{ range $pos, $result := (slice $sessionDetails.Results.Result 0 3) }}
-                                                        {{ if gt $result.TotalTime 0 }}
-                                                            {{ $posInt := int64 (add $pos 1) }}
-
-                                                            <tr>
-                                                                <td><strong>{{ $posInt }}{{ ordinal $posInt }}</strong></td>
-                                                                <td>{{ $result.DriverName }}</td>
-                                                            </tr>
-                                                        {{ end }}
-                                                    {{ end }}
-                                                {{ end }}
-                                            {{ end }}
-                                        </table>
-                                    </div>
-                                {{ end }}
 
                             </div>
 
 
                             {{/* race controls buttons */}}
 
-                            <div class="mt-5 pt-5">
+                            <div class="pt-5">
                                 {{ if not (or $event.InProgress $event.Completed) }}
                                     <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event/{{ $eventIndex }}/start">Start Event</a>
 
@@ -253,8 +261,8 @@
                             </div>
                         </div>
 
-                        <div class="col-md-4">
-                            <img class="img img-fluid pl-2 float-right image-track"
+                        <div class="col-md-6">
+                            <img class="img img-fluid pl-2 float-right image-track pb-2"
                                  src="/content/tracks/{{ $eventSetup.Track }}/ui{{ with $eventSetup.TrackLayout }}/{{.}}{{ end }}/preview.png"
                                  alt="{{ $eventSetup.Track }} {{ $eventSetup.TrackLayout }}"
                             >
