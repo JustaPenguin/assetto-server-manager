@@ -3,7 +3,6 @@ package servermanager
 import (
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
 	"math/rand"
 	"net"
 	"net/http"
@@ -17,6 +16,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/etcd-io/bbolt"
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 

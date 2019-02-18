@@ -12,7 +12,6 @@ import (
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 
-	"github.com/etcd-io/bbolt"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -39,13 +38,7 @@ func NewChampionshipManager(rm *RaceManager) *ChampionshipManager {
 }
 
 func (cm *ChampionshipManager) LoadChampionship(id string) (*Championship, error) {
-	championship, err := cm.raceStore.LoadChampionship(id)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return championship, nil
+	return cm.raceStore.LoadChampionship(id)
 }
 
 func (cm *ChampionshipManager) UpsertChampionship(c *Championship) error {
@@ -57,13 +50,7 @@ func (cm *ChampionshipManager) DeleteChampionship(id string) error {
 }
 
 func (cm *ChampionshipManager) ListChampionships() ([]*Championship, error) {
-	championships, err := cm.raceStore.ListChampionships()
-
-	if err == bbolt.ErrBucketNotFound {
-		return nil, nil
-	}
-
-	return championships, err
+	return cm.raceStore.ListChampionships()
 }
 
 func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (map[string]interface{}, error) {
@@ -427,6 +414,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			currentSession.Results = results
 		} else {
 			logrus.Errorf("Received and EndSession with no matching NewSession")
+			return
 		}
 
 		if cm.activeChampionship.SessionType == SessionTypeRace {
