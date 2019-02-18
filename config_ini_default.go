@@ -58,6 +58,7 @@ var ConfigIniDefault = ServerConfig{
 		WindBaseDirection:         30,
 		WindVariationDirection:    15,
 		StartRule:                 0,
+		RaceExtraLap:              0,
 
 		Sessions: map[SessionType]SessionConfig{
 			SessionTypePractice: {
