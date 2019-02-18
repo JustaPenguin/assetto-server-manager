@@ -33,6 +33,14 @@ steam:
 
 ################################################################################
 #
+#  http settings
+#
+################################################################################
+http:
+  hostname: localhost:8772
+
+################################################################################
+#
 #  data storage - where server manager keeps your data!
 #
 ################################################################################
@@ -62,10 +70,12 @@ store:
 #             delete anything though.
 #
 # specify a username, and md5 hashed password for the user.
-# you can generate passwords using sites such as: https://www.md5hashgenerator.com/
+# you can generate password hashes using sites such as:
+# https://www.md5hashgenerator.com/
 #
 # add as many users as you like.
 users:
+  accounts:
   - name: superadmin
     group: admin
     password: 21232f297a57a5a743894a0e4a801fc3 # 'admin' - DEFINITELY CHANGE THIS
@@ -76,5 +86,5 @@ users:
     group: read
     password: 4f321b12ec27a87579ae91ea3287cb33 # 'spectate' - CHANGE THIS
 
-# set this to true to allow ANYONE to have read permissions
-read_open: false
+  # set this to true to allow ANYONE to have read permissions
+  read_open: false
