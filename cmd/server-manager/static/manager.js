@@ -200,6 +200,7 @@ let raceSetup = {
         raceSetup.showSolSettings();
 
         raceSetup.initEntrantsList();
+        raceSetup.initSunAngle();
     },
 
     updateWeatherGraphics: function () {
@@ -591,10 +592,61 @@ let raceSetup = {
         })
 
     },
+
+
+    initSunAngle: function() {
+        let $timeOfDay = $document.find("#TimeOfDay");
+        let $sunAngle = $document.find("#SunAngle");
+
+        function updateTime() {
+            let angle = $sunAngle.val();
+            let time = getTime(angle);
+
+            $timeOfDay.val(time.getHours() + ":" + time.getFullMinutes());
+        }
+
+        updateTime();
+
+        $timeOfDay.change(function() {
+            let split = $(this).val().split(':');
+
+            if (split.length < 2) {
+                return;
+            }
+
+            $sunAngle.val(getSunAngle(split[0], split[1]));
+        });
+
+        $sunAngle.change(updateTime);
+    },
 };
 
-let logCharLimit = 500000;
+Date.prototype.getFullMinutes = function () {
+    if (this.getMinutes() < 10) {
+        return '0' + this.getMinutes();
+    }
+    return this.getMinutes();
+};
 
+// get time from sun angle: https://github.com/Pringlez/ACServerManager/blob/master/frontend/app/controllers.js
+function getTime(sunAngle) {
+    let baseLine = new Date(2000, 1, 1, 13, 0, 0, 0);
+    let multiplier = (sunAngle / 16) * 60;
+    baseLine.setMinutes(baseLine.getMinutes() + multiplier);
+
+    return baseLine;
+}
+
+// get sun angle from time: https://github.com/Pringlez/ACServerManager/blob/master/frontend/app/controllers.js
+function getSunAngle(hours, mins) {
+    let baseLine = new Date(2000, 1, 1, 13, 0, 0, 0);
+    let time = new Date(2000, 1, 1, hours, mins, 0);
+    let diff = time - baseLine;
+
+    return Math.round(((diff / 60000) / 60) * 16);
+}
+
+const logCharLimit = 500000;
 
 let serverLogs = {
     init: function () {
