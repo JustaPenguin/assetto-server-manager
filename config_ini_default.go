@@ -50,7 +50,7 @@ var ConfigIniDefault = ServerConfig{
 		ReversedGridRacePositions: 0,
 		TimeOfDayMultiplier:       0,
 		QualifyMaxWaitPercentage:  200,
-		RaceGasPenaltyDisabled:    0,
+		RaceGasPenaltyDisabled:    1,
 		MaxBallastKilograms:       50,
 		WindBaseSpeedMin:          3,
 		WindBaseSpeedMax:          15,
@@ -58,6 +58,7 @@ var ConfigIniDefault = ServerConfig{
 		WindBaseDirection:         30,
 		WindVariationDirection:    15,
 		StartRule:                 0,
+		RaceExtraLap:              0,
 
 		Sessions: map[SessionType]SessionConfig{
 			SessionTypePractice: {

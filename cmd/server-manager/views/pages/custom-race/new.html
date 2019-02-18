@@ -21,7 +21,7 @@
         <p>Configure an Event for the <strong>{{ .Championship.Name }}</strong> Championship.</p>
     {{ end }}
 
-    <form method="post" {{ if .IsChampionship }} action="/championship/{{ .Championship.ID.String }}/event/submit" {{ else }} action="/custom/new/submit" {{ end}}>
+    <form method="post" {{ if .IsChampionship }} action="/championship/{{ .Championship.ID.String }}/event/submit" {{ else }} action="/custom/new/submit" {{ end}} data-safe-submit>
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">
@@ -44,8 +44,6 @@
                                         </option>
                                     {{ end }}
                                 </select>
-
-                                <small>Track name</small>
                             </div>
                         </div>
 
@@ -67,8 +65,6 @@
                                         {{ end }}
                                     {{ end }}
                                 </select>
-
-                                <small>Track layout. Some tracks don&#39;t have this.</small>
                             </div>
                         </div>
                     </div>
@@ -221,7 +217,7 @@
                                                     step="1"
                                             >
 
-                                            <small>session length in minutes</small>
+                                            <small>Session length in minutes</small>
                                         </div>
 
 
@@ -237,7 +233,7 @@
                                                     step="1"
                                             >
 
-                                            <small>number of laps in the race</small>
+                                            <small>Number of laps in the race</small>
                                         </div>
                                     </div>
                                 {{ else }}
@@ -256,7 +252,7 @@
                                                     step="1"
                                             >
 
-                                            <small>session length in minutes</small>
+                                            <small>Session length in minutes</small>
                                         </div>
                                     </div>
 
@@ -380,8 +376,9 @@
 
 
                                         <div class="form-group row col-md-6">
-                                            <label for="RaceGasPenaltyDisabled" class="col-sm-6 col-form-label">Race Gas Penalty
-                                                Disabled</label>
+                                            <label for="RaceGasPenaltyDisabled" class="col-sm-6 col-form-label">
+                                                Race Gas Penalty
+                                            </label>
 
 
                                             <div class="col-sm-6">
@@ -389,45 +386,68 @@
                                                         type="checkbox"
                                                         id="RaceGasPenaltyDisabled"
                                                         name="RaceGasPenaltyDisabled"
-                                                        {{ if $f.RaceGasPenaltyDisabled }}
+                                                        {{ if not $f.RaceGasPenaltyDisabled }}
                                                             checked="checked"
                                                         {{ end }}
                                                 >
                                                 <br>
 
-                                                <small>Off = any cut will be penalized with the gas cut message; On = no penalization will be
-                                                    forced, but
-                                                    cuts will be saved in the race result json.
+                                                <small>
+                                                    OFF: no penalization will be  forced, but cuts will be saved in the race result json.<br>
+                                                    ON: any cut will be penalized with the gas cut message.
                                                 </small>
                                             </div>
                                         </div>
 
                                     </div>
 
+                                    <div class="row">
+                                        <div class="form-group row col-md-6">
+                                            <label for="ReversedGridRacePositions" class="col-sm-6 col-form-label" data-toggle="tooltip" title="The race session will be restarted in reversed grid order based on the standings of the previous race. Players disqualified in the first race will start from the back of the grid in the second race, regardless of their position being within the reversed grid range.">
+                                                Reversed Grid Race Positions
+                                            </label>
 
-                                    <div class="form-group row">
-                                        <label for="ReversedGridRacePositions" class="col-sm-3 col-form-label">Reversed Grid Race
-                                            Positions</label>
-
-                                        <div class="col-sm-9">
-                                            <input
-                                                    type="number"
-                                                    id="ReversedGridRacePositions"
-                                                    name="ReversedGridRacePositions"
-                                                    class="form-control"
-                                                    value="{{ $f.ReversedGridRacePositions }}"
+                                            <div class="col-sm-6">
+                                                <input
+                                                        type="number"
+                                                        id="ReversedGridRacePositions"
+                                                        name="ReversedGridRacePositions"
+                                                        class="form-control"
+                                                        value="{{ $f.ReversedGridRacePositions }}"
 
 
-                                                    step="1"
-                                            >
+                                                        step="1"
+                                                >
 
-                                            <small> 0 = no additional race, 1toX = only those position will be reversed for the next race,
-                                                -1 = all
-                                                the position will be reversed (Retired players will be on the last positions)
-                                            </small>
+                                                <small> 0 = no additional race<br/>
+                                                    1toX = only those position will be reversed for the next race,<br/>
+                                                    -1 = all the positions will be reversed (Retired players will be on the last positions)
+                                                </small>
+                                            </div>
+                                        </div>
+
+
+                                        <div class="form-group row col-md-6 race-extra-lap" {{ if and (eq $session.Time 0) (ne $session.Laps 0) }} style="display: none;" {{ end }}>
+                                            <label for="RaceExtraLap" class="col-sm-6 col-form-label">Extra Lap</label>
+
+
+                                            <div class="col-sm-6">
+                                                <input
+                                                        type="checkbox"
+                                                        id="RaceExtraLap"
+                                                        name="RaceExtraLap"
+                                                        {{ if $f.RaceExtraLap }}
+                                                            checked="checked"
+                                                        {{ end }}
+                                                >
+                                                <br>
+
+                                                <small>
+                                                    If the race is timed, force an extra lap after the leader has crossed the line
+                                                </small>
+                                            </div>
                                         </div>
                                     </div>
-
                                 {{ else if eq $sessionType "QUALIFY" }}
                                     <hr>
 
@@ -531,7 +551,12 @@
                         {{ template "entrant" }}
                     </div>
                 {{ end }}
-                <button class="btn btn-warning float-right" id="addEntrant">Add Entrant</button>
+
+                <div class="float-right">
+                    <input id="numEntrantsToAdd" class="form-control" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
+
+                    <button class="btn btn-warning" id="addEntrant">Add Entrant(s)</button>
+                </div>
 
                 <div class="clearfix"></div>
             </div>
@@ -645,23 +670,45 @@
                     <label class="col-sm-3 col-form-label">Sol Integration</label>
 
                     <div class="col-sm-9">
-                        <input
-                                type="checkbox"
-                                class="sol-enabler"
-                                name="Sol.Enabled"
-                                id="Sol.Enabled"
+                        {{ if .SolIsInstalled }}
+                            <input
+                                    type="checkbox"
+                                    class="sol-enabler"
+                                    name="Sol.Enabled"
+                                    id="Sol.Enabled"
 
-                                {{ if $f.IsSol }}
-                                    checked="checked"
-                                {{ end }}
-                        >
+                                    {{ if $f.IsSol }}
+                                        checked="checked"
+                                    {{ end }}
+                            >
 
-                        <br>
-                        <small>Allows for 24 hour time cycles. The server treats time differently if enabled. Clients also require Sol and Content Manager</small>
+                            <br>
+                            <small>Allows for 24 hour time cycles. The server treats time differently if enabled. Clients also require Sol and Content Manager</small>
+                        {{ else }}
+                            <p class="text-danger">Sol isn't installed. Please <a href="/weather">upload your Sol weathers</a> if you want to use Sol.</p>
+                        {{ end }}
                     </div>
                 </div>
 
                 <div class="not-sol-settings" {{ if $f.IsSol }} style="display: none;" {{ end }}>
+
+
+                    <div class="form-group row">
+                        <label for="SunAngle" class="col-sm-3 col-form-label">Time Of Day</label>
+
+                        <div class="col-sm-9">
+                            <input
+                                    type="time"
+                                    id="TimeOfDay"
+                                    name="TimeOfDay"
+                                    class="form-control"
+                                    value="16:00"
+                            >
+
+                            <small>Used to calculate the Sun Angle (below)</small>
+                        </div>
+                    </div>
+
                     <div class="form-group row">
                         <label for="SunAngle" class="col-sm-3 col-form-label">Sun Angle</label>
 
@@ -678,6 +725,24 @@
                             >
 
                             <small>Angle of the position of the sun</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="TimeOfDayMultiplier" class="col-sm-3 col-form-label">Time Of Day Multiplier</label>
+
+                        <div class="col-sm-9">
+                            <input
+                                    type="number"
+                                    id="TimeOfDayMultiplier"
+                                    name="TimeOfDayMultiplier"
+                                    class="form-control"
+                                    value="{{ $f.TimeOfDayMultiplier }}"
+                                    min="0"
+                                    step="1"
+                            >
+
+                            <small>Multiplier for the time of day</small>
                         </div>
                     </div>
                 </div>
@@ -736,7 +801,7 @@
                                 step="1"
                         >
 
-                        <small>base direction of the wind (wind is pointing at); 0 = North, 90 = East etc</small>
+                        <small>Base direction of the wind (wind is pointing at); 0 = North, 90 = East etc</small>
                     </div>
                 </div>
 
@@ -756,11 +821,13 @@
                                 step="1"
                         >
 
-                        <small>variation (&#43; or -) of the base direction</small>
+                        <small>Variation (&#43; or -) of the base direction</small>
                     </div>
                 </div>
 
                 <hr>
+
+                <p>Each new session will be <strong>randomly selected</strong> from the below weather configurations.</p>
 
                 <div class="row">
 
@@ -887,7 +954,7 @@
                                                         step="1"
                                                 >
 
-                                                <small>variation of the ambient&#39;s temperature. In this example final ambient&#39;s
+                                                <small>Variation of the ambient&#39;s temperature. In this example final ambient&#39;s
                                                     temperature can be 16 or 20
                                                 </small>
                                             </div>
@@ -907,7 +974,7 @@
                                                         step="1"
                                                 >
 
-                                                <small>variation of the road&#39;s temperature. Like the ambient one</small>
+                                                <small>Variation of the road&#39;s temperature. Like the ambient one</small>
                                             </div>
                                         </div>
                                     </div>
@@ -1037,31 +1104,29 @@
                         >
                         <br>
 
-                        <small>1 virtual mirror will be enabled for every client, 0 for mirror as optional</small>
+                        <small>Force clients to use Virtual Mirrors (does not work in VR)</small>
                     </div>
                 </div>
 
-
-                <div class="form-group row">
-                    <label for="TimeOfDayMultiplier" class="col-sm-3 col-form-label">Time Of Day Multiplier</label>
-
-                    <div class="col-sm-9">
-                        <input
-                                type="number"
-                                id="TimeOfDayMultiplier"
-                                name="TimeOfDayMultiplier"
-                                class="form-control"
-                                value="{{ $f.TimeOfDayMultiplier }}"
-                                min="0"
-                                step="1"
-                        >
-
-                        <small>Multiplier for the time of day</small>
-                    </div>
-                </div>
 
 
                 <h4>Dynamic Track</h4>
+
+                <div class="form-group row">
+                    <label for="SurfacePreset" class="col-sm-3 col-form-label">Surface Preset</label>
+
+                    <div class="col-sm-9">
+                        <select name="SurfacePreset" class="form-control" id="SurfacePreset">
+                            <option></option>
+                            {{ range $index, $preset := .SurfacePresets }}
+                                <option value="{{ $index }}">{{ $preset.Name }}: {{ $preset.Description }}</option>
+                            {{ end }}
+                        </select>
+
+                        <small>Dynamic Track Presets</small>
+                    </div>
+                </div>
+
 
                 <div class="form-group row">
                     <label for="SessionStart" class="col-sm-3 col-form-label">Session Start</label>
@@ -1098,7 +1163,7 @@
                                 step="1"
                         >
 
-                        <small>level of randomness added to the start grip</small>
+                        <small>Level of randomness added to the start grip</small>
                     </div>
                 </div>
 
@@ -1118,7 +1183,7 @@
                                 step="1"
                         >
 
-                        <small>how much of the gained grip is to be added to the next session 100 -&gt; all the gained
+                        <small>How much of the gained grip is to be added to the next session 100 -&gt; all the gained
                             grip. Example: difference between starting (90) and ending (96) grip in the session = 6%,
                             with session_transfer = 50 then the next session is going to start with 93.
                         </small>
@@ -1141,7 +1206,7 @@
                                 step="1"
                         >
 
-                        <small>how many laps are needed to add 1% grip</small>
+                        <small>How many laps are needed to add 1% grip</small>
                     </div>
                 </div>
 
@@ -1237,27 +1302,6 @@
                         <small>The server restarts from the first event after the previous event has finished</small>
                     </div>
                 </div>
-
-
-                <div class="form-group row">
-                    <label for="SleepTime" class="col-sm-3 col-form-label">Sleep Time</label>
-
-                    <div class="col-sm-9">
-                        <input
-                                type="number"
-                                id="SleepTime"
-                                name="SleepTime"
-                                class="form-control"
-                                value="{{ $f.SleepTime }}"
-
-
-                                step="1"
-                        >
-
-                        <small>TODO</small>
-                    </div>
-                </div>
-
 
                 <div class="form-group row">
                     <label for="StartRule" class="col-sm-3 col-form-label">Start Rule</label>
@@ -1355,5 +1399,6 @@
         const availableTyres = {{ jsonEncode .Tyres }};
         const possibleEntrants = {{ jsonEncode .PossibleEntrants }};
         const availableCars = {{ jsonEncode .CarOpts.AsMap }};
+        const surfacePresets = {{ jsonEncode .SurfacePresets }};
     </script>
 {{ end }}
