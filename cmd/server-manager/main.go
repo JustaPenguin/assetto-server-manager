@@ -1,12 +1,13 @@
 package main
 
 import (
-	"net/http"
-	"os"
-
 	"github.com/cj123/assetto-server-manager"
+	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
 	"github.com/etcd-io/bbolt"
 	"github.com/sirupsen/logrus"
+	"net/http"
+	"os"
+	"path/filepath"
 )
 
 var (
@@ -39,7 +40,14 @@ func main() {
 		logrus.Fatalf("could not initialise view renderer, err: %s", err)
 	}
 
-	go servermanager.CreateDummy()
+	go func() {
+		err = replay.ReplayUDPMessages(filepath.Join("../../fixtures", "red-bull-ring.json"), 1, servermanager.CallbackFunc, true)
+
+		if err != nil {
+			println(err)
+			return
+		}
+	}()
 
 	logrus.Infof("starting assetto server manager on: %s", serverAddress)
 	logrus.Fatal(http.ListenAndServe(serverAddress, servermanager.Router()))
