@@ -1090,13 +1090,29 @@
                         >
                         <br>
 
-                        <small>1 virtual mirror will be enabled for every client, 0 for mirror as optional</small>
+                        <small>Force clients to use Virtual Mirrors (does not work in VR)</small>
                     </div>
                 </div>
 
 
 
                 <h4>Dynamic Track</h4>
+
+                <div class="form-group row">
+                    <label for="SurfacePreset" class="col-sm-3 col-form-label">Surface Preset</label>
+
+                    <div class="col-sm-9">
+                        <select name="SurfacePreset" class="form-control" id="SurfacePreset">
+                            <option></option>
+                            {{ range $index, $preset := .SurfacePresets }}
+                                <option value="{{ $index }}">{{ $preset.Name }}: {{ $preset.Description }}</option>
+                            {{ end }}
+                        </select>
+
+                        <small>Dynamic Track Presets</small>
+                    </div>
+                </div>
+
 
                 <div class="form-group row">
                     <label for="SessionStart" class="col-sm-3 col-form-label">Session Start</label>
@@ -1273,27 +1289,6 @@
                     </div>
                 </div>
 
-
-                <div class="form-group row">
-                    <label for="SleepTime" class="col-sm-3 col-form-label">Sleep Time</label>
-
-                    <div class="col-sm-9">
-                        <input
-                                type="number"
-                                id="SleepTime"
-                                name="SleepTime"
-                                class="form-control"
-                                value="{{ $f.SleepTime }}"
-
-
-                                step="1"
-                        >
-
-                        <small>TODO</small>
-                    </div>
-                </div>
-
-
                 <div class="form-group row">
                     <label for="StartRule" class="col-sm-3 col-form-label">Start Rule</label>
 
@@ -1390,5 +1385,6 @@
         const availableTyres = {{ jsonEncode .Tyres }};
         const possibleEntrants = {{ jsonEncode .PossibleEntrants }};
         const availableCars = {{ jsonEncode .CarOpts.AsMap }};
+        const surfacePresets = {{ jsonEncode .SurfacePresets }};
     </script>
 {{ end }}

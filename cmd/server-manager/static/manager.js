@@ -202,6 +202,7 @@ let raceSetup = {
         raceSetup.showSolSettings();
 
         raceSetup.initEntrantsList();
+        raceSetup.initSurfacePresets();
     },
 
     updateWeatherGraphics: function () {
@@ -601,6 +602,34 @@ let raceSetup = {
             }
         })
 
+    },
+
+    initSurfacePresets: function() {
+        let $surfacePresetDropdown = $document.find("#SurfacePreset");
+
+        if (!$surfacePresetDropdown.length) {
+            return;
+        }
+
+        let $sessionStart = $document.find("#SessionStart");
+        let $randomness = $document.find("#Randomness");
+        let $sessionTransfer = $document.find("#SessionTransfer");
+        let $lapGain = $document.find("#LapGain");
+
+        $surfacePresetDropdown.change(function() {
+            let val = $surfacePresetDropdown.val();
+
+            if (val === "") {
+                return;
+            }
+
+            let preset = surfacePresets[val];
+
+            $sessionStart.val(preset["SessionStart"]);
+            $randomness.val(preset["Randomness"]);
+            $sessionTransfer.val(preset["SessionTransfer"]);
+            $lapGain.val(preset["LapGain"]);
+        });
     },
 };
 
