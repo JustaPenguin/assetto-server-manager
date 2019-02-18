@@ -17,7 +17,7 @@ func init() {
 type SessionType string
 
 const (
-	SessionTypeBooking    SessionType = "BOOKING"
+	SessionTypeBooking    SessionType = "BOOK"
 	SessionTypePractice   SessionType = "PRACTICE"
 	SessionTypeQualifying SessionType = "QUALIFY"
 	SessionTypeRace       SessionType = "RACE"
