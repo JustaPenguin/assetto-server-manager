@@ -224,3 +224,63 @@ func LoadTyresFromACDINI(data []byte) (map[string]string, error) {
 
 	return outTyres, nil
 }
+
+type TrackSurfacePreset struct {
+	Name            string
+	Description     string
+	SessionStart    int
+	SessionTransfer int
+	Randomness      int
+	LapGain         int
+}
+
+var DefaultTrackSurfacePresets = []TrackSurfacePreset{
+	{
+		Name:            "Dusty",
+		SessionStart:    86,
+		SessionTransfer: 50,
+		Randomness:      1,
+		LapGain:         30,
+		Description:     "A very slippery track, improves fast with more laps.",
+	},
+	{
+		Name:            "Old",
+		SessionStart:    89,
+		SessionTransfer: 80,
+		Randomness:      3,
+		LapGain:         50,
+		Description:     "Old tarmac. Bad grip that won't get better soon.",
+	},
+	{
+		Name:            "Slow",
+		SessionStart:    96,
+		SessionTransfer: 80,
+		Randomness:      1,
+		LapGain:         300,
+		Description:     "A slow track that doesn't improve much.",
+	},
+	{
+		Name:            "Green",
+		SessionStart:    95,
+		SessionTransfer: 90,
+		Randomness:      2,
+		LapGain:         132,
+		Description:     "A clean track, gets better with more laps.",
+	},
+	{
+		Name:            "Fast",
+		SessionStart:    98,
+		SessionTransfer: 80,
+		Randomness:      2,
+		LapGain:         700,
+		Description:     "Very grippy track right from the start.",
+	},
+	{
+		Name:            "Optimum",
+		SessionStart:    100,
+		SessionTransfer: 100,
+		Randomness:      0,
+		LapGain:         1,
+		Description:     "Perfect track for hotlapping.",
+	},
+}

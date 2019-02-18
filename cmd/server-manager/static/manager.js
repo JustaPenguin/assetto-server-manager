@@ -39,6 +39,23 @@ $(document).ready(function () {
             }
         })
     });
+
+    if ($document.find("form[data-safe-submit]").length > 0) {
+        let canSubmit = false;
+
+        $document.find("button[type='submit']").click(function() {
+            canSubmit = true;
+        });
+
+        // ask the user before they close the webpage
+        window.onbeforeunload = function() {
+            if (canSubmit) {
+                return;
+            }
+
+            return "Are you sure you want to navigate away? You'll lose unsaved changes to this setup if you do.";
+        };
+    }
 });
 
 const nameRegex = /^[A-Za-z]{0,5}[0-9]+/;
@@ -178,21 +195,6 @@ let raceSetup = {
             raceSetup.$trackDropdown.change(raceSetup.loadTrackLayouts);
             raceSetup.$trackLayoutDropdown.change(raceSetup.showTrackImage);
 
-            let canSubmit = false;
-
-            $document.find("button[type='submit']").click(function() {
-                canSubmit = true;
-            });
-
-            // ask the user before they close the webpage
-            window.onbeforeunload = function() {
-                if (canSubmit) {
-                    return;
-                }
-
-                return "Are you sure you want to navigate away? You'll lose unsaved changes to this setup if you do.";
-            };
-
         }
 
         raceSetup.raceLaps();
@@ -200,6 +202,11 @@ let raceSetup = {
         raceSetup.showSolSettings();
 
         raceSetup.initEntrantsList();
+<<<<<<< HEAD
+        raceSetup.initSunAngle();
+=======
+        raceSetup.initSurfacePresets();
+>>>>>>> master
     },
 
     updateWeatherGraphics: function () {
@@ -581,20 +588,108 @@ let raceSetup = {
         $document.find("#addEntrant").click(function (e) {
             e.preventDefault();
 
-            let $elem = $entrantTemplate.clone();
-            $elem.find("input[type='checkbox']").bootstrapSwitch();
-            $elem.insertBefore($(this));
-            $elem.find(".entryListCar").change(onEntryListCarChange);
-            $elem.find(".btn-delete-entrant").click(deleteEntrant);
-            populateEntryListCars();
-            $elem.css("display", "block");
+            let $numEntrantsField = $(this).parent().find("#numEntrantsToAdd");
+            let numEntrantsToAdd = 1;
+
+            if ($numEntrantsField.length > 0) {
+                numEntrantsToAdd = $numEntrantsField.val();
+            }
+
+            for (let i = 0; i < numEntrantsToAdd; i++) {
+                let $elem = $entrantTemplate.clone();
+                $elem.find("input[type='checkbox']").bootstrapSwitch();
+                $elem.insertBefore($(this).parent());
+                $elem.find(".entryListCar").change(onEntryListCarChange);
+                $elem.find(".btn-delete-entrant").click(deleteEntrant);
+                populateEntryListCars();
+                $elem.css("display", "block");
+            }
         })
 
     },
+
+
+    initSunAngle: function() {
+        let $timeOfDay = $document.find("#TimeOfDay");
+        let $sunAngle = $document.find("#SunAngle");
+
+        function updateTime() {
+            let angle = $sunAngle.val();
+            let time = getTime(angle);
+
+            $timeOfDay.val(time.getHours() + ":" + time.getFullMinutes());
+        }
+
+        updateTime();
+
+        $timeOfDay.change(function() {
+            let split = $(this).val().split(':');
+
+            if (split.length < 2) {
+                return;
+            }
+
+            $sunAngle.val(getSunAngle(split[0], split[1]));
+        });
+
+        $sunAngle.change(updateTime);
+    },
+
+    initSurfacePresets: function() {
+        let $surfacePresetDropdown = $document.find("#SurfacePreset");
+
+        if (!$surfacePresetDropdown.length) {
+            return;
+        }
+
+        let $sessionStart = $document.find("#SessionStart");
+        let $randomness = $document.find("#Randomness");
+        let $sessionTransfer = $document.find("#SessionTransfer");
+        let $lapGain = $document.find("#LapGain");
+
+        $surfacePresetDropdown.change(function() {
+            let val = $surfacePresetDropdown.val();
+
+            if (val === "") {
+                return;
+            }
+
+            let preset = surfacePresets[val];
+
+            $sessionStart.val(preset["SessionStart"]);
+            $randomness.val(preset["Randomness"]);
+            $sessionTransfer.val(preset["SessionTransfer"]);
+            $lapGain.val(preset["LapGain"]);
+        });
+    },
 };
 
-let logCharLimit = 500000;
+Date.prototype.getFullMinutes = function () {
+    if (this.getMinutes() < 10) {
+        return '0' + this.getMinutes();
+    }
+    return this.getMinutes();
+};
 
+// get time from sun angle: https://github.com/Pringlez/ACServerManager/blob/master/frontend/app/controllers.js
+function getTime(sunAngle) {
+    let baseLine = new Date(2000, 1, 1, 13, 0, 0, 0);
+    let multiplier = (sunAngle / 16) * 60;
+    baseLine.setMinutes(baseLine.getMinutes() + multiplier);
+
+    return baseLine;
+}
+
+// get sun angle from time: https://github.com/Pringlez/ACServerManager/blob/master/frontend/app/controllers.js
+function getSunAngle(hours, mins) {
+    let baseLine = new Date(2000, 1, 1, 13, 0, 0, 0);
+    let time = new Date(2000, 1, 1, hours, mins, 0);
+    let diff = time - baseLine;
+
+    return Math.round(((diff / 60000) / 60) * 16);
+}
+
+const logCharLimit = 500000;
 
 let serverLogs = {
     init: function () {
@@ -1351,13 +1446,13 @@ let championships = {
             for (let i = numPoints; i < numEntrants; i++) {
                 // add points up to the numEntrants we have
                 let $newPoints = $pointsTemplate.clone();
-                $newPoints.find("label").text(ordinalSuffix(numPoints+1) + " Place");
+                $newPoints.find("label").text(ordinalSuffix(i+1) + " Place");
 
-                let pointsVal = 0 ;
+                let pointsVal = 0;
 
                 // load the default points value for this position
                 if (numPoints < defaultPoints.Places.length) {
-                    pointsVal = defaultPoints.Places[numPoints];
+                    pointsVal = defaultPoints.Places[i];
                 }
 
                 $newPoints.find("input").attr({"value": pointsVal});
