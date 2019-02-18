@@ -66,6 +66,7 @@ func (tr *Renderer) init() error {
 	funcs["varSplit"] = varSplit
 	funcs["timeFormat"] = timeFormat
 	funcs["dateFormat"] = dateFormat
+	funcs["trackInfo"] = trackInfo
 
 	for _, page := range pages {
 		var templateList []string
@@ -107,6 +108,25 @@ func carList(cars string) string {
 
 func varSplit(str string) []string {
 	return strings.Split(str, ";")
+}
+
+var trackInfoCache = make(map[string]*TrackInfo)
+
+func trackInfo(track, layout string) *TrackInfo {
+	if t, ok := trackInfoCache[track+layout]; ok {
+		return t
+	}
+
+	t, err := GetTrackInfo(track, layout)
+
+	if err != nil {
+		logrus.Errorf("Could not get track info for %s (%s), err: %s", track, layout, err)
+		return nil
+	}
+
+	trackInfoCache[track+layout] = t
+
+	return t
 }
 
 var nameRegex = regexp.MustCompile(`^[A-Za-z]{0,5}[0-9]+`)

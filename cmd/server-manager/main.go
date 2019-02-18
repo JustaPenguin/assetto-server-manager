@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/cj123/assetto-server-manager"
+	"github.com/etcd-io/bbolt"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,11 +19,13 @@ var (
 )
 
 func main() {
-	err := servermanager.SetupRaceManager(storeLocation)
+	bboltdb, err := bbolt.Open(storeLocation, 0644, nil)
 
 	if err != nil {
 		logrus.Fatalf("could not open bbolt store at: '%s', err: %s", storeLocation, err)
 	}
+
+	servermanager.SetupRaceManager(servermanager.NewBoltRaceStore(bboltdb))
 
 	err = servermanager.InstallAssettoCorsaServer(steamUsername, steamPassword, os.Getenv("FORCE_UPDATE") == "true")
 
