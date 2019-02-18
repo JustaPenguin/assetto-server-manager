@@ -39,6 +39,23 @@ $(document).ready(function () {
             }
         })
     });
+
+    if ($document.find("form[data-safe-submit]").length > 0) {
+        let canSubmit = false;
+
+        $document.find("button[type='submit']").click(function() {
+            canSubmit = true;
+        });
+
+        // ask the user before they close the webpage
+        window.onbeforeunload = function() {
+            if (canSubmit) {
+                return;
+            }
+
+            return "Are you sure you want to navigate away? You'll lose unsaved changes to this setup if you do.";
+        };
+    }
 });
 
 const nameRegex = /^[A-Za-z]{0,5}[0-9]+/;
@@ -177,21 +194,6 @@ let raceSetup = {
 
             raceSetup.$trackDropdown.change(raceSetup.loadTrackLayouts);
             raceSetup.$trackLayoutDropdown.change(raceSetup.showTrackImage);
-
-            let canSubmit = false;
-
-            $document.find("button[type='submit']").click(function() {
-                canSubmit = true;
-            });
-
-            // ask the user before they close the webpage
-            window.onbeforeunload = function() {
-                if (canSubmit) {
-                    return;
-                }
-
-                return "Are you sure you want to navigate away? You'll lose unsaved changes to this setup if you do.";
-            };
 
         }
 
@@ -581,13 +583,22 @@ let raceSetup = {
         $document.find("#addEntrant").click(function (e) {
             e.preventDefault();
 
-            let $elem = $entrantTemplate.clone();
-            $elem.find("input[type='checkbox']").bootstrapSwitch();
-            $elem.insertBefore($(this));
-            $elem.find(".entryListCar").change(onEntryListCarChange);
-            $elem.find(".btn-delete-entrant").click(deleteEntrant);
-            populateEntryListCars();
-            $elem.css("display", "block");
+            let $numEntrantsField = $(this).parent().find("#numEntrantsToAdd");
+            let numEntrantsToAdd = 1;
+
+            if ($numEntrantsField.length > 0) {
+                numEntrantsToAdd = $numEntrantsField.val();
+            }
+
+            for (let i = 0; i < numEntrantsToAdd; i++) {
+                let $elem = $entrantTemplate.clone();
+                $elem.find("input[type='checkbox']").bootstrapSwitch();
+                $elem.insertBefore($(this).parent());
+                $elem.find(".entryListCar").change(onEntryListCarChange);
+                $elem.find(".btn-delete-entrant").click(deleteEntrant);
+                populateEntryListCars();
+                $elem.css("display", "block");
+            }
         })
 
     },
@@ -1351,13 +1362,13 @@ let championships = {
             for (let i = numPoints; i < numEntrants; i++) {
                 // add points up to the numEntrants we have
                 let $newPoints = $pointsTemplate.clone();
-                $newPoints.find("label").text(ordinalSuffix(numPoints+1) + " Place");
+                $newPoints.find("label").text(ordinalSuffix(i+1) + " Place");
 
-                let pointsVal = 0 ;
+                let pointsVal = 0;
 
                 // load the default points value for this position
                 if (numPoints < defaultPoints.Places.length) {
-                    pointsVal = defaultPoints.Places[numPoints];
+                    pointsVal = defaultPoints.Places[i];
                 }
 
                 $newPoints.find("input").attr({"value": pointsVal});
