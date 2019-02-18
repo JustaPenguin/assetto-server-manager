@@ -129,6 +129,9 @@ type GlobalServerConfig struct {
 	NumberOfThreads           int    `ini:"NUM_THREADS" min:"1" help:"Number of threads to run on"`
 	WelcomeMessage            string `ini:"WELCOME_MESSAGE" help:"path to the file that contains the server welcome message"`
 	ResultScreenTime          int    `ini:"RESULT_SCREEN_TIME" help:"seconds of result screen between racing sessions"`
+
+	FreeUDPPluginLocalPort int    `ini:"-" show:"-"`
+	FreeUDPPluginAddress   string `ini:"-" show:"-"`
 }
 
 type CurrentRaceConfig struct {
@@ -174,7 +177,7 @@ type CurrentRaceConfig struct {
 	DynamicTrack DynamicTrackConfig `ini:"-"`
 
 	Sessions map[SessionType]SessionConfig `ini:"-"`
-	Weather  map[string]WeatherConfig      `ini:"-"`
+	Weather  map[string]*WeatherConfig     `ini:"-"`
 }
 
 func (c CurrentRaceConfig) HasSession(sess SessionType) bool {
@@ -195,15 +198,15 @@ func (c *CurrentRaceConfig) RemoveSession(sessionType SessionType) {
 	delete(c.Sessions, sessionType)
 }
 
-func (c *CurrentRaceConfig) AddWeather(weather WeatherConfig) {
+func (c *CurrentRaceConfig) AddWeather(weather *WeatherConfig) {
 	if c.Weather == nil {
-		c.Weather = make(map[string]WeatherConfig)
+		c.Weather = make(map[string]*WeatherConfig)
 	}
 
 	c.Weather[fmt.Sprintf("WEATHER_%d", len(c.Weather))] = weather
 }
 
-func (c *CurrentRaceConfig) RemoveWeather(weather WeatherConfig) {
+func (c *CurrentRaceConfig) RemoveWeather(weather *WeatherConfig) {
 	for k, v := range c.Weather {
 		if v == weather {
 			delete(c.Weather, k)

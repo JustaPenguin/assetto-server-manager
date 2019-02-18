@@ -20,7 +20,7 @@
                     <a href="/championship/{{ $championship.ID }}">{{ $championship.Name }}</a>
                 </td>
                 <td>
-                    {{ $championship.Progress }}%
+                    {{ int $championship.Progress }}%
                 </td>
                 <td>
                     {{ len $championship.Events }}
@@ -31,12 +31,9 @@
                 <td>
                     <a class="btn btn-sm btn-success" href="/championship/{{ $championship.ID }}">View</a>
                     <a class="btn btn-sm btn-info" href="/championship/{{ $championship.ID }}/export">Export</a>
-
-                    {{ if eq $championship.Progress 0.0 }}
-                        <a onClick="return confirm('I understand that this will delete the entire championship permanently.') "
-                           class="btn btn-sm btn-danger" href="/championship/{{ $championship.ID }}/delete">Delete</a>
-                    {{ end }}
-
+                    <a class="btn btn-sm btn-warning" href="/championship/{{ $championship.ID }}/edit">Edit</a>
+                    <a onClick="return confirm('I understand that this will delete the entire championship permanently.') "
+                       class="btn btn-sm btn-danger" href="/championship/{{ $championship.ID }}/delete">Delete</a>
                 </td>
             </tr>
         {{ end }}

@@ -46,6 +46,7 @@ func NewChampionship(name string) *Championship {
 		ID:      uuid.New(),
 		Name:    name,
 		Created: time.Now(),
+		Points:  DefaultChampionshipPoints,
 	}
 }
 
@@ -133,20 +134,50 @@ func (c *Championship) Standings() []*ChampionshipStanding {
 	}
 
 	for _, event := range c.Events {
-		race, ok := event.Results[SessionTypeRace]
+		qualifying, qualifyingOK := event.Sessions[SessionTypeQualifying]
 
-		if !ok {
-			continue
+		if qualifyingOK && qualifying.Results != nil {
+			for pos, driver := range qualifying.Results.Result {
+				if pos != 0 {
+					continue
+				}
+
+				if _, ok := entrants[driver.DriverGUID]; ok {
+					// if an entrant is removed from a championship this can panic, hence the ok check
+					entrants[driver.DriverGUID].Points += c.Points.PolePosition
+				}
+			}
 		}
 
-		for pos, driver := range race.Result {
-			entrants[driver.DriverGUID].Points += c.PointForPos(pos)
+		race, raceOK := event.Sessions[SessionTypeRace]
+
+		if raceOK && race.Results != nil {
+			fastestLap := race.Results.FastestLap()
+
+			for pos, driver := range race.Results.Result {
+				if driver.TotalTime <= 0 {
+					continue
+				}
+
+				if _, ok := entrants[driver.DriverGUID]; ok {
+					// if an entrant is removed from a championship this can panic, hence the ok check
+					entrants[driver.DriverGUID].Points += c.PointForPos(pos)
+
+					if fastestLap.DriverGUID == driver.DriverGUID {
+						entrants[driver.DriverGUID].Points += c.Points.BestLap
+					}
+				}
+			}
 		}
 	}
 
 	for _, entrant := range entrants {
 		out = append(out, entrant)
 	}
+
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Entrant.Name < out[j].Entrant.Name
+	})
 
 	sort.Slice(out, func(i, j int) bool {
 		return out[i].Points > out[j].Points
@@ -183,23 +214,57 @@ func (c *Championship) TeamStandings() []*TeamStanding {
 	}
 
 	sort.Slice(out, func(i, j int) bool {
+		return out[i].Team < out[j].Team
+	})
+
+	sort.Slice(out, func(i, j int) bool {
 		return out[i].Points > out[j].Points
 	})
 
 	return out
 }
 
-// A ChampionshipEvent is a given RaceSetup with Results.
-type ChampionshipEvent struct {
-	RaceSetup CurrentRaceConfig
-	Results   map[SessionType]*SessionResults
+// NewChampionshipEvent creates a ChampionshipEvent with an ID
+func NewChampionshipEvent() *ChampionshipEvent {
+	return &ChampionshipEvent{
+		ID: uuid.New(),
+	}
+}
 
+// A ChampionshipEvent is a given RaceSetup with Sessions.
+type ChampionshipEvent struct {
+	ID uuid.UUID
+
+	RaceSetup CurrentRaceConfig
+	Sessions  map[SessionType]*ChampionshipSession
+
+	StartedTime   time.Time
 	CompletedTime time.Time
+}
+
+func (cr *ChampionshipEvent) InProgress() bool {
+	return !cr.StartedTime.IsZero() && cr.CompletedTime.IsZero()
 }
 
 // Completed ChampionshipEvents have a non-zero CompletedTime
 func (cr *ChampionshipEvent) Completed() bool {
 	return !cr.CompletedTime.IsZero()
+}
+
+type ChampionshipSession struct {
+	StartedTime   time.Time
+	CompletedTime time.Time
+
+	Results *SessionResults
+}
+
+func (ce *ChampionshipSession) InProgress() bool {
+	return !ce.StartedTime.IsZero() && ce.CompletedTime.IsZero()
+}
+
+// Completed ChampionshipSessions have a non-zero CompletedTime
+func (ce *ChampionshipSession) Completed() bool {
+	return !ce.CompletedTime.IsZero()
 }
 
 // listChampionshipsHandler lists all available Championships known to Server Manager
@@ -217,8 +282,8 @@ func listChampionshipsHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// newChampionshipHandler builds a Championship form for the user to create a Championship.
-func newChampionshipHandler(w http.ResponseWriter, r *http.Request) {
+// newOrEditChampionshipHandler builds a Championship form for the user to create a Championship.
+func newOrEditChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 	opts, err := championshipManager.BuildChampionshipOpts(r)
 
 	if err != nil {
@@ -233,7 +298,7 @@ func newChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 // submitNewChampionshipHandler creates a given Championship and redirects the user to begin
 // the flow of adding events to the new Championship
 func submitNewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
-	championship, err := championshipManager.HandleCreateChampionship(r)
+	championship, edited, err := championshipManager.HandleCreateChampionship(r)
 
 	if err != nil {
 		logrus.Errorf("couldn't create championship, err: %s", err)
@@ -241,7 +306,13 @@ func submitNewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/championship/"+championship.ID.String()+"/event", http.StatusFound)
+	if edited {
+		AddFlashQuick(w, r, "Championship successfully edited!")
+		http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
+	} else {
+		AddFlashQuick(w, r, "We've created the Championship. Now you need to add some Events!")
+		http.Redirect(w, r, "/championship/"+championship.ID.String()+"/event", http.StatusFound)
+	}
 }
 
 // viewChampionshipHandler shows details of a given Championship
@@ -253,6 +324,10 @@ func viewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
+
+	sort.Slice(championship.Events, func(i, j int) bool {
+		return championship.Events[i].StartedTime.Before(championship.Events[j].StartedTime) && championship.Events[i].CompletedTime.Before(championship.Events[j].CompletedTime)
+	})
 
 	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("championships", "view.html"), map[string]interface{}{
 		"Championship": championship,
@@ -339,6 +414,22 @@ func championshipSubmitEventConfigurationHandler(w http.ResponseWriter, r *http.
 	}
 }
 
+func championshipStartEventHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	err := championshipManager.StartEvent(vars["championshipID"], formValueAsInt(vars["eventID"]))
+
+	if err != nil {
+		logrus.Errorf("Could not start championship event, err: %s", err)
+
+		AddErrFlashQuick(w, r, "Couldn't start the Event")
+	} else {
+		AddFlashQuick(w, r, "Event started successfully!")
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
 func championshipDeleteEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
@@ -366,6 +457,38 @@ func championshipStartPracticeEventHandler(w http.ResponseWriter, r *http.Reques
 		AddErrFlashQuick(w, r, "Couldn't start the Practice Event")
 	} else {
 		AddFlashQuick(w, r, "Practice Event started successfully!")
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func championshipCancelEventHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	err := championshipManager.CancelEvent(vars["championshipID"], formValueAsInt(vars["eventID"]))
+
+	if err != nil {
+		logrus.Errorf("Could not cancel championship event, err: %s", err)
+
+		AddErrFlashQuick(w, r, "Couldn't cancel the Championship Event")
+	} else {
+		AddFlashQuick(w, r, "Event cancelled successfully!")
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func championshipRestartEventHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	err := championshipManager.RestartEvent(vars["championshipID"], formValueAsInt(vars["eventID"]))
+
+	if err != nil {
+		logrus.Errorf("Could not restart championship event, err: %s", err)
+
+		AddErrFlashQuick(w, r, "Couldn't restart the Championship Event")
+	} else {
+		AddFlashQuick(w, r, "Event restarted successfully!")
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)

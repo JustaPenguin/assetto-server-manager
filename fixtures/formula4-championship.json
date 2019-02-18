@@ -1,0 +1,5606 @@
+[
+  {
+    "Received": "2019-02-15T20:46:02.565426126Z",
+    "EventType": 56,
+    "Data": 4
+  },
+  {
+    "Received": "2019-02-15T20:46:02.572417562Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 0,
+      "CurrentSessionIndex": 0,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "acu_bathurst",
+      "TrackConfig": "",
+      "Name": "Qualify",
+      "Type": 2,
+      "Time": 10,
+      "Laps": 0,
+      "WaitTime": 0,
+      "AmbientTemp": 25,
+      "RoadTemp": 35,
+      "WeatherGraphics": "3_clear",
+      "ElapsedMilliseconds": 0,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T20:46:03.776137061Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 0,
+      "CurrentSessionIndex": 0,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "acu_bathurst",
+      "TrackConfig": "",
+      "Name": "Qualify",
+      "Type": 2,
+      "Time": 10,
+      "Laps": 0,
+      "WaitTime": 0,
+      "AmbientTemp": 26,
+      "RoadTemp": 38,
+      "WeatherGraphics": "3_clear",
+      "ElapsedMilliseconds": 0,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T20:59:00.871120659Z",
+    "EventType": 56,
+    "Data": 4
+  },
+  {
+    "Received": "2019-02-15T20:59:00.876225387Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 0,
+      "CurrentSessionIndex": 0,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "barbagallo",
+      "TrackConfig": "",
+      "Name": "Qualify",
+      "Type": 2,
+      "Time": 5,
+      "Laps": 0,
+      "WaitTime": 0,
+      "AmbientTemp": 26,
+      "RoadTemp": 37,
+      "WeatherGraphics": "sol_03_Scattered Clouds_type=17_time=0_mult=0_start=0",
+      "ElapsedMilliseconds": 0,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T20:59:02.032598618Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 0,
+      "CurrentSessionIndex": 0,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "barbagallo",
+      "TrackConfig": "",
+      "Name": "Qualify",
+      "Type": 2,
+      "Time": 5,
+      "Laps": 0,
+      "WaitTime": 0,
+      "AmbientTemp": 26,
+      "RoadTemp": 38,
+      "WeatherGraphics": "sol_03_Scattered Clouds_type=17_time=0_mult=0_start=0",
+      "ElapsedMilliseconds": 0,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T20:59:23.970363285Z",
+    "EventType": 51,
+    "Data": {
+      "CarID": 1,
+      "DriverName": "Joseph Elton",
+      "DriverGUID": "76561198029578060",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "06_Smith_Racing",
+      "EventType": 51
+    }
+  },
+  {
+    "Received": "2019-02-15T20:59:41.436177273Z",
+    "EventType": 58,
+    "Data": 1
+  },
+  {
+    "Received": "2019-02-15T20:59:43.029424069Z",
+    "EventType": 51,
+    "Data": {
+      "CarID": 0,
+      "DriverName": "Callum Jones",
+      "DriverGUID": "76561198020046073",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "14_Outback_Stars",
+      "EventType": 51
+    }
+  },
+  {
+    "Received": "2019-02-15T20:59:57.307114699Z",
+    "EventType": 52,
+    "Data": {
+      "CarID": 1,
+      "DriverName": "Joseph Elton",
+      "DriverGUID": "76561198029578060",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "06_Smith_Racing",
+      "EventType": 52
+    }
+  },
+  {
+    "Received": "2019-02-15T21:00:19.429970287Z",
+    "EventType": 58,
+    "Data": 0
+  },
+  {
+    "Received": "2019-02-15T21:00:26.91913308Z",
+    "EventType": 52,
+    "Data": {
+      "CarID": 0,
+      "DriverName": "Callum Jones",
+      "DriverGUID": "76561198020046073",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "14_Outback_Stars",
+      "EventType": 52
+    }
+  },
+  {
+    "Received": "2019-02-15T21:02:11.121689103Z",
+    "EventType": 56,
+    "Data": 4
+  },
+  {
+    "Received": "2019-02-15T21:02:11.126007993Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 0,
+      "CurrentSessionIndex": 0,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "barbagallo",
+      "TrackConfig": "",
+      "Name": "Qualify",
+      "Type": 2,
+      "Time": 5,
+      "Laps": 0,
+      "WaitTime": 0,
+      "AmbientTemp": 25,
+      "RoadTemp": 35,
+      "WeatherGraphics": "sol_03_Scattered Clouds_type=17_time=0_mult=0_start=43200",
+      "ElapsedMilliseconds": 0,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T21:02:12.284065048Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 0,
+      "CurrentSessionIndex": 0,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "barbagallo",
+      "TrackConfig": "",
+      "Name": "Qualify",
+      "Type": 2,
+      "Time": 5,
+      "Laps": 0,
+      "WaitTime": 0,
+      "AmbientTemp": 25,
+      "RoadTemp": 37,
+      "WeatherGraphics": "sol_03_Scattered Clouds_type=17_time=0_mult=0_start=43200",
+      "ElapsedMilliseconds": 0,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T21:02:23.431481831Z",
+    "EventType": 51,
+    "Data": {
+      "CarID": 1,
+      "DriverName": "Joseph Elton",
+      "DriverGUID": "76561198029578060",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "06_Smith_Racing",
+      "EventType": 51
+    }
+  },
+  {
+    "Received": "2019-02-15T21:02:26.729176384Z",
+    "EventType": 51,
+    "Data": {
+      "CarID": 0,
+      "DriverName": "Callum Jones",
+      "DriverGUID": "76561198020046073",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "14_Outback_Stars",
+      "EventType": 51
+    }
+  },
+  {
+    "Received": "2019-02-15T21:02:36.713641741Z",
+    "EventType": 58,
+    "Data": 1
+  },
+  {
+    "Received": "2019-02-15T21:02:42.432812785Z",
+    "EventType": 58,
+    "Data": 0
+  },
+  {
+    "Received": "2019-02-15T21:03:59.415893713Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 77005,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 77005,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:04:34.11872458Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 117456,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 77005,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 117456,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:05:13.978024827Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 74562,
+      "Cuts": 2,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 77005,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 117456,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:05:31.833466882Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 57721,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 57721,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 77005,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:06:15.356156931Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 61375,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 57721,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 61375,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:06:29.568710886Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 57736,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 57721,
+          "Laps": 3,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 61375,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:07:26.62576394Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 57057,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 57057,
+          "Laps": 4,
+          "Completed": 1
+        },
+        {
+          "CarID": 0,
+          "LapTime": 61375,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:08:56.623463805Z",
+    "EventType": 55,
+    "Data": "results/2019_2_15_21_8_QUALIFY.json"
+  },
+  {
+    "Received": "2019-02-15T21:08:56.624811533Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 1,
+      "CurrentSessionIndex": 1,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "barbagallo",
+      "TrackConfig": "",
+      "Name": "Race",
+      "Type": 3,
+      "Time": 5,
+      "Laps": 0,
+      "WaitTime": 60000,
+      "AmbientTemp": 26,
+      "RoadTemp": 37,
+      "WeatherGraphics": "sol_03_Scattered Clouds_type=17_time=0_mult=0_start=43200",
+      "ElapsedMilliseconds": -59999,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T21:11:01.173881893Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 64529,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 64529,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:11:01.258814662Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 64621,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 64529,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 64618,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:11:01.756033037Z",
+    "EventType": 10,
+    "Data": {
+      "CarID": 1,
+      "OtherCarID": 0,
+      "ImpactSpeed": 3.39687,
+      "WorldPos": {
+        "X": -401.18503,
+        "Y": 7.9383554,
+        "Z": 5.881806
+      },
+      "RelPos": {
+        "X": -0.06472139,
+        "Y": 0.0060657416,
+        "Z": 2.3283312
+      }
+    }
+  },
+  {
+    "Received": "2019-02-15T21:11:02.52373687Z",
+    "EventType": 10,
+    "Data": {
+      "CarID": 0,
+      "OtherCarID": 1,
+      "ImpactSpeed": 9.053193,
+      "WorldPos": {
+        "X": -399.91284,
+        "Y": 8.165169,
+        "Z": -23.454082
+      },
+      "RelPos": {
+        "X": 0.08511992,
+        "Y": 0.055161923,
+        "Z": -1.8013011
+      }
+    }
+  },
+  {
+    "Received": "2019-02-15T21:11:06.755848949Z",
+    "EventType": 10,
+    "Data": {
+      "CarID": 1,
+      "OtherCarID": 0,
+      "ImpactSpeed": 8.236634,
+      "WorldPos": {
+        "X": -399.6576,
+        "Y": 8.121042,
+        "Z": -27.576544
+      },
+      "RelPos": {
+        "X": 0.000051155686,
+        "Y": 0.016862316,
+        "Z": 2.3042321
+      }
+    }
+  },
+  {
+    "Received": "2019-02-15T21:11:07.524392113Z",
+    "EventType": 10,
+    "Data": {
+      "CarID": 0,
+      "OtherCarID": 1,
+      "ImpactSpeed": 8.118366,
+      "WorldPos": {
+        "X": -397.64288,
+        "Y": 7.8052597,
+        "Z": -57.841644
+      },
+      "RelPos": {
+        "X": 0.86961764,
+        "Y": -0.083581954,
+        "Z": -1.4814748
+      }
+    }
+  },
+  {
+    "Received": "2019-02-15T21:11:07.528241978Z",
+    "EventType": 11,
+    "Data": {
+      "CarID": 0,
+      "ImpactSpeed": 53.927273,
+      "WorldPos": {
+        "X": -379.29007,
+        "Y": 6.671806,
+        "Z": -116.009415
+      },
+      "RelPos": {
+        "X": 0.8610587,
+        "Y": 0.30175006,
+        "Z": -1.4951773
+      }
+    }
+  },
+  {
+    "Received": "2019-02-15T21:12:11.640896194Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 70385,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 134997,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 64529,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:12:13.433844442Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 72263,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 134997,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 136793,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:13:09.16261845Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 57521,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 192517,
+          "Laps": 3,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 136793,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:13:13.620387532Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 60194,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 192517,
+          "Laps": 3,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 196986,
+          "Laps": 3,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:14:20.996724089Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 71836,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 264350,
+          "Laps": 4,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 196986,
+          "Laps": 3,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:14:22.55919383Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 68938,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 264350,
+          "Laps": 4,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 265925,
+          "Laps": 4,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:16:00.470924075Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 99478,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 363829,
+          "Laps": 5,
+          "Completed": 1
+        },
+        {
+          "CarID": 0,
+          "LapTime": 265925,
+          "Laps": 4,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:16:42.978286844Z",
+    "EventType": 52,
+    "Data": {
+      "CarID": 0,
+      "DriverName": "Callum Jones",
+      "DriverGUID": "76561198020046073",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "14_Outback_Stars",
+      "EventType": 52
+    }
+  },
+  {
+    "Received": "2019-02-15T21:16:44.671737368Z",
+    "EventType": 55,
+    "Data": "results/2019_2_15_21_16_RACE.json"
+  },
+  {
+    "Received": "2019-02-15T21:16:44.672954823Z",
+    "EventType": 52,
+    "Data": {
+      "CarID": 1,
+      "DriverName": "Joseph Elton",
+      "DriverGUID": "76561198029578060",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "06_Smith_Racing",
+      "EventType": 52
+    }
+  },
+  {
+    "Received": "2019-02-15T21:16:44.675241094Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 0,
+      "CurrentSessionIndex": 0,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "barbagallo",
+      "TrackConfig": "",
+      "Name": "Qualify",
+      "Type": 2,
+      "Time": 5,
+      "Laps": 0,
+      "WaitTime": 0,
+      "AmbientTemp": 25,
+      "RoadTemp": 36,
+      "WeatherGraphics": "sol_03_Scattered Clouds_type=17_time=0_mult=0_start=43200",
+      "ElapsedMilliseconds": 0,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T21:19:32.913015434Z",
+    "EventType": 56,
+    "Data": 4
+  },
+  {
+    "Received": "2019-02-15T21:19:32.919751222Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 0,
+      "CurrentSessionIndex": 0,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "ks_brands_hatch",
+      "TrackConfig": "gp",
+      "Name": "Qualify",
+      "Type": 2,
+      "Time": 5,
+      "Laps": 0,
+      "WaitTime": 0,
+      "AmbientTemp": 25,
+      "RoadTemp": 37,
+      "WeatherGraphics": "sol_03_Scattered Clouds_type=17_time=0_mult=0_start=43200",
+      "ElapsedMilliseconds": 0,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T21:19:34.078153752Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 0,
+      "CurrentSessionIndex": 0,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "ks_brands_hatch",
+      "TrackConfig": "gp",
+      "Name": "Qualify",
+      "Type": 2,
+      "Time": 5,
+      "Laps": 0,
+      "WaitTime": 0,
+      "AmbientTemp": 25,
+      "RoadTemp": 36,
+      "WeatherGraphics": "sol_03_Scattered Clouds_type=17_time=0_mult=0_start=43200",
+      "ElapsedMilliseconds": 0,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T21:19:46.828379953Z",
+    "EventType": 51,
+    "Data": {
+      "CarID": 1,
+      "DriverName": "Joseph Elton",
+      "DriverGUID": "76561198029578060",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "06_Smith_Racing",
+      "EventType": 51
+    }
+  },
+  {
+    "Received": "2019-02-15T21:19:47.086413211Z",
+    "EventType": 51,
+    "Data": {
+      "CarID": 0,
+      "DriverName": "Callum Jones",
+      "DriverGUID": "76561198020046073",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "14_Outback_Stars",
+      "EventType": 51
+    }
+  },
+  {
+    "Received": "2019-02-15T21:20:00.626066768Z",
+    "EventType": 58,
+    "Data": 1
+  },
+  {
+    "Received": "2019-02-15T21:20:06.762332353Z",
+    "EventType": 58,
+    "Data": 0
+  },
+  {
+    "Received": "2019-02-15T21:22:39.303153846Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 152614,
+      "Cuts": 1,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:22:52.781910221Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 172212,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 172212,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:24:17.328060933Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 98034,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 98034,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 172212,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:24:21.222702067Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 88424,
+      "Cuts": 1,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 98034,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 172212,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:25:49.698673045Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 88495,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 88495,
+          "Laps": 2,
+          "Completed": 1
+        },
+        {
+          "CarID": 0,
+          "LapTime": 98034,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:27:34.89121829Z",
+    "EventType": 55,
+    "Data": "results/2019_2_15_21_27_QUALIFY.json"
+  },
+  {
+    "Received": "2019-02-15T21:27:34.896080761Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 1,
+      "CurrentSessionIndex": 1,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "ks_brands_hatch",
+      "TrackConfig": "gp",
+      "Name": "Race",
+      "Type": 3,
+      "Time": 5,
+      "Laps": 0,
+      "WaitTime": 60000,
+      "AmbientTemp": 25,
+      "RoadTemp": 37,
+      "WeatherGraphics": "sol_03_Scattered Clouds_type=17_time=0_mult=0_start=43200",
+      "ElapsedMilliseconds": -59999,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T21:30:08.785795581Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 93873,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 93871,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:30:13.869143112Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 98961,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 93871,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 98966,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:32:06.524665462Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 112652,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 211618,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 93871,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:32:08.225559764Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 119443,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 211618,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 213311,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:32:46.856531653Z",
+    "EventType": 11,
+    "Data": {
+      "CarID": 0,
+      "ImpactSpeed": 20.18648,
+      "WorldPos": {
+        "X": -205.83058,
+        "Y": -1.0222092,
+        "Z": -136.76944
+      },
+      "RelPos": {
+        "X": 0.87319255,
+        "Y": -0.2449569,
+        "Z": -1.4887044
+      }
+    }
+  },
+  {
+    "Received": "2019-02-15T21:33:47.817143151Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 99595,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 312904,
+          "Laps": 3,
+          "Completed": 1
+        },
+        {
+          "CarID": 0,
+          "LapTime": 211618,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:33:50.727152841Z",
+    "EventType": 11,
+    "Data": {
+      "CarID": 1,
+      "ImpactSpeed": 89.57159,
+      "WorldPos": {
+        "X": -192.2411,
+        "Y": -8.30625,
+        "Z": -354.82858
+      },
+      "RelPos": {
+        "X": -0.67337143,
+        "Y": -0.06023032,
+        "Z": 2.4260566
+      }
+    }
+  },
+  {
+    "Received": "2019-02-15T21:34:00.044073362Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 113520,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 312904,
+          "Laps": 3,
+          "Completed": 1
+        },
+        {
+          "CarID": 0,
+          "LapTime": 325129,
+          "Laps": 3,
+          "Completed": 1
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:34:07.38376947Z",
+    "EventType": 52,
+    "Data": {
+      "CarID": 0,
+      "DriverName": "Callum Jones",
+      "DriverGUID": "76561198020046073",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "14_Outback_Stars",
+      "EventType": 52
+    }
+  },
+  {
+    "Received": "2019-02-15T21:34:13.847857581Z",
+    "EventType": 52,
+    "Data": {
+      "CarID": 1,
+      "DriverName": "Joseph Elton",
+      "DriverGUID": "76561198029578060",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "06_Smith_Racing",
+      "EventType": 52
+    }
+  },
+  {
+    "Received": "2019-02-15T21:34:13.850684955Z",
+    "EventType": 55,
+    "Data": "results/2019_2_15_21_34_RACE.json"
+  },
+  {
+    "Received": "2019-02-15T21:34:13.852107925Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 0,
+      "CurrentSessionIndex": 0,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "ks_brands_hatch",
+      "TrackConfig": "gp",
+      "Name": "Qualify",
+      "Type": 2,
+      "Time": 5,
+      "Laps": 0,
+      "WaitTime": 0,
+      "AmbientTemp": 25,
+      "RoadTemp": 37,
+      "WeatherGraphics": "sol_03_Scattered Clouds_type=17_time=0_mult=0_start=43200",
+      "ElapsedMilliseconds": 0,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T21:39:08.792842681Z",
+    "EventType": 56,
+    "Data": 4
+  },
+  {
+    "Received": "2019-02-15T21:39:08.805556906Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 0,
+      "CurrentSessionIndex": 0,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "okayama",
+      "TrackConfig": "circuit_piper",
+      "Name": "Qualify",
+      "Type": 2,
+      "Time": 5,
+      "Laps": 0,
+      "WaitTime": 0,
+      "AmbientTemp": 26,
+      "RoadTemp": 37,
+      "WeatherGraphics": "sol_03_Scattered Clouds_type=17_time=0_mult=0_start=43200",
+      "ElapsedMilliseconds": 0,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T21:39:09.956806086Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 0,
+      "CurrentSessionIndex": 0,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "okayama",
+      "TrackConfig": "circuit_piper",
+      "Name": "Qualify",
+      "Type": 2,
+      "Time": 5,
+      "Laps": 0,
+      "WaitTime": 0,
+      "AmbientTemp": 25,
+      "RoadTemp": 37,
+      "WeatherGraphics": "sol_03_Scattered Clouds_type=17_time=0_mult=0_start=43200",
+      "ElapsedMilliseconds": 1,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T21:39:21.707475967Z",
+    "EventType": 51,
+    "Data": {
+      "CarID": 1,
+      "DriverName": "Joseph Elton",
+      "DriverGUID": "76561198029578060",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "06_Smith_Racing",
+      "EventType": 51
+    }
+  },
+  {
+    "Received": "2019-02-15T21:39:28.47417509Z",
+    "EventType": 51,
+    "Data": {
+      "CarID": 0,
+      "DriverName": "Callum Jones",
+      "DriverGUID": "76561198020046073",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "14_Outback_Stars",
+      "EventType": 51
+    }
+  },
+  {
+    "Received": "2019-02-15T21:39:37.374510225Z",
+    "EventType": 58,
+    "Data": 1
+  },
+  {
+    "Received": "2019-02-15T21:39:47.876318723Z",
+    "EventType": 58,
+    "Data": 0
+  },
+  {
+    "Received": "2019-02-15T21:40:42.33245976Z",
+    "EventType": 10,
+    "Data": {
+      "CarID": 1,
+      "OtherCarID": 0,
+      "ImpactSpeed": 6.8438187,
+      "WorldPos": {
+        "X": -120.34982,
+        "Y": 22.10694,
+        "Z": 162.60994
+      },
+      "RelPos": {
+        "X": 0.8688826,
+        "Y": -0.20171478,
+        "Z": 1.8111669
+      }
+    }
+  },
+  {
+    "Received": "2019-02-15T21:40:42.863199307Z",
+    "EventType": 10,
+    "Data": {
+      "CarID": 0,
+      "OtherCarID": 1,
+      "ImpactSpeed": 14.041922,
+      "WorldPos": {
+        "X": -120.31405,
+        "Y": 22.146368,
+        "Z": 162.89061
+      },
+      "RelPos": {
+        "X": -0.86551964,
+        "Y": -0.16786279,
+        "Z": 1.5871466
+      }
+    }
+  },
+  {
+    "Received": "2019-02-15T21:41:07.340509462Z",
+    "EventType": 10,
+    "Data": {
+      "CarID": 1,
+      "OtherCarID": 0,
+      "ImpactSpeed": 29.39703,
+      "WorldPos": {
+        "X": 362.2109,
+        "Y": 30.92225,
+        "Z": 25.570435
+      },
+      "RelPos": {
+        "X": -0.8486954,
+        "Y": -0.09729755,
+        "Z": 1.261614
+      }
+    }
+  },
+  {
+    "Received": "2019-02-15T21:41:07.86759015Z",
+    "EventType": 10,
+    "Data": {
+      "CarID": 0,
+      "OtherCarID": 1,
+      "ImpactSpeed": 56.922928,
+      "WorldPos": {
+        "X": 362.28055,
+        "Y": 30.901922,
+        "Z": 25.774197
+      },
+      "RelPos": {
+        "X": 0.0935694,
+        "Y": -0.10332847,
+        "Z": 2.5059361
+      }
+    }
+  },
+  {
+    "Received": "2019-02-15T21:41:30.723336798Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 113401,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 113401,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:41:46.93886517Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 119085,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 113401,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 119085,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:42:25.030266148Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 54312,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 54312,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 119085,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:42:52.81669015Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 65875,
+      "Cuts": 2,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 54312,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 119085,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:43:18.842538949Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 53806,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 53806,
+          "Laps": 3,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 119085,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:43:50.274582548Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 57457,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 53806,
+          "Laps": 3,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 57457,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:44:12.242875401Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 53407,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 53407,
+          "Laps": 4,
+          "Completed": 1
+        },
+        {
+          "CarID": 0,
+          "LapTime": 57457,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:44:46.175766152Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 55869,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 53407,
+          "Laps": 4,
+          "Completed": 1
+        },
+        {
+          "CarID": 0,
+          "LapTime": 55869,
+          "Laps": 3,
+          "Completed": 1
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:46:16.172091278Z",
+    "EventType": 55,
+    "Data": "results/2019_2_15_21_46_QUALIFY.json"
+  },
+  {
+    "Received": "2019-02-15T21:46:16.174091432Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 1,
+      "CurrentSessionIndex": 1,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "okayama",
+      "TrackConfig": "circuit_piper",
+      "Name": "Race",
+      "Type": 3,
+      "Time": 5,
+      "Laps": 0,
+      "WaitTime": 60000,
+      "AmbientTemp": 25,
+      "RoadTemp": 37,
+      "WeatherGraphics": "sol_03_Scattered Clouds_type=17_time=0_mult=0_start=43200",
+      "ElapsedMilliseconds": -60000,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T21:48:18.397320223Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 62205,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 62204,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:48:20.204771433Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 64021,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 62204,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 64019,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:48:37.973585808Z",
+    "EventType": 11,
+    "Data": {
+      "CarID": 0,
+      "ImpactSpeed": 61.8277,
+      "WorldPos": {
+        "X": 15.491475,
+        "Y": 18.189901,
+        "Z": -4.3611984
+      },
+      "RelPos": {
+        "X": -0.087334394,
+        "Y": -0.08962787,
+        "Z": 2.5208044
+      }
+    }
+  },
+  {
+    "Received": "2019-02-15T21:49:11.72181359Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 53324,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 115527,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 64019,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:49:24.569439488Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 64355,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 115527,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 128371,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:50:05.694990402Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 53971,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 169497,
+          "Laps": 3,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 128371,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:50:22.016260575Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 57458,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 169497,
+          "Laps": 3,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 185825,
+          "Laps": 3,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:50:58.008348325Z",
+    "EventType": 11,
+    "Data": {
+      "CarID": 0,
+      "ImpactSpeed": 11.596783,
+      "WorldPos": {
+        "X": 328.1576,
+        "Y": 32.28104,
+        "Z": 24.76898
+      },
+      "RelPos": {
+        "X": 0.69994664,
+        "Y": -0.20566629,
+        "Z": 2.4310486
+      }
+    }
+  },
+  {
+    "Received": "2019-02-15T21:50:59.556189528Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 53862,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 223356,
+          "Laps": 4,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 185825,
+          "Laps": 3,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:51:25.897568135Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 63871,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 223356,
+          "Laps": 4,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 249705,
+          "Laps": 4,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:51:53.30113581Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 53752,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 277108,
+          "Laps": 5,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 249705,
+          "Laps": 4,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:52:22.997805619Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 57106,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 277108,
+          "Laps": 5,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 306812,
+          "Laps": 5,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:52:47.798065248Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 54501,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 331608,
+          "Laps": 6,
+          "Completed": 1
+        },
+        {
+          "CarID": 0,
+          "LapTime": 306812,
+          "Laps": 5,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:53:19.919263007Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 56913,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 331608,
+          "Laps": 6,
+          "Completed": 1
+        },
+        {
+          "CarID": 0,
+          "LapTime": 363728,
+          "Laps": 6,
+          "Completed": 1
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:53:34.086309973Z",
+    "EventType": 52,
+    "Data": {
+      "CarID": 0,
+      "DriverName": "Callum Jones",
+      "DriverGUID": "76561198020046073",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "14_Outback_Stars",
+      "EventType": 52
+    }
+  },
+  {
+    "Received": "2019-02-15T21:53:36.563142389Z",
+    "EventType": 52,
+    "Data": {
+      "CarID": 1,
+      "DriverName": "Joseph Elton",
+      "DriverGUID": "76561198029578060",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "06_Smith_Racing",
+      "EventType": 52
+    }
+  },
+  {
+    "Received": "2019-02-15T21:53:36.563672394Z",
+    "EventType": 55,
+    "Data": "results/2019_2_15_21_53_RACE.json"
+  },
+  {
+    "Received": "2019-02-15T21:53:36.568181879Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 0,
+      "CurrentSessionIndex": 0,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "okayama",
+      "TrackConfig": "circuit_piper",
+      "Name": "Qualify",
+      "Type": 2,
+      "Time": 5,
+      "Laps": 0,
+      "WaitTime": 0,
+      "AmbientTemp": 26,
+      "RoadTemp": 38,
+      "WeatherGraphics": "sol_03_Scattered Clouds_type=17_time=0_mult=0_start=43200",
+      "ElapsedMilliseconds": 0,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T21:56:32.270304094Z",
+    "EventType": 56,
+    "Data": 4
+  },
+  {
+    "Received": "2019-02-15T21:56:32.295771337Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 0,
+      "CurrentSessionIndex": 0,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "ks_red_bull_ring",
+      "TrackConfig": "layout_national",
+      "Name": "Qualify",
+      "Type": 2,
+      "Time": 5,
+      "Laps": 0,
+      "WaitTime": 0,
+      "AmbientTemp": 26,
+      "RoadTemp": 37,
+      "WeatherGraphics": "sol_03_Scattered Clouds_type=17_time=0_mult=0_start=43200",
+      "ElapsedMilliseconds": 0,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T21:56:33.484983753Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 0,
+      "CurrentSessionIndex": 0,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "ks_red_bull_ring",
+      "TrackConfig": "layout_national",
+      "Name": "Qualify",
+      "Type": 2,
+      "Time": 5,
+      "Laps": 0,
+      "WaitTime": 0,
+      "AmbientTemp": 25,
+      "RoadTemp": 37,
+      "WeatherGraphics": "sol_03_Scattered Clouds_type=17_time=0_mult=0_start=43200",
+      "ElapsedMilliseconds": 1,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T21:56:45.938488974Z",
+    "EventType": 51,
+    "Data": {
+      "CarID": 1,
+      "DriverName": "Joseph Elton",
+      "DriverGUID": "76561198029578060",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "06_Smith_Racing",
+      "EventType": 51
+    }
+  },
+  {
+    "Received": "2019-02-15T21:57:00.434808301Z",
+    "EventType": 51,
+    "Data": {
+      "CarID": 0,
+      "DriverName": "Callum Jones",
+      "DriverGUID": "76561198020046073",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "14_Outback_Stars",
+      "EventType": 51
+    }
+  },
+  {
+    "Received": "2019-02-15T21:57:02.407391197Z",
+    "EventType": 58,
+    "Data": 1
+  },
+  {
+    "Received": "2019-02-15T21:57:18.108941638Z",
+    "EventType": 58,
+    "Data": 0
+  },
+  {
+    "Received": "2019-02-15T21:58:28.807111651Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 70727,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 70727,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:58:29.942426529Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 87585,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 70727,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 87585,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:59:21.29281912Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 51354,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 51354,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 70727,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T21:59:22.562282953Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 53751,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 51354,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 53751,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T22:00:12.64909829Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 51358,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 51354,
+          "Laps": 3,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 53751,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T22:00:16.221931961Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 53657,
+      "Cuts": 3,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 51354,
+          "Laps": 3,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 53751,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T22:01:03.980119348Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 51332,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 51332,
+          "Laps": 4,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 53751,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T22:01:08.98820612Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 52769,
+      "Cuts": 1,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 51332,
+          "Laps": 4,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 53751,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T22:01:55.047713636Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 51060,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 51060,
+          "Laps": 5,
+          "Completed": 1
+        },
+        {
+          "CarID": 0,
+          "LapTime": 53751,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 999999999,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T22:03:31.89134567Z",
+    "EventType": 55,
+    "Data": "results/2019_2_15_22_3_QUALIFY.json"
+  },
+  {
+    "Received": "2019-02-15T22:03:31.895936133Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 1,
+      "CurrentSessionIndex": 1,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "ks_red_bull_ring",
+      "TrackConfig": "layout_national",
+      "Name": "Race",
+      "Type": 3,
+      "Time": 5,
+      "Laps": 0,
+      "WaitTime": 60000,
+      "AmbientTemp": 26,
+      "RoadTemp": 36,
+      "WeatherGraphics": "sol_03_Scattered Clouds_type=17_time=0_mult=0_start=43200",
+      "ElapsedMilliseconds": -60000,
+      "EventType": 50
+    }
+  },
+  {
+    "Received": "2019-02-15T22:05:28.795087925Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 56850,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 56850,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T22:05:30.902570837Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 58999,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 56850,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 0,
+          "LapTime": 59001,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T22:05:42.456278503Z",
+    "EventType": 11,
+    "Data": {
+      "CarID": 1,
+      "ImpactSpeed": 26.422583,
+      "WorldPos": {
+        "X": -100.20972,
+        "Y": 6.1208777,
+        "Z": 322.7265
+      },
+      "RelPos": {
+        "X": -0.6814578,
+        "Y": -0.061592374,
+        "Z": 2.4296353
+      }
+    }
+  },
+  {
+    "Received": "2019-02-15T22:06:24.429040717Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 53520,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 112523,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 56850,
+          "Laps": 1,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T22:06:31.693074783Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 62923,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 112523,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 119768,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T22:07:17.976196422Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 53549,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 166071,
+          "Laps": 3,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 119768,
+          "Laps": 2,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T22:07:23.316252007Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 51638,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 166071,
+          "Laps": 3,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 171404,
+          "Laps": 3,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T22:08:10.79371802Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 52819,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 218888,
+          "Laps": 4,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 171404,
+          "Laps": 3,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T22:08:14.485226273Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 51154,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 218888,
+          "Laps": 4,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 222560,
+          "Laps": 4,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T22:09:03.809113758Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 53006,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 271896,
+          "Laps": 5,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 222560,
+          "Laps": 4,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T22:09:06.109280042Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 51639,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 0,
+          "LapTime": 271896,
+          "Laps": 5,
+          "Completed": 0
+        },
+        {
+          "CarID": 1,
+          "LapTime": 274185,
+          "Laps": 5,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T22:09:18.250918606Z",
+    "EventType": 11,
+    "Data": {
+      "CarID": 0,
+      "ImpactSpeed": 16.57332,
+      "WorldPos": {
+        "X": -112.085686,
+        "Y": 6.1052675,
+        "Z": 301.82123
+      },
+      "RelPos": {
+        "X": 0.699945,
+        "Y": -0.20566425,
+        "Z": 2.431033
+      }
+    }
+  },
+  {
+    "Received": "2019-02-15T22:09:57.790096541Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 1,
+      "LapTime": 51686,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 325883,
+          "Laps": 6,
+          "Completed": 1
+        },
+        {
+          "CarID": 0,
+          "LapTime": 271896,
+          "Laps": 5,
+          "Completed": 0
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T22:10:06.244837492Z",
+    "EventType": 73,
+    "Data": {
+      "CarID": 0,
+      "LapTime": 62444,
+      "Cuts": 0,
+      "CarsCount": 9,
+      "Cars": [
+        {
+          "CarID": 1,
+          "LapTime": 325883,
+          "Laps": 6,
+          "Completed": 1
+        },
+        {
+          "CarID": 0,
+          "LapTime": 334340,
+          "Laps": 6,
+          "Completed": 1
+        },
+        {
+          "CarID": 2,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 3,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 4,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 5,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 6,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 7,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        },
+        {
+          "CarID": 8,
+          "LapTime": 0,
+          "Laps": 0,
+          "Completed": 0
+        }
+      ]
+    }
+  },
+  {
+    "Received": "2019-02-15T22:10:08.263661748Z",
+    "EventType": 11,
+    "Data": {
+      "CarID": 0,
+      "ImpactSpeed": 94.310814,
+      "WorldPos": {
+        "X": 154.84898,
+        "Y": -11.441612,
+        "Z": 332.17795
+      },
+      "RelPos": {
+        "X": -0.57676584,
+        "Y": -0.09075346,
+        "Z": 2.3523817
+      }
+    }
+  },
+  {
+    "Received": "2019-02-15T22:10:12.365458146Z",
+    "EventType": 52,
+    "Data": {
+      "CarID": 0,
+      "DriverName": "Callum Jones",
+      "DriverGUID": "76561198020046073",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "14_Outback_Stars",
+      "EventType": 52
+    }
+  },
+  {
+    "Received": "2019-02-15T22:10:15.858176721Z",
+    "EventType": 52,
+    "Data": {
+      "CarID": 1,
+      "DriverName": "Joseph Elton",
+      "DriverGUID": "76561198029578060",
+      "CarMode": "rss_formula_rss_4",
+      "CarSkin": "06_Smith_Racing",
+      "EventType": 52
+    }
+  },
+  {
+    "Received": "2019-02-15T22:10:15.862001031Z",
+    "EventType": 55,
+    "Data": "results/2019_2_15_22_10_RACE.json"
+  },
+  {
+    "Received": "2019-02-15T22:10:15.862883566Z",
+    "EventType": 50,
+    "Data": {
+      "Version": 4,
+      "SessionIndex": 0,
+      "CurrentSessionIndex": 0,
+      "SessionCount": 2,
+      "ServerName": "Big Whiskey v2",
+      "Track": "ks_red_bull_ring",
+      "TrackConfig": "layout_national",
+      "Name": "Qualify",
+      "Type": 2,
+      "Time": 5,
+      "Laps": 0,
+      "WaitTime": 0,
+      "AmbientTemp": 26,
+      "RoadTemp": 37,
+      "WeatherGraphics": "sol_03_Scattered Clouds_type=17_time=0_mult=0_start=43200",
+      "ElapsedMilliseconds": 0,
+      "EventType": 50
+    }
+  }
+]
