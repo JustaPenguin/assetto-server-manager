@@ -21,7 +21,7 @@
         <p>Configure an Event for the <strong>{{ .Championship.Name }}</strong> Championship.</p>
     {{ end }}
 
-    <form method="post" {{ if .IsChampionship }} action="/championship/{{ .Championship.ID.String }}/event/submit" {{ else }} action="/custom/new/submit" {{ end}}>
+    <form method="post" {{ if .IsChampionship }} action="/championship/{{ .Championship.ID.String }}/event/submit" {{ else }} action="/custom/new/submit" {{ end}} data-safe-submit>
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">
@@ -217,7 +217,7 @@
                                                     step="1"
                                             >
 
-                                            <small>session length in minutes</small>
+                                            <small>Session length in minutes</small>
                                         </div>
 
 
@@ -233,7 +233,7 @@
                                                     step="1"
                                             >
 
-                                            <small>number of laps in the race</small>
+                                            <small>Number of laps in the race</small>
                                         </div>
                                     </div>
                                 {{ else }}
@@ -252,7 +252,7 @@
                                                     step="1"
                                             >
 
-                                            <small>session length in minutes</small>
+                                            <small>Session length in minutes</small>
                                         </div>
                                     </div>
 
@@ -403,7 +403,7 @@
 
                                     <div class="row">
                                         <div class="form-group row col-md-6">
-                                            <label for="ReversedGridRacePositions" class="col-sm-6 col-form-label">
+                                            <label for="ReversedGridRacePositions" class="col-sm-6 col-form-label" data-toggle="tooltip" title="The race session will be restarted in reversed grid order based on the standings of the previous race. Players disqualified in the first race will start from the back of the grid in the second race, regardless of their position being within the reversed grid range.">
                                                 Reversed Grid Race Positions
                                             </label>
 
@@ -551,7 +551,12 @@
                         {{ template "entrant" }}
                     </div>
                 {{ end }}
-                <button class="btn btn-warning float-right" id="addEntrant">Add Entrant</button>
+
+                <div class="float-right">
+                    <input id="numEntrantsToAdd" class="form-control" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
+
+                    <button class="btn btn-warning" id="addEntrant">Add Entrant(s)</button>
+                </div>
 
                 <div class="clearfix"></div>
             </div>
@@ -821,6 +826,8 @@
                 </div>
 
                 <hr>
+
+                <p>Each new session will be <strong>randomly selected</strong> from the below weather configurations.</p>
 
                 <div class="row">
 
@@ -1097,13 +1104,29 @@
                         >
                         <br>
 
-                        <small>1 virtual mirror will be enabled for every client, 0 for mirror as optional</small>
+                        <small>Force clients to use Virtual Mirrors (does not work in VR)</small>
                     </div>
                 </div>
 
 
 
                 <h4>Dynamic Track</h4>
+
+                <div class="form-group row">
+                    <label for="SurfacePreset" class="col-sm-3 col-form-label">Surface Preset</label>
+
+                    <div class="col-sm-9">
+                        <select name="SurfacePreset" class="form-control" id="SurfacePreset">
+                            <option></option>
+                            {{ range $index, $preset := .SurfacePresets }}
+                                <option value="{{ $index }}">{{ $preset.Name }}: {{ $preset.Description }}</option>
+                            {{ end }}
+                        </select>
+
+                        <small>Dynamic Track Presets</small>
+                    </div>
+                </div>
+
 
                 <div class="form-group row">
                     <label for="SessionStart" class="col-sm-3 col-form-label">Session Start</label>
@@ -1280,27 +1303,6 @@
                     </div>
                 </div>
 
-
-                <div class="form-group row">
-                    <label for="SleepTime" class="col-sm-3 col-form-label">Sleep Time</label>
-
-                    <div class="col-sm-9">
-                        <input
-                                type="number"
-                                id="SleepTime"
-                                name="SleepTime"
-                                class="form-control"
-                                value="{{ $f.SleepTime }}"
-
-
-                                step="1"
-                        >
-
-                        <small>TODO</small>
-                    </div>
-                </div>
-
-
                 <div class="form-group row">
                     <label for="StartRule" class="col-sm-3 col-form-label">Start Rule</label>
 
@@ -1397,5 +1399,6 @@
         const availableTyres = {{ jsonEncode .Tyres }};
         const possibleEntrants = {{ jsonEncode .PossibleEntrants }};
         const availableCars = {{ jsonEncode .CarOpts.AsMap }};
+        const surfacePresets = {{ jsonEncode .SurfacePresets }};
     </script>
 {{ end }}
