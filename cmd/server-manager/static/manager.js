@@ -9,6 +9,7 @@ $(document).ready(function () {
     $document = $(document);
     raceSetup.init();
     serverLogs.init();
+    liveTiming.init();
     championships.init();
 
     // init bootstrap-switch
@@ -659,6 +660,181 @@ let raceSetup = {
             $lapGain.val(preset["LapGain"]);
         });
     },
+};
+
+function msToTime(s) {
+    // Pad to 2 or 3 digits, default is 2
+    let pad = (n, z = 2) => ('00' + n).slice(-z);
+    return pad(s/3.6e6|0) + ':' + pad((s%3.6e6)/6e4 | 0) + ':' + pad((s%6e4)/1000|0) + '.' + pad(s%1000, 3);
+}
+
+function timeDiff( tstart, tend ) {
+    let diff = Math.floor((tend - tstart) / 1000), units = [
+        { d: 60, l: "s" },
+        { d: 60, l: "m" },
+        { d: 24, l: "hr" },
+    ];
+
+    let s = '';
+    for (let i = 0; i < units.length; i++) {
+        if (diff === 0) { continue }
+        s = (diff % units[i].d) + units[i].l + " " + s;
+        diff = Math.floor(diff / units[i].d);
+    }
+    return s;
+}
+
+let liveTiming = {
+    init: function () {
+        let $liveTimingTable = $document.find("#live-table");
+
+        let raceCompletion = "";
+        let total = 0;
+        let sessionType = "";
+        let lapTime = "";
+
+        if ($liveTimingTable.length) {
+            setInterval(function () {
+                $.getJSON("/live-timing/get", function (liveTiming) {
+                    let date = new Date();
+
+                    // Get lap/laps or time/totalTime
+                    if (liveTiming.Time > 0) {
+                        total = liveTiming.Time + "m";
+
+                        raceCompletion = timeDiff(liveTiming.SessionStarted, date.getTime());
+                    } else if (liveTiming.Laps > 0) {
+                        raceCompletion = liveTiming.LapNum;
+                        total = liveTiming.Laps + " laps";
+                    }
+
+                    let $raceTime = $document.find("#race-time");
+                    $raceTime.text("Event Completion: " + raceCompletion + "/ " + total);
+
+                    // Get the session type
+                    let $currentSession = $document.find("#current-session");
+
+                    switch (liveTiming.Type) {
+                        case 0:
+                            sessionType = "Booking";
+                            break;
+                        case 1:
+                            sessionType = "Practice";
+                            break;
+                        case 2:
+                            sessionType = "Qualifying";
+                            break;
+                        case 3:
+                            sessionType = "Race";
+                            break;
+                    }
+
+                    $currentSession.text("Current Session: " + sessionType);
+
+                    for (let car in liveTiming.Cars) {
+                        if (liveTiming.Cars[car].Pos === 0) {
+                            liveTiming.Cars[car].Pos = 255
+                        }
+                    }
+
+                    // Get active cars - sort by pos
+                    let sorted = Object.keys(liveTiming.Cars)
+                        .sort(function (a, b) {
+                            if (liveTiming.Cars[a].Pos < liveTiming.Cars[b].Pos) {
+                                return -1
+                            } else if (liveTiming.Cars[a].Pos === liveTiming.Cars[b].Pos) {
+                                return 0
+                            } else if (liveTiming.Cars[a].Pos > liveTiming.Cars[b].Pos) {
+                                return 1
+                            }
+                        });
+
+                    for (let car of sorted) {
+                        let $driverRow = $document.find("#"+liveTiming.Cars[car].DriverGUID);
+                        let $tr;
+
+                        // Remove a driver row if they disconnect
+                        if (liveTiming.Cars[car].Delete) {
+                            $driverRow.remove();
+                            continue
+                        }
+
+                        // Get the lap time, display previous for 10 seconds after completion
+                        if (liveTiming.Cars[car].LastLapCompleteTimeUnix + 10000 > date.getTime()) {
+                            lapTime = liveTiming.Cars[car].LastLap
+                        } else if (liveTiming.Cars[car].LapNum === 0) {
+                            lapTime = "0s"
+                        } else {
+                            lapTime = timeDiff(liveTiming.Cars[car].LastLapCompleteTimeUnix, date.getTime())
+                        }
+
+                        if ($driverRow.length) {
+                            $driverRow.remove()
+                        }
+
+                        $tr = $("<tr/>");
+                        $tr.attr({'id': liveTiming.Cars[car].DriverGUID});
+                        $tr.empty();
+
+                        let $tdPos = $("<td/>");
+                        let $tdName = $("<td/>");
+                        let $tdLapTime = $("<td/>");
+                        let $tdBestLap = $("<td/>");
+                        let $tdGap = $("<td/>");
+                        let $tdLapNum = $("<td/>");
+                        let $tdEvents = $("<td/>");
+
+                        if (liveTiming.Cars[car].Pos === 255) {
+                            $tdPos.text("n/a");
+                        } else {
+                            $tdPos.text(liveTiming.Cars[car].Pos);
+                        }
+                        $tr.append($tdPos);
+
+                        $tdName.text(liveTiming.Cars[car].DriverName);
+                        $tr.append($tdName);
+
+                        $tdLapTime.text(lapTime);
+                        $tr.append($tdLapTime);
+
+                        $tdBestLap.text(liveTiming.Cars[car].BestLap);
+                        $tr.append($tdBestLap);
+
+                        $tdGap.text(liveTiming.Cars[car].Split);
+                        $tr.append($tdGap);
+
+                        $tdLapNum.text(liveTiming.Cars[car].LapNum);
+                        $tr.append($tdLapNum);
+
+                        if (liveTiming.Cars[car].Loaded && liveTiming.Cars[car].LoadedTime + 10000 > date.getTime()) {
+                            let $tag = $("<span/>");
+                            $tag.attr({'class': 'badge badge-success live-badge'});
+                            $tag.text("Loaded");
+
+                            $tdEvents.append($tag);
+                        }
+
+                        if (liveTiming.Cars[car].Collisions !== null) {
+                            for (let y = 0; y < liveTiming.Cars[car].Collisions.length; y++) {
+                                if (liveTiming.Cars[car].Collisions[y].Time + 10000 > date.getTime()) {
+                                    let $tag = $("<span/>");
+                                    $tag.attr({'class': 'badge badge-danger live-badge'});
+                                    $tag.text("Crash " + liveTiming.Cars[car].Collisions[y].Type + " at " +
+                                        liveTiming.Cars[car].Collisions[y].Speed + "m/s");
+
+                                    $tdEvents.append($tag);
+                                }
+                            }
+                        }
+
+                        $tr.append($tdEvents);
+
+                        $liveTimingTable.append($tr)
+                    }
+                });
+            }, 1000);
+        }
+    }
 };
 
 Date.prototype.getFullMinutes = function () {

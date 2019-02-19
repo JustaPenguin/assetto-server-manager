@@ -70,6 +70,10 @@ func Router() chi.Router {
 		r.Get("/championship/{championshipID}", viewChampionshipHandler)
 		r.Get("/championship/{championshipID}/export", exportChampionshipHandler)
 
+		// live timings
+		r.Get("/live-timing", liveTimingHandler)
+		r.Get("/live-timing/get", liveTimingGetHandler)
+
 		FileServer(r, "/static", http.Dir("./static"))
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")))
 		FileServer(r, "/results/download", http.Dir(filepath.Join(ServerInstallPath, "results")))
@@ -361,4 +365,24 @@ func apiServerLogHandler(w http.ResponseWriter, r *http.Request) {
 		ServerLog:  AssettoProcess.Logs(),
 		ManagerLog: logOutput.String(),
 	})
+}
+
+func liveTimingHandler(w http.ResponseWriter, r *http.Request) {
+	currentRace, entryList := raceManager.CurrentRace()
+
+	var customRace *CustomRace
+
+	if currentRace != nil {
+		customRace = &CustomRace{EntryList: entryList, RaceConfig: currentRace.CurrentRaceConfig}
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "live-timing.html", map[string]interface{}{
+		"RaceDetails": customRace,
+	})
+}
+
+func liveTimingGetHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	_ = json.NewEncoder(w).Encode(liveInfo)
 }
