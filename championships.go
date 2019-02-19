@@ -65,6 +65,16 @@ type Championship struct {
 	Points ChampionshipPoints
 }
 
+func (c *Championship) EventByID(id string) (*ChampionshipEvent, error) {
+	for _, e := range c.Events {
+		if e.ID.String() == id {
+			return e, nil
+		}
+	}
+
+	return nil, ErrInvalidChampionshipEvent
+}
+
 // ValidCarIDs returns a set of all of the valid cars in the Championship - that is, the smallest possible list
 // of Cars driven by the Entrants.
 func (c *Championship) ValidCarIDs() []string {
@@ -417,7 +427,7 @@ func championshipSubmitEventConfigurationHandler(w http.ResponseWriter, r *http.
 func championshipStartEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	err := championshipManager.StartEvent(vars["championshipID"], formValueAsInt(vars["eventID"]))
+	err := championshipManager.StartEvent(vars["championshipID"], vars["eventID"])
 
 	if err != nil {
 		logrus.Errorf("Could not start championship event, err: %s", err)
@@ -433,7 +443,7 @@ func championshipStartEventHandler(w http.ResponseWriter, r *http.Request) {
 func championshipDeleteEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	err := championshipManager.DeleteEvent(vars["championshipID"], formValueAsInt(vars["eventID"]))
+	err := championshipManager.DeleteEvent(vars["championshipID"], vars["eventID"])
 
 	if err != nil {
 		logrus.Errorf("Could not delete championship event, err: %s", err)
@@ -449,7 +459,7 @@ func championshipDeleteEventHandler(w http.ResponseWriter, r *http.Request) {
 func championshipStartPracticeEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	err := championshipManager.StartPracticeEvent(vars["championshipID"], formValueAsInt(vars["eventID"]))
+	err := championshipManager.StartPracticeEvent(vars["championshipID"], vars["eventID"])
 
 	if err != nil {
 		logrus.Errorf("Could not start practice championship event, err: %s", err)
@@ -465,7 +475,7 @@ func championshipStartPracticeEventHandler(w http.ResponseWriter, r *http.Reques
 func championshipCancelEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	err := championshipManager.CancelEvent(vars["championshipID"], formValueAsInt(vars["eventID"]))
+	err := championshipManager.CancelEvent(vars["championshipID"], vars["eventID"])
 
 	if err != nil {
 		logrus.Errorf("Could not cancel championship event, err: %s", err)
@@ -481,7 +491,7 @@ func championshipCancelEventHandler(w http.ResponseWriter, r *http.Request) {
 func championshipRestartEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	err := championshipManager.RestartEvent(vars["championshipID"], formValueAsInt(vars["eventID"]))
+	err := championshipManager.RestartEvent(vars["championshipID"], vars["eventID"])
 
 	if err != nil {
 		logrus.Errorf("Could not restart championship event, err: %s", err)
