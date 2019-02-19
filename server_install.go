@@ -22,15 +22,17 @@ var (
 	ServerConfigPath = "cfg"
 )
 
-func init() {
-	if !filepath.IsAbs(ServerInstallPath) {
+func SetAssettoInstallPath(installPath string) {
+	if !filepath.IsAbs(installPath) {
 		wd, err := os.Getwd()
 
 		if err == nil {
-			ServerInstallPath = filepath.Join(wd, ServerInstallPath)
+			ServerInstallPath = filepath.Join(wd, installPath)
 		} else {
 			panic("unable to get working directory. can't install server")
 		}
+	} else {
+		ServerInstallPath = installPath
 	}
 }
 
