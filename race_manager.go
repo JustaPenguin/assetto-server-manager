@@ -102,6 +102,7 @@ func (rm *RaceManager) UDPCallback(message udp.Message) {
 	spew.Dump(message)
 
 	championshipManager.ChampionshipEventCallback(message)
+	CallbackFunc(message)
 }
 
 func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList) error {

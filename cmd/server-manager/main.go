@@ -1,12 +1,11 @@
 package main
 
 import (
-	"net/http"
-	"os"
-
 	"github.com/cj123/assetto-server-manager"
 	"github.com/etcd-io/bbolt"
 	"github.com/sirupsen/logrus"
+	"net/http"
+	"os"
 )
 
 var (
