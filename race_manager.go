@@ -15,8 +15,8 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/etcd-io/bbolt"
+	"github.com/go-chi/chi"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
@@ -546,7 +546,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		entrants = customRace.EntryList
 	}
 
-	templateIDForEditing := mux.Vars(r)["uuid"]
+	templateIDForEditing := chi.URLParam(r, "uuid")
 	isEditing := templateIDForEditing != ""
 	var customRaceName string
 

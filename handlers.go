@@ -11,15 +11,17 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
 )
 
 var (
 	ViewRenderer *Renderer
-	store        = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+	store        sessions.Store
 	logOutput    = new(bytes.Buffer)
 )
 
@@ -33,68 +35,112 @@ func init() {
 	logrus.SetOutput(io.MultiWriter(os.Stdout, logOutput))
 }
 
-func Router() *mux.Router {
-	r := mux.NewRouter()
+func Router() chi.Router {
+	r := chi.NewRouter()
 
-	// pages
-	r.HandleFunc("/", homeHandler)
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(60 * time.Second))
 
-	// content
-	r.HandleFunc("/cars", carsHandler)
-	r.HandleFunc("/tracks", tracksHandler)
-	r.HandleFunc("/weather", weatherHandler)
-	r.HandleFunc("/track/delete/{name}", trackDeleteHandler)
-	r.HandleFunc("/car/delete/{name}", carDeleteHandler)
-	r.HandleFunc("/weather/delete/{key}", weatherDeleteHandler)
+	r.HandleFunc("/login", loginHandler)
+	r.HandleFunc("/logout", logoutHandler)
 
-	// results
-	r.HandleFunc("/results", resultsHandler)
-	r.HandleFunc("/results/{fileName}", resultHandler)
-	r.HandleFunc("/server-options", serverOptionsHandler)
+	// readers
+	r.Group(func(r chi.Router) {
+		r.Use(ReadAccessMiddleware)
 
-	// races
-	r.HandleFunc("/quick", quickRaceHandler)
-	r.Methods(http.MethodPost).Path("/quick/submit").HandlerFunc(quickRaceSubmitHandler)
-	r.HandleFunc("/custom", customRaceListHandler)
-	r.HandleFunc("/custom/new", customRaceNewOrEditHandler)
-	r.HandleFunc("/custom/load/{uuid}", customRaceLoadHandler)
-	r.HandleFunc("/custom/edit/{uuid}", customRaceNewOrEditHandler)
-	r.HandleFunc("/custom/delete/{uuid}", customRaceDeleteHandler)
-	r.HandleFunc("/custom/star/{uuid}", customRaceStarHandler)
-	r.Methods(http.MethodPost).Path("/custom/new/submit").HandlerFunc(customRaceSubmitHandler)
+		// pages
+		r.Get("/", homeHandler)
 
-	// server management
-	r.HandleFunc("/logs", serverLogsHandler)
-	r.HandleFunc("/process/{action}", serverProcessHandler)
+		// content
+		r.Get("/cars", carsHandler)
+		r.Get("/tracks", tracksHandler)
+		r.Get("/weather", weatherHandler)
 
-	// championships
-	r.HandleFunc("/championships", listChampionshipsHandler)
-	r.HandleFunc("/championships/new", newOrEditChampionshipHandler)
-	r.Methods(http.MethodPost).Path("/championships/new/submit").HandlerFunc(submitNewChampionshipHandler)
-	r.HandleFunc("/championship/{championshipID}", viewChampionshipHandler)
-	r.HandleFunc("/championship/{championshipID}/edit", newOrEditChampionshipHandler)
-	r.HandleFunc("/championship/{championshipID}/export", exportChampionshipHandler)
-	r.HandleFunc("/championship/{championshipID}/delete", deleteChampionshipHandler)
-	r.HandleFunc("/championship/{championshipID}/event", championshipEventConfigurationHandler)
-	r.Methods(http.MethodPost).Path("/championship/{championshipID}/event/submit").HandlerFunc(championshipSubmitEventConfigurationHandler)
-	r.HandleFunc("/championship/{championshipID}/event/{eventID}/start", championshipStartEventHandler)
-	r.HandleFunc("/championship/{championshipID}/event/{eventID}/edit", championshipEventConfigurationHandler)
-	r.HandleFunc("/championship/{championshipID}/event/{eventID}/delete", championshipDeleteEventHandler)
-	r.HandleFunc("/championship/{championshipID}/event/{eventID}/practice", championshipStartPracticeEventHandler)
-	r.HandleFunc("/championship/{championshipID}/event/{eventID}/cancel", championshipCancelEventHandler)
-	r.HandleFunc("/championship/{championshipID}/event/{eventID}/restart", championshipRestartEventHandler)
+		// results
+		r.Get("/results", resultsHandler)
+		r.Get("/results/{fileName}", resultHandler)
 
-	// endpoints
-	r.HandleFunc("/api/logs", apiServerLogHandler)
-	r.HandleFunc("/api/track/upload", apiTrackUploadHandler)
-	r.HandleFunc("/api/car/upload", apiCarUploadHandler)
-	r.HandleFunc("/api/weather/upload", apiWeatherUploadHandler)
+		r.Get("/logs", serverLogsHandler)
+		r.Get("/api/logs", apiServerLogHandler)
 
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
-	r.PathPrefix("/content/").Handler(http.StripPrefix("/content", http.FileServer(http.Dir(filepath.Join(ServerInstallPath, "content")))))
-	r.PathPrefix("/results/download").Handler(http.StripPrefix("/results/download", http.FileServer(http.Dir(filepath.Join(ServerInstallPath, "results")))))
+		// championships
+		r.Get("/championships", listChampionshipsHandler)
+		r.Get("/championship/{championshipID}", viewChampionshipHandler)
+		r.Get("/championship/{championshipID}/export", exportChampionshipHandler)
+
+		FileServer(r, "/static", http.Dir("./static"))
+		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")))
+		FileServer(r, "/results/download", http.Dir(filepath.Join(ServerInstallPath, "results")))
+	})
+
+	// writers
+	r.Group(func(r chi.Router) {
+		r.Use(WriteAccessMiddleware)
+
+		// content
+		r.Get("/track/delete/{name}", trackDeleteHandler)
+		r.Get("/car/delete/{name}", carDeleteHandler)
+		r.Get("/weather/delete/{key}", weatherDeleteHandler)
+
+		// races
+		r.Get("/quick", quickRaceHandler)
+		r.Post("/quick/submit", quickRaceSubmitHandler)
+		r.Get("/custom", customRaceListHandler)
+		r.Get("/custom/new", customRaceNewOrEditHandler)
+		r.Get("/custom/load/{uuid}", customRaceLoadHandler)
+		r.Get("/custom/edit/{uuid}", customRaceNewOrEditHandler)
+		r.Get("/custom/delete/{uuid}", customRaceDeleteHandler)
+		r.Get("/custom/star/{uuid}", customRaceStarHandler)
+		r.Post("/custom/new/submit", customRaceSubmitHandler)
+
+		// server management
+		r.Get("/process/{action}", serverProcessHandler)
+
+		// championships
+		r.Get("/championships/new", newOrEditChampionshipHandler)
+		r.Post("/championships/new/submit", submitNewChampionshipHandler)
+		r.Get("/championship/{championshipID}/edit", newOrEditChampionshipHandler)
+		r.Get("/championship/{championshipID}/delete", deleteChampionshipHandler)
+		r.Get("/championship/{championshipID}/event", championshipEventConfigurationHandler)
+		r.Post("/championship/{championshipID}/event/submit", championshipSubmitEventConfigurationHandler)
+		r.Get("/championship/{championshipID}/event/{eventID}/start", championshipStartEventHandler)
+		r.Get("/championship/{championshipID}/event/{eventID}/edit", championshipEventConfigurationHandler)
+		r.Get("/championship/{championshipID}/event/{eventID}/delete", championshipDeleteEventHandler)
+		r.Get("/championship/{championshipID}/event/{eventID}/practice", championshipStartPracticeEventHandler)
+		r.Get("/championship/{championshipID}/event/{eventID}/cancel", championshipCancelEventHandler)
+		r.Get("/championship/{championshipID}/event/{eventID}/restart", championshipRestartEventHandler)
+
+		// endpoints
+		r.Post("/api/track/upload", apiTrackUploadHandler)
+		r.Post("/api/car/upload", apiCarUploadHandler)
+		r.Post("/api/weather/upload", apiWeatherUploadHandler)
+	})
+
+	r.Group(func(r chi.Router) {
+		r.Use(AdminAccessMiddleware)
+
+		r.Get("/server-options", serverOptionsHandler)
+	})
 
 	return r
+}
+
+func FileServer(r chi.Router, path string, root http.FileSystem) {
+	if strings.ContainsAny(path, "{}*") {
+		panic("FileServer does not permit URL parameters.")
+	}
+
+	fs := http.StripPrefix(path, http.FileServer(root))
+
+	if path != "/" && path[len(path)-1] != '/' {
+		r.Get(path, http.RedirectHandler(path+"/", 301).ServeHTTP)
+		path += "/"
+	}
+	path += "*"
+
+	r.Get(path, fs.ServeHTTP)
 }
 
 // homeHandler serves content to /
@@ -117,7 +163,7 @@ func serverProcessHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var txt string
 
-	switch mux.Vars(r)["action"] {
+	switch chi.URLParam(r, "action") {
 	case "start":
 		err = AssettoProcess.Start()
 		txt = "started"

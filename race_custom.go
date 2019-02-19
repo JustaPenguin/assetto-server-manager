@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/go-chi/chi"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
@@ -68,7 +68,7 @@ func customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func customRaceLoadHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.StartCustomRace(mux.Vars(r)["uuid"])
+	err := raceManager.StartCustomRace(chi.URLParam(r, "uuid"))
 
 	if err != nil {
 		logrus.Errorf("couldn't apply custom race, err: %s", err)
@@ -81,7 +81,7 @@ func customRaceLoadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func customRaceDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.DeleteCustomRace(mux.Vars(r)["uuid"])
+	err := raceManager.DeleteCustomRace(chi.URLParam(r, "uuid"))
 
 	if err != nil {
 		logrus.Errorf("couldn't delete custom race, err: %s", err)
@@ -94,7 +94,7 @@ func customRaceDeleteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func customRaceStarHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.ToggleStarCustomRace(mux.Vars(r)["uuid"])
+	err := raceManager.ToggleStarCustomRace(chi.URLParam(r, "uuid"))
 
 	if err != nil {
 		logrus.Errorf("couldn't star custom race, err: %s", err)

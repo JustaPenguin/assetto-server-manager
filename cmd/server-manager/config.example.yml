@@ -4,6 +4,9 @@
 #                 https://github.com/cj123/assetto-server-manager
 #
 #                       Thanks for using server manager!
+#
+#
+# note that changes to this file require a restart of server manager to work! :)
 ################################################################################
 
 ################################################################################
@@ -37,7 +40,10 @@ steam:
 #
 ################################################################################
 http:
+  # hostname is the hostname the HTTP server should listen on
   hostname: localhost:8772
+  # session key is used to encrypt the http session
+  session_key: RANDOMLY_GENERATE_THIS
 
 ################################################################################
 #

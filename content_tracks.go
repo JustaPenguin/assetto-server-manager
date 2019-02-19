@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
 )
 
@@ -137,7 +137,7 @@ func apiTrackUploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	trackName := mux.Vars(r)["name"]
+	trackName := chi.URLParam(r, "name")
 	tracksPath := filepath.Join(ServerInstallPath, "content", "tracks")
 
 	existingTracks, err := ListTracks()
