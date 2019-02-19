@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/cj123/ini"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
 )
 
@@ -152,7 +152,7 @@ func apiWeatherUploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func weatherDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	weatherKey := mux.Vars(r)["key"]
+	weatherKey := chi.URLParam(r, "key")
 	weatherPath := filepath.Join(ServerInstallPath, "content", "weather")
 
 	existingWeather, err := ListWeather()

@@ -1,32 +1,30 @@
 package main
 
 import (
-	"github.com/cj123/assetto-server-manager"
-	"github.com/etcd-io/bbolt"
-	"github.com/sirupsen/logrus"
 	"net/http"
-	"os"
-)
 
-var (
-	steamUsername = os.Getenv("STEAM_USERNAME")
-	steamPassword = os.Getenv("STEAM_PASSWORD")
+	"github.com/cj123/assetto-server-manager"
 
-	serverAddress = os.Getenv("SERVER_ADDRESS")
-
-	storeLocation = os.Getenv("STORE_LOCATION")
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	bboltdb, err := bbolt.Open(storeLocation, 0644, nil)
+	config, err := servermanager.ReadConfig("config.yml")
 
 	if err != nil {
-		logrus.Fatalf("could not open bbolt store at: '%s', err: %s", storeLocation, err)
+		logrus.Fatalf("could not open config file, err: %s", err)
 	}
 
-	servermanager.SetupRaceManager(servermanager.NewBoltRaceStore(bboltdb))
+	store, err := config.Store.BuildStore()
 
-	err = servermanager.InstallAssettoCorsaServer(steamUsername, steamPassword, os.Getenv("FORCE_UPDATE") == "true")
+	if err != nil {
+		logrus.Fatalf("could not open store, err: %s", err)
+	}
+
+	servermanager.SetupRaceManager(store)
+	servermanager.SetAssettoInstallPath(config.Steam.InstallPath)
+
+	err = servermanager.InstallAssettoCorsaServer(config.Steam.Username, config.Steam.Password, config.Steam.ForceUpdate)
 
 	if err != nil {
 		logrus.Fatalf("could not install assetto corsa server, err: %s", err)
@@ -38,6 +36,6 @@ func main() {
 		logrus.Fatalf("could not initialise view renderer, err: %s", err)
 	}
 
-	logrus.Infof("starting assetto server manager on: %s", serverAddress)
-	logrus.Fatal(http.ListenAndServe(serverAddress, servermanager.Router()))
+	logrus.Infof("starting assetto server manager on: %s", config.HTTP.Hostname)
+	logrus.Fatal(http.ListenAndServe(config.HTTP.Hostname, servermanager.Router()))
 }

@@ -5,6 +5,8 @@
 
     <p>You currently have {{ len .championships }} championships configured.</p>
 
+    {{ $writeAccess := WriteAccess }}
+
     <table class="table table-bordered table-striped">
         <tr>
             <th>Name</th>
@@ -31,15 +33,20 @@
                 <td>
                     <a class="btn btn-sm btn-success" href="/championship/{{ $championship.ID }}">View</a>
                     <a class="btn btn-sm btn-info" href="/championship/{{ $championship.ID }}/export">Export</a>
-                    <a class="btn btn-sm btn-warning" href="/championship/{{ $championship.ID }}/edit">Edit</a>
-                    <a onClick="return confirm('I understand that this will delete the entire championship permanently.') "
-                       class="btn btn-sm btn-danger" href="/championship/{{ $championship.ID }}/delete">Delete</a>
+
+                    {{ if $writeAccess }}
+                        <a class="btn btn-sm btn-warning" href="/championship/{{ $championship.ID }}/edit">Edit</a>
+                        <a onClick="return confirm('I understand that this will delete the entire championship permanently.') "
+                           class="btn btn-sm btn-danger" href="/championship/{{ $championship.ID }}/delete">Delete</a>
+                    {{ end }}
                 </td>
             </tr>
         {{ end }}
     </table>
 
-    <a href="/championships/new" class="btn btn-success float-right">Create a new Championship</a>
+    {{ if $writeAccess }}
+        <a href="/championships/new" class="btn btn-success float-right">Create a new Championship</a>
+    {{ end }}
 
     <div class="clearfix"></div>
 {{ end }}

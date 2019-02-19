@@ -1,0 +1,96 @@
+################################################################################
+#
+#                      Assetto Server Manager Configuration
+#                 https://github.com/cj123/assetto-server-manager
+#
+#                       Thanks for using server manager!
+#
+#
+# note that changes to this file require a restart of server manager to work! :)
+################################################################################
+
+################################################################################
+#
+#  steam settings - server manager can install the assetto corsa
+#                   server for you using steamcmd (if you'd like)
+#
+################################################################################
+steam:
+  # steam username and password. we recommend creating a separate account with
+  # steamguard disabled to use this application.
+  #
+  # server manager uses this information ONLY to install the
+  # assetto corsa server.
+  #
+  # however, if you do not wish to provide server manager with this information,
+  # leave it blank and install assetto corsa to the path you specified in
+  # install_path (default: 'assetto')
+  username: foobar
+  password: hunter2
+
+  # where to install assetto corsa server
+  install_path: assetto
+
+  # set this to true to force an install every time the server manager is loaded
+  force_update: false
+
+################################################################################
+#
+#  http settings
+#
+################################################################################
+http:
+  # hostname is the hostname the HTTP server should listen on
+  hostname: localhost:8772
+  # session key is used to encrypt the http session
+  session_key: RANDOMLY_GENERATE_THIS
+
+################################################################################
+#
+#  data storage - where server manager keeps your data!
+#
+################################################################################
+store:
+  # store type: this can be one of:
+  #  - 'json'   - saves each custom race, championship as separate JSON files
+  #               in the directory specified by store_path
+  #  - 'boltdb' - saves all content inside a single database file specified by
+  #               store_path
+  #
+  # boltdb is recommended for most users.
+  type: boltdb
+
+  # where to save the server manager data
+  path: assetto/store.db
+
+################################################################################
+#
+#  user management - configure admins, writers and readers
+#
+################################################################################
+# users are split into three groups:
+# - 'admin' - edit server settings. full permissions.
+# - 'write' - edit races, add content, edit championships, and most importantly
+#             DELETE races. can't see or edit server settings though.
+# - 'read'  - view races, content, championships, results. they can't change or
+#             delete anything though.
+#
+# specify a username, and md5 hashed password for the user.
+# you can generate password hashes using sites such as:
+# https://www.md5hashgenerator.com/
+#
+# add as many users as you like.
+users:
+  accounts:
+  - name: superadmin
+    group: admin
+    password: 21232f297a57a5a743894a0e4a801fc3 # 'admin' - DEFINITELY CHANGE THIS
+  - name: moderator
+    group: write
+    password: 5f4dcc3b5aa765d61d8327deb882cf99 # 'password' - CHANGE THIS
+  - name: spectator
+    group: read
+    password: 4f321b12ec27a87579ae91ea3287cb33 # 'spectate' - CHANGE THIS
+
+  # set this to true to allow ANYONE to have read permissions
+  read_open: false

@@ -13,10 +13,9 @@ import (
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/etcd-io/bbolt"
+	"github.com/go-chi/chi"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
@@ -98,8 +97,6 @@ func (rm *RaceManager) UDPCallback(message udp.Message) {
 			logrus.Errorf("recovered from panic: %s", r)
 		}
 	}()
-
-	spew.Dump(message)
 
 	championshipManager.ChampionshipEventCallback(message)
 	CallbackFunc(message)
@@ -547,7 +544,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		entrants = customRace.EntryList
 	}
 
-	templateIDForEditing := mux.Vars(r)["uuid"]
+	templateIDForEditing := chi.URLParam(r, "uuid")
 	isEditing := templateIDForEditing != ""
 	var customRaceName string
 
