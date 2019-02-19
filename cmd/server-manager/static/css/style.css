@@ -191,3 +191,13 @@ a.detailed-results:hover {
     position: relative;
     top: 1px;
 }
+
+.live-badge {
+    display: block !important;
+    width: fit-content;
+    margin-top: 4px;
+}
+
+.live-events {
+    width: 280px;
+}
