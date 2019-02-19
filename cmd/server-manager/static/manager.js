@@ -733,6 +733,12 @@ let liveTiming = {
 
                     $currentSession.text("Current Session: " + $sessionType);
 
+                    for (let car in liveTiming.Cars) {
+                        if (liveTiming.Cars[car].Pos === 0) {
+                            liveTiming.Cars[car].Pos = 255
+                        }
+                    }
+
                     // Get active cars - sort by pos
                     let sorted = Object.keys(liveTiming.Cars)
                         .sort(function (a, b) {
@@ -779,10 +785,14 @@ let liveTiming = {
                         let $tdLapTime = $("<td/>");
                         let $tdBestLap = $("<td/>");
                         let $tdGap = $("<td/>");
-                        let $tdPosDiff = $("<td/>"); // @TODO not in prac/quali
+                        let $tdLapNum = $("<td/>");
                         let $tdEvents = $("<td/>");
 
-                        $tdPos.text(liveTiming.Cars[car].Pos);
+                        if (liveTiming.Cars[car].Pos === 255) {
+                            $tdPos.text("n/a");
+                        } else {
+                            $tdPos.text(liveTiming.Cars[car].Pos);
+                        }
                         $tr.append($tdPos);
 
                         $tdName.text(liveTiming.Cars[car].DriverName);
@@ -797,12 +807,12 @@ let liveTiming = {
                         $tdGap.text(liveTiming.Cars[car].Split);
                         $tr.append($tdGap);
 
-                        $tdPosDiff.text(0);
-                        $tr.append($tdPosDiff);
+                        $tdLapNum.text(liveTiming.Cars[car].LapNum);
+                        $tr.append($tdLapNum);
 
                         if (liveTiming.Cars[car].Loaded && liveTiming.Cars[car].LoadedTime + 10000 > date.getTime()) {
                             let $tag = $("<span/>");
-                            $tag.attr({'class': 'badge badge-success'});
+                            $tag.attr({'class': 'badge badge-success live-badge'});
                             $tag.text("Loaded");
 
                             $tdEvents.append($tag);
@@ -812,7 +822,7 @@ let liveTiming = {
                             for (let y = 0; y < liveTiming.Cars[car].Collisions.length; y++) {
                                 if (liveTiming.Cars[car].Collisions[y].Time + 10000 > date.getTime()) {
                                     let $tag = $("<span/>");
-                                    $tag.attr({'class': 'badge badge-danger'});
+                                    $tag.attr({'class': 'badge badge-danger live-badge'});
                                     $tag.text("Crash " + liveTiming.Cars[car].Collisions[y].Type + " at " +
                                         liveTiming.Cars[car].Collisions[y].Speed + "m/s");
 
@@ -826,7 +836,7 @@ let liveTiming = {
                         $liveTimingTable.append($tr)
                     }
                 });
-            }, 1000);
+            }, 500);
         }
     }
 };

@@ -67,12 +67,12 @@ type Collision struct {
 var liveInfo LiveTiming
 
 func CallbackFunc (response udp.Message) {
-	/*currentRace, _ := raceManager.CurrentRace()
+	currentRace, _ := raceManager.CurrentRace()
 
 	if currentRace == nil {
 		// no race live, ignore udp
 		return
-	}*/
+	}
 
 	switch a := response.(type) {
 	case udp.SessionInfo:
@@ -88,7 +88,6 @@ func CallbackFunc (response udp.Message) {
 			sessionT, err := time.ParseDuration(fmt.Sprintf("%dms", a.ElapsedMilliseconds))
 
 			if err != nil {
-				//@TODO
 				logrus.Error(err)
 			}
 
@@ -213,7 +212,8 @@ func CallbackFunc (response udp.Message) {
 					for _, liveCar := range liveInfo.Cars {
 						if liveCar.Pos == liveInfo.Cars[ID].Pos-1 {
 							if liveCar.LapNum == liveInfo.Cars[ID].LapNum {
-								liveInfo.Cars[ID].Split = time.Now().Sub(liveCar.LastLapCompleteTime).String()
+								liveInfo.Cars[ID].Split = time.Now().Sub(liveCar.LastLapCompleteTime).Round(time.Millisecond).String()
+								println(liveInfo.Cars[ID].Split)
 							} else {
 								liveInfo.Cars[ID].Split = strconv.Itoa(liveCar.LapNum-liveInfo.Cars[ID].LapNum) + " lap(s)"
 							}
@@ -222,33 +222,14 @@ func CallbackFunc (response udp.Message) {
 				}
 			// Qualification, Practice
 			case 2, 1:
-				for carID, liveCar := range liveInfo.Cars {
-					if carID == ID {
-						continue
-					}
-
-					if liveCar.BestLapTime < liveInfo.Cars[ID].BestLapTime && liveCar.BestLapTime != time.Duration(0) {
-						pos++
-					}
-				}
-
-				liveInfo.Cars[ID].Pos = pos
-
-				if liveInfo.Cars[ID].Pos == 1 {
-					liveInfo.Cars[ID].Split = time.Duration(0).String()
-				} else {
-					for _, liveCar := range liveInfo.Cars {
-						if liveCar.Pos == liveInfo.Cars[ID].Pos-1 {
-							liveInfo.Cars[ID].Split = (liveInfo.Cars[ID].BestLapTime - liveCar.BestLapTime).String()
-						}
-					}
-				}
-
-				// @TODO this could be simplified
 				// Create an array that can be sorted by position
 				var carArray []*LiveCarWID
 
 				for carID, liveCar := range liveInfo.Cars {
+					if liveCar.BestLapTime == 0 {
+						liveCar.BestLapTime = time.Duration(time.Hour*10)
+					}
+
 					carArray = append(carArray, &LiveCarWID{
 						Car: liveCar,
 						ID: carID,
@@ -256,25 +237,19 @@ func CallbackFunc (response udp.Message) {
 				}
 
 				sort.Slice(carArray, func(i, j int) bool {
-					return carArray[i].Car.Pos > carArray[j].Car.Pos
+					return carArray[i].Car.BestLapTime < carArray[j].Car.BestLapTime
 				})
 
 				// Calculate splits for all other cars, they may have changed
-				for _, liveCar := range carArray {
-					if liveCar.Car.Pos == 1 {
+				for i, liveCar := range carArray {
+					liveInfo.Cars[liveCar.ID].Pos = i + 1
+
+					if liveCar.Car.Pos == 1 || i == 0 {
 						liveInfo.Cars[liveCar.ID].Split = time.Duration(0).String()
 						continue
 					}
 
-					if liveCar.ID == ID {
-						continue
-					}
-
-					for _, newLiveCar := range liveInfo.Cars {
-						if liveCar.Car.Pos == newLiveCar.Pos+1 {
-							liveInfo.Cars[liveCar.ID].Split = (liveCar.Car.BestLapTime - newLiveCar.BestLapTime).String()
-						}
-					}
+					liveInfo.Cars[liveCar.ID].Split = (liveCar.Car.BestLapTime - carArray[i-1].Car.BestLapTime).String()
 				}
 		}
 
@@ -283,7 +258,6 @@ func CallbackFunc (response udp.Message) {
 	err := json.NewEncoder(os.Stdout).Encode(liveInfo)
 
 	if err != nil {
-		//@TODO
 		logrus.Error(err)
 	}
 
