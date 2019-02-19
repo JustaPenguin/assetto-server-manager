@@ -9,6 +9,8 @@ import (
 	"errors"
 	"net/http"
 	"path/filepath"
+
+	"github.com/sirupsen/logrus"
 )
 
 func init() {
@@ -152,7 +154,9 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		if err == ErrInvalidUsernameOrPassword {
 			AddErrFlashQuick(w, r, "Invalid username or password. Check your details and try again.")
 		} else if err != nil {
-			panic(err)
+			logrus.Errorf("Couldn't log in user, err: %s", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
 		} else { // err == nil, successful auth
 			AddFlashQuick(w, r, "Thanks for logging in!")
 			http.Redirect(w, r, "/", http.StatusFound)
