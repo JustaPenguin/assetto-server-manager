@@ -45,10 +45,6 @@ abbr[title] {
     max-height: 600px;
 }
 
-.table-custom-race tr td:nth-child(3) {
-    max-width: 620px;
-}
-
 span[data-toggle=tooltip] { cursor: default; }
 
 .driver-link:hover, .row-link:hover {
@@ -200,4 +196,27 @@ a.detailed-results:hover {
 
 .live-events {
     width: 280px;
+}
+
+.custom-race-actions .btn {
+    margin-bottom: 0.5em;
+    width: 48%;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+
+.table-custom-race tr td:nth-child(1) {
+    text-align: center;
+}
+.table-custom-race tr td:nth-child(2) {
+    max-width: 250px;
+}
+.table-custom-race tr td:nth-child(3) {
+    width: 30px;
+}
+
+.table-custom-race tr td:last-child {
+    max-width: 110px;
+    text-align: center;
 }
