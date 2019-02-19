@@ -218,31 +218,31 @@
 
                             <div class="pt-5">
                                 {{ if not (or $event.InProgress $event.Completed) }}
-                                    <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event/{{ $eventIndex }}/start">Start Event</a>
+                                    <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/start">Start Event</a>
 
                                     <a class="btn btn-info"
-                                       href="/championship/{{ $championship.ID.String }}/event/{{ $eventIndex }}/practice"
+                                       href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/practice"
                                        data-toggle="tooltip"
                                        title="Loads the configured event onto the server as a 2 hour looping practice, but don't track its progress as a championship event.">
                                         Start Practice Event
                                     </a>
 
-                                    <a class="btn btn-warning" href="/championship/{{ $championship.ID.String }}/event/{{ $eventIndex }}/edit">
+                                    <a class="btn btn-warning" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/edit">
                                         Edit Event
                                     </a>
 
                                     <a onClick="return confirm('I understand that this will delete this entire event permanently.') "
-                                       class="btn btn-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $eventIndex }}/delete">
+                                       class="btn btn-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/delete">
                                         Delete Event
                                     </a>
                                 {{ else if $event.InProgress }}
                                     <a onClick="return confirm('I understand that this will restart this entire event and any current results will be lost.') "
-                                       class="btn btn-warning" href="/championship/{{ $championship.ID.String }}/event/{{ $eventIndex }}/restart">
+                                       class="btn btn-warning" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/restart">
                                         Restart Event
                                     </a>
 
                                     <a onClick="return confirm('I understand that this will cancel this entire event and any current results will be lost.') "
-                                       class="btn btn-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $eventIndex }}/cancel">
+                                       class="btn btn-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/cancel">
                                         Cancel Event
                                     </a>
                                 {{ end }}

@@ -202,11 +202,8 @@ let raceSetup = {
         raceSetup.showSolSettings();
 
         raceSetup.initEntrantsList();
-<<<<<<< HEAD
         raceSetup.initSunAngle();
-=======
         raceSetup.initSurfacePresets();
->>>>>>> master
     },
 
     updateWeatherGraphics: function () {
