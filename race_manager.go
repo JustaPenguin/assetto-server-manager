@@ -329,6 +329,14 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 	cars := r.Form["Cars"]
 	isSol := r.FormValue("Sol.Enabled") == "1"
 
+	gasPenaltyDisabled := formValueAsInt(r.FormValue("RaceGasPenaltyDisabled"))
+
+	if gasPenaltyDisabled == 0 {
+		gasPenaltyDisabled = 1
+	} else {
+		gasPenaltyDisabled = 0
+	}
+
 	raceConfig := &CurrentRaceConfig{
 		// general race config
 		Cars:        strings.Join(cars, ";"),
@@ -371,7 +379,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		RacePitWindowEnd:          formValueAsInt(r.FormValue("RacePitWindowEnd")),
 		ReversedGridRacePositions: formValueAsInt(r.FormValue("ReversedGridRacePositions")),
 		QualifyMaxWaitPercentage:  formValueAsInt(r.FormValue("QualifyMaxWaitPercentage")),
-		RaceGasPenaltyDisabled:    formValueAsInt(r.FormValue("RaceGasPenaltyDisabled")),
+		RaceGasPenaltyDisabled:    gasPenaltyDisabled,
 		MaxBallastKilograms:       formValueAsInt(r.FormValue("MaxBallastKilograms")),
 		AllowedTyresOut:           formValueAsInt(r.FormValue("AllowedTyresOut")),
 		PickupModeEnabled:         formValueAsInt(r.FormValue("PickupModeEnabled")),
