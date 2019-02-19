@@ -114,10 +114,10 @@
 
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navBarAccountDropdown">
                             {{ if not LoggedIn }}
-                            <a class="dropdown-item" href="/login">Login</a>
+                                <a class="dropdown-item" href="/login">Login</a>
                             {{ else }}
                                 <h6 class="dropdown-header">Logged in as {{ .User.Name }} ({{ .User.Group }})</h6>
-                            <a class="dropdown-item" href="/logout">Logout</a>
+                                <a class="dropdown-item" href="/logout">Logout</a>
                             {{ end }}
                         </div>
                     </li>
@@ -161,7 +161,7 @@
 
                 {{ range $i, $error := .errors }}
 
-                    <div class="alert alert-danger alert-dismissiblemx-auto" role="alert">
+                    <div class="alert alert-danger alert-dismissible mx-auto" role="alert">
                         {{ $error }}
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                             <span aria-hidden="true">&times;</span>

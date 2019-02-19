@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -41,7 +40,6 @@ func Router() chi.Router {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.HandleFunc("/login", loginHandler)
 	r.HandleFunc("/logout", logoutHandler)
@@ -122,6 +120,7 @@ func Router() chi.Router {
 		r.Post("/api/weather/upload", apiWeatherUploadHandler)
 	})
 
+	// admins
 	r.Group(func(r chi.Router) {
 		r.Use(AdminAccessMiddleware)
 
