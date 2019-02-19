@@ -5,10 +5,13 @@ import (
 	"os"
 
 	"github.com/etcd-io/bbolt"
+	"github.com/gorilla/sessions"
 	"gopkg.in/yaml.v2"
 )
 
-type Config struct {
+var config *Configuration
+
+type Configuration struct {
 	HTTP  HTTPConfig  `yaml:"http"`
 	Steam SteamConfig `yaml:"steam"`
 	Store StoreConfig `yaml:"store"`
@@ -16,7 +19,8 @@ type Config struct {
 }
 
 type HTTPConfig struct {
-	Hostname string `yaml:"hostname"`
+	Hostname   string `yaml:"hostname"`
+	SessionKey string `yaml:"session_key"`
 }
 
 type SteamConfig struct {
@@ -54,7 +58,7 @@ type UsersConfig struct {
 	ReadOpen bool `yaml:"read_open"`
 }
 
-func ReadConfig(location string) (conf *Config, err error) {
+func ReadConfig(location string) (conf *Configuration, err error) {
 	f, err := os.Open(location)
 
 	if err != nil {
@@ -64,6 +68,9 @@ func ReadConfig(location string) (conf *Config, err error) {
 	defer f.Close()
 
 	err = yaml.NewDecoder(f).Decode(&conf)
+
+	config = conf
+	store = sessions.NewCookieStore([]byte(conf.HTTP.SessionKey))
 
 	return conf, err
 }

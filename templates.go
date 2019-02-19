@@ -41,6 +41,11 @@ func NewRenderer(dir string, reload bool) (*Renderer, error) {
 	return tr, nil
 }
 
+// dummy access func is used in place of read/write/admin funcs when initialising templates
+func dummyAccessFunc() bool {
+	return false
+}
+
 // init loads template files into memory.
 func (tr *Renderer) init() error {
 	tr.mutex.Lock()
@@ -67,6 +72,10 @@ func (tr *Renderer) init() error {
 	funcs["timeFormat"] = timeFormat
 	funcs["dateFormat"] = dateFormat
 	funcs["trackInfo"] = trackInfo
+	funcs["ReadAccess"] = dummyAccessFunc
+	funcs["WriteAccess"] = dummyAccessFunc
+	funcs["AdminAccess"] = dummyAccessFunc
+	funcs["LoggedIn"] = dummyAccessFunc
 
 	for _, page := range pages {
 		var templateList []string
@@ -197,6 +206,14 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 	_ = errSession.Save(r, w)
 
 	data["server_status"] = AssettoProcess.IsRunning()
+	data["User"] = UserFromRequest(r)
+
+	t.Funcs(map[string]interface{}{
+		"ReadAccess":  ReadAccess(r),
+		"WriteAccess": WriteAccess(r),
+		"AdminAccess": AdminAccess(r),
+		"LoggedIn":    LoggedIn(r),
+	})
 
 	return t.ExecuteTemplate(w, "base", data)
 }
