@@ -676,7 +676,7 @@ function timeDiff( tstart, tend ) {
     ];
 
     let s = '';
-    for (let i = 0; i < units.length; ++i) {
+    for (let i = 0; i < units.length; i++) {
         if (diff === 0) { continue }
         s = (diff % units[i].d) + units[i].l + " " + s;
         diff = Math.floor(diff / units[i].d);
@@ -684,16 +684,14 @@ function timeDiff( tstart, tend ) {
     return s;
 }
 
-let $drivers = [];
-
 let liveTiming = {
     init: function () {
         let $liveTimingTable = $document.find("#live-table");
 
-        let $raceCompletion = "";
-        let $total = 0;
-        let $sessionType = "";
-        let $lapTime = "";
+        let raceCompletion = "";
+        let total = 0;
+        let sessionType = "";
+        let lapTime = "";
 
         if ($liveTimingTable.length) {
             setInterval(function () {
@@ -702,36 +700,36 @@ let liveTiming = {
 
                     // Get lap/laps or time/totalTime
                     if (liveTiming.Time > 0) {
-                        $total = liveTiming.Time + "m";
+                        total = liveTiming.Time + "m";
 
-                        $raceCompletion = timeDiff(liveTiming.SessionStarted, date.getTime());
+                        raceCompletion = timeDiff(liveTiming.SessionStarted, date.getTime());
                     } else if (liveTiming.Laps > 0) {
-                        $raceCompletion = liveTiming.LapNum;
-                        $total = liveTiming.Laps + " laps";
+                        raceCompletion = liveTiming.LapNum;
+                        total = liveTiming.Laps + " laps";
                     }
 
                     let $raceTime = $document.find("#race-time");
-                    $raceTime.text("Event Completion: " + $raceCompletion + "/ " + $total);
+                    $raceTime.text("Event Completion: " + raceCompletion + "/ " + total);
 
                     // Get the session type
                     let $currentSession = $document.find("#current-session");
 
                     switch (liveTiming.Type) {
                         case 0:
-                            $sessionType = "Booking";
+                            sessionType = "Booking";
                             break;
                         case 1:
-                            $sessionType = "Practice";
+                            sessionType = "Practice";
                             break;
                         case 2:
-                            $sessionType = "Qualification";
+                            sessionType = "Qualification";
                             break;
                         case 3:
-                            $sessionType = "Race";
+                            sessionType = "Race";
                             break;
                     }
 
-                    $currentSession.text("Current Session: " + $sessionType);
+                    $currentSession.text("Current Session: " + sessionType);
 
                     for (let car in liveTiming.Cars) {
                         if (liveTiming.Cars[car].Pos === 0) {
@@ -763,17 +761,15 @@ let liveTiming = {
 
                         // Get the lap time, display previous for 10 seconds after completion
                         if (liveTiming.Cars[car].LastLapCompleteTimeUnix + 10000 > date.getTime()) {
-                            $lapTime = liveTiming.Cars[car].LastLap
+                            lapTime = liveTiming.Cars[car].LastLap
                         } else if (liveTiming.Cars[car].LapNum === 0) {
-                            $lapTime = "0s"
+                            lapTime = "0s"
                         } else {
-                            $lapTime = timeDiff(liveTiming.Cars[car].LastLapCompleteTimeUnix, date.getTime())
+                            lapTime = timeDiff(liveTiming.Cars[car].LastLapCompleteTimeUnix, date.getTime())
                         }
 
                         if ($driverRow.length) {
                             $driverRow.remove()
-                        } else {
-                            $drivers.push(liveTiming.Cars[car].DriverGUID);
                         }
 
                         $tr = $("<tr/>");
@@ -798,7 +794,7 @@ let liveTiming = {
                         $tdName.text(liveTiming.Cars[car].DriverName);
                         $tr.append($tdName);
 
-                        $tdLapTime.text($lapTime);
+                        $tdLapTime.text(lapTime);
                         $tr.append($tdLapTime);
 
                         $tdBestLap.text(liveTiming.Cars[car].BestLap);
