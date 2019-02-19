@@ -3,11 +3,9 @@ package servermanager
 import (
 	"errors"
 	"fmt"
-	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
 	"math/rand"
 	"net"
 	"net/http"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -151,17 +149,6 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 	if err != nil {
 		return err
 	}
-
-	go func() {
-		time.Sleep(time.Duration(time.Second*5))
-
-		err = replay.ReplayUDPMessages(filepath.Join("../../fixtures", "red-bull-ring.json"), 1, CallbackFunc, true)
-
-		if err != nil {
-			println(err)
-			return
-		}
-	}()
 
 	return nil
 }
