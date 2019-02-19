@@ -13,7 +13,6 @@ import (
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/etcd-io/bbolt"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
@@ -98,8 +97,6 @@ func (rm *RaceManager) UDPCallback(message udp.Message) {
 			logrus.Errorf("recovered from panic: %s", r)
 		}
 	}()
-
-	spew.Dump(message)
 
 	championshipManager.ChampionshipEventCallback(message)
 	CallbackFunc(message)
