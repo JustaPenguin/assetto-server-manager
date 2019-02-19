@@ -1,25 +1,25 @@
 package servermanager
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/cj123/assetto-server-manager/pkg/udp"
-	"github.com/sirupsen/logrus"
-	"os"
 	"sort"
 	"strconv"
 	"time"
+
+	"github.com/cj123/assetto-server-manager/pkg/udp"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Live timing output format
 type LiveTiming struct {
 	// Server Info, static
 	ServerName, Track, TrackConfig, Name string
-	Type uint8
-	Time, Laps, WaitTime uint16
-	WeatherGraphics string
-	ElapsedMilliseconds int32
-	SessionStarted int64
+	Type                                 uint8
+	Time, Laps, WaitTime                 uint16
+	WeatherGraphics                      string
+	ElapsedMilliseconds                  int32
+	SessionStarted                       int64
 
 	Cars map[uint8]*LiveCar // map[carID]LiveCar
 
@@ -30,7 +30,7 @@ type LiveTiming struct {
 type LiveCar struct {
 	// Static Car Info
 	DriverName, DriverGUID string
-	CarMode, CarSkin string
+	CarMode, CarSkin       string
 
 	// On disconnect
 	Delete bool
@@ -38,35 +38,35 @@ type LiveCar struct {
 	// Live Info
 	LapNum int
 
-	Loaded bool
+	Loaded     bool
 	LoadedTime int64
 
-	LastLap string
-	BestLap string
-	BestLapTime         time.Duration
-	LastLapCompleteTime time.Time
+	LastLap                 string
+	BestLap                 string
+	BestLapTime             time.Duration
+	LastLapCompleteTime     time.Time
 	LastLapCompleteTimeUnix int64
-	Pos     int
-	Split   string
+	Pos                     int
+	Split                   string
 
 	Collisions []Collision
 }
 
 type LiveCarWID struct {
 	Car *LiveCar
-	ID uint8
+	ID  uint8
 }
 
 type Collision struct {
-	Type string
-	Time int64
+	Type     string
+	Time     int64
 	OtherCar uint8
-	Speed float32
+	Speed    float32
 }
 
 var liveInfo LiveTiming
 
-func CallbackFunc (response udp.Message) {
+func CallbackFunc(response udp.Message) {
 	currentRace, _ := raceManager.CurrentRace()
 
 	if currentRace == nil {
@@ -91,18 +91,18 @@ func CallbackFunc (response udp.Message) {
 				logrus.Error(err)
 			}
 
-			liveInfo = LiveTiming {
-				ServerName: a.ServerName,
-				Track: a.Track,
-				TrackConfig: a.TrackConfig,
-				Name: a.Name,
-				Type: a.Type,
-				Time: a.Time,
-				Laps: a.Laps,
-				WaitTime: a.WaitTime,
-				WeatherGraphics: a.WeatherGraphics,
+			liveInfo = LiveTiming{
+				ServerName:          a.ServerName,
+				Track:               a.Track,
+				TrackConfig:         a.TrackConfig,
+				Name:                a.Name,
+				Type:                a.Type,
+				Time:                a.Time,
+				Laps:                a.Laps,
+				WaitTime:            a.WaitTime,
+				WeatherGraphics:     a.WeatherGraphics,
 				ElapsedMilliseconds: a.ElapsedMilliseconds,
-				SessionStarted: unixNanoToMilli(time.Now().Add(-sessionT).UnixNano()),
+				SessionStarted:      unixNanoToMilli(time.Now().Add(-sessionT).UnixNano()),
 			}
 
 			if len(oldCars) == 0 {
@@ -129,15 +129,16 @@ func CallbackFunc (response udp.Message) {
 
 	case udp.SessionCarInfo:
 		if a.Event() == udp.EventNewConnection {
-			liveInfo.Cars[uint8(a.CarID)] = &LiveCar {
+			liveInfo.Cars[uint8(a.CarID)] = &LiveCar{
 				DriverGUID: a.DriverGUID,
 				DriverName: a.DriverName,
-				CarMode: a.CarMode,
-				CarSkin: a.CarSkin,
-				Delete: false,
+				CarMode:    a.CarMode,
+				CarSkin:    a.CarSkin,
+				Delete:     false,
 			}
 		} else if a.Event() == udp.EventConnectionClosed {
-			_, ok := liveInfo.Cars[uint8(a.CarID)]; if ok {
+			_, ok := liveInfo.Cars[uint8(a.CarID)]
+			if ok {
 				liveInfo.Cars[uint8(a.CarID)].Delete = true
 			}
 		}
@@ -151,20 +152,20 @@ func CallbackFunc (response udp.Message) {
 	case udp.CollisionWithCar:
 		if _, ok := liveInfo.Cars[uint8(a.CarID)]; ok {
 			liveInfo.Cars[uint8(a.CarID)].Collisions = append(liveInfo.Cars[uint8(a.CarID)].Collisions, Collision{
-				Type: "with other car",
-				Time: unixNanoToMilli(time.Now().UnixNano()),
+				Type:     "with other car",
+				Time:     unixNanoToMilli(time.Now().UnixNano()),
 				OtherCar: uint8(a.OtherCarID),
-				Speed: a.ImpactSpeed,
+				Speed:    a.ImpactSpeed,
 			})
 		}
 
 	case udp.CollisionWithEnvironment:
 		if _, ok := liveInfo.Cars[uint8(a.CarID)]; ok {
 			liveInfo.Cars[uint8(a.CarID)].Collisions = append(liveInfo.Cars[uint8(a.CarID)].Collisions, Collision{
-				Type: "with environment",
-				Time: unixNanoToMilli(time.Now().UnixNano()),
+				Type:     "with environment",
+				Time:     unixNanoToMilli(time.Now().UnixNano()),
 				OtherCar: 255,
-				Speed: a.ImpactSpeed,
+				Speed:    a.ImpactSpeed,
 			})
 		}
 
@@ -173,7 +174,7 @@ func CallbackFunc (response udp.Message) {
 
 		if _, ok := liveInfo.Cars[ID]; ok {
 			liveInfo.Cars[ID].LastLap = lapToDuration(int(a.LapCompletedInternal.LapTime)).String()
-			liveInfo.Cars[ID].LapNum ++
+			liveInfo.Cars[ID].LapNum++
 			liveInfo.Cars[ID].LastLapCompleteTime = time.Now()
 			liveInfo.Cars[ID].LastLapCompleteTimeUnix = unixNanoToMilli(time.Now().UnixNano())
 
@@ -189,81 +190,75 @@ func CallbackFunc (response udp.Message) {
 
 		switch liveInfo.Type {
 
-			// Race
-			case 3:
-				for carID, liveCar := range liveInfo.Cars {
-					if carID == ID {
-						continue
-					}
-
-					if liveCar.LastLapCompleteTime.Before(liveInfo.Cars[ID].LastLapCompleteTime) &&
-						liveCar.LapNum >= liveInfo.Cars[ID].LapNum {
-
-						pos++
-					}
-
+		// Race
+		case 3:
+			for carID, liveCar := range liveInfo.Cars {
+				if carID == ID {
+					continue
 				}
 
-				liveInfo.Cars[ID].Pos = pos
+				if liveCar.LastLapCompleteTime.Before(liveInfo.Cars[ID].LastLapCompleteTime) &&
+					liveCar.LapNum >= liveInfo.Cars[ID].LapNum {
 
-				if liveInfo.Cars[ID].Pos == 1 {
-					liveInfo.Cars[ID].Split = time.Duration(0).String()
-				} else {
-					for _, liveCar := range liveInfo.Cars {
-						if liveCar.Pos == liveInfo.Cars[ID].Pos-1 {
-							if liveCar.LapNum == liveInfo.Cars[ID].LapNum {
-								liveInfo.Cars[ID].Split = time.Now().Sub(liveCar.LastLapCompleteTime).Round(time.Millisecond).String()
-							} else {
-								liveInfo.Cars[ID].Split = strconv.Itoa(liveCar.LapNum-liveInfo.Cars[ID].LapNum) + " lap(s)"
-							}
+					pos++
+				}
+
+			}
+
+			liveInfo.Cars[ID].Pos = pos
+
+			if liveInfo.Cars[ID].Pos == 1 {
+				liveInfo.Cars[ID].Split = time.Duration(0).String()
+			} else {
+				for _, liveCar := range liveInfo.Cars {
+					if liveCar.Pos == liveInfo.Cars[ID].Pos-1 {
+						if liveCar.LapNum == liveInfo.Cars[ID].LapNum {
+							liveInfo.Cars[ID].Split = time.Now().Sub(liveCar.LastLapCompleteTime).Round(time.Millisecond).String()
+						} else {
+							liveInfo.Cars[ID].Split = strconv.Itoa(liveCar.LapNum-liveInfo.Cars[ID].LapNum) + " lap(s)"
 						}
 					}
 				}
-			// Qualification, Practice
-			case 2, 1:
-				// Create an array that can be sorted by position
-				var carArray []*LiveCarWID
+			}
+		// Qualification, Practice
+		case 2, 1:
+			// Create an array that can be sorted by position
+			var carArray []*LiveCarWID
 
-				for carID, liveCar := range liveInfo.Cars {
-					if liveCar.BestLapTime == 0 {
-						liveCar.BestLapTime = time.Duration(time.Hour*10)
-					}
-
-					carArray = append(carArray, &LiveCarWID{
-						Car: liveCar,
-						ID: carID,
-					})
+			for carID, liveCar := range liveInfo.Cars {
+				if liveCar.BestLapTime == 0 {
+					liveCar.BestLapTime = time.Duration(time.Hour * 10)
 				}
 
-				sort.Slice(carArray, func(i, j int) bool {
-					return carArray[i].Car.BestLapTime < carArray[j].Car.BestLapTime
+				carArray = append(carArray, &LiveCarWID{
+					Car: liveCar,
+					ID:  carID,
 				})
+			}
 
-				// Calculate splits for all other cars, they may have changed
-				for i, liveCar := range carArray {
-					liveInfo.Cars[liveCar.ID].Pos = i + 1
+			sort.Slice(carArray, func(i, j int) bool {
+				return carArray[i].Car.BestLapTime < carArray[j].Car.BestLapTime
+			})
 
-					if liveCar.Car.Pos == 1 || i == 0 {
-						liveInfo.Cars[liveCar.ID].Split = time.Duration(0).String()
-						continue
-					}
+			// Calculate splits for all other cars, they may have changed
+			for i, liveCar := range carArray {
+				liveInfo.Cars[liveCar.ID].Pos = i + 1
 
-					liveInfo.Cars[liveCar.ID].Split = (liveCar.Car.BestLapTime - carArray[i-1].Car.BestLapTime).String()
+				if liveCar.Car.Pos == 1 || i == 0 {
+					liveInfo.Cars[liveCar.ID].Split = time.Duration(0).String()
+					continue
 				}
+
+				liveInfo.Cars[liveCar.ID].Split = (liveCar.Car.BestLapTime - carArray[i-1].Car.BestLapTime).String()
+			}
 		}
 
-	}
-
-	err := json.NewEncoder(os.Stdout).Encode(liveInfo)
-
-	if err != nil {
-		logrus.Error(err)
 	}
 
 }
 
 func unixNanoToMilli(i int64) int64 {
-	return int64(float64(i)/1000000)
+	return int64(float64(i) / 1000000)
 }
 
 func lapToDuration(i int) time.Duration {
