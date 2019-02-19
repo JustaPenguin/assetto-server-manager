@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
 )
 
@@ -448,7 +448,7 @@ func resultsHandler(w http.ResponseWriter, r *http.Request) {
 
 func resultHandler(w http.ResponseWriter, r *http.Request) {
 	var result *SessionResults
-	fileName := mux.Vars(r)["fileName"]
+	fileName := chi.URLParam(r, "fileName")
 
 	result, err := LoadResult(fileName + ".json")
 

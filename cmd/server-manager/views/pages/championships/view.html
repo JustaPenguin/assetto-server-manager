@@ -4,6 +4,7 @@
     <div class="championship">
         {{ $championship := .Championship }}
         {{ $entrants := .Championship.Entrants }}
+        {{ $writeAccess := WriteAccess }}
 
         <h1 class="text-center">{{ $championship.Name }}</h1>
 
@@ -108,9 +109,11 @@
         <hr>
 
         <div class="float-right">
-            <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event">Add more Events</a>
+            {{ if $writeAccess }}
+                <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event">Add more Events</a>
+                <a href="/championship/{{ $championship.ID.String }}/edit" class="btn btn-warning">Edit Championship</a>
+            {{ end }}
             <a href="/championship/{{ $championship.ID.String }}/export" class="btn btn-info">Export Championship</a>
-            <a href="/championship/{{ $championship.ID.String }}/edit" class="btn btn-warning">Edit Championship</a>
         </div>
 
         <h2>Events</h2>
@@ -217,36 +220,38 @@
                             {{/* race controls buttons */}}
 
                             <div class="pt-5">
-                                {{ if not (or $event.InProgress $event.Completed) }}
-                                    <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/start">Start Event</a>
 
-                                    <a class="btn btn-info"
-                                       href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/practice"
-                                       data-toggle="tooltip"
-                                       title="Loads the configured event onto the server as a 2 hour looping practice, but don't track its progress as a championship event.">
-                                        Start Practice Event
-                                    </a>
+                                {{ if $writeAccess }}
+                                    {{ if not (or $event.InProgress $event.Completed) }}
+                                        <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/start">Start Event</a>
 
-                                    <a class="btn btn-warning" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/edit">
-                                        Edit Event
-                                    </a>
+                                        <a class="btn btn-info"
+                                           href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/practice"
+                                           data-toggle="tooltip"
+                                           title="Loads the configured event onto the server as a 2 hour looping practice, but don't track its progress as a championship event.">
+                                            Start Practice Event
+                                        </a>
 
-                                    <a onClick="return confirm('I understand that this will delete this entire event permanently.') "
-                                       class="btn btn-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/delete">
-                                        Delete Event
-                                    </a>
-                                {{ else if $event.InProgress }}
-                                    <a onClick="return confirm('I understand that this will restart this entire event and any current results will be lost.') "
-                                       class="btn btn-warning" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/restart">
-                                        Restart Event
-                                    </a>
+                                        <a class="btn btn-warning" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/edit">
+                                            Edit Event
+                                        </a>
 
-                                    <a onClick="return confirm('I understand that this will cancel this entire event and any current results will be lost.') "
-                                       class="btn btn-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/cancel">
-                                        Cancel Event
-                                    </a>
+                                        <a onClick="return confirm('I understand that this will delete this entire event permanently.') "
+                                           class="btn btn-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/delete">
+                                            Delete Event
+                                        </a>
+                                    {{ else if $event.InProgress }}
+                                        <a onClick="return confirm('I understand that this will restart this entire event and any current results will be lost.') "
+                                           class="btn btn-warning" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/restart">
+                                            Restart Event
+                                        </a>
+
+                                        <a onClick="return confirm('I understand that this will cancel this entire event and any current results will be lost.') "
+                                           class="btn btn-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/cancel">
+                                            Cancel Event
+                                        </a>
+                                    {{ end }}
                                 {{ end }}
-
 
                                 {{ if $event.Completed }}
                                     <a class="btn btn-primary"

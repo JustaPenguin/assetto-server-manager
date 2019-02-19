@@ -12,8 +12,8 @@ import (
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 
+	"github.com/go-chi/chi"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
@@ -62,7 +62,9 @@ func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (map[strin
 
 	raceOpts["DefaultPoints"] = DefaultChampionshipPoints
 
-	championshipID, isEditingChampionship := mux.Vars(r)["championshipID"]
+	championshipID := chi.URLParam(r, "championshipID")
+
+	isEditingChampionship := championshipID != ""
 	raceOpts["IsEditing"] = isEditingChampionship
 
 	if isEditingChampionship {
@@ -129,10 +131,8 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (map[
 		return nil, err
 	}
 
-	vars := mux.Vars(r)
-
 	// here we customise the opts to tell the template that this is a championship race.
-	championship, err := cm.LoadChampionship(vars["championshipID"])
+	championship, err := cm.LoadChampionship(chi.URLParam(r, "championshipID"))
 
 	if err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (map[
 	opts["IsChampionship"] = true
 	opts["Championship"] = championship
 
-	if editEventID, ok := vars["eventID"]; ok {
+	if editEventID := chi.URLParam(r, "eventID"); editEventID != "" {
 		// editing a championship event
 		event, err := championship.EventByID(editEventID)
 
@@ -174,7 +174,7 @@ func (cm *ChampionshipManager) SaveChampionshipEvent(r *http.Request) (champions
 		return nil, nil, false, err
 	}
 
-	championship, err = cm.LoadChampionship(mux.Vars(r)["championshipID"])
+	championship, err = cm.LoadChampionship(chi.URLParam(r, "championshipID"))
 
 	if err != nil {
 		return nil, nil, false, err

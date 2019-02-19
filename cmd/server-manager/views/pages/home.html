@@ -12,10 +12,13 @@
                     <div class="button-bar">
                         <a href="/live-timing" class="btn btn-primary">Live Timings</a>
 
-                        <div class="float-right">
-                            <a href="/process/restart" class="btn btn-warning">Restart Event</a>
-                            <a href="/process/stop" class="btn btn-danger">Stop Event</a>
-                        </div>
+
+                        {{ if WriteAccess }}
+                            <div class="float-right">
+                                <a href="/process/restart" class="btn btn-warning">Restart Event</a>
+                                <a href="/process/stop" class="btn btn-danger">Stop Event</a>
+                            </div>
+                        {{ end }}
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -30,23 +33,24 @@
     {{ end }}
 
     <div class="row">
-        <div class="col-md-6 col-lg-4 mt-4">
-            <a class="card" href="/quick">
-                <div class="card-body text-center">
-                    <h1 class="text-center"><i class="fas fa-fighter-jet fa-2x"></i></h1>
-                    <h2>Quick Race</h2>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-md-6 col-lg-4 mt-4">
-            <a class="card" href="/custom">
-                <div class="card-body text-center">
-                    <h1 class="text-center"><i class="fas fa-palette fa-2x"></i></h1>
-                    <h2>Custom Race</h2>
-                </div>
-            </a>
-        </div>
+        {{ if WriteAccess }}
+            <div class="col-md-6 col-lg-4 mt-4">
+                <a class="card" href="/quick">
+                    <div class="card-body text-center">
+                        <h1 class="text-center"><i class="fas fa-fighter-jet fa-2x"></i></h1>
+                        <h2>Quick Race</h2>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-4 mt-4">
+                <a class="card" href="/custom">
+                    <div class="card-body text-center">
+                        <h1 class="text-center"><i class="fas fa-palette fa-2x"></i></h1>
+                        <h2>Custom Races</h2>
+                    </div>
+                </a>
+            </div>
+        {{ end }}
 
         <div class="col-md-6 col-lg-4 mt-4">
             <a class="card" href="/championships">
@@ -57,15 +61,16 @@
             </a>
         </div>
 
-
-        <div class="col-md-6 col-lg-4 mt-4">
-            <a class="card" href="/server-options">
-                <div class="card-body text-center">
-                    <h1 class="text-center"><i class="fas fa-cog fa-2x"></i></h1>
-                    <h2>Server Options</h2>
-                </div>
-            </a>
-        </div>
+        {{ if AdminAccess }}
+            <div class="col-md-6 col-lg-4 mt-4">
+                <a class="card" href="/server-options">
+                    <div class="card-body text-center">
+                        <h1 class="text-center"><i class="fas fa-cog fa-2x"></i></h1>
+                        <h2>Server Options</h2>
+                    </div>
+                </a>
+            </div>
+        {{ end }}
 
         <div class="col-md-6 col-lg-4 mt-4">
             <a class="card" href="/results">

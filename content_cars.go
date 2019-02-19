@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
 )
 
@@ -103,7 +103,7 @@ func apiCarUploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	carName := mux.Vars(r)["name"]
+	carName := chi.URLParam(r, "name")
 	carsPath := filepath.Join(ServerInstallPath, "content", "cars")
 
 	existingCars, err := ListCars()

@@ -3,39 +3,43 @@
 {{ define "content" }}
     <h1 class="text-center">Cars</h1>
 
-    <div class="card mb-3">
-        <div class="card-header"><strong>Upload a New Car</strong></div>
-        <div class="card-body">
-            <p class="card-text">You can upload multiple cars at once by placing them in a folder named "cars" and uploading
-                the whole folder. The upload process will only take the files that the server requires, and so should
-                not take too long.</p>
+    {{ if WriteAccess }}
+        <div class="card mb-3">
+            <div class="card-header"><strong>Upload a New Car</strong></div>
+            <div class="card-body">
+                <p class="card-text">You can upload multiple cars at once by placing them in a folder named "cars" and uploading
+                    the whole folder. The upload process will only take the files that the server requires, and so should
+                    not take too long.</p>
 
-            <p class="card-text mb-0">First choose the correct car folder (or containing folder) using the Choose a Folder
-                button below then use the Upload Cars button to upload your cars if the preview information appears
-                correctly.</p>
+                <p class="card-text mb-0">First choose the correct car folder (or containing folder) using the Choose a Folder
+                    button below then use the Upload Cars button to upload your cars if the preview information appears
+                    correctly.</p>
 
-            <form class="d-inline">
-                <div class="mt-3 mb-3">
-                    <div class="btn-file btn btn-secondary d-inline-block align-top">
-                        Choose a Folder
-                        <input id="input-folder-car" name="input-folder-car[]" type="file"
-                               multiple webkitdirectory value="Choose Folder" onchange="handleCarFiles(this.files)"/>
+                <form class="d-inline">
+                    <div class="mt-3 mb-3">
+                        <div class="btn-file btn btn-secondary d-inline-block align-top">
+                            Choose a Folder
+                            <input id="input-folder-car" name="input-folder-car[]" type="file"
+                                   multiple webkitdirectory value="Choose Folder" onchange="handleCarFiles(this.files)"/>
+                        </div>
+
+                        <div id="drop-zone" ondrop="handleCarDropFiles(event);" ondragover="dragOverHandler(event);" ondragleave="dragOutHandler(event);"
+                             class="ml-2 mr-2 drop-zone d-inline-block">Or Drag & Drop a Folder Here</div>
+
+                        <div id="upload-button"></div>
                     </div>
 
-                    <div id="drop-zone" ondrop="handleCarDropFiles(event);" ondragover="dragOverHandler(event);" ondragleave="dragOutHandler(event);"
-                         class="ml-2 mr-2 drop-zone d-inline-block">Or Drag & Drop a Folder Here</div>
-
-                    <div id="upload-button"></div>
-                </div>
-
-                <div class="progress" style="display: none;">
-                    <div class="progress-bar" id="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-            </form>
+                    <div class="progress" style="display: none;">
+                        <div class="progress-bar" id="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </form>
+            </div>
         </div>
-    </div>
 
-    <div id="car-info-panel"></div>
+        <div id="car-info-panel"></div>
+    {{ end }}
+
+    {{ $writeAccess := WriteAccess }}
 
     <table class="table table-bordered table-striped">
         <tr>
@@ -43,7 +47,9 @@
             <th>Car Name</th>
             <th>Tyres</th>
             <th>Skins</th>
-            <th class="text-center">Delete</th>
+            {{ if $writeAccess }}
+                <th class="text-center">Delete</th>
+            {{ end }}
         </tr>
         {{ range $i, $car := .cars }}
             <tr>
@@ -65,9 +71,12 @@
                         {{ carList ($car.Skins | join ";")}}
                     </small>
                 </td>
-                <td class="text-center">
-                    <a href="{{ print "/car/delete/" $car.Name }}"><i class="fas fa-trash text-danger"></i></a>
-                </td>
+
+                {{ if $writeAccess }}
+                    <td class="text-center">
+                        <a href="{{ print "/car/delete/" $car.Name }}"><i class="fas fa-trash text-danger"></i></a>
+                    </td>
+                {{ end }}
             </tr>
         {{ end }}
     </table>
