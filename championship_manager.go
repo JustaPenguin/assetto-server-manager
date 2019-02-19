@@ -143,15 +143,15 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (map[
 
 	if editEventID, ok := vars["eventID"]; ok {
 		// editing a championship event
-		toEdit := formValueAsInt(editEventID)
+		event, err := championship.EventByID(editEventID)
 
-		if toEdit > len(championship.Events) || toEdit < 0 {
-			return nil, ErrInvalidChampionshipEvent
+		if err != nil {
+			return nil, err
 		}
 
-		opts["Current"] = championship.Events[toEdit].RaceSetup
+		opts["Current"] = event.RaceSetup
 		opts["IsEditing"] = true
-		opts["EditingID"] = toEdit
+		opts["EditingID"] = editEventID
 	} else {
 		// creating a new championship event
 		opts["IsEditing"] = false
@@ -188,17 +188,17 @@ func (cm *ChampionshipManager) SaveChampionshipEvent(r *http.Request) (champions
 
 	raceConfig.Cars = strings.Join(championship.ValidCarIDs(), ";")
 
-	if eventIDStr := r.FormValue("Editing"); eventIDStr != "" {
-		eventID := formValueAsInt(eventIDStr)
+	if eventID := r.FormValue("Editing"); eventID != "" {
+		edited = true
 
-		if eventID > len(championship.Events) || eventID < 0 {
-			return nil, nil, true, ErrInvalidChampionshipEvent
+		event, err = championship.EventByID(eventID)
+
+		if err != nil {
+			return nil, nil, true, err
 		}
 
 		// we're editing an existing event
-		championship.Events[eventID].RaceSetup = *raceConfig
-		event = championship.Events[eventID]
-		edited = true
+		event.RaceSetup = *raceConfig
 	} else {
 		// creating a new event
 		event = NewChampionshipEvent()
@@ -210,37 +210,48 @@ func (cm *ChampionshipManager) SaveChampionshipEvent(r *http.Request) (champions
 	return championship, event, edited, cm.UpsertChampionship(championship)
 }
 
-func (cm *ChampionshipManager) DeleteEvent(championshipID string, eventID int) error {
+func (cm *ChampionshipManager) DeleteEvent(championshipID string, eventID string) error {
 	championship, err := cm.LoadChampionship(championshipID)
 
 	if err != nil {
 		return err
 	}
 
-	if eventID > len(championship.Events) || eventID < 0 {
+	toDelete := -1
+
+	for i, event := range championship.Events {
+		if event.ID.String() == eventID {
+			toDelete = i
+			break
+		}
+	}
+
+	if toDelete < 0 {
 		return ErrInvalidChampionshipEvent
 	}
 
-	championship.Events = append(championship.Events[:eventID], championship.Events[eventID+1:]...)
+	championship.Events = append(championship.Events[:toDelete], championship.Events[toDelete+1:]...)
 
 	return cm.UpsertChampionship(championship)
 }
 
 // Start a 2hr long Practice Event based off the existing championship event with eventID
-func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID int) error {
+func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID string) error {
 	championship, err := cm.LoadChampionship(championshipID)
 
 	if err != nil {
 		return err
 	}
 
-	if eventID > len(championship.Events) || eventID < 0 {
-		return ErrInvalidChampionshipEvent
+	event, err := championship.EventByID(eventID)
+
+	if err != nil {
+		return err
 	}
 
 	config := ConfigIniDefault
 
-	raceSetup := championship.Events[eventID].RaceSetup
+	raceSetup := event.RaceSetup
 
 	raceSetup.Sessions = make(map[SessionType]SessionConfig)
 	raceSetup.Sessions[SessionTypePractice] = SessionConfig{
@@ -257,18 +268,18 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 	return cm.applyConfigAndStart(config, championship.Entrants)
 }
 
-func (cm *ChampionshipManager) StartEvent(championshipID string, eventIndex int) error {
+func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string) error {
 	championship, err := cm.LoadChampionship(championshipID)
 
 	if err != nil {
 		return err
 	}
 
-	if eventIndex > len(championship.Events) || eventIndex < 0 {
-		return ErrInvalidChampionshipEvent
-	}
+	event, err := championship.EventByID(eventID)
 
-	event := championship.Events[eventIndex]
+	if err != nil {
+		return err
+	}
 
 	// championship events always have locked entry lists
 	event.RaceSetup.LockedEntryList = 1
@@ -469,18 +480,18 @@ func (cm *ChampionshipManager) findLastWrittenSessionFile() (string, error) {
 	return resultFiles[0].Name(), nil
 }
 
-func (cm *ChampionshipManager) CancelEvent(championshipID string, eventID int) error {
+func (cm *ChampionshipManager) CancelEvent(championshipID string, eventID string) error {
 	championship, err := cm.LoadChampionship(championshipID)
 
 	if err != nil {
 		return err
 	}
 
-	if eventID > len(championship.Events) || eventID < 0 {
-		return ErrInvalidChampionshipEvent
-	}
+	event, err := championship.EventByID(eventID)
 
-	event := championship.Events[eventID]
+	if err != nil {
+		return err
+	}
 
 	event.StartedTime = time.Time{}
 	event.CompletedTime = time.Time{}
@@ -494,7 +505,7 @@ func (cm *ChampionshipManager) CancelEvent(championshipID string, eventID int) e
 	return cm.UpsertChampionship(championship)
 }
 
-func (cm *ChampionshipManager) RestartEvent(championshipID string, eventID int) error {
+func (cm *ChampionshipManager) RestartEvent(championshipID string, eventID string) error {
 	err := cm.CancelEvent(championshipID, eventID)
 
 	if err != nil {
