@@ -836,7 +836,7 @@ let liveTiming = {
                         $liveTimingTable.append($tr)
                     }
                 });
-            }, 500);
+            }, 1000);
         }
     }
 };
