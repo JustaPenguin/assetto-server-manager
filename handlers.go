@@ -64,8 +64,8 @@ func Router() *mux.Router {
 	r.Methods(http.MethodPost).Path("/custom/new/submit").HandlerFunc(customRaceSubmitHandler)
 
 	// live timing
-	r.HandleFunc("/livetiming", liveTimingHandler)
-	r.HandleFunc("/livetiming/get", liveTimingGetHandler)
+	r.HandleFunc("/live-timing", liveTimingHandler)
+	r.HandleFunc("/live-timing/get", liveTimingGetHandler)
 
 	// server management
 	r.HandleFunc("/logs", serverLogsHandler)

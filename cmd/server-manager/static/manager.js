@@ -695,7 +695,7 @@ let liveTiming = {
 
         if ($liveTimingTable.length) {
             setInterval(function () {
-                $.getJSON("/livetiming/get", function (liveTiming) {
+                $.getJSON("/live-timing/get", function (liveTiming) {
                     let date = new Date();
 
                     // Get lap/laps or time/totalTime
@@ -722,7 +722,7 @@ let liveTiming = {
                             sessionType = "Practice";
                             break;
                         case 2:
-                            sessionType = "Qualification";
+                            sessionType = "Qualifying";
                             break;
                         case 3:
                             sessionType = "Race";
