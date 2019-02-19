@@ -62,7 +62,7 @@ func (LapCompleted) Event() Event {
 type LapCompleted struct {
 	LapCompletedInternal
 
-	Cars []*LapCompletedCar // @TODO is this is pos order?
+	Cars []*LapCompletedCar
 }
 
 type LapCompletedCar struct {

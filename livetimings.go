@@ -213,7 +213,6 @@ func CallbackFunc (response udp.Message) {
 						if liveCar.Pos == liveInfo.Cars[ID].Pos-1 {
 							if liveCar.LapNum == liveInfo.Cars[ID].LapNum {
 								liveInfo.Cars[ID].Split = time.Now().Sub(liveCar.LastLapCompleteTime).Round(time.Millisecond).String()
-								println(liveInfo.Cars[ID].Split)
 							} else {
 								liveInfo.Cars[ID].Split = strconv.Itoa(liveCar.LapNum-liveInfo.Cars[ID].LapNum) + " lap(s)"
 							}
