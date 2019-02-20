@@ -19,7 +19,7 @@
     <body>
 
     <nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-primary">
-        <div class="container">
+        <div class="{{ block "header-container" . }}container{{ end }}">
             <a class="navbar-brand" href="/">Assetto Server Manager</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -129,7 +129,7 @@
         </div>
     </nav>
 
-    <div class="container">
+    <div class="{{ block "page-container" . }}container{{ end }}">
         <br><br>
 
         {{ block "content" . }}{{ end }}

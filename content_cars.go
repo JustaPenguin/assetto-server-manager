@@ -93,7 +93,7 @@ func carsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("content", "cars.html"), map[string]interface{}{
+	ViewRenderer.MustLoadTemplate(w, r, "content/cars.html", map[string]interface{}{
 		"cars": cars,
 	})
 }

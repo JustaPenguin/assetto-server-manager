@@ -2,7 +2,6 @@ package servermanager
 
 import (
 	"net/http"
-	"path/filepath"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -31,7 +30,7 @@ func customRaceListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("custom-race", "index.html"), map[string]interface{}{
+	ViewRenderer.MustLoadTemplate(w, r, "custom-race/index.html", map[string]interface{}{
 		"Recent":  recent,
 		"Starred": starred,
 	})
@@ -46,7 +45,7 @@ func customRaceNewOrEditHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("custom-race", "new.html"), customRaceData)
+	ViewRenderer.MustLoadTemplate(w, r, "custom-race/new.html", customRaceData)
 }
 
 func customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {

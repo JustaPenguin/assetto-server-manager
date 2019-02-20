@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"net/http"
-	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 )
@@ -164,7 +163,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("accounts", "login.html"), nil)
+	ViewRenderer.MustLoadTemplate(w, r, "accounts/login.html", nil)
 }
 
 var ErrInvalidUsernameOrPassword = errors.New("servermanager: invalid username or password")
