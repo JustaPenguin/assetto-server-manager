@@ -257,7 +257,8 @@ let raceSetup = {
      */
     showSolSettings: function () {
         $(".sol-enabler").each(function (index, elem) {
-            raceSetup.showSolWeathers($(elem).val() === "on");
+
+            raceSetup.showSolWeathers($(elem).is(':checked'));
 
             $(elem).on('switchChange.bootstrapSwitch', function (event, state) {
                 let $this = $(this);
