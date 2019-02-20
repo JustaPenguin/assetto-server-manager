@@ -57,7 +57,7 @@ var ConfigIniDefault = ServerConfig{
 		MaxClients:                18,
 		WindBaseDirection:         30,
 		WindVariationDirection:    15,
-		StartRule:                 0,
+		StartRule:                 2, // drive-thru
 		RaceExtraLap:              0,
 
 		Sessions: map[SessionType]SessionConfig{
