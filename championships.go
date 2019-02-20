@@ -438,6 +438,7 @@ func championshipStartEventHandler(w http.ResponseWriter, r *http.Request) {
 		AddErrFlashQuick(w, r, "Couldn't start the Event")
 	} else {
 		AddFlashQuick(w, r, "Event started successfully!")
+		time.Sleep(time.Second * 1)
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
@@ -466,6 +467,7 @@ func championshipStartPracticeEventHandler(w http.ResponseWriter, r *http.Reques
 		AddErrFlashQuick(w, r, "Couldn't start the Practice Event")
 	} else {
 		AddFlashQuick(w, r, "Practice Event started successfully!")
+		time.Sleep(time.Second * 1)
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
