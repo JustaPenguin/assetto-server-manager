@@ -15,14 +15,15 @@ script:
   - go generate ./...
   - GOOS=linux GOARCH=amd64 go build
   - GOOS=windows GOARCH=amd64 go build
+  - zip -r server-manager_windows_$TRAVIS_TAG.zip server-manager.exe config.yml
+  - zip -r server-manager_linux_$TRAVIS_TAG.zip server-manager config.yml
 
 deploy:
   provider: releases
   api_key: $OAUTH_TOKEN
   file:
-    - server-manager
-    - server-manager.exe
-    - config.yml
+    - server-manager_windows_$TRAVIS_TAG.zip
+    - server-manager_linux_$TRAVIS_TAG.zip
   skip_cleanup: true
   on:
     tags: true
