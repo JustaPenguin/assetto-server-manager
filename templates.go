@@ -17,18 +17,76 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type TemplateLoader interface {
+	Init() error
+	Templates(funcs template.FuncMap) (map[string]*template.Template, error)
+}
+
+func NewFilesystemTemplateLoader(dir string) TemplateLoader {
+	return &filesystemTemplateLoader{
+		dir: dir,
+	}
+}
+
+type filesystemTemplateLoader struct {
+	dir string
+
+	pages, partials []string
+}
+
+func (fs *filesystemTemplateLoader) Init() error {
+	var err error
+
+	fs.pages, err = zglob.Glob(filepath.Join(fs.dir, "pages", "**", "*.html"))
+
+	if err != nil {
+		return err
+	}
+
+	fs.partials, err = zglob.Glob(filepath.Join(fs.dir, "partials", "**", "*.html"))
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (fs *filesystemTemplateLoader) Templates(funcs template.FuncMap) (map[string]*template.Template, error) {
+	templates := make(map[string]*template.Template)
+
+	for _, page := range fs.pages {
+		var templateList []string
+		templateList = append(templateList, filepath.Join(fs.dir, "layout", "base.html"))
+		templateList = append(templateList, fs.partials...)
+		templateList = append(templateList, page)
+
+		t, err := template.New(page).Funcs(funcs).ParseFiles(templateList...)
+
+		if err != nil {
+			return nil, err
+		}
+
+		templates[strings.TrimPrefix(filepath.ToSlash(page), filepath.ToSlash(fs.dir)+"/pages/")] = t
+	}
+
+	return templates, nil
+}
+
 // Renderer is the template engine.
 type Renderer struct {
 	templates map[string]*template.Template
-	dir       string
-	reload    bool
-	mutex     sync.Mutex
+
+	loader TemplateLoader
+
+	reload bool
+	mutex  sync.Mutex
 }
 
-func NewRenderer(dir string, reload bool) (*Renderer, error) {
+func NewRenderer(loader TemplateLoader, reload bool) (*Renderer, error) {
 	tr := &Renderer{
 		templates: make(map[string]*template.Template),
-		dir:       dir,
+		loader:    loader,
 		reload:    reload,
 	}
 
@@ -51,13 +109,7 @@ func (tr *Renderer) init() error {
 	tr.mutex.Lock()
 	defer tr.mutex.Unlock()
 
-	pages, err := zglob.Glob(filepath.Join(tr.dir, "pages", "**", "*.html"))
-
-	if err != nil {
-		return err
-	}
-
-	partials, err := zglob.Glob(filepath.Join(tr.dir, "partials", "**", "*.html"))
+	err := tr.loader.Init()
 
 	if err != nil {
 		return err
@@ -77,19 +129,10 @@ func (tr *Renderer) init() error {
 	funcs["AdminAccess"] = dummyAccessFunc
 	funcs["LoggedIn"] = dummyAccessFunc
 
-	for _, page := range pages {
-		var templateList []string
-		templateList = append(templateList, filepath.Join(tr.dir, "layout", "base.html"))
-		templateList = append(templateList, partials...)
-		templateList = append(templateList, page)
+	tr.templates, err = tr.loader.Templates(funcs)
 
-		t, err := template.New(page).Funcs(funcs).ParseFiles(templateList...)
-
-		if err != nil {
-			return err
-		}
-
-		tr.templates[filepath.ToSlash(page)] = t
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -178,12 +221,10 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 		}
 	}
 
-	pageView := filepath.Join(tr.dir, "pages", view)
-
-	t, ok := tr.templates[filepath.ToSlash(pageView)]
+	t, ok := tr.templates[filepath.ToSlash(view)]
 
 	if !ok {
-		return fmt.Errorf("unable to find template: %s", pageView)
+		return fmt.Errorf("unable to find template: %s", filepath.ToSlash(view))
 	}
 
 	if data == nil {
@@ -225,28 +266,6 @@ func (tr *Renderer) MustLoadTemplate(w http.ResponseWriter, r *http.Request, vie
 	if err != nil {
 		logrus.Errorf("Unable to load template: %s, err: %s", view, err)
 		http.Error(w, "unable to load template", http.StatusInternalServerError)
-		return
-	}
-}
-
-func (tr *Renderer) LoadPartial(w http.ResponseWriter, partial string, data map[string]interface{}) error {
-	path := filepath.Join(tr.dir, "pages", partial)
-
-	t, err := template.New(partial).ParseFiles(path)
-
-	if err != nil {
-		return err
-	}
-
-	return t.Execute(w, data)
-}
-
-func (tr *Renderer) MustLoadPartial(w http.ResponseWriter, partial string, data map[string]interface{}) {
-	err := tr.LoadPartial(w, partial, data)
-
-	if err != nil {
-		logrus.Errorf("Unable to load partial: %s, err: %s", partial, err)
-		http.Error(w, "unable to load partial", http.StatusInternalServerError)
 		return
 	}
 }

@@ -34,7 +34,7 @@ func init() {
 	logrus.SetOutput(io.MultiWriter(os.Stdout, logOutput))
 }
 
-func Router() chi.Router {
+func Router(fs http.FileSystem) chi.Router {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -72,7 +72,7 @@ func Router() chi.Router {
 		r.Get("/live-timing", liveTimingHandler)
 		r.Get("/live-timing/get", liveTimingGetHandler)
 
-		FileServer(r, "/static", http.Dir("./static"))
+		FileServer(r, "/static", fs)
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")))
 		FileServer(r, "/results/download", http.Dir(filepath.Join(ServerInstallPath, "results")))
 	})
@@ -215,7 +215,7 @@ func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "server_options.html", map[string]interface{}{
+	ViewRenderer.MustLoadTemplate(w, r, "server/options.html", map[string]interface{}{
 		"form": form,
 	})
 }
@@ -350,7 +350,7 @@ func AddErrFlashQuick(w http.ResponseWriter, r *http.Request, message string) {
 }
 
 func serverLogsHandler(w http.ResponseWriter, r *http.Request) {
-	ViewRenderer.MustLoadTemplate(w, r, "server_logs.html", nil)
+	ViewRenderer.MustLoadTemplate(w, r, "server/logs.html", nil)
 }
 
 type logData struct {

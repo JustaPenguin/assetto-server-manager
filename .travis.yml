@@ -1,0 +1,29 @@
+language: go
+
+go:
+  - 1.11
+
+install:
+  - git --version
+  - go version
+
+script:
+  - export GO111MODULE=on
+  - cd cmd/server-manager
+  - cp config.example.yml config.yml
+  - go get -u github.com/mjibson/esc
+  - go generate ./...
+  - GOOS=linux GOARCH=amd64 go build
+  - GOOS=windows GOARCH=amd64 go build
+
+deploy:
+  provider: releases
+  api_key:
+    secure: Ttni3WPvcwIHPjcBVavtSMt+OmhvcxME4ldS0eaVEoLpOnPFQDQnYEuAiKKeN7AnQC8V3OLPKvbr4A4uGZ1uziVG5zMcDryFKZbkZpEX9s+1QlgJoHoDQx8tubbPabH0T1PG8u6dnptW9e9aTxfvlhEtMSRL501w5w7JwLzw1CbRJH/jhjsV7FDkbgxkMBhZ1jiPV3mGXVtkE3EVqB809TqDsZWCW1amL+9AO+0TqzUKP1vdR7TBJGph5//UihE5DQMGi9WauQHvNR9JqSr6OFgfBTy3OJmVvszq6dLyWm8TwBQfVaTpN7OHZXeftOAZK97iqZk6T9H7b4Oq8V92G35MDr/LeTIZDhK9LbRjMxP+9cEav2PVeR/Ex7yNypYAp8Z5jdWgMpOrb5MC/wUOglBEjCElwOhjBtcjhASW59cHA4iSY3PER9icch2z+3ViBmCaCxNCiVd4Sz0f6FHIDPf4PoOfn4axMENBaPUVzp1J+4OFFG6mOIC05DhMNB3WPc/AMP+q25hzoyzuGVQYOVb6JeveVW24noJP2/vro0H1Iq3yVTToxgcvtyxeIaHd+86M0cry7ghZPBDtACX0hbTayY2SJPKtFmxlwC6E8+MTNp+GPNJPPWKW3Ho+khpXPQXe/1099VY28HO7AaU0jQlxX/nnYVaa/m+PdjHeNy0=
+  file:
+    - server-manager
+    - server-manager.exe
+    - config.yml
+  skip_cleanup: true
+  on:
+    tags: true
