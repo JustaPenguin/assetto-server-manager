@@ -334,8 +334,18 @@ func viewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	eventInProgress := false
+
+	for _, event := range championship.Events {
+		if event.InProgress() {
+			eventInProgress = true
+			break
+		}
+	}
+
 	ViewRenderer.MustLoadTemplate(w, r, "championships/view.html", map[string]interface{}{
-		"Championship": championship,
+		"Championship":    championship,
+		"EventInProgress": eventInProgress,
 	})
 }
 
