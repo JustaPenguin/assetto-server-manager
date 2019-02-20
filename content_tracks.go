@@ -127,7 +127,7 @@ func tracksHandler(w http.ResponseWriter, r *http.Request) {
 		logrus.Errorf("could not get track list, err: %s", err)
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("content", "tracks.html"), map[string]interface{}{
+	ViewRenderer.MustLoadTemplate(w, r, "content/tracks.html", map[string]interface{}{
 		"tracks": tracks,
 	})
 }

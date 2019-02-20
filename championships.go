@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"path/filepath"
 	"sort"
 	"time"
 
@@ -287,7 +286,7 @@ func listChampionshipsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("championships", "index.html"), map[string]interface{}{
+	ViewRenderer.MustLoadTemplate(w, r, "championships/index.html", map[string]interface{}{
 		"championships": championships,
 	})
 }
@@ -302,7 +301,7 @@ func newOrEditChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("championships", "new.html"), opts)
+	ViewRenderer.MustLoadTemplate(w, r, "championships/new.html", opts)
 }
 
 // submitNewChampionshipHandler creates a given Championship and redirects the user to begin
@@ -335,7 +334,7 @@ func viewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("championships", "view.html"), map[string]interface{}{
+	ViewRenderer.MustLoadTemplate(w, r, "championships/view.html", map[string]interface{}{
 		"Championship": championship,
 	})
 }
@@ -380,7 +379,7 @@ func championshipEventConfigurationHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("custom-race", "new.html"), championshipRaceOpts)
+	ViewRenderer.MustLoadTemplate(w, r, "custom-race/new.html", championshipRaceOpts)
 }
 
 // championshipSubmitEventConfigurationHandler takes an Event Configuration from a form and

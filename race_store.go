@@ -319,7 +319,9 @@ func (rs *BoltRaceStore) ListChampionships() ([]*Championship, error) {
 	err := rs.db.View(func(tx *bbolt.Tx) error {
 		b, err := rs.championshipsBucket(tx)
 
-		if err != nil {
+		if err == bbolt.ErrBucketNotFound {
+			return nil
+		} else if err != nil {
 			return err
 		}
 
