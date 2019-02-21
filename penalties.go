@@ -131,23 +131,55 @@ func applyPenalty(r *http.Request) (bool, error) {
 		}
 	})
 
-	path := filepath.Join(ServerInstallPath, "results", jsonFileName + ".json")
-
-	file, err := os.Create(path)
-
-	if err != nil {
-		logrus.Errorf("could not load session result file, err: %s", err)
-		return false, err
-	}
-
-	encoder := json.NewEncoder(file)
-
-	err = encoder.Encode(results)
+	err = saveResults(jsonFileName, results)
 
 	if err != nil {
 		logrus.Errorf("could not encode to session result file, err: %s", err)
 		return false, err
 	}
 
+	if results.ChampionshipID != "" {
+		championship, err := championshipManager.LoadChampionship(results.ChampionshipID)
+
+		if err != nil {
+			logrus.Errorf("Couldn't load championship with ID: %s, err: %s", results.ChampionshipID, err)
+			return false, err
+		}
+
+		champEvents:
+		for i, event := range championship.Events {
+			for key, session := range event.Sessions {
+				if session.Results.SessionFile == jsonFileName {
+					championship.Events[i].Sessions[key].Results = results
+
+					break champEvents
+				}
+			}
+		}
+
+		err = championshipManager.UpsertChampionship(championship)
+
+		if err != nil {
+			logrus.Errorf("Couldn't save championship with ID: %s, err: %s", results.ChampionshipID, err)
+			return false, err
+		}
+	}
+
 	return remove, nil
+}
+
+func saveResults(jsonFileName string, results *SessionResults) error {
+	path := filepath.Join(ServerInstallPath, "results", jsonFileName + ".json")
+
+	file, err := os.Create(path)
+
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(file)
+
+	encoder.SetIndent("", "\t")
+
+	return encoder.Encode(results)
 }

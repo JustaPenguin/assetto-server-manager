@@ -25,8 +25,9 @@ type SessionResults struct {
 	TrackConfig string          `json:"TrackConfig"`
 	TrackName   string          `json:"TrackName"`
 	Type        string          `json:"Type"`
-	Date        time.Time
-	SessionFile string
+	Date        time.Time		`json:"Date"`
+	SessionFile string			`json:"SessionFile"`
+	ChampionshipID string 		`json:"ChampionshipID"`
 }
 
 func (s *SessionResults) GetCrashes(guid string) int {

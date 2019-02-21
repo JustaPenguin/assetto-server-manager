@@ -408,13 +408,22 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 		cm.activeChampionship.NumLapsCompleted++
 
 	case udp.EndSession:
-		filename := string(a)
+		filename := filepath.Base(string(a))
 		logrus.Infof("End Session, file outputted at: %s", filename)
 
-		results, err := LoadResult(filepath.Base(filename))
+		results, err := LoadResult(filename)
 
 		if err != nil {
 			logrus.Errorf("Could not read session results for %s, err: %s", cm.activeChampionship.SessionType.String(), err)
+			return
+		}
+
+		// Update the old results json file with championship ID, required for applying penalties properly
+		results.ChampionshipID = cm.activeChampionship.ChampionshipID.String()
+		err = saveResults(filename, results)
+
+		if err != nil {
+			logrus.Errorf("Could not update session results for %s, err: %s", cm.activeChampionship.SessionType.String(), err)
 			return
 		}
 
