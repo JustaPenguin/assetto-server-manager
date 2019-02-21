@@ -3,14 +3,15 @@ package servermanager
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/chi"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"time"
+
+	"github.com/go-chi/chi"
+	"github.com/sirupsen/logrus"
 )
 
 // viewChampionshipHandler shows details of a given Championship
@@ -109,7 +110,7 @@ func applyPenalty(r *http.Request) (bool, error) {
 				// if their number of laps are equal, compare lap times
 
 				return results.GetTime(results.Result[i].TotalTime, results.Result[i].DriverGUID, true) <
-							results.GetTime(results.Result[j].TotalTime, results.Result[j].DriverGUID, true)
+					results.GetTime(results.Result[j].TotalTime, results.Result[j].DriverGUID, true)
 			}
 
 			return results.GetLaps(results.Result[i].DriverGUID) >= results.GetLaps(results.Result[j].DriverGUID)
@@ -146,7 +147,7 @@ func applyPenalty(r *http.Request) (bool, error) {
 			return false, err
 		}
 
-		champEvents:
+	champEvents:
 		for i, event := range championship.Events {
 			for key, session := range event.Sessions {
 				if session.Results.SessionFile == jsonFileName {
@@ -169,7 +170,7 @@ func applyPenalty(r *http.Request) (bool, error) {
 }
 
 func saveResults(jsonFileName string, results *SessionResults) error {
-	path := filepath.Join(ServerInstallPath, "results", jsonFileName + ".json")
+	path := filepath.Join(ServerInstallPath, "results", jsonFileName+".json")
 
 	file, err := os.Create(path)
 
