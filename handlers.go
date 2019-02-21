@@ -63,6 +63,9 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Get("/logs", serverLogsHandler)
 		r.Get("/api/logs", apiServerLogHandler)
 
+		// penalties
+		r.Post("/penalties/{sessionFile}/{driverGUID}", penaltyHandler)
+
 		// championships
 		r.Get("/championships", listChampionshipsHandler)
 		r.Get("/championship/{championshipID}", viewChampionshipHandler)

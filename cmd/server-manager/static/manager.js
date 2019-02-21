@@ -663,6 +663,10 @@ let raceSetup = {
     },
 };
 
+$(function () {
+    $('[data-toggle="popover"]').popover()
+});
+
 function msToTime(s) {
     // Pad to 2 or 3 digits, default is 2
     let pad = (n, z = 2) => ('00' + n).slice(-z);
