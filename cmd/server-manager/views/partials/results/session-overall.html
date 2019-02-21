@@ -15,21 +15,37 @@
                     <th>Best Lap</th>
                     <th>Average Lap</th>
                     <th>Crashes</th>
+                    <th>Penalties</th>
                 </tr>
 
                 {{ range $pos, $result := $sessionResults.Result}}
                     {{ with $result.DriverGUID }}
                         <tr>
                             <td>{{ add $pos 1 }}</td>
-                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ $result.DriverName }}</td>
+                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ $result.DriverName }}
+                                {{ if $result.HasPenalty }} <span class="badge badge-danger">Time Penalty: {{ $result.PenaltyTime }}</span> {{ end }}
+                                {{ if $result.Disqualified }} <span class="badge badge-danger">Disqualified</span> {{ end }}</td>
                             <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
                             <td>{{ prettify $result.CarModel true }}</td>
-                            <td>{{ $sessionResults.GetTime $result.TotalTime $result.DriverGUID }}</td>
+                            <td>{{ $sessionResults.GetTime $result.TotalTime $result.DriverGUID true }}</td>
                             <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
                                 {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
-                            <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID }}</td>
+                            <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID false }}</td>
                             <td>{{ $sessionResults.GetAverageLapTime $result.DriverGUID }}</td>
                             <td>{{ $sessionResults.GetCrashes $result.DriverGUID }}</td>
+                            <td><button type="button" class="btn btn-warning btn-sm" data-placement="bottom"
+                                   data-toggle="popover" title="Penalty Details" data-html="true"
+                                   data-content="<form action='/penalties/{{ $sessionResults.SessionFile }}/{{ $result.DriverGUID }}' method='POST'>
+                                                    <div class='form-group'>
+                                                        <label for='time-penalty'>Time Penalty (seconds)</label>
+                                                        <input type='number' class='form-control' name='time-penalty' id='time-penalty' placeholder='0' step='0.1'>
+                                                        <small class='form-text text-muted'>If set to 0 driver will be disqualified.</small>
+                                                    </div>
+
+                                                    <button type='submit' name='action' value='add' class='btn btn-danger'>Add Penalty</button>
+                                                    <button type='submit' name='action' value='remove' class='btn btn-primary'>Remove Penalty</button>
+                                                </form>"
+                                    >Penalties</button></td>
                         </tr>
                     {{ end }}
                 {{ end }}
@@ -51,7 +67,7 @@
                             <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ $result.DriverName }}</td>
                             <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
                             <td>{{ prettify $result.CarModel true }}</td>
-                            <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID }}</td>
+                            <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID false }}</td>
                             <td>{{ $sessionResults.GetAverageLapTime $result.DriverGUID }}</td>
                             <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
                                 {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
@@ -76,7 +92,7 @@
                             <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ $result.DriverName }}</td>
                             <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
                             <td>{{ prettify $result.CarModel true }}</td>
-                            <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID }}</td>
+                            <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID false }}</td>
                             <td>{{ $sessionResults.GetAverageLapTime $result.DriverGUID }}</td>
                             <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
                                 {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
