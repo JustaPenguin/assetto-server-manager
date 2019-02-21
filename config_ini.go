@@ -121,25 +121,25 @@ func (sc ServerConfig) Write() error {
 
 type GlobalServerConfig struct {
 	Name                      string `ini:"NAME" help:"Server Name"`
-	Password                  string `ini:"PASSWORD" input:"password" help:"server password"`
-	AdminPassword             string `ini:"ADMIN_PASSWORD" input:"password" help:"the password needed to be recognized as server administrator: you can join the server using it to be recognized automatically. Write on the game's chat /help to see the command list"`
+	Password                  string `ini:"PASSWORD" input:"password" help:"Server password"`
+	AdminPassword             string `ini:"ADMIN_PASSWORD" input:"password" help:"The password needed to be recognized as server administrator: you can join the server using it to be recognized automatically. Write on the game's chat /help to see the command list"`
 	UDPPort                   int    `ini:"UDP_PORT" min:"0" max:"65535" help:"UDP port number: open this port on your server's firewall"`
 	TCPPort                   int    `ini:"TCP_PORT" min:"0" max:"65535" help:"TCP port number: open this port on your server's firewall"`
 	HTTPPort                  int    `ini:"HTTP_PORT" min:"0" max:"65535" help:"Lobby port number: open these ports (both UDP and TCP) on your server's firewall"`
-	UDPPluginLocalPort        int    `ini:"UDP_PLUGIN_LOCAL_PORT" min:"0" max:"65535" help:"TODO"`
-	UDPPluginAddress          string `ini:"UDP_PLUGIN_ADDRESS" help:"TODO"`
-	AuthPluginAddress         string `ini:"AUTH_PLUGIN_ADDRESS" help:"TODO"`
+	UDPPluginLocalPort        int    `ini:"UDP_PLUGIN_LOCAL_PORT" min:"0" max:"65535" help:"The port on which to listen for UDP messages from a plugin"`
+	UDPPluginAddress          string `ini:"UDP_PLUGIN_ADDRESS" help:"The address of the plugin to which UDP messages are sent"`
+	AuthPluginAddress         string `ini:"AUTH_PLUGIN_ADDRESS" help:"The address of the auth plugin"`
 	RegisterToLobby           int    `ini:"REGISTER_TO_LOBBY" input:"checkbox" help:"Register the AC Server to the main lobby"`
-	ClientSendIntervalInHertz int    `ini:"CLIENT_SEND_INTERVAL_HZ" help:"refresh rate of packet sending by the server. 10Hz = ~100ms. Higher number = higher MP quality = higher bandwidth resources needed. Really high values can create connection issues"`
-	SendBufferSize            int    `ini:"SEND_BUFFER_SIZE" help:"TODO"`
-	ReceiveBufferSize         int    `ini:"RECV_BUFFER_SIZE" help:"TODO"`
-	KickQuorum                int    `ini:"KICK_QUORUM" help:"percentage that is required for the kick vote to pass"`
-	VotingQuorum              int    `ini:"VOTING_QUORUM" min:"0" max:"100" help:"percentage that is required for the session vote to pass"`
-	VoteDuration              int    `ini:"VOTE_DURATION" min:"0" help:"vote length in seconds"`
-	BlacklistMode             int    `ini:"BLACKLIST_MODE" min:"0" max:"2" help:"ban player -> 0 = normal kick, rejoin possible, 1 = until server restart WARNING: 2 is not more valid since kick_id and ban_id are two different commands."`
+	ClientSendIntervalInHertz int    `ini:"CLIENT_SEND_INTERVAL_HZ" help:"Refresh rate of packet sending by the server. 10Hz = ~100ms. Higher number = higher MP quality = higher bandwidth resources needed. Really high values can create connection issues"`
+	SendBufferSize            int    `ini:"SEND_BUFFER_SIZE" help:""`
+	ReceiveBufferSize         int    `ini:"RECV_BUFFER_SIZE" help:""`
+	KickQuorum                int    `ini:"KICK_QUORUM" help:"Percentage that is required for the kick vote to pass"`
+	VotingQuorum              int    `ini:"VOTING_QUORUM" min:"0" max:"100" help:"Percentage that is required for the session vote to pass"`
+	VoteDuration              int    `ini:"VOTE_DURATION" min:"0" help:"Vote length in seconds"`
+	BlacklistMode             int    `ini:"BLACKLIST_MODE" min:"0" max:"2" help:"Ban player -> 0 = normal kick, rejoin possible, 1 = until server restart WARNING: 2 is not more valid since kick_id and ban_id are two different commands."`
 	NumberOfThreads           int    `ini:"NUM_THREADS" min:"1" help:"Number of threads to run on"`
-	WelcomeMessage            string `ini:"WELCOME_MESSAGE" help:"path to the file that contains the server welcome message"`
-	ResultScreenTime          int    `ini:"RESULT_SCREEN_TIME" help:"seconds of result screen between racing sessions"`
+	WelcomeMessage            string `ini:"WELCOME_MESSAGE" help:"Path to the file that contains the server welcome message"`
+	ResultScreenTime          int    `ini:"RESULT_SCREEN_TIME" help:"Seconds of result screen between racing sessions"`
 
 	FreeUDPPluginLocalPort int    `ini:"-" show:"-"`
 	FreeUDPPluginAddress   string `ini:"-" show:"-"`

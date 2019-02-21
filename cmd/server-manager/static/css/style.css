@@ -203,8 +203,8 @@ a.detailed-results:hover {
     width: 48%;
     margin-left: 0;
     margin-right: 0;
+    min-width: 115px;
 }
-
 
 .table-custom-race tr td:nth-child(1) {
     text-align: center;
