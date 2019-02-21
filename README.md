@@ -1,6 +1,8 @@
 Assetto Server Manager
 ======================
 
+[![Build Status](https://travis-ci.org/cj123/assetto-server-manager.svg?branch=master)](https://travis-ci.org/cj123/assetto-server-manager)
+
 A web interface to manage an Assetto Corsa Server.
 
 ## Features
