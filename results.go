@@ -18,15 +18,16 @@ import (
 )
 
 type SessionResults struct {
-	Cars        []SessionCar    `json:"Cars"`
-	Events      []SessionEvent  `json:"Events"`
-	Laps        []SessionLap    `json:"Laps"`
-	Result      []SessionResult `json:"Result"`
-	TrackConfig string          `json:"TrackConfig"`
-	TrackName   string          `json:"TrackName"`
-	Type        string          `json:"Type"`
-	Date        time.Time
-	SessionFile string
+	Cars           []SessionCar     `json:"Cars"`
+	Events         []SessionEvent   `json:"Events"`
+	Laps           []SessionLap     `json:"Laps"`
+	Result         []*SessionResult `json:"Result"`
+	TrackConfig    string           `json:"TrackConfig"`
+	TrackName      string           `json:"TrackName"`
+	Type           string           `json:"Type"`
+	Date           time.Time        `json:"Date"`
+	SessionFile    string           `json:"SessionFile"`
+	ChampionshipID string           `json:"ChampionshipID"`
 }
 
 func (s *SessionResults) GetCrashes(guid string) int {
@@ -52,7 +53,7 @@ func (s *SessionResults) GetAverageLapTime(guid string) time.Duration {
 		}
 	}
 
-	return s.GetTime(int(float64(totalTime)/float64(laps)), guid)
+	return s.GetTime(int(float64(totalTime)/float64(laps)), guid, false)
 }
 
 // lapNum is the drivers current lap
@@ -177,12 +178,20 @@ func (s *SessionResults) GetDrivers() string {
 	return strings.Join(drivers, ", ")
 }
 
-func (s *SessionResults) GetTime(timeINT int, driverGUID string) time.Duration {
+func (s *SessionResults) GetTime(timeINT int, driverGUID string, total bool) time.Duration {
 	if i := s.GetLaps(driverGUID); i == 0 {
 		return time.Duration(0)
 	}
 
 	d, _ := time.ParseDuration(fmt.Sprintf("%dms", timeINT))
+
+	if total {
+		for _, driver := range s.Result {
+			if driver.DriverGUID == driverGUID && driver.HasPenalty {
+				d += driver.PenaltyTime
+			}
+		}
+	}
 
 	return d
 }
@@ -238,14 +247,17 @@ func (s *SessionResults) FastestLap() *SessionLap {
 }
 
 type SessionResult struct {
-	BallastKG  int    `json:"BallastKG"`
-	BestLap    int    `json:"BestLap"`
-	CarID      int    `json:"CarId"`
-	CarModel   string `json:"CarModel"`
-	DriverGUID string `json:"DriverGuid"`
-	DriverName string `json:"DriverName"`
-	Restrictor int    `json:"Restrictor"`
-	TotalTime  int    `json:"TotalTime"`
+	BallastKG    int           `json:"BallastKG"`
+	BestLap      int           `json:"BestLap"`
+	CarID        int           `json:"CarId"`
+	CarModel     string        `json:"CarModel"`
+	DriverGUID   string        `json:"DriverGuid"`
+	DriverName   string        `json:"DriverName"`
+	Restrictor   int           `json:"Restrictor"`
+	TotalTime    int           `json:"TotalTime"`
+	HasPenalty   bool          `json:"HasPenalty"`
+	PenaltyTime  time.Duration `json:"PenaltyTime"`
+	Disqualified bool          `json:"Disqualified"`
 }
 
 type SessionLap struct {
