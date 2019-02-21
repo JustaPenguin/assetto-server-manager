@@ -36,10 +36,11 @@ func ListTracks() ([]Track, error) {
 	for _, trackFile := range trackFiles {
 		var layouts []string
 
-		files, err := ioutil.ReadDir(tracksPath + "/" + trackFile.Name())
+		files, err := ioutil.ReadDir(filepath.Join(tracksPath, trackFile.Name()))
 
 		if err != nil {
-			return nil, err
+			logrus.Errorf("Can't read folder: %s, err: %s", trackFile.Name(), err)
+			continue
 		}
 
 		// Check for multiple layouts, if tracks have data folders in the main directory then they only have one

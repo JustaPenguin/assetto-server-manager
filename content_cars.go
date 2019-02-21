@@ -58,6 +58,7 @@ func ListCars() (Cars, error) {
 		if err != nil && !os.IsNotExist(err) {
 			// just load without skins. non-fatal
 			logrus.Errorf("couldn't read car dir, err: %s", err)
+			continue
 		}
 
 		var skins []string
