@@ -24,6 +24,8 @@ RUN steamcmd.sh +login anonymous +quit; exit 0
 # build
 ADD . ${BUILD_DIR}
 WORKDIR ${BUILD_DIR}/cmd/server-manager
+RUN go get github.com/mjibson/esc
+RUN go generate ./...
 RUN go build
 RUN mv server-manager /usr/bin/
 
@@ -31,9 +33,6 @@ RUN useradd -ms /bin/bash ${SERVER_USER}
 
 # install
 RUN mkdir -p ${SERVER_MANAGER_DIR}
-RUN mv ${BUILD_DIR}/cmd/server-manager/views ${SERVER_MANAGER_DIR}
-RUN mv ${BUILD_DIR}/cmd/server-manager/static ${SERVER_MANAGER_DIR}
-
 RUN mkdir ${SERVER_INSTALL_DIR}
 
 RUN chown -R ${SERVER_USER}:${SERVER_USER} ${SERVER_MANAGER_DIR}

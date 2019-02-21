@@ -58,6 +58,7 @@ func ListCars() (Cars, error) {
 		if err != nil && !os.IsNotExist(err) {
 			// just load without skins. non-fatal
 			logrus.Errorf("couldn't read car dir, err: %s", err)
+			continue
 		}
 
 		var skins []string
@@ -93,7 +94,7 @@ func carsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("content", "cars.html"), map[string]interface{}{
+	ViewRenderer.MustLoadTemplate(w, r, "content/cars.html", map[string]interface{}{
 		"cars": cars,
 	})
 }

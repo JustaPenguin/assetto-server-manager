@@ -36,10 +36,11 @@ func ListTracks() ([]Track, error) {
 	for _, trackFile := range trackFiles {
 		var layouts []string
 
-		files, err := ioutil.ReadDir(tracksPath + "/" + trackFile.Name())
+		files, err := ioutil.ReadDir(filepath.Join(tracksPath, trackFile.Name()))
 
 		if err != nil {
-			return nil, err
+			logrus.Errorf("Can't read folder: %s, err: %s", trackFile.Name(), err)
+			continue
 		}
 
 		// Check for multiple layouts, if tracks have data folders in the main directory then they only have one
@@ -127,7 +128,7 @@ func tracksHandler(w http.ResponseWriter, r *http.Request) {
 		logrus.Errorf("could not get track list, err: %s", err)
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("content", "tracks.html"), map[string]interface{}{
+	ViewRenderer.MustLoadTemplate(w, r, "content/tracks.html", map[string]interface{}{
 		"tracks": tracks,
 	})
 }
