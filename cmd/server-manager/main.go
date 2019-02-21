@@ -1,12 +1,20 @@
 package main
 
 import (
+	"net"
 	"net/http"
+	"os"
+	"runtime"
 
 	"github.com/cj123/assetto-server-manager"
+	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
+	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
 
+	"github.com/pkg/browser"
 	"github.com/sirupsen/logrus"
 )
+
+var debug = os.Getenv("DEBUG") == "true"
 
 func main() {
 	config, err := servermanager.ReadConfig("config.yml")
@@ -30,7 +38,18 @@ func main() {
 		logrus.Fatalf("could not install assetto corsa server, err: %s", err)
 	}
 
-	servermanager.ViewRenderer, err = servermanager.NewRenderer("./views", true)
+	var templateLoader servermanager.TemplateLoader
+	var filesystem http.FileSystem
+
+	if debug {
+		templateLoader = servermanager.NewFilesystemTemplateLoader("views")
+		filesystem = http.Dir("static")
+	} else {
+		templateLoader = &views.TemplateLoader{}
+		filesystem = static.FS(false)
+	}
+
+	servermanager.ViewRenderer, err = servermanager.NewRenderer(templateLoader, debug)
 
 	if err != nil {
 		logrus.Fatalf("could not initialise view renderer, err: %s", err)
@@ -38,6 +57,19 @@ func main() {
 
 	go servermanager.LoopRaces()
 
+	listener, err := net.Listen("tcp", config.HTTP.Hostname)
+
+	if err != nil {
+		logrus.Fatalf("could not listen on address: %s, err: %s", config.HTTP.Hostname, err)
+	}
+
 	logrus.Infof("starting assetto server manager on: %s", config.HTTP.Hostname)
-	logrus.Fatal(http.ListenAndServe(config.HTTP.Hostname, servermanager.Router()))
+
+	if runtime.GOOS == "windows" {
+		_ = browser.OpenURL("http://" + config.HTTP.Hostname)
+	}
+
+	if err := http.Serve(listener, servermanager.Router(filesystem)); err != nil {
+		logrus.Fatal(err)
+	}
 }
