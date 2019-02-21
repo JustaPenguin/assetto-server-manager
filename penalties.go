@@ -178,6 +178,8 @@ func saveResults(jsonFileName string, results *SessionResults) error {
 		return err
 	}
 
+	defer file.Close()
+
 	encoder := json.NewEncoder(file)
 
 	encoder.SetIndent("", "\t")
