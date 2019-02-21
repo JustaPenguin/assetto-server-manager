@@ -61,7 +61,7 @@ store:
   type: boltdb
 
   # where to save the server manager data
-  path: assetto/store.db
+  path: server_manager.db
 
 ################################################################################
 #

@@ -7,13 +7,13 @@ A web interface to manage an Assetto Corsa Server.
 
 * Quick Race Mode
 * Custom Race Mode with saved presets
-* Results pages for all previous sessions (live timings coming soon!)
+* Live Timings for current sessions
+* Results pages for all previous sessions
 * Content Management - Upload tracks, weather and cars
-* Championship mode ([watch this space!](https://github.com/cj123/assetto-server-manager/issues/4))
+* Championship mode - configure multiple race events and keep track of driver and team points
 * Server Logs / Options Editing
-
-![Server Manager](https://static-dl.justapengu.in/server_manager.png)
-
+* Accounts system with different permissions levels
+* Linux and Windows Support!
 
 ## Installation
 
@@ -26,6 +26,8 @@ See [Manual](#Manual) to set up server manager without Docker.
 
 **Note**: if you are using a directory volume for the server install (as is shown below), be sure to make 
 the directory before running `docker-compose up` - otherwise its permissions may be incorrect. 
+
+You will need a [config.yml](https://github.com/cj123/assetto-server-manager/blob/master/cmd/server-manager/config.example.yml) file to mount into the docker container.
 
 An example docker-compose.yml looks like this:
 
@@ -47,26 +49,29 @@ services:
     # volume mount the entire server install so that 
     # content etc persists across restarts
     - ./server-install:/home/assetto/server-manager/assetto
-    environment:
-      # see cmd/server-manager/env.example for a full list of these options
     
-      # steam username and password. we recommend creating a separate account with
-      # steamguard disabled to use this application.
-      # server-manager uses this information ONLY to install the assetto corsa server.
-      STEAM_USERNAME: steamuser
-      STEAM_PASSWORD: hunter2
-
-      # a key to be used to encrypt session values. we recommend randomly generating this!
-      SESSION_KEY: super_secret_session_value
+    # volume mount the config
+    - ./config.yml:/home/assetto/server-manager/config.yml
 ```
 
 ### Manual
 
-1. Make sure that you have [steamcmd](https://developer.valvesoftware.com/wiki/SteamCMD) installed and in your $PATH
-2. Download the latest release from the [releases page](https://github.com/cj123/assetto-server-manager/releases)
-3. Extract the release
-4. Copy env.example to .env in the same directory, and edit its values
-5. Start the server using `./run.sh`
+1. Download the latest release from the [releases page](https://github.com/cj123/assetto-server-manager/releases)
+2. Extract the release
+3. Edit the config.yml to suit your preferences
+4. Either:
+   - Copy the server folder from your Assetto Corsa install into the directory you configured in config.yml, or
+   - Make sure that you have [steamcmd](https://developer.valvesoftware.com/wiki/SteamCMD) installed and in your $PATH 
+     and have configured the steam username and password in the config.yml file.
+5. Start the server using `./server-manager` (on Linux) or by running `server-manager.exe` (on Windows)
+
+
+### Post Installation
+
+We recommend uploading your entire Assetto Corsa `content/tracks` folder to get the full features of Server Manager. 
+This includes things like track images, all the correct layouts and any mod tracks you may have installed.
+
+Also, we recommend installing Sol locally and uploading your Sol weather files to Server Manager as well so you can try out Day/Night cycles and cool weather!
 
 ## Credits & Thanks
 
@@ -78,3 +83,7 @@ Assetto Corsa Server Manager would not have been possible without the following 
 * The Pizzabab Championship
 * [ACServerManager](https://github.com/Pringlez/ACServerManager) and its authors, for 
 inspiration and reference on understanding the AC configuration files
+
+## Screenshots
+
+Check out the [screenshots folder](https://github.com/cj123/assetto-server-manager/tree/master/screenshots)!
