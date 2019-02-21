@@ -3,3 +3,4 @@ assetto/
 server_manager.db
 config.yml
 server-manager
+static_embed.go

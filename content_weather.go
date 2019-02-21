@@ -142,7 +142,7 @@ func weatherHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("content", "weather.html"), map[string]interface{}{
+	ViewRenderer.MustLoadTemplate(w, r, "content/weather.html", map[string]interface{}{
 		"weathers": weather,
 	})
 }

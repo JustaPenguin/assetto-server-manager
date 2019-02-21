@@ -5,6 +5,7 @@
         {{ $championship := .Championship }}
         {{ $entrants := .Championship.Entrants }}
         {{ $writeAccess := WriteAccess }}
+        {{ $eventInProgress := .EventInProgress }}
 
         <h1 class="text-center">{{ $championship.Name }}</h1>
 
@@ -223,10 +224,25 @@
 
                                 {{ if $writeAccess }}
                                     {{ if not (or $event.InProgress $event.Completed) }}
-                                        <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/start">Start Event</a>
 
-                                        <a class="btn btn-info"
+                                        {{ if $eventInProgress }}
+                                            <p>An event in this championship is in progress. You must wait for it to finish or cancel it before you can start this one.</p>
+                                        {{ end }}
+
+                                        <a class="btn btn-success {{ if $eventInProgress }}disabled{{ end }}"
+                                           href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/start"
+                                           {{ if $eventInProgress }}
+                                               aria-disabled="true"
+                                           {{ end }}
+                                        >
+                                            Start Event
+                                        </a>
+
+                                        <a class="btn btn-info {{ if $eventInProgress }}disabled{{ end }}"
                                            href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/practice"
+                                            {{ if $eventInProgress }}
+                                                aria-disabled="true"
+                                            {{ end }}
                                            data-toggle="tooltip"
                                            title="Loads the configured event onto the server as a 2 hour looping practice, but don't track its progress as a championship event.">
                                             Start Practice Event

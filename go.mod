@@ -15,6 +15,7 @@ require (
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/mattn/go-zglob v0.0.1
+	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/sirupsen/logrus v1.3.0
 	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
