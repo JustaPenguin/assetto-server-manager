@@ -16,14 +16,14 @@ type CustomRace struct {
 	Updated time.Time
 	Deleted time.Time
 	UUID    uuid.UUID
-	Starred bool
+	Starred, Loop bool
 
 	RaceConfig CurrentRaceConfig
 	EntryList  EntryList
 }
 
 func customRaceListHandler(w http.ResponseWriter, r *http.Request) {
-	recent, starred, err := raceManager.ListCustomRaces()
+	recent, starred, looped, err := raceManager.ListCustomRaces()
 
 	if err != nil {
 		logrus.Errorf("couldn't list custom races, err: %s", err)
@@ -34,6 +34,7 @@ func customRaceListHandler(w http.ResponseWriter, r *http.Request) {
 	ViewRenderer.MustLoadTemplate(w, r, filepath.Join("custom-race", "index.html"), map[string]interface{}{
 		"Recent":  recent,
 		"Starred": starred,
+		"Loop": looped,
 	})
 }
 
@@ -68,7 +69,7 @@ func customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func customRaceLoadHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.StartCustomRace(chi.URLParam(r, "uuid"))
+	err := raceManager.StartCustomRace(chi.URLParam(r, "uuid"), false)
 
 	if err != nil {
 		logrus.Errorf("couldn't apply custom race, err: %s", err)
@@ -95,6 +96,18 @@ func customRaceDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 func customRaceStarHandler(w http.ResponseWriter, r *http.Request) {
 	err := raceManager.ToggleStarCustomRace(chi.URLParam(r, "uuid"))
+
+	if err != nil {
+		logrus.Errorf("couldn't star custom race, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func customRaceLoopHandler(w http.ResponseWriter, r *http.Request) {
+	err := raceManager.ToggleLoopCustomRace(chi.URLParam(r, "uuid"))
 
 	if err != nil {
 		logrus.Errorf("couldn't star custom race, err: %s", err)
