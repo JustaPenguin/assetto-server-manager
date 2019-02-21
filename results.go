@@ -18,16 +18,16 @@ import (
 )
 
 type SessionResults struct {
-	Cars        []SessionCar    `json:"Cars"`
-	Events      []SessionEvent  `json:"Events"`
-	Laps        []SessionLap    `json:"Laps"`
-	Result      []*SessionResult `json:"Result"`
-	TrackConfig string          `json:"TrackConfig"`
-	TrackName   string          `json:"TrackName"`
-	Type        string          `json:"Type"`
-	Date        time.Time		`json:"Date"`
-	SessionFile string			`json:"SessionFile"`
-	ChampionshipID string 		`json:"ChampionshipID"`
+	Cars           []SessionCar     `json:"Cars"`
+	Events         []SessionEvent   `json:"Events"`
+	Laps           []SessionLap     `json:"Laps"`
+	Result         []*SessionResult `json:"Result"`
+	TrackConfig    string           `json:"TrackConfig"`
+	TrackName      string           `json:"TrackName"`
+	Type           string           `json:"Type"`
+	Date           time.Time        `json:"Date"`
+	SessionFile    string           `json:"SessionFile"`
+	ChampionshipID string           `json:"ChampionshipID"`
 }
 
 func (s *SessionResults) GetCrashes(guid string) int {
@@ -247,17 +247,17 @@ func (s *SessionResults) FastestLap() *SessionLap {
 }
 
 type SessionResult struct {
-	BallastKG  int    `json:"BallastKG"`
-	BestLap    int    `json:"BestLap"`
-	CarID      int    `json:"CarId"`
-	CarModel   string `json:"CarModel"`
-	DriverGUID string `json:"DriverGuid"`
-	DriverName string `json:"DriverName"`
-	Restrictor int    `json:"Restrictor"`
-	TotalTime  int    `json:"TotalTime"`
-	HasPenalty bool   `json:"HasPenalty"`
-	PenaltyTime time.Duration   `json:"PenaltyTime"`
-	Disqualified bool `json:"Disqualified"`
+	BallastKG    int           `json:"BallastKG"`
+	BestLap      int           `json:"BestLap"`
+	CarID        int           `json:"CarId"`
+	CarModel     string        `json:"CarModel"`
+	DriverGUID   string        `json:"DriverGuid"`
+	DriverName   string        `json:"DriverName"`
+	Restrictor   int           `json:"Restrictor"`
+	TotalTime    int           `json:"TotalTime"`
+	HasPenalty   bool          `json:"HasPenalty"`
+	PenaltyTime  time.Duration `json:"PenaltyTime"`
+	Disqualified bool          `json:"Disqualified"`
 }
 
 type SessionLap struct {
