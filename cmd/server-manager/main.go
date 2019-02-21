@@ -1,13 +1,16 @@
 package main
 
 import (
+	"net"
 	"net/http"
 	"os"
+	"runtime"
 
 	"github.com/cj123/assetto-server-manager"
 	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
 	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
 
+	"github.com/pkg/browser"
 	"github.com/sirupsen/logrus"
 )
 
@@ -52,6 +55,19 @@ func main() {
 		logrus.Fatalf("could not initialise view renderer, err: %s", err)
 	}
 
+	listener, err := net.Listen("tcp", config.HTTP.Hostname)
+
+	if err != nil {
+		logrus.Fatalf("could not listen on address: %s, err: %s", config.HTTP.Hostname, err)
+	}
+
 	logrus.Infof("starting assetto server manager on: %s", config.HTTP.Hostname)
-	logrus.Fatal(http.ListenAndServe(config.HTTP.Hostname, servermanager.Router(filesystem)))
+
+	if runtime.GOOS == "windows" {
+		_ = browser.OpenURL("http://" + config.HTTP.Hostname)
+	}
+
+	if err := http.Serve(listener, servermanager.Router(filesystem)); err != nil {
+		logrus.Fatal(err)
+	}
 }

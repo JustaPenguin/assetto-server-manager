@@ -127,7 +127,7 @@ func Router(fs http.FileSystem) chi.Router {
 	r.Group(func(r chi.Router) {
 		r.Use(AdminAccessMiddleware)
 
-		r.Get("/server-options", serverOptionsHandler)
+		r.HandleFunc("/server-options", serverOptionsHandler)
 	})
 
 	return r
@@ -279,7 +279,7 @@ func addFiles(files []contentFile, contentType string) error {
 		}
 
 		// If user uploaded a "tracks" or "cars" folder containing multiple tracks
-		parts := strings.Split(file.FilePath, string(os.PathSeparator))
+		parts := strings.Split(file.FilePath, "/")
 
 		if parts[0] == "tracks" || parts[0] == "cars" || parts[0] == "weather" {
 			parts = parts[1:]
