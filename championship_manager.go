@@ -273,7 +273,7 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 
 	config.CurrentRaceConfig = raceSetup
 
-	return cm.applyConfigAndStart(config, championship.AllEntrants())
+	return cm.applyConfigAndStart(config, championship.AllEntrants(), false)
 }
 
 func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string) error {
@@ -302,7 +302,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 		EventID:        event.ID,
 	}
 
-	return cm.applyConfigAndStart(config, championship.AllEntrants())
+	return cm.applyConfigAndStart(config, championship.AllEntrants(), false)
 }
 
 func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
