@@ -45,7 +45,6 @@ func NewChampionship(name string) *Championship {
 		ID:      uuid.New(),
 		Name:    name,
 		Created: time.Now(),
-		Points:  DefaultChampionshipPoints,
 	}
 }
 
@@ -58,10 +57,37 @@ type Championship struct {
 	Updated time.Time
 	Deleted time.Time
 
-	Entrants EntryList
+	Classes []*ChampionshipClass
+	Events  []*ChampionshipEvent
+}
 
-	Events []*ChampionshipEvent
-	Points ChampionshipPoints
+func (c *Championship) IsMultiClass() bool {
+	return len(c.Classes) > 1
+}
+
+func NewChampionshipClass(name string) *ChampionshipClass {
+	return &ChampionshipClass{
+		Name:   name,
+		Points: DefaultChampionshipPoints,
+	}
+}
+
+type ChampionshipClass struct {
+	Name string
+
+	Entrants EntryList
+	Points   ChampionshipPoints
+}
+
+// FindClass looks for a class with a name. If it can't find it, a new ChampionshipClass is created
+func (c *Championship) FindClass(name string) *ChampionshipClass {
+	for _, class := range c.Classes {
+		if class.Name == name {
+			return class
+		}
+	}
+
+	return NewChampionshipClass(name)
 }
 
 func (c *Championship) EventByID(id string) (*ChampionshipEvent, error) {
@@ -79,8 +105,10 @@ func (c *Championship) EventByID(id string) (*ChampionshipEvent, error) {
 func (c *Championship) ValidCarIDs() []string {
 	cars := make(map[string]bool)
 
-	for _, e := range c.Entrants {
-		cars[e.Model] = true
+	for _, class := range c.Classes {
+		for _, e := range class.Entrants {
+			cars[e.Model] = true
+		}
 	}
 
 	var out []string
@@ -90,6 +118,34 @@ func (c *Championship) ValidCarIDs() []string {
 	}
 
 	return out
+}
+
+func (c *Championship) NumEntrants() int {
+	entrants := 0
+
+	for _, class := range c.Classes {
+		entrants += len(class.Entrants)
+	}
+
+	return entrants
+}
+
+// AllEntrants returns the list of all entrants in the championship (across ALL classes)
+func (c *Championship) AllEntrants() EntryList {
+	e := make(EntryList)
+
+	for _, class := range c.Classes {
+		for _, entrant := range class.Entrants {
+			e.Add(entrant)
+		}
+	}
+
+	return e
+}
+
+// AddClass to the championship
+func (c *Championship) AddClass(class *ChampionshipClass) {
+	c.Classes = append(c.Classes, class)
 }
 
 // Progress of the Championship as a percentage
@@ -118,7 +174,7 @@ type ChampionshipStanding struct {
 }
 
 // PointForPos uses the Championship's Points to determine what number should be awarded to a given position
-func (c *Championship) PointForPos(i int) int {
+func (c *ChampionshipClass) PointForPos(i int) int {
 	if i >= len(c.Points.Places) {
 		return 0
 	}
@@ -127,12 +183,12 @@ func (c *Championship) PointForPos(i int) int {
 }
 
 // Standings returns the current Driver Standings for the Championship.
-func (c *Championship) Standings() []*ChampionshipStanding {
+func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*ChampionshipStanding {
 	var out []*ChampionshipStanding
 
 	entrants := make(map[string]*ChampionshipStanding)
 
-	if len(c.Events) > 0 {
+	if len(events) > 0 {
 		for _, entrant := range c.Entrants {
 			if entrants[entrant.GUID] == nil {
 				entrants[entrant.GUID] = &ChampionshipStanding{
@@ -142,7 +198,7 @@ func (c *Championship) Standings() []*ChampionshipStanding {
 		}
 	}
 
-	for _, event := range c.Events {
+	for _, event := range events {
 		qualifying, qualifyingOK := event.Sessions[SessionTypeQualifying]
 
 		if qualifyingOK && qualifying.Results != nil {
@@ -202,10 +258,10 @@ type TeamStanding struct {
 }
 
 // TeamStandings returns the current position of Teams in the Championship.
-func (c *Championship) TeamStandings() []*TeamStanding {
+func (c *ChampionshipClass) TeamStandings(events []*ChampionshipEvent) []*TeamStanding {
 	teams := make(map[string]int)
 
-	for _, driver := range c.Standings() {
+	for _, driver := range c.Standings(events) {
 		if _, ok := teams[driver.Entrant.Team]; !ok {
 			teams[driver.Entrant.Team] = driver.Points
 		} else {
@@ -315,11 +371,16 @@ func submitNewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	action := r.FormValue("action")
+
 	if edited {
 		AddFlashQuick(w, r, "Championship successfully edited!")
 		http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
-	} else {
+	} else if action == "addEvent" {
 		AddFlashQuick(w, r, "We've created the Championship. Now you need to add some Events!")
+		http.Redirect(w, r, "/championship/"+championship.ID.String()+"/class", http.StatusFound)
+	} else if action == "addClass" {
+		AddFlashQuick(w, r, "We've created the Championship. You can keep adding more classes!")
 		http.Redirect(w, r, "/championship/"+championship.ID.String()+"/event", http.StatusFound)
 	}
 }
