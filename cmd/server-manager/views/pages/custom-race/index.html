@@ -76,10 +76,10 @@
 
     {{ if gt (len .Loop) 0 }}
         {{ template "custom-race-table" .Loop }}
-        <p class="text-center">These custom races will be selected randomly and looped on the server whilst it is offline!</p>
+        <p class="text-center">These custom races will be looped on the server whilst it is offline!</p>
     {{ else }}
         <p class="text-center">You haven't added any custom races to the auto loop list yet! Add some using the table below!
-            These custom races will be selected randomly and looped on the server whilst it is offline!</p>
+            These custom races will be looped on the server whilst it is inactive!</p>
     {{ end }}
 
     <h2>Recent</h2>

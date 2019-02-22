@@ -117,7 +117,7 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 
 	// Reset the stored session types if this isn't a looped race
 	if !loop {
-		sessionTypes = []SessionType{}
+		sessionTypes = nil
 	}
 
 	// load server opts
