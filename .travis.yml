@@ -9,7 +9,8 @@ install:
 
 script:
   - export GO111MODULE=on
-  - mkdir -p cmd/server-manager/assetto/cfg
+  - mkdir -p cmd/server-manager/assetto/{cfg,results}
+  - cp -R fixtures/results/*.json cmd/server-manager/assetto/results
   - go test
   - cd cmd/server-manager
   - cp config.example.yml config.yml
