@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
@@ -42,6 +43,8 @@ type RaceManager struct {
 	raceStore RaceStore
 
 	udpServerConn *udp.AssettoServerUDP
+
+	mutex sync.RWMutex
 }
 
 func NewRaceManager(raceStore RaceStore) *RaceManager {
@@ -51,6 +54,10 @@ func NewRaceManager(raceStore RaceStore) *RaceManager {
 }
 
 func (rm *RaceManager) CurrentRace() (*ServerConfig, EntryList) {
+	rm.mutex.RLock()
+
+	defer rm.mutex.RUnlock()
+
 	if !AssettoProcess.IsRunning() {
 		return nil, nil
 	}
@@ -100,9 +107,19 @@ func (rm *RaceManager) UDPCallback(message udp.Message) {
 
 	championshipManager.ChampionshipEventCallback(message)
 	CallbackFunc(message)
+	LoopCallbackFunc(message)
 }
 
-func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList) error {
+func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool) error {
+	rm.mutex.Lock()
+
+	defer rm.mutex.Unlock()
+
+	// Reset the stored session types if this isn't a looped race
+	if !loop {
+		sessionTypes = nil
+	}
+
 	// load server opts
 	serverOpts, err := rm.LoadServerOptions()
 
@@ -271,7 +288,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 
 	quickRace.CurrentRaceConfig.MaxClients = numPitboxes
 
-	return rm.applyConfigAndStart(quickRace, entryList)
+	return rm.applyConfigAndStart(quickRace, entryList, false)
 }
 
 func formValueAsInt(val string) int {
@@ -504,7 +521,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 			return nil
 		}
 
-		return rm.applyConfigAndStart(completeConfig, entryList)
+		return rm.applyConfigAndStart(completeConfig, entryList, false)
 	}
 }
 
@@ -565,6 +582,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 
 		customRaceName = customRace.Name
 		race.CurrentRaceConfig = customRace.RaceConfig
+		entrants = customRace.EntryList
 	}
 
 	possibleEntrants, err := rm.raceStore.ListEntrants()
@@ -635,13 +653,13 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 
 const maxRecentRaces = 30
 
-func (rm *RaceManager) ListCustomRaces() (recent, starred []*CustomRace, err error) {
+func (rm *RaceManager) ListCustomRaces() (recent, starred, looped []*CustomRace, err error) {
 	recent, err = rm.raceStore.ListCustomRaces()
 
 	if err == bbolt.ErrBucketNotFound {
-		return nil, nil, nil
+		return nil, nil, nil, nil
 	} else if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	sort.Slice(recent, func(i, j int) bool {
@@ -651,9 +669,15 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred []*CustomRace, err err
 	var filteredRecent []*CustomRace
 
 	for _, race := range recent {
+		if race.Loop {
+			looped = append(looped, race)
+		}
+
 		if race.Starred {
 			starred = append(starred, race)
-		} else {
+		}
+
+		if !race.Starred && !race.Loop {
 			filteredRecent = append(filteredRecent, race)
 		}
 	}
@@ -662,7 +686,7 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred []*CustomRace, err err
 		filteredRecent = filteredRecent[:maxRecentRaces]
 	}
 
-	return filteredRecent, starred, nil
+	return filteredRecent, starred, looped, nil
 }
 
 func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, entryList EntryList, starred bool) error {
@@ -704,7 +728,7 @@ func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, ent
 	})
 }
 
-func (rm *RaceManager) StartCustomRace(uuid string) error {
+func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 	race, err := rm.raceStore.FindCustomRaceByID(uuid)
 
 	if err != nil {
@@ -714,7 +738,12 @@ func (rm *RaceManager) StartCustomRace(uuid string) error {
 	cfg := ConfigIniDefault
 	cfg.CurrentRaceConfig = race.RaceConfig
 
-	return rm.applyConfigAndStart(cfg, race.EntryList)
+	// Required for our nice auto loop stuff
+	if forceRestart {
+		//cfg.CurrentRaceConfig.LoopMode = 1
+	}
+
+	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart)
 }
 
 func (rm *RaceManager) DeleteCustomRace(uuid string) error {
@@ -735,6 +764,18 @@ func (rm *RaceManager) ToggleStarCustomRace(uuid string) error {
 	}
 
 	race.Starred = !race.Starred
+
+	return rm.raceStore.UpsertCustomRace(race)
+}
+
+func (rm *RaceManager) ToggleLoopCustomRace(uuid string) error {
+	race, err := rm.raceStore.FindCustomRaceByID(uuid)
+
+	if err != nil {
+		return err
+	}
+
+	race.Loop = !race.Loop
 
 	return rm.raceStore.UpsertCustomRace(race)
 }

@@ -9,6 +9,7 @@ install:
 
 script:
   - export GO111MODULE=on
+  - mkdir -p cmd/server-manager/assetto/cfg
   - go test
   - cd cmd/server-manager
   - cp config.example.yml config.yml
