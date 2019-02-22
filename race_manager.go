@@ -107,12 +107,18 @@ func (rm *RaceManager) UDPCallback(message udp.Message) {
 
 	championshipManager.ChampionshipEventCallback(message)
 	CallbackFunc(message)
+	LoopCallbackFunc(message)
 }
 
-func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList) error {
+func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool) error {
 	rm.mutex.Lock()
 
 	defer rm.mutex.Unlock()
+
+	// Reset the stored session types if this isn't a looped race
+	if !loop {
+		sessionTypes = []SessionType{}
+	}
 
 	// load server opts
 	serverOpts, err := rm.LoadServerOptions()
@@ -282,7 +288,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 
 	quickRace.CurrentRaceConfig.MaxClients = numPitboxes
 
-	return rm.applyConfigAndStart(quickRace, entryList)
+	return rm.applyConfigAndStart(quickRace, entryList, false)
 }
 
 func formValueAsInt(val string) int {
@@ -515,7 +521,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 			return nil
 		}
 
-		return rm.applyConfigAndStart(completeConfig, entryList)
+		return rm.applyConfigAndStart(completeConfig, entryList, false)
 	}
 }
 
@@ -721,7 +727,7 @@ func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, ent
 	})
 }
 
-func (rm *RaceManager) StartCustomRace(uuid string, disableRestart bool) error {
+func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 	race, err := rm.raceStore.FindCustomRaceByID(uuid)
 
 	if err != nil {
@@ -732,11 +738,11 @@ func (rm *RaceManager) StartCustomRace(uuid string, disableRestart bool) error {
 	cfg.CurrentRaceConfig = race.RaceConfig
 
 	// Required for our nice auto loop stuff
-	if disableRestart {
-		cfg.CurrentRaceConfig.LoopMode = 0
+	if forceRestart {
+		cfg.CurrentRaceConfig.LoopMode = 1
 	}
 
-	return rm.applyConfigAndStart(cfg, race.EntryList)
+	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart)
 }
 
 func (rm *RaceManager) DeleteCustomRace(uuid string) error {
