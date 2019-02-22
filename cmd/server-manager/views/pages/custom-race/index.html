@@ -24,6 +24,13 @@
                                 <i class="far fa-star"></i>
                             {{ end }}
                         </a>
+                        <a href="/custom/loop/{{ $race.UUID.String }}">
+                            {{ if $race.Loop }}
+                                <i class="fas fa-play-circle"></i>
+                            {{ else }}
+                                <i class="far fa-play-circle"></i>
+                            {{ end }}
+                        </a>
                     </td>
                     <td class="align-middle">
 
@@ -63,6 +70,16 @@
         {{ template "custom-race-table" .Starred }}
     {{ else }}
         <p class="text-center">You haven't starred any Custom Races yet. Star some using the table below!</p>
+    {{ end }}
+
+    <h2>Auto Loop</h2>
+
+    {{ if gt (len .Loop) 0 }}
+        {{ template "custom-race-table" .Loop }}
+        <p class="text-center">These custom races will be looped on the server whilst it is inactive!</p>
+    {{ else }}
+        <p class="text-center">You haven't added any custom races to the auto loop list yet! Add some using the table below!
+            These custom races will be looped on the server whilst it is inactive!</p>
     {{ end }}
 
     <h2>Recent</h2>

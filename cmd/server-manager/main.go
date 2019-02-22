@@ -55,6 +55,8 @@ func main() {
 		logrus.Fatalf("could not initialise view renderer, err: %s", err)
 	}
 
+	go servermanager.LoopRaces()
+
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 
 	if err != nil {
