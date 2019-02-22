@@ -5,6 +5,7 @@ require (
 	github.com/Masterminds/sprig v2.17.1+incompatible
 	github.com/aokoli/goutils v1.1.0 // indirect
 	github.com/cj123/ini v1.42.0
+	github.com/davecgh/go-spew v1.1.1
 	github.com/etcd-io/bbolt v1.3.2
 	github.com/fatih/camelcase v1.0.0
 	github.com/go-chi/chi v4.0.1+incompatible
