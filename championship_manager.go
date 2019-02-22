@@ -103,21 +103,29 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		championship = NewChampionship("")
 	}
 
-	championship.Name = r.FormValue("ChampionshipName")
-	championship.Entrants, err = cm.BuildEntryList(r)
+	if championshipName := r.FormValue("ChampionshipName"); championshipName != "" {
+		// this is the first time the championship is being created
+		championship.Name = r.FormValue("ChampionshipName")
+	}
+
+	// add a class
+	class := NewChampionshipClass(r.FormValue("ClassName"))
+	class.Entrants, err = cm.BuildEntryList(r)
 
 	if err != nil {
 		return nil, edited, err
 	}
 
-	championship.Points.Places = make([]int, len(r.Form["Points.Place"]))
+	class.Points.Places = make([]int, len(r.Form["Points.Place"]))
 
 	for i := 0; i < len(r.Form["Points.Place"]); i++ {
-		championship.Points.Places[i] = formValueAsInt(r.Form["Points.Place"][i])
+		class.Points.Places[i] = formValueAsInt(r.Form["Points.Place"][i])
 	}
 
-	championship.Points.PolePosition = formValueAsInt(r.FormValue("Points.PolePosition"))
-	championship.Points.BestLap = formValueAsInt(r.FormValue("Points.BestLap"))
+	class.Points.PolePosition = formValueAsInt(r.FormValue("Points.PolePosition"))
+	class.Points.BestLap = formValueAsInt(r.FormValue("Points.BestLap"))
+
+	championship.AddClass(class)
 
 	return championship, edited, cm.UpsertChampionship(championship)
 }
@@ -261,11 +269,11 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 	}
 
 	raceSetup.LoopMode = 1
-	raceSetup.MaxClients = len(championship.Entrants)
+	raceSetup.MaxClients = championship.NumEntrants()
 
 	config.CurrentRaceConfig = raceSetup
 
-	return cm.applyConfigAndStart(config, championship.Entrants)
+	return cm.applyConfigAndStart(config, championship.AllEntrants())
 }
 
 func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string) error {
@@ -283,7 +291,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 
 	// championship events always have locked entry lists
 	event.RaceSetup.LockedEntryList = 1
-	event.RaceSetup.MaxClients = len(championship.Entrants)
+	event.RaceSetup.MaxClients = championship.NumEntrants()
 
 	config := ConfigIniDefault
 	config.CurrentRaceConfig = event.RaceSetup
@@ -294,7 +302,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 		EventID:        event.ID,
 	}
 
-	return cm.applyConfigAndStart(config, championship.Entrants)
+	return cm.applyConfigAndStart(config, championship.AllEntrants())
 }
 
 func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
