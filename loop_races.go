@@ -11,7 +11,7 @@ var sessionTypes []SessionType
 
 func LoopRaces() {
 	var i int
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(30 * time.Second)
 
 	for {
 		select {
@@ -19,7 +19,6 @@ func LoopRaces() {
 			currentRace, _ := raceManager.CurrentRace()
 
 			if currentRace != nil {
-				//currentRace.CurrentRaceConfig.Sessions[0].Time
 				break
 			}
 
@@ -48,9 +47,9 @@ func LoopRaces() {
 					logrus.Errorf("couldn't start auto loop custom race, err: %s", err)
 					return
 				}
-			}
 
-			i++
+				i++
+			}
 		}
 	}
 
@@ -83,16 +82,16 @@ func LoopCallbackFunc(message udp.Message) {
 			} else if session == SessionTypeQualifying {
 				endSession = SessionTypeQualifying
 			} else if session == SessionTypePractice && endSession != SessionTypeQualifying {
-				endSession = SessionTypeQualifying
+				endSession = SessionTypePractice
 			} else if session == SessionTypeBooking && (endSession != SessionTypeQualifying && endSession != SessionTypePractice) {
-				endSession = SessionTypeQualifying
+				endSession = SessionTypeBooking
 			}
 		}
 
 		if results.Type == endSession.String() {
 			logrus.Infof("Event end detected, stopping looped session.")
 
-			sessionTypes = []SessionType{}
+			sessionTypes = nil
 
 			err := AssettoProcess.Stop()
 
