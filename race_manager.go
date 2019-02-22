@@ -582,6 +582,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 
 		customRaceName = customRace.Name
 		race.CurrentRaceConfig = customRace.RaceConfig
+		entrants = customRace.EntryList
 	}
 
 	possibleEntrants, err := rm.raceStore.ListEntrants()
