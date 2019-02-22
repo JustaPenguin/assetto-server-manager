@@ -10,11 +10,11 @@ import (
 )
 
 type CustomRace struct {
-	Name    string
-	Created time.Time
-	Updated time.Time
-	Deleted time.Time
-	UUID    uuid.UUID
+	Name          string
+	Created       time.Time
+	Updated       time.Time
+	Deleted       time.Time
+	UUID          uuid.UUID
 	Starred, Loop bool
 
 	RaceConfig CurrentRaceConfig
@@ -33,7 +33,7 @@ func customRaceListHandler(w http.ResponseWriter, r *http.Request) {
 	ViewRenderer.MustLoadTemplate(w, r, "custom-race/index.html", map[string]interface{}{
 		"Recent":  recent,
 		"Starred": starred,
-		"Loop": looped,
+		"Loop":    looped,
 	})
 }
 
