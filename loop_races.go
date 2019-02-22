@@ -9,13 +9,13 @@ import (
 
 var sessionTypes []SessionType
 
-func LoopRaces () {
+func LoopRaces() {
 	var i int
 	ticker := time.NewTicker(10 * time.Second)
 
 	for {
-		select{
-		case <- ticker.C:
+		select {
+		case <-ticker.C:
 			currentRace, _ := raceManager.CurrentRace()
 
 			if currentRace != nil {
@@ -59,7 +59,7 @@ func LoopRaces () {
 // callback check for udp end session, load result file, check session type against sessionTypes
 // if session matches last session in sessionTypes then stop server and clear sessionTypes
 func LoopCallbackFunc(message udp.Message) {
-	switch a := message.(type){
+	switch a := message.(type) {
 	case udp.EndSession:
 		if sessionTypes == nil {
 			return
@@ -77,7 +77,7 @@ func LoopCallbackFunc(message udp.Message) {
 		var endSession SessionType
 
 		for _, session := range sessionTypes {
-			if session == SessionTypeRace  {
+			if session == SessionTypeRace {
 				endSession = SessionTypeRace
 				break
 			} else if session == SessionTypeQualifying {
