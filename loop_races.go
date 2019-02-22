@@ -61,7 +61,7 @@ func LoopCallbackFunc(message udp.Message) {
 	switch a := message.(type) {
 	case udp.EndSession:
 		if sessionTypes == nil {
-			logrus.Debugf("Session types == nil. ignoring end session callback")
+			logrus.Infof("Session types == nil. ignoring end session callback")
 			return
 		}
 
@@ -89,7 +89,7 @@ func LoopCallbackFunc(message udp.Message) {
 			}
 		}
 
-		logrus.Debugf("results type: %s, endSession: %s", results.Type, string(endSession))
+		logrus.Infof("results type: %s, endSession: %s", results.Type, string(endSession))
 
 		if results.Type == string(endSession) {
 			logrus.Infof("Event end detected, stopping looped session.")
