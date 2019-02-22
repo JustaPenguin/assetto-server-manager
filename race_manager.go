@@ -740,7 +740,7 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 
 	// Required for our nice auto loop stuff
 	if forceRestart {
-		cfg.CurrentRaceConfig.LoopMode = 1
+		//cfg.CurrentRaceConfig.LoopMode = 1
 	}
 
 	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart)
