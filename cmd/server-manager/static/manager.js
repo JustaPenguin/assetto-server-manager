@@ -9,7 +9,7 @@ $(document).ready(function () {
     $document = $(document);
 
     championships.init();
-    $document.find(".race-setup").each(function(index, elem) {
+    $document.find(".race-setup").each(function (index, elem) {
         new RaceSetup($(elem));
     });
 
@@ -48,12 +48,12 @@ $(document).ready(function () {
     if ($document.find("form[data-safe-submit]").length > 0) {
         let canSubmit = false;
 
-        $document.find("button[type='submit']").click(function() {
+        $document.find("button[type='submit']").click(function () {
             canSubmit = true;
         });
 
         // ask the user before they close the webpage
-        window.onbeforeunload = function() {
+        window.onbeforeunload = function () {
             if (canSubmit) {
                 return;
             }
@@ -86,7 +86,7 @@ function prettifyName(name, acronyms) {
 }
 
 function initMultiSelect($element) {
-    $element.each(function(i, elem) {
+    $element.each(function (i, elem) {
         let $elem = $(elem);
 
         if ($elem.is(":hidden")) {
@@ -154,8 +154,6 @@ class RaceSetup {
         this.trackLayoutOpts = {};
 
         this.$carsDropdown = $parent.find(".Cars");
-
-        console.log(this.$carsDropdown);
 
         this.$trackDropdown = $parent.find("#Track");
         this.$trackLayoutDropdown = $parent.find("#TrackLayout");
@@ -228,7 +226,7 @@ class RaceSetup {
         this.initSurfacePresets();
     }
 
-    updateWeatherGraphics () {
+    updateWeatherGraphics() {
         let $this = $(this);
 
         $this.closest(".weather").find(".weather-preview").attr({
@@ -278,7 +276,7 @@ class RaceSetup {
     /**
      * when a Sol 'enabled' checkbox is modified, toggle the state of the sol-settings and not-sol-settings elements
      */
-    showSolSettings () {
+    showSolSettings() {
         let that = this;
 
         $(".sol-enabler").each(function (index, elem) {
@@ -307,8 +305,8 @@ class RaceSetup {
      *
      * @param state
      */
-    showSolWeathers (state) {
-        this.$parent.find(".weather-graphics").each(function(graphicsIndex, graphicsElement) {
+    showSolWeathers(state) {
+        this.$parent.find(".weather-graphics").each(function (graphicsIndex, graphicsElement) {
             let $elem = $(graphicsElement);
             let $opts = $elem.find("option");
             let $selectedOpt = $elem.find("option:selected");
@@ -335,7 +333,7 @@ class RaceSetup {
     /**
      * populate the tyre dropdown for all currently selected cars.
      */
-    populateTyreDropdown () {
+    populateTyreDropdown() {
         // quick race doesn't have tyre set up.
         if (typeof availableTyres === "undefined") {
             return
@@ -379,7 +377,7 @@ class RaceSetup {
      * given a dropdown input which specifies 'laps'/'time', raceLaps will show the correct input element
      * and empty the unneeded one for either laps or race time.
      */
-    raceLaps () {
+    raceLaps() {
         let $timeOrLaps = this.$parent.find("#TimeOrLaps");
         let $raceLaps = this.$parent.find("#RaceLaps");
         let $raceTime = this.$parent.find("#RaceTime");
@@ -415,7 +413,7 @@ class RaceSetup {
     /**
      * show track image shows the correct image for the track/layout combo
      */
-    showTrackImage () {
+    showTrackImage() {
         let track = this.$trackDropdown.val();
         let layout = this.$trackLayoutDropdown.val();
 
@@ -438,7 +436,7 @@ class RaceSetup {
      * loadTrackLayouts: looks at the selected track and loads in the correct layouts for it into the
      * track layout dropdown
      */
-    loadTrackLayouts () {
+    loadTrackLayouts() {
         this.$trackLayoutDropdown.empty();
 
         let selectedTrack = this.$trackDropdown.find("option:selected").val();
@@ -481,7 +479,7 @@ class RaceSetup {
 
     driverNames;
 
-    autoCompleteDrivers () {
+    autoCompleteDrivers() {
         let opts = {
             source: this.driverNames,
             select: function (event, ui) {
@@ -508,7 +506,7 @@ class RaceSetup {
         });
     }
 
-    initEntrantsList () {
+    initEntrantsList() {
         this.driverNames = [];
 
         this.$entrantsDiv = this.$parent.find("#entrants");
@@ -659,7 +657,7 @@ class RaceSetup {
     }
 
 
-    initSunAngle () {
+    initSunAngle() {
         let $timeOfDay = this.$parent.find("#TimeOfDay");
         let $sunAngle = this.$parent.find("#SunAngle");
 
@@ -672,7 +670,7 @@ class RaceSetup {
 
         updateTime();
 
-        $timeOfDay.change(function() {
+        $timeOfDay.change(function () {
             let split = $(this).val().split(':');
 
             if (split.length < 2) {
@@ -685,7 +683,7 @@ class RaceSetup {
         $sunAngle.change(updateTime);
     }
 
-    initSurfacePresets () {
+    initSurfacePresets() {
         let $surfacePresetDropdown = this.$parent.find("#SurfacePreset");
 
         if (!$surfacePresetDropdown.length) {
@@ -697,7 +695,7 @@ class RaceSetup {
         let $sessionTransfer = this.$parent.find("#SessionTransfer");
         let $lapGain = this.$parent.find("#LapGain");
 
-        $surfacePresetDropdown.change(function() {
+        $surfacePresetDropdown.change(function () {
             let val = $surfacePresetDropdown.val();
 
             if (val === "") {
@@ -721,19 +719,21 @@ $(function () {
 function msToTime(s) {
     // Pad to 2 or 3 digits, default is 2
     let pad = (n, z = 2) => ('00' + n).slice(-z);
-    return pad(s/3.6e6|0) + ':' + pad((s%3.6e6)/6e4 | 0) + ':' + pad((s%6e4)/1000|0) + '.' + pad(s%1000, 3);
+    return pad(s / 3.6e6 | 0) + ':' + pad((s % 3.6e6) / 6e4 | 0) + ':' + pad((s % 6e4) / 1000 | 0) + '.' + pad(s % 1000, 3);
 }
 
-function timeDiff( tstart, tend ) {
+function timeDiff(tstart, tend) {
     let diff = Math.floor((tend - tstart) / 1000), units = [
-        { d: 60, l: "s" },
-        { d: 60, l: "m" },
-        { d: 24, l: "hr" },
+        {d: 60, l: "s"},
+        {d: 60, l: "m"},
+        {d: 24, l: "hr"},
     ];
 
     let s = '';
     for (let i = 0; i < units.length; i++) {
-        if (diff === 0) { continue }
+        if (diff === 0) {
+            continue
+        }
         s = (diff % units[i].d) + units[i].l + " " + s;
         diff = Math.floor(diff / units[i].d);
     }
@@ -806,7 +806,7 @@ let liveTiming = {
                         });
 
                     for (let car of sorted) {
-                        let $driverRow = $document.find("#"+liveTiming.Cars[car].DriverGUID);
+                        let $driverRow = $document.find("#" + liveTiming.Cars[car].DriverGUID);
                         let $tr;
 
                         // Remove a driver row if they disconnect
@@ -1659,10 +1659,10 @@ function addAllColumnHeaders(json, table) {
 
 
 let championships = {
-    init: function() {
+    init: function () {
         let $pointsTemplate = $document.find(".points-place").last().clone();
 
-        $document.on("click", ".addEntrant", function(e) {
+        $document.on("click", ".addEntrant", function (e) {
             e.preventDefault();
 
             let $raceSetup = $(this).closest(".race-setup");
@@ -1679,7 +1679,7 @@ let championships = {
             for (let i = numPoints; i < numEntrants; i++) {
                 // add points up to the numEntrants we have
                 let $newPoints = $pointsTemplate.clone();
-                $newPoints.find("label").text(ordinalSuffix(i+1) + " Place");
+                $newPoints.find("label").text(ordinalSuffix(i + 1) + " Place");
 
                 let pointsVal = 0;
 
@@ -1698,14 +1698,14 @@ let championships = {
 
     $classTemplate: null,
 
-    initClassSetup: function() {
+    initClassSetup: function () {
         let $addClassButton = $document.find("#addClass");
         let $tmpl = $document.find("#class-template");
         championships.$classTemplate = $tmpl.clone();
 
         $tmpl.remove();
 
-        $addClassButton.click(function(e) {
+        $addClassButton.click(function (e) {
             e.preventDefault();
 
             let $cloned = championships.$classTemplate.clone().show();
@@ -1714,7 +1714,7 @@ let championships = {
             new RaceSetup($cloned);
         });
 
-        $document.on("click", ".btn-delete-class", function(e) {
+        $document.on("click", ".btn-delete-class", function (e) {
             e.preventDefault();
             $(this).closest(".race-setup").remove();
         });
