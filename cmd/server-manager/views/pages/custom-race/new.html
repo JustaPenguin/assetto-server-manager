@@ -86,7 +86,7 @@
                         </label>
 
                         <div class="col-sm-10">
-                            <select multiple class="form-control Cars" name="Cars" size="15">
+                            <select multiple required class="form-control Cars" id="Cars" name="Cars" size="15">
                                 {{ range $index, $car := .CarOpts }}
 
                                     {{ $selected := false }}
@@ -258,52 +258,59 @@
 
                                 {{ end }}
 
-                                <div class="form-group row">
-                                    <label for="{{ $sessionType }}.IsOpen" class="col-sm-3 col-form-label">
-                                        Is Open
-                                    </label>
+                                {{ if ne $sessionType "BOOK" }}
 
+                                    <div class="form-group row">
+                                        <label for="{{ $sessionType }}.IsOpen" class="col-sm-3 col-form-label">
+                                            Is Open
+                                        </label>
+                                            <div class="col-sm-9">
+                                                <select class="form-control"
+                                                        id="{{ $sessionType }}.IsOpen"
+                                                        name="{{ $sessionType }}.IsOpen"
+                                                >
+                                                    <option value="0" {{ if eq $session.IsOpen 0 }} selected="selected" {{ end }}>No join</option>
+                                                    <option value="1" {{ if eq $session.IsOpen 1 }} selected="selected" {{ end }}>Free join</option>
 
-                                    <div class="col-sm-9">
-                                        <select class="form-control"
-                                                id="{{ $sessionType }}.IsOpen"
-                                                name="{{ $sessionType }}.IsOpen"
-                                        >
-                                            <option value="0" {{ if eq $session.IsOpen 0 }} selected="selected" {{ end }}>No join</option>
-                                            <option value="1" {{ if eq $session.IsOpen 1 }} selected="selected" {{ end }}>Free join</option>
+                                                    {{ if eq $sessionType "RACE" }}
+                                                        <option value="2" {{ if eq $session.IsOpen 2 }} selected="selected" {{ end }}>
+                                                            Free join until 20 seconds to the green light
+                                                        </option>
+                                                    {{ end }}
+                                                </select>
 
-                                            {{ if eq $sessionType "RACE" }}
-                                                <option value="2" {{ if eq $session.IsOpen 2 }} selected="selected" {{ end }}>
-                                                    Free join until 20 seconds to the green light
-                                                </option>
-                                            {{ end }}
-                                        </select>
-
-                                        <small>Join options for the current session</small>
+                                                <small>Allow joining during a session, the first session of an event should not be set to
+                                                 no join, although subsequent ones can be in order to only allow drivers from the previous
+                                                     session to connect.</small>
+                                            </div>
                                     </div>
-                                </div>
+
+                                {{ end }}
+
+                                {{ if eq $sessionType "RACE" }}
+
+                                    <div class="form-group row">
+                                        <label for="{{ $sessionType }}.WaitTime" class="col-sm-3 col-form-label">
+                                            Wait Time
+                                        </label>
+
+                                        <div class="col-sm-9">
+                                            <input
+                                                    type="number"
+                                                    id="{{ $sessionType }}.WaitTime"
+                                                    name="{{ $sessionType }}.WaitTime"
+                                                    class="form-control"
+                                                    value="{{ $session.WaitTime }}"
 
 
-                                <div class="form-group row">
-                                    <label for="{{ $sessionType }}.WaitTime" class="col-sm-3 col-form-label">
-                                        Wait Time
-                                    </label>
+                                                    step="1"
+                                            >
 
-                                    <div class="col-sm-9">
-                                        <input
-                                                type="number"
-                                                id="{{ $sessionType }}.WaitTime"
-                                                name="{{ $sessionType }}.WaitTime"
-                                                class="form-control"
-                                                value="{{ $session.WaitTime }}"
-
-
-                                                step="1"
-                                        >
-
-                                        <small>Seconds before the start of the session</small>
+                                            <small>Seconds before the start of the session</small>
+                                        </div>
                                     </div>
-                                </div>
+
+                                {{ end }}
 
 
                                 {{ if eq $sessionType "RACE" }}
