@@ -89,7 +89,9 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 
 	// make a championship
 	champ := NewChampionship("Test Championship")
-	champ.Entrants = TestEntryList
+	cl := NewChampionshipClass("Default")
+	cl.Entrants = TestEntryList
+	champ.AddClass(cl)
 
 	for range championshipEventFixtures {
 		e := NewChampionshipEvent()
@@ -105,7 +107,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 
 	for i, sessionFile := range championshipEventFixtures {
 		t.Run(sessionFile, func(t *testing.T) {
-			if err := championshipManager.StartEvent(champ.ID.String(), i); err != nil {
+			if err := championshipManager.StartEvent(champ.ID.String(), champ.Events[i].ID.String()); err != nil {
 				t.Error(err)
 				return
 			}
