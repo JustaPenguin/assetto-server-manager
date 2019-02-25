@@ -58,11 +58,19 @@
 {{ end }}
 
 {{ define "content" }}
-    <h1 class="text-center">Custom Races</h1>
+    <div class="row">
+        <div class="col-4"></div>
+        <div class="col-4"><h1 class="text-center">Custom Races</h1></div>
+        <div class="col-4">
+            <a class="btn btn-success float-right" href="/custom/new">Create a new Custom Race</a>
+            <div class="clearfix mb-5"></div>
+        </div>
+    </div>
 
-    <a class="btn btn-success float-right" href="/custom/new">Create a new Custom Race</a>
-
-    <div class="clearfix mb-5"></div>
+    <p>Custom races are fully configurable events, once you have created a custom race you can Star it or add it to
+    the automatic race loop. You can use a custom race as a template for a new race, which will create a copy of the
+    custom race, or edit the custom race directly. Custom races can be run quickly on the server using the start race
+    button.</p>
 
     <h2>Starred</h2>
 
@@ -78,8 +86,8 @@
         {{ template "custom-race-table" .Loop }}
         <p class="text-center">These custom races will be looped on the server whilst it is inactive!</p>
     {{ else }}
-        <p class="text-center">You haven't added any custom races to the auto loop list yet! Add some using the table below!
-            These custom races will be looped on the server whilst it is inactive!</p>
+        <p class="text-center">No custom races have been added to the auto loop list yet! Use the play icon to add a race to the loop.
+            Any added races will loop on the server whilst it is inactive!</p>
     {{ end }}
 
     <h2>Recent</h2>
