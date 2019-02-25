@@ -759,10 +759,11 @@ let liveTiming = {
                         let $tr;
 
                         // Remove a driver row if they disconnect
-                        if (liveTiming.Cars[car].Delete) {
+                        // @TODO TEST. This should stop cars from being removed from live timing mid-session
+                        /*if (liveTiming.Cars[car].Delete) {
                             $driverRow.remove();
                             continue
-                        }
+                        }*/
 
                         // Get the lap time, display previous for 10 seconds after completion
                         if (liveTiming.Cars[car].LastLapCompleteTimeUnix + 10000 > date.getTime()) {
