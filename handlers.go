@@ -79,7 +79,6 @@ func Router(fs http.FileSystem) chi.Router {
 		FileServer(r, "/results/download", http.Dir(filepath.Join(ServerInstallPath, "results")))
 	})
 
-
 	// writers
 	r.Group(func(r chi.Router) {
 		r.Use(WriteAccessMiddleware)

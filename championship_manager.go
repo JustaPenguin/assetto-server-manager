@@ -451,8 +451,10 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			return
 		}
 
-		if cm.activeChampionship.SessionType == SessionTypeRace {
-			logrus.Infof("End of Race Session detected. Marking championship event %s complete", cm.activeChampionship.EventID.String())
+		lastSession := championship.Events[currentEventIndex].LastSession()
+
+		if cm.activeChampionship.SessionType == lastSession {
+			logrus.Infof("End of %s Session detected. Marking championship event %s complete", lastSession.String(), cm.activeChampionship.EventID.String())
 			championship.Events[currentEventIndex].CompletedTime = time.Now()
 
 			// clear out all current session stuff
