@@ -103,29 +103,36 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		championship = NewChampionship("")
 	}
 
-	if championshipName := r.FormValue("ChampionshipName"); championshipName != "" {
-		// this is the first time the championship is being created
-		championship.Name = r.FormValue("ChampionshipName")
-	}
+	championship.Name = r.FormValue("ChampionshipName")
 
 	// add a class
-	class := NewChampionshipClass(r.FormValue("ClassName"))
-	class.Entrants, err = cm.BuildEntryList(r)
 
-	if err != nil {
-		return nil, edited, err
+	previousNumEntrants := 0
+
+	for i := 0; i < len(r.Form["ClassName"]); i++ {
+		class := NewChampionshipClass(r.Form["ClassName"][i])
+		class.Color = ChampionshipClassColors[i%len(ChampionshipClassColors)]
+
+		numEntrantsForClass := formValueAsInt(r.Form["EntryList.NumEntrants"][i])
+
+		class.Entrants, err = cm.BuildEntryList(r, previousNumEntrants, numEntrantsForClass)
+
+		if err != nil {
+			return nil, edited, err
+		}
+
+		class.Points.Places = make([]int, 0)
+
+		for i := previousNumEntrants; i < previousNumEntrants+numEntrantsForClass; i++ {
+			class.Points.Places = append(class.Points.Places, formValueAsInt(r.Form["Points.Place"][i]))
+		}
+
+		class.Points.PolePosition = formValueAsInt(r.Form["Points.PolePosition"][i])
+		class.Points.BestLap = formValueAsInt(r.Form["Points.BestLap"][i])
+
+		previousNumEntrants += numEntrantsForClass
+		championship.AddClass(class)
 	}
-
-	class.Points.Places = make([]int, len(r.Form["Points.Place"]))
-
-	for i := 0; i < len(r.Form["Points.Place"]); i++ {
-		class.Points.Places[i] = formValueAsInt(r.Form["Points.Place"][i])
-	}
-
-	class.Points.PolePosition = formValueAsInt(r.FormValue("Points.PolePosition"))
-	class.Points.BestLap = formValueAsInt(r.FormValue("Points.BestLap"))
-
-	championship.AddClass(class)
 
 	return championship, edited, cm.UpsertChampionship(championship)
 }

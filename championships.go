@@ -14,6 +14,16 @@ import (
 
 var championshipManager *ChampionshipManager
 
+var ChampionshipClassColors = []string{
+	"#44a8e9",
+	"#acbdba",
+	"#ff5964",
+	"#044389",
+	"#fe7f2d",
+	"#19323c",
+	"#6c698d",
+}
+
 // DefaultChampionshipPoints is the Formula 1 points system.
 var DefaultChampionshipPoints = ChampionshipPoints{
 	Places: []int{
@@ -73,7 +83,8 @@ func NewChampionshipClass(name string) *ChampionshipClass {
 }
 
 type ChampionshipClass struct {
-	Name string
+	Name  string
+	Color string
 
 	Entrants EntryList
 	Points   ChampionshipPoints
@@ -371,16 +382,11 @@ func submitNewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	action := r.FormValue("action")
-
 	if edited {
 		AddFlashQuick(w, r, "Championship successfully edited!")
 		http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
-	} else if action == "addEvent" {
+	} else {
 		AddFlashQuick(w, r, "We've created the Championship. Now you need to add some Events!")
-		http.Redirect(w, r, "/championship/"+championship.ID.String()+"/class", http.StatusFound)
-	} else if action == "addClass" {
-		AddFlashQuick(w, r, "We've created the Championship. You can keep adding more classes!")
 		http.Redirect(w, r, "/championship/"+championship.ID.String()+"/event", http.StatusFound)
 	}
 }
