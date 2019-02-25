@@ -3,6 +3,7 @@ package servermanager
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -131,6 +132,7 @@ func (tr *Renderer) init() error {
 	funcs["classColor"] = func(i int) string {
 		return ChampionshipClassColors[i%len(ChampionshipClassColors)]
 	}
+	funcs["dict"] = templateDict
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
@@ -139,6 +141,21 @@ func (tr *Renderer) init() error {
 	}
 
 	return nil
+}
+
+func templateDict(values ...interface{}) (map[string]interface{}, error) {
+	if len(values)%2 != 0 {
+		return nil, errors.New("invalid dict call")
+	}
+	dict := make(map[string]interface{}, len(values)/2)
+	for i := 0; i < len(values); i += 2 {
+		key, ok := values[i].(string)
+		if !ok {
+			return nil, errors.New("dict keys must be strings")
+		}
+		dict[key] = values[i+1]
+	}
+	return dict, nil
 }
 
 func timeFormat(t time.Time) string {

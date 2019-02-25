@@ -1,11 +1,12 @@
 {{ define "championship-class" }}
-<div class="card mt-3 border-primary race-setup">
+<div class="card mt-3 mb-3 border-primary race-setup">
     <div class="card-header">
         <strong>Class</strong>
+
+        <a class="text-danger btn-delete-class float-right" href="#"><i class="fas fa-trash"></i></a>
     </div>
 
-    {{ $f := .Current }}
-    {{ $class := .Current.FindClass "" }}
+    {{ $class := .Class }}
 
     <div class="card-body" id="entrants">
 
@@ -30,7 +31,7 @@
 
                         {{ $selected := false }}
 
-                        {{ range $j, $selectedCar := $f.ValidCarIDs }}
+                        {{ range $j, $selectedCar := $class.ValidCarIDs }}
                             {{ if eq $selectedCar $car.Name }}
                                 {{ $selected = true }}
                             {{ end }}
@@ -66,14 +67,13 @@
 
         <div class="clearfix"></div>
 
-        <!-- @TODO populate me -->
-        <input type="hidden" class="totalNumEntrants" name="EntryList.NumEntrants" value="1">
+        <input type="hidden" class="totalNumEntrants" name="EntryList.NumEntrants" value="{{ with $class.Entrants }}{{ len $class.Entrants }}{{ else }}1{{ end }}">
 
         <div class="mt-5 points-parent">
 
             <h3>Points</h3>
 
-            {{ if .IsEditing }}
+            {{ if and .IsEditing $class.Entrants }}
 
                 {{ $entrantCount := int64 1 }}
 
@@ -85,7 +85,7 @@
 
                         <div class="col-sm-9">
                             <input type="number" class="form-control" name="Points.Place"
-                                   placeholder="Points" value="{{ index $f.Points.Places (sub $entrantCount 1) }}">
+                                   placeholder="Points" value="{{ index $class.Points.Places (sub $entrantCount 1) }}">
                         </div>
                     </div>
 

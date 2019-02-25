@@ -98,6 +98,8 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		if err != nil {
 			return nil, edited, err
 		}
+
+		championship.Classes = []*ChampionshipClass{}
 	} else {
 		// new championship
 		championship = NewChampionship("")
