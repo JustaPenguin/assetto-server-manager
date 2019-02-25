@@ -98,6 +98,7 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Get("/custom/edit/{uuid}", customRaceNewOrEditHandler)
 		r.Get("/custom/delete/{uuid}", customRaceDeleteHandler)
 		r.Get("/custom/star/{uuid}", customRaceStarHandler)
+		r.Get("/custom/loop/{uuid}", customRaceLoopHandler)
 		r.Post("/custom/new/submit", customRaceSubmitHandler)
 
 		// server management
