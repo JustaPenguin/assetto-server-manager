@@ -15,13 +15,16 @@ import (
 var championshipManager *ChampionshipManager
 
 var ChampionshipClassColors = []string{
-	"#44a8e9",
-	"#acbdba",
-	"#ff5964",
-	"#044389",
-	"#fe7f2d",
-	"#19323c",
-	"#6c698d",
+	"#9ec6f5",
+	"#91d8af",
+	"#dba8ed",
+	"#e3a488",
+	"#e3819a",
+	"#908ba1",
+	"#a2b5b9",
+	"#a681b4",
+	"#c1929d",
+	"#999ecf",
 }
 
 // DefaultChampionshipPoints is the Formula 1 points system.
@@ -83,8 +86,7 @@ func NewChampionshipClass(name string) *ChampionshipClass {
 }
 
 type ChampionshipClass struct {
-	Name  string
-	Color string
+	Name string
 
 	Entrants EntryList
 	Points   ChampionshipPoints

@@ -46,7 +46,7 @@
                             {{ $entrants := ($class.Standings $championship.Events) }}
 
                             {{ range $i, $entrant := $entrants }}
-                                <tr style="color: white; background: {{ $class.Color }}">
+                                <tr style="color: white; background: {{ classColor $classIndex }}">
                                     {{ if eq $i 0 }}
                                         <td rowspan="{{ len $entrants }}">{{ $class.Name }}</td>
                                     {{ end }}
@@ -75,7 +75,7 @@
                             {{ $teamStandings := ($class.TeamStandings $championship.Events) }}
 
                             {{ range $i, $team := $teamStandings }}
-                                <tr style="color: white; background: {{ $class.Color }}">
+                                <tr style="color: white; background: {{ classColor $classIndex }}">
 
                                     {{ if eq $i 0 }}
                                         <td rowspan="{{ len $teamStandings }}">{{ $class.Name }}</td>
@@ -104,7 +104,7 @@
                         {{ range $classIndex, $class := $championship.Classes }}
                             {{ range $i, $pts := $class.Points.Places }}
 
-                                <tr style="color: white; background: {{ $class.Color }}">
+                                <tr style="color: white; background: {{ classColor $classIndex }}">
                                     {{ if eq $i 0 }}
                                         <td rowspan="{{ add (len $class.Points.Places) 2 }}">{{ $class.Name }}</td>
                                     {{ end }}
@@ -113,13 +113,13 @@
                                 </tr>
                             {{ end }}
 
-                            <tr style="color: white; background: {{ $class.Color }}">
+                            <tr style="color: white; background: {{ classColor $classIndex }}">
                                 <td><strong>Fastest Race Lap</strong></td>
                                 <td>
                                     {{ $class.Points.BestLap }}
                                 </td>
                             </tr>
-                            <tr style="color: white; background: {{ $class.Color }}">
+                            <tr style="color: white; background: {{ classColor $classIndex }}">
                                 <td><strong>Best Qualifying Lap</strong></td>
                                 <td>
                                     {{ $class.Points.PolePosition }}

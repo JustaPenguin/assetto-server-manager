@@ -109,7 +109,6 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 
 	for i := 0; i < len(r.Form["ClassName"]); i++ {
 		class := NewChampionshipClass(r.Form["ClassName"][i])
-		class.Color = ChampionshipClassColors[i%len(ChampionshipClassColors)]
 
 		numEntrantsForClass := formValueAsInt(r.Form["EntryList.NumEntrants"][i])
 

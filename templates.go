@@ -128,6 +128,9 @@ func (tr *Renderer) init() error {
 	funcs["WriteAccess"] = dummyAccessFunc
 	funcs["AdminAccess"] = dummyAccessFunc
 	funcs["LoggedIn"] = dummyAccessFunc
+	funcs["classColor"] = func(i int) string {
+		return ChampionshipClassColors[i%len(ChampionshipClassColors)]
+	}
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
