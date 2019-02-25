@@ -3,7 +3,7 @@
 {{ define "content" }}
     <div class="championship">
         {{ $championship := .Championship }}
-        {{ $entrants := .Championship.Entrants }}
+        {{ $entrants := .Championship.AllEntrants }}
         {{ $writeAccess := WriteAccess }}
         {{ $eventInProgress := .EventInProgress }}
 
@@ -34,20 +34,28 @@
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped">
                         <tr>
+                            <th>Class</th>
                             <th>#</th>
                             <th>Driver</th>
                             <th>Team</th>
                             <th>Points</th>
                         </tr>
 
-                        {{ range $i, $entrant := $championship.Standings }}
 
-                            <tr>
-                                <td>{{ add $i 1 }}</td>
-                                <td>{{ $entrant.Entrant.Name }}</td>
-                                <td>{{ $entrant.Entrant.Team }}</td>
-                                <td>{{ $entrant.Points }}</td>
-                            </tr>
+                        {{ range $classIndex, $class := $championship.Classes }}
+                            {{ $entrants := ($class.Standings $championship.Events) }}
+
+                            {{ range $i, $entrant := $entrants }}
+                                <tr style="color: white; background: {{ $class.Color }}">
+                                    {{ if eq $i 0 }}
+                                        <td rowspan="{{ len $entrants }}">{{ $class.Name }}</td>
+                                    {{ end }}
+                                    <td>{{ add $i 1 }}</td>
+                                    <td>{{ $entrant.Entrant.Name }}</td>
+                                    <td>{{ $entrant.Entrant.Team }}</td>
+                                    <td>{{ $entrant.Points }}</td>
+                                </tr>
+                            {{ end }}
                         {{ end }}
                     </table>
                 </div>
@@ -57,18 +65,27 @@
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped">
                         <tr>
+                            <th>Class</th>
                             <th>#</th>
                             <th>Team</th>
                             <th>Points</th>
                         </tr>
 
-                        {{ range $i, $team := $championship.TeamStandings }}
+                        {{ range $classIndex, $class := $championship.Classes }}
+                            {{ $teamStandings := ($class.TeamStandings $championship.Events) }}
 
-                            <tr>
-                                <td>{{ add $i 1 }}</td>
-                                <td>{{ $team.Team }}</td>
-                                <td>{{ $team.Points }}</td>
-                            </tr>
+                            {{ range $i, $team := $teamStandings }}
+                                <tr style="color: white; background: {{ $class.Color }}">
+
+                                    {{ if eq $i 0 }}
+                                        <td rowspan="{{ len $teamStandings }}">{{ $class.Name }}</td>
+                                    {{ end }}
+                                    <td>{{ add $i 1 }}</td>
+
+                                    <td>{{ $team.Team }}</td>
+                                    <td>{{ $team.Points }}</td>
+                                </tr>
+                            {{ end }}
                         {{ end }}
                     </table>
                 </div>
@@ -78,30 +95,37 @@
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped">
                         <tr>
+                            <th>Class</th>
                             <th>Place</th>
                             <th>Points</th>
                         </tr>
 
-                        {{ range $i, $pts := $championship.Points.Places }}
 
-                            <tr>
-                                <td>{{ add $i 1 }}{{ ordinal (add $i 1) }}</td>
-                                <td>{{ $pts }}</td>
+                        {{ range $classIndex, $class := $championship.Classes }}
+                            {{ range $i, $pts := $class.Points.Places }}
+
+                                <tr style="color: white; background: {{ $class.Color }}">
+                                    {{ if eq $i 0 }}
+                                        <td rowspan="{{ add (len $class.Points.Places) 2 }}">{{ $class.Name }}</td>
+                                    {{ end }}
+                                    <td>{{ add $i 1 }}{{ ordinal (add $i 1) }}</td>
+                                    <td>{{ $pts }}</td>
+                                </tr>
+                            {{ end }}
+
+                            <tr style="color: white; background: {{ $class.Color }}">
+                                <td><strong>Fastest Race Lap</strong></td>
+                                <td>
+                                    {{ $class.Points.BestLap }}
+                                </td>
+                            </tr>
+                            <tr style="color: white; background: {{ $class.Color }}">
+                                <td><strong>Best Qualifying Lap</strong></td>
+                                <td>
+                                    {{ $class.Points.PolePosition }}
+                                </td>
                             </tr>
                         {{ end }}
-
-                        <tr>
-                            <td><strong>Fastest Race Lap</strong></td>
-                            <td>
-                                {{ $championship.Points.BestLap }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Best Qualifying Lap</strong></td>
-                            <td>
-                                {{ $championship.Points.PolePosition }}
-                            </td>
-                        </tr>
                     </table>
                 </div>
             </div>
@@ -302,7 +326,7 @@
                                             <th>Car</th>
                                         </tr>
 
-                                        {{ range $entrantIndex, $entrant := $championship.Entrants }}
+                                        {{ range $entrantIndex, $entrant := $championship.AllEntrants }}
                                             <tr>
                                                 <td>{{ $entrant.Name }}</td>
                                                 <td>{{ $entrant.Team }}</td>

@@ -181,8 +181,8 @@ a.detailed-results:hover {
     text-decoration: none;
 }
 
-#numEntrantsToAdd {
-    display: inline-block;
+.numEntrantsToAdd {
+    display: inline-block !important;
     max-width: 80px;
     position: relative;
     top: 1px;

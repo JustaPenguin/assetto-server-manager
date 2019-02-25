@@ -7,10 +7,14 @@ $(document).ready(function () {
     console.log("initialising server manager javascript");
 
     $document = $(document);
-    raceSetup.init();
+
+    championships.init();
+    $document.find(".race-setup").each(function(index, elem) {
+        new RaceSetup($(elem));
+    });
+
     serverLogs.init();
     liveTiming.init();
-    championships.init();
 
     // init bootstrap-switch
     $.fn.bootstrapSwitch.defaults.size = 'small';
@@ -81,165 +85,184 @@ function prettifyName(name, acronyms) {
     return parts.join(" ")
 }
 
-let raceSetup = {
+function initMultiSelect($element) {
+    $element.each(function(i, elem) {
+        let $elem = $(elem);
+
+        if ($elem.is(":hidden")) {
+            return true;
+        }
+
+        $elem.multiSelect({
+            selectableHeader: "<input type='search' class='form-control search-input' autocomplete='off' placeholder='search'>",
+            selectionHeader: "<input type='search' class='form-control search-input' autocomplete='off' placeholder='search'>",
+            afterInit: function (ms) {
+                let that = this,
+                    $selectableSearch = that.$selectableUl.prev(),
+                    $selectionSearch = that.$selectionUl.prev(),
+                    selectableSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selectable:not(.ms-selected)',
+                    selectionSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selection.ms-selected';
+
+                that.qs1 = $selectableSearch.quicksearch(selectableSearchString)
+                    .on('keydown', function (e) {
+                        if (e.which === 40) {
+                            that.$selectableUl.focus();
+                            return false;
+                        }
+                    });
+
+                that.qs2 = $selectionSearch.quicksearch(selectionSearchString)
+                    .on('keydown', function (e) {
+                        if (e.which === 40) {
+                            that.$selectionUl.focus();
+                            return false;
+                        }
+                    });
+            },
+            afterSelect: function () {
+                this.qs1.cache();
+                this.qs2.cache();
+            },
+            afterDeselect: function () {
+                this.qs1.cache();
+                this.qs2.cache();
+            }
+        });
+    });
+}
+
+let $entrantTemplate = null;
+
+class RaceSetup {
     // jQuery elements
-    $trackDropdown: null,
-    $trackLayoutDropdown: null,
-    $trackLayoutDropdownParent: null,
-    $carsDropdown: null,
-    $tyresDropdown: null,
-    $addWeatherButton: null,
+    $trackDropdown;
+    $trackLayoutDropdown;
+    $trackLayoutDropdownParent;
+    $carsDropdown;
+    $tyresDropdown;
+    $addWeatherButton;
 
     // the current layout as specified by the server
-    currentLayout: "",
+    currentLayout;
 
     // all available track layout options
-    trackLayoutOpts: {},
+    trackLayoutOpts;
+    $parent;
 
+    constructor($parent) {
+        this.$parent = $parent;
+        this.trackLayoutOpts = {};
 
-    /**
-     * init: entrypoint for raceSetup functions. looks for track + layout dropdowns and populates them.
-     */
-    init: function () {
-        raceSetup.$carsDropdown = $document.find("#Cars");
+        this.$carsDropdown = $parent.find(".Cars");
 
-        raceSetup.$trackDropdown = $document.find("#Track");
-        raceSetup.$trackLayoutDropdown = $document.find("#TrackLayout");
-        raceSetup.$trackLayoutDropdownParent = raceSetup.$trackLayoutDropdown.closest(".form-group");
+        console.log(this.$carsDropdown);
 
-        raceSetup.$addWeatherButton = $document.find("#addWeather");
+        this.$trackDropdown = $parent.find("#Track");
+        this.$trackLayoutDropdown = $parent.find("#TrackLayout");
+        this.$trackLayoutDropdownParent = this.$trackLayoutDropdown.closest(".form-group");
 
-        if (raceSetup.$carsDropdown) {
-            raceSetup.$carsDropdown.multiSelect({
-                selectableHeader: "<input type='search' class='form-control search-input' autocomplete='off' placeholder='search'>",
-                selectionHeader: "<input type='search' class='form-control search-input' autocomplete='off' placeholder='search'>",
-                afterInit: function (ms) {
-                    let that = this,
-                        $selectableSearch = that.$selectableUl.prev(),
-                        $selectionSearch = that.$selectionUl.prev(),
-                        selectableSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selectable:not(.ms-selected)',
-                        selectionSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selection.ms-selected';
+        this.$addWeatherButton = $parent.find("#addWeather");
 
-                    that.qs1 = $selectableSearch.quicksearch(selectableSearchString)
-                        .on('keydown', function (e) {
-                            if (e.which === 40) {
-                                that.$selectableUl.focus();
-                                return false;
-                            }
-                        });
+        if (this.$carsDropdown) {
+            initMultiSelect(this.$carsDropdown);
+            this.$tyresDropdown = $parent.find("#LegalTyres");
 
-                    that.qs2 = $selectionSearch.quicksearch(selectionSearchString)
-                        .on('keydown', function (e) {
-                            if (e.which === 40) {
-                                that.$selectionUl.focus();
-                                return false;
-                            }
-                        });
-                },
-                afterSelect: function () {
-                    this.qs1.cache();
-                    this.qs2.cache();
-                },
-                afterDeselect: function () {
-                    this.qs1.cache();
-                    this.qs2.cache();
-                }
-            });
-            raceSetup.$tyresDropdown = $document.find("#LegalTyres");
+            if (this.$tyresDropdown) {
+                this.$tyresDropdown.multiSelect();
 
-            if (raceSetup.$tyresDropdown) {
-                raceSetup.$tyresDropdown.multiSelect();
-
-                raceSetup.$carsDropdown.change(raceSetup.populateTyreDropdown)
+                this.$carsDropdown.change(this.populateTyreDropdown.bind(this))
             }
         }
 
-        raceSetup.$addWeatherButton.click(raceSetup.addWeather);
+        this.$addWeatherButton.click(this.addWeather.bind(this));
 
-        $document.find(".weather-delete").click(function (e) {
+        $parent.find(".weather-delete").click(function (e) {
             e.preventDefault();
             let $this = $(this);
 
             $this.closest(".weather").remove();
 
             // go through all .weather divs and update their numbers
-            $document.find(".weather").each(function (index, elem) {
+            $parent.find(".weather").each(function (index, elem) {
                 $(elem).find(".weather-num").text(index);
-
             });
         });
 
-        $document.find(".weather-graphics").change(raceSetup.updateWeatherGraphics);
+        $parent.find(".weather-graphics").change(this.updateWeatherGraphics);
+
+        let that = this;
 
         // restrict loading track layouts to pages which have track dropdown and layout dropdown on them.
-        if (raceSetup.$trackDropdown.length && raceSetup.$trackLayoutDropdown.length) {
+        if (this.$trackDropdown.length && this.$trackLayoutDropdown.length) {
             // build a map of track => available layouts
-            raceSetup.$trackLayoutDropdown.find("option").each(function (index, opt) {
+            this.$trackLayoutDropdown.find("option").each(function (index, opt) {
                 let $optValSplit = $(opt).val().split(":");
                 let trackName = $optValSplit[0];
                 let trackLayout = $optValSplit[1];
 
-                if (!raceSetup.trackLayoutOpts[trackName]) {
-                    raceSetup.trackLayoutOpts[trackName] = [];
+                if (!that.trackLayoutOpts[trackName]) {
+                    that.trackLayoutOpts[trackName] = [];
                 }
 
-                raceSetup.trackLayoutOpts[trackName].push(trackLayout);
+                that.trackLayoutOpts[trackName].push(trackLayout);
 
                 if ($optValSplit.length > 2) {
-                    raceSetup.currentLayout = trackLayout;
+                    that.currentLayout = trackLayout;
                 }
             });
 
-            raceSetup.$trackLayoutDropdownParent.hide();
-            raceSetup.loadTrackLayouts();
+            that.$trackLayoutDropdownParent.hide();
+            that.loadTrackLayouts();
 
-            raceSetup.$trackDropdown.change(raceSetup.loadTrackLayouts);
-            raceSetup.$trackLayoutDropdown.change(raceSetup.showTrackImage);
+            that.$trackDropdown.change(that.loadTrackLayouts.bind(this));
+            that.$trackLayoutDropdown.change(that.showTrackImage.bind(this));
 
         }
 
-        raceSetup.raceLaps();
-        raceSetup.showEnabledSessions();
-        raceSetup.showSolSettings();
+        this.raceLaps();
+        this.showEnabledSessions();
+        this.showSolSettings();
 
-        raceSetup.initEntrantsList();
-        raceSetup.initSunAngle();
-        raceSetup.initSurfacePresets();
-    },
+        this.initEntrantsList();
+        this.initSunAngle();
+        this.initSurfacePresets();
+    }
 
-    updateWeatherGraphics: function () {
+    updateWeatherGraphics () {
         let $this = $(this);
 
         $this.closest(".weather").find(".weather-preview").attr({
             'src': '/content/weather/' + $this.val() + '/preview.jpg',
             'alt': $this.val(),
         });
-    },
+    }
 
     /**
      * add weather elements to the form when the 'new weather' button is clicked
      */
-    addWeather: function (e) {
+    addWeather(e) {
         e.preventDefault();
 
-        let $oldWeather = $document.find(".weather").last();
+        let $oldWeather = this.$parent.find(".weather").last();
 
         let $newWeather = $oldWeather.clone(true, true);
-        $newWeather.find(".weather-num").text($document.find(".weather").length);
+        $newWeather.find(".weather-num").text(this.$parent.find(".weather").length);
         $newWeather.find(".weather-delete").show();
 
         $oldWeather.after($newWeather);
-    },
+    }
 
     /**
      * when a session 'enabled' checkbox is modified, toggle the state of the session-details element
      */
-    showEnabledSessions: function () {
+    showEnabledSessions() {
+        let that = this;
+
         $(".session-enabler").each(function (index, elem) {
             $(elem).on('switchChange.bootstrapSwitch', function (event, state) {
                 let $this = $(this);
                 let $elem = $this.closest(".tab-pane").find(".session-details");
-                let $panelLabel = $document.find("#" + $this.closest(".tab-pane").attr("aria-labelledby"));
+                let $panelLabel = that.$parent.find("#" + $this.closest(".tab-pane").attr("aria-labelledby"));
 
                 if (state) {
                     $elem.show();
@@ -250,15 +273,16 @@ let raceSetup = {
                 }
             });
         });
-    },
+    }
 
     /**
      * when a Sol 'enabled' checkbox is modified, toggle the state of the sol-settings and not-sol-settings elements
      */
-    showSolSettings: function () {
-        $(".sol-enabler").each(function (index, elem) {
+    showSolSettings () {
+        let that = this;
 
-            raceSetup.showSolWeathers($(elem).is(':checked'));
+        $(".sol-enabler").each(function (index, elem) {
+            that.showSolWeathers($(elem).is(':checked'));
 
             $(elem).on('switchChange.bootstrapSwitch', function (event, state) {
                 let $this = $(this);
@@ -273,18 +297,18 @@ let raceSetup = {
                     $notSolElem.show();
                 }
 
-                raceSetup.showSolWeathers(state);
+                that.showSolWeathers(state);
             });
         });
-    },
+    }
 
     /**
      * hide non-sol weather if sol is enabled.
      *
      * @param state
      */
-    showSolWeathers: function(state) {
-        $document.find(".weather-graphics").each(function(graphicsIndex, graphicsElement) {
+    showSolWeathers (state) {
+        this.$parent.find(".weather-graphics").each(function(graphicsIndex, graphicsElement) {
             let $elem = $(graphicsElement);
             let $opts = $elem.find("option");
             let $selectedOpt = $elem.find("option:selected");
@@ -305,19 +329,19 @@ let raceSetup = {
                 }
             }
         });
-    },
+    }
 
 
     /**
      * populate the tyre dropdown for all currently selected cars.
      */
-    populateTyreDropdown: function () {
+    populateTyreDropdown () {
         // quick race doesn't have tyre set up.
         if (typeof availableTyres === "undefined") {
             return
         }
 
-        let cars = raceSetup.$carsDropdown.val();
+        let cars = this.$carsDropdown.val();
         let allValidTyres = new Set();
 
         for (let index = 0; index < cars.length; index++) {
@@ -327,40 +351,39 @@ let raceSetup = {
             for (let tyre in carTyres) {
                 allValidTyres.add(tyre);
 
-                if (raceSetup.$tyresDropdown.find("option[value='" + tyre + "']").length) {
+                if (this.$tyresDropdown.find("option[value='" + tyre + "']").length) {
                     continue; // this has already been added
                 }
 
-                raceSetup.$tyresDropdown.multiSelect('addOption', {
+                this.$tyresDropdown.multiSelect('addOption', {
                     'value': tyre,
                     'text': carTyres[tyre] + " (" + tyre + ")",
                 });
 
-                raceSetup.$tyresDropdown.multiSelect('select', tyre);
+                this.$tyresDropdown.multiSelect('select', tyre);
             }
         }
 
-        raceSetup.$tyresDropdown.find("option").each(function (index, elem) {
+        this.$tyresDropdown.find("option").each(function (index, elem) {
             let $elem = $(elem);
 
             if (!allValidTyres.has($elem.val())) {
                 $elem.remove();
 
-                raceSetup.$tyresDropdown.multiSelect('refresh');
+                this.$tyresDropdown.multiSelect('refresh');
             }
         });
-
-    },
+    }
 
     /**
      * given a dropdown input which specifies 'laps'/'time', raceLaps will show the correct input element
      * and empty the unneeded one for either laps or race time.
      */
-    raceLaps: function () {
-        let $timeOrLaps = $document.find("#TimeOrLaps");
-        let $raceLaps = $document.find("#RaceLaps");
-        let $raceTime = $document.find("#RaceTime");
-        let $extraLap = $document.find(".race-extra-lap");
+    raceLaps () {
+        let $timeOrLaps = this.$parent.find("#TimeOrLaps");
+        let $raceLaps = this.$parent.find("#RaceLaps");
+        let $raceTime = this.$parent.find("#RaceTime");
+        let $extraLap = this.$parent.find(".race-extra-lap");
 
         if ($timeOrLaps.length) {
             $timeOrLaps.change(function () {
@@ -387,14 +410,14 @@ let raceSetup = {
                 }
             });
         }
-    },
+    }
 
     /**
      * show track image shows the correct image for the track/layout combo
      */
-    showTrackImage: function () {
-        let track = raceSetup.$trackDropdown.val();
-        let layout = raceSetup.$trackLayoutDropdown.val();
+    showTrackImage () {
+        let track = this.$trackDropdown.val();
+        let layout = this.$trackLayoutDropdown.val();
 
         let src = '/content/tracks/' + track + '/ui';
 
@@ -405,64 +428,62 @@ let raceSetup = {
         // @TODO jpg
         src += '/preview.png';
 
-        $document.find("#trackImage").attr({
+        this.$parent.find("#trackImage").attr({
             'src': src,
             'alt': track + ' ' + layout,
         })
-    },
+    }
 
     /**
      * loadTrackLayouts: looks at the selected track and loads in the correct layouts for it into the
      * track layout dropdown
      */
-    loadTrackLayouts: function () {
-        raceSetup.$trackLayoutDropdown.empty();
+    loadTrackLayouts () {
+        this.$trackLayoutDropdown.empty();
 
-        let selectedTrack = raceSetup.$trackDropdown.find("option:selected").val();
-        let availableLayouts = raceSetup.trackLayoutOpts[selectedTrack];
+        let selectedTrack = this.$trackDropdown.find("option:selected").val();
+        let availableLayouts = this.trackLayoutOpts[selectedTrack];
 
         if (availableLayouts) {
             for (let i = 0; i < availableLayouts.length; i++) {
-                raceSetup.$trackLayoutDropdown.append(raceSetup.buildTrackLayoutOption(availableLayouts[i]));
+                this.$trackLayoutDropdown.append(this.buildTrackLayoutOption(availableLayouts[i]));
             }
 
-            raceSetup.$trackLayoutDropdownParent.show();
+            this.$trackLayoutDropdownParent.show();
         } else {
             // add an option with an empty value
-            raceSetup.$trackLayoutDropdown.append(raceSetup.buildTrackLayoutOption(""));
-            raceSetup.$trackLayoutDropdownParent.hide();
+            this.$trackLayoutDropdown.append(this.buildTrackLayoutOption(""));
+            this.$trackLayoutDropdownParent.hide();
         }
 
 
-        raceSetup.showTrackImage();
-    },
+        this.showTrackImage();
+    }
 
     /**
      * buildTrackLayoutOption: builds an <option> containing track layout information
      * @param layout
      * @returns {HTMLElement}
      */
-    buildTrackLayoutOption: function (layout) {
+    buildTrackLayoutOption(layout) {
         let $opt = $("<option/>");
         $opt.attr({'value': layout});
         $opt.text(prettifyName(layout, true));
 
-        if (layout === raceSetup.currentLayout) {
+        if (layout === this.currentLayout) {
             $opt.prop("selected", true);
         }
 
         return $opt;
-    },
+    }
 
-    $entrantsDiv: null,
-    $entrantTemplate: null,
+    $entrantsDiv;
 
+    driverNames;
 
-    driverNames: [],
-
-    autoCompleteDrivers: function () {
+    autoCompleteDrivers () {
         let opts = {
-            source: raceSetup.driverNames,
+            source: this.driverNames,
             select: function (event, ui) {
                 // find item.value in our entrants list
                 let $row = $(event.target).closest(".entrant");
@@ -485,18 +506,20 @@ let raceSetup = {
         $(document).on('keydown.autocomplete', ".entryListName", function () {
             $(this).autocomplete(opts);
         });
-    },
+    }
 
-    initEntrantsList: function () {
-        raceSetup.$entrantsDiv = $document.find("#entrants");
+    initEntrantsList () {
+        this.driverNames = [];
 
-        if (!raceSetup.$entrantsDiv.length) {
+        this.$entrantsDiv = this.$parent.find("#entrants");
+
+        if (!this.$entrantsDiv.length) {
             return;
         }
 
         if (possibleEntrants) {
             for (let entrant of possibleEntrants) {
-                raceSetup.driverNames.push(entrant.Name);
+                this.driverNames.push(entrant.Name);
             }
         }
 
@@ -507,12 +530,20 @@ let raceSetup = {
             populateEntryListSkins($this, val);
         }
 
-        $document.find(".entryListCar").change(onEntryListCarChange);
-        raceSetup.autoCompleteDrivers();
+        this.$parent.find(".entryListCar").change(onEntryListCarChange);
+        this.autoCompleteDrivers();
 
-        let $tmpl = $document.find("#entrantTemplate");
-        let $entrantTemplate = $tmpl.prop("id", "").clone(true, true);
+        // initialise entrantTemplate if it's null. this will only happen once so cloned race setups
+        // have an entrant template to work from.
+        let $tmpl = this.$parent.find("#entrantTemplate");
+
+        if (!$entrantTemplate) {
+            $entrantTemplate = $tmpl.prop("id", "").clone(true, true);
+        }
+
         $tmpl.remove();
+
+        let that = this;
 
         function populateEntryListSkins($elem, val) {
             // populate skins
@@ -546,19 +577,36 @@ let raceSetup = {
 
         function deleteEntrant(e) {
             e.preventDefault();
+
+            let $raceSetup = $(this).closest(".race-setup");
+
+            let numEntrants = $raceSetup.find(".entrant:visible").length;
+            let $points = $raceSetup.find(".points-place");
+            let numPoints = $points.length;
+
+
+            for (let i = numPoints; i >= numEntrants; i--) {
+                // remove any extras we don't need
+                $points.last().remove();
+            }
+
             $(this).closest(".entrant").remove();
+
+
+            let $savedNumEntrants = $raceSetup.find(".totalNumEntrants");
+            $savedNumEntrants.val($raceSetup.find(".entrant:visible").length);
         }
 
         function populateEntryListCars() {
             // populate list of cars in entry list
-            let cars = new Set(raceSetup.$carsDropdown.val());
+            let cars = new Set(that.$carsDropdown.val());
 
-            $document.find(".entryListCar").each(function (index, val) {
+            that.$parent.find(".entryListCar").each(function (index, val) {
                 let $val = $(val);
                 let selected = $val.find("option:selected").val();
 
                 if (!selected || !cars.has(selected)) {
-                    selected = raceSetup.$carsDropdown.val()[0];
+                    selected = that.$carsDropdown.val()[0];
                 }
 
 
@@ -581,13 +629,13 @@ let raceSetup = {
         }
 
         populateEntryListCars();
-        raceSetup.$carsDropdown.change(populateEntryListCars);
-        $document.find(".btn-delete-entrant").click(deleteEntrant);
+        that.$carsDropdown.change(populateEntryListCars);
+        that.$parent.find(".btn-delete-entrant").click(deleteEntrant);
 
-        $document.find("#addEntrant").click(function (e) {
+        that.$parent.find(".addEntrant").click(function (e) {
             e.preventDefault();
 
-            let $numEntrantsField = $(this).parent().find("#numEntrantsToAdd");
+            let $numEntrantsField = $(this).parent().find(".numEntrantsToAdd");
             let numEntrantsToAdd = 1;
 
             if ($numEntrantsField.length > 0) {
@@ -603,14 +651,17 @@ let raceSetup = {
                 populateEntryListCars();
                 $elem.css("display", "block");
             }
+
+            let $savedNumEntrants = that.$parent.find(".totalNumEntrants");
+            $savedNumEntrants.val(that.$parent.find(".entrant:visible").length);
         })
 
-    },
+    }
 
 
-    initSunAngle: function() {
-        let $timeOfDay = $document.find("#TimeOfDay");
-        let $sunAngle = $document.find("#SunAngle");
+    initSunAngle () {
+        let $timeOfDay = this.$parent.find("#TimeOfDay");
+        let $sunAngle = this.$parent.find("#SunAngle");
 
         function updateTime() {
             let angle = $sunAngle.val();
@@ -632,19 +683,19 @@ let raceSetup = {
         });
 
         $sunAngle.change(updateTime);
-    },
+    }
 
-    initSurfacePresets: function() {
-        let $surfacePresetDropdown = $document.find("#SurfacePreset");
+    initSurfacePresets () {
+        let $surfacePresetDropdown = this.$parent.find("#SurfacePreset");
 
         if (!$surfacePresetDropdown.length) {
             return;
         }
 
-        let $sessionStart = $document.find("#SessionStart");
-        let $randomness = $document.find("#Randomness");
-        let $sessionTransfer = $document.find("#SessionTransfer");
-        let $lapGain = $document.find("#LapGain");
+        let $sessionStart = this.$parent.find("#SessionStart");
+        let $randomness = this.$parent.find("#Randomness");
+        let $sessionTransfer = this.$parent.find("#SessionTransfer");
+        let $lapGain = this.$parent.find("#LapGain");
 
         $surfacePresetDropdown.change(function() {
             let val = $surfacePresetDropdown.val();
@@ -660,8 +711,8 @@ let raceSetup = {
             $sessionTransfer.val(preset["SessionTransfer"]);
             $lapGain.val(preset["LapGain"]);
         });
-    },
-};
+    }
+}
 
 $(function () {
     $('[data-toggle="popover"]').popover()
@@ -1608,17 +1659,20 @@ function addAllColumnHeaders(json, table) {
 
 let championships = {
     init: function() {
-        let $pointsParent = $document.find("#points");
-
-        if (!$pointsParent.length) {
-            return;
-        }
-
         let $pointsTemplate = $document.find(".points-place").last().clone();
 
-        $document.find("#addEntrant").click(function() {
-            let $points = $document.find(".points-place");
-            let numEntrants = $document.find(".entrant").length;
+        $document.on("click", ".addEntrant", function(e) {
+            e.preventDefault();
+
+            let $raceSetup = $(this).closest(".race-setup");
+            let $pointsParent = $raceSetup.find(".points-parent");
+
+            if (!$pointsParent.length) {
+                return;
+            }
+
+            let $points = $raceSetup.find(".points-place");
+            let numEntrants = $raceSetup.find(".entrant:visible").length;
             let numPoints = $points.length;
 
             for (let i = numPoints; i < numEntrants; i++) {
@@ -1638,16 +1692,26 @@ let championships = {
             }
         });
 
-        $document.on("click", ".btn-delete-entrant", function() {
-            let numEntrants = $document.find(".entrant").length;
-            let $points = $document.find(".points-place");
-            let numPoints = $points.length;
+        championships.initClassSetup();
+    },
 
-            for (let i = numPoints; i >= numEntrants; i--) {
-                // remove any extras we don't need
-                $points.last().remove();
-            }
-        });
+    $classTemplate: null,
+
+    initClassSetup: function() {
+        let $addClassButton = $document.find("#addClass");
+        let $tmpl = $document.find("#class-template");
+        championships.$classTemplate = $tmpl.clone();
+
+        $tmpl.remove();
+
+        $addClassButton.click(function(e) {
+            e.preventDefault();
+
+            let $cloned = championships.$classTemplate.clone().show();
+
+            $(this).before($cloned);
+            new RaceSetup($cloned);
+        })
     },
 };
 
