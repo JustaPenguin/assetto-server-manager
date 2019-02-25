@@ -453,10 +453,14 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 
 			startTimeZoned := startTime.In(time.FixedZone("UTC+10", 10*60*60))
 			timeMulti := r.Form["TimeMulti"][i]
+			timeMultiInt := formValueAsInt(timeMulti)
+
+			// This is probably a bit hacky, and may need removing with a future Sol update
+			startTimeFinal := startTimeZoned.Add(-(time.Duration(timeMultiInt)*5*time.Hour))
 
 			raceConfig.AddWeather(&WeatherConfig{
 				Graphics: weatherName + "_type=" + strconv.Itoa(WFXType) + "_time=0_mult=" +
-					timeMulti + "_start=" + strconv.Itoa(int(startTimeZoned.Unix())),
+					timeMulti + "_start=" + strconv.Itoa(int(startTimeFinal.Unix())),
 				BaseTemperatureAmbient: formValueAsInt(r.Form["BaseTemperatureAmbient"][i]),
 				BaseTemperatureRoad:    formValueAsInt(r.Form["BaseTemperatureRoad"][i]),
 				VariationAmbient:       formValueAsInt(r.Form["VariationAmbient"][i]),
@@ -466,9 +470,9 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 				CMWFXType:          WFXType,
 				CMWFXUseCustomTime: 1,
 				CMWFXTime:          0,
-				CMWFXTimeMulti:     formValueAsInt(timeMulti),
+				CMWFXTimeMulti:     timeMultiInt,
 				CMWFXUseCustomDate: 1,
-				CMWFXDate:          int(startTimeZoned.Unix()),
+				CMWFXDate:          int(startTimeFinal.Unix()),
 			})
 		}
 	}
