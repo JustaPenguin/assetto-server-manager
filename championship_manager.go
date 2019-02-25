@@ -105,8 +105,6 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 
 	championship.Name = r.FormValue("ChampionshipName")
 
-	// add a class
-
 	previousNumEntrants := 0
 
 	for i := 0; i < len(r.Form["ClassName"]); i++ {
