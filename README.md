@@ -88,4 +88,4 @@ inspiration and reference on understanding the AC configuration files
 
 ## Screenshots
 
-Check out the [screenshots folder](https://github.com/cj123/assetto-server-manager/tree/master/screenshots)!
+Check out the [screenshots folder](https://github.com/cj123/assetto-server-manager/tree/master/misc/screenshots)!
