@@ -92,6 +92,22 @@ type ChampionshipClass struct {
 	Points   ChampionshipPoints
 }
 
+func (c *ChampionshipClass) ValidCarIDs() []string {
+	cars := make(map[string]bool)
+
+	for _, e := range c.Entrants {
+		cars[e.Model] = true
+	}
+
+	var out []string
+
+	for car := range cars {
+		out = append(out, car)
+	}
+
+	return out
+}
+
 // FindClass looks for a class with a name. If it can't find it, a new ChampionshipClass is created
 func (c *Championship) FindClass(name string) *ChampionshipClass {
 	for _, class := range c.Classes {

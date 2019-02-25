@@ -1712,7 +1712,12 @@ let championships = {
 
             $(this).before($cloned);
             new RaceSetup($cloned);
-        })
+        });
+
+        $document.on("click", ".btn-delete-class", function(e) {
+            e.preventDefault();
+            $(this).closest(".race-setup").remove();
+        });
     },
 };
 
