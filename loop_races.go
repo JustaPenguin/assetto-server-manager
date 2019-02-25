@@ -1,10 +1,12 @@
 package servermanager
 
 import (
-	"github.com/cj123/assetto-server-manager/pkg/udp"
-	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"time"
+
+	"github.com/cj123/assetto-server-manager/pkg/udp"
+
+	"github.com/sirupsen/logrus"
 )
 
 var sessionTypes []SessionType

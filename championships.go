@@ -14,6 +14,7 @@ import (
 
 var championshipManager *ChampionshipManager
 
+// ChampionshipClassColors are sequentially selected to indicate different classes within a Championship
 var ChampionshipClassColors = []string{
 	"#9ec6f5",
 	"#91d8af",
@@ -74,10 +75,12 @@ type Championship struct {
 	Events  []*ChampionshipEvent
 }
 
+// IsMultiClass is true if the Championship has more than one Class
 func (c *Championship) IsMultiClass() bool {
 	return len(c.Classes) > 1
 }
 
+// NewChampionshipClass creates a championship class with the default points
 func NewChampionshipClass(name string) *ChampionshipClass {
 	return &ChampionshipClass{
 		Name:   name,
@@ -85,6 +88,7 @@ func NewChampionshipClass(name string) *ChampionshipClass {
 	}
 }
 
+// ChampionshipClass contains a Name, Entrants (including Cars, Skins) and Points for those Entrants
 type ChampionshipClass struct {
 	Name string
 
@@ -92,6 +96,7 @@ type ChampionshipClass struct {
 	Points   ChampionshipPoints
 }
 
+// ValidCarIDs returns a set of all cars chosen within the given class
 func (c *ChampionshipClass) ValidCarIDs() []string {
 	cars := make(map[string]bool)
 
@@ -108,6 +113,7 @@ func (c *ChampionshipClass) ValidCarIDs() []string {
 	return out
 }
 
+// EventByID finds a ChampionshipEvent by its ID string.
 func (c *Championship) EventByID(id string) (*ChampionshipEvent, error) {
 	for _, e := range c.Events {
 		if e.ID.String() == id {
@@ -138,6 +144,7 @@ func (c *Championship) ValidCarIDs() []string {
 	return out
 }
 
+// NumEntrants is the number of entrants across all Classes in a Championship.
 func (c *Championship) NumEntrants() int {
 	entrants := 0
 
@@ -325,6 +332,28 @@ type ChampionshipEvent struct {
 	CompletedTime time.Time
 }
 
+// LastSession returns the last configured session in the championship, in the following order:
+// Race, Qualifying, Practice, Booking
+func (cr *ChampionshipEvent) LastSession() SessionType {
+	if cr.HasSession(SessionTypeRace) {
+		return SessionTypeRace
+	} else if cr.HasSession(SessionTypeQualifying) {
+		return SessionTypeQualifying
+	} else if cr.HasSession(SessionTypePractice) {
+		return SessionTypePractice
+	} else {
+		return SessionTypeBooking
+	}
+}
+
+// HasSession returns true if the Championship has the specified session
+func (cr *ChampionshipEvent) HasSession(t SessionType) bool {
+	_, ok := cr.Sessions[t]
+
+	return ok
+}
+
+// InProgress indicates whether a ChampionshipEvent has been started but not stopped
 func (cr *ChampionshipEvent) InProgress() bool {
 	return !cr.StartedTime.IsZero() && cr.CompletedTime.IsZero()
 }
@@ -334,6 +363,7 @@ func (cr *ChampionshipEvent) Completed() bool {
 	return !cr.CompletedTime.IsZero()
 }
 
+// A ChampionshipSession contains information found from the live portion of the Championship tool
 type ChampionshipSession struct {
 	StartedTime   time.Time
 	CompletedTime time.Time
@@ -341,6 +371,7 @@ type ChampionshipSession struct {
 	Results *SessionResults
 }
 
+// InProgress indicates whether a ChampionshipSession has been started but not stopped
 func (ce *ChampionshipSession) InProgress() bool {
 	return !ce.StartedTime.IsZero() && ce.CompletedTime.IsZero()
 }
@@ -503,6 +534,7 @@ func championshipSubmitEventConfigurationHandler(w http.ResponseWriter, r *http.
 	}
 }
 
+// championshipStartEventHandler begins a championship event given by its ID
 func championshipStartEventHandler(w http.ResponseWriter, r *http.Request) {
 	err := championshipManager.StartEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
 
@@ -518,6 +550,7 @@ func championshipStartEventHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+// championshipDeleteEventHandler soft deletes a championship event
 func championshipDeleteEventHandler(w http.ResponseWriter, r *http.Request) {
 	err := championshipManager.DeleteEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
 
@@ -532,6 +565,7 @@ func championshipDeleteEventHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+// championshipStartPracticeEventHandler starts a Practice session for a given event
 func championshipStartPracticeEventHandler(w http.ResponseWriter, r *http.Request) {
 	err := championshipManager.StartPracticeEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
 
@@ -547,6 +581,7 @@ func championshipStartPracticeEventHandler(w http.ResponseWriter, r *http.Reques
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+// championshipCancelEventHandler stops a running championship event and clears any saved results
 func championshipCancelEventHandler(w http.ResponseWriter, r *http.Request) {
 	err := championshipManager.CancelEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
 
@@ -561,6 +596,8 @@ func championshipCancelEventHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+// championshipCancelEventHandler stops a running championship event and clears any saved results
+// then starts the event again.
 func championshipRestartEventHandler(w http.ResponseWriter, r *http.Request) {
 	err := championshipManager.RestartEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
 
