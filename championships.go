@@ -108,17 +108,6 @@ func (c *ChampionshipClass) ValidCarIDs() []string {
 	return out
 }
 
-// FindClass looks for a class with a name. If it can't find it, a new ChampionshipClass is created
-func (c *Championship) FindClass(name string) *ChampionshipClass {
-	for _, class := range c.Classes {
-		if class.Name == name {
-			return class
-		}
-	}
-
-	return NewChampionshipClass(name)
-}
-
 func (c *Championship) EventByID(id string) (*ChampionshipEvent, error) {
 	for _, e := range c.Events {
 		if e.ID.String() == id {
