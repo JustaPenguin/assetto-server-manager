@@ -14,10 +14,16 @@ script:
   - go test
   - cd cmd/server-manager
   - cp config.example.yml config.yml
+  # windows icon
+  - go get -u github.com/akavel/rsrc
+  - rsrc -ico misc/windows/icon.ico -arch amd64 -o ./cmd/server-manager/rsrc.syso
+
+  # asset embed
   - go get -u github.com/mjibson/esc
   - go generate ./...
-  - GOOS=linux GOARCH=amd64 go build
-  - GOOS=windows GOARCH=amd64 go build
+
+  - GOOS=linux GOARCH=amd64 go build -ldflags="-s -w"
+  - GOOS=windows GOARCH=amd64 go build -ldflags="-s -w"
   - zip -r server-manager_windows_$TRAVIS_TAG.zip server-manager.exe config.yml
   - zip -r server-manager_linux_$TRAVIS_TAG.zip server-manager config.yml
 
