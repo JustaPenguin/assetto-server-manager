@@ -1,11 +1,18 @@
 {{ define "title" }}Championships{{ end }}
 
 {{ define "content" }}
-    <h1 class="text-center">Championships</h1>
-
-    <p>You currently have {{ len .championships }} championships configured.</p>
-
     {{ $writeAccess := WriteAccess }}
+
+    <div class="row">
+        <div class="col-4"></div>
+        <div class="col-4"><h1 class="text-center">Championships</h1></div>
+        <div class="col-4">
+            {{ if $writeAccess }}
+                <a href="/championships/new" class="btn btn-success float-right">Create a new Championship</a>
+                <div class="clearfix mb-5"></div>
+            {{ end }}
+        </div>
+    </div>
 
     <table class="table table-bordered table-striped">
         <tr>
@@ -43,10 +50,6 @@
             </tr>
         {{ end }}
     </table>
-
-    {{ if $writeAccess }}
-        <a href="/championships/new" class="btn btn-success float-right">Create a new Championship</a>
-    {{ end }}
 
     <div class="clearfix"></div>
 {{ end }}
