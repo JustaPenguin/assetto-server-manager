@@ -122,7 +122,7 @@ func (sc ServerConfig) Write() error {
 type GlobalServerConfig struct {
 	Name                      string `ini:"NAME" help:"Server Name"`
 	Password                  string `ini:"PASSWORD" input:"password" help:"Server password"`
-	AdminPassword             string `ini:"ADMIN_PASSWORD" input:"password" help:"The password needed to be recognized as server administrator: you can join the server using it to be recognized automatically. Write on the game's chat /help to see the command list"`
+	AdminPassword             string `ini:"ADMIN_PASSWORD" input:"password" help:"The password needed to be recognized as server administrator: you can join the server using it to be recognized automatically. Type /help in the game's chat to see the command list"`
 	UDPPort                   int    `ini:"UDP_PORT" min:"0" max:"65535" help:"UDP port number: open this port on your server's firewall"`
 	TCPPort                   int    `ini:"TCP_PORT" min:"0" max:"65535" help:"TCP port number: open this port on your server's firewall"`
 	HTTPPort                  int    `ini:"HTTP_PORT" min:"0" max:"65535" help:"Lobby port number: open these ports (both UDP and TCP) on your server's firewall"`
@@ -136,7 +136,7 @@ type GlobalServerConfig struct {
 	KickQuorum                int    `ini:"KICK_QUORUM" help:"Percentage that is required for the kick vote to pass"`
 	VotingQuorum              int    `ini:"VOTING_QUORUM" min:"0" max:"100" help:"Percentage that is required for the session vote to pass"`
 	VoteDuration              int    `ini:"VOTE_DURATION" min:"0" help:"Vote length in seconds"`
-	BlacklistMode             int    `ini:"BLACKLIST_MODE" min:"0" max:"2" help:"Ban player -> 0 = normal kick, rejoin possible, 1 = until server restart WARNING: 2 is not more valid since kick_id and ban_id are two different commands."`
+	BlacklistMode             int    `ini:"BLACKLIST_MODE" min:"0" max:"2" help:"0 = normal kick, kicked player can rejoin; 1 = kicked player cannot rejoin until server restart; 2 = kick player and add to blacklist.txt, kicked player can not rejoin unless removed from blacklist (Better to use ban_id command rather than set this)."`
 	NumberOfThreads           int    `ini:"NUM_THREADS" min:"1" help:"Number of threads to run on"`
 	WelcomeMessage            string `ini:"WELCOME_MESSAGE" help:"Path to the file that contains the server welcome message"`
 	ResultScreenTime          int    `ini:"RESULT_SCREEN_TIME" help:"Seconds of result screen between racing sessions"`
