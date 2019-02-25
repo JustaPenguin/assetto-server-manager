@@ -75,10 +75,10 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Get("/live-timing", liveTimingHandler)
 		r.Get("/live-timing/get", liveTimingGetHandler)
 
-		FileServer(r, "/static", fs)
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")))
 		FileServer(r, "/results/download", http.Dir(filepath.Join(ServerInstallPath, "results")))
 	})
+
 
 	// writers
 	r.Group(func(r chi.Router) {
@@ -130,6 +130,8 @@ func Router(fs http.FileSystem) chi.Router {
 
 		r.HandleFunc("/server-options", serverOptionsHandler)
 	})
+
+	FileServer(r, "/static", fs)
 
 	return r
 }
