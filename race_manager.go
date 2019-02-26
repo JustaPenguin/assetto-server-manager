@@ -473,6 +473,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 				CMWFXTimeMulti:     timeMultiInt,
 				CMWFXUseCustomDate: 1,
 				CMWFXDate:          int(startTimeFinal.Unix()),
+				CMWFXDateUnModified: int(startTimeZoned.Unix()),
 			})
 		}
 	}
@@ -633,6 +634,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 	for _, weather := range race.CurrentRaceConfig.Weather {
 		if weather.CMWFXDate == 0 {
 			weather.CMWFXDate = int(time.Now().Unix())
+			weather.CMWFXDateUnModified = int(time.Now().Unix())
 		}
 	}
 
