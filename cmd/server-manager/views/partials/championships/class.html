@@ -1,0 +1,130 @@
+{{ define "championship-class" }}
+<div class="card mt-3 mb-3 border-primary race-setup">
+    <div class="card-header">
+        <strong>Class</strong>
+
+        <a class="text-danger btn-delete-class float-right" href="#"><i class="fas fa-trash"></i></a>
+    </div>
+
+    {{ $class := .Class }}
+
+    <div class="card-body" id="entrants">
+
+        <div class="form-group row">
+            <label for="ClassName" class="col-sm-3 col-form-label">Class Name</label>
+
+            <div class="col-sm-9">
+                <input type="text" class="form-control" id="ClassName" name="ClassName"
+                       placeholder="My awesome class" {{ with $class.Name }} value="{{.}}" {{ end }}>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label for="Cars" class="col-sm-3 col-form-label">
+                Cars
+            </label>
+
+            <div class="col-sm-9">
+                <select multiple class="form-control Cars" name="Cars" size="15">
+
+                    {{ range $index, $car := .CarOpts }}
+
+                        {{ $selected := false }}
+
+                        {{ range $j, $selectedCar := $class.ValidCarIDs }}
+                            {{ if eq $selectedCar $car.Name }}
+                                {{ $selected = true }}
+                            {{ end }}
+                        {{ end }}
+
+                        <option value="{{ $car.Name }}" {{ if $selected }} selected="selected" {{ end }}>{{ prettify $car.Name true }}</option>
+                    {{ end }}
+                </select>
+            </div>
+        </div>
+
+        <hr>
+
+        <div id="entrantTemplate" class="entrant">
+            {{ template "entrant" }}
+        </div>
+
+        {{ range $index, $entrant := $class.Entrants }}
+            <div class="entrant">
+                {{ template "entrant" $entrant }}
+            </div>
+        {{ else }}
+            <div class="entrant">
+                {{ template "entrant" }}
+            </div>
+        {{ end }}
+
+        <div class="float-right">
+            <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
+
+            <button class="btn btn-warning addEntrant">Add Entrant(s)</button>
+        </div>
+
+        <div class="clearfix"></div>
+
+        <input type="hidden" class="totalNumEntrants" name="EntryList.NumEntrants" value="{{ with $class.Entrants }}{{ len $class.Entrants }}{{ else }}1{{ end }}">
+
+        <div class="mt-5 points-parent">
+
+            <h3>Points</h3>
+
+            {{ if and .IsEditing $class.Entrants }}
+
+                {{ $entrantCount := int64 1 }}
+
+                {{ range $index, $entrant := $class.Entrants }}
+                    <div class="form-group row points-place">
+                        <label for="Points.Place" class="col-sm-3 col-form-label">
+                            {{ $entrantCount }}{{ ordinal $entrantCount }} Place
+                        </label>
+
+                        <div class="col-sm-9">
+                            <input type="number" class="form-control" name="Points.Place"
+                                   placeholder="Points" value="{{ index $class.Points.Places (sub $entrantCount 1) }}">
+                        </div>
+                    </div>
+
+                    {{ $entrantCount = add $entrantCount 1 }}
+                {{ end }}
+            {{ else }}
+                <div class="form-group row points-place">
+                    <label for="Points.Place" class="col-sm-3 col-form-label">
+                        1st Place
+                    </label>
+
+                    <div class="col-sm-9">
+                        <input type="number" class="form-control" name="Points.Place"
+                               placeholder="Points" value="{{ index .DefaultPoints.Places 0 }}">
+                    </div>
+                </div>
+            {{ end }}
+        </div>
+
+        <hr>
+
+        <div class="form-group row">
+            <label for="Points.BestLap" class="col-sm-3 col-form-label">Best Lap</label>
+
+            <div class="col-sm-9">
+                <input type="number" class="form-control" name="Points.BestLap"
+                       placeholder="Points" value="{{ with $class.Points.BestLap }}{{ . }}{{ else }}0{{ end }}">
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="Points.PolePosition" class="col-sm-3 col-form-label">Pole Position</label>
+
+
+            <div class="col-sm-9">
+                <input type="number" class="form-control" name="Points.PolePosition"
+                       placeholder="Points" value="{{ with $class.Points.PolePosition }}{{ . }}{{ else }}0{{ end }}">
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ end }}

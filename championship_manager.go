@@ -98,26 +98,40 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		if err != nil {
 			return nil, edited, err
 		}
+
+		championship.Classes = []*ChampionshipClass{}
 	} else {
 		// new championship
 		championship = NewChampionship("")
 	}
 
 	championship.Name = r.FormValue("ChampionshipName")
-	championship.Entrants, err = cm.BuildEntryList(r)
 
-	if err != nil {
-		return nil, edited, err
+	previousNumEntrants := 0
+
+	for i := 0; i < len(r.Form["ClassName"]); i++ {
+		class := NewChampionshipClass(r.Form["ClassName"][i])
+
+		numEntrantsForClass := formValueAsInt(r.Form["EntryList.NumEntrants"][i])
+
+		class.Entrants, err = cm.BuildEntryList(r, previousNumEntrants, numEntrantsForClass)
+
+		if err != nil {
+			return nil, edited, err
+		}
+
+		class.Points.Places = make([]int, 0)
+
+		for i := previousNumEntrants; i < previousNumEntrants+numEntrantsForClass; i++ {
+			class.Points.Places = append(class.Points.Places, formValueAsInt(r.Form["Points.Place"][i]))
+		}
+
+		class.Points.PolePosition = formValueAsInt(r.Form["Points.PolePosition"][i])
+		class.Points.BestLap = formValueAsInt(r.Form["Points.BestLap"][i])
+
+		previousNumEntrants += numEntrantsForClass
+		championship.AddClass(class)
 	}
-
-	championship.Points.Places = make([]int, len(r.Form["Points.Place"]))
-
-	for i := 0; i < len(r.Form["Points.Place"]); i++ {
-		championship.Points.Places[i] = formValueAsInt(r.Form["Points.Place"][i])
-	}
-
-	championship.Points.PolePosition = formValueAsInt(r.FormValue("Points.PolePosition"))
-	championship.Points.BestLap = formValueAsInt(r.FormValue("Points.BestLap"))
 
 	return championship, edited, cm.UpsertChampionship(championship)
 }
@@ -261,11 +275,11 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 	}
 
 	raceSetup.LoopMode = 1
-	raceSetup.MaxClients = len(championship.Entrants)
+	raceSetup.MaxClients = championship.NumEntrants()
 
 	config.CurrentRaceConfig = raceSetup
 
-	return cm.applyConfigAndStart(config, championship.Entrants, false)
+	return cm.applyConfigAndStart(config, championship.AllEntrants(), false)
 }
 
 func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string) error {
@@ -283,7 +297,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 
 	// championship events always have locked entry lists
 	event.RaceSetup.LockedEntryList = 1
-	event.RaceSetup.MaxClients = len(championship.Entrants)
+	event.RaceSetup.MaxClients = championship.NumEntrants()
 
 	config := ConfigIniDefault
 	config.CurrentRaceConfig = event.RaceSetup
@@ -294,7 +308,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 		EventID:        event.ID,
 	}
 
-	return cm.applyConfigAndStart(config, championship.Entrants, false)
+	return cm.applyConfigAndStart(config, championship.AllEntrants(), false)
 }
 
 func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
@@ -437,8 +451,10 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			return
 		}
 
-		if cm.activeChampionship.SessionType == SessionTypeRace {
-			logrus.Infof("End of Race Session detected. Marking championship event %s complete", cm.activeChampionship.EventID.String())
+		lastSession := championship.Events[currentEventIndex].LastSession()
+
+		if cm.activeChampionship.SessionType == lastSession {
+			logrus.Infof("End of %s Session detected. Marking championship event %s complete", lastSession.String(), cm.activeChampionship.EventID.String())
 			championship.Events[currentEventIndex].CompletedTime = time.Now()
 
 			// clear out all current session stuff

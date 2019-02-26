@@ -21,7 +21,7 @@
         <p>Configure an Event for the <strong>{{ .Championship.Name }}</strong> Championship.</p>
     {{ end }}
 
-    <form method="post" {{ if .IsChampionship }} action="/championship/{{ .Championship.ID.String }}/event/submit" {{ else }} action="/custom/new/submit" {{ end}} data-safe-submit>
+    <form class="race-setup" method="post" {{ if .IsChampionship }} action="/championship/{{ .Championship.ID.String }}/event/submit" {{ else }} action="/custom/new/submit" {{ end}} data-safe-submit>
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">
@@ -86,7 +86,7 @@
                         </label>
 
                         <div class="col-sm-10">
-                            <select multiple required class="form-control" name="Cars" id="Cars" size="15">
+                            <select multiple required class="form-control Cars" id="Cars" name="Cars" size="15">
                                 {{ range $index, $car := .CarOpts }}
 
                                     {{ $selected := false }}
@@ -102,7 +102,12 @@
                             </select>
                         </div>
                     </div>
-
+                {{ else }}
+                    <select multiple class="Cars" id="Cars" name="Cars" style="display: none;">
+                        {{ range $index, $car := $.Championship.ValidCarIDs }}
+                            <option value="{{ $car }}" selected="selected">{{ prettify $car true }}</option>
+                        {{ end }}
+                    </select>
                 {{ end }}
             </div>
         </div>
@@ -560,10 +565,14 @@
                 {{ end }}
 
                 <div class="float-right">
-                    <input id="numEntrantsToAdd" class="form-control" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
+                    <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
 
-                    <button class="btn btn-warning" id="addEntrant">Add Entrant(s)</button>
+                    <button class="btn btn-warning addEntrant">Add Entrant(s)</button>
                 </div>
+
+
+                <!-- @TODO populate me -->
+                <input type="hidden" class="totalNumEntrants" name="EntryList.NumEntrants" value="{{ if gt 0 (len .CurrentEntrants) }}{{ len .CurrentEntrants }}{{ else }}1{{ end }}">
 
                 <div class="clearfix"></div>
             </div>

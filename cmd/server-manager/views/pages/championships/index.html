@@ -19,6 +19,7 @@
             <th>Name</th>
             <th>Progress</th>
             <th>Number of Events</th>
+            <th>Number of Classes</th>
             <th>Number of Entrants</th>
             <th>Actions</th>
         </tr>
@@ -35,7 +36,10 @@
                     {{ len $championship.Events }}
                 </td>
                 <td>
-                    {{ len $championship.Entrants }}
+                    {{ len $championship.Classes }}
+                </td>
+                <td>
+                    {{ $championship.NumEntrants }}
                 </td>
                 <td>
                     <a class="btn btn-sm btn-success" href="/championship/{{ $championship.ID }}">View</a>

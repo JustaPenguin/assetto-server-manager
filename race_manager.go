@@ -305,7 +305,7 @@ func formValueAsInt(val string) int {
 	return int(i)
 }
 
-func (rm *RaceManager) BuildEntryList(r *http.Request) (EntryList, error) {
+func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (EntryList, error) {
 	entryList := EntryList{}
 
 	allCars, err := ListCars()
@@ -316,7 +316,7 @@ func (rm *RaceManager) BuildEntryList(r *http.Request) (EntryList, error) {
 
 	carMap := allCars.AsMap()
 
-	for i := 0; i < len(r.Form["EntryList.Name"]); i++ {
+	for i := start; i < start+length; i++ {
 		model := r.Form["EntryList.Car"][i]
 		skin := r.Form["EntryList.Skin"][i]
 
@@ -456,7 +456,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 			timeMultiInt := formValueAsInt(timeMulti)
 
 			// This is probably a bit hacky, and may need removing with a future Sol update
-			startTimeFinal := startTimeZoned.Add(-(time.Duration(timeMultiInt)*5*time.Hour))
+			startTimeFinal := startTimeZoned.Add(-(time.Duration(timeMultiInt) * 5 * time.Hour))
 
 			raceConfig.AddWeather(&WeatherConfig{
 				Graphics: weatherName + "_type=" + strconv.Itoa(WFXType) + "_time=0_mult=" +
@@ -494,7 +494,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 	completeConfig := ConfigIniDefault
 	completeConfig.CurrentRaceConfig = *raceConfig
 
-	entryList, err := rm.BuildEntryList(r)
+	entryList, err := rm.BuildEntryList(r, 0, len(r.Form["EntryList.Name"]))
 
 	if err != nil {
 		return err
