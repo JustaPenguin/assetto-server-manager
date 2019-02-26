@@ -466,13 +466,13 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 				VariationAmbient:       formValueAsInt(r.Form["VariationAmbient"][i]),
 				VariationRoad:          formValueAsInt(r.Form["VariationRoad"][i]),
 
-				CMGraphics:         weatherName,
-				CMWFXType:          WFXType,
-				CMWFXUseCustomTime: 1,
-				CMWFXTime:          0,
-				CMWFXTimeMulti:     timeMultiInt,
-				CMWFXUseCustomDate: 1,
-				CMWFXDate:          int(startTimeFinal.Unix()),
+				CMGraphics:          weatherName,
+				CMWFXType:           WFXType,
+				CMWFXUseCustomTime:  1,
+				CMWFXTime:           0,
+				CMWFXTimeMulti:      timeMultiInt,
+				CMWFXUseCustomDate:  1,
+				CMWFXDate:           int(startTimeFinal.Unix()),
 				CMWFXDateUnModified: int(startTimeZoned.Unix()),
 			})
 		}
