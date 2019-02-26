@@ -35,8 +35,8 @@ script:
 
   - GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${TRAVIS_TAG}"
   - GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${TRAVIS_TAG}"
-  - zip -r server-manager_windows_$TRAVIS_TAG.zip server-manager.exe config.yml README.md LICENSE
-  - zip -r server-manager_linux_$TRAVIS_TAG.zip server-manager config.yml README.md LICENSE
+  - zip -r server-manager_windows_$TRAVIS_TAG.zip server-manager.exe config.yml ../../README.md ../../LICENSE
+  - zip -r server-manager_linux_$TRAVIS_TAG.zip server-manager config.yml ../../README.md ../../LICENSE
 
 deploy:
   provider: releases
