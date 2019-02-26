@@ -26,7 +26,7 @@ ADD . ${BUILD_DIR}
 WORKDIR ${BUILD_DIR}/cmd/server-manager
 RUN go get github.com/mjibson/esc
 RUN go generate ./...
-RUN go build
+RUN export BUILD_TIME=`date +'%s'`; go build -ldflags "-s -w -X github.com/cj123/assetto-server-manager.BuildTime=$BUILD_TIME"
 RUN mv server-manager /usr/bin/
 
 RUN useradd -ms /bin/bash ${SERVER_USER}
