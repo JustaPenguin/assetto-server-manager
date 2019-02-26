@@ -362,13 +362,15 @@ class RaceSetup {
             }
         }
 
+        let that = this;
+
         this.$tyresDropdown.find("option").each(function (index, elem) {
             let $elem = $(elem);
 
             if (!allValidTyres.has($elem.val())) {
                 $elem.remove();
 
-                this.$tyresDropdown.multiSelect('refresh');
+                that.$tyresDropdown.multiSelect('refresh');
             }
         });
     }
