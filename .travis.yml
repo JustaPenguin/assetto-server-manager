@@ -4,10 +4,12 @@ go:
 
 sudo: required
 
+before_install:
+  - nvm install 11
+  - nvm use 11
+
 install:
-  - sudo apt-get update && sudo apt-get install -y nodejs
   - node -v
-  - npm -v
   - git --version
   - go version
 
@@ -23,6 +25,9 @@ script:
 
   - cd cmd/server-manager
   - cp config.example.yml config.yml
+
+  - npm install
+  - node_modules/.bin/babel javascript/manager.js -o static/manager.js
 
   # asset embed
   - go get -u github.com/mjibson/esc
