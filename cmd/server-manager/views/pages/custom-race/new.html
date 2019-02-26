@@ -907,9 +907,9 @@
                                         </div>
 
                                         <div class="form-group row">
-                                            <label class="col-sm-3 col-form-label col-form-label-sm" for="Graphics{{ $index }}">Graphics</label>
+                                            <label class="col-sm-3 col-form-label col-form-label-sm" for="Graphics">Graphics</label>
 
-                                            <select name="Graphics{{ $index }}" id="Graphics{{ $index }}" class="form-control form-control-sm weather-graphics col-sm-9">
+                                            <select name="Graphics" id="Graphics" class="form-control form-control-sm weather-graphics col-sm-9">
                                                 {{ range $weatherKey, $weatherName := $weatherOptions }}
                                                     <option value="{{ $weatherKey }}" {{ if eq $weatherKey ($weather.TrimName $weather.Graphics) }} selected="selected" {{ end }}>
                                                         {{ $weatherName }}
@@ -1032,11 +1032,11 @@
                     <div class="col-sm-9">
                         <select multiple class="form-control" id="LegalTyres" name="LegalTyres">
                             {{ range $index, $tyre := varSplit $f.LegalTyres }}
-                                <option value="{{ $tyre }}" selected="selected">{{ prettify ($allTyres.Name $tyre (varSplit $f.Cars)) false }} ({{ $tyre }}){{ $allTyres.CarsForTyre $tyre (varSplit $f.Cars) }}</option>
+                                <option value="{{ $tyre }}" selected="selected">{{ prettify ($allTyres.Name $tyre (varSplit $f.Cars)) false }} ({{ $tyre }})</option>
                             {{ end }}
 
                             {{ range $tyre, $found := .DeselectedTyres }}
-                                <option value="{{ $tyre }}">{{ prettify ($allTyres.Name $tyre (varSplit $f.Cars)) false }} ({{ $tyre }}){{ $allTyres.CarsForTyre $tyre (varSplit $f.Cars) }}</option>
+                                <option value="{{ $tyre }}">{{ prettify ($allTyres.Name $tyre (varSplit $f.Cars)) false }} ({{ $tyre }})</option>
                             {{ end }}
                         </select>
 
