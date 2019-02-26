@@ -37,132 +37,29 @@
             </div>
         </div>
 
-        <div class="card mt-3 border-secondary">
-            <div class="card-header">
-                <strong>Entrants</strong>
-            </div>
-
-            <div class="card-body" id="entrants">
-
-
-                <div class="form-group row">
-                    <label for="Cars" class="col-sm-3 col-form-label">
-                        Cars
-                    </label>
-
-                    <div class="col-sm-9">
-                        <select multiple required class="form-control" name="Cars" id="Cars" size="15">
-
-                            {{ range $index, $car := .CarOpts }}
-
-                                {{ $selected := false }}
-
-                                {{ range $j, $selectedCar := $f.ValidCarIDs }}
-                                    {{ if eq $selectedCar $car.Name }}
-                                        {{ $selected = true }}
-                                    {{ end }}
-                                {{ end }}
-
-                                <option value="{{ $car.Name }}" {{ if $selected }} selected="selected" {{ end }}>{{ prettify $car.Name true }}</option>
-                            {{ end }}
-                        </select>
-                    </div>
-                </div>
-
-                <hr>
-
-                <div id="entrantTemplate" class="entrant">
-                    {{ template "entrant" }}
-                </div>
-
-                {{ range $index, $entrant := $f.Entrants }}
-                    <div class="entrant">
-                        {{ template "entrant" $entrant }}
-                    </div>
-                {{ else }}
-                    <div class="entrant">
-                        {{ template "entrant" }}
-                    </div>
-                {{ end }}
-
-                <div class="float-right">
-                    <input id="numEntrantsToAdd" class="form-control" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
-
-                    <button class="btn btn-warning" id="addEntrant">Add Entrant(s)</button>
-                </div>
-
-                <div class="clearfix"></div>
-            </div>
+        <div id="class-template" style="display: none;">
+            {{ template "championship-class" . }}
         </div>
 
-        <div class="card mt-3 border-secondary">
-            <div class="card-header">
-                <strong>Points</strong>
-            </div>
-
-            <div class="card-body">
-                <div id="points">
-
-                    {{ if .IsEditing }}
-
-                        {{ $entrantCount := int64 1 }}
-
-                        {{ range $index, $entrant := $f.Entrants }}
-                            <div class="form-group row points-place">
-                                <label for="Points.Place" class="col-sm-3 col-form-label">
-                                    {{ $entrantCount }}{{ ordinal $entrantCount }} Place
-                                </label>
-
-                                <div class="col-sm-9">
-                                    <input type="number" class="form-control" id="Points.Place" name="Points.Place"
-                                           placeholder="Points" value="{{ index $f.Points.Places (sub $entrantCount 1) }}">
-                                </div>
-                            </div>
-
-                            {{ $entrantCount = add $entrantCount 1 }}
-                        {{ end }}
-                    {{ else }}
-                        <div class="form-group row points-place">
-                            <label for="Points.Place" class="col-sm-3 col-form-label">
-                                1st Place
-                            </label>
-
-                            <div class="col-sm-9">
-                                <input type="number" class="form-control" id="Points.Place" name="Points.Place"
-                                       placeholder="Points" value="{{ index .DefaultPoints.Places 0 }}">
-                            </div>
-                        </div>
-                    {{ end }}
-                </div>
-
-                <hr>
-
-                <div class="form-group row">
-                    <label for="Points.BestLap" class="col-sm-3 col-form-label">Best Lap</label>
-
-                    <div class="col-sm-9">
-                        <input type="number" class="form-control" id="Points.BestLap" name="Points.BestLap"
-                               placeholder="Points" value="{{ with $f.Points.BestLap }}{{ . }}{{ else }}0{{ end }}">
-                    </div>
-                </div>
-                <div class="form-group row">
-                    <label for="Points.PolePosition" class="col-sm-3 col-form-label">Pole Position</label>
+        {{ range $classIndex, $class := $f.Classes }}
+            {{ template "championship-class" dict "IsEditing" $.IsEditing "CarOpts" $.CarOpts "Championship" $.Current "Class" $class "DefaultPoints" $.DefaultPoints }}
+        {{ else }}
+            {{ template "championship-class" . }}
+        {{ end }}
 
 
-                    <div class="col-sm-9">
-                        <input type="number" class="form-control" id="Points.PolePosition" name="Points.PolePosition"
-                               placeholder="Points" value="{{ with $f.Points.PolePosition }}{{ . }}{{ else }}0{{ end }}">
-                    </div>
-                </div>
-            </div>
+        <div class="mt-3">
+            <button id="addClass" class="btn btn-primary float-right">Add another class</button>
         </div>
-
+        <div class="clearfix"></div>
 
         {{ if .IsEditing }}
             <input type="hidden" name="Editing" id="Editing" value="{{ $f.ID.String }}">
             <button type="submit" class="btn btn-success mt-5 float-right">Edit Championship</button>
         {{ else }}
-            <button type="submit" class="btn btn-success mt-5 float-right">Add an Event</button>
+            <div class="mt-5 float-right">
+                <button type="submit" name="action" value="addEvent" class="btn btn-success">Add an Event</button>
+            </div>
         {{ end }}
 
         <div class="clearfix"></div>
@@ -175,4 +72,5 @@
         const availableCars = {{ jsonEncode .CarOpts.AsMap }};
         const defaultPoints = {{ jsonEncode .DefaultPoints }};
     </script>
+
 {{ end }}

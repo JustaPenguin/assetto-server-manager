@@ -14,6 +14,20 @@ import (
 
 var championshipManager *ChampionshipManager
 
+// ChampionshipClassColors are sequentially selected to indicate different classes within a Championship
+var ChampionshipClassColors = []string{
+	"#9ec6f5",
+	"#91d8af",
+	"#dba8ed",
+	"#e3a488",
+	"#e3819a",
+	"#908ba1",
+	"#a2b5b9",
+	"#a681b4",
+	"#c1929d",
+	"#999ecf",
+}
+
 // DefaultChampionshipPoints is the Formula 1 points system.
 var DefaultChampionshipPoints = ChampionshipPoints{
 	Places: []int{
@@ -45,7 +59,6 @@ func NewChampionship(name string) *Championship {
 		ID:      uuid.New(),
 		Name:    name,
 		Created: time.Now(),
-		Points:  DefaultChampionshipPoints,
 	}
 }
 
@@ -58,12 +71,49 @@ type Championship struct {
 	Updated time.Time
 	Deleted time.Time
 
-	Entrants EntryList
-
-	Events []*ChampionshipEvent
-	Points ChampionshipPoints
+	Classes []*ChampionshipClass
+	Events  []*ChampionshipEvent
 }
 
+// IsMultiClass is true if the Championship has more than one Class
+func (c *Championship) IsMultiClass() bool {
+	return len(c.Classes) > 1
+}
+
+// NewChampionshipClass creates a championship class with the default points
+func NewChampionshipClass(name string) *ChampionshipClass {
+	return &ChampionshipClass{
+		Name:   name,
+		Points: DefaultChampionshipPoints,
+	}
+}
+
+// ChampionshipClass contains a Name, Entrants (including Cars, Skins) and Points for those Entrants
+type ChampionshipClass struct {
+	Name string
+
+	Entrants EntryList
+	Points   ChampionshipPoints
+}
+
+// ValidCarIDs returns a set of all cars chosen within the given class
+func (c *ChampionshipClass) ValidCarIDs() []string {
+	cars := make(map[string]bool)
+
+	for _, e := range c.Entrants {
+		cars[e.Model] = true
+	}
+
+	var out []string
+
+	for car := range cars {
+		out = append(out, car)
+	}
+
+	return out
+}
+
+// EventByID finds a ChampionshipEvent by its ID string.
 func (c *Championship) EventByID(id string) (*ChampionshipEvent, error) {
 	for _, e := range c.Events {
 		if e.ID.String() == id {
@@ -79,8 +129,10 @@ func (c *Championship) EventByID(id string) (*ChampionshipEvent, error) {
 func (c *Championship) ValidCarIDs() []string {
 	cars := make(map[string]bool)
 
-	for _, e := range c.Entrants {
-		cars[e.Model] = true
+	for _, class := range c.Classes {
+		for _, e := range class.Entrants {
+			cars[e.Model] = true
+		}
 	}
 
 	var out []string
@@ -90,6 +142,35 @@ func (c *Championship) ValidCarIDs() []string {
 	}
 
 	return out
+}
+
+// NumEntrants is the number of entrants across all Classes in a Championship.
+func (c *Championship) NumEntrants() int {
+	entrants := 0
+
+	for _, class := range c.Classes {
+		entrants += len(class.Entrants)
+	}
+
+	return entrants
+}
+
+// AllEntrants returns the list of all entrants in the championship (across ALL classes)
+func (c *Championship) AllEntrants() EntryList {
+	e := make(EntryList)
+
+	for _, class := range c.Classes {
+		for _, entrant := range class.Entrants {
+			e.Add(entrant)
+		}
+	}
+
+	return e
+}
+
+// AddClass to the championship
+func (c *Championship) AddClass(class *ChampionshipClass) {
+	c.Classes = append(c.Classes, class)
 }
 
 // Progress of the Championship as a percentage
@@ -118,7 +199,7 @@ type ChampionshipStanding struct {
 }
 
 // PointForPos uses the Championship's Points to determine what number should be awarded to a given position
-func (c *Championship) PointForPos(i int) int {
+func (c *ChampionshipClass) PointForPos(i int) int {
 	if i >= len(c.Points.Places) {
 		return 0
 	}
@@ -127,12 +208,12 @@ func (c *Championship) PointForPos(i int) int {
 }
 
 // Standings returns the current Driver Standings for the Championship.
-func (c *Championship) Standings() []*ChampionshipStanding {
+func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*ChampionshipStanding {
 	var out []*ChampionshipStanding
 
 	entrants := make(map[string]*ChampionshipStanding)
 
-	if len(c.Events) > 0 {
+	if len(events) > 0 {
 		for _, entrant := range c.Entrants {
 			if entrants[entrant.GUID] == nil {
 				entrants[entrant.GUID] = &ChampionshipStanding{
@@ -142,7 +223,7 @@ func (c *Championship) Standings() []*ChampionshipStanding {
 		}
 	}
 
-	for _, event := range c.Events {
+	for _, event := range events {
 		qualifying, qualifyingOK := event.Sessions[SessionTypeQualifying]
 
 		if qualifyingOK && qualifying.Results != nil {
@@ -202,10 +283,10 @@ type TeamStanding struct {
 }
 
 // TeamStandings returns the current position of Teams in the Championship.
-func (c *Championship) TeamStandings() []*TeamStanding {
+func (c *ChampionshipClass) TeamStandings(events []*ChampionshipEvent) []*TeamStanding {
 	teams := make(map[string]int)
 
-	for _, driver := range c.Standings() {
+	for _, driver := range c.Standings(events) {
 		if _, ok := teams[driver.Entrant.Team]; !ok {
 			teams[driver.Entrant.Team] = driver.Points
 		} else {
@@ -251,6 +332,28 @@ type ChampionshipEvent struct {
 	CompletedTime time.Time
 }
 
+// LastSession returns the last configured session in the championship, in the following order:
+// Race, Qualifying, Practice, Booking
+func (cr *ChampionshipEvent) LastSession() SessionType {
+	if cr.HasSession(SessionTypeRace) {
+		return SessionTypeRace
+	} else if cr.HasSession(SessionTypeQualifying) {
+		return SessionTypeQualifying
+	} else if cr.HasSession(SessionTypePractice) {
+		return SessionTypePractice
+	} else {
+		return SessionTypeBooking
+	}
+}
+
+// HasSession returns true if the Championship has the specified session
+func (cr *ChampionshipEvent) HasSession(t SessionType) bool {
+	_, ok := cr.Sessions[t]
+
+	return ok
+}
+
+// InProgress indicates whether a ChampionshipEvent has been started but not stopped
 func (cr *ChampionshipEvent) InProgress() bool {
 	return !cr.StartedTime.IsZero() && cr.CompletedTime.IsZero()
 }
@@ -260,6 +363,7 @@ func (cr *ChampionshipEvent) Completed() bool {
 	return !cr.CompletedTime.IsZero()
 }
 
+// A ChampionshipSession contains information found from the live portion of the Championship tool
 type ChampionshipSession struct {
 	StartedTime   time.Time
 	CompletedTime time.Time
@@ -267,6 +371,7 @@ type ChampionshipSession struct {
 	Results *SessionResults
 }
 
+// InProgress indicates whether a ChampionshipSession has been started but not stopped
 func (ce *ChampionshipSession) InProgress() bool {
 	return !ce.StartedTime.IsZero() && ce.CompletedTime.IsZero()
 }
@@ -429,6 +534,7 @@ func championshipSubmitEventConfigurationHandler(w http.ResponseWriter, r *http.
 	}
 }
 
+// championshipStartEventHandler begins a championship event given by its ID
 func championshipStartEventHandler(w http.ResponseWriter, r *http.Request) {
 	err := championshipManager.StartEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
 
@@ -444,6 +550,7 @@ func championshipStartEventHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+// championshipDeleteEventHandler soft deletes a championship event
 func championshipDeleteEventHandler(w http.ResponseWriter, r *http.Request) {
 	err := championshipManager.DeleteEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
 
@@ -458,6 +565,7 @@ func championshipDeleteEventHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+// championshipStartPracticeEventHandler starts a Practice session for a given event
 func championshipStartPracticeEventHandler(w http.ResponseWriter, r *http.Request) {
 	err := championshipManager.StartPracticeEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
 
@@ -473,6 +581,7 @@ func championshipStartPracticeEventHandler(w http.ResponseWriter, r *http.Reques
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+// championshipCancelEventHandler stops a running championship event and clears any saved results
 func championshipCancelEventHandler(w http.ResponseWriter, r *http.Request) {
 	err := championshipManager.CancelEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
 
@@ -487,6 +596,8 @@ func championshipCancelEventHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+// championshipCancelEventHandler stops a running championship event and clears any saved results
+// then starts the event again.
 func championshipRestartEventHandler(w http.ResponseWriter, r *http.Request) {
 	err := championshipManager.RestartEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
 

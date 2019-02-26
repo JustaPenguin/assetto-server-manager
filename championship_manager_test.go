@@ -89,7 +89,9 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 
 	// make a championship
 	champ := NewChampionship("Test Championship")
-	champ.Entrants = TestEntryList
+	cl := NewChampionshipClass("Default")
+	cl.Entrants = TestEntryList
+	champ.AddClass(cl)
 
 	for range championshipEventFixtures {
 		e := NewChampionshipEvent()
