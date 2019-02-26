@@ -256,6 +256,7 @@ type WeatherConfig struct {
 	CMWFXTimeMulti     int    `ini:"__CM_WFX_TIME_MULT" help:"Time speed multiplier, default to 1x"`
 	CMWFXUseCustomDate int    `ini:"__CM_WFX_USE_CUSTOM_DATE" help:"If Sol is active then this should be too"`
 	CMWFXDate          int    `ini:"__CM_WFX_DATE" help:"Unix timestamp (UTC + 10)"`
+	CMWFXDateUnModified int   `ini:"__CM_WFX_DATE_UNMODIFIED" help:"Unix timestamp (UTC + 10), without multiplier correction"`
 }
 
 func (w WeatherConfig) UnixToTime(unix int) time.Time {
