@@ -12,7 +12,8 @@ ENV SERVER_INSTALL_DIR ${SERVER_MANAGER_DIR}/assetto
 ENV GO111MODULE on
 
 # steamcmd
-RUN apt-get update && apt-get install -y curl lib32gcc1 lib32stdc++6
+RUN curl -sL https://deb.nodesource.com/setup_11.x | bash -
+RUN apt-get update && apt-get install -y build-essential libssl-dev curl lib32gcc1 lib32stdc++6 nodejs
 RUN mkdir -p ${STEAMROOT}
 WORKDIR ${STEAMROOT}
 RUN curl -s ${STEAMCMD_URL} | tar -vxz
@@ -24,9 +25,11 @@ RUN steamcmd.sh +login anonymous +quit; exit 0
 # build
 ADD . ${BUILD_DIR}
 WORKDIR ${BUILD_DIR}/cmd/server-manager
+RUN npm install
+RUN node_modules/.bin/babel javascript/manager.js -o static/manager.js
 RUN go get github.com/mjibson/esc
 RUN go generate ./...
-RUN go build
+RUN export BUILD_TIME=`date +'%s'`; go build -ldflags "-s -w -X github.com/cj123/assetto-server-manager.BuildTime=$BUILD_TIME"
 RUN mv server-manager /usr/bin/
 
 RUN useradd -ms /bin/bash ${SERVER_USER}

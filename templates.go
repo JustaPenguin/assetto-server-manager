@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -17,6 +19,9 @@ import (
 	"github.com/mattn/go-zglob"
 	"github.com/sirupsen/logrus"
 )
+
+// BuildTime is the time Server Manager was built at
+var BuildTime string
 
 type TemplateLoader interface {
 	Init() error
@@ -133,6 +138,7 @@ func (tr *Renderer) init() error {
 		return ChampionshipClassColors[i%len(ChampionshipClassColors)]
 	}
 	funcs["dict"] = templateDict
+	funcs["asset"] = NewAssetHelper("/", "", "", map[string]string{"cb": BuildTime}).GetURL
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
@@ -308,4 +314,49 @@ func ordinal(x int64) string {
 	}
 
 	return suffix
+}
+
+type AssetHelper struct {
+	baseURL *url.URL
+	prefix  string
+	suffix  string
+	query   map[string]string
+}
+
+func NewAssetHelper(baseURL, prefix, suffix string, query map[string]string) *AssetHelper {
+	u, err := url.Parse(baseURL)
+
+	if err != nil {
+		panic("invalid base url: " + baseURL)
+	}
+
+	return &AssetHelper{
+		baseURL: u,
+		prefix:  prefix,
+		suffix:  suffix,
+		query:   query,
+	}
+}
+
+func (a *AssetHelper) GetURL(location string) string {
+	u, err := url.Parse(location)
+
+	if err != nil {
+		return location
+	}
+
+	u.Scheme = a.baseURL.Scheme
+	u.Host = a.baseURL.Host
+	u.Path = path.Join(a.prefix, u.Path, a.suffix)
+
+	q := u.Query()
+
+	for k, v := range a.query {
+		q.Set(k, v)
+	}
+
+	// rebuild query
+	u.RawQuery = q.Encode()
+
+	return u.String()
 }
