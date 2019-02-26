@@ -23,6 +23,7 @@ $(document).ready(function () {
     $document.find("input[type='checkbox']").bootstrapSwitch();
 
     $document.find('[data-toggle="tooltip"]').tooltip();
+    $document.find('[data-toggle="popover"]').popover();
 
     $document.find(".row-link").click(function () {
         window.location = $(this).data("href");
@@ -715,10 +716,6 @@ class RaceSetup {
         });
     }
 }
-
-$(function () {
-    $('[data-toggle="popover"]').popover()
-});
 
 function msToTime(s) {
     // Pad to 2 or 3 digits, default is 2
