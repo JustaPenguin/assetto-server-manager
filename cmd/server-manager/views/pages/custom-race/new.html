@@ -102,7 +102,12 @@
                             </select>
                         </div>
                     </div>
-
+                {{ else }}
+                    <select multiple class="Cars" id="Cars" name="Cars" style="display: none;">
+                        {{ range $index, $car := $.Championship.ValidCarIDs }}
+                            <option value="{{ $car }}" selected="selected">{{ prettify $car true }}</option>
+                        {{ end }}
+                    </select>
                 {{ end }}
             </div>
         </div>
