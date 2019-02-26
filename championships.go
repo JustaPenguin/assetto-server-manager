@@ -335,22 +335,15 @@ type ChampionshipEvent struct {
 // LastSession returns the last configured session in the championship, in the following order:
 // Race, Qualifying, Practice, Booking
 func (cr *ChampionshipEvent) LastSession() SessionType {
-	if cr.HasSession(SessionTypeRace) {
+	if cr.RaceSetup.HasSession(SessionTypeRace) {
 		return SessionTypeRace
-	} else if cr.HasSession(SessionTypeQualifying) {
+	} else if cr.RaceSetup.HasSession(SessionTypeQualifying) {
 		return SessionTypeQualifying
-	} else if cr.HasSession(SessionTypePractice) {
+	} else if cr.RaceSetup.HasSession(SessionTypePractice) {
 		return SessionTypePractice
 	} else {
 		return SessionTypeBooking
 	}
-}
-
-// HasSession returns true if the Championship has the specified session
-func (cr *ChampionshipEvent) HasSession(t SessionType) bool {
-	_, ok := cr.Sessions[t]
-
-	return ok
 }
 
 // InProgress indicates whether a ChampionshipEvent has been started but not stopped
