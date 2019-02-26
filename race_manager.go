@@ -473,6 +473,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 				CMWFXTimeMulti:     timeMultiInt,
 				CMWFXUseCustomDate: 1,
 				CMWFXDate:          int(startTimeFinal.Unix()),
+				CMWFXDateUnModified: int(startTimeZoned.Unix()),
 			})
 		}
 	}

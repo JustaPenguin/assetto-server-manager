@@ -40,6 +40,38 @@ func (t Tyres) Name(search string, cars []string) string {
 	return search
 }
 
+func (t Tyres) CarsForTyre(search string, carsIn []string) string {
+	var carsOut []string
+
+	carExists := make(map[string]bool)
+
+	for _, car := range carsIn {
+		carExists[car] = true
+	}
+
+	for car, carTyres := range t {
+		if _, ok := carExists[car]; !ok {
+			continue
+		}
+
+		if _, ok := carTyres[search]; ok {
+			carsOut = append(carsOut, car)
+		}
+	}
+
+	var stringFormat string
+
+	for i, car := range carsOut {
+		if i == 0 {
+			stringFormat = " - " + prettifyName(car, true)
+		}
+
+		stringFormat = stringFormat + ", " + prettifyName(car, true)
+	}
+
+	return stringFormat
+}
+
 // ListTyres reads tyres from the TyreFiles and returns them as a map of car => tyre short name => tyre long name
 func ListTyres() (Tyres, error) {
 	out := make(Tyres)
