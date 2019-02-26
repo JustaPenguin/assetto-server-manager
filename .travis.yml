@@ -1,42 +1,37 @@
-matrix:
-  include:
-  - language: node_js
-    node_js:
-      - 11
-    script:
-      - cd cmd/server-manager
-      - npm install
-      - node_modules/.bin/babel  javascript/manager.js -o static/manager.js
+language: go
+go:
+  - 1.11
 
-  - language: go
-    go:
-      - 1.11
+sudo: required
 
-    install:
-      - git --version
-      - go version
+install:
+  - sudo apt-get update && sudo apt-get install -y nodejs
+  - node -v
+  - npm -v
+  - git --version
+  - go version
 
-    script:
-      - export GO111MODULE=on
-      - mkdir -p cmd/server-manager/assetto/{cfg,results}
-      - cp -R fixtures/results/*.json cmd/server-manager/assetto/results
-      - go test
+script:
+  - export GO111MODULE=on
+  - mkdir -p cmd/server-manager/assetto/{cfg,results}
+  - cp -R fixtures/results/*.json cmd/server-manager/assetto/results
+  - go test
 
-      # windows icon
-      - go get -u github.com/akavel/rsrc
-      - rsrc -ico misc/windows/icon.ico -arch amd64 -o ./cmd/server-manager/rsrc.syso
+  # windows icon
+  - go get -u github.com/akavel/rsrc
+  - rsrc -ico misc/windows/icon.ico -arch amd64 -o ./cmd/server-manager/rsrc.syso
 
-      - cd cmd/server-manager
-      - cp config.example.yml config.yml
+  - cd cmd/server-manager
+  - cp config.example.yml config.yml
 
-      # asset embed
-      - go get -u github.com/mjibson/esc
-      - go generate ./...
+  # asset embed
+  - go get -u github.com/mjibson/esc
+  - go generate ./...
 
-      - GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${TRAVIS_TAG}"
-      - GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${TRAVIS_TAG}"
-      - zip -r server-manager_windows_$TRAVIS_TAG.zip server-manager.exe config.yml README.md LICENSE
-      - zip -r server-manager_linux_$TRAVIS_TAG.zip server-manager config.yml README.md LICENSE
+  - GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${TRAVIS_TAG}"
+  - GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${TRAVIS_TAG}"
+  - zip -r server-manager_windows_$TRAVIS_TAG.zip server-manager.exe config.yml README.md LICENSE
+  - zip -r server-manager_linux_$TRAVIS_TAG.zip server-manager config.yml README.md LICENSE
 
 deploy:
   provider: releases
