@@ -425,7 +425,6 @@ class RaceSetup {
             src += '/' + layout;
         }
 
-        // @TODO jpg
         src += '/preview.png';
 
         this.$parent.find("#trackImage").attr({
