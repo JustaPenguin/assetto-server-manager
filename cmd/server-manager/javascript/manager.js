@@ -134,6 +134,20 @@ function initMultiSelect($element) {
 
 let $entrantTemplate = null;
 
+function makeCarString(cars) {
+    let out = "";
+
+    for (let index = 0; index < cars.length; index++) {
+        if (index === 0) {
+            out = " - " + prettifyName(cars[index], true)
+        } else {
+            out = out + ", " + prettifyName(cars[index], true)
+        }
+    }
+
+    return out
+}
+
 class RaceSetup {
     // jQuery elements
     $trackDropdown;
@@ -345,6 +359,20 @@ class RaceSetup {
         let cars = this.$carsDropdown.val();
 
         let allValidTyres = new Set();
+        let tyreCars = {};
+
+        for (let index = 0; index < cars.length; index++) {
+            let car = cars[index];
+            let carTyres = availableTyres[car];
+
+            for (let tyre in carTyres) {
+                if (!tyreCars[tyre]) {
+                    tyreCars[tyre] = []
+                }
+
+                tyreCars[tyre].push(car)
+            }
+        }
 
         for (let index = 0; index < cars.length; index++) {
             let car = cars[index];
@@ -353,13 +381,17 @@ class RaceSetup {
             for (let tyre in carTyres) {
                 allValidTyres.add(tyre);
 
-                if (this.$tyresDropdown.find("option[value='" + tyre + "']").length) {
+                let $dropdownTyre = this.$tyresDropdown.find("option[value='" + tyre + "']");
+
+                if ($dropdownTyre.length) {
+                    $dropdownTyre.text(carTyres[tyre] + " (" + tyre + ")" + makeCarString(tyreCars[tyre]));
+                    this.$tyresDropdown.multiSelect('refresh');
                     continue; // this has already been added
                 }
 
                 this.$tyresDropdown.multiSelect('addOption', {
                     'value': tyre,
-                    'text': carTyres[tyre] + " (" + tyre + ")",
+                    'text': carTyres[tyre] + " (" + tyre + ")" + makeCarString(tyreCars[tyre]),
                 });
 
                 this.$tyresDropdown.multiSelect('select', tyre);
