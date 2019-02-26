@@ -132,7 +132,7 @@ func applyPenalty(r *http.Request) (bool, error) {
 		}
 	})
 
-	err = saveResults(jsonFileName, results)
+	err = saveResults(jsonFileName+".json", results)
 
 	if err != nil {
 		logrus.Errorf("could not encode to session result file, err: %s", err)
@@ -169,8 +169,9 @@ func applyPenalty(r *http.Request) (bool, error) {
 	return remove, nil
 }
 
+// saveResults takes a full json filepath (including the json extension) and saves the results to that file.
 func saveResults(jsonFileName string, results *SessionResults) error {
-	path := filepath.Join(ServerInstallPath, "results", jsonFileName+".json")
+	path := filepath.Join(ServerInstallPath, "results", jsonFileName)
 
 	file, err := os.Create(path)
 
