@@ -101,18 +101,23 @@ func CarNameFromFilepath(path string) (string, error) {
 		return "", fmt.Errorf("servermanager: can't get car name from path: %s", path)
 	}
 
-	return parts[len(parts)-1], nil
-}
+	name := parts[len(parts)-1]
 
-// addTyresForNewCar looks for tyres within the data.acd file and adds them to mod_tyres.ini if any are found
-func addTyresForNewCar(filename string, dataACD []byte) error {
-	carName, err := CarNameFromFilepath(filename)
-
-	if err != nil {
-		return err
+	if name == "data" {
+		// in the case of loading from data/tyres.ini, we need to find the parent of the data folder, i.e. two steps back
+		if len(parts) > 1 {
+			name = parts[len(parts)-2]
+		} else {
+			return "", fmt.Errorf("servermanager: can't get car name from path: %s", path)
+		}
 	}
 
-	currentTyres, err := ListTyres()
+	return name, nil
+}
+
+// addTyresFromDataACD looks for tyres within the data.acd file and adds them to mod_tyres.ini if any are found
+func addTyresFromDataACD(filename string, dataACD []byte) error {
+	carName, err := CarNameFromFilepath(filename)
 
 	if err != nil {
 		return err
@@ -129,28 +134,7 @@ func addTyresForNewCar(filename string, dataACD []byte) error {
 			continue
 		}
 
-		newTyres, err := LoadTyresFromACDINI(file.Bytes())
-
-		if err != nil {
-			return err
-		}
-
-		if carTyres, ok := currentTyres[carName]; ok {
-			hasNew := false
-
-			for newTyre := range newTyres {
-				if _, ok := carTyres[newTyre]; !ok {
-					hasNew = true
-				}
-			}
-
-			if !hasNew {
-				logrus.Infof("New car: %s already has all of its tyres configured", carName)
-				return nil
-			}
-		}
-
-		return addModTyres(carName, newTyres)
+		return addModTyres(carName, file.Bytes())
 	}
 
 	logrus.Warnf("Couldn't find tyres.ini within filepath: '%s'. Cannot add mod_tyres.ini", filename)
@@ -158,8 +142,45 @@ func addTyresForNewCar(filename string, dataACD []byte) error {
 	return nil
 }
 
+func addTyresFromTyresIni(filename string, iniFile []byte) error {
+	carName, err := CarNameFromFilepath(filename)
+
+	if err != nil {
+		return err
+	}
+
+	return addModTyres(carName, iniFile)
+}
+
 // addModTyres writes a set of tyres to the mod_tyres.ini file
-func addModTyres(model string, tyres map[string]string) error {
+func addModTyres(model string, data []byte) error {
+	currentTyres, err := ListTyres()
+
+	if err != nil {
+		return err
+	}
+
+	newTyres, err := LoadTyresFromACDINI(data)
+
+	if err != nil {
+		return err
+	}
+
+	if carTyres, ok := currentTyres[model]; ok {
+		hasNew := false
+
+		for newTyre := range newTyres {
+			if _, ok := carTyres[newTyre]; !ok {
+				hasNew = true
+			}
+		}
+
+		if !hasNew {
+			logrus.Infof("New car: %s already has all of its tyres configured", model)
+			return nil
+		}
+	}
+
 	modTyresFilename := filepath.Join(ServerInstallPath, "manager", "mod_tyres.ini")
 
 	if _, err := os.Stat(modTyresFilename); os.IsNotExist(err) {
@@ -190,7 +211,7 @@ func addModTyres(model string, tyres map[string]string) error {
 		return err
 	}
 
-	for k, v := range tyres {
+	for k, v := range newTyres {
 		_, err := sec.NewKey(k, v)
 
 		if err != nil {

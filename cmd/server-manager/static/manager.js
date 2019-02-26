@@ -168,7 +168,9 @@ class RaceSetup {
             if (this.$tyresDropdown) {
                 this.$tyresDropdown.multiSelect();
 
-                this.$carsDropdown.change(this.populateTyreDropdown.bind(this))
+                this.$carsDropdown.change(this.populateTyreDropdown.bind(this));
+
+                this.populateTyreDropdown();
             }
         }
 
@@ -340,6 +342,7 @@ class RaceSetup {
         }
 
         let cars = this.$carsDropdown.val();
+
         let allValidTyres = new Set();
 
         for (let index = 0; index < cars.length; index++) {
@@ -1217,7 +1220,7 @@ function handleCarFilesLoop(fileList) {
 
     for (let x = 0; x < fileList.length; x++) {
         // Find the files that the server is interested in
-        if (fileList[x].name === "data.acd" || fileList[x].name === "ui_car.json"
+        if (fileList[x].name === "data.acd" || fileList[x].name === "tyres.ini" || fileList[x].name === "ui_car.json"
             || fileList[x].name.startsWith("livery.") || fileList[x].name.startsWith("preview.")
             || fileList[x].name === "ui_skin.json") {
 

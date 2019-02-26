@@ -303,8 +303,17 @@ func addFiles(files []contentFile, contentType string) error {
 		}
 
 		if contentType == "Car" {
+
 			if _, name := filepath.Split(file.FilePath); name == "data.acd" {
-				err := addTyresForNewCar(file.FilePath, fileDecoded)
+				err := addTyresFromDataACD(file.FilePath, fileDecoded)
+
+				if err != nil {
+					logrus.Errorf("Could not create tyres for new car, err: %s", err)
+				}
+			} else if name == "tyres.ini" {
+				// it seems some cars don't pack their data into an ACD file, it's just in a folder called 'data'
+				// so we can just grab tyres.ini from there.
+				err := addTyresFromTyresIni(file.FilePath, fileDecoded)
 
 				if err != nil {
 					logrus.Errorf("Could not create tyres for new car, err: %s", err)
