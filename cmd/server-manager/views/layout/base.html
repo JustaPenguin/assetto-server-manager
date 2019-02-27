@@ -134,14 +134,18 @@
         {{ block "content" . }}{{ end }}
 
         <footer class="pt-4 my-md-5 pt-md-5 border-top row">
-            <div class="col-sm-6">
-                <a href="https://github.com/cj123/assetto-server-manager" class="mr-3">GitHub</a>
-                <a href="https://github.com/cj123/assetto-server-manager/issues/new" class="mr-3">Submit a Bug Report</a>
+            <div class="col-sm-4">
+                <a href="https://github.com/cj123/assetto-server-manager" class="mr-3"><i class="fab fa-github"></i> GitHub</a>
+                <a href="https://github.com/cj123/assetto-server-manager/issues/new" class="mr-3"><i class="fas fa-bug"></i> Submit a Bug Report</a>
+                <a href="https://paypal.me/JustaPenguinUK" class="mr-3"><i class="fas fa-heart"></i> Donate</a>
             </div>
-
-            <div class="col-sm-6 text-right">
+            <div class="col-sm-4 text-center">
+                <img src="/static/img/racer.png" class="img img-footer">
+            </div>
+            <div class="col-sm-4 text-right">
                 Assetto Server Manager &copy; <a href="https://justapengu.in">Just a Penguin</a> 2010-{{ now.Format "2006" }}
             </div>
+
         </footer>
     </div>
 
