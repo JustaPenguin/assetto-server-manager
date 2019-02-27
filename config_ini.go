@@ -249,14 +249,14 @@ type WeatherConfig struct {
 	VariationAmbient       int    `ini:"VARIATION_AMBIENT" help:"variation of the ambient's temperature. In this example final ambient's temperature can be 16 or 20"`
 	VariationRoad          int    `ini:"VARIATION_ROAD" help:"variation of the road's temperature. Like the ambient one"`
 
-	CMGraphics         string `ini:"__CM_GRAPHICS" help:"Graphics folder name"`
-	CMWFXType          int    `ini:"__CM_WFX_TYPE" help:"Weather ini file number, inside weather.ini"`
-	CMWFXUseCustomTime int    `ini:"__CM_WFX_USE_CUSTOM_TIME" help:"If Sol is active then this should be too"`
-	CMWFXTime          int    `ini:"__CM_WFX_TIME" help:"Seconds after 12 noon, usually leave at 0 and use unix timestamp instead"`
-	CMWFXTimeMulti     int    `ini:"__CM_WFX_TIME_MULT" help:"Time speed multiplier, default to 1x"`
-	CMWFXUseCustomDate int    `ini:"__CM_WFX_USE_CUSTOM_DATE" help:"If Sol is active then this should be too"`
-	CMWFXDate          int    `ini:"__CM_WFX_DATE" help:"Unix timestamp (UTC + 10)"`
-	CMWFXDateUnModified int   `ini:"__CM_WFX_DATE_UNMODIFIED" help:"Unix timestamp (UTC + 10), without multiplier correction"`
+	CMGraphics          string `ini:"__CM_GRAPHICS" help:"Graphics folder name"`
+	CMWFXType           int    `ini:"__CM_WFX_TYPE" help:"Weather ini file number, inside weather.ini"`
+	CMWFXUseCustomTime  int    `ini:"__CM_WFX_USE_CUSTOM_TIME" help:"If Sol is active then this should be too"`
+	CMWFXTime           int    `ini:"__CM_WFX_TIME" help:"Seconds after 12 noon, usually leave at 0 and use unix timestamp instead"`
+	CMWFXTimeMulti      int    `ini:"__CM_WFX_TIME_MULT" help:"Time speed multiplier, default to 1x"`
+	CMWFXUseCustomDate  int    `ini:"__CM_WFX_USE_CUSTOM_DATE" help:"If Sol is active then this should be too"`
+	CMWFXDate           int    `ini:"__CM_WFX_DATE" help:"Unix timestamp (UTC + 10)"`
+	CMWFXDateUnModified int    `ini:"__CM_WFX_DATE_UNMODIFIED" help:"Unix timestamp (UTC + 10), without multiplier correction"`
 }
 
 func (w WeatherConfig) UnixToTime(unix int) time.Time {
