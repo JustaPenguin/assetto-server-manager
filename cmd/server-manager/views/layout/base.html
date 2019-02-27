@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="shortcut icon" href="/static/favicon.ico">
         <meta charset="UTF-8">
-        <title>{{ block "title" . }}{{ end }} / Assetto Server Manager</title>
+        <title>{{ block "title" . }}{{ end }} / {{ $.server_name }}</title>
 
         {{ block "stylesheets" . }}
             <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/style.css" }}">
@@ -19,7 +19,7 @@
 
     <nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="/">Assetto Server Manager</a>
+            <a class="navbar-brand" href="/">{{ $.server_name }}</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -135,11 +135,12 @@
 
         <footer class="pt-4 my-md-5 pt-md-5 border-top row">
             <div class="col-sm-6">
-                <a href="https://github.com/cj123/assetto-server-manager">GitHub</a>
+                <a href="https://github.com/cj123/assetto-server-manager" class="mr-3">GitHub</a>
+                <a href="https://github.com/cj123/assetto-server-manager/issues/new" class="mr-3">Submit a Bug Report</a>
             </div>
 
             <div class="col-sm-6 text-right">
-                &copy; <a href="https://justapengu.in">Just a Penguin</a> 2010-{{ now.Format "2006" }}
+                Assetto Server Manager &copy; <a href="https://justapengu.in">Just a Penguin</a> 2010-{{ now.Format "2006" }}
             </div>
         </footer>
     </div>
