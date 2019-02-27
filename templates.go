@@ -272,7 +272,14 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 	_ = session.Save(r, w)
 	_ = errSession.Save(r, w)
 
+	opts, err := raceManager.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
 	data["server_status"] = AssettoProcess.IsRunning()
+	data["server_name"] = opts.Name
 	data["User"] = UserFromRequest(r)
 
 	t.Funcs(map[string]interface{}{
