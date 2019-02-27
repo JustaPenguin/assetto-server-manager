@@ -3,7 +3,7 @@ package servermanager
 // ConfigIniDefault is the default server config (ish) as supplied via the assetto corsa server.
 var ConfigIniDefault = ServerConfig{
 	GlobalServerConfig: GlobalServerConfig{
-		Name:                      "Server Managed Assetto Corsa",
+		Name:                      "Assetto Corsa Server",
 		Password:                  "",
 		AdminPassword:             "",
 		UDPPort:                   9600,
