@@ -12,10 +12,14 @@ A web interface to manage an Assetto Corsa Server.
 * Live Timings for current sessions
 * Results pages for all previous sessions
 * Content Management - Upload tracks, weather and cars
-* Championship mode - configure multiple race events and keep track of driver and team points
+* Sol Integration - Sol weather is compatible, including 24 hour time cycles (session start may advance/reverse time really fast before it syncs up)
+* Championship mode - configure multiple race events and keep track of driver, class and team points
+* Automatic event looping
 * Server Logs / Options Editing
 * Accounts system with different permissions levels
 * Linux and Windows Support!
+
+**If you like Assetto Server Manager, please consider supporting us with a [donation](https://paypal.me/JustaPenguinUK)!**
 
 ## Installation
 

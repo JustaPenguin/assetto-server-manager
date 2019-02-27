@@ -220,3 +220,29 @@ a.detailed-results:hover {
     max-width: 110px;
     text-align: center;
 }
+
+.img-footer {
+    width: 60px;
+    height: 60px;
+    position: relative;
+    margin-top: -20px;
+}
+
+footer {
+    padding-bottom: 20px;
+}
+
+footer a {
+    display: inline-block;
+}
+
+@media screen and (max-width: 550px) {
+    .img-footer {
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    footer .col-sm-4 {
+        text-align: center !important;
+    }
+}
