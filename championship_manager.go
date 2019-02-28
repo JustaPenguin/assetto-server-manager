@@ -106,6 +106,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	}
 
 	championship.Name = r.FormValue("ChampionshipName")
+	championship.OpenEntrants = formValueAsInt("ChampionshipOpenEntrants") == 1
 
 	previousNumEntrants := 0
 
@@ -295,8 +296,11 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 		return err
 	}
 
-	// championship events always have locked entry lists
-	event.RaceSetup.LockedEntryList = 1
+	if !championship.OpenEntrants {
+		// lock the entrylist
+		event.RaceSetup.LockedEntryList = 1
+	}
+
 	event.RaceSetup.MaxClients = championship.NumEntrants()
 
 	config := ConfigIniDefault
@@ -366,6 +370,61 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 	}()
 
 	switch a := message.(type) {
+
+	case udp.SessionCarInfo:
+		if championship.OpenEntrants && a.Event() == udp.EventNewConnection {
+			// a person joined, check to see if they need adding to the championship
+			found := false
+
+			for _, entrant := range championship.AllEntrants() {
+				if entrant.GUID == a.DriverGUID {
+					found = true
+					break
+				}
+			}
+
+			// the person is already in the EntryList, don't add them again
+			if found {
+				logrus.Debugf("Entrant: %s (%s) already found in EntryList", a.DriverName, a.DriverGUID)
+				saveChampionship = false
+				return
+			}
+
+			// now we need to find the class for the car
+			class, err := championship.FindClassForCarModel(a.CarModel)
+
+			if err != nil {
+				saveChampionship = false
+				logrus.Errorf("Could not find class for car: %s in championship", a.CarModel)
+
+				return
+			}
+
+			foundFreeEntrantSlot := false
+
+			// now look for empty Entrants in the Entrylist
+			for carNum, entrant := range class.Entrants {
+				if entrant.Name == "" && entrant.GUID == "" {
+					entrant.Name = a.DriverName
+					entrant.GUID = a.DriverGUID
+					entrant.Model = a.CarModel
+					entrant.Skin = a.CarSkin
+
+					logrus.Infof("New championship entrant: %s (%s) has been assigned to %s", entrant.Name, entrant.GUID, carNum)
+
+					foundFreeEntrantSlot = true
+
+					break
+				}
+			}
+
+			if !foundFreeEntrantSlot {
+				saveChampionship = false
+				logrus.Errorf("Could not find free entrant slot in class: %s for %s (%s)", class.Name, a.DriverName, a.DriverGUID)
+				return
+			}
+		}
+
 	case udp.SessionInfo:
 		if a.Event() == udp.EventNewSession {
 			if championship.Events[currentEventIndex].StartedTime.IsZero() {

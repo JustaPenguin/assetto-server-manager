@@ -132,7 +132,7 @@ func CallbackFunc(response udp.Message) {
 			liveInfo.Cars[uint8(a.CarID)] = &LiveCar{
 				DriverGUID: a.DriverGUID,
 				DriverName: a.DriverName,
-				CarMode:    a.CarMode,
+				CarMode:    a.CarModel,
 				CarSkin:    a.CarSkin,
 				Delete:     false,
 			}

@@ -103,7 +103,7 @@ type SessionCarInfo struct {
 	CarID      CarID
 	DriverName string
 	DriverGUID string
-	CarMode    string
+	CarModel   string
 	CarSkin    string
 
 	EventType Event

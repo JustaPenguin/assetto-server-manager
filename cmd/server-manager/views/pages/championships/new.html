@@ -34,6 +34,22 @@
                                placeholder="My awesome championship" {{ with $f.Name }} value="{{.}}" {{ end }}>
                     </div>
                 </div>
+
+                <div class="form-group row">
+                    <label for="ChampionshipOpenEntrants" class="col-sm-3 col-form-label">Open Championship</label>
+
+                    <div class="col-sm-9">
+                        <input type="checkbox" class="form-control" id="ChampionshipOpenEntrants" name="ChampionshipOpenEntrants"
+                               {{ if $f.OpenEntrants }} checked="checked" {{ end }}><br><br>
+
+                        <small>
+                            An Open Championship allows anyone to join a Championship Event provided that the Championship
+                            still has empty entrant slots. As new Entrants join, the Championship Entrant slots will be filled.
+
+                            It is possible to edit the slots (e.g. to assign teams) by using the Edit Championship functionality.
+                        </small>
+                    </div>
+                </div>
             </div>
         </div>
 
