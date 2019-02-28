@@ -17,7 +17,7 @@ const (
 	serverOptionsFile = "server_options.json"
 )
 
-func NewJSONRaceStore(dir string) *JSONRaceStore {
+func NewJSONRaceStore(dir string) RaceStore {
 	return &JSONRaceStore{
 		base: dir,
 	}
@@ -146,7 +146,7 @@ func (rs *JSONRaceStore) DeleteCustomRace(race *CustomRace) error {
 	return rs.UpsertCustomRace(race)
 }
 
-func (rs *JSONRaceStore) UpsertEntrant(entrant Entrant) error {
+func (rs *JSONRaceStore) UpsertEntrant(entrant *Entrant) error {
 	entrants, err := rs.ListEntrants()
 
 	if err != nil {
@@ -158,8 +158,8 @@ func (rs *JSONRaceStore) UpsertEntrant(entrant Entrant) error {
 	return rs.encodeFile(entrantsFile, entrants)
 }
 
-func (rs *JSONRaceStore) ListEntrants() ([]Entrant, error) {
-	var entrants []Entrant
+func (rs *JSONRaceStore) ListEntrants() ([]*Entrant, error) {
+	var entrants []*Entrant
 
 	err := rs.decodeFile(entrantsFile, &entrants)
 

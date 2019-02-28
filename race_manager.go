@@ -280,7 +280,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 			skin = carMap[model][rand.Intn(len(carMap[model]))]
 		}
 
-		entryList.Add(Entrant{
+		entryList.Add(&Entrant{
 			Model: model,
 			Skin:  skin,
 		})
@@ -326,7 +326,7 @@ func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (Entry
 			}
 		}
 
-		entryList.Add(Entrant{
+		entryList.Add(&Entrant{
 			Name:  r.Form["EntryList.Name"][i],
 			Team:  r.Form["EntryList.Team"][i],
 			GUID:  r.Form["EntryList.GUID"][i],
