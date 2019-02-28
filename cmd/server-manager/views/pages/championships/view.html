@@ -185,7 +185,7 @@
                         <div class="col-md-6 mb-3">
                             <div class="row">
 
-                                <div class="col-sm-4">
+                                <div class="col-sm-5">
 
                                     <ul class="list-unstyled">
                                         {{ range $sessionName, $session := $eventSetup.Sessions }}
@@ -206,19 +206,35 @@
                                 </div>
 
                                 {{ if $event.Completed }}
-                                    <div class="col-sm-4">
+                                    <div class="col-sm-5">
 
                                         <ul class="list-unstyled">
-                                            {{ range $sessionName, $sessionDetails := $event.Sessions }}
-                                                {{ if eq $sessionName "RACE" }}
-                                                    {{ range $pos, $result := (slice $sessionDetails.Results.Result 0 3) }}
-                                                        {{ if gt $result.TotalTime 0 }}
-                                                            {{ $posInt := int64 (add $pos 1) }}
+                                            {{ if $championship.IsMultiClass }}
+                                                {{ range $classIndex, $class := $championship.Classes }}
 
-                                                            <li>
-                                                                <strong>{{ $posInt }}{{ ordinal $posInt }}</strong>:
-                                                                {{ $result.DriverName }}
-                                                            </li>
+                                                    {{ range $sessionName, $sessionDetails := $event.Sessions }}
+                                                        {{ if eq $sessionName "RACE" }}
+                                                            {{ range $pos, $result := (slice ($class.ResultsForClass $sessionDetails.Results.Result) 0 1) }}
+                                                                <li>
+                                                                    <strong>{{ $class.Name }} Winner</strong><br>
+                                                                    {{ $result.DriverName }}
+                                                                </li>
+                                                            {{ end }}
+                                                        {{ end }}
+                                                    {{ end }}
+                                                {{ end }}
+                                            {{ else }}
+                                                {{ range $sessionName, $sessionDetails := $event.Sessions }}
+                                                    {{ if eq $sessionName "RACE" }}
+                                                        {{ range $pos, $result := (slice $sessionDetails.Results.Result 0 3) }}
+                                                            {{ if gt $result.TotalTime 0 }}
+                                                                {{ $posInt := int64 (add $pos 1) }}
+
+                                                                <li>
+                                                                    <strong>{{ $posInt }}{{ ordinal $posInt }}</strong>:
+                                                                    {{ $result.DriverName }}
+                                                                </li>
+                                                            {{ end }}
                                                         {{ end }}
                                                     {{ end }}
                                                 {{ end }}
@@ -228,7 +244,7 @@
                                 {{ end }}
 
 
-                                <div class="col-sm-4">
+                                <div class="col-sm-2">
 
 
                                     {{/* fastest lap + qualifying awards */}}
@@ -253,7 +269,7 @@
                             <div class="pt-5">
 
                                 {{ if $writeAccess }}
-                                    {{ if not (or $event.InProgress $event.Completed) }}
+                                    {{ if (not (or $event.InProgress $event.Completed)) }}
 
                                         {{ if $eventInProgress }}
                                             <p>An event in this championship is in progress. You must wait for it to finish or cancel it before you can start this one.</p>
