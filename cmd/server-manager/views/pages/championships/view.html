@@ -269,7 +269,7 @@
                             <div class="pt-5">
 
                                 {{ if $writeAccess }}
-                                    {{ if (not (or $event.InProgress $event.Completed)) }}
+                                    {{ if not (or $event.InProgress $event.Completed) }}
 
                                         {{ if $eventInProgress }}
                                             <p>An event in this championship is in progress. You must wait for it to finish or cancel it before you can start this one.</p>
