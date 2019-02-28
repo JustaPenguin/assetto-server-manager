@@ -4,9 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"net"
+	"net/http"
 	"os/exec"
 	"path/filepath"
 	"sync"
+
+	"github.com/go-chi/chi"
+	"github.com/sirupsen/logrus"
 )
 
 type ServerProcess interface {
@@ -18,6 +22,33 @@ type ServerProcess interface {
 }
 
 var AssettoProcess ServerProcess
+
+// serverProcessHandler modifies the server process.
+func serverProcessHandler(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var txt string
+
+	switch chi.URLParam(r, "action") {
+	case "start":
+		err = AssettoProcess.Start()
+		txt = "started"
+	case "stop":
+		err = AssettoProcess.Stop()
+		txt = "stopped"
+	case "restart":
+		err = AssettoProcess.Restart()
+		txt = "restarted"
+	}
+
+	if err != nil {
+		logrus.Errorf("could not change server process status, err: %s", err)
+		AddErrFlashQuick(w, r, "Unable to change server status")
+	} else {
+		AddFlashQuick(w, r, "Server successfully "+txt)
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
 
 var ErrServerAlreadyRunning = errors.New("servermanager: assetto corsa server is already running")
 
