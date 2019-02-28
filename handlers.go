@@ -63,9 +63,6 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Get("/logs", serverLogsHandler)
 		r.Get("/api/logs", apiServerLogHandler)
 
-		// penalties
-		r.Post("/penalties/{sessionFile}/{driverGUID}", penaltyHandler)
-
 		// championships
 		r.Get("/championships", listChampionshipsHandler)
 		r.Get("/championship/{championshipID}", viewChampionshipHandler)
@@ -116,6 +113,9 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Get("/championship/{championshipID}/event/{eventID}/practice", championshipStartPracticeEventHandler)
 		r.Get("/championship/{championshipID}/event/{eventID}/cancel", championshipCancelEventHandler)
 		r.Get("/championship/{championshipID}/event/{eventID}/restart", championshipRestartEventHandler)
+
+		// penalties
+		r.Post("/penalties/{sessionFile}/{driverGUID}", penaltyHandler)
 
 		// endpoints
 		r.Post("/api/track/upload", apiTrackUploadHandler)
