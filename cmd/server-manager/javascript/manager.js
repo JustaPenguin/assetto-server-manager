@@ -563,9 +563,38 @@ class RaceSetup {
             let val = $this.val();
 
             populateEntryListSkins($this, val);
+
+            // When the car is changed for an added entrant
+            showEntrantSkin(val, $this.closest(".entrant").find(".entryListSkin").val(), $this)
+        }
+
+        function showEntrantSkin(currentCar, skin, $this) {
+            if (currentCar in availableCars && availableCars[currentCar] != null && availableCars[currentCar].length > 0) {
+                if (skin === "random_skin") {
+                    skin = availableCars[currentCar][0]
+                }
+
+                let path = "/content/cars/"+currentCar+"/skins/"+skin+"/preview.jpg";
+                let $preview = $this.closest(".entrant").find(".entryListCarPreview");
+
+                $.get(path)
+                    .done(function() {
+                        // preview for skin exists
+                        $preview.attr({"src": path, "alt": prettifyName(skin, false)})
+                    }).fail(function() {
+                        // preview doesn't exist, load default fall back image
+                        path = "/static/img/no-preview-car.png";
+                        $preview.attr({"src": path, "alt": "Preview Image"})
+                });
+            }
         }
 
         this.$parent.find(".entryListCar").change(onEntryListCarChange);
+
+        // When the skin is changed on all initially loaded cars
+        this.$parent.find(".entryListSkin").change(function () {
+            showEntrantSkin($(this).closest(".entrant").find(".entryListCar").val(), $(this).val(), $(this))
+        });
         this.autoCompleteDrivers();
 
         // initialise entrantTemplate if it's null. this will only happen once so cloned race setups
@@ -642,8 +671,8 @@ class RaceSetup {
 
                 if (!selected || !cars.has(selected)) {
                     selected = that.$carsDropdown.val()[0];
+                    showEntrantSkin(selected, "random_skin", $val);
                 }
-
 
                 $val.empty();
 
@@ -683,6 +712,12 @@ class RaceSetup {
                 $elem.insertBefore($(this).parent());
                 $elem.find(".entryListCar").change(onEntryListCarChange);
                 $elem.find(".btn-delete-entrant").click(deleteEntrant);
+
+                // when the skin changes on an added entrant
+                $elem.find(".entryListSkin").change(function () {
+                    showEntrantSkin($elem.find(".entryListCar").val(), $(this).val(), $(this))
+                });
+
                 populateEntryListCars();
                 $elem.css("display", "block");
             }
@@ -841,13 +876,6 @@ let liveTiming = {
                     for (let car of sorted) {
                         let $driverRow = $document.find("#" + liveTiming.Cars[car].DriverGUID);
                         let $tr;
-
-                        // Remove a driver row if they disconnect
-                        // @TODO TEST. This should stop cars from being removed from live timing mid-session
-                        /*if (liveTiming.Cars[car].Delete) {
-                            $driverRow.remove();
-                            continue
-                        }*/
 
                         // Get the lap time, display previous for 10 seconds after completion
                         if (liveTiming.Cars[car].LastLapCompleteTimeUnix + 10000 > date.getTime()) {
