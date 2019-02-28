@@ -1254,13 +1254,20 @@ function handleCarFilesLoop(fileList) {
             || fileList[x].name === "ui_skin.json") {
 
             filesToUploadLocal.push(fileList[x]);
-            goodFile = true;
+
+            if (fileList[x].name === "ui_car.json") {
+                goodFile = true;
+            }
         }
     }
 
     if (!goodFile) {
+        notA("car");
         return
     }
+
+    let $panel = $("#car-fail");
+    $panel.hide();
 
     // Preview panel for the car
     let $carPanel = $("#car-info-panel");
@@ -1499,17 +1506,24 @@ function handleTrackFilesLoop(fileList) {
             (fileList[x].filepath.includes("/ui/"))) {
 
             filesToUploadLocal.push(fileList[x]);
-            goodFile = true;
         }
 
         if (fileList[x].name.startsWith("models")) {
             layoutNum++
         }
+
+        if (fileList[x].name === "surfaces.ini") {
+            goodFile = true;
+        }
     }
 
     if (!goodFile) {
+        notA("track");
         return
     }
+
+    let $panel = $("#track-fail");
+    $panel.hide();
 
     if (fileList[0].filepath.startsWith("tracks/")) {
         trackName = fileList[0].filepath.split("/")[1];
@@ -1608,6 +1622,14 @@ function handleTrackFilesLoop(fileList) {
             filesToUpload.push(filesToUploadLocal[x])
         }
     }
+}
+
+function notA(thing) {
+    let $panel = $("#"+thing+"-fail");
+
+    $panel.show();
+    $panel.attr({'class': "alert alert-danger mt-2"});
+    $panel.text("Sorry, looks like that wasn't a " + thing + "!")
 }
 
 function buildInfoPanel(img, info) {
