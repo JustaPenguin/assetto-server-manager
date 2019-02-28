@@ -134,7 +134,13 @@ func addTyresFromDataACD(filename string, dataACD []byte) error {
 			continue
 		}
 
-		return addModTyres(carName, file.Bytes())
+		b, err := file.Bytes()
+
+		if err != nil {
+			return err
+		}
+
+		return addModTyres(carName, b)
 	}
 
 	logrus.Warnf("Couldn't find tyres.ini within filepath: '%s'. Cannot add mod_tyres.ini", filename)
