@@ -296,8 +296,9 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 		return err
 	}
 
-	if !championship.OpenEntrants {
-		// lock the entrylist
+	if championship.OpenEntrants {
+		event.RaceSetup.LockedEntryList = 0
+	} else {
 		event.RaceSetup.LockedEntryList = 1
 	}
 
@@ -374,20 +375,13 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 	case udp.SessionCarInfo:
 		if championship.OpenEntrants && a.Event() == udp.EventNewConnection {
 			// a person joined, check to see if they need adding to the championship
-			found := false
-
 			for _, entrant := range championship.AllEntrants() {
 				if entrant.GUID == a.DriverGUID {
-					found = true
-					break
+					// the person is already in the EntryList, don't add them again
+					logrus.Debugf("Entrant: %s (%s) already found in EntryList", a.DriverName, a.DriverGUID)
+					saveChampionship = false
+					return
 				}
-			}
-
-			// the person is already in the EntryList, don't add them again
-			if found {
-				logrus.Debugf("Entrant: %s (%s) already found in EntryList", a.DriverName, a.DriverGUID)
-				saveChampionship = false
-				return
 			}
 
 			// now we need to find the class for the car
