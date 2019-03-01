@@ -80,10 +80,12 @@ func applyPenalty(r *http.Request) (bool, error) {
 				result.HasPenalty = false
 				result.Disqualified = false
 				result.PenaltyTime = 0
+				result.LapPenalty = 0
 			} else {
 				if penaltyTime == 0 {
 					result.Disqualified = true
 					result.HasPenalty = false
+					result.LapPenalty = 0
 				} else {
 					result.HasPenalty = true
 					result.Disqualified = false
@@ -96,6 +98,13 @@ func applyPenalty(r *http.Request) (bool, error) {
 					}
 
 					result.PenaltyTime = timeParsed
+
+					// If penalty time is greater than a lap then add a lap penalty and change penalty time by one lap
+					lastLapTime := results.GetLastLapTime(result.DriverGUID)
+
+					if result.PenaltyTime > lastLapTime {
+						result.LapPenalty = int(result.PenaltyTime / lastLapTime)
+					}
 				}
 			}
 		}
