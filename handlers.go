@@ -166,33 +166,6 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// serverProcessHandler modifies the server process.
-func serverProcessHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
-	var txt string
-
-	switch chi.URLParam(r, "action") {
-	case "start":
-		err = AssettoProcess.Start()
-		txt = "started"
-	case "stop":
-		err = AssettoProcess.Stop()
-		txt = "stopped"
-	case "restart":
-		err = AssettoProcess.Restart()
-		txt = "restarted"
-	}
-
-	if err != nil {
-		logrus.Errorf("could not change server process status, err: %s", err)
-		AddErrFlashQuick(w, r, "Unable to change server status")
-	} else {
-		AddFlashQuick(w, r, "Server successfully "+txt)
-	}
-
-	http.Redirect(w, r, r.Referer(), http.StatusFound)
-}
-
 func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
 	serverOpts, err := raceManager.LoadServerOptions()
 
@@ -303,12 +276,11 @@ func addFiles(files []contentFile, contentType string) error {
 		}
 
 		if contentType == "Car" {
-
 			if _, name := filepath.Split(file.FilePath); name == "data.acd" {
 				err := addTyresFromDataACD(file.FilePath, fileDecoded)
 
 				if err != nil {
-					logrus.Errorf("Could not create tyres for new car, err: %s", err)
+					logrus.Errorf("Could not create tyres for new car (%s), err: %s", file.FilePath, err)
 				}
 			} else if name == "tyres.ini" {
 				// it seems some cars don't pack their data into an ACD file, it's just in a folder called 'data'
@@ -316,7 +288,7 @@ func addFiles(files []contentFile, contentType string) error {
 				err := addTyresFromTyresIni(file.FilePath, fileDecoded)
 
 				if err != nil {
-					logrus.Errorf("Could not create tyres for new car, err: %s", err)
+					logrus.Errorf("Could not create tyres for new car (%s), err: %s", file.FilePath, err)
 				}
 			}
 		}

@@ -18,7 +18,7 @@ import (
 
 // Reader is a reader for Assetto Corsa .acd files
 type Reader struct {
-	r                io.Reader
+	r                io.ReadSeeker
 	parentFolderName string
 
 	Files []*File
@@ -26,13 +26,33 @@ type Reader struct {
 
 // File is contained within an Assetto Corsa .acd archive.
 type File struct {
-	data []byte
+	length      int32
+	start       int64
+	reader      io.ReadSeeker
+	decipherKey string
+
 	name string
 }
 
 // Bytes returns the data of the file
-func (f *File) Bytes() []byte {
-	return f.data
+func (f *File) Bytes() ([]byte, error) {
+	out := make([]byte, f.length)
+
+	_, err := f.reader.Seek(f.start, io.SeekStart)
+
+	if err := binary.Read(f.reader, binary.LittleEndian, &out); err != nil {
+		return nil, err
+	}
+
+	decipher(out, f.decipherKey)
+
+	utf32Decoded, err := utf32.UTF32(utf32.LittleEndian, utf32.IgnoreBOM).NewDecoder().Bytes(out)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return utf32Decoded, nil
 }
 
 // Name is the filename per the archive
@@ -42,7 +62,7 @@ func (f *File) Name() string {
 
 // NewReader creates a reader for a given io.Reader. parentFolderName must be the original parent folder name
 // as it is used for deciphering purposes
-func NewReader(r io.Reader, parentFolderName string) (*Reader, error) {
+func NewReader(r io.ReadSeeker, parentFolderName string) (*Reader, error) {
 	x := &Reader{
 		r:                r,
 		parentFolderName: parentFolderName,
@@ -54,16 +74,14 @@ func NewReader(r io.Reader, parentFolderName string) (*Reader, error) {
 		return nil, err
 	}
 
-	return x, err
+	return x, nil
 }
 
 func (r *Reader) init() error {
 	key := cipherKey(r.parentFolderName)
 
 	for {
-		var strlen uint32
-
-		err := binary.Read(r.r, binary.LittleEndian, &strlen)
+		f, err := r.nextFileInfo()
 
 		if err == io.EOF {
 			break
@@ -71,39 +89,58 @@ func (r *Reader) init() error {
 			return err
 		}
 
-		name := make([]byte, strlen)
+		f.decipherKey = key
 
-		if err := binary.Read(r.r, binary.LittleEndian, &name); err != nil {
-			return err
-		}
-
-		var length int32
-
-		if err := binary.Read(r.r, binary.LittleEndian, &length); err != nil {
-			return err
-		}
-
-		out := make([]byte, length*4)
-
-		if err := binary.Read(r.r, binary.LittleEndian, &out); err != nil {
-			return err
-		}
-
-		decipher(out, key)
-
-		utf32Decoded, err := utf32.UTF32(utf32.LittleEndian, utf32.IgnoreBOM).NewDecoder().Bytes(out)
-
-		if err != nil {
-			return err
-		}
-
-		r.Files = append(r.Files, &File{
-			data: utf32Decoded,
-			name: string(name),
-		})
+		r.Files = append(r.Files, f)
 	}
 
 	return nil
+}
+
+func (r *Reader) nextFileInfo() (*File, error) {
+	var strlen int32
+
+	err := binary.Read(r.r, binary.LittleEndian, &strlen)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// -1111 appears to be a magic number of sorts.
+	if strlen == -1111 {
+		return r.nextFileInfo()
+	}
+
+	name := make([]byte, strlen)
+
+	if err := binary.Read(r.r, binary.LittleEndian, &name); err != nil {
+		return nil, err
+	}
+
+	var length int32
+
+	if err := binary.Read(r.r, binary.LittleEndian, &length); err != nil {
+		return nil, err
+	}
+
+	pos, err := r.r.Seek(0, io.SeekCurrent)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = r.r.Seek(int64(length*4), io.SeekCurrent)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &File{
+		length: length * 4,
+		start:  pos,
+		name:   string(name),
+		reader: r.r,
+	}, nil
 }
 
 // cipherKey generates an encryption key from the folder of the given filename
