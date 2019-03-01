@@ -189,6 +189,7 @@ func (s *SessionResults) GetTime(timeINT int, driverGUID string, total bool) tim
 		for _, driver := range s.Result {
 			if driver.DriverGUID == driverGUID && driver.HasPenalty {
 				d += driver.PenaltyTime
+				d -= time.Duration(driver.LapPenalty) * s.GetLastLapTime(driverGUID)
 			}
 		}
 	}
@@ -206,16 +207,33 @@ func (s *SessionResults) GetTeamName(driverGUID string) string {
 	return "Unknown"
 }
 
-func (s *SessionResults) GetLaps(driverGuid string) int {
+func (s *SessionResults) GetLaps(driverGUID string) int {
 	var i int
 
 	for _, lap := range s.Laps {
-		if lap.DriverGUID == driverGuid {
+		if lap.DriverGUID == driverGUID {
 			i++
 		}
 	}
 
+	// Apply lap penalty
+	for _, driver := range s.Result {
+		if driver.DriverGUID == driverGUID && driver.HasPenalty {
+			i -= driver.LapPenalty
+		}
+	}
+
 	return i
+}
+
+func (s *SessionResults) GetLastLapTime(driverGuid string) time.Duration {
+	for i := len(s.Laps)-1; i > 0; i-- {
+		if s.Laps[i].DriverGUID == driverGuid {
+			return s.Laps[i].GetLapTime()
+		}
+	}
+
+	return 1
 }
 
 func (s *SessionResults) GetCuts(driverGuid string) int {
@@ -257,6 +275,7 @@ type SessionResult struct {
 	TotalTime    int           `json:"TotalTime"`
 	HasPenalty   bool          `json:"HasPenalty"`
 	PenaltyTime  time.Duration `json:"PenaltyTime"`
+	LapPenalty   int 		   `json:"LapPenalty"`
 	Disqualified bool          `json:"Disqualified"`
 }
 
