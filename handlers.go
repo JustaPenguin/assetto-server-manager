@@ -198,7 +198,7 @@ func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-type contentFile struct {
+type ContentFile struct {
 	Name     string `json:"name"`
 	FileType string `json:"type"`
 	FilePath string `json:"filepath"`
@@ -210,7 +210,7 @@ var base64HeaderRegex = regexp.MustCompile("^(data:.+;base64,)")
 
 // Stores Files encoded into r.Body
 func uploadHandler(w http.ResponseWriter, r *http.Request, contentType string) {
-	var files []contentFile
+	var files []ContentFile
 
 	decoder := json.NewDecoder(r.Body)
 
@@ -233,7 +233,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request, contentType string) {
 }
 
 // Stores files in the correct location
-func addFiles(files []contentFile, contentType string) error {
+func addFiles(files []ContentFile, contentType string) error {
 	var contentPath string
 
 	switch contentType {
