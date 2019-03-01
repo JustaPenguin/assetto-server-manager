@@ -149,7 +149,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 			CarID:      carID,
 			DriverName: driverName,
 			DriverGUID: driverGUID,
-			CarMode:    carMode,
+			CarModel:   carMode,
 			CarSkin:    carSkin,
 			EventType:  eventType,
 		}

@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -71,6 +72,12 @@ type Championship struct {
 	Updated time.Time
 	Deleted time.Time
 
+	// OpenEntrants indicates that entrant names do not need to be specified in the EntryList.
+	// As Entrants join a championship, the available Entrant slots will be filled by the information
+	// provided by a join message. The EntryList for each class will still need creating, but
+	// can omit names/GUIDs/teams as necessary. These can then be edited after the fact.
+	OpenEntrants bool
+
 	Classes []*ChampionshipClass
 	Events  []*ChampionshipEvent
 }
@@ -80,11 +87,26 @@ func (c *Championship) IsMultiClass() bool {
 	return len(c.Classes) > 1
 }
 
+var ErrClassNotFound = errors.New("servermanager: championship class not found")
+
+func (c *Championship) FindClassForCarModel(model string) (*ChampionshipClass, error) {
+	for _, class := range c.Classes {
+		for _, car := range class.ValidCarIDs() {
+			if car == model {
+				return class, nil
+			}
+		}
+	}
+
+	return nil, ErrClassNotFound
+}
+
 // NewChampionshipClass creates a championship class with the default points
 func NewChampionshipClass(name string) *ChampionshipClass {
 	return &ChampionshipClass{
-		Name:   name,
-		Points: DefaultChampionshipPoints,
+		Name:     name,
+		Points:   DefaultChampionshipPoints,
+		Entrants: make(EntryList),
 	}
 }
 
@@ -194,7 +216,7 @@ func (c *Championship) Progress() float64 {
 
 // ChampionshipStanding is the current number of Points an Entrant in the Championship has.
 type ChampionshipStanding struct {
-	Entrant Entrant
+	Entrant *Entrant
 	Points  int
 }
 
