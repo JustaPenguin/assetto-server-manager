@@ -146,8 +146,8 @@ func TestChampionship_FindClassForCarModel(t *testing.T) {
 			},
 		},
 		{
-			searchModel:       "ks_lambo2",
-			expectedClassName: "",
+			searchModel:       "porsche_gt3",
+			expectedClassName: "GT3",
 
 			classesToModels: map[string][]string{
 				"KS": {
@@ -171,7 +171,7 @@ func TestChampionship_FindClassForCarModel(t *testing.T) {
 			class := NewChampionshipClass(className)
 
 			for _, model := range models {
-				for i := 0; i < rand.Intn(20); i++ {
+				for i := 0; i < rand.Intn(20)+1; i++ {
 					class.Entrants.Add(&Entrant{
 						Model: model,
 					})
