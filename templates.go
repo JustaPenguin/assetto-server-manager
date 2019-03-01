@@ -137,6 +137,7 @@ func (tr *Renderer) init() error {
 	funcs["classColor"] = func(i int) string {
 		return ChampionshipClassColors[i%len(ChampionshipClassColors)]
 	}
+	funcs["carSkinURL"] = carSkinURL
 	funcs["dict"] = templateDict
 	funcs["asset"] = NewAssetHelper("/", "", "", map[string]string{"cb": BuildTime}).GetURL
 

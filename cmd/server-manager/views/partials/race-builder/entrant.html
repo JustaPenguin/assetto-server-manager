@@ -113,7 +113,10 @@
                 </div>
 
                 <div class="col-4">
-                    <img src="/static/img/no-preview-car.png" alt="Car Skin" class="entryListCarPreview img-fluid">
+                    <img src="{{ with .Skin }}{{ carSkinURL $.Model $.Skin }}{{ else }}/static/img/no-preview-car.png{{ end }}"
+                         alt="Car Skin"
+                         class="entryListCarPreview img-fluid"
+                    >
                 </div>
 
             </div>
