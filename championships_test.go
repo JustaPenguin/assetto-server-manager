@@ -1,6 +1,9 @@
 package servermanager
 
-import "testing"
+import (
+	"math/rand"
+	"testing"
+)
 
 type lastSessionTest struct {
 	expected SessionType
@@ -82,6 +85,113 @@ func TestChampionshipEvent_LastSession(t *testing.T) {
 
 		if e.LastSession() != x.expected {
 			t.Logf("Expected: %s, got %s", x.expected, e.LastSession())
+			t.Fail()
+		}
+	}
+}
+
+type carClassModelTest struct {
+	searchModel       string
+	expectedClassName string
+
+	classesToModels map[string][]string
+}
+
+func TestChampionship_FindClassForCarModel(t *testing.T) {
+	fixtures := []carClassModelTest{
+		{
+			searchModel:       "ks_lambo",
+			expectedClassName: "KS",
+
+			classesToModels: map[string][]string{
+				"KS": {
+					"ks_merc",
+					"ks_ferrari",
+					"ks_lambo",
+				},
+			},
+		},
+		{
+			searchModel:       "ks_lambo",
+			expectedClassName: "KS",
+
+			classesToModels: map[string][]string{
+				"KS": {
+					"ks_merc",
+					"ks_ferrari",
+					"ks_lambo",
+				},
+				"GT3": {
+					"fast_gt3",
+					"porsche_gt3",
+					"ks_gt3_rs",
+				},
+			},
+		},
+		{
+			searchModel:       "ks_lambo2",
+			expectedClassName: "",
+
+			classesToModels: map[string][]string{
+				"KS": {
+					"ks_merc",
+					"ks_ferrari",
+					"ks_lambo",
+				},
+				"GT3": {
+					"fast_gt3",
+					"porsche_gt3",
+					"ks_gt3_rs",
+				},
+			},
+		},
+		{
+			searchModel:       "porsche_gt3",
+			expectedClassName: "GT3",
+
+			classesToModels: map[string][]string{
+				"KS": {
+					"ks_merc",
+					"ks_ferrari",
+					"ks_lambo",
+				},
+				"GT3": {
+					"fast_gt3",
+					"porsche_gt3",
+					"ks_gt3_rs",
+				},
+			},
+		},
+	}
+
+	for _, fixture := range fixtures {
+		c := NewChampionship(fixture.searchModel)
+
+		for className, models := range fixture.classesToModels {
+			class := NewChampionshipClass(className)
+
+			for _, model := range models {
+				for i := 0; i < rand.Intn(20)+1; i++ {
+					class.Entrants.Add(&Entrant{
+						Model: model,
+					})
+				}
+			}
+
+			c.AddClass(class)
+		}
+
+		foundClass, err := c.FindClassForCarModel(fixture.searchModel)
+
+		if err != nil && fixture.expectedClassName != "" {
+			t.Fail()
+		}
+
+		if foundClass == nil && fixture.expectedClassName == "" {
+			continue // pass
+		}
+
+		if foundClass.Name != fixture.expectedClassName {
 			t.Fail()
 		}
 	}

@@ -57,7 +57,7 @@
       "CarID": 1,
       "DriverName": "Joseph Elton",
       "DriverGUID": "76561198029578060",
-      "CarMode": "rss_formula_rss_4",
+      "CarModel": "rss_formula_rss_4",
       "CarSkin": "06_Smith_Racing",
       "EventType": 51
     }
@@ -69,7 +69,7 @@
       "CarID": 0,
       "DriverName": "Callum Jones",
       "DriverGUID": "76561198020046073",
-      "CarMode": "rss_formula_rss_4",
+      "CarModel": "rss_formula_rss_4",
       "CarSkin": "14_Outback_Stars",
       "EventType": 51
     }
@@ -1559,7 +1559,7 @@
       "CarID": 0,
       "DriverName": "Callum Jones",
       "DriverGUID": "76561198020046073",
-      "CarMode": "rss_formula_rss_4",
+      "CarModel": "rss_formula_rss_4",
       "CarSkin": "14_Outback_Stars",
       "EventType": 52
     }
@@ -1571,7 +1571,7 @@
       "CarID": 1,
       "DriverName": "Joseph Elton",
       "DriverGUID": "76561198029578060",
-      "CarMode": "rss_formula_rss_4",
+      "CarModel": "rss_formula_rss_4",
       "CarSkin": "06_Smith_Racing",
       "EventType": 52
     }

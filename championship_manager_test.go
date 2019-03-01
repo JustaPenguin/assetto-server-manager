@@ -10,46 +10,46 @@ import (
 
 var TestEntryList = EntryList{
 	"CAR_0": {
-		Name:  "John Doe",
-		GUID:  "8623812638761238",
+		Name:  "",
+		GUID:  "",
 		Team:  "Team 1",
-		Model: "ks_mazda_miata",
-		Skin:  "00_classic_red",
+		Model: "rss_formula_rss_4",
+		Skin:  "",
 	},
 	"CAR_1": {
-		Name:  "Jane Doe",
-		GUID:  "8623812638761222",
+		Name:  "",
+		GUID:  "",
 		Team:  "Team 1",
-		Model: "ks_mazda_miata",
-		Skin:  "00_classic_red",
+		Model: "rss_formula_rss_4",
+		Skin:  "",
 	},
 	"CAR_2": {
-		Name:  "Steve Smith",
-		GUID:  "8655432638761222",
+		Name:  "",
+		GUID:  "",
 		Team:  "Team 2",
-		Model: "ks_mazda_miata",
-		Skin:  "00_classic_red",
+		Model: "rss_formula_rss_4",
+		Skin:  "",
 	},
 	"CAR_3": {
-		Name:  "Sue Smith",
-		GUID:  "8655432638761222",
+		Name:  "",
+		GUID:  "",
 		Team:  "Team 2",
-		Model: "ks_mazda_miata",
-		Skin:  "00_classic_red",
+		Model: "rss_formula_rss_4",
+		Skin:  "",
 	},
 	"CAR_4": {
-		Name:  "Michael Scott",
-		GUID:  "8655432638761222",
+		Name:  "",
+		GUID:  "",
 		Team:  "Team 2",
-		Model: "ks_mazda_miata",
-		Skin:  "00_classic_red",
+		Model: "rss_formula_rss_4",
+		Skin:  "",
 	},
 	"CAR_5": {
-		Name:  "Dwight Schrute",
-		GUID:  "8655432638761222",
+		Name:  "",
+		GUID:  "",
 		Team:  "Team 2",
-		Model: "ks_mazda_miata",
-		Skin:  "00_classic_red",
+		Model: "rss_formula_rss_4",
+		Skin:  "",
 	},
 }
 
@@ -82,45 +82,210 @@ var championshipEventFixtures = []string{
 }
 
 func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
-	SetupRaceManager(NewJSONRaceStore(os.TempDir()))
+	SetupRaceManager(NewJSONRaceStore(filepath.Join(os.TempDir(), "asm-race-store")))
 
 	AssettoProcess = dummyServerProcess{}
 	ServerInstallPath = filepath.Join("cmd", "server-manager", "assetto")
 
-	// make a championship
-	champ := NewChampionship("Test Championship")
-	cl := NewChampionshipClass("Default")
-	cl.Entrants = TestEntryList
-	champ.AddClass(cl)
+	t.Run("Basic championship flow, closed entrylist", func(t *testing.T) {
+		// make a championship
+		champ := NewChampionship("Test Championship")
+		champ.OpenEntrants = false
+		cl := NewChampionshipClass("Default")
+		cl.Entrants = TestEntryList
+		champ.AddClass(cl)
 
-	for range championshipEventFixtures {
-		e := NewChampionshipEvent()
-		e.RaceSetup = ConfigIniDefault.CurrentRaceConfig
+		for range championshipEventFixtures {
+			e := NewChampionshipEvent()
+			e.RaceSetup = ConfigIniDefault.CurrentRaceConfig
 
-		champ.Events = append(champ.Events, e)
-	}
+			champ.Events = append(champ.Events, e)
+		}
 
-	if err := championshipManager.UpsertChampionship(champ); err != nil {
+		if err := championshipManager.UpsertChampionship(champ); err != nil {
+			t.Error(err)
+			return
+		}
+
+		for i, sessionFile := range championshipEventFixtures {
+			t.Run(sessionFile, func(t *testing.T) {
+				if err := championshipManager.StartEvent(champ.ID.String(), champ.Events[i].ID.String()); err != nil {
+					t.Error(err)
+					return
+				}
+
+				err := replay.ReplayUDPMessages(filepath.Join("fixtures", sessionFile), 1000, championshipManager.ChampionshipEventCallback, false)
+
+				if err != nil {
+					t.Error(err)
+					return
+				}
+
+				checkChampionshipEventCompletion(t, champ.ID.String(), i)
+			})
+		}
+
+		checkAutoPopulatedEntryList(t, champ.ID.String(), 0)
+	})
+
+	t.Run("Basic championship flow, open entrylist", func(t *testing.T) {
+		// make a championship
+		champ := NewChampionship("Test Championship")
+		champ.OpenEntrants = true
+		cl := NewChampionshipClass("Default")
+		cl.Entrants = TestEntryList
+		champ.AddClass(cl)
+
+		for range championshipEventFixtures {
+			e := NewChampionshipEvent()
+			e.RaceSetup = ConfigIniDefault.CurrentRaceConfig
+
+			champ.Events = append(champ.Events, e)
+		}
+
+		if err := championshipManager.UpsertChampionship(champ); err != nil {
+			t.Error(err)
+			return
+		}
+
+		for i, sessionFile := range championshipEventFixtures {
+			t.Run(sessionFile, func(t *testing.T) {
+				if err := championshipManager.StartEvent(champ.ID.String(), champ.Events[i].ID.String()); err != nil {
+					t.Error(err)
+					return
+				}
+
+				err := replay.ReplayUDPMessages(filepath.Join("fixtures", sessionFile), 1000, championshipManager.ChampionshipEventCallback, false)
+
+				if err != nil {
+					t.Error(err)
+					return
+				}
+
+				checkChampionshipEventCompletion(t, champ.ID.String(), i)
+			})
+		}
+
+		checkAutoPopulatedEntryList(t, champ.ID.String(), 2)
+	})
+
+	t.Run("Basic championship flow, open entrylist with only one free slot", func(t *testing.T) {
+		// make a championship
+		champ := NewChampionship("Test Championship")
+		champ.OpenEntrants = true
+		cl := NewChampionshipClass("Default")
+		cl.Entrants = EntryList{
+			"CAR_0": {
+				Name:  "",
+				GUID:  "",
+				Team:  "Team 1",
+				Model: "rss_formula_rss_4",
+				Skin:  "",
+			},
+		}
+		champ.AddClass(cl)
+
+		for range championshipEventFixtures {
+			e := NewChampionshipEvent()
+			e.RaceSetup = ConfigIniDefault.CurrentRaceConfig
+
+			champ.Events = append(champ.Events, e)
+		}
+
+		if err := championshipManager.UpsertChampionship(champ); err != nil {
+			t.Error(err)
+			return
+		}
+
+		for i, sessionFile := range championshipEventFixtures {
+			t.Run(sessionFile, func(t *testing.T) {
+				if err := championshipManager.StartEvent(champ.ID.String(), champ.Events[i].ID.String()); err != nil {
+					t.Error(err)
+					return
+				}
+
+				err := replay.ReplayUDPMessages(filepath.Join("fixtures", sessionFile), 1000, championshipManager.ChampionshipEventCallback, false)
+
+				if err != nil {
+					t.Error(err)
+					return
+				}
+
+				checkChampionshipEventCompletion(t, champ.ID.String(), i)
+			})
+		}
+
+		checkAutoPopulatedEntryList(t, champ.ID.String(), 1)
+	})
+
+	t.Run("Basic championship flow, open entrylist with one free slot for a non-matching car", func(t *testing.T) {
+		// make a championship
+		champ := NewChampionship("Test Championship")
+		champ.OpenEntrants = true
+		cl := NewChampionshipClass("Default")
+		cl.Entrants = EntryList{
+			"CAR_0": {
+				Name:  "",
+				GUID:  "",
+				Team:  "Team 1",
+				Model: "bmw_m3",
+				Skin:  "",
+			},
+		}
+		champ.AddClass(cl)
+
+		for range championshipEventFixtures {
+			e := NewChampionshipEvent()
+			e.RaceSetup = ConfigIniDefault.CurrentRaceConfig
+
+			champ.Events = append(champ.Events, e)
+		}
+
+		if err := championshipManager.UpsertChampionship(champ); err != nil {
+			t.Error(err)
+			return
+		}
+
+		for i, sessionFile := range championshipEventFixtures {
+			t.Run(sessionFile, func(t *testing.T) {
+				if err := championshipManager.StartEvent(champ.ID.String(), champ.Events[i].ID.String()); err != nil {
+					t.Error(err)
+					return
+				}
+
+				err := replay.ReplayUDPMessages(filepath.Join("fixtures", sessionFile), 1000, championshipManager.ChampionshipEventCallback, false)
+
+				if err != nil {
+					t.Error(err)
+					return
+				}
+
+				checkChampionshipEventCompletion(t, champ.ID.String(), i)
+			})
+		}
+
+		checkAutoPopulatedEntryList(t, champ.ID.String(), 0)
+	})
+}
+
+func checkAutoPopulatedEntryList(t *testing.T, championshipID string, expected int) {
+	loadedChampionship, err := championshipManager.LoadChampionship(championshipID)
+
+	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	for i, sessionFile := range championshipEventFixtures {
-		t.Run(sessionFile, func(t *testing.T) {
-			if err := championshipManager.StartEvent(champ.ID.String(), champ.Events[i].ID.String()); err != nil {
-				t.Error(err)
-				return
-			}
+	numPopulatedEntrants := 0
 
-			err := replay.ReplayUDPMessages(filepath.Join("fixtures", sessionFile), 1000, championshipManager.ChampionshipEventCallback, false)
+	for _, entrant := range loadedChampionship.AllEntrants() {
+		if entrant.Name != "" && entrant.GUID != "" {
+			numPopulatedEntrants++
+		}
+	}
 
-			if err != nil {
-				t.Error(err)
-				return
-			}
-
-			checkChampionshipEventCompletion(t, champ.ID.String(), i)
-		})
+	if numPopulatedEntrants != expected {
+		t.Fail()
 	}
 }
 

@@ -10,7 +10,7 @@ import (
 
 const entryListFilename = "entry_list.ini"
 
-type EntryList map[string]Entrant
+type EntryList map[string]*Entrant
 
 // Write the EntryList to the server location
 func (e EntryList) Write() error {
@@ -43,12 +43,12 @@ func (e EntryList) Write() error {
 }
 
 // Add an Entrant to the EntryList
-func (e EntryList) Add(entrant Entrant) {
+func (e EntryList) Add(entrant *Entrant) {
 	e[fmt.Sprintf("CAR_%d", len(e))] = entrant
 }
 
 // Remove an Entrant from the EntryList
-func (e EntryList) Delete(entrant Entrant) {
+func (e EntryList) Delete(entrant *Entrant) {
 	for k, v := range e {
 		if v == entrant {
 			delete(e, k)
