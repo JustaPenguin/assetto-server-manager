@@ -38,6 +38,8 @@ github.com/sirupsen/logrus
 golang.org/x/crypto/scrypt
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/pbkdf2
+# golang.org/x/net v0.0.0-20190225153610-fe579d43d832
+golang.org/x/net/publicsuffix
 # golang.org/x/sys v0.0.0-20190225065934-cc5685c2db12
 golang.org/x/sys/unix
 golang.org/x/sys/windows
