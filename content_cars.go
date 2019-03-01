@@ -147,3 +147,18 @@ func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
+
+const defaultSkinURL = "/static/img/no-preview-car.png"
+
+func carSkinURL(car, skin string) string {
+	skinPath := filepath.Join("content", "cars", car, "skins", skin, "preview.jpg")
+
+	// look to see if the car preview image exists
+	_, err := os.Stat(filepath.Join(ServerInstallPath, skinPath))
+
+	if err != nil {
+		return defaultSkinURL
+	}
+
+	return "/" + filepath.ToSlash(skinPath)
+}
