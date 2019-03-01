@@ -182,7 +182,7 @@
 
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-8 mb-3">
                             <div class="row">
 
                                 <div class="col-sm-4">
@@ -209,16 +209,32 @@
                                     <div class="col-sm-4">
 
                                         <ul class="list-unstyled">
-                                            {{ range $sessionName, $sessionDetails := $event.Sessions }}
-                                                {{ if eq $sessionName "RACE" }}
-                                                    {{ range $pos, $result := (slice $sessionDetails.Results.Result 0 3) }}
-                                                        {{ if gt $result.TotalTime 0 }}
-                                                            {{ $posInt := int64 (add $pos 1) }}
+                                            {{ if $championship.IsMultiClass }}
+                                                {{ range $classIndex, $class := $championship.Classes }}
 
-                                                            <li>
-                                                                <strong>{{ $posInt }}{{ ordinal $posInt }}</strong>:
-                                                                {{ $result.DriverName }}
-                                                            </li>
+                                                    {{ range $sessionName, $sessionDetails := $event.Sessions }}
+                                                        {{ if eq $sessionName "RACE" }}
+                                                            {{ range $pos, $result := (slice ($class.ResultsForClass $sessionDetails.Results.Result) 0 1) }}
+                                                                <li>
+                                                                    <strong>{{ $class.Name }} Winner</strong><br>
+                                                                    {{ $result.DriverName }}
+                                                                </li>
+                                                            {{ end }}
+                                                        {{ end }}
+                                                    {{ end }}
+                                                {{ end }}
+                                            {{ else }}
+                                                {{ range $sessionName, $sessionDetails := $event.Sessions }}
+                                                    {{ if eq $sessionName "RACE" }}
+                                                        {{ range $pos, $result := (slice $sessionDetails.Results.Result 0 3) }}
+                                                            {{ if gt $result.TotalTime 0 }}
+                                                                {{ $posInt := int64 (add $pos 1) }}
+
+                                                                <li>
+                                                                    <strong>{{ $posInt }}{{ ordinal $posInt }}</strong>:
+                                                                    {{ $result.DriverName }}
+                                                                </li>
+                                                            {{ end }}
                                                         {{ end }}
                                                     {{ end }}
                                                 {{ end }}
@@ -312,7 +328,7 @@
                             </div>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <img class="img img-fluid pl-2 float-right image-track pb-2"
                                  src="/content/tracks/{{ $eventSetup.Track }}/ui{{ with $eventSetup.TrackLayout }}/{{.}}{{ end }}/preview.png"
                                  alt="{{ $eventSetup.Track }} {{ $eventSetup.TrackLayout }}"

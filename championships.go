@@ -229,6 +229,26 @@ func (c *ChampionshipClass) PointForPos(i int) int {
 	return c.Points.Places[i]
 }
 
+func (c *ChampionshipClass) CarInClass(car string) bool {
+	for _, id := range c.ValidCarIDs() {
+		if id == car {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (c *ChampionshipClass) ResultsForClass(results []*SessionResult) (filtered []*SessionResult) {
+	for _, result := range results {
+		if c.CarInClass(result.CarModel) && result.TotalTime > 0 {
+			filtered = append(filtered, result)
+		}
+	}
+
+	return filtered
+}
+
 // Standings returns the current Driver Standings for the Championship.
 func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*ChampionshipStanding {
 	var out []*ChampionshipStanding
@@ -249,7 +269,7 @@ func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*Championsh
 		qualifying, qualifyingOK := event.Sessions[SessionTypeQualifying]
 
 		if qualifyingOK && qualifying.Results != nil {
-			for pos, driver := range qualifying.Results.Result {
+			for pos, driver := range c.ResultsForClass(qualifying.Results.Result) {
 				if pos != 0 {
 					continue
 				}
@@ -266,7 +286,7 @@ func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*Championsh
 		if raceOK && race.Results != nil {
 			fastestLap := race.Results.FastestLap()
 
-			for pos, driver := range race.Results.Result {
+			for pos, driver := range c.ResultsForClass(race.Results.Result) {
 				if driver.TotalTime <= 0 {
 					continue
 				}
