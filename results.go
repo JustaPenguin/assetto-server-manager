@@ -227,7 +227,7 @@ func (s *SessionResults) GetLaps(driverGUID string) int {
 }
 
 func (s *SessionResults) GetLastLapTime(driverGuid string) time.Duration {
-	for i := len(s.Laps)-1; i > 0; i-- {
+	for i := len(s.Laps) - 1; i >= 0; i-- {
 		if s.Laps[i].DriverGUID == driverGuid {
 			return s.Laps[i].GetLapTime()
 		}
@@ -275,7 +275,7 @@ type SessionResult struct {
 	TotalTime    int           `json:"TotalTime"`
 	HasPenalty   bool          `json:"HasPenalty"`
 	PenaltyTime  time.Duration `json:"PenaltyTime"`
-	LapPenalty   int 		   `json:"LapPenalty"`
+	LapPenalty   int           `json:"LapPenalty"`
 	Disqualified bool          `json:"Disqualified"`
 }
 
