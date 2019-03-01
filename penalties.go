@@ -103,7 +103,7 @@ func applyPenalty(r *http.Request) (bool, error) {
 					lastLapTime := results.GetLastLapTime(result.DriverGUID)
 
 					if result.PenaltyTime > lastLapTime {
-						result.LapPenalty = int(result.PenaltyTime/lastLapTime)
+						result.LapPenalty = int(result.PenaltyTime / lastLapTime)
 					}
 				}
 			}
