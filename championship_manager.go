@@ -106,7 +106,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	}
 
 	championship.Name = r.FormValue("ChampionshipName")
-	championship.OpenEntrants = formValueAsInt("ChampionshipOpenEntrants") == 1
+	championship.OpenEntrants = r.FormValue("ChampionshipOpenEntrants") == "on" || r.FormValue("ChampionshipOpenEntrants") == "1"
 
 	previousNumEntrants := 0
 
@@ -296,14 +296,15 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 		return err
 	}
 
-	if championship.OpenEntrants {
+	// @TODO fixme
+	//if championship.OpenEntrants {
 		event.RaceSetup.LockedEntryList = 0
-	} else {
-		event.RaceSetup.LockedEntryList = 1
-	}
+	//} else {
+	//	event.RaceSetup.LockedEntryList = 1
+	//}
 
+	event.RaceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
 	event.RaceSetup.MaxClients = championship.NumEntrants()
-
 	config := ConfigIniDefault
 	config.CurrentRaceConfig = event.RaceSetup
 
