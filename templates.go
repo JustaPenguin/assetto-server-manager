@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -173,14 +174,23 @@ func dateFormat(t time.Time) string {
 	return t.Format("02/01/2006")
 }
 
-func carList(cars string) string {
-	var out []string
+func carList(cars interface{}) string {
+	var split []string
 
-	split := strings.Split(cars, ";")
+	switch cars := cars.(type) {
+	case string:
+		split = strings.Split(cars, ";")
+	case []string:
+		split = cars
+	}
+
+	var out []string
 
 	for _, s := range split {
 		out = append(out, prettifyName(s, true))
 	}
+
+	sort.Strings(out)
 
 	return strings.Join(out, ", ")
 }
