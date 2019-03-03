@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"path"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"sort"
 	"strings"
@@ -182,6 +183,8 @@ func carList(cars interface{}) string {
 		split = strings.Split(cars, ";")
 	case []string:
 		split = cars
+	default:
+		panic("unknown type of cars: " + reflect.TypeOf(cars).String())
 	}
 
 	var out []string
