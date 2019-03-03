@@ -167,7 +167,7 @@
                         <strong>{{ prettify $eventSetup.Track false }} {{ with $eventSetup.TrackLayout }}({{ prettify . true }}){{ end }}</strong>
                     {{ end }}
 
-                    in {{ carList $eventSetup.Cars }}
+                    in {{ carList $championship.ValidCarIDs }}
 
                     <div class="float-right">
                         {{ if $event.Completed }}
@@ -343,17 +343,34 @@
                                 <div class="table-responsive">
                                     <table class="table table-bordered table-striped">
                                         <tr>
+                                            {{ if $championship.IsMultiClass }}
+                                                <th>Class</th>
+                                            {{ end }}
                                             <th>Name</th>
                                             <th>Team</th>
                                             <th>Car</th>
                                         </tr>
 
-                                        {{ range $entrantIndex, $entrant := $championship.AllEntrants }}
-                                            <tr>
-                                                <td>{{ $entrant.Name }}</td>
-                                                <td>{{ $entrant.Team }}</td>
-                                                <td>{{ prettify $entrant.Model true }}</td>
-                                            </tr>
+                                        {{ range $classIndex, $class := $championship.Classes }}
+                                            {{ $entrants := $class.Entrants.AsSlice }}
+
+                                            {{ range $entrantIndex, $entrant := $entrants }}
+                                                <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
+                                                    {{ if $championship.IsMultiClass }}
+                                                        {{ if eq $entrantIndex 0 }}
+                                                            <td rowspan="{{ len $entrants }}">{{ $class.Name }}</td>
+                                                        {{ end }}
+                                                    {{ end }}
+
+                                                    {{ if (contains "open slots" $entrant.Name) }}
+                                                        <td colspan="3"><em>{{ $entrant.Name }}</em></td>
+                                                    {{ else }}
+                                                        <td>{{ $entrant.Name }}</td>
+                                                        <td>{{ $entrant.Team }}</td>
+                                                        <td>{{ prettify $entrant.Model true }}</td>
+                                                    {{ end }}
+                                                </tr>
+                                            {{ end }}
                                         {{ end }}
                                     </table>
                                 </div>

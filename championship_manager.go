@@ -296,12 +296,11 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 		return err
 	}
 
-	// @TODO fixme
-	//if championship.OpenEntrants {
+	if championship.OpenEntrants {
 		event.RaceSetup.LockedEntryList = 0
-	//} else {
-	//	event.RaceSetup.LockedEntryList = 1
-	//}
+	} else {
+		event.RaceSetup.LockedEntryList = 1
+	}
 
 	event.RaceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
 	event.RaceSetup.MaxClients = championship.NumEntrants()
@@ -376,17 +375,9 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 	case udp.SessionCarInfo:
 		if championship.OpenEntrants && a.Event() == udp.EventNewConnection {
 			// a person joined, check to see if they need adding to the championship
-			for _, entrant := range championship.AllEntrants() {
-				if entrant.GUID == a.DriverGUID {
-					// the person is already in the EntryList, don't add them again
-					logrus.Debugf("Entrant: %s (%s) already found in EntryList", a.DriverName, a.DriverGUID)
-					saveChampionship = false
-					return
-				}
-			}
 
-			// now we need to find the class for the car
-			class, err := championship.FindClassForCarModel(a.CarModel)
+			// find the class for the car
+			classForCar, err := championship.FindClassForCarModel(a.CarModel)
 
 			if err != nil {
 				saveChampionship = false
@@ -395,17 +386,39 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 				return
 			}
 
+		classLoop:
+			for _, class := range championship.Classes {
+				for entrantKey, entrant := range class.Entrants {
+					if entrant.GUID == a.DriverGUID {
+						if class == classForCar {
+							// the person is already in the EntryList and this class, update their information
+							logrus.Debugf("Entrant: %s (%s) already found in EntryList. updating their info...", a.DriverName, a.DriverGUID)
+							entrant.Model = a.CarModel
+							entrant.Skin = a.CarSkin
+
+							saveChampionship = true
+							return
+						} else {
+							// the user needs removing from this class
+							logrus.Infof("Entrant: %s (%s) found in EntryList, but changed classes (%s -> %s). removing from original class.", a.DriverName, a.DriverGUID, class.Name, classForCar.Name)
+							delete(class.Entrants, entrantKey)
+							break classLoop
+						}
+					}
+				}
+			}
+
 			foundFreeEntrantSlot := false
 
 			// now look for empty Entrants in the Entrylist
-			for carNum, entrant := range class.Entrants {
+			for carNum, entrant := range classForCar.Entrants {
 				if entrant.Name == "" && entrant.GUID == "" {
 					entrant.Name = a.DriverName
 					entrant.GUID = a.DriverGUID
 					entrant.Model = a.CarModel
 					entrant.Skin = a.CarSkin
 
-					logrus.Infof("New championship entrant: %s (%s) has been assigned to %s", entrant.Name, entrant.GUID, carNum)
+					logrus.Infof("New championship entrant: %s (%s) has been assigned to %s in %s", entrant.Name, entrant.GUID, carNum, classForCar.Name)
 
 					foundFreeEntrantSlot = true
 
@@ -415,7 +428,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 
 			if !foundFreeEntrantSlot {
 				saveChampionship = false
-				logrus.Errorf("Could not find free entrant slot in class: %s for %s (%s)", class.Name, a.DriverName, a.DriverGUID)
+				logrus.Errorf("Could not find free entrant slot in class: %s for %s (%s)", classForCar.Name, a.DriverName, a.DriverGUID)
 				return
 			}
 		}
@@ -528,7 +541,10 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 
 }
 
-var ErrSessionNotFound = errors.New("servermanager: session not found")
+var (
+	ErrSessionNotFound    = errors.New("servermanager: session not found")
+	ErrResultFileNotFound = errors.New("servermanager: results files not found")
+)
 
 func (cm *ChampionshipManager) findSessionWithName(event *ChampionshipEvent, name string) (SessionType, error) {
 	for t, sess := range event.RaceSetup.Sessions {
@@ -553,7 +569,7 @@ func (cm *ChampionshipManager) findLastWrittenSessionFile() (string, error) {
 	})
 
 	if len(resultFiles) == 0 {
-		return "", errors.New("servermanager: results files not found")
+		return "", ErrResultFileNotFound
 	}
 
 	return resultFiles[0].Name(), nil
