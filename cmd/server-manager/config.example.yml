@@ -7,6 +7,12 @@
 #
 #
 # note that changes to this file require a restart of server manager to work! :)
+#
+#
+# The below file is in YAML configuration format. Spacing is important within
+# YAML, and can cause server manager not to launch correctly. You can validate
+# this file online at: http://www.yamllint.com/
+#
 ################################################################################
 
 ################################################################################
@@ -23,7 +29,7 @@ steam:
   # assetto corsa server.
   #
   # however, if you do not wish to provide server manager with this information,
-  # leave it blank and install assetto corsa to the path you specified in
+  # leave it blank and install assetto corsa server to the path you specified in
   # install_path (default: 'assetto')
   username: foobar
   password: hunter2
