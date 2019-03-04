@@ -2,6 +2,11 @@ language: go
 go:
   - 1.12
 
+addons:
+  apt:
+    packages:
+      - dos2unix
+
 before_install:
   - nvm install 11
   - nvm use 11
@@ -36,8 +41,10 @@ script:
 
   - GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${TRAVIS_TAG}"
   - GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${TRAVIS_TAG}"
-  - zip -r server-manager_windows_$TRAVIS_TAG.zip server-manager.exe config.yml README.txt LICENSE.txt CHANGELOG.txt
   - zip -r server-manager_linux_$TRAVIS_TAG.zip server-manager config.yml README.txt LICENSE.txt CHANGELOG.txt
+
+  - unix2dos README.txt LICENSE.txt CHANGELOG.txt config.yml
+  - zip -r server-manager_windows_$TRAVIS_TAG.zip server-manager.exe config.yml README.txt LICENSE.txt CHANGELOG.txt
 
 deploy:
   provider: releases
