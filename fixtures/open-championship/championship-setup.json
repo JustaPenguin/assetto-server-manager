@@ -1,0 +1,4072 @@
+{
+  "ID": "b412c28d-b0d5-41e8-b551-7704e11fe35a",
+  "Name": "Open championship test",
+  "Created": "2019-03-02T12:55:42.831095556Z",
+  "Updated": "2019-03-02T22:28:56.419922652Z",
+  "Deleted": "0001-01-01T00:00:00Z",
+  "OpenEntrants": true,
+  "Classes": [
+    {
+      "Name": "NFS",
+      "Entrants": {
+        "CAR_0": {
+          "Name": "Seb",
+          "Team": "",
+          "GUID": "76561198074322763",
+          "Model": "a3dr_lambo_diablo_vt",
+          "Skin": "Viola_Ophelia",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_1": {
+          "Name": "namelesssboy",
+          "Team": "",
+          "GUID": "76561198022717360",
+          "Model": "a3dr_lambo_diablo_vt",
+          "Skin": "Silver",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_2": {
+          "Name": "Danny Wilson",
+          "Team": "",
+          "GUID": "76561198023931313",
+          "Model": "a3dr_ferrari_512tr",
+          "Skin": "Rosso",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_3": {
+          "Name": "Spaceman9795",
+          "Team": "",
+          "GUID": "76561198045844392",
+          "Model": "a3dr_lambo_diablo_vt",
+          "Skin": "Blu_Oscuro",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_4": {
+          "Name": "rich p",
+          "Team": "",
+          "GUID": "76561198437072463",
+          "Model": "a3dr_lambo_diablo_vt",
+          "Skin": "Blu_Oscuro",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_5": {
+          "Name": "Cheezypoof",
+          "Team": "",
+          "GUID": "76561198365646634",
+          "Model": "a3dr_ferrari_512tr",
+          "Skin": "Giallo_Modena",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        }
+      },
+      "Points": {
+        "Places": [
+          25,
+          18,
+          15,
+          12,
+          10,
+          8
+        ],
+        "BestLap": 0,
+        "PolePosition": 0
+      }
+    },
+    {
+      "Name": "Porsche",
+      "Entrants": {
+        "CAR_0": {
+          "Name": "L33 CR055L3Y",
+          "Team": "",
+          "GUID": "76561198055388877",
+          "Model": "ks_porsche_911_carrera_rsr",
+          "Skin": "10_carrera_grey",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_1": {
+          "Name": "",
+          "Team": "",
+          "GUID": "",
+          "Model": "ks_porsche_911_carrera_rsr",
+          "Skin": "01_racing_red",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_2": {
+          "Name": "",
+          "Team": "",
+          "GUID": "",
+          "Model": "ks_porsche_911_carrera_rsr",
+          "Skin": "10_carrera_grey",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_3": {
+          "Name": "",
+          "Team": "",
+          "GUID": "",
+          "Model": "ks_porsche_911_carrera_rsr",
+          "Skin": "11_carrera_lime",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_4": {
+          "Name": "",
+          "Team": "",
+          "GUID": "",
+          "Model": "ks_porsche_911_carrera_rsr",
+          "Skin": "10_carrera_grey",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_5": {
+          "Name": "",
+          "Team": "",
+          "GUID": "",
+          "Model": "ks_porsche_911_carrera_rsr",
+          "Skin": "21_kunosracing_75",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_6": {
+          "Name": "",
+          "Team": "",
+          "GUID": "",
+          "Model": "ks_porsche_911_carrera_rsr",
+          "Skin": "03_kunosracing_17",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_7": {
+          "Name": "Joseph Elton",
+          "Team": "",
+          "GUID": "76561198029578060",
+          "Model": "ks_porsche_911_carrera_rsr",
+          "Skin": "03_kunosracing_17",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        }
+      },
+      "Points": {
+        "Places": [
+          25,
+          18,
+          15,
+          12,
+          10,
+          8,
+          6,
+          4
+        ],
+        "BestLap": 0,
+        "PolePosition": 0
+      }
+    },
+    {
+      "Name": "Alfa",
+      "Entrants": {
+        "CAR_0": {
+          "Name": "",
+          "Team": "",
+          "GUID": "",
+          "Model": "ks_alfa_33_stradale",
+          "Skin": "00_rosso",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_1": {
+          "Name": "",
+          "Team": "",
+          "GUID": "",
+          "Model": "ks_alfa_33_stradale",
+          "Skin": "00_rosso",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_2": {
+          "Name": "",
+          "Team": "",
+          "GUID": "",
+          "Model": "ks_alfa_33_stradale",
+          "Skin": "00_rosso",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_3": {
+          "Name": "Callum Jones",
+          "Team": "",
+          "GUID": "76561198020046073",
+          "Model": "ks_alfa_33_stradale",
+          "Skin": "00_rosso",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_4": {
+          "Name": "",
+          "Team": "",
+          "GUID": "",
+          "Model": "ks_alfa_33_stradale",
+          "Skin": "00_rosso",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_5": {
+          "Name": "",
+          "Team": "",
+          "GUID": "",
+          "Model": "ks_alfa_33_stradale",
+          "Skin": "00_rosso",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_6": {
+          "Name": "",
+          "Team": "",
+          "GUID": "",
+          "Model": "ks_alfa_33_stradale",
+          "Skin": "00_rosso",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        },
+        "CAR_7": {
+          "Name": "",
+          "Team": "",
+          "GUID": "",
+          "Model": "ks_alfa_33_stradale",
+          "Skin": "00_rosso",
+          "Ballast": 0,
+          "SpectatorMode": 0,
+          "Restrictor": 0
+        }
+      },
+      "Points": {
+        "Places": [
+          25,
+          18,
+          15,
+          12,
+          10,
+          8,
+          6,
+          4
+        ],
+        "BestLap": 0,
+        "PolePosition": 0
+      }
+    }
+  ],
+  "Events": [
+    {
+      "ID": "afc53e20-36f4-4a4c-b4dc-2c75d3da437e",
+      "RaceSetup": {
+        "Cars": "ks_ferrari_fxx_k;ks_lamborghini_huracan_st;ks_porsche_911_gt3_cup_2017",
+        "Track": "road_atlanta2018",
+        "TrackLayout": "shortcourse",
+        "SunAngle": 0,
+        "LegalTyres": "H;M;S",
+        "FuelRate": 100,
+        "DamageMultiplier": 0,
+        "TyreWearRate": 100,
+        "AllowedTyresOut": 3,
+        "ABSAllowed": 1,
+        "TractionControlAllowed": 1,
+        "StabilityControlAllowed": 0,
+        "AutoClutchAllowed": 0,
+        "TyreBlanketsAllowed": 1,
+        "ForceVirtualMirror": 0,
+        "LockedEntryList": 0,
+        "RacePitWindowStart": 0,
+        "RacePitWindowEnd": 0,
+        "ReversedGridRacePositions": 0,
+        "TimeOfDayMultiplier": 0,
+        "QualifyMaxWaitPercentage": 200,
+        "RaceGasPenaltyDisabled": 1,
+        "MaxBallastKilograms": 50,
+        "RaceExtraLap": 0,
+        "PickupModeEnabled": 1,
+        "LoopMode": 1,
+        "MaxClients": 0,
+        "SleepTime": 0,
+        "RaceOverTime": 180,
+        "StartRule": 2,
+        "IsSol": 1,
+        "WindBaseSpeedMin": 3,
+        "WindBaseSpeedMax": 15,
+        "WindBaseDirection": 30,
+        "WindVariationDirection": 15,
+        "DynamicTrack": {
+          "SessionStart": 100,
+          "Randomness": 0,
+          "SessionTransfer": 100,
+          "LapGain": 1
+        },
+        "Sessions": {
+          "QUALIFY": {
+            "Name": "Qualify",
+            "Time": 10,
+            "Laps": 0,
+            "IsOpen": 1,
+            "WaitTime": 0
+          },
+          "RACE": {
+            "Name": "Race",
+            "Time": 10,
+            "Laps": 0,
+            "IsOpen": 1,
+            "WaitTime": 60
+          }
+        },
+        "Weather": {
+          "WEATHER_0": {
+            "Graphics": "sol_01_CLear_type=15_time=0_mult=15_start=1530198000",
+            "BaseTemperatureAmbient": 26,
+            "BaseTemperatureRoad": 11,
+            "VariationAmbient": 1,
+            "VariationRoad": 1,
+            "CMGraphics": "sol_01_CLear",
+            "CMWFXType": 15,
+            "CMWFXUseCustomTime": 1,
+            "CMWFXTime": 0,
+            "CMWFXTimeMulti": 15,
+            "CMWFXUseCustomDate": 1,
+            "CMWFXDate": 1530198000,
+            "CMWFXDateUnModified": 1530468000
+          }
+        }
+      },
+      "Sessions": {
+        "QUALIFY": {
+          "StartedTime": "2019-03-02T20:35:23.044321908Z",
+          "CompletedTime": "2019-03-02T20:48:12.604730869Z",
+          "Results": {
+            "Cars": [
+              {
+                "BallastKG": 0,
+                "CarId": 0,
+                "Driver": {
+                  "Guid": "76561198074322763",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Seb",
+                  "Nation": "ITA",
+                  "Team": ""
+                },
+                "Model": "a3dr_lambo_diablo_vt",
+                "Restrictor": 0,
+                "Skin": "Viola_Ophelia"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 1,
+                "Driver": {
+                  "Guid": "76561198023931313",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Danny Wilson",
+                  "Nation": "GBR",
+                  "Team": ""
+                },
+                "Model": "a3dr_ferrari_512tr",
+                "Restrictor": 0,
+                "Skin": "Rosso"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 2,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "a3dr_ferrari_512tr",
+                "Restrictor": 0,
+                "Skin": "Giallo_Modena"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 3,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "a3dr_ferrari_512tr",
+                "Restrictor": 0,
+                "Skin": "Argento_Nurburgring"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 4,
+                "Driver": {
+                  "Guid": "76561198022717360",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "namelesssboy",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "Model": "a3dr_lambo_diablo_vt",
+                "Restrictor": 0,
+                "Skin": "Silver"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 5,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "a3dr_lambo_diablo_vt",
+                "Restrictor": 0,
+                "Skin": "Blu_Oscuro"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 6,
+                "Driver": {
+                  "Guid": "76561198029578060",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Joseph Elton",
+                  "Nation": "GBR",
+                  "Team": ""
+                },
+                "Model": "ks_porsche_911_carrera_rsr",
+                "Restrictor": 0,
+                "Skin": "03_kunosracing_17"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "Model": "ks_porsche_911_carrera_rsr",
+                "Restrictor": 0,
+                "Skin": "10_carrera_grey"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 8,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_porsche_911_carrera_rsr",
+                "Restrictor": 0,
+                "Skin": "12_carrera_red"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 9,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_porsche_911_carrera_rsr",
+                "Restrictor": 0,
+                "Skin": "01_racing_red"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 10,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_porsche_911_carrera_rsr",
+                "Restrictor": 0,
+                "Skin": "10_carrera_grey"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 11,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_porsche_911_carrera_rsr",
+                "Restrictor": 0,
+                "Skin": "11_carrera_lime"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 12,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_porsche_911_carrera_rsr",
+                "Restrictor": 0,
+                "Skin": "10_carrera_grey"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 13,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_porsche_911_carrera_rsr",
+                "Restrictor": 0,
+                "Skin": "21_kunosracing_75"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 14,
+                "Driver": {
+                  "Guid": "76561198020046073",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Callum Jones",
+                  "Nation": "ABW",
+                  "Team": ""
+                },
+                "Model": "ks_alfa_33_stradale",
+                "Restrictor": 0,
+                "Skin": "00_rosso"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 15,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_alfa_33_stradale",
+                "Restrictor": 0,
+                "Skin": "00_rosso"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 16,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_alfa_33_stradale",
+                "Restrictor": 0,
+                "Skin": "00_rosso"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 17,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_alfa_33_stradale",
+                "Restrictor": 0,
+                "Skin": "00_rosso"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 18,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_alfa_33_stradale",
+                "Restrictor": 0,
+                "Skin": "00_rosso"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 19,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_alfa_33_stradale",
+                "Restrictor": 0,
+                "Skin": "00_rosso"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 20,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_alfa_33_stradale",
+                "Restrictor": 0,
+                "Skin": "00_rosso"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 21,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_alfa_33_stradale",
+                "Restrictor": 0,
+                "Skin": "00_rosso"
+              }
+            ],
+            "Events": [
+              {
+                "CarId": 1,
+                "Driver": {
+                  "Guid": "76561198023931313",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Danny Wilson",
+                  "Nation": "GBR",
+                  "Team": ""
+                },
+                "ImpactSpeed": 3.4481761,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.8726334,
+                  "Y": 0.009840868,
+                  "Z": -1.845053
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": 99.4912,
+                  "Y": -0.68025404,
+                  "Z": 707.87445
+                }
+              },
+              {
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 41.323658,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.7582626,
+                  "Y": 0.06732882,
+                  "Z": 2.0806212
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": 341.26077,
+                  "Y": -10.3295145,
+                  "Z": 321.75922
+                }
+              },
+              {
+                "CarId": 1,
+                "Driver": {
+                  "Guid": "76561198023931313",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Danny Wilson",
+                  "Nation": "GBR",
+                  "Team": ""
+                },
+                "ImpactSpeed": 9.23848,
+                "OtherCarId": 7,
+                "OtherDriver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.07931602,
+                  "Y": -0.055294245,
+                  "Z": 2.5751386
+                },
+                "Type": "COLLISION_WITH_CAR",
+                "WorldPosition": {
+                  "X": 343.1826,
+                  "Y": -7.748003,
+                  "Z": 355.5595
+                }
+              },
+              {
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 9.523971,
+                "OtherCarId": 1,
+                "OtherDriver": {
+                  "Guid": "76561198023931313",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Danny Wilson",
+                  "Nation": "GBR",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.59326816,
+                  "Y": -0.09772314,
+                  "Z": -1.8515455
+                },
+                "Type": "COLLISION_WITH_CAR",
+                "WorldPosition": {
+                  "X": 343.10892,
+                  "Y": -7.7217207,
+                  "Z": 355.58014
+                }
+              },
+              {
+                "CarId": 1,
+                "Driver": {
+                  "Guid": "76561198023931313",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Danny Wilson",
+                  "Nation": "GBR",
+                  "Team": ""
+                },
+                "ImpactSpeed": 24.010284,
+                "OtherCarId": 7,
+                "OtherDriver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.9369556,
+                  "Y": -0.07468344,
+                  "Z": 0.9083626
+                },
+                "Type": "COLLISION_WITH_CAR",
+                "WorldPosition": {
+                  "X": 164.11401,
+                  "Y": 5.312757,
+                  "Z": 609.72156
+                }
+              },
+              {
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 21.739614,
+                "OtherCarId": 1,
+                "OtherDriver": {
+                  "Guid": "76561198023931313",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Danny Wilson",
+                  "Nation": "GBR",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.3763247,
+                  "Y": -0.030625097,
+                  "Z": 2.2685776
+                },
+                "Type": "COLLISION_WITH_CAR",
+                "WorldPosition": {
+                  "X": 194.22424,
+                  "Y": 6.9305124,
+                  "Z": 579.99774
+                }
+              },
+              {
+                "CarId": 1,
+                "Driver": {
+                  "Guid": "76561198023931313",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Danny Wilson",
+                  "Nation": "GBR",
+                  "Team": ""
+                },
+                "ImpactSpeed": 40.02642,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": 0.7846885,
+                  "Y": 0.11835694,
+                  "Z": 2.4270966
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": 208.16618,
+                  "Y": 7.1062746,
+                  "Z": 596.93567
+                }
+              },
+              {
+                "CarId": 4,
+                "Driver": {
+                  "Guid": "76561198022717360",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "namelesssboy",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 27.531704,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": 1.052376,
+                  "Y": 0.3593424,
+                  "Z": 0.99950933
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": 349.54358,
+                  "Y": -10.715356,
+                  "Z": 305.65845
+                }
+              },
+              {
+                "CarId": 1,
+                "Driver": {
+                  "Guid": "76561198023931313",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Danny Wilson",
+                  "Nation": "GBR",
+                  "Team": ""
+                },
+                "ImpactSpeed": 94.74097,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.782713,
+                  "Y": 0.116233096,
+                  "Z": 2.4177246
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": -370.9807,
+                  "Y": 16.781279,
+                  "Z": 840.7675
+                }
+              },
+              {
+                "CarId": 14,
+                "Driver": {
+                  "Guid": "76561198020046073",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Callum Jones",
+                  "Nation": "ABW",
+                  "Team": ""
+                },
+                "ImpactSpeed": 7.680085,
+                "OtherCarId": 0,
+                "OtherDriver": {
+                  "Guid": "76561198074322763",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Seb",
+                  "Nation": "ITA",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": 0.76427066,
+                  "Y": 0.27832294,
+                  "Z": 1.8490028
+                },
+                "Type": "COLLISION_WITH_CAR",
+                "WorldPosition": {
+                  "X": -363.5298,
+                  "Y": 12.709884,
+                  "Z": 191.78935
+                }
+              },
+              {
+                "CarId": 0,
+                "Driver": {
+                  "Guid": "76561198074322763",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Seb",
+                  "Nation": "ITA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 10.999591,
+                "OtherCarId": 14,
+                "OtherDriver": {
+                  "Guid": "76561198020046073",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Callum Jones",
+                  "Nation": "ABW",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.96988446,
+                  "Y": 0.15765344,
+                  "Z": -0.22623976
+                },
+                "Type": "COLLISION_WITH_CAR",
+                "WorldPosition": {
+                  "X": -363.4594,
+                  "Y": 12.719616,
+                  "Z": 191.93095
+                }
+              },
+              {
+                "CarId": 14,
+                "Driver": {
+                  "Guid": "76561198020046073",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Callum Jones",
+                  "Nation": "ABW",
+                  "Team": ""
+                },
+                "ImpactSpeed": 59.23574,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.5419191,
+                  "Y": -0.21236464,
+                  "Z": 2.2094166
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": 103.05621,
+                  "Y": -3.3374496,
+                  "Z": 78.1993
+                }
+              },
+              {
+                "CarId": 14,
+                "Driver": {
+                  "Guid": "76561198020046073",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Callum Jones",
+                  "Nation": "ABW",
+                  "Team": ""
+                },
+                "ImpactSpeed": 9.414676,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.8957843,
+                  "Y": 0.24130149,
+                  "Z": -0.7263129
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": 206.03058,
+                  "Y": -5.4474707,
+                  "Z": 143.57832
+                }
+              },
+              {
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 25.261316,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": 0.89031905,
+                  "Y": 0.1535878,
+                  "Z": 1.7694017
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": 348.63605,
+                  "Y": -10.713557,
+                  "Z": 314.12927
+                }
+              },
+              {
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 106.91365,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.45802307,
+                  "Y": 0.38255495,
+                  "Z": -2.0296555
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": -78.33531,
+                  "Y": -16.3712,
+                  "Z": 876.70087
+                }
+              },
+              {
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 42.98267,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.4754539,
+                  "Y": 0.43887502,
+                  "Z": -2.0616727
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": -63.352352,
+                  "Y": -16.49251,
+                  "Z": 854.4915
+                }
+              },
+              {
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 39.754715,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.79672116,
+                  "Y": -0.05505785,
+                  "Z": 2.0263412
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": -66.21568,
+                  "Y": -17.24809,
+                  "Z": 858.076
+                }
+              }
+            ],
+            "Laps": [
+              {
+                "BallastKG": 0,
+                "CarId": 14,
+                "CarModel": "ks_alfa_33_stradale",
+                "Cuts": 0,
+                "DriverGuid": "76561198020046073",
+                "DriverName": "Callum Jones",
+                "LapTime": 113023,
+                "Restrictor": 0,
+                "Sectors": [
+                  87890,
+                  25133
+                ],
+                "Timestamp": 149122,
+                "Tyre": "V"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 1,
+                "CarModel": "a3dr_ferrari_512tr",
+                "Cuts": 2,
+                "DriverGuid": "76561198023931313",
+                "DriverName": "Danny Wilson",
+                "LapTime": 125704,
+                "Restrictor": 0,
+                "Sectors": [
+                  96481,
+                  29223
+                ],
+                "Timestamp": 210297,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 14,
+                "CarModel": "ks_alfa_33_stradale",
+                "Cuts": 1,
+                "DriverGuid": "76561198020046073",
+                "DriverName": "Callum Jones",
+                "LapTime": 87540,
+                "Restrictor": 0,
+                "Sectors": [
+                  62839,
+                  24701
+                ],
+                "Timestamp": 236663,
+                "Tyre": "V"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 1,
+                "CarModel": "a3dr_ferrari_512tr",
+                "Cuts": 2,
+                "DriverGuid": "76561198023931313",
+                "DriverName": "Danny Wilson",
+                "LapTime": 98344,
+                "Restrictor": 0,
+                "Sectors": [
+                  68307,
+                  30037
+                ],
+                "Timestamp": 308641,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 14,
+                "CarModel": "ks_alfa_33_stradale",
+                "Cuts": 0,
+                "DriverGuid": "76561198020046073",
+                "DriverName": "Callum Jones",
+                "LapTime": 85945,
+                "Restrictor": 0,
+                "Sectors": [
+                  60952,
+                  24993
+                ],
+                "Timestamp": 322606,
+                "Tyre": "V"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 0,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 1,
+                "DriverGuid": "76561198074322763",
+                "DriverName": "Seb",
+                "LapTime": 109059,
+                "Restrictor": 0,
+                "Sectors": [
+                  80250,
+                  28809
+                ],
+                "Timestamp": 380744,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 1,
+                "CarModel": "a3dr_ferrari_512tr",
+                "Cuts": 1,
+                "DriverGuid": "76561198023931313",
+                "DriverName": "Danny Wilson",
+                "LapTime": 83647,
+                "Restrictor": 0,
+                "Sectors": [
+                  58555,
+                  25092
+                ],
+                "Timestamp": 392288,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 14,
+                "CarModel": "ks_alfa_33_stradale",
+                "Cuts": 0,
+                "DriverGuid": "76561198020046073",
+                "DriverName": "Callum Jones",
+                "LapTime": 72969,
+                "Restrictor": 0,
+                "Sectors": [
+                  48722,
+                  24247
+                ],
+                "Timestamp": 395576,
+                "Tyre": "V"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 6,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 0,
+                "DriverGuid": "76561198029578060",
+                "DriverName": "Joseph Elton",
+                "LapTime": 383117,
+                "Restrictor": 0,
+                "Sectors": [
+                  359960,
+                  23157
+                ],
+                "Timestamp": 431000,
+                "Tyre": "V70"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 0,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 2,
+                "DriverGuid": "76561198074322763",
+                "DriverName": "Seb",
+                "LapTime": 82448,
+                "Restrictor": 0,
+                "Sectors": [
+                  54711,
+                  27737
+                ],
+                "Timestamp": 463193,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 1,
+                "CarModel": "a3dr_ferrari_512tr",
+                "Cuts": 0,
+                "DriverGuid": "76561198023931313",
+                "DriverName": "Danny Wilson",
+                "LapTime": 71681,
+                "Restrictor": 0,
+                "Sectors": [
+                  46783,
+                  24898
+                ],
+                "Timestamp": 463967,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 14,
+                "CarModel": "ks_alfa_33_stradale",
+                "Cuts": 0,
+                "DriverGuid": "76561198020046073",
+                "DriverName": "Callum Jones",
+                "LapTime": 73786,
+                "Restrictor": 0,
+                "Sectors": [
+                  49239,
+                  24547
+                ],
+                "Timestamp": 469361,
+                "Tyre": "V"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 6,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 0,
+                "DriverGuid": "76561198029578060",
+                "DriverName": "Joseph Elton",
+                "LapTime": 68204,
+                "Restrictor": 0,
+                "Sectors": [
+                  45529,
+                  22675
+                ],
+                "Timestamp": 498970,
+                "Tyre": "V70"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 14,
+                "CarModel": "ks_alfa_33_stradale",
+                "Cuts": 2,
+                "DriverGuid": "76561198020046073",
+                "DriverName": "Callum Jones",
+                "LapTime": 75966,
+                "Restrictor": 0,
+                "Sectors": [
+                  48435,
+                  27531
+                ],
+                "Timestamp": 545328,
+                "Tyre": "V"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 0,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 2,
+                "DriverGuid": "76561198074322763",
+                "DriverName": "Seb",
+                "LapTime": 82658,
+                "Restrictor": 0,
+                "Sectors": [
+                  56005,
+                  26653
+                ],
+                "Timestamp": 545847,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 6,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 1,
+                "DriverGuid": "76561198029578060",
+                "DriverName": "Joseph Elton",
+                "LapTime": 66746,
+                "Restrictor": 0,
+                "Sectors": [
+                  44337,
+                  22409
+                ],
+                "Timestamp": 565714,
+                "Tyre": "V70"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 4,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 1,
+                "DriverGuid": "76561198022717360",
+                "DriverName": "namelesssboy",
+                "LapTime": 99825,
+                "Restrictor": 0,
+                "Sectors": [
+                  75444,
+                  24381
+                ],
+                "Timestamp": 571851,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 0,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 0,
+                "DriverGuid": "76561198074322763",
+                "DriverName": "Seb",
+                "LapTime": 77348,
+                "Restrictor": 0,
+                "Sectors": [
+                  51213,
+                  26135
+                ],
+                "Timestamp": 623194,
+                "Tyre": "SM"
+              }
+            ],
+            "Result": [
+              {
+                "BallastKG": 0,
+                "BestLap": 68204,
+                "CarId": 6,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "DriverGuid": "76561198029578060",
+                "DriverName": "Joseph Elton",
+                "Restrictor": 0,
+                "TotalTime": 497689,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 71681,
+                "CarId": 1,
+                "CarModel": "a3dr_ferrari_512tr",
+                "DriverGuid": "76561198023931313",
+                "DriverName": "Danny Wilson",
+                "Restrictor": 0,
+                "TotalTime": 462694,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 72969,
+                "CarId": 14,
+                "CarModel": "ks_alfa_33_stradale",
+                "DriverGuid": "76561198020046073",
+                "DriverName": "Callum Jones",
+                "Restrictor": 0,
+                "TotalTime": 468086,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 77348,
+                "CarId": 0,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "DriverGuid": "76561198074322763",
+                "DriverName": "Seb",
+                "Restrictor": 0,
+                "TotalTime": 621919,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 4,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "DriverGuid": "76561198022717360",
+                "DriverName": "namelesssboy",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 7,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "DriverGuid": "76561198055388877",
+                "DriverName": "L33 CR055L3Y",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 2,
+                "CarModel": "a3dr_ferrari_512tr",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 5,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 8,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 9,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 10,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 3,
+                "CarModel": "a3dr_ferrari_512tr",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 12,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 13,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 11,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 15,
+                "CarModel": "ks_alfa_33_stradale",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 16,
+                "CarModel": "ks_alfa_33_stradale",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 17,
+                "CarModel": "ks_alfa_33_stradale",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 18,
+                "CarModel": "ks_alfa_33_stradale",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 19,
+                "CarModel": "ks_alfa_33_stradale",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 20,
+                "CarModel": "ks_alfa_33_stradale",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 21,
+                "CarModel": "ks_alfa_33_stradale",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              }
+            ],
+            "TrackConfig": "shortcourse",
+            "TrackName": "road_atlanta2018",
+            "Type": "QUALIFY",
+            "Date": "2019-03-02T20:48:00Z",
+            "SessionFile": "2019_3_2_20_48_QUALIFY",
+            "ChampionshipID": "b412c28d-b0d5-41e8-b551-7704e11fe35a"
+          }
+        },
+        "RACE": {
+          "StartedTime": "2019-03-02T20:48:12.60869595Z",
+          "CompletedTime": "2019-03-02T21:04:10.635944651Z",
+          "Results": {
+            "Cars": [
+              {
+                "BallastKG": 0,
+                "CarId": 0,
+                "Driver": {
+                  "Guid": "76561198074322763",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Seb",
+                  "Nation": "ITA",
+                  "Team": ""
+                },
+                "Model": "a3dr_lambo_diablo_vt",
+                "Restrictor": 0,
+                "Skin": "Viola_Ophelia"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 1,
+                "Driver": {
+                  "Guid": "76561198023931313",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Danny Wilson",
+                  "Nation": "GBR",
+                  "Team": ""
+                },
+                "Model": "a3dr_ferrari_512tr",
+                "Restrictor": 0,
+                "Skin": "Rosso"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 2,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "a3dr_ferrari_512tr",
+                "Restrictor": 0,
+                "Skin": "Giallo_Modena"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 3,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "a3dr_ferrari_512tr",
+                "Restrictor": 0,
+                "Skin": "Argento_Nurburgring"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 4,
+                "Driver": {
+                  "Guid": "76561198022717360",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "namelesssboy",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "Model": "a3dr_lambo_diablo_vt",
+                "Restrictor": 0,
+                "Skin": "Silver"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 5,
+                "Driver": {
+                  "Guid": "76561198045844392",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Spaceman9795",
+                  "Nation": "USA",
+                  "Team": ""
+                },
+                "Model": "a3dr_lambo_diablo_vt",
+                "Restrictor": 0,
+                "Skin": "Blu_Oscuro"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 6,
+                "Driver": {
+                  "Guid": "76561198029578060",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Joseph Elton",
+                  "Nation": "GBR",
+                  "Team": ""
+                },
+                "Model": "ks_porsche_911_carrera_rsr",
+                "Restrictor": 0,
+                "Skin": "03_kunosracing_17"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "Model": "ks_porsche_911_carrera_rsr",
+                "Restrictor": 0,
+                "Skin": "10_carrera_grey"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 8,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_porsche_911_carrera_rsr",
+                "Restrictor": 0,
+                "Skin": "12_carrera_red"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 9,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_porsche_911_carrera_rsr",
+                "Restrictor": 0,
+                "Skin": "01_racing_red"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 10,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_porsche_911_carrera_rsr",
+                "Restrictor": 0,
+                "Skin": "10_carrera_grey"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 11,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_porsche_911_carrera_rsr",
+                "Restrictor": 0,
+                "Skin": "11_carrera_lime"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 12,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_porsche_911_carrera_rsr",
+                "Restrictor": 0,
+                "Skin": "10_carrera_grey"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 13,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_porsche_911_carrera_rsr",
+                "Restrictor": 0,
+                "Skin": "21_kunosracing_75"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 14,
+                "Driver": {
+                  "Guid": "76561198020046073",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Callum Jones",
+                  "Nation": "ABW",
+                  "Team": ""
+                },
+                "Model": "ks_alfa_33_stradale",
+                "Restrictor": 0,
+                "Skin": "00_rosso"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 15,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_alfa_33_stradale",
+                "Restrictor": 0,
+                "Skin": "00_rosso"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 16,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_alfa_33_stradale",
+                "Restrictor": 0,
+                "Skin": "00_rosso"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 17,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_alfa_33_stradale",
+                "Restrictor": 0,
+                "Skin": "00_rosso"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 18,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_alfa_33_stradale",
+                "Restrictor": 0,
+                "Skin": "00_rosso"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 19,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_alfa_33_stradale",
+                "Restrictor": 0,
+                "Skin": "00_rosso"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 20,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_alfa_33_stradale",
+                "Restrictor": 0,
+                "Skin": "00_rosso"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 21,
+                "Driver": {
+                  "Guid": "",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "Model": "ks_alfa_33_stradale",
+                "Restrictor": 0,
+                "Skin": "00_rosso"
+              }
+            ],
+            "Events": [
+              {
+                "CarId": 4,
+                "Driver": {
+                  "Guid": "76561198022717360",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "namelesssboy",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 24.245506,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.78595805,
+                  "Y": 0.039386205,
+                  "Z": 2.2981842
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": 337.47366,
+                  "Y": -9.342905,
+                  "Z": 334.0582
+                }
+              },
+              {
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 23.33455,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.46135074,
+                  "Y": 0.037888948,
+                  "Z": 2.2632244
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": 119.48544,
+                  "Y": 3.602386,
+                  "Z": 608.40356
+                }
+              },
+              {
+                "CarId": 4,
+                "Driver": {
+                  "Guid": "76561198022717360",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "namelesssboy",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 93.99738,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.7796812,
+                  "Y": 0.03254054,
+                  "Z": 2.2683103
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": -372.3561,
+                  "Y": 16.759512,
+                  "Z": 839.4282
+                }
+              },
+              {
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 11.575833,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": 0.000009434298,
+                  "Y": 0.02099806,
+                  "Z": 2.3114219
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": -205.51936,
+                  "Y": -4.0964437,
+                  "Z": 956.89215
+                }
+              },
+              {
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 58.248055,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": 0.9078875,
+                  "Y": 0.14932533,
+                  "Z": -0.5796213
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": 392.36182,
+                  "Y": -11.456185,
+                  "Z": 294.39423
+                }
+              },
+              {
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 61.18317,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.82921624,
+                  "Y": 0.31166998,
+                  "Z": -0.5896139
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": 51.47633,
+                  "Y": -1.3451948,
+                  "Z": 45.277203
+                }
+              },
+              {
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 11.944935,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.47545153,
+                  "Y": 0.43887287,
+                  "Z": -2.0617037
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": 99.42345,
+                  "Y": -2.4284506,
+                  "Z": 75.82876
+                }
+              },
+              {
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 26.496397,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.754289,
+                  "Y": -0.053788655,
+                  "Z": 2.0941443
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": 147.19011,
+                  "Y": -4.492675,
+                  "Z": 106.252945
+                }
+              },
+              {
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 25.00765,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": 0.7250676,
+                  "Y": -0.08441716,
+                  "Z": 2.074926
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": -84.23594,
+                  "Y": -16.541346,
+                  "Z": 884.10474
+                }
+              },
+              {
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 4.132443,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": 0.6663108,
+                  "Y": -0.09347161,
+                  "Z": -1.8271179
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": -88.331245,
+                  "Y": -16.191883,
+                  "Z": 889.03125
+                }
+              },
+              {
+                "CarId": 4,
+                "Driver": {
+                  "Guid": "76561198022717360",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "namelesssboy",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 44.95503,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.748965,
+                  "Y": 0.027728407,
+                  "Z": 2.2681112
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": 351.3514,
+                  "Y": -11.066508,
+                  "Z": 310.14713
+                }
+              },
+              {
+                "CarId": 14,
+                "Driver": {
+                  "Guid": "76561198020046073",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Callum Jones",
+                  "Nation": "ABW",
+                  "Team": ""
+                },
+                "ImpactSpeed": 8.127973,
+                "OtherCarId": 6,
+                "OtherDriver": {
+                  "Guid": "76561198029578060",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Joseph Elton",
+                  "Nation": "GBR",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": 0.5227216,
+                  "Y": -0.010529488,
+                  "Z": 2.2386231
+                },
+                "Type": "COLLISION_WITH_CAR",
+                "WorldPosition": {
+                  "X": -336.22775,
+                  "Y": 8.570851,
+                  "Z": 291.50876
+                }
+              },
+              {
+                "CarId": 6,
+                "Driver": {
+                  "Guid": "76561198029578060",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Joseph Elton",
+                  "Nation": "GBR",
+                  "Team": ""
+                },
+                "ImpactSpeed": 9.576664,
+                "OtherCarId": 14,
+                "OtherDriver": {
+                  "Guid": "76561198020046073",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Callum Jones",
+                  "Nation": "ABW",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": 0.6575319,
+                  "Y": -0.26483682,
+                  "Z": -0.4538347
+                },
+                "Type": "COLLISION_WITH_CAR",
+                "WorldPosition": {
+                  "X": -336.53696,
+                  "Y": 8.513263,
+                  "Z": 293.70697
+                }
+              },
+              {
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 45.0264,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.94368994,
+                  "Y": 0.15626273,
+                  "Z": -1.2444124
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": -63.108425,
+                  "Y": 3.557945,
+                  "Z": -54.179726
+                }
+              },
+              {
+                "CarId": 0,
+                "Driver": {
+                  "Guid": "76561198074322763",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "Seb",
+                  "Nation": "ITA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 52.866833,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.7793544,
+                  "Y": 0.03210375,
+                  "Z": 2.2664547
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": 353.3642,
+                  "Y": -11.434663,
+                  "Z": 300.88672
+                }
+              },
+              {
+                "CarId": 4,
+                "Driver": {
+                  "Guid": "76561198022717360",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "namelesssboy",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 45.857872,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": -0.4035101,
+                  "Y": -0.34405965,
+                  "Z": 2.4484196
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": 354.35977,
+                  "Y": -12.172672,
+                  "Z": 281.01334
+                }
+              },
+              {
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 10.350677,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": 0.7714395,
+                  "Y": 0.031208891,
+                  "Z": 2.1077933
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": 27.258234,
+                  "Y": -0.1833095,
+                  "Z": -1.9857945
+                }
+              },
+              {
+                "CarId": 7,
+                "Driver": {
+                  "Guid": "76561198055388877",
+                  "GuidsList": [
+                    ""
+                  ],
+                  "Name": "L33 CR055L3Y",
+                  "Nation": "PLA",
+                  "Team": ""
+                },
+                "ImpactSpeed": 12.220794,
+                "OtherCarId": -1,
+                "OtherDriver": {
+                  "Guid": "",
+                  "GuidsList": null,
+                  "Name": "",
+                  "Nation": "",
+                  "Team": ""
+                },
+                "RelPosition": {
+                  "X": 0.72866845,
+                  "Y": -0.034977205,
+                  "Z": -1.6889089
+                },
+                "Type": "COLLISION_WITH_ENV",
+                "WorldPosition": {
+                  "X": 59.541283,
+                  "Y": -1.5393885,
+                  "Z": 18.720987
+                }
+              }
+            ],
+            "Laps": [
+              {
+                "BallastKG": 0,
+                "CarId": 6,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 0,
+                "DriverGuid": "76561198029578060",
+                "DriverName": "Joseph Elton",
+                "LapTime": 74161,
+                "Restrictor": 0,
+                "Sectors": [
+                  51314,
+                  22847
+                ],
+                "Timestamp": 903740,
+                "Tyre": "V70"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 0,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 0,
+                "DriverGuid": "76561198074322763",
+                "DriverName": "Seb",
+                "LapTime": 82432,
+                "Restrictor": 0,
+                "Sectors": [
+                  56678,
+                  25754
+                ],
+                "Timestamp": 912003,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 14,
+                "CarModel": "ks_alfa_33_stradale",
+                "Cuts": 0,
+                "DriverGuid": "76561198020046073",
+                "DriverName": "Callum Jones",
+                "LapTime": 85200,
+                "Restrictor": 0,
+                "Sectors": [
+                  57416,
+                  27784
+                ],
+                "Timestamp": 914770,
+                "Tyre": "V"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 4,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 0,
+                "DriverGuid": "76561198022717360",
+                "DriverName": "namelesssboy",
+                "LapTime": 111341,
+                "Restrictor": 0,
+                "Sectors": [
+                  85111,
+                  26230
+                ],
+                "Timestamp": 940916,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 7,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 0,
+                "DriverGuid": "76561198055388877",
+                "DriverName": "L33 CR055L3Y",
+                "LapTime": 130310,
+                "Restrictor": 0,
+                "Sectors": [
+                  94846,
+                  35464
+                ],
+                "Timestamp": 959877,
+                "Tyre": "V70"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 6,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 0,
+                "DriverGuid": "76561198029578060",
+                "DriverName": "Joseph Elton",
+                "LapTime": 71326,
+                "Restrictor": 0,
+                "Sectors": [
+                  44159,
+                  27167
+                ],
+                "Timestamp": 975065,
+                "Tyre": "V70"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 0,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 0,
+                "DriverGuid": "76561198074322763",
+                "DriverName": "Seb",
+                "LapTime": 75304,
+                "Restrictor": 0,
+                "Sectors": [
+                  49802,
+                  25502
+                ],
+                "Timestamp": 987306,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 14,
+                "CarModel": "ks_alfa_33_stradale",
+                "Cuts": 0,
+                "DriverGuid": "76561198020046073",
+                "DriverName": "Callum Jones",
+                "LapTime": 88857,
+                "Restrictor": 0,
+                "Sectors": [
+                  48221,
+                  40636
+                ],
+                "Timestamp": 1003628,
+                "Tyre": "V"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 4,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 0,
+                "DriverGuid": "76561198022717360",
+                "DriverName": "namelesssboy",
+                "LapTime": 69869,
+                "Restrictor": 0,
+                "Sectors": [
+                  46253,
+                  23616
+                ],
+                "Timestamp": 1010782,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 6,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 0,
+                "DriverGuid": "76561198029578060",
+                "DriverName": "Joseph Elton",
+                "LapTime": 67064,
+                "Restrictor": 0,
+                "Sectors": [
+                  44614,
+                  22450
+                ],
+                "Timestamp": 1042126,
+                "Tyre": "V70"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 7,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 0,
+                "DriverGuid": "76561198055388877",
+                "DriverName": "L33 CR055L3Y",
+                "LapTime": 100946,
+                "Restrictor": 0,
+                "Sectors": [
+                  70823,
+                  30123
+                ],
+                "Timestamp": 1060819,
+                "Tyre": "V70"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 0,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 0,
+                "DriverGuid": "76561198074322763",
+                "DriverName": "Seb",
+                "LapTime": 75862,
+                "Restrictor": 0,
+                "Sectors": [
+                  50626,
+                  25236
+                ],
+                "Timestamp": 1063164,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 14,
+                "CarModel": "ks_alfa_33_stradale",
+                "Cuts": 0,
+                "DriverGuid": "76561198020046073",
+                "DriverName": "Callum Jones",
+                "LapTime": 75626,
+                "Restrictor": 0,
+                "Sectors": [
+                  50444,
+                  25182
+                ],
+                "Timestamp": 1079252,
+                "Tyre": "V"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 4,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 0,
+                "DriverGuid": "76561198022717360",
+                "DriverName": "namelesssboy",
+                "LapTime": 74536,
+                "Restrictor": 0,
+                "Sectors": [
+                  50241,
+                  24295
+                ],
+                "Timestamp": 1085316,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 6,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 0,
+                "DriverGuid": "76561198029578060",
+                "DriverName": "Joseph Elton",
+                "LapTime": 66890,
+                "Restrictor": 0,
+                "Sectors": [
+                  44584,
+                  22306
+                ],
+                "Timestamp": 1109111,
+                "Tyre": "V70"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 7,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 0,
+                "DriverGuid": "76561198055388877",
+                "DriverName": "L33 CR055L3Y",
+                "LapTime": 79571,
+                "Restrictor": 0,
+                "Sectors": [
+                  54349,
+                  25222
+                ],
+                "Timestamp": 1140387,
+                "Tyre": "V70"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 0,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 0,
+                "DriverGuid": "76561198074322763",
+                "DriverName": "Seb",
+                "LapTime": 85559,
+                "Restrictor": 0,
+                "Sectors": [
+                  51958,
+                  33601
+                ],
+                "Timestamp": 1148722,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 14,
+                "CarModel": "ks_alfa_33_stradale",
+                "Cuts": 0,
+                "DriverGuid": "76561198020046073",
+                "DriverName": "Callum Jones",
+                "LapTime": 74550,
+                "Restrictor": 0,
+                "Sectors": [
+                  49359,
+                  25191
+                ],
+                "Timestamp": 1153802,
+                "Tyre": "V"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 4,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 0,
+                "DriverGuid": "76561198022717360",
+                "DriverName": "namelesssboy",
+                "LapTime": 76766,
+                "Restrictor": 0,
+                "Sectors": [
+                  52817,
+                  23949
+                ],
+                "Timestamp": 1162079,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 6,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 0,
+                "DriverGuid": "76561198029578060",
+                "DriverName": "Joseph Elton",
+                "LapTime": 66769,
+                "Restrictor": 0,
+                "Sectors": [
+                  44130,
+                  22639
+                ],
+                "Timestamp": 1175781,
+                "Tyre": "V70"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 0,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 0,
+                "DriverGuid": "76561198074322763",
+                "DriverName": "Seb",
+                "LapTime": 75328,
+                "Restrictor": 0,
+                "Sectors": [
+                  50614,
+                  24714
+                ],
+                "Timestamp": 1224047,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 14,
+                "CarModel": "ks_alfa_33_stradale",
+                "Cuts": 0,
+                "DriverGuid": "76561198020046073",
+                "DriverName": "Callum Jones",
+                "LapTime": 73930,
+                "Restrictor": 0,
+                "Sectors": [
+                  49347,
+                  24583
+                ],
+                "Timestamp": 1227734,
+                "Tyre": "V"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 4,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 0,
+                "DriverGuid": "76561198022717360",
+                "DriverName": "namelesssboy",
+                "LapTime": 74369,
+                "Restrictor": 0,
+                "Sectors": [
+                  50983,
+                  23386
+                ],
+                "Timestamp": 1236445,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 6,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 0,
+                "DriverGuid": "76561198029578060",
+                "DriverName": "Joseph Elton",
+                "LapTime": 66930,
+                "Restrictor": 0,
+                "Sectors": [
+                  44043,
+                  22887
+                ],
+                "Timestamp": 1242711,
+                "Tyre": "V70"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 7,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 0,
+                "DriverGuid": "76561198055388877",
+                "DriverName": "L33 CR055L3Y",
+                "LapTime": 112386,
+                "Restrictor": 0,
+                "Sectors": [
+                  87145,
+                  25241
+                ],
+                "Timestamp": 1252772,
+                "Tyre": "V70"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 0,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 0,
+                "DriverGuid": "76561198074322763",
+                "DriverName": "Seb",
+                "LapTime": 73599,
+                "Restrictor": 0,
+                "Sectors": [
+                  48120,
+                  25479
+                ],
+                "Timestamp": 1297646,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 14,
+                "CarModel": "ks_alfa_33_stradale",
+                "Cuts": 0,
+                "DriverGuid": "76561198020046073",
+                "DriverName": "Callum Jones",
+                "LapTime": 72145,
+                "Restrictor": 0,
+                "Sectors": [
+                  47773,
+                  24372
+                ],
+                "Timestamp": 1299878,
+                "Tyre": "V"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 6,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 0,
+                "DriverGuid": "76561198029578060",
+                "DriverName": "Joseph Elton",
+                "LapTime": 67266,
+                "Restrictor": 0,
+                "Sectors": [
+                  44649,
+                  22617
+                ],
+                "Timestamp": 1309975,
+                "Tyre": "V70"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 4,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 0,
+                "DriverGuid": "76561198022717360",
+                "DriverName": "namelesssboy",
+                "LapTime": 78410,
+                "Restrictor": 0,
+                "Sectors": [
+                  54673,
+                  23737
+                ],
+                "Timestamp": 1314853,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 7,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 0,
+                "DriverGuid": "76561198055388877",
+                "DriverName": "L33 CR055L3Y",
+                "LapTime": 95094,
+                "Restrictor": 0,
+                "Sectors": [
+                  69961,
+                  25133
+                ],
+                "Timestamp": 1347865,
+                "Tyre": "V70"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 14,
+                "CarModel": "ks_alfa_33_stradale",
+                "Cuts": 0,
+                "DriverGuid": "76561198020046073",
+                "DriverName": "Callum Jones",
+                "LapTime": 81946,
+                "Restrictor": 0,
+                "Sectors": [
+                  55360,
+                  26586
+                ],
+                "Timestamp": 1381821,
+                "Tyre": "V"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 0,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 0,
+                "DriverGuid": "76561198074322763",
+                "DriverName": "Seb",
+                "LapTime": 86710,
+                "Restrictor": 0,
+                "Sectors": [
+                  57946,
+                  28764
+                ],
+                "Timestamp": 1384353,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 4,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 0,
+                "DriverGuid": "76561198022717360",
+                "DriverName": "namelesssboy",
+                "LapTime": 73794,
+                "Restrictor": 0,
+                "Sectors": [
+                  50376,
+                  23418
+                ],
+                "Timestamp": 1388646,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 6,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 0,
+                "DriverGuid": "76561198029578060",
+                "DriverName": "Joseph Elton",
+                "LapTime": 80239,
+                "Restrictor": 0,
+                "Sectors": [
+                  45225,
+                  35014
+                ],
+                "Timestamp": 1390213,
+                "Tyre": "V70"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 14,
+                "CarModel": "ks_alfa_33_stradale",
+                "Cuts": 0,
+                "DriverGuid": "76561198020046073",
+                "DriverName": "Callum Jones",
+                "LapTime": 73256,
+                "Restrictor": 0,
+                "Sectors": [
+                  48785,
+                  24471
+                ],
+                "Timestamp": 1455075,
+                "Tyre": "V"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 7,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 0,
+                "DriverGuid": "76561198055388877",
+                "DriverName": "L33 CR055L3Y",
+                "LapTime": 109007,
+                "Restrictor": 0,
+                "Sectors": [
+                  56848,
+                  52159
+                ],
+                "Timestamp": 1456884,
+                "Tyre": "V70"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 4,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 0,
+                "DriverGuid": "76561198022717360",
+                "DriverName": "namelesssboy",
+                "LapTime": 68822,
+                "Restrictor": 0,
+                "Sectors": [
+                  45567,
+                  23255
+                ],
+                "Timestamp": 1457465,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 6,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 0,
+                "DriverGuid": "76561198029578060",
+                "DriverName": "Joseph Elton",
+                "LapTime": 67384,
+                "Restrictor": 0,
+                "Sectors": [
+                  44380,
+                  23004
+                ],
+                "Timestamp": 1457594,
+                "Tyre": "V70"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 0,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 0,
+                "DriverGuid": "76561198074322763",
+                "DriverName": "Seb",
+                "LapTime": 73500,
+                "Restrictor": 0,
+                "Sectors": [
+                  48264,
+                  25236
+                ],
+                "Timestamp": 1457852,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 14,
+                "CarModel": "ks_alfa_33_stradale",
+                "Cuts": 0,
+                "DriverGuid": "76561198020046073",
+                "DriverName": "Callum Jones",
+                "LapTime": 72858,
+                "Restrictor": 0,
+                "Sectors": [
+                  47311,
+                  25547
+                ],
+                "Timestamp": 1527934,
+                "Tyre": "V"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 4,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "Cuts": 0,
+                "DriverGuid": "76561198022717360",
+                "DriverName": "namelesssboy",
+                "LapTime": 77718,
+                "Restrictor": 0,
+                "Sectors": [
+                  54695,
+                  23023
+                ],
+                "Timestamp": 1535182,
+                "Tyre": "SM"
+              },
+              {
+                "BallastKG": 0,
+                "CarId": 7,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "Cuts": 0,
+                "DriverGuid": "76561198055388877",
+                "DriverName": "L33 CR055L3Y",
+                "LapTime": 85295,
+                "Restrictor": 0,
+                "Sectors": [
+                  57823,
+                  27472
+                ],
+                "Timestamp": 1542161,
+                "Tyre": "V70"
+              }
+            ],
+            "Result": [
+              {
+                "BallastKG": 0,
+                "BestLap": 66769,
+                "CarId": 6,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "DriverGuid": "76561198029578060",
+                "DriverName": "Joseph Elton",
+                "Restrictor": 0,
+                "TotalTime": 628012,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 72145,
+                "CarId": 14,
+                "CarModel": "ks_alfa_33_stradale",
+                "DriverGuid": "76561198020046073",
+                "DriverName": "Callum Jones",
+                "Restrictor": 0,
+                "TotalTime": 698358,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 68822,
+                "CarId": 4,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "DriverGuid": "76561198022717360",
+                "DriverName": "namelesssboy",
+                "Restrictor": 0,
+                "TotalTime": 705603,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 73500,
+                "CarId": 0,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "DriverGuid": "76561198074322763",
+                "DriverName": "Seb",
+                "Restrictor": 0,
+                "TotalTime": 628276,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 79571,
+                "CarId": 7,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "DriverGuid": "76561198055388877",
+                "DriverName": "L33 CR055L3Y",
+                "Restrictor": 0,
+                "TotalTime": 712586,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 1,
+                "CarModel": "a3dr_ferrari_512tr",
+                "DriverGuid": "76561198023931313",
+                "DriverName": "Danny Wilson",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 2,
+                "CarModel": "a3dr_ferrari_512tr",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 5,
+                "CarModel": "a3dr_lambo_diablo_vt",
+                "DriverGuid": "76561198045844392",
+                "DriverName": "Spaceman9795",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 8,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 9,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 10,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 3,
+                "CarModel": "a3dr_ferrari_512tr",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 12,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 13,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 11,
+                "CarModel": "ks_porsche_911_carrera_rsr",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 15,
+                "CarModel": "ks_alfa_33_stradale",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 16,
+                "CarModel": "ks_alfa_33_stradale",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 17,
+                "CarModel": "ks_alfa_33_stradale",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 18,
+                "CarModel": "ks_alfa_33_stradale",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 19,
+                "CarModel": "ks_alfa_33_stradale",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 20,
+                "CarModel": "ks_alfa_33_stradale",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              },
+              {
+                "BallastKG": 0,
+                "BestLap": 999999999,
+                "CarId": 21,
+                "CarModel": "ks_alfa_33_stradale",
+                "DriverGuid": "",
+                "DriverName": "",
+                "Restrictor": 0,
+                "TotalTime": 0,
+                "HasPenalty": false,
+                "PenaltyTime": 0,
+                "LapPenalty": 0,
+                "Disqualified": false
+              }
+            ],
+            "TrackConfig": "shortcourse",
+            "TrackName": "road_atlanta2018",
+            "Type": "RACE",
+            "Date": "2019-03-02T21:04:00Z",
+            "SessionFile": "2019_3_2_21_4_RACE",
+            "ChampionshipID": "b412c28d-b0d5-41e8-b551-7704e11fe35a"
+          }
+        }
+      },
+      "StartedTime": "2019-03-02T20:35:23.044261877Z",
+      "CompletedTime": "2019-03-02T21:04:10.636030155Z"
+    },
+    {
+      "ID": "006e6edd-7e77-4d7e-a2ce-d757adb65d95",
+      "RaceSetup": {
+        "Cars": "a3dr_lambo_diablo_vt;ks_porsche_911_carrera_rsr;ks_alfa_33_stradale;a3dr_ferrari_512tr",
+        "Track": "ks_nurburgring",
+        "TrackLayout": "layout_sprint_b",
+        "SunAngle": 0,
+        "LegalTyres": "SM;ST;SV;V70;V",
+        "FuelRate": 100,
+        "DamageMultiplier": 0,
+        "TyreWearRate": 100,
+        "AllowedTyresOut": 3,
+        "ABSAllowed": 1,
+        "TractionControlAllowed": 1,
+        "StabilityControlAllowed": 0,
+        "AutoClutchAllowed": 0,
+        "TyreBlanketsAllowed": 1,
+        "ForceVirtualMirror": 0,
+        "LockedEntryList": 0,
+        "RacePitWindowStart": 0,
+        "RacePitWindowEnd": 0,
+        "ReversedGridRacePositions": 0,
+        "TimeOfDayMultiplier": 0,
+        "QualifyMaxWaitPercentage": 200,
+        "RaceGasPenaltyDisabled": 1,
+        "MaxBallastKilograms": 50,
+        "RaceExtraLap": 0,
+        "PickupModeEnabled": 1,
+        "LoopMode": 1,
+        "MaxClients": 0,
+        "SleepTime": 0,
+        "RaceOverTime": 180,
+        "StartRule": 2,
+        "IsSol": 1,
+        "WindBaseSpeedMin": 3,
+        "WindBaseSpeedMax": 15,
+        "WindBaseDirection": 30,
+        "WindVariationDirection": 15,
+        "DynamicTrack": {
+          "SessionStart": 100,
+          "Randomness": 0,
+          "SessionTransfer": 100,
+          "LapGain": 1
+        },
+        "Sessions": {
+          "QUALIFY": {
+            "Name": "Qualify",
+            "Time": 10,
+            "Laps": 0,
+            "IsOpen": 1,
+            "WaitTime": 0
+          },
+          "RACE": {
+            "Name": "Race",
+            "Time": 10,
+            "Laps": 0,
+            "IsOpen": 1,
+            "WaitTime": 60
+          }
+        },
+        "Weather": {
+          "WEATHER_0": {
+            "Graphics": "sol_01_CLear_type=15_time=0_mult=15_start=1530169200",
+            "BaseTemperatureAmbient": 26,
+            "BaseTemperatureRoad": 11,
+            "VariationAmbient": 1,
+            "VariationRoad": 1,
+            "CMGraphics": "sol_01_CLear",
+            "CMWFXType": 15,
+            "CMWFXUseCustomTime": 1,
+            "CMWFXTime": 0,
+            "CMWFXTimeMulti": 15,
+            "CMWFXUseCustomDate": 1,
+            "CMWFXDate": 1530169200,
+            "CMWFXDateUnModified": 1530439200
+          }
+        }
+      },
+      "Sessions": {},
+      "StartedTime": "0001-01-01T00:00:00Z",
+      "CompletedTime": "0001-01-01T00:00:00Z"
+    },
+    {
+      "ID": "c412e271-b3c0-4a71-abbe-954c540260de",
+      "RaceSetup": {
+        "Cars": "a3dr_lambo_diablo_vt;a3dr_ferrari_512tr;ks_porsche_911_carrera_rsr;ks_alfa_33_stradale",
+        "Track": "ks_red_bull_ring",
+        "TrackLayout": "layout_national",
+        "SunAngle": 0,
+        "LegalTyres": "V;SM;ST;SV;V70",
+        "FuelRate": 100,
+        "DamageMultiplier": 0,
+        "TyreWearRate": 100,
+        "AllowedTyresOut": 3,
+        "ABSAllowed": 1,
+        "TractionControlAllowed": 1,
+        "StabilityControlAllowed": 0,
+        "AutoClutchAllowed": 0,
+        "TyreBlanketsAllowed": 1,
+        "ForceVirtualMirror": 0,
+        "LockedEntryList": 0,
+        "RacePitWindowStart": 0,
+        "RacePitWindowEnd": 0,
+        "ReversedGridRacePositions": 0,
+        "TimeOfDayMultiplier": 0,
+        "QualifyMaxWaitPercentage": 200,
+        "RaceGasPenaltyDisabled": 1,
+        "MaxBallastKilograms": 50,
+        "RaceExtraLap": 0,
+        "PickupModeEnabled": 1,
+        "LoopMode": 1,
+        "MaxClients": 0,
+        "SleepTime": 0,
+        "RaceOverTime": 180,
+        "StartRule": 2,
+        "IsSol": 1,
+        "WindBaseSpeedMin": 3,
+        "WindBaseSpeedMax": 15,
+        "WindBaseDirection": 30,
+        "WindVariationDirection": 15,
+        "DynamicTrack": {
+          "SessionStart": 100,
+          "Randomness": 0,
+          "SessionTransfer": 100,
+          "LapGain": 1
+        },
+        "Sessions": {
+          "QUALIFY": {
+            "Name": "Qualify",
+            "Time": 10,
+            "Laps": 0,
+            "IsOpen": 1,
+            "WaitTime": 0
+          },
+          "RACE": {
+            "Name": "Race",
+            "Time": 10,
+            "Laps": 0,
+            "IsOpen": 1,
+            "WaitTime": 60
+          }
+        },
+        "Weather": {
+          "WEATHER_0": {
+            "Graphics": "sol_01_CLear_type=15_time=0_mult=15_start=1530190800",
+            "BaseTemperatureAmbient": 26,
+            "BaseTemperatureRoad": 11,
+            "VariationAmbient": 1,
+            "VariationRoad": 1,
+            "CMGraphics": "sol_01_CLear",
+            "CMWFXType": 15,
+            "CMWFXUseCustomTime": 1,
+            "CMWFXTime": 0,
+            "CMWFXTimeMulti": 15,
+            "CMWFXUseCustomDate": 1,
+            "CMWFXDate": 1530190800,
+            "CMWFXDateUnModified": 1530460800
+          }
+        }
+      },
+      "Sessions": {},
+      "StartedTime": "0001-01-01T00:00:00Z",
+      "CompletedTime": "0001-01-01T00:00:00Z"
+    },
+    {
+      "ID": "09bddc04-45ed-40f7-bc94-73a3fe42f3fb",
+      "RaceSetup": {
+        "Cars": "ks_porsche_911_carrera_rsr;ks_alfa_33_stradale;a3dr_lambo_diablo_vt;a3dr_ferrari_512tr",
+        "Track": "suzuka",
+        "TrackLayout": "suzukaeast",
+        "SunAngle": 0,
+        "LegalTyres": "SM;ST;SV;V70;V",
+        "FuelRate": 100,
+        "DamageMultiplier": 0,
+        "TyreWearRate": 100,
+        "AllowedTyresOut": 3,
+        "ABSAllowed": 1,
+        "TractionControlAllowed": 1,
+        "StabilityControlAllowed": 0,
+        "AutoClutchAllowed": 0,
+        "TyreBlanketsAllowed": 1,
+        "ForceVirtualMirror": 0,
+        "LockedEntryList": 0,
+        "RacePitWindowStart": 0,
+        "RacePitWindowEnd": 0,
+        "ReversedGridRacePositions": 0,
+        "TimeOfDayMultiplier": 0,
+        "QualifyMaxWaitPercentage": 200,
+        "RaceGasPenaltyDisabled": 1,
+        "MaxBallastKilograms": 50,
+        "RaceExtraLap": 0,
+        "PickupModeEnabled": 1,
+        "LoopMode": 1,
+        "MaxClients": 0,
+        "SleepTime": 0,
+        "RaceOverTime": 180,
+        "StartRule": 2,
+        "IsSol": 1,
+        "WindBaseSpeedMin": 3,
+        "WindBaseSpeedMax": 15,
+        "WindBaseDirection": 30,
+        "WindVariationDirection": 15,
+        "DynamicTrack": {
+          "SessionStart": 100,
+          "Randomness": 0,
+          "SessionTransfer": 100,
+          "LapGain": 1
+        },
+        "Sessions": {
+          "QUALIFY": {
+            "Name": "Qualify",
+            "Time": 10,
+            "Laps": 0,
+            "IsOpen": 1,
+            "WaitTime": 0
+          },
+          "RACE": {
+            "Name": "Race",
+            "Time": 10,
+            "Laps": 0,
+            "IsOpen": 1,
+            "WaitTime": 60
+          }
+        },
+        "Weather": {
+          "WEATHER_0": {
+            "Graphics": "sol_01_CLear_type=15_time=0_mult=15_start=1530183600",
+            "BaseTemperatureAmbient": 26,
+            "BaseTemperatureRoad": 11,
+            "VariationAmbient": 1,
+            "VariationRoad": 1,
+            "CMGraphics": "sol_01_CLear",
+            "CMWFXType": 15,
+            "CMWFXUseCustomTime": 1,
+            "CMWFXTime": 0,
+            "CMWFXTimeMulti": 15,
+            "CMWFXUseCustomDate": 1,
+            "CMWFXDate": 1530183600,
+            "CMWFXDateUnModified": 1530453600
+          }
+        }
+      },
+      "Sessions": {},
+      "StartedTime": "0001-01-01T00:00:00Z",
+      "CompletedTime": "0001-01-01T00:00:00Z"
+    }
+  ]
+}

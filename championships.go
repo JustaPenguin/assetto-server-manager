@@ -304,14 +304,18 @@ func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*Championsh
 	}
 
 	for _, entrant := range entrants {
+		if entrant.Entrant.Name == "" {
+			continue
+		}
+
 		out = append(out, entrant)
 	}
 
 	sort.Slice(out, func(i, j int) bool {
-		return out[i].Entrant.Name < out[j].Entrant.Name
-	})
+		if out[i].Points == out[j].Points {
+			return out[i].Entrant.Name < out[j].Entrant.Name
+		}
 
-	sort.Slice(out, func(i, j int) bool {
 		return out[i].Points > out[j].Points
 	})
 

@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -81,10 +82,12 @@ var championshipEventFixtures = []string{
 	"barbagello-no-end-sessions.json",
 }
 
-func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
+func init() {
 	SetupRaceManager(NewJSONRaceStore(filepath.Join(os.TempDir(), "asm-race-store")))
-
 	AssettoProcess = dummyServerProcess{}
+}
+
+func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 	ServerInstallPath = filepath.Join("cmd", "server-manager", "assetto")
 
 	t.Run("Basic championship flow, closed entrylist", func(t *testing.T) {
@@ -329,4 +332,59 @@ func checkChampionshipEventCompletion(t *testing.T, championshipID string, event
 			return
 		}
 	}
+}
+
+func TestChampionshipManager_ChampionshipEventCallbackOpenChampionshipExample(t *testing.T) {
+	var champ *Championship
+
+	f, err := os.Open(filepath.Join("fixtures", "open-championship", "championship-setup.json"))
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	defer f.Close()
+
+	err = json.NewDecoder(f).Decode(&champ)
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	err = championshipManager.UpsertChampionship(champ)
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	eventIDToJSON := map[string]string{
+		"006e6edd-7e77-4d7e-a2ce-d757adb65d95": filepath.Join("fixtures", "open-championship", "nurburgring_sprint_b.json"),
+		"c412e271-b3c0-4a71-abbe-954c540260de": filepath.Join("fixtures", "open-championship", "rbr_national.json"),
+		"09bddc04-45ed-40f7-bc94-73a3fe42f3fb": filepath.Join("fixtures", "open-championship", "suzuka_east.json"),
+	}
+
+	eventNum := 1
+
+	for eventID, file := range eventIDToJSON {
+		err = championshipManager.StartEvent(champ.ID.String(), eventID)
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		err := replay.ReplayUDPMessages(file, 1000, championshipManager.ChampionshipEventCallback, false)
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		checkChampionshipEventCompletion(t, champ.ID.String(), eventNum)
+		eventNum++
+	}
+
 }
