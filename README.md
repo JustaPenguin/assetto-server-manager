@@ -23,6 +23,19 @@ A web interface to manage an Assetto Corsa Server.
 
 ## Installation
 
+
+### Manual
+
+1. Download the latest release from the [releases page](https://github.com/cj123/assetto-server-manager/releases)
+2. Extract the release
+3. Edit the config.yml to suit your preferences
+4. Either:
+   - Copy the server folder from your Assetto Corsa install into the directory you configured in config.yml, or
+   - Make sure that you have [steamcmd](https://developer.valvesoftware.com/wiki/SteamCMD) installed and in your $PATH 
+     and have configured the steam username and password in the config.yml file.
+5. Start the server using `./server-manager` (on Linux) or by running `server-manager.exe` (on Windows)
+
+
 ### Docker
 
 A docker image is available under the name `seejy/assetto-server-manager`. We recommend using docker-compose
@@ -59,18 +72,6 @@ services:
     # volume mount the config
     - ./config.yml:/home/assetto/server-manager/config.yml
 ```
-
-### Manual
-
-1. Download the latest release from the [releases page](https://github.com/cj123/assetto-server-manager/releases)
-2. Extract the release
-3. Edit the config.yml to suit your preferences
-4. Either:
-   - Copy the server folder from your Assetto Corsa install into the directory you configured in config.yml, or
-   - Make sure that you have [steamcmd](https://developer.valvesoftware.com/wiki/SteamCMD) installed and in your $PATH 
-     and have configured the steam username and password in the config.yml file.
-5. Start the server using `./server-manager` (on Linux) or by running `server-manager.exe` (on Windows)
-
 
 ### Post Installation
 
