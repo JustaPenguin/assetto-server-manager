@@ -3,6 +3,7 @@ package servermanager
 import (
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/cj123/ini"
@@ -55,6 +56,37 @@ func (e EntryList) Delete(entrant *Entrant) {
 			return
 		}
 	}
+}
+
+func (e EntryList) AsSlice() []*Entrant {
+	var entrants []*Entrant
+
+	numOpenSlots := 0
+
+	for _, x := range e {
+		if x.Name == "" && x.Team == "" {
+			numOpenSlots++
+			continue
+		}
+
+		entrants = append(entrants, x)
+	}
+
+	sort.Slice(entrants, func(i, j int) bool {
+		if entrants[i].Team == entrants[j].Team {
+			return entrants[i].Name < entrants[j].Name
+		} else {
+			return entrants[i].Team < entrants[j].Team
+		}
+	})
+
+	if numOpenSlots > 0 {
+		entrants = append(entrants, &Entrant{
+			Name: fmt.Sprintf("%d open slots", numOpenSlots),
+		})
+	}
+
+	return entrants
 }
 
 func (e EntryList) Entrants() string {
