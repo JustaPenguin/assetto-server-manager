@@ -1767,7 +1767,7 @@ let championships = {
                 let pointsVal = 0;
 
                 // load the default points value for this position
-                if (numPoints < defaultPoints.Places.length) {
+                if (i < defaultPoints.Places.length) {
                     pointsVal = defaultPoints.Places[i];
                 }
 
