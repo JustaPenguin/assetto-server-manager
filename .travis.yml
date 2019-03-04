@@ -2,8 +2,6 @@ language: go
 go:
   - 1.12
 
-sudo: required
-
 before_install:
   - nvm install 11
   - nvm use 11
@@ -17,6 +15,9 @@ script:
   - export GO111MODULE=on
   - mkdir -p cmd/server-manager/assetto/{cfg,results}
   - cp -R fixtures/results/*.json cmd/server-manager/assetto/results
+  - cp -R LICENSE cmd/server-manager/LICENSE.txt
+  - cp -R README.md cmd/server-manager/README.txt
+  - cp -R CHANGELOG.txt cmd/server-manager/CHANGELOG.txt
   - go test
 
   # windows icon
@@ -35,8 +36,8 @@ script:
 
   - GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${TRAVIS_TAG}"
   - GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${TRAVIS_TAG}"
-  - zip -r server-manager_windows_$TRAVIS_TAG.zip server-manager.exe config.yml ../../README.md ../../LICENSE
-  - zip -r server-manager_linux_$TRAVIS_TAG.zip server-manager config.yml ../../README.md ../../LICENSE
+  - zip -r server-manager_windows_$TRAVIS_TAG.zip server-manager.exe config.yml README.txt LICENSE.txt CHANGELOG.txt
+  - zip -r server-manager_linux_$TRAVIS_TAG.zip server-manager config.yml README.txt LICENSE.txt CHANGELOG.txt
 
 deploy:
   provider: releases
