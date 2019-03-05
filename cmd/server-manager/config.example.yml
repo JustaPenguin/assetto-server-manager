@@ -23,7 +23,8 @@
 ################################################################################
 steam:
   # steam username and password. we recommend creating a separate account with
-  # steamguard disabled to use this application.
+  # steamguard disabled to use this application. Assetto Corsa Server is FREE
+  # so you don't need to worry about purchasing it again.
   #
   # server manager uses this information ONLY to install the
   # assetto corsa server.
