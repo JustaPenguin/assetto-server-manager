@@ -23,7 +23,7 @@
                 </td>
 
                 <td>
-                    {{ $result.GetDrivers }}
+                    <small>{{ $result.GetDrivers }}</small>
                 </td>
             </tr>
         {{ end }}
@@ -34,13 +34,53 @@
     <nav aria-label="Page Navigation">
         <ul class="pagination justify-content-center pagination-sm">
             {{ $currentPage := .currentPage }}
-            <li class="page-item {{ if eq $currentPage 0 }}disabled{{ end }}"><a class="page-link"
-                {{ if eq $currentPage 0 }}tabindex="-1"{{ end }} href="?page={{ add $currentPage -1 }}">Previous</a></li>
-            {{ range $i, $null := .pages }}
-            <li class="page-item {{ if eq $currentPage $i }}active{{ end }}"><a class="page-link" href="?page={{ $i }}">{{ $i }}</a></li>
+
+
+            <li class="page-item {{ if eq $currentPage 0 }}disabled{{ end }}">
+                <a class="page-link"
+                   {{ if eq $currentPage 0 }}tabindex="-1"{{ end }}
+                   href="?page=0">
+                    <i class="fas fa-fast-backward fa-fw"></i>
+                </a>
+            </li>
+
+
+            <li class="page-item {{ if eq $currentPage 0 }}disabled{{ end }}">
+                <a class="page-link"
+                {{ if eq $currentPage 0 }}tabindex="-1"{{ end }}
+                   href="?page={{ add $currentPage -1 }}">
+                    <i class="fas fa-caret-left fa-fw"></i>
+                </a>
+            </li>
+
+            {{ $start := (max 0 (sub $currentPage 3)) }}
+            {{ $end := (min (len .pages) (add $currentPage 4)) }}
+
+            {{ range $i, $no := (slice .pages $start $end) }}
+                <li class="page-item {{ if eq $currentPage $no }}disabled{{ end }}">
+                    <a class="page-link"
+                       href="?page={{ $no }}">
+                        {{ $no }}
+                    </a>
+                </li>
             {{ end }}
-            <li class="page-item {{ if or (eq $currentPage (add (len .pages) -1)) (eq (len .pages) 0) }}disabled{{ end }}"><a class="page-link"
-                {{ if eq $currentPage (add (len .pages) -1) }}tabindex="-1"{{ end }} href="?page={{ add $currentPage 1 }}">Next</a></li>
+
+
+            <li class="page-item {{ if or (eq $currentPage (add (len .pages) -1)) (eq (len .pages) 0) }}disabled{{ end }}">
+                <a class="page-link"
+                {{ if eq $currentPage (add (len .pages) -1) }}tabindex="-1"{{ end }}
+                   href="?page={{ add $currentPage 1 }}">
+                    <i class="fas fa-caret-right fa-fw"></i>
+                </a>
+            </li>
+
+            <li class="page-item {{ if or (eq $currentPage (add (len .pages) -1)) (eq (len .pages) 0) }}disabled{{ end }}">
+                <a class="page-link"
+                   {{ if eq $currentPage (add (len .pages) -1) }}tabindex="-1"{{ end }}
+                   href="?page={{ add (len .pages) -1 }}">
+                    <i class="fas fa-fast-forward fa-fw"></i>
+                </a>
+            </li>
         </ul>
     </nav>
 {{ end }}
