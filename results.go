@@ -43,7 +43,7 @@ func (s *SessionResults) GetCrashes(guid string) int {
 }
 
 func (s *SessionResults) GetAverageLapTime(guid string) time.Duration {
-	var totalTime, driverLapCount, lapsForAverage int
+	var totalTime, driverLapCount, lapsForAverage, totalTimeForAverage int
 
 	for _, lap := range s.Laps {
 		if lap.DriverGUID == guid  {
@@ -51,15 +51,16 @@ func (s *SessionResults) GetAverageLapTime(guid string) time.Duration {
 
 			// if lap doesnt cut and if lap is < 107% of average for that driver so far and if lap isn't lap 1
 			if lap.Cuts == 0 && driverLapCount != 0 && (float64(lap.LapTime) < avgSoFar || totalTime == 0) {
-				totalTime += lap.LapTime
+				totalTimeForAverage += lap.LapTime
 				lapsForAverage++
 			}
 
 			driverLapCount++
+			totalTime += lap.LapTime
 		}
 	}
 
-	return s.GetTime(int(float64(totalTime)/float64(lapsForAverage)), guid, false)
+	return s.GetTime(int(float64(totalTimeForAverage)/float64(lapsForAverage)), guid, false)
 }
 
 // lapNum is the drivers current lap
