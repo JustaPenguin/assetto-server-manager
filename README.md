@@ -10,9 +10,9 @@ A web interface to manage an Assetto Corsa Server.
 * Quick Race Mode
 * Custom Race Mode with saved presets
 * Live Timings for current sessions
-* Results pages for all previous sessions
+* Results pages for all previous sessions, with the ability to apply penalties
 * Content Management - Upload tracks, weather and cars
-* Sol Integration - Sol weather is compatible, including 24 hour time cycles (session start may advance/reverse time really fast before it syncs up)
+* Sol Integration - Sol weather is compatible, including 24 hour time cycles (session start may advance/reverse time really fast before it syncs up - requires drivers to launch from content manager)
 * Championship mode - configure multiple race events and keep track of driver, class and team points
 * Automatic event looping
 * Server Logs / Options Editing

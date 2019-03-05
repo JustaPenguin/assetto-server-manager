@@ -1,3 +1,12 @@
+v1.0.1
+------
+
+* Fixed an issue with populating default points when creating championship classes. Points for places beyond the F1
+  defaults now show '0' when created, rather than '25' which was incorrectly shown before.
+* Average Lap Time on Results pages is now calculated lap times that meet the following conditions:
+    "if lap doesnt cut and if lap is < 107% of average for that driver so far and if lap isn't lap 1"
+* Fixed an issue with Quick Race Time/Laps selector not defaulting to the correct value.
+
 v1.0.0
 ------
 
