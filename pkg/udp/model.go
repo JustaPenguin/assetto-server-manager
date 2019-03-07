@@ -197,3 +197,19 @@ type SectorCompleted struct {
 	Anothernum uint8
 	Time       uint16
 }
+
+type EnableRealtimePosInterval struct {
+	Type     uint8
+	Interval uint16
+}
+
+func (EnableRealtimePosInterval) Event() Event {
+	return EventRealtimeposInterval
+}
+
+func NewEnableRealtimePosInterval(interval uint16) EnableRealtimePosInterval {
+	return EnableRealtimePosInterval{
+		Type:     uint8(EventRealtimeposInterval),
+		Interval: interval,
+	}
+}

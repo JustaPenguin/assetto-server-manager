@@ -45,7 +45,9 @@ abbr[title] {
     max-height: 600px;
 }
 
-span[data-toggle=tooltip] { cursor: default; }
+span[data-toggle=tooltip] {
+    cursor: default;
+}
 
 .driver-link:hover, .row-link:hover {
     cursor: pointer;
@@ -77,6 +79,7 @@ span[data-toggle=tooltip] { cursor: default; }
         width: auto;
         margin-bottom: 10px;
     }
+
     .home-race-info .float-right {
         float: unset !important;
     }
@@ -209,9 +212,11 @@ a.detailed-results:hover {
 .table-custom-race tr td:nth-child(1) {
     text-align: center;
 }
+
 .table-custom-race tr td:nth-child(2) {
     max-width: 250px;
 }
+
 .table-custom-race tr td:nth-child(3) {
     width: 30px;
 }
@@ -245,4 +250,21 @@ footer a {
     footer .col-sm-4 {
         text-align: center !important;
     }
+}
+
+#map {
+    background-size: contain;
+    background-repeat: no-repeat;
+    position: relative;
+}
+
+.dot {
+    position: absolute;
+    background: red;
+    transform: translate(-50%, -50%);
+    border-radius: 100%;
+    width: 10px;
+    height: 10px;
+    content: " ";
+    z-index: 100;
 }

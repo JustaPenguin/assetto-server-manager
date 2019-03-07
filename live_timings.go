@@ -66,7 +66,7 @@ type Collision struct {
 
 var liveInfo LiveTiming
 
-func CallbackFunc(response udp.Message) {
+func LiveTimingCallback(response udp.Message) {
 	currentRace, _ := raceManager.CurrentRace()
 
 	if currentRace == nil {

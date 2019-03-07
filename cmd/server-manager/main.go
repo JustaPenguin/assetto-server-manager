@@ -1,17 +1,16 @@
 package main
 
 import (
+	"github.com/cj123/assetto-server-manager"
+	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
+	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
+	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/pkg/browser"
+	"github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"os"
 	"runtime"
-
-	"github.com/cj123/assetto-server-manager"
-	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
-	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
-
-	"github.com/pkg/browser"
-	"github.com/sirupsen/logrus"
 )
 
 var debug = os.Getenv("DEBUG") == "true"
@@ -49,6 +48,8 @@ func main() {
 		filesystem = static.FS(false)
 	}
 
+	udp.RealtimePosIntervalMs = 42
+
 	servermanager.ViewRenderer, err = servermanager.NewRenderer(templateLoader, debug)
 
 	if err != nil {
@@ -56,7 +57,21 @@ func main() {
 	}
 
 	go servermanager.LoopRaces()
+	/*
+		go func() {
+			time.Sleep(time.Second * 5)
+			logrus.Infof("Starting")
 
+			err := replay.ReplayUDPMessages("2019-03-06_18.16.json", 5, func(response udp.Message) {
+				servermanager.LiveMapCallback(response)
+				servermanager.LiveTimingCallback(response)
+			}, false)
+
+			if err != nil {
+				panic(err)
+			}
+		}()
+	*/
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 
 	if err != nil {

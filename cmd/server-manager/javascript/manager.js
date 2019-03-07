@@ -15,6 +15,8 @@ $(document).ready(function () {
 
     serverLogs.init();
     liveTiming.init();
+    liveMap.init();
+
 
     // init bootstrap-switch
     $.fn.bootstrapSwitch.defaults.size = 'small';
@@ -63,6 +65,90 @@ $(document).ready(function () {
         };
     }
 });
+
+
+function getRandomColor() {
+    let letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}
+
+let liveMap = {
+
+    joined: {},
+
+    init: function () {
+        let ws = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/api/live-map");
+
+        let xOffset = 0, zOffset = 0;
+
+        const $map = $document.find("#map");
+
+        let multiplierX = 1;
+        let multiplierZ = 1;
+
+        let mapWidth = 0, mapHeight = 0;
+
+        ws.onmessage = function (e) {
+            let data = JSON.parse(e.data);
+
+            if (!data) {
+                return;
+            }
+
+            if (data.OffsetX) {
+                // track map info
+                xOffset = data.OffsetX;
+                zOffset = data.OffsetZ;
+            } else if (data.DriverName) {
+                if (data.EventType === 51) {
+                    // connect
+                    let addToPage = !(data.CarID in liveMap.joined);
+
+                    liveMap.joined[data.CarID] = data;
+
+                    if (addToPage) {
+                        liveMap.joined[data.CarID].dot = $("<div class='dot' style='background-color: " + getRandomColor() + "'/>");
+                        //liveMap.joined[data.CarID].dot.text(data.DriverName);
+                        liveMap.joined[data.CarID].dot.appendTo($map);
+                    }
+                } else if (data.EventType === 52) {
+                    // disconnect
+                    liveMap.joined[data.CarID].dot.remove();
+                    delete liveMap.joined[data.CarID];
+                }
+            } else if (data.Pos) {
+                // player position
+                console.log((data.Pos.X + xOffset) * multiplierX, (data.Pos.Z + zOffset) * multiplierZ);
+
+                liveMap.joined[data.CarID].dot.css({
+                    'left': (data.Pos.X + xOffset) * multiplierX,
+                    'top': (data.Pos.Z + zOffset) * multiplierZ
+                });
+            } else if (!!data.Track) {
+                // track info
+                let trackURL = "/content/tracks/" + data.Track + (!!data.TrackConfig ? "/" + data.TrackConfig : "") + "/map.png";
+
+                let img = new Image();
+
+                img.onload = function() {
+                    // new session
+                    let image = "url('" + trackURL + "')";
+
+                    $map.css({'background-image': image, 'width': img.width, 'height': img.height});
+
+                    mapWidth = img.width;
+                    mapHeight = img.height;
+                };
+
+                img.src = trackURL;
+            }
+        };
+    },
+};
 
 const nameRegex = /^[A-Za-z]{0,5}[0-9]+/;
 
@@ -574,17 +660,17 @@ class RaceSetup {
                     skin = availableCars[currentCar][0]
                 }
 
-                let path = "/content/cars/"+currentCar+"/skins/"+skin+"/preview.jpg";
+                let path = "/content/cars/" + currentCar + "/skins/" + skin + "/preview.jpg";
                 let $preview = $this.closest(".entrant").find(".entryListCarPreview");
 
                 $.get(path)
-                    .done(function() {
+                    .done(function () {
                         // preview for skin exists
                         $preview.attr({"src": path, "alt": prettifyName(skin, false)})
-                    }).fail(function() {
-                        // preview doesn't exist, load default fall back image
-                        path = "/static/img/no-preview-car.png";
-                        $preview.attr({"src": path, "alt": "Preview Image"})
+                    }).fail(function () {
+                    // preview doesn't exist, load default fall back image
+                    path = "/static/img/no-preview-car.png";
+                    $preview.attr({"src": path, "alt": "Preview Image"})
                 });
             }
         }
@@ -1531,7 +1617,7 @@ function handleTrackFilesLoop(fileList) {
         // get model/surfaces and drs zones and ui folder
         if ((fileList[x].name.startsWith("models") && fileList[x].name.endsWith(".ini")) ||
             (fileList[x].name === "surfaces.ini" || fileList[x].name === "drs_zones.ini") ||
-            (fileList[x].filepath.includes("/ui/"))) {
+            (fileList[x].filepath.includes("/ui/") || fileList[x].name === "map.png" || fileList[x].name === "map.ini")) {
 
             filesToUploadLocal.push(fileList[x]);
         }
@@ -1653,7 +1739,7 @@ function handleTrackFilesLoop(fileList) {
 }
 
 function notA(thing) {
-    let $panel = $("#"+thing+"-fail");
+    let $panel = $("#" + thing + "-fail");
 
     $panel.show();
     $panel.attr({'class': "alert alert-danger mt-2"});
