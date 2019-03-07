@@ -1,10 +1,16 @@
 {{ define "title" }}Live Timing{{ end }}
 
 {{ define "content" }}
+
+    <div id="map">
+    </div>
+
     {{ with .RaceDetails }}
         <div class="card">
             <h5 class="card-header">Event in Progress</h5>
             <div class="card-body row home-race-info">
+
+
                 <div class="col-md-8">
 
                     {{ template "race-card" . }}

@@ -65,7 +65,7 @@ func (rm *RaceManager) CurrentRace() (*ServerConfig, EntryList) {
 	return rm.currentRace, rm.currentEntryList
 }
 
-func (rm *RaceManager) startUDPListener(cfg ServerConfig, forwardingAddress string) error {
+func (rm *RaceManager) startUDPListener(cfg ServerConfig, forwardingAddress string, forwardListenPort int) error {
 	var err error
 
 	if rm.udpServerConn != nil {
@@ -88,7 +88,7 @@ func (rm *RaceManager) startUDPListener(cfg ServerConfig, forwardingAddress stri
 		return err
 	}
 
-	rm.udpServerConn, err = udp.NewServerClient(host, int(port), cfg.GlobalServerConfig.FreeUDPPluginLocalPort, true, forwardingAddress, rm.UDPCallback)
+	rm.udpServerConn, err = udp.NewServerClient(host, int(port), cfg.GlobalServerConfig.FreeUDPPluginLocalPort, true, forwardingAddress, forwardListenPort, rm.UDPCallback)
 
 	if err != nil {
 		return err
@@ -105,9 +105,10 @@ func (rm *RaceManager) UDPCallback(message udp.Message) {
 		}
 	}()
 
+	LiveMapCallback(message)
 	championshipManager.ChampionshipEventCallback(message)
-	CallbackFunc(message)
-	LoopCallbackFunc(message)
+	LiveTimingCallback(message)
+	LoopCallback(message)
 }
 
 func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool) error {
@@ -129,6 +130,7 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 
 	config.GlobalServerConfig = *serverOpts
 	forwardingAddress := config.GlobalServerConfig.UDPPluginAddress
+	forwardListenPort := config.GlobalServerConfig.UDPPluginLocalPort
 
 	config.GlobalServerConfig.UDPPluginAddress = config.GlobalServerConfig.FreeUDPPluginAddress
 	config.GlobalServerConfig.UDPPluginLocalPort = config.GlobalServerConfig.FreeUDPPluginLocalPort
@@ -145,7 +147,7 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		return err
 	}
 
-	err = rm.startUDPListener(config, forwardingAddress)
+	err = rm.startUDPListener(config, forwardingAddress, forwardListenPort)
 
 	if err != nil {
 		return err

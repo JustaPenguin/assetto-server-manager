@@ -5,12 +5,14 @@ require (
 	github.com/Masterminds/semver v1.4.2 // indirect
 	github.com/Masterminds/sprig v2.18.0+incompatible
 	github.com/cj123/ini v1.42.0
+	github.com/davecgh/go-spew v1.1.1
 	github.com/etcd-io/bbolt v1.3.2
 	github.com/fatih/camelcase v1.0.0
 	github.com/go-chi/chi v4.0.1+incompatible
 	github.com/google/uuid v1.1.0
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/gorilla/sessions v1.1.3
+	github.com/gorilla/websocket v1.4.0
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/kr/pretty v0.1.0 // indirect

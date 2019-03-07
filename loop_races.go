@@ -59,7 +59,7 @@ func LoopRaces() {
 
 // callback check for udp end session, load result file, check session type against sessionTypes
 // if session matches last session in sessionTypes then stop server and clear sessionTypes
-func LoopCallbackFunc(message udp.Message) {
+func LoopCallback(message udp.Message) {
 	switch a := message.(type) {
 	case udp.EndSession:
 		if sessionTypes == nil {
