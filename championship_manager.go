@@ -29,6 +29,7 @@ type ActiveChampionship struct {
 	SessionType             SessionType
 
 	NumLapsCompleted int
+	NumRaceEndEvents int
 }
 
 func NewChampionshipManager(rm *RaceManager) *ChampionshipManager {
@@ -520,7 +521,13 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 
 		lastSession := championship.Events[currentEventIndex].LastSession()
 
-		if cm.activeChampionship.SessionType == lastSession {
+		if cm.activeChampionship.SessionType == SessionTypeRace {
+			// keep track of the number of race end events so we can determine if we're on race 2
+			// if the session has ReversedGridPositions != 0
+			cm.activeChampionship.NumRaceEndEvents++
+		}
+
+		if cm.activeChampionship.SessionType == lastSession || (lastSession == SessionTypeRacex2 && cm.activeChampionship.NumRaceEndEvents == 2) {
 			logrus.Infof("End of %s Session detected. Marking championship event %s complete", lastSession.String(), cm.activeChampionship.EventID.String())
 			championship.Events[currentEventIndex].CompletedTime = time.Now()
 
