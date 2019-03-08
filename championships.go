@@ -381,7 +381,10 @@ type ChampionshipEvent struct {
 // LastSession returns the last configured session in the championship, in the following order:
 // Race, Qualifying, Practice, Booking
 func (cr *ChampionshipEvent) LastSession() SessionType {
-	if cr.RaceSetup.HasSession(SessionTypeRace) {
+	if cr.RaceSetup.ReversedGridRacePositions != 0 && cr.RaceSetup.HasSession(SessionTypeRace) {
+		// there must be two races as reversed grid positions are on
+		return SessionTypeRacex2
+	} else if cr.RaceSetup.HasSession(SessionTypeRace) {
 		return SessionTypeRace
 	} else if cr.RaceSetup.HasSession(SessionTypeQualifying) {
 		return SessionTypeQualifying
