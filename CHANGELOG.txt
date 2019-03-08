@@ -1,3 +1,8 @@
+v1.0.2
+------
+
+* Fixed an issue with named Custom Race entrants losing their car/skin on race start.
+
 v1.0.1
 ------
 
