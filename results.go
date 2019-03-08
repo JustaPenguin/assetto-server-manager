@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
+	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -360,7 +361,7 @@ type SessionPos struct {
 	Z float64 `json:"Z"`
 }
 
-const pageSize = 10
+const pageSize = 20
 
 var ErrResultsPageNotFound = errors.New("servermanager: results page not found")
 
@@ -389,7 +390,7 @@ func listResults(page int) ([]SessionResults, []int, error) {
 	var pagesSlice []int
 
 	for x := 0; x < int(pagesRound); x++ {
-		pagesSlice = append(pagesSlice, 0)
+		pagesSlice = append(pagesSlice, x)
 	}
 
 	// get result files for selected page probably
@@ -490,7 +491,10 @@ func resultHandler(w http.ResponseWriter, r *http.Request) {
 
 	result, err := LoadResult(fileName + ".json")
 
-	if err != nil {
+	if os.IsNotExist(err) {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	} else if err != nil {
 		logrus.Errorf("could not get result, err: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
