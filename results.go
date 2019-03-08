@@ -46,7 +46,7 @@ func (s *SessionResults) GetAverageLapTime(guid string) time.Duration {
 	var totalTime, driverLapCount, lapsForAverage, totalTimeForAverage int
 
 	for _, lap := range s.Laps {
-		if lap.DriverGUID == guid  {
+		if lap.DriverGUID == guid {
 			avgSoFar := (float64(totalTime) / float64(lapsForAverage)) * 1.07
 
 			// if lap doesnt cut and if lap is < 107% of average for that driver so far and if lap isn't lap 1
