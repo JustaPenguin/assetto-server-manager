@@ -3,7 +3,8 @@ v1.0.2
 
 * Increase number of results per result listing page to 20.
 * Add a 404 error for results pages that don't exist
-* Results listing page now only shows a maximum of 3 pages either side of the current page you are on.
+* Results listing page now shows 10 pages in the pagination bar with options to skip to the front and end,
+  and forwards/backwards by 10 pages.
 
 
 v1.0.1
