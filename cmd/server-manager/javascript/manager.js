@@ -938,7 +938,7 @@ let liveTiming = {
                                     let $tag = $("<span/>");
                                     $tag.attr({'class': 'badge badge-danger live-badge'});
                                     $tag.text("Crash " + liveTiming.Cars[car].Collisions[y].Type + " at " +
-                                        liveTiming.Cars[car].Collisions[y].Speed + "m/s");
+                                        parseFloat(liveTiming.Cars[car].Collisions[y].Speed).toFixed(2) + "m/s");
 
                                     $tdEvents.append($tag);
                                 }
