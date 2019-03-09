@@ -1,3 +1,15 @@
+v1.0.3
+------
+
+* Added a Live Map. You'll need to re-upload your tracks to see the live map, since it requires new
+  track assets.
+* Added support for plugins such as KissMyRank. Follow the KissMyRank setup, but instead of editing
+  server_cfg.ini, edit the Options in Server Manager (it overwrites server_cfg.ini!)
+* Overhauled UDP proxying to work with sending messages as well as existing support for receiving.
+  (This is what makes KissMyRank etc work!)
+* Added support for 'Reverse Grid Positions' races within Championship events.
+
+
 v1.0.2
 ------
 

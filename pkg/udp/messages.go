@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"net"
+
+	"github.com/sirupsen/logrus"
 )
 
 // RealtimePosIntervalMs is the interval to request real time positional information.
@@ -46,6 +48,7 @@ func NewServerClient(addr string, receivePort, sendPort int, forward bool, forwa
 	}
 
 	go u.serve()
+	go u.forwardServe()
 
 	return u, nil
 }
@@ -80,12 +83,42 @@ func (asu *AssettoServerUDP) Close() error {
 	return nil
 }
 
+func (asu *AssettoServerUDP) forwardServe() {
+	if !asu.forward || asu.forwarder == nil {
+		return
+	}
+
+	for {
+		select {
+		case <-asu.ctx.Done():
+			asu.forwarder.Close()
+			return
+		default:
+			buf := make([]byte, 1024)
+
+			// read message from assetto
+			_, _, err := asu.forwarder.ReadFromUDP(buf)
+
+			if err != nil {
+				logrus.Errorf("could not read udp message, err: %s", err)
+				continue
+			}
+
+			_, err = asu.listener.Write(buf)
+
+			if err != nil {
+				logrus.Errorf("could not forward udp message, err: %s", err)
+				continue
+			}
+		}
+	}
+}
+
 func (asu *AssettoServerUDP) serve() {
 	for {
 		select {
 		case <-asu.ctx.Done():
 			asu.listener.Close()
-			asu.forwarder.Close()
 			return
 		default:
 			buf := make([]byte, 1024)
