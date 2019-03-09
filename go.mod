@@ -8,24 +8,28 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/etcd-io/bbolt v1.3.2
 	github.com/fatih/camelcase v1.0.0
-	github.com/go-chi/chi v4.0.1+incompatible
-	github.com/google/uuid v1.1.0
-	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
+	github.com/go-chi/chi v4.0.2+incompatible
+	github.com/google/uuid v1.1.1
+	github.com/gopherjs/gopherjs v0.0.0-20190309154008-847fc94819f9 // indirect
 	github.com/gorilla/sessions v1.1.3
 	github.com/gorilla/websocket v1.4.0
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
+	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
+	github.com/kr/pty v1.1.3 // indirect
 	github.com/mattn/go-zglob v0.0.1
+	github.com/mitchellh/go-wordwrap v1.0.0
+	github.com/mjibson/esc v0.1.0 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/sirupsen/logrus v1.3.0
 	github.com/smartystreets/assertions v0.0.0-20190215210624-980c5ac6f3ac // indirect
-	github.com/smartystreets/goconvey v0.0.0-20190222223459-a17d461953aa // indirect
+	github.com/smartystreets/goconvey v0.0.0-20190306220146-200a235640ff // indirect
 	github.com/stretchr/testify v1.3.0 // indirect
 	go.etcd.io/bbolt v1.3.2 // indirect
-	golang.org/x/crypto v0.0.0-20190225124518-7f87c0fbb88b // indirect
-	golang.org/x/net v0.0.0-20190225153610-fe579d43d832
-	golang.org/x/sys v0.0.0-20190225065934-cc5685c2db12 // indirect
+	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2 // indirect
+	golang.org/x/net v0.0.0-20190301231341-16b79f2e4e95
+	golang.org/x/sys v0.0.0-20190309122539-980fc434d28e // indirect
 	golang.org/x/text v0.3.0
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/ini.v1 v1.42.0 // indirect
