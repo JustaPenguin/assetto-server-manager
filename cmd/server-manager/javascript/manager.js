@@ -91,6 +91,8 @@ let liveMap = {
         let multiplierZ = 1;
 
         let mapWidth = 0, mapHeight = 0;
+        let scale = 1;
+        let margin = 0;
 
         ws.onmessage = function (e) {
             let data = JSON.parse(e.data);
@@ -103,6 +105,8 @@ let liveMap = {
                 // track map info
                 xOffset = data.OffsetX;
                 zOffset = data.OffsetZ;
+                scale = data.ScaleFactor;
+                //margin = data.Margin;
             } else if (data.DriverName) {
                 if (data.EventType === 51) {
                     // connect
@@ -111,7 +115,7 @@ let liveMap = {
                     liveMap.joined[data.CarID] = data;
 
                     if (addToPage) {
-                        liveMap.joined[data.CarID].dot = $("<div class='dot' style='background-color: " + getRandomColor() + "'/>");
+                        liveMap.joined[data.CarID].dot = $("<div class='dot' style='background: " + getRandomColor() + "'/>");
                         //liveMap.joined[data.CarID].dot.text(data.DriverName);
                         liveMap.joined[data.CarID].dot.appendTo($map);
                     }
@@ -122,11 +126,23 @@ let liveMap = {
                 }
             } else if (data.Pos) {
                 // player position
-                console.log((data.Pos.X + xOffset) * multiplierX, (data.Pos.Z + zOffset) * multiplierZ);
+
+                let x = 0, y = 0;
+
+                if (parseInt(data.Velocity.X) > 0 || parseInt(data.Velocity.Z) > 0) {
+                    x = data.Velocity.X;
+                    y = data.Velocity.Z;
+                } else {
+                    x = data.Pos.X;
+                    y = data.Pos.Z;
+                }
+
+                let deg = toDegrees(direction(x, y));
 
                 liveMap.joined[data.CarID].dot.css({
-                    'left': (data.Pos.X + xOffset) * multiplierX,
-                    'top': (data.Pos.Z + zOffset) * multiplierZ
+                    'transform': "rotate(" + deg + "deg) translate(-50%, -50%)",
+                    'left': ((data.Pos.X + xOffset + margin) * multiplierX) / scale,
+                    'top': ((data.Pos.Z + zOffset + margin) * multiplierZ) / scale
                 });
             } else if (!!data.Track) {
                 // track info
@@ -134,7 +150,7 @@ let liveMap = {
 
                 let img = new Image();
 
-                img.onload = function() {
+                img.onload = function () {
                     // new session
                     let image = "url('" + trackURL + "')";
 
@@ -149,6 +165,14 @@ let liveMap = {
         };
     },
 };
+
+function direction(x, y) {
+    return Math.atan2(y, x);
+}
+
+function toDegrees(angle) {
+    return angle * (180 / Math.PI);
+}
 
 const nameRegex = /^[A-Za-z]{0,5}[0-9]+/;
 

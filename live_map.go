@@ -33,15 +33,11 @@ func LiveMapHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendCh := make(chan udp.Message)
-	udpMessageMutex.Lock()
 	udpMessageChan[c] = sendCh
-	udpMessageMutex.Unlock()
 
 	defer func() {
 		logrus.Debugf("closing socket")
 
-		udpMessageMutex.Lock()
-		defer udpMessageMutex.Unlock()
 		close(sendCh)
 		delete(udpMessageChan, c)
 		c.Close()
@@ -111,9 +107,6 @@ func LiveMapCallback(message udp.Message) {
 	default:
 		return
 	}
-
-	udpMessageMutex.RLock()
-	defer udpMessageMutex.RUnlock()
 
 	for _, ch := range udpMessageChan {
 		ch <- message
