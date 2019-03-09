@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
@@ -431,7 +432,25 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 				logrus.Errorf("Could not find free entrant slot in class: %s for %s (%s)", classForCar.Name, a.DriverName, a.DriverGUID)
 				return
 			}
+
 		}
+
+
+		go func() {
+			time.Sleep(time.Second * 10)
+
+			welcomeMessage, err := udp.NewSendChat(a.CarID, fmt.Sprintf("Hi, %s! Welcome to the %s Championship! Make this race count!", a.DriverName, championship.Name))
+
+			if err == nil {
+				err := cm.udpServerConn.SendMessage(welcomeMessage)
+
+				if err != nil {
+					logrus.Errorf("Unable to send welcome message to: %s", a.DriverName)
+				}
+			} else {
+				logrus.Errorf("Unable to build welcome message to: %s", a.DriverName)
+			}
+		}()
 
 	case udp.SessionInfo:
 		if a.Event() == udp.EventNewSession {

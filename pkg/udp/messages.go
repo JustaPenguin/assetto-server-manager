@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"reflect"
 
 	"github.com/sirupsen/logrus"
 )
@@ -140,7 +141,7 @@ func (asu *AssettoServerUDP) serve() {
 
 			asu.callback(msg)
 
-			if asu.forward {
+			if asu.forward && asu.forwarder != nil {
 				go func() {
 					// write the message to the forwarding address
 					_, err := asu.forwarder.Write(buf)
@@ -174,9 +175,9 @@ func readString(r io.Reader, sizeMultiplier int) string {
 }
 
 func (asu *AssettoServerUDP) SendMessage(message Message) error {
-
+	fmt.Println(reflect.TypeOf(message).String())
 	switch a := message.(type) {
-	case EnableRealtimePosInterval:
+	case EnableRealtimePosInterval, *SendChat:
 		err := binary.Write(asu.listener, binary.LittleEndian, a)
 
 		if err != nil {
