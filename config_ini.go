@@ -24,7 +24,7 @@ const (
 
 	// SessionTypeRacex2 is a convenience const to allow for checking of
 	// reversed grid positions signifying a second race.
-	SessionTypeRacex2     SessionType = "RACEx2"
+	SessionTypeRacex2 SessionType = "RACEx2"
 
 	serverConfigIniPath = "server_cfg.ini"
 )
