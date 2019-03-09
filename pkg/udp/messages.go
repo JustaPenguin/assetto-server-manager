@@ -6,11 +6,9 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"io"
 	"net"
-	"reflect"
-
-	"github.com/sirupsen/logrus"
 )
 
 // RealtimePosIntervalMs is the interval to request real time positional information.
@@ -175,9 +173,8 @@ func readString(r io.Reader, sizeMultiplier int) string {
 }
 
 func (asu *AssettoServerUDP) SendMessage(message Message) error {
-	fmt.Println(reflect.TypeOf(message).String())
 	switch a := message.(type) {
-	case EnableRealtimePosInterval, *SendChat:
+	case EnableRealtimePosInterval:
 		err := binary.Write(asu.listener, binary.LittleEndian, a)
 
 		if err != nil {
@@ -185,6 +182,31 @@ func (asu *AssettoServerUDP) SendMessage(message Message) error {
 		}
 
 		return err
+
+	case *SendChat:
+		buf := new(bytes.Buffer)
+
+		if err := binary.Write(buf, binary.LittleEndian, a.EventType); err != nil {
+			return err
+		}
+
+		if err := binary.Write(buf, binary.LittleEndian, a.CarID); err != nil {
+			return err
+		}
+
+		if err := binary.Write(buf, binary.LittleEndian, a.Len); err != nil {
+			return err
+		}
+
+		if _, err := buf.Write(a.UTF32Encoded); err != nil {
+			return err
+		}
+
+		if _, err := io.Copy(asu.listener, buf); err != nil {
+			return err
+		}
+
+		return nil
 	}
 
 	return errors.New("udp: invalid message type")
