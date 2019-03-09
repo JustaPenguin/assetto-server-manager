@@ -130,6 +130,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 
 		class.Points.PolePosition = formValueAsInt(r.Form["Points.PolePosition"][i])
 		class.Points.BestLap = formValueAsInt(r.Form["Points.BestLap"][i])
+		class.Points.SecondRaceMultiplier = formValueAsFloat(r.Form["Points.SecondRaceMultiplier"][i])
 
 		previousNumEntrants += numEntrantsForClass
 		championship.AddClass(class)
@@ -558,7 +559,7 @@ func (cm *ChampionshipManager) findSessionWithName(event *ChampionshipEvent, nam
 		if sess.Name == name {
 			if t == SessionTypeRace && event.RaceSetup.ReversedGridRacePositions != 0 && cm.activeChampionship.NumRaceStartEvents == 1 {
 				// this is a second race session
-				return SessionTypeRacex2, nil
+				return SessionTypeSecondRace, nil
 			}
 
 			return t, nil
