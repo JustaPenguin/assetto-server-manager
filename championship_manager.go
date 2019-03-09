@@ -28,8 +28,8 @@ type ActiveChampionship struct {
 	ChampionshipID, EventID uuid.UUID
 	SessionType             SessionType
 
-	NumLapsCompleted int
-	NumRaceEndEvents int
+	NumLapsCompleted   int
+	NumRaceStartEvents int
 }
 
 func NewChampionshipManager(rm *RaceManager) *ChampionshipManager {
@@ -453,6 +453,12 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 				return
 			}
 
+			if sessionType == SessionTypeRace {
+				// keep track of the number of race end events so we can determine if we're on race 2
+				// if the session has ReversedGridPositions != 0
+				cm.activeChampionship.NumRaceStartEvents++
+			}
+
 			currentSession, ok := championship.Events[currentEventIndex].Sessions[sessionType]
 
 			if !ok {
@@ -521,13 +527,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 
 		lastSession := championship.Events[currentEventIndex].LastSession()
 
-		if cm.activeChampionship.SessionType == SessionTypeRace {
-			// keep track of the number of race end events so we can determine if we're on race 2
-			// if the session has ReversedGridPositions != 0
-			cm.activeChampionship.NumRaceEndEvents++
-		}
-
-		if cm.activeChampionship.SessionType == lastSession || (lastSession == SessionTypeRacex2 && cm.activeChampionship.NumRaceEndEvents == 2) {
+		if cm.activeChampionship.SessionType == lastSession {
 			logrus.Infof("End of %s Session detected. Marking championship event %s complete", lastSession.String(), cm.activeChampionship.EventID.String())
 			championship.Events[currentEventIndex].CompletedTime = time.Now()
 
@@ -556,6 +556,11 @@ var (
 func (cm *ChampionshipManager) findSessionWithName(event *ChampionshipEvent, name string) (SessionType, error) {
 	for t, sess := range event.RaceSetup.Sessions {
 		if sess.Name == name {
+			if t == SessionTypeRace && event.RaceSetup.ReversedGridRacePositions != 0 && cm.activeChampionship.NumRaceStartEvents == 1 {
+				// this is a second race session
+				return SessionTypeRacex2, nil
+			}
+
 			return t, nil
 		}
 	}
