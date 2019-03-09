@@ -48,7 +48,7 @@ func main() {
 		filesystem = static.FS(false)
 	}
 
-	udp.RealtimePosIntervalMs = 42
+	udp.RealtimePosIntervalMs = 67
 
 	servermanager.ViewRenderer, err = servermanager.NewRenderer(templateLoader, debug)
 
@@ -57,21 +57,7 @@ func main() {
 	}
 
 	go servermanager.LoopRaces()
-	/*
-		go func() {
-			time.Sleep(time.Second * 5)
-			logrus.Infof("Starting")
 
-			err := replay.ReplayUDPMessages("2019-03-06_18.16.json", 5, func(response udp.Message) {
-				servermanager.LiveMapCallback(response)
-				servermanager.LiveTimingCallback(response)
-			}, false)
-
-			if err != nil {
-				panic(err)
-			}
-		}()
-	*/
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 
 	if err != nil {

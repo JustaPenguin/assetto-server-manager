@@ -260,7 +260,6 @@ footer a {
 
 .dot {
     position: absolute;
-    background: red;
     transform: translate(-50%, -50%);
     border-radius: 100%;
     width: 10px;
