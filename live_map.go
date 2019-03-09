@@ -92,7 +92,8 @@ func LiveMapCallback(message udp.Message) {
 		websocketTrackMapData, err = LoadTrackMapData(m.Track, m.TrackConfig)
 
 		if err != nil {
-			panic(err) // @TODO
+			logrus.Errorf("Could not load map data, err: %s", err)
+			return
 		}
 
 		LiveMapCallback(websocketTrackMapData)
