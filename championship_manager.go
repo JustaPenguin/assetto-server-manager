@@ -28,7 +28,8 @@ type ActiveChampionship struct {
 	ChampionshipID, EventID uuid.UUID
 	SessionType             SessionType
 
-	NumLapsCompleted int
+	NumLapsCompleted   int
+	NumRaceStartEvents int
 }
 
 func NewChampionshipManager(rm *RaceManager) *ChampionshipManager {
@@ -129,6 +130,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 
 		class.Points.PolePosition = formValueAsInt(r.Form["Points.PolePosition"][i])
 		class.Points.BestLap = formValueAsInt(r.Form["Points.BestLap"][i])
+		class.Points.SecondRaceMultiplier = formValueAsFloat(r.Form["Points.SecondRaceMultiplier"][i])
 
 		previousNumEntrants += numEntrantsForClass
 		championship.AddClass(class)
@@ -452,6 +454,12 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 				return
 			}
 
+			if sessionType == SessionTypeRace {
+				// keep track of the number of race end events so we can determine if we're on race 2
+				// if the session has ReversedGridPositions != 0
+				cm.activeChampionship.NumRaceStartEvents++
+			}
+
 			currentSession, ok := championship.Events[currentEventIndex].Sessions[sessionType]
 
 			if !ok {
@@ -549,6 +557,11 @@ var (
 func (cm *ChampionshipManager) findSessionWithName(event *ChampionshipEvent, name string) (SessionType, error) {
 	for t, sess := range event.RaceSetup.Sessions {
 		if sess.Name == name {
+			if t == SessionTypeRace && event.RaceSetup.ReversedGridRacePositions != 0 && cm.activeChampionship.NumRaceStartEvents == 1 {
+				// this is a second race session
+				return SessionTypeSecondRace, nil
+			}
+
 			return t, nil
 		}
 	}
