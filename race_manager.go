@@ -304,6 +304,16 @@ func formValueAsInt(val string) int {
 	return int(i)
 }
 
+func formValueAsFloat(val string) float64 {
+	i, err := strconv.ParseFloat(val, 0)
+
+	if err != nil {
+		return 0
+	}
+
+	return i
+}
+
 func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (EntryList, error) {
 	entryList := EntryList{}
 
