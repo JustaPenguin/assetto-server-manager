@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -28,15 +29,20 @@ var (
 	connectedCars            = make(map[udp.CarID]udp.SessionCarInfo)
 )
 
+type liveMapMessage struct {
+	EventType udp.Event
+	Message   udp.Message
+}
+
 type liveMapHub struct {
 	clients   map[*liveMapClient]bool
-	broadcast chan udp.Message
+	broadcast chan liveMapMessage
 	register  chan *liveMapClient
 }
 
 func newLiveMapHub() *liveMapHub {
 	return &liveMapHub{
-		broadcast: make(chan udp.Message),
+		broadcast: make(chan liveMapMessage),
 		register:  make(chan *liveMapClient),
 		clients:   make(map[*liveMapClient]bool),
 	}
@@ -56,6 +62,18 @@ func (h *liveMapHub) run() {
 					delete(h.clients, client)
 				}
 			}
+		case <-serverStoppedChan:
+			for _, client := range connectedCars {
+				client := client
+
+				client.EventType = udp.EventConnectionClosed
+
+				go func() {
+					h.broadcast <- liveMapMessage{udp.EventConnectionClosed, client}
+				}()
+			}
+
+			connectedCars = make(map[udp.CarID]udp.SessionCarInfo)
 		}
 	}
 }
@@ -64,7 +82,7 @@ type liveMapClient struct {
 	hub *liveMapHub
 
 	conn *websocket.Conn
-	send chan udp.Message
+	send chan liveMapMessage
 }
 
 func (c *liveMapClient) writePump() {
@@ -112,22 +130,23 @@ func LiveMapHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &liveMapClient{hub: mapHub, conn: c, send: make(chan udp.Message, 256)}
+	client := &liveMapClient{hub: mapHub, conn: c, send: make(chan liveMapMessage, 256)}
 	client.hub.register <- client
 
 	go client.writePump()
 
 	// new client. send them the session info if we have it
 	if websocketLastSessionInfo != nil {
-		client.send <- websocketLastSessionInfo
+		client.send <- liveMapMessage{udp.EventSessionInfo, websocketLastSessionInfo}
 	}
 
 	if websocketTrackMapData != nil {
-		client.send <- websocketTrackMapData
+		client.send <- liveMapMessage{222, websocketTrackMapData}
 	}
 
 	for _, car := range connectedCars {
-		client.send <- car
+		client.send <- liveMapMessage{udp.EventNewConnection, car}
+		client.send <- liveMapMessage{udp.EventClientLoaded, udp.ClientLoaded(car.CarID)}
 	}
 }
 
@@ -153,12 +172,12 @@ func LiveMapCallback(message udp.Message) {
 		} else if m.Event() == udp.EventConnectionClosed {
 			delete(connectedCars, m.CarID)
 		}
-	case udp.CarUpdate, *TrackMapData, udp.CollisionWithEnvironment, udp.CollisionWithCar:
+	case udp.CarUpdate, *TrackMapData, udp.CollisionWithEnvironment, udp.CollisionWithCar, udp.ClientLoaded:
 	default:
 		return
 	}
 
-	mapHub.broadcast <- message
+	mapHub.broadcast <- liveMapMessage{message.Event(), message}
 }
 
 type TrackMapData struct {
@@ -172,7 +191,7 @@ type TrackMapData struct {
 }
 
 func (*TrackMapData) Event() udp.Event {
-	return 0
+	return 222
 }
 
 func LoadTrackMapData(track, trackLayout string) (*TrackMapData, error) {

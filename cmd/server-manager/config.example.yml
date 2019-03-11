@@ -101,3 +101,13 @@ users:
 
   # set this to true to allow ANYONE to have read permissions
   read_open: false
+
+
+################################################################################
+#
+#  live map config
+#
+################################################################################
+live_map:
+  # how often to refresh the map data in milliseconds
+  refresh_interval_ms: 67
