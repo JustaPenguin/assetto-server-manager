@@ -525,10 +525,34 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		return rm.raceStore.UpsertCustomRace(customRace)
 	} else {
 		saveAsPresetWithoutStartingRace := r.FormValue("action") == "justSave"
+		schedule := r.FormValue("action") == "schedule"
 
 		// save the custom race preset
-		if err := rm.SaveCustomRace(r.FormValue("CustomRaceName"), *raceConfig, entryList, saveAsPresetWithoutStartingRace); err != nil {
+		race, err := rm.SaveCustomRace(r.FormValue("CustomRaceName"), *raceConfig, entryList, saveAsPresetWithoutStartingRace)
+
+		if err != nil {
 			return err
+		}
+
+		if schedule {
+			dateString := r.FormValue("CustomRaceScheduled")
+			timeString := r.FormValue("CustomRaceScheduledTime")
+
+			dateTimeString := dateString + "-" + timeString
+
+			date, err := time.Parse("2006-02-01-15:04", dateTimeString)
+
+			if err != nil {
+				return err
+			}
+
+			err = rm.ScheduleRace(race.UUID.String(), date, "add")
+
+			if err != nil {
+				return err
+			}
+
+			return nil
 		}
 
 		if saveAsPresetWithoutStartingRace {
@@ -668,13 +692,13 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 
 const maxRecentRaces = 30
 
-func (rm *RaceManager) ListCustomRaces() (recent, starred, looped []*CustomRace, err error) {
+func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*CustomRace, err error) {
 	recent, err = rm.raceStore.ListCustomRaces()
 
 	if err == bbolt.ErrBucketNotFound {
-		return nil, nil, nil, nil
+		return nil, nil, nil, nil, nil
 	} else if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	sort.Slice(recent, func(i, j int) bool {
@@ -692,7 +716,11 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred, looped []*CustomRace,
 			starred = append(starred, race)
 		}
 
-		if !race.Starred && !race.Loop {
+		if race.Scheduled.After(time.Now()) {
+			scheduled = append(scheduled, race)
+		}
+
+		if !race.Starred && !race.Loop && !race.Scheduled.After(time.Now()) {
 			filteredRecent = append(filteredRecent, race)
 		}
 	}
@@ -701,10 +729,10 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred, looped []*CustomRace,
 		filteredRecent = filteredRecent[:maxRecentRaces]
 	}
 
-	return filteredRecent, starred, looped, nil
+	return filteredRecent, starred, looped, scheduled, nil
 }
 
-func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, entryList EntryList, starred bool) error {
+func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, entryList EntryList, starred bool) (*CustomRace, error) {
 	if name == "" {
 		var trackLayout string
 
@@ -728,11 +756,11 @@ func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, ent
 		err := rm.raceStore.UpsertEntrant(*entrant)
 
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return rm.raceStore.UpsertCustomRace(&CustomRace{
+	race := &CustomRace{
 		Name:    name,
 		Created: time.Now(),
 		UUID:    uuid.New(),
@@ -740,7 +768,15 @@ func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, ent
 
 		RaceConfig: config,
 		EntryList:  entryList,
-	})
+	}
+
+	err := rm.raceStore.UpsertCustomRace(race)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return race, nil
 }
 
 func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
@@ -759,6 +795,37 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 	}
 
 	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart)
+}
+
+func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string) error {
+	race, err := raceManager.raceStore.FindCustomRaceByID(uuid)
+
+	if err != nil {
+		return err
+	}
+
+	if action == "add" {
+		// add a scheduled event on date
+		duration := date.Sub(time.Now())
+
+		race.Scheduled = date
+		CustomRaceStartTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+			err := raceManager.StartCustomRace(race.UUID.String(), false)
+
+			if err != nil {
+				logrus.Errorf("couldn't start scheduled race, err: %s", err)
+			}
+		})
+
+		return raceManager.raceStore.UpsertCustomRace(race)
+
+	} else {
+		// remove scheduled event on date
+		race.Scheduled = date
+		CustomRaceStartTimers[race.UUID.String()].Stop()
+
+		return raceManager.raceStore.UpsertCustomRace(race)
+	}
 }
 
 func (rm *RaceManager) DeleteCustomRace(uuid string) error {

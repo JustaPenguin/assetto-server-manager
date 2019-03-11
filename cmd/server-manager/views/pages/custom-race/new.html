@@ -1391,11 +1391,43 @@
                         </div>
                     </div>
 
+                    <div class="form-group row">
+                        <label for="CustomRaceScheduled" class="col-sm-3 col-form-label">Scheduled Race</label>
+
+                        <div class="col-sm-5">
+
+                            <input
+                                    class="form-control"
+                                    type="date"
+                                    id="CustomRaceScheduled"
+                                    name="CustomRaceScheduled"
+                                    value="{{ .CustomRaceScheduledDate }}"
+                                    placeholder=""
+                            >
+
+                            <small>If these fields are both populated then the race will start at a scheduled time.</small>
+
+                        </div>
+
+                        <div class="col-sm-4">
+
+                            <input
+                                    class="form-control"
+                                    type="time"
+                                    id="CustomRaceScheduledTime"
+                                    name="CustomRaceScheduledTime"
+                                    value="{{ .CustomRaceScheduledTime }}"
+                                    placeholder=""
+                            >
+
+                        </div>
+                    </div>
+
 
                     <div class="float-right">
                         {{ if not .IsEditing }}
-                            <button class="btn btn-info mt-5" data-toggle="tooltip" name="action" value="justSave" type="submit" title="Save this setup without starting the race">Save Custom Race</button>
-                            <button class="btn btn-success mt-5" data-toggle="tooltip" name="action" value="startRace" type="submit" title="Save this setup and begin the race">Start Race</button>
+                            <button class="btn btn-info mt-5" data-toggle="tooltip" id="save-race-button" name="action" value="justSave" type="submit" title="Save this setup without starting the race">Save Custom Race</button>
+                            <button class="btn btn-success mt-5" data-toggle="tooltip" id="start-race-button" name="action" value="startRace" type="submit" title="Save this setup and begin the race">Start Race</button>
                         {{ else }}
                             <input type="hidden" name="Editing" id="Editing" value="{{ .EditingID }}">
                             <button class="btn btn-info mt-5" data-toggle="tooltip" name="action" value="justSave" type="submit">Edit Race</button>
