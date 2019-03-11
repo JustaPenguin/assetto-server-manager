@@ -1,17 +1,15 @@
 package main
 
 import (
+	"github.com/cj123/assetto-server-manager"
+	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
+	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
+	"github.com/pkg/browser"
+	"github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"os"
 	"runtime"
-
-	"github.com/cj123/assetto-server-manager"
-	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
-	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
-
-	"github.com/pkg/browser"
-	"github.com/sirupsen/logrus"
 )
 
 var debug = os.Getenv("DEBUG") == "true"
@@ -56,6 +54,17 @@ func main() {
 	}
 
 	go servermanager.LoopRaces()
+	err = servermanager.InitialiseScheduledCustomRaces()
+
+	if err != nil {
+		logrus.Errorf("couldn't initialise scheduled races, err: %s", err)
+	}
+
+	err = servermanager.InitialiseScheduledChampionshipEvents()
+
+	if err != nil {
+		logrus.Errorf("couldn't initialise scheduled championship events, err: %s", err)
+	}
 
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 

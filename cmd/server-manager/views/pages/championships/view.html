@@ -188,6 +188,8 @@
                                 <div class="col-sm-4">
 
                                     <ul class="list-unstyled">
+                                        {{if isBefore .Scheduled }}<li><strong>Scheduled:</strong> {{ dateFormat .Scheduled }} at {{ timeFormat .Scheduled }}</li>{{ end }}
+
                                         {{ range $sessionName, $session := $eventSetup.Sessions }}
                                             <li>
                                                 <strong>{{ $sessionName.String }}</strong>:
@@ -283,6 +285,22 @@
                                         >
                                             Start Event
                                         </a>
+
+                                        <button type="button" class="btn btn-success{{ if $eventInProgress }} disabled{{ end }} dropdown-toggle" data-placement="bottom"
+                                                data-toggle="popover" title="Schedule Event" data-html="true" {{ if $eventInProgress }}aria-disabled="true"{{ end }}
+                                                data-content="<form action='/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/schedule' method='POST'>
+                                                            <div class='form-group'>
+                                                                <input type='date' class='form-control' name='event-schedule-date' id='event-schedule-date' required value='' min=''>
+                                                                <input type='time' class='form-control' name='event-schedule-time' id='event-schedule-time' required value='' min=''>
+                                                                <small class='form-text text-muted'>Please enter the correct date and time to both add and remove scheduled races.</small>
+
+                                                            </div>
+
+                                                            <button type='submit' name='action' value='add' class='btn btn-sm btn-primary'>Schedule</button>
+                                                            <button type='submit' name='action' value='remove' class='btn btn-sm btn-danger'>Remove Scheduled Event</button>
+                                                        </form>"
+                                        >Schedule Event
+                                        </button>
 
                                         <a class="btn btn-info {{ if $eventInProgress }}disabled{{ end }}"
                                            href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/practice"
