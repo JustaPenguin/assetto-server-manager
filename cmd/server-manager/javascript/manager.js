@@ -62,6 +62,29 @@ $(document).ready(function () {
             return "Are you sure you want to navigate away? You'll lose unsaved changes to this setup if you do.";
         };
     }
+
+    $document.find("#CustomRaceScheduled").change(function () {
+        if ($(this).val() && $document.find("#CustomRaceScheduledTime").val()) {
+            $document.find("#start-race-button").hide();
+            $document.find("#save-race-button").val("schedule");
+        }
+        else {
+            $document.find("#start-race-button").show();
+            $document.find("#save-race-button").val("justSave");
+        }
+    });
+
+    $document.find("#CustomRaceScheduledTime").change(function () {
+        if ($(this).val() && $document.find("#CustomRaceScheduled").val()) {
+            $document.find("#start-race-button").hide();
+            $document.find("#save-race-button").val("schedule");
+        }
+        else {
+            $document.find("#start-race-button").show();
+            $document.find("#save-race-button").val("justSave");
+
+        }
+    });
 });
 
 const nameRegex = /^[A-Za-z]{0,5}[0-9]+/;

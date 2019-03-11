@@ -44,7 +44,27 @@
                     <td class="align-middle">{{ timeFormat $race.Created }}<br> {{ dateFormat $race.Created }}</td>
                     {{ if $writeAccess }}
                         <td class="align-middle custom-race-actions">
-                            <a class="btn btn-sm btn-success" href="/custom/load/{{ $race.UUID.String }}">Start Race</a>
+                            <div class="btn-group custom-race-actions-btn-group">
+
+                                <a class="btn btn-sm btn-success custom-race-actions-btn-big" href="/custom/load/{{ $race.UUID.String }}">Start Race</a>
+
+                                <button type="button" class="btn btn-success btn-sm custom-race-actions-btn-small dropdown-toggle dropdown-toggle-split" data-placement="bottom"
+                                        data-toggle="popover" title="Schedule Race" data-html="true"
+                                        data-content="<form action='/custom/schedule/{{ $race.UUID.String  }}' method='POST'>
+                                                            <div class='form-group'>
+                                                                <input type='date' class='form-control' name='event-schedule-date' id='event-schedule-date' required value='' min=''>
+                                                                <input type='time' class='form-control' name='event-schedule-time' id='event-schedule-time' required value='' min=''>
+                                                                <small class='form-text text-muted'>Please enter the correct date and time to both add and remove scheduled races.</small>
+
+                                                            </div>
+
+                                                            <button type='submit' name='action' value='add' class='btn btn-sm btn-primary'>Schedule</button>
+                                                            <button type='submit' name='action' value='remove' class='btn btn-sm btn-danger'>Remove Scheduled Race</button>
+                                                        </form>"
+                                ></button>
+
+                            </div>
+
                             <a class="btn btn-sm btn-info" href="/custom/new?from={{ $race.UUID.String }}">Use as Template</a>
                             <a class="btn btn-sm btn-warning" href="/custom/edit/{{ $race.UUID.String }}">Edit Race</a>
                             <a onClick="return confirm('I understand that this will delete this race setup permanently');"
@@ -71,6 +91,14 @@
     the automatic race loop. You can use a custom race as a template for a new race, which will create a copy of the
     custom race, or edit the custom race directly. Custom races can be run quickly on the server using the start race
     button.</p>
+
+    <h2>Scheduled</h2>
+
+    {{ if gt (len .Scheduled) 0 }}
+        {{ template "custom-race-table" .Scheduled }}
+    {{ else }}
+        <p class="text-center">You haven't Scheduled any races!</p>
+    {{ end }}
 
     <h2>Starred</h2>
 
