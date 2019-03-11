@@ -92,7 +92,8 @@ func (c *Championship) GetPlayerSummary(guid string) string {
 				standings := class.Standings(c.Events)
 				teamstandings := class.TeamStandings(c.Events)
 
-				var driverPos, teamPos, driverPoints, teamPoints int
+				var driverPos, teamPos int
+				var driverPoints, teamPoints float64
 
 				for pos, standing := range standings {
 					if standing.Entrant.GUID == guid {
@@ -102,7 +103,7 @@ func (c *Championship) GetPlayerSummary(guid string) string {
 				}
 
 				var driverAhead string
-				var driverAheadPoints int
+				var driverAheadPoints float64
 
 				if driverPos > 2 {
 					driverAhead = standings[driverPos-2].Entrant.Name
@@ -117,24 +118,24 @@ func (c *Championship) GetPlayerSummary(guid string) string {
 				}
 
 				var teamAhead string
-				var teamAheadPoints int
+				var teamAheadPoints float64
 
 				if teamPos > 2 {
 					teamAhead = teamstandings[teamPos-2].Team
 					teamAheadPoints = teamstandings[teamPos-2].Points
 				}
 
-				out := fmt.Sprintf("You are currently %d%s with %d points. ", driverPos, ordinal(int64(driverPos)), driverPoints)
+				out := fmt.Sprintf("You are currently %d%s with %.2f points. ", driverPos, ordinal(int64(driverPos)), driverPoints)
 
 				if driverAhead != "" {
 					out += fmt.Sprintf("The driver ahead of you is %s with %d points. ", driverAhead, driverAheadPoints)
 				}
 
 				if entrant.Team != "" {
-					out += fmt.Sprintf("Your team '%s' has %d points. ", entrant.Team, teamPoints)
+					out += fmt.Sprintf("Your team '%s' has %.2f points. ", entrant.Team, teamPoints)
 
 					if teamAhead != "" {
-						out += fmt.Sprintf("The team ahead is '%s' with %d points. ", teamAhead, teamAheadPoints)
+						out += fmt.Sprintf("The team ahead is '%s' with %.2f points. ", teamAhead, teamAheadPoints)
 					}
 				}
 
