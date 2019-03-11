@@ -74,7 +74,7 @@ func customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func customRaceScheduleHandler(w http.ResponseWriter, r *http.Request) {
+func  customRaceScheduleHandler(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		logrus.Errorf("couldn't parse schedule race form, err: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -96,6 +96,18 @@ func customRaceScheduleHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = raceManager.ScheduleRace(raceID, date, r.FormValue("action"))
+
+	if err != nil {
+		logrus.Errorf("couldn't schedule race, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func customRaceScheduleRemoveHandler(w http.ResponseWriter, r *http.Request) {
+	err := raceManager.ScheduleRace(chi.URLParam(r, "uuid"), time.Time{}, "remove")
 
 	if err != nil {
 		logrus.Errorf("couldn't schedule race, err: %s", err)

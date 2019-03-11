@@ -810,7 +810,7 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string) 
 
 	} else {
 		// remove scheduled event on date
-		race.Scheduled = time.Time{}
+		race.Scheduled = date
 		CustomRaceStartTimers[race.UUID.String()].Stop()
 
 		return raceManager.raceStore.UpsertCustomRace(race)

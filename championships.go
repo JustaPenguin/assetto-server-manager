@@ -623,6 +623,19 @@ func championshipScheduleEventHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+func championshipScheduleEventRemoveHandler(w http.ResponseWriter, r *http.Request) {
+	err := championshipManager.ScheduleEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"),
+		time.Time{}, "remove")
+
+	if err != nil {
+		logrus.Errorf("couldn't schedule championship event, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
 // championshipDeleteEventHandler soft deletes a championship event
 func championshipDeleteEventHandler(w http.ResponseWriter, r *http.Request) {
 	err := championshipManager.DeleteEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
