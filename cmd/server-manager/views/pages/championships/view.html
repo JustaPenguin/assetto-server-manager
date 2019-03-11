@@ -131,6 +131,12 @@
                                     {{ $class.Points.PolePosition }}
                                 </td>
                             </tr>
+                            <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
+                                <td><strong>Second Race Points Multiplier</strong></td>
+                                <td>
+                                    {{ $class.Points.SecondRaceMultiplier }}
+                                </td>
+                            </tr>
                         {{ end }}
                     </table>
                 </div>
@@ -192,7 +198,13 @@
 
                                         {{ range $sessionName, $session := $eventSetup.Sessions }}
                                             <li>
-                                                <strong>{{ $sessionName.String }}</strong>:
+                                                <strong>
+                                                    {{ if and $eventSetup.HasMultipleRaces (eq $sessionName "RACE") }}
+                                                        1st
+                                                    {{ end }}
+
+                                                    {{ $sessionName.String }}
+                                                </strong>:
 
                                                 {{ if ne $session.Time 0 }}
                                                     {{ $session.Time }} minutes
@@ -203,12 +215,40 @@
                                                 {{ end }}
                                             </li>
                                         {{ end }}
+
+                                        {{ if $eventSetup.HasMultipleRaces }}
+                                            {{ $session := index $eventSetup.Sessions (SessionType "RACE") }}
+                                            <li>
+                                                <strong>2nd Race</strong>:
+
+                                                {{ if ne $session.Time 0 }}
+                                                    {{ $session.Time }} minutes
+                                                {{ else }}
+                                                    {{ with $session.Laps }}
+                                                        {{ . }} laps
+                                                    {{ end }}
+                                                {{ end }}
+                                                <br>
+
+                                                <small>
+                                                    {{ if eq $eventSetup.ReversedGridRacePositions -1 }}
+                                                        All grid positions will be reversed in 2nd Race.
+                                                    {{ else }}
+                                                        {{ $eventSetup.ReversedGridRacePositions }} grid positions will be reversed in 2nd Race.
+                                                    {{ end }}
+                                                </small>
+                                            </li>
+                                        {{ end }}
                                     </ul>
 
                                 </div>
 
                                 {{ if $event.Completed }}
                                     <div class="col-sm-4">
+
+                                        {{ if $eventSetup.HasMultipleRaces }}
+                                            <h5>1st Race</h5>
+                                        {{ end }}
 
                                         <ul class="list-unstyled">
                                             {{ if $championship.IsMultiClass }}
@@ -242,6 +282,43 @@
                                                 {{ end }}
                                             {{ end }}
                                         </ul>
+
+                                        {{ if $eventSetup.HasMultipleRaces }}
+                                            <h5>2nd Race</h5>
+
+                                            <ul class="list-unstyled">
+                                                {{ if $championship.IsMultiClass }}
+                                                    {{ range $classIndex, $class := $championship.Classes }}
+
+                                                        {{ range $sessionName, $sessionDetails := $event.Sessions }}
+                                                            {{ if eq $sessionName "RACEx2" }}
+                                                                {{ range $pos, $result := (slice ($class.ResultsForClass $sessionDetails.Results.Result) 0 1) }}
+                                                                    <li>
+                                                                        <strong>{{ $class.Name }} Winner</strong><br>
+                                                                        {{ $result.DriverName }}
+                                                                    </li>
+                                                                {{ end }}
+                                                            {{ end }}
+                                                        {{ end }}
+                                                    {{ end }}
+                                                {{ else }}
+                                                    {{ range $sessionName, $sessionDetails := $event.Sessions }}
+                                                        {{ if eq $sessionName "RACEx2" }}
+                                                            {{ range $pos, $result := (slice $sessionDetails.Results.Result 0 3) }}
+                                                                {{ if gt $result.TotalTime 0 }}
+                                                                    {{ $posInt := int64 (add $pos 1) }}
+
+                                                                    <li>
+                                                                        <strong>{{ $posInt }}{{ ordinal $posInt }}</strong>:
+                                                                        {{ $result.DriverName }}
+                                                                    </li>
+                                                                {{ end }}
+                                                            {{ end }}
+                                                        {{ end }}
+                                                    {{ end }}
+                                                {{ end }}
+                                            </ul>
+                                        {{ end }}
                                     </div>
                                 {{ end }}
 
@@ -253,7 +330,17 @@
                                     {{ range $sessionName, $session := $event.Sessions }}
                                         {{ with $session.Results }}
                                             {{ if eq $sessionName "RACE" }}
-                                                <span class="badge badge-best">Fastest Lap: {{ $session.Results.FastestLap.DriverName }}</span><br>
+                                                <span class="badge badge-best">
+                                                    Fastest Lap{{ if $eventSetup.HasMultipleRaces }} (1st Race){{ end }}
+
+                                                    : {{ $session.Results.FastestLap.DriverName }}
+                                                </span><br>
+                                            {{ else if eq $sessionName "RACEx2" }}
+                                                <span class="badge badge-best">
+                                                    Fastest Lap (2nd Race)
+
+                                                    : {{ $session.Results.FastestLap.DriverName }}
+                                                </span><br>
                                             {{ else if eq $sessionName "QUALIFY" }}
                                                 <span class="badge badge-success">Best Qualifying: {{ $session.Results.FastestLap.DriverName }}</span><br>
                                             {{ end }}
@@ -404,10 +491,17 @@
                                     {{ range $sessionName, $sessionDetails := $event.Sessions }}
                                         <li class="nav-item">
                                             <a class="nav-link  {{ if eq $sessionCount $sessionsLen }} active {{ end }}"
-                                               id="{{ $sessionName }}-{{ $eventIndex}}-tab" data-toggle="tab"
-                                               href="#{{ $sessionName }}-{{ $eventIndex}}"
+                                               id="results-{{ $sessionCount }}-{{ $eventIndex}}-tab" data-toggle="tab"
+                                               href="#results-{{ $sessionCount }}-{{ $eventIndex}}"
                                                role="tab"
-                                               {{ if eq $sessionName "RACE" }}aria-selected="true" {{ end }}>{{ $sessionName.String }}</a>
+                                               {{ if eq $sessionName "RACE" }}aria-selected="true" {{ end }}>
+
+                                                {{ if and $eventSetup.HasMultipleRaces (eq $sessionName "RACE") }}
+                                                    1st Race
+                                                {{ else }}
+                                                    {{ $sessionName.String }}
+                                                {{ end }}
+                                            </a>
                                         </li>
 
                                         {{ $sessionCount = add $sessionCount 1 }}
@@ -418,8 +512,8 @@
 
                                     {{ range $sessionName, $sessionDetails := $event.Sessions }}
                                         <div class="tab-pane fade {{ if eq $sessionCount $sessionsLen }} show active {{ end }}"
-                                             id="{{ $sessionName }}-{{ $eventIndex}}" role="tabpanel"
-                                             aria-labelledby="{{ $sessionName }}-{{ $eventIndex}}-tab">
+                                             id="results-{{ $sessionCount }}-{{ $eventIndex}}" role="tabpanel"
+                                             aria-labelledby="results-{{ $sessionCount }}-{{ $eventIndex}}-tab">
 
                                             {{ if $sessionDetails.Completed }}
 
