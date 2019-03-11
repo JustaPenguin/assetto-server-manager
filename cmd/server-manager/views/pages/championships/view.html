@@ -180,6 +180,8 @@
                             <span class="text-success">Complete</span>
                         {{ else if $event.InProgress }}
                             <span class="text-info">In Progress</span>
+                        {{ else if isBefore .Scheduled }}
+                            <span class="text-warning">Scheduled for {{ dateFormat .Scheduled }} at {{ timeFormat .Scheduled }}</span>
                         {{ else }}
                             <span class="text-danger">Not started</span>
                         {{ end }}
@@ -194,8 +196,6 @@
                                 <div class="col-sm-4">
 
                                     <ul class="list-unstyled">
-                                        {{if isBefore .Scheduled }}<li><strong>Scheduled:</strong> {{ dateFormat .Scheduled }} at {{ timeFormat .Scheduled }}</li>{{ end }}
-
                                         {{ range $sessionName, $session := $eventSetup.Sessions }}
                                             <li>
                                                 <strong>

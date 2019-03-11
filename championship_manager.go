@@ -286,11 +286,20 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 }
 
 func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string) error {
-	championship, event, err := cm.SetupEvent(championshipID, eventID)
+	championship, event, err := cm.GetChampionshipAndEvent(championshipID, eventID)
 
 	if err != nil {
 		return err
 	}
+
+	if championship.OpenEntrants {
+		event.RaceSetup.LockedEntryList = 0
+	} else {
+		event.RaceSetup.LockedEntryList = 1
+	}
+
+	event.RaceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
+	event.RaceSetup.MaxClients = championship.NumEntrants()
 
 	config := ConfigIniDefault
 	config.CurrentRaceConfig = event.RaceSetup
@@ -304,7 +313,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 	return cm.applyConfigAndStart(config, championship.AllEntrants(), false)
 }
 
-func (cm *ChampionshipManager) SetupEvent(championshipID string, eventID string) (*Championship, *ChampionshipEvent, error) {
+func (cm *ChampionshipManager) GetChampionshipAndEvent(championshipID string, eventID string) (*Championship, *ChampionshipEvent, error) {
 	championship, err := cm.LoadChampionship(championshipID)
 
 	if err != nil {
@@ -317,21 +326,12 @@ func (cm *ChampionshipManager) SetupEvent(championshipID string, eventID string)
 		return nil, nil, err
 	}
 
-	if championship.OpenEntrants {
-		event.RaceSetup.LockedEntryList = 0
-	} else {
-		event.RaceSetup.LockedEntryList = 1
-	}
-
-	event.RaceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
-	event.RaceSetup.MaxClients = championship.NumEntrants()
-
 	return championship, event, nil
 }
 
 func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID string, date time.Time, action string) error {
 
-	championship, event, err := cm.SetupEvent(championshipID, eventID)
+	championship, event, err := cm.GetChampionshipAndEvent(championshipID, eventID)
 
 	if err != nil {
 		return err

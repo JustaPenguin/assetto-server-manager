@@ -74,7 +74,7 @@ func customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func  customRaceScheduleHandler(w http.ResponseWriter, r *http.Request) {
+func customRaceScheduleHandler(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		logrus.Errorf("couldn't parse schedule race form, err: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
