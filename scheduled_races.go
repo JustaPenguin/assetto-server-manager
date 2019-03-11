@@ -1,8 +1,9 @@
 package servermanager
 
 import (
-	"github.com/sirupsen/logrus"
 	"time"
+	
+	"github.com/sirupsen/logrus"
 )
 
 var CustomRaceStartTimers map[string]*time.Timer
