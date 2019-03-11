@@ -6,6 +6,8 @@ v1.0.3
   multiplier to all second races to scale their points. This multiplier can be a decimal, and can even be negative!
 * Added the ability to schedule championship events and custom races.
 * Added button on results page to open the results on the SimResults website.
+* When creating a race the number of available pit boxes for a track/layout is now displayed, max clients is limited to
+  this number (requires manual upload of track - including default content).
 
 
 v1.0.2
