@@ -261,7 +261,7 @@ class RaceSetup {
             that.loadTrackLayouts();
 
             that.$trackDropdown.change(that.loadTrackLayouts.bind(this));
-            that.$trackLayoutDropdown.change(that.showTrackImage.bind(this));
+            that.$trackLayoutDropdown.change(that.showTrackDetails.bind(this));
 
         }
 
@@ -480,9 +480,9 @@ class RaceSetup {
     }
 
     /**
-     * show track image shows the correct image for the track/layout combo
+     * show track details shows the correct image and pit boxes for the track/layout combo
      */
-    showTrackImage() {
+    showTrackDetails() {
         let track = this.$trackDropdown.val();
         let layout = this.$trackLayoutDropdown.val();
 
@@ -492,12 +492,26 @@ class RaceSetup {
             src += '/' + layout;
         }
 
+        let jsonURL  = src + "/ui_track.json";
+
         src += '/preview.png';
 
         this.$parent.find("#trackImage").attr({
             'src': src,
             'alt': track + ' ' + layout,
+        });
+
+        let $pitBoxes = $document.find("#track-pitboxes");
+        let $maxClients = $document.find("#MaxClients");
+
+        $.getJSON(jsonURL, function (trackInfo) {
+            $pitBoxes.closest(".row").show();
+            $pitBoxes.text(trackInfo.pitboxes);
+            $maxClients.attr("max", trackInfo.pitboxes);
         })
+            .fail(function() {
+                $pitBoxes.closest(".row").hide()
+            })
     }
 
     /**
@@ -523,7 +537,7 @@ class RaceSetup {
         }
 
 
-        this.showTrackImage();
+        this.showTrackDetails();
     }
 
     /**
