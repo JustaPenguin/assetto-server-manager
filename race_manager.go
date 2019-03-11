@@ -786,7 +786,7 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart)
 }
 
-func(rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string) error {
+func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string) error {
 	race, err := raceManager.raceStore.FindCustomRaceByID(uuid)
 
 	if err != nil {
