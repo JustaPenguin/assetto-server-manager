@@ -32,9 +32,9 @@ func customRaceListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ViewRenderer.MustLoadTemplate(w, r, "custom-race/index.html", map[string]interface{}{
-		"Recent":  recent,
-		"Starred": starred,
-		"Loop":    looped,
+		"Recent":    recent,
+		"Starred":   starred,
+		"Loop":      looped,
 		"Scheduled": scheduled,
 	})
 }

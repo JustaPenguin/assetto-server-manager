@@ -38,7 +38,7 @@ func InitialiseScheduledCustomRaces() error {
 		} else {
 			emptyTime := time.Time{}
 			if race.Scheduled != emptyTime {
-				logrus.Infof("Looks like the server was offline whilst a scheduled event was meant to start!" +
+				logrus.Infof("Looks like the server was offline whilst a scheduled event was meant to start!"+
 					" Start time: %s. The schedule has been cleared. Start the event manually if you wish to run it.", race.Scheduled.String())
 
 				race.Scheduled = emptyTime
