@@ -180,6 +180,8 @@
                             <span class="text-success">Complete</span>
                         {{ else if $event.InProgress }}
                             <span class="text-info">In Progress</span>
+                        {{ else if isBefore .Scheduled }}
+                            <span class="text-warning">Scheduled for {{ dateFormat .Scheduled }} at {{ timeFormat .Scheduled }}</span>
                         {{ else }}
                             <span class="text-danger">Not started</span>
                         {{ end }}
@@ -370,6 +372,22 @@
                                         >
                                             Start Event
                                         </a>
+
+                                        <button type="button" class="btn btn-success{{ if $eventInProgress }} disabled{{ end }} dropdown-toggle" data-placement="bottom"
+                                                data-toggle="popover" title="Schedule Event" data-html="true" {{ if $eventInProgress }}aria-disabled="true"{{ end }}
+                                                data-content="<form action='/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/schedule' method='POST'>
+                                                            <div class='form-group'>
+                                                                <input type='date' class='form-control' name='event-schedule-date' id='event-schedule-date' required value='' min=''>
+                                                                <input type='time' class='form-control' name='event-schedule-time' id='event-schedule-time' required value='' min=''>
+                                                                <small class='form-text text-muted'>Please enter the correct date and time to add a scheduled race.</small>
+
+                                                            </div>
+
+                                                            <button type='submit' name='action' value='add' class='btn btn-sm btn-primary'>Schedule</button>
+                                                            <a href='/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/schedule/remove' class='btn btn-sm btn-danger'>Remove Scheduled Event</a>
+                                                        </form>"
+                                        >Schedule Event
+                                        </button>
 
                                         <a class="btn btn-info {{ if $eventInProgress }}disabled{{ end }}"
                                            href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/practice"

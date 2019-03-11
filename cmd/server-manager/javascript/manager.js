@@ -64,6 +64,29 @@ $(document).ready(function () {
             return "Are you sure you want to navigate away? You'll lose unsaved changes to this setup if you do.";
         };
     }
+
+    $document.find("#CustomRaceScheduled").change(function () {
+        if ($(this).val() && $document.find("#CustomRaceScheduledTime").val()) {
+            $document.find("#start-race-button").hide();
+            $document.find("#save-race-button").val("schedule");
+        }
+        else {
+            $document.find("#start-race-button").show();
+            $document.find("#save-race-button").val("justSave");
+        }
+    });
+
+    $document.find("#CustomRaceScheduledTime").change(function () {
+        if ($(this).val() && $document.find("#CustomRaceScheduled").val()) {
+            $document.find("#start-race-button").hide();
+            $document.find("#save-race-button").val("schedule");
+        }
+        else {
+            $document.find("#start-race-button").show();
+            $document.find("#save-race-button").val("justSave");
+
+        }
+    });
 });
 
 
@@ -185,6 +208,14 @@ function prettifyName(name, acronyms) {
     }
 
     return parts.join(" ")
+}
+
+function openInSimResults() {
+    let link = window.location.href.replace("results", "results/download") + ".json";
+
+    window.open('http://simresults.net/remote?result=' + link, '_blank');
+
+    return false
 }
 
 function initMultiSelect($element) {
@@ -331,7 +362,7 @@ class RaceSetup {
             that.loadTrackLayouts();
 
             that.$trackDropdown.change(that.loadTrackLayouts.bind(this));
-            that.$trackLayoutDropdown.change(that.showTrackImage.bind(this));
+            that.$trackLayoutDropdown.change(that.showTrackDetails.bind(this));
 
         }
 
@@ -550,9 +581,9 @@ class RaceSetup {
     }
 
     /**
-     * show track image shows the correct image for the track/layout combo
+     * show track details shows the correct image and pit boxes for the track/layout combo
      */
-    showTrackImage() {
+    showTrackDetails() {
         let track = this.$trackDropdown.val();
         let layout = this.$trackLayoutDropdown.val();
 
@@ -562,12 +593,26 @@ class RaceSetup {
             src += '/' + layout;
         }
 
+        let jsonURL  = src + "/ui_track.json";
+
         src += '/preview.png';
 
         this.$parent.find("#trackImage").attr({
             'src': src,
             'alt': track + ' ' + layout,
+        });
+
+        let $pitBoxes = $document.find("#track-pitboxes");
+        let $maxClients = $document.find("#MaxClients");
+
+        $.getJSON(jsonURL, function (trackInfo) {
+            $pitBoxes.closest(".row").show();
+            $pitBoxes.text(trackInfo.pitboxes);
+            $maxClients.attr("max", trackInfo.pitboxes);
         })
+            .fail(function() {
+                $pitBoxes.closest(".row").hide()
+            })
     }
 
     /**
@@ -593,7 +638,7 @@ class RaceSetup {
         }
 
 
-        this.showTrackImage();
+        this.showTrackDetails();
     }
 
     /**

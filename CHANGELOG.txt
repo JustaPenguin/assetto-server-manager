@@ -10,6 +10,10 @@ v1.0.3
 * Added support for 'Reverse Grid Positions' races within Championship events. If a second race occurs, the championship
   page will show results for that too. It will correctly add points to the entrants and optionally can apply a
   multiplier to all second races to scale their points. This multiplier can be a decimal, and can even be negative!
+* Added the ability to schedule championship events and custom races.
+* Added button on results page to open the results on the SimResults website.
+* When creating a race the number of available pit boxes for a track/layout is now displayed, max clients is limited to
+  this number (requires manual upload of track - including default content).
 
 
 v1.0.2
