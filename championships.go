@@ -43,8 +43,9 @@ var DefaultChampionshipPoints = ChampionshipPoints{
 		2,
 		1,
 	},
-	BestLap:      0,
-	PolePosition: 0,
+	BestLap:              0,
+	PolePosition:         0,
+	SecondRaceMultiplier: 1,
 }
 
 // ChampionshipPoints represent the potential points for positions as well as other awards in a Championship.
@@ -52,6 +53,8 @@ type ChampionshipPoints struct {
 	Places       []int
 	BestLap      int
 	PolePosition int
+
+	SecondRaceMultiplier float64
 }
 
 // NewChampionship creates a Championship with a given name, creating a UUID for the championship as well.
@@ -217,16 +220,16 @@ func (c *Championship) Progress() float64 {
 // ChampionshipStanding is the current number of Points an Entrant in the Championship has.
 type ChampionshipStanding struct {
 	Entrant *Entrant
-	Points  int
+	Points  float64
 }
 
 // PointForPos uses the Championship's Points to determine what number should be awarded to a given position
-func (c *ChampionshipClass) PointForPos(i int) int {
+func (c *ChampionshipClass) PointForPos(i int) float64 {
 	if i >= len(c.Points.Places) {
 		return 0
 	}
 
-	return c.Points.Places[i]
+	return float64(c.Points.Places[i])
 }
 
 func (c *ChampionshipClass) CarInClass(car string) bool {
@@ -276,7 +279,7 @@ func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*Championsh
 
 				if _, ok := entrants[driver.DriverGUID]; ok {
 					// if an entrant is removed from a championship this can panic, hence the ok check
-					entrants[driver.DriverGUID].Points += c.Points.PolePosition
+					entrants[driver.DriverGUID].Points += float64(c.Points.PolePosition)
 				}
 			}
 		}
@@ -296,7 +299,28 @@ func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*Championsh
 					entrants[driver.DriverGUID].Points += c.PointForPos(pos)
 
 					if fastestLap.DriverGUID == driver.DriverGUID {
-						entrants[driver.DriverGUID].Points += c.Points.BestLap
+						entrants[driver.DriverGUID].Points += float64(c.Points.BestLap)
+					}
+				}
+			}
+		}
+
+		race2, race2OK := event.Sessions[SessionTypeSecondRace]
+
+		if race2OK && race2.Results != nil {
+			fastestLap := race2.Results.FastestLap()
+
+			for pos, driver := range c.ResultsForClass(race2.Results.Result) {
+				if driver.TotalTime <= 0 {
+					continue
+				}
+
+				if _, ok := entrants[driver.DriverGUID]; ok {
+					// if an entrant is removed from a championship this can panic, hence the ok check
+					entrants[driver.DriverGUID].Points += c.PointForPos(pos) * c.Points.SecondRaceMultiplier
+
+					if fastestLap.DriverGUID == driver.DriverGUID {
+						entrants[driver.DriverGUID].Points += float64(c.Points.BestLap) * c.Points.SecondRaceMultiplier
 					}
 				}
 			}
@@ -325,12 +349,12 @@ func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*Championsh
 // TeamStanding is the current number of Points a Team has.
 type TeamStanding struct {
 	Team   string
-	Points int
+	Points float64
 }
 
 // TeamStandings returns the current position of Teams in the Championship.
 func (c *ChampionshipClass) TeamStandings(events []*ChampionshipEvent) []*TeamStanding {
-	teams := make(map[string]int)
+	teams := make(map[string]float64)
 
 	for _, driver := range c.Standings(events) {
 		if _, ok := teams[driver.Entrant.Team]; !ok {
@@ -382,7 +406,10 @@ type ChampionshipEvent struct {
 // LastSession returns the last configured session in the championship, in the following order:
 // Race, Qualifying, Practice, Booking
 func (cr *ChampionshipEvent) LastSession() SessionType {
-	if cr.RaceSetup.HasSession(SessionTypeRace) {
+	if cr.RaceSetup.HasMultipleRaces() {
+		// there must be two races as reversed grid positions are on
+		return SessionTypeSecondRace
+	} else if cr.RaceSetup.HasSession(SessionTypeRace) {
 		return SessionTypeRace
 	} else if cr.RaceSetup.HasSession(SessionTypeQualifying) {
 		return SessionTypeQualifying

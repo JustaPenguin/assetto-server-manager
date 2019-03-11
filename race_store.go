@@ -16,7 +16,7 @@ type RaceStore interface {
 	DeleteCustomRace(race *CustomRace) error
 
 	// Entrants
-	UpsertEntrant(entrant *Entrant) error
+	UpsertEntrant(entrant Entrant) error
 	ListEntrants() ([]*Entrant, error)
 
 	// Server Options
@@ -166,7 +166,7 @@ func (rs *BoltRaceStore) entrantsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	return tx.CreateBucketIfNotExists(entrantsBucketName)
 }
 
-func (rs *BoltRaceStore) UpsertEntrant(entrant *Entrant) error {
+func (rs *BoltRaceStore) UpsertEntrant(entrant Entrant) error {
 	return rs.db.Update(func(tx *bbolt.Tx) error {
 		bkt, err := rs.entrantsBucket(tx)
 
