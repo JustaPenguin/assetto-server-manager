@@ -351,7 +351,7 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 		return cm.UpsertChampionship(championship)
 	} else {
 		// remove scheduled event on date
-		event.Scheduled = time.Time{}
+		event.Scheduled = date
 		ChampionshipEventStartTimers[event.ID.String()].Stop()
 
 		return cm.UpsertChampionship(championship)
