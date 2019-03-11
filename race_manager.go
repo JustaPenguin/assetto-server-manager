@@ -113,7 +113,6 @@ func (rm *RaceManager) UDPCallback(message udp.Message) {
 
 func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool) error {
 	rm.mutex.Lock()
-
 	defer rm.mutex.Unlock()
 
 	// Reset the stored session types if this isn't a looped race
@@ -305,6 +304,16 @@ func formValueAsInt(val string) int {
 	}
 
 	return int(i)
+}
+
+func formValueAsFloat(val string) float64 {
+	i, err := strconv.ParseFloat(val, 0)
+
+	if err != nil {
+		return 0
+	}
+
+	return i
 }
 
 func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (EntryList, error) {
@@ -718,7 +727,7 @@ func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, ent
 			continue // only save entrants that have a name
 		}
 
-		err := rm.raceStore.UpsertEntrant(entrant)
+		err := rm.raceStore.UpsertEntrant(*entrant)
 
 		if err != nil {
 			return err

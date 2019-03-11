@@ -146,14 +146,14 @@ func (rs *JSONRaceStore) DeleteCustomRace(race *CustomRace) error {
 	return rs.UpsertCustomRace(race)
 }
 
-func (rs *JSONRaceStore) UpsertEntrant(entrant *Entrant) error {
+func (rs *JSONRaceStore) UpsertEntrant(entrant Entrant) error {
 	entrants, err := rs.ListEntrants()
 
 	if err != nil {
 		return err
 	}
 
-	entrants = append(entrants, entrant)
+	entrants = append(entrants, &entrant)
 
 	return rs.encodeFile(entrantsFile, entrants)
 }
