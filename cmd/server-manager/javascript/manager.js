@@ -69,8 +69,7 @@ $(document).ready(function () {
         if ($(this).val() && $document.find("#CustomRaceScheduledTime").val()) {
             $document.find("#start-race-button").hide();
             $document.find("#save-race-button").val("schedule");
-        }
-        else {
+        } else {
             $document.find("#start-race-button").show();
             $document.find("#save-race-button").val("justSave");
         }
@@ -80,8 +79,7 @@ $(document).ready(function () {
         if ($(this).val() && $document.find("#CustomRaceScheduled").val()) {
             $document.find("#start-race-button").hide();
             $document.find("#save-race-button").val("schedule");
-        }
-        else {
+        } else {
             $document.find("#start-race-button").show();
             $document.find("#save-race-button").val("justSave");
 
@@ -90,18 +88,30 @@ $(document).ready(function () {
 });
 
 
-function getRandomColor() {
-    let letters = '0123456789ABCDEF';
-    let color = '#';
-    for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-}
+const EventCollisionWithCar = 10,
+    EventCollisionWithEnv = 11,
+    EventNewSession = 50,
+    EventNewConnection = 51,
+    EventConnectionClosed = 52,
+    EventCarUpdate = 53,
+    EventCarInfo = 54,
+    EventEndSession = 55,
+    EventVersion = 56,
+    EventChat = 57,
+    EventClientLoaded = 58,
+    EventSessionInfo = 59,
+    EventError = 60,
+    EventLapCompleted = 73,
+    EventClientEvent = 130,
+    EventTrackMapInfo = 222
+;
+
 
 let liveMap = {
 
     joined: {},
+
+    $driverInfo: null,
 
     init: function () {
         let ws = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/api/live-map");
@@ -120,6 +130,7 @@ let liveMap = {
         let mapImageHasLoaded = false;
 
         let $imgContainer = $map.find("img");
+        liveMap.$driverInfo = $document.find("#driverInfo");
 
         $(window).resize(function () {
             if (!loadedImg || !mapImageHasLoaded) {
@@ -130,59 +141,107 @@ let liveMap = {
         });
 
         ws.onmessage = function (e) {
-            let data = JSON.parse(e.data);
+            let message = JSON.parse(e.data);
 
-            if (!data) {
+            if (!message) {
                 return;
             }
 
-            if (data.OffsetX) {
-                // track map info
-                xOffset = data.OffsetX;
-                zOffset = data.OffsetZ;
-                scale = data.ScaleFactor;
-                //margin = data.Margin;
-            } else if (data.DriverName) {
-                if (data.EventType === 51) {
-                    // connect
-                    let addToPage = !(data.CarID in liveMap.joined);
+            let data = message.Message;
 
+            switch (message.EventType) {
+                case EventTrackMapInfo:
+                    // track map info
+                    xOffset = data.OffsetX;
+                    zOffset = data.OffsetZ;
+                    scale = data.ScaleFactor;
+                    break;
+
+                case EventNewConnection:
                     liveMap.joined[data.CarID] = data;
 
-                    if (addToPage) {
-                        liveMap.joined[data.CarID].dot = $("<div class='dot' style='background: " + getRandomColor() + "'/>");
-                        //liveMap.joined[data.CarID].dot.text(data.DriverName);
-                        liveMap.joined[data.CarID].dot.appendTo($map);
-                    }
-                } else if (data.EventType === 52) {
-                    // disconnect
+                    let $driverName = $("<span class='name'/>").text(getAbbreviation(data.DriverName));
+
+                    liveMap.joined[data.CarID].dot = $("<div class='dot' style='background: " + randomColor({
+                        luminosity: 'bright',
+                        seed: data.DriverGUID
+                    }) + "'/>").append($driverName);
+                    break;
+
+                case EventConnectionClosed:
                     liveMap.joined[data.CarID].dot.remove();
                     delete liveMap.joined[data.CarID];
-                }
-            } else if (data.Pos) {
-                // player position
-                liveMap.joined[data.CarID].dot.css({
-                    'transform': "translate(-50%, -50%)",
-                    'left': (((data.Pos.X + xOffset + margin) * multiplierX) / scale) * mapSizeMultiplier,
-                    'top': (((data.Pos.Z + zOffset + margin) * multiplierZ) / scale) * mapSizeMultiplier,
-                });
-            } else if (!!data.Track) {
-                // track info
-                let trackURL = "/content/tracks/" + data.Track + (!!data.TrackConfig ? "/" + data.TrackConfig : "") + "/map.png";
+                    break;
 
-                loadedImg = new Image();
+                case EventCarUpdate:
+                    liveMap.joined[data.CarID].dot.css({
+                        'left': (((data.Pos.X + xOffset + margin) * multiplierX) / scale) * mapSizeMultiplier,
+                        'top': (((data.Pos.Z + zOffset + margin) * multiplierZ) / scale) * mapSizeMultiplier,
+                    });
+                    break;
 
-                loadedImg.onload = function () {
-                    $imgContainer.attr({'src': trackURL});
-                    mapSizeMultiplier = $imgContainer.width() / loadedImg.width;
-                    mapImageHasLoaded = true;
-                };
+                case EventSessionInfo:
+                    liveMap.clearAllDrivers();
+                    let trackURL = "/content/tracks/" + data.Track + (!!data.TrackConfig ? "/" + data.TrackConfig : "") + "/map.png";
 
-                loadedImg.src = trackURL;
+                    loadedImg = new Image();
+
+                    loadedImg.onload = function () {
+                        $imgContainer.attr({'src': trackURL});
+                        mapSizeMultiplier = $imgContainer.width() / loadedImg.width;
+                        mapImageHasLoaded = true;
+                    };
+
+                    loadedImg.src = trackURL;
+                    break;
+
+                case EventClientLoaded:
+                    liveMap.joined[data].dot.appendTo($map);
+                    break;
+
+                case EventCollisionWithEnv:
+                case EventCollisionWithCar:
+
+                    let x = data.WorldPos.X, y = data.WorldPos.Z;
+
+                    let $collision = $("<div class='collision' />").css({
+                        'left': (((x + xOffset + margin) * multiplierX) / scale) * mapSizeMultiplier,
+                        'top': (((y + zOffset + margin) * multiplierZ) / scale) * mapSizeMultiplier,
+                    });
+
+                    $collision.appendTo($map);
+
+                    break;
             }
         };
     },
+
+    clearAllDrivers: function () {
+        for (let driver in liveMap.joined) {
+            if (driver.dot === undefined) {
+                continue;
+            }
+
+            driver.dot.delete();
+        }
+
+        liveMap.joined = [];
+
+        liveMap.$driverInfo.empty();
+    }
 };
+
+function getAbbreviation(name) {
+    let parts = name.split(" ");
+
+    if (parts.length < 1) {
+        return name
+    }
+
+    let lastName = parts[parts.length - 1];
+
+    return lastName.slice(0, 3).toUpperCase();
+}
 
 function direction(x, y) {
     return Math.atan2(y, x);
@@ -593,7 +652,7 @@ class RaceSetup {
             src += '/' + layout;
         }
 
-        let jsonURL  = src + "/ui_track.json";
+        let jsonURL = src + "/ui_track.json";
 
         src += '/preview.png';
 
@@ -610,7 +669,7 @@ class RaceSetup {
             $pitBoxes.text(trackInfo.pitboxes);
             $maxClients.attr("max", trackInfo.pitboxes);
         })
-            .fail(function() {
+            .fail(function () {
                 $pitBoxes.closest(".row").hide()
             })
     }
@@ -1056,6 +1115,10 @@ let liveTiming = {
                         $tr.append($tdPos);
 
                         $tdName.text(liveTiming.Cars[car].DriverName);
+                        $tdName.prepend($("<div class='dot' style='background: " + randomColor({
+                            luminosity: 'bright',
+                            seed: liveTiming.Cars[car].DriverGUID
+                        }) + "'/>"));
                         $tr.append($tdName);
 
                         $tdLapTime.text(lapTime);

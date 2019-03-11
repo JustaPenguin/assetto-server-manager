@@ -12,10 +12,15 @@ import (
 var config *Configuration
 
 type Configuration struct {
-	HTTP  HTTPConfig  `yaml:"http"`
-	Steam SteamConfig `yaml:"steam"`
-	Store StoreConfig `yaml:"store"`
-	Users UsersConfig `yaml:"users"`
+	HTTP    HTTPConfig    `yaml:"http"`
+	Steam   SteamConfig   `yaml:"steam"`
+	Store   StoreConfig   `yaml:"store"`
+	Users   UsersConfig   `yaml:"users"`
+	LiveMap LiveMapConfig `yaml:"live_map"`
+}
+
+type LiveMapConfig struct {
+	IntervalMs int `yaml:"refresh_interval_ms"`
 }
 
 type HTTPConfig struct {

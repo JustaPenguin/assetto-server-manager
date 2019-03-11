@@ -276,6 +276,9 @@ footer a {
 
 #map {
     position: relative;
+    border-bottom: 1px solid rgba(0,0,0,0.125);
+    margin-bottom: 15px;
+    padding-bottom: 15px;
 }
 
 .dot {
@@ -286,8 +289,60 @@ footer a {
     height: 10px;
     content: " ";
     z-index: 100;
+    display: inline-grid;
+}
+
+.dot .name {
+    position: relative;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.45);
+    color: white;
+    border-radius: 4px;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    padding-left: 4px;
+    padding-right: 4px;
+    font-weight: bold;
 }
 
 .popover {
     max-width: 278px !important;
+}
+
+.driver {
+    display: block;
+}
+
+td .dot {
+    position: relative;
+    transform: none;
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.collision {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    border-radius: 100%;
+    width: 40px;
+    height: 40px;
+    background-image: url("/static/img/explosion.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 99;
+    display: inline-grid;
+    -webkit-animation: cssAnimation 10s forwards;
+    animation: cssAnimation 10s forwards;
+}
+
+@keyframes cssAnimation {
+    0%   {opacity: 1;}
+    90%  {opacity: 1;}
+    100% {opacity: 0;}
+}
+
+@-webkit-keyframes cssAnimation {
+    0%   {opacity: 1;}
+    90%  {opacity: 1;}
+    100% {opacity: 0;}
 }

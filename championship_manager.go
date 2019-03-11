@@ -369,7 +369,6 @@ func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
 	defer cm.mutex.Unlock()
 
 	if cm.activeChampionship == nil {
-		logrus.Debugf("No active championship set up, not performing championship callbacks")
 		return
 	}
 

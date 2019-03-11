@@ -21,7 +21,8 @@ import (
 )
 
 var (
-	raceManager *RaceManager
+	raceManager       *RaceManager
+	serverStoppedChan = make(chan struct{})
 
 	ErrCustomRaceNotFound = errors.New("servermanager: custom race not found")
 )
@@ -33,7 +34,7 @@ func init() {
 func SetupRaceManager(store RaceStore) {
 	raceManager = NewRaceManager(store)
 	championshipManager = NewChampionshipManager(raceManager)
-	AssettoProcess = &AssettoServerProcess{}
+	AssettoProcess = &AssettoServerProcess{doneCh: serverStoppedChan}
 }
 
 type RaceManager struct {

@@ -58,6 +58,8 @@ type AssettoServerProcess struct {
 
 	out   *bytes.Buffer
 	mutex sync.Mutex
+
+	doneCh chan struct{}
 }
 
 // Logs outputs the server logs
@@ -90,6 +92,12 @@ func (as *AssettoServerProcess) Start() error {
 		as.cmd = nil
 		return err
 	}
+
+	go func() {
+		_ = as.cmd.Wait()
+
+		as.doneCh <- struct{}{}
+	}()
 
 	return nil
 }

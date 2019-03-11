@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io"
 	"net"
 )
@@ -99,14 +98,12 @@ func (asu *AssettoServerUDP) forwardServe() {
 			_, _, err := asu.forwarder.ReadFromUDP(buf)
 
 			if err != nil {
-				logrus.Errorf("could not read udp message, err: %s", err)
 				continue
 			}
 
 			_, err = asu.listener.Write(buf)
 
 			if err != nil {
-				logrus.Errorf("could not forward udp message, err: %s", err)
 				continue
 			}
 		}

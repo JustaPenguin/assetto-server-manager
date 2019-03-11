@@ -1,18 +1,18 @@
 package main
 
 import (
-	"github.com/cj123/assetto-server-manager"
-	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
-	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
-	"github.com/cj123/assetto-server-manager/pkg/udp"
-	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
-	"github.com/pkg/browser"
-	"github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"os"
 	"runtime"
-	"time"
+
+	"github.com/cj123/assetto-server-manager"
+	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
+	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
+	"github.com/cj123/assetto-server-manager/pkg/udp"
+
+	"github.com/pkg/browser"
+	"github.com/sirupsen/logrus"
 )
 
 var debug = os.Getenv("DEBUG") == "true"
@@ -50,17 +50,7 @@ func main() {
 		filesystem = static.FS(false)
 	}
 
-	udp.RealtimePosIntervalMs = 67
-
-	go func() {
-		time.Sleep(time.Second * 3)
-
-		err := replay.ReplayUDPMessages("assetto/session-logs/2019-03-07_00.34.json", 20, servermanager.LiveMapCallback, false)
-
-		if err != nil {
-			panic(err)
-		}
-	}()
+	udp.RealtimePosIntervalMs = config.LiveMap.IntervalMs
 
 	servermanager.ViewRenderer, err = servermanager.NewRenderer(templateLoader, debug)
 
