@@ -69,6 +69,17 @@ func main() {
 	}
 
 	go servermanager.LoopRaces()
+	err = servermanager.InitialiseScheduledCustomRaces()
+
+	if err != nil {
+		logrus.Errorf("couldn't initialise scheduled races, err: %s", err)
+	}
+
+	err = servermanager.InitialiseScheduledChampionshipEvents()
+
+	if err != nil {
+		logrus.Errorf("couldn't initialise scheduled championship events, err: %s", err)
+	}
 
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 

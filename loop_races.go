@@ -24,7 +24,7 @@ func LoopRaces() {
 				break
 			}
 
-			_, _, looped, err := raceManager.ListCustomRaces()
+			_, _, looped, _, err := raceManager.ListCustomRaces()
 
 			if err != nil {
 				logrus.Errorf("couldn't list custom races, err: %s", err)
