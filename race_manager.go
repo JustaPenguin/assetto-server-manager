@@ -542,6 +542,8 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 			if err != nil {
 				return err
 			}
+			
+			return
 		}
 
 		if saveAsPresetWithoutStartingRace {
