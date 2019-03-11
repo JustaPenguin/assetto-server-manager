@@ -104,6 +104,10 @@ span[data-toggle=tooltip] { cursor: default; }
     margin-bottom: 5px;
 }
 
+.race-setup .pit-boxes {
+    padding-top: calc(0.375rem + 1px);
+}
+
 .btn-file {
     position: relative;
     overflow: hidden;
