@@ -90,9 +90,21 @@ let liveMap = {
         let multiplierX = 1;
         let multiplierZ = 1;
 
-        let mapWidth = 0, mapHeight = 0;
+        let mapSizeMultiplier = 1;
         let scale = 1;
         let margin = 0;
+        let loadedImg = null;
+        let mapImageHasLoaded = false;
+
+        let $imgContainer = $map.find("img");
+
+        $(window).resize(function () {
+            if (!loadedImg || !mapImageHasLoaded) {
+                return;
+            }
+
+            mapSizeMultiplier = $imgContainer.width() / loadedImg.width;
+        });
 
         ws.onmessage = function (e) {
             let data = JSON.parse(e.data);
@@ -126,41 +138,24 @@ let liveMap = {
                 }
             } else if (data.Pos) {
                 // player position
-
-                let x = 0, y = 0;
-
-                if (parseInt(data.Velocity.X) > 0 || parseInt(data.Velocity.Z) > 0) {
-                    x = data.Velocity.X;
-                    y = data.Velocity.Z;
-                } else {
-                    x = data.Pos.X;
-                    y = data.Pos.Z;
-                }
-
-                let deg = toDegrees(direction(x, y));
-
                 liveMap.joined[data.CarID].dot.css({
-                    'transform': "rotate(" + deg + "deg) translate(-50%, -50%)",
-                    'left': ((data.Pos.X + xOffset + margin) * multiplierX) / scale,
-                    'top': ((data.Pos.Z + zOffset + margin) * multiplierZ) / scale
+                    'transform': "translate(-50%, -50%)",
+                    'left': (((data.Pos.X + xOffset + margin) * multiplierX) / scale) * mapSizeMultiplier,
+                    'top': (((data.Pos.Z + zOffset + margin) * multiplierZ) / scale) * mapSizeMultiplier,
                 });
             } else if (!!data.Track) {
                 // track info
                 let trackURL = "/content/tracks/" + data.Track + (!!data.TrackConfig ? "/" + data.TrackConfig : "") + "/map.png";
 
-                let img = new Image();
+                loadedImg = new Image();
 
-                img.onload = function () {
-                    // new session
-                    let image = "url('" + trackURL + "')";
-
-                    $map.css({'background-image': image, 'width': img.width, 'height': img.height});
-
-                    mapWidth = img.width;
-                    mapHeight = img.height;
+                loadedImg.onload = function () {
+                    $imgContainer.attr({'src': trackURL});
+                    mapSizeMultiplier = $imgContainer.width() / loadedImg.width;
+                    mapImageHasLoaded = true;
                 };
 
-                img.src = trackURL;
+                loadedImg.src = trackURL;
             }
         };
     },
@@ -168,10 +163,6 @@ let liveMap = {
 
 function direction(x, y) {
     return Math.atan2(y, x);
-}
-
-function toDegrees(angle) {
-    return angle * (180 / Math.PI);
 }
 
 const nameRegex = /^[A-Za-z]{0,5}[0-9]+/;

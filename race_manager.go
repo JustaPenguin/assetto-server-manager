@@ -105,7 +105,7 @@ func (rm *RaceManager) UDPCallback(message udp.Message) {
 		}
 	}()
 
-	LiveMapCallback(message)
+	go LiveMapCallback(message)
 	championshipManager.ChampionshipEventCallback(message)
 	LiveTimingCallback(message)
 	LoopCallback(message)

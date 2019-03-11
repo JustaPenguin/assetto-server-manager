@@ -1,28 +1,108 @@
 package servermanager
 
 import (
-	"github.com/cj123/ini"
 	"net/http"
 	"os"
 	"path/filepath"
-	"sync"
+	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/cj123/ini"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
 
-var upgrader = websocket.Upgrader{}
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
+const (
+	// Time allowed to write a message to the peer.
+	writeWait = 10 * time.Second
+)
 
 var (
-	udpMessageMutex sync.RWMutex
-	udpMessageChan  = make(map[*websocket.Conn]chan udp.Message)
-
 	websocketLastSessionInfo *udp.SessionInfo
 	websocketTrackMapData    *TrackMapData
-
-	connectedCars = make(map[udp.CarID]udp.SessionCarInfo)
+	connectedCars            = make(map[udp.CarID]udp.SessionCarInfo)
 )
+
+type liveMapHub struct {
+	clients   map[*liveMapClient]bool
+	broadcast chan udp.Message
+	register  chan *liveMapClient
+}
+
+func newLiveMapHub() *liveMapHub {
+	return &liveMapHub{
+		broadcast: make(chan udp.Message),
+		register:  make(chan *liveMapClient),
+		clients:   make(map[*liveMapClient]bool),
+	}
+}
+
+func (h *liveMapHub) run() {
+	for {
+		select {
+		case client := <-h.register:
+			h.clients[client] = true
+		case message := <-h.broadcast:
+			for client := range h.clients {
+				select {
+				case client.send <- message:
+				default:
+					close(client.send)
+					delete(h.clients, client)
+				}
+			}
+		}
+	}
+}
+
+type liveMapClient struct {
+	hub *liveMapHub
+
+	conn *websocket.Conn
+	send chan udp.Message
+}
+
+func (c *liveMapClient) writePump() {
+	ticker := time.NewTicker(time.Second * 10)
+	defer func() {
+		ticker.Stop()
+		c.conn.Close()
+	}()
+
+	for {
+		select {
+		case message, ok := <-c.send:
+			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if !ok {
+				// The hub closed the channel.
+				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
+
+			err := c.conn.WriteJSON(message)
+
+			if err != nil {
+				return
+			}
+		case <-ticker.C:
+			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
+		}
+	}
+}
+
+var mapHub = newLiveMapHub()
+
+func init() {
+	go mapHub.run()
+}
 
 func LiveMapHandler(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
@@ -32,53 +112,22 @@ func LiveMapHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendCh := make(chan udp.Message)
-	udpMessageChan[c] = sendCh
+	client := &liveMapClient{hub: mapHub, conn: c, send: make(chan udp.Message, 256)}
+	client.hub.register <- client
 
-	defer func() {
-		logrus.Debugf("closing socket")
-
-		close(sendCh)
-		delete(udpMessageChan, c)
-		c.Close()
-	}()
+	go client.writePump()
 
 	// new client. send them the session info if we have it
-
 	if websocketLastSessionInfo != nil {
-		err = c.WriteJSON(websocketLastSessionInfo)
-
-		if err != nil {
-			logrus.Error(err)
-			return
-		}
+		client.send <- websocketLastSessionInfo
 	}
 
 	if websocketTrackMapData != nil {
-		err = c.WriteJSON(websocketTrackMapData)
-
-		if err != nil {
-			logrus.Error(err)
-			return
-		}
+		client.send <- websocketTrackMapData
 	}
 
 	for _, car := range connectedCars {
-		err = c.WriteJSON(car)
-
-		if err != nil {
-			logrus.Error(err)
-			return
-		}
-	}
-
-	for {
-		err = c.WriteJSON(<-sendCh)
-
-		if err != nil {
-			logrus.Error(err)
-			return
-		}
+		client.send <- car
 	}
 }
 
@@ -104,14 +153,12 @@ func LiveMapCallback(message udp.Message) {
 		} else if m.Event() == udp.EventConnectionClosed {
 			delete(connectedCars, m.CarID)
 		}
-	case udp.CarUpdate, *TrackMapData:
+	case udp.CarUpdate, *TrackMapData, udp.CollisionWithEnvironment, udp.CollisionWithCar:
 	default:
 		return
 	}
 
-	for _, ch := range udpMessageChan {
-		ch <- message
-	}
+	mapHub.broadcast <- message
 }
 
 type TrackMapData struct {

@@ -253,8 +253,6 @@ footer a {
 }
 
 #map {
-    background-size: contain;
-    background-repeat: no-repeat;
     position: relative;
 }
 

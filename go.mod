@@ -5,7 +5,6 @@ require (
 	github.com/Masterminds/semver v1.4.2 // indirect
 	github.com/Masterminds/sprig v2.18.0+incompatible
 	github.com/cj123/ini v1.42.0
-	github.com/davecgh/go-spew v1.1.1
 	github.com/etcd-io/bbolt v1.3.2
 	github.com/fatih/camelcase v1.0.0
 	github.com/go-chi/chi v4.0.2+incompatible
@@ -17,10 +16,8 @@ require (
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/kr/pty v1.1.3 // indirect
 	github.com/mattn/go-zglob v0.0.1
 	github.com/mitchellh/go-wordwrap v1.0.0
-	github.com/mjibson/esc v0.1.0 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/sirupsen/logrus v1.3.0
 	github.com/smartystreets/assertions v0.0.0-20190215210624-980c5ac6f3ac // indirect
