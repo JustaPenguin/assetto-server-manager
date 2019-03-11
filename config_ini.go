@@ -22,6 +22,10 @@ const (
 	SessionTypeQualifying SessionType = "QUALIFY"
 	SessionTypeRace       SessionType = "RACE"
 
+	// SessionTypeSecondRace is a convenience const to allow for checking of
+	// reversed grid positions signifying a second race.
+	SessionTypeSecondRace SessionType = "RACEx2"
+
 	serverConfigIniPath = "server_cfg.ini"
 )
 
@@ -35,6 +39,8 @@ func (s SessionType) String() string {
 		return "Qualifying"
 	case SessionTypeRace:
 		return "Race"
+	case SessionTypeSecondRace:
+		return "2nd Race"
 	default:
 		return strings.Title(strings.ToLower(string(s)))
 	}
@@ -190,6 +196,10 @@ type CurrentRaceConfig struct {
 
 	Sessions map[SessionType]SessionConfig `ini:"-"`
 	Weather  map[string]*WeatherConfig     `ini:"-"`
+}
+
+func (c CurrentRaceConfig) HasMultipleRaces() bool {
+	return c.HasSession(SessionTypeRace) && c.ReversedGridRacePositions != 0
 }
 
 func (c CurrentRaceConfig) HasSession(sess SessionType) bool {

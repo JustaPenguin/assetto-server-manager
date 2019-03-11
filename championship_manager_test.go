@@ -124,7 +124,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 					return
 				}
 
-				checkChampionshipEventCompletion(t, champ.ID.String(), i)
+				checkChampionshipEventCompletion(t, champ.ID.String(), champ.Events[i].ID.String())
 			})
 		}
 
@@ -165,7 +165,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 					return
 				}
 
-				checkChampionshipEventCompletion(t, champ.ID.String(), i)
+				checkChampionshipEventCompletion(t, champ.ID.String(), champ.Events[i].ID.String())
 			})
 		}
 
@@ -214,7 +214,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 					return
 				}
 
-				checkChampionshipEventCompletion(t, champ.ID.String(), i)
+				checkChampionshipEventCompletion(t, champ.ID.String(), champ.Events[i].ID.String())
 			})
 		}
 
@@ -263,7 +263,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 					return
 				}
 
-				checkChampionshipEventCompletion(t, champ.ID.String(), i)
+				checkChampionshipEventCompletion(t, champ.ID.String(), champ.Events[i].ID.String())
 			})
 		}
 
@@ -292,7 +292,7 @@ func checkAutoPopulatedEntryList(t *testing.T, championshipID string, expected i
 	}
 }
 
-func checkChampionshipEventCompletion(t *testing.T, championshipID string, eventID int) {
+func checkChampionshipEventCompletion(t *testing.T, championshipID string, eventID string) {
 	// now look at the championship event and see if it has a start/end time
 	loadedChampionship, err := championshipManager.LoadChampionship(championshipID)
 
@@ -301,25 +301,26 @@ func checkChampionshipEventCompletion(t *testing.T, championshipID string, event
 		return
 	}
 
-	if eventID >= len(loadedChampionship.Events) || eventID < 0 {
-		t.Logf("Invalid event ID %d", eventID)
-		t.Fail()
+	event, err := loadedChampionship.EventByID(eventID)
+
+	if err != nil {
+		t.Error(err)
 		return
 	}
 
-	if loadedChampionship.Events[eventID].StartedTime.IsZero() {
+	if event.StartedTime.IsZero() {
 		t.Logf("Invalid championship event start time (zero)")
 		t.Fail()
 		return
 	}
 
-	if loadedChampionship.Events[eventID].CompletedTime.IsZero() {
+	if event.CompletedTime.IsZero() {
 		t.Logf("Invalid championship event completed time (zero)")
 		t.Fail()
 		return
 	}
 
-	for _, sess := range loadedChampionship.Events[eventID].Sessions {
+	for _, sess := range event.Sessions {
 		if sess.StartedTime.IsZero() {
 			t.Logf("Invalid session start time (zero)")
 			t.Fail()
@@ -383,7 +384,7 @@ func TestChampionshipManager_ChampionshipEventCallbackOpenChampionshipExample(t 
 			return
 		}
 
-		checkChampionshipEventCompletion(t, champ.ID.String(), eventNum)
+		checkChampionshipEventCompletion(t, champ.ID.String(), eventID)
 		eventNum++
 	}
 
