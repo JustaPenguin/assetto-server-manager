@@ -8,6 +8,7 @@
 
 {{ define "content" }}
     {{ $f := .Current }}
+    {{ $trackInfo := trackInfo $f.Track $f.TrackLayout }}
 
     <h1 class="text-center">
         {{ if .IsChampionship }}
@@ -67,6 +68,18 @@
                                 </select>
                             </div>
                         </div>
+
+                        {{ with $trackInfo }}
+                            <div class="form-group row">
+                                <label for="PitBoxes" class="col-sm-3 col-form-label">
+                                    Pit Boxes
+                                </label>
+
+                                <div class="col-sm-9 pit-boxes">
+                                    <span id="track-pitboxes">{{ $trackInfo.Pitboxes }}</span>
+                                </div>
+                            </div>
+                        {{ end }}
                     </div>
 
                     <div class="col-sm-4">
@@ -516,7 +529,7 @@
                                 class="form-control"
                                 value="{{ $f.MaxClients }}"
 
-
+                                {{ with $trackInfo }}max="{{ $trackInfo.Pitboxes }}"{{ end }}
                                 step="1"
                         >
 
