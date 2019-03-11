@@ -109,6 +109,14 @@ function prettifyName(name, acronyms) {
     return parts.join(" ")
 }
 
+function openInSimResults() {
+    let link = window.location.href.replace("results", "results/download") + ".json";
+
+    window.open('http://simresults.net/remote?result=' + link, '_blank');
+
+    return false
+}
+
 function initMultiSelect($element) {
     $element.each(function (i, elem) {
         let $elem = $(elem);
