@@ -400,6 +400,7 @@ type ChampionshipEvent struct {
 
 	StartedTime   time.Time
 	CompletedTime time.Time
+	Scheduled     time.Time
 }
 
 // LastSession returns the last configured session in the championship, in the following order:
@@ -611,6 +612,52 @@ func championshipStartEventHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		AddFlashQuick(w, r, "Event started successfully!")
 		time.Sleep(time.Second * 1)
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func championshipScheduleEventHandler(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		logrus.Errorf("couldn't parse schedule race form, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	championshipID := chi.URLParam(r, "championshipID")
+	championshipEventID := chi.URLParam(r, "eventID")
+	dateString := r.FormValue("event-schedule-date")
+	timeString := r.FormValue("event-schedule-time")
+
+	dateTimeString := dateString + "-" + timeString
+
+	date, err := time.Parse("2006-01-02-15:04", dateTimeString)
+
+	if err != nil {
+		logrus.Errorf("couldn't parse schedule championship event date, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	err = championshipManager.ScheduleEvent(championshipID, championshipEventID, date, r.FormValue("action"))
+
+	if err != nil {
+		logrus.Errorf("couldn't schedule championship event, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func championshipScheduleEventRemoveHandler(w http.ResponseWriter, r *http.Request) {
+	err := championshipManager.ScheduleEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"),
+		time.Time{}, "remove")
+
+	if err != nil {
+		logrus.Errorf("couldn't schedule championship event, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)

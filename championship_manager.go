@@ -286,13 +286,7 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 }
 
 func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string) error {
-	championship, err := cm.LoadChampionship(championshipID)
-
-	if err != nil {
-		return err
-	}
-
-	event, err := championship.EventByID(eventID)
+	championship, event, err := cm.GetChampionshipAndEvent(championshipID, eventID)
 
 	if err != nil {
 		return err
@@ -306,6 +300,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 
 	event.RaceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
 	event.RaceSetup.MaxClients = championship.NumEntrants()
+
 	config := ConfigIniDefault
 	config.CurrentRaceConfig = event.RaceSetup
 
@@ -316,6 +311,53 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 	}
 
 	return cm.applyConfigAndStart(config, championship.AllEntrants(), false)
+}
+
+func (cm *ChampionshipManager) GetChampionshipAndEvent(championshipID string, eventID string) (*Championship, *ChampionshipEvent, error) {
+	championship, err := cm.LoadChampionship(championshipID)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	event, err := championship.EventByID(eventID)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return championship, event, nil
+}
+
+func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID string, date time.Time, action string) error {
+
+	championship, event, err := cm.GetChampionshipAndEvent(championshipID, eventID)
+
+	if err != nil {
+		return err
+	}
+
+	if action == "add" {
+		// add a scheduled event on date
+		duration := date.Sub(time.Now())
+
+		event.Scheduled = date
+		ChampionshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+			err := cm.StartEvent(championship.ID.String(), event.ID.String())
+
+			if err != nil {
+				logrus.Errorf("couldn't start scheduled race, err: %s", err)
+			}
+		})
+
+		return cm.UpsertChampionship(championship)
+	} else {
+		// remove scheduled event on date
+		event.Scheduled = date
+		ChampionshipEventStartTimers[event.ID.String()].Stop()
+
+		return cm.UpsertChampionship(championship)
+	}
 }
 
 func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
