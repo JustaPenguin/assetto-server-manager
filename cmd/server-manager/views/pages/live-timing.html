@@ -7,18 +7,6 @@
         <div class="card">
             <h5 class="card-header">Event in Progress</h5>
             <div class="card-body row home-race-info">
-
-                {{ if Config.LiveMap.IsEnabled }}
-
-                    <div class="col-md-12">
-
-                        <div id="map">
-                            <img src="" class="img img-fluid img-bordered">
-                        </div>
-                    </div>
-
-                {{ end }}
-
                 <div class="col-md-8">
 
                     {{ template "race-card" . }}
@@ -34,6 +22,14 @@
                          alt="{{ .RaceConfig.Track }} {{ .RaceConfig.TrackLayout }}"
                     >
                 </div>
+
+                {{ if Config.LiveMap.IsEnabled }}
+                    <div class="col-md-12 map-container">
+                        <div id="map">
+                            <img src="" class="img img-fluid img-bordered">
+                        </div>
+                    </div>
+                {{ end }}
 
                 <div class="table-responsive p-3">
                     <table id="live-table" class="table table-bordered table-striped">

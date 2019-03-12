@@ -47,7 +47,8 @@ steam:
 #
 ################################################################################
 http:
-  # hostname is the hostname the HTTP server should listen on
+  # hostname is the hostname the HTTP server should listen on.
+  # change 'localhost' to '0.0.0.0' if you want server manager to be available on the web.
   hostname: localhost:8772
   # session key is used to encrypt the http session
   session_key: RANDOMLY_GENERATE_THIS
