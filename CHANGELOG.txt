@@ -8,6 +8,8 @@ v1.0.3
 * Added button on results page to open the results on the SimResults website.
 * When creating a race the number of available pit boxes for a track/layout is now displayed, max clients is limited to
   this number (requires manual upload of track - including default content).
+* Improve handling of tracks which have a default layout (i.e. data folder in the base of the track directory) AND extra
+  layouts. This fix adds compatibility for mods such as the Assetto Corsa Wet Mod.
 
 
 v1.0.2

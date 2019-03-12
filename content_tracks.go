@@ -22,6 +22,8 @@ func (t Track) PrettyName() string {
 	return prettifyName(t.Name, false)
 }
 
+const defaultLayoutName = "<default>"
+
 func ListTracks() ([]Track, error) {
 	tracksPath := filepath.Join(ServerInstallPath, "content", "tracks")
 
@@ -48,13 +50,20 @@ func ListTracks() ([]Track, error) {
 			for _, layout := range files {
 				if layout.IsDir() {
 					if layout.Name() == "data" {
-						// track only has one layout
-						layouts = nil
-						break
+						layouts = append(layouts, defaultLayoutName)
 					} else if layout.Name() == "ui" {
 						// ui folder, not a layout
 						continue
 					} else {
+						// valid layouts must contain a surfaces.ini
+						_, err := os.Stat(filepath.Join(tracksPath, trackFile.Name(), layout.Name(), "data", "surfaces.ini"))
+
+						if os.IsNotExist(err) {
+							continue
+						} else if err != nil {
+							return nil, err
+						}
+
 						layouts = append(layouts, layout.Name())
 					}
 				}
