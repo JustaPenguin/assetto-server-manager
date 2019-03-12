@@ -203,17 +203,25 @@ let liveMap = {
                             mapSizeMultiplier = $imgContainer.width() / loadedImg.width;
 
                             $map.closest(".map-container").css({
-                                'max-height': loadedImg.width * mapSizeMultiplier,
-                                'max-width': 'auto',
+                                'max-height': (loadedImg.width * mapSizeMultiplier) + 20,
+                            });
+
+
+                            $map.css({
+                                'max-width': (loadedImg.width * mapSizeMultiplier) + 20,
                             });
 
                         } else {
                             // un-rotate the map
                             $map.removeClass("rotated");
 
-                            $map.closest(".map-container").css({
+                            $map.css({
                                 'max-height': 'inherit',
                                 'max-width': '100%',
+                            });
+
+                            $map.closest(".map-container").css({
+                                'max-height': 'auto',
                             });
 
                             $imgContainer.css({
