@@ -23,9 +23,9 @@ const (
 )
 
 var (
-	websocketLastSessionInfo *udp.SessionInfo
-	websocketTrackMapData    *TrackMapData
-	connectedCars            = make(map[udp.CarID]udp.SessionCarInfo)
+	websocketLastSeenSessionInfo *udp.SessionInfo
+	websocketTrackMapData        *TrackMapData
+	connectedCars                = make(map[udp.CarID]udp.SessionCarInfo)
 )
 
 type liveMapMessage struct {
@@ -55,9 +55,9 @@ func (h *liveMapHub) run() {
 		case message := <-h.broadcast:
 			for client := range h.clients {
 				select {
-				case client.send <- message:
+				case client.receive <- message:
 				default:
-					close(client.send)
+					close(client.receive)
 					delete(h.clients, client)
 				}
 			}
@@ -80,8 +80,8 @@ func (h *liveMapHub) run() {
 type liveMapClient struct {
 	hub *liveMapHub
 
-	conn *websocket.Conn
-	send chan liveMapMessage
+	conn    *websocket.Conn
+	receive chan liveMapMessage
 }
 
 func (c *liveMapClient) writePump() {
@@ -93,7 +93,7 @@ func (c *liveMapClient) writePump() {
 
 	for {
 		select {
-		case message, ok := <-c.send:
+		case message, ok := <-c.receive:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The hub closed the channel.
@@ -129,23 +129,23 @@ func LiveMapHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &liveMapClient{hub: mapHub, conn: c, send: make(chan liveMapMessage, 256)}
+	client := &liveMapClient{hub: mapHub, conn: c, receive: make(chan liveMapMessage, 256)}
 	client.hub.register <- client
 
 	go client.writePump()
 
-	// new client. send them the session info if we have it
-	if websocketLastSessionInfo != nil {
-		client.send <- liveMapMessage{udp.EventSessionInfo, websocketLastSessionInfo}
+	// new client. receive them the session info if we have it
+	if websocketLastSeenSessionInfo != nil {
+		client.receive <- liveMapMessage{udp.EventSessionInfo, websocketLastSeenSessionInfo}
 	}
 
 	if websocketTrackMapData != nil {
-		client.send <- liveMapMessage{222, websocketTrackMapData}
+		client.receive <- liveMapMessage{222, websocketTrackMapData}
 	}
 
 	for _, car := range connectedCars {
-		client.send <- liveMapMessage{udp.EventNewConnection, car}
-		client.send <- liveMapMessage{udp.EventClientLoaded, udp.ClientLoaded(car.CarID)}
+		client.receive <- liveMapMessage{udp.EventNewConnection, car}
+		client.receive <- liveMapMessage{udp.EventClientLoaded, udp.ClientLoaded(car.CarID)}
 	}
 }
 
@@ -155,7 +155,7 @@ func LiveMapCallback(message udp.Message) {
 	case udp.SessionInfo:
 		var err error
 
-		websocketLastSessionInfo = &m
+		websocketLastSeenSessionInfo = &m
 		websocketTrackMapData, err = LoadTrackMapData(m.Track, m.TrackConfig)
 
 		if err != nil {

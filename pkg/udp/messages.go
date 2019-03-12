@@ -94,7 +94,6 @@ func (asu *AssettoServerUDP) forwardServe() {
 		default:
 			buf := make([]byte, 1024)
 
-			// read message from assetto
 			_, _, err := asu.forwarder.ReadFromUDP(buf)
 
 			if err != nil {
