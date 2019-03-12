@@ -276,6 +276,7 @@ footer a {
 
 #map {
     position: relative;
+    background-color: rgba(0,0,0,0.125);
 }
 
 #map.rotated {
