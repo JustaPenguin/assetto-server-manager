@@ -688,7 +688,7 @@ class RaceSetup {
 
         let src = '/content/tracks/' + track + '/ui';
 
-        if (layout) {
+        if (layout && layout !== '<default>') {
             src += '/' + layout;
         }
 
@@ -724,7 +724,7 @@ class RaceSetup {
         let selectedTrack = this.$trackDropdown.find("option:selected").val();
         let availableLayouts = this.trackLayoutOpts[selectedTrack];
 
-        if (availableLayouts) {
+        if (availableLayouts && !(availableLayouts.length === 1 && availableLayouts[0] === "<default>")) {
             for (let i = 0; i < availableLayouts.length; i++) {
                 this.$trackLayoutDropdown.append(this.buildTrackLayoutOption(availableLayouts[i]));
             }
