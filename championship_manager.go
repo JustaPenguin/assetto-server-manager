@@ -37,27 +37,27 @@ type ActiveChampionship struct {
 }
 
 func NewChampionshipManager(rm *RaceManager) *ChampionshipManager {
-	cm := &ChampionshipManager{
+	return &ChampionshipManager{
 		RaceManager: rm,
 	}
-
-	go cm.listener()
-
-	return cm
 }
 
-func (cm *ChampionshipManager) listener() {
-	for {
-		select {
-		case <-serverStoppedChan:
-			if cm.activeChampionship != nil {
-				logrus.Infof("Server stopped, clearing active championship")
-				cm.mutex.Lock()
-				cm.activeChampionship = nil
-				cm.mutex.Unlock()
-			}
-		}
+func (cm *ChampionshipManager) applyConfigAndStart(config ServerConfig, entryList EntryList, championship *ActiveChampionship) error {
+	err := cm.RaceManager.applyConfigAndStart(config, entryList, false)
+
+	if err != nil {
+		return err
 	}
+
+	cm.activeChampionship = championship
+
+	go func() {
+		<-serverStoppedChan
+
+		cm.activeChampionship = nil
+	}()
+
+	return nil
 }
 
 func (cm *ChampionshipManager) LoadChampionship(id string) (*Championship, error) {
@@ -304,7 +304,7 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 
 	config.CurrentRaceConfig = raceSetup
 
-	return cm.applyConfigAndStart(config, championship.AllEntrants(), false)
+	return cm.RaceManager.applyConfigAndStart(config, championship.AllEntrants(), false)
 }
 
 func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string) error {
@@ -327,12 +327,10 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 	config.CurrentRaceConfig = event.RaceSetup
 
 	// track that this is the current event
-	cm.activeChampionship = &ActiveChampionship{
+	return cm.applyConfigAndStart(config, championship.AllEntrants(), &ActiveChampionship{
 		ChampionshipID: championship.ID,
 		EventID:        event.ID,
-	}
-
-	return cm.applyConfigAndStart(config, championship.AllEntrants(), false)
+	})
 }
 
 func (cm *ChampionshipManager) GetChampionshipAndEvent(championshipID string, eventID string) (*Championship, *ChampionshipEvent, error) {
