@@ -13,6 +13,14 @@ $(document).ready(function () {
         new RaceSetup($(elem));
     });
 
+    $document.find("#open-in-simres").each(function(index, elem) {
+        let link = window.location.href.split("#")[0].replace("results", "results/download") + ".json";
+
+        $(elem).attr('href', "http://simresults.net/remote?result=" + link);
+
+        return false
+    });
+
     serverLogs.init();
     liveTiming.init();
     liveMap.init();
@@ -306,13 +314,6 @@ function prettifyName(name, acronyms) {
     return parts.join(" ")
 }
 
-function openInSimResults() {
-    let link = window.location.href.replace("results", "results/download") + ".json";
-
-    window.open('http://simresults.net/remote?result=' + link, '_blank');
-
-    return false
-}
 
 function initMultiSelect($element) {
     $element.each(function (i, elem) {
