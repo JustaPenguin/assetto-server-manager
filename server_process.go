@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/go-chi/chi"
@@ -58,6 +59,8 @@ type AssettoServerProcess struct {
 
 	out   *bytes.Buffer
 	mutex sync.Mutex
+
+	doneCh chan struct{}
 }
 
 // Logs outputs the server logs
@@ -90,6 +93,12 @@ func (as *AssettoServerProcess) Start() error {
 		as.cmd = nil
 		return err
 	}
+
+	go func() {
+		_ = as.cmd.Wait()
+
+		as.doneCh <- struct{}{}
+	}()
 
 	return nil
 }
@@ -126,7 +135,7 @@ func (as *AssettoServerProcess) Stop() error {
 
 	err := as.cmd.Process.Kill()
 
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "process already finished") {
 		return err
 	}
 

@@ -47,7 +47,8 @@ steam:
 #
 ################################################################################
 http:
-  # hostname is the hostname the HTTP server should listen on
+  # hostname is the hostname the HTTP server should listen on.
+  # change 'localhost' to '0.0.0.0' if you want server manager to be available on the web.
   hostname: localhost:8772
   # session key is used to encrypt the http session
   session_key: RANDOMLY_GENERATE_THIS
@@ -101,3 +102,14 @@ users:
 
   # set this to true to allow ANYONE to have read permissions
   read_open: false
+
+
+################################################################################
+#
+#  live map config
+#
+################################################################################
+live_map:
+  # how often to refresh the map data in milliseconds
+  # set this to 0 to disable live map.
+  refresh_interval_ms: 67

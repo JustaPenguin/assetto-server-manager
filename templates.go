@@ -144,6 +144,7 @@ func (tr *Renderer) init() error {
 	funcs["dict"] = templateDict
 	funcs["asset"] = NewAssetHelper("/", "", "", map[string]string{"cb": BuildTime}).GetURL
 	funcs["SessionType"] = func(s string) SessionType { return SessionType(s) }
+	funcs["Config"] = func() *Configuration { return config }
 
 	tr.templates, err = tr.loader.Templates(funcs)
 

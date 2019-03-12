@@ -1,6 +1,10 @@
 package udp
 
-type Event int
+import (
+	"golang.org/x/text/encoding/unicode/utf32"
+)
+
+type Event uint8
 
 const (
 	// Receive
@@ -192,8 +196,46 @@ func (s SessionInfo) Event() Event {
 	return s.EventType
 }
 
-type SectorCompleted struct {
-	Num        uint8
-	Anothernum uint8
-	Time       uint16
+type EnableRealtimePosInterval struct {
+	Type     uint8
+	Interval uint16
+}
+
+func (EnableRealtimePosInterval) Event() Event {
+	return EventRealtimeposInterval
+}
+
+func NewEnableRealtimePosInterval(interval uint16) EnableRealtimePosInterval {
+	return EnableRealtimePosInterval{
+		Type:     uint8(EventRealtimeposInterval),
+		Interval: interval,
+	}
+}
+
+type SendChat struct {
+	EventType    uint8
+	CarID        uint8
+	Len          uint8
+	UTF32Encoded []byte
+}
+
+func (SendChat) Event() Event {
+	return EventSendChat
+}
+
+func NewSendChat(carID CarID, data string) (*SendChat, error) {
+	strlen := len(data)
+
+	encoded, err := utf32.UTF32(utf32.LittleEndian, utf32.IgnoreBOM).NewEncoder().Bytes([]byte(data))
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &SendChat{
+		EventType:    uint8(EventSendChat),
+		CarID:        uint8(carID),
+		Len:          uint8(strlen),
+		UTF32Encoded: encoded,
+	}, nil
 }

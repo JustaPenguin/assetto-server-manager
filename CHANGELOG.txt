@@ -1,6 +1,14 @@
 v1.0.3
 ------
 
+We recommend re-uploading all of your tracks after doing this update! Some new features will only work with
+new track assets!
+
+Please also consult the config.yml in the zip file, there is a new section: "live_map" that you must add to your
+config.yml to get live map functionality!
+
+* Added a Live Map. You'll need to re-upload your tracks to see the live map, since it requires new
+  track assets.
 * Added support for 'Reverse Grid Positions' races within Championship events. If a second race occurs, the championship
   page will show results for that too. It will correctly add points to the entrants and optionally can apply a
   multiplier to all second races to scale their points. This multiplier can be a decimal, and can even be negative!
@@ -8,9 +16,14 @@ v1.0.3
 * Added button on results page to open the results on the SimResults website.
 * When creating a race the number of available pit boxes for a track/layout is now displayed, max clients is limited to
   this number (requires manual upload of track - including default content).
+* Championship events now welcome each player with a message describing their current position in the championship
+  and who their nearest rivals are.
 * Improve handling of tracks which have a default layout (i.e. data folder in the base of the track directory) AND extra
   layouts. This fix adds compatibility for mods such as the Assetto Corsa Wet Mod.
-
+* Added support for plugins such as KissMyRank. Follow the KissMyRank setup, but instead of editing
+  server_cfg.ini, edit the Options in Server Manager (it overwrites server_cfg.ini!)
+* Overhauled UDP proxying to work with sending messages as well as existing support for receiving.
+  (This is what makes KissMyRank etc work!)
 
 v1.0.2
 ------

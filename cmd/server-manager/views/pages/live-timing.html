@@ -21,6 +21,14 @@
                     >
                 </div>
 
+                {{ if Config.LiveMap.IsEnabled }}
+                    <div class="col-md-12 map-container">
+                        <div id="map">
+                            <img src="" class="img img-fluid img-bordered">
+                        </div>
+                    </div>
+                {{ end }}
+
                 <div class="table-responsive p-3">
                     <table id="live-table" class="table table-bordered table-striped">
                         <tr>

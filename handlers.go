@@ -71,6 +71,7 @@ func Router(fs http.FileSystem) chi.Router {
 		// live timings
 		r.Get("/live-timing", liveTimingHandler)
 		r.Get("/live-timing/get", liveTimingGetHandler)
+		r.Get("/api/live-map", LiveMapHandler)
 
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")))
 		FileServer(r, "/results/download", http.Dir(filepath.Join(ServerInstallPath, "results")))
