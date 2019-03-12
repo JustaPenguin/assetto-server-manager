@@ -128,7 +128,7 @@ func (c *Championship) GetPlayerSummary(guid string) string {
 				out := fmt.Sprintf("You are currently %d%s with %.2f points. ", driverPos, ordinal(int64(driverPos)), driverPoints)
 
 				if driverAhead != "" {
-					out += fmt.Sprintf("The driver ahead of you is %s with %d points. ", driverAhead, driverAheadPoints)
+					out += fmt.Sprintf("The driver ahead of you is %s with %.2f points. ", driverAhead, driverAheadPoints)
 				}
 
 				if entrant.Team != "" {
