@@ -347,8 +347,8 @@ td .dot {
     background-repeat: no-repeat;
     z-index: 99;
     display: inline-grid;
-    -webkit-animation: cssAnimation 10s forwards;
-    animation: cssAnimation 10s forwards;
+    -webkit-animation: cssAnimation 5s forwards;
+    animation: cssAnimation 5s forwards;
 }
 
 @keyframes cssAnimation {
