@@ -111,8 +111,6 @@ let liveMap = {
 
     joined: {},
 
-    $driverInfo: null,
-
     init: function () {
         const $map = $document.find("#map");
 
@@ -123,8 +121,6 @@ let liveMap = {
         let ws = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/api/live-map");
 
         let xOffset = 0, zOffset = 0;
-        let multiplierX = 1;
-        let multiplierZ = 1;
 
         let mapSizeMultiplier = 1;
         let scale = 1;
@@ -133,7 +129,6 @@ let liveMap = {
         let mapImageHasLoaded = false;
 
         let $imgContainer = $map.find("img");
-        liveMap.$driverInfo = $document.find("#driverInfo");
 
         $(window).resize(function () {
             if (!loadedImg || !mapImageHasLoaded) {
@@ -181,8 +176,8 @@ let liveMap = {
 
                 case EventCarUpdate:
                     liveMap.joined[data.CarID].dot.css({
-                        'left': (((data.Pos.X + xOffset + margin) * multiplierX) / scale) * mapSizeMultiplier,
-                        'top': (((data.Pos.Z + zOffset + margin) * multiplierZ) / scale) * mapSizeMultiplier,
+                        'left': (((data.Pos.X + xOffset + margin)) / scale) * mapSizeMultiplier,
+                        'top': (((data.Pos.Z + zOffset + margin)) / scale) * mapSizeMultiplier,
                     });
                     break;
 
@@ -245,8 +240,8 @@ let liveMap = {
                     let x = data.WorldPos.X, y = data.WorldPos.Z;
 
                     let $collision = $("<div class='collision' />").css({
-                        'left': (((x + xOffset + margin) * multiplierX) / scale) * mapSizeMultiplier,
-                        'top': (((y + zOffset + margin) * multiplierZ) / scale) * mapSizeMultiplier,
+                        'left': (((x + xOffset + margin)) / scale) * mapSizeMultiplier,
+                        'top': (((y + zOffset + margin)) / scale) * mapSizeMultiplier,
                     });
 
                     $collision.appendTo($map);
@@ -266,8 +261,6 @@ let liveMap = {
         }
 
         liveMap.joined = [];
-
-        liveMap.$driverInfo.empty();
     }
 };
 
@@ -281,10 +274,6 @@ function getAbbreviation(name) {
     let lastName = parts[parts.length - 1];
 
     return lastName.slice(0, 3).toUpperCase();
-}
-
-function direction(x, y) {
-    return Math.atan2(y, x);
 }
 
 const nameRegex = /^[A-Za-z]{0,5}[0-9]+/;

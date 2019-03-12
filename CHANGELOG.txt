@@ -9,10 +9,6 @@ config.yml to get live map functionality!
 
 * Added a Live Map. You'll need to re-upload your tracks to see the live map, since it requires new
   track assets.
-* Added support for plugins such as KissMyRank. Follow the KissMyRank setup, but instead of editing
-  server_cfg.ini, edit the Options in Server Manager (it overwrites server_cfg.ini!)
-* Overhauled UDP proxying to work with sending messages as well as existing support for receiving.
-  (This is what makes KissMyRank etc work!)
 * Added support for 'Reverse Grid Positions' races within Championship events. If a second race occurs, the championship
   page will show results for that too. It will correctly add points to the entrants and optionally can apply a
   multiplier to all second races to scale their points. This multiplier can be a decimal, and can even be negative!
@@ -24,6 +20,10 @@ config.yml to get live map functionality!
   and who their nearest rivals are.
 * Improve handling of tracks which have a default layout (i.e. data folder in the base of the track directory) AND extra
   layouts. This fix adds compatibility for mods such as the Assetto Corsa Wet Mod.
+* Added support for plugins such as KissMyRank. Follow the KissMyRank setup, but instead of editing
+  server_cfg.ini, edit the Options in Server Manager (it overwrites server_cfg.ini!)
+* Overhauled UDP proxying to work with sending messages as well as existing support for receiving.
+  (This is what makes KissMyRank etc work!)
 
 v1.0.2
 ------

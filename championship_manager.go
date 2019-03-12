@@ -523,7 +523,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 				err := cm.udpServerConn.SendMessage(welcomeMessage)
 
 				if err != nil {
-					logrus.Errorf("Unable to send welcome message to: %s, err: %s", entrant.DriverName, err)
+					logrus.Errorf("Unable to receive welcome message to: %s, err: %s", entrant.DriverName, err)
 				}
 			} else {
 				logrus.Errorf("Unable to build welcome message to: %s, err: %s", entrant.DriverName, err)

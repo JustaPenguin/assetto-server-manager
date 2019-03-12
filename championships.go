@@ -105,7 +105,7 @@ func (c *Championship) GetPlayerSummary(guid string) string {
 				var driverAhead string
 				var driverAheadPoints float64
 
-				if driverPos > 2 {
+				if driverPos >= 2 {
 					driverAhead = standings[driverPos-2].Entrant.Name
 					driverAheadPoints = standings[driverPos-2].Points
 				}
@@ -120,7 +120,7 @@ func (c *Championship) GetPlayerSummary(guid string) string {
 				var teamAhead string
 				var teamAheadPoints float64
 
-				if teamPos > 2 {
+				if teamPos >= 2 {
 					teamAhead = teamstandings[teamPos-2].Team
 					teamAheadPoints = teamstandings[teamPos-2].Points
 				}
