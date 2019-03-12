@@ -1,4 +1,4 @@
-v1.0.3
+v1.1.0
 ------
 
 We recommend re-uploading all of your tracks after doing this update! Some new features will only work with
