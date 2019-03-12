@@ -15,6 +15,8 @@ $(document).ready(function () {
 
     serverLogs.init();
     liveTiming.init();
+    liveMap.init();
+
 
     // init bootstrap-switch
     $.fn.bootstrapSwitch.defaults.size = 'small';
@@ -67,8 +69,7 @@ $(document).ready(function () {
         if ($(this).val() && $document.find("#CustomRaceScheduledTime").val()) {
             $document.find("#start-race-button").hide();
             $document.find("#save-race-button").val("schedule");
-        }
-        else {
+        } else {
             $document.find("#start-race-button").show();
             $document.find("#save-race-button").val("justSave");
         }
@@ -78,14 +79,202 @@ $(document).ready(function () {
         if ($(this).val() && $document.find("#CustomRaceScheduled").val()) {
             $document.find("#start-race-button").hide();
             $document.find("#save-race-button").val("schedule");
-        }
-        else {
+        } else {
             $document.find("#start-race-button").show();
             $document.find("#save-race-button").val("justSave");
 
         }
     });
 });
+
+
+const EventCollisionWithCar = 10,
+    EventCollisionWithEnv = 11,
+    EventNewSession = 50,
+    EventNewConnection = 51,
+    EventConnectionClosed = 52,
+    EventCarUpdate = 53,
+    EventCarInfo = 54,
+    EventEndSession = 55,
+    EventVersion = 56,
+    EventChat = 57,
+    EventClientLoaded = 58,
+    EventSessionInfo = 59,
+    EventError = 60,
+    EventLapCompleted = 73,
+    EventClientEvent = 130,
+    EventTrackMapInfo = 222
+;
+
+
+let liveMap = {
+
+    joined: {},
+
+    init: function () {
+        const $map = $document.find("#map");
+
+        if (!$map.length) {
+            return; // livemap is disabled.
+        }
+
+        let ws = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/api/live-map");
+
+        let xOffset = 0, zOffset = 0;
+
+        let mapSizeMultiplier = 1;
+        let scale = 1;
+        let margin = 0;
+        let loadedImg = null;
+        let mapImageHasLoaded = false;
+
+        let $imgContainer = $map.find("img");
+
+        $(window).resize(function () {
+            if (!loadedImg || !mapImageHasLoaded) {
+                return;
+            }
+
+            mapSizeMultiplier = $imgContainer.width() / loadedImg.width;
+        });
+
+        ws.onmessage = function (e) {
+            let message = JSON.parse(e.data);
+
+            if (!message) {
+                return;
+            }
+
+            let data = message.Message;
+
+            switch (message.EventType) {
+                case EventVersion:
+                    location.reload();
+                    break;
+                case EventTrackMapInfo:
+                    // track map info
+                    xOffset = data.OffsetX;
+                    zOffset = data.OffsetZ;
+                    scale = data.ScaleFactor;
+                    break;
+
+                case EventNewConnection:
+                    liveMap.joined[data.CarID] = data;
+
+                    let $driverName = $("<span class='name'/>").text(getAbbreviation(data.DriverName));
+
+                    liveMap.joined[data.CarID].dot = $("<div class='dot' style='background: " + randomColor({
+                        luminosity: 'bright',
+                        seed: data.DriverGUID
+                    }) + "'/>").append($driverName);
+                    break;
+
+                case EventConnectionClosed:
+                    liveMap.joined[data.CarID].dot.remove();
+                    delete liveMap.joined[data.CarID];
+                    break;
+
+                case EventCarUpdate:
+                    liveMap.joined[data.CarID].dot.css({
+                        'left': (((data.Pos.X + xOffset + margin)) / scale) * mapSizeMultiplier,
+                        'top': (((data.Pos.Z + zOffset + margin)) / scale) * mapSizeMultiplier,
+                    });
+                    break;
+
+                case EventSessionInfo:
+                case EventNewSession:
+                    liveMap.clearAllDrivers();
+                    let trackURL = "/content/tracks/" + data.Track + (!!data.TrackConfig ? "/" + data.TrackConfig : "") + "/map.png";
+
+                    loadedImg = new Image();
+
+                    loadedImg.onload = function () {
+                        $imgContainer.attr({'src': trackURL});
+
+                        if (loadedImg.height / loadedImg.width > 1.2) {
+                            // rotate the map
+                            $map.addClass("rotated");
+
+                            $imgContainer.css({
+                                'max-height': $imgContainer.closest(".map-container").width(),
+                                'max-width': 'auto'
+                            });
+
+                            mapSizeMultiplier = $imgContainer.width() / loadedImg.width;
+
+                            $map.closest(".map-container").css({
+                                'max-height': loadedImg.width * mapSizeMultiplier,
+                                'max-width': 'auto',
+                            });
+
+                        } else {
+                            // un-rotate the map
+                            $map.removeClass("rotated");
+
+                            $map.closest(".map-container").css({
+                                'max-height': 'inherit',
+                                'max-width': '100%',
+                            });
+
+                            $imgContainer.css({
+                                'max-height': 'inherit',
+                                'max-width': '100%'
+                            });
+
+                            mapSizeMultiplier = $imgContainer.width() / loadedImg.width;
+                        }
+
+                        mapImageHasLoaded = true;
+                    };
+
+                    loadedImg.src = trackURL;
+                    break;
+
+                case EventClientLoaded:
+                    liveMap.joined[data].dot.appendTo($map);
+                    break;
+
+                case EventCollisionWithEnv:
+                case EventCollisionWithCar:
+
+                    let x = data.WorldPos.X, y = data.WorldPos.Z;
+
+                    let $collision = $("<div class='collision' />").css({
+                        'left': (((x + xOffset + margin)) / scale) * mapSizeMultiplier,
+                        'top': (((y + zOffset + margin)) / scale) * mapSizeMultiplier,
+                    });
+
+                    $collision.appendTo($map);
+
+                    break;
+            }
+        };
+    },
+
+    clearAllDrivers: function () {
+        for (let driver in liveMap.joined) {
+            if (driver.dot === undefined) {
+                continue;
+            }
+
+            driver.dot.delete();
+        }
+
+        liveMap.joined = [];
+    }
+};
+
+function getAbbreviation(name) {
+    let parts = name.split(" ");
+
+    if (parts.length < 1) {
+        return name
+    }
+
+    let lastName = parts[parts.length - 1];
+
+    return lastName.slice(0, 3).toUpperCase();
+}
 
 const nameRegex = /^[A-Za-z]{0,5}[0-9]+/;
 
@@ -492,7 +681,7 @@ class RaceSetup {
             src += '/' + layout;
         }
 
-        let jsonURL  = src + "/ui_track.json";
+        let jsonURL = src + "/ui_track.json";
 
         src += '/preview.png';
 
@@ -509,7 +698,7 @@ class RaceSetup {
             $pitBoxes.text(trackInfo.pitboxes);
             $maxClients.attr("max", trackInfo.pitboxes);
         })
-            .fail(function() {
+            .fail(function () {
                 $pitBoxes.closest(".row").hide()
             })
     }
@@ -619,17 +808,17 @@ class RaceSetup {
                     skin = availableCars[currentCar][0]
                 }
 
-                let path = "/content/cars/"+currentCar+"/skins/"+skin+"/preview.jpg";
+                let path = "/content/cars/" + currentCar + "/skins/" + skin + "/preview.jpg";
                 let $preview = $this.closest(".entrant").find(".entryListCarPreview");
 
                 $.get(path)
-                    .done(function() {
+                    .done(function () {
                         // preview for skin exists
                         $preview.attr({"src": path, "alt": prettifyName(skin, false)})
-                    }).fail(function() {
-                        // preview doesn't exist, load default fall back image
-                        path = "/static/img/no-preview-car.png";
-                        $preview.attr({"src": path, "alt": "Preview Image"})
+                    }).fail(function () {
+                    // preview doesn't exist, load default fall back image
+                    path = "/static/img/no-preview-car.png";
+                    $preview.attr({"src": path, "alt": "Preview Image"})
                 });
             }
         }
@@ -955,6 +1144,10 @@ let liveTiming = {
                         $tr.append($tdPos);
 
                         $tdName.text(liveTiming.Cars[car].DriverName);
+                        $tdName.prepend($("<div class='dot' style='background: " + randomColor({
+                            luminosity: 'bright',
+                            seed: liveTiming.Cars[car].DriverGUID
+                        }) + "'/>"));
                         $tr.append($tdName);
 
                         $tdLapTime.text(lapTime);
@@ -1576,7 +1769,7 @@ function handleTrackFilesLoop(fileList) {
         // get model/surfaces and drs zones and ui folder
         if ((fileList[x].name.startsWith("models") && fileList[x].name.endsWith(".ini")) ||
             (fileList[x].name === "surfaces.ini" || fileList[x].name === "drs_zones.ini") ||
-            (fileList[x].filepath.includes("/ui/"))) {
+            (fileList[x].filepath.includes("/ui/") || fileList[x].name === "map.png" || fileList[x].name === "map.ini")) {
 
             filesToUploadLocal.push(fileList[x]);
         }
@@ -1698,7 +1891,7 @@ function handleTrackFilesLoop(fileList) {
 }
 
 function notA(thing) {
-    let $panel = $("#"+thing+"-fail");
+    let $panel = $("#" + thing + "-fail");
 
     $panel.show();
     $panel.attr({'class': "alert alert-danger mt-2"});

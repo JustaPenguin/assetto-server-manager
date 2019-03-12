@@ -10,8 +10,12 @@ import (
 	"net"
 )
 
-func NewServerClient(addr string, receivePort, sendPort int, forward bool, forwardAddrStr string, callback CallbackFunc) (*AssettoServerUDP, error) {
-	listener, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP(addr), Port: receivePort})
+// RealtimePosIntervalMs is the interval to request real time positional information.
+// Set this to greater than 0 to enable.
+var RealtimePosIntervalMs = -1
+
+func NewServerClient(addr string, receivePort, sendPort int, forward bool, forwardAddrStr string, forwardListenPort int, callback CallbackFunc) (*AssettoServerUDP, error) {
+	listener, err := net.DialUDP("udp", &net.UDPAddr{IP: net.ParseIP(addr), Port: receivePort}, &net.UDPAddr{IP: net.ParseIP(addr), Port: sendPort})
 
 	if err != nil {
 		return nil, err
@@ -28,7 +32,13 @@ func NewServerClient(addr string, receivePort, sendPort int, forward bool, forwa
 	}
 
 	if forward {
-		u.forwardAddr, err = net.ResolveUDPAddr("udp", forwardAddrStr)
+		forwardAddr, err := net.ResolveUDPAddr("udp", forwardAddrStr)
+
+		if err != nil {
+			return nil, err
+		}
+
+		u.forwarder, err = net.DialUDP("udp", &net.UDPAddr{IP: net.ParseIP(addr), Port: forwardListenPort}, forwardAddr)
 
 		if err != nil {
 			return nil, err
@@ -36,6 +46,7 @@ func NewServerClient(addr string, receivePort, sendPort int, forward bool, forwa
 	}
 
 	go u.serve()
+	go u.forwardServe()
 
 	return u, nil
 }
@@ -43,9 +54,10 @@ func NewServerClient(addr string, receivePort, sendPort int, forward bool, forwa
 type CallbackFunc func(response Message)
 
 type AssettoServerUDP struct {
-	listener    *net.UDPConn
-	forwardAddr *net.UDPAddr
-	forward     bool
+	listener  *net.UDPConn
+	forwarder *net.UDPConn
+
+	forward bool
 
 	cfn      func()
 	ctx      context.Context
@@ -60,7 +72,41 @@ func (asu *AssettoServerUDP) Close() error {
 		return err
 	}
 
+	err = asu.forwarder.Close()
+
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (asu *AssettoServerUDP) forwardServe() {
+	if !asu.forward || asu.forwarder == nil {
+		return
+	}
+
+	for {
+		select {
+		case <-asu.ctx.Done():
+			asu.forwarder.Close()
+			return
+		default:
+			buf := make([]byte, 1024)
+
+			_, _, err := asu.forwarder.ReadFromUDP(buf)
+
+			if err != nil {
+				continue
+			}
+
+			_, err = asu.listener.Write(buf)
+
+			if err != nil {
+				continue
+			}
+		}
+	}
 }
 
 func (asu *AssettoServerUDP) serve() {
@@ -72,6 +118,7 @@ func (asu *AssettoServerUDP) serve() {
 		default:
 			buf := make([]byte, 1024)
 
+			// read message from assetto
 			_, _, err := asu.listener.ReadFromUDP(buf)
 
 			if err != nil {
@@ -88,9 +135,14 @@ func (asu *AssettoServerUDP) serve() {
 
 			asu.callback(msg)
 
-			if asu.forward {
+			if asu.forward && asu.forwarder != nil {
 				go func() {
-					asu.listener.WriteTo(buf, asu.forwardAddr)
+					// write the message to the forwarding address
+					_, err := asu.forwarder.Write(buf)
+
+					if err != nil {
+						fmt.Println("err", err)
+					}
 				}()
 			}
 		}
@@ -114,6 +166,46 @@ func readString(r io.Reader, sizeMultiplier int) string {
 	err = binary.Read(r, binary.LittleEndian, &s)
 
 	return string(bytes.Replace(s, []byte("\x00"), nil, -1))
+}
+
+func (asu *AssettoServerUDP) SendMessage(message Message) error {
+	switch a := message.(type) {
+	case EnableRealtimePosInterval:
+		err := binary.Write(asu.listener, binary.LittleEndian, a)
+
+		if err != nil {
+			return err
+		}
+
+		return err
+
+	case *SendChat:
+		buf := new(bytes.Buffer)
+
+		if err := binary.Write(buf, binary.LittleEndian, a.EventType); err != nil {
+			return err
+		}
+
+		if err := binary.Write(buf, binary.LittleEndian, a.CarID); err != nil {
+			return err
+		}
+
+		if err := binary.Write(buf, binary.LittleEndian, a.Len); err != nil {
+			return err
+		}
+
+		if _, err := buf.Write(a.UTF32Encoded); err != nil {
+			return err
+		}
+
+		if _, err := io.Copy(asu.listener, buf); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return errors.New("udp: invalid message type")
 }
 
 func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
@@ -304,6 +396,14 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 		sessionInfo.EventType = eventType
 
 		response = sessionInfo
+
+		if RealtimePosIntervalMs > 0 {
+			err = asu.SendMessage(NewEnableRealtimePosInterval(uint16(RealtimePosIntervalMs)))
+
+			if err != nil {
+				return nil, err
+			}
+		}
 	case EventError:
 		message := readStringW(r)
 

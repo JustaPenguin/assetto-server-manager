@@ -85,6 +85,68 @@ type Championship struct {
 	Events  []*ChampionshipEvent
 }
 
+func (c *Championship) GetPlayerSummary(guid string) string {
+	for _, class := range c.Classes {
+		for _, entrant := range class.Entrants {
+			if entrant.GUID == guid {
+				standings := class.Standings(c.Events)
+				teamstandings := class.TeamStandings(c.Events)
+
+				var driverPos, teamPos int
+				var driverPoints, teamPoints float64
+
+				for pos, standing := range standings {
+					if standing.Entrant.GUID == guid {
+						driverPos = pos + 1
+						driverPoints = standing.Points
+					}
+				}
+
+				var driverAhead string
+				var driverAheadPoints float64
+
+				if driverPos >= 2 {
+					driverAhead = standings[driverPos-2].Entrant.Name
+					driverAheadPoints = standings[driverPos-2].Points
+				}
+
+				for pos, standing := range teamstandings {
+					if standing.Team == entrant.Team {
+						teamPos = pos + 1
+						teamPoints = standing.Points
+					}
+				}
+
+				var teamAhead string
+				var teamAheadPoints float64
+
+				if teamPos >= 2 {
+					teamAhead = teamstandings[teamPos-2].Team
+					teamAheadPoints = teamstandings[teamPos-2].Points
+				}
+
+				out := fmt.Sprintf("You are currently %d%s with %.2f points. ", driverPos, ordinal(int64(driverPos)), driverPoints)
+
+				if driverAhead != "" {
+					out += fmt.Sprintf("The driver ahead of you is %s with %.2f points. ", driverAhead, driverAheadPoints)
+				}
+
+				if entrant.Team != "" {
+					out += fmt.Sprintf("Your team '%s' has %.2f points. ", entrant.Team, teamPoints)
+
+					if teamAhead != "" {
+						out += fmt.Sprintf("The team ahead is '%s' with %.2f points. ", teamAhead, teamAheadPoints)
+					}
+				}
+
+				return out
+			}
+		}
+	}
+
+	return ""
+}
+
 // IsMultiClass is true if the Championship has more than one Class
 func (c *Championship) IsMultiClass() bool {
 	return len(c.Classes) > 1

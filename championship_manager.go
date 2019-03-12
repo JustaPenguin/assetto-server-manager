@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
+	"github.com/mitchellh/go-wordwrap"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,6 +29,8 @@ type ChampionshipManager struct {
 type ActiveChampionship struct {
 	ChampionshipID, EventID uuid.UUID
 	SessionType             SessionType
+
+	loadedEntrants map[udp.CarID]udp.SessionCarInfo
 
 	NumLapsCompleted   int
 	NumRaceStartEvents int
@@ -365,7 +369,6 @@ func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
 	defer cm.mutex.Unlock()
 
 	if cm.activeChampionship == nil {
-		logrus.Debugf("No active championship set up, not performing championship callbacks")
 		return
 	}
 
@@ -417,6 +420,17 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 	switch a := message.(type) {
 
 	case udp.SessionCarInfo:
+
+		if a.Event() == udp.EventNewConnection {
+
+			if cm.activeChampionship.loadedEntrants == nil {
+				cm.activeChampionship.loadedEntrants = make(map[udp.CarID]udp.SessionCarInfo)
+			}
+
+			cm.activeChampionship.loadedEntrants[a.CarID] = a
+
+		}
+
 		if championship.OpenEntrants && a.Event() == udp.EventNewConnection {
 			// a person joined, check to see if they need adding to the championship
 
@@ -477,6 +491,44 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			}
 		}
 
+	case udp.ClientLoaded:
+
+		entrant, ok := cm.activeChampionship.loadedEntrants[udp.CarID(a)]
+
+		if !ok {
+			return
+		}
+
+		championshipText := " Championship"
+
+		if strings.HasSuffix(strings.ToLower(championship.Name), "championship") {
+			championshipText = ""
+		}
+
+		wrapped := strings.Split(wordwrap.WrapString(
+			fmt.Sprintf(
+				"Hi, %s! Welcome to the %s%s! %s Make this race count!\n",
+				entrant.DriverName,
+				championship.Name,
+				championshipText,
+				championship.GetPlayerSummary(entrant.DriverGUID),
+			),
+			60,
+		), "\n")
+
+		for _, msg := range wrapped {
+			welcomeMessage, err := udp.NewSendChat(entrant.CarID, msg)
+
+			if err == nil {
+				err := cm.udpServerConn.SendMessage(welcomeMessage)
+
+				if err != nil {
+					logrus.Errorf("Unable to receive welcome message to: %s, err: %s", entrant.DriverName, err)
+				}
+			} else {
+				logrus.Errorf("Unable to build welcome message to: %s, err: %s", entrant.DriverName, err)
+			}
+		}
 	case udp.SessionInfo:
 		if a.Event() == udp.EventNewSession {
 			if championship.Events[currentEventIndex].StartedTime.IsZero() {

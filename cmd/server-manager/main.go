@@ -9,6 +9,7 @@ import (
 	"github.com/cj123/assetto-server-manager"
 	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
 	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
+	"github.com/cj123/assetto-server-manager/pkg/udp"
 
 	"github.com/pkg/browser"
 	"github.com/sirupsen/logrus"
@@ -47,6 +48,10 @@ func main() {
 	} else {
 		templateLoader = &views.TemplateLoader{}
 		filesystem = static.FS(false)
+	}
+
+	if config.LiveMap.IsEnabled() {
+		udp.RealtimePosIntervalMs = config.LiveMap.IntervalMs
 	}
 
 	servermanager.ViewRenderer, err = servermanager.NewRenderer(templateLoader, debug)
