@@ -37,8 +37,26 @@ type ActiveChampionship struct {
 }
 
 func NewChampionshipManager(rm *RaceManager) *ChampionshipManager {
-	return &ChampionshipManager{
+	cm := &ChampionshipManager{
 		RaceManager: rm,
+	}
+
+	go cm.listener()
+
+	return cm
+}
+
+func (cm *ChampionshipManager) listener() {
+	for {
+		select {
+		case <-serverStoppedChan:
+			if cm.activeChampionship != nil {
+				logrus.Infof("Server stopped, clearing active championship")
+				cm.mutex.Lock()
+				cm.activeChampionship = nil
+				cm.mutex.Unlock()
+			}
+		}
 	}
 }
 
