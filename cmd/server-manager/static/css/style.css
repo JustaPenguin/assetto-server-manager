@@ -276,9 +276,24 @@ footer a {
 
 #map {
     position: relative;
-    border-bottom: 1px solid rgba(0,0,0,0.125);
+}
+
+#map.rotated {
+    transform: rotate(90deg) translateY(-100%);
+    transform-origin: top left;
+}
+
+#map.rotated .dot, #map.rotated .collision {
+    transform: rotate(-90deg) translate(-50%, -50%);
+
+    transform-origin: top left;
+}
+
+.map-container {
+    border-top: 1px solid rgba(0, 0, 0, 0.125);
+    margin-top: 15px;
+    padding-top: 15px;
     margin-bottom: 15px;
-    padding-bottom: 15px;
 }
 
 .dot {
@@ -326,7 +341,7 @@ td .dot {
     border-radius: 100%;
     width: 40px;
     height: 40px;
-    background-image: url("/static/img/explosion.png");
+    background-image: url("/static/img/splosion.gif");
     background-size: contain;
     background-repeat: no-repeat;
     z-index: 99;
@@ -336,13 +351,25 @@ td .dot {
 }
 
 @keyframes cssAnimation {
-    0%   {opacity: 1;}
-    90%  {opacity: 1;}
-    100% {opacity: 0;}
+    0% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
 }
 
 @-webkit-keyframes cssAnimation {
-    0%   {opacity: 1;}
-    90%  {opacity: 1;}
-    100% {opacity: 0;}
+    0% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
 }

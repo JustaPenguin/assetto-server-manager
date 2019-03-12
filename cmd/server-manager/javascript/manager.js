@@ -114,16 +114,15 @@ let liveMap = {
     $driverInfo: null,
 
     init: function () {
-        let ws = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/api/live-map");
-
-        let xOffset = 0, zOffset = 0;
-
         const $map = $document.find("#map");
 
         if (!$map.length) {
             return; // livemap is disabled.
         }
 
+        let ws = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/api/live-map");
+
+        let xOffset = 0, zOffset = 0;
         let multiplierX = 1;
         let multiplierZ = 1;
 
@@ -154,6 +153,9 @@ let liveMap = {
             let data = message.Message;
 
             switch (message.EventType) {
+                case EventVersion:
+                    location.reload();
+                    break;
                 case EventTrackMapInfo:
                     // track map info
                     xOffset = data.OffsetX;
@@ -185,6 +187,7 @@ let liveMap = {
                     break;
 
                 case EventSessionInfo:
+                case EventNewSession:
                     liveMap.clearAllDrivers();
                     let trackURL = "/content/tracks/" + data.Track + (!!data.TrackConfig ? "/" + data.TrackConfig : "") + "/map.png";
 
@@ -192,7 +195,40 @@ let liveMap = {
 
                     loadedImg.onload = function () {
                         $imgContainer.attr({'src': trackURL});
-                        mapSizeMultiplier = $imgContainer.width() / loadedImg.width;
+
+                        if (loadedImg.height / loadedImg.width > 1.2) {
+                            // rotate the map
+                            $map.addClass("rotated");
+
+                            $imgContainer.css({
+                                'max-height': $imgContainer.closest(".map-container").width(),
+                                'max-width': 'auto'
+                            });
+
+                            mapSizeMultiplier = $imgContainer.width() / loadedImg.width;
+
+                            $map.closest(".map-container").css({
+                                'max-height': loadedImg.width * mapSizeMultiplier,
+                                'max-width': 'auto',
+                            });
+
+                        } else {
+                            // un-rotate the map
+                            $map.removeClass("rotated");
+
+                            $map.closest(".map-container").css({
+                                'max-height': 'inherit',
+                                'max-width': '100%',
+                            });
+
+                            $imgContainer.css({
+                                'max-height': 'inherit',
+                                'max-width': '100%'
+                            });
+
+                            mapSizeMultiplier = $imgContainer.width() / loadedImg.width;
+                        }
+
                         mapImageHasLoaded = true;
                     };
 

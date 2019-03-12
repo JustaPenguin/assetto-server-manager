@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/go-chi/chi"
@@ -134,7 +135,7 @@ func (as *AssettoServerProcess) Stop() error {
 
 	err := as.cmd.Process.Kill()
 
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "process already finished") {
 		return err
 	}
 
