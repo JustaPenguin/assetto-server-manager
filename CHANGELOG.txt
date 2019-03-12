@@ -1,6 +1,12 @@
 v1.0.3
 ------
 
+We recommend re-uploading all of your tracks after doing this update! Some new features will only work with
+new track assets!
+
+Please also consult the config.yml in the zip file, there is a new section: "live_map" that you must add to your
+config.yml to get live map functionality!
+
 * Added a Live Map. You'll need to re-upload your tracks to see the live map, since it requires new
   track assets.
 * Added support for plugins such as KissMyRank. Follow the KissMyRank setup, but instead of editing
