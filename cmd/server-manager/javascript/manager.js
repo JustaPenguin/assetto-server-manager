@@ -120,6 +120,10 @@ let liveMap = {
 
         const $map = $document.find("#map");
 
+        if (!$map.length) {
+            return; // livemap is disabled.
+        }
+
         let multiplierX = 1;
         let multiplierZ = 1;
 

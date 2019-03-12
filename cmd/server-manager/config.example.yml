@@ -110,4 +110,5 @@ users:
 ################################################################################
 live_map:
   # how often to refresh the map data in milliseconds
+  # set this to 0 to disable live map.
   refresh_interval_ms: 67

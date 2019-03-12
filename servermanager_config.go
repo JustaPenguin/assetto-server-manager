@@ -23,6 +23,10 @@ type LiveMapConfig struct {
 	IntervalMs int `yaml:"refresh_interval_ms"`
 }
 
+func (l *LiveMapConfig) IsEnabled() bool {
+	return l.IntervalMs > 0
+}
+
 type HTTPConfig struct {
 	Hostname   string `yaml:"hostname"`
 	SessionKey string `yaml:"session_key"`

@@ -50,7 +50,9 @@ func main() {
 		filesystem = static.FS(false)
 	}
 
-	udp.RealtimePosIntervalMs = config.LiveMap.IntervalMs
+	if config.LiveMap.IsEnabled() {
+		udp.RealtimePosIntervalMs = config.LiveMap.IntervalMs
+	}
 
 	servermanager.ViewRenderer, err = servermanager.NewRenderer(templateLoader, debug)
 
