@@ -1,3 +1,8 @@
+v1.1.1
+------
+
+* Fixed a bug that caused some scheduled races to not start correctly.
+
 v1.1.0
 ------
 

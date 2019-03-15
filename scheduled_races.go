@@ -19,6 +19,8 @@ func InitialiseScheduledCustomRaces() error {
 	}
 
 	for _, race := range races {
+		race := race
+
 		if race.Scheduled.After(time.Now()) {
 			// add a scheduled event on date
 			duration := race.Scheduled.Sub(time.Now())
@@ -67,7 +69,11 @@ func InitialiseScheduledChampionshipEvents() error {
 	}
 
 	for _, championship := range championships {
+		championship := championship
+
 		for _, event := range championship.Events {
+			event := event
+
 			if event.Scheduled.After(time.Now()) {
 				// add a scheduled event on date
 				duration := event.Scheduled.Sub(time.Now())
