@@ -155,6 +155,8 @@ func (as *AssettoServerProcess) stopChildProcesses() {
 
 		_ = command.Process.Release()
 	}
+
+	as.extraProcesses = make([]*exec.Cmd, 0)
 }
 
 // Restart the assetto server.
@@ -194,6 +196,8 @@ func (as *AssettoServerProcess) Stop() error {
 	}
 
 	as.cmd = nil
+
+	as.stopChildProcesses()
 
 	return nil
 }
