@@ -3,6 +3,8 @@ package servermanager
 import (
 	"bytes"
 	"errors"
+	"github.com/go-chi/chi"
+	"github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"os"
@@ -10,10 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"syscall"
-
-	"github.com/go-chi/chi"
-	"github.com/sirupsen/logrus"
 )
 
 const MaxLogSizeBytes = 1e6
@@ -116,15 +114,14 @@ func (as *AssettoServerProcess) Start() error {
 		var cmd *exec.Cmd
 
 		if len(parts) > 1 {
-			cmd = exec.Command(parts[0], parts[1:]...)
+			cmd = buildCommand(parts[0], parts[1:]...)
 		} else {
-			cmd = exec.Command(parts[0])
+			cmd = buildCommand(parts[0])
 		}
 
 		cmd.Stdout = pluginsOutput
 		cmd.Stderr = pluginsOutput
 		cmd.Dir = wd
-		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 		err := cmd.Start()
 
@@ -149,7 +146,7 @@ func (as *AssettoServerProcess) Start() error {
 
 func (as *AssettoServerProcess) stopChildProcesses() {
 	for _, command := range as.extraProcesses {
-		err := syscall.Kill(-command.Process.Pid, syscall.SIGINT|syscall.SIGKILL)
+		err := kill(command.Process)
 
 		if err != nil {
 			logrus.Errorf("Can't kill process: %d, err: %s", command.Process.Pid, err)
