@@ -1,7 +1,6 @@
 package servermanager
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"io"
@@ -19,9 +18,10 @@ import (
 )
 
 var (
-	ViewRenderer *Renderer
-	store        sessions.Store
-	logOutput    = new(bytes.Buffer)
+	ViewRenderer  *Renderer
+	store         sessions.Store
+	logOutput     = newLogBuffer(MaxLogSizeBytes)
+	pluginsOutput = newLogBuffer(MaxLogSizeBytes)
 )
 
 func init() {
@@ -345,7 +345,7 @@ func serverLogsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type logData struct {
-	ServerLog, ManagerLog string
+	ServerLog, ManagerLog, PluginsLog string
 }
 
 func apiServerLogHandler(w http.ResponseWriter, r *http.Request) {
@@ -354,6 +354,7 @@ func apiServerLogHandler(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(logData{
 		ServerLog:  AssettoProcess.Logs(),
 		ManagerLog: logOutput.String(),
+		PluginsLog: pluginsOutput.String(),
 	})
 }
 
