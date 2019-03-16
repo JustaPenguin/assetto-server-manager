@@ -12,11 +12,12 @@ import (
 var config *Configuration
 
 type Configuration struct {
-	HTTP    HTTPConfig    `yaml:"http"`
-	Steam   SteamConfig   `yaml:"steam"`
-	Store   StoreConfig   `yaml:"store"`
-	Users   UsersConfig   `yaml:"users"`
-	LiveMap LiveMapConfig `yaml:"live_map"`
+	HTTP    HTTPConfig        `yaml:"http"`
+	Steam   SteamConfig       `yaml:"steam"`
+	Store   StoreConfig       `yaml:"store"`
+	Users   UsersConfig       `yaml:"users"`
+	LiveMap LiveMapConfig     `yaml:"live_map"`
+	Server  ServerExtraConfig `yaml:"server"`
 }
 
 type LiveMapConfig struct {
@@ -65,6 +66,10 @@ type UsersConfig struct {
 	Accounts []Account `yaml:"accounts"`
 
 	ReadOpen bool `yaml:"read_open"`
+}
+
+type ServerExtraConfig struct {
+	RunOnStart []string `yaml:"run_on_start"`
 }
 
 func ReadConfig(location string) (conf *Configuration, err error) {
