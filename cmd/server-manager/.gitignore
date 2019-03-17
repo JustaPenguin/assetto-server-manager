@@ -4,5 +4,5 @@ server_manager.db
 config.yml
 server-manager
 static_embed.go
-static/manager.js
+static/bundle.js
 node_modules
