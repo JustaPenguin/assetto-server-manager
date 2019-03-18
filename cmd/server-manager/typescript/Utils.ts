@@ -49,7 +49,6 @@ export function initMultiSelect($element: JQuery) {
             return false;
         }
 
-        // @ts-ignore
         $elem.multiSelect({
             selectableHeader: "<input type='search' class='form-control search-input' autocomplete='off' placeholder='search'>",
             selectionHeader: "<input type='search' class='form-control search-input' autocomplete='off' placeholder='search'>",

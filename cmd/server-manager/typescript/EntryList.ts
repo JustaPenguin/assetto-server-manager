@@ -15,7 +15,7 @@ export class EntryList {
 
     $entrantsDiv: JQuery<HTMLElement> | null = null;
 
-    constructor($parent: JQuery<HTMLElement>, $carsDropdown: JQuery<HTMLSelectElement>) {
+    public constructor($parent: JQuery<HTMLElement>, $carsDropdown: JQuery<HTMLSelectElement>) {
         this.$parent = $parent;
         this.$carsDropdown = $carsDropdown;
 

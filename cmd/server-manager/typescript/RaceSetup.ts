@@ -25,7 +25,7 @@ export class RaceSetup {
     // entryList for this RaceSetup
     private entryList: EntryList;
 
-    constructor($parent: JQuery<HTMLElement>) {
+    public constructor($parent: JQuery<HTMLElement>) {
         this.$document = $(document);
         this.$parent = $parent;
         this.trackLayoutOpts = {};

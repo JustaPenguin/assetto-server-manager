@@ -9,7 +9,7 @@ export class Championship {
     private $pointsTemplate: JQuery<HTMLElement>;
     private $classTemplate: JQuery<HTMLElement>;
 
-    constructor() {
+    public constructor() {
         this.$document = $(document);
         this.$pointsTemplate = $(".points-place").last().clone();
 

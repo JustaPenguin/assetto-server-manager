@@ -4,8 +4,11 @@ import "bootstrap";
 import "bootstrap-switch";
 import "randomcolor";
 import "@fortawesome/fontawesome-free/js/all";
+
 import {RaceSetup} from "./RaceSetup";
 import {Championship} from "./Championship";
+import {LiveTiming} from "./LiveTiming";
+import {ServerLogs} from "./ServerLogs";
 
 $(() => {
     console.log("initialising server manager javascript");
@@ -16,6 +19,10 @@ $(() => {
         new RaceSetup($(elem));
     });
 
+    new LiveTiming();
+    new ServerLogs();
+
+
     $("#open-in-simres").each(function(index, elem) {
         let link = window.location.href.split("#")[0].replace("results", "results/download") + ".json";
 
@@ -23,12 +30,6 @@ $(() => {
 
         return false
     });
-
-    /*
-    serverLogs.init();
-    liveTiming.init();
-    liveMap.init();
-    */
 
     // init bootstrap-switch
     $.fn.bootstrapSwitch.defaults.size = 'small';
