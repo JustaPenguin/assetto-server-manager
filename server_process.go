@@ -3,8 +3,6 @@ package servermanager
 import (
 	"bytes"
 	"errors"
-	"github.com/go-chi/chi"
-	"github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"os"
@@ -12,6 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/go-chi/chi"
+	"github.com/sirupsen/logrus"
 )
 
 const MaxLogSizeBytes = 1e6
