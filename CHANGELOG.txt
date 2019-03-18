@@ -8,9 +8,10 @@ v1.1.2
 * Log outputs are now limited to a size of 1MB. When the log output reaches 1MB, it is trimmed to keep the most recent
   messages.
 * Championships are now split into active and completed championships. They are ordered by the time they were last
-  updated
+  updated.
+* Fixes a bug where tyres configured in a championship event would not carry across to the next championship event or
+  load into the edit championship event page.
 * Fixed scheduled events for time zones outside of UTC.
-
 
 v1.1.1
 ------
