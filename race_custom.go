@@ -86,7 +86,7 @@ func customRaceScheduleHandler(w http.ResponseWriter, r *http.Request) {
 	timeString := r.FormValue("event-schedule-time")
 
 	// Parse time in correct time zone
-	date, err := time.ParseInLocation("2006-01-02-15:04", dateString + "-" + timeString, time.Local)
+	date, err := time.ParseInLocation("2006-01-02-15:04", dateString+"-"+timeString, time.Local)
 
 	if err != nil {
 		logrus.Errorf("couldn't parse schedule race date, err: %s", err)
