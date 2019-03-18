@@ -131,6 +131,7 @@ func (tr *Renderer) init() error {
 	funcs["varSplit"] = varSplit
 	funcs["timeFormat"] = timeFormat
 	funcs["dateFormat"] = dateFormat
+	funcs["timeZone"] = timeZone
 	funcs["isBefore"] = isBefore
 	funcs["trackInfo"] = trackInfo
 	funcs["ReadAccess"] = dummyAccessFunc
@@ -177,6 +178,12 @@ func timeFormat(t time.Time) string {
 
 func dateFormat(t time.Time) string {
 	return t.Format("02/01/2006")
+}
+
+func timeZone(t time.Time) string {
+	name, _ := t.Zone()
+
+	return name
 }
 
 func isBefore(t time.Time) bool {
