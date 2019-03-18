@@ -244,7 +244,12 @@ a.detailed-results:hover {
 }
 
 .table-custom-race tr td:last-child {
-    max-width: 110px;
+    max-width: 160px;
+    text-align: center;
+}
+
+.table-championship tr td:last-child {
+    max-width: 270px;
     text-align: center;
 }
 

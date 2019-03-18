@@ -12,6 +12,7 @@ v1.1.2
 * Fixes a bug where tyres configured in a championship event would not carry across to the next championship event or
   load into the edit championship event page.
 * Fixed scheduled events for time zones outside of UTC.
+* Improved some page layouts on mobile devices
 
 v1.1.1
 ------
