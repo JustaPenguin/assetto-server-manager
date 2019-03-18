@@ -691,9 +691,12 @@ func championshipScheduleEventHandler(w http.ResponseWriter, r *http.Request) {
 	dateString := r.FormValue("event-schedule-date")
 	timeString := r.FormValue("event-schedule-time")
 
-	dateTimeString := dateString + "-" + timeString
+	// Get the timezone of the server, parse the scheduled time as this instead of UTC
+	location, _ := time.Now().Zone()
 
-	date, err := time.Parse("2006-01-02-15:04", dateTimeString)
+	dateTimeString := dateString + "-" + timeString + " at (" + location + ")"
+
+	date, err := time.Parse("2006-01-02-15:04 at (MST)", dateTimeString)
 
 	if err != nil {
 		logrus.Errorf("couldn't parse schedule championship event date, err: %s", err)
