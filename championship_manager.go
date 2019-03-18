@@ -215,6 +215,12 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (map[
 		}
 	}
 
+	err = cm.applyCurrentRaceSetupToOptions(opts, opts["Current"].(CurrentRaceConfig))
+
+	if err != nil {
+		return nil, err
+	}
+
 	return opts, nil
 }
 
