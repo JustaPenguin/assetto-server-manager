@@ -7,6 +7,8 @@ v1.1.2
 * Improves UDP forwarding to only forward as many bytes as were received.
 * Log outputs are now limited to a size of 1MB. When the log output reaches 1MB, it is trimmed to keep the most recent
   messages.
+* Championships are now split into active and completed championships. They are ordered by the time they were last
+  updated
 
 
 v1.1.1
