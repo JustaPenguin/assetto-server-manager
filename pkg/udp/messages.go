@@ -94,13 +94,13 @@ func (asu *AssettoServerUDP) forwardServe() {
 		default:
 			buf := make([]byte, 1024)
 
-			_, _, err := asu.forwarder.ReadFromUDP(buf)
+			n, _, err := asu.forwarder.ReadFromUDP(buf)
 
 			if err != nil {
 				continue
 			}
 
-			_, err = asu.listener.Write(buf)
+			_, err = asu.listener.Write(buf[:n])
 
 			if err != nil {
 				continue
@@ -119,7 +119,7 @@ func (asu *AssettoServerUDP) serve() {
 			buf := make([]byte, 1024)
 
 			// read message from assetto
-			_, _, err := asu.listener.ReadFromUDP(buf)
+			n, _, err := asu.listener.ReadFromUDP(buf)
 
 			if err != nil {
 				asu.callback(ServerError{err})
@@ -138,7 +138,7 @@ func (asu *AssettoServerUDP) serve() {
 			if asu.forward && asu.forwarder != nil {
 				go func() {
 					// write the message to the forwarding address
-					_, err := asu.forwarder.Write(buf)
+					_, err := asu.forwarder.Write(buf[:n])
 
 					if err != nil {
 						fmt.Println("err", err)

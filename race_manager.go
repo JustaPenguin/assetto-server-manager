@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
 	"sort"
 	"strconv"
 	"strings"
@@ -35,6 +37,19 @@ func SetupRaceManager(store RaceStore) {
 	raceManager = NewRaceManager(store)
 	championshipManager = NewChampionshipManager(raceManager)
 	AssettoProcess = &AssettoServerProcess{doneCh: serverStoppedChan}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for range c {
+			// ^C, handle it
+			if p, ok := AssettoProcess.(*AssettoServerProcess); ok {
+				p.stopChildProcesses()
+			}
+
+			os.Exit(0)
+		}
+	}()
 }
 
 type RaceManager struct {

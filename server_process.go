@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -13,6 +14,8 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
 )
+
+const MaxLogSizeBytes = 1e6
 
 type ServerProcess interface {
 	Logs() string
@@ -57,14 +60,20 @@ var ErrServerAlreadyRunning = errors.New("servermanager: assetto corsa server is
 type AssettoServerProcess struct {
 	cmd *exec.Cmd
 
-	out   *bytes.Buffer
+	out   *logBuffer
 	mutex sync.Mutex
 
 	doneCh chan struct{}
+
+	extraProcesses []*exec.Cmd
 }
 
 // Logs outputs the server logs
 func (as *AssettoServerProcess) Logs() string {
+	if as.out == nil {
+		return ""
+	}
+
 	return as.out.String()
 }
 
@@ -77,30 +86,78 @@ func (as *AssettoServerProcess) Start() error {
 	as.mutex.Lock()
 	defer as.mutex.Unlock()
 
+	wd, err := os.Getwd()
+
+	if err != nil {
+		return err
+	}
+
 	as.cmd = exec.Command(filepath.Join(ServerInstallPath, serverExecutablePath))
 	as.cmd.Dir = ServerInstallPath
 
 	if as.out == nil {
-		as.out = new(bytes.Buffer)
+		as.out = newLogBuffer(MaxLogSizeBytes)
 	}
 
 	as.cmd.Stdout = as.out
 	as.cmd.Stderr = as.out
 
-	err := as.cmd.Start()
+	err = as.cmd.Start()
 
 	if err != nil {
 		as.cmd = nil
 		return err
 	}
 
+	for _, command := range config.Server.RunOnStart {
+		parts := strings.Split(command, " ")
+
+		var cmd *exec.Cmd
+
+		if len(parts) > 1 {
+			cmd = buildCommand(parts[0], parts[1:]...)
+		} else {
+			cmd = buildCommand(parts[0])
+		}
+
+		cmd.Stdout = pluginsOutput
+		cmd.Stderr = pluginsOutput
+		cmd.Dir = wd
+
+		err := cmd.Start()
+
+		if err != nil {
+			logrus.Errorf("Could not run extra command: %s, err: %s", command, err)
+			continue
+		}
+
+		as.extraProcesses = append(as.extraProcesses, cmd)
+	}
+
 	go func() {
 		_ = as.cmd.Wait()
+
+		as.stopChildProcesses()
 
 		as.doneCh <- struct{}{}
 	}()
 
 	return nil
+}
+
+func (as *AssettoServerProcess) stopChildProcesses() {
+	for _, command := range as.extraProcesses {
+		err := kill(command.Process)
+
+		if err != nil {
+			logrus.Errorf("Can't kill process: %d, err: %s", command.Process.Pid, err)
+			continue
+		}
+
+		_ = command.Process.Release()
+	}
+
+	as.extraProcesses = make([]*exec.Cmd, 0)
 }
 
 // Restart the assetto server.
@@ -141,6 +198,8 @@ func (as *AssettoServerProcess) Stop() error {
 
 	as.cmd = nil
 
+	as.stopChildProcesses()
+
 	return nil
 }
 
@@ -160,4 +219,31 @@ func FreeUDPPort() (int, error) {
 	defer l.Close()
 
 	return l.LocalAddr().(*net.UDPAddr).Port, nil
+}
+
+func newLogBuffer(maxSize int) *logBuffer {
+	return &logBuffer{
+		size: maxSize,
+		buf:  new(bytes.Buffer),
+	}
+}
+
+type logBuffer struct {
+	buf *bytes.Buffer
+
+	size int
+}
+
+func (lb *logBuffer) Write(p []byte) (n int, err error) {
+	b := lb.buf.Bytes()
+
+	if len(b) > lb.size {
+		lb.buf = bytes.NewBuffer(b[len(b)-lb.size:])
+	}
+
+	return lb.buf.Write(p)
+}
+
+func (lb *logBuffer) String() string {
+	return lb.buf.String()
 }
