@@ -584,6 +584,46 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 	}
 }
 
+// applyCurrentRaceSetupToOptions takes current values in race which require more detailed configuration
+// and applies them to the template opts.
+func (rm *RaceManager) applyCurrentRaceSetupToOptions(opts map[string]interface{}, race CurrentRaceConfig) error {
+	tyres, err := ListTyres()
+
+	if err != nil {
+		return err
+	}
+
+	deselectedTyres := make(map[string]bool)
+
+	for _, car := range varSplit(race.Cars) {
+		tyresForCar, ok := tyres[car]
+
+		if !ok {
+			continue
+		}
+
+		for carTyre := range tyresForCar {
+			found := false
+
+			for _, t := range varSplit(race.LegalTyres) {
+				if carTyre == t {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				deselectedTyres[carTyre] = true
+			}
+		}
+	}
+
+	opts["Tyres"] = tyres
+	opts["DeselectedTyres"] = deselectedTyres
+
+	return nil
+}
+
 // BuildRaceOpts builds a quick race form
 func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, error) {
 	cars, err := ListCars()
@@ -593,12 +633,6 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 	}
 
 	tracks, err := ListTracks()
-
-	if err != nil {
-		return nil, err
-	}
-
-	tyres, err := ListTyres()
 
 	if err != nil {
 		return nil, err
@@ -650,31 +684,6 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		return nil, err
 	}
 
-	deselectedTyres := make(map[string]bool)
-
-	for _, car := range varSplit(race.CurrentRaceConfig.Cars) {
-		tyresForCar, ok := tyres[car]
-
-		if !ok {
-			continue
-		}
-
-		for carTyre := range tyresForCar {
-			found := false
-
-			for _, t := range varSplit(race.CurrentRaceConfig.LegalTyres) {
-				if carTyre == t {
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				deselectedTyres[carTyre] = true
-			}
-		}
-	}
-
 	solIsInstalled := false
 
 	for availableWeather := range weather {
@@ -692,12 +701,10 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		}
 	}
 
-	return map[string]interface{}{
+	opts := map[string]interface{}{
 		"CarOpts":           cars,
 		"TrackOpts":         tracks,
 		"AvailableSessions": AvailableSessions,
-		"Tyres":             tyres,
-		"DeselectedTyres":   deselectedTyres,
 		"Weather":           weather,
 		"SolIsInstalled":    solIsInstalled,
 		"Current":           race.CurrentRaceConfig,
@@ -708,7 +715,15 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		"EditingID":         templateIDForEditing,
 		"CustomRaceName":    customRaceName,
 		"SurfacePresets":    DefaultTrackSurfacePresets,
-	}, nil
+	}
+
+	err = rm.applyCurrentRaceSetupToOptions(opts, race.CurrentRaceConfig)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return opts, nil
 }
 
 const maxRecentRaces = 30
