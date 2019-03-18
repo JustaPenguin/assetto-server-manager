@@ -73,7 +73,17 @@ func (cm *ChampionshipManager) DeleteChampionship(id string) error {
 }
 
 func (cm *ChampionshipManager) ListChampionships() ([]*Championship, error) {
-	return cm.raceStore.ListChampionships()
+	champs, err := cm.raceStore.ListChampionships()
+
+	if err != nil {
+		return nil, err
+	}
+
+	sort.Slice(champs, func(i, j int) bool {
+		return champs[i].Updated.After(champs[j].Updated)
+	})
+
+	return champs, nil
 }
 
 func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (map[string]interface{}, error) {
