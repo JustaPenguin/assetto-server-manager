@@ -1,8 +1,15 @@
 v1.1.2
 ------
 
+* Adds support for sTracker. Read the new config.yml file for more information on setting up sTracker.
+* Adds support for running processes alongside the Assetto Corsa server. Each process is run when the server
+  is started, and killed when the server is stopped. See config.yml for more information.
+* Improves UDP forwarding to only forward as many bytes as were received.
+* Log outputs are now limited to a size of 1MB. When the log output reaches 1MB, it is trimmed to keep the most recent
+  messages.
 * Championships are now split into active and completed championships. They are ordered by the time they were last
   updated
+
 
 v1.1.1
 ------
