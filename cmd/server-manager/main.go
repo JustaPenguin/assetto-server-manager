@@ -42,7 +42,7 @@ func main() {
 	var templateLoader servermanager.TemplateLoader
 	var filesystem http.FileSystem
 
-	if debug {
+	if os.Getenv("FILESYSTEM_HTML") == "true" {
 		templateLoader = servermanager.NewFilesystemTemplateLoader("views")
 		filesystem = http.Dir("static")
 	} else {
