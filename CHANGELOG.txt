@@ -9,6 +9,7 @@ v1.1.2
   messages.
 * Championships are now split into active and completed championships. They are ordered by the time they were last
   updated
+* Fixed scheduled events for time zones outside of UTC.
 
 
 v1.1.1
