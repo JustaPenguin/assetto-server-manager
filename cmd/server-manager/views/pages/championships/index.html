@@ -4,9 +4,9 @@
     {{ $writeAccess := WriteAccess }}
 
     <div class="row">
-        <div class="col-4"></div>
-        <div class="col-4"><h1 class="text-center">Championships</h1></div>
-        <div class="col-4">
+        <div class="col-sm-4"></div>
+        <div class="col-sm-4"><h1 class="text-center">Championships</h1></div>
+        <div class="col-sm-4">
             {{ if $writeAccess }}
                 <a href="/championships/new" class="btn btn-success float-right">Create a new Championship</a>
                 <div class="clearfix mb-5"></div>
@@ -16,91 +16,95 @@
 
     <h2>Active</h2>
 
-    <table class="table table-bordered table-striped">
-        <tr>
-            <th>Name</th>
-            <th>Progress</th>
-            <th>Number of Events</th>
-            <th>Number of Classes</th>
-            <th>Number of Entrants</th>
-            <th>Actions</th>
-        </tr>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-championship">
+            <tr>
+                <th>Name</th>
+                <th>Progress</th>
+                <th>Number of Events</th>
+                <th>Number of Classes</th>
+                <th>Number of Entrants</th>
+                <th>Actions</th>
+            </tr>
 
-        {{ range $index, $championship := .championships }}
-            {{ if ne $championship.Progress 100.0 }}
-                <tr>
-                    <td>
-                        <a href="/championship/{{ $championship.ID }}">{{ $championship.Name }}</a>
-                    </td>
-                    <td>
-                        {{ int $championship.Progress }}%
-                    </td>
-                    <td>
-                        {{ len $championship.Events }}
-                    </td>
-                    <td>
-                        {{ len $championship.Classes }}
-                    </td>
-                    <td>
-                        {{ $championship.NumEntrants }}
-                    </td>
-                    <td>
-                        <a class="btn btn-sm btn-success" href="/championship/{{ $championship.ID }}">View</a>
-                        <a class="btn btn-sm btn-info" href="/championship/{{ $championship.ID }}/export">Export</a>
+            {{ range $index, $championship := .championships }}
+                {{ if ne $championship.Progress 100.0 }}
+                    <tr>
+                        <td>
+                            <a href="/championship/{{ $championship.ID }}">{{ $championship.Name }}</a>
+                        </td>
+                        <td>
+                            {{ int $championship.Progress }}%
+                        </td>
+                        <td>
+                            {{ len $championship.Events }}
+                        </td>
+                        <td>
+                            {{ len $championship.Classes }}
+                        </td>
+                        <td>
+                            {{ $championship.NumEntrants }}
+                        </td>
+                        <td class="align-middle custom-race-actions">
+                            <a class="btn btn-sm btn-success" href="/championship/{{ $championship.ID }}">View</a>
+                            <a class="btn btn-sm btn-info" href="/championship/{{ $championship.ID }}/export">Export</a>
 
-                        {{ if $writeAccess }}
-                            <a class="btn btn-sm btn-warning" href="/championship/{{ $championship.ID }}/edit">Edit</a>
-                            <a onClick="return confirm('I understand that this will delete the entire championship permanently.') "
-                               class="btn btn-sm btn-danger" href="/championship/{{ $championship.ID }}/delete">Delete</a>
-                        {{ end }}
-                    </td>
-                </tr>
-            {{ end}}
-        {{ end }}
-    </table>
+                            {{ if $writeAccess }}
+                                <a class="btn btn-sm btn-warning" href="/championship/{{ $championship.ID }}/edit">Edit</a>
+                                <a onClick="return confirm('I understand that this will delete the entire championship permanently.') "
+                                   class="btn btn-sm btn-danger" href="/championship/{{ $championship.ID }}/delete">Delete</a>
+                            {{ end }}
+                        </td>
+                    </tr>
+                {{ end}}
+            {{ end }}
+        </table>
+    </div>
 
     <hr>
 
     <h2>Completed</h2>
 
-    <table class="table table-bordered table-striped">
-        <tr>
-            <th>Name</th>
-            <th>Number of Events</th>
-            <th>Number of Classes</th>
-            <th>Number of Entrants</th>
-            <th>Actions</th>
-        </tr>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-championship">
+            <tr>
+                <th>Name</th>
+                <th>Number of Events</th>
+                <th>Number of Classes</th>
+                <th>Number of Entrants</th>
+                <th>Actions</th>
+            </tr>
 
-        {{ range $index, $championship := .championships }}
-            {{ if eq $championship.Progress 100.0 }}
-                <tr>
-                    <td>
-                        <a href="/championship/{{ $championship.ID }}">{{ $championship.Name }}</a>
-                    </td>
-                    <td>
-                        {{ len $championship.Events }}
-                    </td>
-                    <td>
-                        {{ len $championship.Classes }}
-                    </td>
-                    <td>
-                        {{ $championship.NumEntrants }}
-                    </td>
-                    <td>
-                        <a class="btn btn-sm btn-success" href="/championship/{{ $championship.ID }}">View</a>
-                        <a class="btn btn-sm btn-info" href="/championship/{{ $championship.ID }}/export">Export</a>
+            {{ range $index, $championship := .championships }}
+                {{ if eq $championship.Progress 100.0 }}
+                    <tr>
+                        <td>
+                            <a href="/championship/{{ $championship.ID }}">{{ $championship.Name }}</a>
+                        </td>
+                        <td>
+                            {{ len $championship.Events }}
+                        </td>
+                        <td>
+                            {{ len $championship.Classes }}
+                        </td>
+                        <td>
+                            {{ $championship.NumEntrants }}
+                        </td>
+                        <td class="align-middle custom-race-actions">
+                            <a class="btn btn-sm btn-success" href="/championship/{{ $championship.ID }}">View</a>
+                            <a class="btn btn-sm btn-info" href="/championship/{{ $championship.ID }}/export">Export</a>
 
-                        {{ if $writeAccess }}
-                            <a class="btn btn-sm btn-warning" href="/championship/{{ $championship.ID }}/edit">Edit</a>
-                            <a onClick="return confirm('I understand that this will delete the entire championship permanently.') "
-                               class="btn btn-sm btn-danger" href="/championship/{{ $championship.ID }}/delete">Delete</a>
-                        {{ end }}
-                    </td>
-                </tr>
+                            {{ if $writeAccess }}
+                                <a class="btn btn-sm btn-warning" href="/championship/{{ $championship.ID }}/edit">Edit</a>
+                                <a onClick="return confirm('I understand that this will delete the entire championship permanently.') "
+                                   class="btn btn-sm btn-danger" href="/championship/{{ $championship.ID }}/delete">Delete</a>
+                            {{ end }}
+                        </td>
+                    </tr>
+                {{ end }}
             {{ end }}
-        {{ end }}
-    </table>
+        </table>
+    </div>
 
 
     <div class="clearfix"></div>
