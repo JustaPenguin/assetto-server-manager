@@ -132,13 +132,16 @@ server:
   #   rcvPort = 12002
   #   sendPort = 11002
   #
-  # otherwise, stracker will not be able to connect to the server manager
-  #
   # where:
   #   - rcvPort equals the port from the UDP Plugin Address in Server Options
-  #   - sendPort equals the port from the UDP Plugin Local Port in Server Options
+  #   - sendPort equals the value of the UDP Plugin Local Port in Server Options
+  #
+  # otherwise, stracker will not be able to connect to the server manager
   #
   # you can of course add your own commands (whatever you like!) here.
+  # 
+  # this assumes that you have installed stracker into a folder called "stracker"
+  # next to the server-manager executable.
   run_on_start:
     # uncomment the line below for stracker on Linux
     # - ./stracker/stracker_linux_x86/stracker --stracker_ini ./stracker/stracker.ini
