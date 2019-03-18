@@ -559,9 +559,8 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 			dateString := r.FormValue("CustomRaceScheduled")
 			timeString := r.FormValue("CustomRaceScheduledTime")
 
-			dateTimeString := dateString + "-" + timeString
-
-			date, err := time.Parse("2006-02-01-15:04", dateTimeString)
+			// Parse time in correct time zone
+			date, err := time.ParseInLocation("2006-01-02-15:04", dateString+"-"+timeString, time.Local)
 
 			if err != nil {
 				return err
