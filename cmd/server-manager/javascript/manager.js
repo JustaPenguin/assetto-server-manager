@@ -1227,15 +1227,15 @@ function getSunAngle(hours, mins) {
     return Math.round(((diff / 60000) / 60) * 16);
 }
 
-const logCharLimit = 500000;
-
 let serverLogs = {
     init: function () {
         let $serverLog = $document.find("#server-logs");
         let $managerLog = $document.find("#manager-logs");
+        let $pluginLog = $document.find("#plugin-logs");
 
         let disableServerLogRefresh = false;
         let disableManagerLogRefresh = false;
+        let disablePluginLogRefresh = false;
 
         $serverLog.on("mousedown", function () {
             disableServerLogRefresh = true;
@@ -1243,6 +1243,14 @@ let serverLogs = {
 
         $serverLog.on("mouseup", function () {
             disableServerLogRefresh = false;
+        });
+
+        $pluginLog.on("mousedown", function () {
+            disablePluginLogRefresh = true;
+        });
+
+        $pluginLog.on("mouseup", function () {
+            disablePluginLogRefresh = false;
         });
 
         $managerLog.on("mousedown", function () {
@@ -1258,20 +1266,12 @@ let serverLogs = {
             return node.scrollTop + node.offsetHeight >= node.scrollHeight - 40;
         }
 
-        if ($serverLog.length && $managerLog.length) {
+        if ($serverLog.length && $managerLog.length && $pluginLog.length) {
             setInterval(function () {
                 $.get("/api/logs", function (data) {
                     if (!window.getSelection().toString()) {
-                        if (data.ServerLog.length > logCharLimit) {
-                            data.ServerLog = data.ServerLog.slice(data.ServerLog.length - logCharLimit, data.ServerLog.length);
-                        }
-
-                        if (data.ManagerLog.length > logCharLimit) {
-                            data.ManagerLog = data.ManagerLog.slice(data.ManagerLog.length - logCharLimit, data.ManagerLog.length);
-                        }
 
                         if (isAtBottom($serverLog) && !disableServerLogRefresh) {
-
                             $serverLog.text(data.ServerLog);
                             $serverLog.scrollTop(1E10);
                         }
@@ -1279,6 +1279,11 @@ let serverLogs = {
                         if (isAtBottom($managerLog) && !disableManagerLogRefresh) {
                             $managerLog.text(data.ManagerLog);
                             $managerLog.scrollTop(1E10);
+                        }
+
+                        if (isAtBottom($pluginLog) && !disablePluginLogRefresh) {
+                            $pluginLog.text(data.PluginsLog);
+                            $pluginLog.scrollTop(1E10);
                         }
                     }
                 });

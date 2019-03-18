@@ -113,3 +113,39 @@ live_map:
   # how often to refresh the map data in milliseconds
   # set this to 0 to disable live map.
   refresh_interval_ms: 67
+
+
+################################################################################
+#
+#  server config - configure plugins, e.g. stracker here.
+#
+################################################################################
+server:
+  # list of commands to run on server start and kill on server stop. this should
+  # contain the full command with arguments to run the given program.
+  #
+  # I envisage a lot of people wishing to use stracker with this, so i've tried
+  # to provide a couple of ideas of what this might look like below.
+  #
+  # !!! please also note that your stracker.ini must have the following lines set
+  # in the ACPLUGIN settings: !!!
+  #   rcvPort = 12002
+  #   sendPort = 11002
+  #
+  # where:
+  #   - rcvPort equals the port from the UDP Plugin Address in Server Options
+  #   - sendPort equals the value of the UDP Plugin Local Port in Server Options
+  #
+  # otherwise, stracker will not be able to connect to the server manager
+  #
+  # you can of course add your own commands (whatever you like!) here.
+  # 
+  # this assumes that you have installed stracker into a folder called "stracker"
+  # next to the server-manager executable.
+  run_on_start:
+    # uncomment the line below for stracker on Linux
+    # - ./stracker/stracker_linux_x86/stracker --stracker_ini ./stracker/stracker.ini
+
+    # uncomment the line below for stracker on Windows
+    # - ./stracker/stracker.exe --stracker_ini ./stracker/stracker.ini
+
