@@ -8,7 +8,8 @@ clean:
 	$(MAKE) -C cmd/server-manager clean
 
 test:
-	mkdir -p cmd/server-manager/assetto/{cfg,results}
+	mkdir -p cmd/server-manager/assetto/cfg
+	mkdir -p cmd/server-manager/assetto/results
 	cp -R fixtures/results/*.json cmd/server-manager/assetto/results
 	go test
 
