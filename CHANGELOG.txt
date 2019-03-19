@@ -1,3 +1,8 @@
+v1.1.4
+------
+
+* Fixes an issue preventing the upload of older cars which contain a data folder rather than a data.acd file.
+
 v1.1.3
 ------
 
