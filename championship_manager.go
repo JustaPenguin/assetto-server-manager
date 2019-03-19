@@ -315,6 +315,7 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 		IsOpen: 1,
 	}
 
+	raceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
 	raceSetup.LoopMode = 1
 	raceSetup.MaxClients = championship.NumEntrants()
 
