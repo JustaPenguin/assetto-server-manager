@@ -26,7 +26,7 @@ deploy: clean assets
 	go generate ./...
 
 	# directory structure
-	mkdir -p build/{linux,windows}
+	mkdir -p build/linux build/windows
 	cp config.example.yml build/linux/config.yml
 	cp config.example.yml build/windows/config.yml
 
