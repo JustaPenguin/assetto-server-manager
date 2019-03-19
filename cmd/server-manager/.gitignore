@@ -7,3 +7,5 @@ static_embed.go
 static/manager.js
 node_modules
 stracker*
+build/
+*.zip
