@@ -55,6 +55,7 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Get("/cars", carsHandler)
 		r.Get("/tracks", tracksHandler)
 		r.Get("/weather", weatherHandler)
+		r.Get("/setups", carSetupsHandler)
 
 		// results
 		r.Get("/results", resultsHandler)

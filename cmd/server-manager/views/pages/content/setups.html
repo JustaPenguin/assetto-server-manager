@@ -1,0 +1,46 @@
+{{ define "title" }}Car Setups{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">Car Setups</h1>
+
+    {{ if WriteAccess }}
+        <!-- @TODO upload -->
+    {{ end }}
+
+    {{ $writeAccess := WriteAccess }}
+
+    <table class="table table-bordered table-striped">
+        <tr>
+            <th>Car</th>
+            <th>Setup File</th>
+            {{ if $writeAccess }}
+                <th class="text-center">Delete</th>
+            {{ end }}
+        </tr>
+        {{ range $car, $setups := .setups }}
+
+            {{ range $index, $setup := $setups }}
+
+                <tr>
+                    {{ if eq $index 0 }}
+                        <td rowspan="{{ len $setups }}">
+                            <abbr title="{{ $car }}">{{ prettify $car true }}</abbr>
+                        </td>
+                    {{ end }}
+                    <td>
+                        {{ $setup }}
+                    </td>
+
+                    {{ if $writeAccess }}
+                        <td class="text-center">
+                            <a href="{{ print "/setup/delete/" $setup }}"><i class="fas fa-trash text-danger"></i></a>
+                        </td>
+                    {{ end }}
+                </tr>
+
+            {{ end }}
+        {{ end }}
+    </table>
+
+    <div class="clearfix"></div>
+{{ end }}
