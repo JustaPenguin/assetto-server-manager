@@ -251,11 +251,17 @@ func addFiles(files []ContentFile, contentType string) error {
 	}
 
 	for _, file := range files {
-		fileDecoded, err := base64.StdEncoding.DecodeString(base64HeaderRegex.ReplaceAllString(file.Data, ""))
+		var fileDecoded []byte
 
-		if err != nil {
-			logrus.Errorf("could not decode "+contentType+" file data, err: %s", err)
-			return err
+		if file.Size > 0 {
+			// zero-size files will still be created, just with no content. (some data files exist but are empty)
+			var err error
+			fileDecoded, err = base64.StdEncoding.DecodeString(base64HeaderRegex.ReplaceAllString(file.Data, ""))
+
+			if err != nil {
+				logrus.Errorf("could not decode "+contentType+" file data, err: %s", err)
+				return err
+			}
 		}
 
 		// If user uploaded a "tracks" or "cars" folder containing multiple tracks
@@ -273,7 +279,7 @@ func addFiles(files []ContentFile, contentType string) error {
 		path := filepath.Join(contentPath, file.FilePath)
 
 		// Makes any directories in the path that don't exist (there can be multiple)
-		err = os.MkdirAll(filepath.Dir(path), 0755)
+		err := os.MkdirAll(filepath.Dir(path), 0755)
 
 		if err != nil {
 			logrus.Errorf("could not create "+contentType+" file directory, err: %s", err)
