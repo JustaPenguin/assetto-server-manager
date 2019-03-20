@@ -1531,7 +1531,7 @@ function handleCarFilesLoop(fileList) {
         // Find the files that the server is interested in
         if (fileList[x].name === "data.acd" || fileList[x].name === "tyres.ini" || fileList[x].name === "ui_car.json"
             || fileList[x].name.startsWith("livery.") || fileList[x].name.startsWith("preview.")
-            || fileList[x].name === "ui_skin.json") {
+            || fileList[x].name === "ui_skin.json"|| fileList[x].filepath.indexOf("/data/") !== -1) {
 
             filesToUploadLocal.push(fileList[x]);
 
