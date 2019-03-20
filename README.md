@@ -58,11 +58,12 @@ services:
     image: seejy/assetto-server-manager:latest
     ports:
     # the port that the server manager runs on
-    - 8772:8772
+    - "8772:8772"
     # the port that the assetto server runs on (may vary depending on your configuration inside server manager)
-    - 9600:9600
+    - "9600:9600"
+    - "9600:9600/udp"
     # the port that the assetto server HTTP API runs on.
-    - 8081:8081
+    - "8081:8081"
     # you may also wish to bind your configured UDP plugin ports here. 
     volumes: 
     # volume mount the entire server install so that 
