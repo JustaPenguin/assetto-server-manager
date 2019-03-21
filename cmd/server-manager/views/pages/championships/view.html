@@ -399,14 +399,28 @@
                                             Start Practice Event
                                         </a>
 
-                                        <a class="btn btn-warning" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/edit">
-                                            Edit Event
-                                        </a>
 
-                                        <a onClick="return confirm('I understand that this will delete this entire event permanently.') "
-                                           class="btn btn-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/delete">
-                                            Delete Event
-                                        </a>
+                                        <div class="dropdown show" style="display: inline-block">
+                                            <a class="btn btn-warning dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                Manage Event
+                                            </a>
+
+                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                                                <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/edit">
+                                                    Edit
+                                                </a>
+
+                                                <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/import">
+                                                    Import Results
+                                                </a>
+
+                                                <a onClick="return confirm('I understand that this will delete this entire event permanently.') "
+                                                   class="dropdown-item text-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/delete">
+                                                    Delete
+                                                </a>
+                                            </div>
+                                        </div>
+
                                     {{ else if $event.InProgress }}
                                         <a onClick="return confirm('I understand that this will restart this entire event and any current results will be lost.') "
                                            class="btn btn-warning" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/restart">
@@ -444,44 +458,7 @@
 
                     <div class="row">
                         <div class="col-md-12">
-                            {{ if not (or $event.InProgress $event.Completed) }}
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-striped">
-                                        <tr>
-                                            {{ if $championship.IsMultiClass }}
-                                                <th>Class</th>
-                                            {{ end }}
-                                            <th>Name</th>
-                                            <th>Team</th>
-                                            <th>Car</th>
-                                        </tr>
-
-                                        {{ range $classIndex, $class := $championship.Classes }}
-                                            {{ $entrants := $class.Entrants.AsSlice }}
-
-                                            {{ range $entrantIndex, $entrant := $entrants }}
-                                                <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
-                                                    {{ if $championship.IsMultiClass }}
-                                                        {{ if eq $entrantIndex 0 }}
-                                                            <td rowspan="{{ len $entrants }}">{{ $class.Name }}</td>
-                                                        {{ end }}
-                                                    {{ end }}
-
-                                                    {{ if (contains "open slots" $entrant.Name) }}
-                                                        <td colspan="3"><em>{{ $entrant.Name }}</em></td>
-                                                    {{ else }}
-                                                        <td>{{ $entrant.Name }}</td>
-                                                        <td>{{ $entrant.Team }}</td>
-                                                        <td>{{ prettify $entrant.Model true }}</td>
-                                                    {{ end }}
-                                                </tr>
-                                            {{ end }}
-                                        {{ end }}
-                                    </table>
-                                </div>
-                            {{ else }}
-
-
+                            {{ if (or $event.InProgress $event.Completed) }}
                             <div {{ if $event.Completed }} class="collapse" id="event-{{ $eventIndex }}" {{ end }}>
 
                                 <ul class="nav nav-tabs mt-3" role="tablist">

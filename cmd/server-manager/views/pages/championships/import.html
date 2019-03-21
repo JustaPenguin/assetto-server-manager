@@ -1,0 +1,73 @@
+{{ define "title" }}Import a Championship Event{{ end }}
+
+{{ define "content" }}
+    {{ $writeAccess := WriteAccess }}
+
+    <h1 class="text-center">Import a Championship Event for {{ prettify .Event.RaceSetup.Track false }} ({{ prettify .Event.RaceSetup.TrackLayout true }})</h1>
+
+
+    <form action="/championship/{{ .ChampionshipID }}/event/{{ .Event.ID.String }}/import" method="post" data-safe-submit>
+
+        <div class="card mt-3 border-secondary">
+            <div class="card-header">
+                <strong>Events</strong>
+            </div>
+
+            <div class="card-body">
+
+                <p>Choose results for the following sessions (you may leave some session results unselected).</p>
+
+                <div class="form-group row">
+                    <label for="RaceResult" class="col-sm-3 col-form-label">Race Result File</label>
+
+                    <div class="col-sm-9">
+                        <select name="RaceResult" id="RaceResult" class="form-control">
+                            <option value="">none</option>
+                            {{ range $index, $result := .Results }}
+                                {{ if eq $result.Type "RACE" }}
+                                    <option value="{{ $result.SessionFile }}">{{ $result.TrackName }} ({{ $result.TrackConfig }}) on {{ $result.Date }}</option>
+                                {{ end }}
+                            {{ end }}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="QualifyingResult" class="col-sm-3 col-form-label">Qualifying Result File</label>
+
+                    <div class="col-sm-9">
+                        <select name="QualifyingResult" id="QualifyingResult" class="form-control">
+                            <option value="">none</option>
+                            {{ range $index, $result := .Results }}
+                                {{ if eq $result.Type "QUALIFY" }}
+                                    <option value="{{ $result.SessionFile }}">{{ $result.TrackName }} ({{ $result.TrackConfig }}) on {{ $result.Date }}</option>
+                                {{ end }}
+                            {{ end }}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="PracticeResult" class="col-sm-3 col-form-label">Practice Result File</label>
+
+                    <div class="col-sm-9">
+                        <select name="PracticeResult" id="PracticeResult" class="form-control">
+                            <option value="">none</option>
+                            {{ range $index, $result := .Results }}
+                                {{ if eq $result.Type "PRACTICE" }}
+                                    <option value="{{ $result.SessionFile }}">{{ $result.TrackName }} ({{ $result.TrackConfig }}) on {{ $result.Date }}</option>
+                                {{ end }}
+                            {{ end }}
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success float-right">Import Event</button>
+
+            </div>
+
+        </div>
+
+    </form>
+
+    <div class="clearfix"></div>
+{{ end }}
