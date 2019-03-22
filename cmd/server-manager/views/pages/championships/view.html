@@ -269,13 +269,15 @@
                                                 {{ range $sessionName, $sessionDetails := $event.Sessions }}
                                                     {{ if eq $sessionName "RACE" }}
                                                         {{ range $pos, $result := (slice $sessionDetails.Results.Result 0 3) }}
-                                                            {{ if gt $result.TotalTime 0 }}
-                                                                {{ $posInt := int64 (add $pos 1) }}
+                                                            {{ with $result }}
+                                                                {{ if gt $result.TotalTime 0 }}
+                                                                    {{ $posInt := int64 (add $pos 1) }}
 
-                                                                <li>
-                                                                    <strong>{{ $posInt }}{{ ordinal $posInt }}</strong>:
-                                                                    {{ $result.DriverName }}
-                                                                </li>
+                                                                    <li>
+                                                                        <strong>{{ $posInt }}{{ ordinal $posInt }}</strong>:
+                                                                        {{ $result.DriverName }}
+                                                                    </li>
+                                                                {{ end }}
                                                             {{ end }}
                                                         {{ end }}
                                                     {{ end }}
