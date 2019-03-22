@@ -612,6 +612,38 @@ func deleteChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+func championshipEventImportHandler(w http.ResponseWriter, r *http.Request) {
+	championshipID := chi.URLParam(r, "championshipID")
+	eventID := chi.URLParam(r, "eventID")
+
+	if r.Method == http.MethodPost {
+		err := championshipManager.ImportEvent(championshipID, eventID, r)
+
+		if err != nil {
+			logrus.Errorf("Could not import championship event, error: %s", err)
+			AddErrFlashQuick(w, r, "Could not import session files")
+		} else {
+			AddFlashQuick(w, r, "Successfully imported session files!")
+			http.Redirect(w, r, "/championship/"+championshipID, http.StatusFound)
+			return
+		}
+	}
+
+	event, results, err := championshipManager.ListAvailableResultsFilesForEvent(championshipID, eventID)
+
+	if err != nil {
+		logrus.Errorf("Couldn't load session files, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "championships/import.html", map[string]interface{}{
+		"Results":        results,
+		"ChampionshipID": championshipID,
+		"Event":          event,
+	})
+}
+
 // championshipEventConfigurationHandler builds a Custom Race form with slight modifications
 // to allow a user to configure a ChampionshipEvent.
 func championshipEventConfigurationHandler(w http.ResponseWriter, r *http.Request) {

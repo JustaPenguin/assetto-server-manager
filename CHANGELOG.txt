@@ -8,6 +8,10 @@ v1.1.4
   toggled on/off by clicking their name in the live timings table.
 * Changed the layout of the live timings page to better accommodate the new features.
 * Fixes an issue preventing the upload of older cars which contain a data folder rather than a data.acd file.
+* Added "Import Championship Event" functionality, which lets you import non-championship results files into a
+  championship. To use this, create a championship event for the track and layout you wish to import results to. Then,
+  click on "Manage Event" on the Championship page and select the session results files to import from.
+* Removed unnecessary duplication of entrants on Championship pages.
 
 v1.1.3
 ------
