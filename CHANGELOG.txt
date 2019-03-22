@@ -1,6 +1,12 @@
 v1.1.4
 ------
 
+* Added configurable IFrames to the live timings page. Users with write access can modify and add IFrames to the
+  page (they will persist for all users between events). Intended for use with event live streams or track info etc.
+* Added extra track info to live timings page.
+* Added an extra info pane to drivers on the live map that displays their current speed, gear and rpm. This can be
+  toggled on/off by clicking their name in the live timings table.
+* Changed the layout of the live timings page to better accommodate the new features.
 * Fixes an issue preventing the upload of older cars which contain a data folder rather than a data.acd file.
 
 v1.1.3
