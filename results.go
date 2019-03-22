@@ -415,6 +415,36 @@ func listResults(page int) ([]SessionResults, []int, error) {
 	return results, pagesSlice, nil
 }
 
+func ListAllResults() ([]SessionResults, error) {
+	resultsPath := filepath.Join(ServerInstallPath, "results")
+	resultFiles, err := ioutil.ReadDir(resultsPath)
+
+	if err != nil {
+		return nil, err
+	}
+
+	sort.Slice(resultFiles, func(i, j int) bool {
+		d1, _ := getResultDate(resultFiles[i].Name())
+		d2, _ := getResultDate(resultFiles[j].Name())
+
+		return d1.After(d2)
+	})
+
+	var results []SessionResults
+
+	for _, resultFile := range resultFiles {
+		result, err := LoadResult(resultFile.Name())
+
+		if err != nil {
+			return nil, err
+		}
+
+		results = append(results, *result)
+	}
+
+	return results, nil
+}
+
 func getResultDate(name string) (time.Time, error) {
 	dateSplit := strings.Split(name, "_")
 	dateSplit = dateSplit[0 : len(dateSplit)-1]
