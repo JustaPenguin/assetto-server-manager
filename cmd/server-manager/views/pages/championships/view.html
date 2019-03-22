@@ -257,10 +257,12 @@
                                                     {{ range $sessionName, $sessionDetails := $event.Sessions }}
                                                         {{ if eq $sessionName "RACE" }}
                                                             {{ range $pos, $result := (slice ($class.ResultsForClass $sessionDetails.Results.Result) 0 1) }}
-                                                                <li>
-                                                                    <strong>{{ $class.Name }} Winner</strong><br>
-                                                                    {{ $result.DriverName }}
-                                                                </li>
+                                                                {{ with $result }}
+                                                                    <li>
+                                                                        <strong>{{ $class.Name }} Winner</strong><br>
+                                                                        {{ $result.DriverName }}
+                                                                    </li>
+                                                                {{ end }}
                                                             {{ end }}
                                                         {{ end }}
                                                     {{ end }}
@@ -307,13 +309,15 @@
                                                     {{ range $sessionName, $sessionDetails := $event.Sessions }}
                                                         {{ if eq $sessionName "RACEx2" }}
                                                             {{ range $pos, $result := (slice $sessionDetails.Results.Result 0 3) }}
-                                                                {{ if gt $result.TotalTime 0 }}
-                                                                    {{ $posInt := int64 (add $pos 1) }}
+                                                                {{ with $result }}
+                                                                    {{ if gt $result.TotalTime 0 }}
+                                                                        {{ $posInt := int64 (add $pos 1) }}
 
-                                                                    <li>
-                                                                        <strong>{{ $posInt }}{{ ordinal $posInt }}</strong>:
-                                                                        {{ $result.DriverName }}
-                                                                    </li>
+                                                                        <li>
+                                                                            <strong>{{ $posInt }}{{ ordinal $posInt }}</strong>:
+                                                                            {{ $result.DriverName }}
+                                                                        </li>
+                                                                    {{ end }}
                                                                 {{ end }}
                                                             {{ end }}
                                                         {{ end }}
