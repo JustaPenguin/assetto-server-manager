@@ -119,6 +119,9 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Get("/championship/{championshipID}/event/{eventID}/cancel", championshipCancelEventHandler)
 		r.Get("/championship/{championshipID}/event/{eventID}/restart", championshipRestartEventHandler)
 
+		r.Get("/championship/{championshipID}/event/{eventID}/import", championshipEventImportHandler)
+		r.Post("/championship/{championshipID}/event/{eventID}/import", championshipEventImportHandler)
+
 		// penalties
 		r.Post("/penalties/{sessionFile}/{driverGUID}", penaltyHandler)
 
