@@ -315,6 +315,7 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 		IsOpen: 1,
 	}
 
+	raceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
 	raceSetup.LoopMode = 1
 	raceSetup.MaxClients = championship.NumEntrants()
 
@@ -555,7 +556,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 				err := cm.udpServerConn.SendMessage(welcomeMessage)
 
 				if err != nil {
-					logrus.Errorf("Unable to receive welcome message to: %s, err: %s", entrant.DriverName, err)
+					logrus.Errorf("Unable to send welcome message to: %s, err: %s", entrant.DriverName, err)
 				}
 			} else {
 				logrus.Errorf("Unable to build welcome message to: %s, err: %s", entrant.DriverName, err)
@@ -747,4 +748,104 @@ func (cm *ChampionshipManager) RestartEvent(championshipID string, eventID strin
 	}
 
 	return cm.StartEvent(championshipID, eventID)
+}
+
+func (cm *ChampionshipManager) ListAvailableResultsFilesForEvent(championshipID string, eventID string) (*ChampionshipEvent, []SessionResults, error) {
+	championship, err := cm.LoadChampionship(championshipID)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	event, err := championship.EventByID(eventID)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	results, err := ListAllResults()
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var filteredResults []SessionResults
+
+	for _, result := range results {
+		if result.TrackName == event.RaceSetup.Track && result.TrackConfig == event.RaceSetup.TrackLayout {
+			filteredResults = append(filteredResults, result)
+		}
+	}
+
+	return event, filteredResults, nil
+}
+
+func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string, r *http.Request) error {
+	if err := r.ParseForm(); err != nil {
+		return err
+	}
+
+	championship, err := cm.LoadChampionship(championshipID)
+
+	if err != nil {
+		return err
+	}
+
+	event, err := championship.EventByID(eventID)
+
+	if err != nil {
+		return err
+	}
+
+	event.Sessions = make(map[SessionType]*ChampionshipSession)
+
+	if practiceFile := r.FormValue("PracticeResult"); practiceFile != "" {
+		results, err := LoadResult(practiceFile + ".json")
+
+		if err != nil {
+			return err
+		}
+
+		event.Sessions[SessionTypePractice] = &ChampionshipSession{
+			StartedTime:   results.Date.Add(-time.Minute * 30),
+			CompletedTime: results.Date,
+			Results:       results,
+		}
+
+		event.CompletedTime = results.Date
+	}
+
+	if qualifyingFile := r.FormValue("QualifyingResult"); qualifyingFile != "" {
+		results, err := LoadResult(qualifyingFile + ".json")
+
+		if err != nil {
+			return err
+		}
+
+		event.Sessions[SessionTypeQualifying] = &ChampionshipSession{
+			StartedTime:   results.Date.Add(-time.Minute * 30),
+			CompletedTime: results.Date,
+			Results:       results,
+		}
+
+		event.CompletedTime = results.Date
+	}
+
+	if raceFile := r.FormValue("RaceResult"); raceFile != "" {
+		results, err := LoadResult(raceFile + ".json")
+
+		if err != nil {
+			return err
+		}
+
+		event.Sessions[SessionTypeRace] = &ChampionshipSession{
+			StartedTime:   results.Date.Add(-time.Minute * 30),
+			CompletedTime: results.Date,
+			Results:       results,
+		}
+
+		event.CompletedTime = results.Date
+	}
+
+	return cm.UpsertChampionship(championship)
 }

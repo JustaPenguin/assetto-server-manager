@@ -121,7 +121,7 @@ func (rm *RaceManager) UDPCallback(message udp.Message) {
 		}
 	}()
 
-	if config.LiveMap.IsEnabled() {
+	if config != nil && config.LiveMap.IsEnabled() {
 		go LiveMapCallback(message)
 	}
 
