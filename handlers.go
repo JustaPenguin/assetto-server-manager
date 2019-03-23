@@ -86,6 +86,8 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Get("/track/delete/{name}", trackDeleteHandler)
 		r.Get("/car/delete/{name}", carDeleteHandler)
 		r.Get("/weather/delete/{key}", weatherDeleteHandler)
+		r.Get("/setups/delete/{car}/{track}/{setup}", carSetupDeleteHandler)
+		r.Post("/setups/upload", carSetupsHandler)
 
 		// races
 		r.Get("/quick", quickRaceHandler)

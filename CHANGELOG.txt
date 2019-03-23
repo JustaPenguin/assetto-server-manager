@@ -1,6 +1,9 @@
-v1.1.4
+v1.2.0
 ------
 
+* Adds Fixed Setups to Custom Races and Championships. Fixed setups can be uploaded on the Cars page. You can fix
+  a setup for a whole championship or individually for specific events in the Championship.
+* Adds skin, ballast and restrictor customisation for individual Championship Events.
 * Fixes an issue preventing the upload of older cars which contain a data folder rather than a data.acd file.
 * Added "Import Championship Event" functionality, which lets you import non-championship results files into a
   championship. To use this, create a championship event for the track and layout you wish to import results to. Then,
