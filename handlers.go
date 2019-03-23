@@ -75,6 +75,7 @@ func Router(fs http.FileSystem) chi.Router {
 
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")))
 		FileServer(r, "/results/download", http.Dir(filepath.Join(ServerInstallPath, "results")))
+		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")))
 	})
 
 	// writers
