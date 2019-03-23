@@ -185,7 +185,9 @@
                                 {{ end }}
 
                                 <td>
-                                    {{ $setup }}
+                                    <a href="{{ printf "/setups/download/%s/%s/%s" $car $trackName $setup }}">
+                                        {{ $setup }}
+                                    </a>
                                 </td>
 
                                 {{ if $writeAccess }}
