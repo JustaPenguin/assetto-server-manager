@@ -509,67 +509,67 @@
         </div>
 
 
-        {{ if not .IsChampionship }}
-
-            <div class="card mt-3 border-secondary">
+        <div class="card mt-3 border-secondary">
             <div class="card-header">
                 <strong>Entry List</strong>
             </div>
 
             <div class="card-body" id="entrants">
+                {{ if not .IsChampionship }}
+                    <div class="form-group row">
+                        <label for="MaxClients" class="col-sm-3 col-form-label">Max Clients</label>
 
-                <div class="form-group row">
-                    <label for="MaxClients" class="col-sm-3 col-form-label">Max Clients</label>
+                        <div class="col-sm-9">
+                            <input
+                                    type="number"
+                                    id="MaxClients"
+                                    name="MaxClients"
+                                    class="form-control"
+                                    value="{{ $f.MaxClients }}"
 
-                    <div class="col-sm-9">
-                        <input
-                                type="number"
-                                id="MaxClients"
-                                name="MaxClients"
-                                class="form-control"
-                                value="{{ $f.MaxClients }}"
+                                    {{ with $trackInfo }}max="{{ $trackInfo.Pitboxes }}"{{ end }}
+                                    step="1"
+                            >
 
-                                {{ with $trackInfo }}max="{{ $trackInfo.Pitboxes }}"{{ end }}
-                                step="1"
-                        >
-
-                        <small>Maximum number of clients allowed on the server</small>
+                            <small>Maximum number of clients allowed on the server</small>
+                        </div>
                     </div>
-                </div>
 
 
 
 
-                <div class="form-group row">
-                    <label for="LockedEntryList" class="col-sm-3 col-form-label">Locked Entry List</label>
+                    <div class="form-group row">
+                        <label for="LockedEntryList" class="col-sm-3 col-form-label">Locked Entry List</label>
 
 
-                    <div class="col-sm-9">
-                        <input type="checkbox"
-                               id="LockedEntryList"
-                               name="LockedEntryList"
-                               value="{{ $f.LockedEntryList }}"
+                        <div class="col-sm-9">
+                            <input type="checkbox"
+                                   id="LockedEntryList"
+                                   name="LockedEntryList"
+                                   value="{{ $f.LockedEntryList }}"
 
-                                {{ if eq $f.LockedEntryList 1 }}
-                                    checked="checked"
-                                {{ end }}
-                        >
+                                    {{ if eq $f.LockedEntryList 1 }}
+                                        checked="checked"
+                                    {{ end }}
+                            >
 
-                        <br>
+                            <br>
 
-                        <small>Only players already included in the entry list can join the server</small>
+                            <small>Only players already included in the entry list can join the server</small>
+                        </div>
                     </div>
-                </div>
 
-                <p>If you add an Entrant once, the next time you add an Entrant, the 'name' input will give you suggestions and auto-populate the Entrant's Name, Team and GUID.</p>
+                    <p>If you add an Entrant once, the next time you add an Entrant, the 'name' input will give you suggestions and auto-populate the Entrant's Name, Team and GUID.</p>
 
-                <div id="entrantTemplate" class="entrant">
-                    {{ template "entrant" }}
-                </div>
+                    <div id="entrantTemplate" class="entrant">
+                        {{ template "entrant" }}
+                    </div>
 
-                {{ range $index, $entrant := .CurrentEntrants }}
+                {{ end }}
+
+                {{ range $index, $entrant := .CurrentEntrants.AsSlice }}
                     <div class="entrant">
-                        {{ template "entrant" $entrant }}
+                        {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" $.IsChampionship }}
                     </div>
                 {{ else }}
                     <div class="entrant">
@@ -577,12 +577,14 @@
                     </div>
                 {{ end }}
 
-                <div class="text-right">
-                    <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
 
-                    <button class="btn btn-warning addEntrant">Add Entrant(s)</button>
-                </div>
+                {{ if not .IsChampionship }}
+                    <div class="text-right">
+                        <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
 
+                        <button class="btn btn-warning addEntrant">Add Entrant(s)</button>
+                    </div>
+                {{ end }}
 
                 <input type="hidden" class="totalNumEntrants" name="EntryList.NumEntrants" value="{{ if gt 0 (len .CurrentEntrants) }}{{ len .CurrentEntrants }}{{ else }}1{{ end }}">
 
@@ -590,7 +592,6 @@
             </div>
         </div>
 
-        {{ end }}
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">
@@ -1460,5 +1461,6 @@
         const possibleEntrants = {{ jsonEncode .PossibleEntrants }};
         const availableCars = {{ jsonEncode .CarOpts.AsMap }};
         const surfacePresets = {{ jsonEncode .SurfacePresets }};
+        const fixedSetups = {{ jsonEncode .FixedSetups }};
     </script>
 {{ end }}

@@ -117,9 +117,10 @@ type Entrant struct {
 	Model string `ini:"MODEL"`
 	Skin  string `ini:"SKIN"`
 
-	Ballast       int `ini:"BALLAST"`
-	SpectatorMode int `ini:"SPECTATOR_MODE"`
-	Restrictor    int `ini:"RESTRICTOR"`
+	Ballast       int    `ini:"BALLAST"`
+	SpectatorMode int    `ini:"SPECTATOR_MODE"`
+	Restrictor    int    `ini:"RESTRICTOR"`
+	FixedSetup    string `ini:"FIXED_SETUP"`
 }
 
 func (e Entrant) ID() string {

@@ -73,6 +73,11 @@ $(document).ready(function () {
         };
     }
 
+    $('#SetupFile').on('change',function(){
+        let fileName = this.files[0].name;
+        $(this).next('.custom-file-label').html(fileName);
+    });
+
     $document.find("#CustomRaceScheduled").change(function () {
         if ($(this).val() && $document.find("#CustomRaceScheduledTime").val()) {
             $document.find("#start-race-button").hide();
@@ -805,7 +810,7 @@ class RaceSetup {
             let $this = $(this);
             let val = $this.val();
 
-            populateEntryListSkins($this, val);
+            populateEntryListSkinAndSetups($this, val);
 
             // When the car is changed for an added entrant
             showEntrantSkin(val, $this.closest(".entrant").find(".entryListSkin").val(), $this)
@@ -852,29 +857,63 @@ class RaceSetup {
 
         let that = this;
 
-        function populateEntryListSkins($elem, val) {
+        function populateEntryListSkinAndSetups($elem, car) {
             // populate skins
             let $skinsDropdown = $elem.closest(".entrant").find(".entryListSkin");
-            let selected = $skinsDropdown.val();
+            let selectedSkin = $skinsDropdown.val();
 
             $skinsDropdown.empty();
 
             $("<option value='random_skin'>&lt;random skin&gt;</option>").appendTo($skinsDropdown);
 
-
             try {
 
-                if (val in availableCars && availableCars[val] != null) {
-                    for (let skin of availableCars[val]) {
+                if (car in availableCars && availableCars[car] != null) {
+                    for (let skin of availableCars[car]) {
                         let $opt = $("<option/>");
                         $opt.attr({'value': skin});
                         $opt.text(prettifyName(skin, true));
 
-                        if (skin === selected) {
+                        if (skin === selectedSkin) {
                             $opt.attr({'selected': 'selected'});
                         }
 
                         $opt.appendTo($skinsDropdown);
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+
+            // populate fixed setups
+            let $fixedSetupDropdown = $elem.closest(".entrant").find(".fixedSetup");
+            let selectedSetup = $fixedSetupDropdown.val();
+
+            $fixedSetupDropdown.empty();
+
+            $("<option>").val("").text("No Fixed Setup").appendTo($fixedSetupDropdown);
+
+            try {
+                if (car in fixedSetups && fixedSetups[car] !== null) {
+                    for (let track in fixedSetups[car]) {
+                        // create an optgroup for the track
+                        let $optgroup = $("<optgroup>").attr("label", prettifyName(track, false));
+
+                        for (let setup of fixedSetups[car][track]) {
+                            let setupFullPath = car + "/" + track + "/" + setup;
+
+                            let $opt = $("<option/>");
+                            $opt.attr({'value': setupFullPath});
+                            $opt.text(prettifyName(setup.replace(".ini", ""), true));
+
+                            if (setupFullPath === selectedSetup) {
+                                $opt.attr({'selected': 'selected'});
+                            }
+
+                            $opt.appendTo($optgroup);
+                        }
+
+                        $optgroup.appendTo($fixedSetupDropdown);
                     }
                 }
             } catch (e) {
@@ -931,7 +970,7 @@ class RaceSetup {
                     $val.append($opt);
                 }
 
-                populateEntryListSkins($val, selected);
+                populateEntryListSkinAndSetups($val, selected);
             });
         }
 

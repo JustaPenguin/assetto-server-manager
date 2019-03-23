@@ -366,6 +366,7 @@ func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (Entry
 			// SpectatorMode: formValueAsInt(r.Form["EntryList.Spectator"][i]),
 			Ballast:    formValueAsInt(r.Form["EntryList.Ballast"][i]),
 			Restrictor: formValueAsInt(r.Form["EntryList.Restrictor"][i]),
+			FixedSetup: r.Form["EntryList.FixedSetup"][i],
 		})
 	}
 
@@ -683,6 +684,12 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		return nil, err
 	}
 
+	fixedSetups, err := ListSetups()
+
+	if err != nil {
+		return nil, err
+	}
+
 	solIsInstalled := false
 
 	for availableWeather := range weather {
@@ -709,6 +716,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		"Current":           race.CurrentRaceConfig,
 		"CurrentEntrants":   entrants,
 		"PossibleEntrants":  possibleEntrants,
+		"FixedSetups":       fixedSetups,
 		"IsChampionship":    false, // this flag is overridden by championship setup
 		"IsEditing":         isEditing,
 		"EditingID":         templateIDForEditing,

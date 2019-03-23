@@ -201,9 +201,11 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (map[
 		opts["Current"] = event.RaceSetup
 		opts["IsEditing"] = true
 		opts["EditingID"] = editEventID
+		opts["CurrentEntrants"] = event.CombineEntryLists(championship)
 	} else {
 		// creating a new championship event
 		opts["IsEditing"] = false
+		opts["CurrentEntrants"] = championship.AllEntrants()
 
 		// override Current race config if there is a previous championship race configured
 		if len(championship.Events) > 0 {
@@ -243,6 +245,12 @@ func (cm *ChampionshipManager) SaveChampionshipEvent(r *http.Request) (champions
 
 	raceConfig.Cars = strings.Join(championship.ValidCarIDs(), ";")
 
+	entryList, err := cm.BuildEntryList(r, 0, len(r.Form["EntryList.Name"]))
+
+	if err != nil {
+		return nil, nil, false, err
+	}
+
 	if eventID := r.FormValue("Editing"); eventID != "" {
 		edited = true
 
@@ -254,10 +262,12 @@ func (cm *ChampionshipManager) SaveChampionshipEvent(r *http.Request) (champions
 
 		// we're editing an existing event
 		event.RaceSetup = *raceConfig
+		event.EntryList = entryList
 	} else {
 		// creating a new event
 		event = NewChampionshipEvent()
 		event.RaceSetup = *raceConfig
+		event.EntryList = entryList
 
 		championship.Events = append(championship.Events, event)
 	}
@@ -321,7 +331,7 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 
 	config.CurrentRaceConfig = raceSetup
 
-	return cm.RaceManager.applyConfigAndStart(config, championship.AllEntrants(), false)
+	return cm.RaceManager.applyConfigAndStart(config, event.CombineEntryLists(championship), false)
 }
 
 func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string) error {
@@ -344,7 +354,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 	config.CurrentRaceConfig = event.RaceSetup
 
 	// track that this is the current event
-	return cm.applyConfigAndStart(config, championship.AllEntrants(), &ActiveChampionship{
+	return cm.applyConfigAndStart(config, event.CombineEntryLists(championship), &ActiveChampionship{
 		ChampionshipID: championship.ID,
 		EventID:        event.ID,
 	})
