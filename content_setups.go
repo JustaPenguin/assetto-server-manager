@@ -118,7 +118,7 @@ func uploadCarSetup(r *http.Request) (string, error) {
 	return carName, err
 }
 
-func carSetupsHandler(w http.ResponseWriter, r *http.Request) {
+func carSetupsUploadHandler(w http.ResponseWriter, r *http.Request) {
 	if carName, err := uploadCarSetup(r); err != nil {
 		logrus.Errorf("Could not upload setup file, err: %s", err)
 		if carName != "" {
