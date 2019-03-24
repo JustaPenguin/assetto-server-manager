@@ -1,13 +1,14 @@
 package servermanager
 
 import (
-	"github.com/go-chi/chi"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
+
+	"github.com/go-chi/chi"
+	"github.com/sirupsen/logrus"
 )
 
 type Car struct {
