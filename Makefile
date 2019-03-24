@@ -21,3 +21,6 @@ build:
 
 deploy: clean test
 	$(MAKE) -C cmd/server-manager deploy
+
+run:
+	$(MAKE) -C cmd/server-manager run
