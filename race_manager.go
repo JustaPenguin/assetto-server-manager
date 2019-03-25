@@ -767,6 +767,22 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*
 	return filteredRecent, starred, looped, scheduled, nil
 }
 
+func (rm *RaceManager) SaveEntrantsForAutoFill(entryList EntryList) error {
+	for _, entrant := range entryList {
+		if entrant.Name == "" {
+			continue // only save entrants that have a name
+		}
+
+		err := rm.raceStore.UpsertEntrant(*entrant)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, entryList EntryList, starred bool) (*CustomRace, error) {
 	if name == "" {
 		var trackLayout string
@@ -783,16 +799,8 @@ func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, ent
 		)
 	}
 
-	for _, entrant := range entryList {
-		if entrant.Name == "" {
-			continue // only save entrants that have a name
-		}
-
-		err := rm.raceStore.UpsertEntrant(*entrant)
-
-		if err != nil {
-			return nil, err
-		}
+	if err := rm.SaveEntrantsForAutoFill(entryList); err != nil {
+		return nil, err
 	}
 
 	race := &CustomRace{

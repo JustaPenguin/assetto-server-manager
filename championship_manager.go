@@ -168,6 +168,11 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		championship.AddClass(class)
 	}
 
+	// persist any entrants so that they can be autofilled
+	if err := cm.SaveEntrantsForAutoFill(championship.AllEntrants()); err != nil {
+		return nil, edited, err
+	}
+
 	return championship, edited, cm.UpsertChampionship(championship)
 }
 
