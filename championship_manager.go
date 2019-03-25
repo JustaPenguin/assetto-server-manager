@@ -740,8 +740,6 @@ func (cm *ChampionshipManager) CancelEvent(championshipID string, eventID string
 		return err
 	}
 
-	fmt.Println("DOING A THING")
-
 	return cm.UpsertChampionship(championship)
 }
 
