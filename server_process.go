@@ -139,6 +139,7 @@ func (as *AssettoServerProcess) Start() error {
 
 		as.stopChildProcesses()
 
+		as.cmd = nil
 		as.doneCh <- struct{}{}
 	}()
 
