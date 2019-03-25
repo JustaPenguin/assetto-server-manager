@@ -145,6 +145,24 @@
 
         <hr>
 
+        {{ with $championship.Links }}
+            {{ $count := 0 }}
+            <div class="card">
+                <div class="card-header">
+                    <strong>Important Links</strong>
+                </div>
+
+                <div class="card-body">
+                    {{ range $name, $link := . }}
+                        {{ if gt $count 0 }}, {{ end }}<a href="{{ $link }}">{{ $name }}</a>
+
+                        {{ $count = add $count 1 }}
+                    {{ end }}
+                </div>
+            </div>
+            <hr>
+        {{ end }}
+
         <div class="float-right">
             {{ if $writeAccess }}
                 <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event">Add more Events</a>

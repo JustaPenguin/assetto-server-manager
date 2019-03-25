@@ -2121,6 +2121,7 @@ let championships = {
         });
 
         championships.initClassSetup();
+        championships.initLinks();
     },
 
     $classTemplate: null,
@@ -2146,6 +2147,30 @@ let championships = {
             $(this).closest(".race-setup").remove();
         });
     },
+
+    $linkTemplate: null,
+
+    initLinks: function () {
+        let $addLinkButton = $document.find("#addLink");
+        let $linkTemplate = $document.find("#link-template");
+
+        championships.$linkTemplate = $linkTemplate.clone();
+
+        $linkTemplate.remove();
+
+        $addLinkButton.click(function (e) {
+            e.preventDefault();
+
+            let $cloned = championships.$linkTemplate.clone().show();
+
+            $(this).closest(".add-link-group").before($cloned);
+        });
+
+        $document.on("click", ".btn-delete-link", function (e) {
+            e.preventDefault();
+            $(this).closest(".link-group").remove();
+        });
+    }
 };
 
 function ordinalSuffix(i) {
