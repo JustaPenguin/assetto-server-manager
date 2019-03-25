@@ -56,7 +56,7 @@
 
                     <div class="col-sm-9">
                         {{ with $f.Links }}
-                            {{ range $name, $link := $f.Links }}
+                            {{ range $link, $name := $f.Links }}
                                 <div class="row pl-3 pr-3 mb-2 link-group">
                                     <input type="text" class="form-control col-5" id="ImportantLinks" name="ImportantLinks"
                                            placeholder="Link Text" {{ with $name }} value="{{.}}" {{ end }}>
