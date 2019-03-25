@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
+	"github.com/spkg/bom"
 )
 
 type Track struct {
@@ -125,7 +126,7 @@ func GetTrackInfo(name, layout string) (*TrackInfo, error) {
 
 	var trackInfo *TrackInfo
 
-	err = json.NewDecoder(f).Decode(&trackInfo)
+	err = json.NewDecoder(bom.NewReader(f)).Decode(&trackInfo)
 
 	return trackInfo, err
 }
