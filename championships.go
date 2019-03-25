@@ -63,7 +63,7 @@ func NewChampionship(name string) *Championship {
 		ID:      uuid.New(),
 		Name:    name,
 		Created: time.Now(),
-		Links: make(map[string]string),
+		Links:   make(map[string]string),
 	}
 }
 
