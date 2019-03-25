@@ -181,7 +181,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 			name = link
 		}
 
-		championship.Links[name] = link
+		championship.Links[link] = name
 	}
 
 	return championship, edited, cm.UpsertChampionship(championship)

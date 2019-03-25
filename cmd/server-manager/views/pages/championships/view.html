@@ -190,7 +190,7 @@
                 </div>
 
                 <div class="card-body">
-                    {{ range $name, $link := . }}
+                    {{ range $link, $name := . }}
                         {{ if gt $count 0 }}, {{ end }}<a href="{{ $link }}">{{ $name }}</a>
 
                         {{ $count = add $count 1 }}
