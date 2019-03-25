@@ -14,6 +14,7 @@ v1.2.0
 * Added important links to championship create/edit. You can now add important links to track/car downloads etc.
 * Removed unnecessary duplication of entrants on Championship pages.
 * Added car images to Championship pages.
+* Added option to upload multiple content folders by dragging them into the drag and drop upload boxes.
 * Fixes an issue with illegal Byte Order Marks preventing some track info files from being read.
 * Fixes an issue where some Live Map cars would not properly clear on server restart.
 
