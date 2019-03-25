@@ -133,6 +133,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		}
 
 		championship.Classes = []*ChampionshipClass{}
+		championship.Links = make(map[string]string)
 	} else {
 		// new championship
 		championship = NewChampionship("")
@@ -166,6 +167,21 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 
 		previousNumEntrants += numEntrantsForClass
 		championship.AddClass(class)
+	}
+
+	for i := 0; i < len(r.Form["ImportantLinks"]); i++ {
+		name := r.Form["ImportantLinks"][i]
+		link := r.Form["ImportantLinksURL"][i]
+
+		if link == "" {
+			continue
+		}
+
+		if name == "" && link != "" {
+			name = link
+		}
+
+		championship.Links[name] = link
 	}
 
 	return championship, edited, cm.UpsertChampionship(championship)
