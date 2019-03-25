@@ -148,39 +148,57 @@
         <div class="container-fluid">
             <div class="row flex-row flex-nowrap pb-3" style="overflow-x: auto;">
 
-            {{ range $classIndex, $class := $championship.Classes }}
-                {{ $entrants := ($class.Standings $championship.Events) }}
+                {{ range $classIndex, $class := $championship.Classes }}
+                    {{ $entrants := ($class.Standings $championship.Events) }}
 
-                {{ range $i, $entrant := $entrants }}
+                    {{ range $i, $entrant := $entrants }}
 
-                    <div class="col-6 col-lg-3 col-md-3 col-sm-6 entrant-car">
-                        <div class="card card-block" {{ if $championship.IsMultiClass }}style="color: white; background: {{ classColor $classIndex }}"{{ end }}>
-                            <img src="{{ with $entrant.Entrant.Skin }}{{ carSkinURL $entrant.Entrant.Model $entrant.Entrant.Skin }}{{ else }}/static/img/no-preview-car.png{{ end }}"
-                                 alt="Car Skin"
-                                 class="card-img-top"
-                            >
-                            <div class="card-body p-1 text-center">
-                                {{ if $championship.IsMultiClass }}
-                                    <small>{{ $class.Name }}</small><br>
-                                {{ end }}
-                                {{ add $i 1 }}{{ ordinal (add $i 1) }} Place
+                        <div class="col-6 col-lg-3 col-md-3 col-sm-6 entrant-car">
+                            <div class="card card-block" {{ if $championship.IsMultiClass }}style="color: white; background: {{ classColor $classIndex }}"{{ end }}>
+                                <img src="{{ with $entrant.Entrant.Skin }}{{ carSkinURL $entrant.Entrant.Model $entrant.Entrant.Skin }}{{ else }}/static/img/no-preview-car.png{{ end }}"
+                                     alt="Car Skin"
+                                     class="card-img-top"
+                                >
+                                <div class="card-body p-1 text-center">
+                                    {{ if $championship.IsMultiClass }}
+                                        <small>{{ $class.Name }}</small><br>
+                                    {{ end }}
+                                    {{ add $i 1 }}{{ ordinal (add $i 1) }} Place
 
-                                <p class="mb-0">
-                                    <small>
-                                        {{ $entrant.Entrant.Name }}<br>
-                                        {{ $entrant.Entrant.Team }}
-                                    </small>
-                                </p>
+                                    <p class="mb-0">
+                                        <small>
+                                            {{ $entrant.Entrant.Name }}<br>
+                                            {{ $entrant.Entrant.Team }}
+                                        </small>
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    {{ end }}
                 {{ end }}
-            {{ end }}
 
             </div>
         </div>
 
         <hr>
+
+        {{ with $championship.Links }}
+            {{ $count := 0 }}
+            <div class="card">
+                <div class="card-header">
+                    <strong>Important Links</strong>
+                </div>
+
+                <div class="card-body">
+                    {{ range $link, $name := . }}
+                        {{ if gt $count 0 }}, {{ end }}<a href="{{ $link }}">{{ $name }}</a>
+
+                        {{ $count = add $count 1 }}
+                    {{ end }}
+                </div>
+            </div>
+            <hr>
+        {{ end }}
 
         <div class="float-right">
             {{ if $writeAccess }}
