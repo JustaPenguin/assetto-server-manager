@@ -53,6 +53,7 @@ func (cm *ChampionshipManager) applyConfigAndStart(config ServerConfig, entryLis
 
 	go func() {
 		<-serverStoppedChan
+		logrus.Infof("Server stopped. Clearing active championship")
 
 		cm.activeChampionship = nil
 	}()
@@ -739,6 +740,8 @@ func (cm *ChampionshipManager) CancelEvent(championshipID string, eventID string
 		return err
 	}
 
+	fmt.Println("DOING A THING")
+
 	return cm.UpsertChampionship(championship)
 }
 
@@ -750,6 +753,24 @@ func (cm *ChampionshipManager) RestartEvent(championshipID string, eventID strin
 	}
 
 	return cm.StartEvent(championshipID, eventID)
+}
+
+var ErrNoActiveEvent = errors.New("servermanager: no active championship event")
+
+func (cm *ChampionshipManager) RestartActiveEvent() error {
+	if cm.activeChampionship == nil {
+		return ErrNoActiveEvent
+	}
+
+	return cm.RestartEvent(cm.activeChampionship.ChampionshipID.String(), cm.activeChampionship.EventID.String())
+}
+
+func (cm *ChampionshipManager) StopActiveEvent() error {
+	if cm.activeChampionship == nil {
+		return ErrNoActiveEvent
+	}
+
+	return cm.CancelEvent(cm.activeChampionship.ChampionshipID.String(), cm.activeChampionship.EventID.String())
 }
 
 func (cm *ChampionshipManager) ListAvailableResultsFilesForEvent(championshipID string, eventID string) (*ChampionshipEvent, []SessionResults, error) {

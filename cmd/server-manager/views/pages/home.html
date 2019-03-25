@@ -3,7 +3,12 @@
 {{ define "content" }}
     {{ with .RaceDetails }}
         <div class="card">
-            <h5 class="card-header">Event in Progress</h5>
+            {{ if eq $.server_event_type "CHAMPIONSHIP" }}
+                <h5 class="card-header">Championship Event in Progress</h5>
+            {{ else }}
+                <h5 class="card-header">Event in Progress</h5>
+            {{ end }}
+
             <div class="card-body row home-race-info">
                 <div class="col-md-8">
 
@@ -15,8 +20,26 @@
 
                         {{ if WriteAccess }}
                             <div class="float-right">
-                                <a href="/process/restart" class="btn btn-warning">Restart Event</a>
-                                <a href="/process/stop" class="btn btn-danger">Stop Event</a>
+                                <a
+                                    href="/process/restart"
+                                    class="btn btn-warning"
+
+                                    {{ if eq $.server_event_type "CHAMPIONSHIP" }}
+                                        onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                    {{ end }}
+                                >
+                                    Restart Event
+                                </a>
+                                <a
+                                    href="/process/stop"
+                                    class="btn btn-danger"
+
+                                    {{ if eq $.server_event_type "CHAMPIONSHIP" }}
+                                        onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                    {{ end }}
+                                >
+                                    Stop Event
+                                </a>
                             </div>
                         {{ end }}
                     </div>

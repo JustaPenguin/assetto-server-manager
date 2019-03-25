@@ -15,7 +15,7 @@ func kill(process *os.Process) error {
 }
 
 func buildCommand(command string, args ...string) *exec.Cmd {
-	cmd := exec.Command(command, args...)
+	cmd := exec.Command("cmd", "/c", "start", "/wait", command, args...)
 
 	return cmd
 }
