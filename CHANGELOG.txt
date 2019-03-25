@@ -11,6 +11,7 @@ v1.2.0
 * Added "Import Championship Event" functionality, which lets you import non-championship results files into a
   championship. To use this, create a championship event for the track and layout you wish to import results to. Then,
   click on "Manage Event" on the Championship page and select the session results files to import from.
+* Added important links to championship create/edit. You can now add important links to track/car downloads etc.
 * Removed unnecessary duplication of entrants on Championship pages.
 * Added car images to Championship pages.
 * Fixes an issue with illegal Byte Order Marks preventing some track info files from being read.
