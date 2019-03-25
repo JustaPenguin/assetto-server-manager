@@ -205,9 +205,8 @@ let liveMap = {
                         liveMap.joined[data.CarID].maxRPM = data.EngineRPM
                     }
 
-                    liveMap.joined[data.CarID].dot.find(".info").text(speed + "Km/h " + data.Gear);
+                    liveMap.joined[data.CarID].dot.find(".info").text(speed + "Km/h " + (data.Gear-1));
 
-                    //let $rpmGauge = $("<progress id='rpm' max='"+maxRPM+"' value='"+data.EngineRPM+"'</progress>");
                     let $rpmGaugeOuter = $("<div class='rpm-outer'></div>");
                     let $rpmGaugeInner = $("<div class='rpm-inner'></div>");
 

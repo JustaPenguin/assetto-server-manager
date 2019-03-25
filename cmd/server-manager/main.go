@@ -1,14 +1,15 @@
 package main
 
 import (
-	"github.com/cj123/assetto-server-manager"
-	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
-	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
-	"github.com/cj123/assetto-server-manager/pkg/udp"
 	"net"
 	"net/http"
 	"os"
 	"runtime"
+
+	"github.com/cj123/assetto-server-manager"
+	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
+	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
+	"github.com/cj123/assetto-server-manager/pkg/udp"
 
 	"github.com/pkg/browser"
 	"github.com/sirupsen/logrus"
