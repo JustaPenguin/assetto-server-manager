@@ -1,4 +1,4 @@
-v1.1.4
+v1.2.0
 ------
 
 * Added configurable IFrames to the live timings page. Users with write access can modify and add IFrames to the
@@ -12,6 +12,7 @@ v1.1.4
   championship. To use this, create a championship event for the track and layout you wish to import results to. Then,
   click on "Manage Event" on the Championship page and select the session results files to import from.
 * Removed unnecessary duplication of entrants on Championship pages.
+* Added car images to Championship pages.
 * Fixes an issue with illegal Byte Order Marks preventing some track info files from being read.
 * Fixes an issue where some Live Map cars would not properly clear on server restart.
 
