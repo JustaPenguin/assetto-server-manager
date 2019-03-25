@@ -82,11 +82,11 @@
                                 </div>
 
                                 {{ if WriteAccess }}
-                                    <div class="row ml-3 mr-3 w-100">
-                                        <input type="text" class="live-frame-link form-control pl-1 mt-1 col-8" name="frame-link"
+                                    <div class="row ml-3 mr-3 mt-2 w-100">
+                                        <input type="text" class="live-frame-link form-control pl-1 col-8" name="frame-link"
                                                placeholder="IFrame content link (track location on map, race live stream etc.)">
                                         <span class="col-1"></span>
-                                        <a class="btn btn-primary btn-sm text-light col-3 remove-live-frame" >Remove IFrame</a>
+                                        <button class="btn btn-primary text-light col-3 remove-live-frame" >Remove IFrame</button>
                                     </div>
                                 {{ end }}
                             </div>
@@ -102,11 +102,11 @@
                                         </div>
 
                                         {{ if WriteAccess }}
-                                            <div class="row ml-3 mr-3 w-100">
-                                                <input type="text" class="live-frame-link form-control pl-1 mt-1 col-8" name="frame-link"
+                                            <div class="row ml-3 mr-3 mt-2 w-100">
+                                                <input type="text" class="live-frame-link form-control pl-1 col-8" name="frame-link"
                                                        value={{ $link }}>
                                                 <span class="col-1"></span>
-                                                <a class="btn btn-primary btn-sm text-light col-3 remove-live-frame" >Remove IFrame</a>
+                                                <button class="btn btn-primary text-light col-3 remove-live-frame" >Remove IFrame</button>
                                             </div>
                                         {{ end }}
                                     </div>
