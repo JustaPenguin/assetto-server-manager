@@ -134,6 +134,7 @@ func (tr *Renderer) init() error {
 	funcs["timeZone"] = timeZone
 	funcs["isBefore"] = isBefore
 	funcs["trackInfo"] = trackInfo
+	funcs["stripGeotagCrap"] = stripGeotagCrap
 	funcs["ReadAccess"] = dummyAccessFunc
 	funcs["WriteAccess"] = dummyAccessFunc
 	funcs["AdminAccess"] = dummyAccessFunc
@@ -234,6 +235,34 @@ func trackInfo(track, layout string) *TrackInfo {
 	trackInfoCache[track+layout] = t
 
 	return t
+}
+
+func stripGeotagCrap(tag string, north bool) string {
+	re := regexp.MustCompile("[0-9]+")
+	geoTags := re.FindAllString(tag, -1)
+
+	if len(geoTags) == 2 {
+		// "52.9452° N" format
+		// @TODO +- some amount for the bbox
+
+		return geoTags[0] + "." + geoTags[1]
+	} else if len(geoTags) == 3 {
+		// "50� 13' 57 N" format
+		for _, thing := range geoTags {
+			println(thing)
+		}
+	} else if len(geoTags) == 1 {
+		// dunno, some crazy format, just return
+		return geoTags[0]
+	}
+
+	// Geotags of "lost" - a hamlet in Scotland
+	if north {
+		return "57.2050"
+	} else {
+		return "-3.0774"
+	}
+
 }
 
 var nameRegex = regexp.MustCompile(`^[A-Za-z]{0,5}[0-9]+`)

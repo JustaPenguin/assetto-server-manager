@@ -15,6 +15,7 @@ const (
 	championshipsDir  = "championships"
 	entrantsFile      = "entrants.json"
 	serverOptionsFile = "server_options.json"
+	frameLinksFile    = "frame_links.json"
 )
 
 func NewJSONRaceStore(dir string) RaceStore {
@@ -236,4 +237,22 @@ func (rs *JSONRaceStore) DeleteChampionship(id string) error {
 	c.Deleted = time.Now()
 
 	return rs.UpsertChampionship(c)
+}
+
+func (rs *JSONRaceStore) UpsertLiveFrames(frameLinks []string) error {
+	return rs.encodeFile(frameLinksFile, frameLinks)
+}
+
+func (rs *JSONRaceStore) ListPrevFrames() ([]string, error) {
+	var links []string
+
+	err := rs.decodeFile(frameLinksFile, &links)
+
+	if os.IsNotExist(err) {
+		return links, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return links, nil
 }

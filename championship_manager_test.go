@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
 )
@@ -117,7 +118,8 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 					return
 				}
 
-				err := replay.ReplayUDPMessages(filepath.Join("fixtures", sessionFile), 1000, championshipManager.ChampionshipEventCallback, false)
+				err := replay.ReplayUDPMessages(filepath.Join("fixtures", sessionFile), 1000,
+					championshipManager.ChampionshipEventCallback, time.Second)
 
 				if err != nil {
 					t.Error(err)
@@ -158,7 +160,8 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 					return
 				}
 
-				err := replay.ReplayUDPMessages(filepath.Join("fixtures", sessionFile), 1000, championshipManager.ChampionshipEventCallback, false)
+				err := replay.ReplayUDPMessages(filepath.Join("fixtures", sessionFile), 1000,
+					championshipManager.ChampionshipEventCallback, time.Second)
 
 				if err != nil {
 					t.Error(err)
@@ -207,7 +210,8 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 					return
 				}
 
-				err := replay.ReplayUDPMessages(filepath.Join("fixtures", sessionFile), 1000, championshipManager.ChampionshipEventCallback, false)
+				err := replay.ReplayUDPMessages(filepath.Join("fixtures", sessionFile), 1000,
+					championshipManager.ChampionshipEventCallback, time.Second)
 
 				if err != nil {
 					t.Error(err)
@@ -256,7 +260,8 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 					return
 				}
 
-				err := replay.ReplayUDPMessages(filepath.Join("fixtures", sessionFile), 1000, championshipManager.ChampionshipEventCallback, false)
+				err := replay.ReplayUDPMessages(filepath.Join("fixtures", sessionFile), 1000,
+					championshipManager.ChampionshipEventCallback, time.Second)
 
 				if err != nil {
 					t.Error(err)
@@ -377,7 +382,7 @@ func TestChampionshipManager_ChampionshipEventCallbackOpenChampionshipExample(t 
 			return
 		}
 
-		err := replay.ReplayUDPMessages(file, 1000, championshipManager.ChampionshipEventCallback, false)
+		err := replay.ReplayUDPMessages(file, 1000, championshipManager.ChampionshipEventCallback, time.Second)
 
 		if err != nil {
 			t.Error(err)

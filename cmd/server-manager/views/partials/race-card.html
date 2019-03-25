@@ -1,7 +1,15 @@
 {{ define "race-card" }}
+
+    {{ $trackInfo := trackInfo .RaceConfig.Track .RaceConfig.TrackLayout }}
+
     <div class="race-info">
         <strong>
             {{ prettify .RaceConfig.Track false }} {{ with .RaceConfig.TrackLayout }}({{ prettify . true }}){{ end }}
+        </strong>
+
+        {{ with $trackInfo }} {{ $trackInfo.City }}, {{ $trackInfo.Country }}{{ end }}
+
+        <strong>
             {{if isBefore .Scheduled }} - Scheduled for {{ dateFormat .Scheduled }} at {{ timeFormat .Scheduled }} ({{ timeZone .Scheduled }}){{ end }}
         </strong>
 
