@@ -159,7 +159,11 @@ func (as *AssettoServerProcess) Start() error {
 	}
 
 	go func() {
-		_ = as.cmd.Wait()
+		err = as.cmd.Wait()
+
+		if err != nil {
+			logrus.Errorf("Wait errored: %s", err)
+		}
 
 		as.stopChildProcesses()
 

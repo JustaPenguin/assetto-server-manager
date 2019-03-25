@@ -40,37 +40,23 @@ func SetupRaceManager(store RaceStore) {
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
-	exitCount := 0
 
 	go func() {
 		for range c {
-			exitCount++
-
-			if AssettoProcess.IsRunning() && exitCount < 2 {
-				logrus.Infof("An active %s event is running. Are you sure you want to close? ^C again to confirm", AssettoProcess.EventType())
-
-				timeout := time.Tick(time.Second * 30)
-
-				go func() {
-					<-timeout
-					exitCount = 0
-				}()
-			} else {
-				fmt.Println(AssettoProcess.EventType())
-
+			// ^C, handle it
+			if AssettoProcess.IsRunning() {
 				if AssettoProcess.EventType() == EventTypeChampionship {
 					if err := championshipManager.StopActiveEvent(); err != nil {
 						logrus.Errorf("Error stopping event, err: %s", err)
 					}
 				}
 
-				// ^C, handle it
 				if p, ok := AssettoProcess.(*AssettoServerProcess); ok {
 					p.stopChildProcesses()
 				}
-
-				os.Exit(0)
 			}
+
+			os.Exit(0)
 		}
 	}()
 }
