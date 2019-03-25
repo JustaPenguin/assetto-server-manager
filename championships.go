@@ -481,15 +481,15 @@ func (cr *ChampionshipEvent) CombineEntryLists(championship *Championship) Entry
 
 	for _, entrant := range entryList {
 		for _, eventEntrant := range cr.EntryList {
-			if entrant.GUID != eventEntrant.GUID {
-				continue
-			}
+			if entrant.InternalUUID == eventEntrant.InternalUUID {
+				entrant.FixedSetup = eventEntrant.FixedSetup
+				entrant.Restrictor = eventEntrant.Restrictor
+				entrant.SpectatorMode = eventEntrant.SpectatorMode
+				entrant.Ballast = eventEntrant.Ballast
+				entrant.Skin = eventEntrant.Skin
 
-			entrant.FixedSetup = eventEntrant.FixedSetup
-			entrant.Restrictor = eventEntrant.Restrictor
-			entrant.SpectatorMode = eventEntrant.SpectatorMode
-			entrant.Ballast = eventEntrant.Ballast
-			entrant.Skin = eventEntrant.Skin
+				break
+			}
 		}
 	}
 

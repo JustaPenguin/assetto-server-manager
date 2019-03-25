@@ -19,6 +19,8 @@
                 <div class="col-sm-8">
 
                     <div class="row">
+                        <!-- internal UUID for matching purposes -->
+                        <input type="hidden" name="EntryList.InternalUUID" {{ with $entrant.InternalUUID }}value="{{ .String }}"{{ end }}>
 
                         <div class="form-group row col-md-6">
                             <label for="Name" class="col-sm-4 col-form-label col-form-label-sm">Name</label>
