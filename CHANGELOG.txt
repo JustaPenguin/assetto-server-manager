@@ -15,6 +15,7 @@ v1.2.0
 * Added car images to Championship pages.
 * Fixes an issue with illegal Byte Order Marks preventing some track info files from being read.
 * Fixes an issue where some Live Map cars would not properly clear on server restart.
+* Fixes an issue where new entrants in a Championship were not persisted for autofill.
 
 v1.1.3
 ------
