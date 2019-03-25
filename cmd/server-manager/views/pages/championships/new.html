@@ -50,6 +50,57 @@
                         </small>
                     </div>
                 </div>
+
+                <div class="form-group row">
+                    <label for="ImportantLinks" class="col-sm-3 col-form-label">Important Links</label>
+
+                    <div class="col-sm-9">
+                        {{ with $f.Links }}
+                            {{ range $link, $name := $f.Links }}
+                                <div class="row pl-3 pr-3 mb-2 link-group">
+                                    <input type="text" class="form-control col-5" id="ImportantLinks" name="ImportantLinks"
+                                           placeholder="Link Text" {{ with $name }} value="{{.}}" {{ end }}>
+                                    <span class="col-1"></span>
+                                    <input type="text" class="form-control col-5" id="ImportantLinksURL" name="ImportantLinksURL"
+                                           placeholder="Link URL" {{ with $link }} value="{{.}}" {{ end }}>
+                                    <a class="text-danger btn-delete-link col-1 pt-1 text-right" href="#"><i class="fas fa-trash"></i></a>
+                                </div>
+                            {{ end }}
+                        {{ end }}
+
+                        <!-- link-template is copied by js, then removed -->
+                        <div class="row pl-3 pr-3 mt-2 link-group" id="link-template">
+                            <input type="text" class="form-control col-5" id="ImportantLinks" name="ImportantLinks"
+                                   placeholder="Link Text">
+                            <span class="col-1"></span>
+                            <input type="text" class="form-control col-5" id="ImportantLinksURL" name="ImportantLinksURL"
+                                   placeholder="Link URL">
+                            <a class="text-danger btn-delete-link col-1 pt-1 text-right" href="#"><i class="fas fa-trash"></i></a>
+                        </div>
+
+                        <div class="row pl-3 pr-3 link-group">
+                            <input type="text" class="form-control col-5" id="ImportantLinks" name="ImportantLinks"
+                                   placeholder="Link Text">
+                            <span class="col-1"></span>
+                            <input type="text" class="form-control col-5" id="ImportantLinksURL" name="ImportantLinksURL"
+                                   placeholder="Link URL">
+                            <a class="text-danger btn-delete-link col-1 pt-1 text-right" href="#"><i class="fas fa-trash"></i></a>
+                        </div>
+
+                        <div class="mt-3 row add-link-group">
+                            <small class="col-10">
+                                You can use Important Links to share links to tracks/cars or any other resources (or just
+                                anything you can think of really) with the entrants of your championship! You can just
+                                leave this blank if you don't want any links!
+                            </small>
+
+                            <div class="col-2">
+                                <button id="addLink" class="btn btn-primary float-right">Add Link</button>
+                            </div>
+                        </div>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
             </div>
         </div>
 

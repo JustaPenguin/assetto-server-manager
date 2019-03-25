@@ -1508,29 +1508,32 @@ function handleWeatherFiles(fileList) {
         }
     }
 
-    // check for multiple weathers inside "weather" folder, if so call loop function for each weather
-    if (fileList[0].filepath.startsWith("weather/") && !fileList[0].newPath) {
-        let splitList = {};
+    let idPos = 0;
 
-        for (let y = 0; y < fileList.length; y++) {
-            let splitPath = fileList[y].filepath.split("/");
-
-            let weatherIdentifier = splitPath.slice(0, 2).join(":");
-
-            fileList[y].newPath = splitPath.slice(1, splitPath.length - 1).join("/");
-
-            if (!splitList[weatherIdentifier]) {
-                splitList[weatherIdentifier] = []
-            }
-
-            splitList[weatherIdentifier].push(fileList[y]);
-        }
-
-        for (let weather in splitList) {
-            handleWeatherFilesLoop(splitList[weather]);
-        }
+    if (fileList[0].filepath.startsWith("weather/")) {
+        idPos = 2
     } else {
-        handleWeatherFilesLoop(fileList);
+        idPos = 1
+    }
+
+    let splitList = {};
+
+    for (let y = 0; y < fileList.length; y++) {
+        let splitPath = fileList[y].filepath.split("/");
+
+        let weatherIdentifier = splitPath.slice(0, idPos).join(":");
+
+        fileList[y].newPath = splitPath.slice(1, splitPath.length - 1).join("/");
+
+        if (!splitList[weatherIdentifier]) {
+            splitList[weatherIdentifier] = []
+        }
+
+        splitList[weatherIdentifier].push(fileList[y]);
+    }
+
+    for (let weather in splitList) {
+        handleWeatherFilesLoop(splitList[weather]);
     }
 }
 
@@ -1628,29 +1631,32 @@ function handleCarFiles(fileList) {
         }
     }
 
-    // check for multiple cars inside "cars" folder, if so recall this function for each car
-    if (fileList[0].filepath.startsWith("cars/") && !fileList[0].newPath) {
-        let splitList = {};
+    let idPos = 0;
 
-        for (let y = 0; y < fileList.length; y++) {
-            let splitPath = fileList[y].filepath.split("/");
-
-            let carIdentifier = splitPath.slice(0, 2).join(":");
-
-            fileList[y].newPath = splitPath.slice(1, splitPath.length - 1).join("/");
-
-            if (!splitList[carIdentifier]) {
-                splitList[carIdentifier] = []
-            }
-
-            splitList[carIdentifier].push(fileList[y]);
-        }
-
-        for (let car in splitList) {
-            handleCarFiles(splitList[car]);
-        }
+    if (fileList[0].filepath.startsWith("cars/")) {
+        idPos = 2
     } else {
-        handleCarFilesLoop(fileList);
+        idPos = 1
+    }
+
+    let splitList = {};
+
+    for (let y = 0; y < fileList.length; y++) {
+        let splitPath = fileList[y].filepath.split("/");
+
+        let carIdentifier = splitPath.slice(0, idPos).join(":");
+
+        fileList[y].newPath = splitPath.slice(1, splitPath.length - 1).join("/");
+
+        if (!splitList[carIdentifier]) {
+            splitList[carIdentifier] = []
+        }
+
+        splitList[carIdentifier].push(fileList[y]);
+    }
+
+    for (let car in splitList) {
+        handleCarFilesLoop(splitList[car]);
     }
 }
 
@@ -1878,29 +1884,34 @@ function handleTrackFiles(fileList) {
         }
     }
 
-    if (fileList[0].filepath.startsWith("tracks/") && !fileList[0].newPath) {
-        let splitList = {};
+    let idPos = 0;
 
-        for (let y = 0; y < fileList.length; y++) {
-            let splitPath = fileList[y].filepath.split("/");
-
-            let trackIdentifier = splitPath.slice(0, 2).join(":");
-
-            fileList[y].newPath = splitPath.slice(1, splitPath.length - 1).join("/");
-
-            if (!splitList[trackIdentifier]) {
-                splitList[trackIdentifier] = []
-            }
-
-            splitList[trackIdentifier].push(fileList[y]);
-        }
-
-        for (let track in splitList) {
-            handleTrackFilesLoop(splitList[track]);
-        }
+    if (fileList[0].filepath.startsWith("tracks/")) {
+        idPos = 2
     } else {
-        handleTrackFilesLoop(fileList);
+        idPos = 1
     }
+
+    let splitList = {};
+
+    for (let y = 0; y < fileList.length; y++) {
+        let splitPath = fileList[y].filepath.split("/");
+
+        let trackIdentifier = splitPath.slice(0, idPos).join(":");
+
+        fileList[y].newPath = splitPath.slice(1, splitPath.length - 1).join("/");
+
+        if (!splitList[trackIdentifier]) {
+            splitList[trackIdentifier] = []
+        }
+
+        splitList[trackIdentifier].push(fileList[y]);
+    }
+
+    for (let track in splitList) {
+        handleTrackFilesLoop(splitList[track]);
+    }
+
 }
 
 function handleTrackFilesLoop(fileList) {
@@ -2160,6 +2171,7 @@ let championships = {
         });
 
         championships.initClassSetup();
+        championships.initLinks();
     },
 
     $classTemplate: null,
@@ -2185,6 +2197,30 @@ let championships = {
             $(this).closest(".race-setup").remove();
         });
     },
+
+    $linkTemplate: null,
+
+    initLinks: function () {
+        let $addLinkButton = $document.find("#addLink");
+        let $linkTemplate = $document.find("#link-template");
+
+        championships.$linkTemplate = $linkTemplate.clone();
+
+        $linkTemplate.remove();
+
+        $addLinkButton.click(function (e) {
+            e.preventDefault();
+
+            let $cloned = championships.$linkTemplate.clone().show();
+
+            $(this).closest(".add-link-group").before($cloned);
+        });
+
+        $document.on("click", ".btn-delete-link", function (e) {
+            e.preventDefault();
+            $(this).closest(".link-group").remove();
+        });
+    }
 };
 
 function ordinalSuffix(i) {
