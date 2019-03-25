@@ -28,6 +28,10 @@ type RaceStore interface {
 	ListChampionships() ([]*Championship, error)
 	LoadChampionship(id string) (*Championship, error)
 	DeleteChampionship(id string) error
+
+	// Live Timings
+	UpsertLiveFrames([]string) error
+	ListPrevFrames() ([]string, error)
 }
 
 type BoltRaceStore struct {
@@ -43,6 +47,7 @@ var (
 	serverOptionsBucketName = []byte("serverOptions")
 	entrantsBucketName      = []byte("entrants")
 	championshipsBucketName = []byte("championships")
+	frameLinksBucketName    = []byte("frameLinks")
 
 	serverOptionsKey = []byte("serverOptions")
 )
@@ -217,6 +222,64 @@ func (rs *BoltRaceStore) ListEntrants() ([]*Entrant, error) {
 	})
 
 	return entrants, err
+}
+
+func (rs *BoltRaceStore) frameLinksBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+	if !tx.Writable() {
+		bkt := tx.Bucket(frameLinksBucketName)
+
+		if bkt == nil {
+			return nil, bbolt.ErrBucketNotFound
+		}
+
+		return bkt, nil
+	}
+
+	return tx.CreateBucketIfNotExists(frameLinksBucketName)
+}
+
+func (rs *BoltRaceStore) UpsertLiveFrames(frameLinks []string) error {
+	return rs.db.Update(func(tx *bbolt.Tx) error {
+		bkt, err := rs.frameLinksBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		encoded, err := rs.encode(frameLinks)
+
+		if err != nil {
+			return err
+		}
+
+		return bkt.Put([]byte("frameLinks"), encoded)
+	})
+}
+
+func (rs *BoltRaceStore) ListPrevFrames() ([]string, error) {
+	var links []string
+
+	err := rs.db.View(func(tx *bbolt.Tx) error {
+		bkt, err := rs.frameLinksBucket(tx)
+
+		if err == bbolt.ErrBucketNotFound {
+			return nil
+		} else if err != nil {
+			return err
+		}
+
+		linksByte := bkt.Get([]byte("frameLinks"))
+
+		err = rs.decode(linksByte, &links)
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return links, err
 }
 
 func (rs *BoltRaceStore) serverOptionsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {

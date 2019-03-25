@@ -937,3 +937,11 @@ func (rm *RaceManager) LoadServerOptions() (*GlobalServerConfig, error) {
 
 	return serverOpts, nil
 }
+
+func (rm *RaceManager) GetLiveFrames() ([]string, error) {
+	return rm.raceStore.ListPrevFrames()
+}
+
+func (rm *RaceManager) UpsertLiveFrames(links []string) error {
+	return rm.raceStore.UpsertLiveFrames(links)
+}

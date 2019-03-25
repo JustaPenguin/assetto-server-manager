@@ -111,7 +111,7 @@
                                 <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
                                     {{ if $championship.IsMultiClass }}
                                         {{ if eq $i 0 }}
-                                            <td rowspan="{{ add (len $class.Points.Places) 2 }}">{{ $class.Name }}</td>
+                                            <td rowspan="{{ add (len $class.Points.Places) 3 }}">{{ $class.Name }}</td>
                                         {{ end }}
                                     {{ end }}
                                     <td>{{ add $i 1 }}{{ ordinal (add $i 1) }}</td>
@@ -140,6 +140,43 @@
                         {{ end }}
                     </table>
                 </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="container-fluid">
+            <div class="row flex-row flex-nowrap pb-3" style="overflow-x: auto;">
+
+            {{ range $classIndex, $class := $championship.Classes }}
+                {{ $entrants := ($class.Standings $championship.Events) }}
+
+                {{ range $i, $entrant := $entrants }}
+
+                    <div class="col-6 col-lg-3 col-md-3 col-sm-6 entrant-car">
+                        <div class="card card-block" {{ if $championship.IsMultiClass }}style="color: white; background: {{ classColor $classIndex }}"{{ end }}>
+                            <img src="{{ with $entrant.Entrant.Skin }}{{ carSkinURL $entrant.Entrant.Model $entrant.Entrant.Skin }}{{ else }}/static/img/no-preview-car.png{{ end }}"
+                                 alt="Car Skin"
+                                 class="card-img-top"
+                            >
+                            <div class="card-body p-1 text-center">
+                                {{ if $championship.IsMultiClass }}
+                                    <small>{{ $class.Name }}</small><br>
+                                {{ end }}
+                                {{ add $i 1 }}{{ ordinal (add $i 1) }} Place
+
+                                <p class="mb-0">
+                                    <small>
+                                        {{ $entrant.Entrant.Name }}<br>
+                                        {{ $entrant.Entrant.Team }}
+                                    </small>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {{ end }}
+            {{ end }}
+
             </div>
         </div>
 
