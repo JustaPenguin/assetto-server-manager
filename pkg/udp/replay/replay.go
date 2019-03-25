@@ -179,7 +179,7 @@ func RecordUDPMessages(filename string) (callbackFunc udp.CallbackFunc) {
 	}
 }
 
-func ReplayUDPMessages(filename string, multiplier int, callbackFunc udp.CallbackFunc, async bool) error {
+func ReplayUDPMessages(filename string, multiplier int, callbackFunc udp.CallbackFunc, waitTime time.Duration) error {
 	var loadedEntries []*Entry
 
 	f, err := os.Open(filename)
@@ -203,18 +203,18 @@ func ReplayUDPMessages(filename string, multiplier int, callbackFunc udp.Callbac
 	for _, entry := range loadedEntries {
 		tickDuration := entry.Received.Sub(timeStart) / time.Duration(multiplier)
 
+		if tickDuration > waitTime {
+			tickDuration = waitTime
+		}
+
 		logrus.Debugf("next tick occurs in: %s", tickDuration)
 
 		if tickDuration > 0 {
-			tickWhenEventOccurs := time.Tick(entry.Received.Sub(timeStart) / time.Duration(multiplier))
+			tickWhenEventOccurs := time.Tick(tickDuration)
 			<-tickWhenEventOccurs
 		}
 
-		if async {
-			go callbackFunc(entry.Data)
-		} else {
-			callbackFunc(entry.Data)
-		}
+		callbackFunc(entry.Data)
 
 		timeStart = entry.Received
 	}

@@ -171,7 +171,10 @@ func LiveMapCallback(message udp.Message) {
 		} else if m.Event() == udp.EventConnectionClosed {
 			delete(connectedCars, m.CarID)
 		}
-	case udp.CarUpdate, *TrackMapData, udp.CollisionWithEnvironment, udp.CollisionWithCar, udp.ClientLoaded, udp.Version:
+
+	case udp.Version:
+		connectedCars = make(map[udp.CarID]udp.SessionCarInfo)
+	case udp.CarUpdate, *TrackMapData, udp.CollisionWithEnvironment, udp.CollisionWithCar, udp.ClientLoaded:
 	default:
 		return
 	}

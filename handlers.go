@@ -128,6 +128,9 @@ func Router(fs http.FileSystem) chi.Router {
 		// penalties
 		r.Post("/penalties/{sessionFile}/{driverGUID}", penaltyHandler)
 
+		// live timings
+		r.Post("/live-timing/save-frames", LiveFrameSaveHandler)
+
 		// endpoints
 		r.Post("/api/track/upload", apiTrackUploadHandler)
 		r.Post("/api/car/upload", apiCarUploadHandler)
@@ -379,8 +382,16 @@ func liveTimingHandler(w http.ResponseWriter, r *http.Request) {
 		customRace = &CustomRace{EntryList: entryList, RaceConfig: currentRace.CurrentRaceConfig}
 	}
 
+	frameLinks, err := raceManager.GetLiveFrames()
+
+	if err != nil {
+		logrus.Errorf("could not get frame links, err: %s", err)
+		return
+	}
+
 	ViewRenderer.MustLoadTemplate(w, r, "live-timing.html", map[string]interface{}{
 		"RaceDetails": customRace,
+		"FrameLinks":  frameLinks,
 	})
 }
 
@@ -388,4 +399,35 @@ func liveTimingGetHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	_ = json.NewEncoder(w).Encode(liveInfo)
+}
+
+func deleteEmpty(s []string) []string {
+	var r []string
+	for _, str := range s {
+		if str != "" {
+			r = append(r, str)
+		}
+	}
+	return r
+}
+
+func LiveFrameSaveHandler(w http.ResponseWriter, r *http.Request) {
+	// Save the frame links from the form
+	err := r.ParseForm()
+
+	if err != nil {
+		logrus.Errorf("could not load parse form, err: %s", err)
+		return
+	}
+
+	err = raceManager.UpsertLiveFrames(deleteEmpty(r.Form["frame-link"]))
+
+	if err != nil {
+		logrus.Errorf("could not save frame links, err: %s", err)
+		return
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+
+	return
 }

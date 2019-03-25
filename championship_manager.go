@@ -353,6 +353,8 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 	config := ConfigIniDefault
 	config.CurrentRaceConfig = event.RaceSetup
 
+	logrus.Infof("Starting Championship Event: %s at %s (%s) with %d entrants", event.RaceSetup.Cars, event.RaceSetup.Track, event.RaceSetup.TrackLayout, event.RaceSetup.MaxClients)
+
 	// track that this is the current event
 	return cm.applyConfigAndStart(config, event.CombineEntryLists(championship), &ActiveChampionship{
 		ChampionshipID: championship.ID,
