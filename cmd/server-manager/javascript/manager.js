@@ -170,11 +170,18 @@ let liveMap = {
                     liveMap.joined[data.CarID] = data;
 
                     let $driverName = $("<span class='name'/>").text(getAbbreviation(data.DriverName));
+                    let $info = $("<span class='info'/>").text("0");
 
                     liveMap.joined[data.CarID].dot = $("<div class='dot' style='background: " + randomColor({
                         luminosity: 'bright',
                         seed: data.DriverGUID
-                    }) + "'/>").append($driverName);
+                    }) + "'/>").append($driverName, $info);
+
+                    if (liveMap.joined.length > 1) {
+                        liveMap.joined[data.CarID].dot.find(".info").hide();
+
+                        hiddenDots[liveMap.joined[data.CarID].DriverGUID] = liveMap.joined[data.CarID].dot.find(".info").is(":hidden");
+                    }
                     break;
 
                 case EventConnectionClosed:
@@ -187,6 +194,34 @@ let liveMap = {
                         'left': (((data.Pos.X + xOffset + margin)) / scale) * mapSizeMultiplier,
                         'top': (((data.Pos.Z + zOffset + margin)) / scale) * mapSizeMultiplier,
                     });
+
+                    let speed = Math.floor(Math.sqrt((Math.pow(data.Velocity.X, 2) + Math.pow(data.Velocity.Z, 2)))*3.6);
+
+                    if (!liveMap.joined[data.CarID].maxRPM) {
+                        liveMap.joined[data.CarID].maxRPM = 0
+                    }
+
+                    if (data.EngineRPM > liveMap.joined[data.CarID].maxRPM) {
+                        liveMap.joined[data.CarID].maxRPM = data.EngineRPM
+                    }
+
+                    liveMap.joined[data.CarID].dot.find(".info").text(speed + "Km/h " + (data.Gear-1));
+
+                    let $rpmGaugeOuter = $("<div class='rpm-outer'></div>");
+                    let $rpmGaugeInner = $("<div class='rpm-inner'></div>");
+
+                    $rpmGaugeInner.css({
+                        'width': ((data.EngineRPM/liveMap.joined[data.CarID].maxRPM)*100).toFixed(0)+"%",
+                        'background': randomColor({
+                            luminosity: 'bright',
+                            seed: liveMap.joined[data.CarID].DriverGUID,
+                        }),
+                    });
+
+                    $rpmGaugeOuter.append($rpmGaugeInner);
+
+                    liveMap.joined[data.CarID].dot.find(".info").append($rpmGaugeOuter);
+
                     break;
 
                 case EventSessionInfo:
@@ -199,7 +234,7 @@ let liveMap = {
                     loadedImg.onload = function () {
                         $imgContainer.attr({'src': trackURL});
 
-                        if (loadedImg.height / loadedImg.width > 1.2) {
+                        if (loadedImg.height / loadedImg.width > 1.07) {
                             // rotate the map
                             $map.addClass("rotated");
 
@@ -1051,154 +1086,211 @@ function timeDiff(tstart, tend) {
     return s;
 }
 
+let hiddenDots = [];
+
 let liveTiming = {
     init: function () {
         let $liveTimingTable = $document.find("#live-table");
+
+        if (!$liveTimingTable.length) {
+            return
+        }
 
         let raceCompletion = "";
         let total = 0;
         let sessionType = "";
         let lapTime = "";
 
-        if ($liveTimingTable.length) {
-            setInterval(function () {
-                $.getJSON("/live-timing/get", function (liveTiming) {
-                    let date = new Date();
+        $document.find(".container").attr("class", "container-fluid");
 
-                    // Get lap/laps or time/totalTime
-                    if (liveTiming.Time > 0) {
-                        total = liveTiming.Time + "m";
+        $document.on("change", ".live-frame-link", function () {
+            if ($(this).val()) {
+                let $liveTimingFrame = $(this).closest(".live-frame-wrapper").find(".live-frame");
+                $(this).closest(".live-frame-wrapper").find(".embed-responsive").attr("class", "embed-responsive embed-responsive-16by9");
 
-                        raceCompletion = timeDiff(liveTiming.SessionStarted, date.getTime());
-                    } else if (liveTiming.Laps > 0) {
-                        raceCompletion = liveTiming.LapNum;
-                        total = liveTiming.Laps + " laps";
-                    }
+                // if somebody pasted an embed code just grab the actual link
+                if ($(this).val().startsWith('<iframe')) {
+                    let res = $(this).val().split('"');
 
-                    let $raceTime = $document.find("#race-time");
-                    $raceTime.text("Event Completion: " + raceCompletion + "/ " + total);
-
-                    // Get the session type
-                    let $currentSession = $document.find("#current-session");
-
-                    switch (liveTiming.Type) {
-                        case 0:
-                            sessionType = "Booking";
-                            break;
-                        case 1:
-                            sessionType = "Practice";
-                            break;
-                        case 2:
-                            sessionType = "Qualifying";
-                            break;
-                        case 3:
-                            sessionType = "Race";
-                            break;
-                    }
-
-                    $currentSession.text("Current Session: " + sessionType);
-
-                    for (let car in liveTiming.Cars) {
-                        if (liveTiming.Cars[car].Pos === 0) {
-                            liveTiming.Cars[car].Pos = 255
+                    for (let i = 0; i < res.length; i++) {
+                        if (res[i] === " src=") {
+                            if (res[i+1])
+                                $liveTimingFrame.attr("src", res[i+1]);
+                                $(this).val(res[i+1])
                         }
                     }
+                } else {
+                    $liveTimingFrame.attr("src", $(this).val())
+                }
+            }
+        });
 
-                    // Get active cars - sort by pos
-                    let sorted = Object.keys(liveTiming.Cars)
-                        .sort(function (a, b) {
-                            if (liveTiming.Cars[a].Pos < liveTiming.Cars[b].Pos) {
-                                return -1
-                            } else if (liveTiming.Cars[a].Pos === liveTiming.Cars[b].Pos) {
-                                return 0
-                            } else if (liveTiming.Cars[a].Pos > liveTiming.Cars[b].Pos) {
-                                return 1
+        $document.on("click", ".remove-live-frame", function () {
+            $(this).closest(".live-frame-wrapper").remove()
+        });
+
+        $document.find("#add-live-frame").click(function () {
+            let $copy = $document.find(".live-frame-wrapper").first().clone();
+
+            $copy.attr("class", "w-100 live-frame-wrapper d-contents");
+            $copy.find(".embed-responsive").attr("class", "d-none embed-responsive embed-responsive-16by9");
+
+            $document.find(".live-frame-wrapper").last().after($copy);
+        });
+
+        setInterval(function () {
+            $.getJSON("/live-timing/get", function (liveTiming) {
+                let date = new Date();
+
+                // Get lap/laps or time/totalTime
+                if (liveTiming.Time > 0) {
+                    total = liveTiming.Time + "m";
+
+                    raceCompletion = timeDiff(liveTiming.SessionStarted, date.getTime());
+                } else if (liveTiming.Laps > 0) {
+                    raceCompletion = liveTiming.LapNum;
+                    total = liveTiming.Laps + " laps";
+                }
+
+                let $raceTime = $document.find("#race-time");
+                $raceTime.text("Event Completion: " + raceCompletion + "/ " + total);
+
+                // Get the session type
+                let $currentSession = $document.find("#current-session");
+
+                switch (liveTiming.Type) {
+                    case 0:
+                        sessionType = "Booking";
+                        break;
+                    case 1:
+                        sessionType = "Practice";
+                        break;
+                    case 2:
+                        sessionType = "Qualifying";
+                        break;
+                    case 3:
+                        sessionType = "Race";
+                        break;
+                }
+
+                $currentSession.text("Current Session: " + sessionType);
+
+                for (let car in liveTiming.Cars) {
+                    if (liveTiming.Cars[car].Pos === 0) {
+                        liveTiming.Cars[car].Pos = 255
+                    }
+                }
+
+                // Get active cars - sort by pos
+                let sorted = Object.keys(liveTiming.Cars)
+                    .sort(function (a, b) {
+                        if (liveTiming.Cars[a].Pos < liveTiming.Cars[b].Pos) {
+                            return -1
+                        } else if (liveTiming.Cars[a].Pos === liveTiming.Cars[b].Pos) {
+                            return 0
+                        } else if (liveTiming.Cars[a].Pos > liveTiming.Cars[b].Pos) {
+                            return 1
+                        }
+                    });
+
+                for (let car of sorted) {
+                    let $driverRow = $document.find("#" + liveTiming.Cars[car].DriverGUID);
+                    let $tr;
+
+                    // Get the lap time, display previous for 10 seconds after completion
+                    if (liveTiming.Cars[car].LastLapCompleteTimeUnix + 10000 > date.getTime()) {
+                        lapTime = liveTiming.Cars[car].LastLap
+                    } else if (liveTiming.Cars[car].LapNum === 0) {
+                        lapTime = "0s"
+                    } else {
+                        lapTime = timeDiff(liveTiming.Cars[car].LastLapCompleteTimeUnix, date.getTime())
+                    }
+
+                    if ($driverRow.length) {
+                        $driverRow.remove()
+                    }
+
+                    $tr = $("<tr/>");
+                    $tr.attr({'id': liveTiming.Cars[car].DriverGUID});
+                    $tr.empty();
+
+                    let $tdPos = $("<td/>");
+                    let $tdName = $("<td/>");
+                    let $tdLapTime = $("<td/>");
+                    let $tdBestLap = $("<td/>");
+                    let $tdGap = $("<td/>");
+                    let $tdLapNum = $("<td/>");
+                    let $tdEvents = $("<td/>");
+
+                    if (liveTiming.Cars[car].Pos === 255) {
+                        $tdPos.text("n/a");
+                    } else {
+                        $tdPos.text(liveTiming.Cars[car].Pos);
+                    }
+                    $tr.append($tdPos);
+
+                    $tdName.text(liveTiming.Cars[car].DriverName);
+                    let dotClass;
+                    if (hiddenDots[liveTiming.Cars[car].DriverGUID]) {
+                        dotClass = "dot dot-inactive"
+                    } else {
+                        dotClass = "dot"
+                    }
+                    $tdName.prepend($("<div class='" + dotClass + "' style='background: " + randomColor({
+                        luminosity: 'bright',
+                        seed: liveTiming.Cars[car].DriverGUID
+                    }) + "'/>"));
+                    $tdName.attr("class", "driver-link");
+                    $tdName.click(function () {
+                        for (let driver of liveMap.joined) {
+                            if (driver !== undefined && driver.DriverGUID === liveTiming.Cars[car].DriverGUID) {
+                                driver.dot.find(".info").toggle();
+
+                                hiddenDots[liveTiming.Cars[car].DriverGUID] = driver.dot.find(".info").is(":hidden");
                             }
-                        });
-
-                    for (let car of sorted) {
-                        let $driverRow = $document.find("#" + liveTiming.Cars[car].DriverGUID);
-                        let $tr;
-
-                        // Get the lap time, display previous for 10 seconds after completion
-                        if (liveTiming.Cars[car].LastLapCompleteTimeUnix + 10000 > date.getTime()) {
-                            lapTime = liveTiming.Cars[car].LastLap
-                        } else if (liveTiming.Cars[car].LapNum === 0) {
-                            lapTime = "0s"
-                        } else {
-                            lapTime = timeDiff(liveTiming.Cars[car].LastLapCompleteTimeUnix, date.getTime())
                         }
+                    });
+                    $tr.append($tdName);
 
-                        if ($driverRow.length) {
-                            $driverRow.remove()
-                        }
+                    $tdLapTime.text(lapTime);
+                    $tr.append($tdLapTime);
 
-                        $tr = $("<tr/>");
-                        $tr.attr({'id': liveTiming.Cars[car].DriverGUID});
-                        $tr.empty();
+                    $tdBestLap.text(liveTiming.Cars[car].BestLap);
+                    $tr.append($tdBestLap);
 
-                        let $tdPos = $("<td/>");
-                        let $tdName = $("<td/>");
-                        let $tdLapTime = $("<td/>");
-                        let $tdBestLap = $("<td/>");
-                        let $tdGap = $("<td/>");
-                        let $tdLapNum = $("<td/>");
-                        let $tdEvents = $("<td/>");
+                    $tdGap.text(liveTiming.Cars[car].Split);
+                    $tr.append($tdGap);
 
-                        if (liveTiming.Cars[car].Pos === 255) {
-                            $tdPos.text("n/a");
-                        } else {
-                            $tdPos.text(liveTiming.Cars[car].Pos);
-                        }
-                        $tr.append($tdPos);
+                    $tdLapNum.text(liveTiming.Cars[car].LapNum);
+                    $tr.append($tdLapNum);
 
-                        $tdName.text(liveTiming.Cars[car].DriverName);
-                        $tdName.prepend($("<div class='dot' style='background: " + randomColor({
-                            luminosity: 'bright',
-                            seed: liveTiming.Cars[car].DriverGUID
-                        }) + "'/>"));
-                        $tr.append($tdName);
+                    if (liveTiming.Cars[car].Loaded && liveTiming.Cars[car].LoadedTime + 10000 > date.getTime()) {
+                        let $tag = $("<span/>");
+                        $tag.attr({'class': 'badge badge-success live-badge'});
+                        $tag.text("Loaded");
 
-                        $tdLapTime.text(lapTime);
-                        $tr.append($tdLapTime);
+                        $tdEvents.append($tag);
+                    }
 
-                        $tdBestLap.text(liveTiming.Cars[car].BestLap);
-                        $tr.append($tdBestLap);
+                    if (liveTiming.Cars[car].Collisions !== null) {
+                        for (let y = 0; y < liveTiming.Cars[car].Collisions.length; y++) {
+                            if (liveTiming.Cars[car].Collisions[y].Time + 10000 > date.getTime()) {
+                                let $tag = $("<span/>");
+                                $tag.attr({'class': 'badge badge-danger live-badge'});
+                                $tag.text("Crash " + liveTiming.Cars[car].Collisions[y].Type + " at " +
+                                    parseFloat(liveTiming.Cars[car].Collisions[y].Speed).toFixed(2) + "m/s");
 
-                        $tdGap.text(liveTiming.Cars[car].Split);
-                        $tr.append($tdGap);
-
-                        $tdLapNum.text(liveTiming.Cars[car].LapNum);
-                        $tr.append($tdLapNum);
-
-                        if (liveTiming.Cars[car].Loaded && liveTiming.Cars[car].LoadedTime + 10000 > date.getTime()) {
-                            let $tag = $("<span/>");
-                            $tag.attr({'class': 'badge badge-success live-badge'});
-                            $tag.text("Loaded");
-
-                            $tdEvents.append($tag);
-                        }
-
-                        if (liveTiming.Cars[car].Collisions !== null) {
-                            for (let y = 0; y < liveTiming.Cars[car].Collisions.length; y++) {
-                                if (liveTiming.Cars[car].Collisions[y].Time + 10000 > date.getTime()) {
-                                    let $tag = $("<span/>");
-                                    $tag.attr({'class': 'badge badge-danger live-badge'});
-                                    $tag.text("Crash " + liveTiming.Cars[car].Collisions[y].Type + " at " +
-                                        parseFloat(liveTiming.Cars[car].Collisions[y].Speed).toFixed(2) + "m/s");
-
-                                    $tdEvents.append($tag);
-                                }
+                                $tdEvents.append($tag);
                             }
                         }
-
-                        $tr.append($tdEvents);
-
-                        $liveTimingTable.append($tr)
                     }
-                });
-            }, 1000);
-        }
+
+                    $tr.append($tdEvents);
+
+                    $liveTimingTable.append($tr)
+                }
+            });
+        }, 1000);
     }
 };
 

@@ -1,12 +1,20 @@
 v1.2.0
 ------
 
+* Added configurable IFrames to the live timings page. Users with write access can modify and add IFrames to the
+  page (they will persist for all users between events). Intended for use with event live streams or track info etc.
+* Added extra track info to live timings page.
+* Added an extra info pane to drivers on the live map that displays their current speed, gear and rpm. This can be
+  toggled on/off by clicking their name in the live timings table.
+* Changed the layout of the live timings page to better accommodate the new features.
 * Fixes an issue preventing the upload of older cars which contain a data folder rather than a data.acd file.
 * Added "Import Championship Event" functionality, which lets you import non-championship results files into a
   championship. To use this, create a championship event for the track and layout you wish to import results to. Then,
   click on "Manage Event" on the Championship page and select the session results files to import from.
 * Removed unnecessary duplication of entrants on Championship pages.
 * Added car images to Championship pages.
+* Fixes an issue with illegal Byte Order Marks preventing some track info files from being read.
+* Fixes an issue where some Live Map cars would not properly clear on server restart.
 
 v1.1.3
 ------
