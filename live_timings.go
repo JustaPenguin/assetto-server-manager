@@ -108,7 +108,7 @@ func LiveTimingCallback(response udp.Message) {
 				Time:                a.Time,
 				Laps:                a.Laps,
 				AmbientTemp:         a.AmbientTemp,
-				RoadTemp: 			 a.RoadTemp,
+				RoadTemp:            a.RoadTemp,
 				WaitTime:            a.WaitTime,
 				WeatherGraphics:     a.WeatherGraphics,
 				ElapsedMilliseconds: a.ElapsedMilliseconds,

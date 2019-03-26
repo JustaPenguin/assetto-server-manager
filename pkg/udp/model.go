@@ -197,7 +197,6 @@ func (s SessionInfo) Event() Event {
 }
 
 type GetSessionInfo struct {
-
 }
 
 func (GetSessionInfo) Event() Event {
