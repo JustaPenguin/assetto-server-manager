@@ -196,6 +196,14 @@ func (s SessionInfo) Event() Event {
 	return s.EventType
 }
 
+type GetSessionInfo struct {
+
+}
+
+func (GetSessionInfo) Event() Event {
+	return EventGetSessionInfo
+}
+
 type EnableRealtimePosInterval struct {
 	Type     uint8
 	Interval uint16
