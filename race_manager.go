@@ -40,11 +40,20 @@ func SetupRaceManager(store RaceStore) {
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
+
 	go func() {
 		for range c {
 			// ^C, handle it
-			if p, ok := AssettoProcess.(*AssettoServerProcess); ok {
-				p.stopChildProcesses()
+			if AssettoProcess.IsRunning() {
+				if AssettoProcess.EventType() == EventTypeChampionship {
+					if err := championshipManager.StopActiveEvent(); err != nil {
+						logrus.Errorf("Error stopping event, err: %s", err)
+					}
+				}
+
+				if p, ok := AssettoProcess.(*AssettoServerProcess); ok {
+					p.stopChildProcesses()
+				}
 			}
 
 			os.Exit(0)
