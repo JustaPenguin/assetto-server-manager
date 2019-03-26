@@ -17,12 +17,20 @@ import (
 
 const MaxLogSizeBytes = 1e6
 
+type ServerEventType string
+
+const (
+	EventTypeRace         ServerEventType = "RACE"
+	EventTypeChampionship ServerEventType = "CHAMPIONSHIP"
+)
+
 type ServerProcess interface {
 	Logs() string
 	Start() error
 	Stop() error
 	Restart() error
 	IsRunning() bool
+	EventType() ServerEventType
 }
 
 var AssettoProcess ServerProcess
@@ -32,23 +40,39 @@ func serverProcessHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var txt string
 
+	eventType := AssettoProcess.EventType()
+
 	switch chi.URLParam(r, "action") {
 	case "start":
 		err = AssettoProcess.Start()
 		txt = "started"
 	case "stop":
-		err = AssettoProcess.Stop()
+		if eventType == EventTypeChampionship {
+			err = championshipManager.StopActiveEvent()
+		} else {
+			err = AssettoProcess.Stop()
+		}
 		txt = "stopped"
 	case "restart":
-		err = AssettoProcess.Restart()
+		if eventType == EventTypeChampionship {
+			err = championshipManager.RestartActiveEvent()
+		} else {
+			err = AssettoProcess.Restart()
+		}
 		txt = "restarted"
 	}
 
+	noun := "Server"
+
+	if eventType == EventTypeChampionship {
+		noun = "Championship"
+	}
+
 	if err != nil {
-		logrus.Errorf("could not change server process status, err: %s", err)
-		AddErrFlashQuick(w, r, "Unable to change server status")
+		logrus.Errorf("could not change "+noun+" status, err: %s", err)
+		AddErrFlashQuick(w, r, "Unable to change "+noun+" status")
 	} else {
-		AddFlashQuick(w, r, "Server successfully "+txt)
+		AddFlashQuick(w, r, noun+" successfully "+txt)
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
@@ -135,7 +159,11 @@ func (as *AssettoServerProcess) Start() error {
 	}
 
 	go func() {
-		_ = as.cmd.Wait()
+		err = as.cmd.Wait()
+
+		if err != nil {
+			logrus.Errorf("Wait errored: %s", err)
+		}
 
 		as.stopChildProcesses()
 
@@ -179,6 +207,14 @@ func (as *AssettoServerProcess) IsRunning() bool {
 	defer as.mutex.Unlock()
 
 	return as.cmd != nil && as.cmd.Process != nil
+}
+
+func (as *AssettoServerProcess) EventType() ServerEventType {
+	if championshipManager.activeChampionship != nil {
+		return EventTypeChampionship
+	} else {
+		return EventTypeRace
+	}
 }
 
 // Stop the assetto server.

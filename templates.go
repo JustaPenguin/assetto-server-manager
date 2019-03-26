@@ -337,6 +337,7 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 	}
 
 	data["server_status"] = AssettoProcess.IsRunning()
+	data["server_event_type"] = AssettoProcess.EventType()
 	data["server_name"] = opts.Name
 	data["User"] = UserFromRequest(r)
 

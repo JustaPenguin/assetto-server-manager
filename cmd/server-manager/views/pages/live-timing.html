@@ -8,7 +8,12 @@
         <div class="row">
             <div class="col-lg-6 col-md-12">
                 <div class="card">
-                    <h5 class="card-header">Event in Progress</h5>
+                    {{ if eq $.server_event_type "CHAMPIONSHIP" }}
+                        <h5 class="card-header">Championship Event in Progress</h5>
+                    {{ else }}
+                        <h5 class="card-header">Event in Progress</h5>
+                    {{ end }}
+
                     <div class="card-body row home-race-info">
                         <div class="col-md-8">
 

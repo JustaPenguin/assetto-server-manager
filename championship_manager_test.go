@@ -77,6 +77,10 @@ func (dummyServerProcess) IsRunning() bool {
 	return true
 }
 
+func (dummyServerProcess) EventType() ServerEventType {
+	return EventTypeChampionship
+}
+
 var championshipEventFixtures = []string{
 	"barbagello.json",
 	"red-bull-ring.json",

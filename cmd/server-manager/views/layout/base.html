@@ -87,21 +87,49 @@
                     {{ if .server_status  }}
                         <li class="nav-item dropdown mr-2 {{ if not WriteAccess }} mt-2 {{ end }}">
                             {{ if WriteAccess }}
-                                <a class="nav-link dropdown-toggle" href="#" id="navBarStatusDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <span class="badge badge-success">Server Running</span>
-                                </a>
+                                {{ if eq .server_event_type "CHAMPIONSHIP" }}
+                                    <a class="nav-link dropdown-toggle" href="#" id="navBarStatusDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <span class="badge badge-warning">Championship in Progress</span>
+                                    </a>
+                                {{ else }}
+                                    <a class="nav-link dropdown-toggle" href="#" id="navBarStatusDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <span class="badge badge-success">Assetto Server Running</span>
+                                    </a>
+                                {{ end }}
 
                                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navBarStatusDropdown">
-                                    <a class="dropdown-item" href="/process/restart">Restart</a>
-                                    <a class="dropdown-item" href="/process/stop">Stop</a>
+                                    <a
+                                        class="dropdown-item"
+                                        href="/process/restart"
+
+                                        {{ if eq .server_event_type "CHAMPIONSHIP" }}
+                                            onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                        {{ end }}
+                                    >
+                                        Restart
+                                    </a>
+                                    <a
+                                        class="dropdown-item"
+                                        href="/process/stop"
+
+                                        {{ if eq .server_event_type "CHAMPIONSHIP" }}
+                                            onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                        {{ end }}
+                                    >
+                                        Stop
+                                    </a>
                                 </div>
                             {{ else }}
-                                <span class="badge badge-success">Server Running</span>
+                                {{ if eq .server_event_type "CHAMPIONSHIP" }}
+                                    <span class="badge badge-warning">Championship in Progress</span>
+                                {{ else }}
+                                    <span class="badge badge-success">Assetto Server Running</span>
+                                {{ end }}
                             {{ end }}
                         </li>
                     {{ else }}
                         <li class="nav-item mr-2 mt-2">
-                            <span class="badge badge-danger">Server Offline</span>
+                            <span class="badge badge-danger">Assetto Server Offline</span>
                         </li>
                     {{ end }}
 
