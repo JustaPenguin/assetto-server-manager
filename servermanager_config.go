@@ -46,6 +46,8 @@ type StoreConfig struct {
 }
 
 func (s *StoreConfig) BuildStore() (RaceStore, error) {
+	var rs RaceStore
+
 	switch s.Type {
 	case "boltdb":
 		bbdb, err := bbolt.Open(s.Path, 0644, nil)
@@ -54,12 +56,18 @@ func (s *StoreConfig) BuildStore() (RaceStore, error) {
 			return nil, err
 		}
 
-		return NewBoltRaceStore(bbdb), nil
+		rs = NewBoltRaceStore(bbdb)
 	case "json":
-		return NewJSONRaceStore(s.Path), nil
+		rs = NewJSONRaceStore(s.Path)
 	default:
 		return nil, fmt.Errorf("invalid store type (%s), must be either boltdb/json", s.Type)
 	}
+
+	if err := Migrate(rs); err != nil {
+		return nil, err
+	}
+
+	return rs, nil
 }
 
 type UsersConfig struct {
