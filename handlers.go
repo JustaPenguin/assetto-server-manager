@@ -75,6 +75,7 @@ func Router(fs http.FileSystem) chi.Router {
 
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")))
 		FileServer(r, "/results/download", http.Dir(filepath.Join(ServerInstallPath, "results")))
+		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")))
 	})
 
 	// writers
@@ -85,6 +86,8 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Get("/track/delete/{name}", trackDeleteHandler)
 		r.Get("/car/delete/{name}", carDeleteHandler)
 		r.Get("/weather/delete/{key}", weatherDeleteHandler)
+		r.Get("/setups/delete/{car}/{track}/{setup}", carSetupDeleteHandler)
+		r.Post("/setups/upload", carSetupsUploadHandler)
 
 		// races
 		r.Get("/quick", quickRaceHandler)

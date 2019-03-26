@@ -13,7 +13,7 @@ $(document).ready(function () {
         new RaceSetup($(elem));
     });
 
-    $document.find("#open-in-simres").each(function(index, elem) {
+    $document.find("#open-in-simres").each(function (index, elem) {
         let link = window.location.href.split("#")[0].replace("results", "results/download") + ".json";
 
         $(elem).attr('href', "http://simresults.net/remote?result=" + link);
@@ -72,6 +72,11 @@ $(document).ready(function () {
             return "Are you sure you want to navigate away? You'll lose unsaved changes to this setup if you do.";
         };
     }
+
+    $('#SetupFile').on('change', function () {
+        let fileName = this.files[0].name;
+        $(this).next('.custom-file-label').html(fileName);
+    });
 
     $document.find("#CustomRaceScheduled").change(function () {
         if ($(this).val() && $document.find("#CustomRaceScheduledTime").val()) {
@@ -195,7 +200,7 @@ let liveMap = {
                         'top': (((data.Pos.Z + zOffset + margin)) / scale) * mapSizeMultiplier,
                     });
 
-                    let speed = Math.floor(Math.sqrt((Math.pow(data.Velocity.X, 2) + Math.pow(data.Velocity.Z, 2)))*3.6);
+                    let speed = Math.floor(Math.sqrt((Math.pow(data.Velocity.X, 2) + Math.pow(data.Velocity.Z, 2))) * 3.6);
 
                     if (!liveMap.joined[data.CarID].maxRPM) {
                         liveMap.joined[data.CarID].maxRPM = 0
@@ -205,13 +210,13 @@ let liveMap = {
                         liveMap.joined[data.CarID].maxRPM = data.EngineRPM
                     }
 
-                    liveMap.joined[data.CarID].dot.find(".info").text(speed + "Km/h " + (data.Gear-1));
+                    liveMap.joined[data.CarID].dot.find(".info").text(speed + "Km/h " + (data.Gear - 1));
 
                     let $rpmGaugeOuter = $("<div class='rpm-outer'></div>");
                     let $rpmGaugeInner = $("<div class='rpm-inner'></div>");
 
                     $rpmGaugeInner.css({
-                        'width': ((data.EngineRPM/liveMap.joined[data.CarID].maxRPM)*100).toFixed(0)+"%",
+                        'width': ((data.EngineRPM / liveMap.joined[data.CarID].maxRPM) * 100).toFixed(0) + "%",
                         'background': randomColor({
                             luminosity: 'bright',
                             seed: liveMap.joined[data.CarID].DriverGUID,
@@ -840,7 +845,7 @@ class RaceSetup {
             let $this = $(this);
             let val = $this.val();
 
-            populateEntryListSkins($this, val);
+            populateEntryListSkinsAndSetups($this, val);
 
             // When the car is changed for an added entrant
             showEntrantSkin(val, $this.closest(".entrant").find(".entryListSkin").val(), $this)
@@ -887,29 +892,63 @@ class RaceSetup {
 
         let that = this;
 
-        function populateEntryListSkins($elem, val) {
+        function populateEntryListSkinsAndSetups($elem, car) {
             // populate skins
             let $skinsDropdown = $elem.closest(".entrant").find(".entryListSkin");
-            let selected = $skinsDropdown.val();
+            let selectedSkin = $skinsDropdown.val();
 
             $skinsDropdown.empty();
 
             $("<option value='random_skin'>&lt;random skin&gt;</option>").appendTo($skinsDropdown);
 
-
             try {
 
-                if (val in availableCars && availableCars[val] != null) {
-                    for (let skin of availableCars[val]) {
+                if (car in availableCars && availableCars[car] != null) {
+                    for (let skin of availableCars[car]) {
                         let $opt = $("<option/>");
                         $opt.attr({'value': skin});
                         $opt.text(prettifyName(skin, true));
 
-                        if (skin === selected) {
+                        if (skin === selectedSkin) {
                             $opt.attr({'selected': 'selected'});
                         }
 
                         $opt.appendTo($skinsDropdown);
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+
+            // populate fixed setups
+            let $fixedSetupDropdown = $elem.closest(".entrant").find(".fixedSetup");
+            let selectedSetup = $fixedSetupDropdown.val();
+
+            $fixedSetupDropdown.empty();
+
+            $("<option>").val("").text("No Fixed Setup").appendTo($fixedSetupDropdown);
+
+            try {
+                if (car in fixedSetups && fixedSetups[car] !== null) {
+                    for (let track in fixedSetups[car]) {
+                        // create an optgroup for the track
+                        let $optgroup = $("<optgroup>").attr("label", prettifyName(track, false));
+
+                        for (let setup of fixedSetups[car][track]) {
+                            let setupFullPath = car + "/" + track + "/" + setup;
+
+                            let $opt = $("<option/>");
+                            $opt.attr({'value': setupFullPath});
+                            $opt.text(prettifyName(setup.replace(".ini", ""), true));
+
+                            if (setupFullPath === selectedSetup) {
+                                $opt.attr({'selected': 'selected'});
+                            }
+
+                            $opt.appendTo($optgroup);
+                        }
+
+                        $optgroup.appendTo($fixedSetupDropdown);
                     }
                 }
             } catch (e) {
@@ -966,7 +1005,7 @@ class RaceSetup {
                     $val.append($opt);
                 }
 
-                populateEntryListSkins($val, selected);
+                populateEntryListSkinsAndSetups($val, selected);
             });
         }
 
@@ -1114,9 +1153,9 @@ let liveTiming = {
 
                     for (let i = 0; i < res.length; i++) {
                         if (res[i] === " src=") {
-                            if (res[i+1])
-                                $liveTimingFrame.attr("src", res[i+1]);
-                                $(this).val(res[i+1])
+                            if (res[i + 1])
+                                $liveTimingFrame.attr("src", res[i + 1]);
+                            $(this).val(res[i + 1])
                         }
                     }
                 } else {
@@ -1629,7 +1668,7 @@ function handleCarFilesLoop(fileList) {
         // Find the files that the server is interested in
         if (fileList[x].name === "data.acd" || fileList[x].name === "tyres.ini" || fileList[x].name === "ui_car.json"
             || fileList[x].name.startsWith("livery.") || fileList[x].name.startsWith("preview.")
-            || fileList[x].name === "ui_skin.json"|| fileList[x].filepath.indexOf("/data/") !== -1) {
+            || fileList[x].name === "ui_skin.json" || fileList[x].filepath.indexOf("/data/") !== -1) {
 
             filesToUploadLocal.push(fileList[x]);
 

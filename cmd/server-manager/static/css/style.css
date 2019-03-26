@@ -422,6 +422,18 @@ td .dot-inactive {
     }
 }
 
+.custom-file input {
+    cursor: pointer !important;
+}
+
+.custom-file-label {
+    height: calc(2.0625rem + 5px) !important;
+}
+
+.custom-file-label:after {
+    height: 2.225rem !important;
+}
+
 .entrant-car {
     width: 18rem;
     display: inline-block;

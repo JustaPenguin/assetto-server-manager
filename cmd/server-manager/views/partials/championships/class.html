@@ -51,7 +51,7 @@
 
         {{ range $index, $entrant := $class.Entrants }}
             <div class="entrant">
-                {{ template "entrant" $entrant }}
+                {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" false }}
             </div>
         {{ else }}
             <div class="entrant">

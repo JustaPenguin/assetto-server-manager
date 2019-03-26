@@ -462,11 +462,38 @@ type ChampionshipEvent struct {
 	ID uuid.UUID
 
 	RaceSetup CurrentRaceConfig
-	Sessions  map[SessionType]*ChampionshipSession
+	EntryList EntryList
+
+	Sessions map[SessionType]*ChampionshipSession
 
 	StartedTime   time.Time
 	CompletedTime time.Time
 	Scheduled     time.Time
+}
+
+func (cr *ChampionshipEvent) CombineEntryLists(championship *Championship) EntryList {
+	entryList := championship.AllEntrants()
+
+	if cr.EntryList == nil {
+		// no specific entry list for this event, just use the default
+		return entryList
+	}
+
+	for _, entrant := range entryList {
+		for _, eventEntrant := range cr.EntryList {
+			if entrant.InternalUUID == eventEntrant.InternalUUID {
+				entrant.FixedSetup = eventEntrant.FixedSetup
+				entrant.Restrictor = eventEntrant.Restrictor
+				entrant.SpectatorMode = eventEntrant.SpectatorMode
+				entrant.Ballast = eventEntrant.Ballast
+				entrant.Skin = eventEntrant.Skin
+
+				break
+			}
+		}
+	}
+
+	return entryList
 }
 
 // LastSession returns the last configured session in the championship, in the following order:

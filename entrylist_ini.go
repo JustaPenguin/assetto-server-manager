@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/cj123/ini"
+	"github.com/google/uuid"
 )
 
 const entryListFilename = "entry_list.ini"
@@ -109,7 +110,15 @@ func (e EntryList) Entrants() string {
 	return strings.Join(entrants, ", ")
 }
 
+func NewEntrant() *Entrant {
+	return &Entrant{
+		InternalUUID: uuid.New(),
+	}
+}
+
 type Entrant struct {
+	InternalUUID uuid.UUID `ini:"-"`
+
 	Name string `ini:"DRIVERNAME"`
 	Team string `ini:"TEAM"`
 	GUID string `ini:"GUID"`
@@ -117,9 +126,10 @@ type Entrant struct {
 	Model string `ini:"MODEL"`
 	Skin  string `ini:"SKIN"`
 
-	Ballast       int `ini:"BALLAST"`
-	SpectatorMode int `ini:"SPECTATOR_MODE"`
-	Restrictor    int `ini:"RESTRICTOR"`
+	Ballast       int    `ini:"BALLAST"`
+	SpectatorMode int    `ini:"SPECTATOR_MODE"`
+	Restrictor    int    `ini:"RESTRICTOR"`
+	FixedSetup    string `ini:"FIXED_SETUP"`
 }
 
 func (e Entrant) ID() string {

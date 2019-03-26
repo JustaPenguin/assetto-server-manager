@@ -309,10 +309,11 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 			skin = carMap[model][rand.Intn(len(carMap[model]))]
 		}
 
-		entryList.Add(&Entrant{
-			Model: model,
-			Skin:  skin,
-		})
+		e := NewEntrant()
+		e.Model = model
+		e.Skin = skin
+
+		entryList.Add(e)
 	}
 
 	quickRace.CurrentRaceConfig.MaxClients = numPitboxes
@@ -365,17 +366,28 @@ func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (Entry
 			}
 		}
 
-		entryList.Add(&Entrant{
-			Name:  r.Form["EntryList.Name"][i],
-			Team:  r.Form["EntryList.Team"][i],
-			GUID:  r.Form["EntryList.GUID"][i],
-			Model: model,
-			Skin:  skin,
-			// Despite having the option for SpectatorMode, the server does not support it, and panics if set to 1
-			// SpectatorMode: formValueAsInt(r.Form["EntryList.Spectator"][i]),
-			Ballast:    formValueAsInt(r.Form["EntryList.Ballast"][i]),
-			Restrictor: formValueAsInt(r.Form["EntryList.Restrictor"][i]),
-		})
+		e := NewEntrant()
+
+		if r.Form["EntryList.InternalUUID"][i] != "" {
+			internalUUID, err := uuid.Parse(r.Form["EntryList.InternalUUID"][i])
+
+			if err == nil {
+				e.InternalUUID = internalUUID
+			}
+		}
+
+		e.Name = r.Form["EntryList.Name"][i]
+		e.Team = r.Form["EntryList.Team"][i]
+		e.GUID = r.Form["EntryList.GUID"][i]
+		e.Model = model
+		e.Skin = skin
+		// Despite having the option for SpectatorMode, the server does not support it, and panics if set to 1
+		// SpectatorMode: formValueAsInt(r.Form["EntryList.Spectator"][i]),
+		e.Ballast = formValueAsInt(r.Form["EntryList.Ballast"][i])
+		e.Restrictor = formValueAsInt(r.Form["EntryList.Restrictor"][i])
+		e.FixedSetup = r.Form["EntryList.FixedSetup"][i]
+
+		entryList.Add(e)
 	}
 
 	return entryList, nil
@@ -692,6 +704,12 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		return nil, err
 	}
 
+	fixedSetups, err := ListSetups()
+
+	if err != nil {
+		return nil, err
+	}
+
 	solIsInstalled := false
 
 	for availableWeather := range weather {
@@ -718,6 +736,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		"Current":           race.CurrentRaceConfig,
 		"CurrentEntrants":   entrants,
 		"PossibleEntrants":  possibleEntrants,
+		"FixedSetups":       fixedSetups,
 		"IsChampionship":    false, // this flag is overridden by championship setup
 		"IsEditing":         isEditing,
 		"EditingID":         templateIDForEditing,
