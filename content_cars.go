@@ -86,7 +86,7 @@ func ListCars() (Cars, error) {
 }
 
 func carsHandler(w http.ResponseWriter, r *http.Request) {
-	cars, err := ListCars()
+	opts, err := raceManager.BuildRaceOpts(r)
 
 	if err != nil {
 		logrus.Errorf("could not get car list, err: %s", err)
@@ -94,9 +94,9 @@ func carsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "content/cars.html", map[string]interface{}{
-		"cars": cars,
-	})
+	opts["ShowSetups"] = r.URL.Query().Get("tab") == "setups"
+
+	ViewRenderer.MustLoadTemplate(w, r, "content/cars.html", opts)
 }
 
 func apiCarUploadHandler(w http.ResponseWriter, r *http.Request) {

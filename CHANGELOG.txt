@@ -1,6 +1,9 @@
 v1.2.0
 ------
 
+* Adds Fixed Setups to Custom Races and Championships. Fixed setups can be uploaded on the Cars page. You can fix
+  a setup for a whole championship or individually for specific events in the Championship.
+* Adds skin, ballast and restrictor customisation for individual Championship Events.
 * Added configurable IFrames to the live timings page. Users with write access can modify and add IFrames to the
   page (they will persist for all users between events). Intended for use with event live streams or track info etc.
 * Added extra track info to live timings page.
