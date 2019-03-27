@@ -73,6 +73,17 @@ $(document).ready(function () {
         };
     }
 
+    // Fix for mobile safari
+    $document.find("#Cars").change(function () {
+        let selectedCars = $(this).children("option:selected").val();
+
+        if (selectedCars !== undefined) {
+            $(this).removeAttr('required')
+        } else {
+            $(this).attr('required', 'required')
+        }
+    });
+
     $('#SetupFile').on('change', function () {
         let fileName = this.files[0].name;
         $(this).next('.custom-file-label').html(fileName);
