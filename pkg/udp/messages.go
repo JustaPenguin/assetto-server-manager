@@ -179,6 +179,15 @@ func (asu *AssettoServerUDP) SendMessage(message Message) error {
 
 		return err
 
+	case GetSessionInfo:
+		err := binary.Write(asu.listener, binary.LittleEndian, a.Event())
+
+		if err != nil {
+			return err
+		}
+
+		return err
+
 	case *SendChat:
 		buf := new(bytes.Buffer)
 
