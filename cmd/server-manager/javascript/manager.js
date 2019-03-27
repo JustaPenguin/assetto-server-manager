@@ -73,6 +73,7 @@ $(document).ready(function () {
         };
     }
 
+    // Fix for mobile safari
     $document.find("#Cars").change(function () {
         let selectedCars = $(this).children("option:selected").val();
 
