@@ -1131,11 +1131,14 @@ let percentColors = [
     { pct: 1.0, color: { r: 0xff, g: 0x00, b: 0 } } ];
 
 let getColorForPercentage = function(pct) {
-    for (var i = 1; i < percentColors.length - 1; i++) {
+    let i
+
+    for (i = 1; i < percentColors.length - 1; i++) {
         if (pct < percentColors[i].pct) {
             break;
         }
     }
+
     let lower = percentColors[i - 1];
     let upper = percentColors[i];
     let range = upper.pct - lower.pct;
