@@ -296,6 +296,7 @@ func timeTick(done <-chan struct{}) {
 			}
 		case <-done:
 			logrus.Info("Closing udp request channel")
+			tickChan.Stop()
 			return
 		}
 	}
