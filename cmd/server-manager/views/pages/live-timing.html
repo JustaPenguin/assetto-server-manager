@@ -63,7 +63,7 @@
                                  src="/content/tracks/{{ .RaceConfig.Track }}/ui{{ with .RaceConfig.TrackLayout }}/{{.}}{{ end }}/preview.png"
                                  alt="{{ .RaceConfig.Track }} {{ .RaceConfig.TrackLayout }}"
                             >
-                            <img class="img img-fluid float-right mt-1" id="weatherImage" src="" alt="Current Weather">
+                            <img class="img img-fluid float-right mt-1" id="weatherImage" src="/static/img/no-preview-general.png" alt="Current Weather">
                         </div>
 
                         <div class="table-responsive p-3">
@@ -71,6 +71,7 @@
                                 <tr>
                                     <th>Pos</th>
                                     <th>Driver</th>
+                                    <th>Car</th>
                                     <th>Current Lap</th>
                                     <th>Best Lap</th>
                                     <th>Gap</th>

@@ -97,6 +97,8 @@ func LiveTimingCallback(response udp.Message) {
 			if liveInfo.SessionInfoStopChan != nil {
 				liveInfo.SessionInfoStopChan <- struct{}{}
 				close(liveInfo.SessionInfoStopChan)
+
+				liveInfo.SessionInfoStopChan = nil
 			}
 
 			liveInfo = LiveTiming{
@@ -152,6 +154,8 @@ func LiveTimingCallback(response udp.Message) {
 		// stop the session info ticker
 		liveInfo.SessionInfoStopChan <- struct{}{}
 		close(liveInfo.SessionInfoStopChan)
+
+		liveInfo.SessionInfoStopChan = nil
 
 	case udp.SessionCarInfo:
 		if a.Event() == udp.EventNewConnection {
