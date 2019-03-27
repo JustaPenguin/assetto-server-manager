@@ -15,13 +15,15 @@ import (
 type LiveTiming struct {
 	// Server Info, static
 	ServerName, Track, TrackConfig, Name string
-	Type                                 uint8
+	Type, AmbientTemp, RoadTemp          uint8
 	Time, Laps, WaitTime                 uint16
 	WeatherGraphics                      string
 	ElapsedMilliseconds                  int32
 	SessionStarted                       int64
 
 	Cars map[uint8]*LiveCar // map[carID]LiveCar
+
+	SessionInfoStopChan chan struct{} `json:"-"`
 
 	// Live data
 	LapNum int
@@ -91,6 +93,12 @@ func LiveTimingCallback(response udp.Message) {
 				logrus.Error(err)
 			}
 
+			// If we didn't get a sessionEnd event stop the udp request channel
+			if liveInfo.SessionInfoStopChan != nil {
+				liveInfo.SessionInfoStopChan <- struct{}{}
+				close(liveInfo.SessionInfoStopChan)
+			}
+
 			liveInfo = LiveTiming{
 				ServerName:          a.ServerName,
 				Track:               a.Track,
@@ -99,6 +107,8 @@ func LiveTimingCallback(response udp.Message) {
 				Type:                a.Type,
 				Time:                a.Time,
 				Laps:                a.Laps,
+				AmbientTemp:         a.AmbientTemp,
+				RoadTemp:            a.RoadTemp,
 				WaitTime:            a.WaitTime,
 				WeatherGraphics:     a.WeatherGraphics,
 				ElapsedMilliseconds: a.ElapsedMilliseconds,
@@ -125,7 +135,23 @@ func LiveTimingCallback(response udp.Message) {
 
 				liveInfo.Cars = oldCars
 			}
+
+			liveInfo.SessionInfoStopChan = make(chan struct{})
+
+			go timeTick(liveInfo.SessionInfoStopChan)
+		} else if a.Event() == udp.EventSessionInfo {
+			if liveInfo.SessionInfoStopChan != nil {
+				liveInfo.AmbientTemp = a.AmbientTemp
+				liveInfo.RoadTemp = a.RoadTemp
+				liveInfo.ElapsedMilliseconds = a.ElapsedMilliseconds
+				liveInfo.WeatherGraphics = a.WeatherGraphics
+			}
 		}
+
+	case udp.EndSession:
+		// stop the session info ticker
+		liveInfo.SessionInfoStopChan <- struct{}{}
+		close(liveInfo.SessionInfoStopChan)
 
 	case udp.SessionCarInfo:
 		if a.Event() == udp.EventNewConnection {
@@ -255,6 +281,25 @@ func LiveTimingCallback(response udp.Message) {
 
 	}
 
+}
+
+func timeTick(done <-chan struct{}) {
+	tickChan := time.NewTicker(time.Second)
+
+	for {
+		select {
+		case <-tickChan.C:
+			err := raceManager.udpServerConn.SendMessage(udp.GetSessionInfo{})
+
+			if err != nil {
+				logrus.Errorf("Couldn't send session info udp request, err: %s", err)
+			}
+		case <-done:
+			logrus.Info("Closing udp request channel")
+			tickChan.Stop()
+			return
+		}
+	}
 }
 
 func unixNanoToMilli(i int64) int64 {
