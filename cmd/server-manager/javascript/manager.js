@@ -1680,6 +1680,12 @@ function handleWeatherFilesLoop(fileList) {
     }
 }
 
+let onlyKS = false;
+
+function toggleKS() {
+    onlyKS = $document.find("#only-ks").is(':checked');
+}
+
 function handleCarFiles(fileList) {
     // Correct filepath
     for (let x = 0; x < fileList.length; x++) {
@@ -1699,6 +1705,11 @@ function handleCarFiles(fileList) {
     let splitList = {};
 
     for (let y = 0; y < fileList.length; y++) {
+        // if onlyKS is set, and the file doesn't contain the ks_ prefix
+        if (onlyKS && fileList[y].filepath.indexOf("ks_", 0) === -1) {
+            continue
+        }
+
         let splitPath = fileList[y].filepath.split("/");
 
         let carIdentifier = splitPath.slice(0, idPos).join(":");
@@ -1952,6 +1963,11 @@ function handleTrackFiles(fileList) {
     let splitList = {};
 
     for (let y = 0; y < fileList.length; y++) {
+        // if onlyKS is set, and the file doesn't contain the ks_ prefix
+        if (onlyKS && fileList[y].filepath.indexOf("ks_", 0) === -1) {
+            continue
+        }
+
         let splitPath = fileList[y].filepath.split("/");
 
         let trackIdentifier = splitPath.slice(0, idPos).join(":");
