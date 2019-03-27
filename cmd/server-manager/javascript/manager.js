@@ -1248,7 +1248,28 @@ let liveTiming = {
                 $ambientTempText.text(liveTiming.AmbientTemp + "°C");
 
                 let $currentWeather = $document.find("#weatherImage");
-                $currentWeather.attr("src", "/content/weather/" + liveTiming.WeatherGraphics + "/preview.jpg");
+
+                // Fix for sol weathers with time info in this format:
+                // sol_05_Broken%20Clouds_type=18_time=0_mult=20_start=1551792960/preview.jpg
+                let pathCorrected = liveTiming.WeatherGraphics.split("_");
+
+                for (let i = 0; i < pathCorrected.length; i++) {
+                    if (pathCorrected[i].indexOf("type=") !== -1) {
+                        pathCorrected.splice(i);
+                        break;
+                    }
+                }
+
+                let pathFinal = pathCorrected.join("_");
+
+                $.get("/content/weather/" + pathFinal + "/preview.jpg").done(function () {
+                    // preview for skin exists
+                    $currentWeather.attr("src", "/content/weather/" + pathFinal + "/preview.jpg");
+                }).fail(function () {
+                    // preview doesn't exist, load default fall back image
+                    $currentWeather.attr( "src", "/static/img/no-preview-general.png");
+                });
+
                 $currentWeather.attr("alt", "Current Weather: " + prettifyName(liveTiming.WeatherGraphics, false));
 
                 // Get the session type
@@ -1312,6 +1333,7 @@ let liveTiming = {
 
                     let $tdPos = $("<td/>");
                     let $tdName = $("<td/>");
+                    let $tdCar = $("<td/>");
                     let $tdLapTime = $("<td/>");
                     let $tdBestLap = $("<td/>");
                     let $tdGap = $("<td/>");
@@ -1347,6 +1369,9 @@ let liveTiming = {
                         }
                     });
                     $tr.append($tdName);
+
+                    $tdCar.text(prettifyName(liveTiming.Cars[car].CarMode, true) + " - " + prettifyName(liveTiming.Cars[car].CarSkin, true));
+                    $tr.append($tdCar);
 
                     $tdLapTime.text(lapTime);
                     $tr.append($tdLapTime);
