@@ -1,10 +1,12 @@
 package main
 
 import (
+	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
 	"net"
 	"net/http"
 	"os"
 	"runtime"
+	"time"
 
 	"github.com/cj123/assetto-server-manager"
 	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
@@ -80,6 +82,15 @@ func main() {
 	}
 
 	logrus.Infof("starting assetto server manager on: %s", config.HTTP.Hostname)
+
+	go func() {
+		err := replay.ReplayUDPMessages("./assetto/results/2019-03-09_13.36.json", 5, servermanager.LiveTimingCallback, time.Second*5)
+
+		if err != nil {
+			logrus.Error(err)
+		}
+	}()
+
 
 	if runtime.GOOS == "windows" {
 		_ = browser.OpenURL("http://" + config.HTTP.Hostname)
