@@ -142,6 +142,7 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Use(AdminAccessMiddleware)
 
 		r.HandleFunc("/server-options", serverOptionsHandler)
+		r.HandleFunc("/accounts", manageAccountsHandler)
 	})
 
 	FileServer(r, "/static", fs)

@@ -1,0 +1,41 @@
+{{ define "title" }}Manage Accounts{{ end }}
+
+{{ define "content" }}
+    <div class="col-sm-6 offset-sm-3">
+        <form method="post" action="/login">
+            <div class="card mb-3">
+                <div class="card-header"><strong>Login</strong></div>
+                <div class="card-body">
+                    <div class="form-group row">
+                        <label for="Username" class="col-sm-3 col-form-label">Username</label>
+
+                        <div class="col-sm-9">
+                            <input
+                                    type="text"
+                                    id="Username"
+                                    name="Username"
+                                    class="form-control"
+                                    placeholder="username"
+                            >
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="Password" class="col-sm-3 col-form-label">Password</label>
+
+                        <div class="col-sm-9">
+                            <input
+                                    type="password"
+                                    id="Password"
+                                    name="Password"
+                                    class="form-control"
+                                    placeholder="password"
+                            >
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary float-right" type="submit">Login</button>
+                </div>
+            </div>
+        </form>
+    </div>
+{{ end }}

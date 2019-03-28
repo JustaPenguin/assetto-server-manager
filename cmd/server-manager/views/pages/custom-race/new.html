@@ -567,7 +567,7 @@
 
                 {{ end }}
 
-                {{ range $index, $entrant := .CurrentEntrants }}
+                {{ range $index, $entrant := .CurrentEntrants.AsSlice }}
                     <div class="entrant">
                         {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" $.IsChampionship }}
                     </div>

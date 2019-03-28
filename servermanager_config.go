@@ -15,7 +15,6 @@ type Configuration struct {
 	HTTP    HTTPConfig        `yaml:"http"`
 	Steam   SteamConfig       `yaml:"steam"`
 	Store   StoreConfig       `yaml:"store"`
-	Users   UsersConfig       `yaml:"users"`
 	LiveMap LiveMapConfig     `yaml:"live_map"`
 	Server  ServerExtraConfig `yaml:"server"`
 }
@@ -60,12 +59,6 @@ func (s *StoreConfig) BuildStore() (RaceStore, error) {
 	default:
 		return nil, fmt.Errorf("invalid store type (%s), must be either boltdb/json", s.Type)
 	}
-}
-
-type UsersConfig struct {
-	Accounts []Account `yaml:"accounts"`
-
-	ReadOpen bool `yaml:"read_open"`
 }
 
 type ServerExtraConfig struct {
