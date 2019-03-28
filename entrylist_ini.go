@@ -62,14 +62,7 @@ func (e EntryList) Delete(entrant *Entrant) {
 func (e EntryList) AsSlice() []*Entrant {
 	var entrants []*Entrant
 
-	numOpenSlots := 0
-
 	for _, x := range e {
-		if x.Name == "" && x.Team == "" {
-			numOpenSlots++
-			continue
-		}
-
 		entrants = append(entrants, x)
 	}
 
@@ -80,12 +73,6 @@ func (e EntryList) AsSlice() []*Entrant {
 			return entrants[i].Team < entrants[j].Team
 		}
 	})
-
-	if numOpenSlots > 0 {
-		entrants = append(entrants, &Entrant{
-			Name: fmt.Sprintf("%d open slots", numOpenSlots),
-		})
-	}
 
 	return entrants
 }

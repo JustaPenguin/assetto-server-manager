@@ -13,6 +13,7 @@ import (
 const (
 	customRacesDir    = "custom_races"
 	championshipsDir  = "championships"
+	accountsDir       = "accounts"
 	entrantsFile      = "entrants.json"
 	serverOptionsFile = "server_options.json"
 	frameLinksFile    = "frame_links.json"
@@ -255,4 +256,42 @@ func (rs *JSONRaceStore) ListPrevFrames() ([]string, error) {
 	}
 
 	return links, nil
+}
+
+func (rs *JSONRaceStore) ListAccounts() ([]*Account, error) {
+	files, err := rs.listFiles(accountsDir)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var accounts []*Account
+
+	for _, file := range files {
+		a, err := rs.FindAccountByName(file)
+
+		if err != nil || !a.Deleted.IsZero() {
+			continue
+		}
+
+		accounts = append(accounts, a)
+	}
+
+	return accounts, nil
+}
+
+func (rs *JSONRaceStore) UpsertAccount(a *Account) error {
+	return rs.encodeFile(filepath.Join(accountsDir, a.Name+".json"), a)
+}
+
+func (rs *JSONRaceStore) FindAccountByName(name string) (*Account, error) {
+	var account *Account
+
+	err := rs.decodeFile(filepath.Join(accountsDir, name+".json"), &account)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return account, nil
 }

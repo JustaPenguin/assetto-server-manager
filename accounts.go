@@ -8,7 +8,9 @@ import (
 	"encoding/hex"
 	"errors"
 	"net/http"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,7 +19,20 @@ func init() {
 	gob.Register(Account{})
 }
 
+func NewAccount() *Account {
+	return &Account{
+		ID:      uuid.New(),
+		Created: time.Now(),
+	}
+}
+
 type Account struct {
+	ID uuid.UUID
+
+	Created time.Time
+	Updated time.Time
+	Deleted time.Time
+
 	Name            string `yaml:"name"`
 	Group           Group  `yaml:"group"`
 	PasswordMD5Hash string `yaml:"password"`
@@ -69,7 +84,7 @@ func MustLoginMiddleware(requiredGroup Group, next http.Handler) http.Handler {
 			return
 		}
 
-		if requiredGroup == GroupRead && config.Users.ReadOpen {
+		if requiredGroup == GroupRead /* && config.Users.ReadOpen @TODO read open */ {
 			// if read is open, allow access and use a dummy user so the UI doesn't break
 			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "user", OpenUser)))
 			return
@@ -175,7 +190,13 @@ func LoginUser(r *http.Request, w http.ResponseWriter) error {
 
 	username, password := r.FormValue("Username"), r.FormValue("Password")
 
-	for _, user := range config.Users.Accounts {
+	users, err := raceManager.raceStore.ListAccounts()
+
+	if err != nil {
+		return err
+	}
+
+	for _, user := range users {
 		if username == user.Name {
 			if subtle.ConstantTimeCompare([]byte(user.PasswordMD5Hash), []byte(md5EncodePassword(password))) == 1 {
 				sess := getSession(r)
@@ -198,4 +219,16 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	_ = sess.Save(r, w)
 
 	http.Redirect(w, r, "/", http.StatusFound)
+}
+
+func manageAccountsHandler(w http.ResponseWriter, r *http.Request) {
+	accounts, err := raceManager.raceStore.ListAccounts()
+
+	if err != nil {
+		panic(err)
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "accounts/manage.html", map[string]interface{}{
+		"Accounts": accounts,
+	})
 }
