@@ -29,4 +29,5 @@ type RaceStore interface {
 	ListAccounts() ([]*Account, error)
 	UpsertAccount(a *Account) error
 	FindAccountByName(name string) (*Account, error)
+	FindAccountByID(id string) (*Account, error)
 }

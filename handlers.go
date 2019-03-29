@@ -142,6 +142,8 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Use(AdminAccessMiddleware)
 
 		r.HandleFunc("/server-options", serverOptionsHandler)
+		r.HandleFunc("/accounts/new", createOrEditAccountHandler)
+		r.HandleFunc("/accounts/edit/{id}", createOrEditAccountHandler)
 		r.HandleFunc("/accounts", manageAccountsHandler)
 	})
 

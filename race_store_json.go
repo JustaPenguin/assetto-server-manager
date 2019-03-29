@@ -295,3 +295,19 @@ func (rs *JSONRaceStore) FindAccountByName(name string) (*Account, error) {
 
 	return account, nil
 }
+
+func (rs *JSONRaceStore) FindAccountByID(id string) (*Account, error) {
+	accounts, err := rs.ListAccounts()
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, a := range accounts {
+		if a.ID.String() == id {
+			return a, nil
+		}
+	}
+
+	return nil, ErrAccountNotFound
+}
