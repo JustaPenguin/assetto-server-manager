@@ -20,7 +20,19 @@ type CarSetups map[string]map[string][]string
 func ListSetups() (CarSetups, error) {
 	setups := make(CarSetups)
 
-	err := filepath.Walk(filepath.Join(ServerInstallPath, "setups"), func(path string, file os.FileInfo, err error) error {
+	setupDirectory := filepath.Join(ServerInstallPath, "setups")
+
+	if _, err := os.Stat(setupDirectory); os.IsNotExist(err) {
+		err := os.MkdirAll(setupDirectory, 0755)
+
+		if err != nil {
+			return nil, err
+		}
+	} else if err != nil {
+		return nil, err
+	}
+
+	err := filepath.Walk(setupDirectory, func(path string, file os.FileInfo, err error) error {
 		if file.IsDir() || filepath.Ext(file.Name()) != ".ini" {
 			return nil
 		}
