@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -219,6 +220,63 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	_ = sess.Save(r, w)
 
 	http.Redirect(w, r, "/", http.StatusFound)
+}
+
+func createOrEditAccountHandler(w http.ResponseWriter, r *http.Request) {
+	var account *Account
+	isEditing := false
+
+	if id := chi.URLParam(r, "id"); id != "" {
+		var err error
+		account, err = raceManager.raceStore.FindAccountByID(id)
+
+		if err != nil {
+			panic(err)
+		}
+
+		isEditing = true
+	} else {
+		account = &Account{}
+	}
+
+	if r.Method == http.MethodPost {
+		username := r.FormValue("Username")
+		password := r.FormValue("Password")
+		group := r.FormValue("Group")
+
+		if !isEditing {
+			// creating new account
+			account = NewAccount()
+		}
+
+		account.Name = username
+
+		if (isEditing && password != "") || !isEditing {
+			account.PasswordMD5Hash = md5EncodePassword(password)
+		}
+
+		account.Group = Group(group)
+
+		err := raceManager.raceStore.UpsertAccount(account)
+
+		if err != nil {
+			panic(err)
+		}
+
+		if isEditing {
+			AddFlashQuick(w, r, "Account successfully edited")
+		} else {
+			AddFlashQuick(w, r, "Account successfully created")
+		}
+
+		http.Redirect(w, r, "/accounts", http.StatusFound)
+		return
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "accounts/new.html", map[string]interface{}{
+		"Account":   account,
+		"IsEditing": isEditing,
+	})
 }
 
 func manageAccountsHandler(w http.ResponseWriter, r *http.Request) {

@@ -1,0 +1,65 @@
+{{ define "title" }}Manage Accounts{{ end }}
+
+{{ define "content" }}
+    <div class="card">
+        <div class="card-header">
+            Add an Account
+        </div>
+
+        <div class="card-body">
+            <form method="post" {{ if $.IsEditing }}action="/accounts/edit/{{ .Account.ID.String }}"{{ else }}action="/accounts/new"{{ end }}>
+                <div class="form-group row">
+                    <label for="Username" class="col-sm-3 col-form-label">Username</label>
+
+                    <div class="col-sm-9">
+                        <input
+                            type="text"
+                            id="Username"
+                            name="Username"
+                            class="form-control"
+                            placeholder="username"
+                            {{ with .Account.Name }}
+                                value="{{ . }}"
+                            {{ end }}
+                        >
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="Password" class="col-sm-3 col-form-label">Password</label>
+
+                    <div class="col-sm-9">
+                        <input
+                            type="password"
+                            id="Password"
+                            name="Password"
+                            class="form-control"
+                            placeholder="password"
+                        >
+
+
+                        {{ with .Account.PasswordMD5Hash }}
+                            <small>Leaving the password blank will make it keep its original value.</small>
+                        {{ end }}
+                    </div>
+
+
+                </div>
+
+                <div class="form-group row">
+                    <label for="Group" class="col-sm-3 col-form-label">Group</label>
+
+                    <div class="col-sm-9">
+                        <select class="form-control" id="Group" name="Group">
+                            <option value="read" {{ if eq .Account.Group "read" }}selected="selected"{{ end }}>Read - Read races, content, and championships</option>
+                            <option value="write" {{ if eq .Account.Group "write" }}selected="selected"{{ end }}>Write - Read and Write races, content and championships</option>
+                            <option value="delete" {{ if eq .Account.Group "delete" }}selected="selected"{{ end }}>Delete - Read, Write, Delete races, content and championships</option>
+                            <option value="admin" {{ if eq .Account.Group "admin" }}selected="selected"{{ end }}>Admin - Full access</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="btn btn-success float-right" type="submit">Add User</button>
+            </form>
+        </div>
+    </div>
+{{ end }}

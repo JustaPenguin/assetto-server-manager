@@ -82,7 +82,7 @@ func main() {
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 
 	if err != nil {
-		ServeHTTPWithError(defaultAddress, "Listen on hostname " + config.HTTP.Hostname + ". Likely the port has already been taken by another application", err)
+		ServeHTTPWithError(defaultAddress, "Listen on hostname "+config.HTTP.Hostname+". Likely the port has already been taken by another application", err)
 		return
 	}
 

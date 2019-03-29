@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"time"
-	
+
 	"github.com/etcd-io/bbolt"
 )
 
@@ -521,4 +521,20 @@ func (rs *BoltRaceStore) FindAccountByName(name string) (*Account, error) {
 	}
 
 	return account, err
+}
+
+func (rs *BoltRaceStore) FindAccountByID(id string) (*Account, error) {
+	accounts, err := rs.ListAccounts()
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, a := range accounts {
+		if a.ID.String() == id {
+			return a, nil
+		}
+	}
+
+	return nil, ErrAccountNotFound
 }
