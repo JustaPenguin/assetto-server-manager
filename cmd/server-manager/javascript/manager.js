@@ -811,26 +811,42 @@ class RaceSetup {
     driverNames;
 
     autoCompleteDrivers() {
+        function autoFillEntrant(elem, val) {
+            let $row = $(elem).closest(".entrant");
+
+            console.log($row);
+
+            for (let entrant of possibleEntrants) {
+                if (entrant.Name === val) {
+                    // populate
+                    let $team = $row.find("input[name='EntryList.Team']");
+                    let $guid = $row.find("input[name='EntryList.GUID']");
+                    let $name = $row.find("input[name='EntryList.Name']");
+
+                    $name.val(entrant.Name);
+                    $team.val(entrant.Team);
+                    $guid.val(entrant.GUID);
+
+                    break;
+                }
+            }
+        }
+
         let opts = {
             source: this.driverNames,
             select: function (event, ui) {
-                // find item.value in our entrants list
-                let $row = $(event.target).closest(".entrant");
-
-                for (let entrant of possibleEntrants) {
-                    if (entrant.Name === ui.item.value) {
-                        // populate
-                        let $team = $row.find("input[name='EntryList.Team']");
-                        let $guid = $row.find("input[name='EntryList.GUID']");
-
-                        $team.val(entrant.Team);
-                        $guid.val(entrant.GUID);
-
-                        break;
-                    }
-                }
+                autoFillEntrant(event.target, ui.item.value);
             }
         };
+
+
+        for (let entrant of possibleEntrants) {
+            $(".entrant-autofill").append($("<option>").val(entrant.Name).text(entrant.Name));
+        }
+
+        $(document).on("change", ".entrant-autofill", function(e) {
+            autoFillEntrant(e.currentTarget, $(e.currentTarget).val());
+        });
 
         $(document).on('keydown.autocomplete', ".entryListName", function () {
             $(this).autocomplete(opts);
