@@ -814,8 +814,6 @@ class RaceSetup {
         function autoFillEntrant(elem, val) {
             let $row = $(elem).closest(".entrant");
 
-            console.log($row);
-
             for (let entrant of possibleEntrants) {
                 if (entrant.Name === val) {
                     // populate
