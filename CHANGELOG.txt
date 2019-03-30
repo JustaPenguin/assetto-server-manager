@@ -17,6 +17,8 @@ Added:
   click on "Manage Event" on the Championship page and select the session results files to import from.
 * Added important links to championship create/edit. You can now add important links to track/car downloads etc.
 * Added car images to Championship pages.
+* Added car info to live timing table
+* Added an option to only upload official ks content from a folder
 * Added option to upload multiple content folders by dragging them into the drag and drop upload boxes.
 * Added a more informative message for users who experience issues launching Server Manager. We're trying our best
   to make Server Manager really good, and we're a little disheartened by negative reviews caused by people not managing
@@ -29,6 +31,7 @@ Fixes:
 * Fixes an issue with illegal Byte Order Marks preventing some track info files from being read.
 * Fixes an issue where some Live Map cars would not properly clear on server restart.
 * Fixes an issue where new entrants in a Championship were not persisted for autofill.
+* Fixes an issue that made it impossible to start quick/custom races on mobile safari.
 
 v1.1.3
 ------

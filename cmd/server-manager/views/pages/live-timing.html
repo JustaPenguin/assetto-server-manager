@@ -19,8 +19,28 @@
 
                             {{ template "race-card" . }}
 
-                            <div id="current-session" class="mt-2 font-weight-bold"></div>
-                            <div id="race-time" class="mt-2 font-weight-bold"></div>
+                            <div class="row">
+                                <div class="col-8">
+                                    <div id="current-session" class="mt-2 font-weight-bold"></div>
+                                    <div id="race-time" class="mt-2 font-weight-bold"></div>
+                                    <div id="live-info-general" class="mt-2"></div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="float-right">
+                                        <div id="road-temp-wrapper" data-toggle="tooltip"
+                                             title data-original-title="Road Temp">
+                                            <div id="road-temp-text"></div>
+                                            <img src="/static/img/temp-road.png" alt="Road Temp" id="road-temp">
+                                        </div>
+
+                                        <div id="ambient-temp-wrapper" class="mt-1" data-toggle="tooltip"
+                                             title data-original-title="Ambient Temp">
+                                            <div id="ambient-temp-text"></div>
+                                            <img src="/static/img/temp-ambient.png" alt="Ambient Temp" id="ambient-temp">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
                             {{ with $trackInfo }}
                                 <div class="mt-2 text-primary">
@@ -38,11 +58,12 @@
 
                         </div>
                         <div class="col-md-4">
-                            <img class="img img-fluid"
+                            <img class="img img-fluid float-right"
                                  id="trackImage"
                                  src="/content/tracks/{{ .RaceConfig.Track }}/ui{{ with .RaceConfig.TrackLayout }}/{{.}}{{ end }}/preview.png"
                                  alt="{{ .RaceConfig.Track }} {{ .RaceConfig.TrackLayout }}"
                             >
+                            <img class="img img-fluid float-right mt-1" id="weatherImage" src="/static/img/no-preview-general.png" alt="Current Weather">
                         </div>
 
                         <div class="table-responsive p-3">
@@ -50,6 +71,7 @@
                                 <tr>
                                     <th>Pos</th>
                                     <th>Driver</th>
+                                    <th>Car</th>
                                     <th>Current Lap</th>
                                     <th>Best Lap</th>
                                     <th>Gap</th>
