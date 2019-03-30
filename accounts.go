@@ -48,7 +48,11 @@ func (a Account) HasGroupPrivilege(g Group) bool {
 		return true
 	}
 
-	if g == GroupRead && a.Group == GroupWrite {
+	if g == GroupWrite && a.Group == GroupDelete {
+		return true
+	}
+
+	if g == GroupRead && (a.Group == GroupWrite || a.Group == GroupDelete) {
 		return true
 	}
 
@@ -58,9 +62,10 @@ func (a Account) HasGroupPrivilege(g Group) bool {
 type Group string
 
 const (
-	GroupRead  Group = "read"
-	GroupWrite Group = "write"
-	GroupAdmin Group = "admin"
+	GroupRead   Group = "read"
+	GroupWrite  Group = "write"
+	GroupDelete Group = "delete"
+	GroupAdmin  Group = "admin"
 )
 
 var OpenUser = Account{
@@ -107,6 +112,10 @@ func WriteAccessMiddleware(next http.Handler) http.Handler {
 	return MustLoginMiddleware(GroupWrite, next)
 }
 
+func DeleteAccessMiddleware(next http.Handler) http.Handler {
+	return MustLoginMiddleware(GroupDelete, next)
+}
+
 func AdminAccessMiddleware(next http.Handler) http.Handler {
 	return MustLoginMiddleware(GroupAdmin, next)
 }
@@ -148,6 +157,14 @@ func LoggedIn(r *http.Request) func() bool {
 
 func WriteAccess(r *http.Request) func() bool {
 	ok := UserFromRequest(r).HasGroupPrivilege(GroupWrite)
+
+	return func() bool {
+		return ok
+	}
+}
+
+func DeleteAccess(r *http.Request) func() bool {
+	ok := UserFromRequest(r).HasGroupPrivilege(GroupDelete)
 
 	return func() bool {
 		return ok

@@ -67,7 +67,7 @@
                     <th>Car Name</th>
                     <th>Tyres</th>
                     <th>Skins</th>
-                    {{ if $writeAccess }}
+                    {{ if DeleteAccess }}
                         <th class="text-center">Delete</th>
                     {{ end }}
                 </tr>
@@ -92,7 +92,7 @@
                             </small>
                         </td>
 
-                        {{ if $writeAccess }}
+                        {{ if DeleteAccess }}
                             <td class="text-center">
                                 <a href="{{ print "/car/delete/" $car.Name }}"><i class="fas fa-trash text-danger"></i></a>
                             </td>
@@ -156,7 +156,7 @@
                     <th>Car</th>
                     <th>Track</th>
                     <th>Setup File</th>
-                    {{ if $writeAccess }}
+                    {{ if DeleteAccess }}
                         <th class="text-center">Delete</th>
                     {{ end }}
                 </tr>
@@ -193,7 +193,7 @@
                                     </a>
                                 </td>
 
-                                {{ if $writeAccess }}
+                                {{ if DeleteAccess }}
                                     <td class="text-center">
                                         <a href="{{ printf "/setups/delete/%s/%s/%s" $car $trackName $setup }}"><i class="fas fa-trash text-danger"></i></a>
                                     </td>

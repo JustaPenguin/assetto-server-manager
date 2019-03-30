@@ -52,7 +52,7 @@
                             {{ if $writeAccess }}
                                 <a class="btn btn-sm btn-warning" href="/championship/{{ $championship.ID }}/edit">Edit</a>
                                 <a onClick="return confirm('I understand that this will delete the entire championship permanently.') "
-                                   class="btn btn-sm btn-danger" href="/championship/{{ $championship.ID }}/delete">Delete</a>
+                                   class="btn btn-sm btn-danger {{ if not DeleteAccess}}disabled{{ end }}" href="/championship/{{ $championship.ID }}/delete">Delete</a>
                             {{ end }}
                         </td>
                     </tr>
@@ -97,7 +97,7 @@
                             {{ if $writeAccess }}
                                 <a class="btn btn-sm btn-warning" href="/championship/{{ $championship.ID }}/edit">Edit</a>
                                 <a onClick="return confirm('I understand that this will delete the entire championship permanently.') "
-                                   class="btn btn-sm btn-danger" href="/championship/{{ $championship.ID }}/delete">Delete</a>
+                                   class="btn btn-sm btn-danger {{ if not DeleteAccess}}disabled{{ end }}" href="/championship/{{ $championship.ID }}/delete">Delete</a>
                             {{ end }}
                         </td>
                     </tr>

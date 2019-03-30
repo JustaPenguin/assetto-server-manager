@@ -50,7 +50,7 @@
             <th>Weather Key</th>
             <th>Weather Name</th>
 
-            {{ if $writeAccess }}
+            {{ if DeleteAccess }}
                 <th class="text-center">Delete</th>
             {{ end }}
         </tr>
@@ -63,7 +63,7 @@
                     {{ $weather }}
                 </td>
 
-                {{ if $writeAccess }}
+                {{ if DeleteAccess }}
                     <td class="text-center">
                         <a href="{{ print "/weather/delete/" $i }}"><i class="fas fa-trash fa text-danger"></i></a>
                     </td>
