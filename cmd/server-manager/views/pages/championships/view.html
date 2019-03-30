@@ -205,7 +205,7 @@
                 <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event">Add more Events</a>
                 <a href="/championship/{{ $championship.ID.String }}/edit" class="btn btn-warning">Edit Championship</a>
             {{ end }}
-            <a href="/championship/{{ $championship.ID.String }}/export" class="btn btn-info">Export Championship</a>
+            <a href="/championship/{{ $championship.ID.String }}/export" class="btn btn-primary">Export Championship</a>
         </div>
 
         <h2>Events</h2>
@@ -450,7 +450,7 @@
                                         >Schedule Event
                                         </button>
 
-                                        <a class="btn btn-info {{ if $eventInProgress }}disabled{{ end }}"
+                                        <a class="btn btn-primary {{ if $eventInProgress }}disabled{{ end }}"
                                            href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/practice"
                                             {{ if $eventInProgress }}
                                                 aria-disabled="true"
