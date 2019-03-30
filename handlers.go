@@ -83,10 +83,6 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Use(WriteAccessMiddleware)
 
 		// content
-		r.Get("/track/delete/{name}", trackDeleteHandler)
-		r.Get("/car/delete/{name}", carDeleteHandler)
-		r.Get("/weather/delete/{key}", weatherDeleteHandler)
-		r.Get("/setups/delete/{car}/{track}/{setup}", carSetupDeleteHandler)
 		r.Post("/setups/upload", carSetupsUploadHandler)
 
 		// races
@@ -98,7 +94,6 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Post("/custom/schedule/{uuid}", customRaceScheduleHandler)
 		r.Get("/custom/schedule/{uuid}/remove", customRaceScheduleRemoveHandler)
 		r.Get("/custom/edit/{uuid}", customRaceNewOrEditHandler)
-		r.Get("/custom/delete/{uuid}", customRaceDeleteHandler)
 		r.Get("/custom/star/{uuid}", customRaceStarHandler)
 		r.Get("/custom/loop/{uuid}", customRaceLoopHandler)
 		r.Post("/custom/new/submit", customRaceSubmitHandler)
@@ -110,14 +105,12 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Get("/championships/new", newOrEditChampionshipHandler)
 		r.Post("/championships/new/submit", submitNewChampionshipHandler)
 		r.Get("/championship/{championshipID}/edit", newOrEditChampionshipHandler)
-		r.Get("/championship/{championshipID}/delete", deleteChampionshipHandler)
 		r.Get("/championship/{championshipID}/event", championshipEventConfigurationHandler)
 		r.Post("/championship/{championshipID}/event/submit", championshipSubmitEventConfigurationHandler)
 		r.Get("/championship/{championshipID}/event/{eventID}/start", championshipStartEventHandler)
 		r.Post("/championship/{championshipID}/event/{eventID}/schedule", championshipScheduleEventHandler)
 		r.Get("/championship/{championshipID}/event/{eventID}/schedule/remove", championshipScheduleEventRemoveHandler)
 		r.Get("/championship/{championshipID}/event/{eventID}/edit", championshipEventConfigurationHandler)
-		r.Get("/championship/{championshipID}/event/{eventID}/delete", championshipDeleteEventHandler)
 		r.Get("/championship/{championshipID}/event/{eventID}/practice", championshipStartPracticeEventHandler)
 		r.Get("/championship/{championshipID}/event/{eventID}/cancel", championshipCancelEventHandler)
 		r.Get("/championship/{championshipID}/event/{eventID}/restart", championshipRestartEventHandler)
@@ -135,6 +128,20 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Post("/api/track/upload", apiTrackUploadHandler)
 		r.Post("/api/car/upload", apiCarUploadHandler)
 		r.Post("/api/weather/upload", apiWeatherUploadHandler)
+	})
+
+	// deleters
+	r.Group(func(r chi.Router) {
+		r.Use(DeleteAccessMiddleware)
+
+		r.Get("/championship/{championshipID}/event/{eventID}/delete", championshipDeleteEventHandler)
+		r.Get("/championship/{championshipID}/delete", deleteChampionshipHandler)
+		r.Get("/custom/delete/{uuid}", customRaceDeleteHandler)
+
+		r.Get("/track/delete/{name}", trackDeleteHandler)
+		r.Get("/car/delete/{name}", carDeleteHandler)
+		r.Get("/weather/delete/{key}", weatherDeleteHandler)
+		r.Get("/setups/delete/{car}/{track}/{setup}", carSetupDeleteHandler)
 	})
 
 	// admins
