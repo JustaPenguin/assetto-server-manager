@@ -810,7 +810,29 @@ class RaceSetup {
 
     driverNames;
 
+    toggleAlreadyAutocompletedDrivers() {
+        $(".entrant-autofill option").each(function(index, elem) {
+            let found = false;
+            let $elem = $(elem);
+
+            $(".entrant .entryListName").each(function(entryIndex, entryName) {
+                if ($(entryName).val() === $elem.val()) {
+                    found = true;
+                }
+            });
+
+
+            if (found) {
+                $elem.hide();
+            } else {
+                $elem.show();
+            }
+        });
+    }
+
     autoCompleteDrivers() {
+        let that = this;
+
         function autoFillEntrant(elem, val) {
             let $row = $(elem).closest(".entrant");
 
@@ -828,6 +850,8 @@ class RaceSetup {
                     break;
                 }
             }
+
+            that.toggleAlreadyAutocompletedDrivers();
         }
 
         let opts = {
@@ -1001,6 +1025,9 @@ class RaceSetup {
 
             let $savedNumEntrants = $raceSetup.find(".totalNumEntrants");
             $savedNumEntrants.val($raceSetup.find(".entrant:visible").length);
+
+
+            that.toggleAlreadyAutocompletedDrivers();
         }
 
         function populateEntryListCars() {
@@ -1066,6 +1093,8 @@ class RaceSetup {
 
             let $savedNumEntrants = that.$parent.find(".totalNumEntrants");
             $savedNumEntrants.val(that.$parent.find(".entrant:visible").length);
+
+            that.toggleAlreadyAutocompletedDrivers();
         })
 
     }
