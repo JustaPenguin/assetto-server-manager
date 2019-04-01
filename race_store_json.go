@@ -17,6 +17,7 @@ const (
 	entrantsFile      = "entrants.json"
 	serverOptionsFile = "server_options.json"
 	frameLinksFile    = "frame_links.json"
+	serverVersionFile = "version.json"
 )
 
 func NewJSONRaceStore(dir string) RaceStore {
@@ -310,4 +311,22 @@ func (rs *JSONRaceStore) FindAccountByID(id string) (*Account, error) {
 	}
 
 	return nil, ErrAccountNotFound
+}
+
+func (rs *JSONRaceStore) SetVersion(version int) error {
+	return rs.encodeFile(serverVersionFile, version)
+}
+
+func (rs *JSONRaceStore) GetVersion() (int, error) {
+	var version int
+
+	err := rs.decodeFile(serverVersionFile, &version)
+
+	if os.IsNotExist(err) {
+		return version, nil
+	} else if err != nil {
+		return 0, err
+	}
+
+	return version, nil
 }

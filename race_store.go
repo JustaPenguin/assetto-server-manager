@@ -25,6 +25,10 @@ type RaceStore interface {
 	UpsertLiveFrames([]string) error
 	ListPrevFrames() ([]string, error)
 
+	// Meta
+	SetVersion(version int) error
+	GetVersion() (int, error)
+
 	// Accounts
 	ListAccounts() ([]*Account, error)
 	UpsertAccount(a *Account) error
