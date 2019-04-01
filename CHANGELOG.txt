@@ -25,6 +25,7 @@ v1.2.0
 * Fixes an issue where new entrants in a Championship were not persisted for autofill.
 * Fixes an issue that made it impossible to start quick/custom races on mobile safari.
 * Fixes an issue where Championship Events were not correctly finished/tracked.
+* Added logging to server-manager.log - this should make debugging issues easier.
 
 v1.1.3
 ------
