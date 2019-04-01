@@ -34,11 +34,17 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func SetupRaceManager(store RaceStore) {
+func InitWithStore(store Store) {
 	raceManager = NewRaceManager(store)
 	championshipManager = NewChampionshipManager(raceManager)
 	accountManager = NewAccountManager(store)
 	AssettoProcess = &AssettoServerProcess{doneCh: serverStoppedChan}
+
+	err := raceManager.raceStore.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Could not load server account options")
+	}
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -67,14 +73,14 @@ type RaceManager struct {
 	currentRace      *ServerConfig
 	currentEntryList EntryList
 
-	raceStore RaceStore
+	raceStore Store
 
 	udpServerConn *udp.AssettoServerUDP
 
 	mutex sync.RWMutex
 }
 
-func NewRaceManager(raceStore RaceStore) *RaceManager {
+func NewRaceManager(raceStore Store) *RaceManager {
 	return &RaceManager{
 		raceStore: raceStore,
 	}

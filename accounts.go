@@ -312,12 +312,12 @@ var ErrAccountNeedsPassword = errors.New("servermanager: account needs to set a 
 var ErrInvalidUsernameOrPassword = errors.New("servermanager: invalid username or password")
 
 type AccountManager struct {
-	raceStore RaceStore
+	store Store
 }
 
-func NewAccountManager(raceStore RaceStore) *AccountManager {
+func NewAccountManager(store Store) *AccountManager {
 	return &AccountManager{
-		raceStore: raceStore,
+		store: store,
 	}
 }
 

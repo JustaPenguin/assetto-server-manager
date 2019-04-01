@@ -10,7 +10,7 @@ const (
 	versionMetaKey          = "version"
 )
 
-func Migrate(store RaceStore) error {
+func Migrate(store Store) error {
 	var storeVersion int
 
 	err := store.GetMeta(versionMetaKey, &storeVersion)
@@ -30,14 +30,14 @@ func Migrate(store RaceStore) error {
 	return store.SetMeta(versionMetaKey, CurrentMigrationVersion)
 }
 
-type migrationFunc func(RaceStore) error
+type migrationFunc func(Store) error
 
 var migrations = []migrationFunc{
 	addEntrantIDToChampionships,
 	addAdminAccount,
 }
 
-func addEntrantIDToChampionships(rs RaceStore) error {
+func addEntrantIDToChampionships(rs Store) error {
 	logrus.Infof("Running migration: Add Internal UUID to Championship Entrants")
 
 	championships, err := rs.ListChampionships()
@@ -65,7 +65,7 @@ func addEntrantIDToChampionships(rs RaceStore) error {
 	return nil
 }
 
-func addAdminAccount(rs RaceStore) error {
+func addAdminAccount(rs Store) error {
 	logrus.Infof("Running migration: Add Admin Account")
 
 	account := NewAccount()

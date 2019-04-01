@@ -8,12 +8,12 @@ import (
 	"github.com/etcd-io/bbolt"
 )
 
-type BoltRaceStore struct {
+type BoltStore struct {
 	db *bbolt.DB
 }
 
-func NewBoltRaceStore(db *bbolt.DB) RaceStore {
-	return &BoltRaceStore{db: db}
+func NewBoltStore(db *bbolt.DB) Store {
+	return &BoltStore{db: db}
 }
 
 var (
@@ -27,7 +27,7 @@ var (
 	serverOptionsKey = []byte("serverOptions")
 )
 
-func (rs *BoltRaceStore) customRaceBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+func (rs *BoltStore) customRaceBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	if !tx.Writable() {
 		bkt := tx.Bucket(customRaceBucketName)
 
@@ -41,15 +41,15 @@ func (rs *BoltRaceStore) customRaceBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	return tx.CreateBucketIfNotExists(customRaceBucketName)
 }
 
-func (rs *BoltRaceStore) encode(data interface{}) ([]byte, error) {
+func (rs *BoltStore) encode(data interface{}) ([]byte, error) {
 	return json.Marshal(data)
 }
 
-func (rs *BoltRaceStore) decode(data []byte, out interface{}) error {
+func (rs *BoltStore) decode(data []byte, out interface{}) error {
 	return json.Unmarshal(data, out)
 }
 
-func (rs *BoltRaceStore) UpsertCustomRace(race *CustomRace) error {
+func (rs *BoltStore) UpsertCustomRace(race *CustomRace) error {
 	return rs.db.Update(func(tx *bbolt.Tx) error {
 		bkt, err := rs.customRaceBucket(tx)
 
@@ -69,7 +69,7 @@ func (rs *BoltRaceStore) UpsertCustomRace(race *CustomRace) error {
 	})
 }
 
-func (rs *BoltRaceStore) FindCustomRaceByID(uuid string) (*CustomRace, error) {
+func (rs *BoltStore) FindCustomRaceByID(uuid string) (*CustomRace, error) {
 	var customRace *CustomRace
 
 	err := rs.db.View(func(tx *bbolt.Tx) error {
@@ -91,7 +91,7 @@ func (rs *BoltRaceStore) FindCustomRaceByID(uuid string) (*CustomRace, error) {
 	return customRace, err
 }
 
-func (rs *BoltRaceStore) ListCustomRaces() ([]*CustomRace, error) {
+func (rs *BoltStore) ListCustomRaces() ([]*CustomRace, error) {
 	var customRaces []*CustomRace
 
 	err := rs.db.View(func(tx *bbolt.Tx) error {
@@ -126,13 +126,13 @@ func (rs *BoltRaceStore) ListCustomRaces() ([]*CustomRace, error) {
 	return customRaces, err
 }
 
-func (rs *BoltRaceStore) DeleteCustomRace(race *CustomRace) error {
+func (rs *BoltStore) DeleteCustomRace(race *CustomRace) error {
 	race.Deleted = time.Now()
 
 	return rs.UpsertCustomRace(race)
 }
 
-func (rs *BoltRaceStore) entrantsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+func (rs *BoltStore) entrantsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	if !tx.Writable() {
 		bkt := tx.Bucket(entrantsBucketName)
 
@@ -146,7 +146,7 @@ func (rs *BoltRaceStore) entrantsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	return tx.CreateBucketIfNotExists(entrantsBucketName)
 }
 
-func (rs *BoltRaceStore) UpsertEntrant(entrant Entrant) error {
+func (rs *BoltStore) UpsertEntrant(entrant Entrant) error {
 	return rs.db.Update(func(tx *bbolt.Tx) error {
 		bkt, err := rs.entrantsBucket(tx)
 
@@ -169,7 +169,7 @@ func (rs *BoltRaceStore) UpsertEntrant(entrant Entrant) error {
 	})
 }
 
-func (rs *BoltRaceStore) ListEntrants() ([]*Entrant, error) {
+func (rs *BoltStore) ListEntrants() ([]*Entrant, error) {
 	var entrants []*Entrant
 
 	err := rs.db.View(func(tx *bbolt.Tx) error {
@@ -199,7 +199,7 @@ func (rs *BoltRaceStore) ListEntrants() ([]*Entrant, error) {
 	return entrants, err
 }
 
-func (rs *BoltRaceStore) frameLinksBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+func (rs *BoltStore) frameLinksBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	if !tx.Writable() {
 		bkt := tx.Bucket(frameLinksBucketName)
 
@@ -213,7 +213,7 @@ func (rs *BoltRaceStore) frameLinksBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	return tx.CreateBucketIfNotExists(frameLinksBucketName)
 }
 
-func (rs *BoltRaceStore) UpsertLiveFrames(frameLinks []string) error {
+func (rs *BoltStore) UpsertLiveFrames(frameLinks []string) error {
 	return rs.db.Update(func(tx *bbolt.Tx) error {
 		bkt, err := rs.frameLinksBucket(tx)
 
@@ -231,7 +231,7 @@ func (rs *BoltRaceStore) UpsertLiveFrames(frameLinks []string) error {
 	})
 }
 
-func (rs *BoltRaceStore) ListPrevFrames() ([]string, error) {
+func (rs *BoltStore) ListPrevFrames() ([]string, error) {
 	var links []string
 
 	err := rs.db.View(func(tx *bbolt.Tx) error {
@@ -257,7 +257,7 @@ func (rs *BoltRaceStore) ListPrevFrames() ([]string, error) {
 	return links, err
 }
 
-func (rs *BoltRaceStore) serverOptionsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+func (rs *BoltStore) serverOptionsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	if !tx.Writable() {
 		bkt := tx.Bucket(serverOptionsBucketName)
 
@@ -271,7 +271,7 @@ func (rs *BoltRaceStore) serverOptionsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error
 	return tx.CreateBucketIfNotExists(serverOptionsBucketName)
 }
 
-func (rs *BoltRaceStore) UpsertServerOptions(so *GlobalServerConfig) error {
+func (rs *BoltStore) UpsertServerOptions(so *GlobalServerConfig) error {
 	return rs.db.Update(func(tx *bbolt.Tx) error {
 		bkt, err := rs.serverOptionsBucket(tx)
 
@@ -289,7 +289,7 @@ func (rs *BoltRaceStore) UpsertServerOptions(so *GlobalServerConfig) error {
 	})
 }
 
-func (rs *BoltRaceStore) LoadServerOptions() (*GlobalServerConfig, error) {
+func (rs *BoltStore) LoadServerOptions() (*GlobalServerConfig, error) {
 	// start with defaults
 	so := &ConfigIniDefault.GlobalServerConfig
 
@@ -317,7 +317,7 @@ func (rs *BoltRaceStore) LoadServerOptions() (*GlobalServerConfig, error) {
 	return so, err
 }
 
-func (rs *BoltRaceStore) championshipsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+func (rs *BoltStore) championshipsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	if !tx.Writable() {
 		bkt := tx.Bucket(championshipsBucketName)
 
@@ -331,7 +331,7 @@ func (rs *BoltRaceStore) championshipsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error
 	return tx.CreateBucketIfNotExists(championshipsBucketName)
 }
 
-func (rs *BoltRaceStore) UpsertChampionship(c *Championship) error {
+func (rs *BoltStore) UpsertChampionship(c *Championship) error {
 	c.Updated = time.Now()
 
 	return rs.db.Update(func(tx *bbolt.Tx) error {
@@ -351,7 +351,7 @@ func (rs *BoltRaceStore) UpsertChampionship(c *Championship) error {
 	})
 }
 
-func (rs *BoltRaceStore) ListChampionships() ([]*Championship, error) {
+func (rs *BoltStore) ListChampionships() ([]*Championship, error) {
 	var championships []*Championship
 
 	err := rs.db.View(func(tx *bbolt.Tx) error {
@@ -388,7 +388,7 @@ func (rs *BoltRaceStore) ListChampionships() ([]*Championship, error) {
 
 var ErrChampionshipNotFound = errors.New("servermanager: championship not found")
 
-func (rs *BoltRaceStore) LoadChampionship(id string) (*Championship, error) {
+func (rs *BoltStore) LoadChampionship(id string) (*Championship, error) {
 	var championship *Championship
 
 	err := rs.db.View(func(tx *bbolt.Tx) error {
@@ -414,7 +414,7 @@ func (rs *BoltRaceStore) LoadChampionship(id string) (*Championship, error) {
 	return championship, err
 }
 
-func (rs *BoltRaceStore) DeleteChampionship(id string) error {
+func (rs *BoltStore) DeleteChampionship(id string) error {
 	championship, err := rs.LoadChampionship(id)
 
 	if err != nil {
@@ -426,7 +426,7 @@ func (rs *BoltRaceStore) DeleteChampionship(id string) error {
 	return rs.UpsertChampionship(championship)
 }
 
-func (rs *BoltRaceStore) accountsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+func (rs *BoltStore) accountsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	if !tx.Writable() {
 		bkt := tx.Bucket(accountsBucketName)
 
@@ -440,7 +440,7 @@ func (rs *BoltRaceStore) accountsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	return tx.CreateBucketIfNotExists(accountsBucketName)
 }
 
-func (rs *BoltRaceStore) ListAccounts() ([]*Account, error) {
+func (rs *BoltStore) ListAccounts() ([]*Account, error) {
 	var accounts []*Account
 
 	err := rs.db.View(func(tx *bbolt.Tx) error {
@@ -475,7 +475,7 @@ func (rs *BoltRaceStore) ListAccounts() ([]*Account, error) {
 	return accounts, err
 }
 
-func (rs *BoltRaceStore) UpsertAccount(a *Account) error {
+func (rs *BoltStore) UpsertAccount(a *Account) error {
 	a.Updated = time.Now()
 
 	return rs.db.Update(func(tx *bbolt.Tx) error {
@@ -497,7 +497,7 @@ func (rs *BoltRaceStore) UpsertAccount(a *Account) error {
 
 var ErrAccountNotFound = errors.New("servermanager: account not found")
 
-func (rs *BoltRaceStore) FindAccountByName(name string) (*Account, error) {
+func (rs *BoltStore) FindAccountByName(name string) (*Account, error) {
 	var account *Account
 
 	err := rs.db.View(func(tx *bbolt.Tx) error {
@@ -523,7 +523,7 @@ func (rs *BoltRaceStore) FindAccountByName(name string) (*Account, error) {
 	return account, err
 }
 
-func (rs *BoltRaceStore) FindAccountByID(id string) (*Account, error) {
+func (rs *BoltStore) FindAccountByID(id string) (*Account, error) {
 	accounts, err := rs.ListAccounts()
 
 	if err != nil {
@@ -539,7 +539,7 @@ func (rs *BoltRaceStore) FindAccountByID(id string) (*Account, error) {
 	return nil, ErrAccountNotFound
 }
 
-func (rs *BoltRaceStore) DeleteAccount(id string) error {
+func (rs *BoltStore) DeleteAccount(id string) error {
 	account, err := rs.FindAccountByID(id)
 
 	if err != nil {
@@ -553,7 +553,7 @@ func (rs *BoltRaceStore) DeleteAccount(id string) error {
 
 var metaBucketName = []byte("meta")
 
-func (rs *BoltRaceStore) metaBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+func (rs *BoltStore) metaBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	if !tx.Writable() {
 		bkt := tx.Bucket(metaBucketName)
 
@@ -567,7 +567,7 @@ func (rs *BoltRaceStore) metaBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	return tx.CreateBucketIfNotExists(metaBucketName)
 }
 
-func (rs *BoltRaceStore) SetMeta(key string, value interface{}) error {
+func (rs *BoltStore) SetMeta(key string, value interface{}) error {
 	return rs.db.Update(func(tx *bbolt.Tx) error {
 		bkt, err := rs.metaBucket(tx)
 
@@ -587,7 +587,7 @@ func (rs *BoltRaceStore) SetMeta(key string, value interface{}) error {
 
 var ErrMetaValueNotSet = errors.New("servermanager: value not set")
 
-func (rs *BoltRaceStore) GetMeta(key string, out interface{}) error {
+func (rs *BoltStore) GetMeta(key string, out interface{}) error {
 	err := rs.db.View(func(tx *bbolt.Tx) error {
 		bkt, err := rs.metaBucket(tx)
 
