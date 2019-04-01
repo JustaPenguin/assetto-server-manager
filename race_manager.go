@@ -37,6 +37,7 @@ func init() {
 func SetupRaceManager(store RaceStore) {
 	raceManager = NewRaceManager(store)
 	championshipManager = NewChampionshipManager(raceManager)
+	accountManager = NewAccountManager(store)
 	AssettoProcess = &AssettoServerProcess{doneCh: serverStoppedChan}
 
 	c := make(chan os.Signal, 1)

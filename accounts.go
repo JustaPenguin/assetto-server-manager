@@ -21,10 +21,13 @@ import (
 )
 
 const (
-	sessionUserID         = "user_id"
-	requestContextKeyUser = "user"
-	adminUserName         = "admin"
+	sessionAccountID            = "account_id"
+	requestContextKeyAccount    = "account"
+	adminUserName               = "admin"
+	serverAccountOptionsMetaKey = "server-account-options"
 )
+
+var accountManager *AccountManager
 
 type ServerAccountOptions struct {
 	IsOpen bool
@@ -95,24 +98,24 @@ const (
 	GroupAdmin  Group = "admin"
 )
 
-var OpenUser = &Account{
+var OpenAccount = &Account{
 	Name:  "Free Access",
 	Group: GroupRead,
 }
 
-// MustLoginMiddleware determines whether a user needs to log in to access a given Group page
+// MustLoginMiddleware determines whether an account needs to log in to access a given Group page
 func MustLoginMiddleware(requiredGroup Group, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sess := getSession(r)
 
-		userID, ok := sess.Values[sessionUserID].(string)
+		accountID, ok := sess.Values[sessionAccountID].(string)
 
 		if ok {
-			user, err := raceManager.raceStore.FindAccountByID(userID)
+			account, err := raceManager.raceStore.FindAccountByID(accountID)
 
 			if err == nil {
-				if user.HasGroupPrivilege(requiredGroup) {
-					next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), requestContextKeyUser, user)))
+				if account.HasGroupPrivilege(requiredGroup) {
+					next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), requestContextKeyAccount, account)))
 					return
 				} else {
 					AddErrFlashQuick(w, r, "You do not have permission to view this page.")
@@ -120,13 +123,13 @@ func MustLoginMiddleware(requiredGroup Group, next http.Handler) http.Handler {
 					return
 				}
 			} else {
-				logrus.WithError(err).Errorf("Could not find user for id: %d", userID)
+				logrus.WithError(err).Errorf("Could not find account for id: %d", accountID)
 			}
 		}
 
 		if requiredGroup == GroupRead && accountOptions.IsOpen {
-			// if read is open, allow access and use a dummy user so the UI doesn't break
-			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), requestContextKeyUser, OpenUser)))
+			// if read is open, allow access and use a dummy account so the UI doesn't break
+			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), requestContextKeyAccount, OpenAccount)))
 			return
 		}
 
@@ -154,8 +157,8 @@ func AdminAccessMiddleware(next http.Handler) http.Handler {
 	return MustLoginMiddleware(GroupAdmin, next)
 }
 
-func UserFromRequest(r *http.Request) *Account {
-	u, ok := r.Context().Value(requestContextKeyUser).(*Account)
+func AccountFromRequest(r *http.Request) *Account {
+	u, ok := r.Context().Value(requestContextKeyAccount).(*Account)
 
 	if !ok {
 		return &Account{}
@@ -165,7 +168,7 @@ func UserFromRequest(r *http.Request) *Account {
 }
 
 func ReadAccess(r *http.Request) func() bool {
-	ok := UserFromRequest(r).HasGroupPrivilege(GroupRead)
+	ok := AccountFromRequest(r).HasGroupPrivilege(GroupRead)
 
 	return func() bool {
 		return ok
@@ -173,9 +176,9 @@ func ReadAccess(r *http.Request) func() bool {
 }
 
 func LoggedIn(r *http.Request) func() bool {
-	user := UserFromRequest(r)
+	account := AccountFromRequest(r)
 
-	ok := user.Name != "" && user != OpenUser
+	ok := account.Name != "" && account != OpenAccount
 
 	return func() bool {
 		return ok
@@ -183,7 +186,7 @@ func LoggedIn(r *http.Request) func() bool {
 }
 
 func WriteAccess(r *http.Request) func() bool {
-	ok := UserFromRequest(r).HasGroupPrivilege(GroupWrite)
+	ok := AccountFromRequest(r).HasGroupPrivilege(GroupWrite)
 
 	return func() bool {
 		return ok
@@ -191,7 +194,7 @@ func WriteAccess(r *http.Request) func() bool {
 }
 
 func DeleteAccess(r *http.Request) func() bool {
-	ok := UserFromRequest(r).HasGroupPrivilege(GroupDelete)
+	ok := AccountFromRequest(r).HasGroupPrivilege(GroupDelete)
 
 	return func() bool {
 		return ok
@@ -199,7 +202,7 @@ func DeleteAccess(r *http.Request) func() bool {
 }
 
 func AdminAccess(r *http.Request) func() bool {
-	ok := UserFromRequest(r).HasGroupPrivilege(GroupAdmin)
+	ok := AccountFromRequest(r).HasGroupPrivilege(GroupAdmin)
 
 	return func() bool {
 		return ok
@@ -208,16 +211,16 @@ func AdminAccess(r *http.Request) func() bool {
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		err := loginUser(r, w)
+		err := accountManager.login(r, w)
 
 		if err == ErrInvalidUsernameOrPassword {
 			AddErrFlashQuick(w, r, "Invalid username or password. Check your details and try again.")
-		} else if err == ErrUserNeedsPassword {
+		} else if err == ErrAccountNeedsPassword {
 			AddFlashQuick(w, r, "Thanks for logging in. We need you to set up a permanent password for your account.")
 			http.Redirect(w, r, "/accounts/new-password", http.StatusFound)
 			return
 		} else if err != nil {
-			logrus.Errorf("Couldn't log in user, err: %s", err)
+			logrus.Errorf("Couldn't log in account, err: %s", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		} else { // err == nil, successful auth
@@ -230,21 +233,23 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	ViewRenderer.MustLoadTemplate(w, r, "accounts/login.html", nil)
 }
 
-const serverOptions = "server-account-options"
-
 func toggleServerOpenStatusHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.raceStore.GetMeta(serverOptions, &accountOptions)
+	err := raceManager.raceStore.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
 
 	if err != nil && err != ErrMetaValueNotSet {
-		panic(err) // @TODO
+		logrus.WithError(err).Errorf("Could not determine server open status")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	accountOptions.IsOpen = !accountOptions.IsOpen
 
-	err = raceManager.raceStore.SetMeta(serverOptions, accountOptions)
+	err = raceManager.raceStore.SetMeta(serverAccountOptionsMetaKey, accountOptions)
 
 	if err != nil {
-		panic(err) // @TODO
+		logrus.WithError(err).Errorf("Could not save server open status")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	AddFlashQuick(w, r, "Server openness successfully changed")
@@ -256,30 +261,15 @@ func newPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		password, repeatPassword := r.FormValue("Password"), r.FormValue("RepeatPassword")
 
 		if password == repeatPassword {
-			salt, err := generateSalt()
+			account := AccountFromRequest(r)
 
-			if err != nil {
-				panic(err) // @TODO
+			if err := accountManager.changePassword(account, password); err == nil {
+				AddFlashQuick(w, r, "Your password was successfully changed!")
+			} else {
+				AddErrFlashQuick(w, r, "Unable to change your password")
+				logrus.WithError(err).Errorf("Could not change password for account id: %s", account.ID.String())
 			}
 
-			pass, err := hashPassword([]byte(password), []byte(salt))
-
-			if err != nil {
-				panic(err) // @TODO
-			}
-
-			user := UserFromRequest(r)
-			user.DefaultPassword = ""
-			user.PasswordSalt = salt
-			user.PasswordHash = pass
-
-			err = raceManager.raceStore.UpsertAccount(user)
-
-			if err != nil {
-				panic(err) // @TODO
-			}
-
-			AddFlashQuick(w, r, "Your password was successfully changed!")
 			http.Redirect(w, r, "/", http.StatusFound)
 			return
 		} else {
@@ -306,55 +296,51 @@ func deleteAccountHandler(w http.ResponseWriter, r *http.Request) {
 func resetPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	accountID := chi.URLParam(r, "id")
 
-	user, err := raceManager.raceStore.FindAccountByID(accountID)
+	account, err := accountManager.resetPassword(accountID)
 
 	if err != nil {
-		panic(err) // @TODO
+		AddErrFlashQuick(w, r, "Unable to reset account password")
+		logrus.WithError(err).Errorf("Could not reset password for account id: %s", accountID)
+	} else {
+		AddFlashQuick(w, r, fmt.Sprintf("We have autogenerated a new password for %s, it is: %s", account.Name, account.DefaultPassword))
 	}
 
-	defaultPass, err := diceware.Generate(4)
-
-	if err != nil {
-		panic(err)
-	}
-
-	user.DefaultPassword = strings.Join(defaultPass, "-")
-	user.PasswordSalt = ""
-	user.PasswordHash = ""
-
-	err = raceManager.raceStore.UpsertAccount(user)
-
-	if err != nil {
-		panic(err) // @TODO
-	}
-
-	AddFlashQuick(w, r, fmt.Sprintf("We have autogenerated a new password for %s, it is: %s", user.Name, user.DefaultPassword))
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-var ErrUserNeedsPassword = errors.New("servermanager: user needs to set a password")
+var ErrAccountNeedsPassword = errors.New("servermanager: account needs to set a password")
 var ErrInvalidUsernameOrPassword = errors.New("servermanager: invalid username or password")
 
-func loginUser(r *http.Request, w http.ResponseWriter) error {
+type AccountManager struct {
+	raceStore RaceStore
+}
+
+func NewAccountManager(raceStore RaceStore) *AccountManager {
+	return &AccountManager{
+		raceStore: raceStore,
+	}
+}
+
+func (am *AccountManager) login(r *http.Request, w http.ResponseWriter) error {
 	if err := r.ParseForm(); err != nil {
 		return err
 	}
 
 	username, password := r.FormValue("Username"), r.FormValue("Password")
 
-	users, err := raceManager.raceStore.ListAccounts()
+	accounts, err := raceManager.raceStore.ListAccounts()
 
 	if err != nil {
 		return err
 	}
 
-	for _, user := range users {
-		if username == user.Name {
-			if (user.NeedsPasswordReset() && password == user.DefaultPassword) ||
-				(user.Name == adminUserName && config.Users.AdminPasswordOverride != "" && password == config.Users.AdminPasswordOverride) {
-				// first log in of the user, direct them to a reset password form
+	for _, account := range accounts {
+		if username == account.Name {
+			if (account.NeedsPasswordReset() && password == account.DefaultPassword) ||
+				(account.Name == adminUserName && config.Users.AdminPasswordOverride != "" && password == config.Users.AdminPasswordOverride) {
+				// first log in of the account, direct them to a reset password form
 				sess := getSession(r)
-				sess.Values[sessionUserID] = user.ID.String()
+				sess.Values[sessionAccountID] = account.ID.String()
 
 				err := sess.Save(r, w)
 
@@ -362,18 +348,18 @@ func loginUser(r *http.Request, w http.ResponseWriter) error {
 					return err
 				}
 
-				return ErrUserNeedsPassword
+				return ErrAccountNeedsPassword
 			}
 
-			passwordHash, err := hashPassword([]byte(password), []byte(user.PasswordSalt))
+			passwordHash, err := hashPassword([]byte(password), []byte(account.PasswordSalt))
 
 			if err != nil {
 				return err
 			}
 
-			if subtle.ConstantTimeCompare([]byte(user.PasswordHash), []byte(passwordHash)) == 1 {
+			if subtle.ConstantTimeCompare([]byte(account.PasswordHash), []byte(passwordHash)) == 1 {
 				sess := getSession(r)
-				sess.Values[sessionUserID] = user.ID.String()
+				sess.Values[sessionAccountID] = account.ID.String()
 
 				return sess.Save(r, w)
 			} else {
@@ -385,9 +371,49 @@ func loginUser(r *http.Request, w http.ResponseWriter) error {
 	return ErrInvalidUsernameOrPassword
 }
 
+func (am *AccountManager) resetPassword(accountID string) (*Account, error) {
+	account, err := raceManager.raceStore.FindAccountByID(accountID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defaultPass, err := diceware.Generate(4)
+
+	if err != nil {
+		return nil, err
+	}
+
+	account.DefaultPassword = strings.Join(defaultPass, "-")
+	account.PasswordSalt = ""
+	account.PasswordHash = ""
+
+	return account, raceManager.raceStore.UpsertAccount(account)
+}
+
+func (am *AccountManager) changePassword(account *Account, password string) error {
+	salt, err := generateSalt()
+
+	if err != nil {
+		return err
+	}
+
+	pass, err := hashPassword([]byte(password), []byte(salt))
+
+	if err != nil {
+		return err
+	}
+
+	account.DefaultPassword = ""
+	account.PasswordSalt = salt
+	account.PasswordHash = pass
+
+	return raceManager.raceStore.UpsertAccount(account)
+}
+
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	sess := getSession(r)
-	delete(sess.Values, sessionUserID)
+	delete(sess.Values, sessionAccountID)
 
 	_ = sess.Save(r, w)
 
@@ -403,7 +429,9 @@ func createOrEditAccountHandler(w http.ResponseWriter, r *http.Request) {
 		account, err = raceManager.raceStore.FindAccountByID(id)
 
 		if err != nil {
-			panic(err)
+			logrus.WithError(err).Errorf("Could not find account for id: %s", id)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
 		}
 
 		isEditing = true
@@ -411,7 +439,9 @@ func createOrEditAccountHandler(w http.ResponseWriter, r *http.Request) {
 		defaultPass, err := diceware.Generate(4)
 
 		if err != nil {
-			panic(err)
+			logrus.WithError(err).Errorf("Could not generate password")
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
 		}
 
 		account = &Account{
@@ -435,7 +465,9 @@ func createOrEditAccountHandler(w http.ResponseWriter, r *http.Request) {
 		err := raceManager.raceStore.UpsertAccount(account)
 
 		if err != nil {
-			panic(err)
+			logrus.WithError(err).Errorf("Could save account with id: %s", account.ID)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
 		}
 
 		if isEditing {
@@ -458,7 +490,9 @@ func manageAccountsHandler(w http.ResponseWriter, r *http.Request) {
 	accounts, err := raceManager.raceStore.ListAccounts()
 
 	if err != nil {
-		panic(err)
+		logrus.WithError(err).Errorf("Could not list accounts")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	ViewRenderer.MustLoadTemplate(w, r, "accounts/manage.html", map[string]interface{}{
