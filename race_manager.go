@@ -136,8 +136,6 @@ func (rm *RaceManager) UDPCallback(message udp.Message) {
 		go LiveMapCallback(message)
 	}
 
-	panic("banana")
-
 	championshipManager.ChampionshipEventCallback(message)
 	LiveTimingCallback(message)
 	LoopCallback(message)
