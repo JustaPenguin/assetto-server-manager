@@ -17,7 +17,7 @@ const (
 	entrantsFile      = "entrants.json"
 	serverOptionsFile = "server_options.json"
 	frameLinksFile    = "frame_links.json"
-	serverVersionFile = "version.json"
+	serverMetaDir     = "meta"
 )
 
 func NewJSONRaceStore(dir string) RaceStore {
@@ -313,20 +313,28 @@ func (rs *JSONRaceStore) FindAccountByID(id string) (*Account, error) {
 	return nil, ErrAccountNotFound
 }
 
-func (rs *JSONRaceStore) SetVersion(version int) error {
-	return rs.encodeFile(serverVersionFile, version)
-}
+func (rs *JSONRaceStore) DeleteAccount(id string) error {
+	account, err := rs.FindAccountByID(id)
 
-func (rs *JSONRaceStore) GetVersion() (int, error) {
-	var version int
-
-	err := rs.decodeFile(serverVersionFile, &version)
-
-	if os.IsNotExist(err) {
-		return version, nil
-	} else if err != nil {
-		return 0, err
+	if err != nil {
+		return err
 	}
 
-	return version, nil
+	account.Deleted = time.Now()
+
+	return rs.UpsertAccount(account)
+}
+
+func (rs *JSONRaceStore) SetMeta(key string, value interface{}) error {
+	return rs.encodeFile(filepath.Join(serverMetaDir, key+".json"), value)
+}
+
+func (rs *JSONRaceStore) GetMeta(key string, out interface{}) error {
+	err := rs.decodeFile(filepath.Join(serverMetaDir, key+".json"), out)
+
+	if os.IsNotExist(err) {
+		return ErrMetaValueNotSet
+	}
+
+	return err
 }

@@ -1,0 +1,55 @@
+Assetto Server Manager Installation Instructions
+================================================
+
+Hi! Welcome to Assetto Server Manager! We're pretty proud of our tool and we hope you can get it set up OK.
+
+However, if you have any problems, please don't hesitate to ask questions in one of the following places:
+
+* Race Department Support thread: https://www.racedepartment.com/threads/ac-server-manager.165662/
+* GitHub: https://github.com/cj123/assetto-server-manager/issues
+
+We'd also like to ask that you consider donating to help fund the development of Server Manager. We're a two
+person team who dedicate a lot of our time to make cool things for the community. If you can help out, we'd
+really appreciate it. You can donate at: https://paypal.me/JustaPenguinUK
+
+Right! With that let's begin setting up the server.
+
+Installation Steps:
+-------------------
+
+1. Unzip the server-manager.zip to your preferred location.
+2. Open the config.yml file in your favourite editor. This is important, some things do need configuring here.
+3. Read the config.yml file carefully. The most important part of this is the 'steam' section. At the very minimum,
+   you must change the 'install_path' setting. You should make this point to your Assetto Corsa Server install.
+
+   On Windows, this will most likely look something like this:
+
+   C:\Program Files\Steam\SteamApps\common\assettocorsa\server
+
+   But it will vary a bit depending on your Windows installation, so please find your correct path and put it in the
+   config file.
+
+   After configuring this, feel free to read the rest of the configuration file and change things as you see fit. We've
+   tried our best to make the defaults be as sensible as possible, but you can tune things to your liking here.
+
+4. Run the 'server-manager' executable. On Windows, this will open your browser window. If you're on Linux, you'll
+   need to manually open the URL: http://localhost:8772 in your browser.
+
+5. Log in to Server Manager. You can do this with the "Login" link underneath the Person icon in the navigation. You'll
+   need the default username and password to get in, they are:
+
+       username: admin
+       password: servermanager
+
+   When you log in, you will be immediately prompted to change your password. You can add new accounts at any time from
+   the server manager web interface.
+
+
+Forgotten Password:
+-------------------
+
+If you've forgotten your password, you can set a password_override key in the config.yml. It will change the admin
+password to be whatever you have specified in plain text. You will then be prompted to change your password on next
+login.
+
+The admin user cannot be deleted or have its group changed.

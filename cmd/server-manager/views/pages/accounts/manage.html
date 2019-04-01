@@ -1,7 +1,6 @@
 {{ define "title" }}Manage Accounts{{ end }}
 
 {{ define "content" }}
-
     <h1 class="text-center">Manage Accounts</h1>
 
     <table class="table table-bordered table-striped">
@@ -18,12 +17,14 @@
                 <td>{{ $account.Name }}</td>
                 <td>{{ $account.Group }}</td>
                 <td>
-                    <a class="btn btn-warning" href="/accounts/edit/{{ $account.ID.String }}">
-                        Edit
-                    </a>
-                    <a class="btn btn-danger" href="/accounts/delete/{{ $account.ID.String }}">
-                        Delete
-                    </a>
+                    {{ if ne $account.Name "admin" }}
+                        <a class="btn btn-warning" href="/accounts/edit/{{ $account.ID.String }}">
+                            Edit
+                        </a>
+                        <a class="btn btn-danger" href="/accounts/delete/{{ $account.ID.String }}">
+                            Delete
+                        </a>
+                    {{ end }}
                 </td>
             </tr>
         {{ end }}
@@ -31,4 +32,19 @@
 
     <a class="btn btn-success mt-3 float-right" href="/accounts/new">Add Account</a>
     <div class="clearfix"></div>
+
+
+    <h2>Open Server Manager</h2>
+
+    <p>An Open Server Manager allows read access to anyone.</p>
+
+    {{ if $.ServerReadIsOpen }}
+        <p class="d-inline-block mr-5 text-success">Server Manager is currently open.</p>
+
+        <a href="/accounts/toggle-open" class="btn btn-danger d-inline-block">Make Closed</a>
+    {{ else }}
+        <p class="d-inline-block mr-5 text-danger">Server Manager is currently not open.</p>
+
+        <a href="/accounts/toggle-open" class="btn btn-success d-inline-block">Make Open</a>
+    {{ end }}
 {{ end }}

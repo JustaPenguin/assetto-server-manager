@@ -121,7 +121,7 @@ func init() {
 	go mapHub.run()
 }
 
-func LiveMapHandler(w http.ResponseWriter, r *http.Request) {
+func liveMapHandler(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 
 	if err != nil {
