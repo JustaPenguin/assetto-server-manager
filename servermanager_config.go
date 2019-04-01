@@ -6,6 +6,7 @@ import (
 
 	"github.com/etcd-io/bbolt"
 	"github.com/gorilla/sessions"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
@@ -17,6 +18,11 @@ type Configuration struct {
 	Store   StoreConfig       `yaml:"store"`
 	LiveMap LiveMapConfig     `yaml:"live_map"`
 	Server  ServerExtraConfig `yaml:"server"`
+	Users   UsersConfig       `yaml:"users"`
+}
+
+type UsersConfig struct {
+	AdminPasswordOverride string `yaml:"admin_password_override"`
 }
 
 type LiveMapConfig struct {
@@ -86,6 +92,10 @@ func ReadConfig(location string) (conf *Configuration, err error) {
 
 	config = conf
 	store = sessions.NewCookieStore([]byte(conf.HTTP.SessionKey))
+
+	if config.Users.AdminPasswordOverride != "" {
+		logrus.Infof("WARNING! Admin Password Override is set. Please only have this set if you are resetting your admin account password!")
+	}
 
 	return conf, err
 }

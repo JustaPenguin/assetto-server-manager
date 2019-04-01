@@ -117,7 +117,7 @@
             <a class="card" href="/tracks">
                 <div class="card-body text-center">
                     <h1 class="text-center"><i class="fas fa-road fa-2x"></i></h1>
-                    <h2>Manage Tracks</h2>
+                    <h2>Tracks</h2>
                 </div>
             </a>
         </div>
@@ -126,7 +126,7 @@
             <a class="card" href="/cars">
                 <div class="card-body text-center">
                     <h1 class="text-center"><i class="fas fa-car fa-2x"></i></h1>
-                    <h2>Manage Cars &amp; Setups</h2>
+                    <h2>Cars &amp; Setups</h2>
                 </div>
             </a>
         </div>
@@ -135,11 +135,21 @@
             <a class="card" href="/weather">
                 <div class="card-body text-center">
                     <h1 class="text-center"><i class="fas fa-cloud-moon fa-2x"></i></h1>
-                    <h2>Manage Weather</h2>
+                    <h2>Weather</h2>
                 </div>
             </a>
         </div>
 
+        {{ if AdminAccess }}
+            <div class="col-md-6 col-lg-4 mt-4">
+                <a class="card" href="/accounts">
+                    <div class="card-body text-center">
+                        <h1 class="text-center"><i class="fas fa-user fa-2x"></i></h1>
+                        <h2>Accounts</h2>
+                    </div>
+                </a>
+            </div>
+        {{ end }}
     </div>
 
     <div class="clearfix"></div>

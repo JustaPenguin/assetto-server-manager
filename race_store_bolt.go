@@ -539,8 +539,19 @@ func (rs *BoltRaceStore) FindAccountByID(id string) (*Account, error) {
 	return nil, ErrAccountNotFound
 }
 
+func (rs *BoltRaceStore) DeleteAccount(id string) error {
+	account, err := rs.FindAccountByID(id)
+
+	if err != nil {
+		return err
+	}
+
+	account.Deleted = time.Now()
+
+	return rs.UpsertAccount(account)
+}
+
 var metaBucketName = []byte("meta")
-var versionKey = []byte("version")
 
 func (rs *BoltRaceStore) metaBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	if !tx.Writable() {
@@ -556,7 +567,7 @@ func (rs *BoltRaceStore) metaBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	return tx.CreateBucketIfNotExists(metaBucketName)
 }
 
-func (rs *BoltRaceStore) SetVersion(version int) error {
+func (rs *BoltRaceStore) SetMeta(key string, value interface{}) error {
 	return rs.db.Update(func(tx *bbolt.Tx) error {
 		bkt, err := rs.metaBucket(tx)
 
@@ -564,19 +575,19 @@ func (rs *BoltRaceStore) SetVersion(version int) error {
 			return err
 		}
 
-		enc, err := rs.encode(version)
+		enc, err := rs.encode(value)
 
 		if err != nil {
 			return err
 		}
 
-		return bkt.Put(versionKey, enc)
+		return bkt.Put([]byte(key), enc)
 	})
 }
 
-func (rs *BoltRaceStore) GetVersion() (int, error) {
-	var version int
+var ErrMetaValueNotSet = errors.New("servermanager: value not set")
 
+func (rs *BoltRaceStore) GetMeta(key string, out interface{}) error {
 	err := rs.db.View(func(tx *bbolt.Tx) error {
 		bkt, err := rs.metaBucket(tx)
 
@@ -584,14 +595,16 @@ func (rs *BoltRaceStore) GetVersion() (int, error) {
 			return err
 		}
 
-		err = rs.decode(bkt.Get(versionKey), &version)
+		val := bkt.Get([]byte(key))
+
+		if val == nil {
+			return ErrMetaValueNotSet
+		}
+
+		err = rs.decode(val, &out)
 
 		return err
 	})
 
-	if err == bbolt.ErrBucketNotFound {
-		return 0, nil
-	}
-
-	return version, err
+	return err
 }

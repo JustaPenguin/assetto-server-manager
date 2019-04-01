@@ -26,12 +26,13 @@ type RaceStore interface {
 	ListPrevFrames() ([]string, error)
 
 	// Meta
-	SetVersion(version int) error
-	GetVersion() (int, error)
+	SetMeta(key string, value interface{}) error
+	GetMeta(key string, out interface{}) error
 
 	// Accounts
 	ListAccounts() ([]*Account, error)
 	UpsertAccount(a *Account) error
 	FindAccountByName(name string) (*Account, error)
 	FindAccountByID(id string) (*Account, error)
+	DeleteAccount(id string) error
 }

@@ -5,12 +5,17 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const CurrentMigrationVersion = 1
+const (
+	CurrentMigrationVersion = 2
+	versionMetaKey          = "version"
+)
 
 func Migrate(store RaceStore) error {
-	storeVersion, err := store.GetVersion()
+	var storeVersion int
 
-	if err != nil {
+	err := store.GetMeta(versionMetaKey, &storeVersion)
+
+	if err != nil && err != ErrMetaValueNotSet {
 		return err
 	}
 
@@ -22,13 +27,14 @@ func Migrate(store RaceStore) error {
 		}
 	}
 
-	return store.SetVersion(CurrentMigrationVersion)
+	return store.SetMeta(versionMetaKey, CurrentMigrationVersion)
 }
 
 type migrationFunc func(RaceStore) error
 
 var migrations = []migrationFunc{
 	addEntrantIDToChampionships,
+	addAdminAccount,
 }
 
 func addEntrantIDToChampionships(rs RaceStore) error {
@@ -57,4 +63,15 @@ func addEntrantIDToChampionships(rs RaceStore) error {
 	}
 
 	return nil
+}
+
+func addAdminAccount(rs RaceStore) error {
+	logrus.Infof("Running migration: Add Admin Account")
+
+	account := NewAccount()
+	account.Name = adminUserName
+	account.DefaultPassword = "servermanager"
+	account.Group = GroupAdmin
+
+	return rs.UpsertAccount(account)
 }

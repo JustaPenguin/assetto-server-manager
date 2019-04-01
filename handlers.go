@@ -81,7 +81,10 @@ func Router(fs http.FileSystem) chi.Router {
 		// live timings
 		r.Get("/live-timing", liveTimingHandler)
 		r.Get("/live-timing/get", liveTimingGetHandler)
-		r.Get("/api/live-map", LiveMapHandler)
+		r.Get("/api/live-map", liveMapHandler)
+
+		// account management
+		r.HandleFunc("/accounts/new-password", newPasswordHandler)
 
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")))
 		FileServer(r, "/results/download", http.Dir(filepath.Join(ServerInstallPath, "results")))
@@ -132,7 +135,7 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Post("/penalties/{sessionFile}/{driverGUID}", penaltyHandler)
 
 		// live timings
-		r.Post("/live-timing/save-frames", LiveFrameSaveHandler)
+		r.Post("/live-timing/save-frames", liveFrameSaveHandler)
 
 		// endpoints
 		r.Post("/api/track/upload", apiTrackUploadHandler)
@@ -161,6 +164,9 @@ func Router(fs http.FileSystem) chi.Router {
 		r.HandleFunc("/server-options", serverOptionsHandler)
 		r.HandleFunc("/accounts/new", createOrEditAccountHandler)
 		r.HandleFunc("/accounts/edit/{id}", createOrEditAccountHandler)
+		r.HandleFunc("/accounts/delete/{id}", deleteAccountHandler)
+		r.HandleFunc("/accounts/reset-password/{id}", resetPasswordHandler)
+		r.HandleFunc("/accounts/toggle-open", toggleServerOpenStatusHandler)
 		r.HandleFunc("/accounts", manageAccountsHandler)
 	})
 
@@ -431,7 +437,7 @@ func deleteEmpty(s []string) []string {
 	return r
 }
 
-func LiveFrameSaveHandler(w http.ResponseWriter, r *http.Request) {
+func liveFrameSaveHandler(w http.ResponseWriter, r *http.Request) {
 	// Save the frame links from the form
 	err := r.ParseForm()
 
