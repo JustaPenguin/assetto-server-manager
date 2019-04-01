@@ -156,17 +156,19 @@ func LiveMapCallback(message udp.Message) {
 	switch m := message.(type) {
 
 	case udp.SessionInfo:
-		var err error
+		if m.Event() == udp.EventNewSession {
+			var err error
 
-		websocketLastSeenSessionInfo = &m
-		websocketTrackMapData, err = LoadTrackMapData(m.Track, m.TrackConfig)
+			websocketLastSeenSessionInfo = &m
+			websocketTrackMapData, err = LoadTrackMapData(m.Track, m.TrackConfig)
 
-		if err != nil {
-			logrus.Errorf("Could not load map data, err: %s", err)
-			return
+			if err != nil {
+				logrus.Errorf("Could not load map data, err: %s", err)
+				return
+			}
+
+			LiveMapCallback(websocketTrackMapData)
 		}
-
-		LiveMapCallback(websocketTrackMapData)
 
 	case udp.SessionCarInfo:
 		if m.Event() == udp.EventNewConnection {
