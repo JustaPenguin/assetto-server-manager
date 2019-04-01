@@ -28,10 +28,10 @@ func Migrate(store RaceStore) error {
 type migrationFunc func(RaceStore) error
 
 var migrations = []migrationFunc{
-	addEventIDtoChampionships,
+	addEntrantIDToChampionships,
 }
 
-func addEventIDtoChampionships(rs RaceStore) error {
+func addEntrantIDToChampionships(rs RaceStore) error {
 	logrus.Infof("Running migration: Add Internal UUID to Championship Entrants")
 
 	championships, err := rs.ListChampionships()
