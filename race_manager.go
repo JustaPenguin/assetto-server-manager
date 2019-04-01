@@ -375,7 +375,7 @@ func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (Entry
 
 		e := NewEntrant()
 
-		if r.Form["EntryList.InternalUUID"][i] != "" {
+		if r.Form["EntryList.InternalUUID"][i] != "" || r.Form["EntryList.InternalUUID"][i] != uuid.Nil.String() {
 			internalUUID, err := uuid.Parse(r.Form["EntryList.InternalUUID"][i])
 
 			if err == nil {
