@@ -21,7 +21,8 @@
                         <a class="btn btn-warning" href="/accounts/edit/{{ $account.ID.String }}">
                             Edit
                         </a>
-                        <a class="btn btn-danger" href="/accounts/delete/{{ $account.ID.String }}">
+                        <a onClick="return confirm('I understand that this will delete this account permanently.') "
+                           class="btn btn-danger" href="/accounts/delete/{{ $account.ID.String }}">
                             Delete
                         </a>
                     {{ end }}
