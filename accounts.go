@@ -123,7 +123,7 @@ func MustLoginMiddleware(requiredGroup Group, next http.Handler) http.Handler {
 					return
 				}
 			} else {
-				logrus.WithError(err).Errorf("Could not find account for id: %d", accountID)
+				logrus.WithError(err).Errorf("Could not find account for id: %s", accountID)
 			}
 		}
 
