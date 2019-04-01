@@ -1,8 +1,17 @@
 v1.2.0
 ------
 
+Note: This update changes how the accounts work, you will need to re-add all of your existing accounts in the server
+control panel! To do this, you will need the new default admin details:
+
+  username: admin
+  password: servermanager
+
+Now, on to the changes!
+
 Added:
 
+* Account Management via the web interface! No more fiddling with configuration files! You will need to re-add your accounts.
 * Adds Fixed Setups to Custom Races and Championships. Fixed setups can be uploaded on the Cars page. You can fix
   a setup for a whole championship or individually for specific events in the Championship.
 * Adds skin, ballast and restrictor customisation for individual Championship Events.
@@ -23,6 +32,8 @@ Added:
 * Added a more informative message for users who experience issues launching Server Manager. We're trying our best
   to make Server Manager really good, and we're a little disheartened by negative reviews caused by people not managing
   to follow our setup instructions.
+* Added a dropdown to the Entrant box which makes auto fill much more obvious and less likely to be interfered with
+  by browsers.
 
 Fixes:
 
@@ -34,9 +45,6 @@ Fixes:
 * Fixes an issue that made it impossible to start quick/custom races on mobile safari.
 * Fixes an issue where Championship Events were not correctly finished/tracked.
 * Added logging to server-manager.log - this should make debugging issues easier.
-* Added a dropdown to the Entrant box which makes auto fill much more obvious and less likely to be interfered with
-  by browsers.
-
 
 v1.1.3
 ------

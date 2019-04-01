@@ -41,7 +41,7 @@ deploy: clean assets
 	cp ../../README.md build/README.txt
 	cp ../../INSTALL.txt build/INSTALL.txt
 	cp ../../LICENSE build/LICENSE.txt
-	cp ../../CHANGELOG.txt build
+	cp ../../CHANGELOG.md build/CHANGELOG.txt
 	unix2dos build/README.txt build/LICENSE.txt build/CHANGELOG.txt build/windows/config.yml build/INSTALL.txt
 
 	# archive
