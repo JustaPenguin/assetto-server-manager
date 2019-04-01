@@ -18,7 +18,7 @@ func NewBoltRaceStore(db *bbolt.DB) RaceStore {
 
 var (
 	customRaceBucketName    = []byte("customRaces")
-	serverOptionsBucketName = []byte("serverAccountOptionsMetaKey")
+	serverOptionsBucketName = []byte("serverOptions")
 	entrantsBucketName      = []byte("entrants")
 	championshipsBucketName = []byte("championships")
 	accountsBucketName      = []byte("accounts")
