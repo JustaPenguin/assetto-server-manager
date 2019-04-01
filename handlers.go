@@ -22,6 +22,8 @@ var (
 	store         sessions.Store
 	logOutput     = newLogBuffer(MaxLogSizeBytes)
 	pluginsOutput = newLogBuffer(MaxLogSizeBytes)
+
+	logMultiWriter io.Writer
 )
 
 func init() {
@@ -31,7 +33,15 @@ func init() {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 
-	logrus.SetOutput(io.MultiWriter(os.Stdout, logOutput))
+	logFile, err := os.OpenFile("server-manager.log", os.O_APPEND|os.O_WRONLY, 0666)
+
+	if err == nil {
+		logMultiWriter = io.MultiWriter(os.Stdout, logOutput, logFile)
+	} else {
+		logMultiWriter = io.MultiWriter(os.Stdout, logOutput)
+	}
+
+	logrus.SetOutput(logMultiWriter)
 }
 
 func Router(fs http.FileSystem) chi.Router {

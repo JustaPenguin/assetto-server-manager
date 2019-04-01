@@ -43,20 +43,13 @@ func NewChampionshipManager(rm *RaceManager) *ChampionshipManager {
 }
 
 func (cm *ChampionshipManager) applyConfigAndStart(config ServerConfig, entryList EntryList, championship *ActiveChampionship) error {
-	err := cm.RaceManager.applyConfigAndStart(config, entryList, false)
+	err := cm.RaceManager.applyConfigAndStart(config, entryList, false, true)
 
 	if err != nil {
 		return err
 	}
 
 	cm.activeChampionship = championship
-
-	go func() {
-		<-serverStoppedChan
-		logrus.Infof("Server stopped. Clearing active championship")
-
-		cm.activeChampionship = nil
-	}()
 
 	return nil
 }
@@ -353,7 +346,7 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 
 	config.CurrentRaceConfig = raceSetup
 
-	return cm.RaceManager.applyConfigAndStart(config, event.CombineEntryLists(championship), false)
+	return cm.RaceManager.applyConfigAndStart(config, event.CombineEntryLists(championship), false, false)
 }
 
 func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string) error {

@@ -538,3 +538,60 @@ func (rs *BoltRaceStore) FindAccountByID(id string) (*Account, error) {
 
 	return nil, ErrAccountNotFound
 }
+
+var metaBucketName = []byte("meta")
+var versionKey = []byte("version")
+
+func (rs *BoltRaceStore) metaBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+	if !tx.Writable() {
+		bkt := tx.Bucket(metaBucketName)
+
+		if bkt == nil {
+			return nil, bbolt.ErrBucketNotFound
+		}
+
+		return bkt, nil
+	}
+
+	return tx.CreateBucketIfNotExists(metaBucketName)
+}
+
+func (rs *BoltRaceStore) SetVersion(version int) error {
+	return rs.db.Update(func(tx *bbolt.Tx) error {
+		bkt, err := rs.metaBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		enc, err := rs.encode(version)
+
+		if err != nil {
+			return err
+		}
+
+		return bkt.Put(versionKey, enc)
+	})
+}
+
+func (rs *BoltRaceStore) GetVersion() (int, error) {
+	var version int
+
+	err := rs.db.View(func(tx *bbolt.Tx) error {
+		bkt, err := rs.metaBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		err = rs.decode(bkt.Get(versionKey), &version)
+
+		return err
+	})
+
+	if err == bbolt.ErrBucketNotFound {
+		return 0, nil
+	}
+
+	return version, err
+}

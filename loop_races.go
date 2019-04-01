@@ -10,6 +10,7 @@ import (
 )
 
 var sessionTypes []SessionType
+var waitForSecondRace bool
 
 func LoopRaces() {
 	var i int
@@ -41,6 +42,10 @@ func LoopRaces() {
 
 				for sessionID := range looped[i].RaceConfig.Sessions {
 					sessionTypes = append(sessionTypes, sessionID)
+				}
+
+				if currentRace.CurrentRaceConfig.ReversedGridRacePositions != 0 {
+					sessionTypes = append(sessionTypes, SessionTypeSecondRace)
 				}
 
 				err := raceManager.StartCustomRace(looped[i].UUID.String(), true)
@@ -77,6 +82,21 @@ func LoopCallback(message udp.Message) {
 		}
 
 		var endSession SessionType
+
+		// If this is a race, and there is a second race configured
+		// then wait for the second race to happen.
+		if results.Type == string(SessionTypeRace) {
+			for _, session := range sessionTypes {
+				if session == SessionTypeSecondRace {
+					if !waitForSecondRace {
+						waitForSecondRace = true
+						return
+					} else {
+						waitForSecondRace = false
+					}
+				}
+			}
+		}
 
 		for _, session := range sessionTypes {
 			if session == SessionTypeRace {

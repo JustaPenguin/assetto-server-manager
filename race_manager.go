@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
@@ -126,7 +127,8 @@ func (rm *RaceManager) UDPCallback(message udp.Message) {
 	// recover from panics that may occur while handling UDP messages
 	defer func() {
 		if r := recover(); r != nil {
-			logrus.Errorf("recovered from panic: %s", r)
+			fmt.Fprintf(logMultiWriter, "\n\nrecovered from panic: %v\n\n", r)
+			fmt.Fprintf(logMultiWriter, string(debug.Stack()))
 		}
 	}()
 
@@ -139,7 +141,7 @@ func (rm *RaceManager) UDPCallback(message udp.Message) {
 	LoopCallback(message)
 }
 
-func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool) error {
+func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool, championshipEvent bool) error {
 	rm.mutex.Lock()
 	defer rm.mutex.Unlock()
 
@@ -161,6 +163,11 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 
 	config.GlobalServerConfig.UDPPluginAddress = config.GlobalServerConfig.FreeUDPPluginAddress
 	config.GlobalServerConfig.UDPPluginLocalPort = config.GlobalServerConfig.FreeUDPPluginLocalPort
+
+	if !championshipEvent && championshipManager != nil {
+		logrus.Infof("Starting a non championship event. Setting activeChampionship to nil")
+		championshipManager.activeChampionship = nil
+	}
 
 	err = config.Write()
 
@@ -318,7 +325,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 
 	quickRace.CurrentRaceConfig.MaxClients = numPitboxes
 
-	return rm.applyConfigAndStart(quickRace, entryList, false)
+	return rm.applyConfigAndStart(quickRace, entryList, false, false)
 }
 
 func formValueAsInt(val string) int {
@@ -368,7 +375,7 @@ func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (Entry
 
 		e := NewEntrant()
 
-		if r.Form["EntryList.InternalUUID"][i] != "" {
+		if r.Form["EntryList.InternalUUID"][i] != "" || r.Form["EntryList.InternalUUID"][i] != uuid.Nil.String() {
 			internalUUID, err := uuid.Parse(r.Form["EntryList.InternalUUID"][i])
 
 			if err == nil {
@@ -600,7 +607,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 			return nil
 		}
 
-		return rm.applyConfigAndStart(completeConfig, entryList, false)
+		return rm.applyConfigAndStart(completeConfig, entryList, false, false)
 	}
 }
 
@@ -865,7 +872,7 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 		//cfg.CurrentRaceConfig.LoopMode = 1
 	}
 
-	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart)
+	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart, false)
 }
 
 func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string) error {
