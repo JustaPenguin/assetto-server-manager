@@ -191,7 +191,7 @@
 
                 <div class="card-body">
                     {{ range $link, $name := . }}
-                        {{ if gt $count 0 }}, {{ end }}<a href="{{ $link }}">{{ $name }}</a>
+                        <a href="{{ $link }}">{{ $name }}</a>{{ if ne $count (sub (len $championship.Links) 1) }}, {{ end }}
 
                         {{ $count = add $count 1 }}
                     {{ end }}

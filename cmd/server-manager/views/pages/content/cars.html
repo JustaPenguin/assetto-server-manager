@@ -45,6 +45,11 @@
                                 <div id="drop-zone" ondrop="handleCarDropFiles(event);" ondragover="dragOverHandler(event);" ondragleave="dragOutHandler(event);"
                                      class="ml-2 mr-2 drop-zone d-inline-block">Or Drag & Drop Folder(s) Here</div>
 
+                                <div class="float-right">
+                                    <label for="only-ks" class="mr-2">Only Upload Official KS Content</label>
+                                    <input type="checkbox" name="only-ks" id="only-ks" onchange="toggleKS()">
+                                </div>
+
                                 <div id="upload-button"></div>
                             </div>
 

@@ -73,6 +73,17 @@ $(document).ready(function () {
         };
     }
 
+    // Fix for mobile safari
+    $document.find("#Cars").change(function () {
+        let selectedCars = $(this).children("option:selected").val();
+
+        if (selectedCars !== undefined) {
+            $(this).removeAttr('required')
+        } else {
+            $(this).attr('required', 'required')
+        }
+    });
+
     $('#SetupFile').on('change', function () {
         let fileName = this.files[0].name;
         $(this).next('.custom-file-label').html(fileName);
@@ -1125,6 +1136,34 @@ function timeDiff(tstart, tend) {
     return s;
 }
 
+let percentColors = [
+    { pct: 0.25, color: { r: 0x00, g: 0x00, b: 0xff } },
+    { pct: 0.625, color: { r: 0x00, g: 0xff, b: 0 } },
+    { pct: 1.0, color: { r: 0xff, g: 0x00, b: 0 } } ];
+
+let getColorForPercentage = function(pct) {
+    let i
+
+    for (i = 1; i < percentColors.length - 1; i++) {
+        if (pct < percentColors[i].pct) {
+            break;
+        }
+    }
+
+    let lower = percentColors[i - 1];
+    let upper = percentColors[i];
+    let range = upper.pct - lower.pct;
+    let rangePct = (pct - lower.pct) / range;
+    let pctLower = 1 - rangePct;
+    let pctUpper = rangePct;
+    let color = {
+        r: Math.floor(lower.color.r * pctLower + upper.color.r * pctUpper),
+        g: Math.floor(lower.color.g * pctLower + upper.color.g * pctUpper),
+        b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper)
+    };
+    return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
+};
+
 let hiddenDots = [];
 
 let liveTiming = {
@@ -1194,6 +1233,45 @@ let liveTiming = {
                 let $raceTime = $document.find("#race-time");
                 $raceTime.text("Event Completion: " + raceCompletion + "/ " + total);
 
+                let $roadTempWrapper = $document.find("#road-temp-wrapper");
+                $roadTempWrapper.attr("style", "background-color: " + getColorForPercentage(((liveTiming.RoadTemp/40))));
+                $roadTempWrapper.attr("data-original-title", "Road Temp: " + liveTiming.RoadTemp + "°C");
+
+                let $roadTempText = $document.find("#road-temp-text");
+                $roadTempText.text(liveTiming.RoadTemp + "°C");
+
+                let $ambientTempWrapper = $document.find("#ambient-temp-wrapper");
+                $ambientTempWrapper.attr("style", "background-color: " + getColorForPercentage(((liveTiming.AmbientTemp/40))));
+                $ambientTempWrapper.attr("data-original-title", "Ambient Temp: " + liveTiming.AmbientTemp + "°C");
+
+                let $ambientTempText = $document.find("#ambient-temp-text");
+                $ambientTempText.text(liveTiming.AmbientTemp + "°C");
+
+                let $currentWeather = $document.find("#weatherImage");
+
+                // Fix for sol weathers with time info in this format:
+                // sol_05_Broken%20Clouds_type=18_time=0_mult=20_start=1551792960/preview.jpg
+                let pathCorrected = liveTiming.WeatherGraphics.split("_");
+
+                for (let i = 0; i < pathCorrected.length; i++) {
+                    if (pathCorrected[i].indexOf("type=") !== -1) {
+                        pathCorrected.splice(i);
+                        break;
+                    }
+                }
+
+                let pathFinal = pathCorrected.join("_");
+
+                $.get("/content/weather/" + pathFinal + "/preview.jpg").done(function () {
+                    // preview for skin exists
+                    $currentWeather.attr("src", "/content/weather/" + pathFinal + "/preview.jpg");
+                }).fail(function () {
+                    // preview doesn't exist, load default fall back image
+                    $currentWeather.attr( "src", "/static/img/no-preview-general.png");
+                });
+
+                $currentWeather.attr("alt", "Current Weather: " + prettifyName(liveTiming.WeatherGraphics, false));
+
                 // Get the session type
                 let $currentSession = $document.find("#current-session");
 
@@ -1255,6 +1333,7 @@ let liveTiming = {
 
                     let $tdPos = $("<td/>");
                     let $tdName = $("<td/>");
+                    let $tdCar = $("<td/>");
                     let $tdLapTime = $("<td/>");
                     let $tdBestLap = $("<td/>");
                     let $tdGap = $("<td/>");
@@ -1290,6 +1369,9 @@ let liveTiming = {
                         }
                     });
                     $tr.append($tdName);
+
+                    $tdCar.text(prettifyName(liveTiming.Cars[car].CarMode, true) + " - " + prettifyName(liveTiming.Cars[car].CarSkin, true));
+                    $tr.append($tdCar);
 
                     $tdLapTime.text(lapTime);
                     $tr.append($tdLapTime);
@@ -1623,6 +1705,12 @@ function handleWeatherFilesLoop(fileList) {
     }
 }
 
+let onlyKS = false;
+
+function toggleKS() {
+    onlyKS = $document.find("#only-ks").is(':checked');
+}
+
 function handleCarFiles(fileList) {
     // Correct filepath
     for (let x = 0; x < fileList.length; x++) {
@@ -1642,6 +1730,11 @@ function handleCarFiles(fileList) {
     let splitList = {};
 
     for (let y = 0; y < fileList.length; y++) {
+        // if onlyKS is set, and the file doesn't contain the ks_ prefix
+        if (onlyKS && fileList[y].filepath.indexOf("ks_", 0) === -1) {
+            continue
+        }
+
         let splitPath = fileList[y].filepath.split("/");
 
         let carIdentifier = splitPath.slice(0, idPos).join(":");
@@ -1895,6 +1988,11 @@ function handleTrackFiles(fileList) {
     let splitList = {};
 
     for (let y = 0; y < fileList.length; y++) {
+        // if onlyKS is set, and the file doesn't contain the ks_ prefix
+        if (onlyKS && fileList[y].filepath.indexOf("ks_", 0) === -1) {
+            continue
+        }
+
         let splitPath = fileList[y].filepath.split("/");
 
         let trackIdentifier = splitPath.slice(0, idPos).join(":");
