@@ -139,7 +139,7 @@ func (rm *RaceManager) UDPCallback(message udp.Message) {
 	LoopCallback(message)
 }
 
-func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool) error {
+func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool, championshipEvent bool) error {
 	rm.mutex.Lock()
 	defer rm.mutex.Unlock()
 
@@ -161,6 +161,11 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 
 	config.GlobalServerConfig.UDPPluginAddress = config.GlobalServerConfig.FreeUDPPluginAddress
 	config.GlobalServerConfig.UDPPluginLocalPort = config.GlobalServerConfig.FreeUDPPluginLocalPort
+
+	if !championshipEvent && championshipManager != nil {
+		championshipManager.championshipDoneCh <- struct{}{}
+		championshipManager.activeChampionship = nil
+	}
 
 	err = config.Write()
 
@@ -318,7 +323,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 
 	quickRace.CurrentRaceConfig.MaxClients = numPitboxes
 
-	return rm.applyConfigAndStart(quickRace, entryList, false)
+	return rm.applyConfigAndStart(quickRace, entryList, false, false)
 }
 
 func formValueAsInt(val string) int {
@@ -600,7 +605,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 			return nil
 		}
 
-		return rm.applyConfigAndStart(completeConfig, entryList, false)
+		return rm.applyConfigAndStart(completeConfig, entryList, false, false)
 	}
 }
 
@@ -865,7 +870,7 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 		//cfg.CurrentRaceConfig.LoopMode = 1
 	}
 
-	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart)
+	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart, false)
 }
 
 func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string) error {

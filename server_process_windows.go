@@ -11,7 +11,13 @@ import (
 const serverExecutablePath = "acServer.exe"
 
 func kill(process *os.Process) error {
-	return exec.Command("taskkill", "/F", "/T", "/PID", fmt.Sprint(process.Pid)).Run()
+	err := exec.Command("taskkill", "/F", "/T", "/PID", fmt.Sprintf("%d", process.Pid)).Run()
+
+	if err != nil {
+		return process.Kill()
+	}
+
+	return nil
 }
 
 func buildCommand(command string, args ...string) *exec.Cmd {
