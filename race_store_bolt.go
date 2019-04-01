@@ -24,7 +24,7 @@ var (
 	accountsBucketName      = []byte("accounts")
 	frameLinksBucketName    = []byte("frameLinks")
 
-	serverOptionsKey = []byte("serverAccountOptionsMetaKey")
+	serverOptionsKey = []byte("serverOptions")
 )
 
 func (rs *BoltRaceStore) customRaceBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {

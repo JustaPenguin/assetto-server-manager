@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/cj123/assetto-server-manager"
 	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
@@ -89,7 +90,7 @@ func main() {
 	logrus.Infof("starting assetto server manager on: %s", config.HTTP.Hostname)
 
 	if runtime.GOOS == "windows" {
-		_ = browser.OpenURL("http://" + config.HTTP.Hostname)
+		_ = browser.OpenURL("http://" + strings.Replace(config.HTTP.Hostname, "0.0.0.0", "127.0.0.1", 1))
 	}
 
 	if err := http.Serve(listener, servermanager.Router(filesystem)); err != nil {
