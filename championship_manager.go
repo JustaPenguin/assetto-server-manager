@@ -24,6 +24,7 @@ type ChampionshipManager struct {
 
 	activeChampionship *ActiveChampionship
 	mutex              sync.Mutex
+	championshipDoneCh chan struct{}
 }
 
 type ActiveChampionship struct {
@@ -38,12 +39,13 @@ type ActiveChampionship struct {
 
 func NewChampionshipManager(rm *RaceManager) *ChampionshipManager {
 	return &ChampionshipManager{
-		RaceManager: rm,
+		RaceManager:        rm,
+		championshipDoneCh: make(chan struct{}),
 	}
 }
 
 func (cm *ChampionshipManager) applyConfigAndStart(config ServerConfig, entryList EntryList, championship *ActiveChampionship) error {
-	err := cm.RaceManager.applyConfigAndStart(config, entryList, false)
+	err := cm.RaceManager.applyConfigAndStart(config, entryList, false, true)
 
 	if err != nil {
 		return err
@@ -53,6 +55,7 @@ func (cm *ChampionshipManager) applyConfigAndStart(config ServerConfig, entryLis
 
 	go func() {
 		<-serverStoppedChan
+		<-cm.championshipDoneCh
 		logrus.Infof("Server stopped. Clearing active championship")
 
 		cm.activeChampionship = nil
@@ -353,7 +356,7 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 
 	config.CurrentRaceConfig = raceSetup
 
-	return cm.RaceManager.applyConfigAndStart(config, event.CombineEntryLists(championship), false)
+	return cm.RaceManager.applyConfigAndStart(config, event.CombineEntryLists(championship), false, false)
 }
 
 func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string) error {
@@ -695,6 +698,8 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 
 			// clear out all current session stuff
 			cm.activeChampionship = nil
+
+			cm.championshipDoneCh <- struct{}{}
 
 			// stop the server
 			err := AssettoProcess.Stop()
