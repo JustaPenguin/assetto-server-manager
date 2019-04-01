@@ -24,7 +24,6 @@ type ChampionshipManager struct {
 
 	activeChampionship *ActiveChampionship
 	mutex              sync.Mutex
-	championshipDoneCh chan struct{}
 }
 
 type ActiveChampionship struct {
@@ -39,8 +38,7 @@ type ActiveChampionship struct {
 
 func NewChampionshipManager(rm *RaceManager) *ChampionshipManager {
 	return &ChampionshipManager{
-		RaceManager:        rm,
-		championshipDoneCh: make(chan struct{}),
+		RaceManager: rm,
 	}
 }
 
@@ -52,14 +50,6 @@ func (cm *ChampionshipManager) applyConfigAndStart(config ServerConfig, entryLis
 	}
 
 	cm.activeChampionship = championship
-
-	go func() {
-		<-serverStoppedChan
-		<-cm.championshipDoneCh
-		logrus.Infof("Server stopped. Clearing active championship")
-
-		cm.activeChampionship = nil
-	}()
 
 	return nil
 }
@@ -698,8 +688,6 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 
 			// clear out all current session stuff
 			cm.activeChampionship = nil
-
-			cm.championshipDoneCh <- struct{}{}
 
 			// stop the server
 			err := AssettoProcess.Stop()

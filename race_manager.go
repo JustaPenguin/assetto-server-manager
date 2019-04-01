@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
@@ -126,13 +127,16 @@ func (rm *RaceManager) UDPCallback(message udp.Message) {
 	// recover from panics that may occur while handling UDP messages
 	defer func() {
 		if r := recover(); r != nil {
-			logrus.Errorf("recovered from panic: %s", r)
+			fmt.Fprintf(logMultiWriter, "\n\nrecovered from panic: %v\n\n", r)
+			fmt.Fprintf(logMultiWriter, string(debug.Stack()))
 		}
 	}()
 
 	if config != nil && config.LiveMap.IsEnabled() {
 		go LiveMapCallback(message)
 	}
+
+	panic("banana")
 
 	championshipManager.ChampionshipEventCallback(message)
 	LiveTimingCallback(message)
@@ -163,7 +167,7 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 	config.GlobalServerConfig.UDPPluginLocalPort = config.GlobalServerConfig.FreeUDPPluginLocalPort
 
 	if !championshipEvent && championshipManager != nil {
-		championshipManager.championshipDoneCh <- struct{}{}
+		logrus.Infof("Starting a non championship event. Setting activeChampionship to nil")
 		championshipManager.activeChampionship = nil
 	}
 
