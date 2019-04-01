@@ -4,8 +4,8 @@ v1.2.0
 Note: This update changes how the accounts work, you will need to re-add all of your existing accounts in the server
 control panel! To do this, you will need the new default admin details:
 
-  username: admin
-  password: servermanager
+  * username: admin
+  * password: servermanager
 
 Now, on to the changes!
 
