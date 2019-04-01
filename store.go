@@ -1,6 +1,6 @@
 package servermanager
 
-type RaceStore interface {
+type Store interface {
 	// Custom Races
 	UpsertCustomRace(race *CustomRace) error
 	FindCustomRaceByID(uuid string) (*CustomRace, error)

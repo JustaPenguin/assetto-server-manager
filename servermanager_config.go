@@ -50,8 +50,8 @@ type StoreConfig struct {
 	Path string `yaml:"path"`
 }
 
-func (s *StoreConfig) BuildStore() (RaceStore, error) {
-	var rs RaceStore
+func (s *StoreConfig) BuildStore() (Store, error) {
+	var rs Store
 
 	switch s.Type {
 	case "boltdb":
@@ -61,9 +61,9 @@ func (s *StoreConfig) BuildStore() (RaceStore, error) {
 			return nil, err
 		}
 
-		rs = NewBoltRaceStore(bbdb)
+		rs = NewBoltStore(bbdb)
 	case "json":
-		rs = NewJSONRaceStore(s.Path)
+		rs = NewJSONStore(s.Path)
 	default:
 		return nil, fmt.Errorf("invalid store type (%s), must be either boltdb/json", s.Type)
 	}

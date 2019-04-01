@@ -35,7 +35,7 @@ func main() {
 		return
 	}
 
-	servermanager.SetupRaceManager(store)
+	servermanager.InitWithStore(store)
 	servermanager.SetAssettoInstallPath(config.Steam.InstallPath)
 
 	err = servermanager.InstallAssettoCorsaServer(config.Steam.Username, config.Steam.Password, config.Steam.ForceUpdate)
