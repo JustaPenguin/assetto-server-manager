@@ -24,8 +24,11 @@ v1.2.0
 * Fixes an issue where some Live Map cars would not properly clear on server restart.
 * Fixes an issue where new entrants in a Championship were not persisted for autofill.
 * Fixes an issue that made it impossible to start quick/custom races on mobile safari.
+* Fixes an issue where Championship Events were not correctly finished/tracked.
+* Added logging to server-manager.log - this should make debugging issues easier.
 * Added a dropdown to the Entrant box which makes auto fill much more obvious and less likely to be interfered with
   by browsers.
+
 
 v1.1.3
 ------

@@ -9,3 +9,4 @@ node_modules
 stracker*
 build/
 *.zip
+*.log
