@@ -34,6 +34,7 @@ Added:
   to follow our setup instructions.
 * Added a dropdown to the Entrant box which makes auto fill much more obvious and less likely to be interfered with
   by browsers.
+* Added a "Delete" group - they are the only group (other than admin) allowed to delete content, championships, races, etc.
 
 Fixes:
 
