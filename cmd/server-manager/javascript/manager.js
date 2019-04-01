@@ -240,7 +240,6 @@ let liveMap = {
 
                     break;
 
-                case EventSessionInfo:
                 case EventNewSession:
                     liveMap.clearAllDrivers();
                     let trackURL = "/content/tracks/" + data.Track + (!!data.TrackConfig ? "/" + data.TrackConfig : "") + "/map.png";
@@ -298,6 +297,7 @@ let liveMap = {
                     break;
 
                 case EventClientLoaded:
+
                     liveMap.joined[data].dot.appendTo($map);
                     break;
 

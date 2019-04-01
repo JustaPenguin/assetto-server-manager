@@ -136,7 +136,7 @@ func liveMapHandler(w http.ResponseWriter, r *http.Request) {
 
 	// new client. receive them the session info if we have it
 	if websocketLastSeenSessionInfo != nil {
-		client.receive <- liveMapMessage{udp.EventSessionInfo, websocketLastSeenSessionInfo}
+		client.receive <- liveMapMessage{udp.EventNewSession, websocketLastSeenSessionInfo}
 	}
 
 	if websocketTrackMapData != nil {
@@ -145,6 +145,9 @@ func liveMapHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, car := range connectedCars {
 		client.receive <- liveMapMessage{udp.EventNewConnection, car}
+	}
+
+	for _, car := range connectedCars {
 		client.receive <- liveMapMessage{udp.EventClientLoaded, udp.ClientLoaded(car.CarID)}
 	}
 }
