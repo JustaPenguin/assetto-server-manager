@@ -149,9 +149,6 @@ type GlobalServerConfig struct {
 
 	FreeUDPPluginLocalPort int    `ini:"-" show:"-"`
 	FreeUDPPluginAddress   string `ini:"-" show:"-"`
-
-	// ServerFirstLaunch is used to prompt the user with configuration they need to do
-	ServerFirstLaunch bool `ini:"-" show:"-"`
 }
 
 type CurrentRaceConfig struct {

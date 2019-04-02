@@ -7,11 +7,15 @@ control panel! To do this, you will need the new default admin details:
   * username: admin
   * password: servermanager
 
+We also recommend backing up your data store (as defined in config.yml in 'store' -> 'path') before upgrading to this 
+version!
+
 Now, on to the changes!
 
 Added:
 
-* Account Management via the web interface! No more fiddling with configuration files! You will need to re-add your accounts.
+* Account Management via the web interface! No more fiddling with configuration files! You will need to re-add your accounts
+  in the web UI.
 * Adds Fixed Setups to Custom Races and Championships. Fixed setups can be uploaded on the Cars page. You can fix
   a setup for a whole championship or individually for specific events in the Championship.
 * Adds skin, ballast and restrictor customisation for individual Championship Events.
@@ -31,7 +35,7 @@ Added:
 * Added option to upload multiple content folders by dragging them into the drag and drop upload boxes.
 * Added a more informative message for users who experience issues launching Server Manager. We're trying our best
   to make Server Manager really good, and we're a little disheartened by negative reviews caused by people not managing
-  to follow our setup instructions.
+  to follow our setup instructions, so hopefully this will help with debugging!
 * Added a dropdown to the Entrant box which makes auto fill much more obvious and less likely to be interfered with
   by browsers.
 * Added a "Delete" group - they are the only group (other than admin) allowed to delete content, championships, races, etc.
