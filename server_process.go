@@ -3,6 +3,8 @@ package servermanager
 import (
 	"bytes"
 	"errors"
+	"github.com/go-chi/chi"
+	"github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"os"
@@ -11,9 +13,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/go-chi/chi"
-	"github.com/sirupsen/logrus"
 )
 
 const MaxLogSizeBytes = 1e6
@@ -207,8 +206,6 @@ func (as *AssettoServerProcess) Restart() error {
 		}
 	}
 
-	time.Sleep(time.Millisecond * 500)
-
 	return as.Start()
 }
 
@@ -246,6 +243,8 @@ func (as *AssettoServerProcess) Stop() error {
 	as.cmd = nil
 
 	as.stopChildProcesses()
+
+	time.Sleep(time.Millisecond * 500)
 
 	return nil
 }
