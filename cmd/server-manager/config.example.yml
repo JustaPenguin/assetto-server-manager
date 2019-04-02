@@ -38,6 +38,9 @@ steam:
   # where to install assetto corsa server
   install_path: assetto
 
+  # the path to the executable to run. relative to the install_path by default
+  executable_path: acServer
+
   # set this to true to force an install every time the server manager is loaded
   force_update: false
 

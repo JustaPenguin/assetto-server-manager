@@ -29,6 +29,7 @@ deploy: clean assets
 	mkdir -p build/linux build/windows
 	cp config.example.yml build/linux/config.yml
 	cp config.example.yml build/windows/config.yml
+	sed -i 's/executable_path\: acServer/executable_path\: acServer.exe/' build/windows/config.yml
 
 	# windows icon
 	go get -u github.com/akavel/rsrc
