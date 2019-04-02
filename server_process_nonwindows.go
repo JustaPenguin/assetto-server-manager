@@ -17,7 +17,19 @@ func kill(process *os.Process) error {
 		return err
 	}
 
-	return syscall.Kill(-pgid, syscall.SIGINT|syscall.SIGKILL)
+	err = syscall.Kill(-pgid, syscall.SIGKILL)
+
+	if err != nil {
+		return err
+	}
+
+	err = syscall.Kill(-pgid, syscall.SIGINT)
+
+	if err != nil {
+		return err
+	}
+
+	return syscall.Kill(-process.Pid, syscall.SIGKILL|syscall.SIGINT)
 }
 
 func buildCommand(command string, args ...string) *exec.Cmd {

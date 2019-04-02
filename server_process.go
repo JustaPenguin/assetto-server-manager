@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
@@ -205,6 +206,8 @@ func (as *AssettoServerProcess) Restart() error {
 			return err
 		}
 	}
+
+	time.Sleep(time.Millisecond * 500)
 
 	return as.Start()
 }
