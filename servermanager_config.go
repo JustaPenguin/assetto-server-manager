@@ -13,15 +13,15 @@ import (
 var config *Configuration
 
 type Configuration struct {
-	HTTP    HTTPConfig        `yaml:"http"`
-	Steam   SteamConfig       `yaml:"steam"`
-	Store   StoreConfig       `yaml:"store"`
-	LiveMap LiveMapConfig     `yaml:"live_map"`
-	Server  ServerExtraConfig `yaml:"server"`
-	Users   UsersConfig       `yaml:"users"`
+	HTTP     HTTPConfig        `yaml:"http"`
+	Steam    SteamConfig       `yaml:"steam"`
+	Store    StoreConfig       `yaml:"store"`
+	LiveMap  LiveMapConfig     `yaml:"live_map"`
+	Server   ServerExtraConfig `yaml:"server"`
+	Accounts AccountsConfig    `yaml:"accounts"`
 }
 
-type UsersConfig struct {
+type AccountsConfig struct {
 	AdminPasswordOverride string `yaml:"admin_password_override"`
 }
 
@@ -93,7 +93,7 @@ func ReadConfig(location string) (conf *Configuration, err error) {
 	config = conf
 	store = sessions.NewCookieStore([]byte(conf.HTTP.SessionKey))
 
-	if config.Users.AdminPasswordOverride != "" {
+	if config.Accounts.AdminPasswordOverride != "" {
 		logrus.Infof("WARNING! Admin Password Override is set. Please only have this set if you are resetting your admin account password!")
 	}
 

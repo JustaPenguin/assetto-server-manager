@@ -31,7 +31,7 @@ func main() {
 	store, err := config.Store.BuildStore()
 
 	if err != nil {
-		ServeHTTPWithError(defaultAddress, "Open server manager storage (bolt or json)", err)
+		ServeHTTPWithError(config.HTTP.Hostname, "Open server manager storage (bolt or json)", err)
 		return
 	}
 
@@ -63,7 +63,7 @@ func main() {
 	servermanager.ViewRenderer, err = servermanager.NewRenderer(templateLoader, debug)
 
 	if err != nil {
-		ServeHTTPWithError(defaultAddress, "Initialise view renderer (internal error)", err)
+		ServeHTTPWithError(config.HTTP.Hostname, "Initialise view renderer (internal error)", err)
 		return
 	}
 

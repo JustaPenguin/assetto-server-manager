@@ -77,7 +77,7 @@ store:
 #  user management - this is now mostly done via the web interface.
 #
 ################################################################################
-users:
+accounts:
   # admin password override is used to override the admin password in the case
   # that you have forgotten it. set it to e.g. 'password' and log in with:
   # username: admin
