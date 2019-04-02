@@ -74,36 +74,17 @@ store:
 
 ################################################################################
 #
-#  user management - configure admins, writers and readers
+#  user management - this is now mostly done via the web interface.
 #
 ################################################################################
-# users are split into three groups:
-# - 'admin' - edit server settings. full permissions.
-# - 'write' - edit races, add content, edit championships, and most importantly
-#             DELETE races. can't see or edit server settings though.
-# - 'read'  - view races, content, championships, results. they can't change or
-#             delete anything though.
-#
-# specify a username, and md5 hashed password for the user.
-# you can generate password hashes using sites such as:
-# https://www.md5hashgenerator.com/
-#
-# add as many users as you like.
-users:
-  accounts:
-  - name: superadmin
-    group: admin
-    password: 21232f297a57a5a743894a0e4a801fc3 # 'admin' - DEFINITELY CHANGE THIS
-  - name: moderator
-    group: write
-    password: 5f4dcc3b5aa765d61d8327deb882cf99 # 'password' - CHANGE THIS
-  - name: spectator
-    group: read
-    password: 4f321b12ec27a87579ae91ea3287cb33 # 'spectate' - CHANGE THIS
-
-  # set this to true to allow ANYONE to have read permissions
-  read_open: false
-
+accounts:
+  # admin password override is used to override the admin password in the case
+  # that you have forgotten it. set it to e.g. 'password' and log in with:
+  # username: admin
+  # password: password
+  # and you will be prompted to change your admin password back to something you
+  # can remember
+  admin_password_override:
 
 ################################################################################
 #

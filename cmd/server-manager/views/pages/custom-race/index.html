@@ -66,10 +66,10 @@
 
                             </div>
 
-                            <a class="btn btn-sm btn-info" href="/custom/new?from={{ $race.UUID.String }}">Use as Template</a>
+                            <a class="btn btn-sm btn-primary" href="/custom/new?from={{ $race.UUID.String }}">Use as Template</a>
                             <a class="btn btn-sm btn-warning" href="/custom/edit/{{ $race.UUID.String }}">Edit Race</a>
                             <a onClick="return confirm('I understand that this will delete this race setup permanently');"
-                               class="btn btn-sm btn-danger" href="/custom/delete/{{ $race.UUID.String }}">Delete</a>
+                               class="btn btn-sm btn-danger {{ if not DeleteAccess}}disabled{{ end }}" href="/custom/delete/{{ $race.UUID.String }}">Delete</a>
                         </td>
                     {{ end }}
                 </tr>

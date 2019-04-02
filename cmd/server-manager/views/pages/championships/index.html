@@ -47,12 +47,12 @@
                         </td>
                         <td class="align-middle custom-race-actions">
                             <a class="btn btn-sm btn-success" href="/championship/{{ $championship.ID }}">View</a>
-                            <a class="btn btn-sm btn-info" href="/championship/{{ $championship.ID }}/export">Export</a>
+                            <a class="btn btn-sm btn-primary" href="/championship/{{ $championship.ID }}/export">Export</a>
 
                             {{ if $writeAccess }}
                                 <a class="btn btn-sm btn-warning" href="/championship/{{ $championship.ID }}/edit">Edit</a>
                                 <a onClick="return confirm('I understand that this will delete the entire championship permanently.') "
-                                   class="btn btn-sm btn-danger" href="/championship/{{ $championship.ID }}/delete">Delete</a>
+                                   class="btn btn-sm btn-danger {{ if not DeleteAccess}}disabled{{ end }}" href="/championship/{{ $championship.ID }}/delete">Delete</a>
                             {{ end }}
                         </td>
                     </tr>
@@ -92,12 +92,12 @@
                         </td>
                         <td class="align-middle custom-race-actions">
                             <a class="btn btn-sm btn-success" href="/championship/{{ $championship.ID }}">View</a>
-                            <a class="btn btn-sm btn-info" href="/championship/{{ $championship.ID }}/export">Export</a>
+                            <a class="btn btn-sm btn-primary" href="/championship/{{ $championship.ID }}/export">Export</a>
 
                             {{ if $writeAccess }}
                                 <a class="btn btn-sm btn-warning" href="/championship/{{ $championship.ID }}/edit">Edit</a>
                                 <a onClick="return confirm('I understand that this will delete the entire championship permanently.') "
-                                   class="btn btn-sm btn-danger" href="/championship/{{ $championship.ID }}/delete">Delete</a>
+                                   class="btn btn-sm btn-danger {{ if not DeleteAccess}}disabled{{ end }}" href="/championship/{{ $championship.ID }}/delete">Delete</a>
                             {{ end }}
                         </td>
                     </tr>

@@ -98,7 +98,6 @@ func LoopCallback(message udp.Message) {
 			}
 		}
 
-
 		for _, session := range sessionTypes {
 			if session == SessionTypeRace {
 				endSession = SessionTypeRace

@@ -55,7 +55,7 @@
             <th>#</th>
             <th>Track Name</th>
             <th>Layouts</th>
-            {{ if $writeAccess }}
+            {{ if DeleteAccess }}
                 <th class="text-center">Delete</th>
             {{ end }}
         </tr>
@@ -71,7 +71,7 @@
                     {{ $track.LayoutsCSV }}
                 </td>
 
-                {{ if $writeAccess }}
+                {{ if DeleteAccess }}
                     <td class="text-center">
                         <a href="{{ print "/track/delete/" $track.Name }}"><i class="fas fa-trash text-danger"></i></a>
                     </td>

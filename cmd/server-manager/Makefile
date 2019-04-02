@@ -39,9 +39,10 @@ deploy: clean assets
 	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${VERSION}" -o build/windows/server-manager.exe
 
 	cp ../../README.md build/README.txt
+	cp ../../INSTALL.txt build/INSTALL.txt
 	cp ../../LICENSE build/LICENSE.txt
-	cp ../../CHANGELOG.txt build
-	unix2dos build/README.txt build/LICENSE.txt build/CHANGELOG.txt build/windows/config.yml
+	cp ../../CHANGELOG.md build/CHANGELOG.txt
+	unix2dos build/README.txt build/LICENSE.txt build/CHANGELOG.txt build/windows/config.yml build/INSTALL.txt
 
 	# archive
 	cd build && zip -r ../server-manager_${VERSION}.zip *

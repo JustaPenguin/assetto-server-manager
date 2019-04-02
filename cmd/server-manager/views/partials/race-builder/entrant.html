@@ -10,13 +10,13 @@
                     <small>Entrant</small>
                 </div>
 
-                <div class="col-md-3" style="padding-left: 32px; padding-right: 46px;">
-                    <select name="EntrantAutoFill" class="form-control form-control-sm entrant-autofill">
-                        <option value="">Autofill</option>
-                    </select>
-                </div>
-
                 {{ if not $IsChampionshipEvent }}
+                    <div class="col-md-3" style="padding-left: 32px; padding-right: 46px;">
+                        <select name="EntrantAutoFill" class="form-control form-control-sm entrant-autofill">
+                            <option value="">Autofill</option>
+                        </select>
+                    </div>
+
                     <div class="col-md-8">
                         <a class="text-danger btn-delete-entrant float-right" href="#"><i class="fas fa-trash"></i></a>
                     </div>

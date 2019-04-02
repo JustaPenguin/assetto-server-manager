@@ -6,18 +6,23 @@ import (
 
 	"github.com/etcd-io/bbolt"
 	"github.com/gorilla/sessions"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
 var config *Configuration
 
 type Configuration struct {
-	HTTP    HTTPConfig        `yaml:"http"`
-	Steam   SteamConfig       `yaml:"steam"`
-	Store   StoreConfig       `yaml:"store"`
-	Users   UsersConfig       `yaml:"users"`
-	LiveMap LiveMapConfig     `yaml:"live_map"`
-	Server  ServerExtraConfig `yaml:"server"`
+	HTTP     HTTPConfig        `yaml:"http"`
+	Steam    SteamConfig       `yaml:"steam"`
+	Store    StoreConfig       `yaml:"store"`
+	LiveMap  LiveMapConfig     `yaml:"live_map"`
+	Server   ServerExtraConfig `yaml:"server"`
+	Accounts AccountsConfig    `yaml:"accounts"`
+}
+
+type AccountsConfig struct {
+	AdminPasswordOverride string `yaml:"admin_password_override"`
 }
 
 type LiveMapConfig struct {
@@ -45,8 +50,8 @@ type StoreConfig struct {
 	Path string `yaml:"path"`
 }
 
-func (s *StoreConfig) BuildStore() (RaceStore, error) {
-	var rs RaceStore
+func (s *StoreConfig) BuildStore() (Store, error) {
+	var rs Store
 
 	switch s.Type {
 	case "boltdb":
@@ -56,9 +61,9 @@ func (s *StoreConfig) BuildStore() (RaceStore, error) {
 			return nil, err
 		}
 
-		rs = NewBoltRaceStore(bbdb)
+		rs = NewBoltStore(bbdb)
 	case "json":
-		rs = NewJSONRaceStore(s.Path)
+		rs = NewJSONStore(s.Path)
 	default:
 		return nil, fmt.Errorf("invalid store type (%s), must be either boltdb/json", s.Type)
 	}
@@ -68,12 +73,6 @@ func (s *StoreConfig) BuildStore() (RaceStore, error) {
 	}
 
 	return rs, nil
-}
-
-type UsersConfig struct {
-	Accounts []Account `yaml:"accounts"`
-
-	ReadOpen bool `yaml:"read_open"`
 }
 
 type ServerExtraConfig struct {
@@ -93,6 +92,10 @@ func ReadConfig(location string) (conf *Configuration, err error) {
 
 	config = conf
 	store = sessions.NewCookieStore([]byte(conf.HTTP.SessionKey))
+
+	if config.Accounts.AdminPasswordOverride != "" {
+		logrus.Infof("WARNING! Admin Password Override is set. Please only have this set if you are resetting your admin account password!")
+	}
 
 	return conf, err
 }
