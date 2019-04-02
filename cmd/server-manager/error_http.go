@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"runtime"
+	"strings"
 
 	"github.com/pkg/browser"
 	"github.com/sirupsen/logrus"
@@ -67,7 +68,7 @@ func ServeHTTPWithError(addr string, cause string, err error) {
 	}
 
 	if runtime.GOOS == "windows" {
-		_ = browser.OpenURL("http://" + addr)
+		_ = browser.OpenURL("http://" + strings.Replace(addr, "0.0.0.0", "127.0.0.1", 1))
 	}
 
 	if err := http.Serve(listener, h); err != nil {

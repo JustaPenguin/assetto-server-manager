@@ -273,13 +273,12 @@ func newPasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 			if err := accountManager.changePassword(account, password); err == nil {
 				AddFlashQuick(w, r, "Your password was successfully changed!")
+				http.Redirect(w, r, "/", http.StatusFound)
+				return
 			} else {
 				AddErrFlashQuick(w, r, "Unable to change your password")
 				logrus.WithError(err).Errorf("Could not change password for account id: %s", account.ID.String())
 			}
-
-			http.Redirect(w, r, "/", http.StatusFound)
-			return
 		} else {
 			AddErrFlashQuick(w, r, "Your passwords must match")
 		}
@@ -345,7 +344,7 @@ func (am *AccountManager) login(r *http.Request, w http.ResponseWriter) error {
 	for _, account := range accounts {
 		if username == account.Name {
 			if (account.NeedsPasswordReset() && password == account.DefaultPassword) ||
-				(account.Name == adminUserName && config.Users.AdminPasswordOverride != "" && password == config.Users.AdminPasswordOverride) {
+				(account.Name == adminUserName && config.Accounts.AdminPasswordOverride != "" && password == config.Accounts.AdminPasswordOverride) {
 				// first log in of the account, direct them to a reset password form
 				sess := getSession(r)
 				sess.Values[sessionAccountID] = account.ID.String()

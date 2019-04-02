@@ -52,4 +52,4 @@ If you've forgotten your password, you can set a password_override key in the co
 password to be whatever you have specified in plain text. You will then be prompted to change your password on next
 login.
 
-The admin user cannot be deleted or have its group changed.
+The default admin user cannot be deleted or have its group changed.
