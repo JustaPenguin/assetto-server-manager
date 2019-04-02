@@ -144,7 +144,7 @@
                     </p>
 
                     <div class="float-right">
-                        <button class="btn btn-info mt-5" data-toggle="tooltip" name="action" value="addAnotherRace" type="submit" title="Save this setup and then configure another">Add another Race</button>
+                        <button class="btn btn-primary mt-5" data-toggle="tooltip" name="action" value="addAnotherRace" type="submit" title="Save this setup and then configure another">Add another Race</button>
                         <button class="btn btn-success mt-5" data-toggle="tooltip" name="action" value="saveChampionship" type="submit" title="Save this race setup and finish creating the championship">Finish Creating Championship</button>
                     </div>
                 </div>
@@ -567,7 +567,7 @@
 
                 {{ end }}
 
-                {{ range $index, $entrant := .CurrentEntrants }}
+                {{ range $index, $entrant := .CurrentEntrants.AsSlice }}
                     <div class="entrant">
                         {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" $.IsChampionship }}
                     </div>
@@ -1021,7 +1021,7 @@
                     {{ end }}
                 </div>
 
-                <button class="btn btn-info float-right" id="addWeather">Add Weather</button>
+                <button class="btn btn-primary float-right" id="addWeather">Add Weather</button>
 
                 <div class="clearfix mb-5"></div>
 
@@ -1371,11 +1371,11 @@
                     <div class="float-right">
 
                         {{ if not .IsEditing }}
-                            <button class="btn btn-info mt-5" data-toggle="tooltip" name="action" value="addAnotherRace" type="submit" title="Save this setup and then configure another">Add another Event</button>
+                            <button class="btn btn-primary mt-5" data-toggle="tooltip" name="action" value="addAnotherRace" type="submit" title="Save this setup and then configure another">Add another Event</button>
                             <button class="btn btn-success mt-5" data-toggle="tooltip" name="action" value="saveChampionship" type="submit" title="Save this event setup and finish creating the championship">Finish Creating Championship</button>
                         {{ else }}
                             <input type="hidden" name="Editing" id="Editing" value="{{ .EditingID }}">
-                            <button class="btn btn-info mt-5" data-toggle="tooltip" name="action" value="saveChampionship" type="submit">Edit Event</button>
+                            <button class="btn btn-primary mt-5" data-toggle="tooltip" name="action" value="saveChampionship" type="submit">Edit Event</button>
                         {{ end }}
                    </div>
                 </div>
@@ -1440,11 +1440,11 @@
 
                     <div class="float-right">
                         {{ if not .IsEditing }}
-                            <button class="btn btn-info mt-5" data-toggle="tooltip" id="save-race-button" name="action" value="justSave" type="submit" title="Save this setup without starting the race">Save Custom Race</button>
+                            <button class="btn btn-primary mt-5" data-toggle="tooltip" id="save-race-button" name="action" value="justSave" type="submit" title="Save this setup without starting the race">Save Custom Race</button>
                             <button class="btn btn-success mt-5" data-toggle="tooltip" id="start-race-button" name="action" value="startRace" type="submit" title="Save this setup and begin the race">Start Race</button>
                         {{ else }}
                             <input type="hidden" name="Editing" id="Editing" value="{{ .EditingID }}">
-                            <button class="btn btn-info mt-5" data-toggle="tooltip" name="action" value="justSave" type="submit">Edit Race</button>
+                            <button class="btn btn-primary mt-5" data-toggle="tooltip" name="action" value="justSave" type="submit">Edit Race</button>
                         {{ end }}
                     </div>
                 </div>

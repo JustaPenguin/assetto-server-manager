@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/cj123/assetto-server-manager"
 	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
@@ -17,26 +18,31 @@ import (
 
 var debug = os.Getenv("DEBUG") == "true"
 
+var defaultAddress = "0.0.0.0:8772"
+
 func main() {
 	config, err := servermanager.ReadConfig("config.yml")
 
 	if err != nil {
-		logrus.Fatalf("could not open config file, err: %s", err)
+		ServeHTTPWithError(defaultAddress, "Read configuration file (config.yml)", err)
+		return
 	}
 
 	store, err := config.Store.BuildStore()
 
 	if err != nil {
-		logrus.Fatalf("could not open store, err: %s", err)
+		ServeHTTPWithError(config.HTTP.Hostname, "Open server manager storage (bolt or json)", err)
+		return
 	}
 
-	servermanager.SetupRaceManager(store)
+	servermanager.InitWithStore(store)
 	servermanager.SetAssettoInstallPath(config.Steam.InstallPath)
 
 	err = servermanager.InstallAssettoCorsaServer(config.Steam.Username, config.Steam.Password, config.Steam.ForceUpdate)
 
 	if err != nil {
-		logrus.Fatalf("could not install assetto corsa server, err: %s", err)
+		ServeHTTPWithError(defaultAddress, "Install assetto corsa server with steamcmd. Likely you do not have steamcmd installed correctly.", err)
+		return
 	}
 
 	var templateLoader servermanager.TemplateLoader
@@ -57,7 +63,8 @@ func main() {
 	servermanager.ViewRenderer, err = servermanager.NewRenderer(templateLoader, debug)
 
 	if err != nil {
-		logrus.Fatalf("could not initialise view renderer, err: %s", err)
+		ServeHTTPWithError(config.HTTP.Hostname, "Initialise view renderer (internal error)", err)
+		return
 	}
 
 	go servermanager.LoopRaces()
@@ -76,13 +83,14 @@ func main() {
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 
 	if err != nil {
-		logrus.Fatalf("could not listen on address: %s, err: %s", config.HTTP.Hostname, err)
+		ServeHTTPWithError(defaultAddress, "Listen on hostname "+config.HTTP.Hostname+". Likely the port has already been taken by another application", err)
+		return
 	}
 
 	logrus.Infof("starting assetto server manager on: %s", config.HTTP.Hostname)
 
 	if runtime.GOOS == "windows" {
-		_ = browser.OpenURL("http://" + config.HTTP.Hostname)
+		_ = browser.OpenURL("http://" + strings.Replace(config.HTTP.Hostname, "0.0.0.0", "127.0.0.1", 1))
 	}
 
 	if err := http.Serve(listener, servermanager.Router(filesystem)); err != nil {

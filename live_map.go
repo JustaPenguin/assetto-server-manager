@@ -121,7 +121,7 @@ func init() {
 	go mapHub.run()
 }
 
-func LiveMapHandler(w http.ResponseWriter, r *http.Request) {
+func liveMapHandler(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 
 	if err != nil {
@@ -136,7 +136,7 @@ func LiveMapHandler(w http.ResponseWriter, r *http.Request) {
 
 	// new client. receive them the session info if we have it
 	if websocketLastSeenSessionInfo != nil {
-		client.receive <- liveMapMessage{udp.EventSessionInfo, websocketLastSeenSessionInfo}
+		client.receive <- liveMapMessage{udp.EventNewSession, websocketLastSeenSessionInfo}
 	}
 
 	if websocketTrackMapData != nil {
@@ -145,6 +145,9 @@ func LiveMapHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, car := range connectedCars {
 		client.receive <- liveMapMessage{udp.EventNewConnection, car}
+	}
+
+	for _, car := range connectedCars {
 		client.receive <- liveMapMessage{udp.EventClientLoaded, udp.ClientLoaded(car.CarID)}
 	}
 }
@@ -153,17 +156,19 @@ func LiveMapCallback(message udp.Message) {
 	switch m := message.(type) {
 
 	case udp.SessionInfo:
-		var err error
+		if m.Event() == udp.EventNewSession {
+			var err error
 
-		websocketLastSeenSessionInfo = &m
-		websocketTrackMapData, err = LoadTrackMapData(m.Track, m.TrackConfig)
+			websocketLastSeenSessionInfo = &m
+			websocketTrackMapData, err = LoadTrackMapData(m.Track, m.TrackConfig)
 
-		if err != nil {
-			logrus.Errorf("Could not load map data, err: %s", err)
-			return
+			if err != nil {
+				logrus.Errorf("Could not load map data, err: %s", err)
+				return
+			}
+
+			LiveMapCallback(websocketTrackMapData)
 		}
-
-		LiveMapCallback(websocketTrackMapData)
 
 	case udp.SessionCarInfo:
 		if m.Event() == udp.EventNewConnection {

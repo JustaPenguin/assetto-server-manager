@@ -137,6 +137,7 @@ func (tr *Renderer) init() error {
 	funcs["stripGeotagCrap"] = stripGeotagCrap
 	funcs["ReadAccess"] = dummyAccessFunc
 	funcs["WriteAccess"] = dummyAccessFunc
+	funcs["DeleteAccess"] = dummyAccessFunc
 	funcs["AdminAccess"] = dummyAccessFunc
 	funcs["LoggedIn"] = dummyAccessFunc
 	funcs["classColor"] = func(i int) string {
@@ -339,13 +340,14 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 	data["server_status"] = AssettoProcess.IsRunning()
 	data["server_event_type"] = AssettoProcess.EventType()
 	data["server_name"] = opts.Name
-	data["User"] = UserFromRequest(r)
+	data["User"] = AccountFromRequest(r)
 
 	t.Funcs(map[string]interface{}{
-		"ReadAccess":  ReadAccess(r),
-		"WriteAccess": WriteAccess(r),
-		"AdminAccess": AdminAccess(r),
-		"LoggedIn":    LoggedIn(r),
+		"ReadAccess":   ReadAccess(r),
+		"WriteAccess":  WriteAccess(r),
+		"DeleteAccess": DeleteAccess(r),
+		"AdminAccess":  AdminAccess(r),
+		"LoggedIn":     LoggedIn(r),
 	})
 
 	return t.ExecuteTemplate(w, "base", data)

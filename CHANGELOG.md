@@ -1,6 +1,21 @@
 v1.2.0
 ------
 
+Note: This update changes how the accounts work, you will need to re-add all of your existing accounts in the server
+control panel! To do this, you will need the new default admin details:
+
+  * username: admin
+  * password: servermanager
+
+We also recommend backing up your data store (as defined in config.yml in 'store' -> 'path') before upgrading to this 
+version!
+
+Now, on to the changes!
+
+Added:
+
+* Account Management via the web interface! No more fiddling with configuration files! You will need to re-add your accounts
+  in the web UI.
 * Adds Fixed Setups to Custom Races and Championships. Fixed setups can be uploaded on the Cars page. You can fix
   a setup for a whole championship or individually for specific events in the Championship.
 * Adds skin, ballast and restrictor customisation for individual Championship Events.
@@ -10,25 +25,31 @@ v1.2.0
 * Added an extra info pane to drivers on the live map that displays their current speed, gear and rpm. This can be
   toggled on/off by clicking their name in the live timings table.
 * Changed the layout of the live timings page to better accommodate the new features.
-* Fixes an issue preventing the upload of older cars which contain a data folder rather than a data.acd file.
 * Added "Import Championship Event" functionality, which lets you import non-championship results files into a
   championship. To use this, create a championship event for the track and layout you wish to import results to. Then,
   click on "Manage Event" on the Championship page and select the session results files to import from.
 * Added important links to championship create/edit. You can now add important links to track/car downloads etc.
-* Removed unnecessary duplication of entrants on Championship pages.
 * Added car images to Championship pages.
 * Added car info to live timing table
 * Added an option to only upload official ks content from a folder
 * Added option to upload multiple content folders by dragging them into the drag and drop upload boxes.
+* Added a more informative message for users who experience issues launching Server Manager. We're trying our best
+  to make Server Manager really good, and we're a little disheartened by negative reviews caused by people not managing
+  to follow our setup instructions, so hopefully this will help with debugging!
+* Added a dropdown to the Entrant box which makes auto fill much more obvious and less likely to be interfered with
+  by browsers.
+* Added a "Delete" group - they are the only group (other than admin) allowed to delete content, championships, races, etc.
+
+Fixes:
+
+* Fixes an issue preventing the upload of older cars which contain a data folder rather than a data.acd file.
+* Removed unnecessary duplication of entrants on Championship pages.
 * Fixes an issue with illegal Byte Order Marks preventing some track info files from being read.
 * Fixes an issue where some Live Map cars would not properly clear on server restart.
 * Fixes an issue where new entrants in a Championship were not persisted for autofill.
 * Fixes an issue that made it impossible to start quick/custom races on mobile safari.
 * Fixes an issue where Championship Events were not correctly finished/tracked.
 * Added logging to server-manager.log - this should make debugging issues easier.
-* Added a dropdown to the Entrant box which makes auto fill much more obvious and less likely to be interfered with
-  by browsers.
-
 
 v1.1.3
 ------

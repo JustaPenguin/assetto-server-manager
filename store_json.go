@@ -13,25 +13,26 @@ import (
 const (
 	customRacesDir    = "custom_races"
 	championshipsDir  = "championships"
+	accountsDir       = "accounts"
 	entrantsFile      = "entrants.json"
 	serverOptionsFile = "server_options.json"
 	frameLinksFile    = "frame_links.json"
-	serverVersionFile = "version.json"
+	serverMetaDir     = "meta"
 )
 
-func NewJSONRaceStore(dir string) RaceStore {
-	return &JSONRaceStore{
+func NewJSONStore(dir string) Store {
+	return &JSONStore{
 		base: dir,
 	}
 }
 
-type JSONRaceStore struct {
+type JSONStore struct {
 	base string
 
 	mutex sync.RWMutex
 }
 
-func (rs *JSONRaceStore) listFiles(dir string) ([]string, error) {
+func (rs *JSONStore) listFiles(dir string) ([]string, error) {
 	dir = filepath.Join(rs.base, dir)
 
 	files, err := ioutil.ReadDir(dir)
@@ -53,7 +54,7 @@ func (rs *JSONRaceStore) listFiles(dir string) ([]string, error) {
 	return list, nil
 }
 
-func (rs *JSONRaceStore) encodeFile(filename string, data interface{}) error {
+func (rs *JSONStore) encodeFile(filename string, data interface{}) error {
 	rs.mutex.Lock()
 	defer rs.mutex.Unlock()
 
@@ -85,7 +86,7 @@ func (rs *JSONRaceStore) encodeFile(filename string, data interface{}) error {
 	return enc.Encode(data)
 }
 
-func (rs *JSONRaceStore) decodeFile(filename string, out interface{}) error {
+func (rs *JSONStore) decodeFile(filename string, out interface{}) error {
 	rs.mutex.RLock()
 	defer rs.mutex.RUnlock()
 
@@ -104,11 +105,11 @@ func (rs *JSONRaceStore) decodeFile(filename string, out interface{}) error {
 	return enc.Decode(out)
 }
 
-func (rs *JSONRaceStore) UpsertCustomRace(race *CustomRace) error {
+func (rs *JSONStore) UpsertCustomRace(race *CustomRace) error {
 	return rs.encodeFile(filepath.Join(customRacesDir, race.UUID.String()+".json"), race)
 }
 
-func (rs *JSONRaceStore) FindCustomRaceByID(uuid string) (*CustomRace, error) {
+func (rs *JSONStore) FindCustomRaceByID(uuid string) (*CustomRace, error) {
 	var customRace *CustomRace
 
 	err := rs.decodeFile(filepath.Join(customRacesDir, uuid+".json"), &customRace)
@@ -120,7 +121,7 @@ func (rs *JSONRaceStore) FindCustomRaceByID(uuid string) (*CustomRace, error) {
 	return customRace, nil
 }
 
-func (rs *JSONRaceStore) ListCustomRaces() ([]*CustomRace, error) {
+func (rs *JSONStore) ListCustomRaces() ([]*CustomRace, error) {
 	files, err := rs.listFiles(customRacesDir)
 
 	if err != nil {
@@ -142,13 +143,13 @@ func (rs *JSONRaceStore) ListCustomRaces() ([]*CustomRace, error) {
 	return customRaces, nil
 }
 
-func (rs *JSONRaceStore) DeleteCustomRace(race *CustomRace) error {
+func (rs *JSONStore) DeleteCustomRace(race *CustomRace) error {
 	race.Deleted = time.Now()
 
 	return rs.UpsertCustomRace(race)
 }
 
-func (rs *JSONRaceStore) UpsertEntrant(entrant Entrant) error {
+func (rs *JSONStore) UpsertEntrant(entrant Entrant) error {
 	entrants, err := rs.ListEntrants()
 
 	if err != nil {
@@ -160,7 +161,7 @@ func (rs *JSONRaceStore) UpsertEntrant(entrant Entrant) error {
 	return rs.encodeFile(entrantsFile, entrants)
 }
 
-func (rs *JSONRaceStore) ListEntrants() ([]*Entrant, error) {
+func (rs *JSONStore) ListEntrants() ([]*Entrant, error) {
 	var entrants []*Entrant
 
 	err := rs.decodeFile(entrantsFile, &entrants)
@@ -172,11 +173,11 @@ func (rs *JSONRaceStore) ListEntrants() ([]*Entrant, error) {
 	return entrants, nil
 }
 
-func (rs *JSONRaceStore) UpsertServerOptions(so *GlobalServerConfig) error {
+func (rs *JSONStore) UpsertServerOptions(so *GlobalServerConfig) error {
 	return rs.encodeFile(serverOptionsFile, so)
 }
 
-func (rs *JSONRaceStore) LoadServerOptions() (*GlobalServerConfig, error) {
+func (rs *JSONStore) LoadServerOptions() (*GlobalServerConfig, error) {
 	var out *GlobalServerConfig
 
 	err := rs.decodeFile(serverOptionsFile, &out)
@@ -190,11 +191,11 @@ func (rs *JSONRaceStore) LoadServerOptions() (*GlobalServerConfig, error) {
 	return out, err
 }
 
-func (rs *JSONRaceStore) UpsertChampionship(c *Championship) error {
+func (rs *JSONStore) UpsertChampionship(c *Championship) error {
 	return rs.encodeFile(filepath.Join(championshipsDir, c.ID.String()+".json"), c)
 }
 
-func (rs *JSONRaceStore) ListChampionships() ([]*Championship, error) {
+func (rs *JSONStore) ListChampionships() ([]*Championship, error) {
 	files, err := rs.listFiles(championshipsDir)
 
 	if err != nil {
@@ -216,7 +217,7 @@ func (rs *JSONRaceStore) ListChampionships() ([]*Championship, error) {
 	return championships, nil
 }
 
-func (rs *JSONRaceStore) LoadChampionship(id string) (*Championship, error) {
+func (rs *JSONStore) LoadChampionship(id string) (*Championship, error) {
 	var championship *Championship
 
 	err := rs.decodeFile(filepath.Join(championshipsDir, id+".json"), &championship)
@@ -228,7 +229,7 @@ func (rs *JSONRaceStore) LoadChampionship(id string) (*Championship, error) {
 	return championship, nil
 }
 
-func (rs *JSONRaceStore) DeleteChampionship(id string) error {
+func (rs *JSONStore) DeleteChampionship(id string) error {
 	c, err := rs.LoadChampionship(id)
 
 	if err != nil {
@@ -240,11 +241,11 @@ func (rs *JSONRaceStore) DeleteChampionship(id string) error {
 	return rs.UpsertChampionship(c)
 }
 
-func (rs *JSONRaceStore) UpsertLiveFrames(frameLinks []string) error {
+func (rs *JSONStore) UpsertLiveFrames(frameLinks []string) error {
 	return rs.encodeFile(frameLinksFile, frameLinks)
 }
 
-func (rs *JSONRaceStore) ListPrevFrames() ([]string, error) {
+func (rs *JSONStore) ListPrevFrames() ([]string, error) {
 	var links []string
 
 	err := rs.decodeFile(frameLinksFile, &links)
@@ -258,20 +259,82 @@ func (rs *JSONRaceStore) ListPrevFrames() ([]string, error) {
 	return links, nil
 }
 
-func (rs *JSONRaceStore) SetVersion(version int) error {
-	return rs.encodeFile(serverVersionFile, version)
-}
+func (rs *JSONStore) ListAccounts() ([]*Account, error) {
+	files, err := rs.listFiles(accountsDir)
 
-func (rs *JSONRaceStore) GetVersion() (int, error) {
-	var version int
-
-	err := rs.decodeFile(serverVersionFile, &version)
-
-	if os.IsNotExist(err) {
-		return version, nil
-	} else if err != nil {
-		return 0, err
+	if err != nil {
+		return nil, err
 	}
 
-	return version, nil
+	var accounts []*Account
+
+	for _, file := range files {
+		a, err := rs.FindAccountByName(file)
+
+		if err != nil || !a.Deleted.IsZero() {
+			continue
+		}
+
+		accounts = append(accounts, a)
+	}
+
+	return accounts, nil
+}
+
+func (rs *JSONStore) UpsertAccount(a *Account) error {
+	return rs.encodeFile(filepath.Join(accountsDir, a.Name+".json"), a)
+}
+
+func (rs *JSONStore) FindAccountByName(name string) (*Account, error) {
+	var account *Account
+
+	err := rs.decodeFile(filepath.Join(accountsDir, name+".json"), &account)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return account, nil
+}
+
+func (rs *JSONStore) FindAccountByID(id string) (*Account, error) {
+	accounts, err := rs.ListAccounts()
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, a := range accounts {
+		if a.ID.String() == id {
+			return a, nil
+		}
+	}
+
+	return nil, ErrAccountNotFound
+}
+
+func (rs *JSONStore) DeleteAccount(id string) error {
+	account, err := rs.FindAccountByID(id)
+
+	if err != nil {
+		return err
+	}
+
+	account.Deleted = time.Now()
+
+	return rs.UpsertAccount(account)
+}
+
+func (rs *JSONStore) SetMeta(key string, value interface{}) error {
+	return rs.encodeFile(filepath.Join(serverMetaDir, key+".json"), value)
+}
+
+func (rs *JSONStore) GetMeta(key string, out interface{}) error {
+	err := rs.decodeFile(filepath.Join(serverMetaDir, key+".json"), out)
+
+	if os.IsNotExist(err) {
+		return ErrMetaValueNotSet
+	}
+
+	return err
 }
