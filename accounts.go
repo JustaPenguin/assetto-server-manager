@@ -15,6 +15,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
+	"github.com/gorilla/sessions"
 	"github.com/sethvargo/go-diceware/diceware"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/scrypt"
@@ -124,6 +125,13 @@ func MustLoginMiddleware(requiredGroup Group, next http.Handler) http.Handler {
 				}
 			} else {
 				logrus.WithError(err).Errorf("Could not find account for id: %s", accountID)
+				delete(sess.Values, sessionAccountID)
+				_ = sessions.Save(r, w)
+
+				AddFlashQuick(w, r, "You have been logged out")
+
+				http.Redirect(w, r, "/", http.StatusFound)
+				return
 			}
 		}
 

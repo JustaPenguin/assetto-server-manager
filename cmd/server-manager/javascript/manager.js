@@ -831,6 +831,10 @@ class RaceSetup {
     }
 
     autoCompleteDrivers() {
+        if (!possibleEntrants) {
+            return;
+        }
+
         let that = this;
 
         function autoFillEntrant(elem, val) {
