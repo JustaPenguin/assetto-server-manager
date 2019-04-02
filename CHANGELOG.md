@@ -39,6 +39,9 @@ Added:
 * Added a dropdown to the Entrant box which makes auto fill much more obvious and less likely to be interfered with
   by browsers.
 * Added a "Delete" group - they are the only group (other than admin) allowed to delete content, championships, races, etc.
+* You can now change which assetto server executable file is run by Server Manager. By default, acServer(.exe) is used.
+  See config.yml "executable_path" for more information. This means tools such as ac-server-wrapper should now be
+  compatible with Server Manager!
 
 Fixes:
 

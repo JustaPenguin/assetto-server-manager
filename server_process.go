@@ -116,7 +116,15 @@ func (as *AssettoServerProcess) Start() error {
 		return err
 	}
 
-	as.cmd = exec.Command(filepath.Join(ServerInstallPath, serverExecutablePath))
+	var executablePath string
+
+	if filepath.IsAbs(config.Steam.ExecutablePath) {
+		executablePath = config.Steam.ExecutablePath
+	} else {
+		executablePath = filepath.Join(ServerInstallPath, config.Steam.ExecutablePath)
+	}
+
+	as.cmd = exec.Command(executablePath)
 	as.cmd.Dir = ServerInstallPath
 
 	if as.out == nil {

@@ -591,7 +591,9 @@ func (rs *BoltStore) GetMeta(key string, out interface{}) error {
 	err := rs.db.View(func(tx *bbolt.Tx) error {
 		bkt, err := rs.metaBucket(tx)
 
-		if err != nil {
+		if err == bbolt.ErrBucketNotFound {
+			return ErrMetaValueNotSet
+		} else if err != nil {
 			return err
 		}
 

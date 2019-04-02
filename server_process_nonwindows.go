@@ -11,7 +11,13 @@ import (
 const serverExecutablePath = "acServer"
 
 func kill(process *os.Process) error {
-	return syscall.Kill(-process.Pid, syscall.SIGINT|syscall.SIGKILL)
+	pgid, err := syscall.Getpgid(process.Pid)
+
+	if err != nil {
+		return err
+	}
+
+	return syscall.Kill(-pgid, syscall.SIGINT|syscall.SIGKILL)
 }
 
 func buildCommand(command string, args ...string) *exec.Cmd {

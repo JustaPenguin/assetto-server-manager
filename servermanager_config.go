@@ -39,10 +39,11 @@ type HTTPConfig struct {
 }
 
 type SteamConfig struct {
-	Username    string `yaml:"username"`
-	Password    string `yaml:"password"`
-	InstallPath string `yaml:"install_path"`
-	ForceUpdate bool   `yaml:"force_update"`
+	Username       string `yaml:"username"`
+	Password       string `yaml:"password"`
+	InstallPath    string `yaml:"install_path"`
+	ForceUpdate    bool   `yaml:"force_update"`
+	ExecutablePath string `yaml:"executable_path"`
 }
 
 type StoreConfig struct {
@@ -95,6 +96,10 @@ func ReadConfig(location string) (conf *Configuration, err error) {
 
 	if config.Accounts.AdminPasswordOverride != "" {
 		logrus.Infof("WARNING! Admin Password Override is set. Please only have this set if you are resetting your admin account password!")
+	}
+
+	if config.Steam.ExecutablePath == "" {
+		config.Steam.ExecutablePath = serverExecutablePath
 	}
 
 	return conf, err
