@@ -299,7 +299,7 @@ func timeTick(done <-chan struct{}) {
 				logrus.Errorf("Couldn't send session info udp request, err: %s", err)
 			}
 		case <-done:
-			logrus.Info("Closing udp request channel")
+			logrus.Debugf("Closing udp request channel")
 			tickChan.Stop()
 			return
 		}

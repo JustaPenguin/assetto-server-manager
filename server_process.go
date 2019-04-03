@@ -2,9 +2,8 @@ package servermanager
 
 import (
 	"bytes"
+	"context"
 	"errors"
-	"github.com/go-chi/chi"
-	"github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"os"
@@ -13,6 +12,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/go-chi/chi"
+	"github.com/mitchellh/go-ps"
+	"github.com/sirupsen/logrus"
 )
 
 const MaxLogSizeBytes = 1e6
@@ -31,6 +34,8 @@ type ServerProcess interface {
 	Restart() error
 	IsRunning() bool
 	EventType() ServerEventType
+
+	Done() <-chan struct{}
 }
 
 var AssettoProcess ServerProcess
@@ -87,9 +92,26 @@ type AssettoServerProcess struct {
 	out   *logBuffer
 	mutex sync.Mutex
 
+	ctx context.Context
+	cfn context.CancelFunc
+
 	doneCh chan struct{}
 
 	extraProcesses []*exec.Cmd
+}
+
+func NewAssettoServerProcess() *AssettoServerProcess {
+	ctx, cfn := context.WithCancel(context.Background())
+
+	return &AssettoServerProcess{
+		ctx:    ctx,
+		cfn:    cfn,
+		doneCh: make(chan struct{}),
+	}
+}
+
+func (as *AssettoServerProcess) Done() <-chan struct{} {
+	return as.doneCh
 }
 
 // Logs outputs the server logs
@@ -124,7 +146,7 @@ func (as *AssettoServerProcess) Start() error {
 		executablePath = filepath.Join(ServerInstallPath, config.Steam.ExecutablePath)
 	}
 
-	as.cmd = exec.Command(executablePath)
+	as.cmd = buildCommand(as.ctx, executablePath)
 	as.cmd.Dir = ServerInstallPath
 
 	if as.out == nil {
@@ -147,9 +169,9 @@ func (as *AssettoServerProcess) Start() error {
 		var cmd *exec.Cmd
 
 		if len(parts) > 1 {
-			cmd = buildCommand(parts[0], parts[1:]...)
+			cmd = buildCommand(as.ctx, parts[0], parts[1:]...)
 		} else {
-			cmd = buildCommand(parts[0])
+			cmd = buildCommand(as.ctx, parts[0])
 		}
 
 		cmd.Stdout = pluginsOutput
@@ -167,15 +189,8 @@ func (as *AssettoServerProcess) Start() error {
 	}
 
 	go func() {
-		err = as.cmd.Wait()
-
-		if err != nil {
-			logrus.Errorf("Wait errored: %s", err)
-		}
-
+		_ = as.cmd.Wait()
 		as.stopChildProcesses()
-
-		as.doneCh <- struct{}{}
 	}()
 
 	return nil
@@ -234,17 +249,31 @@ func (as *AssettoServerProcess) Stop() error {
 	as.mutex.Lock()
 	defer as.mutex.Unlock()
 
-	err := as.cmd.Process.Kill()
+	err := kill(as.cmd.Process)
 
 	if err != nil && !strings.Contains(err.Error(), "process already finished") {
 		return err
 	}
 
-	as.cmd = nil
-
 	as.stopChildProcesses()
 
-	time.Sleep(time.Millisecond * 500)
+	for {
+		proc, err := ps.FindProcess(as.cmd.Process.Pid)
+
+		if err != nil {
+			return err
+		}
+
+		if proc == nil && err == nil {
+			break
+		}
+
+		logrus.Debugf("Waiting for Assetto Corsa Server process to finish...")
+		time.Sleep(time.Millisecond * 500)
+	}
+
+	as.cmd = nil
+	as.doneCh <- struct{}{}
 
 	return nil
 }

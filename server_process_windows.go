@@ -3,6 +3,7 @@
 package servermanager
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -23,10 +24,10 @@ func kill(process *os.Process) error {
 	return nil
 }
 
-func buildCommand(command string, args ...string) *exec.Cmd {
+func buildCommand(ctx context.Context, command string, args ...string) *exec.Cmd {
 	args = append([]string{"/c", "start", "/wait", command}, args...)
 
-	cmd := exec.Command("cmd", args...)
+	cmd := exec.CommandContext(ctx, "cmd", args...)
 
 	return cmd
 }
