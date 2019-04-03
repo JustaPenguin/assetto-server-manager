@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"net/http"
 	"sort"
 	"time"
@@ -63,7 +64,6 @@ func NewChampionship(name string) *Championship {
 		ID:      uuid.New(),
 		Name:    name,
 		Created: time.Now(),
-		Links:   make(map[string]string),
 	}
 }
 
@@ -76,8 +76,9 @@ type Championship struct {
 	Updated time.Time
 	Deleted time.Time
 
-	// Links can be attached to championships, used to share tracks/cars etc. map[link text]link
-	Links map[string]string
+	// Raw html can be attached to championships, used to share tracks/cars etc.
+	Info       template.HTML
+	InfoString string
 
 	// OpenEntrants indicates that entrant names do not need to be specified in the EntryList.
 	// As Entrants join a championship, the available Entrant slots will be filled by the information
