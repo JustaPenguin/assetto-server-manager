@@ -42,6 +42,8 @@ Added:
 * You can now change which assetto server executable file is run by Server Manager. By default, acServer(.exe) is used.
   See config.yml "executable_path" for more information. This means tools such as ac-server-wrapper should now be
   compatible with Server Manager!
+* Added missing "MAX_CONTACTS_PER_KM" to server configuration options. This comes with a migration to make sure that
+  all existing Championship Events and Custom Races have their value set to '5' (the default).
 
 Fixes:
 

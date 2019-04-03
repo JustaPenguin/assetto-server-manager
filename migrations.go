@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	CurrentMigrationVersion = 2
+	CurrentMigrationVersion = 3
 	versionMetaKey          = "version"
 )
 
@@ -35,6 +35,7 @@ type migrationFunc func(Store) error
 var migrations = []migrationFunc{
 	addEntrantIDToChampionships,
 	addAdminAccount,
+	addMaxContactsPerKilometer,
 }
 
 func addEntrantIDToChampionships(rs Store) error {
@@ -74,4 +75,42 @@ func addAdminAccount(rs Store) error {
 	account.Group = GroupAdmin
 
 	return rs.UpsertAccount(account)
+}
+
+func addMaxContactsPerKilometer(rs Store) error {
+	logrus.Infof("Running migration: Add Default Max Contacts per kilometer")
+
+	const maxContactsPerKM = 5
+
+	customRaces, err := rs.ListCustomRaces()
+
+	if err != nil {
+		return err
+	}
+
+	for _, race := range customRaces {
+		race.RaceConfig.MaxContactsPerKilometer = maxContactsPerKM
+
+		if err := rs.UpsertCustomRace(race); err != nil {
+			return err
+		}
+	}
+
+	championships, err := rs.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	for _, champ := range championships {
+		for _, event := range champ.Events {
+			event.RaceSetup.MaxContactsPerKilometer = maxContactsPerKM
+		}
+
+		if err := rs.UpsertChampionship(champ); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
