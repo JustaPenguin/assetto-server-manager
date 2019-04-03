@@ -14,11 +14,11 @@ import (
 const serverExecutablePath = "acServer.exe"
 
 func kill(process *os.Process) error {
-	err := exec.Command("taskkill", "/F", "/T", "/PID", fmt.Sprintf("%d", process.Pid)).Run()
+	err := process.Kill()
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Initial attempt at killing windows process (taskkill) failed")
-		return process.Kill()
+		return exec.Command("taskkill", "/F", "/T", "/PID", fmt.Sprintf("%d", process.Pid)).Run()
 	}
 
 	return nil
