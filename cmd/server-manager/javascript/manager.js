@@ -2317,6 +2317,7 @@ let championships = {
 
         championships.initClassSetup();
         championships.initLinks();
+        championships.initDisplayOrder();
     },
 
     $classTemplate: null,
@@ -2365,7 +2366,82 @@ let championships = {
             e.preventDefault();
             $(this).closest(".link-group").remove();
         });
-    }
+    },
+
+    initDisplayOrder: function () {
+        let $hideCompleted = $document.find("#hide-completed");
+        let $hideNotCompleted = $document.find("#hide-not-completed");
+        let $switchOrder = $document.find("#switch-order");
+
+
+        let $championship = $document.find(".championship").first();
+
+        $hideCompleted.click(function (e) {
+            e.preventDefault();
+
+            let $events = $document.find(".championship-event");
+
+            for (let i = 0; i < $events.length; i++) {
+                if ($($events[i]).hasClass("event-complete")) {
+                    if ($($events[i]).is(":hidden")) {
+                        $($events[i]).show();
+                        $(this).attr("class", "dropdown-item text-success")
+                    } else {
+                        $($events[i]).hide();
+                        $(this).attr("class", "dropdown-item text-danger")
+                    }
+                }
+            }
+        });
+
+        $hideNotCompleted.click(function (e) {
+            e.preventDefault();
+
+            let $events = $document.find(".championship-event");
+
+            for (let i = 0; i < $events.length; i++) {
+                if (!$($events[i]).hasClass("event-complete")) {
+                    if ($($events[i]).is(":hidden")) {
+                        $($events[i]).show();
+                        $(this).attr("class", "dropdown-item text-success")
+                    } else {
+                        $($events[i]).hide();
+                        $(this).attr("class", "dropdown-item text-danger")
+                    }
+                }
+            }
+        });
+
+        $switchOrder.click(function (e) {
+            e.preventDefault();
+
+            // switch order, @TODO swap text from v to ^
+            let $events = $document.find(".championship-event");
+
+            for (let i = $events.length; i >= 0; i--) {
+                if (i === $events.length) {
+                    continue
+                }
+
+                $($events[i]).insertAfter($championship.find(".championship-event").last())
+            }
+
+            $(this).find(".fa-stack-1x").each(function () {
+                let icon;
+                if ($(this).hasClass("fa-sort-up")) {
+                    icon = "fa-sort-up"
+                } else {
+                    icon = "fa-sort-down"
+                }
+
+                if ($(this).hasClass("text-success")) {
+                    $(this).attr("class", icon + " fas fa-stack-1x text-dark")
+                } else  {
+                    $(this).attr("class", icon + " fas fa-stack-1x text-success")
+                }
+            })
+        });
+    },
 };
 
 function ordinalSuffix(i) {
