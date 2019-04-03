@@ -2316,7 +2316,7 @@ let championships = {
         });
 
         championships.initClassSetup();
-        championships.initLinks();
+        championships.initSummerNote();
     },
 
     $classTemplate: null,
@@ -2345,27 +2345,24 @@ let championships = {
 
     $linkTemplate: null,
 
-    initLinks: function () {
-        let $addLinkButton = $document.find("#addLink");
-        let $linkTemplate = $document.find("#link-template");
+    initSummerNote: function () {
+        let $summerNote = $document.find("#summernote");
+        let $ChampionshipInfoHolder = $document.find("#ChampionshipInfoHolder");
 
-        championships.$linkTemplate = $linkTemplate.clone();
+        if ($ChampionshipInfoHolder.length > 0) {
+            $summerNote.summernote('code', $ChampionshipInfoHolder.html());
+        }
 
-        $linkTemplate.remove();
-
-        $addLinkButton.click(function (e) {
-            e.preventDefault();
-
-            let $cloned = championships.$linkTemplate.clone().show();
-
-            $(this).closest(".add-link-group").before($cloned);
+        $summerNote.summernote({
+            placeholder: 'You can use this text input to share links to tracks/cars or any other resources, outline' +
+                ' Championship rules and anything else you can think of with the entrants of your championship!' +
+                ' You can just leave this blank if you don\'t want any info! Large images will degrade the load time' +
+                ' of this edit championship page, it shouldn\'t affect the view page too much though.',
+            tabsize: 2,
+            height: 200,
         });
+    },
 
-        $document.on("click", ".btn-delete-link", function (e) {
-            e.preventDefault();
-            $(this).closest(".link-group").remove();
-        });
-    }
 };
 
 function ordinalSuffix(i) {

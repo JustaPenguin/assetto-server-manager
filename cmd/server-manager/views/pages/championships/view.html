@@ -182,21 +182,12 @@
 
         <hr>
 
-        {{ with $championship.Links }}
-            {{ $count := 0 }}
-            <div class="card">
-                <div class="card-header">
-                    <strong>Important Links</strong>
-                </div>
-
-                <div class="card-body">
-                    {{ range $link, $name := . }}
-                        <a href="{{ $link }}">{{ $name }}</a>{{ if ne $count (sub (len $championship.Links) 1) }}, {{ end }}
-
-                        {{ $count = add $count 1 }}
-                    {{ end }}
-                </div>
+        {{ with $championship.Info }}
+            <div class="">
+                {{ $championship.Info }}
             </div>
+
+            <br>
             <hr>
         {{ end }}
 
