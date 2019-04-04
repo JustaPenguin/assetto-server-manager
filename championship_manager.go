@@ -380,18 +380,23 @@ func (cm *ChampionshipManager) GetChampionshipAndEvent(championshipID string, ev
 }
 
 func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID string, date time.Time, action string) error {
-
 	championship, event, err := cm.GetChampionshipAndEvent(championshipID, eventID)
 
 	if err != nil {
 		return err
 	}
 
+	event.Scheduled = date
+
+	// if there is an existing schedule timer for this event stop it
+	if timer := ChampionshipEventStartTimers[event.ID.String()]; timer != nil {
+		timer.Stop()
+	}
+
 	if action == "add" {
 		// add a scheduled event on date
 		duration := date.Sub(time.Now())
 
-		event.Scheduled = date
 		ChampionshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
 			err := cm.StartEvent(championship.ID.String(), event.ID.String())
 
@@ -399,18 +404,9 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 				logrus.Errorf("couldn't start scheduled race, err: %s", err)
 			}
 		})
-
-		return cm.UpsertChampionship(championship)
-	} else {
-		// remove scheduled event on date
-		event.Scheduled = date
-
-		if timer := ChampionshipEventStartTimers[event.ID.String()]; timer != nil {
-			timer.Stop()
-		}
-
-		return cm.UpsertChampionship(championship)
 	}
+
+	return cm.UpsertChampionship(championship)
 }
 
 func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
