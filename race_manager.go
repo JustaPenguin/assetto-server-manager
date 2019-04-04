@@ -24,8 +24,7 @@ import (
 )
 
 var (
-	raceManager       *RaceManager
-	serverStoppedChan = make(chan struct{})
+	raceManager *RaceManager
 
 	ErrCustomRaceNotFound = errors.New("servermanager: custom race not found")
 )
@@ -38,13 +37,16 @@ func InitWithStore(store Store) {
 	raceManager = NewRaceManager(store)
 	championshipManager = NewChampionshipManager(raceManager)
 	accountManager = NewAccountManager(store)
-	AssettoProcess = &AssettoServerProcess{doneCh: serverStoppedChan}
+	AssettoProcess = NewAssettoServerProcess()
 
 	err := raceManager.raceStore.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Could not load server account options")
 	}
+
+	mapHub = newLiveMapHub()
+	go mapHub.run()
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -55,7 +57,11 @@ func InitWithStore(store Store) {
 			if AssettoProcess.IsRunning() {
 				if AssettoProcess.EventType() == EventTypeChampionship {
 					if err := championshipManager.StopActiveEvent(); err != nil {
-						logrus.Errorf("Error stopping event, err: %s", err)
+						logrus.WithError(err).Errorf("Error stopping event")
+					}
+				} else {
+					if err := AssettoProcess.Stop(); err != nil {
+						logrus.WithError(err).Errorf("Could not stop server")
 					}
 				}
 
