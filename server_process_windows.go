@@ -17,7 +17,7 @@ func kill(process *os.Process) error {
 	err := process.Kill()
 
 	if err != nil {
-		logrus.WithError(err).Errorf("Initial attempt at killing windows process (taskkill) failed")
+		logrus.WithError(err).Errorf("Initial attempt at killing windows process (process.Kill) failed")
 		return exec.Command("taskkill", "/F", "/T", "/PID", fmt.Sprintf("%d", process.Pid)).Run()
 	}
 
