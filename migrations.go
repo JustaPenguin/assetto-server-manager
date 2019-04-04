@@ -3,10 +3,11 @@ package servermanager
 import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"html/template"
 )
 
 const (
-	CurrentMigrationVersion = 2
+	CurrentMigrationVersion = 3
 	versionMetaKey          = "version"
 )
 
@@ -35,6 +36,7 @@ type migrationFunc func(Store) error
 var migrations = []migrationFunc{
 	addEntrantIDToChampionships,
 	addAdminAccount,
+	championshipLinksToSummerNote,
 }
 
 func addEntrantIDToChampionships(rs Store) error {
@@ -74,4 +76,39 @@ func addAdminAccount(rs Store) error {
 	account.Group = GroupAdmin
 
 	return rs.UpsertAccount(account)
+}
+
+func championshipLinksToSummerNote(rs Store) error {
+	logrus.Infof("Converting old championship links to new markdown format")
+
+	championships, err := rs.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	var i int
+
+	for _, c := range championships {
+		i = 0
+		for link, name := range c.Links {
+			c.Info += template.HTML("<a href='"+link+"'>"+name+"</a>")
+
+			if i != len(c.Links)-1 {
+				c.Info += ", "
+			}
+
+			i++
+		}
+
+		c.Links = nil
+
+		err = rs.UpsertChampionship(c)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
