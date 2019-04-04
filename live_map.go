@@ -61,7 +61,7 @@ func (h *liveMapHub) run() {
 					delete(h.clients, client)
 				}
 			}
-		case <-serverStoppedChan:
+		case <-AssettoProcess.Done():
 			for _, client := range connectedCars {
 				client := client
 
@@ -115,11 +115,7 @@ func (c *liveMapClient) writePump() {
 	}
 }
 
-var mapHub = newLiveMapHub()
-
-func init() {
-	go mapHub.run()
-}
+var mapHub *liveMapHub
 
 func liveMapHandler(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
