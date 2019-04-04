@@ -41,11 +41,16 @@ Added:
 * Added a "Delete" group - they are the only group (other than admin) allowed to delete content, championships, races, etc.
 * You can now change which assetto server executable file is run by Server Manager. By default, acServer(.exe) is used.
   See config.yml "executable_path" for more information. This means tools such as ac-server-wrapper should now be
+<<<<<<< HEAD
   compatible with Server Manager!
 * Added buttons to change the Championship event order and show/hide completed/not completed events.
 * Looped practice events will now persist drivers in the live timings table across each event.
 * Added a text input (with support for images, embedded video etc.) to Championship pages. Intended for adding information
   about the championship, rules, links to content used etc.
+=======
+  compatible with Server Manager! You can even write your own wrapper scripts around acServer if you'd like.
+* Added missing "MAX_CONTACTS_PER_KM" to server configuration options.
+>>>>>>> master
 
 Fixes:
 

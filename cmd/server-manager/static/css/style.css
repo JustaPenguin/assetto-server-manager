@@ -500,3 +500,10 @@ td .dot-inactive {
 .entrant-car:last-child {
     padding-right: 0 !important;
 }
+
+.fa-stack-override {
+    display: inline-block;
+    height: 0.7em;
+    position: relative;
+    width: 1.4em;
+}
