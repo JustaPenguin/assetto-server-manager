@@ -3,6 +3,7 @@
 package servermanager
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"syscall"
@@ -32,8 +33,8 @@ func kill(process *os.Process) error {
 	return syscall.Kill(-process.Pid, syscall.SIGKILL|syscall.SIGINT)
 }
 
-func buildCommand(command string, args ...string) *exec.Cmd {
-	cmd := exec.Command(command, args...)
+func buildCommand(ctx context.Context, command string, args ...string) *exec.Cmd {
+	cmd := exec.CommandContext(ctx, command, args...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 	return cmd

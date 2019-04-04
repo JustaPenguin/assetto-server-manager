@@ -20,6 +20,10 @@ var debug = os.Getenv("DEBUG") == "true"
 
 var defaultAddress = "0.0.0.0:8772"
 
+func init() {
+	runtime.LockOSThread()
+}
+
 func main() {
 	config, err := servermanager.ReadConfig("config.yml")
 
