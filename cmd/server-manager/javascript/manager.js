@@ -1079,7 +1079,13 @@ class RaceSetup {
                 numEntrantsToAdd = $numEntrantsField.val();
             }
 
+            let maxClients = that.$parent.find("#MaxClients").val();
+
             for (let i = 0; i < numEntrantsToAdd; i++) {
+                if (that.$parent.find(".entrant:visible").length >= maxClients) {
+                    continue;
+                }
+
                 let $elem = $entrantTemplate.clone();
                 $elem.find("input[type='checkbox']").bootstrapSwitch();
                 $elem.insertBefore($(this).parent());
