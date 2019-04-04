@@ -42,6 +42,10 @@ Added:
 * You can now change which assetto server executable file is run by Server Manager. By default, acServer(.exe) is used.
   See config.yml "executable_path" for more information. This means tools such as ac-server-wrapper should now be
   compatible with Server Manager! You can even write your own wrapper scripts around acServer if you'd like.
+* Added buttons to change the Championship event order and show/hide completed/not completed events.
+* Looped practice events will now persist drivers in the live timings table across each event.
+* Added a text input (with support for images, embedded video etc.) to Championship pages. Intended for adding information
+  about the championship, rules, links to content used etc.
 * Added missing "MAX_CONTACTS_PER_KM" to server configuration options.
 
 Fixes:

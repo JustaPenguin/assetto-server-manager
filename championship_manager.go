@@ -3,6 +3,7 @@ package servermanager
 import (
 	"errors"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
@@ -127,7 +128,6 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		}
 
 		championship.Classes = []*ChampionshipClass{}
-		championship.Links = make(map[string]string)
 	} else {
 		// new championship
 		championship = NewChampionship("")
@@ -135,6 +135,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 
 	championship.Name = r.FormValue("ChampionshipName")
 	championship.OpenEntrants = r.FormValue("ChampionshipOpenEntrants") == "on" || r.FormValue("ChampionshipOpenEntrants") == "1"
+	championship.Info = template.HTML(r.FormValue("ChampionshipInfo"))
 
 	previousNumEntrants := 0
 
@@ -166,21 +167,6 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	// persist any entrants so that they can be autofilled
 	if err := cm.SaveEntrantsForAutoFill(championship.AllEntrants()); err != nil {
 		return nil, edited, err
-	}
-
-	for i := 0; i < len(r.Form["ImportantLinks"]); i++ {
-		name := r.Form["ImportantLinks"][i]
-		link := r.Form["ImportantLinksURL"][i]
-
-		if link == "" {
-			continue
-		}
-
-		if name == "" && link != "" {
-			name = link
-		}
-
-		championship.Links[link] = name
 	}
 
 	return championship, edited, cm.UpsertChampionship(championship)
