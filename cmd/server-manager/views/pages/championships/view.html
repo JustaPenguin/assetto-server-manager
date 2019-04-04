@@ -201,6 +201,25 @@
 
         <h2>Events</h2>
 
+        <div class="btn-group float-right" role="group" aria-label="Button group with nested dropdown">
+            <div class="btn-group" role="group">
+                <button id="btnGroupDrop1" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Hide/Show
+                </button>
+                <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                    <a class="dropdown-item text-success" href="#" id="hide-completed">Completed</a>
+                    <a class="dropdown-item text-success" href="#" id="hide-not-completed">Not Completed</a>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-secondary" id="switch-order">
+                <span class="fa-stack-override fa-1x">
+                  <i class="fas fa-sort-up fa-stack-1x text-dark"></i>
+                  <i class="fas fa-sort-down fa-stack-1x text-success"></i>
+                </span>
+            </button>
+        </div>
+
         <p>This Championship currently has {{ len $championship.Events }} events configured.</p>
 
 
@@ -209,7 +228,7 @@
         {{ range $eventIndex, $event := $championship.Events }}
             {{ $eventSetup := $event.RaceSetup }}
 
-            <div class="card mt-3 border-secondary">
+            <div class="card mt-3 border-secondary championship-event {{ if $event.Completed }}event-complete{{ end }}">
                 <div class="card-header">
                     {{ $trackInfo := trackInfo $eventSetup.Track $eventSetup.TrackLayout }}
 

@@ -77,6 +77,10 @@ func (dummyServerProcess) IsRunning() bool {
 	return true
 }
 
+func (dummyServerProcess) Done() <-chan struct{} {
+	return nil
+}
+
 func (dummyServerProcess) EventType() ServerEventType {
 	return EventTypeChampionship
 }

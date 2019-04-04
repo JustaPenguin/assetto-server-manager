@@ -59,6 +59,7 @@ var ConfigIniDefault = ServerConfig{
 		WindVariationDirection:    15,
 		StartRule:                 2, // drive-thru
 		RaceExtraLap:              0,
+		MaxContactsPerKilometer:   -1,
 
 		Sessions: map[SessionType]SessionConfig{
 			SessionTypePractice: {
