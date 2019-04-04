@@ -19,11 +19,12 @@ const (
 	formShowTagName = "show"
 )
 
-func NewForm(i interface{}, dropdownOpts map[string][]string, visibility string) *Form {
+func NewForm(i interface{}, dropdownOpts map[string][]string, visibility string, forceShowAllOptions bool) *Form {
 	return &Form{
-		data:            i,
-		dropdownOptions: dropdownOpts,
-		visibility:      visibility,
+		data:                i,
+		dropdownOptions:     dropdownOpts,
+		visibility:          visibility,
+		forceShowAllOptions: forceShowAllOptions,
 	}
 }
 
@@ -35,6 +36,9 @@ type Form struct {
 
 	// visibility is used to filter out fields by their 'show' tag.
 	visibility string
+
+	// force all options to show
+	forceShowAllOptions bool
 }
 
 func (f Form) Submit(r *http.Request) error {
@@ -129,7 +133,7 @@ func (f Form) buildOpts(val reflect.Value, t reflect.Type, parentName string) []
 			formShow := typeField.Tag.Get(formShowTagName)
 
 			// check to see if we should be showing this tag
-			if formShow == "-" || (f.visibility != "" && formShow != f.visibility) {
+			if formShow == "-" || (formShow != "open" && f.visibility != "" && formShow != f.visibility) {
 				continue
 			}
 
@@ -147,6 +151,7 @@ func (f Form) buildOpts(val reflect.Value, t reflect.Type, parentName string) []
 				HelpText: typeField.Tag.Get("help"),
 				Type:     formType,
 				Opts:     make(map[string]bool),
+				Hidden:   formShow == "open" && IsHosted && !f.forceShowAllOptions,
 			}
 
 			if formType == "dropdown" || formType == "multiSelect" {
@@ -177,6 +182,7 @@ type FormOption struct {
 	HelpText string
 	Value    interface{}
 	Min, Max string
+	Hidden   bool
 
 	Opts map[string]bool
 }
@@ -201,21 +207,29 @@ func (f FormOption) render(templ string) (template.HTML, error) {
 
 func (f FormOption) renderDropdown() template.HTML {
 	const dropdownTemplate = `
-		<div class="form-group row">
-			<label for="{{ .Key }}" class="col-sm-3 col-form-label">
-				{{ .Name }}
-			</label>
+		{{ if not .Hidden }}
+			<div class="form-group row">
+				<label for="{{ .Key }}" class="col-sm-3 col-form-label">
+					{{ .Name }}
+				</label>
 
-            <div class="col-sm-9">
-				<select {{ if eq .Type "multiSelect" }} multiple {{ end }} class="form-control" name="{{ .Key }}" id="{{ .Key }}">
-					{{ range $opt, $selected := .Opts }}
-						<option {{ if $selected }} selected {{ end }} value="{{ $opt }}">{{ $opt }}</option>
-					{{ end }}
-				</select>
+            	<div class="col-sm-9">
+					<select {{ if eq .Type "multiSelect" }} multiple {{ end }} class="form-control" name="{{ .Key }}" id="{{ .Key }}">
+						{{ range $opt, $selected := .Opts }}
+							<option {{ if $selected }} selected {{ end }} value="{{ $opt }}">{{ $opt }}</option>
+						{{ end }}
+					</select>
 
-				<small>{{ .HelpText }}</small>
+					<small>{{ .HelpText }}</small>
+				</div>
 			</div>
-		</div>
+		{{ else }}
+			{{ range $opt, $selected := .Opts }}
+				{{ if $selected }}
+					<input type="hidden" name="{{ .Key }}" value="{{ $opt }}">
+				{{ end }}
+			{{ end }}
+		{{ end }}
 	`
 
 	tmpl, err := f.render(dropdownTemplate)
@@ -229,16 +243,20 @@ func (f FormOption) renderDropdown() template.HTML {
 
 func (f FormOption) renderCheckbox() template.HTML {
 	const checkboxTemplate = `
-		<div class="form-group row">
-			<label for="{{ .Key }}" class="col-sm-3 col-form-label">{{ .Name }}</label>
+		{{ if not .Hidden }}
+			<div class="form-group row">
+				<label for="{{ .Key }}" class="col-sm-3 col-form-label">{{ .Name }}</label>
 
 
-            <div class="col-sm-9">
-				<input type="checkbox" id="{{ .Key }}" name="{{ .Key }}" {{ if eq .Value 1 }}checked="checked"{{ end }}><br>
+            	<div class="col-sm-9">
+					<input type="checkbox" id="{{ .Key }}" name="{{ .Key }}" {{ if eq .Value 1 }}checked="checked"{{ end }}><br>
 
-				<small>{{ .HelpText }}</small>
+					<small>{{ .HelpText }}</small>
+				</div>
 			</div>
-		</div>
+		{{ else }}
+			<input type="hidden" id="{{ .Key }}" name="{{ .Key }}" {{ if eq .Value 1 }}value="1"{{ else }}value="0"{{ end }}><br>
+		{{ end }}
 	`
 
 	tmpl, err := f.render(checkboxTemplate)
@@ -252,15 +270,19 @@ func (f FormOption) renderCheckbox() template.HTML {
 
 func (f FormOption) renderTextInput() template.HTML {
 	const inputTextTemplate = `
-		<div class="form-group row">
-			<label for="{{ .Key }}" class="col-sm-3 col-form-label">{{ .Name }}</label>
+		{{ if not .Hidden }}
+			<div class="form-group row">
+				<label for="{{ .Key }}" class="col-sm-3 col-form-label">{{ .Name }}</label>
 
-			<div class="col-sm-9">
-				<input type="{{ if eq .Type "password" }}password{{ else }}text{{ end }}" id="{{ .Key }}" name="{{ .Key }}" class="form-control" value="{{ .Value }}">
+				<div class="col-sm-9">
+					<input type="{{ if eq .Type "password" }}password{{ else }}text{{ end }}" id="{{ .Key }}" name="{{ .Key }}" class="form-control" value="{{ .Value }}">
 
-				<small>{{ .HelpText }}</small>
+					<small>{{ .HelpText }}</small>
+				</div>
 			</div>
-		</div>
+		{{ else }}
+			<input type="hidden" id="{{ .Key }}" name="{{ .Key }}" value="{{ .Value }}">
+		{{ end }}
 	`
 
 	tmpl, err := f.render(inputTextTemplate)
@@ -274,24 +296,28 @@ func (f FormOption) renderTextInput() template.HTML {
 
 func (f FormOption) renderNumberInput() template.HTML {
 	const numberInputTemplate = `
-		<div class="form-group row">
-			<label for="{{ .Key }}" class="col-sm-3 col-form-label">{{ .Name }}</label>
+		{{ if not .Hidden }}
+			<div class="form-group row">
+				<label for="{{ .Key }}" class="col-sm-3 col-form-label">{{ .Name }}</label>
 
-			<div class="col-sm-9">
-				<input 
-					type="number" 
-					id="{{ .Key }}" 
-					name="{{ .Key }}" 
-					class="form-control" 
-					value="{{ .Value }}"
-					{{ with .Min }}min="{{ . }}"{{ end }}
-					{{ with .Max }}min="{{ . }}"{{ end }}
-					step="1"
-				>
+				<div class="col-sm-9">
+					<input 
+						type="number" 
+						id="{{ .Key }}" 
+						name="{{ .Key }}" 
+						class="form-control" 
+						value="{{ .Value }}"
+						{{ with .Min }}min="{{ . }}"{{ end }}
+						{{ with .Max }}min="{{ . }}"{{ end }}
+						step="1"
+					>
 
-				<small>{{ .HelpText }}</small>
+					<small>{{ .HelpText }}</small>
+				</div>
 			</div>
-		</div>
+		{{ else }}
+			<input type="hidden" id="{{ .Key }}" name="{{ .Key }}" value="{{ .Value }}">
+		{{ end }}
 	`
 
 	tmpl, err := f.render(numberInputTemplate)

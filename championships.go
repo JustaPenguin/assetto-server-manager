@@ -77,7 +77,7 @@ type Championship struct {
 	Deleted time.Time
 
 	// Raw html can be attached to championships, used to share tracks/cars etc.
-	Info       template.HTML
+	Info template.HTML
 	// Deprecated, replaced with Info above.
 	Links map[string]string
 

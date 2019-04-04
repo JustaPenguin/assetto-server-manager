@@ -154,6 +154,8 @@ func (rm *RaceManager) UDPCallback(message udp.Message) {
 	LoopCallback(message)
 }
 
+var ErrEntryListTooBig = errors.New("servermanager: EntryList exceeds MaxClients setting")
+
 func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool, championshipEvent bool) error {
 	rm.mutex.Lock()
 	defer rm.mutex.Unlock()
@@ -177,8 +179,16 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 	config.GlobalServerConfig.UDPPluginAddress = config.GlobalServerConfig.FreeUDPPluginAddress
 	config.GlobalServerConfig.UDPPluginLocalPort = config.GlobalServerConfig.FreeUDPPluginLocalPort
 
+	if MaxClientsOverride > 0 {
+		config.CurrentRaceConfig.MaxClients = MaxClientsOverride
+
+		if len(entryList) > MaxClientsOverride {
+			return ErrEntryListTooBig
+		}
+	}
+
 	if !championshipEvent && championshipManager != nil {
-		logrus.Infof("Starting a non championship event. Setting activeChampionship to nil")
+		logrus.Debugf("Starting a non championship event. Setting activeChampionship to nil")
 		championshipManager.activeChampionship = nil
 	}
 
@@ -310,6 +320,10 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		numPitboxes = int(boxes)
 	} else {
 		numPitboxes = quickRace.CurrentRaceConfig.MaxClients
+	}
+
+	if numPitboxes > MaxClientsOverride {
+		numPitboxes = MaxClientsOverride
 	}
 
 	allCars, err := ListCars()

@@ -92,7 +92,7 @@ func championshipLinksToSummerNote(rs Store) error {
 	for _, c := range championships {
 		i = 0
 		for link, name := range c.Links {
-			c.Info += template.HTML("<a href='"+link+"'>"+name+"</a>")
+			c.Info += template.HTML("<a href='" + link + "'>" + name + "</a>")
 
 			if i != len(c.Links)-1 {
 				c.Info += ", "
