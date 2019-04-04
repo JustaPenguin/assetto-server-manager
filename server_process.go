@@ -252,7 +252,7 @@ func (as *AssettoServerProcess) Stop() error {
 	err := kill(as.cmd.Process)
 
 	if err != nil && !strings.Contains(err.Error(), "process already finished") {
-		return err
+		logrus.WithError(err).Errorf("Stopping server reported an error (continuing anyway...)")
 	}
 
 	as.stopChildProcesses()
@@ -261,10 +261,10 @@ func (as *AssettoServerProcess) Stop() error {
 		proc, err := ps.FindProcess(as.cmd.Process.Pid)
 
 		if err != nil {
-			return err
+			logrus.WithError(err).Warnf("Could not find process: %d", as.cmd.Process.Pid)
 		}
 
-		if proc == nil && err == nil {
+		if proc == nil {
 			break
 		}
 
