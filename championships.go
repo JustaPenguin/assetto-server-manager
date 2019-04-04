@@ -78,7 +78,8 @@ type Championship struct {
 
 	// Raw html can be attached to championships, used to share tracks/cars etc.
 	Info       template.HTML
-	InfoString string
+	// Deprecated, replaced with Info above.
+	Links map[string]string
 
 	// OpenEntrants indicates that entrant names do not need to be specified in the EntryList.
 	// As Entrants join a championship, the available Entrant slots will be filled by the information
