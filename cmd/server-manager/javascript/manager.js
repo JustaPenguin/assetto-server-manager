@@ -2415,7 +2415,6 @@ let championships = {
         $switchOrder.click(function (e) {
             e.preventDefault();
 
-            // switch order, @TODO swap text from v to ^
             let $events = $document.find(".championship-event");
 
             for (let i = $events.length; i >= 0; i--) {
