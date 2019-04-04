@@ -109,7 +109,7 @@ func customRaceScheduleRemoveHandler(w http.ResponseWriter, r *http.Request) {
 	err := raceManager.ScheduleRace(chi.URLParam(r, "uuid"), time.Time{}, "remove")
 
 	if err != nil {
-		logrus.Errorf("couldn't schedule race, err: %s", err)
+		logrus.Errorf("couldn't remove scheduled race, err: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

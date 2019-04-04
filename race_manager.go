@@ -896,6 +896,13 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string) 
 		return err
 	}
 
+	race.Scheduled = date
+
+	// if there is an existing schedule timer for this event stop it
+	if timer := CustomRaceStartTimers[race.UUID.String()]; timer != nil {
+		timer.Stop()
+	}
+
 	if action == "add" {
 		// add a scheduled event on date
 		duration := date.Sub(time.Now())
@@ -908,16 +915,9 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string) 
 				logrus.Errorf("couldn't start scheduled race, err: %s", err)
 			}
 		})
-
-		return raceManager.raceStore.UpsertCustomRace(race)
-
-	} else {
-		// remove scheduled event on date
-		race.Scheduled = date
-		CustomRaceStartTimers[race.UUID.String()].Stop()
-
-		return raceManager.raceStore.UpsertCustomRace(race)
 	}
+
+	return raceManager.raceStore.UpsertCustomRace(race)
 }
 
 func (rm *RaceManager) DeleteCustomRace(uuid string) error {
