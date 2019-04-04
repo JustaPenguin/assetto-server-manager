@@ -42,6 +42,7 @@ Added:
 * You can now change which assetto server executable file is run by Server Manager. By default, acServer(.exe) is used.
   See config.yml "executable_path" for more information. This means tools such as ac-server-wrapper should now be
   compatible with Server Manager! You can even write your own wrapper scripts around acServer if you'd like.
+* Added missing "MAX_CONTACTS_PER_KM" to server configuration options.
 
 Fixes:
 

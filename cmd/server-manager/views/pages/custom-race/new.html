@@ -1290,6 +1290,25 @@
                     </div>
                 </div>
 
+                <div class="form-group row">
+                    <label for="MaxContactsPerKilometer" class="col-sm-3 col-form-label">Max Contacts Per Kilometer</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="MaxContactsPerKilometer"
+                                name="MaxContactsPerKilometer"
+                                class="form-control"
+                                value="{{ $f.MaxContactsPerKilometer }}"
+
+
+                                step="1"
+                        >
+
+                        <small>Maximum number times you can make contact with another car in 1 kilometer. -1 = no limit</small>
+                    </div>
+                </div>
+
 
                 <div class="form-group row">
                     <label for="PickupModeEnabled" class="col-sm-3 col-form-label">Pickup Mode Enabled</label>
