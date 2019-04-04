@@ -136,7 +136,6 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	championship.Name = r.FormValue("ChampionshipName")
 	championship.OpenEntrants = r.FormValue("ChampionshipOpenEntrants") == "on" || r.FormValue("ChampionshipOpenEntrants") == "1"
 	championship.Info = template.HTML(r.FormValue("ChampionshipInfo"))
-	championship.InfoString = r.FormValue("ChampionshipInfo")
 
 	previousNumEntrants := 0
 
