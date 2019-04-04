@@ -3,6 +3,7 @@
 package servermanager
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -13,20 +14,18 @@ import (
 const serverExecutablePath = "acServer.exe"
 
 func kill(process *os.Process) error {
-	err := exec.Command("taskkill", "/F", "/T", "/PID", fmt.Sprintf("%d", process.Pid)).Run()
+	err := process.Kill()
 
 	if err != nil {
-		logrus.WithError(err).Errorf("Initial attempt at killing windows process (taskkill) failed")
-		return process.Kill()
+		logrus.WithError(err).Errorf("Initial attempt at killing windows process (process.Kill) failed")
+		return exec.Command("taskkill", "/F", "/T", "/PID", fmt.Sprintf("%d", process.Pid)).Run()
 	}
 
 	return nil
 }
 
-func buildCommand(command string, args ...string) *exec.Cmd {
-	args = append([]string{"/c", "start", "/wait", command}, args...)
-
-	cmd := exec.Command("cmd", args...)
+func buildCommand(ctx context.Context, command string, args ...string) *exec.Cmd {
+	cmd := exec.CommandContext(ctx, command, args...)
 
 	return cmd
 }

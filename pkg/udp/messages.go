@@ -406,7 +406,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 
 		response = sessionInfo
 
-		if RealtimePosIntervalMs > 0 {
+		if RealtimePosIntervalMs > 0 && eventType == EventNewSession {
 			err = asu.SendMessage(NewEnableRealtimePosInterval(uint16(RealtimePosIntervalMs)))
 
 			if err != nil {

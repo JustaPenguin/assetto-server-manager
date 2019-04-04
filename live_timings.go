@@ -101,6 +101,18 @@ func LiveTimingCallback(response udp.Message) {
 				liveInfo.SessionInfoStopChan = nil
 			}
 
+			// If this is a looped practice event, and the previous event had some cars then keep the cars
+			if len(liveInfo.Cars) > 0 && a.Type == 1 {
+				if liveInfo.Type == a.Type && liveInfo.Track == a.Track && liveInfo.TrackConfig == a.TrackConfig &&
+				 liveInfo.Name == a.Name {
+
+					for i := range oldCars {
+						oldCars[i].Delete = false
+					}
+
+				}
+			}
+
 			liveInfo = LiveTiming{
 				ServerName:          a.ServerName,
 				Track:               a.Track,
@@ -299,7 +311,7 @@ func timeTick(done <-chan struct{}) {
 				logrus.Errorf("Couldn't send session info udp request, err: %s", err)
 			}
 		case <-done:
-			logrus.Info("Closing udp request channel")
+			logrus.Debugf("Closing udp request channel")
 			tickChan.Stop()
 			return
 		}
