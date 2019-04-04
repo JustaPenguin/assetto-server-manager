@@ -33,11 +33,12 @@ func init() {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 
-	logFile, err := os.OpenFile("server-manager.log", os.O_APPEND|os.O_WRONLY, 0666)
+	logFile, err := os.OpenFile("server-manager.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 
 	if err == nil {
 		logMultiWriter = io.MultiWriter(os.Stdout, logOutput, logFile)
 	} else {
+		logrus.WithError(err).Errorf("Could not create server manager log file")
 		logMultiWriter = io.MultiWriter(os.Stdout, logOutput)
 	}
 
