@@ -1,6 +1,7 @@
 body {
     padding-top: 60px;
     font-size: 1rem !important;
+    overflow-y: scroll;
 }
 
 @media screen and (min-width: 400px) {

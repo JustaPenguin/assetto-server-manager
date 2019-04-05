@@ -6,12 +6,15 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/cj123/assetto-server-manager"
 	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
 	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
 	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
 
+	"github.com/etcd-io/bbolt"
 	"github.com/pkg/browser"
 	"github.com/sirupsen/logrus"
 )
@@ -99,5 +102,25 @@ func main() {
 
 	if err := http.Serve(listener, servermanager.Router(filesystem)); err != nil {
 		logrus.Fatal(err)
+	}
+}
+
+func startUDPReplay(file string) {
+	time.Sleep(time.Second * 20)
+
+	db, err := bbolt.Open(file, 0644, nil)
+
+	if err != nil {
+		logrus.WithError(err).Error("Could not open bolt")
+	}
+
+	err = replay.ReplayUDPMessages(db, 10, func(response udp.Message) {
+		servermanager.LiveTimingCallback(response)
+		servermanager.LiveMapCallback(response)
+		servermanager.LoopCallback(response)
+	}, time.Second*2)
+
+	if err != nil {
+		logrus.WithError(err).Error("UDP Replay failed")
 	}
 }

@@ -7,7 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cj123/assetto-server-manager/pkg/udp"
 	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
+
+	"github.com/etcd-io/bbolt"
 )
 
 var TestEntryList = EntryList{
@@ -86,14 +89,27 @@ func (dummyServerProcess) EventType() ServerEventType {
 }
 
 var championshipEventFixtures = []string{
-	"barbagello.json",
-	"red-bull-ring.json",
-	"barbagello-no-end-sessions.json",
+	"barbagello.db",
+	"red-bull-ring.db",
+	// @TODO fix me
+	// "barbagello-no-end-sessions.db",
 }
 
 func init() {
 	InitWithStore(NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store")))
 	AssettoProcess = dummyServerProcess{}
+}
+
+func doReplay(filename string, multiplier int, callbackFunc udp.CallbackFunc, waitTime time.Duration) error {
+	db, err := bbolt.Open(filename, 0644, nil)
+
+	if err != nil {
+		return err
+	}
+
+	defer db.Close()
+
+	return replay.ReplayUDPMessages(db, multiplier, callbackFunc, waitTime)
 }
 
 func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
@@ -126,7 +142,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 					return
 				}
 
-				err := replay.ReplayUDPMessages(filepath.Join("fixtures", sessionFile), 1000,
+				err := doReplay(filepath.Join("fixtures", sessionFile), 1000,
 					championshipManager.ChampionshipEventCallback, time.Second)
 
 				if err != nil {
@@ -168,7 +184,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 					return
 				}
 
-				err := replay.ReplayUDPMessages(filepath.Join("fixtures", sessionFile), 1000,
+				err := doReplay(filepath.Join("fixtures", sessionFile), 1000,
 					championshipManager.ChampionshipEventCallback, time.Second)
 
 				if err != nil {
@@ -218,7 +234,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 					return
 				}
 
-				err := replay.ReplayUDPMessages(filepath.Join("fixtures", sessionFile), 1000,
+				err := doReplay(filepath.Join("fixtures", sessionFile), 1000,
 					championshipManager.ChampionshipEventCallback, time.Second)
 
 				if err != nil {
@@ -268,7 +284,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 					return
 				}
 
-				err := replay.ReplayUDPMessages(filepath.Join("fixtures", sessionFile), 1000,
+				err := doReplay(filepath.Join("fixtures", sessionFile), 1000,
 					championshipManager.ChampionshipEventCallback, time.Second)
 
 				if err != nil {
@@ -375,9 +391,9 @@ func TestChampionshipManager_ChampionshipEventCallbackOpenChampionshipExample(t 
 	}
 
 	eventIDToJSON := map[string]string{
-		"006e6edd-7e77-4d7e-a2ce-d757adb65d95": filepath.Join("fixtures", "open-championship", "nurburgring_sprint_b.json"),
-		"c412e271-b3c0-4a71-abbe-954c540260de": filepath.Join("fixtures", "open-championship", "rbr_national.json"),
-		"09bddc04-45ed-40f7-bc94-73a3fe42f3fb": filepath.Join("fixtures", "open-championship", "suzuka_east.json"),
+		"006e6edd-7e77-4d7e-a2ce-d757adb65d95": filepath.Join("fixtures", "open-championship", "nurburgring_sprint_b.db"),
+		"c412e271-b3c0-4a71-abbe-954c540260de": filepath.Join("fixtures", "open-championship", "rbr_national.db"),
+		"09bddc04-45ed-40f7-bc94-73a3fe42f3fb": filepath.Join("fixtures", "open-championship", "suzuka_east.db"),
 	}
 
 	eventNum := 1
@@ -390,7 +406,7 @@ func TestChampionshipManager_ChampionshipEventCallbackOpenChampionshipExample(t 
 			return
 		}
 
-		err := replay.ReplayUDPMessages(file, 1000, championshipManager.ChampionshipEventCallback, time.Second)
+		err := doReplay(file, 10000, championshipManager.ChampionshipEventCallback, time.Second)
 
 		if err != nil {
 			t.Error(err)
