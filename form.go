@@ -6,7 +6,6 @@ import (
 	"html/template"
 	"net/http"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"github.com/fatih/camelcase"
@@ -63,13 +62,7 @@ func (f Form) Submit(r *http.Request) error {
 				if vals[0] == "on" {
 					f.SetInt(1)
 				} else {
-					i, err := strconv.ParseInt(vals[0], 10, 0)
-
-					if err != nil {
-						return err
-					}
-
-					f.SetInt(i)
+					f.SetInt(int64(formValueAsInt(vals[0])))
 				}
 			default:
 				panic("form submit - unknown type")
