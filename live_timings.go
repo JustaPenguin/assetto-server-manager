@@ -182,6 +182,7 @@ func LiveTimingCallback(response udp.Message) {
 			_, ok := liveInfo.Cars[uint8(a.CarID)]
 			if ok {
 				liveInfo.Cars[uint8(a.CarID)].Delete = true
+				delete(liveInfo.Cars, uint8(a.CarID))
 			}
 		}
 

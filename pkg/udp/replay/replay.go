@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"sort"
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
@@ -11,6 +12,20 @@ import (
 	"github.com/etcd-io/bbolt"
 	"github.com/sirupsen/logrus"
 )
+
+type Entries []*Entry
+
+func (e Entries) Len() int {
+	return len(e)
+}
+
+func (e Entries) Less(i, j int) bool {
+	return e[i].Received.Before(e[j].Received)
+}
+
+func (e Entries) Swap(i, j int) {
+	e[i], e[j] = e[j], e[i]
+}
 
 type Entry struct {
 	Received  time.Time
@@ -145,12 +160,13 @@ func (e *Entry) UnmarshalJSON(b []byte) error {
 		}
 
 		e.Data = *data
+	default:
 	}
 
 	return nil
 }
 
-var boltBucketName = []byte("sessions")
+var BucketName = []byte("sessions")
 
 func RecordUDPMessages(db *bbolt.DB) (callbackFunc udp.CallbackFunc) {
 	return func(message udp.Message) {
@@ -167,13 +183,13 @@ func RecordUDPMessages(db *bbolt.DB) (callbackFunc udp.CallbackFunc) {
 		encoder.Encode(e)
 
 		err := db.Update(func(tx *bbolt.Tx) error {
-			bkt, err := tx.CreateBucketIfNotExists(boltBucketName)
+			bkt, err := tx.CreateBucketIfNotExists(BucketName)
 
 			if err != nil {
 				return err
 			}
 
-			return bkt.Put([]byte(time.Now().Format(time.RFC3339)), []byte(buf.String()))
+			return bkt.Put([]byte(e.Received.Format(time.RFC3339Nano)), []byte(buf.String()))
 		})
 
 		if err != nil {
@@ -183,10 +199,10 @@ func RecordUDPMessages(db *bbolt.DB) (callbackFunc udp.CallbackFunc) {
 }
 
 func ReplayUDPMessages(db *bbolt.DB, multiplier int, callbackFunc udp.CallbackFunc, waitTime time.Duration) error {
-	var loadedEntries []*Entry
+	var loadedEntries Entries
 
 	err := db.View(func(tx *bbolt.Tx) error {
-		err := tx.Bucket(boltBucketName).ForEach(func(k, v []byte) error {
+		err := tx.Bucket(BucketName).ForEach(func(k, v []byte) error {
 			var entry *Entry
 			err := json.Unmarshal(v, &entry)
 
@@ -207,6 +223,8 @@ func ReplayUDPMessages(db *bbolt.DB, multiplier int, callbackFunc udp.CallbackFu
 			return nil
 		}
 
+		sort.Sort(loadedEntries)
+
 		timeStart := loadedEntries[0].Received
 
 		for _, entry := range loadedEntries {
@@ -215,8 +233,6 @@ func ReplayUDPMessages(db *bbolt.DB, multiplier int, callbackFunc udp.CallbackFu
 			if tickDuration > waitTime {
 				tickDuration = waitTime
 			}
-
-			logrus.Debugf("next tick occurs in: %s", tickDuration)
 
 			if tickDuration > 0 {
 				tickWhenEventOccurs := time.Tick(tickDuration)
