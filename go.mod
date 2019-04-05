@@ -6,6 +6,7 @@ require (
 	github.com/Masterminds/sprig v2.18.0+incompatible
 	github.com/akavel/rsrc v0.8.0 // indirect
 	github.com/cj123/ini v1.42.0
+	github.com/davecgh/go-spew v1.1.1
 	github.com/etcd-io/bbolt v1.3.2
 	github.com/fatih/camelcase v1.0.0
 	github.com/go-chi/chi v4.0.2+incompatible

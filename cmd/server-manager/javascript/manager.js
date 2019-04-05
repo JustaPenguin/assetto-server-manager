@@ -172,9 +172,6 @@ let liveMap = {
             let data = message.Message;
 
             switch (message.EventType) {
-                case EventVersion:
-                    location.reload();
-                    break;
                 case EventTrackMapInfo:
                     // track map info
                     xOffset = data.OffsetX;
@@ -240,7 +237,7 @@ let liveMap = {
 
                     break;
 
-                case EventNewSession:
+                case EventVersion:
                     liveMap.clearAllDrivers();
                     let trackURL = "/content/tracks/" + data.Track + (!!data.TrackConfig ? "/" + data.TrackConfig : "") + "/map.png";
 
