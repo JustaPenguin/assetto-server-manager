@@ -341,6 +341,8 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 	data["server_event_type"] = AssettoProcess.EventType()
 	data["server_name"] = opts.Name
 	data["User"] = AccountFromRequest(r)
+	data["IsHosted"] = IsHosted
+	data["MaxClientsOverride"] = MaxClientsOverride
 
 	t.Funcs(map[string]interface{}{
 		"ReadAccess":   ReadAccess(r),

@@ -214,7 +214,7 @@ func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
 		logrus.Errorf("couldn't load server options, err: %s", err)
 	}
 
-	form := NewForm(serverOpts, nil, "")
+	form := NewForm(serverOpts, nil, "", AccountFromRequest(r).Name == "admin")
 
 	if r.Method == http.MethodPost {
 		err := form.Submit(r)

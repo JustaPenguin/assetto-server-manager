@@ -257,7 +257,13 @@ func (as *AssettoServerProcess) Stop() error {
 
 	as.stopChildProcesses()
 
+	loopNum := 0
+
 	for {
+		if loopNum > 50 {
+			break
+		}
+
 		proc, err := ps.FindProcess(as.cmd.Process.Pid)
 
 		if err != nil {
@@ -270,10 +276,13 @@ func (as *AssettoServerProcess) Stop() error {
 
 		logrus.Debugf("Waiting for Assetto Corsa Server process to finish...")
 		time.Sleep(time.Millisecond * 500)
+		loopNum++
 	}
 
 	as.cmd = nil
-	as.doneCh <- struct{}{}
+	go func() {
+		as.doneCh <- struct{}{}
+	}()
 
 	return nil
 }

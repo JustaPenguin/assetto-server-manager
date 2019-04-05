@@ -69,7 +69,7 @@
         </div>
 
         {{ range $classIndex, $class := $f.Classes }}
-            {{ template "championship-class" dict "IsEditing" $.IsEditing "CarOpts" $.CarOpts "Championship" $.Current "Class" $class "DefaultPoints" $.DefaultPoints }}
+            {{ template "championship-class" dict "IsEditing" $.IsEditing "CarOpts" $.CarOpts "Championship" $.Current "Class" $class "DefaultPoints" $.DefaultPoints "MaxClientsOverride" $.MaxClientsOverride }}
         {{ else }}
             {{ template "championship-class" . }}
         {{ end }}

@@ -172,9 +172,6 @@ let liveMap = {
             let data = message.Message;
 
             switch (message.EventType) {
-                case EventVersion:
-                    location.reload();
-                    break;
                 case EventTrackMapInfo:
                     // track map info
                     xOffset = data.OffsetX;
@@ -240,7 +237,7 @@ let liveMap = {
 
                     break;
 
-                case EventNewSession:
+                case EventVersion:
                     liveMap.clearAllDrivers();
                     let trackURL = "/content/tracks/" + data.Track + (!!data.TrackConfig ? "/" + data.TrackConfig : "") + "/map.png";
 
@@ -1079,7 +1076,13 @@ class RaceSetup {
                 numEntrantsToAdd = $numEntrantsField.val();
             }
 
+            let maxClients = that.$parent.find("#MaxClients").val();
+
             for (let i = 0; i < numEntrantsToAdd; i++) {
+                if (that.$parent.find(".entrant:visible").length >= maxClients) {
+                    continue;
+                }
+
                 let $elem = $entrantTemplate.clone();
                 $elem.find("input[type='checkbox']").bootstrapSwitch();
                 $elem.insertBefore($(this).parent());

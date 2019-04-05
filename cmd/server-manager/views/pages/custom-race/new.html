@@ -520,23 +520,31 @@
                         <label for="MaxClients" class="col-sm-3 col-form-label">Max Clients</label>
 
                         <div class="col-sm-9">
-                            <input
-                                    type="number"
-                                    id="MaxClients"
-                                    name="MaxClients"
-                                    class="form-control"
-                                    value="{{ $f.MaxClients }}"
+                            {{ if gt $.MaxClientsOverride 0 }}
+                                <input
+                                        type="hidden"
+                                        id="MaxClients"
+                                        name="MaxClients"
+                                        value="{{ $.MaxClientsOverride }}"
+                                >
 
-                                    {{ with $trackInfo }}max="{{ $trackInfo.Pitboxes }}"{{ end }}
-                                    step="1"
-                            >
+                                Locked to <strong>{{ $.MaxClientsOverride }}</strong><br>
+                            {{ else }}
+                                <input
+                                        type="number"
+                                        id="MaxClients"
+                                        name="MaxClients"
+                                        class="form-control"
+                                        value="{{ $f.MaxClients }}"
+
+                                        {{ with $trackInfo }}max="{{ $trackInfo.Pitboxes }}"{{ end }}
+                                        step="1"
+                                >
+                            {{ end }}
 
                             <small>Maximum number of clients allowed on the server</small>
                         </div>
                     </div>
-
-
-
 
                     <div class="form-group row">
                         <label for="LockedEntryList" class="col-sm-3 col-form-label">Locked Entry List</label>
