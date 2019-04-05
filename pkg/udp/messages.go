@@ -72,10 +72,12 @@ func (asu *AssettoServerUDP) Close() error {
 		return err
 	}
 
-	err = asu.forwarder.Close()
+	if asu.forwarder != nil {
+		err = asu.forwarder.Close()
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
