@@ -52,7 +52,7 @@ Added:
     earn go to new team.
   - If a driver changes class, an entirely new entry is made but the old one is not deleted - new points earned go to new 
     team and new driver entry.
-
+* Added logging to server-manager.log - this should make debugging issues easier.
 
 Fixes:
 
@@ -63,7 +63,6 @@ Fixes:
 * Fixes an issue where new entrants in a Championship were not persisted for autofill.
 * Fixes an issue that made it impossible to start quick/custom races on mobile safari.
 * Fixes an issue where Championship Events were not correctly finished/tracked.
-* Added logging to server-manager.log - this should make debugging issues easier.
 
 v1.1.3
 ------
