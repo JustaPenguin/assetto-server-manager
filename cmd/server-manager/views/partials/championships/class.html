@@ -9,6 +9,7 @@
     {{ $class := .Class }}
 
     <div class="card-body" id="entrants">
+        <input type="hidden" name="ClassID" id="ClassID" {{ with $class.ID }}value="{{ .String }}"{{ end }}>
 
         <div class="form-group row">
             <label for="ClassName" class="col-sm-3 col-form-label">Class Name</label>

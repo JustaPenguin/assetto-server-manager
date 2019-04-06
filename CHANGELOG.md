@@ -28,7 +28,6 @@ Added:
 * Added "Import Championship Event" functionality, which lets you import non-championship results files into a
   championship. To use this, create a championship event for the track and layout you wish to import results to. Then,
   click on "Manage Event" on the Championship page and select the session results files to import from.
-* Added important links to championship create/edit. You can now add important links to track/car downloads etc.
 * Added car images to Championship pages.
 * Added car info to live timing table
 * Added an option to only upload official ks content from a folder
@@ -47,6 +46,13 @@ Added:
 * Added a text input (with support for images, embedded video etc.) to Championship pages. Intended for adding information
   about the championship, rules, links to content used etc.
 * Added missing "MAX_CONTACTS_PER_KM" to server configuration options.
+* Vastly improved Championship points scoring. Points scoring now adheres to the following rules:
+  - If a driver changes car but NOT team or class, both team and driver points persist.
+  - If a driver changes team, but NOT class, drivers points persist, team points stay at old team and new points 
+    earn go to new team.
+  - If a driver changes class, an entirely new entry is made but the old one is not deleted - new points earned go to new 
+    team and new driver entry.
+
 
 Fixes:
 

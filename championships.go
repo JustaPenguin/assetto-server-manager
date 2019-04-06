@@ -175,6 +175,7 @@ func (c *Championship) FindClassForCarModel(model string) (*ChampionshipClass, e
 // NewChampionshipClass creates a championship class with the default points
 func NewChampionshipClass(name string) *ChampionshipClass {
 	return &ChampionshipClass{
+		ID:       uuid.New(),
 		Name:     name,
 		Points:   DefaultChampionshipPoints,
 		Entrants: make(EntryList),
@@ -183,6 +184,7 @@ func NewChampionshipClass(name string) *ChampionshipClass {
 
 // ChampionshipClass contains a Name, Entrants (including Cars, Skins) and Points for those Entrants
 type ChampionshipClass struct {
+	ID   uuid.UUID
 	Name string
 
 	Entrants EntryList
@@ -285,6 +287,50 @@ func (c *Championship) Progress() float64 {
 	return (numCompletedRaces / numRaces) * 100
 }
 
+// EnhanceResults takes a set of SessionResults and attaches Championship information to them.
+func (c *Championship) EnhanceResults(results *SessionResults) {
+	if results == nil {
+		return
+	}
+
+	results.ChampionshipID = c.ID.String()
+
+	// update names / teams to the values we know to be correct due to championship setup
+	for _, class := range c.Classes {
+		for _, entrant := range class.Entrants {
+			for _, car := range results.Cars {
+				if car.Driver.GUID == entrant.GUID {
+					car.Driver.AssignEntrant(entrant, class.ID)
+				}
+			}
+
+			for _, event := range results.Events {
+				if event.Driver.GUID == entrant.GUID {
+					event.Driver.AssignEntrant(entrant, class.ID)
+				}
+
+				if event.OtherDriver.GUID == entrant.GUID {
+					event.OtherDriver.AssignEntrant(entrant, class.ID)
+				}
+			}
+
+			for _, lap := range results.Laps {
+				if lap.DriverGUID == entrant.GUID {
+					lap.DriverName = entrant.Name
+					lap.ClassID = class.ID
+				}
+			}
+
+			for _, result := range results.Result {
+				if result.DriverGUID == entrant.GUID {
+					result.DriverName = entrant.Name
+					result.ClassID = class.ID
+				}
+			}
+		}
+	}
+}
+
 // ChampionshipStanding is the current number of Points an Entrant in the Championship has.
 type ChampionshipStanding struct {
 	Entrant *Entrant
@@ -300,19 +346,13 @@ func (c *ChampionshipClass) PointForPos(i int) float64 {
 	return float64(c.Points.Places[i])
 }
 
-func (c *ChampionshipClass) CarInClass(car string) bool {
-	for _, id := range c.ValidCarIDs() {
-		if id == car {
-			return true
-		}
-	}
-
-	return false
+func (c *ChampionshipClass) DriverInClass(driverGUID string, result *SessionResult) bool {
+	return result.ClassID == c.ID
 }
 
 func (c *ChampionshipClass) ResultsForClass(results []*SessionResult) (filtered []*SessionResult) {
 	for _, result := range results {
-		if c.CarInClass(result.CarModel) && result.TotalTime > 0 {
+		if c.DriverInClass(result.DriverGUID, result) && result.TotalTime > 0 {
 			filtered = append(filtered, result)
 		}
 	}
@@ -320,22 +360,7 @@ func (c *ChampionshipClass) ResultsForClass(results []*SessionResult) (filtered 
 	return filtered
 }
 
-// Standings returns the current Driver Standings for the Championship.
-func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*ChampionshipStanding {
-	var out []*ChampionshipStanding
-
-	entrants := make(map[string]*ChampionshipStanding)
-
-	if len(events) > 0 {
-		for _, entrant := range c.Entrants {
-			if entrants[entrant.GUID] == nil {
-				entrants[entrant.GUID] = &ChampionshipStanding{
-					Entrant: entrant,
-				}
-			}
-		}
-	}
-
+func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints func(event *ChampionshipEvent, driverGUID string, points float64)) {
 	for _, event := range events {
 		qualifying, qualifyingOK := event.Sessions[SessionTypeQualifying]
 
@@ -345,10 +370,7 @@ func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*Championsh
 					continue
 				}
 
-				if _, ok := entrants[driver.DriverGUID]; ok {
-					// if an entrant is removed from a championship this can panic, hence the ok check
-					entrants[driver.DriverGUID].Points += float64(c.Points.PolePosition)
-				}
+				givePoints(event, driver.DriverGUID, float64(c.Points.PolePosition))
 			}
 		}
 
@@ -362,13 +384,10 @@ func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*Championsh
 					continue
 				}
 
-				if _, ok := entrants[driver.DriverGUID]; ok {
-					// if an entrant is removed from a championship this can panic, hence the ok check
-					entrants[driver.DriverGUID].Points += c.PointForPos(pos)
+				givePoints(event, driver.DriverGUID, c.PointForPos(pos))
 
-					if fastestLap.DriverGUID == driver.DriverGUID {
-						entrants[driver.DriverGUID].Points += float64(c.Points.BestLap)
-					}
+				if fastestLap.DriverGUID == driver.DriverGUID {
+					givePoints(event, driver.DriverGUID, float64(c.Points.BestLap))
 				}
 			}
 		}
@@ -383,17 +402,45 @@ func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*Championsh
 					continue
 				}
 
-				if _, ok := entrants[driver.DriverGUID]; ok {
-					// if an entrant is removed from a championship this can panic, hence the ok check
-					entrants[driver.DriverGUID].Points += c.PointForPos(pos) * c.Points.SecondRaceMultiplier
+				givePoints(event, driver.DriverGUID, c.PointForPos(pos)*c.Points.SecondRaceMultiplier)
 
-					if fastestLap.DriverGUID == driver.DriverGUID {
-						entrants[driver.DriverGUID].Points += float64(c.Points.BestLap) * c.Points.SecondRaceMultiplier
-					}
+				if fastestLap.DriverGUID == driver.DriverGUID {
+					givePoints(event, driver.DriverGUID, float64(c.Points.BestLap)*c.Points.SecondRaceMultiplier)
 				}
 			}
 		}
 	}
+}
+
+// Standings returns the current Driver Standings for the Championship.
+func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*ChampionshipStanding {
+	var out []*ChampionshipStanding
+
+	entrants := make(map[string]*ChampionshipStanding)
+
+	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64) {
+		if _, ok := entrants[driverGUID]; !ok {
+			var entrant *Entrant
+
+			for _, e := range event.EntryList {
+				if e.GUID == driverGUID {
+					entrant = e
+					break
+				}
+			}
+
+			if entrant == nil {
+				return
+			}
+
+			entrants[driverGUID] = &ChampionshipStanding{
+				Entrant: entrant,
+				Points:  0.0,
+			}
+		}
+
+		entrants[driverGUID].Points += points
+	})
 
 	for _, entrant := range entrants {
 		if entrant.Entrant.Name == "" {
@@ -424,13 +471,28 @@ type TeamStanding struct {
 func (c *ChampionshipClass) TeamStandings(events []*ChampionshipEvent) []*TeamStanding {
 	teams := make(map[string]float64)
 
-	for _, driver := range c.Standings(events) {
-		if _, ok := teams[driver.Entrant.Team]; !ok {
-			teams[driver.Entrant.Team] = driver.Points
-		} else {
-			teams[driver.Entrant.Team] += driver.Points
+	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64) {
+		var team string
+
+		// find the team the driver was in for this race.
+		for _, session := range event.Sessions {
+			if session.Results != nil {
+				for _, car := range session.Results.Cars {
+					if car.Driver.GUID == driverGUID {
+						team = car.Driver.Team
+						break
+					}
+				}
+				break
+			}
 		}
-	}
+
+		if _, ok := teams[team]; !ok {
+			teams[team] = points
+		} else {
+			teams[team] += points
+		}
+	})
 
 	var out []*TeamStanding
 

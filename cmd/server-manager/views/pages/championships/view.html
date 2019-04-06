@@ -16,8 +16,9 @@
         {{ end }}
 
         <ul class="nav nav-tabs" role="tablist">
+
             <li class="nav-item">
-                <a class="nav-link active" id="drivers-tab" data-toggle="tab" href="#drivers" role="tab"
+                <a class="nav-link {{ if gt $championship.Progress 0.0 }}active{{ end }}" id="drivers-tab" data-toggle="tab" href="#drivers" role="tab"
                    aria-controls="drivers" aria-selected="true">Driver Standings</a>
             </li>
             <li class="nav-item">
@@ -25,77 +26,91 @@
                    aria-selected="false">Team Standings</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" id="points-tab" data-toggle="tab" href="#points" role="tab" aria-controls="points"
+                <a class="nav-link {{ if eq $championship.Progress 0.0 }}active{{ end }}" id="points-tab" data-toggle="tab" href="#points" role="tab" aria-controls="points"
                    aria-selected="false">Points Reference</a>
             </li>
         </ul>
         <div class="tab-content">
-            <div class="tab-pane fade show active" id="drivers" role="tabpanel" aria-labelledby="drivers-tab">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped">
-                        <tr>
-                            {{ if $championship.IsMultiClass }}<th>Class</th>{{ end }}
-                            <th>#</th>
-                            <th>Driver</th>
-                            <th>Team</th>
-                            <th>Points</th>
-                        </tr>
+            <div class="tab-pane fade {{ if gt $championship.Progress 0.0 }}show active{{ end }}" id="drivers" role="tabpanel" aria-labelledby="drivers-tab">
+
+                {{ if gt $championship.Progress 0.0 }}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <tr>
+                                {{ if $championship.IsMultiClass }}<th>Class</th>{{ end }}
+                                <th>#</th>
+                                <th>Driver</th>
+                                <th>Team</th>
+                                <th>Points</th>
+                            </tr>
 
 
-                        {{ range $classIndex, $class := $championship.Classes }}
-                            {{ $entrants := ($class.Standings $championship.Events) }}
+                            {{ range $classIndex, $class := $championship.Classes }}
+                                {{ $entrants := ($class.Standings $championship.Events) }}
 
-                            {{ range $i, $entrant := $entrants }}
-                                <tr {{ if $championship.IsMultiClass }}style="color: white; background: {{ classColor $classIndex }}"{{ end }}>
-                                    {{ if $championship.IsMultiClass }}
-                                        {{ if eq $i 0 }}
-                                            <td rowspan="{{ len $entrants }}">{{ $class.Name }}</td>
+                                {{ range $i, $entrant := $entrants }}
+                                    <tr {{ if $championship.IsMultiClass }}style="color: white; background: {{ classColor $classIndex }}"{{ end }}>
+                                        {{ if $championship.IsMultiClass }}
+                                            {{ if eq $i 0 }}
+                                                <td rowspan="{{ len $entrants }}">{{ $class.Name }}</td>
+                                            {{ end }}
                                         {{ end }}
-                                    {{ end }}
-                                    <td>{{ add $i 1 }}</td>
-                                    <td>{{ $entrant.Entrant.Name }}</td>
-                                    <td>{{ $entrant.Entrant.Team }}</td>
-                                    <td>{{ $entrant.Points }}</td>
-                                </tr>
+                                        <td>{{ add $i 1 }}</td>
+                                        <td>{{ $entrant.Entrant.Name }}</td>
+                                        <td>{{ $entrant.Entrant.Team }}</td>
+                                        <td>{{ $entrant.Points }}</td>
+                                    </tr>
+                                {{ end }}
                             {{ end }}
-                        {{ end }}
-                    </table>
-                </div>
+                        </table>
+                    </div>
+                {{ else }}
+                    <div class="text-center mt-3 mb-3">
+                        <p>Complete an Event to see Driver Standings here!</p>
+                    </div>
+                {{ end }}
             </div>
 
             <div class="tab-pane fade" id="teams" role="tabpanel" aria-labelledby="teams-tab">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped">
-                        <tr>
-                            {{ if $championship.IsMultiClass }}<th>Class</th>{{ end }}
-                            <th>#</th>
-                            <th>Team</th>
-                            <th>Points</th>
-                        </tr>
 
-                        {{ range $classIndex, $class := $championship.Classes }}
-                            {{ $teamStandings := ($class.TeamStandings $championship.Events) }}
+                {{ if gt $championship.Progress 0.0 }}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <tr>
+                                {{ if $championship.IsMultiClass }}<th>Class</th>{{ end }}
+                                <th>#</th>
+                                <th>Team</th>
+                                <th>Points</th>
+                            </tr>
 
-                            {{ range $i, $team := $teamStandings }}
-                                <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
+                            {{ range $classIndex, $class := $championship.Classes }}
+                                {{ $teamStandings := ($class.TeamStandings $championship.Events) }}
 
-                                    {{ if $championship.IsMultiClass }}
-                                        {{ if eq $i 0 }}
-                                            <td rowspan="{{ len $teamStandings }}">{{ $class.Name }}</td>
+                                {{ range $i, $team := $teamStandings }}
+                                    <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
+
+                                        {{ if $championship.IsMultiClass }}
+                                            {{ if eq $i 0 }}
+                                                <td rowspan="{{ len $teamStandings }}">{{ $class.Name }}</td>
+                                            {{ end }}
                                         {{ end }}
-                                    {{ end }}
-                                    <td>{{ add $i 1 }}</td>
+                                        <td>{{ add $i 1 }}</td>
 
-                                    <td>{{ $team.Team }}</td>
-                                    <td>{{ $team.Points }}</td>
-                                </tr>
+                                        <td>{{ $team.Team }}</td>
+                                        <td>{{ $team.Points }}</td>
+                                    </tr>
+                                {{ end }}
                             {{ end }}
-                        {{ end }}
-                    </table>
-                </div>
+                        </table>
+                    </div>
+                {{ else }}
+                    <div class="text-center mt-3 mb-3">
+                        <p>Complete an Event to see Team Standings here!</p>
+                    </div>
+                {{ end }}
             </div>
 
-            <div class="tab-pane fade" id="points" role="tabpanel" aria-labelledby="points-tab">
+            <div class="tab-pane fade {{ if eq $championship.Progress 0.0 }}show active{{ end }}" id="points" role="tabpanel" aria-labelledby="points-tab">
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped">
                         <tr>
@@ -143,47 +158,47 @@
             </div>
         </div>
 
-        <hr>
+        {{ if gt $championship.Progress 0.0 }}
+            <hr>
 
-        <div class="container-fluid">
-            <div class="row flex-row flex-nowrap pb-3" style="overflow-x: auto;">
+            <div class="container-fluid">
+                <div class="row flex-row flex-nowrap pb-3" style="overflow-x: auto;">
 
-                {{ range $classIndex, $class := $championship.Classes }}
-                    {{ $entrants := ($class.Standings $championship.Events) }}
+                    {{ range $classIndex, $class := $championship.Classes }}
+                        {{ $entrants := ($class.Standings $championship.Events) }}
 
-                    {{ range $i, $entrant := $entrants }}
+                        {{ range $i, $entrant := $entrants }}
+                            <div class="col-6 col-lg-3 col-md-3 col-sm-6 entrant-car">
+                                <div class="card card-block" {{ if $championship.IsMultiClass }}style="color: white; background: {{ classColor $classIndex }}"{{ end }}>
+                                    <img src="{{ with $entrant.Entrant.Skin }}{{ carSkinURL $entrant.Entrant.Model $entrant.Entrant.Skin }}{{ else }}/static/img/no-preview-car.png{{ end }}"
+                                         alt="Car Skin"
+                                         class="card-img-top"
+                                    >
+                                    <div class="card-body p-1 text-center">
+                                        {{ if $championship.IsMultiClass }}
+                                            <small>{{ $class.Name }}</small><br>
+                                        {{ end }}
+                                        {{ add $i 1 }}{{ ordinal (add $i 1) }} Place
 
-                        <div class="col-6 col-lg-3 col-md-3 col-sm-6 entrant-car">
-                            <div class="card card-block" {{ if $championship.IsMultiClass }}style="color: white; background: {{ classColor $classIndex }}"{{ end }}>
-                                <img src="{{ with $entrant.Entrant.Skin }}{{ carSkinURL $entrant.Entrant.Model $entrant.Entrant.Skin }}{{ else }}/static/img/no-preview-car.png{{ end }}"
-                                     alt="Car Skin"
-                                     class="card-img-top"
-                                >
-                                <div class="card-body p-1 text-center">
-                                    {{ if $championship.IsMultiClass }}
-                                        <small>{{ $class.Name }}</small><br>
-                                    {{ end }}
-                                    {{ add $i 1 }}{{ ordinal (add $i 1) }} Place
-
-                                    <p class="mb-0">
-                                        <small>
-                                            {{ $entrant.Entrant.Name }}<br>
-                                            {{ $entrant.Entrant.Team }}
-                                        </small>
-                                    </p>
+                                        <p class="mb-0">
+                                            <small>
+                                                {{ $entrant.Entrant.Name }}<br>
+                                                {{ $entrant.Entrant.Team }}
+                                            </small>
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        {{ end }}
                     {{ end }}
-                {{ end }}
-
+                </div>
             </div>
-        </div>
+        {{ end }}
 
         <hr>
 
         {{ with $championship.Info }}
-            <div class="">
+            <div>
                 {{ $championship.Info }}
             </div>
 
@@ -197,31 +212,30 @@
                 <a href="/championship/{{ $championship.ID.String }}/edit" class="btn btn-warning">Edit Championship</a>
             {{ end }}
             <a href="/championship/{{ $championship.ID.String }}/export" class="btn btn-primary">Export Championship</a>
-        </div>
 
-        <h2>Events</h2>
-
-        <div class="btn-group float-right" role="group" aria-label="Button group with nested dropdown">
-            <div class="btn-group" role="group">
-                <button id="btnGroupDrop1" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Hide/Show
-                </button>
-                <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                    <a class="dropdown-item text-success" href="#" id="hide-completed">Completed</a>
-                    <a class="dropdown-item text-success" href="#" id="hide-not-completed">Not Completed</a>
+            <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
+                <div class="btn-group" role="group">
+                    <button id="btnGroupDrop1" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Hide/Show
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                        <a class="dropdown-item text-success" href="#" id="hide-completed">Completed</a>
+                        <a class="dropdown-item text-success" href="#" id="hide-not-completed">Not Completed</a>
+                    </div>
                 </div>
-            </div>
 
-            <button type="button" class="btn btn-secondary" id="switch-order">
+                <button type="button" class="btn btn-secondary" id="switch-order">
                 <span class="fa-stack-override fa-1x">
                   <i class="fas fa-sort-up fa-stack-1x text-dark"></i>
                   <i class="fas fa-sort-down fa-stack-1x text-success"></i>
                 </span>
-            </button>
+                </button>
+            </div>
         </div>
 
-        <p>This Championship currently has {{ len $championship.Events }} events configured.</p>
+        <h2>Events</h2>
 
+        <p>This Championship currently has {{ len $championship.Events }} events configured.</p>
 
         <div class="clearfix"></div>
 
