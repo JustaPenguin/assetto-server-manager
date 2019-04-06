@@ -142,6 +142,10 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	for i := 0; i < len(r.Form["ClassName"]); i++ {
 		class := NewChampionshipClass(r.Form["ClassName"][i])
 
+		if classID := r.Form["ClassID"][i]; classID != "" && classID != uuid.Nil.String() {
+			class.ID = uuid.MustParse(classID)
+		}
+
 		numEntrantsForClass := formValueAsInt(r.Form["EntryList.NumEntrants"][i])
 
 		class.Entrants, err = cm.BuildEntryList(r, previousNumEntrants, numEntrantsForClass)
@@ -646,8 +650,8 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			return
 		}
 
-		// Update the old results json file with championship ID, required for applying penalties properly
-		results.ChampionshipID = cm.activeChampionship.ChampionshipID.String()
+		// Update the old results json file with more championship information, required for applying penalties properly
+		championship.EnhanceResults(results)
 		err = saveResults(filename, results)
 
 		if err != nil {
