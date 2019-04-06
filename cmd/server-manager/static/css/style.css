@@ -1,6 +1,7 @@
 body {
     padding-top: 60px;
     font-size: 1rem !important;
+    overflow-y: scroll;
 }
 
 @media screen and (min-width: 400px) {
@@ -92,6 +93,22 @@ span[data-toggle=tooltip] {
         padding-left: 0 !important;
         width: 100%;
     }
+}
+
+#trackImage {
+    border-radius: 7.5px;
+    width: 100%;
+    max-width: 355px;
+}
+
+#weatherImage {
+    border-radius: 7.5px;
+    width: 100%;
+    max-width: 355px;
+}
+
+.entryListCarPreview {
+	border-radius: 7.5px;
 }
 
 .home-race-info .race-info, .home-race-info .race-info small {
@@ -202,7 +219,11 @@ a.detailed-results:hover {
 }
 
 .live-events {
-    width: 280px;
+    width: 220px;
+}
+
+.d-contents {
+    display: contents;
 }
 
 .custom-race-actions .btn:not(.dropdown-toggle-split) {
@@ -244,7 +265,12 @@ a.detailed-results:hover {
 }
 
 .table-custom-race tr td:last-child {
-    max-width: 110px;
+    max-width: 160px;
+    text-align: center;
+}
+
+.table-championship tr td:last-child {
+    max-width: 270px;
     text-align: center;
 }
 
@@ -274,8 +300,54 @@ footer a {
     }
 }
 
+#road-temp-wrapper {
+    display: block;
+    width: 45px;
+    height: 45px;
+    border-radius: 10px;
+    cursor: default;
+}
+
+#road-temp {
+    width: 100%;
+    height: 100%;
+}
+
+#road-temp-text {
+    display: block;
+    position: absolute;
+    margin: 7px;
+    margin-top: 15px;
+    font-weight: bold;
+    color: white;
+}
+
+#ambient-temp-wrapper {
+    display: block;
+    width: 45px;
+    height: 45px;
+    border-radius: 10px;
+    cursor: default;
+}
+
+#ambient-temp {
+    width: 100%;
+    height: 100%;
+}
+
+#ambient-temp-text {
+    display: block;
+    position: absolute;
+    margin: 13px;
+    margin-left: 10px;
+    font-size: 80%;
+    font-weight: bold;
+    color: white;
+}
+
 #map {
     position: relative;
+    border-radius: 7.5px;
     background-color: rgba(0,0,0,0.125);
 }
 
@@ -288,13 +360,6 @@ footer a {
     transform: rotate(-90deg) translate(-50%, -50%);
 
     transform-origin: top left;
-}
-
-.map-container {
-    border-top: 1px solid rgba(0, 0, 0, 0.125);
-    margin-top: 15px;
-    padding-top: 15px;
-    margin-bottom: 15px;
 }
 
 .dot {
@@ -312,10 +377,25 @@ footer a {
     position: relative;
     top: 10px;
     left: 10px;
+    background: rgba(0, 0, 0, 0.65);
+    color: white;
+    border-radius: 4px;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    padding-left: 4px;
+    padding-right: 4px;
+    font-weight: bold;
+}
+
+.dot .info {
+    position: relative;
+    top: 12px;
+    left: 10px;
+    min-width: 80px;
     background: rgba(0, 0, 0, 0.45);
     color: white;
     border-radius: 4px;
     font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 80%;
     padding-left: 4px;
     padding-right: 4px;
     font-weight: bold;
@@ -334,6 +414,27 @@ td .dot {
     transform: none;
     display: inline-block;
     margin-right: 10px;
+}
+
+td .dot-inactive {
+    position: relative;
+    transform: none;
+    display: inline-block;
+    margin-right: 10px;
+    border: 2px solid black;
+}
+
+.rpm-outer {
+    width: 100%;
+    height: 8px;
+    margin-bottom: 4px;
+    border-radius: 10px;
+    background: lightgrey;
+}
+
+.rpm-inner {
+    border-radius: 10px;
+    height: 8px;
 }
 
 .collision {
@@ -373,4 +474,37 @@ td .dot {
     100% {
         opacity: 0;
     }
+}
+
+.custom-file input {
+    cursor: pointer !important;
+}
+
+.custom-file-label {
+    height: calc(2.0625rem + 5px) !important;
+}
+
+.custom-file-label:after {
+    height: 2.225rem !important;
+}
+
+.entrant-car {
+    width: 18rem;
+    display: inline-block;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+}
+
+.entrant-car:first-child {
+    padding-left: 0 !important;
+}
+.entrant-car:last-child {
+    padding-right: 0 !important;
+}
+
+.fa-stack-override {
+    display: inline-block;
+    height: 0.7em;
+    position: relative;
+    width: 1.4em;
 }

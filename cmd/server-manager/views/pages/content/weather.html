@@ -11,9 +11,12 @@
                     the whole folder. The upload process will only take the files that the server requires, and so should
                     not take too long.</p>
 
-                <p class="card-text mb-0">First choose the correct weather folder (or containing folder) using the Choose a Folder
+                <p class="card-text ">First choose the correct weather folder (or containing folder) using the Choose a Folder
                     button below then use the Upload Weather Preset button to upload your weather presets if the preview information appears
                     correctly.</p>
+
+                <p class="card-text mb-0">The drag and drop input accepts a single weather folder, multiple weather folders
+                    or a weather folder containing multiple weathers!</p>
 
                 <form class="d-inline">
                     <div class="mt-3 mb-3">
@@ -24,7 +27,7 @@
                         </div>
 
                         <div id="drop-zone" ondrop="handleWeatherDropFiles(event);" ondragover="dragOverHandler(event);" ondragleave="dragOutHandler(event);"
-                             class="ml-2 mr-2 drop-zone d-inline-block">Or Drag & Drop a Folder Here</div>
+                             class="ml-2 mr-2 drop-zone d-inline-block">Or Drag & Drop Folder(s) Here</div>
 
                         <div id="upload-button"></div>
                     </div>
@@ -47,7 +50,7 @@
             <th>Weather Key</th>
             <th>Weather Name</th>
 
-            {{ if $writeAccess }}
+            {{ if DeleteAccess }}
                 <th class="text-center">Delete</th>
             {{ end }}
         </tr>
@@ -60,7 +63,7 @@
                     {{ $weather }}
                 </td>
 
-                {{ if $writeAccess }}
+                {{ if DeleteAccess }}
                     <td class="text-center">
                         <a href="{{ print "/weather/delete/" $i }}"><i class="fas fa-trash fa text-danger"></i></a>
                     </td>

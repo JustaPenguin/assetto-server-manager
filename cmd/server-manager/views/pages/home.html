@@ -3,7 +3,12 @@
 {{ define "content" }}
     {{ with .RaceDetails }}
         <div class="card">
-            <h5 class="card-header">Event in Progress</h5>
+            {{ if eq $.server_event_type "CHAMPIONSHIP" }}
+                <h5 class="card-header">Championship Event in Progress</h5>
+            {{ else }}
+                <h5 class="card-header">Event in Progress</h5>
+            {{ end }}
+
             <div class="card-body row home-race-info">
                 <div class="col-md-8">
 
@@ -15,14 +20,32 @@
 
                         {{ if WriteAccess }}
                             <div class="float-right">
-                                <a href="/process/restart" class="btn btn-warning">Restart Event</a>
-                                <a href="/process/stop" class="btn btn-danger">Stop Event</a>
+                                <a
+                                    href="/process/restart"
+                                    class="btn btn-warning"
+
+                                    {{ if eq $.server_event_type "CHAMPIONSHIP" }}
+                                        onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                    {{ end }}
+                                >
+                                    Restart Event
+                                </a>
+                                <a
+                                    href="/process/stop"
+                                    class="btn btn-danger"
+
+                                    {{ if eq $.server_event_type "CHAMPIONSHIP" }}
+                                        onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                    {{ end }}
+                                >
+                                    Stop Event
+                                </a>
                             </div>
                         {{ end }}
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <img class="img img-fluid pl-2"
+                    <img class="img img-fluid ml-2"
                          id="trackImage"
                          src="/content/tracks/{{ .RaceConfig.Track }}/ui{{ with .RaceConfig.TrackLayout }}/{{.}}{{ end }}/preview.png"
                          alt="{{ .RaceConfig.Track }} {{ .RaceConfig.TrackLayout }}"
@@ -94,7 +117,7 @@
             <a class="card" href="/tracks">
                 <div class="card-body text-center">
                     <h1 class="text-center"><i class="fas fa-road fa-2x"></i></h1>
-                    <h2>Manage Tracks</h2>
+                    <h2>Tracks</h2>
                 </div>
             </a>
         </div>
@@ -103,7 +126,7 @@
             <a class="card" href="/cars">
                 <div class="card-body text-center">
                     <h1 class="text-center"><i class="fas fa-car fa-2x"></i></h1>
-                    <h2>Manage Cars</h2>
+                    <h2>Cars &amp; Setups</h2>
                 </div>
             </a>
         </div>
@@ -112,11 +135,21 @@
             <a class="card" href="/weather">
                 <div class="card-body text-center">
                     <h1 class="text-center"><i class="fas fa-cloud-moon fa-2x"></i></h1>
-                    <h2>Manage Weather</h2>
+                    <h2>Weather</h2>
                 </div>
             </a>
         </div>
 
+        {{ if AdminAccess }}
+            <div class="col-md-6 col-lg-4 mt-4">
+                <a class="card" href="/accounts">
+                    <div class="card-body text-center">
+                        <h1 class="text-center"><i class="fas fa-user fa-2x"></i></h1>
+                        <h2>Accounts</h2>
+                    </div>
+                </a>
+            </div>
+        {{ end }}
     </div>
 
     <div class="clearfix"></div>

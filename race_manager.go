@@ -6,6 +6,9 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
+	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
@@ -21,8 +24,7 @@ import (
 )
 
 var (
-	raceManager       *RaceManager
-	serverStoppedChan = make(chan struct{})
+	raceManager *RaceManager
 
 	ErrCustomRaceNotFound = errors.New("servermanager: custom race not found")
 )
@@ -31,24 +33,60 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func SetupRaceManager(store RaceStore) {
+func InitWithStore(store Store) {
 	raceManager = NewRaceManager(store)
 	championshipManager = NewChampionshipManager(raceManager)
-	AssettoProcess = &AssettoServerProcess{doneCh: serverStoppedChan}
+	accountManager = NewAccountManager(store)
+	AssettoProcess = NewAssettoServerProcess()
+
+	err := raceManager.raceStore.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Could not load server account options")
+	}
+
+	mapHub = newLiveMapHub()
+	go mapHub.run()
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+
+	go func() {
+		for range c {
+			// ^C, handle it
+			if AssettoProcess.IsRunning() {
+				if AssettoProcess.EventType() == EventTypeChampionship {
+					if err := championshipManager.StopActiveEvent(); err != nil {
+						logrus.WithError(err).Errorf("Error stopping event")
+					}
+				} else {
+					if err := AssettoProcess.Stop(); err != nil {
+						logrus.WithError(err).Errorf("Could not stop server")
+					}
+				}
+
+				if p, ok := AssettoProcess.(*AssettoServerProcess); ok {
+					p.stopChildProcesses()
+				}
+			}
+
+			os.Exit(0)
+		}
+	}()
 }
 
 type RaceManager struct {
 	currentRace      *ServerConfig
 	currentEntryList EntryList
 
-	raceStore RaceStore
+	raceStore Store
 
 	udpServerConn *udp.AssettoServerUDP
 
 	mutex sync.RWMutex
 }
 
-func NewRaceManager(raceStore RaceStore) *RaceManager {
+func NewRaceManager(raceStore Store) *RaceManager {
 	return &RaceManager{
 		raceStore: raceStore,
 	}
@@ -102,11 +140,12 @@ func (rm *RaceManager) UDPCallback(message udp.Message) {
 	// recover from panics that may occur while handling UDP messages
 	defer func() {
 		if r := recover(); r != nil {
-			logrus.Errorf("recovered from panic: %s", r)
+			fmt.Fprintf(logMultiWriter, "\n\nrecovered from panic: %v\n\n", r)
+			fmt.Fprintf(logMultiWriter, string(debug.Stack()))
 		}
 	}()
 
-	if config.LiveMap.IsEnabled() {
+	if config != nil && config.LiveMap.IsEnabled() {
 		go LiveMapCallback(message)
 	}
 
@@ -115,7 +154,9 @@ func (rm *RaceManager) UDPCallback(message udp.Message) {
 	LoopCallback(message)
 }
 
-func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool) error {
+var ErrEntryListTooBig = errors.New("servermanager: EntryList exceeds MaxClients setting")
+
+func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool, championshipEvent bool) error {
 	rm.mutex.Lock()
 	defer rm.mutex.Unlock()
 
@@ -137,6 +178,19 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 
 	config.GlobalServerConfig.UDPPluginAddress = config.GlobalServerConfig.FreeUDPPluginAddress
 	config.GlobalServerConfig.UDPPluginLocalPort = config.GlobalServerConfig.FreeUDPPluginLocalPort
+
+	if MaxClientsOverride > 0 {
+		config.CurrentRaceConfig.MaxClients = MaxClientsOverride
+
+		if len(entryList) > MaxClientsOverride {
+			return ErrEntryListTooBig
+		}
+	}
+
+	if !championshipEvent && championshipManager != nil {
+		logrus.Debugf("Starting a non championship event. Setting activeChampionship to nil")
+		championshipManager.activeChampionship = nil
+	}
 
 	err = config.Write()
 
@@ -268,6 +322,10 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		numPitboxes = quickRace.CurrentRaceConfig.MaxClients
 	}
 
+	if numPitboxes > MaxClientsOverride {
+		numPitboxes = MaxClientsOverride
+	}
+
 	allCars, err := ListCars()
 
 	if err != nil {
@@ -285,15 +343,16 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 			skin = carMap[model][rand.Intn(len(carMap[model]))]
 		}
 
-		entryList.Add(&Entrant{
-			Model: model,
-			Skin:  skin,
-		})
+		e := NewEntrant()
+		e.Model = model
+		e.Skin = skin
+
+		entryList.Add(e)
 	}
 
 	quickRace.CurrentRaceConfig.MaxClients = numPitboxes
 
-	return rm.applyConfigAndStart(quickRace, entryList, false)
+	return rm.applyConfigAndStart(quickRace, entryList, false, false)
 }
 
 func formValueAsInt(val string) int {
@@ -341,17 +400,28 @@ func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (Entry
 			}
 		}
 
-		entryList.Add(&Entrant{
-			Name:  r.Form["EntryList.Name"][i],
-			Team:  r.Form["EntryList.Team"][i],
-			GUID:  r.Form["EntryList.GUID"][i],
-			Model: model,
-			Skin:  skin,
-			// Despite having the option for SpectatorMode, the server does not support it, and panics if set to 1
-			// SpectatorMode: formValueAsInt(r.Form["EntryList.Spectator"][i]),
-			Ballast:    formValueAsInt(r.Form["EntryList.Ballast"][i]),
-			Restrictor: formValueAsInt(r.Form["EntryList.Restrictor"][i]),
-		})
+		e := NewEntrant()
+
+		if r.Form["EntryList.InternalUUID"][i] != "" || r.Form["EntryList.InternalUUID"][i] != uuid.Nil.String() {
+			internalUUID, err := uuid.Parse(r.Form["EntryList.InternalUUID"][i])
+
+			if err == nil {
+				e.InternalUUID = internalUUID
+			}
+		}
+
+		e.Name = r.Form["EntryList.Name"][i]
+		e.Team = r.Form["EntryList.Team"][i]
+		e.GUID = r.Form["EntryList.GUID"][i]
+		e.Model = model
+		e.Skin = skin
+		// Despite having the option for SpectatorMode, the server does not support it, and panics if set to 1
+		// SpectatorMode: formValueAsInt(r.Form["EntryList.Spectator"][i]),
+		e.Ballast = formValueAsInt(r.Form["EntryList.Ballast"][i])
+		e.Restrictor = formValueAsInt(r.Form["EntryList.Restrictor"][i])
+		e.FixedSetup = r.Form["EntryList.FixedSetup"][i]
+
+		entryList.Add(e)
 	}
 
 	return entryList, nil
@@ -421,6 +491,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		StartRule:                 formValueAsInt(r.FormValue("StartRule")),
 		MaxClients:                formValueAsInt(r.FormValue("MaxClients")),
 		RaceExtraLap:              formValueAsInt(r.FormValue("RaceExtraLap")),
+		MaxContactsPerKilometer:   formValueAsInt(r.FormValue("MaxContactsPerKilometer")),
 	}
 
 	if isSol {
@@ -544,9 +615,8 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 			dateString := r.FormValue("CustomRaceScheduled")
 			timeString := r.FormValue("CustomRaceScheduledTime")
 
-			dateTimeString := dateString + "-" + timeString
-
-			date, err := time.Parse("2006-02-01-15:04", dateTimeString)
+			// Parse time in correct time zone
+			date, err := time.ParseInLocation("2006-01-02-15:04", dateString+"-"+timeString, time.Local)
 
 			if err != nil {
 				return err
@@ -565,8 +635,48 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 			return nil
 		}
 
-		return rm.applyConfigAndStart(completeConfig, entryList, false)
+		return rm.applyConfigAndStart(completeConfig, entryList, false, false)
 	}
+}
+
+// applyCurrentRaceSetupToOptions takes current values in race which require more detailed configuration
+// and applies them to the template opts.
+func (rm *RaceManager) applyCurrentRaceSetupToOptions(opts map[string]interface{}, race CurrentRaceConfig) error {
+	tyres, err := ListTyres()
+
+	if err != nil {
+		return err
+	}
+
+	deselectedTyres := make(map[string]bool)
+
+	for _, car := range varSplit(race.Cars) {
+		tyresForCar, ok := tyres[car]
+
+		if !ok {
+			continue
+		}
+
+		for carTyre := range tyresForCar {
+			found := false
+
+			for _, t := range varSplit(race.LegalTyres) {
+				if carTyre == t {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				deselectedTyres[carTyre] = true
+			}
+		}
+	}
+
+	opts["Tyres"] = tyres
+	opts["DeselectedTyres"] = deselectedTyres
+
+	return nil
 }
 
 // BuildRaceOpts builds a quick race form
@@ -578,12 +688,6 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 	}
 
 	tracks, err := ListTracks()
-
-	if err != nil {
-		return nil, err
-	}
-
-	tyres, err := ListTyres()
 
 	if err != nil {
 		return nil, err
@@ -635,29 +739,10 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		return nil, err
 	}
 
-	deselectedTyres := make(map[string]bool)
+	fixedSetups, err := ListSetups()
 
-	for _, car := range varSplit(race.CurrentRaceConfig.Cars) {
-		tyresForCar, ok := tyres[car]
-
-		if !ok {
-			continue
-		}
-
-		for carTyre := range tyresForCar {
-			found := false
-
-			for _, t := range varSplit(race.CurrentRaceConfig.LegalTyres) {
-				if carTyre == t {
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				deselectedTyres[carTyre] = true
-			}
-		}
+	if err != nil {
+		return nil, err
 	}
 
 	solIsInstalled := false
@@ -677,23 +762,30 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		}
 	}
 
-	return map[string]interface{}{
+	opts := map[string]interface{}{
 		"CarOpts":           cars,
 		"TrackOpts":         tracks,
 		"AvailableSessions": AvailableSessions,
-		"Tyres":             tyres,
-		"DeselectedTyres":   deselectedTyres,
 		"Weather":           weather,
 		"SolIsInstalled":    solIsInstalled,
 		"Current":           race.CurrentRaceConfig,
 		"CurrentEntrants":   entrants,
 		"PossibleEntrants":  possibleEntrants,
+		"FixedSetups":       fixedSetups,
 		"IsChampionship":    false, // this flag is overridden by championship setup
 		"IsEditing":         isEditing,
 		"EditingID":         templateIDForEditing,
 		"CustomRaceName":    customRaceName,
 		"SurfacePresets":    DefaultTrackSurfacePresets,
-	}, nil
+	}
+
+	err = rm.applyCurrentRaceSetupToOptions(opts, race.CurrentRaceConfig)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return opts, nil
 }
 
 const maxRecentRaces = 30
@@ -738,6 +830,22 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*
 	return filteredRecent, starred, looped, scheduled, nil
 }
 
+func (rm *RaceManager) SaveEntrantsForAutoFill(entryList EntryList) error {
+	for _, entrant := range entryList {
+		if entrant.Name == "" {
+			continue // only save entrants that have a name
+		}
+
+		err := rm.raceStore.UpsertEntrant(*entrant)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, entryList EntryList, starred bool) (*CustomRace, error) {
 	if name == "" {
 		var trackLayout string
@@ -754,16 +862,8 @@ func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, ent
 		)
 	}
 
-	for _, entrant := range entryList {
-		if entrant.Name == "" {
-			continue // only save entrants that have a name
-		}
-
-		err := rm.raceStore.UpsertEntrant(*entrant)
-
-		if err != nil {
-			return nil, err
-		}
+	if err := rm.SaveEntrantsForAutoFill(entryList); err != nil {
+		return nil, err
 	}
 
 	race := &CustomRace{
@@ -800,7 +900,7 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 		//cfg.CurrentRaceConfig.LoopMode = 1
 	}
 
-	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart)
+	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart, false)
 }
 
 func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string) error {
@@ -808,6 +908,13 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string) 
 
 	if err != nil {
 		return err
+	}
+
+	race.Scheduled = date
+
+	// if there is an existing schedule timer for this event stop it
+	if timer := CustomRaceStartTimers[race.UUID.String()]; timer != nil {
+		timer.Stop()
 	}
 
 	if action == "add" {
@@ -822,16 +929,9 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string) 
 				logrus.Errorf("couldn't start scheduled race, err: %s", err)
 			}
 		})
-
-		return raceManager.raceStore.UpsertCustomRace(race)
-
-	} else {
-		// remove scheduled event on date
-		race.Scheduled = date
-		CustomRaceStartTimers[race.UUID.String()].Stop()
-
-		return raceManager.raceStore.UpsertCustomRace(race)
 	}
+
+	return raceManager.raceStore.UpsertCustomRace(race)
 }
 
 func (rm *RaceManager) DeleteCustomRace(uuid string) error {
@@ -899,4 +999,12 @@ func (rm *RaceManager) LoadServerOptions() (*GlobalServerConfig, error) {
 	serverOpts.FreeUDPPluginLocalPort = udpListenPort
 
 	return serverOpts, nil
+}
+
+func (rm *RaceManager) GetLiveFrames() ([]string, error) {
+	return rm.raceStore.ListPrevFrames()
+}
+
+func (rm *RaceManager) UpsertLiveFrames(links []string) error {
+	return rm.raceStore.UpsertLiveFrames(links)
 }

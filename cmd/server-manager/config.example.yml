@@ -38,6 +38,9 @@ steam:
   # where to install assetto corsa server
   install_path: assetto
 
+  # the path to the executable to run. relative to the install_path by default
+  executable_path: acServer
+
   # set this to true to force an install every time the server manager is loaded
   force_update: false
 
@@ -48,8 +51,9 @@ steam:
 ################################################################################
 http:
   # hostname is the hostname the HTTP server should listen on.
-  # change 'localhost' to '0.0.0.0' if you want server manager to be available on the web.
-  hostname: localhost:8772
+  # change '0.0.0.0' to 'localhost' if you don't want server manager to be
+  # available on the web.
+  hostname: 0.0.0.0:8772
   # session key is used to encrypt the http session
   session_key: RANDOMLY_GENERATE_THIS
 
@@ -73,36 +77,17 @@ store:
 
 ################################################################################
 #
-#  user management - configure admins, writers and readers
+#  user management - this is now mostly done via the web interface.
 #
 ################################################################################
-# users are split into three groups:
-# - 'admin' - edit server settings. full permissions.
-# - 'write' - edit races, add content, edit championships, and most importantly
-#             DELETE races. can't see or edit server settings though.
-# - 'read'  - view races, content, championships, results. they can't change or
-#             delete anything though.
-#
-# specify a username, and md5 hashed password for the user.
-# you can generate password hashes using sites such as:
-# https://www.md5hashgenerator.com/
-#
-# add as many users as you like.
-users:
-  accounts:
-  - name: superadmin
-    group: admin
-    password: 21232f297a57a5a743894a0e4a801fc3 # 'admin' - DEFINITELY CHANGE THIS
-  - name: moderator
-    group: write
-    password: 5f4dcc3b5aa765d61d8327deb882cf99 # 'password' - CHANGE THIS
-  - name: spectator
-    group: read
-    password: 4f321b12ec27a87579ae91ea3287cb33 # 'spectate' - CHANGE THIS
-
-  # set this to true to allow ANYONE to have read permissions
-  read_open: false
-
+accounts:
+  # admin password override is used to override the admin password in the case
+  # that you have forgotten it. set it to e.g. 'password' and log in with:
+  # username: admin
+  # password: password
+  # and you will be prompted to change your admin password back to something you
+  # can remember
+  admin_password_override:
 
 ################################################################################
 #
@@ -113,3 +98,39 @@ live_map:
   # how often to refresh the map data in milliseconds
   # set this to 0 to disable live map.
   refresh_interval_ms: 67
+
+
+################################################################################
+#
+#  server config - configure plugins, e.g. stracker here.
+#
+################################################################################
+server:
+  # list of commands to run on server start and kill on server stop. this should
+  # contain the full command with arguments to run the given program.
+  #
+  # I envisage a lot of people wishing to use stracker with this, so i've tried
+  # to provide a couple of ideas of what this might look like below.
+  #
+  # !!! please also note that your stracker.ini must have the following lines set
+  # in the ACPLUGIN settings: !!!
+  #   rcvPort = 12002
+  #   sendPort = 11002
+  #
+  # where:
+  #   - rcvPort equals the port from the UDP Plugin Address in Server Options
+  #   - sendPort equals the value of the UDP Plugin Local Port in Server Options
+  #
+  # otherwise, stracker will not be able to connect to the server manager
+  #
+  # you can of course add your own commands (whatever you like!) here.
+  # 
+  # this assumes that you have installed stracker into a folder called "stracker"
+  # next to the server-manager executable.
+  run_on_start:
+    # uncomment the line below for stracker on Linux
+    # - ./stracker/stracker_linux_x86/stracker --stracker_ini ./stracker/stracker.ini
+
+    # uncomment the line below for stracker on Windows
+    # - ./stracker/stracker.exe --stracker_ini ./stracker/stracker.ini
+

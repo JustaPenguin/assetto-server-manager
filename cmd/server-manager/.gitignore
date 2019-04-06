@@ -6,3 +6,7 @@ server-manager
 static_embed.go
 static/bundle.js
 node_modules
+stracker*
+build/
+*.zip
+*.log

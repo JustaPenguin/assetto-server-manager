@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"net/http"
 	"sort"
 	"time"
@@ -74,6 +75,11 @@ type Championship struct {
 	Created time.Time
 	Updated time.Time
 	Deleted time.Time
+
+	// Raw html can be attached to championships, used to share tracks/cars etc.
+	Info template.HTML
+	// Deprecated, replaced with Info above.
+	Links map[string]string
 
 	// OpenEntrants indicates that entrant names do not need to be specified in the EntryList.
 	// As Entrants join a championship, the available Entrant slots will be filled by the information
@@ -458,11 +464,38 @@ type ChampionshipEvent struct {
 	ID uuid.UUID
 
 	RaceSetup CurrentRaceConfig
-	Sessions  map[SessionType]*ChampionshipSession
+	EntryList EntryList
+
+	Sessions map[SessionType]*ChampionshipSession
 
 	StartedTime   time.Time
 	CompletedTime time.Time
 	Scheduled     time.Time
+}
+
+func (cr *ChampionshipEvent) CombineEntryLists(championship *Championship) EntryList {
+	entryList := championship.AllEntrants()
+
+	if cr.EntryList == nil {
+		// no specific entry list for this event, just use the default
+		return entryList
+	}
+
+	for _, entrant := range entryList {
+		for _, eventEntrant := range cr.EntryList {
+			if entrant.InternalUUID != uuid.Nil && entrant.InternalUUID == eventEntrant.InternalUUID && entrant.Model == eventEntrant.Model {
+				entrant.FixedSetup = eventEntrant.FixedSetup
+				entrant.Restrictor = eventEntrant.Restrictor
+				entrant.SpectatorMode = eventEntrant.SpectatorMode
+				entrant.Ballast = eventEntrant.Ballast
+				entrant.Skin = eventEntrant.Skin
+
+				break
+			}
+		}
+	}
+
+	return entryList
 }
 
 // LastSession returns the last configured session in the championship, in the following order:
@@ -612,6 +645,38 @@ func deleteChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+func championshipEventImportHandler(w http.ResponseWriter, r *http.Request) {
+	championshipID := chi.URLParam(r, "championshipID")
+	eventID := chi.URLParam(r, "eventID")
+
+	if r.Method == http.MethodPost {
+		err := championshipManager.ImportEvent(championshipID, eventID, r)
+
+		if err != nil {
+			logrus.Errorf("Could not import championship event, error: %s", err)
+			AddErrFlashQuick(w, r, "Could not import session files")
+		} else {
+			AddFlashQuick(w, r, "Successfully imported session files!")
+			http.Redirect(w, r, "/championship/"+championshipID, http.StatusFound)
+			return
+		}
+	}
+
+	event, results, err := championshipManager.ListAvailableResultsFilesForEvent(championshipID, eventID)
+
+	if err != nil {
+		logrus.Errorf("Couldn't load session files, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "championships/import.html", map[string]interface{}{
+		"Results":        results,
+		"ChampionshipID": championshipID,
+		"Event":          event,
+	})
+}
+
 // championshipEventConfigurationHandler builds a Custom Race form with slight modifications
 // to allow a user to configure a ChampionshipEvent.
 func championshipEventConfigurationHandler(w http.ResponseWriter, r *http.Request) {
@@ -691,9 +756,8 @@ func championshipScheduleEventHandler(w http.ResponseWriter, r *http.Request) {
 	dateString := r.FormValue("event-schedule-date")
 	timeString := r.FormValue("event-schedule-time")
 
-	dateTimeString := dateString + "-" + timeString
-
-	date, err := time.Parse("2006-01-02-15:04", dateTimeString)
+	// Parse time in correct time zone
+	date, err := time.ParseInLocation("2006-01-02-15:04", dateString+"-"+timeString, time.Local)
 
 	if err != nil {
 		logrus.Errorf("couldn't parse schedule championship event date, err: %s", err)

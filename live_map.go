@@ -61,7 +61,7 @@ func (h *liveMapHub) run() {
 					delete(h.clients, client)
 				}
 			}
-		case <-serverStoppedChan:
+		case <-AssettoProcess.Done():
 			for _, client := range connectedCars {
 				client := client
 
@@ -115,13 +115,9 @@ func (c *liveMapClient) writePump() {
 	}
 }
 
-var mapHub = newLiveMapHub()
+var mapHub *liveMapHub
 
-func init() {
-	go mapHub.run()
-}
-
-func LiveMapHandler(w http.ResponseWriter, r *http.Request) {
+func liveMapHandler(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 
 	if err != nil {
@@ -136,7 +132,7 @@ func LiveMapHandler(w http.ResponseWriter, r *http.Request) {
 
 	// new client. receive them the session info if we have it
 	if websocketLastSeenSessionInfo != nil {
-		client.receive <- liveMapMessage{udp.EventSessionInfo, websocketLastSeenSessionInfo}
+		client.receive <- liveMapMessage{udp.EventNewSession, websocketLastSeenSessionInfo}
 	}
 
 	if websocketTrackMapData != nil {
@@ -145,6 +141,9 @@ func LiveMapHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, car := range connectedCars {
 		client.receive <- liveMapMessage{udp.EventNewConnection, car}
+	}
+
+	for _, car := range connectedCars {
 		client.receive <- liveMapMessage{udp.EventClientLoaded, udp.ClientLoaded(car.CarID)}
 	}
 }
@@ -153,17 +152,19 @@ func LiveMapCallback(message udp.Message) {
 	switch m := message.(type) {
 
 	case udp.SessionInfo:
-		var err error
+		if m.Event() == udp.EventNewSession {
+			var err error
 
-		websocketLastSeenSessionInfo = &m
-		websocketTrackMapData, err = LoadTrackMapData(m.Track, m.TrackConfig)
+			websocketLastSeenSessionInfo = &m
+			websocketTrackMapData, err = LoadTrackMapData(m.Track, m.TrackConfig)
 
-		if err != nil {
-			logrus.Errorf("Could not load map data, err: %s", err)
-			return
+			if err != nil {
+				logrus.Errorf("Could not load map data, err: %s", err)
+				return
+			}
+
+			LiveMapCallback(websocketTrackMapData)
 		}
-
-		LiveMapCallback(websocketTrackMapData)
 
 	case udp.SessionCarInfo:
 		if m.Event() == udp.EventNewConnection {
@@ -171,7 +172,10 @@ func LiveMapCallback(message udp.Message) {
 		} else if m.Event() == udp.EventConnectionClosed {
 			delete(connectedCars, m.CarID)
 		}
-	case udp.CarUpdate, *TrackMapData, udp.CollisionWithEnvironment, udp.CollisionWithCar, udp.ClientLoaded, udp.Version:
+
+	case udp.Version:
+		connectedCars = make(map[udp.CarID]udp.SessionCarInfo)
+	case udp.CarUpdate, *TrackMapData, udp.CollisionWithEnvironment, udp.CollisionWithCar, udp.ClientLoaded:
 	default:
 		return
 	}

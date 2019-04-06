@@ -131,10 +131,13 @@ func (tr *Renderer) init() error {
 	funcs["varSplit"] = varSplit
 	funcs["timeFormat"] = timeFormat
 	funcs["dateFormat"] = dateFormat
+	funcs["timeZone"] = timeZone
 	funcs["isBefore"] = isBefore
 	funcs["trackInfo"] = trackInfo
+	funcs["stripGeotagCrap"] = stripGeotagCrap
 	funcs["ReadAccess"] = dummyAccessFunc
 	funcs["WriteAccess"] = dummyAccessFunc
+	funcs["DeleteAccess"] = dummyAccessFunc
 	funcs["AdminAccess"] = dummyAccessFunc
 	funcs["LoggedIn"] = dummyAccessFunc
 	funcs["classColor"] = func(i int) string {
@@ -145,6 +148,7 @@ func (tr *Renderer) init() error {
 	funcs["asset"] = NewAssetHelper("/", "", "", map[string]string{"cb": BuildTime}).GetURL
 	funcs["SessionType"] = func(s string) SessionType { return SessionType(s) }
 	funcs["Config"] = func() *Configuration { return config }
+	funcs["Version"] = func() string { return BuildTime }
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
@@ -176,6 +180,12 @@ func timeFormat(t time.Time) string {
 
 func dateFormat(t time.Time) string {
 	return t.Format("02/01/2006")
+}
+
+func timeZone(t time.Time) string {
+	name, _ := t.Zone()
+
+	return name
 }
 
 func isBefore(t time.Time) bool {
@@ -226,6 +236,34 @@ func trackInfo(track, layout string) *TrackInfo {
 	trackInfoCache[track+layout] = t
 
 	return t
+}
+
+func stripGeotagCrap(tag string, north bool) string {
+	re := regexp.MustCompile("[0-9]+")
+	geoTags := re.FindAllString(tag, -1)
+
+	if len(geoTags) == 2 {
+		// "52.9452° N" format
+		// @TODO +- some amount for the bbox
+
+		return geoTags[0] + "." + geoTags[1]
+	} else if len(geoTags) == 3 {
+		// "50� 13' 57 N" format
+		for _, thing := range geoTags {
+			println(thing)
+		}
+	} else if len(geoTags) == 1 {
+		// dunno, some crazy format, just return
+		return geoTags[0]
+	}
+
+	// Geotags of "lost" - a hamlet in Scotland
+	if north {
+		return "57.2050"
+	} else {
+		return "-3.0774"
+	}
+
 }
 
 var nameRegex = regexp.MustCompile(`^[A-Za-z]{0,5}[0-9]+`)
@@ -300,14 +338,18 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 	}
 
 	data["server_status"] = AssettoProcess.IsRunning()
+	data["server_event_type"] = AssettoProcess.EventType()
 	data["server_name"] = opts.Name
-	data["User"] = UserFromRequest(r)
+	data["User"] = AccountFromRequest(r)
+	data["IsHosted"] = IsHosted
+	data["MaxClientsOverride"] = MaxClientsOverride
 
 	t.Funcs(map[string]interface{}{
-		"ReadAccess":  ReadAccess(r),
-		"WriteAccess": WriteAccess(r),
-		"AdminAccess": AdminAccess(r),
-		"LoggedIn":    LoggedIn(r),
+		"ReadAccess":   ReadAccess(r),
+		"WriteAccess":  WriteAccess(r),
+		"DeleteAccess": DeleteAccess(r),
+		"AdminAccess":  AdminAccess(r),
+		"LoggedIn":     LoggedIn(r),
 	})
 
 	return t.ExecuteTemplate(w, "base", data)

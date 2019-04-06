@@ -14,8 +14,8 @@
             <strong>{{ prettify $sessionResults.TrackName false }} {{ with $sessionResults.TrackConfig }} - {{ prettify . true }} {{ end }}</strong>
             on {{ $sessionResults.GetDate }}
 
-            <a class="btn btn-info btn-sm float-right" href="/results/download/{{ $sessionResults.SessionFile }}.json">Download as JSON</a>
-            <a class="btn btn-info btn-sm float-right mr-1" href="#" target="_blank" id="open-in-simres">Open in Simresults</a>
+            <a class="btn btn-primary btn-sm float-right" href="/results/download/{{ $sessionResults.SessionFile }}.json">Download as JSON</a>
+            <a class="btn btn-primary btn-sm float-right mr-1" href="#" target="_blank" id="open-in-simres">Open in Simresults</a>
         </div>
         <div class="card-body">
 

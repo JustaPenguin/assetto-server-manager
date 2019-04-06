@@ -85,9 +85,8 @@ func customRaceScheduleHandler(w http.ResponseWriter, r *http.Request) {
 	dateString := r.FormValue("event-schedule-date")
 	timeString := r.FormValue("event-schedule-time")
 
-	dateTimeString := dateString + "-" + timeString
-
-	date, err := time.Parse("2006-01-02-15:04", dateTimeString)
+	// Parse time in correct time zone
+	date, err := time.ParseInLocation("2006-01-02-15:04", dateString+"-"+timeString, time.Local)
 
 	if err != nil {
 		logrus.Errorf("couldn't parse schedule race date, err: %s", err)
@@ -110,7 +109,7 @@ func customRaceScheduleRemoveHandler(w http.ResponseWriter, r *http.Request) {
 	err := raceManager.ScheduleRace(chi.URLParam(r, "uuid"), time.Time{}, "remove")
 
 	if err != nil {
-		logrus.Errorf("couldn't schedule race, err: %s", err)
+		logrus.Errorf("couldn't remove scheduled race, err: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

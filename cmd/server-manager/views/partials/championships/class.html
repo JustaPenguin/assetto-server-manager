@@ -45,13 +45,31 @@
 
         <hr>
 
+        {{ if gt $.MaxClientsOverride 0 }}
+            <p>Your server is restricted to a maximum of <strong>{{ $.MaxClientsOverride }}</strong> championship entrants.</p>
+
+            <input
+                type="hidden"
+                id="MaxClients"
+                name="MaxClients"
+                value="{{ $.MaxClientsOverride }}"
+            >
+        {{ else }}
+            <input
+                type="hidden"
+                id="MaxClients"
+                name="MaxClients"
+                value="1000"
+            >
+        {{ end }}
+
         <div id="entrantTemplate" class="entrant">
             {{ template "entrant" }}
         </div>
 
-        {{ range $index, $entrant := $class.Entrants }}
+        {{ range $index, $entrant := $class.Entrants.AsSlice }}
             <div class="entrant">
-                {{ template "entrant" $entrant }}
+                {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" false }}
             </div>
         {{ else }}
             <div class="entrant">
@@ -59,7 +77,7 @@
             </div>
         {{ end }}
 
-        <div class="float-right">
+        <div class="text-right">
             <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
 
             <button class="btn btn-warning addEntrant">Add Entrant(s)</button>

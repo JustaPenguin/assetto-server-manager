@@ -1,25 +1,44 @@
 {{ define "entrant" }}
 
+    {{ $entrant := .Entrant }}
+    {{ $IsChampionshipEvent := .IsChampionshipEvent }}
+
     <div class="card mt-2 mb-2 border-warning">
         <div class="card-header">
-            Entrant
+            <div class="row">
+                <div class="col-md-1">
+                    <small>Entrant</small>
+                </div>
 
-            <a class="text-danger btn-delete-entrant float-right" href="#"><i class="fas fa-trash"></i></a>
+                {{ if not $IsChampionshipEvent }}
+                    <div class="col-md-3" style="padding-left: 32px; padding-right: 46px;">
+                        <select name="EntrantAutoFill" class="form-control form-control-sm entrant-autofill">
+                            <option value="">Autofill</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-8">
+                        <a class="text-danger btn-delete-entrant float-right" href="#"><i class="fas fa-trash"></i></a>
+                    </div>
+                {{ end }}
+            </div>
         </div>
 
         <div class="card-body">
 
             <div class="row">
 
-                <div class="col-8">
+                <div class="col-sm-8">
 
                     <div class="row">
+                        <!-- internal UUID for matching purposes -->
+                        <input type="hidden" name="EntryList.InternalUUID" {{ with $entrant.InternalUUID }}value="{{ .String }}"{{ end }}>
 
                         <div class="form-group row col-md-6">
                             <label for="Name" class="col-sm-4 col-form-label col-form-label-sm">Name</label>
 
                             <div class="col-sm-8">
-                                <input autocomplete="false" class="form-control form-control-sm entryListName" type="text" name="EntryList.Name" {{ with .Name }}value="{{ . }}"{{ end }}>
+                                <input autocomplete="false" class="form-control form-control-sm entryListName" type="text" name="EntryList.Name" {{ with $entrant.Name }}value="{{ . }}"{{ end }} {{ if $IsChampionshipEvent }}readonly="readonly"{{ end }}>
                             </div>
                         </div>
 
@@ -29,7 +48,7 @@
                             <label for="Team" class="col-sm-4 col-form-label col-form-label-sm">Team</label>
 
                             <div class="col-sm-8">
-                                <input class="form-control form-control-sm" type="text" name="EntryList.Team" {{ with .Team }}value="{{ . }}"{{ end }}>
+                                <input class="form-control form-control-sm" type="text" name="EntryList.Team" {{ with $entrant.Team }}value="{{ . }}"{{ end }} {{ if $IsChampionshipEvent }}readonly="readonly"{{ end }}>
                             </div>
                         </div>
 
@@ -42,7 +61,7 @@
                             <label for="GUID" class="col-sm-4 col-form-label col-form-label-sm">GUID</label>
 
                             <div class="col-sm-8">
-                                <input class="form-control form-control-sm" type="text" name="EntryList.GUID" {{ with .GUID }}value="{{ . }}"{{ end }}>
+                                <input class="form-control form-control-sm" type="text" name="EntryList.GUID" {{ with $entrant.GUID }}value="{{ . }}"{{ end }} {{ if $IsChampionshipEvent }}readonly="readonly"{{ end }}>
                             </div>
                         </div>
 
@@ -50,8 +69,12 @@
                             <label for="Model" class="col-sm-4 col-form-label col-form-label-sm">Car</label>
 
                             <div class="col-sm-8">
-                                <select class="form-control form-control-sm entryListCar" name="EntryList.Car">
-                                    {{ with .Model }}<option value="{{ . }}">{{ prettify . true }}</option>{{ end }}
+                                {{ if $IsChampionshipEvent }}
+                                    <input type="text" class="form-control form-control-sm" readonly="readonly" value="{{ prettify $entrant.Model true }}">
+                                {{ end }}
+
+                                <select class="form-control form-control-sm entryListCar" name="EntryList.Car" {{ if $IsChampionshipEvent }}style="display: none;"{{ end }}>
+                                    {{ with $entrant.Model }}<option value="{{ . }}">{{ prettify . true }}</option>{{ end }}
                                 </select>
                             </div>
                         </div>
@@ -65,7 +88,7 @@
 
                             <div class="col-sm-8">
                                 <select class="form-control form-control-sm entryListSkin" name="EntryList.Skin">
-                                    {{ with .Skin }}<option value="{{ . }}">{{ prettify . true }}</option>{{ end }}
+                                    {{ with $entrant.Skin }}<option value="{{ . }}">{{ prettify . true }}</option>{{ end }}
                                 </select>
                             </div>
                         </div>
@@ -75,7 +98,7 @@
                             <label for="Ballast" class="col-sm-4 col-form-label col-form-label-sm">Ballast</label>
 
                             <div class="col-sm-8">
-                                <input class="form-control form-control-sm" type="number" min="0" name="EntryList.Ballast" value="{{ with .Ballast }}{{ . }}{{ else }}0{{ end }}">
+                                <input class="form-control form-control-sm" type="number" min="0" name="EntryList.Ballast" value="{{ with $entrant.Ballast }}{{ . }}{{ else }}0{{ end }}">
                             </div>
                         </div>
 
@@ -90,7 +113,7 @@
                             <label for="SpectatorMode" class="col-sm-4 col-form-label col-form-label-sm">Spectator Mode</label>
 
                             <div class="col-sm-8">
-                                <input class="form-control" type="checkbox" name="EntryList.Spectator" {{ with .SpectatorMode }}{{ if eq . 1 }}checked="checked"{{ end }}{{ end }}>
+                                <input class="form-control" type="checkbox" name="EntryList.Spectator" {{ with $entrant.SpectatorMode }}{{ if eq . 1 }}checked="checked"{{ end }}{{ end }}>
 
                             </div>
                         </div>
@@ -101,19 +124,28 @@
                             <label for="Restrictor" class="col-sm-4 col-form-label col-form-label-sm">Restrictor</label>
 
                             <div class="col-sm-8">
-                                <input class="form-control form-control-sm" type="number" min="0" max="100" name="EntryList.Restrictor" value="{{ with .Restrictor }}{{ . }}{{ else }}0{{ end }}">
+                                <input class="form-control form-control-sm" type="number" min="0" max="100" name="EntryList.Restrictor" value="{{ with $entrant.Restrictor }}{{ . }}{{ else }}0{{ end }}">
                             </div>
                         </div>
 
                         <div class="form-group col-md-6 row">
+                            <label for="FixedSetup" class="col-sm-4 col-form-label col-form-label-sm">Fixed Setup</label>
 
+                            <div class="col-sm-8">
+                                <select class="form-control form-control-sm fixedSetup" name="EntryList.FixedSetup">
+                                    <option value="">No Fixed Setup</option>
+                                    {{ with $entrant.FixedSetup }}
+                                        <option value="{{ . }}" selected="selected">{{ . }}</option>
+                                    {{ end }}
+                                </select>
+                            </div>
                         </div>
                     </div>
 
                 </div>
 
-                <div class="col-4">
-                    <img src="{{ with .Skin }}{{ carSkinURL $.Model $.Skin }}{{ else }}/static/img/no-preview-car.png{{ end }}"
+                <div class="col-sm-4">
+                    <img src="{{ with $entrant.Skin }}{{ carSkinURL $entrant.Model $entrant.Skin }}{{ else }}/static/img/no-preview-car.png{{ end }}"
                          alt="Car Skin"
                          class="entryListCarPreview img-fluid"
                     >

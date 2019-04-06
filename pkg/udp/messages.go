@@ -72,10 +72,12 @@ func (asu *AssettoServerUDP) Close() error {
 		return err
 	}
 
-	err = asu.forwarder.Close()
+	if asu.forwarder != nil {
+		err = asu.forwarder.Close()
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -94,13 +96,13 @@ func (asu *AssettoServerUDP) forwardServe() {
 		default:
 			buf := make([]byte, 1024)
 
-			_, _, err := asu.forwarder.ReadFromUDP(buf)
+			n, _, err := asu.forwarder.ReadFromUDP(buf)
 
 			if err != nil {
 				continue
 			}
 
-			_, err = asu.listener.Write(buf)
+			_, err = asu.listener.Write(buf[:n])
 
 			if err != nil {
 				continue
@@ -119,7 +121,7 @@ func (asu *AssettoServerUDP) serve() {
 			buf := make([]byte, 1024)
 
 			// read message from assetto
-			_, _, err := asu.listener.ReadFromUDP(buf)
+			n, _, err := asu.listener.ReadFromUDP(buf)
 
 			if err != nil {
 				asu.callback(ServerError{err})
@@ -138,7 +140,7 @@ func (asu *AssettoServerUDP) serve() {
 			if asu.forward && asu.forwarder != nil {
 				go func() {
 					// write the message to the forwarding address
-					_, err := asu.forwarder.Write(buf)
+					_, err := asu.forwarder.Write(buf[:n])
 
 					if err != nil {
 						fmt.Println("err", err)
@@ -172,6 +174,15 @@ func (asu *AssettoServerUDP) SendMessage(message Message) error {
 	switch a := message.(type) {
 	case EnableRealtimePosInterval:
 		err := binary.Write(asu.listener, binary.LittleEndian, a)
+
+		if err != nil {
+			return err
+		}
+
+		return err
+
+	case GetSessionInfo:
+		err := binary.Write(asu.listener, binary.LittleEndian, a.Event())
 
 		if err != nil {
 			return err
@@ -397,7 +408,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 
 		response = sessionInfo
 
-		if RealtimePosIntervalMs > 0 {
+		if RealtimePosIntervalMs > 0 && eventType == EventNewSession {
 			err = asu.SendMessage(NewEnableRealtimePosInterval(uint16(RealtimePosIntervalMs)))
 
 			if err != nil {

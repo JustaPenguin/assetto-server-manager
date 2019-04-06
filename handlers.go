@@ -1,7 +1,6 @@
 package servermanager
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"io"
@@ -19,9 +18,12 @@ import (
 )
 
 var (
-	ViewRenderer *Renderer
-	store        sessions.Store
-	logOutput    = new(bytes.Buffer)
+	ViewRenderer  *Renderer
+	store         sessions.Store
+	logOutput     = newLogBuffer(MaxLogSizeBytes)
+	pluginsOutput = newLogBuffer(MaxLogSizeBytes)
+
+	logMultiWriter io.Writer
 )
 
 func init() {
@@ -31,7 +33,16 @@ func init() {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 
-	logrus.SetOutput(io.MultiWriter(os.Stdout, logOutput))
+	logFile, err := os.OpenFile("server-manager.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
+
+	if err == nil {
+		logMultiWriter = io.MultiWriter(os.Stdout, logOutput, logFile)
+	} else {
+		logrus.WithError(err).Errorf("Could not create server manager log file")
+		logMultiWriter = io.MultiWriter(os.Stdout, logOutput)
+	}
+
+	logrus.SetOutput(logMultiWriter)
 }
 
 func Router(fs http.FileSystem) chi.Router {
@@ -71,10 +82,14 @@ func Router(fs http.FileSystem) chi.Router {
 		// live timings
 		r.Get("/live-timing", liveTimingHandler)
 		r.Get("/live-timing/get", liveTimingGetHandler)
-		r.Get("/api/live-map", LiveMapHandler)
+		r.Get("/api/live-map", liveMapHandler)
+
+		// account management
+		r.HandleFunc("/accounts/new-password", newPasswordHandler)
 
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")))
 		FileServer(r, "/results/download", http.Dir(filepath.Join(ServerInstallPath, "results")))
+		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")))
 	})
 
 	// writers
@@ -82,9 +97,7 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Use(WriteAccessMiddleware)
 
 		// content
-		r.Get("/track/delete/{name}", trackDeleteHandler)
-		r.Get("/car/delete/{name}", carDeleteHandler)
-		r.Get("/weather/delete/{key}", weatherDeleteHandler)
+		r.Post("/setups/upload", carSetupsUploadHandler)
 
 		// races
 		r.Get("/quick", quickRaceHandler)
@@ -95,7 +108,6 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Post("/custom/schedule/{uuid}", customRaceScheduleHandler)
 		r.Get("/custom/schedule/{uuid}/remove", customRaceScheduleRemoveHandler)
 		r.Get("/custom/edit/{uuid}", customRaceNewOrEditHandler)
-		r.Get("/custom/delete/{uuid}", customRaceDeleteHandler)
 		r.Get("/custom/star/{uuid}", customRaceStarHandler)
 		r.Get("/custom/loop/{uuid}", customRaceLoopHandler)
 		r.Post("/custom/new/submit", customRaceSubmitHandler)
@@ -107,20 +119,24 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Get("/championships/new", newOrEditChampionshipHandler)
 		r.Post("/championships/new/submit", submitNewChampionshipHandler)
 		r.Get("/championship/{championshipID}/edit", newOrEditChampionshipHandler)
-		r.Get("/championship/{championshipID}/delete", deleteChampionshipHandler)
 		r.Get("/championship/{championshipID}/event", championshipEventConfigurationHandler)
 		r.Post("/championship/{championshipID}/event/submit", championshipSubmitEventConfigurationHandler)
 		r.Get("/championship/{championshipID}/event/{eventID}/start", championshipStartEventHandler)
 		r.Post("/championship/{championshipID}/event/{eventID}/schedule", championshipScheduleEventHandler)
 		r.Get("/championship/{championshipID}/event/{eventID}/schedule/remove", championshipScheduleEventRemoveHandler)
 		r.Get("/championship/{championshipID}/event/{eventID}/edit", championshipEventConfigurationHandler)
-		r.Get("/championship/{championshipID}/event/{eventID}/delete", championshipDeleteEventHandler)
 		r.Get("/championship/{championshipID}/event/{eventID}/practice", championshipStartPracticeEventHandler)
 		r.Get("/championship/{championshipID}/event/{eventID}/cancel", championshipCancelEventHandler)
 		r.Get("/championship/{championshipID}/event/{eventID}/restart", championshipRestartEventHandler)
 
+		r.Get("/championship/{championshipID}/event/{eventID}/import", championshipEventImportHandler)
+		r.Post("/championship/{championshipID}/event/{eventID}/import", championshipEventImportHandler)
+
 		// penalties
 		r.Post("/penalties/{sessionFile}/{driverGUID}", penaltyHandler)
+
+		// live timings
+		r.Post("/live-timing/save-frames", liveFrameSaveHandler)
 
 		// endpoints
 		r.Post("/api/track/upload", apiTrackUploadHandler)
@@ -128,11 +144,31 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Post("/api/weather/upload", apiWeatherUploadHandler)
 	})
 
+	// deleters
+	r.Group(func(r chi.Router) {
+		r.Use(DeleteAccessMiddleware)
+
+		r.Get("/championship/{championshipID}/event/{eventID}/delete", championshipDeleteEventHandler)
+		r.Get("/championship/{championshipID}/delete", deleteChampionshipHandler)
+		r.Get("/custom/delete/{uuid}", customRaceDeleteHandler)
+
+		r.Get("/track/delete/{name}", trackDeleteHandler)
+		r.Get("/car/delete/{name}", carDeleteHandler)
+		r.Get("/weather/delete/{key}", weatherDeleteHandler)
+		r.Get("/setups/delete/{car}/{track}/{setup}", carSetupDeleteHandler)
+	})
+
 	// admins
 	r.Group(func(r chi.Router) {
 		r.Use(AdminAccessMiddleware)
 
 		r.HandleFunc("/server-options", serverOptionsHandler)
+		r.HandleFunc("/accounts/new", createOrEditAccountHandler)
+		r.HandleFunc("/accounts/edit/{id}", createOrEditAccountHandler)
+		r.HandleFunc("/accounts/delete/{id}", deleteAccountHandler)
+		r.HandleFunc("/accounts/reset-password/{id}", resetPasswordHandler)
+		r.HandleFunc("/accounts/toggle-open", toggleServerOpenStatusHandler)
+		r.HandleFunc("/accounts", manageAccountsHandler)
 	})
 
 	FileServer(r, "/static", fs)
@@ -178,7 +214,7 @@ func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
 		logrus.Errorf("couldn't load server options, err: %s", err)
 	}
 
-	form := NewForm(serverOpts, nil, "")
+	form := NewForm(serverOpts, nil, "", AccountFromRequest(r).Name == "admin")
 
 	if r.Method == http.MethodPost {
 		err := form.Submit(r)
@@ -251,11 +287,17 @@ func addFiles(files []ContentFile, contentType string) error {
 	}
 
 	for _, file := range files {
-		fileDecoded, err := base64.StdEncoding.DecodeString(base64HeaderRegex.ReplaceAllString(file.Data, ""))
+		var fileDecoded []byte
 
-		if err != nil {
-			logrus.Errorf("could not decode "+contentType+" file data, err: %s", err)
-			return err
+		if file.Size > 0 {
+			// zero-size files will still be created, just with no content. (some data files exist but are empty)
+			var err error
+			fileDecoded, err = base64.StdEncoding.DecodeString(base64HeaderRegex.ReplaceAllString(file.Data, ""))
+
+			if err != nil {
+				logrus.Errorf("could not decode "+contentType+" file data, err: %s", err)
+				return err
+			}
 		}
 
 		// If user uploaded a "tracks" or "cars" folder containing multiple tracks
@@ -273,7 +315,7 @@ func addFiles(files []ContentFile, contentType string) error {
 		path := filepath.Join(contentPath, file.FilePath)
 
 		// Makes any directories in the path that don't exist (there can be multiple)
-		err = os.MkdirAll(filepath.Dir(path), 0755)
+		err := os.MkdirAll(filepath.Dir(path), 0755)
 
 		if err != nil {
 			logrus.Errorf("could not create "+contentType+" file directory, err: %s", err)
@@ -345,7 +387,7 @@ func serverLogsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type logData struct {
-	ServerLog, ManagerLog string
+	ServerLog, ManagerLog, PluginsLog string
 }
 
 func apiServerLogHandler(w http.ResponseWriter, r *http.Request) {
@@ -354,6 +396,7 @@ func apiServerLogHandler(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(logData{
 		ServerLog:  AssettoProcess.Logs(),
 		ManagerLog: logOutput.String(),
+		PluginsLog: pluginsOutput.String(),
 	})
 }
 
@@ -366,8 +409,16 @@ func liveTimingHandler(w http.ResponseWriter, r *http.Request) {
 		customRace = &CustomRace{EntryList: entryList, RaceConfig: currentRace.CurrentRaceConfig}
 	}
 
+	frameLinks, err := raceManager.GetLiveFrames()
+
+	if err != nil {
+		logrus.Errorf("could not get frame links, err: %s", err)
+		return
+	}
+
 	ViewRenderer.MustLoadTemplate(w, r, "live-timing.html", map[string]interface{}{
 		"RaceDetails": customRace,
+		"FrameLinks":  frameLinks,
 	})
 }
 
@@ -375,4 +426,35 @@ func liveTimingGetHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	_ = json.NewEncoder(w).Encode(liveInfo)
+}
+
+func deleteEmpty(s []string) []string {
+	var r []string
+	for _, str := range s {
+		if str != "" {
+			r = append(r, str)
+		}
+	}
+	return r
+}
+
+func liveFrameSaveHandler(w http.ResponseWriter, r *http.Request) {
+	// Save the frame links from the form
+	err := r.ParseForm()
+
+	if err != nil {
+		logrus.Errorf("could not load parse form, err: %s", err)
+		return
+	}
+
+	err = raceManager.UpsertLiveFrames(deleteEmpty(r.Form["frame-link"]))
+
+	if err != nil {
+		logrus.Errorf("could not save frame links, err: %s", err)
+		return
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+
+	return
 }

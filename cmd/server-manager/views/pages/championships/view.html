@@ -111,7 +111,7 @@
                                 <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
                                     {{ if $championship.IsMultiClass }}
                                         {{ if eq $i 0 }}
-                                            <td rowspan="{{ add (len $class.Points.Places) 2 }}">{{ $class.Name }}</td>
+                                            <td rowspan="{{ add (len $class.Points.Places) 3 }}">{{ $class.Name }}</td>
                                         {{ end }}
                                     {{ end }}
                                     <td>{{ add $i 1 }}{{ ordinal (add $i 1) }}</td>
@@ -145,15 +145,80 @@
 
         <hr>
 
+        <div class="container-fluid">
+            <div class="row flex-row flex-nowrap pb-3" style="overflow-x: auto;">
+
+                {{ range $classIndex, $class := $championship.Classes }}
+                    {{ $entrants := ($class.Standings $championship.Events) }}
+
+                    {{ range $i, $entrant := $entrants }}
+
+                        <div class="col-6 col-lg-3 col-md-3 col-sm-6 entrant-car">
+                            <div class="card card-block" {{ if $championship.IsMultiClass }}style="color: white; background: {{ classColor $classIndex }}"{{ end }}>
+                                <img src="{{ with $entrant.Entrant.Skin }}{{ carSkinURL $entrant.Entrant.Model $entrant.Entrant.Skin }}{{ else }}/static/img/no-preview-car.png{{ end }}"
+                                     alt="Car Skin"
+                                     class="card-img-top"
+                                >
+                                <div class="card-body p-1 text-center">
+                                    {{ if $championship.IsMultiClass }}
+                                        <small>{{ $class.Name }}</small><br>
+                                    {{ end }}
+                                    {{ add $i 1 }}{{ ordinal (add $i 1) }} Place
+
+                                    <p class="mb-0">
+                                        <small>
+                                            {{ $entrant.Entrant.Name }}<br>
+                                            {{ $entrant.Entrant.Team }}
+                                        </small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {{ end }}
+                {{ end }}
+
+            </div>
+        </div>
+
+        <hr>
+
+        {{ with $championship.Info }}
+            <div class="">
+                {{ $championship.Info }}
+            </div>
+
+            <br>
+            <hr>
+        {{ end }}
+
         <div class="float-right">
             {{ if $writeAccess }}
                 <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event">Add more Events</a>
                 <a href="/championship/{{ $championship.ID.String }}/edit" class="btn btn-warning">Edit Championship</a>
             {{ end }}
-            <a href="/championship/{{ $championship.ID.String }}/export" class="btn btn-info">Export Championship</a>
+            <a href="/championship/{{ $championship.ID.String }}/export" class="btn btn-primary">Export Championship</a>
         </div>
 
         <h2>Events</h2>
+
+        <div class="btn-group float-right" role="group" aria-label="Button group with nested dropdown">
+            <div class="btn-group" role="group">
+                <button id="btnGroupDrop1" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Hide/Show
+                </button>
+                <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                    <a class="dropdown-item text-success" href="#" id="hide-completed">Completed</a>
+                    <a class="dropdown-item text-success" href="#" id="hide-not-completed">Not Completed</a>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-secondary" id="switch-order">
+                <span class="fa-stack-override fa-1x">
+                  <i class="fas fa-sort-up fa-stack-1x text-dark"></i>
+                  <i class="fas fa-sort-down fa-stack-1x text-success"></i>
+                </span>
+            </button>
+        </div>
 
         <p>This Championship currently has {{ len $championship.Events }} events configured.</p>
 
@@ -163,7 +228,7 @@
         {{ range $eventIndex, $event := $championship.Events }}
             {{ $eventSetup := $event.RaceSetup }}
 
-            <div class="card mt-3 border-secondary">
+            <div class="card mt-3 border-secondary championship-event {{ if $event.Completed }}event-complete{{ end }}">
                 <div class="card-header">
                     {{ $trackInfo := trackInfo $eventSetup.Track $eventSetup.TrackLayout }}
 
@@ -181,7 +246,7 @@
                         {{ else if $event.InProgress }}
                             <span class="text-info">In Progress</span>
                         {{ else if isBefore .Scheduled }}
-                            <span class="text-warning">Scheduled for {{ dateFormat .Scheduled }} at {{ timeFormat .Scheduled }}</span>
+                            <span class="text-warning">Scheduled for {{ dateFormat .Scheduled }} at {{ timeFormat .Scheduled }} ({{ timeZone .Scheduled }})</span>
                         {{ else }}
                             <span class="text-danger">Not started</span>
                         {{ end }}
@@ -257,10 +322,12 @@
                                                     {{ range $sessionName, $sessionDetails := $event.Sessions }}
                                                         {{ if eq $sessionName "RACE" }}
                                                             {{ range $pos, $result := (slice ($class.ResultsForClass $sessionDetails.Results.Result) 0 1) }}
-                                                                <li>
-                                                                    <strong>{{ $class.Name }} Winner</strong><br>
-                                                                    {{ $result.DriverName }}
-                                                                </li>
+                                                                {{ with $result }}
+                                                                    <li>
+                                                                        <strong>{{ $class.Name }} Winner</strong><br>
+                                                                        {{ $result.DriverName }}
+                                                                    </li>
+                                                                {{ end }}
                                                             {{ end }}
                                                         {{ end }}
                                                     {{ end }}
@@ -269,13 +336,15 @@
                                                 {{ range $sessionName, $sessionDetails := $event.Sessions }}
                                                     {{ if eq $sessionName "RACE" }}
                                                         {{ range $pos, $result := (slice $sessionDetails.Results.Result 0 3) }}
-                                                            {{ if gt $result.TotalTime 0 }}
-                                                                {{ $posInt := int64 (add $pos 1) }}
+                                                            {{ with $result }}
+                                                                {{ if gt $result.TotalTime 0 }}
+                                                                    {{ $posInt := int64 (add $pos 1) }}
 
-                                                                <li>
-                                                                    <strong>{{ $posInt }}{{ ordinal $posInt }}</strong>:
-                                                                    {{ $result.DriverName }}
-                                                                </li>
+                                                                    <li>
+                                                                        <strong>{{ $posInt }}{{ ordinal $posInt }}</strong>:
+                                                                        {{ $result.DriverName }}
+                                                                    </li>
+                                                                {{ end }}
                                                             {{ end }}
                                                         {{ end }}
                                                     {{ end }}
@@ -305,13 +374,15 @@
                                                     {{ range $sessionName, $sessionDetails := $event.Sessions }}
                                                         {{ if eq $sessionName "RACEx2" }}
                                                             {{ range $pos, $result := (slice $sessionDetails.Results.Result 0 3) }}
-                                                                {{ if gt $result.TotalTime 0 }}
-                                                                    {{ $posInt := int64 (add $pos 1) }}
+                                                                {{ with $result }}
+                                                                    {{ if gt $result.TotalTime 0 }}
+                                                                        {{ $posInt := int64 (add $pos 1) }}
 
-                                                                    <li>
-                                                                        <strong>{{ $posInt }}{{ ordinal $posInt }}</strong>:
-                                                                        {{ $result.DriverName }}
-                                                                    </li>
+                                                                        <li>
+                                                                            <strong>{{ $posInt }}{{ ordinal $posInt }}</strong>:
+                                                                            {{ $result.DriverName }}
+                                                                        </li>
+                                                                    {{ end }}
                                                                 {{ end }}
                                                             {{ end }}
                                                         {{ end }}
@@ -389,7 +460,7 @@
                                         >Schedule Event
                                         </button>
 
-                                        <a class="btn btn-info {{ if $eventInProgress }}disabled{{ end }}"
+                                        <a class="btn btn-primary {{ if $eventInProgress }}disabled{{ end }}"
                                            href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/practice"
                                             {{ if $eventInProgress }}
                                                 aria-disabled="true"
@@ -399,14 +470,30 @@
                                             Start Practice Event
                                         </a>
 
-                                        <a class="btn btn-warning" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/edit">
-                                            Edit Event
-                                        </a>
 
-                                        <a onClick="return confirm('I understand that this will delete this entire event permanently.') "
-                                           class="btn btn-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/delete">
-                                            Delete Event
-                                        </a>
+                                        <div class="dropdown show" style="display: inline-block">
+                                            <a class="btn btn-warning dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                Manage Event
+                                            </a>
+
+                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                                                <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/edit">
+                                                    Edit
+                                                </a>
+
+                                                <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/import">
+                                                    Import Results
+                                                </a>
+
+                                                {{ if DeleteAccess }}
+                                                    <a onClick="return confirm('I understand that this will delete this entire event permanently.') "
+                                                       class="dropdown-item text-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/delete">
+                                                        Delete
+                                                    </a>
+                                                {{ end }}
+                                            </div>
+                                        </div>
+
                                     {{ else if $event.InProgress }}
                                         <a onClick="return confirm('I understand that this will restart this entire event and any current results will be lost.') "
                                            class="btn btn-warning" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/restart">
@@ -444,44 +531,7 @@
 
                     <div class="row">
                         <div class="col-md-12">
-                            {{ if not (or $event.InProgress $event.Completed) }}
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-striped">
-                                        <tr>
-                                            {{ if $championship.IsMultiClass }}
-                                                <th>Class</th>
-                                            {{ end }}
-                                            <th>Name</th>
-                                            <th>Team</th>
-                                            <th>Car</th>
-                                        </tr>
-
-                                        {{ range $classIndex, $class := $championship.Classes }}
-                                            {{ $entrants := $class.Entrants.AsSlice }}
-
-                                            {{ range $entrantIndex, $entrant := $entrants }}
-                                                <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
-                                                    {{ if $championship.IsMultiClass }}
-                                                        {{ if eq $entrantIndex 0 }}
-                                                            <td rowspan="{{ len $entrants }}">{{ $class.Name }}</td>
-                                                        {{ end }}
-                                                    {{ end }}
-
-                                                    {{ if (contains "open slots" $entrant.Name) }}
-                                                        <td colspan="3"><em>{{ $entrant.Name }}</em></td>
-                                                    {{ else }}
-                                                        <td>{{ $entrant.Name }}</td>
-                                                        <td>{{ $entrant.Team }}</td>
-                                                        <td>{{ prettify $entrant.Model true }}</td>
-                                                    {{ end }}
-                                                </tr>
-                                            {{ end }}
-                                        {{ end }}
-                                    </table>
-                                </div>
-                            {{ else }}
-
-
+                            {{ if (or $event.InProgress $event.Completed) }}
                             <div {{ if $event.Completed }} class="collapse" id="event-{{ $eventIndex }}" {{ end }}>
 
                                 <ul class="nav nav-tabs mt-3" role="tablist">

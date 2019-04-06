@@ -2,6 +2,7 @@ FROM golang:1.12
 
 MAINTAINER Callum Jones <cj@icj.me>
 
+ENV SERVER_MANAGER_VERSION=1.2.0
 ENV STEAMCMD_URL="http://media.steampowered.com/installer/steamcmd_linux.tar.gz"
 ENV STEAMROOT=/opt/steamcmd
 ENV DEBIAN_FRONTEND noninteractive
@@ -29,7 +30,7 @@ RUN npm install
 RUN node_modules/.bin/babel javascript/manager.js -o static/manager.js
 RUN go get github.com/mjibson/esc
 RUN go generate ./...
-RUN export BUILD_TIME=`date +'%s'`; go build -ldflags "-s -w -X github.com/cj123/assetto-server-manager.BuildTime=$BUILD_TIME"
+RUN go build -ldflags "-s -w -X github.com/cj123/assetto-server-manager.BuildTime=$SERVER_MANAGER_VERSION"
 RUN mv server-manager /usr/bin/
 
 RUN useradd -ms /bin/bash ${SERVER_USER}

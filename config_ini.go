@@ -129,22 +129,22 @@ type GlobalServerConfig struct {
 	Name                      string `ini:"NAME" help:"Server Name"`
 	Password                  string `ini:"PASSWORD" input:"password" help:"Server password"`
 	AdminPassword             string `ini:"ADMIN_PASSWORD" input:"password" help:"The password needed to be recognized as server administrator: you can join the server using it to be recognized automatically. Type /help in the game's chat to see the command list"`
-	UDPPort                   int    `ini:"UDP_PORT" min:"0" max:"65535" help:"UDP port number: open this port on your server's firewall"`
-	TCPPort                   int    `ini:"TCP_PORT" min:"0" max:"65535" help:"TCP port number: open this port on your server's firewall"`
-	HTTPPort                  int    `ini:"HTTP_PORT" min:"0" max:"65535" help:"Lobby port number: open these ports (both UDP and TCP) on your server's firewall"`
-	UDPPluginLocalPort        int    `ini:"UDP_PLUGIN_LOCAL_PORT" min:"0" max:"65535" help:"The port on which to listen for UDP messages from a plugin"`
-	UDPPluginAddress          string `ini:"UDP_PLUGIN_ADDRESS" help:"The address of the plugin to which UDP messages are sent"`
-	AuthPluginAddress         string `ini:"AUTH_PLUGIN_ADDRESS" help:"The address of the auth plugin"`
-	RegisterToLobby           int    `ini:"REGISTER_TO_LOBBY" input:"checkbox" help:"Register the AC Server to the main lobby"`
-	ClientSendIntervalInHertz int    `ini:"CLIENT_SEND_INTERVAL_HZ" help:"Refresh rate of packet sending by the server. 10Hz = ~100ms. Higher number = higher MP quality = higher bandwidth resources needed. Really high values can create connection issues"`
-	SendBufferSize            int    `ini:"SEND_BUFFER_SIZE" help:""`
-	ReceiveBufferSize         int    `ini:"RECV_BUFFER_SIZE" help:""`
+	UDPPort                   int    `ini:"UDP_PORT" show:"open" min:"0" max:"65535" help:"UDP port number: open this port on your server's firewall"`
+	TCPPort                   int    `ini:"TCP_PORT" show:"open" min:"0" max:"65535" help:"TCP port number: open this port on your server's firewall"`
+	HTTPPort                  int    `ini:"HTTP_PORT" show:"open" min:"0" max:"65535" help:"Lobby port number: open these ports (both UDP and TCP) on your server's firewall"`
+	UDPPluginLocalPort        int    `ini:"UDP_PLUGIN_LOCAL_PORT" show:"open" min:"0" max:"65535" help:"The port on which to listen for UDP messages from a plugin"`
+	UDPPluginAddress          string `ini:"UDP_PLUGIN_ADDRESS" show:"open" help:"The address of the plugin to which UDP messages are sent"`
+	AuthPluginAddress         string `ini:"AUTH_PLUGIN_ADDRESS" show:"open" help:"The address of the auth plugin"`
+	RegisterToLobby           int    `ini:"REGISTER_TO_LOBBY" show:"open" input:"checkbox" help:"Register the AC Server to the main lobby"`
+	ClientSendIntervalInHertz int    `ini:"CLIENT_SEND_INTERVAL_HZ" show:"open" help:"Refresh rate of packet sending by the server. 10Hz = ~100ms. Higher number = higher MP quality = higher bandwidth resources needed. Really high values can create connection issues"`
+	SendBufferSize            int    `ini:"SEND_BUFFER_SIZE" show:"open" help:""`
+	ReceiveBufferSize         int    `ini:"RECV_BUFFER_SIZE" show:"open" help:""`
 	KickQuorum                int    `ini:"KICK_QUORUM" help:"Percentage that is required for the kick vote to pass"`
 	VotingQuorum              int    `ini:"VOTING_QUORUM" min:"0" max:"100" help:"Percentage that is required for the session vote to pass"`
 	VoteDuration              int    `ini:"VOTE_DURATION" min:"0" help:"Vote length in seconds"`
 	BlacklistMode             int    `ini:"BLACKLIST_MODE" min:"0" max:"2" help:"0 = normal kick, kicked player can rejoin; 1 = kicked player cannot rejoin until server restart; 2 = kick player and add to blacklist.txt, kicked player can not rejoin unless removed from blacklist (Better to use ban_id command rather than set this)."`
-	NumberOfThreads           int    `ini:"NUM_THREADS" min:"1" help:"Number of threads to run on"`
-	WelcomeMessage            string `ini:"WELCOME_MESSAGE" help:"Path to the file that contains the server welcome message"`
+	NumberOfThreads           int    `ini:"NUM_THREADS" show:"open" min:"1" help:"Number of threads to run on"`
+	WelcomeMessage            string `ini:"WELCOME_MESSAGE" show:"open" help:"Path to the file that contains the server welcome message"`
 	ResultScreenTime          int    `ini:"RESULT_SCREEN_TIME" help:"Seconds of result screen between racing sessions"`
 
 	FreeUDPPluginLocalPort int    `ini:"-" show:"-"`
@@ -176,6 +176,7 @@ type CurrentRaceConfig struct {
 	RaceGasPenaltyDisabled    int    `ini:"RACE_GAS_PENALTY_DISABLED" input:"checkbox" help:"0 = any cut will be penalized with the gas cut message; 1 = no penalization will be forced, but cuts will be saved in the race result json."`
 	MaxBallastKilograms       int    `ini:"MAX_BALLAST_KG" help:"the max total of ballast that can be added through the admin command"`
 	RaceExtraLap              int    `ini:"RACE_EXTRA_LAP" input:"checkbox" help:"If the race is timed, force an extra lap after the leader has crossed the line"`
+	MaxContactsPerKilometer   int    `ini:"MAX_CONTACTS_PER_KM" help:"Maximum number times you can make contact with another car in 1 kilometer."`
 
 	PickupModeEnabled int `ini:"PICKUP_MODE_ENABLED" help:"if 0 the server start in booking mode (do not use it). Warning: in pickup mode you have to list only a circuit under TRACK and you need to list a least one car in the entry_list"`
 	LoopMode          int `ini:"LOOP_MODE" input:"checkbox" help:"the server restarts from the first track, to disable this set it to 0"`

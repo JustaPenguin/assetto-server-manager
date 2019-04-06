@@ -18,7 +18,7 @@
         {{ end }}
     </h1>
 
-    <form action="/championships/new/submit" method="post" data-safe-submit>
+    <form action="/championships/new/submit" method="post" id="championship-form" data-safe-submit>
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">
@@ -50,6 +50,17 @@
                         </small>
                     </div>
                 </div>
+
+                {{ if .IsEditing }}{{ with .Current.Info }}<div class="d-none" id="ChampionshipInfoHolder">{{ . }}</div>{{ end }}{{ end }}
+
+                <div class="form-group row">
+                    <label for="summernote" class="col-sm-3 col-form-label">Important Information</label>
+
+                    <div class="col-sm-9" id="championship-info">
+                        <textarea id="summernote" name="ChampionshipInfo"></textarea>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -58,7 +69,7 @@
         </div>
 
         {{ range $classIndex, $class := $f.Classes }}
-            {{ template "championship-class" dict "IsEditing" $.IsEditing "CarOpts" $.CarOpts "Championship" $.Current "Class" $class "DefaultPoints" $.DefaultPoints }}
+            {{ template "championship-class" dict "IsEditing" $.IsEditing "CarOpts" $.CarOpts "Championship" $.Current "Class" $class "DefaultPoints" $.DefaultPoints "MaxClientsOverride" $.MaxClientsOverride }}
         {{ else }}
             {{ template "championship-class" . }}
         {{ end }}
@@ -87,6 +98,7 @@
         const possibleEntrants = {{ jsonEncode .PossibleEntrants }};
         const availableCars = {{ jsonEncode .CarOpts.AsMap }};
         const defaultPoints = {{ jsonEncode .DefaultPoints }};
+        const fixedSetups = {{ jsonEncode .FixedSetups }};
     </script>
 
 {{ end }}

@@ -5,44 +5,57 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
+	"time"
 
 	"github.com/cj123/assetto-server-manager"
 	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
 	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
 	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
 
+	"github.com/etcd-io/bbolt"
 	"github.com/pkg/browser"
 	"github.com/sirupsen/logrus"
 )
 
 var debug = os.Getenv("DEBUG") == "true"
 
+var defaultAddress = "0.0.0.0:8772"
+
+func init() {
+	runtime.LockOSThread()
+}
+
 func main() {
 	config, err := servermanager.ReadConfig("config.yml")
 
 	if err != nil {
-		logrus.Fatalf("could not open config file, err: %s", err)
+		ServeHTTPWithError(defaultAddress, "Read configuration file (config.yml)", err)
+		return
 	}
 
 	store, err := config.Store.BuildStore()
 
 	if err != nil {
-		logrus.Fatalf("could not open store, err: %s", err)
+		ServeHTTPWithError(config.HTTP.Hostname, "Open server manager storage (bolt or json)", err)
+		return
 	}
 
-	servermanager.SetupRaceManager(store)
+	servermanager.InitWithStore(store)
 	servermanager.SetAssettoInstallPath(config.Steam.InstallPath)
 
 	err = servermanager.InstallAssettoCorsaServer(config.Steam.Username, config.Steam.Password, config.Steam.ForceUpdate)
 
 	if err != nil {
-		logrus.Fatalf("could not install assetto corsa server, err: %s", err)
+		ServeHTTPWithError(defaultAddress, "Install assetto corsa server with steamcmd. Likely you do not have steamcmd installed correctly.", err)
+		return
 	}
 
 	var templateLoader servermanager.TemplateLoader
 	var filesystem http.FileSystem
 
-	if debug {
+	if os.Getenv("FILESYSTEM_HTML") == "true" {
 		templateLoader = servermanager.NewFilesystemTemplateLoader("views")
 		filesystem = http.Dir("static")
 	} else {
@@ -57,7 +70,8 @@ func main() {
 	servermanager.ViewRenderer, err = servermanager.NewRenderer(templateLoader, debug)
 
 	if err != nil {
-		logrus.Fatalf("could not initialise view renderer, err: %s", err)
+		ServeHTTPWithError(config.HTTP.Hostname, "Initialise view renderer (internal error)", err)
+		return
 	}
 
 	go servermanager.LoopRaces()
@@ -76,16 +90,37 @@ func main() {
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 
 	if err != nil {
-		logrus.Fatalf("could not listen on address: %s, err: %s", config.HTTP.Hostname, err)
+		ServeHTTPWithError(defaultAddress, "Listen on hostname "+config.HTTP.Hostname+". Likely the port has already been taken by another application", err)
+		return
 	}
 
 	logrus.Infof("starting assetto server manager on: %s", config.HTTP.Hostname)
 
 	if runtime.GOOS == "windows" {
-		_ = browser.OpenURL("http://" + config.HTTP.Hostname)
+		_ = browser.OpenURL("http://" + strings.Replace(config.HTTP.Hostname, "0.0.0.0", "127.0.0.1", 1))
 	}
 
 	if err := http.Serve(listener, servermanager.Router(filesystem)); err != nil {
 		logrus.Fatal(err)
+	}
+}
+
+func startUDPReplay(file string) {
+	time.Sleep(time.Second * 20)
+
+	db, err := bbolt.Open(file, 0644, nil)
+
+	if err != nil {
+		logrus.WithError(err).Error("Could not open bolt")
+	}
+
+	err = replay.ReplayUDPMessages(db, 10, func(response udp.Message) {
+		servermanager.LiveTimingCallback(response)
+		servermanager.LiveMapCallback(response)
+		servermanager.LoopCallback(response)
+	}, time.Second*2)
+
+	if err != nil {
+		logrus.WithError(err).Error("UDP Replay failed")
 	}
 }
