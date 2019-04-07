@@ -1011,16 +1011,6 @@ class RaceSetup {
 
             let $raceSetup = $(this).closest(".race-setup");
 
-            let numEntrants = $raceSetup.find(".entrant:visible").length;
-            let $points = $raceSetup.find(".points-place");
-            let numPoints = $points.length;
-
-
-            for (let i = numPoints; i >= numEntrants; i--) {
-                // remove any extras we don't need
-                $points.last().remove();
-            }
-
             $(this).closest(".entrant").remove();
 
 
@@ -2316,6 +2306,9 @@ let championships = {
                 $newPoints.find("input").attr({"value": pointsVal});
                 $pointsParent.append($newPoints);
             }
+
+            let $savedNumPoints = $raceSetup.find(".totalNumPoints");
+            $savedNumPoints.val($raceSetup.find(".points-place:visible").length);
         });
 
         championships.initClassSetup();

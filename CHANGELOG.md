@@ -63,6 +63,7 @@ Fixes:
 * Fixes an issue where new entrants in a Championship were not persisted for autofill.
 * Fixes an issue that made it impossible to start quick/custom races on mobile safari.
 * Fixes an issue where Championship Events were not correctly finished/tracked.
+* Fixes an issue where Second Race Multiplier would default to 0 if not specified, rather than using 1.
 
 v1.1.3
 ------

@@ -138,6 +138,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	championship.Info = template.HTML(r.FormValue("ChampionshipInfo"))
 
 	previousNumEntrants := 0
+	previousNumPoints := 0
 
 	for i := 0; i < len(r.Form["ClassName"]); i++ {
 		class := NewChampionshipClass(r.Form["ClassName"][i])
@@ -147,6 +148,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		}
 
 		numEntrantsForClass := formValueAsInt(r.Form["EntryList.NumEntrants"][i])
+		numPointsForClass := formValueAsInt(r.Form["NumPoints"][i])
 
 		class.Entrants, err = cm.BuildEntryList(r, previousNumEntrants, numEntrantsForClass)
 
@@ -156,7 +158,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 
 		class.Points.Places = make([]int, 0)
 
-		for i := previousNumEntrants; i < previousNumEntrants+numEntrantsForClass; i++ {
+		for i := previousNumPoints; i < previousNumPoints+numPointsForClass; i++ {
 			class.Points.Places = append(class.Points.Places, formValueAsInt(r.Form["Points.Place"][i]))
 		}
 
@@ -165,6 +167,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		class.Points.SecondRaceMultiplier = formValueAsFloat(r.Form["Points.SecondRaceMultiplier"][i])
 
 		previousNumEntrants += numEntrantsForClass
+		previousNumPoints += numPointsForClass
 		championship.AddClass(class)
 	}
 

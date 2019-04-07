@@ -56,8 +56,8 @@
                                             {{ end }}
                                         {{ end }}
                                         <td>{{ add $i 1 }}</td>
-                                        <td>{{ $entrant.Entrant.Name }}</td>
-                                        <td>{{ $entrant.Entrant.Team }}</td>
+                                        <td>{{ $entrant.Car.Driver.Name }}</td>
+                                        <td>{{ $entrant.Car.Driver.Team }}</td>
                                         <td>{{ $entrant.Points }}</td>
                                     </tr>
                                 {{ end }}
@@ -170,7 +170,7 @@
                         {{ range $i, $entrant := $entrants }}
                             <div class="col-6 col-lg-3 col-md-3 col-sm-6 entrant-car">
                                 <div class="card card-block" {{ if $championship.IsMultiClass }}style="color: white; background: {{ classColor $classIndex }}"{{ end }}>
-                                    <img src="{{ with $entrant.Entrant.Skin }}{{ carSkinURL $entrant.Entrant.Model $entrant.Entrant.Skin }}{{ else }}/static/img/no-preview-car.png{{ end }}"
+                                    <img src="{{ with $entrant.Car.Skin }}{{ carSkinURL $entrant.Car.Model $entrant.Car.Skin }}{{ else }}/static/img/no-preview-car.png{{ end }}"
                                          alt="Car Skin"
                                          class="card-img-top"
                                     >
@@ -182,8 +182,8 @@
 
                                         <p class="mb-0">
                                             <small>
-                                                {{ $entrant.Entrant.Name }}<br>
-                                                {{ $entrant.Entrant.Team }}
+                                                {{ $entrant.Car.Driver.Name }}<br>
+                                                {{ $entrant.Car.Driver.Team }}
                                             </small>
                                         </p>
                                     </div>
@@ -252,7 +252,7 @@
                         <strong>{{ prettify $eventSetup.Track false }} {{ with $eventSetup.TrackLayout }}({{ prettify . true }}){{ end }}</strong>
                     {{ end }}
 
-                    in {{ carList $championship.ValidCarIDs }}
+                    in {{ carList ($event.Cars $championship) }}
 
                     <div class="float-right">
                         {{ if $event.Completed }}
