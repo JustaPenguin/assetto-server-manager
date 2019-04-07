@@ -52,6 +52,7 @@ Added:
   - If a driver changes class, an entirely new entry is made but the old one is not deleted - new points earned go to new 
     team and new driver entry.
 * Added logging to server-manager.log - this should make debugging issues easier.
+* Moved "Result Screen Time" option to Custom Race / Championship Event configuration.
 
 Fixes:
 
