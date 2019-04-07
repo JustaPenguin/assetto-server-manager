@@ -21,7 +21,6 @@ var ConfigIniDefault = ServerConfig{
 		UDPPluginAddress:          "",
 		AuthPluginAddress:         "",
 		NumberOfThreads:           2,
-		ResultScreenTime:          90,
 	},
 
 	CurrentRaceConfig: CurrentRaceConfig{
@@ -60,6 +59,7 @@ var ConfigIniDefault = ServerConfig{
 		StartRule:                 2, // drive-thru
 		RaceExtraLap:              0,
 		MaxContactsPerKilometer:   -1,
+		ResultScreenTime:          90,
 
 		Sessions: map[SessionType]SessionConfig{
 			SessionTypePractice: {
