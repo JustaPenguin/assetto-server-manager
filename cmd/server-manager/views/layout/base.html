@@ -159,7 +159,37 @@
     </nav>
 
     <div class="container">
-        <br><br>
+
+        {{ if ne $.IsPremium "true" }}
+            <div class="card border-success mb-4 {{ randAlphaNum 10 }}" id="{{ randAlphaNum 10 }}">
+                <div class="card-body">
+                    <p>
+                        Assetto Corsa Server Manager is free, open source software. We're really proud of it and we think it adds a lot of
+                        really exciting stuff to Assetto Corsa. It's improved the way we play and enjoy the game,
+                        and we hope that it has done for you too.
+                    </p>
+
+                    <p>
+                        We have dedicated a lot of time towards the development of Server Manager, and it'd be great if
+                        you would consider supporting us. It helps us keep working on cool new features for Server Manager!
+                    </p>
+
+                    <ul>
+                        <li>
+                            <strong>Rent a Server</strong> - always-online server hosting for Assetto Corsa - with Server Manager (obviously!).
+                            We handle setup and updates so you can get on and race!
+                        </li>
+
+                        <li><strong>Donate via PayPal</strong> - use the link below to buy us some beers, or a coffee, or a toaster. Or an aeroplane? We'll send you a new version of Server Manager without this banner if you donate to us.</li>
+                    </ul>
+                </div>
+                <div class="card-footer text-right">
+                    <a class="btn btn-success" href="https://assettocorsaservers.com">Rent a Server <i class="ml-1 fas fa-server"></i></a>
+                    <a class="btn btn-danger" href="https://paypal.me/JustaPenguinUK">Donate via PayPal <i class="ml-1 fas fa-heart"></i></a>
+                </div>
+            </div>
+        {{ end }}
+
 
         {{ block "content" . }}{{ end }}
 
@@ -173,7 +203,7 @@
                 <img src="/static/img/racer.png" class="img img-footer">
             </div>
             <div class="col-sm-4 text-right">
-                Assetto Server Manager v{{ Version }}<br> &copy; <a href="https://justapengu.in">Just a Penguin</a> 2010-{{ now.Format "2006" }}
+                Assetto Corsa Server Manager v{{ Version }}<br> &copy; <a href="https://justapengu.in">Just a Penguin</a> 2010-{{ now.Format "2006" }}
             </div>
 
         </footer>
