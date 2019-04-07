@@ -58,8 +58,10 @@ var ConfigIniDefault = ServerConfig{
 		WindVariationDirection:    15,
 		StartRule:                 2, // drive-thru
 		RaceExtraLap:              0,
-		MaxContactsPerKilometer:   -1,
-		ResultScreenTime:          90,
+		// MaxContactsPerKilometer seems to be another feature added to the config but not actually
+		// integrated into Assetto Corsa's Server.
+		// MaxContactsPerKilometer:   -1,
+		ResultScreenTime: 90,
 
 		Sessions: map[SessionType]SessionConfig{
 			SessionTypePractice: {

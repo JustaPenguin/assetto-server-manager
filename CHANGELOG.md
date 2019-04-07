@@ -45,7 +45,6 @@ Added:
 * Looped practice events will now persist drivers in the live timings table across each event.
 * Added a text input (with support for images, embedded video etc.) to Championship pages. Intended for adding information
   about the championship, rules, links to content used etc.
-* Added missing "MAX_CONTACTS_PER_KM" to server configuration options.
 * Vastly improved Championship points scoring. Points scoring now adheres to the following rules:
   - If a driver changes car but NOT team or class, both team and driver points persist.
   - If a driver changes team, but NOT class, drivers points persist, team points stay at old team and new points 
