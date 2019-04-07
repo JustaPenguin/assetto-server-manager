@@ -342,6 +342,7 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 	data["server_name"] = opts.Name
 	data["User"] = AccountFromRequest(r)
 	data["IsHosted"] = IsHosted
+	data["IsPremium"] = IsPremium
 	data["MaxClientsOverride"] = MaxClientsOverride
 
 	t.Funcs(map[string]interface{}{

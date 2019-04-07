@@ -1,5 +1,5 @@
 body {
-    padding-top: 60px;
+    padding-top: 100px;
     font-size: 1rem !important;
     overflow-y: scroll;
 }
@@ -96,19 +96,19 @@ span[data-toggle=tooltip] {
 }
 
 #trackImage {
-    border-radius: 7.5px;
+    border-radius: 0.25rem;
     width: 100%;
     max-width: 355px;
 }
 
 #weatherImage {
-    border-radius: 7.5px;
+    border-radius: 0.25rem;
     width: 100%;
     max-width: 355px;
 }
 
 .entryListCarPreview {
-	border-radius: 7.5px;
+	border-radius: 0.25rem;
 }
 
 .home-race-info .race-info, .home-race-info .race-info small {
@@ -163,6 +163,7 @@ span[data-toggle=tooltip] {
 
 .image-track {
     max-height: 200px;
+    border-radius: 0.25rem !important;
 }
 
 .drop-zone {
@@ -347,7 +348,7 @@ footer a {
 
 #map {
     position: relative;
-    border-radius: 7.5px;
+    border-radius: 0.25rem;
     background-color: rgba(0,0,0,0.125);
 }
 
