@@ -70,12 +70,14 @@
 
         {{ range $index, $entrant := $class.Entrants.AsSlice }}
             <div class="entrant">
-                {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" false }}
+                {{ template "entrant" dict "Car" $entrant "IsChampionshipEvent" false }}
             </div>
         {{ else }}
-            <div class="entrant">
-                {{ template "entrant" }}
-            </div>
+            {{ if not $.IsEditing }}
+                <div class="entrant">
+                    {{ template "entrant" }}
+                </div>
+            {{ end }}
         {{ end }}
 
         <div class="text-right">
@@ -86,29 +88,29 @@
 
         <div class="clearfix"></div>
 
-        <input type="hidden" class="totalNumEntrants" name="EntryList.NumEntrants" value="{{ with $class.Entrants }}{{ len $class.Entrants }}{{ else }}1{{ end }}">
+        <input type="hidden" class="totalNumEntrants" name="EntryList.NumEntrants" value="{{ with $class.Entrants }}{{ len $class.Entrants }}{{ else }}{{ if $.IsEditing }}0{{ else }}1{{ end }}{{ end }}">
 
         <div class="mt-5 points-parent">
 
             <h3>Points</h3>
 
-            {{ if and .IsEditing $class.Entrants }}
+            {{ if and .IsEditing $class.Points.Places }}
 
-                {{ $entrantCount := int64 1 }}
+                {{ $pointsCount := int64 1 }}
 
-                {{ range $index, $entrant := $class.Entrants }}
+                {{ range $index, $points := $class.Points.Places }}
                     <div class="form-group row points-place">
                         <label for="Points.Place" class="col-sm-3 col-form-label">
-                            {{ $entrantCount }}{{ ordinal $entrantCount }} Place
+                            {{ $pointsCount }}{{ ordinal $pointsCount }} Place
                         </label>
 
                         <div class="col-sm-9">
                             <input type="number" class="form-control" name="Points.Place"
-                                   placeholder="Points" value="{{ index $class.Points.Places (sub $entrantCount 1) }}">
+                                   placeholder="Points" value="{{ index $class.Points.Places (sub $pointsCount 1) }}">
                         </div>
                     </div>
 
-                    {{ $entrantCount = add $entrantCount 1 }}
+                    {{ $pointsCount = add $pointsCount 1 }}
                 {{ end }}
             {{ else }}
                 <div class="form-group row points-place">
@@ -124,6 +126,18 @@
             {{ end }}
         </div>
 
+        <input type="hidden" class="totalNumPoints" name="NumPoints" value="{{ with $class.Points.Places }}{{ len $class.Points.Places }}{{ else }}0{{ end }}">
+
+        <div class="row">
+            <div class="col-sm-9 offset-sm-3">
+                <small>
+                    Once added, Championship Points cannot be removed. Results for Championships are calculated on page load (allowing for much
+                    greater flexibility for improvements), so previous Championship points must be available to do that. If you wish to disable
+                    points entirely for this class, set all the above values to zero. This will affect all entrants points who raced in this
+                    class in this Championship.
+                </small>
+            </div>
+        </div>
         <hr>
 
         <div class="form-group row">
@@ -149,7 +163,7 @@
 
             <div class="col-sm-9">
                 <input type="number" class="form-control" name="Points.SecondRaceMultiplier" step="0.01"
-                       placeholder="Multiplier" value="{{ if .IsEditing }}{{ with $class.Points.SecondRaceMultiplier }}{{ . }}{{ end }}{{ else }}{{ .DefaultPoints.SecondRaceMultiplier }}{{ end }}">
+                       placeholder="Multiplier" value="{{ with $class.Points.SecondRaceMultiplier }}{{ . }}{{ else }}0{{ end }}">
 
                 <small>
                     This multiplier is applied when giving points to any events which make use of the "Reversed Grid Positions"

@@ -102,7 +102,7 @@ func (c *Championship) GetPlayerSummary(guid string) string {
 				var driverPoints, teamPoints float64
 
 				for pos, standing := range standings {
-					if standing.Entrant.GUID == guid {
+					if standing.Car.Driver.GUID == guid {
 						driverPos = pos + 1
 						driverPoints = standing.Points
 					}
@@ -112,7 +112,7 @@ func (c *Championship) GetPlayerSummary(guid string) string {
 				var driverAheadPoints float64
 
 				if driverPos >= 2 {
-					driverAhead = standings[driverPos-2].Entrant.Name
+					driverAhead = standings[driverPos-2].Car.Driver.Name
 					driverAheadPoints = standings[driverPos-2].Points
 				}
 
@@ -333,8 +333,8 @@ func (c *Championship) EnhanceResults(results *SessionResults) {
 
 // ChampionshipStanding is the current number of Points an Entrant in the Championship has.
 type ChampionshipStanding struct {
-	Entrant *Entrant
-	Points  float64
+	Car    *SessionCar
+	Points float64
 }
 
 // PointForPos uses the Championship's Points to determine what number should be awarded to a given position
@@ -346,13 +346,13 @@ func (c *ChampionshipClass) PointForPos(i int) float64 {
 	return float64(c.Points.Places[i])
 }
 
-func (c *ChampionshipClass) DriverInClass(driverGUID string, result *SessionResult) bool {
+func (c *ChampionshipClass) DriverInClass(result *SessionResult) bool {
 	return result.ClassID == c.ID
 }
 
 func (c *ChampionshipClass) ResultsForClass(results []*SessionResult) (filtered []*SessionResult) {
 	for _, result := range results {
-		if c.DriverInClass(result.DriverGUID, result) && result.TotalTime > 0 {
+		if c.DriverInClass(result) && result.TotalTime > 0 {
 			filtered = append(filtered, result)
 		}
 	}
@@ -380,7 +380,7 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 			fastestLap := race.Results.FastestLap()
 
 			for pos, driver := range c.ResultsForClass(race.Results.Result) {
-				if driver.TotalTime <= 0 {
+				if driver.TotalTime <= 0 || driver.Disqualified {
 					continue
 				}
 
@@ -398,7 +398,7 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 			fastestLap := race2.Results.FastestLap()
 
 			for pos, driver := range c.ResultsForClass(race2.Results.Result) {
-				if driver.TotalTime <= 0 {
+				if driver.TotalTime <= 0 || driver.Disqualified {
 					continue
 				}
 
@@ -416,43 +416,45 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*ChampionshipStanding {
 	var out []*ChampionshipStanding
 
-	entrants := make(map[string]*ChampionshipStanding)
+	standings := make(map[string]*ChampionshipStanding)
 
 	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64) {
-		if _, ok := entrants[driverGUID]; !ok {
-			var entrant *Entrant
+		if _, ok := standings[driverGUID]; !ok {
+			var car *SessionCar
 
-			for _, e := range event.EntryList {
-				if e.GUID == driverGUID {
-					entrant = e
-					break
+			for _, session := range event.Sessions {
+				for _, sessionCar := range session.Results.Cars {
+					if sessionCar.Driver.GUID == driverGUID {
+						car = sessionCar
+						break
+					}
 				}
 			}
 
-			if entrant == nil {
+			if car == nil {
 				return
 			}
 
-			entrants[driverGUID] = &ChampionshipStanding{
-				Entrant: entrant,
-				Points:  0.0,
+			standings[driverGUID] = &ChampionshipStanding{
+				Car:    car,
+				Points: points,
 			}
+		} else {
+			standings[driverGUID].Points += points
 		}
-
-		entrants[driverGUID].Points += points
 	})
 
-	for _, entrant := range entrants {
-		if entrant.Entrant.Name == "" {
+	for _, standing := range standings {
+		if standing.Car.Driver.Name == "" {
 			continue
 		}
 
-		out = append(out, entrant)
+		out = append(out, standing)
 	}
 
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].Points == out[j].Points {
-			return out[i].Entrant.Name < out[j].Entrant.Name
+			return out[i].Car.Driver.Name < out[j].Car.Driver.Name
 		}
 
 		return out[i].Points > out[j].Points
@@ -533,6 +535,31 @@ type ChampionshipEvent struct {
 	StartedTime   time.Time
 	CompletedTime time.Time
 	Scheduled     time.Time
+}
+
+func (cr *ChampionshipEvent) Cars(c *Championship) []string {
+	if cr.Completed() {
+		cars := make(map[string]bool)
+
+		// look for cars in the session results
+		for _, session := range cr.Sessions {
+			if session.Results != nil {
+				for _, car := range session.Results.Cars {
+					cars[car.Model] = true
+				}
+			}
+		}
+
+		var out []string
+
+		for car := range cars {
+			out = append(out, car)
+		}
+
+		return out
+	} else {
+		return c.ValidCarIDs()
+	}
 }
 
 func (cr *ChampionshipEvent) CombineEntryLists(championship *Championship) EntryList {
