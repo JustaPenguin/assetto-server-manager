@@ -299,35 +299,7 @@ func (c *Championship) EnhanceResults(results *SessionResults) {
 	// update names / teams to the values we know to be correct due to championship setup
 	for _, class := range c.Classes {
 		for _, entrant := range class.Entrants {
-			for _, car := range results.Cars {
-				if car.Driver.GUID == entrant.GUID {
-					car.Driver.AssignEntrant(entrant, class.ID)
-				}
-			}
-
-			for _, event := range results.Events {
-				if event.Driver.GUID == entrant.GUID {
-					event.Driver.AssignEntrant(entrant, class.ID)
-				}
-
-				if event.OtherDriver.GUID == entrant.GUID {
-					event.OtherDriver.AssignEntrant(entrant, class.ID)
-				}
-			}
-
-			for _, lap := range results.Laps {
-				if lap.DriverGUID == entrant.GUID {
-					lap.DriverName = entrant.Name
-					lap.ClassID = class.ID
-				}
-			}
-
-			for _, result := range results.Result {
-				if result.DriverGUID == entrant.GUID {
-					result.DriverName = entrant.Name
-					result.ClassID = class.ID
-				}
-			}
+			class.AttachEntrantToResult(entrant, results)
 		}
 	}
 }
@@ -386,6 +358,38 @@ func (c *ChampionshipClass) PointForPos(i int) float64 {
 
 func (c *ChampionshipClass) DriverInClass(result *SessionResult) bool {
 	return result.ClassID == c.ID
+}
+
+func (c *ChampionshipClass) AttachEntrantToResult(entrant *Entrant, results *SessionResults) {
+	for _, car := range results.Cars {
+		if car.Driver.GUID == entrant.GUID {
+			car.Driver.AssignEntrant(entrant, c.ID)
+		}
+	}
+
+	for _, event := range results.Events {
+		if event.Driver.GUID == entrant.GUID {
+			event.Driver.AssignEntrant(entrant, c.ID)
+		}
+
+		if event.OtherDriver.GUID == entrant.GUID {
+			event.OtherDriver.AssignEntrant(entrant, c.ID)
+		}
+	}
+
+	for _, lap := range results.Laps {
+		if lap.DriverGUID == entrant.GUID {
+			lap.DriverName = entrant.Name
+			lap.ClassID = c.ID
+		}
+	}
+
+	for _, result := range results.Result {
+		if result.DriverGUID == entrant.GUID {
+			result.DriverName = entrant.Name
+			result.ClassID = c.ID
+		}
+	}
 }
 
 func (c *ChampionshipClass) ResultsForClass(results []*SessionResult) (filtered []*SessionResult) {
@@ -460,6 +464,10 @@ func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*Championsh
 		var car *SessionCar
 
 		for _, session := range event.Sessions {
+			if session.Results == nil {
+				continue
+			}
+
 			for _, sessionCar := range session.Results.Cars {
 				if sessionCar.Driver.GUID == driverGUID {
 					car = sessionCar

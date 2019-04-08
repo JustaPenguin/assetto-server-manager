@@ -421,6 +421,10 @@ func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (Entry
 		e.Restrictor = formValueAsInt(r.Form["EntryList.Restrictor"][i])
 		e.FixedSetup = r.Form["EntryList.FixedSetup"][i]
 
+		if r.Form["EntryList.TransferTeamPoints"] != nil && formValueAsInt(r.Form["EntryList.TransferTeamPoints"][i]) == 1 {
+			e.TransferTeamPoints = true
+		}
+
 		entryList.Add(e)
 	}
 
