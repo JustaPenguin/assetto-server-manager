@@ -447,11 +447,17 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		gasPenaltyDisabled = 0
 	}
 
+	trackLayout := r.FormValue("TrackLayout")
+
+	if trackLayout == "<default>" {
+		trackLayout = ""
+	}
+
 	raceConfig := &CurrentRaceConfig{
 		// general race config
 		Cars:        strings.Join(cars, ";"),
 		Track:       r.FormValue("Track"),
-		TrackLayout: r.FormValue("TrackLayout"),
+		TrackLayout: trackLayout,
 
 		// assists
 		ABSAllowed:              formValueAsInt(r.FormValue("ABSAllowed")),
