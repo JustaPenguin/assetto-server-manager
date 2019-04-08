@@ -1,6 +1,9 @@
 {{ define "title" }}Home{{ end }}
 
 {{ define "content" }}
+
+    {{ template "premium" dict "IsPremium" $.IsPremium }}
+
     {{ with .RaceDetails }}
         <div class="card">
             {{ if eq $.server_event_type "CHAMPIONSHIP" }}
@@ -153,4 +156,8 @@
     </div>
 
     <div class="clearfix"></div>
+{{ end }}
+
+{{ define "showpremium" }}
+    <!-- no-op -->
 {{ end }}

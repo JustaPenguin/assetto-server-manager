@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"net/http"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -331,10 +332,47 @@ func (c *Championship) EnhanceResults(results *SessionResults) {
 	}
 }
 
+func NewChampionshipStanding(car *SessionCar) *ChampionshipStanding {
+	return &ChampionshipStanding{
+		Car:   car,
+		Teams: make(map[string]int),
+	}
+}
+
 // ChampionshipStanding is the current number of Points an Entrant in the Championship has.
 type ChampionshipStanding struct {
-	Car    *SessionCar
+	Car *SessionCar
+
+	// Teams is a map of Team Name to how many Events per team were completed.
+	Teams  map[string]int
 	Points float64
+}
+
+func (cs *ChampionshipStanding) AddEventForTeam(team string) {
+	if _, ok := cs.Teams[team]; ok {
+		cs.Teams[team]++
+	} else {
+		cs.Teams[team] = 1
+	}
+}
+
+func (cs *ChampionshipStanding) TeamSummary() string {
+	if len(cs.Teams) == 1 {
+		for team := range cs.Teams {
+			return team
+		}
+	} else {
+		// more than one team
+		var summary []string
+
+		for team, races := range cs.Teams {
+			summary = append(summary, fmt.Sprintf("%s (%d races)", team, races))
+		}
+
+		return strings.Join(summary, ", ")
+	}
+
+	return ""
 }
 
 // PointForPos uses the Championship's Points to determine what number should be awarded to a given position
@@ -419,29 +457,27 @@ func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*Championsh
 	standings := make(map[string]*ChampionshipStanding)
 
 	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64) {
-		if _, ok := standings[driverGUID]; !ok {
-			var car *SessionCar
+		var car *SessionCar
 
-			for _, session := range event.Sessions {
-				for _, sessionCar := range session.Results.Cars {
-					if sessionCar.Driver.GUID == driverGUID {
-						car = sessionCar
-						break
-					}
+		for _, session := range event.Sessions {
+			for _, sessionCar := range session.Results.Cars {
+				if sessionCar.Driver.GUID == driverGUID {
+					car = sessionCar
+					break
 				}
 			}
-
-			if car == nil {
-				return
-			}
-
-			standings[driverGUID] = &ChampionshipStanding{
-				Car:    car,
-				Points: points,
-			}
-		} else {
-			standings[driverGUID].Points += points
 		}
+
+		if car == nil {
+			return
+		}
+
+		if _, ok := standings[driverGUID]; !ok {
+			standings[driverGUID] = NewChampionshipStanding(car)
+		}
+
+		standings[driverGUID].Points += points
+		standings[driverGUID].AddEventForTeam(car.Driver.Team)
 	})
 
 	for _, standing := range standings {
