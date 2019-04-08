@@ -250,7 +250,7 @@ func serverBlacklistHandler(w http.ResponseWriter, r *http.Request) {
 		err := ioutil.WriteFile(filepath.Join(ServerInstallPath, "blacklist.txt"), []byte(text), 0644)
 
 		if err != nil {
-			logrus.Errorf("couldn't save blacklist, err: %s", err)
+			logrus.WithError(err).Error("couldn't save blacklist")
 			AddErrFlashQuick(w, r, "Failed to save Server blacklist changes")
 		} else {
 			AddFlashQuick(w, r, "Server blacklist successfully changed!")
@@ -260,7 +260,7 @@ func serverBlacklistHandler(w http.ResponseWriter, r *http.Request) {
 	// load blacklist.txt
 	b, err := ioutil.ReadFile(filepath.Join(ServerInstallPath, "blacklist.txt")) // just pass the file name
 	if err != nil {
-		logrus.Errorf("Couldn't find blacklist.txt")
+		logrus.WithError(err).Error("couldn't find blacklist.txt")
 	}
 
 	// render blacklist edit page
