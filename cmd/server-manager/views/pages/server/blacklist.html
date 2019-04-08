@@ -1,0 +1,15 @@
+{{ define "title" }}Server Options{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">Server Blacklist</h1>
+
+    <form method="post" action="/blacklist">
+        <label for="blacklist"></label>
+        <textarea id="blacklist" name="blacklist" class="form-control md-textarea text-area">{{ .text }}</textarea>
+
+        <button class="btn btn-success float-right mt-2" type="submit">Save</button>
+    </form>
+
+    <p><small>This file is where banned user GUIDs are stored. If blacklist mode is set to 2 users will automatically
+            be added to this list when kicked. You can edit this list manually regardless of blacklist mode.</small></p>
+{{ end }}
