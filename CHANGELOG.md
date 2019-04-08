@@ -48,6 +48,7 @@ Added:
   about the championship, rules, links to content used etc.
 * Added missing "MAX_CONTACTS_PER_KM" to server configuration options.
 * Added disconnected table to live timing page, shows best times of disconnected drivers from the current session.
+* Added blacklist.txt editor.
 
 Fixes:
 
