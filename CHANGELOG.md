@@ -47,6 +47,7 @@ Added:
 * Added a text input (with support for images, embedded video etc.) to Championship pages. Intended for adding information
   about the championship, rules, links to content used etc.
 * Added missing "MAX_CONTACTS_PER_KM" to server configuration options.
+* Added disconnected table to live timing page, shows best times of disconnected drivers from the current session.
 
 Fixes:
 
@@ -58,6 +59,7 @@ Fixes:
 * Fixes an issue that made it impossible to start quick/custom races on mobile safari.
 * Fixes an issue where Championship Events were not correctly finished/tracked.
 * Added logging to server-manager.log - this should make debugging issues easier.
+* Improved reliability of live timing table.
 
 v1.1.3
 ------
