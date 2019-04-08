@@ -322,7 +322,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		numPitboxes = quickRace.CurrentRaceConfig.MaxClients
 	}
 
-	if numPitboxes > MaxClientsOverride {
+	if numPitboxes > MaxClientsOverride && MaxClientsOverride > 0 {
 		numPitboxes = MaxClientsOverride
 	}
 
