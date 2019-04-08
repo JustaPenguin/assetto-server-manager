@@ -53,6 +53,7 @@ Added:
     change a driver's team name.
   - If a driver changes class, an entirely new entry is made but the old one is not deleted - new points earned go to new 
     team and new driver entry.
+  
   A byproduct of this is that once points have been added to a Championship Class, they cannot be removed. That is, if you
   have 6 drivers in a Championship Class and you remove 2, there will still be 6 points inputs in the Class. This is so
   that previous Championship Events have the correct number of points for their calculations.
