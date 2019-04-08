@@ -24,10 +24,12 @@ var (
 	pluginsOutput = newLogBuffer(MaxLogSizeBytes)
 
 	logMultiWriter io.Writer
+
+	Debug = os.Getenv("DEBUG") == "true"
 )
 
 func init() {
-	if os.Getenv("DEBUG") != "true" {
+	if !Debug {
 		logrus.SetLevel(logrus.InfoLevel)
 	} else {
 		logrus.SetLevel(logrus.DebugLevel)
