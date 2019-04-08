@@ -58,6 +58,8 @@ Added:
   that previous Championship Events have the correct number of points for their calculations.
 * Added logging to server-manager.log - this should make debugging issues easier.
 * Moved "Result Screen Time" option to Custom Race / Championship Event configuration.
+* Added disconnected table to live timing page, shows best times of disconnected drivers from the current session.
+* Added blacklist.txt editor.
 
 Fixes:
 
@@ -72,6 +74,8 @@ Fixes:
 * We now exclude disqualified drivers from points in the race they were disqualified from.
 * Championship Events now show the cars that entered the race or are due to enter the race in their header, rather
   than just showing the cars entered into the Championship.
+* Added logging to server-manager.log - this should make debugging issues easier.
+* Improved reliability of live timing table.
 
 v1.1.3
 ------

@@ -510,6 +510,10 @@ td .dot-inactive {
     width: 1.4em;
 }
 
+.text-area {
+    min-height: 200px;
+}
+
 .points-transfer {
     margin-top: 10px;
     font-size: 0.765625rem;
