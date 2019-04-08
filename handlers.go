@@ -243,17 +243,11 @@ func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func serverBlacklistHandler(w http.ResponseWriter, r *http.Request) {
-	// load blacklist.txt
-	b, err := ioutil.ReadFile("./assetto/blacklist.txt") // just pass the file name
-	if err != nil {
-		logrus.Errorf("Couldn't find blacklist.txt")
-	}
-
 	if r.Method == http.MethodPost {
 		// save to blacklist.txt
 		text := r.FormValue("blacklist")
 
-		err = ioutil.WriteFile("./assetto/blacklist.txt", []byte(text), 0644)
+		err := ioutil.WriteFile(filepath.Join(ServerInstallPath, "/blacklist.txt"), []byte(text), 0644)
 
 		if err != nil {
 			logrus.Errorf("couldn't save blacklist, err: %s", err)
@@ -261,11 +255,12 @@ func serverBlacklistHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			AddFlashQuick(w, r, "Server blacklist successfully changed!")
 		}
+	}
 
-		b, err = ioutil.ReadFile("./assetto/blacklist.txt") // just pass the file name
-		if err != nil {
-			logrus.Errorf("Couldn't find blacklist.txt")
-		}
+	// load blacklist.txt
+	b, err := ioutil.ReadFile("./assetto/blacklist.txt") // just pass the file name
+	if err != nil {
+		logrus.Errorf("Couldn't find blacklist.txt")
 	}
 
 	// render blacklist edit page
