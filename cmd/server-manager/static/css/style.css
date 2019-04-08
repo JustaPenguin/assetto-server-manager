@@ -508,3 +508,7 @@ td .dot-inactive {
     position: relative;
     width: 1.4em;
 }
+
+.text-area {
+    min-height: 200px;
+}
