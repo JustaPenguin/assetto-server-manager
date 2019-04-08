@@ -210,7 +210,7 @@ func LiveTimingCallback(response udp.Message) {
 		if a.Event() == udp.EventNewConnection {
 			for id, car := range liveInfo.DeletedCars {
 				if car.DriverGUID == a.DriverGUID && car.CarMode == a.CarModel {
-					logrus.Infof("Car: %s, %s Reconnected", a.DriverGUID, a.CarModel)
+					logrus.Debugf("Car: %s, %s Reconnected", a.DriverGUID, a.CarModel)
 					liveInfo.Cars[uint8(a.CarID)] = car
 
 					delete(liveInfo.DeletedCars, id)
@@ -225,11 +225,11 @@ func LiveTimingCallback(response udp.Message) {
 				CarSkin:    a.CarSkin,
 			}
 
-			logrus.Infof("Car: %s, %s Connected", a.DriverGUID, a.CarModel)
+			logrus.Debugf("Car: %s, %s Connected", a.DriverGUID, a.CarModel)
 		} else if a.Event() == udp.EventConnectionClosed {
 			_, ok := liveInfo.Cars[uint8(a.CarID)]
 			if ok {
-				logrus.Infof("Car: %s, %s Disconnected\n", liveInfo.Cars[uint8(a.CarID)].DriverGUID,
+				logrus.Debugf("Car: %s, %s Disconnected\n", liveInfo.Cars[uint8(a.CarID)].DriverGUID,
 					liveInfo.Cars[uint8(a.CarID)].CarMode)
 
 				liveInfo.DeletedCars[fmt.Sprintf("%d - %s - %s", uint8(a.CarID),
