@@ -22,6 +22,7 @@ type LiveTiming struct {
 	SessionStarted                       int64
 
 	Cars map[uint8]*LiveCar // map[carID]LiveCar
+	DeletedCars map[string]*LiveCar // map[carID]LiveCar
 
 	SessionInfoStopChan chan struct{} `json:"-"`
 
@@ -33,9 +34,6 @@ type LiveCar struct {
 	// Static Car Info
 	DriverName, DriverGUID string
 	CarMode, CarSkin       string
-
-	// On disconnect
-	Delete bool
 
 	// Live Info
 	LapNum int
@@ -81,10 +79,16 @@ func LiveTimingCallback(response udp.Message) {
 		if a.Event() == udp.EventNewSession {
 			// New session, clear old data and create new - keep cars if necessary
 			var oldCars map[uint8]*LiveCar
+			var oldDelCars map[string]*LiveCar
 
 			if len(liveInfo.Cars) != 0 {
 				oldCars = make(map[uint8]*LiveCar)
 				oldCars = liveInfo.Cars
+			}
+
+			if len(liveInfo.DeletedCars) != 0 {
+				oldDelCars = make(map[string]*LiveCar)
+				oldDelCars = liveInfo.DeletedCars
 			}
 
 			sessionT, err := time.ParseDuration(fmt.Sprintf("%dms", a.ElapsedMilliseconds))
@@ -101,15 +105,31 @@ func LiveTimingCallback(response udp.Message) {
 				liveInfo.SessionInfoStopChan = nil
 			}
 
+			var del = true
+			var clear = false
+
+			// Only remove cars on the first session (avoid deleting cars between prac-quali-race)
+			if a.CurrentSessionIndex != 0 || liveInfo.Track == a.Track && liveInfo.TrackConfig == a.TrackConfig {
+				del = false
+				clear = true
+			}
+
 			// If this is a looped practice event, and the previous event had some cars then keep the cars
 			if len(liveInfo.Cars) > 0 && a.Type == 1 {
 				if liveInfo.Type == a.Type && liveInfo.Track == a.Track && liveInfo.TrackConfig == a.TrackConfig &&
 					liveInfo.Name == a.Name {
+					del = false
+					clear = false
+				}
+			}
 
-					for i := range oldCars {
-						oldCars[i].Delete = false
-					}
+			if del {
+				for id := range liveInfo.DeletedCars {
+					delete(oldDelCars, id)
+				}
 
+				for id := range liveInfo.Cars {
+					delete(oldCars, id)
 				}
 			}
 
@@ -132,22 +152,39 @@ func LiveTimingCallback(response udp.Message) {
 			if len(oldCars) == 0 {
 				liveInfo.Cars = make(map[uint8]*LiveCar)
 			} else {
-				for id, liveCar := range oldCars {
-					if liveCar.Delete {
-						delete(oldCars, id)
+				if clear {
+					for _, liveCar := range oldCars {
+						liveCar.LapNum = 0
+						liveCar.BestLapTime = time.Duration(0)
+						liveCar.BestLap = ""
+						liveCar.LastLapCompleteTime = time.Now()
+						liveCar.LastLapCompleteTimeUnix = unixNanoToMilli(time.Now().UnixNano())
+						liveCar.LastLap = ""
+						liveCar.Split = ""
+						liveCar.Pos = 0
 					}
-
-					liveCar.LapNum = 0
-					liveCar.BestLapTime = time.Duration(0)
-					liveCar.BestLap = ""
-					liveCar.LastLapCompleteTime = time.Now()
-					liveCar.LastLapCompleteTimeUnix = unixNanoToMilli(time.Now().UnixNano())
-					liveCar.LastLap = ""
-					liveCar.Split = ""
-					liveCar.Pos = 0
 				}
 
 				liveInfo.Cars = oldCars
+			}
+
+			if len(oldDelCars) == 0 {
+				liveInfo.DeletedCars = make(map[string]*LiveCar)
+			} else {
+				if clear {
+					for _, liveCar := range oldDelCars {
+						liveCar.LapNum = 0
+						liveCar.BestLapTime = time.Duration(0)
+						liveCar.BestLap = ""
+						liveCar.LastLapCompleteTime = time.Now()
+						liveCar.LastLapCompleteTimeUnix = unixNanoToMilli(time.Now().UnixNano())
+						liveCar.LastLap = ""
+						liveCar.Split = ""
+						liveCar.Pos = 0
+					}
+				}
+
+				liveInfo.DeletedCars = oldDelCars
 			}
 
 			liveInfo.SessionInfoStopChan = make(chan struct{})
@@ -171,17 +208,34 @@ func LiveTimingCallback(response udp.Message) {
 
 	case udp.SessionCarInfo:
 		if a.Event() == udp.EventNewConnection {
+			for id, car := range liveInfo.DeletedCars {
+				if car.DriverGUID == a.DriverGUID && car.CarMode == a.CarModel {
+					logrus.Infof("Car: %s, %s Reconnected", a.DriverGUID, a.CarModel)
+					liveInfo.Cars[uint8(a.CarID)] = car
+
+					delete(liveInfo.DeletedCars, id)
+					return
+				}
+			}
+
 			liveInfo.Cars[uint8(a.CarID)] = &LiveCar{
 				DriverGUID: a.DriverGUID,
 				DriverName: a.DriverName,
 				CarMode:    a.CarModel,
 				CarSkin:    a.CarSkin,
-				Delete:     false,
 			}
+
+			logrus.Infof("Car: %s, %s Connected", a.DriverGUID, a.CarModel)
 		} else if a.Event() == udp.EventConnectionClosed {
 			_, ok := liveInfo.Cars[uint8(a.CarID)]
 			if ok {
-				liveInfo.Cars[uint8(a.CarID)].Delete = true
+				logrus.Infof("Car: %s, %s Disconnected\n", liveInfo.Cars[uint8(a.CarID)].DriverGUID,
+					liveInfo.Cars[uint8(a.CarID)].CarMode)
+
+				liveInfo.DeletedCars[fmt.Sprintf("%d - %s - %s", uint8(a.CarID),
+					liveInfo.Cars[uint8(a.CarID)].DriverGUID,
+					liveInfo.Cars[uint8(a.CarID)].CarMode)] = liveInfo.Cars[uint8(a.CarID)] // save deleted car (incase they rejoin)
+
 				delete(liveInfo.Cars, uint8(a.CarID))
 			}
 		}
