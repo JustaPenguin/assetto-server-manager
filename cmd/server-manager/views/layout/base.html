@@ -163,11 +163,13 @@
 
 
         {{ block "showpremium" . }}
-            <div class="clearfix"></div>
+            {{ if ne $._request.URL.Path "/" }}
+                <div class="clearfix"></div>
 
-            <div class="mt-5">
-                {{ template "premium" dict "IsPremium" $.IsPremium }}
-            </div>
+                <div class="mt-5">
+                    {{ template "premium" dict "IsPremium" $.IsPremium }}
+                </div>
+            {{ end }}
         {{ end }}
 
         <footer class="pt-4 my-md-5 pt-md-5 border-top row">

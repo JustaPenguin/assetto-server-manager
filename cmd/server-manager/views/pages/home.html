@@ -1,7 +1,6 @@
 {{ define "title" }}Home{{ end }}
 
 {{ define "content" }}
-
     {{ template "premium" dict "IsPremium" $.IsPremium }}
 
     {{ with .RaceDetails }}
@@ -156,8 +155,4 @@
     </div>
 
     <div class="clearfix"></div>
-{{ end }}
-
-{{ define "showpremium" }}
-    <!-- no-op -->
 {{ end }}
