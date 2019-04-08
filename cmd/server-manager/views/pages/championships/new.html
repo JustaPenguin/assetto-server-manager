@@ -35,6 +35,32 @@
                     </div>
                 </div>
 
+                {{ if gt $.MaxClientsOverride 0 }}
+                    <div class="form-group row">
+                        <label for="ChampionshipName" class="col-sm-3 col-form-label">Maximum Number of Entrants</label>
+
+                        <div class="col-sm-9">
+                            <input
+                                    type="hidden"
+                                    id="MaxClients"
+                                    name="MaxClients"
+                                    value="{{ $.MaxClientsOverride }}"
+                            >
+
+                            <p class="col-form-label">Your server is restricted to a maximum of <strong>{{ $.MaxClientsOverride }}</strong> championship entrants.</p>
+
+
+                        </div>
+                    </div>
+                {{ else }}
+                    <input
+                            type="hidden"
+                            id="MaxClients"
+                            name="MaxClients"
+                            value="1000"
+                    >
+                {{ end }}
+
                 <div class="form-group row">
                     <label for="ChampionshipOpenEntrants" class="col-sm-3 col-form-label">Open Championship</label>
 
