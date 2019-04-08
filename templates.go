@@ -343,6 +343,7 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 	data["User"] = AccountFromRequest(r)
 	data["IsHosted"] = IsHosted
 	data["MaxClientsOverride"] = MaxClientsOverride
+	data["Debug"] = Debug
 
 	t.Funcs(map[string]interface{}{
 		"ReadAccess":   ReadAccess(r),
