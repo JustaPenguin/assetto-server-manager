@@ -238,7 +238,11 @@ let liveMap = {
                     break;
 
                 case EventVersion:
-                    liveMap.clearAllDrivers();
+
+                    location.reload();
+                    break;
+
+                case EventNewSession:
                     let trackURL = "/content/tracks/" + data.Track + (!!data.TrackConfig ? "/" + data.TrackConfig : "") + "/map.png";
 
                     loadedImg = new Image();
@@ -753,7 +757,19 @@ class RaceSetup {
         $.getJSON(jsonURL, function (trackInfo) {
             $pitBoxes.closest(".row").show();
             $pitBoxes.text(trackInfo.pitboxes);
-            $maxClients.attr("max", trackInfo.pitboxes);
+
+            let overrideAmount = $maxClients.data('value-override');
+
+            if ((overrideAmount && trackInfo.pitboxes <= overrideAmount) || !overrideAmount) {
+                $maxClients.attr("max", trackInfo.pitboxes);
+
+                if (parseInt($maxClients.val()) > trackInfo.pitboxes) {
+                    $maxClients.val(trackInfo.pitboxes);
+                }
+            } else if (overrideAmount) {
+                $maxClients.attr("max", overrideAmount);
+                $maxClients.val(overrideAmount);
+            }
         })
             .fail(function () {
                 $pitBoxes.closest(".row").hide()
@@ -922,6 +938,19 @@ class RaceSetup {
             }
         }
 
+        $("#MaxClients").on("keydown keyup", function(e) {
+            let max = parseInt($(this).attr("max"));
+            let val = parseInt($(this).val());
+
+            if (val > max
+                && e.keyCode !== 46 // keycode for delete
+                && e.keyCode !== 8 // keycode for backspace
+            ) {
+                e.preventDefault();
+                $(this).val(max);
+            }
+        });
+
         this.$parent.find(".entryListCar").change(onEntryListCarChange);
 
         // When the skin is changed on all initially loaded cars
@@ -1066,10 +1095,10 @@ class RaceSetup {
                 numEntrantsToAdd = $numEntrantsField.val();
             }
 
-            let maxClients = that.$parent.find("#MaxClients").val();
+            let maxClients = $("#MaxClients").val();
 
             for (let i = 0; i < numEntrantsToAdd; i++) {
-                if (that.$parent.find(".entrant:visible").length >= maxClients) {
+                if ($(".entrant:visible").length >= maxClients) {
                     continue;
                 }
 
@@ -1209,6 +1238,7 @@ let hiddenDots = [];
 let liveTiming = {
     init: function () {
         let $liveTimingTable = $document.find("#live-table");
+        let $liveTimingDisconnectedTable = $document.find("#live-table-disconnected");
 
         if (!$liveTimingTable.length) {
             return
@@ -1350,17 +1380,60 @@ let liveTiming = {
                         }
                     });
 
+                let sortedDeleted = Object.keys(liveTiming.DeletedCars)
+                    .sort(function (a, b) {
+                        if (liveTiming.DeletedCars[a].Pos < liveTiming.DeletedCars[b].Pos) {
+                            return -1
+                        } else if (liveTiming.DeletedCars[a].Pos === liveTiming.DeletedCars[b].Pos) {
+                            return 0
+                        } else if (liveTiming.DeletedCars[a].Pos > liveTiming.DeletedCars[b].Pos) {
+                            return 1
+                        }
+                    });
+
                 for (let car of sorted) {
-                    let $driverRow = $document.find("#" + liveTiming.Cars[car].DriverGUID);
+                    removeDriverFromTable(liveTiming.Cars, car, $liveTimingDisconnectedTable, true);
+                    addDriverToTable(liveTiming.Cars, car, $liveTimingTable, false);
+                }
+
+                for (let carDis of sortedDeleted) {
+                    removeDriverFromTable(liveTiming.DeletedCars, carDis, $liveTimingTable, false);
+                    addDriverToTable(liveTiming.DeletedCars, carDis, $liveTimingDisconnectedTable, true);
+                }
+
+                function removeDriverFromTable(carSet, car, table, discon) {
+                    let $driverRow;
+                    if (!discon) {
+                        $driverRow = table.find("#" + carSet[car].DriverGUID);
+                    } else {
+                        $driverRow = table.find("#" + carSet[car].DriverGUID + "-" + carSet[car].CarMode + "-disconnect");
+                    }
+
+                    if ($driverRow.length) {
+                        let $car = $driverRow.find("#" + carSet[car].CarMode + "-" + carSet[car].DriverGUID);
+
+                        if ($car.length) {
+                            $driverRow.remove()
+                        }
+                    }
+                }
+
+                function addDriverToTable(carSet, car, table, discon) {
+                    let $driverRow;
+                    if (!discon) {
+                        $driverRow = $document.find("#" + carSet[car].DriverGUID);
+                    } else {
+                        $driverRow = $document.find("#" + carSet[car].DriverGUID + "-" + carSet[car].CarMode + "-disconnect");
+                    }
                     let $tr;
 
                     // Get the lap time, display previous for 10 seconds after completion
-                    if (liveTiming.Cars[car].LastLapCompleteTimeUnix + 10000 > date.getTime()) {
-                        lapTime = liveTiming.Cars[car].LastLap
-                    } else if (liveTiming.Cars[car].LapNum === 0) {
+                    if (carSet[car].LastLapCompleteTimeUnix + 10000 > date.getTime()) {
+                        lapTime = carSet[car].LastLap
+                    } else if (carSet[car].LapNum === 0) {
                         lapTime = "0s"
                     } else {
-                        lapTime = timeDiff(liveTiming.Cars[car].LastLapCompleteTimeUnix, date.getTime())
+                        lapTime = timeDiff(carSet[car].LastLapCompleteTimeUnix, date.getTime())
                     }
 
                     if ($driverRow.length) {
@@ -1368,7 +1441,12 @@ let liveTiming = {
                     }
 
                     $tr = $("<tr/>");
-                    $tr.attr({'id': liveTiming.Cars[car].DriverGUID});
+                    if (!discon) {
+                        $tr.attr({'id': carSet[car].DriverGUID});
+                    } else {
+                        $tr.attr({'id': carSet[car].DriverGUID + "-" + carSet[car].CarMode + "-disconnect"});
+                    }
+
                     $tr.empty();
 
                     let $tdPos = $("<td/>");
@@ -1380,75 +1458,87 @@ let liveTiming = {
                     let $tdLapNum = $("<td/>");
                     let $tdEvents = $("<td/>");
 
-                    if (liveTiming.Cars[car].Pos === 255) {
-                        $tdPos.text("n/a");
-                    } else {
-                        $tdPos.text(liveTiming.Cars[car].Pos);
-                    }
-                    $tr.append($tdPos);
-
-                    $tdName.text(liveTiming.Cars[car].DriverName);
-                    let dotClass;
-                    if (hiddenDots[liveTiming.Cars[car].DriverGUID]) {
-                        dotClass = "dot dot-inactive"
-                    } else {
-                        dotClass = "dot"
-                    }
-                    $tdName.prepend($("<div class='" + dotClass + "' style='background: " + randomColor({
-                        luminosity: 'bright',
-                        seed: liveTiming.Cars[car].DriverGUID
-                    }) + "'/>"));
-                    $tdName.attr("class", "driver-link");
-                    $tdName.click(function () {
-                        for (let driver of liveMap.joined) {
-                            if (driver !== undefined && driver.DriverGUID === liveTiming.Cars[car].DriverGUID) {
-                                driver.dot.find(".info").toggle();
-
-                                hiddenDots[liveTiming.Cars[car].DriverGUID] = driver.dot.find(".info").is(":hidden");
-                            }
+                    if (!discon) {
+                        if (carSet[car].Pos === 255) {
+                            $tdPos.text("n/a");
+                        } else {
+                            $tdPos.text(carSet[car].Pos);
                         }
-                    });
+                        $tr.append($tdPos);
+                    }
+
+                    $tdName.text(carSet[car].DriverName);
+
+                    if (!discon) {
+                        let dotClass;
+                        if (hiddenDots[carSet[car].DriverGUID]) {
+                            dotClass = "dot dot-inactive"
+                        } else {
+                            dotClass = "dot"
+                        }
+                        $tdName.prepend($("<div class='" + dotClass + "' style='background: " + randomColor({
+                            luminosity: 'bright',
+                            seed: carSet[car].DriverGUID
+                        }) + "'/>"));
+                        $tdName.attr("class", "driver-link");
+                        $tdName.click(function () {
+                            for (let driver of liveMap.joined) {
+                                if (driver !== undefined && driver.DriverGUID === carSet[car].DriverGUID) {
+                                    driver.dot.find(".info").toggle();
+
+                                    hiddenDots[carSet[car].DriverGUID] = driver.dot.find(".info").is(":hidden");
+                                }
+                            }
+                        });
+                    }
                     $tr.append($tdName);
 
-                    $tdCar.text(prettifyName(liveTiming.Cars[car].CarMode, true) + " - " + prettifyName(liveTiming.Cars[car].CarSkin, true));
+                    $tdCar.attr("id", carSet[car].CarMode + "-" + carSet[car].DriverGUID);
+                    $tdCar.text(prettifyName(carSet[car].CarMode, true) + " - " + prettifyName(carSet[car].CarSkin, true));
                     $tr.append($tdCar);
 
-                    $tdLapTime.text(lapTime);
-                    $tr.append($tdLapTime);
+                    if (!discon) {
+                        $tdLapTime.text(lapTime);
+                        $tr.append($tdLapTime);
+                    }
 
-                    $tdBestLap.text(liveTiming.Cars[car].BestLap);
+                    $tdBestLap.text(carSet[car].BestLap);
                     $tr.append($tdBestLap);
 
-                    $tdGap.text(liveTiming.Cars[car].Split);
-                    $tr.append($tdGap);
+                    if (!discon) {
+                        $tdGap.text(carSet[car].Split);
+                        $tr.append($tdGap);
+                    }
 
-                    $tdLapNum.text(liveTiming.Cars[car].LapNum);
+                    $tdLapNum.text(carSet[car].LapNum);
                     $tr.append($tdLapNum);
 
-                    if (liveTiming.Cars[car].Loaded && liveTiming.Cars[car].LoadedTime + 10000 > date.getTime()) {
-                        let $tag = $("<span/>");
-                        $tag.attr({'class': 'badge badge-success live-badge'});
-                        $tag.text("Loaded");
+                    if (!discon) {
+                        if (carSet[car].Loaded && carSet[car].LoadedTime + 10000 > date.getTime()) {
+                            let $tag = $("<span/>");
+                            $tag.attr({'class': 'badge badge-success live-badge'});
+                            $tag.text("Loaded");
 
-                        $tdEvents.append($tag);
-                    }
+                            $tdEvents.append($tag);
+                        }
 
-                    if (liveTiming.Cars[car].Collisions !== null) {
-                        for (let y = 0; y < liveTiming.Cars[car].Collisions.length; y++) {
-                            if (liveTiming.Cars[car].Collisions[y].Time + 10000 > date.getTime()) {
-                                let $tag = $("<span/>");
-                                $tag.attr({'class': 'badge badge-danger live-badge'});
-                                $tag.text("Crash " + liveTiming.Cars[car].Collisions[y].Type + " at " +
-                                    parseFloat(liveTiming.Cars[car].Collisions[y].Speed).toFixed(2) + "m/s");
+                        if (carSet[car].Collisions !== null) {
+                            for (let y = 0; y < carSet[car].Collisions.length; y++) {
+                                if (carSet[car].Collisions[y].Time + 10000 > date.getTime()) {
+                                    let $tag = $("<span/>");
+                                    $tag.attr({'class': 'badge badge-danger live-badge'});
+                                    $tag.text("Crash " + carSet[car].Collisions[y].Type + " at " +
+                                        parseFloat(carSet[car].Collisions[y].Speed).toFixed(2) + "m/s");
 
-                                $tdEvents.append($tag);
+                                    $tdEvents.append($tag);
+                                }
                             }
                         }
+
+                        $tr.append($tdEvents);
                     }
 
-                    $tr.append($tdEvents);
-
-                    $liveTimingTable.append($tr)
+                    table.append($tr)
                 }
             });
         }, 1000);
@@ -2332,6 +2422,13 @@ let championships = {
 
             $(this).before($cloned);
             new RaceSetup($cloned);
+
+
+            let maxClients = $("#MaxClients").val();
+
+            if ($(".entrant:visible").length >= maxClients) {
+                $cloned.find(".entrant:visible").remove();
+            }
         });
 
         $document.on("click", ".btn-delete-class", function (e) {

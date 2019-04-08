@@ -46,24 +46,6 @@
 
         <hr>
 
-        {{ if gt $.MaxClientsOverride 0 }}
-            <p>Your server is restricted to a maximum of <strong>{{ $.MaxClientsOverride }}</strong> championship entrants.</p>
-
-            <input
-                type="hidden"
-                id="MaxClients"
-                name="MaxClients"
-                value="{{ $.MaxClientsOverride }}"
-            >
-        {{ else }}
-            <input
-                type="hidden"
-                id="MaxClients"
-                name="MaxClients"
-                value="1000"
-            >
-        {{ end }}
-
         <div id="entrantTemplate" class="entrant">
             {{ template "entrant" }}
         </div>

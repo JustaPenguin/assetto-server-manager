@@ -520,29 +520,31 @@
                         <label for="MaxClients" class="col-sm-3 col-form-label">Max Clients</label>
 
                         <div class="col-sm-9">
-                            {{ if gt $.MaxClientsOverride 0 }}
-                                <input
-                                        type="hidden"
-                                        id="MaxClients"
-                                        name="MaxClients"
-                                        value="{{ $.MaxClientsOverride }}"
-                                >
-
-                                Locked to <strong>{{ $.MaxClientsOverride }}</strong><br>
-                            {{ else }}
                                 <input
                                         type="number"
                                         id="MaxClients"
                                         name="MaxClients"
                                         class="form-control"
-                                        value="{{ $f.MaxClients }}"
 
-                                        {{ with $trackInfo }}max="{{ $trackInfo.Pitboxes }}"{{ end }}
+                                        {{ if gt $.MaxClientsOverride 0 }}
+                                            data-value-override="{{ $.MaxClientsOverride }}"
+                                            value="{{ $.MaxClientsOverride }}"
+
+                                            max="{{ $.MaxClientsOverride }}"
+                                        {{ else }}
+                                            value="{{ $f.MaxClients }}"
+                                            {{ with $trackInfo }}max="{{ $trackInfo.Pitboxes }}"{{ end }}
+                                        {{ end }}
                                         step="1"
                                 >
-                            {{ end }}
 
-                            <small>Maximum number of clients allowed on the server</small>
+                            <small>
+                                Maximum number of clients allowed on the server.
+
+                                {{ if gt $.MaxClientsOverride 0 }}
+                                    <strong>Cannot be greater than {{ $.MaxClientsOverride }}</strong>. (This value is restricted by your hosting provider.)<br>
+                                {{ end }}
+                            </small>
                         </div>
                     </div>
 

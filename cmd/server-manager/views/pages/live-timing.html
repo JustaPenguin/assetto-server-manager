@@ -66,7 +66,7 @@
                             <img class="img img-fluid float-right mt-1" id="weatherImage" src="/static/img/no-preview-general.png" alt="Current Weather">
                         </div>
 
-                        <div class="table-responsive p-3">
+                        <div class="table-responsive table-sm p-3">
                             <table id="live-table" class="table table-bordered table-striped">
                                 <tr>
                                     <th>Pos</th>
@@ -77,6 +77,20 @@
                                     <th>Gap</th>
                                     <th>Laps Completed</th>
                                     <th class="live-events">Events</th>
+                                </tr>
+
+                                <!-- trs for drivers are appended by javascript -->
+                            </table>
+                        </div>
+
+                        <h4 style="padding-left: 1rem;">Disconnected</h4>
+                        <div class="table-responsive table-sm p-3">
+                            <table id="live-table-disconnected" class="table table-bordered table-striped">
+                                <tr>
+                                    <th>Driver</th>
+                                    <th>Car</th>
+                                    <th>Best Lap</th>
+                                    <th>Laps Completed</th>
                                 </tr>
 
                                 <!-- trs for drivers are appended by javascript -->
