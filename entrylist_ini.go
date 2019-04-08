@@ -77,6 +77,36 @@ func (e EntryList) AsSlice() []*Entrant {
 	return entrants
 }
 
+func (e EntryList) PrettyList() []*Entrant {
+	var entrants []*Entrant
+
+	numOpenSlots := 0
+
+	for _, x := range e {
+		if x.GUID == "" {
+			numOpenSlots++
+			continue
+		}
+
+		entrants = append(entrants, x)
+	}
+
+	sort.Slice(entrants, func(i, j int) bool {
+		if entrants[i].Team == entrants[j].Team {
+			return entrants[i].Name < entrants[j].Name
+		} else {
+			return entrants[i].Team < entrants[j].Team
+		}
+	})
+
+	entrants = append(entrants, &Entrant{
+		Name: fmt.Sprintf("%d open slots", numOpenSlots),
+		GUID: "OPEN_SLOTS",
+	})
+
+	return entrants
+}
+
 func (e EntryList) Entrants() string {
 	var entrants []string
 
