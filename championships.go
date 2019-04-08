@@ -93,6 +93,10 @@ type Championship struct {
 }
 
 func (c *Championship) GetPlayerSummary(guid string) string {
+	if c.Progress() == 0 {
+		return "This is the first event of the Championship!"
+	}
+
 	for _, class := range c.Classes {
 		for _, entrant := range class.Entrants {
 			if entrant.GUID == guid {
