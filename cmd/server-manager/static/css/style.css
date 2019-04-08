@@ -509,3 +509,19 @@ td .dot-inactive {
     position: relative;
     width: 1.4em;
 }
+
+.points-transfer {
+    margin-top: 10px;
+    font-size: 0.765625rem;
+    line-height: 1.5;
+
+    display: none;
+}
+
+.points-transfer label {
+    padding-top: 6px;
+}
+
+.points-transfer .bootstrap-switch {
+    float: right;
+}

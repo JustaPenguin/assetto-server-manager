@@ -117,6 +117,8 @@ type Entrant struct {
 	SpectatorMode int    `ini:"SPECTATOR_MODE"`
 	Restrictor    int    `ini:"RESTRICTOR"`
 	FixedSetup    string `ini:"FIXED_SETUP"`
+
+	TransferTeamPoints bool `ini:"-" json:"-"`
 }
 
 func (e Entrant) ID() string {

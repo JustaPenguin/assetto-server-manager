@@ -2338,6 +2338,10 @@ let championships = {
             e.preventDefault();
             $(this).closest(".race-setup").remove();
         });
+
+        $document.on("input", ".entrant-team", function() {
+            $(this).closest(".entrant").find(".points-transfer").show();
+        });
     },
 
     $linkTemplate: null,

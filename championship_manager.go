@@ -176,6 +176,26 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		return nil, edited, err
 	}
 
+	for _, class := range championship.Classes {
+		for _, entrant := range class.Entrants {
+			if !entrant.TransferTeamPoints {
+				continue
+			}
+
+			logrus.Infof("Changing class for entrant: %s (%s)", entrant.Name, entrant.GUID)
+
+			for _, event := range championship.Events {
+				for _, session := range event.Sessions {
+					if session.Results == nil {
+						continue
+					}
+
+					class.AttachEntrantToResult(entrant, session.Results)
+				}
+			}
+		}
+	}
+
 	return championship, edited, cm.UpsertChampionship(championship)
 }
 
