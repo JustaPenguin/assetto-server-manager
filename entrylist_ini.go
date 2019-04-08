@@ -97,6 +97,16 @@ func (e EntryList) Entrants() string {
 	return strings.Join(entrants, ", ")
 }
 
+func (e EntryList) FindEntrantByInternalUUID(internalUUID uuid.UUID) *Entrant {
+	for _, entrant := range e {
+		if entrant.InternalUUID == internalUUID {
+			return entrant
+		}
+	}
+
+	return &Entrant{}
+}
+
 func NewEntrant() *Entrant {
 	return &Entrant{
 		InternalUUID: uuid.New(),
@@ -119,6 +129,7 @@ type Entrant struct {
 	FixedSetup    string `ini:"FIXED_SETUP"`
 
 	TransferTeamPoints bool `ini:"-" json:"-"`
+	OverwriteAllEvents bool `ini:"-" json:"-"`
 }
 
 func (e Entrant) ID() string {
@@ -127,4 +138,12 @@ func (e Entrant) ID() string {
 	} else {
 		return e.Name
 	}
+}
+
+func (e Entrant) OverwriteProperties(other *Entrant) {
+	e.FixedSetup = other.FixedSetup
+	e.Restrictor = other.Restrictor
+	e.SpectatorMode = other.SpectatorMode
+	e.Ballast = other.Ballast
+	e.Skin = other.Skin
 }
