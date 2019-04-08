@@ -87,6 +87,8 @@ func main() {
 		logrus.Errorf("couldn't initialise scheduled championship events, err: %s", err)
 	}
 
+	//go startUDPReplay("./assetto/session-logs/practiceloop_all.db")
+
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 
 	if err != nil {
