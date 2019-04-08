@@ -165,6 +165,7 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Use(AdminAccessMiddleware)
 
 		r.HandleFunc("/server-options", serverOptionsHandler)
+		r.HandleFunc("/blacklist", serverBlacklistHandler)
 		r.HandleFunc("/accounts/new", createOrEditAccountHandler)
 		r.HandleFunc("/accounts/edit/{id}", createOrEditAccountHandler)
 		r.HandleFunc("/accounts/delete/{id}", deleteAccountHandler)
@@ -238,6 +239,33 @@ func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ViewRenderer.MustLoadTemplate(w, r, "server/options.html", map[string]interface{}{
 		"form": form,
+	})
+}
+
+func serverBlacklistHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		// save to blacklist.txt
+		text := r.FormValue("blacklist")
+
+		err := ioutil.WriteFile(filepath.Join(ServerInstallPath, "blacklist.txt"), []byte(text), 0644)
+
+		if err != nil {
+			logrus.WithError(err).Error("couldn't save blacklist")
+			AddErrFlashQuick(w, r, "Failed to save Server blacklist changes")
+		} else {
+			AddFlashQuick(w, r, "Server blacklist successfully changed!")
+		}
+	}
+
+	// load blacklist.txt
+	b, err := ioutil.ReadFile(filepath.Join(ServerInstallPath, "blacklist.txt")) // just pass the file name
+	if err != nil {
+		logrus.WithError(err).Error("couldn't find blacklist.txt")
+	}
+
+	// render blacklist edit page
+	ViewRenderer.MustLoadTemplate(w, r, "server/blacklist.html", map[string]interface{}{
+		"text": string(b),
 	})
 }
 
