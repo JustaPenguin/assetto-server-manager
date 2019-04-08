@@ -425,6 +425,10 @@ func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (Entry
 			e.TransferTeamPoints = true
 		}
 
+		if r.Form["EntryList.OverwriteAllEvents"] != nil && formValueAsInt(r.Form["EntryList.OverwriteAllEvents"][i]) == 1 {
+			e.OverwriteAllEvents = true
+		}
+
 		entryList.Add(e)
 	}
 

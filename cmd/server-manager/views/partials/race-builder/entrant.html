@@ -17,8 +17,20 @@
                         </select>
                     </div>
 
+
+
                     <div class="col-md-8">
-                        <a class="text-danger btn-delete-entrant float-right" href="#"><i class="fas fa-trash"></i></a>
+                        <div class="float-right">
+                            {{ if $.IsChampionship }}
+                                <div class="d-inline-block mr-4">
+                                    <span data-toggle="tooltip" title="Overwrite all Championship Event specific settings (skin, restrictor, ballast, setup) with the settings defined in this entrant" class="pr-3"><small>Overwrite All Event Settings?</small></span>
+
+                                    <input type="checkbox" name="EntryList.OverwriteAllEvents">
+                                </div>
+                            {{ end }}
+
+                            <a class="text-danger btn-delete-entrant" href="#"><i class="fas fa-trash"></i></a>
+                        </div>
                     </div>
                 {{ end }}
             </div>
@@ -77,6 +89,7 @@
                             <label for="Model" class="col-sm-4 col-form-label col-form-label-sm">Car</label>
 
                             <div class="col-sm-8">
+
                                 {{ if $IsChampionshipEvent }}
                                     <input type="text" class="form-control form-control-sm" readonly="readonly" value="{{ prettify $entrant.Model true }}">
                                 {{ end }}

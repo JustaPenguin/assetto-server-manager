@@ -196,6 +196,22 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		}
 	}
 
+	for _, class := range championship.Classes {
+		for _, entrant := range class.Entrants {
+			if !entrant.OverwriteAllEvents {
+				continue
+			}
+
+			for _, event := range championship.Events {
+				eventEntrant := event.EntryList.FindEntrantByInternalUUID(entrant.InternalUUID)
+
+				logrus.Infof("Overwriting properties for entrant: %s (%s)", entrant.Name, entrant.GUID)
+
+				eventEntrant.OverwriteProperties(entrant)
+			}
+		}
+	}
+
 	return championship, edited, cm.UpsertChampionship(championship)
 }
 
