@@ -753,7 +753,19 @@ class RaceSetup {
         $.getJSON(jsonURL, function (trackInfo) {
             $pitBoxes.closest(".row").show();
             $pitBoxes.text(trackInfo.pitboxes);
-            $maxClients.attr("max", trackInfo.pitboxes);
+
+            let overrideAmount = $maxClients.data('value-override');
+
+            if ((overrideAmount && trackInfo.pitboxes <= overrideAmount) || !overrideAmount) {
+                $maxClients.attr("max", trackInfo.pitboxes);
+
+                if (parseInt($maxClients.val()) > trackInfo.pitboxes) {
+                    $maxClients.val(trackInfo.pitboxes);
+                }
+            } else if (overrideAmount) {
+                $maxClients.attr("max", overrideAmount);
+                $maxClients.val(overrideAmount);
+            }
         })
             .fail(function () {
                 $pitBoxes.closest(".row").hide()
@@ -922,6 +934,19 @@ class RaceSetup {
             }
         }
 
+        $("#MaxClients").on("keydown keyup", function(e) {
+            let max = parseInt($(this).attr("max"));
+            let val = parseInt($(this).val());
+
+            if (val > max
+                && e.keyCode !== 46 // keycode for delete
+                && e.keyCode !== 8 // keycode for backspace
+            ) {
+                e.preventDefault();
+                $(this).val(max);
+            }
+        });
+
         this.$parent.find(".entryListCar").change(onEntryListCarChange);
 
         // When the skin is changed on all initially loaded cars
@@ -1076,10 +1101,10 @@ class RaceSetup {
                 numEntrantsToAdd = $numEntrantsField.val();
             }
 
-            let maxClients = that.$parent.find("#MaxClients").val();
+            let maxClients = $("#MaxClients").val();
 
             for (let i = 0; i < numEntrantsToAdd; i++) {
-                if (that.$parent.find(".entrant:visible").length >= maxClients) {
+                if ($(".entrant:visible").length >= maxClients) {
                     continue;
                 }
 
@@ -2339,6 +2364,13 @@ let championships = {
 
             $(this).before($cloned);
             new RaceSetup($cloned);
+
+
+            let maxClients = $("#MaxClients").val();
+
+            if ($(".entrant:visible").length >= maxClients) {
+                $cloned.find(".entrant:visible").remove();
+            }
         });
 
         $document.on("click", ".btn-delete-class", function (e) {
