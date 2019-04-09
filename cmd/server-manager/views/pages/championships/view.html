@@ -500,7 +500,7 @@
                                             Start Event
                                         </a>
 
-                                        <button type="button" class="btn btn-success{{ if $eventInProgress }} disabled{{ end }} dropdown-toggle" data-placement="bottom"
+                                        <button type="button" class="btn btn-success{{ if $eventInProgress }} disabled{{ end }} dropdown-toggle popover-external-html" data-placement="bottom"
                                                 data-toggle="popover" title="Schedule Event" data-html="true" {{ if $eventInProgress }}aria-disabled="true"{{ end }}
                                                 id="schedule-{{ $event.ID.String }}"
                                         >Schedule Event
