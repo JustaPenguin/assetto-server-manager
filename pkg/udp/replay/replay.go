@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
@@ -201,6 +202,8 @@ func RecordUDPMessages(db *bbolt.DB) (callbackFunc udp.CallbackFunc) {
 func ReplayUDPMessages(db *bbolt.DB, multiplier int, callbackFunc udp.CallbackFunc, waitTime time.Duration) error {
 	var loadedEntries Entries
 
+	var wg sync.WaitGroup
+
 	err := db.View(func(tx *bbolt.Tx) error {
 		err := tx.Bucket(BucketName).ForEach(func(k, v []byte) error {
 			var entry *Entry
@@ -239,13 +242,20 @@ func ReplayUDPMessages(db *bbolt.DB, multiplier int, callbackFunc udp.CallbackFu
 				<-tickWhenEventOccurs
 			}
 
-			callbackFunc(entry.Data)
+			wg.Add(1)
+
+			go func() {
+				callbackFunc(entry.Data)
+				wg.Done()
+			}()
 
 			timeStart = entry.Received
 		}
 
 		return nil
 	})
+
+	wg.Wait()
 
 	return err
 }

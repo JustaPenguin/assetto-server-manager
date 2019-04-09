@@ -407,7 +407,15 @@ func (c *ChampionshipClass) ResultsForClass(results []*SessionResult) (filtered 
 }
 
 func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints func(event *ChampionshipEvent, driverGUID string, points float64)) {
-	for _, event := range events {
+	eventsReverseCompletedOrder := make([]*ChampionshipEvent, len(events))
+
+	copy(eventsReverseCompletedOrder, events)
+
+	sort.Slice(eventsReverseCompletedOrder, func(i, j int) bool {
+		return eventsReverseCompletedOrder[i].CompletedTime.After(eventsReverseCompletedOrder[j].CompletedTime)
+	})
+
+	for _, event := range eventsReverseCompletedOrder {
 		qualifying, qualifyingOK := event.Sessions[SessionTypeQualifying]
 
 		if qualifyingOK && qualifying.Results != nil {
