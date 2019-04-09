@@ -500,21 +500,26 @@
                                             Start Event
                                         </a>
 
-                                        <button type="button" class="btn btn-success{{ if $eventInProgress }} disabled{{ end }} dropdown-toggle" data-placement="bottom"
+                                        <button type="button" class="btn btn-success{{ if $eventInProgress }} disabled{{ end }} dropdown-toggle popover-external-html" data-placement="bottom"
                                                 data-toggle="popover" title="Schedule Event" data-html="true" {{ if $eventInProgress }}aria-disabled="true"{{ end }}
-                                                data-content="<form action='/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/schedule' method='POST'>
-                                                            <div class='form-group'>
-                                                                <input type='date' class='form-control' name='event-schedule-date' id='event-schedule-date' required value='' min=''>
-                                                                <input type='time' class='form-control' name='event-schedule-time' id='event-schedule-time' required value='' min=''>
-                                                                <small class='form-text text-muted'>Please enter the correct date and time to add a scheduled race.  This date/time is in the same timezone as the server.</small>
-
-                                                            </div>
-
-                                                            <button type='submit' name='action' value='add' class='btn btn-sm btn-primary'>Schedule</button>
-                                                            <a href='/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/schedule/remove' class='btn btn-sm btn-danger'>Remove Scheduled Event</a>
-                                                        </form>"
+                                                id="schedule-{{ $event.ID.String }}"
                                         >Schedule Event
                                         </button>
+
+                                        <div id="popover-content-schedule-{{ $event.ID.String }}" style="display: none;">
+                                            <form action='/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/schedule' method='POST'>
+                                                <div class='form-group'>
+                                                    <input type='date' class='form-control' name='event-schedule-date' id='event-schedule-date' required value='{{ now.Format "2006-01-02" }}' min=''>
+                                                    <input type='time' class='form-control' name='event-schedule-time' id='event-schedule-time' required value='{{ now.Format "15:04" }}' min=''>
+                                                    <input type='hidden' name="event-schedule-timezone" class="event-schedule-timezone">
+                                                    <small class='form-text text-muted'>Please enter the correct date and time to add a scheduled race. This date/time is in your timezone (<span class='timezone'></span>).</small>
+
+                                                </div>
+
+                                                <button type='submit' name='action' value='add' class='btn btn-sm btn-primary'>Schedule</button>
+                                                <a href='/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/schedule/remove' class='btn btn-sm btn-danger'>Remove Scheduled Event</a>
+                                            </form>
+                                        </div>
 
                                         <a class="btn btn-primary {{ if $eventInProgress }}disabled{{ end }}"
                                            href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/practice"

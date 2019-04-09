@@ -48,22 +48,26 @@
 
                                 <a class="btn btn-sm btn-success custom-race-actions-btn-big" href="/custom/load/{{ $race.UUID.String }}">Start Race</a>
 
-                                <button type="button" class="btn btn-success btn-sm custom-race-actions-btn-small dropdown-toggle dropdown-toggle-split" data-placement="bottom"
+                                <button type="button" class="btn btn-success btn-sm custom-race-actions-btn-small dropdown-toggle dropdown-toggle-split popover-external-html" data-placement="bottom"
                                         data-toggle="popover" title="Schedule Race" data-html="true"
-                                        data-content="<form action='/custom/schedule/{{ $race.UUID.String }}' method='POST'>
-                                                            <div class='form-group'>
-                                                                <input type='date' class='form-control' name='event-schedule-date' id='event-schedule-date' required value='' min=''>
-                                                                <input type='time' class='form-control' name='event-schedule-time' id='event-schedule-time' required value='' min=''>
-                                                                <small class='form-text text-muted'>Please enter the correct date and time to add a scheduled race. This date/time is in the same timezone as the server.</small>
-
-                                                            </div>
-
-                                                            <button type='submit' name='action' value='add' class='btn btn-sm btn-primary'>Schedule</button>
-                                                            <a href='/custom/schedule/{{ $race.UUID.String }}/remove' class='btn btn-sm btn-danger'>Remove Scheduled Race</a>
-
-                                                        </form>"
+                                        id="schedule-{{ $race.UUID.String }}"
                                 ></button>
 
+                                <div id="popover-content-schedule-{{ $race.UUID.String }}" style="display: none;">
+                                    <form action='/custom/schedule/{{ $race.UUID.String }}' method='POST'>
+                                        <div class='form-group'>
+                                            <input type='date' class='form-control' name='event-schedule-date' id='event-schedule-date' required value='{{ now.Format "2006-01-02" }}' min=''>
+                                            <input type='time' class='form-control' name='event-schedule-time' id='event-schedule-time' required value='{{ now.Format "15:04" }}' min=''>
+                                            <input type='hidden' name="event-schedule-timezone" class="event-schedule-timezone">
+                                            <small class='form-text text-muted'>Please enter the correct date and time to add a scheduled race. This date/time is in your timezone (<span class='timezone'></span>).</small>
+
+                                        </div>
+
+                                        <button type='submit' name='action' value='add' class='btn btn-sm btn-primary'>Schedule</button>
+                                        <a href='/custom/schedule/{{ $race.UUID.String }}/remove' class='btn btn-sm btn-danger'>Remove Scheduled Race</a>
+
+                                    </form>
+                                </div>
                             </div>
 
                             <a class="btn btn-sm btn-primary" href="/custom/new?from={{ $race.UUID.String }}">Use as Template</a>
