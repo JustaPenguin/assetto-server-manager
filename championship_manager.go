@@ -176,13 +176,14 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		return nil, edited, err
 	}
 
+	// look to see if any entrants have their team points set to transfer, move them across to the team they are in now
 	for _, class := range championship.Classes {
 		for _, entrant := range class.Entrants {
 			if !entrant.TransferTeamPoints {
 				continue
 			}
 
-			logrus.Infof("Changing class for entrant: %s (%s)", entrant.Name, entrant.GUID)
+			logrus.Infof("Renaming team for entrant: %s (%s)", entrant.Name, entrant.GUID)
 
 			for _, event := range championship.Events {
 				for _, session := range event.Sessions {
@@ -196,6 +197,8 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		}
 	}
 
+	// look at each entrant to see if their properties should overwrite all event properties set up in the
+	// event entrylist. this is useful for globally changing skins, restrictor values etc.
 	for _, class := range championship.Classes {
 		for _, entrant := range class.Entrants {
 			if !entrant.OverwriteAllEvents {
