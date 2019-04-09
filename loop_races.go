@@ -43,11 +43,11 @@ func LoopRaces() {
 				for sessionID := range looped[i].RaceConfig.Sessions {
 					sessionTypes = append(sessionTypes, sessionID)
 				}
-				/*
-					if currentRace.CurrentRaceConfig.ReversedGridRacePositions != 0 {
-						sessionTypes = append(sessionTypes, SessionTypeSecondRace)
-					}
-				*/
+
+				if looped[i].RaceConfig.ReversedGridRacePositions != 0 {
+					sessionTypes = append(sessionTypes, SessionTypeSecondRace)
+				}
+
 				err := raceManager.StartCustomRace(looped[i].UUID.String(), true)
 
 				if err != nil {

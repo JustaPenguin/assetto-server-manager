@@ -15,13 +15,14 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
 type SessionResults struct {
-	Cars           []SessionCar     `json:"Cars"`
-	Events         []SessionEvent   `json:"Events"`
-	Laps           []SessionLap     `json:"Laps"`
+	Cars           []*SessionCar    `json:"Cars"`
+	Events         []*SessionEvent  `json:"Events"`
+	Laps           []*SessionLap    `json:"Laps"`
 	Result         []*SessionResult `json:"Result"`
 	TrackConfig    string           `json:"TrackConfig"`
 	TrackName      string           `json:"TrackName"`
@@ -261,7 +262,7 @@ func (s *SessionResults) FastestLap() *SessionLap {
 		return nil
 	}
 
-	laps := make([]SessionLap, len(s.Laps))
+	laps := make([]*SessionLap, len(s.Laps))
 
 	copy(laps, s.Laps)
 
@@ -269,7 +270,7 @@ func (s *SessionResults) FastestLap() *SessionLap {
 		return laps[i].Cuts == 0 && laps[i].LapTime < laps[j].LapTime
 	})
 
-	return &laps[0]
+	return laps[0]
 }
 
 type SessionResult struct {
@@ -285,20 +286,22 @@ type SessionResult struct {
 	PenaltyTime  time.Duration `json:"PenaltyTime"`
 	LapPenalty   int           `json:"LapPenalty"`
 	Disqualified bool          `json:"Disqualified"`
+	ClassID      uuid.UUID     `json:"ClassID"`
 }
 
 type SessionLap struct {
-	BallastKG  int    `json:"BallastKG"`
-	CarID      int    `json:"CarId"`
-	CarModel   string `json:"CarModel"`
-	Cuts       int    `json:"Cuts"`
-	DriverGUID string `json:"DriverGuid"`
-	DriverName string `json:"DriverName"`
-	LapTime    int    `json:"LapTime"`
-	Restrictor int    `json:"Restrictor"`
-	Sectors    []int  `json:"Sectors"`
-	Timestamp  int    `json:"Timestamp"`
-	Tyre       string `json:"Tyre"`
+	BallastKG  int       `json:"BallastKG"`
+	CarID      int       `json:"CarId"`
+	CarModel   string    `json:"CarModel"`
+	Cuts       int       `json:"Cuts"`
+	DriverGUID string    `json:"DriverGuid"`
+	DriverName string    `json:"DriverName"`
+	LapTime    int       `json:"LapTime"`
+	Restrictor int       `json:"Restrictor"`
+	Sectors    []int     `json:"Sectors"`
+	Timestamp  int       `json:"Timestamp"`
+	Tyre       string    `json:"Tyre"`
+	ClassID    uuid.UUID `json:"ClassID"`
 }
 
 func (sl *SessionLap) GetSector(x int) time.Duration {
@@ -329,14 +332,14 @@ type SessionCar struct {
 }
 
 type SessionEvent struct {
-	CarID         int           `json:"CarId"`
-	Driver        SessionDriver `json:"Driver"`
-	ImpactSpeed   float64       `json:"ImpactSpeed"`
-	OtherCarID    int           `json:"OtherCarId"`
-	OtherDriver   SessionDriver `json:"OtherDriver"`
-	RelPosition   SessionPos    `json:"RelPosition"`
-	Type          string        `json:"Type"`
-	WorldPosition SessionPos    `json:"WorldPosition"`
+	CarID         int            `json:"CarId"`
+	Driver        *SessionDriver `json:"Driver"`
+	ImpactSpeed   float64        `json:"ImpactSpeed"`
+	OtherCarID    int            `json:"OtherCarId"`
+	OtherDriver   *SessionDriver `json:"OtherDriver"`
+	RelPosition   *SessionPos    `json:"RelPosition"`
+	Type          string         `json:"Type"`
+	WorldPosition *SessionPos    `json:"WorldPosition"`
 }
 
 func (se *SessionEvent) GetRelPosition() string {
@@ -348,11 +351,22 @@ func (se *SessionEvent) GetWorldPosition() string {
 }
 
 type SessionDriver struct {
-	GUID      string   `json:"Guid"`
-	GuidsList []string `json:"GuidsList"`
-	Name      string   `json:"Name"`
-	Nation    string   `json:"Nation"`
-	Team      string   `json:"Team"`
+	GUID      string    `json:"Guid"`
+	GuidsList []string  `json:"GuidsList"`
+	Name      string    `json:"Name"`
+	Nation    string    `json:"Nation"`
+	Team      string    `json:"Team"`
+	ClassID   uuid.UUID `json:"ClassID"`
+}
+
+func (sd *SessionDriver) AssignEntrant(entrant *Entrant, classID uuid.UUID) {
+	if sd.GUID != entrant.GUID {
+		return
+	}
+
+	sd.Name = entrant.Name
+	sd.Team = entrant.Team
+	sd.ClassID = classID
 }
 
 type SessionPos struct {

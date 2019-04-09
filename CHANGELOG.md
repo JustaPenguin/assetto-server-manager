@@ -18,7 +18,8 @@ Added:
   in the web UI.
 * Adds Fixed Setups to Custom Races and Championships. Fixed setups can be uploaded on the Cars page. You can fix
   a setup for a whole championship or individually for specific events in the Championship.
-* Adds skin, ballast and restrictor customisation for individual Championship Events.
+* Adds skin, ballast and restrictor customisation for individual Championship Events. You can overwrite these options
+  for all Championship Events in the Edit Championship Page.
 * Added configurable IFrames to the live timings page. Users with write access can modify and add IFrames to the
   page (they will persist for all users between events). Intended for use with event live streams or track info etc.
 * Added extra track info to live timings page.
@@ -28,7 +29,6 @@ Added:
 * Added "Import Championship Event" functionality, which lets you import non-championship results files into a
   championship. To use this, create a championship event for the track and layout you wish to import results to. Then,
   click on "Manage Event" on the Championship page and select the session results files to import from.
-* Added important links to championship create/edit. You can now add important links to track/car downloads etc.
 * Added car images to Championship pages.
 * Added car info to live timing table
 * Added an option to only upload official ks content from a folder
@@ -46,7 +46,19 @@ Added:
 * Looped practice events will now persist drivers in the live timings table across each event.
 * Added a text input (with support for images, embedded video etc.) to Championship pages. Intended for adding information
   about the championship, rules, links to content used etc.
-* Added missing "MAX_CONTACTS_PER_KM" to server configuration options.
+* Vastly improved Championship points scoring. Points scoring now adheres to the following rules:
+  - If a driver changes car but NOT team or class, both team and driver points persist.
+  - If a driver changes team, but NOT class, drivers points persist, team points stay at old team and new points 
+    earn go to new team. You can override this by turning on the "Transfer Points from previous team?" switch when you
+    change a driver's team name.
+  - If a driver changes class, an entirely new entry is made but the old one is not deleted - new points earned go to new 
+    team and new driver entry.
+  
+  A byproduct of this is that once points have been added to a Championship Class, they cannot be removed. That is, if you
+  have 6 drivers in a Championship Class and you remove 2, there will still be 6 points inputs in the Class. This is so
+  that previous Championship Events have the correct number of points for their calculations.
+* Added logging to server-manager.log - this should make debugging issues easier.
+* Moved "Result Screen Time" option to Custom Race / Championship Event configuration.
 * Added disconnected table to live timing page, shows best times of disconnected drivers from the current session.
 * Added blacklist.txt editor.
 
@@ -59,6 +71,10 @@ Fixes:
 * Fixes an issue where new entrants in a Championship were not persisted for autofill.
 * Fixes an issue that made it impossible to start quick/custom races on mobile safari.
 * Fixes an issue where Championship Events were not correctly finished/tracked.
+* Fixes an issue where Second Race Multiplier would default to 0 if not specified, rather than using 1.
+* We now exclude disqualified drivers from points in the race they were disqualified from.
+* Championship Events now show the cars that entered the race or are due to enter the race in their header, rather
+  than just showing the cars entered into the Championship.
 * Added logging to server-manager.log - this should make debugging issues easier.
 * Improved reliability of live timing table.
 

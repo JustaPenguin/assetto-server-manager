@@ -1,13 +1,15 @@
 package servermanager
 
 import (
+	"html/template"
+	"sort"
+
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"html/template"
 )
 
 const (
-	CurrentMigrationVersion = 3
+	CurrentMigrationVersion = 7
 	versionMetaKey          = "version"
 )
 
@@ -37,6 +39,10 @@ var migrations = []migrationFunc{
 	addEntrantIDToChampionships,
 	addAdminAccount,
 	championshipLinksToSummerNote,
+	addEntrantsToChampionshipEvents,
+	addIDToChampionshipClasses,
+	enhanceOldChampionshipResultFiles,
+	addResultScreenTimeDefault,
 }
 
 func addEntrantIDToChampionships(rs Store) error {
@@ -104,6 +110,134 @@ func championshipLinksToSummerNote(rs Store) error {
 		c.Links = nil
 
 		err = rs.UpsertChampionship(c)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func addEntrantsToChampionshipEvents(rs Store) error {
+	logrus.Infof("Running migration: Add entrants to championship events")
+
+	championships, err := rs.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	for _, c := range championships {
+		for _, event := range c.Events {
+			if event.EntryList == nil || len(event.EntryList) == 0 {
+				event.EntryList = c.AllEntrants()
+			}
+		}
+
+		err = rs.UpsertChampionship(c)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func addIDToChampionshipClasses(rs Store) error {
+	logrus.Infof("Running migration: Add class ID to championship classes")
+
+	championships, err := rs.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	for _, c := range championships {
+		for _, class := range c.Classes {
+			if class.ID == uuid.Nil {
+				class.ID = uuid.New()
+			}
+		}
+
+		err = rs.UpsertChampionship(c)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func enhanceOldChampionshipResultFiles(rs Store) error {
+	logrus.Infof("Running migration: Enhance Old Championship Results Files")
+
+	championships, err := rs.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	for _, c := range championships {
+		for _, event := range c.Events {
+			for _, session := range event.Sessions {
+				c.EnhanceResults(session.Results)
+			}
+		}
+
+		err = rs.UpsertChampionship(c)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func addResultScreenTimeDefault(rs Store) error {
+	logrus.Errorf("Running migration: Add Result Screen Time")
+
+	const defaultResultScreenTime = 90
+
+	customRaces, err := rs.ListCustomRaces()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(customRaces, func(i, j int) bool {
+		return customRaces[i].Updated.After(customRaces[j].Updated)
+	})
+
+	for _, race := range customRaces {
+		race.RaceConfig.ResultScreenTime = defaultResultScreenTime
+
+		err := rs.UpsertCustomRace(race)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	championships, err := rs.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(championships, func(i, j int) bool {
+		return championships[i].Updated.After(championships[j].Updated)
+	})
+
+	for _, champ := range championships {
+		for _, event := range champ.Events {
+			event.RaceSetup.ResultScreenTime = defaultResultScreenTime
+		}
+
+		err := rs.UpsertChampionship(champ)
 
 		if err != nil {
 			return err

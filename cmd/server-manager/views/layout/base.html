@@ -160,9 +160,18 @@
     </nav>
 
     <div class="container">
-        <br><br>
-
         {{ block "content" . }}{{ end }}
+
+
+        {{ block "showpremium" . }}
+            {{ if ne $._request.URL.Path "/" }}
+                <div class="clearfix"></div>
+
+                <div class="mt-5">
+                    {{ template "premium" dict "IsPremium" $.IsPremium }}
+                </div>
+            {{ end }}
+        {{ end }}
 
         <footer class="pt-4 my-md-5 pt-md-5 border-top row">
             <div class="col-sm-4">
@@ -174,7 +183,7 @@
                 <img src="/static/img/racer.png" class="img img-footer">
             </div>
             <div class="col-sm-4 text-right">
-                Assetto Server Manager v{{ Version }}<br> &copy; <a href="https://justapengu.in">Just a Penguin</a> 2010-{{ now.Format "2006" }}
+                Assetto Corsa Server Manager v{{ Version }}<br> &copy; <a href="https://justapengu.in">Just a Penguin</a> 2010-{{ now.Format "2006" }}
             </div>
 
         </footer>

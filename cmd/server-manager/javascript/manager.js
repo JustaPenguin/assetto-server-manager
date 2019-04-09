@@ -1040,16 +1040,6 @@ class RaceSetup {
 
             let $raceSetup = $(this).closest(".race-setup");
 
-            let numEntrants = $raceSetup.find(".entrant:visible").length;
-            let $points = $raceSetup.find(".points-place");
-            let numPoints = $points.length;
-
-
-            for (let i = numPoints; i >= numEntrants; i--) {
-                // remove any extras we don't need
-                $points.last().remove();
-            }
-
             $(this).closest(".entrant").remove();
 
 
@@ -2406,6 +2396,9 @@ let championships = {
                 $newPoints.find("input").attr({"value": pointsVal});
                 $pointsParent.append($newPoints);
             }
+
+            let $savedNumPoints = $raceSetup.find(".totalNumPoints");
+            $savedNumPoints.val($raceSetup.find(".points-place:visible").length);
         });
 
         championships.initClassSetup();
@@ -2441,6 +2434,10 @@ let championships = {
         $document.on("click", ".btn-delete-class", function (e) {
             e.preventDefault();
             $(this).closest(".race-setup").remove();
+        });
+
+        $document.on("input", ".entrant-team", function() {
+            $(this).closest(".entrant").find(".points-transfer").show();
         });
     },
 

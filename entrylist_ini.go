@@ -77,6 +77,36 @@ func (e EntryList) AsSlice() []*Entrant {
 	return entrants
 }
 
+func (e EntryList) PrettyList() []*Entrant {
+	var entrants []*Entrant
+
+	numOpenSlots := 0
+
+	for _, x := range e {
+		if x.GUID == "" {
+			numOpenSlots++
+			continue
+		}
+
+		entrants = append(entrants, x)
+	}
+
+	sort.Slice(entrants, func(i, j int) bool {
+		if entrants[i].Team == entrants[j].Team {
+			return entrants[i].Name < entrants[j].Name
+		} else {
+			return entrants[i].Team < entrants[j].Team
+		}
+	})
+
+	entrants = append(entrants, &Entrant{
+		Name: fmt.Sprintf("%d open slots", numOpenSlots),
+		GUID: "OPEN_SLOTS",
+	})
+
+	return entrants
+}
+
 func (e EntryList) Entrants() string {
 	var entrants []string
 
@@ -95,6 +125,16 @@ func (e EntryList) Entrants() string {
 	}
 
 	return strings.Join(entrants, ", ")
+}
+
+func (e EntryList) FindEntrantByInternalUUID(internalUUID uuid.UUID) *Entrant {
+	for _, entrant := range e {
+		if entrant.InternalUUID == internalUUID {
+			return entrant
+		}
+	}
+
+	return &Entrant{}
 }
 
 func NewEntrant() *Entrant {
@@ -117,6 +157,9 @@ type Entrant struct {
 	SpectatorMode int    `ini:"SPECTATOR_MODE"`
 	Restrictor    int    `ini:"RESTRICTOR"`
 	FixedSetup    string `ini:"FIXED_SETUP"`
+
+	TransferTeamPoints bool `ini:"-" json:"-"`
+	OverwriteAllEvents bool `ini:"-" json:"-"`
 }
 
 func (e Entrant) ID() string {
@@ -125,4 +168,12 @@ func (e Entrant) ID() string {
 	} else {
 		return e.Name
 	}
+}
+
+func (e Entrant) OverwriteProperties(other *Entrant) {
+	e.FixedSetup = other.FixedSetup
+	e.Restrictor = other.Restrictor
+	e.SpectatorMode = other.SpectatorMode
+	e.Ballast = other.Ballast
+	e.Skin = other.Skin
 }

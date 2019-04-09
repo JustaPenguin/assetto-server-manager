@@ -21,7 +21,7 @@ type LiveTiming struct {
 	ElapsedMilliseconds                  int32
 	SessionStarted                       int64
 
-	Cars map[uint8]*LiveCar // map[carID]LiveCar
+	Cars        map[uint8]*LiveCar  // map[carID]LiveCar
 	DeletedCars map[string]*LiveCar // map[carID]LiveCar
 
 	SessionInfoStopChan chan struct{} `json:"-"`
