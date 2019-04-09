@@ -77,6 +77,7 @@ Fixes:
   than just showing the cars entered into the Championship.
 * Added logging to server-manager.log - this should make debugging issues easier.
 * Improved reliability of live timing table.
+* Event scheduling now uses your local timezone from your browser.
 
 v1.1.3
 ------

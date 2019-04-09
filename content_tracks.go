@@ -110,7 +110,7 @@ type TrackInfo struct {
 func GetTrackInfo(name, layout string) (*TrackInfo, error) {
 	uiDataFile := filepath.Join(ServerInstallPath, "content", "tracks", name, "ui")
 
-	if layout != "" {
+	if layout != "" && layout != defaultLayoutName {
 		uiDataFile = filepath.Join(uiDataFile, layout)
 	}
 
