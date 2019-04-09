@@ -38,7 +38,7 @@ $(document).ready(function () {
         $(this).popover({
             html: true,
             content: function () {
-                var id = $(this).attr('id')
+                let id = $(this).attr('id');
                 return $('#popover-content-' + id).html();
             }
         });
