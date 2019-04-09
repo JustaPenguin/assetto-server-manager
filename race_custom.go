@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -84,9 +85,17 @@ func customRaceScheduleHandler(w http.ResponseWriter, r *http.Request) {
 	raceID := chi.URLParam(r, "uuid")
 	dateString := r.FormValue("event-schedule-date")
 	timeString := r.FormValue("event-schedule-time")
+	timezone := r.FormValue("event-schedule-timezone")
+
+	location, err := time.LoadLocation(timezone)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("could not find location: %s", location)
+		location = time.Local
+	}
 
 	// Parse time in correct time zone
-	date, err := time.ParseInLocation("2006-01-02-15:04", dateString+"-"+timeString, time.Local)
+	date, err := time.ParseInLocation("2006-01-02-15:04", dateString+"-"+timeString, location)
 
 	if err != nil {
 		logrus.Errorf("couldn't parse schedule race date, err: %s", err)
@@ -102,6 +111,7 @@ func customRaceScheduleHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	AddFlashQuick(w, r, fmt.Sprintf("We have scheduled the race to begin at %s", date.Format(time.RFC1123)))
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 

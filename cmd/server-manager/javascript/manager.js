@@ -33,7 +33,21 @@ $(document).ready(function () {
     $document.find("input[type='checkbox']").bootstrapSwitch();
 
     $document.find('[data-toggle="tooltip"]').tooltip();
-    $document.find('[data-toggle="popover"]').popover();
+
+    $("[data-toggle=popover]").each(function (i, obj) {
+        $(this).popover({
+            html: true,
+            content: function () {
+                let id = $(this).attr('id');
+                return $('#popover-content-' + id).html();
+            }
+        });
+    });
+
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    $(".timezone").text(timezone);
+    $(".event-schedule-timezone").val(timezone);
 
     $document.find(".row-link").click(function () {
         window.location = $(this).data("href");
@@ -824,11 +838,11 @@ class RaceSetup {
     driverNames;
 
     toggleAlreadyAutocompletedDrivers() {
-        $(".entrant-autofill option").each(function(index, elem) {
+        $(".entrant-autofill option").each(function (index, elem) {
             let found = false;
             let $elem = $(elem);
 
-            $(".entrant .entryListName").each(function(entryIndex, entryName) {
+            $(".entrant .entryListName").each(function (entryIndex, entryName) {
                 if ($(entryName).val() === $elem.val()) {
                     found = true;
                 }
@@ -883,7 +897,7 @@ class RaceSetup {
             $(".entrant-autofill").append($("<option>").val(entrant.Name).text(entrant.Name));
         }
 
-        $(document).on("change", ".entrant-autofill", function(e) {
+        $(document).on("change", ".entrant-autofill", function (e) {
             autoFillEntrant(e.currentTarget, $(e.currentTarget).val());
         });
 
@@ -938,7 +952,7 @@ class RaceSetup {
             }
         }
 
-        $("#MaxClients").on("keydown keyup", function(e) {
+        $("#MaxClients").on("keydown keyup", function (e) {
             let max = parseInt($(this).attr("max"));
             let val = parseInt($(this).val());
 
@@ -1206,11 +1220,11 @@ function timeDiff(tstart, tend) {
 }
 
 let percentColors = [
-    { pct: 0.25, color: { r: 0x00, g: 0x00, b: 0xff } },
-    { pct: 0.625, color: { r: 0x00, g: 0xff, b: 0 } },
-    { pct: 1.0, color: { r: 0xff, g: 0x00, b: 0 } } ];
+    {pct: 0.25, color: {r: 0x00, g: 0x00, b: 0xff}},
+    {pct: 0.625, color: {r: 0x00, g: 0xff, b: 0}},
+    {pct: 1.0, color: {r: 0xff, g: 0x00, b: 0}}];
 
-let getColorForPercentage = function(pct) {
+let getColorForPercentage = function (pct) {
     let i
 
     for (i = 1; i < percentColors.length - 1; i++) {
@@ -1304,14 +1318,14 @@ let liveTiming = {
                 $raceTime.text("Event Completion: " + raceCompletion + "/ " + total);
 
                 let $roadTempWrapper = $document.find("#road-temp-wrapper");
-                $roadTempWrapper.attr("style", "background-color: " + getColorForPercentage(((liveTiming.RoadTemp/40))));
+                $roadTempWrapper.attr("style", "background-color: " + getColorForPercentage(((liveTiming.RoadTemp / 40))));
                 $roadTempWrapper.attr("data-original-title", "Road Temp: " + liveTiming.RoadTemp + "°C");
 
                 let $roadTempText = $document.find("#road-temp-text");
                 $roadTempText.text(liveTiming.RoadTemp + "°C");
 
                 let $ambientTempWrapper = $document.find("#ambient-temp-wrapper");
-                $ambientTempWrapper.attr("style", "background-color: " + getColorForPercentage(((liveTiming.AmbientTemp/40))));
+                $ambientTempWrapper.attr("style", "background-color: " + getColorForPercentage(((liveTiming.AmbientTemp / 40))));
                 $ambientTempWrapper.attr("data-original-title", "Ambient Temp: " + liveTiming.AmbientTemp + "°C");
 
                 let $ambientTempText = $document.find("#ambient-temp-text");
@@ -1337,7 +1351,7 @@ let liveTiming = {
                     $currentWeather.attr("src", "/content/weather/" + pathFinal + "/preview.jpg");
                 }).fail(function () {
                     // preview doesn't exist, load default fall back image
-                    $currentWeather.attr( "src", "/static/img/no-preview-general.png");
+                    $currentWeather.attr("src", "/static/img/no-preview-general.png");
                 });
 
                 $currentWeather.attr("alt", "Current Weather: " + prettifyName(liveTiming.WeatherGraphics, false));
@@ -2436,7 +2450,7 @@ let championships = {
             $(this).closest(".race-setup").remove();
         });
 
-        $document.on("input", ".entrant-team", function() {
+        $document.on("input", ".entrant-team", function () {
             $(this).closest(".entrant").find(".points-transfer").show();
         });
     },
@@ -2528,7 +2542,7 @@ let championships = {
 
                 if ($(this).hasClass("text-success")) {
                     $(this).attr("class", icon + " fas fa-stack-1x text-dark")
-                } else  {
+                } else {
                     $(this).attr("class", icon + " fas fa-stack-1x text-success")
                 }
             })
