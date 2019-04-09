@@ -149,6 +149,7 @@ func (tr *Renderer) init() error {
 	funcs["SessionType"] = func(s string) SessionType { return SessionType(s) }
 	funcs["Config"] = func() *Configuration { return config }
 	funcs["Version"] = func() string { return BuildTime }
+	funcs["fullTimeFormat"] = fullTimeFormat
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
@@ -186,6 +187,10 @@ func timeZone(t time.Time) string {
 	name, _ := t.Zone()
 
 	return name
+}
+
+func fullTimeFormat(t time.Time) string {
+	return t.Format("Mon, 02 Jan 2006 15:04 MST")
 }
 
 func isBefore(t time.Time) bool {
