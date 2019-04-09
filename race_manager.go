@@ -322,7 +322,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		numPitboxes = quickRace.CurrentRaceConfig.MaxClients
 	}
 
-	if numPitboxes > MaxClientsOverride {
+	if numPitboxes > MaxClientsOverride && MaxClientsOverride > 0 {
 		numPitboxes = MaxClientsOverride
 	}
 
@@ -421,6 +421,14 @@ func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (Entry
 		e.Restrictor = formValueAsInt(r.Form["EntryList.Restrictor"][i])
 		e.FixedSetup = r.Form["EntryList.FixedSetup"][i]
 
+		if r.Form["EntryList.TransferTeamPoints"] != nil && formValueAsInt(r.Form["EntryList.TransferTeamPoints"][i]) == 1 {
+			e.TransferTeamPoints = true
+		}
+
+		if r.Form["EntryList.OverwriteAllEvents"] != nil && formValueAsInt(r.Form["EntryList.OverwriteAllEvents"][i]) == 1 {
+			e.OverwriteAllEvents = true
+		}
+
 		entryList.Add(e)
 	}
 
@@ -439,11 +447,17 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		gasPenaltyDisabled = 0
 	}
 
+	trackLayout := r.FormValue("TrackLayout")
+
+	if trackLayout == "<default>" {
+		trackLayout = ""
+	}
+
 	raceConfig := &CurrentRaceConfig{
 		// general race config
 		Cars:        strings.Join(cars, ";"),
 		Track:       r.FormValue("Track"),
-		TrackLayout: r.FormValue("TrackLayout"),
+		TrackLayout: trackLayout,
 
 		// assists
 		ABSAllowed:              formValueAsInt(r.FormValue("ABSAllowed")),
@@ -491,7 +505,10 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		StartRule:                 formValueAsInt(r.FormValue("StartRule")),
 		MaxClients:                formValueAsInt(r.FormValue("MaxClients")),
 		RaceExtraLap:              formValueAsInt(r.FormValue("RaceExtraLap")),
-		MaxContactsPerKilometer:   formValueAsInt(r.FormValue("MaxContactsPerKilometer")),
+		// MaxContactsPerKilometer seems to be another feature added to the config but not actually
+		// integrated into Assetto Corsa's Server.
+		//MaxContactsPerKilometer:   formValueAsInt(r.FormValue("MaxContactsPerKilometer")),
+		ResultScreenTime: formValueAsInt(r.FormValue("ResultScreenTime")),
 	}
 
 	if isSol {

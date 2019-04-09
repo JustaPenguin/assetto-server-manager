@@ -138,11 +138,17 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	championship.Info = template.HTML(r.FormValue("ChampionshipInfo"))
 
 	previousNumEntrants := 0
+	previousNumPoints := 0
 
 	for i := 0; i < len(r.Form["ClassName"]); i++ {
 		class := NewChampionshipClass(r.Form["ClassName"][i])
 
+		if classID := r.Form["ClassID"][i]; classID != "" && classID != uuid.Nil.String() {
+			class.ID = uuid.MustParse(classID)
+		}
+
 		numEntrantsForClass := formValueAsInt(r.Form["EntryList.NumEntrants"][i])
+		numPointsForClass := formValueAsInt(r.Form["NumPoints"][i])
 
 		class.Entrants, err = cm.BuildEntryList(r, previousNumEntrants, numEntrantsForClass)
 
@@ -152,7 +158,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 
 		class.Points.Places = make([]int, 0)
 
-		for i := previousNumEntrants; i < previousNumEntrants+numEntrantsForClass; i++ {
+		for i := previousNumPoints; i < previousNumPoints+numPointsForClass; i++ {
 			class.Points.Places = append(class.Points.Places, formValueAsInt(r.Form["Points.Place"][i]))
 		}
 
@@ -161,12 +167,52 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		class.Points.SecondRaceMultiplier = formValueAsFloat(r.Form["Points.SecondRaceMultiplier"][i])
 
 		previousNumEntrants += numEntrantsForClass
+		previousNumPoints += numPointsForClass
 		championship.AddClass(class)
 	}
 
 	// persist any entrants so that they can be autofilled
 	if err := cm.SaveEntrantsForAutoFill(championship.AllEntrants()); err != nil {
 		return nil, edited, err
+	}
+
+	// look to see if any entrants have their team points set to transfer, move them across to the team they are in now
+	for _, class := range championship.Classes {
+		for _, entrant := range class.Entrants {
+			if !entrant.TransferTeamPoints {
+				continue
+			}
+
+			logrus.Infof("Renaming team for entrant: %s (%s)", entrant.Name, entrant.GUID)
+
+			for _, event := range championship.Events {
+				for _, session := range event.Sessions {
+					if session.Results == nil {
+						continue
+					}
+
+					class.AttachEntrantToResult(entrant, session.Results)
+				}
+			}
+		}
+	}
+
+	// look at each entrant to see if their properties should overwrite all event properties set up in the
+	// event entrylist. this is useful for globally changing skins, restrictor values etc.
+	for _, class := range championship.Classes {
+		for _, entrant := range class.Entrants {
+			if !entrant.OverwriteAllEvents {
+				continue
+			}
+
+			for _, event := range championship.Events {
+				eventEntrant := event.EntryList.FindEntrantByInternalUUID(entrant.InternalUUID)
+
+				logrus.Infof("Overwriting properties for entrant: %s (%s)", entrant.Name, entrant.GUID)
+
+				eventEntrant.OverwriteProperties(entrant)
+			}
+		}
 	}
 
 	return championship, edited, cm.UpsertChampionship(championship)
@@ -646,8 +692,8 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			return
 		}
 
-		// Update the old results json file with championship ID, required for applying penalties properly
-		results.ChampionshipID = cm.activeChampionship.ChampionshipID.String()
+		// Update the old results json file with more championship information, required for applying penalties properly
+		championship.EnhanceResults(results)
 		err = saveResults(filename, results)
 
 		if err != nil {

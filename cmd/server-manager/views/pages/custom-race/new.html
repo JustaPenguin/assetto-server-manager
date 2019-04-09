@@ -577,6 +577,7 @@
 
                 {{ end }}
 
+
                 {{ range $index, $entrant := .CurrentEntrants.AsSlice }}
                     <div class="entrant">
                         {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" $.IsChampionship }}
@@ -1300,6 +1301,9 @@
                     </div>
                 </div>
 
+                <!--
+                As per our testing, this appears to not work...
+
                 <div class="form-group row">
                     <label for="MaxContactsPerKilometer" class="col-sm-3 col-form-label">Max Contacts Per Kilometer</label>
 
@@ -1309,7 +1313,7 @@
                                 id="MaxContactsPerKilometer"
                                 name="MaxContactsPerKilometer"
                                 class="form-control"
-                                value="{{ $f.MaxContactsPerKilometer }}"
+
 
 
                                 step="1"
@@ -1318,7 +1322,22 @@
                         <small>Maximum number times you can make contact with another car in 1 kilometer. -1 = no limit</small>
                     </div>
                 </div>
+                -->
 
+                <div class="form-group row">
+                    <label for="StartRule" class="col-sm-3 col-form-label">Start Rule</label>
+
+                    <div class="col-sm-9">
+
+                        <select class="form-control" id="StartRule" name="StartRule">
+                            <option value="0" {{ if eq $f.StartRule 0 }} selected="selected" {{ end }}>Car is Locked Until Start</option>
+                            <option value="1" {{ if eq $f.StartRule 1 }} selected="selected" {{ end }}>Teleport</option>
+                            <option value="2" {{ if eq $f.StartRule 2 }} selected="selected" {{ end }}>Drive Through</option>
+                        </select>
+
+                        <small>If race has 3 or less laps then the Teleport penalty is enabled.</small>
+                    </div>
+                </div>
 
                 <div class="form-group row">
                     <label for="PickupModeEnabled" class="col-sm-3 col-form-label">Pickup Mode Enabled</label>
@@ -1334,9 +1353,9 @@
                                 {{ end }}
                         ><br>
 
-                        <small>If 0 the server starts in booking mode (<strong>do not use it</strong>).
+                        <small>If 0 the server starts in booking mode.
                             Warning: in pickup mode you have to list only a circuit under TRACK and you need to list a
-                            least one car in the entry_list
+                            least one car in the Entry List
                         </small>
                     </div>
                 </div>
@@ -1362,17 +1381,21 @@
                 </div>
 
                 <div class="form-group row">
-                    <label for="StartRule" class="col-sm-3 col-form-label">Start Rule</label>
+                    <label for="ResultScreenTime" class="col-sm-3 col-form-label">Result Screen Time</label>
 
                     <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="ResultScreenTime"
+                                name="ResultScreenTime"
+                                class="form-control"
+                                {{ with $f.ResultScreenTime }}
+                                    value="{{ . }}"
+                                {{ end }}
+                                min="0"
+                        >
 
-                        <select class="form-control" id="StartRule" name="StartRule">
-                            <option value="0" {{ if eq $f.StartRule 0 }} selected="selected" {{ end }}>Car is Locked Until Start</option>
-                            <option value="1" {{ if eq $f.StartRule 1 }} selected="selected" {{ end }}>Teleport</option>
-                            <option value="2" {{ if eq $f.StartRule 2 }} selected="selected" {{ end }}>Drive Through</option>
-                        </select>
-
-                        <small>If race has 3 or less laps then the Teleport penalty is enabled.</small>
+                        <small>Seconds of result screen between racing sessions</small>
                     </div>
                 </div>
             </div>
