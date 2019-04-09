@@ -128,25 +128,27 @@ func (asu *AssettoServerUDP) serve() {
 				continue
 			}
 
-			msg, err := asu.handleMessage(bytes.NewReader(buf))
+			go func() {
+				msg, err := asu.handleMessage(bytes.NewReader(buf))
 
-			if err != nil {
-				asu.callback(ServerError{err})
-				return
-			}
+				if err != nil {
+					asu.callback(ServerError{err})
+					return
+				}
 
-			asu.callback(msg)
+				asu.callback(msg)
 
-			if asu.forward && asu.forwarder != nil {
-				go func() {
-					// write the message to the forwarding address
-					_, err := asu.forwarder.Write(buf[:n])
+				if asu.forward && asu.forwarder != nil {
+					go func() {
+						// write the message to the forwarding address
+						_, err := asu.forwarder.Write(buf[:n])
 
-					if err != nil {
-						fmt.Println("err", err)
-					}
-				}()
-			}
+						if err != nil {
+							fmt.Println("err", err)
+						}
+					}()
+				}
+			}()
 		}
 	}
 }
