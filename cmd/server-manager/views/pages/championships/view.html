@@ -302,7 +302,7 @@
                         {{ else if $event.InProgress }}
                             <span class="text-info">In Progress</span>
                         {{ else if isBefore .Scheduled }}
-                            <span class="text-warning">Scheduled for {{ dateFormat .Scheduled }} at {{ timeFormat .Scheduled }} ({{ timeZone .Scheduled }})</span>
+                            <span class="text-warning">Scheduled for {{ fullTimeFormat .Scheduled }}</span>
                         {{ else }}
                             <span class="text-danger">Not started</span>
                         {{ end }}
