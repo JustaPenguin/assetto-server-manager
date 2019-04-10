@@ -1306,7 +1306,21 @@ let liveTiming = {
 
                 // Get lap/laps or time/totalTime
                 if (liveTiming.Time > 0) {
-                    total = liveTiming.Time + "m";
+
+                    if (total === 0) {
+                        let hours = Math.floor(liveTiming.Time / 60);
+                        let minutes = liveTiming.Time % 60;
+
+                        if (hours > 0) {
+                            total = hours + "h ";
+
+                            if (minutes > 0) {
+                                total += minutes + "m";
+                            }
+                        } else if (minutes > 0) {
+                            total = minutes + "m";
+                        }
+                    }
 
                     raceCompletion = timeDiff(liveTiming.SessionStarted, date.getTime());
                 } else if (liveTiming.Laps > 0) {
@@ -1408,6 +1422,14 @@ let liveTiming = {
                 for (let car of sorted) {
                     removeDriverFromTable(liveTiming.Cars, car, $liveTimingDisconnectedTable, true);
                     addDriverToTable(liveTiming.Cars, car, $liveTimingTable, false);
+                }
+
+                if (sortedDeleted.length === 0) {
+                    $document.find("#stored-times-header").hide();
+                    $liveTimingDisconnectedTable.hide();
+                } else {
+                    $document.find("#stored-times-header").show();
+                    $liveTimingDisconnectedTable.show();
                 }
 
                 for (let carDis of sortedDeleted) {

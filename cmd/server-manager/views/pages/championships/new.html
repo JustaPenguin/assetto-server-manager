@@ -23,6 +23,10 @@
         <div class="card mt-3 border-secondary">
             <div class="card-header">
                 <strong>Championship</strong>
+
+                {{ if .IsEditing }}
+                    <button type="submit" class="btn btn-success float-right">Save Championship</button>
+                {{ end }}
             </div>
 
             <div class="card-body">
@@ -108,7 +112,7 @@
 
         {{ if .IsEditing }}
             <input type="hidden" name="Editing" id="Editing" value="{{ $f.ID.String }}">
-            <button type="submit" class="btn btn-success mt-5 float-right">Edit Championship</button>
+            <button type="submit" class="btn btn-success mt-5 float-right">Save Championship</button>
         {{ else }}
             <div class="mt-5 float-right">
                 <button type="submit" name="action" value="addEvent" class="btn btn-success">Add an Event</button>
