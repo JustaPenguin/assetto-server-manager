@@ -548,54 +548,64 @@
                         </div>
                     </div>
 
-                    <div class="form-group row">
-                        <label for="LockedEntryList" class="col-sm-3 col-form-label">Locked Entry List</label>
+                    <div class="hidden-booking-enabled">
+
+                        <div class="form-group row">
+                            <label for="LockedEntryList" class="col-sm-3 col-form-label">Locked Entry List</label>
 
 
-                        <div class="col-sm-9">
-                            <input type="checkbox"
-                                   id="LockedEntryList"
-                                   name="LockedEntryList"
-                                   value="{{ $f.LockedEntryList }}"
+                            <div class="col-sm-9">
+                                <input type="checkbox"
+                                       id="LockedEntryList"
+                                       name="LockedEntryList"
+                                       value="{{ $f.LockedEntryList }}"
 
-                                    {{ if eq $f.LockedEntryList 1 }}
-                                        checked="checked"
-                                    {{ end }}
-                            >
+                                        {{ if eq $f.LockedEntryList 1 }}
+                                            checked="checked"
+                                        {{ end }}
+                                >
 
-                            <br>
+                                <br>
 
-                            <small>Only players already included in the entry list can join the server</small>
+                                <small>Only players already included in the entry list can join the server</small>
+                            </div>
                         </div>
-                    </div>
 
-                    <p>If you add an Entrant once, the next time you add an Entrant, the 'name' input will give you suggestions and auto-populate the Entrant's Name, Team and GUID.</p>
+                        <p>If you add an Entrant once, the next time you add an Entrant, the 'name' input will give you suggestions and auto-populate the Entrant's Name, Team and GUID.</p>
 
-                    <div id="entrantTemplate" class="entrant">
-                        {{ template "entrant" }}
-                    </div>
+                        <div id="entrantTemplate" class="entrant">
+                            {{ template "entrant" }}
+                        </div>
 
-                {{ end }}
-
-
-                {{ range $index, $entrant := .CurrentEntrants.AsSlice }}
-                    <div class="entrant">
-                        {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" $.IsChampionship }}
-                    </div>
-                {{ else }}
-                    <div class="entrant">
-                        {{ template "entrant" }}
                     </div>
                 {{ end }}
 
+                <div class="hidden-booking-enabled">
 
-                {{ if not .IsChampionship }}
-                    <div class="text-right">
-                        <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
+                    {{ range $index, $entrant := .CurrentEntrants.AsSlice }}
+                        <div class="entrant">
+                            {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" $.IsChampionship }}
+                        </div>
+                    {{ else }}
+                        <div class="entrant">
+                            {{ template "entrant" }}
+                        </div>
+                    {{ end }}
 
-                        <button class="btn btn-warning addEntrant">Add Entrant(s)</button>
-                    </div>
-                {{ end }}
+
+                    {{ if not .IsChampionship }}
+                        <div class="text-right">
+                            <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
+
+                            <button class="btn btn-warning addEntrant">Add Entrant(s)</button>
+                        </div>
+                    {{ end }}
+
+                </div>
+
+                <div class="visible-booking-enabled">
+                    <p>Booking Mode is enabled. You cannot configure specific drivers in the EntryList.</p>
+                </div>
 
                 <input type="hidden" class="totalNumEntrants" name="EntryList.NumEntrants" value="{{ if gt 0 (len .CurrentEntrants) }}{{ len .CurrentEntrants }}{{ else }}1{{ end }}">
 

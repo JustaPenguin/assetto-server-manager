@@ -53,6 +53,12 @@ var AvailableSessions = []SessionType{
 	SessionTypeBooking,
 }
 
+var AvailableSessionsClosedChampionship = []SessionType{
+	SessionTypeRace,
+	SessionTypeQualifying,
+	SessionTypePractice,
+}
+
 type ServerConfig struct {
 	GlobalServerConfig GlobalServerConfig `ini:"SERVER"`
 	CurrentRaceConfig  CurrentRaceConfig  `ini:"SERVER"`

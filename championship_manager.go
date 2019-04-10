@@ -264,6 +264,10 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (map[
 		}
 	}
 
+	if !championship.OpenEntrants {
+		opts["AvailableSessions"] = AvailableSessionsClosedChampionship
+	}
+
 	err = cm.applyCurrentRaceSetupToOptions(opts, opts["Current"].(CurrentRaceConfig))
 
 	if err != nil {
