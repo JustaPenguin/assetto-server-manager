@@ -10,6 +10,7 @@ import (
 	"net"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/text/encoding/unicode/utf32"
 )
 
 // RealtimePosIntervalMs is the interval to request real time positional information.
@@ -179,11 +180,25 @@ func readString(r io.Reader, sizeMultiplier int) string {
 		return ""
 	}
 
-	s := make([]byte, int(size)*sizeMultiplier)
+	b := make([]byte, int(size)*sizeMultiplier)
 
-	err = binary.Read(r, binary.LittleEndian, &s)
+	err = binary.Read(r, binary.LittleEndian, &b)
 
-	return string(bytes.Replace(s, []byte("\x00"), nil, -1))
+	if err != nil {
+		return ""
+	}
+
+	if sizeMultiplier == 4 {
+		bs, err := utf32.UTF32(utf32.LittleEndian, utf32.IgnoreBOM).NewDecoder().Bytes(b)
+
+		if err != nil {
+			return ""
+		}
+
+		return string(bs)
+	} else {
+		return string(b)
+	}
 }
 
 func (asu *AssettoServerUDP) SendMessage(message Message) error {
