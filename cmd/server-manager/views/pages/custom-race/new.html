@@ -198,6 +198,12 @@
                                             checked="checked"
                                             {{ end }}
                                     >
+
+
+                                    {{ if eq $sessionType "BOOK" }}
+                                        <br><br>
+                                        <small>Enabling Booking Mode means that you cannot configure a specific EntryList. The server will start with Pickup mode disabled and Entrants must choose their car and livery during the Booking session time.</small>
+                                    {{ end }}
                                 </div>
                             </div>
 
@@ -604,7 +610,7 @@
                 </div>
 
                 <div class="visible-booking-enabled">
-                    <p>Booking Mode is enabled. You cannot configure specific drivers in the EntryList.</p>
+                    <p>Booking Mode is enabled. You cannot configure specific drivers in the EntryList. Pickup Mode will be disabled.</p>
                 </div>
 
                 <input type="hidden" class="totalNumEntrants" name="EntryList.NumEntrants" value="{{ if gt 0 (len .CurrentEntrants) }}{{ len .CurrentEntrants }}{{ else }}1{{ end }}">
@@ -1346,27 +1352,6 @@
                         </select>
 
                         <small>If race has 3 or less laps then the Teleport penalty is enabled.</small>
-                    </div>
-                </div>
-
-                <div class="form-group row">
-                    <label for="PickupModeEnabled" class="col-sm-3 col-form-label">Pickup Mode Enabled</label>
-
-                    <div class="col-sm-9">
-                        <input
-                                type="checkbox"
-                                id="PickupModeEnabled"
-                                name="PickupModeEnabled"
-                                class="form-control"
-                                {{ if $f.PickupModeEnabled }}
-                                    checked="checked"
-                                {{ end }}
-                        ><br>
-
-                        <small>If 0 the server starts in booking mode.
-                            Warning: in pickup mode you have to list only a circuit under TRACK and you need to list a
-                            least one car in the Entry List
-                        </small>
                     </div>
                 </div>
 

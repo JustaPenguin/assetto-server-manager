@@ -568,6 +568,18 @@ class RaceSetup {
     showEnabledSessions() {
         let that = this;
 
+
+        let $hiddenWhenBookingEnabled =  that.$parent.find(".hidden-booking-enabled");
+        let $visibleWhenBookingEnabled = that.$parent.find(".visible-booking-enabled");
+
+        if ($(".session-enabler[name='Booking.Enabled']").is(":checked")) {
+            $hiddenWhenBookingEnabled.hide();
+            $visibleWhenBookingEnabled.show();
+        } else {
+            $hiddenWhenBookingEnabled.show();
+            $visibleWhenBookingEnabled.hide();
+        }
+
         $(".session-enabler").each(function (index, elem) {
             $(elem).on('switchChange.bootstrapSwitch', function (event, state) {
                 let $this = $(this);
@@ -575,8 +587,6 @@ class RaceSetup {
                 let $panelLabel = that.$parent.find("#" + $this.closest(".tab-pane").attr("aria-labelledby"));
 
                 let isBooking = $(elem).attr("name") === "Booking.Enabled";
-                let $hiddenWhenBookingEnabled =  that.$parent.find(".hidden-booking-enabled");
-                let $visibleWhenBookingEnabled = that.$parent.find(".visible-booking-enabled");
 
                 if (state) {
                     $elem.show();
