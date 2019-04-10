@@ -115,7 +115,7 @@ func LiveTimingCallback(response udp.Message) {
 			}
 
 			// If this is a looped practice event, and the previous event had some cars then keep the cars
-			if len(liveInfo.Cars) > 0 && a.Type == 1 {
+			if (len(liveInfo.Cars) > 0 || len(liveInfo.DeletedCars) > 0) && a.Type == 1 {
 				if liveInfo.Type == a.Type && liveInfo.Track == a.Track && liveInfo.TrackConfig == a.TrackConfig &&
 					liveInfo.Name == a.Name {
 					del = false
