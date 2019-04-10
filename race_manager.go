@@ -187,6 +187,12 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		}
 	}
 
+	if config.CurrentRaceConfig.HasSession(SessionTypeBooking) {
+		config.CurrentRaceConfig.PickupModeEnabled = 0
+	} else {
+		config.CurrentRaceConfig.PickupModeEnabled = 1
+	}
+
 	if !championshipEvent && championshipManager != nil {
 		logrus.Debugf("Starting a non championship event. Setting activeChampionship to nil")
 		championshipManager.activeChampionship = nil
@@ -498,7 +504,6 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		RaceGasPenaltyDisabled:    gasPenaltyDisabled,
 		MaxBallastKilograms:       formValueAsInt(r.FormValue("MaxBallastKilograms")),
 		AllowedTyresOut:           formValueAsInt(r.FormValue("AllowedTyresOut")),
-		PickupModeEnabled:         formValueAsInt(r.FormValue("PickupModeEnabled")),
 		LoopMode:                  formValueAsInt(r.FormValue("LoopMode")),
 		SleepTime:                 formValueAsInt(r.FormValue("SleepTime")),
 		RaceOverTime:              formValueAsInt(r.FormValue("RaceOverTime")),
@@ -595,9 +600,6 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		return err
 	}
 
-	completeConfig := ConfigIniDefault
-	completeConfig.CurrentRaceConfig = *raceConfig
-
 	var entryList EntryList
 
 	if !raceConfig.HasSession(SessionTypeBooking) {
@@ -607,6 +609,9 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 			return err
 		}
 	}
+
+	completeConfig := ConfigIniDefault
+	completeConfig.CurrentRaceConfig = *raceConfig
 
 	if customRaceID := r.FormValue("Editing"); customRaceID != "" {
 		// we are editing the race. load the previous one and overwrite it with this one
