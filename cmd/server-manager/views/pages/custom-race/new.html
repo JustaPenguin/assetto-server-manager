@@ -29,7 +29,6 @@
                 <strong>Track{{ if not .IsChampionship }} & Cars {{ end }}</strong>
 
                 {{ if .IsEditing }}
-                    <input type="hidden" name="Editing" id="Editing" value="{{ .EditingID }}">
                     <button type="submit" class="btn btn-success float-right">Save Race</button>
                 {{ end }}
             </div>
