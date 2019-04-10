@@ -598,10 +598,14 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 	completeConfig := ConfigIniDefault
 	completeConfig.CurrentRaceConfig = *raceConfig
 
-	entryList, err := rm.BuildEntryList(r, 0, len(r.Form["EntryList.Name"]))
+	var entryList EntryList
 
-	if err != nil {
-		return err
+	if !raceConfig.HasSession(SessionTypeBooking) {
+		entryList, err = rm.BuildEntryList(r, 0, len(r.Form["EntryList.Name"]))
+
+		if err != nil {
+			return err
+		}
 	}
 
 	if customRaceID := r.FormValue("Editing"); customRaceID != "" {

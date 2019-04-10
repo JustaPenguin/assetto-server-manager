@@ -574,12 +574,26 @@ class RaceSetup {
                 let $elem = $this.closest(".tab-pane").find(".session-details");
                 let $panelLabel = that.$parent.find("#" + $this.closest(".tab-pane").attr("aria-labelledby"));
 
+                let isBooking = $(elem).attr("name") === "Booking.Enabled";
+                let $hiddenWhenBookingEnabled =  that.$parent.find(".hidden-booking-enabled");
+                let $visibleWhenBookingEnabled = that.$parent.find(".visible-booking-enabled");
+
                 if (state) {
                     $elem.show();
-                    $panelLabel.addClass("text-success")
+                    $panelLabel.addClass("text-success");
+
+                    if (isBooking) {
+                        $hiddenWhenBookingEnabled.hide();
+                        $visibleWhenBookingEnabled.show();
+                    }
                 } else {
                     $elem.hide();
-                    $panelLabel.removeClass("text-success")
+                    $panelLabel.removeClass("text-success");
+
+                    if (isBooking) {
+                        $hiddenWhenBookingEnabled.show();
+                        $visibleWhenBookingEnabled.hide();
+                    }
                 }
             });
         });
