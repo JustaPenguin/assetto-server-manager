@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"net"
+
+	"github.com/sirupsen/logrus"
 )
 
 // RealtimePosIntervalMs is the interval to request real time positional information.
@@ -112,23 +114,13 @@ func (asu *AssettoServerUDP) forwardServe() {
 }
 
 func (asu *AssettoServerUDP) serve() {
-	for {
-		select {
-		case <-asu.ctx.Done():
-			asu.listener.Close()
-			return
-		default:
-			buf := make([]byte, 1024)
+	messageChan := make(chan []byte)
+	defer close(messageChan)
 
-			// read message from assetto
-			n, _, err := asu.listener.ReadFromUDP(buf)
-
-			if err != nil {
-				asu.callback(ServerError{err})
-				continue
-			}
-
-			go func() {
+	go func() {
+		for {
+			select {
+			case buf := <-messageChan:
 				msg, err := asu.handleMessage(bytes.NewReader(buf))
 
 				if err != nil {
@@ -141,14 +133,36 @@ func (asu *AssettoServerUDP) serve() {
 				if asu.forward && asu.forwarder != nil {
 					go func() {
 						// write the message to the forwarding address
-						_, err := asu.forwarder.Write(buf[:n])
+						_, err := asu.forwarder.Write(buf)
 
 						if err != nil {
-							fmt.Println("err", err)
+							logrus.WithError(err).Error("could not forward UDP message")
 						}
 					}()
 				}
-			}()
+			case <-asu.ctx.Done():
+				return
+			}
+		}
+	}()
+
+	for {
+		select {
+		case <-asu.ctx.Done():
+			asu.listener.Close()
+			return
+		default:
+			buf := make([]byte, 1024)
+
+			// read message from assetto
+			n, _, err := asu.listener.ReadFromUDP(buf)
+
+			if err != nil {
+				logrus.WithError(err).Error("could not read from UDP")
+				continue
+			}
+
+			messageChan <- buf[:n]
 		}
 	}
 }
