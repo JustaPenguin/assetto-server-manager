@@ -78,6 +78,8 @@ Fixes:
 * Added logging to server-manager.log - this should make debugging issues easier.
 * Improved reliability of live timing table.
 * Event scheduling now uses your local timezone from your browser.
+* Fixes incorrectly decoded utf32 strings coming through UDP data.
+* Booking Mode now works correctly. Closed Championships have booking mode disabled for all events.
 
 v1.1.3
 ------

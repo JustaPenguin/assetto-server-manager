@@ -264,6 +264,10 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (map[
 		}
 	}
 
+	if !championship.OpenEntrants {
+		opts["AvailableSessions"] = AvailableSessionsClosedChampionship
+	}
+
 	err = cm.applyCurrentRaceSetupToOptions(opts, opts["Current"].(CurrentRaceConfig))
 
 	if err != nil {
@@ -882,6 +886,8 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 			return err
 		}
 
+		championship.EnhanceResults(results)
+
 		event.Sessions[SessionTypePractice] = &ChampionshipSession{
 			StartedTime:   results.Date.Add(-time.Minute * 30),
 			CompletedTime: results.Date,
@@ -898,6 +904,8 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 			return err
 		}
 
+		championship.EnhanceResults(results)
+
 		event.Sessions[SessionTypeQualifying] = &ChampionshipSession{
 			StartedTime:   results.Date.Add(-time.Minute * 30),
 			CompletedTime: results.Date,
@@ -913,6 +921,8 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 		if err != nil {
 			return err
 		}
+
+		championship.EnhanceResults(results)
 
 		event.Sessions[SessionTypeRace] = &ChampionshipSession{
 			StartedTime:   results.Date.Add(-time.Minute * 30),

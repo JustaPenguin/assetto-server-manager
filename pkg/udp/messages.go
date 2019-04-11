@@ -8,6 +8,9 @@ import (
 	"fmt"
 	"io"
 	"net"
+
+	"github.com/sirupsen/logrus"
+	"golang.org/x/text/encoding/unicode/utf32"
 )
 
 // RealtimePosIntervalMs is the interval to request real time positional information.
@@ -112,6 +115,38 @@ func (asu *AssettoServerUDP) forwardServe() {
 }
 
 func (asu *AssettoServerUDP) serve() {
+	messageChan := make(chan []byte)
+	defer close(messageChan)
+
+	go func() {
+		for {
+			select {
+			case buf := <-messageChan:
+				msg, err := asu.handleMessage(bytes.NewReader(buf))
+
+				if err != nil {
+					asu.callback(ServerError{err})
+					return
+				}
+
+				asu.callback(msg)
+
+				if asu.forward && asu.forwarder != nil {
+					go func() {
+						// write the message to the forwarding address
+						_, err := asu.forwarder.Write(buf)
+
+						if err != nil {
+							logrus.WithError(err).Error("could not forward UDP message")
+						}
+					}()
+				}
+			case <-asu.ctx.Done():
+				return
+			}
+		}
+	}()
+
 	for {
 		select {
 		case <-asu.ctx.Done():
@@ -124,29 +159,11 @@ func (asu *AssettoServerUDP) serve() {
 			n, _, err := asu.listener.ReadFromUDP(buf)
 
 			if err != nil {
-				asu.callback(ServerError{err})
+				logrus.WithError(err).Error("could not read from UDP")
 				continue
 			}
 
-			msg, err := asu.handleMessage(bytes.NewReader(buf))
-
-			if err != nil {
-				asu.callback(ServerError{err})
-				return
-			}
-
-			asu.callback(msg)
-
-			if asu.forward && asu.forwarder != nil {
-				go func() {
-					// write the message to the forwarding address
-					_, err := asu.forwarder.Write(buf[:n])
-
-					if err != nil {
-						fmt.Println("err", err)
-					}
-				}()
-			}
+			messageChan <- buf[:n]
 		}
 	}
 }
@@ -163,11 +180,25 @@ func readString(r io.Reader, sizeMultiplier int) string {
 		return ""
 	}
 
-	s := make([]byte, int(size)*sizeMultiplier)
+	b := make([]byte, int(size)*sizeMultiplier)
 
-	err = binary.Read(r, binary.LittleEndian, &s)
+	err = binary.Read(r, binary.LittleEndian, &b)
 
-	return string(bytes.Replace(s, []byte("\x00"), nil, -1))
+	if err != nil {
+		return ""
+	}
+
+	if sizeMultiplier == 4 {
+		bs, err := utf32.UTF32(utf32.LittleEndian, utf32.IgnoreBOM).NewDecoder().Bytes(b)
+
+		if err != nil {
+			return ""
+		}
+
+		return string(bs)
+	} else {
+		return string(b)
+	}
 }
 
 func (asu *AssettoServerUDP) SendMessage(message Message) error {
