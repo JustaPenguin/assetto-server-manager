@@ -1464,12 +1464,14 @@ let liveTiming = {
                     let $tr;
 
                     // Get the lap time, display previous for 10 seconds after completion
-                    if (carSet[car].LastLapCompleteTimeUnix + 10000 > date.getTime()) {
-                        lapTime = carSet[car].LastLap
-                    } else if (carSet[car].LapNum === 0) {
-                        lapTime = "0s"
-                    } else {
-                        lapTime = timeDiff(carSet[car].LastLapCompleteTimeUnix, date.getTime())
+                    if (!discon) {
+                        if (carSet[car].LastLapCompleteTimeUnix + 10000 > date.getTime()) {
+                            lapTime = carSet[car].LastLap
+                        } else if (carSet[car].LapNum === 0) {
+                            lapTime = "0s"
+                        } else {
+                            lapTime = timeDiff(carSet[car].LastLapCompleteTimeUnix, date.getTime())
+                        }
                     }
 
                     if ($driverRow.length) {
@@ -1529,8 +1531,13 @@ let liveTiming = {
                     }
                     $tr.append($tdName);
 
+                    let skin = "";
+                    if (carSet[car].CarSkin !== "") {
+                        skin = " - " + prettifyName(carSet[car].CarSkin, true);
+                    }
+
                     $tdCar.attr("id", carSet[car].CarMode + "-" + carSet[car].DriverGUID);
-                    $tdCar.text(prettifyName(carSet[car].CarMode, true) + " - " + prettifyName(carSet[car].CarSkin, true));
+                    $tdCar.text(prettifyName(carSet[car].CarMode, true) + skin);
                     $tr.append($tdCar);
 
                     if (!discon) {
