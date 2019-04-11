@@ -67,7 +67,7 @@ func main() {
 		udp.RealtimePosIntervalMs = config.LiveMap.IntervalMs
 	}
 
-	servermanager.ViewRenderer, err = servermanager.NewRenderer(templateLoader, debug)
+	servermanager.ViewRenderer, err = servermanager.NewRenderer(templateLoader, os.Getenv("FILESYSTEM_HTML") == "true")
 
 	if err != nil {
 		ServeHTTPWithError(config.HTTP.Hostname, "Initialise view renderer (internal error)", err)
