@@ -568,18 +568,42 @@ class RaceSetup {
     showEnabledSessions() {
         let that = this;
 
+
+        let $hiddenWhenBookingEnabled =  that.$parent.find(".hidden-booking-enabled");
+        let $visibleWhenBookingEnabled = that.$parent.find(".visible-booking-enabled");
+
+        if ($(".session-enabler[name='Booking.Enabled']").is(":checked")) {
+            $hiddenWhenBookingEnabled.hide();
+            $visibleWhenBookingEnabled.show();
+        } else {
+            $hiddenWhenBookingEnabled.show();
+            $visibleWhenBookingEnabled.hide();
+        }
+
         $(".session-enabler").each(function (index, elem) {
             $(elem).on('switchChange.bootstrapSwitch', function (event, state) {
                 let $this = $(this);
                 let $elem = $this.closest(".tab-pane").find(".session-details");
                 let $panelLabel = that.$parent.find("#" + $this.closest(".tab-pane").attr("aria-labelledby"));
 
+                let isBooking = $(elem).attr("name") === "Booking.Enabled";
+
                 if (state) {
                     $elem.show();
-                    $panelLabel.addClass("text-success")
+                    $panelLabel.addClass("text-success");
+
+                    if (isBooking) {
+                        $hiddenWhenBookingEnabled.hide();
+                        $visibleWhenBookingEnabled.show();
+                    }
                 } else {
                     $elem.hide();
-                    $panelLabel.removeClass("text-success")
+                    $panelLabel.removeClass("text-success");
+
+                    if (isBooking) {
+                        $hiddenWhenBookingEnabled.show();
+                        $visibleWhenBookingEnabled.hide();
+                    }
                 }
             });
         });
