@@ -12,6 +12,7 @@ Fixes:
 * The Manage Event button in a Championship is now visible for completed events for admin users only. This
   should allow you to import results files if Championships fail to complete successfully.
 * Starting a Custom Race now takes you to the Live Timings page.
+* Servers with really long names now have the name truncated in the navigation. You can hover over the name to see the full text.
 
 v1.2.0
 ------
