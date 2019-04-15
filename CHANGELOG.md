@@ -1,11 +1,17 @@
 v1.2.1
 ------
 
+Added:
+
+* Added a MOTD editor
+* Added the missing MAX_CONTACTS_PER_KM server_cfg.ini option. We've found this a bit temperamental so use it with caution!
+
 Fixes:
 
 * Limited the Live Map refresh interval to a minimum of 300ms. It is now 500ms by default in config.yml.
 * The Manage Event button in a Championship is now visible for completed events for admin users only. This
   should allow you to import results files if Championships fail to complete successfully.
+* Starting a Custom Race now takes you to the Live Timings page.
 
 v1.2.0
 ------

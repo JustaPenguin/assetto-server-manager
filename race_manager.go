@@ -510,10 +510,8 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		StartRule:                 formValueAsInt(r.FormValue("StartRule")),
 		MaxClients:                formValueAsInt(r.FormValue("MaxClients")),
 		RaceExtraLap:              formValueAsInt(r.FormValue("RaceExtraLap")),
-		// MaxContactsPerKilometer seems to be another feature added to the config but not actually
-		// integrated into Assetto Corsa's Server.
-		//MaxContactsPerKilometer:   formValueAsInt(r.FormValue("MaxContactsPerKilometer")),
-		ResultScreenTime: formValueAsInt(r.FormValue("ResultScreenTime")),
+		MaxContactsPerKilometer:   formValueAsInt(r.FormValue("MaxContactsPerKilometer")),
+		ResultScreenTime:          formValueAsInt(r.FormValue("ResultScreenTime")),
 	}
 
 	if isSol {

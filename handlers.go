@@ -166,6 +166,7 @@ func Router(fs http.FileSystem) chi.Router {
 
 		r.HandleFunc("/server-options", serverOptionsHandler)
 		r.HandleFunc("/blacklist", serverBlacklistHandler)
+		r.HandleFunc("/motd", serverMOTDHandler)
 		r.HandleFunc("/accounts/new", createOrEditAccountHandler)
 		r.HandleFunc("/accounts/edit/{id}", createOrEditAccountHandler)
 		r.HandleFunc("/accounts/delete/{id}", deleteAccountHandler)
