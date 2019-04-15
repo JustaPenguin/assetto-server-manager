@@ -33,7 +33,6 @@ func serverMOTDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// render blacklist edit page
 	ViewRenderer.MustLoadTemplate(w, r, "server/motd.html", map[string]interface{}{
 		"text": string(b),
 	})
