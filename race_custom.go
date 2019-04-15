@@ -71,7 +71,7 @@ func customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/custom", http.StatusFound)
 	} else {
 		AddFlashQuick(w, r, "Custom race started!")
-		http.Redirect(w, r, "/", http.StatusFound)
+		http.Redirect(w, r, "/live-timing", http.StatusFound)
 	}
 }
 
