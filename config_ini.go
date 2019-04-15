@@ -65,6 +65,9 @@ type ServerConfig struct {
 }
 
 func (sc ServerConfig) Write() error {
+	// overwrite server config
+	sc.GlobalServerConfig.WelcomeMessage = MOTDFilename
+
 	f := ini.NewFile([]ini.DataSource{nil}, ini.LoadOptions{
 		IgnoreInlineComment: true,
 	})
@@ -150,7 +153,7 @@ type GlobalServerConfig struct {
 	VoteDuration              int    `ini:"VOTE_DURATION" min:"0" help:"Vote length in seconds"`
 	BlacklistMode             int    `ini:"BLACKLIST_MODE" min:"0" max:"2" help:"0 = normal kick, kicked player can rejoin; 1 = kicked player cannot rejoin until server restart; 2 = kick player and add to blacklist.txt, kicked player can not rejoin unless removed from blacklist (Better to use ban_id command rather than set this)."`
 	NumberOfThreads           int    `ini:"NUM_THREADS" show:"open" min:"1" help:"Number of threads to run on"`
-	WelcomeMessage            string `ini:"WELCOME_MESSAGE" show:"open" help:"Path to the file that contains the server welcome message"`
+	WelcomeMessage            string `ini:"WELCOME_MESSAGE" show:"-" help:"Path to the file that contains the server welcome message"`
 
 	FreeUDPPluginLocalPort int    `ini:"-" show:"-"`
 	FreeUDPPluginAddress   string `ini:"-" show:"-"`
@@ -181,10 +184,8 @@ type CurrentRaceConfig struct {
 	RaceGasPenaltyDisabled    int    `ini:"RACE_GAS_PENALTY_DISABLED" input:"checkbox" help:"0 = any cut will be penalized with the gas cut message; 1 = no penalization will be forced, but cuts will be saved in the race result json."`
 	MaxBallastKilograms       int    `ini:"MAX_BALLAST_KG" help:"the max total of ballast that can be added through the admin command"`
 	RaceExtraLap              int    `ini:"RACE_EXTRA_LAP" input:"checkbox" help:"If the race is timed, force an extra lap after the leader has crossed the line"`
-	// MaxContactsPerKilometer seems to be another feature added to the config but not actually
-	// integrated into Assetto Corsa's Server.
-	// MaxContactsPerKilometer   int    `ini:"MAX_CONTACTS_PER_KM" help:"Maximum number times you can make contact with another car in 1 kilometer."`
-	ResultScreenTime int `ini:"RESULT_SCREEN_TIME" help:"Seconds of result screen between racing sessions"`
+	MaxContactsPerKilometer   int    `ini:"MAX_CONTACTS_PER_KM" help:"Maximum number times you can make contact with another car in 1 kilometer."`
+	ResultScreenTime          int    `ini:"RESULT_SCREEN_TIME" help:"Seconds of result screen between racing sessions"`
 
 	PickupModeEnabled int `ini:"PICKUP_MODE_ENABLED" help:"if 0 the server start in booking mode (do not use it). Warning: in pickup mode you have to list only a circuit under TRACK and you need to list a least one car in the entry_list"`
 	LoopMode          int `ini:"LOOP_MODE" input:"checkbox" help:"the server restarts from the first track, to disable this set it to 0"`

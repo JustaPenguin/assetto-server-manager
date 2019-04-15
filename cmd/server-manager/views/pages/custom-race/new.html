@@ -1321,9 +1321,6 @@
                     </div>
                 </div>
 
-                <!--
-                As per our testing, this appears to not work...
-
                 <div class="form-group row">
                     <label for="MaxContactsPerKilometer" class="col-sm-3 col-form-label">Max Contacts Per Kilometer</label>
 
@@ -1334,15 +1331,15 @@
                                 name="MaxContactsPerKilometer"
                                 class="form-control"
 
+                                value="{{ $f.MaxContactsPerKilometer }}"
 
 
                                 step="1"
                         >
 
-                        <small>Maximum number times you can make contact with another car in 1 kilometer. -1 = no limit</small>
+                        <small>Maximum number times you can make contact with another car in 1 kilometer. -1 = no limit. (We had mixed results using this in our testing. Use with caution.)</small>
                     </div>
                 </div>
-                -->
 
                 <div class="form-group row">
                     <label for="StartRule" class="col-sm-3 col-form-label">Start Rule</label>

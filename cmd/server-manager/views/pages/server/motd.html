@@ -1,0 +1,12 @@
+{{ define "title" }}Message of the Day{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">Message of the Day</h1>
+
+    <form method="post" action="/motd">
+        <label for="motd"></label>
+        <textarea id="motd" name="motd" class="form-control md-textarea text-area">{{ .text }}</textarea>
+
+        <button class="btn btn-success float-right mt-2" type="submit">Save</button>
+    </form>
+{{ end }}
