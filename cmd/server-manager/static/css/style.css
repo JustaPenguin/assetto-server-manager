@@ -4,6 +4,14 @@ body {
     overflow-y: scroll;
 }
 
+.navbar-brand {
+    max-width: 250px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: block;
+    overflow: hidden;
+}
+
 @media screen and (min-width: 400px) {
     a.card {
         padding-top: 40px;
