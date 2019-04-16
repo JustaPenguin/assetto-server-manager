@@ -65,6 +65,7 @@ type Collision struct {
 }
 
 var liveInfo LiveTiming
+var carCounter map[uint8]int
 
 func LiveTimingCallback(response udp.Message) {
 	currentRace, _ := raceManager.CurrentRace()
@@ -90,6 +91,8 @@ func LiveTimingCallback(response udp.Message) {
 				oldDelCars = make(map[string]*LiveCar)
 				oldDelCars = liveInfo.DeletedCars
 			}
+
+			carCounter = make(map[uint8]int)
 
 			sessionT, err := time.ParseDuration(fmt.Sprintf("%dms", a.ElapsedMilliseconds))
 
@@ -206,6 +209,19 @@ func LiveTimingCallback(response udp.Message) {
 
 		liveInfo.SessionInfoStopChan = nil
 
+	case udp.CarUpdate:
+		for id := range carCounter {
+			carCounter[id]++
+
+			// if car has missed five car updates - alt + f4 or game crash
+			if carCounter[id] > len(liveInfo.Cars)*5 {
+				disconnect(id)
+			}
+		}
+
+		// reset counter for this car
+		carCounter[uint8(a.CarID)] = 0
+
 	case udp.SessionCarInfo:
 		if a.Event() == udp.EventNewConnection {
 			for id, car := range liveInfo.DeletedCars {
@@ -227,17 +243,7 @@ func LiveTimingCallback(response udp.Message) {
 
 			logrus.Debugf("Car: %s, %s Connected", a.DriverGUID, a.CarModel)
 		} else if a.Event() == udp.EventConnectionClosed {
-			_, ok := liveInfo.Cars[uint8(a.CarID)]
-			if ok {
-				logrus.Debugf("Car: %s, %s Disconnected\n", liveInfo.Cars[uint8(a.CarID)].DriverGUID,
-					liveInfo.Cars[uint8(a.CarID)].CarMode)
-
-				liveInfo.DeletedCars[fmt.Sprintf("%d - %s - %s", uint8(a.CarID),
-					liveInfo.Cars[uint8(a.CarID)].DriverGUID,
-					liveInfo.Cars[uint8(a.CarID)].CarMode)] = liveInfo.Cars[uint8(a.CarID)] // save deleted car (incase they rejoin)
-
-				delete(liveInfo.Cars, uint8(a.CarID))
-			}
+			disconnect(uint8(a.CarID))
 		}
 
 	case udp.ClientLoaded:
@@ -352,6 +358,25 @@ func LiveTimingCallback(response udp.Message) {
 
 	}
 
+}
+
+func disconnect(id uint8) {
+	_, ok := liveInfo.Cars[id]
+	if ok {
+		logrus.Debugf("Car: %s, %s Disconnected\n", liveInfo.Cars[id].DriverGUID,
+			liveInfo.Cars[id].CarMode)
+
+		liveInfo.DeletedCars[fmt.Sprintf("%d - %s - %s", id,
+			liveInfo.Cars[id].DriverGUID,
+			liveInfo.Cars[id].CarMode)] = liveInfo.Cars[id] // save deleted car (incase they rejoin)
+
+		delete(liveInfo.Cars, id)
+	}
+
+	_, ok = carCounter[id]
+	if ok {
+		delete(carCounter, id)
+	}
 }
 
 func timeTick(done <-chan struct{}) {
