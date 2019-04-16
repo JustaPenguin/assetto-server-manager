@@ -133,6 +133,19 @@ func (rm *RaceManager) startUDPListener(cfg ServerConfig, forwardingAddress stri
 		return err
 	}
 
+	go func() {
+		<-AssettoProcess.Done()
+
+		if rm.udpServerConn != nil {
+			if liveInfo.SessionInfoStopChan != nil {
+				liveInfo.SessionInfoStopChan <- struct{}{}
+			}
+			rm.udpServerConn.Close()
+		}
+
+		return
+	}()
+
 	return nil
 }
 
@@ -210,17 +223,21 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		return err
 	}
 
-	err = rm.startUDPListener(config, forwardingAddress, forwardListenPort)
-
-	if err != nil {
-		return err
-	}
-
 	rm.currentRace = &config
 	rm.currentEntryList = entryList
 
 	if AssettoProcess.IsRunning() {
-		return AssettoProcess.Restart()
+		err := AssettoProcess.Stop()
+
+		if err != nil {
+			return err
+		}
+	}
+
+	err = rm.startUDPListener(config, forwardingAddress, forwardListenPort)
+
+	if err != nil {
+		return err
 	}
 
 	err = AssettoProcess.Start()
