@@ -602,7 +602,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 
 		visitServer := ""
 
-		if config.HTTP.BaseURL != "" {
+		if config != nil && config.HTTP.BaseURL != "" {
 			visitServer = fmt.Sprintf(" You can check out the results of this championship in detail at %s.",
 				config.HTTP.BaseURL+"/championship/"+championship.ID.String())
 		}
