@@ -59,7 +59,7 @@ http:
   # server manager base URL is the URL that the server manager is accessible on
   # only used for links in championship welcome message in game
   # you can leave this blank if not required
-  # example: https://opengt3.assettocorsaservers.com/
+  # example: https://opengt3.assettocorsaservers.com <-- requires https:// or http://, no closing / at the end
   server_manager_base_URL:
 
 ################################################################################
