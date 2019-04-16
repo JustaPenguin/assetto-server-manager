@@ -8,6 +8,7 @@ Added:
 * Ballast and Restrictor are now visible in Results pages
 * Championship welcome message now shows a link to the championship overview page (requires server_manager_base_URL 
   option in config.yml)
+* Scheduled events now show their times in your local timezone.
 
 Fixes:
 
