@@ -6,6 +6,8 @@ Added:
 * Added a MOTD editor
 * Added the missing MAX_CONTACTS_PER_KM server_cfg.ini option. We've found this a bit temperamental so use it with caution!
 * Ballast and Restrictor are now visible in Results pages
+* Championship welcome message now shows a link to the championship overview page (requires server_manager_base_URL 
+  option in config.yml)
 * Scheduled events now show their times in your local timezone.
 
 Fixes:
@@ -16,6 +18,8 @@ Fixes:
 * Starting a Custom Race now takes you to the Live Timings page.
 * Servers with really long names now have the name truncated in the navigation. You can hover over the name to see the full text.
 * Fixed an issue where lots of UDP errors would appear in the log.
+* Fixed live map extra data toggle.
+* Detected improper disconnects (game crashes, alt+f4 etc.) in live timing.
 
 v1.2.0
 ------
