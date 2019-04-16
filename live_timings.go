@@ -92,6 +92,8 @@ func LiveTimingCallback(response udp.Message) {
 				oldDelCars = liveInfo.DeletedCars
 			}
 
+			carCounter = make(map[uint8]int)
+
 			sessionT, err := time.ParseDuration(fmt.Sprintf("%dms", a.ElapsedMilliseconds))
 
 			if err != nil {
@@ -208,17 +210,17 @@ func LiveTimingCallback(response udp.Message) {
 		liveInfo.SessionInfoStopChan = nil
 
 	case udp.CarUpdate:
-		// reset counter for this car
-		carCounter[uint8(a.CarID)] = 0
-
 		for id := range carCounter {
 			carCounter[id] ++
 
-			// if car has missed two car updates - alt + f4 or game crash
-			if carCounter[id] > len(liveInfo.Cars) * 2 {
+			// if car has missed five car updates - alt + f4 or game crash
+			if carCounter[id] > len(liveInfo.Cars) * 5 {
 				disconnect(id)
 			}
 		}
+
+		// reset counter for this car
+		carCounter[uint8(a.CarID)] = 0
 
 	case udp.SessionCarInfo:
 		if a.Event() == udp.EventNewConnection {
@@ -369,6 +371,11 @@ func disconnect(id uint8) {
 			liveInfo.Cars[id].CarMode)] = liveInfo.Cars[id] // save deleted car (incase they rejoin)
 
 		delete(liveInfo.Cars, id)
+	}
+
+	_, ok = carCounter[id]
+	if ok {
+		delete(carCounter, id)
 	}
 }
 
