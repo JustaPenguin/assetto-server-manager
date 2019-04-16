@@ -5,6 +5,7 @@ Added:
 
 * Added a MOTD editor
 * Added the missing MAX_CONTACTS_PER_KM server_cfg.ini option. We've found this a bit temperamental so use it with caution!
+* Ballast and Restrictor are now visible in Results pages
 
 Fixes:
 
