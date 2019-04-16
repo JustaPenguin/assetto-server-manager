@@ -1544,11 +1544,11 @@ let liveTiming = {
                         }) + "'/>"));
                         $tdName.attr("class", "driver-link");
                         $tdName.click(function () {
-                            for (let driver of liveMap.joined) {
-                                if (driver !== undefined && driver.DriverGUID === carSet[car].DriverGUID) {
-                                    driver.dot.find(".info").toggle();
+                            for (let driver in liveMap.joined) {
+                                if (liveMap.joined[driver] !== undefined && liveMap.joined[driver].DriverGUID === carSet[car].DriverGUID) {
+                                    liveMap.joined[driver].dot.find(".info").toggle();
 
-                                    hiddenDots[carSet[car].DriverGUID] = driver.dot.find(".info").is(":hidden");
+                                    hiddenDots[carSet[car].DriverGUID] = liveMap.joined[driver].dot.find(".info").is(":hidden");
                                 }
                             }
                         });
