@@ -211,10 +211,10 @@ func LiveTimingCallback(response udp.Message) {
 
 	case udp.CarUpdate:
 		for id := range carCounter {
-			carCounter[id] ++
+			carCounter[id]++
 
 			// if car has missed five car updates - alt + f4 or game crash
-			if carCounter[id] > len(liveInfo.Cars) * 5 {
+			if carCounter[id] > len(liveInfo.Cars)*5 {
 				disconnect(id)
 			}
 		}
