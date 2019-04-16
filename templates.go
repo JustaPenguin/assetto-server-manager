@@ -150,6 +150,7 @@ func (tr *Renderer) init() error {
 	funcs["Config"] = func() *Configuration { return config }
 	funcs["Version"] = func() string { return BuildTime }
 	funcs["fullTimeFormat"] = fullTimeFormat
+	funcs["localFormat"] = localFormatHelper
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
@@ -175,6 +176,10 @@ func templateDict(values ...interface{}) (map[string]interface{}, error) {
 	return dict, nil
 }
 
+func localFormatHelper(t time.Time) template.HTML {
+	return template.HTML(fmt.Sprintf(`<span class="time-local" data-toggle="tooltip" data-time="%s" title="Translated to your timezone from %s">%s</span>`, t.Format(time.RFC3339), fullTimeFormat(t), fullTimeFormat(t)))
+}
+
 func timeFormat(t time.Time) string {
 	return t.Format(time.Kitchen)
 }
@@ -190,7 +195,7 @@ func timeZone(t time.Time) string {
 }
 
 func fullTimeFormat(t time.Time) string {
-	return t.Format("Mon, 02 Jan 2006 15:04 MST")
+	return t.Format("Monday, January 2, 2006 3:04 PM (MST)")
 }
 
 func isBefore(t time.Time) bool {
