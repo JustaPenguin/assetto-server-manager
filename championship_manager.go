@@ -603,14 +603,14 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 		visitServer := ""
 
 		if config.HTTP.BaseURL != "" {
-			visitServer = fmt.Sprintf("You can check out the results of this championship in detail at %s.",
+			visitServer = fmt.Sprintf(" You can check out the results of this championship in detail at %s.",
 				config.HTTP.BaseURL+"/championship/"+championship.ID.String())
 		}
 
 		wrapped := strings.Split(wordwrap.WrapString(
 
 			fmt.Sprintf(
-				"Hi, %s! Welcome to the %s%s! %s %s Make this race count!\n",
+				"Hi, %s! Welcome to the %s%s! %s%s Make this race count!\n",
 				entrant.DriverName,
 				championship.Name,
 				championshipText,
