@@ -14,6 +14,7 @@
                     <th>Num Laps</th>
                     <th>Best Lap</th>
                     <th><span data-toggle="tooltip" title="Laps contribute to this average if they don't have cuts, aren't lap 1, and the lap time is within 107% of the average lap time so far">Average Clean Lap</span></th>
+                    <th>Handicaps</th>
                     <th>Crashes</th>
                     {{ if WriteAccess }}
                         <th>Penalties</th>
@@ -34,6 +35,27 @@
                                 {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
                             <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID false }}</td>
                             <td>{{ $sessionResults.GetAverageLapTime $result.DriverGUID }}</td>
+                            <td>
+                                {{ $hasHandicap := false }}
+
+                                <div class="small">
+                                    {{ if gt $result.BallastKG 0 }}
+                                        {{ $hasHandicap = true }}
+                                        Ballast:
+                                        {{ $result.BallastKG }} kg<br>
+                                    {{ end }}
+
+                                    {{ if gt $result.Restrictor 0 }}
+                                        {{ $hasHandicap = true }}
+                                        Restrictor:
+                                        {{ $result.Restrictor }}%<br>
+                                    {{ end }}
+                                </div>
+
+                                {{ if not $hasHandicap }}
+                                    n/a
+                                {{ end }}
+                            </td>
                             <td>{{ $sessionResults.GetCrashes $result.DriverGUID }}</td>
 
                             {{ if WriteAccess }}
@@ -69,6 +91,7 @@
                     <th>Qualifying Time</th>
                     <th>Average Lap</th>
                     <th>Laps</th>
+                    <th>Handicaps</th>
                 </tr>
 
                 {{ range $pos, $result := $sessionResults.Result }}
@@ -82,6 +105,27 @@
                             <td>{{ $sessionResults.GetAverageLapTime $result.DriverGUID }}</td>
                             <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
                                 {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
+                            <td>
+                                {{ $hasHandicap := false }}
+
+                                <div class="small">
+                                    {{ if gt $result.BallastKG 0 }}
+                                        {{ $hasHandicap = true }}
+                                        Ballast:
+                                        {{ $result.BallastKG }} kg<br>
+                                    {{ end }}
+
+                                    {{ if gt $result.Restrictor 0 }}
+                                        {{ $hasHandicap = true }}
+                                        Restrictor:
+                                        {{ $result.Restrictor }}%<br>
+                                    {{ end }}
+                                </div>
+
+                                {{ if not $hasHandicap }}
+                                    n/a
+                                {{ end }}
+                            </td>
                         </tr>
                     {{ end }}
                 {{ end }}
@@ -94,6 +138,7 @@
                     <th>Best Practice Lap</th>
                     <th>Average Lap</th>
                     <th>Laps</th>
+                    <th>Handicaps</th>
                 </tr>
 
                 {{ range $pos, $result := $sessionResults.Result }}
@@ -107,6 +152,27 @@
                             <td>{{ $sessionResults.GetAverageLapTime $result.DriverGUID }}</td>
                             <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
                                 {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
+                            <td>
+                                {{ $hasHandicap := false }}
+
+                                <div class="small">
+                                    {{ if gt $result.BallastKG 0 }}
+                                        {{ $hasHandicap = true }}
+                                        Ballast:
+                                        {{ $result.BallastKG }} kg<br>
+                                    {{ end }}
+
+                                    {{ if gt $result.Restrictor 0 }}
+                                        {{ $hasHandicap = true }}
+                                        Restrictor:
+                                        {{ $result.Restrictor }}%<br>
+                                    {{ end }}
+                                </div>
+
+                                {{ if not $hasHandicap }}
+                                    n/a
+                                {{ end }}
+                            </td>
                         </tr>
                     {{ end }}
                 {{ end }}

@@ -210,6 +210,12 @@ span[data-toggle=tooltip] {
     }
 }
 
+.results {
+    max-width: 1500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 a.detailed-results:hover {
     text-decoration: none;
 }
