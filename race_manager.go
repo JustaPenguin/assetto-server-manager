@@ -136,10 +136,11 @@ func (rm *RaceManager) startUDPListener(cfg ServerConfig, forwardingAddress stri
 	go func() {
 		<-AssettoProcess.Done()
 
+		if liveInfo.SessionInfoStopChan != nil {
+			liveInfo.SessionInfoStopChan <- struct{}{}
+		}
+
 		if rm.udpServerConn != nil {
-			if liveInfo.SessionInfoStopChan != nil {
-				liveInfo.SessionInfoStopChan <- struct{}{}
-			}
 			rm.udpServerConn.Close()
 		}
 
