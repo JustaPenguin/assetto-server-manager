@@ -91,7 +91,7 @@ func main() {
 		logrus.Errorf("couldn't initialise scheduled championship events, err: %s", err)
 	}
 
-	//go startUDPReplay("./assetto/session-logs/practiceloop_all.db")
+	//go startUDPReplay("./assetto/session-logs/brandshatch_sillyold.db")
 
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 
@@ -120,7 +120,7 @@ func startUDPReplay(file string) {
 		logrus.WithError(err).Error("Could not open bolt")
 	}
 
-	err = replay.ReplayUDPMessages(db, 10, func(response udp.Message) {
+	err = replay.ReplayUDPMessages(db, 1, func(response udp.Message) {
 		servermanager.LiveTimingCallback(response)
 		servermanager.LiveMapCallback(response)
 		servermanager.LoopCallback(response)
