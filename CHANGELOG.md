@@ -17,6 +17,8 @@ Fixes:
 * Starting a Custom Race now takes you to the Live Timings page.
 * Servers with really long names now have the name truncated in the navigation. You can hover over the name to see the full text.
 * Fixed an issue where lots of UDP errors would appear in the log.
+* Fixed live map extra data toggle.
+* Detected improper disconnects (game crashes, alt+f4 etc.) in live timing.
 
 v1.2.0
 ------
