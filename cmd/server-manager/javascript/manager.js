@@ -44,6 +44,12 @@ $(document).ready(function () {
         });
     });
 
+    $(".time-local").each(function(i, elem) {
+        let $elem = $(elem);
+
+        $elem.text(moment.parseZone($elem.attr("data-time")).tz(moment.tz.guess()).format('LLLL (z)'));
+    });
+
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     $(".timezone").text(timezone);
