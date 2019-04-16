@@ -65,9 +65,19 @@ type AssettoServerUDP struct {
 	cfn      func()
 	ctx      context.Context
 	callback CallbackFunc
+
+	closed bool
 }
 
 func (asu *AssettoServerUDP) Close() error {
+	if asu.closed {
+		return nil
+	}
+
+	defer func() {
+		asu.closed = true
+	}()
+
 	asu.cfn()
 	err := asu.listener.Close()
 
