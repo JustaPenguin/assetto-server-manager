@@ -56,6 +56,11 @@ http:
   hostname: 0.0.0.0:8772
   # session key is used to encrypt the http session
   session_key: RANDOMLY_GENERATE_THIS
+  # server manager base URL is the URL that the server manager is accessible on
+  # only used for links in championship welcome message in game
+  # you can leave this blank if not required
+  # example: https://opengt3.assettocorsaservers.com/
+  server_manager_base_URL:
 
 ################################################################################
 #
