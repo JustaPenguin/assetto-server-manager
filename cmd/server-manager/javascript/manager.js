@@ -1482,11 +1482,11 @@ let liveTiming = {
 
                 let sortedDeleted = Object.keys(liveTiming.DeletedCars)
                     .sort(function (a, b) {
-                        if (liveTiming.DeletedCars[a].Pos < liveTiming.DeletedCars[b].Pos) {
+                        if (liveTiming.DeletedCars[a].BestLap < liveTiming.DeletedCars[b].BestLap) {
                             return -1
-                        } else if (liveTiming.DeletedCars[a].Pos === liveTiming.DeletedCars[b].Pos) {
+                        } else if (liveTiming.DeletedCars[a].BestLap === liveTiming.DeletedCars[b].BestLap) {
                             return 0
-                        } else if (liveTiming.DeletedCars[a].Pos > liveTiming.DeletedCars[b].Pos) {
+                        } else if (liveTiming.DeletedCars[a].BestLap > liveTiming.DeletedCars[b].BestLap) {
                             return 1
                         }
                     });
