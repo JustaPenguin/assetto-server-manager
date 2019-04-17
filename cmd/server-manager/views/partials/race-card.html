@@ -10,7 +10,7 @@
         {{ with $trackInfo }} {{ $trackInfo.City }}, {{ $trackInfo.Country }}{{ end }}
 
         <strong>
-            {{if isBefore .Scheduled }} - Scheduled for {{ fullTimeFormat .Scheduled }}{{ end }}
+            {{if isBefore .Scheduled }} - Scheduled for {{ localFormat .Scheduled }}{{ end }}
         </strong>
 
         <div class="float-right text-right">

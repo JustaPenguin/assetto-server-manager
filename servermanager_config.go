@@ -36,6 +36,7 @@ func (l *LiveMapConfig) IsEnabled() bool {
 type HTTPConfig struct {
 	Hostname   string `yaml:"hostname"`
 	SessionKey string `yaml:"session_key"`
+	BaseURL    string `yaml:"server_manager_base_URL"`
 }
 
 type SteamConfig struct {
