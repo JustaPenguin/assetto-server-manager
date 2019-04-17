@@ -1190,7 +1190,7 @@ class RaceSetup {
                 if (fixedSetup) {
                     $elem.find("[name='EntryList.FixedSetup']").append($("<option>", {
                         value: fixedSetup,
-                        text: prettifyName(chosenSkin, true),
+                        text: fixedSetup,
                         selected: true
                     }));
                 }
