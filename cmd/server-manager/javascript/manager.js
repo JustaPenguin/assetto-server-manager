@@ -1564,6 +1564,7 @@ let liveTiming = {
                     let $tdCar = $("<td/>");
                     let $tdLapTime = $("<td/>");
                     let $tdBestLap = $("<td/>");
+                    let $tdLastLap = $("<td/>");
                     let $tdGap = $("<td/>");
                     let $tdLapNum = $("<td/>");
                     let $tdEvents = $("<td/>");
@@ -1619,6 +1620,11 @@ let liveTiming = {
 
                     $tdBestLap.text(carSet[car].BestLap);
                     $tr.append($tdBestLap);
+
+                    if (!discon) {
+                        $tdLastLap.text(carSet[car].LastLap);
+                        $tr.append($tdLastLap);
+                    }
 
                     if (!discon) {
                         $tdGap.text(carSet[car].Split);
