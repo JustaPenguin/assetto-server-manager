@@ -8,6 +8,9 @@ Added:
 * Ballast and Restrictor are now visible in Results pages
 * When adding Entrants to a Custom Race or Championship, the values from the last Entrant in the list are copied to 
   each new Entrant that is added. This should make editing the EntryList a bit easier!
+* Championship welcome message now shows a link to the championship overview page (requires server_manager_base_URL 
+  option in config.yml)
+* Scheduled events now show their times in your local timezone.
 
 Fixes:
 
@@ -19,6 +22,8 @@ Fixes:
 * Fixed an issue where lots of UDP errors would appear in the log.
 * Championship Name is now a required field
 * Removed a non-critical error message from the logs
+* Fixed live map extra data toggle.
+* Detected improper disconnects (game crashes, alt+f4 etc.) in live timing.
 
 v1.2.0
 ------
