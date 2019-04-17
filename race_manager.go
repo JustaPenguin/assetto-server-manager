@@ -41,7 +41,7 @@ func InitWithStore(store Store) {
 
 	err := raceManager.raceStore.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
 
-	if err != nil {
+	if err != nil && err != ErrMetaValueNotSet {
 		logrus.WithError(err).Errorf("Could not load server account options")
 	}
 
