@@ -367,6 +367,10 @@ function getAbbreviation(name) {
 const nameRegex = /^[A-Za-z]{0,5}[0-9]+/;
 
 function prettifyName(name, acronyms) {
+    if (!name || name.length === 0) {
+        return "";
+    }
+
     let parts = name.split("_");
 
     if (parts[0] === "ks") {
@@ -1141,14 +1145,23 @@ class RaceSetup {
 
             let maxClients = $("#MaxClients").val();
 
+            let $clonedTemplate = $entrantTemplate.clone();
+            let $lastElement = that.$parent.find(".entrant").last();
+
+            let chosenCar = $lastElement.find("[name='EntryList.Car']").val();
+            let chosenSkin = $lastElement.find("[name='EntryList.Skin']").val();
+            let ballast = $lastElement.find("[name='EntryList.Ballast']").val();
+            let fixedSetup = $lastElement.find("[name='EntryList.FixedSetup']").val();
+            let restrictor = $lastElement.find("[name='EntryList.Restrictor']").val();
+
             for (let i = 0; i < numEntrantsToAdd; i++) {
                 if ($(".entrant:visible").length >= maxClients) {
                     continue;
                 }
 
-                let $elem = $entrantTemplate.clone();
+                let $elem = $clonedTemplate.clone();
                 $elem.find("input[type='checkbox']").bootstrapSwitch();
-                $elem.insertBefore($(this).parent());
+                $elem.insertAfter($lastElement);
                 $elem.find(".entryListCar").change(onEntryListCarChange);
                 $elem.find(".btn-delete-entrant").click(deleteEntrant);
 
@@ -1157,7 +1170,37 @@ class RaceSetup {
                     showEntrantSkin($elem.find(".entryListCar").val(), $(this).val(), $(this))
                 });
 
+                if (chosenCar) {
+                    // dropdowns nead full <option> elements appending to them for populateEntryListCars to function correctly.
+                    $elem.find("[name='EntryList.Car']").append($("<option>", {
+                        value: chosenCar,
+                        text: prettifyName(chosenCar, true),
+                        selected: true
+                    }));
+                }
+
+                if (chosenSkin) {
+                    $elem.find("[name='EntryList.Skin']").append($("<option>", {
+                        value: chosenSkin,
+                        text: prettifyName(chosenSkin, true),
+                        selected: true
+                    }));
+                }
+
+                if (fixedSetup) {
+                    $elem.find("[name='EntryList.FixedSetup']").append($("<option>", {
+                        value: fixedSetup,
+                        text: fixedSetup,
+                        selected: true
+                    }));
+                }
+
+                $elem.find("[name='EntryList.Ballast']").val(ballast);
+                $elem.find("[name='EntryList.Restrictor']").val(restrictor);
+
                 populateEntryListCars();
+                showEntrantSkin(chosenCar, chosenSkin, $elem);
+
                 $elem.css("display", "block");
             }
 
@@ -1165,8 +1208,7 @@ class RaceSetup {
             $savedNumEntrants.val(that.$parent.find(".entrant:visible").length);
 
             that.toggleAlreadyAutocompletedDrivers();
-        })
-
+        });
     }
 
 
