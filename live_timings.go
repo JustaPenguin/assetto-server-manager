@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
@@ -24,10 +25,11 @@ type LiveTiming struct {
 	Cars        map[uint8]*LiveCar  // map[carID]LiveCar
 	DeletedCars map[string]*LiveCar // map[carID]LiveCar
 
-	SessionInfoStopChan chan struct{} `json:"-"`
-
 	// Live data
 	LapNum int
+
+	ctx            context.Context
+	endSessionFunc context.CancelFunc
 }
 
 type LiveCar struct {
@@ -101,11 +103,8 @@ func LiveTimingCallback(response udp.Message) {
 			}
 
 			// If we didn't get a sessionEnd event stop the udp request channel
-			if liveInfo.SessionInfoStopChan != nil {
-				liveInfo.SessionInfoStopChan <- struct{}{}
-				close(liveInfo.SessionInfoStopChan)
-
-				liveInfo.SessionInfoStopChan = nil
+			if liveInfo.endSessionFunc != nil {
+				liveInfo.endSessionFunc()
 			}
 
 			var del = true
@@ -190,11 +189,11 @@ func LiveTimingCallback(response udp.Message) {
 				liveInfo.DeletedCars = oldDelCars
 			}
 
-			liveInfo.SessionInfoStopChan = make(chan struct{})
+			liveInfo.ctx, liveInfo.endSessionFunc = context.WithCancel(context.Background())
 
-			go timeTick(liveInfo.SessionInfoStopChan)
+			go sendGetSessionInfoAtInterval(liveInfo.ctx)
 		} else if a.Event() == udp.EventSessionInfo {
-			if liveInfo.SessionInfoStopChan != nil {
+			if liveInfo.ctx != nil {
 				liveInfo.AmbientTemp = a.AmbientTemp
 				liveInfo.RoadTemp = a.RoadTemp
 				liveInfo.ElapsedMilliseconds = a.ElapsedMilliseconds
@@ -204,10 +203,7 @@ func LiveTimingCallback(response udp.Message) {
 
 	case udp.EndSession:
 		// stop the session info ticker
-		liveInfo.SessionInfoStopChan <- struct{}{}
-		close(liveInfo.SessionInfoStopChan)
-
-		liveInfo.SessionInfoStopChan = nil
+		liveInfo.endSessionFunc()
 
 	case udp.CarUpdate:
 		for id := range carCounter {
@@ -379,18 +375,18 @@ func disconnect(id uint8) {
 	}
 }
 
-func timeTick(done <-chan struct{}) {
+func sendGetSessionInfoAtInterval(ctx context.Context) {
 	tickChan := time.NewTicker(time.Second)
 
 	for {
 		select {
 		case <-tickChan.C:
-			err := raceManager.udpServerConn.SendMessage(udp.GetSessionInfo{})
+			err := AssettoProcess.SendUDPMessage(udp.GetSessionInfo{})
 
 			if err != nil {
 				logrus.Errorf("Couldn't send session info udp request, err: %s", err)
 			}
-		case <-done:
+		case <-ctx.Done():
 			logrus.Debugf("Closing udp request channel")
 			tickChan.Stop()
 			return
