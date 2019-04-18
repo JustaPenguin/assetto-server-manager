@@ -4,18 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
-	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/cj123/assetto-server-manager/pkg/udp"
 
 	"github.com/etcd-io/bbolt"
 	"github.com/go-chi/chi"
@@ -81,8 +77,6 @@ type RaceManager struct {
 
 	raceStore Store
 
-	udpServerConn *udp.AssettoServerUDP
-
 	mutex sync.RWMutex
 }
 
@@ -102,70 +96,6 @@ func (rm *RaceManager) CurrentRace() (*ServerConfig, EntryList) {
 	}
 
 	return rm.currentRace, rm.currentEntryList
-}
-
-func (rm *RaceManager) startUDPListener(cfg ServerConfig, forwardingAddress string, forwardListenPort int) error {
-	var err error
-
-	if rm.udpServerConn != nil {
-		err := rm.udpServerConn.Close()
-
-		if err != nil {
-			return err
-		}
-	}
-
-	host, portStr, err := net.SplitHostPort(cfg.GlobalServerConfig.FreeUDPPluginAddress)
-
-	if err != nil {
-		return err
-	}
-
-	port, err := strconv.ParseInt(portStr, 10, 0)
-
-	if err != nil {
-		return err
-	}
-
-	rm.udpServerConn, err = udp.NewServerClient(host, int(port), cfg.GlobalServerConfig.FreeUDPPluginLocalPort, true, forwardingAddress, forwardListenPort, rm.UDPCallback)
-
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		<-AssettoProcess.Done()
-
-		if liveInfo.SessionInfoStopChan != nil {
-			liveInfo.SessionInfoStopChan <- struct{}{}
-		}
-
-		if rm.udpServerConn != nil {
-			rm.udpServerConn.Close()
-		}
-
-		return
-	}()
-
-	return nil
-}
-
-func (rm *RaceManager) UDPCallback(message udp.Message) {
-	// recover from panics that may occur while handling UDP messages
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Fprintf(logMultiWriter, "\n\nrecovered from panic: %v\n\n", r)
-			fmt.Fprintf(logMultiWriter, string(debug.Stack()))
-		}
-	}()
-
-	if config != nil && config.LiveMap.IsEnabled() {
-		go LiveMapCallback(message)
-	}
-
-	championshipManager.ChampionshipEventCallback(message)
-	LiveTimingCallback(message)
-	LoopCallback(message)
 }
 
 var ErrEntryListTooBig = errors.New("servermanager: EntryList exceeds MaxClients setting")
@@ -235,13 +165,7 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		}
 	}
 
-	err = rm.startUDPListener(config, forwardingAddress, forwardListenPort)
-
-	if err != nil {
-		return err
-	}
-
-	err = AssettoProcess.Start()
+	err = AssettoProcess.Start(config, forwardingAddress, forwardListenPort)
 
 	if err != nil {
 		return err

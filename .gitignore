@@ -2,6 +2,7 @@
 server-install
 docker-compose.yml
 cmd/championship-import
+server-manager.log
 
 # Created by https://www.gitignore.io/api/go
 # Edit at https://www.gitignore.io/?templates=go

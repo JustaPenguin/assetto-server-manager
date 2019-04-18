@@ -4,14 +4,19 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime/debug"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/cj123/assetto-server-manager/pkg/udp"
 
 	"github.com/go-chi/chi"
 	"github.com/mitchellh/go-ps"
@@ -29,11 +34,13 @@ const (
 
 type ServerProcess interface {
 	Logs() string
-	Start() error
+	Start(cfg ServerConfig, forwardingAddress string, forwardListenPort int) error
 	Stop() error
 	Restart() error
 	IsRunning() bool
 	EventType() ServerEventType
+	UDPCallback(message udp.Message)
+	SendUDPMessage(message udp.Message) error
 
 	Done() <-chan struct{}
 }
@@ -48,9 +55,6 @@ func serverProcessHandler(w http.ResponseWriter, r *http.Request) {
 	eventType := AssettoProcess.EventType()
 
 	switch chi.URLParam(r, "action") {
-	case "start":
-		err = AssettoProcess.Start()
-		txt = "started"
 	case "stop":
 		if eventType == EventTypeChampionship {
 			err = championshipManager.StopActiveEvent()
@@ -98,6 +102,11 @@ type AssettoServerProcess struct {
 	doneCh chan struct{}
 
 	extraProcesses []*exec.Cmd
+
+	serverConfig      ServerConfig
+	forwardingAddress string
+	forwardListenPort int
+	udpServerConn     *udp.AssettoServerUDP
 }
 
 func NewAssettoServerProcess() *AssettoServerProcess {
@@ -124,13 +133,23 @@ func (as *AssettoServerProcess) Logs() string {
 }
 
 // Start the assetto server. If it's already running, an ErrServerAlreadyRunning is returned.
-func (as *AssettoServerProcess) Start() error {
+func (as *AssettoServerProcess) Start(cfg ServerConfig, forwardingAddress string, forwardListenPort int) error {
 	if as.IsRunning() {
 		return ErrServerAlreadyRunning
 	}
 
 	as.mutex.Lock()
 	defer as.mutex.Unlock()
+
+	logrus.Debugf("Starting assetto server process")
+
+	as.serverConfig = cfg
+	as.forwardingAddress = forwardingAddress
+	as.forwardListenPort = forwardListenPort
+
+	if err := as.startUDPListener(); err != nil {
+		return err
+	}
 
 	wd, err := os.Getwd()
 
@@ -191,9 +210,82 @@ func (as *AssettoServerProcess) Start() error {
 	go func() {
 		_ = as.cmd.Wait()
 		as.stopChildProcesses()
+		as.closeUDPConnection()
 	}()
 
 	return nil
+}
+
+func (as *AssettoServerProcess) closeUDPConnection() {
+	if as.udpServerConn == nil {
+		return
+	}
+
+	logrus.Debugf("Closing UDP connection")
+
+	err := as.udpServerConn.Close()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Couldn't close UDP connection")
+	}
+
+	as.udpServerConn = nil
+}
+
+func (as *AssettoServerProcess) startUDPListener() error {
+	if as.udpServerConn != nil {
+		return nil
+	}
+
+	var err error
+
+	host, portStr, err := net.SplitHostPort(as.serverConfig.GlobalServerConfig.FreeUDPPluginAddress)
+
+	if err != nil {
+		return err
+	}
+
+	port, err := strconv.ParseInt(portStr, 10, 0)
+
+	if err != nil {
+		return err
+	}
+
+	as.udpServerConn, err = udp.NewServerClient(host, int(port), as.serverConfig.GlobalServerConfig.FreeUDPPluginLocalPort, true, as.forwardingAddress, as.forwardListenPort, as.UDPCallback)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (as *AssettoServerProcess) UDPCallback(message udp.Message) {
+	// recover from panics that may occur while handling UDP messages
+	defer func() {
+		if r := recover(); r != nil {
+			_, _ = fmt.Fprintf(logMultiWriter, "\n\nrecovered from panic: %v\n\n", r)
+			_, _ = fmt.Fprintf(logMultiWriter, string(debug.Stack()))
+		}
+	}()
+
+	if config != nil && config.LiveMap.IsEnabled() {
+		go LiveMapCallback(message)
+	}
+
+	championshipManager.ChampionshipEventCallback(message)
+	LiveTimingCallback(message)
+	LoopCallback(message)
+}
+
+var ErrNoOpenUDPConnection = errors.New("servermanager: no open UDP connection found")
+
+func (as *AssettoServerProcess) SendUDPMessage(message udp.Message) error {
+	if as.udpServerConn == nil {
+		return ErrNoOpenUDPConnection
+	}
+
+	return as.udpServerConn.SendMessage(message)
 }
 
 func (as *AssettoServerProcess) stopChildProcesses() {
@@ -221,7 +313,7 @@ func (as *AssettoServerProcess) Restart() error {
 		}
 	}
 
-	return as.Start()
+	return as.Start(as.serverConfig, as.forwardingAddress, as.forwardListenPort)
 }
 
 // IsRunning of the server. returns true if running
@@ -283,6 +375,10 @@ func (as *AssettoServerProcess) Stop() error {
 	go func() {
 		as.doneCh <- struct{}{}
 	}()
+
+	if liveInfo.endSessionFunc != nil {
+		liveInfo.endSessionFunc()
+	}
 
 	return nil
 }
