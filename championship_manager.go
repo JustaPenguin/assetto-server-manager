@@ -624,7 +624,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			welcomeMessage, err := udp.NewSendChat(entrant.CarID, msg)
 
 			if err == nil {
-				err := cm.udpServerConn.SendMessage(welcomeMessage)
+				err := AssettoProcess.SendUDPMessage(welcomeMessage)
 
 				if err != nil {
 					logrus.Errorf("Unable to send welcome message to: %s, err: %s", entrant.DriverName, err)

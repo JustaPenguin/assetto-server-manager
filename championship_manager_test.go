@@ -60,12 +60,20 @@ var TestEntryList = EntryList{
 
 type dummyServerProcess struct{}
 
-func (dummyServerProcess) Logs() string {
-	return ""
+func (dummyServerProcess) Start(cfg ServerConfig, forwardingAddress string, forwardListenPort int) error {
+	return nil
 }
 
-func (dummyServerProcess) Start() error {
+func (dummyServerProcess) UDPCallback(message udp.Message) {
+
+}
+
+func (dummyServerProcess) SendUDPMessage(message udp.Message) error {
 	return nil
+}
+
+func (dummyServerProcess) Logs() string {
+	return ""
 }
 
 func (dummyServerProcess) Stop() error {

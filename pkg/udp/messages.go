@@ -50,6 +50,7 @@ func NewServerClient(addr string, receivePort, sendPort int, forward bool, forwa
 
 	go u.serve()
 	go u.forwardServe()
+	logrus.Debugf("Started new UDP server connection")
 
 	return u, nil
 }
@@ -70,6 +71,7 @@ type AssettoServerUDP struct {
 }
 
 func (asu *AssettoServerUDP) Close() error {
+
 	if asu.closed {
 		return nil
 	}
@@ -92,6 +94,8 @@ func (asu *AssettoServerUDP) Close() error {
 			return err
 		}
 	}
+
+	logrus.Debugf("Closed UDP server connection")
 
 	return nil
 }
@@ -135,7 +139,7 @@ func (asu *AssettoServerUDP) serve() {
 				msg, err := asu.handleMessage(bytes.NewReader(buf))
 
 				if err != nil {
-					asu.callback(ServerError{err})
+					logrus.WithError(err).Error("could not handle UDP message")
 					return
 				}
 
