@@ -251,9 +251,32 @@
         <div class="float-right">
             {{ if $writeAccess }}
                 <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event">Add more Events</a>
-                <a href="/championship/{{ $championship.ID.String }}/edit" class="btn btn-warning">Edit Championship</a>
             {{ end }}
-            <a href="/championship/{{ $championship.ID.String }}/export" class="btn btn-primary">Export Championship</a>
+
+            <div class="dropdown show" style="display: inline-block">
+                <a class="btn btn-warning dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Manage Championship
+                </a>
+
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+
+                    {{ if $writeAccess }}
+                        <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/edit">
+                            Edit
+                        </a>
+                    {{ end }}
+
+                    <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/export">
+                        Export
+                    </a>
+
+                    {{ if $championship.HasScheduledEvents }}
+                        <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/ics">
+                            Subscribe to Calendar Feed
+                        </a>
+                    {{ end }}
+                </div>
+            </div>
 
             <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
                 <div class="btn-group" role="group">

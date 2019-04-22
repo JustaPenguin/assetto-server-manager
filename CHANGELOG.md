@@ -11,6 +11,7 @@ Added:
 * Championship welcome message now shows a link to the championship overview page (requires server_manager_base_URL 
   option in config.yml)
 * Scheduled events now show their times in your local timezone.
+* You can now subscribe to iCal feeds for scheduled races at a server level or per Championship.
 
 Fixes:
 
