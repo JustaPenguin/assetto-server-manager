@@ -64,8 +64,8 @@ func main() {
 	}
 
 	if config.LiveMap.IsEnabled() {
-		if config.LiveMap.IntervalMs < 300 {
-			udp.RealtimePosIntervalMs = 300
+		if config.LiveMap.IntervalMs < 200 {
+			udp.RealtimePosIntervalMs = 200
 		} else {
 			udp.RealtimePosIntervalMs = config.LiveMap.IntervalMs
 		}
