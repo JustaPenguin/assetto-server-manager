@@ -23,6 +23,30 @@ type CustomRace struct {
 	EntryList  EntryList
 }
 
+func (cr *CustomRace) GetID() uuid.UUID {
+	return cr.UUID
+}
+
+func (cr *CustomRace) GetRaceSetup() CurrentRaceConfig {
+	return cr.RaceConfig
+}
+
+func (cr *CustomRace) GetScheduledTime() time.Time {
+	return cr.Scheduled
+}
+
+func (cr *CustomRace) GetSummary() string {
+	return ""
+}
+
+func (cr *CustomRace) GetURL() string {
+	return ""
+}
+
+func (cr *CustomRace) GetEntryList() EntryList {
+	return cr.EntryList
+}
+
 func customRaceListHandler(w http.ResponseWriter, r *http.Request) {
 	recent, starred, looped, scheduled, err := raceManager.ListCustomRaces()
 

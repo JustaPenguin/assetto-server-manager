@@ -69,6 +69,8 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Get("/tracks", tracksHandler)
 		r.Get("/weather", weatherHandler)
 
+		r.Get("/events.ics", allScheduledRacesICalHandler)
+
 		// results
 		r.Get("/results", resultsHandler)
 		r.Get("/results/{fileName}", resultHandler)
@@ -80,6 +82,7 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Get("/championships", listChampionshipsHandler)
 		r.Get("/championship/{championshipID}", viewChampionshipHandler)
 		r.Get("/championship/{championshipID}/export", exportChampionshipHandler)
+		r.Get("/championship/{championshipID}/ics", championshipICalFeedHandler)
 
 		// live timings
 		r.Get("/live-timing", liveTimingHandler)

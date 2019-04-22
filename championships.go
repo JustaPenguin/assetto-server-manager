@@ -163,6 +163,16 @@ func (c *Championship) IsMultiClass() bool {
 	return len(c.Classes) > 1
 }
 
+func (c *Championship) HasScheduledEvents() bool {
+	for _, event := range c.Events {
+		if !event.Scheduled.IsZero() {
+			return true
+		}
+	}
+
+	return false
+}
+
 var ErrClassNotFound = errors.New("servermanager: championship class not found")
 
 func (c *Championship) FindClassForCarModel(model string) (*ChampionshipClass, error) {
@@ -591,6 +601,32 @@ type ChampionshipEvent struct {
 	StartedTime   time.Time
 	CompletedTime time.Time
 	Scheduled     time.Time
+
+	championship *Championship
+}
+
+func (cr *ChampionshipEvent) GetSummary() string {
+	return fmt.Sprintf("(%s)", cr.championship.Name)
+}
+
+func (cr *ChampionshipEvent) GetURL() string {
+	return "/championship/" + cr.championship.ID.String()
+}
+
+func (cr *ChampionshipEvent) GetEntryList() EntryList {
+	return cr.CombineEntryLists(cr.championship)
+}
+
+func (cr *ChampionshipEvent) GetID() uuid.UUID {
+	return cr.ID
+}
+
+func (cr *ChampionshipEvent) GetRaceSetup() CurrentRaceConfig {
+	return cr.RaceSetup
+}
+
+func (cr *ChampionshipEvent) GetScheduledTime() time.Time {
+	return cr.Scheduled
 }
 
 func (cr *ChampionshipEvent) Cars(c *Championship) []string {
@@ -999,4 +1035,17 @@ func championshipRestartEventHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func championshipICalFeedHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "text/calendar; charset=utf-8")
+	w.Header().Add("Content-Disposition", "inline; filename=championship.ics")
+
+	err := championshipManager.BuildICalFeed(chi.URLParam(r, "championshipID"), w)
+
+	if err != nil {
+		logrus.WithError(err).Error("could not build scheduled races feed")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 }
