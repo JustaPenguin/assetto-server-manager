@@ -369,11 +369,11 @@ func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (Entry
 		e.Restrictor = formValueAsInt(r.Form["EntryList.Restrictor"][i])
 		e.FixedSetup = r.Form["EntryList.FixedSetup"][i]
 
-		if r.Form["EntryList.TransferTeamPoints"] != nil && formValueAsInt(r.Form["EntryList.TransferTeamPoints"][i]) == 1 {
+		if r.Form["EntryList.TransferTeamPoints"] != nil && i < len(r.Form["EntryList.TransferTeamPoints"]) && formValueAsInt(r.Form["EntryList.TransferTeamPoints"][i]) == 1 {
 			e.TransferTeamPoints = true
 		}
 
-		if r.Form["EntryList.OverwriteAllEvents"] != nil && formValueAsInt(r.Form["EntryList.OverwriteAllEvents"][i]) == 1 {
+		if r.Form["EntryList.OverwriteAllEvents"] != nil && i < len(r.Form["EntryList.OverwriteAllEvents"]) && formValueAsInt(r.Form["EntryList.OverwriteAllEvents"][i]) == 1 {
 			e.OverwriteAllEvents = true
 		}
 
