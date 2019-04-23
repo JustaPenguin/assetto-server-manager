@@ -82,7 +82,7 @@ func Router(fs http.FileSystem) chi.Router {
 		r.Get("/championships", listChampionshipsHandler)
 		r.Get("/championship/{championshipID}", viewChampionshipHandler)
 		r.Get("/championship/{championshipID}/export", exportChampionshipHandler)
-		r.Get("/championship/{championshipID}/ics", championshipICalFeedHandler)
+		r.Get("/championship/{championshipID}/ics", championshipICalHandler)
 
 		// live timings
 		r.Get("/live-timing", liveTimingHandler)
