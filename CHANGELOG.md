@@ -1,3 +1,8 @@
+v1.2.2
+------
+
+Fixes a bug where new Championship Entrants couldn't be added.
+
 v1.2.1
 ------
 
