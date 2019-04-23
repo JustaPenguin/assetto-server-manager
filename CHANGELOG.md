@@ -24,6 +24,7 @@ Fixes:
 * Removed a non-critical error message from the logs
 * Fixed live map extra data toggle.
 * Detected improper disconnects (game crashes, alt+f4 etc.) in live timing.
+* Fixes an issue where configured car skins would be lost in Open Championships.
 
 v1.2.0
 ------
