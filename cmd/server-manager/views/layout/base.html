@@ -137,7 +137,6 @@
                         </li>
                     {{ end }}
 
-
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navBarAccountDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-user"></i>
@@ -177,8 +176,11 @@
         <footer class="pt-4 my-md-5 pt-md-5 border-top row">
             <div class="col-sm-4">
                 <a href="https://github.com/cj123/assetto-server-manager" class="mr-3"><i class="fab fa-github"></i> GitHub</a>
-                <a href="https://github.com/cj123/assetto-server-manager/issues" class="mr-3"><i class="fas fa-bug"></i> Submit a Bug Report</a>
+                <a href="https://github.com/cj123/assetto-server-manager/issues" class="mr-3"><i class="fas fa-bug"></i> Submit a Bug Report</a><br>
                 <a href="https://paypal.me/JustaPenguinUK" class="mr-3"><i class="fas fa-heart"></i> Donate</a>
+                <a href="/events.ics" data-toggle="tooltip" title="Subscribe to a calendar feed for all Scheduled Events!">
+                    <i class="fas fa-calendar"></i> Scheduled Events
+                </a>
             </div>
             <div class="col-sm-4 text-center">
                 <img src="/static/img/racer.png" class="img img-footer">
@@ -186,7 +188,6 @@
             <div class="col-sm-4 text-right">
                 Assetto Corsa Server Manager v{{ Version }}<br> &copy; <a href="https://justapengu.in">Just a Penguin</a> 2010-{{ now.Format "2006" }}
             </div>
-
         </footer>
     </div>
 

@@ -11,10 +11,11 @@ Added:
 * Championship welcome message now shows a link to the championship overview page (requires server_manager_base_URL 
   option in config.yml)
 * Scheduled events now show their times in your local timezone.
+* You can now subscribe to iCal feeds for scheduled races at a server level or per Championship.
 
 Fixes:
 
-* Limited the Live Map refresh interval to a minimum of 300ms. It is now 500ms by default in config.yml.
+* Limited the Live Map refresh interval to a minimum of 200ms. It is now 500ms by default in config.yml.
 * The Manage Event button in a Championship is now visible for completed events for admin users only. This
   should allow you to import results files if Championships fail to complete successfully.
 * Starting a Custom Race now takes you to the Live Timings page.

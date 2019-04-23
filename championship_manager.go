@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
@@ -16,6 +17,8 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
+	"github.com/heindl/caldav-go/icalendar"
+	"github.com/heindl/caldav-go/icalendar/components"
 	"github.com/mitchellh/go-wordwrap"
 	"github.com/sirupsen/logrus"
 )
@@ -943,4 +946,36 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 	}
 
 	return cm.UpsertChampionship(championship)
+}
+
+func (cm *ChampionshipManager) BuildICalFeed(championshipID string, w io.Writer) error {
+	championship, err := cm.raceStore.LoadChampionship(championshipID)
+
+	if err != nil {
+		return err
+	}
+
+	cal := components.NewCalendar()
+
+	for _, event := range championship.Events {
+		if event.Scheduled.IsZero() {
+			continue
+		}
+
+		event.championship = championship
+
+		icalEvent := BuildICalEvent(event)
+
+		cal.Events = append(cal.Events, icalEvent)
+	}
+
+	str, err := icalendar.Marshal(cal)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprint(w, str)
+
+	return err
 }
