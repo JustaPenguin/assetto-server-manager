@@ -204,8 +204,32 @@ type CurrentRaceConfig struct {
 
 	DynamicTrack DynamicTrackConfig `ini:"-"`
 
-	Sessions map[SessionType]SessionConfig `ini:"-"`
-	Weather  map[string]*WeatherConfig     `ini:"-"`
+	Sessions Sessions                  `ini:"-"`
+	Weather  map[string]*WeatherConfig `ini:"-"`
+}
+
+type Sessions map[SessionType]SessionConfig
+
+func (s Sessions) AsSlice() []SessionConfig {
+	var out []SessionConfig
+
+	if x, ok := s[SessionTypeBooking]; ok {
+		out = append(out, x)
+	}
+
+	if x, ok := s[SessionTypePractice]; ok {
+		out = append(out, x)
+	}
+
+	if x, ok := s[SessionTypeQualifying]; ok {
+		out = append(out, x)
+	}
+
+	if x, ok := s[SessionTypeRace]; ok {
+		out = append(out, x)
+	}
+
+	return out
 }
 
 func (c CurrentRaceConfig) HasMultipleRaces() bool {
