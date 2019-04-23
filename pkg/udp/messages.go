@@ -151,7 +151,7 @@ func (asu *AssettoServerUDP) serve() {
 						_, err := asu.forwarder.Write(buf)
 
 						if err != nil {
-							logrus.WithError(err).Error("could not forward UDP message")
+							logrus.WithError(err).Debug("could not forward UDP message")
 						}
 					}()
 				}
@@ -291,7 +291,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 		}
 
 		carMode := readString(r, 1)
-		carSkin := readStringW(r)
+		carSkin := readString(r, 1)
 
 		response = SessionCarInfo{
 			CarID:      carID,
