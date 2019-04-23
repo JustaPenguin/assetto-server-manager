@@ -1037,7 +1037,7 @@ func championshipRestartEventHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-func championshipICalFeedHandler(w http.ResponseWriter, r *http.Request) {
+func championshipICalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/calendar; charset=utf-8")
 	w.Header().Add("Content-Disposition", "inline; filename=championship.ics")
 
