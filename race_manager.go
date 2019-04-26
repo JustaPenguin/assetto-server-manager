@@ -843,6 +843,8 @@ func (rm *RaceManager) SaveEntrantsForAutoFill(entryList EntryList) error {
 }
 
 func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, entryList EntryList, starred bool) (*CustomRace, error) {
+	hasCustomRaceName := true
+
 	if name == "" {
 		var trackLayout string
 
@@ -856,6 +858,8 @@ func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, ent
 			carList(config.Cars),
 			len(entryList),
 		)
+
+		hasCustomRaceName = false
 	}
 
 	if err := rm.SaveEntrantsForAutoFill(entryList); err != nil {
@@ -863,10 +867,11 @@ func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, ent
 	}
 
 	race := &CustomRace{
-		Name:    name,
-		Created: time.Now(),
-		UUID:    uuid.New(),
-		Starred: starred,
+		Name:          name,
+		HasCustomName: hasCustomRaceName,
+		Created:       time.Now(),
+		UUID:          uuid.New(),
+		Starred:       starred,
 
 		RaceConfig: config,
 		EntryList:  entryList,
