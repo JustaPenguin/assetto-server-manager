@@ -1,8 +1,14 @@
 v1.2.3
 ------
 
+Added:
+
+* In Server Options you can now configure Server Manager to show the Championship or Custom Race name after the server name
+  in the Assetto Corsa server lobby.
+
 Fixes:
 
+* Loop Mode is no longer an option in Championship Events
 * Imported Championship Events now correctly link to their original results files, meaning that penalties carry across
   to Championships when applied in the results pages.
 * Fixes a bug where penalties would not correctly apply to some Championship Events.

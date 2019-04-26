@@ -100,7 +100,22 @@ func (rm *RaceManager) CurrentRace() (*ServerConfig, EntryList) {
 
 var ErrEntryListTooBig = errors.New("servermanager: EntryList exceeds MaxClients setting")
 
-func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool, championshipEvent bool) error {
+type RaceEvent interface {
+	IsChampionship() bool
+	EventName() string
+}
+
+type normalEvent struct{}
+
+func (normalEvent) IsChampionship() bool {
+	return false
+}
+
+func (normalEvent) EventName() string {
+	return ""
+}
+
+func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool, event RaceEvent) error {
 	rm.mutex.Lock()
 	defer rm.mutex.Unlock()
 
@@ -137,9 +152,16 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		config.CurrentRaceConfig.PickupModeEnabled = 1
 	}
 
-	if !championshipEvent && championshipManager != nil {
+	if !event.IsChampionship() && championshipManager != nil {
 		logrus.Debugf("Starting a non championship event. Setting activeChampionship to nil")
 		championshipManager.activeChampionship = nil
+	}
+
+	if config.GlobalServerConfig.ShowRaceNameInServerLobby == 1 {
+		// append the race name to the server name
+		if name := event.EventName(); name != "" {
+			config.GlobalServerConfig.Name += fmt.Sprintf(": %s", name)
+		}
 	}
 
 	err = config.Write()
@@ -300,7 +322,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 
 	quickRace.CurrentRaceConfig.MaxClients = numPitboxes
 
-	return rm.applyConfigAndStart(quickRace, entryList, false, false)
+	return rm.applyConfigAndStart(quickRace, entryList, false, normalEvent{})
 }
 
 func formValueAsInt(val string) int {
@@ -609,7 +631,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 			return nil
 		}
 
-		return rm.applyConfigAndStart(completeConfig, entryList, false, false)
+		return rm.applyConfigAndStart(completeConfig, entryList, false, race)
 	}
 }
 
@@ -821,6 +843,8 @@ func (rm *RaceManager) SaveEntrantsForAutoFill(entryList EntryList) error {
 }
 
 func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, entryList EntryList, starred bool) (*CustomRace, error) {
+	hasCustomRaceName := true
+
 	if name == "" {
 		var trackLayout string
 
@@ -834,6 +858,8 @@ func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, ent
 			carList(config.Cars),
 			len(entryList),
 		)
+
+		hasCustomRaceName = false
 	}
 
 	if err := rm.SaveEntrantsForAutoFill(entryList); err != nil {
@@ -841,10 +867,11 @@ func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, ent
 	}
 
 	race := &CustomRace{
-		Name:    name,
-		Created: time.Now(),
-		UUID:    uuid.New(),
-		Starred: starred,
+		Name:          name,
+		HasCustomName: hasCustomRaceName,
+		Created:       time.Now(),
+		UUID:          uuid.New(),
+		Starred:       starred,
 
 		RaceConfig: config,
 		EntryList:  entryList,
@@ -874,7 +901,7 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 		//cfg.CurrentRaceConfig.LoopMode = 1
 	}
 
-	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart, false)
+	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart, race)
 }
 
 func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string) error {
