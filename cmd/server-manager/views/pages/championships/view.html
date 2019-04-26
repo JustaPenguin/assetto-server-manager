@@ -49,6 +49,9 @@
                                 <th>Driver</th>
                                 <th>Team</th>
                                 <th>Points</th>
+                                {{ if WriteAccess }}
+                                    <th>Actions</th>
+                                {{ end }}
                             </tr>
 
 
@@ -63,9 +66,47 @@
                                             {{ end }}
                                         {{ end }}
                                         <td>{{ add $i 1 }}</td>
-                                        <td>{{ $entrant.Car.Driver.Name }}</td>
+                                        <td>
+                                            {{ $entrant.Car.Driver.Name }}
+
+                                            {{ $driverPenalty := $class.PenaltyForGUID $entrant.Car.Driver.GUID }}
+
+                                            {{ if gt $driverPenalty 0 }}
+                                                <span class="badge badge-danger ml-2">Points Penalty: {{ $driverPenalty }}</span>
+                                            {{ end }}
+                                        </td>
                                         <td>{{ $entrant.TeamSummary }}</td>
                                         <td>{{ $entrant.Points }}</td>
+
+                                        {{ if WriteAccess }}
+                                            <td >
+                                                <button type="button" class="btn {{ if $championship.IsMultiClass}}btn-default{{ else }}btn-warning{{ end }} btn-sm" data-placement="left"
+                                                        data-toggle="popover" title="Penalty Details" data-html="true"
+                                                        id="point-penalty-{{ $entrant.Car.Driver.GUID }}"
+                                                >
+                                                    Penalties
+                                                </button>
+
+                                                <div id="popover-content-point-penalty-{{ $entrant.Car.Driver.GUID }}" style="display: none;">
+                                                    <form action="/championship/{{ $championship.ID.String }}/driver-penalty/{{ $class.ID.String }}/{{ $entrant.Car.Driver.GUID }}" method="POST">
+                                                        <div class="form-group">
+                                                            <label>
+                                                                Points Penalty
+                                                                <input type="number" class="form-control" name="PointsPenalty" placeholder="0" value="{{ $driverPenalty }}" step="1" min="0">
+                                                            </label>
+                                                        </div>
+
+
+                                                        <button type="submit" name="action" value="set" class="btn btn-danger">Set Penalty</button>
+                                                        <button type="submit" name="action" value="remove" class="btn btn-primary">Remove Penalty</button>
+
+                                                        <div class="d-block">
+                                                            <small>Note that penalty points only apply to the driver, not the team. You can add team penalties in the Team Standings tab.</small>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        {{ end }}
                                     </tr>
                                 {{ end }}
                             {{ end }}
@@ -81,6 +122,9 @@
                                 <th>#</th>
                                 <th>Team</th>
                                 <th>Points</th>
+                                {{ if WriteAccess }}
+                                    <th>Actions</th>
+                                {{ end }}
                             </tr>
 
                             {{ range $classIndex, $class := $championship.Classes }}
@@ -96,8 +140,47 @@
                                         {{ end }}
                                         <td>{{ add $i 1 }}</td>
 
-                                        <td>{{ $team.Team }}</td>
+                                        <td>
+                                            {{ $team.Team }}
+
+                                            {{ $teamPenalty := $class.PenaltyForTeam $team.Team }}
+
+                                            {{ if gt $teamPenalty 0 }}
+                                                <span class="badge badge-danger ml-2">Points Penalty: {{ $teamPenalty }}</span>
+                                            {{ end }}
+                                        </td>
                                         <td>{{ $team.Points }}</td>
+
+
+                                        {{ if WriteAccess }}
+                                            <td >
+                                                <button type="button" class="btn {{ if $championship.IsMultiClass}}btn-default{{ else }}btn-warning{{ end }} btn-sm" data-placement="left"
+                                                        data-toggle="popover" title="Penalty Details" data-html="true"
+                                                        id="point-penalty-{{ sha1sum $team.Team }}"
+                                                >
+                                                    Penalties
+                                                </button>
+
+                                                <div id="popover-content-point-penalty-{{ sha1sum $team.Team }}" style="display: none;">
+                                                    <form action="/championship/{{ $championship.ID.String }}/team-penalty/{{ $class.ID.String }}/{{ $team.Team }}" method="POST">
+                                                        <div class="form-group">
+                                                            <label>
+                                                                Points Penalty
+                                                                <input type="number" class="form-control" name="PointsPenalty" placeholder="0" value="{{ $teamPenalty }}" step="1" min="0">
+                                                            </label>
+                                                        </div>
+
+
+                                                        <button type="submit" name="action" value="set" class="btn btn-danger">Set Penalty</button>
+                                                        <button type="submit" name="action" value="remove" class="btn btn-primary">Remove Penalty</button>
+
+                                                        <div class="d-block">
+                                                            <small>Note that penalty points only apply to the team, not the driver. You can add driver penalties in the Driver Standings tab.</small>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        {{ end }}
                                     </tr>
                                 {{ end }}
                             {{ end }}

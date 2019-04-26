@@ -204,6 +204,8 @@ type ChampionshipClass struct {
 
 	Entrants EntryList
 	Points   ChampionshipPoints
+
+	DriverPenalties, TeamPenalties map[string]int
 }
 
 // ValidCarIDs returns a set of all cars chosen within the given class
@@ -232,6 +234,17 @@ func (c *Championship) EventByID(id string) (*ChampionshipEvent, error) {
 	}
 
 	return nil, ErrInvalidChampionshipEvent
+}
+
+// ClassByID finds a ChampionshipClass by its ID string.
+func (c *Championship) ClassByID(id string) (*ChampionshipClass, error) {
+	for _, x := range c.Classes {
+		if x.ID.String() == id {
+			return x, nil
+		}
+	}
+
+	return nil, ErrInvalidChampionshipClass
 }
 
 // ValidCarIDs returns a set of all of the valid cars in the Championship - that is, the smallest possible list
@@ -416,6 +429,22 @@ func (c *ChampionshipClass) ResultsForClass(results []*SessionResult) (filtered 
 	return filtered
 }
 
+func (c *ChampionshipClass) PenaltyForGUID(guid string) int {
+	if penalty, ok := c.DriverPenalties[guid]; ok {
+		return penalty
+	} else {
+		return 0
+	}
+}
+
+func (c *ChampionshipClass) PenaltyForTeam(name string) int {
+	if teamPenalty, ok := c.TeamPenalties[name]; ok {
+		return teamPenalty
+	} else {
+		return 0
+	}
+}
+
 func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints func(event *ChampionshipEvent, driverGUID string, points float64)) {
 	eventsReverseCompletedOrder := make([]*ChampionshipEvent, len(events))
 
@@ -515,6 +544,8 @@ func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*Championsh
 			continue
 		}
 
+		standing.Points -= float64(c.PenaltyForGUID(standing.Car.Driver.GUID))
+
 		out = append(out, standing)
 	}
 
@@ -567,7 +598,7 @@ func (c *ChampionshipClass) TeamStandings(events []*ChampionshipEvent) []*TeamSt
 	for name, pts := range teams {
 		out = append(out, &TeamStanding{
 			Team:   name,
-			Points: pts,
+			Points: pts - float64(c.PenaltyForTeam(name)),
 		})
 	}
 
@@ -1048,4 +1079,44 @@ func championshipICalHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
+}
+
+func championshipDriverPenaltyHandler(w http.ResponseWriter, r *http.Request) {
+	err := championshipManager.ModifyDriverPenalty(
+		chi.URLParam(r, "championshipID"),
+		chi.URLParam(r, "classID"),
+		chi.URLParam(r, "driverGUID"),
+		PenaltyAction(r.FormValue("action")),
+		formValueAsInt(r.FormValue("PointsPenalty")),
+	)
+
+	if err != nil {
+		logrus.Errorf("Could not modify championship driver penalty, err: %s", err)
+
+		AddErrFlashQuick(w, r, "Couldn't modify driver penalty")
+	} else {
+		AddFlashQuick(w, r, "Driver penalty successfully modified")
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func championshipTeamPenaltyHandler(w http.ResponseWriter, r *http.Request) {
+	err := championshipManager.ModifyTeamPenalty(
+		chi.URLParam(r, "championshipID"),
+		chi.URLParam(r, "classID"),
+		chi.URLParam(r, "team"),
+		PenaltyAction(r.FormValue("action")),
+		formValueAsInt(r.FormValue("PointsPenalty")),
+	)
+
+	if err != nil {
+		logrus.Errorf("Could not modify championship penalty, err: %s", err)
+
+		AddErrFlashQuick(w, r, "Couldn't modify team penalty")
+	} else {
+		AddFlashQuick(w, r, "Team penalty successfully modified")
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
