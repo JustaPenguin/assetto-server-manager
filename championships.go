@@ -1113,9 +1113,9 @@ func championshipTeamPenaltyHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logrus.Errorf("Could not modify championship penalty, err: %s", err)
 
-		AddErrFlashQuick(w, r, "Couldn't modify penalty")
+		AddErrFlashQuick(w, r, "Couldn't modify team penalty")
 	} else {
-		AddFlashQuick(w, r, "Penalty successfully modified")
+		AddFlashQuick(w, r, "Team penalty successfully modified")
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
