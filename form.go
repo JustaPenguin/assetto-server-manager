@@ -287,6 +287,28 @@ func (f FormOption) renderTextInput() template.HTML {
 	return tmpl
 }
 
+func (f FormOption) renderTextarea() template.HTML {
+	const textareaTemplate = `
+		<div class="form-group row" {{ if .Hidden }}style="display: none;"{{ end }}>
+			<label for="{{ .Key }}" class="col-sm-3 col-form-label">{{ .Name }}</label>
+
+			<div class="col-sm-9">
+				<textarea id="{{ .Key }}" name="{{ .Key }}" class="form-control text-monospace" rows="15">{{ .Value }}</textarea>
+
+				<small>{{ .HelpText }}</small>
+			</div>
+		</div>
+	`
+
+	tmpl, err := f.render(textareaTemplate)
+
+	if err != nil {
+		return template.HTML(fmt.Sprintf("err: %s", err))
+	}
+
+	return tmpl
+}
+
 func (f FormOption) renderNumberInput() template.HTML {
 	const numberInputTemplate = `
 		{{ if not .Hidden }}
@@ -334,6 +356,8 @@ func (f FormOption) HTML() template.HTML {
 		}
 
 		return f.renderNumberInput()
+	case "textarea":
+		return f.renderTextarea()
 	case "string", "password":
 		return f.renderTextInput()
 	default:
