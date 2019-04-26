@@ -900,6 +900,10 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 
 		championship.EnhanceResults(results)
 
+		if err := saveResults(practiceFile+".json", results); err != nil {
+			return err
+		}
+
 		event.Sessions[SessionTypePractice] = &ChampionshipSession{
 			StartedTime:   results.Date.Add(-time.Minute * 30),
 			CompletedTime: results.Date,
@@ -918,6 +922,10 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 
 		championship.EnhanceResults(results)
 
+		if err := saveResults(qualifyingFile+".json", results); err != nil {
+			return err
+		}
+
 		event.Sessions[SessionTypeQualifying] = &ChampionshipSession{
 			StartedTime:   results.Date.Add(-time.Minute * 30),
 			CompletedTime: results.Date,
@@ -935,6 +943,10 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 		}
 
 		championship.EnhanceResults(results)
+
+		if err := saveResults(raceFile+".json", results); err != nil {
+			return err
+		}
 
 		event.Sessions[SessionTypeRace] = &ChampionshipSession{
 			StartedTime:   results.Date.Add(-time.Minute * 30),
