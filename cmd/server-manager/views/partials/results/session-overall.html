@@ -62,10 +62,10 @@
                                 <td>
                                     <button type="button" class="btn btn-warning btn-sm" data-placement="bottom"
                                        data-toggle="popover" title="Penalty Details" data-html="true"
-                                        id="result-{{ $result.DriverGUID }}"
+                                        id="result-{{ $result.DriverGUID }}-{{ $sessionResults.SessionFile }}"
                                         >Penalties</button>
 
-                                    <div id="popover-content-result-{{ $result.DriverGUID }}" style="display: none;">
+                                    <div id="popover-content-result-{{ $result.DriverGUID }}-{{ $sessionResults.SessionFile }}" style="display: none;">
                                         <form action='/penalties/{{ $sessionResults.SessionFile }}/{{ $result.DriverGUID }}' method='POST'>
                                             <div class='form-group'>
                                                 <label for='time-penalty'>Time Penalty (seconds)</label>
