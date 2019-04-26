@@ -12,6 +12,8 @@ import (
 
 type CustomRace struct {
 	Name          string
+	HasCustomName bool
+
 	Created       time.Time
 	Updated       time.Time
 	Deleted       time.Time
@@ -24,7 +26,11 @@ type CustomRace struct {
 }
 
 func (cr *CustomRace) EventName() string {
-	return cr.Name
+	if cr.HasCustomName {
+		return cr.Name
+	} else {
+		return ""
+	}
 }
 
 func (cr *CustomRace) IsChampionship() bool {

@@ -1362,24 +1362,26 @@
                 </div>
 
 
-                <div class="form-group row">
-                    <label for="LoopMode" class="col-sm-3 col-form-label">Loop Mode</label>
+                {{ if not $.IsChampionship }}
+                    <div class="form-group row">
+                        <label for="LoopMode" class="col-sm-3 col-form-label">Loop Mode</label>
 
 
-                    <div class="col-sm-9">
-                        <input
-                                type="checkbox"
-                                id="LoopMode"
-                                name="LoopMode"
-                                {{ if $f.LoopMode }}
-                                    checked="checked"
-                                {{ end }}
-                        >
-                        <br>
+                        <div class="col-sm-9">
+                            <input
+                                    type="checkbox"
+                                    id="LoopMode"
+                                    name="LoopMode"
+                                    {{ if $f.LoopMode }}
+                                        checked="checked"
+                                    {{ end }}
+                            >
+                            <br>
 
-                        <small>The server restarts from the first event after the previous event has finished</small>
+                            <small>The server restarts from the first event after the previous event has finished</small>
+                        </div>
                     </div>
-                </div>
+                {{ end }}
 
                 <div class="form-group row">
                     <label for="ResultScreenTime" class="col-sm-3 col-form-label">Result Screen Time</label>
