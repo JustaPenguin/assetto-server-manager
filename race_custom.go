@@ -12,6 +12,8 @@ import (
 
 type CustomRace struct {
 	Name          string
+	HasCustomName bool
+
 	Created       time.Time
 	Updated       time.Time
 	Deleted       time.Time
@@ -21,6 +23,18 @@ type CustomRace struct {
 
 	RaceConfig CurrentRaceConfig
 	EntryList  EntryList
+}
+
+func (cr *CustomRace) EventName() string {
+	if cr.HasCustomName {
+		return cr.Name
+	} else {
+		return ""
+	}
+}
+
+func (cr *CustomRace) IsChampionship() bool {
+	return false
 }
 
 func (cr *CustomRace) GetID() uuid.UUID {

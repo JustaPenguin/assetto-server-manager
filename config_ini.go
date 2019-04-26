@@ -157,6 +157,8 @@ type GlobalServerConfig struct {
 
 	FreeUDPPluginLocalPort int    `ini:"-" show:"-"`
 	FreeUDPPluginAddress   string `ini:"-" show:"-"`
+
+	ShowRaceNameInServerLobby int `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager append the Custom Race or Championship name to the Server name in the lobby."`
 }
 
 type CurrentRaceConfig struct {
