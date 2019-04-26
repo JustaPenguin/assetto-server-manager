@@ -6,6 +6,9 @@ Added:
 * In Server Options you can now configure Server Manager to show the Championship or Custom Race name after the server name
   in the Assetto Corsa server lobby.
 
+Fixes:
+
+* Loop Mode is no longer an option in Championship Events
 
 v1.2.2
 ------
