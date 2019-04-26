@@ -21,6 +21,7 @@ var ConfigIniDefault = ServerConfig{
 		UDPPluginAddress:          "",
 		AuthPluginAddress:         "",
 		NumberOfThreads:           2,
+		ShowRaceNameInServerLobby: 1,
 	},
 
 	CurrentRaceConfig: CurrentRaceConfig{

@@ -23,6 +23,14 @@ type CustomRace struct {
 	EntryList  EntryList
 }
 
+func (cr *CustomRace) EventName() string {
+	return cr.Name
+}
+
+func (cr *CustomRace) IsChampionship() bool {
+	return false
+}
+
 func (cr *CustomRace) GetID() uuid.UUID {
 	return cr.UUID
 }

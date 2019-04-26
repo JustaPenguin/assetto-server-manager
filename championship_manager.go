@@ -31,6 +31,7 @@ type ChampionshipManager struct {
 }
 
 type ActiveChampionship struct {
+	Name                    string
 	ChampionshipID, EventID uuid.UUID
 	SessionType             SessionType
 
@@ -40,6 +41,14 @@ type ActiveChampionship struct {
 	NumRaceStartEvents int
 }
 
+func (a *ActiveChampionship) IsChampionship() bool {
+	return true
+}
+
+func (a *ActiveChampionship) EventName() string {
+	return a.Name
+}
+
 func NewChampionshipManager(rm *RaceManager) *ChampionshipManager {
 	return &ChampionshipManager{
 		RaceManager: rm,
@@ -47,7 +56,7 @@ func NewChampionshipManager(rm *RaceManager) *ChampionshipManager {
 }
 
 func (cm *ChampionshipManager) applyConfigAndStart(config ServerConfig, entryList EntryList, championship *ActiveChampionship) error {
-	err := cm.RaceManager.applyConfigAndStart(config, entryList, false, true)
+	err := cm.RaceManager.applyConfigAndStart(config, entryList, false, championship)
 
 	if err != nil {
 		return err
@@ -385,7 +394,7 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 
 	config.CurrentRaceConfig = raceSetup
 
-	return cm.RaceManager.applyConfigAndStart(config, event.CombineEntryLists(championship), false, false)
+	return cm.RaceManager.applyConfigAndStart(config, event.CombineEntryLists(championship), false, normalEvent{})
 }
 
 func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string) error {
@@ -413,6 +422,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 	return cm.applyConfigAndStart(config, event.CombineEntryLists(championship), &ActiveChampionship{
 		ChampionshipID: championship.ID,
 		EventID:        event.ID,
+		Name:           championship.Name,
 	})
 }
 
