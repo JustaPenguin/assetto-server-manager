@@ -1,3 +1,12 @@
+v1.2.3
+------
+
+Added:
+
+* In Server Options you can now configure Server Manager to show the Championship or Custom Race name after the server name
+  in the Assetto Corsa server lobby.
+
+
 v1.2.2
 ------
 
