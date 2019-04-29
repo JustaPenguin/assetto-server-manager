@@ -6,6 +6,7 @@ Added:
 * In Server Options you can now configure Server Manager to show the Championship or Custom Race name after the server name
   in the Assetto Corsa server lobby.
 * You can now add custom CSS to your server manager install from the Server Options!
+* You can now add points penalties to Championship Drivers and Teams.
 
 Fixes:
 
