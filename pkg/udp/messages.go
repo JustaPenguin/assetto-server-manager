@@ -148,11 +148,7 @@ func (asu *AssettoServerUDP) serve() {
 				if asu.forward && asu.forwarder != nil {
 					go func() {
 						// write the message to the forwarding address
-						_, err := asu.forwarder.Write(buf)
-
-						if err != nil {
-							logrus.WithError(err).Debug("could not forward UDP message")
-						}
+						_, _ = asu.forwarder.Write(buf)
 					}()
 				}
 			case <-asu.ctx.Done():
