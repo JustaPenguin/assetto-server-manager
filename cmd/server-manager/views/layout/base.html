@@ -14,6 +14,10 @@
             <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/jquery-ui.min.css" }}">
             <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/bootstrap.min.css" }}">
             <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/summernote-bs4.css" }}">
+
+            <style type="text/css">
+                {{ .custom_css }}
+            </style>
         {{ end }}
     </head>
     <body>
