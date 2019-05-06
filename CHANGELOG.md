@@ -14,7 +14,7 @@ Fixes:
 * Imported Championship Events now correctly link to their original results files, meaning that penalties carry across
   to Championships when applied in the results pages.
 * Fixes a bug where penalties would not correctly apply to some Championship Events.
-
+* Fixes an issue where Looped Races could hang at the end of a race rather than continuing to the next Looped Race.
 
 v1.2.2
 ------
