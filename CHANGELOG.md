@@ -7,6 +7,7 @@ Added:
   in the Assetto Corsa server lobby.
 * You can now add custom CSS to your server manager install from the Server Options!
 * You can now add points penalties to Championship Drivers and Teams.
+* You can now import Championship results for second races.
 
 Fixes:
 
@@ -14,7 +15,8 @@ Fixes:
 * Imported Championship Events now correctly link to their original results files, meaning that penalties carry across
   to Championships when applied in the results pages.
 * Fixes a bug where penalties would not correctly apply to some Championship Events.
-
+* Open Championships will now correctly set up Entrants (and results tables) when importing results files that have new
+  Entrants in them.
 
 v1.2.2
 ------

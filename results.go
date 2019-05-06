@@ -331,6 +331,22 @@ type SessionCar struct {
 	Skin       string        `json:"Skin"`
 }
 
+func (c *SessionCar) GetName() string {
+	return c.Driver.Name
+}
+
+func (c *SessionCar) GetCar() string {
+	return c.Model
+}
+
+func (c *SessionCar) GetSkin() string {
+	return c.Skin
+}
+
+func (c *SessionCar) GetGUID() string {
+	return c.Driver.GUID
+}
+
 type SessionEvent struct {
 	CarID         int            `json:"CarId"`
 	Driver        *SessionDriver `json:"Driver"`
