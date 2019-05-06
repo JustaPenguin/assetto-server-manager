@@ -7,6 +7,7 @@ Added:
   in the Assetto Corsa server lobby.
 * You can now add custom CSS to your server manager install from the Server Options!
 * You can now add points penalties to Championship Drivers and Teams.
+* Improved 'Reverse Grid' text to explain what happens if the value is set to '1' (a 2nd Race will take place with the grid formed from the 1st Race's Results)
 
 Fixes:
 
