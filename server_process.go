@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -261,21 +259,15 @@ func (as *AssettoServerProcess) startUDPListener() error {
 }
 
 func (as *AssettoServerProcess) UDPCallback(message udp.Message) {
-	// recover from panics that may occur while handling UDP messages
-	defer func() {
-		if r := recover(); r != nil {
-			_, _ = fmt.Fprintf(logMultiWriter, "\n\nrecovered from panic: %v\n\n", r)
-			_, _ = fmt.Fprint(logMultiWriter, string(debug.Stack()))
+	panicCapture(func() {
+		if config != nil && config.LiveMap.IsEnabled() {
+			go LiveMapCallback(message)
 		}
-	}()
 
-	if config != nil && config.LiveMap.IsEnabled() {
-		go LiveMapCallback(message)
-	}
-
-	championshipManager.ChampionshipEventCallback(message)
-	LiveTimingCallback(message)
-	LoopCallback(message)
+		championshipManager.ChampionshipEventCallback(message)
+		LiveTimingCallback(message)
+		LoopCallback(message)
+	})
 }
 
 var ErrNoOpenUDPConnection = errors.New("servermanager: no open UDP connection found")

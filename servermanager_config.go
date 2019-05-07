@@ -13,12 +13,17 @@ import (
 var config *Configuration
 
 type Configuration struct {
-	HTTP     HTTPConfig        `yaml:"http"`
-	Steam    SteamConfig       `yaml:"steam"`
-	Store    StoreConfig       `yaml:"store"`
-	LiveMap  LiveMapConfig     `yaml:"live_map"`
-	Server   ServerExtraConfig `yaml:"server"`
-	Accounts AccountsConfig    `yaml:"accounts"`
+	HTTP       HTTPConfig        `yaml:"http"`
+	Steam      SteamConfig       `yaml:"steam"`
+	Store      StoreConfig       `yaml:"store"`
+	LiveMap    LiveMapConfig     `yaml:"live_map"`
+	Server     ServerExtraConfig `yaml:"server"`
+	Accounts   AccountsConfig    `yaml:"accounts"`
+	Monitoring MonitoringConfig  `yaml:"monitoring"`
+}
+
+type MonitoringConfig struct {
+	Enabled bool `yaml:"enabled"`
 }
 
 type AccountsConfig struct {
