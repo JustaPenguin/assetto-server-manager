@@ -367,6 +367,8 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 	data["MaxClientsOverride"] = MaxClientsOverride
 	data["_request"] = r
 	data["Debug"] = Debug
+	data["MonitoringEnabled"] = config.Monitoring.Enabled
+	data["SentryDSN"] = template.JSStr(sentryJSDSN)
 
 	t.Funcs(map[string]interface{}{
 		"ReadAccess":   ReadAccess(r),

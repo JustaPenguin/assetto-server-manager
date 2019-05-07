@@ -65,6 +65,41 @@ http:
 
 ################################################################################
 #
+#  monitoring - enabling monitoring allows us to find out more information
+#  about how you're using Server Manager, as well as seeing any issues that may
+#  occur so we can collect and fix them. We understand that you may not wish
+#  for us to do any monitoring, so you can disable it by setting 'enabled'
+#  to false
+#
+################################################################################
+#  with monitoring enabled, the following systems are in place:
+#
+#  1. Sentry (https://sentry.io) monitoring of both Server Manager's backend
+#     code and frontend javascript. This lets us see application errors when
+#     they occur.
+#
+#  2. Google Analytics (https://analytics.google.com) tracking so we can see how
+#     many people use Server Manager, when they use it and where they are in
+#     the world.
+#
+#  3. Prometheus Monitoring - this provides more technical debugging in terms of
+#     memory and CPU usage, etc. This is *NOT* sent to us. We have added this in
+#     so that anybody who wants to monitor Server Manager for themselves can do
+#     so with Prometheus. We use it internally at assettocorsaservers.com to
+#     track our Server installs to help us improve our service.
+#
+#     you can access the prometheus endpoint at:
+#                <your servermanager domain>/metrics
+#
+#
+# once again, if you do not wish for Server Manager to do these things, simply
+# set 'enabled' to false and monitoring will not take place.
+################################################################################
+monitoring:
+  enabled: true
+
+################################################################################
+#
 #  data storage - where server manager keeps your data!
 #
 ################################################################################
