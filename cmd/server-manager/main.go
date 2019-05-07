@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/go-chi/chi/middleware"
 	"net"
 	"net/http"
 	"os"
@@ -17,6 +18,8 @@ import (
 	"github.com/etcd-io/bbolt"
 	"github.com/pkg/browser"
 	"github.com/sirupsen/logrus"
+
+	_ "net/http/pprof"
 )
 
 var debug = os.Getenv("DEBUG") == "true"
@@ -106,7 +109,11 @@ func main() {
 		_ = browser.OpenURL("http://" + strings.Replace(config.HTTP.Hostname, "0.0.0.0", "127.0.0.1", 1))
 	}
 
-	if err := http.Serve(listener, servermanager.Router(filesystem)); err != nil {
+	router := servermanager.Router(filesystem)
+
+	router.Mount("/debug/", middleware.Profiler())
+
+	if err := http.Serve(listener, router); err != nil {
 		logrus.Fatal(err)
 	}
 }
