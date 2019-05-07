@@ -436,13 +436,15 @@
 
                                     </div>
 
+                                    <hr>
+
                                     <div class="row">
-                                        <div class="form-group row col-md-6">
-                                            <label for="ReversedGridRacePositions" class="col-sm-6 col-form-label" data-toggle="tooltip" title="The race session will be restarted in reversed grid order based on the standings of the previous race. Players disqualified in the first race will start from the back of the grid in the second race, regardless of their position being within the reversed grid range.">
+                                        <div class="form-group row col-md-12">
+                                            <label for="ReversedGridRacePositions" class="col-sm-3 col-form-label" data-toggle="tooltip" title="The race session will be restarted in reversed grid order based on the standings of the previous race. Players disqualified in the first race will start from the back of the grid in the second race, regardless of their position being within the reversed grid range.">
                                                 Reversed Grid Race Positions
                                             </label>
 
-                                            <div class="col-sm-6">
+                                            <div class="col-sm-9">
                                                 <input
                                                         type="number"
                                                         id="ReversedGridRacePositions"
@@ -456,7 +458,8 @@
 
                                                 <small> 0 = no additional race<br/>
                                                     1toX = only those position will be reversed for the next race,<br/>
-                                                    -1 = all the positions will be reversed (Retired players will be on the last positions)
+                                                    -1 = all the positions will be reversed (Retired players will be on the last positions)<br/>
+                                                    1 = A 2nd Race will take place with the grid formed from the 1st Race's results.
                                                 </small>
                                             </div>
                                         </div>
