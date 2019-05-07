@@ -898,9 +898,9 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 	cfg.CurrentRaceConfig = race.RaceConfig
 
 	// Required for our nice auto loop stuff
-	/*if forceRestart {
+	if forceRestart {
 		cfg.CurrentRaceConfig.LoopMode = 1
-	}*/
+	}
 
 	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart, race)
 }
