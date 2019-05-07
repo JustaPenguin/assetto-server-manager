@@ -285,9 +285,10 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 
 		if err != nil {
 			numPitboxes = quickRace.CurrentRaceConfig.MaxClients
+		} else {
+			numPitboxes = int(boxes)
 		}
 
-		numPitboxes = int(boxes)
 	} else {
 		numPitboxes = quickRace.CurrentRaceConfig.MaxClients
 	}
@@ -898,7 +899,7 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 
 	// Required for our nice auto loop stuff
 	if forceRestart {
-		//cfg.CurrentRaceConfig.LoopMode = 1
+		cfg.CurrentRaceConfig.LoopMode = 1
 	}
 
 	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart, race)
@@ -920,7 +921,7 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string) 
 
 	if action == "add" {
 		// add a scheduled event on date
-		duration := date.Sub(time.Now())
+		duration := time.Until(date)
 
 		race.Scheduled = date
 		CustomRaceStartTimers[race.UUID.String()] = time.AfterFunc(duration, func() {

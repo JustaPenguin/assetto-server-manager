@@ -24,7 +24,7 @@ var (
 		defer func() {
 			if r := recover(); r != nil {
 				_, _ = fmt.Fprintf(logMultiWriter, "\n\nrecovered from panic: %v\n\n", r)
-				_, _ = fmt.Fprintf(logMultiWriter, string(debug.Stack()))
+				_, _ = fmt.Fprint(logMultiWriter, string(debug.Stack()))
 			}
 		}()
 

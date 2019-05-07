@@ -31,7 +31,7 @@ func InitialiseScheduledCustomRaces() error {
 
 		if race.Scheduled.After(time.Now()) {
 			// add a scheduled event on date
-			duration := race.Scheduled.Sub(time.Now())
+			duration := time.Until(race.Scheduled)
 
 			CustomRaceStartTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
 				err := raceManager.StartCustomRace(race.UUID.String(), false)
@@ -84,7 +84,7 @@ func InitialiseScheduledChampionshipEvents() error {
 
 			if event.Scheduled.After(time.Now()) {
 				// add a scheduled event on date
-				duration := event.Scheduled.Sub(time.Now())
+				duration := time.Until(event.Scheduled)
 
 				ChampionshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
 					err := championshipManager.StartEvent(championship.ID.String(), event.ID.String())

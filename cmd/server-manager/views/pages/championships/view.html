@@ -460,6 +460,8 @@
                                                 <small>
                                                     {{ if eq $eventSetup.ReversedGridRacePositions -1 }}
                                                         All grid positions will be reversed in 2nd Race.
+                                                    {{ else if eq $eventSetup.ReversedGridRacePositions 1 }}
+                                                        A 2nd Race will take place with the grid formed from the 1st Race's results.
                                                     {{ else }}
                                                         {{ $eventSetup.ReversedGridRacePositions }} grid positions will be reversed in 2nd Race.
                                                     {{ end }}
