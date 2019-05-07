@@ -383,8 +383,12 @@ func sendGetSessionInfoAtInterval(ctx context.Context) {
 		case <-tickChan.C:
 			err := AssettoProcess.SendUDPMessage(udp.GetSessionInfo{})
 
-			if err != nil {
-				logrus.Errorf("Couldn't send session info udp request, err: %s", err)
+			if err == ErrNoOpenUDPConnection {
+				logrus.WithError(err).Errorf("Couldn't send session info udp request. Breaking loop.")
+				tickChan.Stop()
+				return
+			} else if err != nil {
+				logrus.WithError(err).Errorf("Couldn't send session info udp request")
 			}
 		case <-ctx.Done():
 			logrus.Debugf("Closing udp request channel")
