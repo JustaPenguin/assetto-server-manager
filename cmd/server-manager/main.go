@@ -35,6 +35,10 @@ func main() {
 		return
 	}
 
+	if config.Monitoring.Enabled {
+		servermanager.InitMonitoring()
+	}
+
 	store, err := config.Store.BuildStore()
 
 	if err != nil {

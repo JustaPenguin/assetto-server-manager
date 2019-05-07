@@ -14,6 +14,8 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/gorilla/sessions"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
 
@@ -47,15 +49,16 @@ func init() {
 	logrus.SetOutput(logMultiWriter)
 }
 
-func Router(fs http.FileSystem) chi.Router {
+func Router(fs http.FileSystem) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(middleware.Recoverer)
+	r.Use(panicHandler)
 
 	r.HandleFunc("/login", loginHandler)
 	r.HandleFunc("/logout", logoutHandler)
+	r.Handle("/metrics", prometheusMonitoringHandler())
 
 	// readers
 	r.Group(func(r chi.Router) {
@@ -182,7 +185,13 @@ func Router(fs http.FileSystem) chi.Router {
 
 	FileServer(r, "/static", fs)
 
-	return r
+	return promhttp.InstrumentHandlerInFlight(HTTPInFlightGauge,
+		promhttp.InstrumentHandlerDuration(HTTPDuration.MustCurryWith(prometheus.Labels{"handler": "push"}),
+			promhttp.InstrumentHandlerCounter(HTTPCounter,
+				promhttp.InstrumentHandlerResponseSize(HTTPResponseSize, r),
+			),
+		),
+	)
 }
 
 func FileServer(r chi.Router, path string, root http.FileSystem) {

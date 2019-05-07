@@ -7,6 +7,8 @@ Added:
   in the Assetto Corsa server lobby.
 * You can now add custom CSS to your server manager install from the Server Options!
 * You can now add points penalties to Championship Drivers and Teams.
+* Added monitoring and analytics. This will help us keep better track of issues in Server Manager. You can disable this
+  in the config.yml.
 
 Fixes:
 
