@@ -14,8 +14,6 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/gorilla/sessions"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
 
@@ -185,13 +183,7 @@ func Router(fs http.FileSystem) http.Handler {
 
 	FileServer(r, "/static", fs)
 
-	return promhttp.InstrumentHandlerInFlight(HTTPInFlightGauge,
-		promhttp.InstrumentHandlerDuration(HTTPDuration.MustCurryWith(prometheus.Labels{"handler": "push"}),
-			promhttp.InstrumentHandlerCounter(HTTPCounter,
-				promhttp.InstrumentHandlerResponseSize(HTTPResponseSize, r),
-			),
-		),
-	)
+	return prometheusMonitoringWrapper(r)
 }
 
 func FileServer(r chi.Router, path string, root http.FileSystem) {
