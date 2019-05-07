@@ -315,6 +315,65 @@ func (c *Championship) Progress() float64 {
 	return (numCompletedRaces / numRaces) * 100
 }
 
+var ErrClosedChampionship = errors.New("servermanager: closed championship cannot add entrants on the fly")
+
+type PotentialOpenChampionshipEntrant interface {
+	GetName() string
+	GetCar() string
+	GetSkin() string
+	GetGUID() string
+}
+
+func (c *Championship) AddEntrantFromSessionData(potentialEntrant PotentialOpenChampionshipEntrant) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
+	if !c.OpenEntrants {
+		return false, nil, ErrClosedChampionship
+	}
+
+	classForCar, err := c.FindClassForCarModel(potentialEntrant.GetCar())
+
+	if err != nil {
+		logrus.Errorf("Could not find class for car: %s in championship", potentialEntrant.GetCar())
+
+		return false, nil, err
+	}
+
+classLoop:
+	for _, class := range c.Classes {
+		for entrantKey, entrant := range class.Entrants {
+			if entrant.GUID == potentialEntrant.GetGUID() {
+				if class == classForCar {
+					// the person is already in the EntryList and this class, update their information
+					logrus.Debugf("Entrant: %s (%s) already found in EntryList. updating their info...", potentialEntrant.GetName(), potentialEntrant.GetGUID())
+					entrant.Model = potentialEntrant.GetCar()
+					entrant.Skin = potentialEntrant.GetSkin()
+
+					return true, class, nil
+				} else {
+					// the user needs removing from this class
+					logrus.Infof("Entrant: %s (%s) found in EntryList, but changed classes (%s -> %s). removing from original class.", potentialEntrant.GetName(), potentialEntrant.GetGUID(), class.Name, classForCar.Name)
+					delete(class.Entrants, entrantKey)
+					break classLoop
+				}
+			}
+		}
+	}
+	// now look for empty Entrants in the Entrylist
+	for carNum, entrant := range classForCar.Entrants {
+		if entrant.Name == "" && entrant.GUID == "" {
+			entrant.Name = potentialEntrant.GetName()
+			entrant.GUID = potentialEntrant.GetGUID()
+			entrant.Model = potentialEntrant.GetCar()
+			entrant.Skin = potentialEntrant.GetSkin()
+
+			logrus.Infof("New championship entrant: %s (%s) has been assigned to %s in %s", entrant.Name, entrant.GUID, carNum, classForCar.Name)
+
+			return true, classForCar, nil
+		}
+	}
+
+	return false, classForCar, nil
+}
+
 // EnhanceResults takes a set of SessionResults and attaches Championship information to them.
 func (c *Championship) EnhanceResults(results *SessionResults) {
 	if results == nil {
