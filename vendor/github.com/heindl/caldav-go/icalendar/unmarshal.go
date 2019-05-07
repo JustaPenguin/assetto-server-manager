@@ -43,8 +43,6 @@ func tokenizeSlice(slice []string, name ...string) (*token, error) {
 
 	for i := 0; i < size; i++ {
 
-
-
 		// Handle iCalendar's space-indented line break format
 		// See: https://www.ietf.org/rfc/rfc2445.txt section 4.1
 		// "a long line can be split between any two characters by inserting a CRLF immediately followed by a single

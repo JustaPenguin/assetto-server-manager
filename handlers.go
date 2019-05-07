@@ -57,6 +57,7 @@ func Router(fs http.FileSystem) http.Handler {
 	r.HandleFunc("/login", loginHandler)
 	r.HandleFunc("/logout", logoutHandler)
 	r.Handle("/metrics", prometheusMonitoringHandler())
+	r.Mount("/debug/", middleware.Profiler())
 
 	// readers
 	r.Group(func(r chi.Router) {
