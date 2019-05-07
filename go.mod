@@ -1,11 +1,13 @@
 module github.com/cj123/assetto-server-manager
 
 require (
+	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/Masterminds/goutils v1.1.0 // indirect
 	github.com/Masterminds/semver v1.4.2 // indirect
 	github.com/Masterminds/sprig v2.18.0+incompatible
 	github.com/cj123/ini v1.42.0
 	github.com/davecgh/go-spew v1.1.1
+	github.com/dominikh/go-tools v0.0.0-20190418001031-e561f6794a2a // indirect
 	github.com/etcd-io/bbolt v1.3.2
 	github.com/fatih/camelcase v1.0.0
 	github.com/go-chi/chi v4.0.2+incompatible
@@ -33,7 +35,9 @@ require (
 	golang.org/x/net v0.0.0-20190311183353-d8887717615a
 	golang.org/x/sys v0.0.0-20190309122539-980fc434d28e // indirect
 	golang.org/x/text v0.3.0
+	golang.org/x/tools v0.0.0-20190506145303-2d16b83fe98c // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/ini.v1 v1.42.0 // indirect
 	gopkg.in/yaml.v2 v2.2.2
+	honnef.co/go/tools v0.0.0-20190418001031-e561f6794a2a // indirect
 )

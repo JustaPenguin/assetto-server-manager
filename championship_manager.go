@@ -461,7 +461,7 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 
 	if action == "add" {
 		// add a scheduled event on date
-		duration := date.Sub(time.Now())
+		duration := time.Until(date)
 
 		ChampionshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
 			err := cm.StartEvent(championship.ID.String(), event.ID.String())
@@ -651,14 +651,12 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 				cm.activeChampionship.NumRaceStartEvents++
 			}
 
-			currentSession, ok := championship.Events[currentEventIndex].Sessions[sessionType]
+			_, ok := championship.Events[currentEventIndex].Sessions[sessionType]
 
 			if !ok {
-				currentSession = &ChampionshipSession{
+				championship.Events[currentEventIndex].Sessions[sessionType] = &ChampionshipSession{
 					StartedTime: time.Now(),
 				}
-
-				championship.Events[currentEventIndex].Sessions[sessionType] = currentSession
 			}
 
 			previousSessionType := cm.activeChampionship.SessionType

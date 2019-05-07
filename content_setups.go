@@ -32,7 +32,7 @@ func ListSetups() (CarSetups, error) {
 		return nil, err
 	}
 
-	err := filepath.Walk(setupDirectory, func(path string, file os.FileInfo, err error) error {
+	err := filepath.Walk(setupDirectory, func(path string, file os.FileInfo, _ error) error {
 		if file.IsDir() || filepath.Ext(file.Name()) != ".ini" {
 			return nil
 		}
