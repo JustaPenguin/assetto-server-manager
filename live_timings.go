@@ -85,12 +85,10 @@ func LiveTimingCallback(response udp.Message) {
 			var oldDelCars map[string]*LiveCar
 
 			if len(liveInfo.Cars) != 0 {
-				oldCars = make(map[uint8]*LiveCar)
 				oldCars = liveInfo.Cars
 			}
 
 			if len(liveInfo.DeletedCars) != 0 {
-				oldDelCars = make(map[string]*LiveCar)
 				oldDelCars = liveInfo.DeletedCars
 			}
 
@@ -312,7 +310,7 @@ func LiveTimingCallback(response udp.Message) {
 				for _, liveCar := range liveInfo.Cars {
 					if liveCar.Pos == liveInfo.Cars[ID].Pos-1 {
 						if liveCar.LapNum == liveInfo.Cars[ID].LapNum {
-							liveInfo.Cars[ID].Split = time.Now().Sub(liveCar.LastLapCompleteTime).Round(time.Millisecond).String()
+							liveInfo.Cars[ID].Split = time.Since(liveCar.LastLapCompleteTime).Round(time.Millisecond).String()
 						} else {
 							liveInfo.Cars[ID].Split = strconv.Itoa(liveCar.LapNum-liveInfo.Cars[ID].LapNum) + " lap(s)"
 						}
@@ -383,8 +381,12 @@ func sendGetSessionInfoAtInterval(ctx context.Context) {
 		case <-tickChan.C:
 			err := AssettoProcess.SendUDPMessage(udp.GetSessionInfo{})
 
-			if err != nil {
-				logrus.Errorf("Couldn't send session info udp request, err: %s", err)
+			if err == ErrNoOpenUDPConnection {
+				logrus.WithError(err).Errorf("Couldn't send session info udp request. Breaking loop.")
+				tickChan.Stop()
+				return
+			} else if err != nil {
+				logrus.WithError(err).Errorf("Couldn't send session info udp request")
 			}
 		case <-ctx.Done():
 			logrus.Debugf("Closing udp request channel")
