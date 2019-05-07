@@ -36,6 +36,10 @@ var (
 	prometheusMonitoringHandler = func() http.Handler {
 		return http.NotFoundHandler()
 	}
+
+	prometheusMonitoringWrapper = func(next http.Handler) http.Handler {
+		return next
+	}
 )
 
 func InitMonitoring() {
@@ -59,6 +63,15 @@ func InitMonitoring() {
 	logrus.Infof("initialising Prometheus Monitoring")
 	prometheus.MustRegister(HTTPInFlightGauge, HTTPCounter, HTTPDuration, HTTPResponseSize, httpInFlightRequests, httpRequestCounter, dnsLatencyVec, tlsLatencyVec, histVec)
 	prometheusMonitoringHandler = promhttp.Handler
+	prometheusMonitoringWrapper = func(next http.Handler) http.Handler {
+		return promhttp.InstrumentHandlerInFlight(HTTPInFlightGauge,
+			promhttp.InstrumentHandlerDuration(HTTPDuration.MustCurryWith(prometheus.Labels{"handler": "push"}),
+				promhttp.InstrumentHandlerCounter(HTTPCounter,
+					promhttp.InstrumentHandlerResponseSize(HTTPResponseSize, next),
+				),
+			),
+		)
+	}
 }
 
 var httpInFlightRequests = prometheus.NewGauge(prometheus.GaugeOpts{
