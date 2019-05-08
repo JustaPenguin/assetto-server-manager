@@ -86,6 +86,7 @@ func Router(fs http.FileSystem) http.Handler {
 		r.Get("/championship/{championshipID}/export", exportChampionshipHandler)
 		r.Get("/championship/{championshipID}/ics", championshipICalHandler)
 		r.Get("/championship/{championshipID}/sign-up", championshipSignUpFormHandler)
+		r.Post("/championship/{championshipID}/sign-up", championshipSignUpFormHandler)
 
 		// live timings
 		r.Get("/live-timing", liveTimingHandler)

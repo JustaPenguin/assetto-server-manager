@@ -102,6 +102,38 @@ type ChampionshipSignUpForm struct {
 	AskForTeam    bool
 	HideCarChoice bool
 	ExtraFields   []string
+
+	Responses []ChampionshipSignUpResponse
+}
+
+type ChampionshipSignUpResponse struct {
+	Name      string
+	GUID      string
+	Team      string
+	Email     string
+	Car       string
+	Skin      string
+	Questions map[string]string
+}
+
+func (csr ChampionshipSignUpResponse) GetName() string {
+	return csr.Name
+}
+
+func (csr ChampionshipSignUpResponse) GetTeam() string {
+	return csr.Team
+}
+
+func (csr ChampionshipSignUpResponse) GetCar() string {
+	return csr.Car
+}
+
+func (csr ChampionshipSignUpResponse) GetSkin() string {
+	return csr.Skin
+}
+
+func (csr ChampionshipSignUpResponse) GetGUID() string {
+	return csr.GUID
 }
 
 func (c *Championship) GetPlayerSummary(guid string) string {
@@ -327,20 +359,15 @@ func (c *Championship) Progress() float64 {
 	return (numCompletedRaces / numRaces) * 100
 }
 
-var ErrClosedChampionship = errors.New("servermanager: closed championship cannot add entrants on the fly")
-
-type PotentialOpenChampionshipEntrant interface {
+type PotentialChampionshipEntrant interface {
 	GetName() string
+	GetTeam() string
 	GetCar() string
 	GetSkin() string
 	GetGUID() string
 }
 
-func (c *Championship) AddEntrantFromSessionData(potentialEntrant PotentialOpenChampionshipEntrant) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
-	if !c.OpenEntrants {
-		return false, nil, ErrClosedChampionship
-	}
-
+func (c *Championship) AddEntrantFromSessionData(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
 	classForCar, err := c.FindClassForCarModel(potentialEntrant.GetCar())
 
 	if err != nil {
@@ -376,6 +403,7 @@ classLoop:
 			entrant.GUID = potentialEntrant.GetGUID()
 			entrant.Model = potentialEntrant.GetCar()
 			entrant.Skin = potentialEntrant.GetSkin()
+			entrant.Team = potentialEntrant.GetTeam()
 
 			logrus.Infof("New championship entrant: %s (%s) has been assigned to %s in %s", entrant.Name, entrant.GUID, carNum, classForCar.Name)
 
@@ -839,7 +867,7 @@ func listChampionshipsHandler(w http.ResponseWriter, r *http.Request) {
 
 // newOrEditChampionshipHandler builds a Championship form for the user to create a Championship.
 func newOrEditChampionshipHandler(w http.ResponseWriter, r *http.Request) {
-	opts, err := championshipManager.BuildChampionshipOpts(r)
+	_, opts, err := championshipManager.BuildChampionshipOpts(r)
 
 	if err != nil {
 		logrus.Errorf("couldn't build championship form, err: %s", err)
@@ -1193,7 +1221,7 @@ func championshipTeamPenaltyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func championshipSignUpFormHandler(w http.ResponseWriter, r *http.Request) {
-	opts, err := championshipManager.BuildChampionshipOpts(r)
+	championship, opts, err := championshipManager.BuildChampionshipOpts(r)
 
 	if err != nil {
 		logrus.WithError(err).Error("couldn't load championship")
@@ -1201,11 +1229,33 @@ func championshipSignUpFormHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	championship := opts["Current"].(*Championship)
-
 	if !championship.SignUpForm.Enabled {
 		http.NotFound(w, r)
 		return
+	}
+
+	if r.Method == http.MethodPost {
+		signUpResponse, foundSlot, err := championshipManager.HandleChampionshipSignUp(r)
+
+		if err != nil {
+			switch err.(type) {
+			case ValidationError:
+				opts["FormData"] = signUpResponse
+				opts["ValidationError"] = err.Error()
+			default:
+				panic(err) // @TODO
+			}
+		} else {
+			// @TODO this should only happen if the championship has immediate approval turned ON
+			if foundSlot {
+				AddFlashQuick(w, r, "Thanks for registering for the championship!")
+				http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
+				return
+			} else {
+				opts["FormData"] = signUpResponse
+				opts["ValidationError"] = fmt.Sprintf("There are no more available slots for the car: %s. Please pick a different car.", prettifyName(signUpResponse.GetCar(), true))
+			}
+		}
 	}
 
 	ViewRenderer.MustLoadTemplate(w, r, "championships/sign-up.html", opts)

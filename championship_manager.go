@@ -3,6 +3,7 @@ package servermanager
 import (
 	"errors"
 	"fmt"
+	"github.com/haisum/recaptcha"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -93,11 +94,11 @@ func (cm *ChampionshipManager) ListChampionships() ([]*Championship, error) {
 	return champs, nil
 }
 
-func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (map[string]interface{}, error) {
+func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (championship *Championship, opts map[string]interface{}, err error) {
 	raceOpts, err := cm.BuildRaceOpts(r)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	raceOpts["DefaultPoints"] = DefaultChampionshipPoints
@@ -108,18 +109,18 @@ func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (map[strin
 	raceOpts["IsEditing"] = isEditingChampionship
 
 	if isEditingChampionship {
-		current, err := cm.LoadChampionship(championshipID)
+		championship, err = cm.LoadChampionship(championshipID)
 
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-
-		raceOpts["Current"] = current
 	} else {
-		raceOpts["Current"] = NewChampionship("")
+		championship = NewChampionship("")
 	}
 
-	return raceOpts, nil
+	raceOpts["Current"] = championship
+
+	return championship, raceOpts, nil
 }
 
 func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (championship *Championship, edited bool, err error) {
@@ -538,6 +539,10 @@ func (s sessionEntrantWrapper) GetSkin() string {
 
 func (s sessionEntrantWrapper) GetGUID() string {
 	return s.DriverGUID
+}
+
+func (s sessionEntrantWrapper) GetTeam() string {
+	return ""
 }
 
 func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, championship *Championship, currentEventIndex int) {
@@ -1046,4 +1051,59 @@ func (cm *ChampionshipManager) ModifyTeamPenalty(championshipID, classID, team s
 	}
 
 	return cm.UpsertChampionship(championship)
+}
+
+type ValidationError string
+
+func (e ValidationError) Error() string {
+	return string(e)
+}
+
+func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (response *ChampionshipSignUpResponse, foundSlot bool, err error) {
+	if err := r.ParseForm(); err != nil {
+		return nil, false, err
+	}
+
+	championship, err := cm.LoadChampionship(chi.URLParam(r, "championshipID"))
+
+	if err != nil {
+		return nil, false, err
+	}
+
+	signUpResponse := &ChampionshipSignUpResponse{
+		Name:  r.FormValue("Name"),
+		GUID:  r.FormValue("GUID"),
+		Team:  r.FormValue("Team"),
+		Email: r.FormValue("Email"),
+
+		Car:  r.FormValue("Car"),
+		Skin: r.FormValue("Skin"),
+
+		Questions: make(map[string]string),
+	}
+
+	for index, question := range championship.SignUpForm.ExtraFields {
+		signUpResponse.Questions[question] = r.FormValue(fmt.Sprintf("Question.%d", index))
+	}
+
+	if config.Championships.RecaptchaConfig.SecretKey != "" {
+		captcha := recaptcha.R{
+			Secret: config.Championships.RecaptchaConfig.SecretKey,
+		}
+
+		if !captcha.Verify(*r) {
+			return signUpResponse, false, ValidationError("Please complete the reCAPTCHA")
+		}
+	}
+
+	// check to see if there is room in the entrylist for the user in their specific car
+	foundSlot, _, err = championship.AddEntrantFromSessionData(signUpResponse)
+
+	if err != nil {
+		return signUpResponse, foundSlot, err
+	}
+
+	championship.SignUpForm.Responses = append(championship.SignUpForm.Responses, *signUpResponse)
+
+	return signUpResponse, foundSlot, cm.UpsertChampionship(championship)
 }
