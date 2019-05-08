@@ -542,6 +542,7 @@ class RaceSetup {
         this.raceLaps();
         this.showEnabledSessions();
         this.showSolSettings();
+        this.toggleOverridePassword();
 
         this.initEntrantsList();
         this.initSunAngle();
@@ -616,6 +617,22 @@ class RaceSetup {
                     }
                 }
             });
+        });
+    }
+
+    /**
+     * show the override password text field when the checkbox is modified
+     */
+    toggleOverridePassword() {
+        $("#OverridePassword").on('switchChange.bootstrapSwitch', function (event, state) {
+            let $this = $(this);
+            let $replacementPasswordElem = $this.closest(".card-body").find("#ReplacementPasswordWrapper");
+
+            if (state) {
+                $replacementPasswordElem.show();
+            } else {
+                $replacementPasswordElem.hide();
+            }
         });
     }
 

@@ -102,10 +102,15 @@ var ErrEntryListTooBig = errors.New("servermanager: EntryList exceeds MaxClients
 
 type RaceEvent interface {
 	IsChampionship() bool
+	OverrideServerPassword() bool
+	ReplacementServerPassword() string
 	EventName() string
 }
 
-type normalEvent struct{}
+type normalEvent struct {
+	OverridePassword    bool
+	ReplacementPassword string
+}
 
 func (normalEvent) IsChampionship() bool {
 	return false
@@ -113,6 +118,14 @@ func (normalEvent) IsChampionship() bool {
 
 func (normalEvent) EventName() string {
 	return ""
+}
+
+func (n normalEvent) OverrideServerPassword() bool {
+	return n.OverridePassword
+}
+
+func (n normalEvent) ReplacementServerPassword() string {
+	return n.ReplacementPassword
 }
 
 func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool, event RaceEvent) error {
@@ -144,6 +157,13 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		if len(entryList) > MaxClientsOverride {
 			return ErrEntryListTooBig
 		}
+	}
+
+	// if password override turn the password off
+	if event.OverrideServerPassword() {
+		config.GlobalServerConfig.Password = event.ReplacementServerPassword()
+	} else {
+		config.GlobalServerConfig.Password = serverOpts.Password
 	}
 
 	if config.CurrentRaceConfig.HasSession(SessionTypeBooking) {
@@ -576,6 +596,9 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 	completeConfig := ConfigIniDefault
 	completeConfig.CurrentRaceConfig = *raceConfig
 
+	overridePassword := r.FormValue("OverridePassword") == "1"
+	replacementPassword := r.FormValue("ReplacementPassword")
+
 	if customRaceID := r.FormValue("Editing"); customRaceID != "" {
 		// we are editing the race. load the previous one and overwrite it with this one
 		customRace, err := rm.raceStore.FindCustomRaceByID(customRaceID)
@@ -583,6 +606,9 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		if err != nil {
 			return err
 		}
+
+		customRace.OverridePassword = overridePassword
+		customRace.ReplacementPassword = replacementPassword
 
 		customRace.Name = r.FormValue("CustomRaceName")
 		customRace.EntryList = entryList
@@ -594,7 +620,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		schedule := r.FormValue("action") == "schedule"
 
 		// save the custom race preset
-		race, err := rm.SaveCustomRace(r.FormValue("CustomRaceName"), *raceConfig, entryList, saveAsPresetWithoutStartingRace)
+		race, err := rm.SaveCustomRace(r.FormValue("CustomRaceName"), overridePassword, replacementPassword, *raceConfig, entryList, saveAsPresetWithoutStartingRace)
 
 		if err != nil {
 			return err
@@ -716,7 +742,8 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 
 	templateIDForEditing := chi.URLParam(r, "uuid")
 	isEditing := templateIDForEditing != ""
-	var customRaceName string
+	var customRaceName, replacementPassword string
+	var overridePassword bool
 
 	if isEditing {
 		customRace, err := rm.raceStore.FindCustomRaceByID(templateIDForEditing)
@@ -728,6 +755,8 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		customRaceName = customRace.Name
 		race.CurrentRaceConfig = customRace.RaceConfig
 		entrants = customRace.EntryList
+		overridePassword = customRace.OverrideServerPassword()
+		replacementPassword = customRace.ReplacementServerPassword()
 	}
 
 	possibleEntrants, err := rm.raceStore.ListEntrants()
@@ -760,20 +789,22 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 	}
 
 	opts := map[string]interface{}{
-		"CarOpts":           cars,
-		"TrackOpts":         tracks,
-		"AvailableSessions": AvailableSessions,
-		"Weather":           weather,
-		"SolIsInstalled":    solIsInstalled,
-		"Current":           race.CurrentRaceConfig,
-		"CurrentEntrants":   entrants,
-		"PossibleEntrants":  possibleEntrants,
-		"FixedSetups":       fixedSetups,
-		"IsChampionship":    false, // this flag is overridden by championship setup
-		"IsEditing":         isEditing,
-		"EditingID":         templateIDForEditing,
-		"CustomRaceName":    customRaceName,
-		"SurfacePresets":    DefaultTrackSurfacePresets,
+		"CarOpts":             cars,
+		"TrackOpts":           tracks,
+		"AvailableSessions":   AvailableSessions,
+		"Weather":             weather,
+		"SolIsInstalled":      solIsInstalled,
+		"Current":             race.CurrentRaceConfig,
+		"CurrentEntrants":     entrants,
+		"PossibleEntrants":    possibleEntrants,
+		"FixedSetups":         fixedSetups,
+		"IsChampionship":      false, // this flag is overridden by championship setup
+		"IsEditing":           isEditing,
+		"EditingID":           templateIDForEditing,
+		"CustomRaceName":      customRaceName,
+		"SurfacePresets":      DefaultTrackSurfacePresets,
+		"OverridePassword":    overridePassword,
+		"ReplacementPassword": replacementPassword,
 	}
 
 	err = rm.applyCurrentRaceSetupToOptions(opts, race.CurrentRaceConfig)
@@ -843,7 +874,9 @@ func (rm *RaceManager) SaveEntrantsForAutoFill(entryList EntryList) error {
 	return nil
 }
 
-func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, entryList EntryList, starred bool) (*CustomRace, error) {
+func (rm *RaceManager) SaveCustomRace(name string, overridePassword bool, replacementPassword string,
+	config CurrentRaceConfig, entryList EntryList, starred bool) (*CustomRace, error) {
+
 	hasCustomRaceName := true
 
 	if name == "" {
@@ -868,11 +901,13 @@ func (rm *RaceManager) SaveCustomRace(name string, config CurrentRaceConfig, ent
 	}
 
 	race := &CustomRace{
-		Name:          name,
-		HasCustomName: hasCustomRaceName,
-		Created:       time.Now(),
-		UUID:          uuid.New(),
-		Starred:       starred,
+		Name:                name,
+		HasCustomName:       hasCustomRaceName,
+		OverridePassword:    overridePassword,
+		ReplacementPassword: replacementPassword,
+		Created:             time.Now(),
+		UUID:                uuid.New(),
+		Starred:             starred,
 
 		RaceConfig: config,
 		EntryList:  entryList,

@@ -11,6 +11,7 @@ Added:
   in the config.yml.
 * Improved 'Reverse Grid' text to explain what happens if the value is set to '1' (a 2nd Race will take place with the grid formed from the 1st Race's Results)
 * You can now import Championship results for second races.
+* Individual events (custom races and championships) can now override the global server password setting.
 
 Fixes:
 
