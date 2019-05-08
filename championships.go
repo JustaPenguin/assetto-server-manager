@@ -97,10 +97,11 @@ type Championship struct {
 }
 
 type ChampionshipSignUpForm struct {
-	Enabled     bool
-	AskForEmail bool
-	AskForTeam  bool
-	ExtraFields []string
+	Enabled       bool
+	AskForEmail   bool
+	AskForTeam    bool
+	HideCarChoice bool
+	ExtraFields   []string
 }
 
 func (c *Championship) GetPlayerSummary(guid string) string {
