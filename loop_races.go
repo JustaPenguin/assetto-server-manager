@@ -16,50 +16,46 @@ func LoopRaces() {
 	var i int
 	ticker := time.NewTicker(30 * time.Second)
 
-	for {
-		select {
-		case <-ticker.C:
-			currentRace, _ := raceManager.CurrentRace()
+	for range ticker.C {
+		currentRace, _ := raceManager.CurrentRace()
 
-			if currentRace != nil {
-				break
+		if currentRace != nil {
+			break
+		}
+
+		_, _, looped, _, err := raceManager.ListCustomRaces()
+
+		if err != nil {
+			logrus.Errorf("couldn't list custom races, err: %s", err)
+			return
+		}
+
+		if looped != nil {
+			if i >= len(looped) {
+				i = 0
 			}
 
-			_, _, looped, _, err := raceManager.ListCustomRaces()
+			// Reset the stored session types
+			sessionTypes = []SessionType{}
+
+			for sessionID := range looped[i].RaceConfig.Sessions {
+				sessionTypes = append(sessionTypes, sessionID)
+			}
+
+			if looped[i].RaceConfig.ReversedGridRacePositions != 0 {
+				sessionTypes = append(sessionTypes, SessionTypeSecondRace)
+			}
+
+			err := raceManager.StartCustomRace(looped[i].UUID.String(), true)
 
 			if err != nil {
-				logrus.Errorf("couldn't list custom races, err: %s", err)
+				logrus.Errorf("couldn't start auto loop custom race, err: %s", err)
 				return
 			}
 
-			if looped != nil {
-				if i >= len(looped) {
-					i = 0
-				}
-
-				// Reset the stored session types
-				sessionTypes = []SessionType{}
-
-				for sessionID := range looped[i].RaceConfig.Sessions {
-					sessionTypes = append(sessionTypes, sessionID)
-				}
-
-				if looped[i].RaceConfig.ReversedGridRacePositions != 0 {
-					sessionTypes = append(sessionTypes, SessionTypeSecondRace)
-				}
-
-				err := raceManager.StartCustomRace(looped[i].UUID.String(), true)
-
-				if err != nil {
-					logrus.Errorf("couldn't start auto loop custom race, err: %s", err)
-					return
-				}
-
-				i++
-			}
+			i++
 		}
 	}
-
 }
 
 // callback check for udp end session, load result file, check session type against sessionTypes

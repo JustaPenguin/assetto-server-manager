@@ -35,6 +35,10 @@ func main() {
 		return
 	}
 
+	if config.Monitoring.Enabled {
+		servermanager.InitMonitoring()
+	}
+
 	store, err := config.Store.BuildStore()
 
 	if err != nil {
@@ -106,7 +110,9 @@ func main() {
 		_ = browser.OpenURL("http://" + strings.Replace(config.HTTP.Hostname, "0.0.0.0", "127.0.0.1", 1))
 	}
 
-	if err := http.Serve(listener, servermanager.Router(filesystem)); err != nil {
+	router := servermanager.Router(filesystem)
+
+	if err := http.Serve(listener, router); err != nil {
 		logrus.Fatal(err)
 	}
 }

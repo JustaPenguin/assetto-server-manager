@@ -33,6 +33,21 @@
                 </div>
 
                 <div class="form-group row">
+                    <label for="SecondRaceResult" class="col-sm-3 col-form-label"><strong>Second</strong> Race Result File</label>
+
+                    <div class="col-sm-9">
+                        <select name="SecondRaceResult" id="SecondRaceResult" class="form-control">
+                            <option value="">none</option>
+                            {{ range $index, $result := .Results }}
+                                {{ if eq $result.Type "RACE" }}
+                                    <option value="{{ $result.SessionFile }}">{{ $result.TrackName }} ({{ $result.TrackConfig }}) on {{ $result.Date }}</option>
+                                {{ end }}
+                            {{ end }}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group row">
                     <label for="QualifyingResult" class="col-sm-3 col-form-label">Qualifying Result File</label>
 
                     <div class="col-sm-9">
