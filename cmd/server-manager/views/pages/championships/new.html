@@ -81,6 +81,23 @@
                     </div>
                 </div>
 
+                <div class="form-group row">
+                    <label for="ChampionshipSignUpFormEnabled" class="col-sm-3 col-form-label">Sign Up Form</label>
+
+                    <div class="col-sm-9">
+                        <input type="checkbox" class="form-control" id="ChampionshipSignUpFormEnabled" name="ChampionshipSignUpFormEnabled"
+                               {{ if $f.SignUpFormEnabled }} checked="checked" {{ end }}><br><br>
+
+                        <small>
+                            Allow anyone to access a Sign Up form where they can register to be added into the EntryList of a Championship.
+
+                            <!-- @TODO RECAPTCHA PROMPT -->
+
+
+                        </small>
+                    </div>
+                </div>
+
                 {{ if .IsEditing }}{{ with .Current.Info }}<div class="d-none" id="ChampionshipInfoHolder">{{ . }}</div>{{ end }}{{ end }}
 
                 <div class="form-group row">

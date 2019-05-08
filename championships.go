@@ -88,6 +88,10 @@ type Championship struct {
 	// can omit names/GUIDs/teams as necessary. These can then be edited after the fact.
 	OpenEntrants bool
 
+	// SignUpFormEnabled gives anyone on the web access to a Championship Sign Up Form so that they can
+	// mark themselves for participation in this Championship.
+	SignUpFormEnabled bool
+
 	Classes []*ChampionshipClass
 	Events  []*ChampionshipEvent
 }
@@ -1119,4 +1123,23 @@ func championshipTeamPenaltyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func championshipSignUpFormHandler(w http.ResponseWriter, r *http.Request) {
+	opts, err := championshipManager.BuildChampionshipOpts(r)
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't load championship")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	championship := opts["Current"].(*Championship)
+
+	if !championship.SignUpFormEnabled {
+		http.NotFound(w, r)
+		return
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "championships/sign-up.html", opts)
 }

@@ -1,0 +1,101 @@
+
+
+{{ define "title" }}{{ $.Current.Name }}{{ end }}
+
+{{ define "content" }}
+    {{ $championship := $.Current }}
+    <h1 class="text-center">
+        {{ $championship.Name }}
+    </h1>
+
+    {{ with $championship.Info }}
+        <div class="card mt-3 border-secondary">
+            <div class="card-header">
+                <strong>About Championship</strong>
+            </div>
+
+            <div class="card-body">
+                {{ $championship.Info }}
+            </div>
+        </div>
+    {{ end }}
+
+    <form action="/championships/{{ $championship.ID.String }}/sign-up" method="post" id="championship-signup-form" data-safe-submit>
+
+        <div class="card mt-3 border-secondary">
+            <div class="card-header">
+                <strong>Your Details</strong>
+            </div>
+
+            <div class="card-body">
+                <div class="form-group row">
+                    <label for="Name" class="col-sm-3 col-form-label">Name</label>
+
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="Name" name="Name" required
+                               placeholder="Jimmy Bob">
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="Team" class="col-sm-3 col-form-label">Team</label>
+
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="Team" name="Team"
+                               placeholder="The Fast Team">
+
+                        <small>You may leave the team name blank.</small>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="GUID" class="col-sm-3 col-form-label">Steam GUID</label>
+
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="GUID" name="GUID"
+                               placeholder="">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3 border-secondary" id="entrants">
+            <div class="card-header">
+                <strong>Your Car</strong>
+            </div>
+
+            <div class="card-body">
+                <div class="form-group row">
+                    <label for="Car" class="col-sm-3 col-form-label">Car</label>
+
+                    <div class="col-sm-9">
+                        <select name="Car" id="Car" class="form-control entryListCar">
+                            {{ range $index, $class := $championship.Classes }}
+                                <optgroup label="{{ $class.Name }}">
+                                    {{ range $index, $car := $class.ValidCarIDs }}
+                                        <option value="{{ $car }}">{{ prettify $car true }}</option>
+                                    {{ end }}
+                                </optgroup>
+                            {{ end }}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="Skin" class="col-sm-3 col-form-label">Skin</label>
+
+                    <div class="col-sm-9">
+                        <select name="Skin" id="Skin" class="form-control entryListSkin"></select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+
+
+    <script type="text/javascript">
+        const availableCars = {{ jsonEncode .CarOpts.AsMap }};
+    </script>
+{{ end }}
