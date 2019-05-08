@@ -32,6 +32,10 @@ type SessionResults struct {
 	ChampionshipID string           `json:"ChampionshipID"`
 }
 
+func (s *SessionResults) GetURL() string {
+	return config.HTTP.BaseURL + "/results/download/" + s.SessionFile + ".json"
+}
+
 func (s *SessionResults) GetCrashes(guid string) int {
 	var num int
 

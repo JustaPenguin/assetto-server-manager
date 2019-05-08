@@ -353,6 +353,10 @@
                         Export
                     </a>
 
+                    <a class="dropdown-item" id="simres-group" target="_blank" href="/championship/{{ $championship.ID.String }}/export-results">
+                        View in Simresults
+                    </a>
+
                     {{ if $championship.HasScheduledEvents }}
                         <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/ics">
                             Subscribe to Calendar Feed
