@@ -898,6 +898,52 @@ func exportChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(championship)
 }
 
+type championshipResultsCollection struct {
+	Name    string                `json:"name"`
+	Results []championshipResults `json:"results"`
+}
+
+type championshipResults struct {
+	Name string   `json:"name"`
+	Log  []string `json:"log"`
+}
+
+// exportChampionshipResults returns championship result files in JSON format.
+func exportChampionshipResultsHandler(w http.ResponseWriter, r *http.Request) {
+	championship, err := championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
+
+	if err != nil {
+		logrus.Errorf("couldn't export championship, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	var results []championshipResults
+
+	for _, event := range championship.Events {
+
+		var sessionFiles []string
+
+		for _, session := range event.Sessions {
+			sessionFiles = append(sessionFiles, session.Results.GetFilePath())
+		}
+
+		results = append(results, championshipResults{
+			Name: "Event at " + prettifyName(event.RaceSetup.Track, false) + ", completed on " + event.CompletedTime.Format("Monday, January 2, 2006 3:04 PM (MST)"),
+			Log:  sessionFiles,
+		})
+	}
+
+	champResultsCollection := championshipResultsCollection{
+		Name:    championship.Name,
+		Results: results,
+	}
+
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	enc.Encode(champResultsCollection)
+}
+
 // deleteChampionshipHandler soft deletes a Championship.
 func deleteChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 	err := championshipManager.DeleteChampionship(chi.URLParam(r, "championshipID"))
