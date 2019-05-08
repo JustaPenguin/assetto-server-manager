@@ -625,16 +625,12 @@ class RaceSetup {
      */
     toggleOverridePassword() {
         $("#OverridePassword").on('switchChange.bootstrapSwitch', function (event, state) {
-            console.log("switch");
-
             let $this = $(this);
             let $replacementPasswordElem = $this.closest(".card-body").find("#ReplacementPasswordWrapper");
 
             if (state) {
-                console.log("show");
                 $replacementPasswordElem.show();
             } else {
-                console.log("hide");
                 $replacementPasswordElem.hide();
             }
         });
