@@ -7,6 +7,10 @@ Added:
   in the Assetto Corsa server lobby.
 * You can now add custom CSS to your server manager install from the Server Options!
 * You can now add points penalties to Championship Drivers and Teams.
+* Added monitoring and analytics. This will help us keep better track of issues in Server Manager. You can disable this
+  in the config.yml.
+* Improved 'Reverse Grid' text to explain what happens if the value is set to '1' (a 2nd Race will take place with the grid formed from the 1st Race's Results)
+* You can now import Championship results for second races.
 
 Fixes:
 
@@ -14,7 +18,9 @@ Fixes:
 * Imported Championship Events now correctly link to their original results files, meaning that penalties carry across
   to Championships when applied in the results pages.
 * Fixes a bug where penalties would not correctly apply to some Championship Events.
-
+* Fixes an issue where Looped Races could hang at the end of a race rather than continuing to the next Looped Race.
+* Open Championships will now correctly set up Entrants (and results tables) when importing results files that have new
+  Entrants in them.
 
 v1.2.2
 ------

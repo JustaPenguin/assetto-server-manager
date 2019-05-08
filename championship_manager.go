@@ -462,7 +462,7 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 
 	if action == "add" {
 		// add a scheduled event on date
-		duration := date.Sub(time.Now())
+		duration := time.Until(date)
 
 		ChampionshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
 			err := cm.StartEvent(championship.ID.String(), event.ID.String())
@@ -508,6 +508,24 @@ func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
 	cm.handleSessionChanges(message, championship, currentEventIndex)
 }
 
+type sessionEntrantWrapper udp.SessionCarInfo
+
+func (s sessionEntrantWrapper) GetName() string {
+	return s.DriverName
+}
+
+func (s sessionEntrantWrapper) GetCar() string {
+	return s.CarModel
+}
+
+func (s sessionEntrantWrapper) GetSkin() string {
+	return s.CarSkin
+}
+
+func (s sessionEntrantWrapper) GetGUID() string {
+	return s.DriverGUID
+}
+
 func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, championship *Championship, currentEventIndex int) {
 	if championship.Events[currentEventIndex].Completed() {
 		logrus.Infof("Event is complete. Ignoring messages")
@@ -545,59 +563,18 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 
 		if championship.OpenEntrants && a.Event() == udp.EventNewConnection {
 			// a person joined, check to see if they need adding to the championship
-
-			// find the class for the car
-			classForCar, err := championship.FindClassForCarModel(a.CarModel)
+			foundSlot, classForCar, err := championship.AddEntrantFromSessionData(sessionEntrantWrapper(a))
 
 			if err != nil {
 				saveChampionship = false
-				logrus.Errorf("Could not find class for car: %s in championship", a.CarModel)
+				logrus.WithError(err).WithField("entrant", a).Errorf("could not add entrant to open championship")
 
 				return
 			}
 
-		classLoop:
-			for _, class := range championship.Classes {
-				for entrantKey, entrant := range class.Entrants {
-					if entrant.GUID == a.DriverGUID {
-						if class == classForCar {
-							// the person is already in the EntryList and this class, update their information
-							logrus.Debugf("Entrant: %s (%s) already found in EntryList. updating their info...", a.DriverName, a.DriverGUID)
-							entrant.Model = a.CarModel
-							entrant.Skin = a.CarSkin
+			saveChampionship = foundSlot
 
-							saveChampionship = true
-							return
-						} else {
-							// the user needs removing from this class
-							logrus.Infof("Entrant: %s (%s) found in EntryList, but changed classes (%s -> %s). removing from original class.", a.DriverName, a.DriverGUID, class.Name, classForCar.Name)
-							delete(class.Entrants, entrantKey)
-							break classLoop
-						}
-					}
-				}
-			}
-
-			foundFreeEntrantSlot := false
-
-			// now look for empty Entrants in the Entrylist
-			for carNum, entrant := range classForCar.Entrants {
-				if entrant.Name == "" && entrant.GUID == "" {
-					entrant.Name = a.DriverName
-					entrant.GUID = a.DriverGUID
-					entrant.Model = a.CarModel
-					entrant.Skin = a.CarSkin
-
-					logrus.Infof("New championship entrant: %s (%s) has been assigned to %s in %s", entrant.Name, entrant.GUID, carNum, classForCar.Name)
-
-					foundFreeEntrantSlot = true
-
-					break
-				}
-			}
-
-			if !foundFreeEntrantSlot {
-				saveChampionship = false
+			if !foundSlot {
 				logrus.Errorf("Could not find free entrant slot in class: %s for %s (%s)", classForCar.Name, a.DriverName, a.DriverGUID)
 				return
 			}
@@ -675,14 +652,12 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 				cm.activeChampionship.NumRaceStartEvents++
 			}
 
-			currentSession, ok := championship.Events[currentEventIndex].Sessions[sessionType]
+			_, ok := championship.Events[currentEventIndex].Sessions[sessionType]
 
 			if !ok {
-				currentSession = &ChampionshipSession{
+				championship.Events[currentEventIndex].Sessions[sessionType] = &ChampionshipSession{
 					StartedTime: time.Now(),
 				}
-
-				championship.Events[currentEventIndex].Sessions[sessionType] = currentSession
 			}
 
 			previousSessionType := cm.activeChampionship.SessionType
@@ -905,64 +880,52 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 
 	event.Sessions = make(map[SessionType]*ChampionshipSession)
 
-	if practiceFile := r.FormValue("PracticeResult"); practiceFile != "" {
-		results, err := LoadResult(practiceFile + ".json")
-
-		if err != nil {
-			return err
-		}
-
-		championship.EnhanceResults(results)
-
-		if err := saveResults(practiceFile+".json", results); err != nil {
-			return err
-		}
-
-		event.Sessions[SessionTypePractice] = &ChampionshipSession{
-			StartedTime:   results.Date.Add(-time.Minute * 30),
-			CompletedTime: results.Date,
-			Results:       results,
-		}
-
-		event.CompletedTime = results.Date
+	sessions := map[SessionType]string{
+		SessionTypePractice:   r.FormValue("PracticeResult"),
+		SessionTypeQualifying: r.FormValue("QualifyingResult"),
+		SessionTypeRace:       r.FormValue("RaceResult"),
+		SessionTypeSecondRace: r.FormValue("SecondRaceResult"),
 	}
 
-	if qualifyingFile := r.FormValue("QualifyingResult"); qualifyingFile != "" {
-		results, err := LoadResult(qualifyingFile + ".json")
+	for sessionType, sessionFile := range sessions {
+		if sessionFile == "" {
+			continue
+		}
+
+		results, err := LoadResult(sessionFile + ".json")
 
 		if err != nil {
 			return err
 		}
 
+		if championship.OpenEntrants {
+			// if the championship is open, we might have entrants in this session file who have not
+			// raced in this championship before. add them to the championship as they would be added
+			// if they joined during a race.
+			for _, car := range results.Cars {
+				if car.GetGUID() == "" {
+					continue
+				}
+
+				foundFreeSlot, _, err := championship.AddEntrantFromSessionData(car)
+
+				if err != nil {
+					return err
+				}
+
+				if !foundFreeSlot {
+					logrus.WithField("car", car).Warn("Could not add entrant to championship. No free slot found")
+				}
+			}
+		}
+
 		championship.EnhanceResults(results)
 
-		if err := saveResults(qualifyingFile+".json", results); err != nil {
+		if err := saveResults(sessionFile+".json", results); err != nil {
 			return err
 		}
 
-		event.Sessions[SessionTypeQualifying] = &ChampionshipSession{
-			StartedTime:   results.Date.Add(-time.Minute * 30),
-			CompletedTime: results.Date,
-			Results:       results,
-		}
-
-		event.CompletedTime = results.Date
-	}
-
-	if raceFile := r.FormValue("RaceResult"); raceFile != "" {
-		results, err := LoadResult(raceFile + ".json")
-
-		if err != nil {
-			return err
-		}
-
-		championship.EnhanceResults(results)
-
-		if err := saveResults(raceFile+".json", results); err != nil {
-			return err
-		}
-
-		event.Sessions[SessionTypeRace] = &ChampionshipSession{
+		event.Sessions[sessionType] = &ChampionshipSession{
 			StartedTime:   results.Date.Add(-time.Minute * 30),
 			CompletedTime: results.Date,
 			Results:       results,

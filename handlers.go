@@ -47,15 +47,17 @@ func init() {
 	logrus.SetOutput(logMultiWriter)
 }
 
-func Router(fs http.FileSystem) chi.Router {
+func Router(fs http.FileSystem) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(middleware.Recoverer)
+	r.Use(panicHandler)
 
 	r.HandleFunc("/login", loginHandler)
 	r.HandleFunc("/logout", logoutHandler)
+	r.Handle("/metrics", prometheusMonitoringHandler())
+	r.Mount("/debug/", middleware.Profiler())
 
 	// readers
 	r.Group(func(r chi.Router) {
@@ -183,7 +185,7 @@ func Router(fs http.FileSystem) chi.Router {
 
 	FileServer(r, "/static", fs)
 
-	return r
+	return prometheusMonitoringWrapper(r)
 }
 
 func FileServer(r chi.Router, path string, root http.FileSystem) {
@@ -194,7 +196,7 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 	fs := http.StripPrefix(path, http.FileServer(root))
 
 	if path != "/" && path[len(path)-1] != '/' {
-		r.Get(path, http.RedirectHandler(path+"/", 301).ServeHTTP)
+		r.Get(path, http.RedirectHandler(path+"/", http.StatusMovedPermanently).ServeHTTP)
 		path += "/"
 	}
 	path += "*"
@@ -492,6 +494,4 @@ func liveFrameSaveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
-
-	return
 }
