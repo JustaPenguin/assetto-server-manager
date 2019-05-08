@@ -21,6 +21,14 @@ $(document).ready(function () {
         return false
     });
 
+    $document.find("#simres-group").each(function (index, elem) {
+        let link = window.location.href + "/export-results";
+
+        $(elem).attr('href', "http://simresults.net/remote?result=" + link);
+
+        return false
+    });
+
     serverLogs.init();
     liveTiming.init();
     liveMap.init();
