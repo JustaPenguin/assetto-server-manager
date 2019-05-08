@@ -927,7 +927,7 @@
                                         <div class="sol-settings" {{ if not $f.IsSol }} style="display: none;" {{ end }}>
 
                                             <div class="form-group row">
-                                                <label class="col-sm-3 col-form-label col-form-label-sm">Session Start Date/Time</label>
+                                                <label class="col-sm-3 col-form-label col-form-label-sm">Session Start Date/Time (<span class='timezone'></span>)</label>
 
                                                 <div class="col-sm-9 p-0" id='date-time-picker'>
                                                     <input
@@ -939,6 +939,8 @@
                                                     >
                                                 </div>
                                             </div>
+
+                                            <input type='hidden' name="sol-timezone" class="sol-timezone">
 
                                             <div class="form-group row">
                                                 <label class="col-sm-3 col-form-label col-form-label-sm">Time Progression Multiplier</label>
@@ -1129,7 +1131,7 @@
                                 class="form-control"
                                 value="{{ $f.DamageMultiplier }}"
                                 min="0"
-                                min="100"
+                                max="100"
                                 step="1"
                         >
 
