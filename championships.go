@@ -71,11 +71,13 @@ func NewChampionship(name string) *Championship {
 // A Championship is a collection of ChampionshipEvents for a group of Entrants. Each Entrant in a Championship
 // is awarded Points for their position in a ChampionshipEvent.
 type Championship struct {
-	ID      uuid.UUID
-	Name    string
-	Created time.Time
-	Updated time.Time
-	Deleted time.Time
+	ID                  uuid.UUID
+	Name                string
+	Created             time.Time
+	Updated             time.Time
+	Deleted             time.Time
+	OverridePassword    bool
+	ReplacementPassword string
 
 	// Raw html can be attached to championships, used to share tracks/cars etc.
 	Info template.HTML
