@@ -83,42 +83,45 @@
             </div>
         </div>
 
-        <div class="card mt-3 border-secondary" id="entrants">
-            <div class="card-header">
-                <strong>Your Car</strong>
-            </div>
+        {{ if not $championship.SignUpForm.HideCarChoice }}
+            <div class="card mt-3 border-secondary" id="entrants">
+                <div class="card-header">
+                    <strong>Your Car</strong>
+                </div>
 
-            <div class="card-body row">
-                <div class="col-sm-8">
-                    <div class="form-group row">
-                        <label for="Car" class="col-sm-3 col-form-label">Car</label>
+                <div class="card-body row">
+                    <div class="col-sm-8">
+                        <div class="form-group row">
+                            <label for="Car" class="col-sm-3 col-form-label">Car</label>
 
-                        <div class="col-sm-9">
-                            <select name="Car" id="Car" class="form-control entryListCar">
-                                {{ range $index, $class := $championship.Classes }}
-                                    <optgroup label="{{ $class.Name }}">
-                                        {{ range $index, $car := $class.ValidCarIDs }}
-                                            <option value="{{ $car }}">{{ prettify $car true }}</option>
-                                        {{ end }}
-                                    </optgroup>
-                                {{ end }}
-                            </select>
+                            <div class="col-sm-9">
+                                <select name="Car" id="Car" class="form-control entryListCar">
+                                    {{ range $index, $class := $championship.Classes }}
+                                        <optgroup label="{{ $class.Name }}">
+                                            {{ range $index, $car := $class.ValidCarIDs }}
+                                                <option value="{{ $car }}">{{ prettify $car true }}</option>
+                                            {{ end }}
+                                        </optgroup>
+                                    {{ end }}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="Skin" class="col-sm-3 col-form-label">Skin</label>
+
+                            <div class="col-sm-9">
+                                <select name="Skin" id="Skin" class="form-control entryListSkin"></select>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-group row">
-                        <label for="Skin" class="col-sm-3 col-form-label">Skin</label>
-
-                        <div class="col-sm-9">
-                            <select name="Skin" id="Skin" class="form-control entryListSkin"></select>
-                        </div>
+                    <div class="col-sm-4">
+                        <img class="img img-fluid entryListCarPreview" src="/static/img/no-preview-car.png" alt="Car Preview" id="CarPreview">
                     </div>
                 </div>
-                <div class="col-sm-4">
-                    <img class="img img-fluid entryListCarPreview" src="/static/img/no-preview-car.png" alt="Car Preview" id="CarPreview">
-                </div>
             </div>
-        </div>
+        {{ end }}
 
         {{ if gt (len $championship.SignUpForm.ExtraFields) 0 }}
             <div class="card mt-3 border-secondary" id="entrants">

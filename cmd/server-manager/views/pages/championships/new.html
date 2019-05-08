@@ -160,6 +160,20 @@
 
 
                     <div class="form-group row">
+                        <label for="Championship.SignUpForm.HideCarChoice" class="col-sm-3 col-form-label">Let users choose car?</label>
+
+                        <div class="col-sm-9">
+                            <input type="checkbox" id="Championship.SignUpForm.HideCarChoice" name="Championship.SignUpForm.HideCarChoice"
+                                    {{ if not $f.SignUpForm.HideCarChoice }} checked="checked" {{ end }}><br><br>
+
+                            <small>
+                                Lets users control which car and skin they want to drive.
+                            </small>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group row">
                         <label for="Championship.SignUpForm.ExtraFields" class="col-sm-3 col-form-label">Extra Questions</label>
 
                         <div class="col-sm-9">
