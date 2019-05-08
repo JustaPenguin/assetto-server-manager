@@ -927,7 +927,7 @@
                                         <div class="sol-settings" {{ if not $f.IsSol }} style="display: none;" {{ end }}>
 
                                             <div class="form-group row">
-                                                <label class="col-sm-3 col-form-label col-form-label-sm">Session Start Date/Time</label>
+                                                <label class="col-sm-3 col-form-label col-form-label-sm">Session Start Date/Time (<span class='timezone'></span>)</label>
 
                                                 <div class="col-sm-9 p-0" id='date-time-picker'>
                                                     <input
@@ -939,6 +939,8 @@
                                                     >
                                                 </div>
                                             </div>
+
+                                            <input type='hidden' name="sol-timezone" class="sol-timezone">
 
                                             <div class="form-group row">
                                                 <label class="col-sm-3 col-form-label col-form-label-sm">Time Progression Multiplier</label>
@@ -1129,7 +1131,7 @@
                                 class="form-control"
                                 value="{{ $f.DamageMultiplier }}"
                                 min="0"
-                                min="100"
+                                max="100"
                                 step="1"
                         >
 
@@ -1460,6 +1462,42 @@
                             >
 
                             <small>The name above will be used on the Custom Races page.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="OverridePassword" class="col-sm-3 col-form-label">Override Server Password</label>
+
+                        <div class="col-sm-9">
+
+                            <input
+                                    class="form-control"
+                                    type="checkbox"
+                                    id="OverridePassword"
+                                    name="OverridePassword"
+                                    {{ if .OverridePassword }}
+                                        checked="checked"
+                                    {{ end }}
+                            >
+
+                            <small>If enabled then the server password will be replaced for this event.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group row" id="ReplacementPasswordWrapper" {{ if not .OverridePassword }} style="display: none;" {{ end }}>
+                        <label for="ReplacementPassword" class="col-sm-3 col-form-label">Replacement Password</label>
+
+                        <div class="col-sm-9">
+
+                            <input
+                                    class="form-control"
+                                    type="password"
+                                    id="ReplacementPassword"
+                                    name="ReplacementPassword"
+                                    value="{{ .ReplacementPassword }}"
+                            >
+
+                            <small>If left empty then the server will have no password.</small>
                         </div>
                     </div>
 

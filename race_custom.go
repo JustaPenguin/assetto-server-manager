@@ -11,8 +11,9 @@ import (
 )
 
 type CustomRace struct {
-	Name          string
-	HasCustomName bool
+	Name                            string
+	HasCustomName, OverridePassword bool
+	ReplacementPassword             string
 
 	Created       time.Time
 	Updated       time.Time
@@ -31,6 +32,14 @@ func (cr *CustomRace) EventName() string {
 	} else {
 		return ""
 	}
+}
+
+func (cr *CustomRace) OverrideServerPassword() bool {
+	return cr.OverridePassword
+}
+
+func (cr *CustomRace) ReplacementServerPassword() string {
+	return cr.ReplacementPassword
 }
 
 func (cr *CustomRace) IsChampionship() bool {
