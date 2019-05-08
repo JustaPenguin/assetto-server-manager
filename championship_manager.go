@@ -35,6 +35,8 @@ type ActiveChampionship struct {
 	Name                    string
 	ChampionshipID, EventID uuid.UUID
 	SessionType             SessionType
+	OverridePassword        bool
+	ReplacementPassword     string
 
 	loadedEntrants map[udp.CarID]udp.SessionCarInfo
 
@@ -44,6 +46,14 @@ type ActiveChampionship struct {
 
 func (a *ActiveChampionship) IsChampionship() bool {
 	return true
+}
+
+func (a *ActiveChampionship) OverrideServerPassword() bool {
+	return a.OverridePassword
+}
+
+func (a *ActiveChampionship) ReplacementServerPassword() string {
+	return a.ReplacementPassword
 }
 
 func (a *ActiveChampionship) EventName() string {
@@ -164,6 +174,8 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	}
 
 	championship.Info = template.HTML(r.FormValue("ChampionshipInfo"))
+	championship.OverridePassword = r.FormValue("OverridePassword") == "1"
+	championship.ReplacementPassword = r.FormValue("ReplacementPassword")
 
 	previousNumEntrants := 0
 	previousNumPoints := 0
@@ -413,7 +425,10 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 
 	config.CurrentRaceConfig = raceSetup
 
-	return cm.RaceManager.applyConfigAndStart(config, event.CombineEntryLists(championship), false, normalEvent{})
+	return cm.RaceManager.applyConfigAndStart(config, event.CombineEntryLists(championship), false, normalEvent{
+		OverridePassword:    championship.OverridePassword,
+		ReplacementPassword: championship.ReplacementPassword,
+	})
 }
 
 func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string) error {
@@ -439,9 +454,11 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 
 	// track that this is the current event
 	return cm.applyConfigAndStart(config, event.CombineEntryLists(championship), &ActiveChampionship{
-		ChampionshipID: championship.ID,
-		EventID:        event.ID,
-		Name:           championship.Name,
+		ChampionshipID:      championship.ID,
+		EventID:             event.ID,
+		Name:                championship.Name,
+		OverridePassword:    championship.OverridePassword,
+		ReplacementPassword: championship.ReplacementPassword,
 	})
 }
 
