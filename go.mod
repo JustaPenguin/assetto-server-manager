@@ -15,6 +15,7 @@ require (
 	github.com/gopherjs/gopherjs v0.0.0-20190309154008-847fc94819f9 // indirect
 	github.com/gorilla/sessions v1.1.3
 	github.com/gorilla/websocket v1.4.0
+	github.com/haisum/recaptcha v0.0.0-20170327142240-7d3b8053900e
 	github.com/heindl/caldav-go v0.0.0-20160315204950-22453f8a38b5
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
