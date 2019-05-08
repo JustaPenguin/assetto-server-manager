@@ -21,6 +21,14 @@ $(document).ready(function () {
         return false
     });
 
+    $document.find("#simres-group").each(function (index, elem) {
+        let link = window.location.href + "/export-results";
+
+        $(elem).attr('href', "http://simresults.net/remote?result=" + link);
+
+        return false
+    });
+
     serverLogs.init();
     liveTiming.init();
     liveMap.init();
@@ -54,6 +62,7 @@ $(document).ready(function () {
 
     $(".timezone").text(timezone);
     $(".event-schedule-timezone").val(timezone);
+    $(".sol-timezone").val(timezone);
 
     $document.find(".row-link").click(function () {
         window.location = $(this).data("href");
@@ -542,6 +551,7 @@ class RaceSetup {
         this.raceLaps();
         this.showEnabledSessions();
         this.showSolSettings();
+        this.toggleOverridePassword();
 
         this.initEntrantsList();
         this.initSunAngle();
@@ -616,6 +626,22 @@ class RaceSetup {
                     }
                 }
             });
+        });
+    }
+
+    /**
+     * show the override password text field when the checkbox is modified
+     */
+    toggleOverridePassword() {
+        $("#OverridePassword").on('switchChange.bootstrapSwitch', function (event, state) {
+            let $this = $(this);
+            let $replacementPasswordElem = $this.closest(".card-body").find("#ReplacementPasswordWrapper");
+
+            if (state) {
+                $replacementPasswordElem.show();
+            } else {
+                $replacementPasswordElem.hide();
+            }
         });
     }
 
