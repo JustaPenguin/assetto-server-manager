@@ -536,7 +536,16 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 				VariationRoad:          formValueAsInt(r.Form["VariationRoad"][i]),
 			})
 		} else {
-			startTime, err := time.Parse("2006-01-02T15:04", r.Form["DateUnix"][i])
+			timezone := r.FormValue("sol-timezone")
+
+			location, err := time.LoadLocation(timezone)
+
+			if err != nil {
+				logrus.WithError(err).Errorf("could not find location: %s", location)
+				location = time.Local
+			}
+
+			startTime, err := time.ParseInLocation("2006-01-02T15:04", r.Form["DateUnix"][i], location)
 
 			if err != nil {
 				return nil, err
@@ -564,7 +573,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 				CMWFXTimeMulti:      timeMultiInt,
 				CMWFXUseCustomDate:  1,
 				CMWFXDate:           int(startTimeFinal.Unix()),
-				CMWFXDateUnModified: int(startTimeZoned.Unix()),
+				CMWFXDateUnModified: int(startTime.Unix()),
 			})
 		}
 	}
