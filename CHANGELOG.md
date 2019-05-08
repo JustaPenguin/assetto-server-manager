@@ -21,6 +21,7 @@ Fixes:
 * Fixes an issue where Looped Races could hang at the end of a race rather than continuing to the next Looped Race.
 * Open Championships will now correctly set up Entrants (and results tables) when importing results files that have new
   Entrants in them.
+* Sol session start time should now save properly.
 
 v1.2.2
 ------
