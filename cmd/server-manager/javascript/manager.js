@@ -44,7 +44,7 @@ $(document).ready(function () {
         });
     });
 
-    $(".time-local").each(function(i, elem) {
+    $(".time-local").each(function (i, elem) {
         let $elem = $(elem);
 
         $elem.text(moment.parseZone($elem.attr("data-time")).tz(moment.tz.guess()).format('LLLL (z)'));
@@ -579,7 +579,7 @@ class RaceSetup {
         let that = this;
 
 
-        let $hiddenWhenBookingEnabled =  that.$parent.find(".hidden-booking-enabled");
+        let $hiddenWhenBookingEnabled = that.$parent.find(".hidden-booking-enabled");
         let $visibleWhenBookingEnabled = that.$parent.find(".visible-booking-enabled");
 
         if ($(".session-enabler[name='Booking.Enabled']").is(":checked")) {
@@ -2525,6 +2525,7 @@ let championships = {
         championships.initClassSetup();
         championships.initSummerNote();
         championships.initDisplayOrder();
+        championships.initSignUpForm();
     },
 
     $classTemplate: null,
