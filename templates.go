@@ -369,6 +369,7 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 	data["Debug"] = Debug
 	data["MonitoringEnabled"] = config.Monitoring.Enabled
 	data["SentryDSN"] = template.JSStr(sentryJSDSN)
+	data["RecaptchaSiteKey"] = config.Championships.RecaptchaConfig.SiteKey
 
 	t.Funcs(map[string]interface{}{
 		"ReadAccess":   ReadAccess(r),

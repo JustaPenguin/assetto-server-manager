@@ -88,12 +88,19 @@ type Championship struct {
 	// can omit names/GUIDs/teams as necessary. These can then be edited after the fact.
 	OpenEntrants bool
 
-	// SignUpFormEnabled gives anyone on the web access to a Championship Sign Up Form so that they can
+	// SignUpForm gives anyone on the web access to a Championship Sign Up Form so that they can
 	// mark themselves for participation in this Championship.
-	SignUpFormEnabled bool
+	SignUpForm ChampionshipSignUpForm
 
 	Classes []*ChampionshipClass
 	Events  []*ChampionshipEvent
+}
+
+type ChampionshipSignUpForm struct {
+	Enabled     bool
+	AskForEmail bool
+	AskForTeam  bool
+	ExtraFields []string
 }
 
 func (c *Championship) GetPlayerSummary(guid string) string {
@@ -1195,7 +1202,7 @@ func championshipSignUpFormHandler(w http.ResponseWriter, r *http.Request) {
 
 	championship := opts["Current"].(*Championship)
 
-	if !championship.SignUpFormEnabled {
+	if !championship.SignUpForm.Enabled {
 		http.NotFound(w, r)
 		return
 	}

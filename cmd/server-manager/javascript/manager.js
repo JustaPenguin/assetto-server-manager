@@ -2525,7 +2525,92 @@ let championships = {
         championships.initClassSetup();
         championships.initSummerNote();
         championships.initDisplayOrder();
+        championships.initConfigureSignUpForm();
         championships.initSignUpForm();
+    },
+
+    initConfigureSignUpForm: function () {
+        let $showWhenSignUpEnabled = $(".show-signup-form-enabled");
+
+        $("#ChampionshipSignUpFormEnabled").on('switchChange.bootstrapSwitch', function (event, state) {
+            if (state) {
+                $showWhenSignUpEnabled.show();
+            } else {
+                $showWhenSignUpEnabled.hide();
+            }
+        });
+
+        let $clonedQuestion = $(".championship-signup-question").first().clone();
+
+        $("#AddSignUpFormQuestion").on("click", function (e) {
+            e.preventDefault();
+
+            let $newQuestion = $clonedQuestion.clone();
+            $newQuestion.find("input").val("");
+            $newQuestion.appendTo($("#Questions"));
+        });
+
+        $document.on("click", ".btn-delete-question", function (e) {
+            e.preventDefault();
+
+            $(this).closest(".championship-signup-question").remove();
+        })
+    },
+
+    initSignUpForm: function () {
+        let $signUpForm = $("#championship-signup-form");
+
+        if ($signUpForm.length < 1) {
+            return;
+        }
+
+        function populateSkinsDropdown(car) {
+            if (typeof availableCars === "undefined") {
+                return;
+            }
+
+            $skinsDropdown.empty();
+
+            if (car in availableCars) {
+                for (let skin of availableCars[car]) {
+                    $skinsDropdown.append($("<option>", {
+                        "val": skin,
+                        "text": prettifyName(skin, true),
+                    }));
+                }
+            }
+        }
+
+        function showCarImage(car, skin) {
+            let path = "/content/cars/" + car + "/skins/" + skin + "/preview.jpg";
+
+            $.get(path)
+                .done(function () {
+                    $carPreviewImage.attr({"src": path, "alt": prettifyName(skin, false)})
+                })
+                .fail(function () {
+                    path = "/static/img/no-preview-car.png";
+                    $carPreviewImage.attr({"src": path, "alt": "Preview Image"})
+                })
+            ;
+        }
+
+        let $skinsDropdown = $signUpForm.find("#Skin");
+        let $carsDropdown = $signUpForm.find("#Car");
+        let $carPreviewImage = $signUpForm.find("#CarPreview");
+
+        populateSkinsDropdown($carsDropdown.val());
+        showCarImage($carsDropdown.val(), $skinsDropdown.val());
+
+        $carsDropdown.on("change", function () {
+            let $this = $(this);
+            populateSkinsDropdown($this.val());
+            showCarImage($this.val(), $skinsDropdown.val());
+        });
+
+        $skinsDropdown.on("change", function () {
+            showCarImage($carsDropdown.val(), $skinsDropdown.val());
+        });
     },
 
     $classTemplate: null,

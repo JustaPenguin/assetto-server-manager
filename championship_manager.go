@@ -147,7 +147,20 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 
 	championship.Name = r.FormValue("ChampionshipName")
 	championship.OpenEntrants = r.FormValue("ChampionshipOpenEntrants") == "on" || r.FormValue("ChampionshipOpenEntrants") == "1"
-	championship.SignUpFormEnabled = r.FormValue("ChampionshipSignUpFormEnabled") == "on" || r.FormValue("ChampionshipSignUpFormEnabled") == "1"
+	championship.SignUpForm.Enabled = r.FormValue("Championship.SignUpForm.Enabled") == "on" || r.FormValue("Championship.SignUpForm.Enabled") == "1"
+	championship.SignUpForm.AskForEmail = r.FormValue("Championship.SignUpForm.AskForEmail") == "on" || r.FormValue("Championship.SignUpForm.AskForEmail") == "1"
+	championship.SignUpForm.AskForTeam = r.FormValue("Championship.SignUpForm.AskForTeam") == "on" || r.FormValue("Championship.SignUpForm.AskForTeam") == "1"
+
+	championship.SignUpForm.ExtraFields = []string{}
+
+	for _, question := range r.Form["Championship.SignUpForm.ExtraFields"] {
+		if question == "" {
+			continue
+		}
+
+		championship.SignUpForm.ExtraFields = append(championship.SignUpForm.ExtraFields, question)
+	}
+
 	championship.Info = template.HTML(r.FormValue("ChampionshipInfo"))
 
 	previousNumEntrants := 0
