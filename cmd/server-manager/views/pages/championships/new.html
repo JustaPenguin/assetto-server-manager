@@ -81,6 +81,36 @@
                     </div>
                 </div>
 
+                <div class="form-group row">
+                    <label for="OverridePassword" class="col-sm-3 col-form-label">Override Server Password</label>
+
+                    <div class="col-sm-9">
+                        <input type="checkbox" class="form-control" id="OverridePassword" name="OverridePassword"
+                                {{ if $f.OverridePassword }} checked="checked" {{ end }}><br><br>
+
+                        <small>
+                            If enabled then the server password will be ignored for all events in this championship.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-group row" id="ReplacementPasswordWrapper" {{ if not $f.OverridePassword }} style="display: none;" {{ end }}>
+                    <label for="ReplacementPassword" class="col-sm-3 col-form-label">Replacement Password</label>
+
+                    <div class="col-sm-9">
+
+                        <input
+                                class="form-control"
+                                type="password"
+                                id="ReplacementPassword"
+                                name="ReplacementPassword"
+                                value="{{ $f.ReplacementPassword }}"
+                        >
+
+                        <small>If left empty then the server will have no password.</small>
+                    </div>
+                </div>
+
                 {{ if .IsEditing }}{{ with .Current.Info }}<div class="d-none" id="ChampionshipInfoHolder">{{ . }}</div>{{ end }}{{ end }}
 
                 <div class="form-group row">
