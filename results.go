@@ -32,7 +32,7 @@ type SessionResults struct {
 	ChampionshipID string           `json:"ChampionshipID"`
 }
 
-func (s *SessionResults) GetFilePath() string {
+func (s *SessionResults) GetURL() string {
 	return config.HTTP.BaseURL + "/results/download/" + s.SessionFile + ".json"
 }
 

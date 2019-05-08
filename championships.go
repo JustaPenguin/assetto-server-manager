@@ -925,7 +925,7 @@ func exportChampionshipResultsHandler(w http.ResponseWriter, r *http.Request) {
 		var sessionFiles []string
 
 		for _, session := range event.Sessions {
-			sessionFiles = append(sessionFiles, session.Results.GetFilePath())
+			sessionFiles = append(sessionFiles, session.Results.GetURL())
 		}
 
 		results = append(results, championshipResults{
