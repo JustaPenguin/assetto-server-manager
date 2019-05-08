@@ -54,6 +54,7 @@ $(document).ready(function () {
 
     $(".timezone").text(timezone);
     $(".event-schedule-timezone").val(timezone);
+    $(".sol-timezone").val(timezone);
 
     $document.find(".row-link").click(function () {
         window.location = $(this).data("href");
