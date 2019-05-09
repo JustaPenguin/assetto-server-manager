@@ -488,7 +488,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		},
 
 		// rules
-		PickupModeEnabled:         formValueAsInt(r.FormValue("LockedEntryList")),
+		PickupModeEnabled:         lockedEntryList,
 		RacePitWindowStart:        formValueAsInt(r.FormValue("RacePitWindowStart")),
 		RacePitWindowEnd:          formValueAsInt(r.FormValue("RacePitWindowEnd")),
 		ReversedGridRacePositions: formValueAsInt(r.FormValue("ReversedGridRacePositions")),
