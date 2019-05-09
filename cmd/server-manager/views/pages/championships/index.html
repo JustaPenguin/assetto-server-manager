@@ -8,7 +8,20 @@
         <div class="col-sm-4"><h1 class="text-center">Championships</h1></div>
         <div class="col-sm-4">
             {{ if $writeAccess }}
-                <a href="/championships/new" class="btn btn-success float-right">Create a new Championship</a>
+
+                <div class="btn-group float-right" role="group" aria-label="New Championsip">
+                    <a href="/championships/new" class="btn btn-success">Create a new Championship</a>
+
+                    <div class="btn-group" role="group">
+                        <button id="btnGroupDrop1" type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="btnGroupDrop1">
+                            <a href="/championship/import" class="dropdown-item">Import Championship</a>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="clearfix mb-5"></div>
             {{ end }}
         </div>
