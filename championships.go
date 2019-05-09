@@ -327,6 +327,33 @@ type PotentialOpenChampionshipEntrant interface {
 }
 
 func (c *Championship) AddEntrantFromSessionData(potentialEntrant PotentialOpenChampionshipEntrant) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
+	foundFreeSlot, class, err := c.AddEntrantFromSession(potentialEntrant)
+
+	if err != nil {
+		return foundFreeSlot, class, err
+	}
+
+	if foundFreeSlot {
+		newEntrant := NewEntrant()
+
+		newEntrant.GUID = potentialEntrant.GetGUID()
+		newEntrant.Name = potentialEntrant.GetName()
+
+		e := make(EntryList)
+
+		e.Add(newEntrant)
+
+		err := raceManager.SaveEntrantsForAutoFill(e)
+
+		if err != nil {
+			logrus.Errorf("Couldn't add entrant (GUID; %s, Name; %s) to autofill list", newEntrant.GUID, newEntrant.Name)
+		}
+	}
+
+	return foundFreeSlot, class, nil
+}
+
+func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialOpenChampionshipEntrant) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
 	if !c.OpenEntrants {
 		return false, nil, ErrClosedChampionship
 	}
