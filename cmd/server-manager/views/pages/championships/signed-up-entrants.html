@@ -1,0 +1,73 @@
+{{ define "title" }}{{ $.Championship.Name }} Entrants{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">
+        {{ $.Championship.Name }} Entrants
+    </h1>
+
+    {{ with .Championship }}
+        {{- /*gotype: github.com/cj123/assetto-server-manager.Championship*/ -}}
+        {{ $championship := .}}
+
+        <a class="btn btn-primary float-right mb-5" href="/championship/{{ $championship.ID.String }}/entrants.csv">Export CSV</a>
+
+        <div class="clearfix"></div>
+
+        <table class="table table-bordered table-striped">
+            <tr>
+                <th>Created</th>
+                <th>Name</th>
+                <th>Team</th>
+                <th>GUID</th>
+                <th>Email</th>
+                <th>Car / Skin</th>
+                <th>Status</th>
+
+               <!-- {{ range $index, $question := $championship.SignUpForm.ExtraFields }}
+                    <th>{{ $question }}</th>
+                {{ end }}-->
+
+                <th>Actions</th>
+            </tr>
+
+            {{ range $index, $entrant := .SignUpForm.Responses }}
+                <tr>
+                    <td>
+                        {{ timeFormat $entrant.Created }} on {{ dateFormat $entrant.Created }}
+                    </td>
+                    <td>
+                        {{ $entrant.Name }}
+                    </td>
+                    <td>
+                        {{ $entrant.Team }}
+                    </td>
+                    <td>
+                        {{ $entrant.GUID }}
+                    </td>
+                    <td>
+                        {{ $entrant.Email }}
+                    </td>
+                    <td>
+                        {{ prettify $entrant.Car true }} / {{ prettify $entrant.Skin true }}
+                    </td>
+                    <!--{{ range $index, $question := $championship.SignUpForm.ExtraFields }}
+                        <td>{{ index $entrant.Questions $question }}</td>
+                    {{ end }}-->
+
+                    <td class="pl-2 pr-2">
+                        {{ if gt (len $championship.SignUpForm.ExtraFields) 0 }}
+                        <div class="row">
+                            <a class="btn btn-sm btn-warning" href="#" style="width: 100%; display: block">View Answers</a>
+                        </div>
+                        {{ end }}
+
+                        <div class="row">
+                            <a class="btn btn-sm btn-success col-6 m-2" href="/championship/{{ $championship.ID.String }}/entrant/{{ $entrant.GUID }}">Approve</a>
+                            <a class="btn btn-sm btn-danger col-6 m-2" href="/championship/{{ $championship.ID.String }}/entrant/{{ $entrant.GUID }}">Reject</a>
+                        </div>
+                    </td>
+                </tr>
+            {{ end }}
+        </table>
+    {{ end }}
+{{ end }}
