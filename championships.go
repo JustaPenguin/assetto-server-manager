@@ -900,6 +900,23 @@ func exportChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(championship)
 }
 
+// importChampionshipHandler reads Championship data from JSON.
+func importChampionshipHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		championshipID, err := championshipManager.ImportChampionship(r.FormValue("import"))
+
+		if err != nil {
+			logrus.Errorf("couldn't import championship, err: %s", err)
+			AddErrFlashQuick(w, r, "Sorry, we couldn't import that championship! Check your JSON formatting.")
+		} else {
+			AddFlashQuick(w, r, "Championship successfully imported!")
+			http.Redirect(w, r, "/championship/"+championshipID, http.StatusFound)
+		}
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "championships/import_championship.html", nil)
+}
+
 type championshipResultsCollection struct {
 	Name    string                `json:"name"`
 	Results []championshipResults `json:"results"`

@@ -1,0 +1,16 @@
+{{ define "title" }}Import Championship{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">Import Championship</h1>
+
+    <form method="post" action="/championship/import">
+        <label for="import"></label>
+        <textarea id="import" name="import" placeholder="Paste your championship JSON here!" class="form-control md-textarea text-area"></textarea>
+
+        <button class="btn btn-success float-right mt-2" type="submit">Save</button>
+    </form>
+
+    <p><small>Here you can import championships in a JSON format (this format matches the format given when you export a
+        championship). We do not recommend attempting to manually create this data, as the format is quite complex. However
+        if you want to move championships across servers but don't have file access then you can use this feature!</small></p>
+{{ end }}
