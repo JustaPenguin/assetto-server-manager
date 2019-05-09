@@ -423,9 +423,9 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 	}
 
 	if championship.OpenEntrants {
-		event.RaceSetup.LockedEntryList = 0
+		event.RaceSetup.PickupModeEnabled = 1
 	} else {
-		event.RaceSetup.LockedEntryList = 1
+		event.RaceSetup.PickupModeEnabled = 0
 	}
 
 	event.RaceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
