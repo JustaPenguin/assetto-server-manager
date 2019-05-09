@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -109,6 +110,8 @@ type ChampionshipSignUpForm struct {
 }
 
 type ChampionshipSignUpResponse struct {
+	Created time.Time
+
 	Name      string
 	GUID      string
 	Team      string
@@ -935,6 +938,9 @@ func exportChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// sign up responses are hidden for data protection reasons
+	championship.SignUpForm.Responses = nil
+
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	enc.Encode(championship)
@@ -1313,4 +1319,75 @@ func championshipSignUpFormHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ViewRenderer.MustLoadTemplate(w, r, "championships/sign-up.html", opts)
+}
+
+func championshipSignedUpEntrantsHandler(w http.ResponseWriter, r *http.Request) {
+	championship, err := championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
+
+	if err != nil {
+		panic(err) // @TODO
+	}
+
+	if !championship.SignUpForm.Enabled {
+		http.NotFound(w, r)
+		return
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "championships/signed-up-entrants.html", map[string]interface{}{
+		"Championship": championship,
+	})
+}
+
+func championshipSignedUpEntrantsCSVHandler(w http.ResponseWriter, r *http.Request) {
+	championship, err := championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
+
+	if err != nil {
+		panic(err) // @TODO
+	}
+
+	headers := []string{
+		"Created",
+		"Name",
+		"Team",
+		"GUID",
+		"Email",
+		"Car",
+		"Skin",
+	}
+
+	for _, question := range championship.SignUpForm.ExtraFields {
+		headers = append(headers, question)
+	}
+
+	var out [][]string
+
+	out = append(out, headers)
+
+	for _, entrant := range championship.SignUpForm.Responses {
+		data := []string{
+			entrant.Created.String(),
+			entrant.Name,
+			entrant.Team,
+			entrant.GUID,
+			entrant.Email,
+			entrant.Car,
+			entrant.Skin,
+		}
+
+		for _, question := range championship.SignUpForm.ExtraFields {
+			if response, ok := entrant.Questions[question]; ok {
+				data = append(data, response)
+			} else {
+				data = append(data, "")
+			}
+		}
+
+		out = append(out, data)
+	}
+
+	w.Header().Add("Content-Type", "text/csv")
+	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment;filename=Entrants_%s.csv", championship.Name))
+	wr := csv.NewWriter(w)
+	wr.UseCRLF = true
+	wr.WriteAll(out)
 }
