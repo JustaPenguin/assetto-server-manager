@@ -964,6 +964,10 @@ func exportChampionshipResultsHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, event := range championship.Events {
 
+		if !event.Completed() {
+			continue
+		}
+
 		var sessionFiles []string
 
 		for _, session := range event.Sessions {
@@ -980,6 +984,8 @@ func exportChampionshipResultsHandler(w http.ResponseWriter, r *http.Request) {
 		Name:    championship.Name,
 		Results: results,
 	}
+
+	w.Header().Add("Content-Type", "application/json")
 
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")

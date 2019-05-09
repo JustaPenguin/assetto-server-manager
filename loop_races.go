@@ -20,7 +20,7 @@ func LoopRaces() {
 		currentRace, _ := raceManager.CurrentRace()
 
 		if currentRace != nil {
-			break
+			continue
 		}
 
 		_, _, looped, _, err := raceManager.ListCustomRaces()

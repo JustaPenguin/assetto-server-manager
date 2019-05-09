@@ -24,6 +24,7 @@ Fixes:
 * Open Championships will now correctly set up Entrants (and results tables) when importing results files that have new
   Entrants in them.
 * Sol session start time should now save properly.
+* Locked entry list option should now work.
 
 v1.2.2
 ------
