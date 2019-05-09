@@ -431,11 +431,18 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 	isSol := r.FormValue("Sol.Enabled") == "1"
 
 	gasPenaltyDisabled := formValueAsInt(r.FormValue("RaceGasPenaltyDisabled"))
+	lockedEntryList := formValueAsInt(r.FormValue("LockedEntryList"))
 
 	if gasPenaltyDisabled == 0 {
 		gasPenaltyDisabled = 1
 	} else {
 		gasPenaltyDisabled = 0
+	}
+
+	if lockedEntryList == 0 {
+		lockedEntryList = 1
+	} else {
+		lockedEntryList = 0
 	}
 
 	trackLayout := r.FormValue("TrackLayout")
@@ -481,7 +488,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		},
 
 		// rules
-		LockedEntryList:           formValueAsInt(r.FormValue("LockedEntryList")),
+		PickupModeEnabled:         formValueAsInt(r.FormValue("LockedEntryList")),
 		RacePitWindowStart:        formValueAsInt(r.FormValue("RacePitWindowStart")),
 		RacePitWindowEnd:          formValueAsInt(r.FormValue("RacePitWindowEnd")),
 		ReversedGridRacePositions: formValueAsInt(r.FormValue("ReversedGridRacePositions")),
