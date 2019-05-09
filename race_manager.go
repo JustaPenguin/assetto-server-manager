@@ -88,7 +88,6 @@ func NewRaceManager(raceStore Store) *RaceManager {
 
 func (rm *RaceManager) CurrentRace() (*ServerConfig, EntryList) {
 	rm.mutex.RLock()
-
 	defer rm.mutex.RUnlock()
 
 	if !AssettoProcess.IsRunning() {
