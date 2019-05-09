@@ -330,7 +330,7 @@ func (c *Championship) AddEntrantFromSessionData(potentialEntrant PotentialOpenC
 	foundFreeSlot, class, err := c.AddEntrantFromSession(potentialEntrant)
 
 	if err != nil {
-		return false, nil, err
+		return foundFreeSlot, class, err
 	}
 
 	if foundFreeSlot {
