@@ -24,7 +24,7 @@ $(document).ready(function () {
     $document.find("#simres-group").each(function (index, elem) {
         let link = window.location.href + "/export-results";
 
-        $(elem).attr('href', "http://simresults.net/remote?result=" + link);
+        $(elem).attr('href', "http://simresults.net/remote?results=" + link);
 
         return false
     });
