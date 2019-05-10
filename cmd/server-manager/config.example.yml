@@ -187,6 +187,9 @@ championships:
   # must specify a site_key and secret_key to enable reCAPTCHA
   # Register for reCAPTCHA here: https://www.google.com/recaptcha
   # Please note you must register for reCAPTCHA v2.
+  #
+  # Note: reCAPTCHA is NOT required, but highly recommended if you are running
+  # Championship Sign Up Forms
   recaptcha:
     site_key:
     secret_key:
