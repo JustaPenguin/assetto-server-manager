@@ -1395,7 +1395,9 @@ func championshipSignUpFormHandler(w http.ResponseWriter, r *http.Request) {
 				opts["FormData"] = signUpResponse
 				opts["ValidationError"] = err.Error()
 			default:
-				panic(err) // @TODO
+				logrus.WithError(err).Error("couldn't handle championship")
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
 			}
 		} else {
 			if championship.SignUpForm.RequiresApproval {
@@ -1403,7 +1405,6 @@ func championshipSignUpFormHandler(w http.ResponseWriter, r *http.Request) {
 				http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
 				return
 			} else {
-				// @TODO this should only happen if the championship has immediate approval turned ON
 				if foundSlot {
 					AddFlashQuick(w, r, "Thanks for registering for the championship!")
 					http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
@@ -1423,7 +1424,9 @@ func championshipSignedUpEntrantsHandler(w http.ResponseWriter, r *http.Request)
 	championship, err := championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
 
 	if err != nil {
-		panic(err) // @TODO
+		logrus.WithError(err).Error("couldn't load championship")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	if !championship.SignUpForm.Enabled {
@@ -1444,7 +1447,9 @@ func championshipSignedUpEntrantsCSVHandler(w http.ResponseWriter, r *http.Reque
 	championship, err := championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
 
 	if err != nil {
-		panic(err) // @TODO
+		logrus.WithError(err).Error("couldn't load championship")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	headers := []string{
@@ -1500,7 +1505,9 @@ func championshipModifyEntrantStatusHandler(w http.ResponseWriter, r *http.Reque
 	championship, err := championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
 
 	if err != nil {
-		panic(err) // @TODO
+		logrus.WithError(err).Error("couldn't load championship")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	if !championship.SignUpForm.Enabled {
@@ -1526,7 +1533,9 @@ func championshipModifyEntrantStatusHandler(w http.ResponseWriter, r *http.Reque
 			foundSlot, _, err := championship.AddEntrantFromSessionData(entrant)
 
 			if err != nil {
-				panic(err) // @TODO
+				logrus.WithError(err).Error("couldn't add entrant to championship")
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
 			}
 
 			if foundSlot {
@@ -1556,7 +1565,9 @@ func championshipModifyEntrantStatusHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	if err := championshipManager.UpsertChampionship(championship); err != nil {
-		panic(err) // @TODO
+		logrus.WithError(err).Error("couldn't save championship")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
