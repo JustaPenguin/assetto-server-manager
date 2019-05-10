@@ -26,12 +26,19 @@
             </div>
 
             <div class="card-body">
+
+                {{ with $.ValidationError }}
+                    <div class="alert alert-danger">
+                        {{ . }}
+                    </div>
+                {{ end }}
+
                 <div class="form-group row">
                     <label for="Name" class="col-sm-4 col-form-label">Name</label>
 
                     <div class="col-sm-8">
                         <input type="text" class="form-control" id="Name" name="Name" required
-                               placeholder="Jimmy Bob">
+                               placeholder="Jimmy Bob" value="{{ $.FormData.Name }}">
                     </div>
                 </div>
 
@@ -41,7 +48,7 @@
 
                         <div class="col-sm-8">
                             <input type="text" class="form-control" id="Team" name="Team"
-                                   placeholder="The Fast Team">
+                                   placeholder="The Fast Team" value="{{ $.FormData.Team }}">
 
                             <small>You may leave the team name blank.</small>
                         </div>
@@ -53,7 +60,7 @@
 
                     <div class="col-sm-8">
                         <input type="text" class="form-control" id="GUID" name="GUID"
-                               placeholder="">
+                               placeholder="" value="{{ .FormData.GUID }}">
 
                         <small>You can find your Steam ID at <a href="https://steamid.io/">steamid.io</a> or in your Steam Profile URL. Note that we require the <strong>SteamID64</strong>.</small>
                     </div>
@@ -65,7 +72,7 @@
 
                         <div class="col-sm-8">
                             <input type="email" class="form-control" id="Email" name="Email"
-                                   placeholder="jimmy@bob.com" required>
+                                   placeholder="jimmy@bob.com" required value="{{ $.FormData.Email }}">
 
                         </div>
                     </div>
@@ -98,7 +105,7 @@
                                     {{ range $index, $class := $championship.Classes }}
                                         <optgroup label="{{ $class.Name }}">
                                             {{ range $index, $car := $class.ValidCarIDs }}
-                                                <option value="{{ $car }}">{{ prettify $car true }}</option>
+                                                <option value="{{ $car }}" {{ if eq $.FormData.Car $car }}selected="selected"{{ end }}>{{ prettify $car true }}</option>
                                             {{ end }}
                                         </optgroup>
                                     {{ end }}
@@ -110,7 +117,11 @@
                             <label for="Skin" class="col-sm-3 col-form-label">Skin</label>
 
                             <div class="col-sm-9">
-                                <select name="Skin" id="Skin" class="form-control entryListSkin"></select>
+                                <select name="Skin" id="Skin" class="form-control entryListSkin">
+                                    {{ with $.FormData.Skin }}
+                                        <option value="{{ . }}" selected="selected">{{ prettify . true }}</option>
+                                    {{ end }}
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -137,7 +148,7 @@
 
                             <div class="col-sm-8">
                                 <input type="text" class="form-control" id="Question.{{ $index }}" name="Question.{{ $index }}"
-                                       placeholder="">
+                                       placeholder="" value="{{ index $.FormData.Questions $question }}">
                             </div>
                         </div>
                     {{ end }}

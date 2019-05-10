@@ -15,7 +15,7 @@ func quickRaceHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "quick_race.html", quickRaceData)
+	ViewRenderer.MustLoadTemplate(w, r, "quick-race.html", quickRaceData)
 }
 
 func quickRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {

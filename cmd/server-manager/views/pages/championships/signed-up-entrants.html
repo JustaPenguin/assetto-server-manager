@@ -9,7 +9,32 @@
         {{- /*gotype: github.com/cj123/assetto-server-manager.Championship*/ -}}
         {{ $championship := .}}
 
-        <a class="btn btn-primary float-right mb-5" href="/championship/{{ $championship.ID.String }}/entrants.csv">Export CSV</a>
+        <div class="float-right mb-5">
+            {{ if $championship.SignUpForm.AskForEmail }}
+                <div class="dropdown show" style="display: inline-block">
+                    <a class="btn btn-success dropdown-toggle" href="#" role="button" id="dropdownEmailEntrants" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                       Email Entrants
+                    </a>
+
+                    <div class="dropdown-menu" aria-labelledby="dropdownEmailEntrants">
+                        <a class="dropdown-item" href="mailto:?bcc={{ $championship.SignUpForm.EmailList "all" }}&subject={{ $championship.Name }}">
+                            All Entrants
+                        </a>
+                        <a class="dropdown-item" href="mailto:?bcc={{ $championship.SignUpForm.EmailList "accepted" }}&subject={{ $championship.Name }}">
+                            Accepted Entrants
+                        </a>
+                        <a class="dropdown-item" href="mailto:?bcc={{ $championship.SignUpForm.EmailList "rejected" }}&subject={{ $championship.Name }}">
+                            Rejected Entrants
+                        </a>
+                        <a class="dropdown-item" href="mailto:?bcc={{ $championship.SignUpForm.EmailList "pending" }}&subject={{ $championship.Name }}">
+                            Pending Entrants
+                        </a>
+                    </div>
+                </div>
+            {{ end }}
+
+            <a class="btn btn-primary" href="/championship/{{ $championship.ID.String }}/entrants.csv">Export CSV</a>
+        </div>
 
         <div class="clearfix"></div>
 
@@ -42,29 +67,44 @@
                         {{ $entrant.Team }}
                     </td>
                     <td>
-                        {{ $entrant.GUID }}
+                        <small><code>{{ $entrant.GUID }}</code></small>
                     </td>
                     <td>
-                        {{ $entrant.Email }}
+                        <a href="mailto:{{ $entrant.Email }}?subject={{ $championship.Name }}">{{ $entrant.Email }}</a>
                     </td>
                     <td>
                         {{ prettify $entrant.Car true }} / {{ prettify $entrant.Skin true }}
                     </td>
-                    <!--{{ range $index, $question := $championship.SignUpForm.ExtraFields }}
-                        <td>{{ index $entrant.Questions $question }}</td>
-                    {{ end }}-->
+
+
+
+                    <td>
+                        {{ $entrant.Status }}
+                    </td>
 
                     <td class="pl-2 pr-2">
                         {{ if gt (len $championship.SignUpForm.ExtraFields) 0 }}
-                        <div class="row">
-                            <a class="btn btn-sm btn-warning" href="#" style="width: 100%; display: block">View Answers</a>
-                        </div>
+
+                            <button type="button" class="btn btn-sm btn-warning dropdown-toggle popover-external-html" data-placement="left"
+                                    data-toggle="popover" data-html="true"
+                                    id="answers-{{ $entrant.GUID }}"
+                                    style="width: 100%; margin-bottom: 5px;"
+                            >
+                                View Answers
+                            </button>
+
+                            <div id="popover-content-answers-{{ $entrant.GUID }}" style="display: none; font-size: 20px !important;">
+                                <div style="font-size: 0.9rem; max-height: 500px; overflow-y: auto;">
+                                    {{ range $index, $question := $championship.SignUpForm.ExtraFields }}
+                                        <strong>{{ $question }}</strong><br>{{ index $entrant.Questions $question }}<br>
+                                    {{ end }}
+                                </div>
+                            </div>
+
                         {{ end }}
 
-                        <div class="row">
-                            <a class="btn btn-sm btn-success col-6 m-2" href="/championship/{{ $championship.ID.String }}/entrant/{{ $entrant.GUID }}">Approve</a>
-                            <a class="btn btn-sm btn-danger col-6 m-2" href="/championship/{{ $championship.ID.String }}/entrant/{{ $entrant.GUID }}">Reject</a>
-                        </div>
+                        <a class="btn btn-sm btn-success" href="/championship/{{ $championship.ID.String }}/entrant/{{ $entrant.GUID }}?action=accept">Accept</a>
+                        <a class="btn btn-sm btn-danger" href="/championship/{{ $championship.ID.String }}/entrant/{{ $entrant.GUID }}?action=reject" style="float: right;">Reject</a>
                     </td>
                 </tr>
             {{ end }}

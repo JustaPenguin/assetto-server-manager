@@ -142,6 +142,7 @@ func Router(fs http.FileSystem) http.Handler {
 		r.Post("/championship/{championshipID}/team-penalty/{classID}/{team}", championshipTeamPenaltyHandler)
 		r.Get("/championship/{championshipID}/entrants", championshipSignedUpEntrantsHandler)
 		r.Get("/championship/{championshipID}/entrants.csv", championshipSignedUpEntrantsCSVHandler)
+		r.Get("/championship/{championshipID}/entrant/{entrantGUID}", championshipModifyEntrantStatusHandler)
 
 		r.Get("/championship/import", importChampionshipHandler)
 		r.Post("/championship/import", importChampionshipHandler)
