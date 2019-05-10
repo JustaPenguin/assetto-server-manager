@@ -2595,6 +2595,8 @@ let championships = {
                 return;
             }
 
+            let selected = $skinsDropdown.val();
+
             $skinsDropdown.empty();
 
             if (car in availableCars) {
@@ -2602,6 +2604,7 @@ let championships = {
                     $skinsDropdown.append($("<option>", {
                         "val": skin,
                         "text": prettifyName(skin, true),
+                        "selected": skin === selected,
                     }));
                 }
             }

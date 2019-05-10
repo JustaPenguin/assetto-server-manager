@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -163,6 +164,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	championship.SignUpForm.AskForEmail = r.FormValue("Championship.SignUpForm.AskForEmail") == "on" || r.FormValue("Championship.SignUpForm.AskForEmail") == "1"
 	championship.SignUpForm.AskForTeam = r.FormValue("Championship.SignUpForm.AskForTeam") == "on" || r.FormValue("Championship.SignUpForm.AskForTeam") == "1"
 	championship.SignUpForm.HideCarChoice = !(r.FormValue("Championship.SignUpForm.HideCarChoice") == "on" || r.FormValue("Championship.SignUpForm.HideCarChoice") == "1")
+	championship.SignUpForm.RequiresApproval = r.FormValue("Championship.SignUpForm.RequiresApproval") == "on" || r.FormValue("Championship.SignUpForm.RequiresApproval") == "1"
 
 	championship.SignUpForm.ExtraFields = []string{}
 
@@ -1092,6 +1094,8 @@ func (e ValidationError) Error() string {
 	return string(e)
 }
 
+var steamGUIDRegex = regexp.MustCompile("^[0-9]{17}$")
+
 func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (response *ChampionshipSignUpResponse, foundSlot bool, err error) {
 	if err := r.ParseForm(); err != nil {
 		return nil, false, err
@@ -1114,6 +1118,7 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 		Skin: r.FormValue("Skin"),
 
 		Questions: make(map[string]string),
+		Status:    ChampionshipEntrantPending,
 	}
 
 	for index, question := range championship.SignUpForm.ExtraFields {
@@ -1126,18 +1131,40 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 		}
 
 		if !captcha.Verify(*r) {
-			return signUpResponse, false, ValidationError("Please complete the reCAPTCHA")
+			return signUpResponse, false, ValidationError("Please complete the reCAPTCHA.")
 		}
 	}
 
-	// check to see if there is room in the entrylist for the user in their specific car
-	foundSlot, _, err = championship.AddEntrantFromSessionData(signUpResponse)
-
-	if err != nil {
-		return signUpResponse, foundSlot, err
+	if !steamGUIDRegex.MatchString(signUpResponse.GUID) {
+		return signUpResponse, false, ValidationError("Please enter a valid SteamID64.")
 	}
 
-	championship.SignUpForm.Responses = append(championship.SignUpForm.Responses, *signUpResponse)
+	for _, entrant := range championship.SignUpForm.Responses {
+		if entrant.GUID == signUpResponse.GUID {
+			return signUpResponse, false, ValidationError("This GUID is already registered.")
+		}
+
+		if entrant.Email == signUpResponse.Email {
+			return signUpResponse, false, ValidationError("Someone has already registered with this email address.")
+		}
+	}
+
+	if !championship.SignUpForm.RequiresApproval {
+		// check to see if there is room in the entrylist for the user in their specific car
+		foundSlot, _, err = championship.AddEntrantFromSessionData(signUpResponse)
+
+		if err != nil {
+			return signUpResponse, foundSlot, err
+		}
+
+		if foundSlot {
+			signUpResponse.Status = ChampionshipEntrantAccepted
+		} else {
+			signUpResponse.Status = ChampionshipEntrantRejected
+		}
+	}
+
+	championship.SignUpForm.Responses = append(championship.SignUpForm.Responses, signUpResponse)
 
 	return signUpResponse, foundSlot, cm.UpsertChampionship(championship)
 }

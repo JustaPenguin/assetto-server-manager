@@ -120,6 +120,8 @@
                         <textarea id="summernote" name="ChampionshipInfo"></textarea>
                         <div class="clearfix"></div>
                     </div>
+
+                    <small>Important information is shown at the top of a Championship page and on Sign Up pages (if enabled).</small>
                 </div>
             </div>
         </div>
@@ -161,6 +163,19 @@
                 </div>
 
                 <div class="show-signup-form-enabled" {{ if not $f.SignUpForm.Enabled}} style="display: none" {{ end }}>
+                    <div class="form-group row">
+                        <label for="Championship.SignUpForm.RequiresApproval" class="col-sm-3 col-form-label">Require all applications to be approved by an admin/write user?</label>
+
+                        <div class="col-sm-9">
+                            <input type="checkbox" id="Championship.SignUpForm.RequiresApproval" name="Championship.SignUpForm.RequiresApproval"
+                                    {{ if $f.SignUpForm.RequiresApproval }} checked="checked" {{ end }}><br><br>
+
+                            <small>
+                                All applications will be visible in a page where you can Accept or Reject them.
+                            </small>
+                        </div>
+                    </div>
+
                     <div class="form-group row">
                         <label for="Championship.SignUpForm.AskForEmail" class="col-sm-3 col-form-label">Ask users for Email?</label>
 
