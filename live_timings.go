@@ -44,7 +44,7 @@ type LiveCar struct {
 	LoadedTime int64
 
 	LastLap                 string
-	BestLap                 string
+	BestLap                 uint32
 	BestLapTime             time.Duration
 	LastLapCompleteTime     time.Time
 	LastLapCompleteTimeUnix int64
@@ -156,7 +156,7 @@ func LiveTimingCallback(response udp.Message) {
 					for _, liveCar := range oldCars {
 						liveCar.LapNum = 0
 						liveCar.BestLapTime = time.Duration(0)
-						liveCar.BestLap = ""
+						liveCar.BestLap = 0
 						liveCar.LastLapCompleteTime = time.Now()
 						liveCar.LastLapCompleteTimeUnix = unixNanoToMilli(time.Now().UnixNano())
 						liveCar.LastLap = ""
@@ -175,7 +175,7 @@ func LiveTimingCallback(response udp.Message) {
 					for _, liveCar := range oldDelCars {
 						liveCar.LapNum = 0
 						liveCar.BestLapTime = time.Duration(0)
-						liveCar.BestLap = ""
+						liveCar.BestLap = 0
 						liveCar.LastLapCompleteTime = time.Now()
 						liveCar.LastLapCompleteTimeUnix = unixNanoToMilli(time.Now().UnixNano())
 						liveCar.LastLap = ""
@@ -277,7 +277,7 @@ func LiveTimingCallback(response udp.Message) {
 
 			if lapToDuration(int(a.LapCompletedInternal.LapTime)) < liveInfo.Cars[ID].BestLapTime || liveInfo.Cars[ID].BestLapTime == 0 {
 				liveInfo.Cars[ID].BestLapTime = lapToDuration(int(a.LapCompletedInternal.LapTime))
-				liveInfo.Cars[ID].BestLap = liveInfo.Cars[ID].BestLapTime.String()
+				liveInfo.Cars[ID].BestLap = a.LapCompletedInternal.LapTime
 			}
 		} else {
 			return
