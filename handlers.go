@@ -86,6 +86,8 @@ func Router(fs http.FileSystem) http.Handler {
 		r.Get("/championship/{championshipID}/export", exportChampionshipHandler)
 		r.HandleFunc("/championship/{championshipID}/export-results", exportChampionshipResultsHandler)
 		r.Get("/championship/{championshipID}/ics", championshipICalHandler)
+		r.Get("/championship/{championshipID}/sign-up", championshipSignUpFormHandler)
+		r.Post("/championship/{championshipID}/sign-up", championshipSignUpFormHandler)
 
 		// live timings
 		r.Get("/live-timing", liveTimingHandler)
@@ -138,6 +140,9 @@ func Router(fs http.FileSystem) http.Handler {
 		r.Get("/championship/{championshipID}/event/{eventID}/restart", championshipRestartEventHandler)
 		r.Post("/championship/{championshipID}/driver-penalty/{classID}/{driverGUID}", championshipDriverPenaltyHandler)
 		r.Post("/championship/{championshipID}/team-penalty/{classID}/{team}", championshipTeamPenaltyHandler)
+		r.Get("/championship/{championshipID}/entrants", championshipSignedUpEntrantsHandler)
+		r.Get("/championship/{championshipID}/entrants.csv", championshipSignedUpEntrantsCSVHandler)
+		r.Get("/championship/{championshipID}/entrant/{entrantGUID}", championshipModifyEntrantStatusHandler)
 
 		r.Get("/championship/import", importChampionshipHandler)
 		r.Post("/championship/import", importChampionshipHandler)

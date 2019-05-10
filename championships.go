@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -90,8 +92,95 @@ type Championship struct {
 	// can omit names/GUIDs/teams as necessary. These can then be edited after the fact.
 	OpenEntrants bool
 
+	// SignUpForm gives anyone on the web access to a Championship Sign Up Form so that they can
+	// mark themselves for participation in this Championship.
+	SignUpForm ChampionshipSignUpForm
+
 	Classes []*ChampionshipClass
 	Events  []*ChampionshipEvent
+
+	entryListMutex sync.Mutex
+}
+
+type ChampionshipSignUpForm struct {
+	Enabled          bool
+	AskForEmail      bool
+	AskForTeam       bool
+	HideCarChoice    bool
+	ExtraFields      []string
+	RequiresApproval bool
+
+	Responses []*ChampionshipSignUpResponse
+}
+
+func (c ChampionshipSignUpForm) EmailList(group string) string {
+	var filteredStatus ChampionshipEntrantStatus
+
+	switch group {
+	case "accepted":
+		filteredStatus = ChampionshipEntrantAccepted
+	case "rejected":
+		filteredStatus = ChampionshipEntrantRejected
+	case "pending":
+		filteredStatus = ChampionshipEntrantPending
+	case "all":
+		filteredStatus = ChampionshipEntrantAll
+	default:
+		panic("unknown entrant status: " + group)
+	}
+
+	var filteredEmails []string
+
+	for _, entrant := range c.Responses {
+		if entrant.Status == filteredStatus || filteredStatus == ChampionshipEntrantAll && entrant.Email != "" {
+			filteredEmails = append(filteredEmails, entrant.Email)
+		}
+	}
+
+	return strings.Join(filteredEmails, ",")
+}
+
+type ChampionshipEntrantStatus string
+
+const (
+	ChampionshipEntrantAll      = "All"
+	ChampionshipEntrantAccepted = "Accepted"
+	ChampionshipEntrantRejected = "Rejected"
+	ChampionshipEntrantPending  = "Pending Approval"
+)
+
+type ChampionshipSignUpResponse struct {
+	Created time.Time
+
+	Name      string
+	GUID      string
+	Team      string
+	Email     string
+	Car       string
+	Skin      string
+	Questions map[string]string
+
+	Status ChampionshipEntrantStatus
+}
+
+func (csr ChampionshipSignUpResponse) GetName() string {
+	return csr.Name
+}
+
+func (csr ChampionshipSignUpResponse) GetTeam() string {
+	return csr.Team
+}
+
+func (csr ChampionshipSignUpResponse) GetCar() string {
+	return csr.Car
+}
+
+func (csr ChampionshipSignUpResponse) GetSkin() string {
+	return csr.Skin
+}
+
+func (csr ChampionshipSignUpResponse) GetGUID() string {
+	return csr.GUID
 }
 
 func (c *Championship) GetPlayerSummary(guid string) string {
@@ -317,16 +406,15 @@ func (c *Championship) Progress() float64 {
 	return (numCompletedRaces / numRaces) * 100
 }
 
-var ErrClosedChampionship = errors.New("servermanager: closed championship cannot add entrants on the fly")
-
-type PotentialOpenChampionshipEntrant interface {
+type PotentialChampionshipEntrant interface {
 	GetName() string
+	GetTeam() string
 	GetCar() string
 	GetSkin() string
 	GetGUID() string
 }
 
-func (c *Championship) AddEntrantFromSessionData(potentialEntrant PotentialOpenChampionshipEntrant) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
+func (c *Championship) AddEntrantFromSessionData(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
 	foundFreeSlot, class, err := c.AddEntrantFromSession(potentialEntrant)
 
 	if err != nil {
@@ -338,6 +426,7 @@ func (c *Championship) AddEntrantFromSessionData(potentialEntrant PotentialOpenC
 
 		newEntrant.GUID = potentialEntrant.GetGUID()
 		newEntrant.Name = potentialEntrant.GetName()
+		newEntrant.Team = potentialEntrant.GetTeam()
 
 		e := make(EntryList)
 
@@ -353,10 +442,9 @@ func (c *Championship) AddEntrantFromSessionData(potentialEntrant PotentialOpenC
 	return foundFreeSlot, class, nil
 }
 
-func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialOpenChampionshipEntrant) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
-	if !c.OpenEntrants {
-		return false, nil, ErrClosedChampionship
-	}
+func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
+	c.entryListMutex.Lock()
+	defer c.entryListMutex.Unlock()
 
 	classForCar, err := c.FindClassForCarModel(potentialEntrant.GetCar())
 
@@ -393,6 +481,7 @@ classLoop:
 			entrant.GUID = potentialEntrant.GetGUID()
 			entrant.Model = potentialEntrant.GetCar()
 			entrant.Skin = potentialEntrant.GetSkin()
+			entrant.Team = potentialEntrant.GetTeam()
 
 			logrus.Infof("New championship entrant: %s (%s) has been assigned to %s in %s", entrant.Name, entrant.GUID, carNum, classForCar.Name)
 
@@ -856,7 +945,7 @@ func listChampionshipsHandler(w http.ResponseWriter, r *http.Request) {
 
 // newOrEditChampionshipHandler builds a Championship form for the user to create a Championship.
 func newOrEditChampionshipHandler(w http.ResponseWriter, r *http.Request) {
-	opts, err := championshipManager.BuildChampionshipOpts(r)
+	_, opts, err := championshipManager.BuildChampionshipOpts(r)
 
 	if err != nil {
 		logrus.Errorf("couldn't build championship form, err: %s", err)
@@ -922,6 +1011,9 @@ func exportChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// sign up responses are hidden for data protection reasons
+	championship.SignUpForm.Responses = nil
+
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	enc.Encode(championship)
@@ -941,7 +1033,7 @@ func importChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "championships/import_championship.html", nil)
+	ViewRenderer.MustLoadTemplate(w, r, "championships/import-championship.html", nil)
 }
 
 type championshipResultsCollection struct {
@@ -1035,7 +1127,7 @@ func championshipEventImportHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "championships/import.html", map[string]interface{}{
+	ViewRenderer.MustLoadTemplate(w, r, "championships/import-event.html", map[string]interface{}{
 		"Results":        results,
 		"ChampionshipID": championshipID,
 		"Event":          event,
@@ -1273,6 +1365,211 @@ func championshipTeamPenaltyHandler(w http.ResponseWriter, r *http.Request) {
 		AddErrFlashQuick(w, r, "Couldn't modify team penalty")
 	} else {
 		AddFlashQuick(w, r, "Team penalty successfully modified")
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func championshipSignUpFormHandler(w http.ResponseWriter, r *http.Request) {
+	championship, opts, err := championshipManager.BuildChampionshipOpts(r)
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't load championship")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if !championship.SignUpForm.Enabled {
+		http.NotFound(w, r)
+		return
+	}
+
+	opts["FormData"] = &ChampionshipSignUpResponse{}
+
+	if r.Method == http.MethodPost {
+		signUpResponse, foundSlot, err := championshipManager.HandleChampionshipSignUp(r)
+
+		if err != nil {
+			switch err.(type) {
+			case ValidationError:
+				opts["FormData"] = signUpResponse
+				opts["ValidationError"] = err.Error()
+			default:
+				logrus.WithError(err).Error("couldn't handle championship")
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
+			}
+		} else {
+			if championship.SignUpForm.RequiresApproval {
+				AddFlashQuick(w, r, "Thanks for registering for the championship! Your registration is pending approval by an administrator.")
+				http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
+				return
+			} else {
+				if foundSlot {
+					AddFlashQuick(w, r, "Thanks for registering for the championship!")
+					http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
+					return
+				} else {
+					opts["FormData"] = signUpResponse
+					opts["ValidationError"] = fmt.Sprintf("There are no more available slots for the car: %s. Please pick a different car.", prettifyName(signUpResponse.GetCar(), true))
+				}
+			}
+		}
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "championships/sign-up.html", opts)
+}
+
+func championshipSignedUpEntrantsHandler(w http.ResponseWriter, r *http.Request) {
+	championship, err := championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't load championship")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if !championship.SignUpForm.Enabled {
+		http.NotFound(w, r)
+		return
+	}
+
+	sort.Slice(championship.SignUpForm.Responses, func(i, j int) bool {
+		return championship.SignUpForm.Responses[i].Created.After(championship.SignUpForm.Responses[j].Created)
+	})
+
+	ViewRenderer.MustLoadTemplate(w, r, "championships/signed-up-entrants.html", map[string]interface{}{
+		"Championship": championship,
+	})
+}
+
+func championshipSignedUpEntrantsCSVHandler(w http.ResponseWriter, r *http.Request) {
+	championship, err := championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't load championship")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	headers := []string{
+		"Created",
+		"Name",
+		"Team",
+		"GUID",
+		"Email",
+		"Car",
+		"Skin",
+		"Status",
+	}
+
+	for _, question := range championship.SignUpForm.ExtraFields {
+		headers = append(headers, question)
+	}
+
+	var out [][]string
+
+	out = append(out, headers)
+
+	for _, entrant := range championship.SignUpForm.Responses {
+		data := []string{
+			entrant.Created.String(),
+			entrant.Name,
+			entrant.Team,
+			entrant.GUID,
+			entrant.Email,
+			entrant.Car,
+			entrant.Skin,
+			string(entrant.Status),
+		}
+
+		for _, question := range championship.SignUpForm.ExtraFields {
+			if response, ok := entrant.Questions[question]; ok {
+				data = append(data, response)
+			} else {
+				data = append(data, "")
+			}
+		}
+
+		out = append(out, data)
+	}
+
+	w.Header().Add("Content-Type", "text/csv")
+	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment;filename=Entrants_%s.csv", championship.Name))
+	wr := csv.NewWriter(w)
+	wr.UseCRLF = true
+	_ = wr.WriteAll(out)
+}
+
+func championshipModifyEntrantStatusHandler(w http.ResponseWriter, r *http.Request) {
+	championship, err := championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't load championship")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if !championship.SignUpForm.Enabled {
+		http.NotFound(w, r)
+		return
+	}
+
+	entrantGUID := chi.URLParam(r, "entrantGUID")
+
+	for _, entrant := range championship.SignUpForm.Responses {
+		if entrant.GUID != entrantGUID {
+			continue
+		}
+
+		switch r.URL.Query().Get("action") {
+		case "accept":
+			if entrant.Status == ChampionshipEntrantAccepted {
+				AddFlashQuick(w, r, "This entrant has already been accepted.")
+				break
+			}
+
+			// add the entrant to the entrylist
+			foundSlot, _, err := championship.AddEntrantFromSessionData(entrant)
+
+			if err != nil {
+				logrus.WithError(err).Error("couldn't add entrant to championship")
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
+			}
+
+			if foundSlot {
+				entrant.Status = ChampionshipEntrantAccepted
+
+				AddFlashQuick(w, r, "The entrant was successfully accepted!")
+			} else {
+				AddErrFlashQuick(w, r, "There are no more slots available for the given entrant and car. Please check the Championship configuration.")
+			}
+		case "reject":
+			entrant.Status = ChampionshipEntrantRejected
+
+		classLoop:
+			for _, class := range championship.Classes {
+				for _, classEntrant := range class.Entrants {
+					if entrantGUID == classEntrant.GUID {
+						// remove the entrant from the championship.
+						classEntrant.Name = ""
+						classEntrant.GUID = ""
+						classEntrant.Team = ""
+						break classLoop
+					}
+				}
+			}
+		default:
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+	}
+
+	if err := championshipManager.UpsertChampionship(championship); err != nil {
+		logrus.WithError(err).Error("couldn't save championship")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)

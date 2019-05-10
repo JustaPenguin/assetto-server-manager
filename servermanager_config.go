@@ -13,13 +13,21 @@ import (
 var config *Configuration
 
 type Configuration struct {
-	HTTP       HTTPConfig        `yaml:"http"`
-	Steam      SteamConfig       `yaml:"steam"`
-	Store      StoreConfig       `yaml:"store"`
-	LiveMap    LiveMapConfig     `yaml:"live_map"`
-	Server     ServerExtraConfig `yaml:"server"`
-	Accounts   AccountsConfig    `yaml:"accounts"`
-	Monitoring MonitoringConfig  `yaml:"monitoring"`
+	HTTP          HTTPConfig          `yaml:"http"`
+	Steam         SteamConfig         `yaml:"steam"`
+	Store         StoreConfig         `yaml:"store"`
+	LiveMap       LiveMapConfig       `yaml:"live_map"`
+	Server        ServerExtraConfig   `yaml:"server"`
+	Accounts      AccountsConfig      `yaml:"accounts"`
+	Monitoring    MonitoringConfig    `yaml:"monitoring"`
+	Championships ChampionshipsConfig `yaml:"championships"`
+}
+
+type ChampionshipsConfig struct {
+	RecaptchaConfig struct {
+		SiteKey   string `yaml:"site_key"`
+		SecretKey string `yaml:"secret_key"`
+	} `yaml:"recaptcha"`
 }
 
 type MonitoringConfig struct {
