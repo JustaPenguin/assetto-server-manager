@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/haisum/recaptcha"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -20,6 +19,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
+	"github.com/haisum/recaptcha"
 	"github.com/heindl/caldav-go/icalendar"
 	"github.com/heindl/caldav-go/icalendar/components"
 	"github.com/mitchellh/go-wordwrap"
