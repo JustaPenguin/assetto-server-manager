@@ -1144,7 +1144,7 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 			return signUpResponse, false, ValidationError("This GUID is already registered.")
 		}
 
-		if entrant.Email == signUpResponse.Email {
+		if championship.SignUpForm.AskForEmail && entrant.Email == signUpResponse.Email {
 			return signUpResponse, false, ValidationError("Someone has already registered with this email address.")
 		}
 	}
