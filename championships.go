@@ -373,6 +373,34 @@ type PotentialChampionshipEntrant interface {
 }
 
 func (c *Championship) AddEntrantFromSessionData(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
+	foundFreeSlot, class, err := c.AddEntrantFromSession(potentialEntrant)
+
+	if err != nil {
+		return foundFreeSlot, class, err
+	}
+
+	if foundFreeSlot {
+		newEntrant := NewEntrant()
+
+		newEntrant.GUID = potentialEntrant.GetGUID()
+		newEntrant.Name = potentialEntrant.GetName()
+		newEntrant.Team = potentialEntrant.GetTeam()
+
+		e := make(EntryList)
+
+		e.Add(newEntrant)
+
+		err := raceManager.SaveEntrantsForAutoFill(e)
+
+		if err != nil {
+			logrus.Errorf("Couldn't add entrant (GUID; %s, Name; %s) to autofill list", newEntrant.GUID, newEntrant.Name)
+		}
+	}
+
+	return foundFreeSlot, class, nil
+}
+
+func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
 	classForCar, err := c.FindClassForCarModel(potentialEntrant.GetCar())
 
 	if err != nil {
@@ -944,6 +972,23 @@ func exportChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	enc.Encode(championship)
+}
+
+// importChampionshipHandler reads Championship data from JSON.
+func importChampionshipHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		championshipID, err := championshipManager.ImportChampionship(r.FormValue("import"))
+
+		if err != nil {
+			logrus.Errorf("couldn't import championship, err: %s", err)
+			AddErrFlashQuick(w, r, "Sorry, we couldn't import that championship! Check your JSON formatting.")
+		} else {
+			AddFlashQuick(w, r, "Championship successfully imported!")
+			http.Redirect(w, r, "/championship/"+championshipID, http.StatusFound)
+		}
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "championships/import_championship.html", nil)
 }
 
 type championshipResultsCollection struct {

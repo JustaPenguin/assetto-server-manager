@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/haisum/recaptcha"
@@ -895,6 +896,21 @@ func (cm *ChampionshipManager) ListAvailableResultsFilesForEvent(championshipID 
 	}
 
 	return event, filteredResults, nil
+}
+
+func (cm *ChampionshipManager) ImportChampionship(jsonData string) (string, error) {
+	var championship *Championship
+
+	err := json.Unmarshal([]byte(jsonData), &championship)
+
+	if err != nil {
+		return "", err
+	}
+
+	// generate a new ID to avoid clashes
+	championship.ID = uuid.New()
+
+	return championship.ID.String(), cm.UpsertChampionship(championship)
 }
 
 func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string, r *http.Request) error {
