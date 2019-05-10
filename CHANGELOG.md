@@ -14,9 +14,12 @@ Added:
   - Extra Questions - ask registrants to fill out questions that you specify, e.g. Discord username, Twitter handle, 
     number of races completed, etc.
   
-  Championship Sign Up requests can be viewed by Write Access users and Approved or Rejected in a new page. This new page also allows Write Access users to email groups of registrants, and download a Comma Separated Values list of the registration requests (to be used in spreadsheets etc.)
+  Championship Sign Up requests can be viewed by Write Access users and Approved or Rejected in a new page. 
+  This new page also allows Write Access users to email groups of registrants, and download a Comma Separated Values 
+  list of the registration requests (to be used in spreadsheets etc.)
   
-  We hope that this functionality improves the management of large events for Server Owners! Please get in touch if you run large events and let us know how it goes!
+  We hope that this functionality improves the management of large events for Server Owners! Please get in touch if 
+  you run large events and let us know how it goes!
   
 * In Server Options you can now configure Server Manager to show the Championship or Custom Race name after the server name
   in the Assetto Corsa server lobby.

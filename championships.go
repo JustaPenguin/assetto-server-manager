@@ -1543,11 +1543,12 @@ func championshipModifyEntrantStatusHandler(w http.ResponseWriter, r *http.Reque
 
 				AddFlashQuick(w, r, "The entrant was successfully accepted!")
 			} else {
-				AddErrFlashQuick(w, r, "There are no more slots available for the given entrant. Please check the Championship configuration.")
+				AddErrFlashQuick(w, r, "There are no more slots available for the given entrant and car. Please check the Championship configuration.")
 			}
 		case "reject":
 			entrant.Status = ChampionshipEntrantRejected
 
+		classLoop:
 			for _, class := range championship.Classes {
 				for _, classEntrant := range class.Entrants {
 					if entrantGUID == classEntrant.GUID {
@@ -1555,6 +1556,7 @@ func championshipModifyEntrantStatusHandler(w http.ResponseWriter, r *http.Reque
 						classEntrant.Name = ""
 						classEntrant.GUID = ""
 						classEntrant.Team = ""
+						break classLoop
 					}
 				}
 			}

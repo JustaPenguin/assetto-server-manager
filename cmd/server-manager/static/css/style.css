@@ -548,3 +548,9 @@ td .dot-inactive {
 .championship-signup-question {
     margin-bottom: 5px;
 }
+
+.popover-signup-answers {
+    font-size: 0.9rem;
+    max-height: 500px;
+    overflow-y: auto;
+}

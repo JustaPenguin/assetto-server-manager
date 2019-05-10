@@ -84,16 +84,16 @@
                     <td class="pl-2 pr-2">
                         {{ if gt (len $championship.SignUpForm.ExtraFields) 0 }}
 
-                            <button type="button" class="btn btn-sm btn-warning dropdown-toggle popover-external-html" data-placement="left"
+                            <button type="button" class="btn btn-sm btn-warning dropdown-toggle popover-external-html mb-2" data-placement="left"
                                     data-toggle="popover" data-html="true"
                                     id="answers-{{ $entrant.GUID }}"
-                                    style="width: 100%; margin-bottom: 5px;"
+                                    style="width: 100%;"
                             >
                                 View Answers
                             </button>
 
-                            <div id="popover-content-answers-{{ $entrant.GUID }}" style="display: none; font-size: 20px !important;">
-                                <div style="font-size: 0.9rem; max-height: 500px; overflow-y: auto;">
+                            <div id="popover-content-answers-{{ $entrant.GUID }}" style="display: none;">
+                                <div class="popover-signup-answers">
                                     {{ range $index, $question := $championship.SignUpForm.ExtraFields }}
                                         <strong>{{ $question }}</strong><br>{{ index $entrant.Questions $question }}<br>
                                     {{ end }}
@@ -103,7 +103,7 @@
                         {{ end }}
 
                         <a class="btn btn-sm btn-success" href="/championship/{{ $championship.ID.String }}/entrant/{{ $entrant.GUID }}?action=accept">Accept</a>
-                        <a class="btn btn-sm btn-danger" href="/championship/{{ $championship.ID.String }}/entrant/{{ $entrant.GUID }}?action=reject" style="float: right;">Reject</a>
+                        <a class="btn btn-sm btn-danger float-right" href="/championship/{{ $championship.ID.String }}/entrant/{{ $entrant.GUID }}?action=reject">Reject</a>
                     </td>
                 </tr>
             {{ end }}
