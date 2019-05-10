@@ -1,8 +1,23 @@
-v1.2.3
+v1.3.0
 ------
 
 Added:
 
+* Added a Championship Sign Up form. When configuring a Championship, you can now enable 'Sign Up Form'. This creates a public 
+  registration form where anybody can sign up to be added to a Championship. This has the following options:
+  - Require admin approval for applications - Every sign up request must be approved by an administrator before 
+    they are added to the EntryList.
+  - Ask users for Email - you can request that users enter their email address so you can contact them
+  - Ask users for Team - enable a 'Team' field to be filled out by registrants (this is optional though)
+  - Let users choose car and skin - On by default, users can pick their car and skin. If turned off, an administrator 
+    will have to configure the car and skin in the EntryList once the driver is accepted.
+  - Extra Questions - ask registrants to fill out questions that you specify, e.g. Discord username, Twitter handle, 
+    number of races completed, etc.
+  
+  Championship Sign Up requests can be viewed by Write Access users and Approved or Rejected in a new page. This new page also allows Write Access users to email groups of registrants, and download a Comma Separated Values list of the registration requests (to be used in spreadsheets etc.)
+  
+  We hope that this functionality improves the management of large events for Server Owners! Please get in touch if you run large events and let us know how it goes!
+  
 * In Server Options you can now configure Server Manager to show the Championship or Custom Race name after the server name
   in the Assetto Corsa server lobby.
 * You can now add custom CSS to your server manager install from the Server Options!
