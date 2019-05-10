@@ -1,0 +1,172 @@
+{{ define "title" }}{{ $.Current.Name }}{{ end }}
+
+{{ define "content" }}
+    {{ $championship := $.Current }}
+    <h1 class="text-center">
+        {{ $championship.Name }}
+    </h1>
+
+    {{ with $championship.Info }}
+        <div class="card mt-3 border-secondary">
+            <div class="card-header">
+                <strong>About Championship</strong>
+            </div>
+
+            <div class="card-body">
+                {{ $championship.Info }}
+            </div>
+        </div>
+    {{ end }}
+
+    <form action="/championship/{{ $championship.ID.String }}/sign-up" method="post" id="championship-signup-form" data-safe-submit>
+
+        <div class="card mt-3 border-secondary">
+            <div class="card-header">
+                <strong>Your Details</strong>
+            </div>
+
+            <div class="card-body">
+
+                {{ with $.ValidationError }}
+                    <div class="alert alert-danger">
+                        {{ . }}
+                    </div>
+                {{ end }}
+
+                <div class="form-group row">
+                    <label for="Name" class="col-sm-4 col-form-label">Name</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="Name" name="Name" required
+                               placeholder="Jimmy Bob" value="{{ $.FormData.Name }}">
+                    </div>
+                </div>
+
+                {{ if $championship.SignUpForm.AskForTeam }}
+                    <div class="form-group row">
+                        <label for="Team" class="col-sm-4 col-form-label">Team</label>
+
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" id="Team" name="Team"
+                                   placeholder="The Fast Team" value="{{ $.FormData.Team }}">
+
+                            <small>You may leave the team name blank.</small>
+                        </div>
+                    </div>
+                {{ end }}
+
+                <div class="form-group row">
+                    <label for="GUID" class="col-sm-4 col-form-label">Steam GUID</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="GUID" name="GUID"
+                               placeholder="" value="{{ .FormData.GUID }}">
+
+                        <small>You can find your Steam ID at <a href="https://steamid.io/">steamid.io</a> or in your Steam Profile URL. Note that we require the <strong>SteamID64</strong>.</small>
+                    </div>
+                </div>
+
+                {{ if $championship.SignUpForm.AskForEmail }}
+                    <div class="form-group row">
+                        <label for="Email" class="col-sm-4 col-form-label">Email Address</label>
+
+                        <div class="col-sm-8">
+                            <input type="email" class="form-control" id="Email" name="Email"
+                                   placeholder="jimmy@bob.com" required value="{{ $.FormData.Email }}">
+
+                        </div>
+                    </div>
+                {{ end }}
+
+                {{ if ne $.RecaptchaSiteKey "" }}
+
+                    <div class="form-group row">
+                        <div class="col-sm-8 offset-sm-4">
+                            <div class="g-recaptcha" data-sitekey="{{ $.RecaptchaSiteKey }}"></div>
+                        </div>
+                    </div>
+                {{ end }}
+            </div>
+        </div>
+
+        {{ if not $championship.SignUpForm.HideCarChoice }}
+            <div class="card mt-3 border-secondary" id="entrants">
+                <div class="card-header">
+                    <strong>Your Car</strong>
+                </div>
+
+                <div class="card-body row">
+                    <div class="col-sm-8">
+                        <div class="form-group row">
+                            <label for="Car" class="col-sm-3 col-form-label">Car</label>
+
+                            <div class="col-sm-9">
+                                <select name="Car" id="Car" class="form-control entryListCar">
+                                    {{ range $index, $class := $championship.Classes }}
+                                        <optgroup label="{{ $class.Name }}">
+                                            {{ range $index, $car := $class.ValidCarIDs }}
+                                                <option value="{{ $car }}" {{ if eq $.FormData.Car $car }}selected="selected"{{ end }}>{{ prettify $car true }}</option>
+                                            {{ end }}
+                                        </optgroup>
+                                    {{ end }}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="Skin" class="col-sm-3 col-form-label">Skin</label>
+
+                            <div class="col-sm-9">
+                                <select name="Skin" id="Skin" class="form-control entryListSkin">
+                                    {{ with $.FormData.Skin }}
+                                        <option value="{{ . }}" selected="selected">{{ prettify . true }}</option>
+                                    {{ end }}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-4">
+                        <img class="img img-fluid entryListCarPreview" src="/static/img/no-preview-car.png" alt="Car Preview" id="CarPreview">
+                    </div>
+                </div>
+            </div>
+        {{ end }}
+
+        {{ if gt (len $championship.SignUpForm.ExtraFields) 0 }}
+            <div class="card mt-3 border-secondary" id="entrants">
+                <div class="card-header">
+                    <strong>Extra Information</strong>
+                </div>
+
+                <div class="card-body">
+                    <p>The championship organisers have also requested the following information.</p>
+
+                    {{ range $index, $question := $championship.SignUpForm.ExtraFields }}
+                        <div class="form-group row">
+                            <label for="Question.{{ $index }}" class="col-sm-4 col-form-label">{{ $question }}</label>
+
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" id="Question.{{ $index }}" name="Question.{{ $index }}"
+                                       placeholder="" value="{{ index $.FormData.Questions $question }}">
+                            </div>
+                        </div>
+                    {{ end }}
+                </div>
+            </div>
+        {{ end }}
+
+        <div class="mt-5">
+            <button type="submit" class="btn btn-success float-right">Register</button>
+        </div>
+    </form>
+
+
+    <script type="text/javascript">
+        const availableCars = {{ jsonEncode .CarOpts.AsMap }};
+    </script>
+
+    {{ if ne $.RecaptchaSiteKey "" }}
+        <script src='https://www.google.com/recaptcha/api.js'></script>
+    {{ end }}
+{{ end }}

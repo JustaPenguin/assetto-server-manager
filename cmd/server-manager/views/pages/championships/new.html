@@ -69,7 +69,7 @@
                     <label for="ChampionshipOpenEntrants" class="col-sm-3 col-form-label">Open Championship</label>
 
                     <div class="col-sm-9">
-                        <input type="checkbox" class="form-control" id="ChampionshipOpenEntrants" name="ChampionshipOpenEntrants"
+                        <input type="checkbox" id="ChampionshipOpenEntrants" name="ChampionshipOpenEntrants"
                                {{ if $f.OpenEntrants }} checked="checked" {{ end }}><br><br>
 
                         <small>
@@ -85,7 +85,7 @@
                     <label for="OverridePassword" class="col-sm-3 col-form-label">Override Server Password</label>
 
                     <div class="col-sm-9">
-                        <input type="checkbox" class="form-control" id="OverridePassword" name="OverridePassword"
+                        <input type="checkbox" id="OverridePassword" name="OverridePassword"
                                 {{ if $f.OverridePassword }} checked="checked" {{ end }}><br><br>
 
                         <small>
@@ -119,11 +119,13 @@
                     <div class="col-sm-9" id="championship-info">
                         <textarea id="summernote" name="ChampionshipInfo"></textarea>
                         <div class="clearfix"></div>
+
+                        <small>Important information is shown at the top of a Championship page and on Sign Up pages (if enabled).</small>
                     </div>
+
                 </div>
             </div>
         </div>
-
         <div id="class-template" style="display: none;">
             {{ template "championship-class" . }}
         </div>
@@ -140,14 +142,137 @@
         </div>
         <div class="clearfix"></div>
 
-        {{ if .IsEditing }}
-            <input type="hidden" name="Editing" id="Editing" value="{{ $f.ID.String }}">
-            <button type="submit" class="btn btn-success mt-5 float-right">Save Championship</button>
-        {{ else }}
-            <div class="mt-5 float-right">
-                <button type="submit" name="action" value="addEvent" class="btn btn-success">Add an Event</button>
+
+
+        <div class="card mt-3 border-secondary">
+            <div class="card-header">
+                <strong>Sign Up Form</strong>
             </div>
-        {{ end }}
+
+            <div class="card-body">
+                <div class="form-group row">
+                    <label for="Championship.SignUpForm.Enabled" class="col-sm-3 col-form-label">Enabled</label>
+
+                    <div class="col-sm-9">
+                        <input type="checkbox" id="ChampionshipSignUpFormEnabled" name="Championship.SignUpForm.Enabled"
+                                {{ if $f.SignUpForm.Enabled }} checked="checked" {{ end }}><br><br>
+
+                        <small>
+                            Allow anyone to access a Sign Up form where they can register to be added into the EntryList of a Championship.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="show-signup-form-enabled" {{ if not $f.SignUpForm.Enabled}} style="display: none" {{ end }}>
+                    <div class="form-group row">
+                        <label for="Championship.SignUpForm.RequiresApproval" class="col-sm-3 col-form-label">Require all applications to be approved by an admin/write user?</label>
+
+                        <div class="col-sm-9">
+                            <input type="checkbox" id="Championship.SignUpForm.RequiresApproval" name="Championship.SignUpForm.RequiresApproval"
+                                    {{ if $f.SignUpForm.RequiresApproval }} checked="checked" {{ end }}><br><br>
+
+                            <small>
+                                All applications will be visible in a page where you can Accept or Reject them.
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="Championship.SignUpForm.AskForEmail" class="col-sm-3 col-form-label">Ask users for Email?</label>
+
+                        <div class="col-sm-9">
+                            <input type="checkbox" id="Championship.SignUpForm.AskForEmail" name="Championship.SignUpForm.AskForEmail"
+                                    {{ if $f.SignUpForm.AskForEmail }} checked="checked" {{ end }}><br><br>
+
+                            <small>
+                                Asking users for their email will allow you to contact them with event details etc.
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="Championship.SignUpForm.AskForTeam" class="col-sm-3 col-form-label">Ask users for Team?</label>
+
+                        <div class="col-sm-9">
+                            <input type="checkbox" id="Championship.SignUpForm.AskForTeam" name="Championship.SignUpForm.AskForTeam"
+                                    {{ if $f.SignUpForm.AskForTeam }} checked="checked" {{ end }}><br><br>
+
+                            <small>
+                                Allow users to specify their team name.
+                            </small>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group row">
+                        <label for="Championship.SignUpForm.HideCarChoice" class="col-sm-3 col-form-label">Let users choose Car and Skin?</label>
+
+                        <div class="col-sm-9">
+                            <input type="checkbox" id="Championship.SignUpForm.HideCarChoice" name="Championship.SignUpForm.HideCarChoice"
+                                    {{ if not $f.SignUpForm.HideCarChoice }} checked="checked" {{ end }}><br><br>
+
+                            <small>
+                                Lets users control which car and skin they want to drive.
+                            </small>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group row">
+                        <label for="Championship.SignUpForm.ExtraFields" class="col-sm-3 col-form-label">Extra Questions</label>
+
+                        <div class="col-sm-9">
+
+                            <div id="Questions">
+                                {{ range $index, $question := $f.SignUpForm.ExtraFields }}
+                                    <div class="championship-signup-question row">
+                                        <div class="col-sm-11">
+                                            <input type="text" class="form-control championshipExtraField" name="Championship.SignUpForm.ExtraFields"
+                                                   placeholder="e.g. What is your discord username?" value="{{ $question }}">
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <a href="#" class="text-danger btn-delete-question"><i class="fas fa-trash"></i></a>
+                                        </div>
+                                    </div>
+                                {{ else }}
+                                    <div class="championship-signup-question row">
+                                        <div class="col-sm-11">
+                                            <input type="text" class="form-control championshipExtraField" name="Championship.SignUpForm.ExtraFields"
+                                                   placeholder="e.g. What is your discord username?">
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <a href="#" class="text-danger btn-delete-question"><i class="fas fa-trash"></i></a>
+                                        </div>
+                                    </div>
+                                {{ end }}
+                            </div>
+
+                            <div class="mt-2">
+                                <button class="btn btn-info float-right" id="AddSignUpFormQuestion">Add another question</button>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    {{ with $.RecaptchaSiteKey }}
+                        <span class="text-success">reCAPTCHA is configured. Users will be prompted to complete a CAPTCHA before their registration request is submitted.</span>
+                    {{ else }}
+                        <span class="text-danger">reCAPTCHA is not configured. Users will NOT be prompted to complete a CAPTCHA before their registration request is submitted. You can enable reCAPTCHA in your config.yml.</span>
+                    {{ end }}
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-5">
+            {{ if .IsEditing }}
+                <input type="hidden" name="Editing" id="Editing" value="{{ $f.ID.String }}">
+                <button type="submit" class="btn btn-success float-right">Save Championship</button>
+            {{ else }}
+                <div class="float-right">
+                    <button type="submit" name="action" value="addEvent" class="btn btn-success">Add an Event</button>
+                </div>
+            {{ end }}
+        </div>
 
         <div class="clearfix"></div>
     </form>

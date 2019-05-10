@@ -36,6 +36,8 @@ github.com/gorilla/sessions v1.1.3 h1:uXoZdcdA5XdXF3QzuSlheVRUvjl+1rKY7zBXL68L9R
 github.com/gorilla/sessions v1.1.3/go.mod h1:8KCfur6+4Mqcc6S0FEfKuN15Vl5MgXW92AE8ovaJD0w=
 github.com/gorilla/websocket v1.4.0 h1:WDFjx/TMzVgy9VdMMQi2K2Emtwi2QcUQsztZ/zLaH/Q=
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
+github.com/haisum/recaptcha v0.0.0-20170327142240-7d3b8053900e h1:SLxmrOPIeLANjk9W0BRT9I9w6YAaSTV/RhGAvCfV4io=
+github.com/haisum/recaptcha v0.0.0-20170327142240-7d3b8053900e/go.mod h1:4C2PL8L8RP6rj5QpimHOsQcMh1fecsamFK5aY2V7VBQ=
 github.com/heindl/caldav-go v0.0.0-20160315204950-22453f8a38b5 h1:YL5q8EPxWJqCjzKCwyLYiXOwtPckqGd0rSLsslYYoHk=
 github.com/heindl/caldav-go v0.0.0-20160315204950-22453f8a38b5/go.mod h1:j0EXLgmOBPO5TblJLOjHr7TZJIYBsd2CeXYjpPWyPs8=
 github.com/huandu/xstrings v1.2.0 h1:yPeWdRnmynF7p+lLYz0H2tthW9lqhMJrQV/U7yy4wX0=

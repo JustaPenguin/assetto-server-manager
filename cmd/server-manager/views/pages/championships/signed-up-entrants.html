@@ -1,0 +1,112 @@
+{{ define "title" }}{{ $.Championship.Name }} Entrants{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">
+        {{ $.Championship.Name }} Entrants
+    </h1>
+
+    {{ with .Championship }}
+        {{- /*gotype: github.com/cj123/assetto-server-manager.Championship*/ -}}
+        {{ $championship := .}}
+
+        <div class="float-right mb-5">
+            {{ if $championship.SignUpForm.AskForEmail }}
+                <div class="dropdown show" style="display: inline-block">
+                    <a class="btn btn-success dropdown-toggle" href="#" role="button" id="dropdownEmailEntrants" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                       Email Entrants
+                    </a>
+
+                    <div class="dropdown-menu" aria-labelledby="dropdownEmailEntrants">
+                        <a class="dropdown-item" href="mailto:?bcc={{ $championship.SignUpForm.EmailList "all" }}&subject={{ $championship.Name }}">
+                            All Entrants
+                        </a>
+                        <a class="dropdown-item" href="mailto:?bcc={{ $championship.SignUpForm.EmailList "accepted" }}&subject={{ $championship.Name }}">
+                            Accepted Entrants
+                        </a>
+                        <a class="dropdown-item" href="mailto:?bcc={{ $championship.SignUpForm.EmailList "rejected" }}&subject={{ $championship.Name }}">
+                            Rejected Entrants
+                        </a>
+                        <a class="dropdown-item" href="mailto:?bcc={{ $championship.SignUpForm.EmailList "pending" }}&subject={{ $championship.Name }}">
+                            Pending Entrants
+                        </a>
+                    </div>
+                </div>
+            {{ end }}
+
+            <a class="btn btn-primary" href="/championship/{{ $championship.ID.String }}/entrants.csv">Export CSV</a>
+        </div>
+
+        <div class="clearfix"></div>
+
+        <table class="table table-bordered table-striped">
+            <tr>
+                <th>Created</th>
+                <th>Name</th>
+                <th>Team</th>
+                <th>GUID</th>
+                <th>Email</th>
+                {{ if not $championship.SignUpForm.HideCarChoice }}
+                    <th>Car / Skin</th>
+                {{ end }}
+                <th>Status</th>
+
+                <th>Actions</th>
+            </tr>
+
+            {{ range $index, $entrant := .SignUpForm.Responses }}
+                <tr>
+                    <td>
+                        {{ timeFormat $entrant.Created }} on {{ dateFormat $entrant.Created }}
+                    </td>
+                    <td>
+                        {{ $entrant.Name }}
+                    </td>
+                    <td>
+                        {{ $entrant.Team }}
+                    </td>
+                    <td>
+                        <small><code>{{ $entrant.GUID }}</code></small>
+                    </td>
+                    <td>
+                        <a href="mailto:{{ $entrant.Email }}?subject={{ $championship.Name }}">{{ $entrant.Email }}</a>
+                    </td>
+
+                    {{ if not $championship.SignUpForm.HideCarChoice }}
+                        <td>
+                            {{ prettify $entrant.Car true }} / {{ prettify $entrant.Skin true }}
+                        </td>
+                    {{ end }}
+
+                    <td>
+                        {{ $entrant.Status }}
+                    </td>
+
+                    <td class="pl-2 pr-2">
+                        {{ if gt (len $championship.SignUpForm.ExtraFields) 0 }}
+
+                            <button type="button" class="btn btn-sm btn-warning dropdown-toggle popover-external-html mb-2" data-placement="left"
+                                    data-toggle="popover" data-html="true"
+                                    id="answers-{{ $entrant.GUID }}"
+                                    style="width: 100%;"
+                            >
+                                View Answers
+                            </button>
+
+                            <div id="popover-content-answers-{{ $entrant.GUID }}" style="display: none;">
+                                <div class="popover-signup-answers">
+                                    {{ range $index, $question := $championship.SignUpForm.ExtraFields }}
+                                        <strong>{{ $question }}</strong><br>{{ index $entrant.Questions $question }}<br>
+                                    {{ end }}
+                                </div>
+                            </div>
+
+                        {{ end }}
+
+                        <a class="btn btn-sm btn-success" href="/championship/{{ $championship.ID.String }}/entrant/{{ $entrant.GUID }}?action=accept">Accept</a>
+                        <a class="btn btn-sm btn-danger float-right" href="/championship/{{ $championship.ID.String }}/entrant/{{ $entrant.GUID }}?action=reject">Reject</a>
+                    </td>
+                </tr>
+            {{ end }}
+        </table>
+    {{ end }}
+{{ end }}

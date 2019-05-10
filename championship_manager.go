@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
+	"github.com/haisum/recaptcha"
 	"github.com/heindl/caldav-go/icalendar"
 	"github.com/heindl/caldav-go/icalendar/components"
 	"github.com/mitchellh/go-wordwrap"
@@ -104,11 +106,11 @@ func (cm *ChampionshipManager) ListChampionships() ([]*Championship, error) {
 	return champs, nil
 }
 
-func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (map[string]interface{}, error) {
+func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (championship *Championship, opts map[string]interface{}, err error) {
 	raceOpts, err := cm.BuildRaceOpts(r)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	raceOpts["DefaultPoints"] = DefaultChampionshipPoints
@@ -119,18 +121,18 @@ func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (map[strin
 	raceOpts["IsEditing"] = isEditingChampionship
 
 	if isEditingChampionship {
-		current, err := cm.LoadChampionship(championshipID)
+		championship, err = cm.LoadChampionship(championshipID)
 
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-
-		raceOpts["Current"] = current
 	} else {
-		raceOpts["Current"] = NewChampionship("")
+		championship = NewChampionship("")
 	}
 
-	return raceOpts, nil
+	raceOpts["Current"] = championship
+
+	return championship, raceOpts, nil
 }
 
 func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (championship *Championship, edited bool, err error) {
@@ -158,6 +160,22 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 
 	championship.Name = r.FormValue("ChampionshipName")
 	championship.OpenEntrants = r.FormValue("ChampionshipOpenEntrants") == "on" || r.FormValue("ChampionshipOpenEntrants") == "1"
+	championship.SignUpForm.Enabled = r.FormValue("Championship.SignUpForm.Enabled") == "on" || r.FormValue("Championship.SignUpForm.Enabled") == "1"
+	championship.SignUpForm.AskForEmail = r.FormValue("Championship.SignUpForm.AskForEmail") == "on" || r.FormValue("Championship.SignUpForm.AskForEmail") == "1"
+	championship.SignUpForm.AskForTeam = r.FormValue("Championship.SignUpForm.AskForTeam") == "on" || r.FormValue("Championship.SignUpForm.AskForTeam") == "1"
+	championship.SignUpForm.HideCarChoice = !(r.FormValue("Championship.SignUpForm.HideCarChoice") == "on" || r.FormValue("Championship.SignUpForm.HideCarChoice") == "1")
+	championship.SignUpForm.RequiresApproval = r.FormValue("Championship.SignUpForm.RequiresApproval") == "on" || r.FormValue("Championship.SignUpForm.RequiresApproval") == "1"
+
+	championship.SignUpForm.ExtraFields = []string{}
+
+	for _, question := range r.Form["Championship.SignUpForm.ExtraFields"] {
+		if question == "" {
+			continue
+		}
+
+		championship.SignUpForm.ExtraFields = append(championship.SignUpForm.ExtraFields, question)
+	}
+
 	championship.Info = template.HTML(r.FormValue("ChampionshipInfo"))
 	championship.OverridePassword = r.FormValue("OverridePassword") == "1"
 	championship.ReplacementPassword = r.FormValue("ReplacementPassword")
@@ -541,6 +559,10 @@ func (s sessionEntrantWrapper) GetSkin() string {
 
 func (s sessionEntrantWrapper) GetGUID() string {
 	return s.DriverGUID
+}
+
+func (s sessionEntrantWrapper) GetTeam() string {
+	return ""
 }
 
 func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, championship *Championship, currentEventIndex int) {
@@ -1064,4 +1086,85 @@ func (cm *ChampionshipManager) ModifyTeamPenalty(championshipID, classID, team s
 	}
 
 	return cm.UpsertChampionship(championship)
+}
+
+type ValidationError string
+
+func (e ValidationError) Error() string {
+	return string(e)
+}
+
+var steamGUIDRegex = regexp.MustCompile("^[0-9]{17}$")
+
+func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (response *ChampionshipSignUpResponse, foundSlot bool, err error) {
+	if err := r.ParseForm(); err != nil {
+		return nil, false, err
+	}
+
+	championship, err := cm.LoadChampionship(chi.URLParam(r, "championshipID"))
+
+	if err != nil {
+		return nil, false, err
+	}
+
+	signUpResponse := &ChampionshipSignUpResponse{
+		Created: time.Now(),
+		Name:    r.FormValue("Name"),
+		GUID:    r.FormValue("GUID"),
+		Team:    r.FormValue("Team"),
+		Email:   r.FormValue("Email"),
+
+		Car:  r.FormValue("Car"),
+		Skin: r.FormValue("Skin"),
+
+		Questions: make(map[string]string),
+		Status:    ChampionshipEntrantPending,
+	}
+
+	for index, question := range championship.SignUpForm.ExtraFields {
+		signUpResponse.Questions[question] = r.FormValue(fmt.Sprintf("Question.%d", index))
+	}
+
+	if config.Championships.RecaptchaConfig.SecretKey != "" {
+		captcha := recaptcha.R{
+			Secret: config.Championships.RecaptchaConfig.SecretKey,
+		}
+
+		if !captcha.Verify(*r) {
+			return signUpResponse, false, ValidationError("Please complete the reCAPTCHA.")
+		}
+	}
+
+	if !steamGUIDRegex.MatchString(signUpResponse.GUID) {
+		return signUpResponse, false, ValidationError("Please enter a valid SteamID64.")
+	}
+
+	for _, entrant := range championship.SignUpForm.Responses {
+		if entrant.GUID == signUpResponse.GUID {
+			return signUpResponse, false, ValidationError("This GUID is already registered.")
+		}
+
+		if entrant.Email == signUpResponse.Email {
+			return signUpResponse, false, ValidationError("Someone has already registered with this email address.")
+		}
+	}
+
+	if !championship.SignUpForm.RequiresApproval {
+		// check to see if there is room in the entrylist for the user in their specific car
+		foundSlot, _, err = championship.AddEntrantFromSessionData(signUpResponse)
+
+		if err != nil {
+			return signUpResponse, foundSlot, err
+		}
+
+		if foundSlot {
+			signUpResponse.Status = ChampionshipEntrantAccepted
+		} else {
+			signUpResponse.Status = ChampionshipEntrantRejected
+		}
+	}
+
+	championship.SignUpForm.Responses = append(championship.SignUpForm.Responses, signUpResponse)
+
+	return signUpResponse, foundSlot, cm.UpsertChampionship(championship)
 }

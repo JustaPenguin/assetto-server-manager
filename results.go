@@ -351,6 +351,10 @@ func (c *SessionCar) GetGUID() string {
 	return c.Driver.GUID
 }
 
+func (c *SessionCar) GetTeam() string {
+	return c.Driver.Team
+}
+
 type SessionEvent struct {
 	CarID         int            `json:"CarId"`
 	Driver        *SessionDriver `json:"Driver"`
