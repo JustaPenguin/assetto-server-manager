@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cj123/sessions"
 	"github.com/etcd-io/bbolt"
-	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )

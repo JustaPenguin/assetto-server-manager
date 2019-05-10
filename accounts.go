@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cj123/sessions"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
-	"github.com/gorilla/sessions"
 	"github.com/sethvargo/go-diceware/diceware"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/scrypt"
