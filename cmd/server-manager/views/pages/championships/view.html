@@ -19,8 +19,6 @@
                     You can register for a place in this Championship!
                     {{ if $championship.SignUpForm.RequiresApproval }}
                         Pending admin approval, you will be added to the grid!
-                    {{ else }}
-
                     {{ end }}
 
                     <a class="btn btn-primary float-right" href="/championship/{{ $championship.ID.String }}/sign-up">Register Now</a>
