@@ -11,9 +11,9 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/cj123/sessions"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
 )
 

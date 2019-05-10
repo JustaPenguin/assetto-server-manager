@@ -6,6 +6,7 @@ require (
 	github.com/Masterminds/sprig v2.18.0+incompatible
 	github.com/certifi/gocertifi v0.0.0-20190506164543-d2eda7129713 // indirect
 	github.com/cj123/ini v1.42.0
+	github.com/cj123/sessions v1.1.5
 	github.com/davecgh/go-spew v1.1.1
 	github.com/etcd-io/bbolt v1.3.2
 	github.com/fatih/camelcase v1.0.0
@@ -13,7 +14,6 @@ require (
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/google/uuid v1.1.1
 	github.com/gopherjs/gopherjs v0.0.0-20190309154008-847fc94819f9 // indirect
-	github.com/gorilla/sessions v1.1.3
 	github.com/gorilla/websocket v1.4.0
 	github.com/haisum/recaptcha v0.0.0-20170327142240-7d3b8053900e
 	github.com/heindl/caldav-go v0.0.0-20160315204950-22453f8a38b5
