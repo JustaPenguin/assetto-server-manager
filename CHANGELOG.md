@@ -13,6 +13,7 @@ Added:
 * You can now import Championship results for second races.
 * You can now export all of the results for a championship to Simresults together.
 * Individual events (custom races and championships) can now override the global server password setting.
+* Added the ability to import entire championships.
 
 Fixes:
 
