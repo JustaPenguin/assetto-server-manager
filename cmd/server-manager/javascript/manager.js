@@ -1294,9 +1294,25 @@ class RaceSetup {
 }
 
 function msToTime(s) {
-    // Pad to 2 or 3 digits, default is 2
-    let pad = (n, z = 2) => ('00' + n).slice(-z);
-    return pad(s / 3.6e6 | 0) + ':' + pad((s % 3.6e6) / 6e4 | 0) + ':' + pad((s % 6e4) / 1000 | 0) + '.' + pad(s % 1000, 3);
+    let hours = (s / 3.6e6 | 0);
+    let minutes = ((s % 3.6e6) / 6e4 | 0);
+    let seconds = ((s % 6e4) / 1000 | 0) + '.' + (s % 1000);
+
+    let output = '';
+
+    if (hours !== 0) {
+        output += hours + "h"
+    }
+
+    if (minutes !== 0) {
+        output += minutes + "m"
+    }
+
+    if (seconds !== '0.0') {
+        output += seconds + "s"
+    }
+
+    return output
 }
 
 function timeDiff(tstart, tend) {
@@ -1508,6 +1524,10 @@ let liveTiming = {
 
                 let sortedDeleted = Object.keys(liveTiming.DeletedCars)
                     .sort(function (a, b) {
+                        if (liveTiming.DeletedCars[a].BestLap === 0) {
+                            return 1
+                        }
+
                         if (liveTiming.DeletedCars[a].BestLap < liveTiming.DeletedCars[b].BestLap) {
                             return -1
                         } else if (liveTiming.DeletedCars[a].BestLap === liveTiming.DeletedCars[b].BestLap) {
@@ -1644,7 +1664,7 @@ let liveTiming = {
                         $tr.append($tdLapTime);
                     }
 
-                    $tdBestLap.text(carSet[car].BestLap);
+                    $tdBestLap.text(msToTime(carSet[car].BestLap));
                     $tr.append($tdBestLap);
 
                     if (!discon) {
