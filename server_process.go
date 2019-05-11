@@ -105,6 +105,7 @@ type AssettoServerProcess struct {
 	forwardingAddress string
 	forwardListenPort int
 	udpServerConn     *udp.AssettoServerUDP
+	udpStatusMutex    sync.Mutex
 }
 
 func NewAssettoServerProcess() *AssettoServerProcess {
@@ -215,6 +216,9 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, forwardingAddress string
 }
 
 func (as *AssettoServerProcess) closeUDPConnection() {
+	as.udpStatusMutex.Lock()
+	defer as.udpStatusMutex.Unlock()
+
 	if as.udpServerConn == nil {
 		return
 	}
@@ -231,6 +235,9 @@ func (as *AssettoServerProcess) closeUDPConnection() {
 }
 
 func (as *AssettoServerProcess) startUDPListener() error {
+	as.udpStatusMutex.Lock()
+	defer as.udpStatusMutex.Unlock()
+
 	if as.udpServerConn != nil {
 		return nil
 	}
