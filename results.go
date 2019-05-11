@@ -525,6 +525,17 @@ func LoadResult(fileName string) (*SessionResults, error) {
 	result.Date = date
 	result.SessionFile = strings.Trim(fileName, ".json")
 
+	var validResults []*SessionResult
+
+	// filter out invalid results
+	for _, driver := range result.Result {
+		if driver.TotalTime > 0 {
+			validResults = append(validResults, driver)
+		}
+	}
+
+	result.Result = validResults
+
 	return result, nil
 }
 
