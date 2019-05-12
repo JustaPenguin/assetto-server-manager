@@ -66,11 +66,12 @@ type Collision struct {
 	Speed    float32
 }
 
+// @TODO these need to live inside the server
 var liveInfo LiveTiming
 var carCounter map[uint8]int
 
-func LiveTimingCallback(response udp.Message) {
-	currentRace, _ := raceManager.CurrentRace()
+func (ms *MultiServer) LiveTimingCallback(response udp.Message) {
+	currentRace, _ := ms.raceManager.CurrentRace()
 
 	if currentRace == nil {
 		// no race live, ignore udp
@@ -189,7 +190,7 @@ func LiveTimingCallback(response udp.Message) {
 
 			liveInfo.ctx, liveInfo.endSessionFunc = context.WithCancel(context.Background())
 
-			go sendGetSessionInfoAtInterval(liveInfo.ctx)
+			go sendGetSessionInfoAtInterval(liveInfo.ctx, ms.process)
 		} else if a.Event() == udp.EventSessionInfo {
 			if liveInfo.ctx != nil {
 				liveInfo.AmbientTemp = a.AmbientTemp
@@ -373,13 +374,13 @@ func disconnect(id uint8) {
 	}
 }
 
-func sendGetSessionInfoAtInterval(ctx context.Context) {
+func sendGetSessionInfoAtInterval(ctx context.Context, proc ServerProcess) {
 	tickChan := time.NewTicker(time.Second)
 
 	for {
 		select {
 		case <-tickChan.C:
-			err := AssettoProcess.SendUDPMessage(udp.GetSessionInfo{})
+			err := proc.SendUDPMessage(udp.GetSessionInfo{})
 
 			if err == ErrNoOpenUDPConnection {
 				logrus.WithError(err).Errorf("Couldn't send session info udp request. Breaking loop.")

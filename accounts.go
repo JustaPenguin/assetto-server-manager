@@ -112,7 +112,7 @@ func MustLoginMiddleware(requiredGroup Group, next http.Handler) http.Handler {
 		accountID, ok := sess.Values[sessionAccountID].(string)
 
 		if ok {
-			account, err := raceManager.raceStore.FindAccountByID(accountID)
+			account, err := accountManager.store.FindAccountByID(accountID)
 
 			if err == nil {
 				if account.HasGroupPrivilege(requiredGroup) {
@@ -242,7 +242,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func toggleServerOpenStatusHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.raceStore.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
+	err := accountManager.store.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
 
 	if err != nil && err != ErrMetaValueNotSet {
 		logrus.WithError(err).Errorf("Could not determine server open status")
@@ -252,7 +252,7 @@ func toggleServerOpenStatusHandler(w http.ResponseWriter, r *http.Request) {
 
 	accountOptions.IsOpen = !accountOptions.IsOpen
 
-	err = raceManager.raceStore.SetMeta(serverAccountOptionsMetaKey, accountOptions)
+	err = accountManager.store.SetMeta(serverAccountOptionsMetaKey, accountOptions)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Could not save server open status")
@@ -290,7 +290,7 @@ func newPasswordHandler(w http.ResponseWriter, r *http.Request) {
 func deleteAccountHandler(w http.ResponseWriter, r *http.Request) {
 	accountID := chi.URLParam(r, "id")
 
-	if err := raceManager.raceStore.DeleteAccount(accountID); err != nil {
+	if err := accountManager.store.DeleteAccount(accountID); err != nil {
 		logrus.WithError(err).Errorf("Could not delete account")
 		AddErrFlashQuick(w, r, "Could not delete account")
 	} else {
@@ -335,7 +335,7 @@ func (am *AccountManager) login(r *http.Request, w http.ResponseWriter) error {
 
 	username, password := r.FormValue("Username"), r.FormValue("Password")
 
-	accounts, err := raceManager.raceStore.ListAccounts()
+	accounts, err := accountManager.store.ListAccounts()
 
 	if err != nil {
 		return err
@@ -379,7 +379,7 @@ func (am *AccountManager) login(r *http.Request, w http.ResponseWriter) error {
 }
 
 func (am *AccountManager) resetPassword(accountID string) (*Account, error) {
-	account, err := raceManager.raceStore.FindAccountByID(accountID)
+	account, err := accountManager.store.FindAccountByID(accountID)
 
 	if err != nil {
 		return nil, err
@@ -395,7 +395,7 @@ func (am *AccountManager) resetPassword(accountID string) (*Account, error) {
 	account.PasswordSalt = ""
 	account.PasswordHash = ""
 
-	return account, raceManager.raceStore.UpsertAccount(account)
+	return account, accountManager.store.UpsertAccount(account)
 }
 
 func (am *AccountManager) changePassword(account *Account, password string) error {
@@ -415,7 +415,7 @@ func (am *AccountManager) changePassword(account *Account, password string) erro
 	account.PasswordSalt = salt
 	account.PasswordHash = pass
 
-	return raceManager.raceStore.UpsertAccount(account)
+	return accountManager.store.UpsertAccount(account)
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -433,7 +433,7 @@ func createOrEditAccountHandler(w http.ResponseWriter, r *http.Request) {
 
 	if id := chi.URLParam(r, "id"); id != "" {
 		var err error
-		account, err = raceManager.raceStore.FindAccountByID(id)
+		account, err = accountManager.store.FindAccountByID(id)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Could not find account for id: %s", id)
@@ -469,7 +469,7 @@ func createOrEditAccountHandler(w http.ResponseWriter, r *http.Request) {
 		account.Name = username
 		account.Group = Group(group)
 
-		err := raceManager.raceStore.UpsertAccount(account)
+		err := accountManager.store.UpsertAccount(account)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Could save account with id: %s", account.ID)
@@ -494,7 +494,7 @@ func createOrEditAccountHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func manageAccountsHandler(w http.ResponseWriter, r *http.Request) {
-	accounts, err := raceManager.raceStore.ListAccounts()
+	accounts, err := accountManager.store.ListAccounts()
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Could not list accounts")

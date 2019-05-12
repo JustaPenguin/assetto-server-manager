@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
+
 	"github.com/cj123/ini"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
@@ -37,13 +38,16 @@ type liveMapHub struct {
 	clients   map[*liveMapClient]bool
 	broadcast chan liveMapMessage
 	register  chan *liveMapClient
+
+	process ServerProcess
 }
 
-func newLiveMapHub() *liveMapHub {
+func newLiveMapHub(process ServerProcess) *liveMapHub {
 	return &liveMapHub{
 		broadcast: make(chan liveMapMessage),
 		register:  make(chan *liveMapClient),
 		clients:   make(map[*liveMapClient]bool),
+		process:   process,
 	}
 }
 
@@ -61,7 +65,7 @@ func (h *liveMapHub) run() {
 					delete(h.clients, client)
 				}
 			}
-		case <-AssettoProcess.Done():
+		case <-h.process.Done():
 			for _, client := range connectedCars {
 				client := client
 
@@ -115,9 +119,7 @@ func (c *liveMapClient) writePump() {
 	}
 }
 
-var mapHub *liveMapHub
-
-func liveMapHandler(w http.ResponseWriter, r *http.Request) {
+func (ms *MultiServer) liveMapHandler(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 
 	if err != nil {
@@ -125,7 +127,7 @@ func liveMapHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &liveMapClient{hub: mapHub, conn: c, receive: make(chan liveMapMessage, 256)}
+	client := &liveMapClient{hub: ms.liveMapHub, conn: c, receive: make(chan liveMapMessage, 256)}
 	client.hub.register <- client
 
 	go client.writePump()
@@ -148,7 +150,7 @@ func liveMapHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func LiveMapCallback(message udp.Message) {
+func (ms *MultiServer) LiveMapCallback(message udp.Message) {
 	switch m := message.(type) {
 
 	case udp.SessionInfo:
@@ -163,7 +165,7 @@ func LiveMapCallback(message udp.Message) {
 				return
 			}
 
-			LiveMapCallback(websocketTrackMapData)
+			ms.LiveMapCallback(websocketTrackMapData)
 		}
 
 	case udp.SessionCarInfo:
@@ -180,7 +182,7 @@ func LiveMapCallback(message udp.Message) {
 		return
 	}
 
-	mapHub.broadcast <- liveMapMessage{message.Event(), message}
+	ms.liveMapHub.broadcast <- liveMapMessage{message.Event(), message}
 }
 
 type TrackMapData struct {

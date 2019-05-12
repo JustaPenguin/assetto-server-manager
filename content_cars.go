@@ -86,7 +86,7 @@ func ListCars() (Cars, error) {
 }
 
 func carsHandler(w http.ResponseWriter, r *http.Request) {
-	opts, err := raceManager.BuildRaceOpts(r)
+	opts, err := AnyServer().raceManager.BuildRaceOpts(r)
 
 	if err != nil {
 		logrus.Errorf("could not get car list, err: %s", err)

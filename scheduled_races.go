@@ -14,13 +14,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var CustomRaceStartTimers map[string]*time.Timer
-var ChampionshipEventStartTimers map[string]*time.Timer
+type RaceScheduler struct {
+	customRaceStartTimers        map[string]*time.Timer
+	championshipEventStartTimers map[string]*time.Timer
 
-func InitialiseScheduledCustomRaces() error {
-	CustomRaceStartTimers = make(map[string]*time.Timer)
+	championshipManager *ChampionshipManager
+}
 
-	races, err := raceManager.raceStore.ListCustomRaces()
+func NewRaceScheduler(championshipManager *ChampionshipManager) *RaceScheduler {
+	return &RaceScheduler{
+		championshipManager: championshipManager,
+
+		customRaceStartTimers:        make(map[string]*time.Timer),
+		championshipEventStartTimers: make(map[string]*time.Timer),
+	}
+}
+
+func (rs *RaceScheduler) InitialiseScheduledCustomRaces() error {
+	races, err := rs.championshipManager.raceStore.ListCustomRaces()
 
 	if err != nil {
 		return err
@@ -33,15 +44,15 @@ func InitialiseScheduledCustomRaces() error {
 			// add a scheduled event on date
 			duration := time.Until(race.Scheduled)
 
-			CustomRaceStartTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
-				err := raceManager.StartCustomRace(race.UUID.String(), false)
+			rs.customRaceStartTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+				err := rs.championshipManager.StartCustomRace(race.UUID.String(), false)
 
 				if err != nil {
 					logrus.Errorf("couldn't start scheduled race, err: %s", err)
 				}
 			})
 
-			err := raceManager.raceStore.UpsertCustomRace(race)
+			err := rs.championshipManager.raceStore.UpsertCustomRace(race)
 
 			if err != nil {
 				return err
@@ -54,7 +65,7 @@ func InitialiseScheduledCustomRaces() error {
 
 				race.Scheduled = emptyTime
 
-				err := raceManager.raceStore.UpsertCustomRace(race)
+				err := rs.championshipManager.raceStore.UpsertCustomRace(race)
 
 				if err != nil {
 					return err
@@ -67,10 +78,71 @@ func InitialiseScheduledCustomRaces() error {
 	return nil
 }
 
-func InitialiseScheduledChampionshipEvents() error {
-	ChampionshipEventStartTimers = make(map[string]*time.Timer)
+func (rs *RaceScheduler) ScheduleEvent(championshipID string, eventID string, date time.Time, action string) error {
+	championship, event, err := rs.championshipManager.GetChampionshipAndEvent(championshipID, eventID)
 
-	championships, err := championshipManager.ListChampionships()
+	if err != nil {
+		return err
+	}
+
+	event.Scheduled = date
+
+	// if there is an existing schedule timer for this event stop it
+	// @TODO this should be a function
+	if timer := rs.championshipEventStartTimers[event.ID.String()]; timer != nil {
+		timer.Stop()
+	}
+
+	if action == "add" {
+		// add a scheduled event on date
+		duration := time.Until(date)
+
+		// @TODO this should also be a function
+		rs.championshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+			err := rs.championshipManager.StartEvent(championship.ID.String(), event.ID.String())
+
+			if err != nil {
+				logrus.Errorf("couldn't start scheduled race, err: %s", err)
+			}
+		})
+	}
+
+	return rs.championshipManager.UpsertChampionship(championship)
+}
+
+func (rs *RaceScheduler) ScheduleRace(uuid string, date time.Time, action string) error {
+	race, err := rs.championshipManager.raceStore.FindCustomRaceByID(uuid)
+
+	if err != nil {
+		return err
+	}
+
+	race.Scheduled = date
+
+	// if there is an existing schedule timer for this event stop it
+	if timer := rs.customRaceStartTimers[race.UUID.String()]; timer != nil {
+		timer.Stop()
+	}
+
+	if action == "add" {
+		// add a scheduled event on date
+		duration := time.Until(date)
+
+		race.Scheduled = date
+		rs.customRaceStartTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+			err := rs.championshipManager.StartCustomRace(race.UUID.String(), false)
+
+			if err != nil {
+				logrus.Errorf("couldn't start scheduled race, err: %s", err)
+			}
+		})
+	}
+
+	return rs.championshipManager.raceStore.UpsertCustomRace(race)
+}
+
+func (rs *RaceScheduler) InitialiseScheduledChampionshipEvents() error {
+	championships, err := rs.championshipManager.ListChampionships()
 
 	if err != nil {
 		return err
@@ -86,15 +158,15 @@ func InitialiseScheduledChampionshipEvents() error {
 				// add a scheduled event on date
 				duration := time.Until(event.Scheduled)
 
-				ChampionshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
-					err := championshipManager.StartEvent(championship.ID.String(), event.ID.String())
+				rs.championshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+					err := rs.championshipManager.StartEvent(championship.ID.String(), event.ID.String())
 
 					if err != nil {
 						logrus.Errorf("couldn't start scheduled race, err: %s", err)
 					}
 				})
 
-				return championshipManager.UpsertChampionship(championship)
+				return rs.championshipManager.UpsertChampionship(championship)
 			} else {
 				emptyTime := time.Time{}
 				if event.Scheduled != emptyTime {
@@ -103,9 +175,8 @@ func InitialiseScheduledChampionshipEvents() error {
 
 					event.Scheduled = emptyTime
 
-					return championshipManager.UpsertChampionship(championship)
+					return rs.championshipManager.UpsertChampionship(championship)
 				}
-
 			}
 		}
 	}
@@ -176,32 +247,34 @@ func BuildICalEvent(event ScheduledEvent) *components.Event {
 }
 
 func buildScheduledRaces(w io.Writer) error {
-	_, _, _, customRaces, err := raceManager.ListCustomRaces()
-
-	if err != nil {
-		return err
-	}
-
 	var scheduled []ScheduledEvent
 
-	for _, race := range customRaces {
-		scheduled = append(scheduled, race)
-	}
+	for _, server := range servers {
+		_, _, _, customRaces, err := server.raceManager.ListCustomRaces()
 
-	championships, err := championshipManager.ListChampionships()
+		if err != nil {
+			return err
+		}
 
-	if err != nil {
-		return err
-	}
+		for _, race := range customRaces {
+			scheduled = append(scheduled, race)
+		}
 
-	for _, championship := range championships {
-		for _, event := range championship.Events {
-			if event.Scheduled.IsZero() {
-				continue
+		championships, err := server.championshipManager.ListChampionships()
+
+		if err != nil {
+			return err
+		}
+
+		for _, championship := range championships {
+			for _, event := range championship.Events {
+				if event.Scheduled.IsZero() {
+					continue
+				}
+
+				event.championship = championship
+				scheduled = append(scheduled, event)
 			}
-
-			event.championship = championship
-			scheduled = append(scheduled, event)
 		}
 	}
 

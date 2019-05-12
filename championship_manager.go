@@ -62,9 +62,9 @@ func (a *ActiveChampionship) EventName() string {
 	return a.Name
 }
 
-func NewChampionshipManager(rm *RaceManager) *ChampionshipManager {
+func NewChampionshipManager(raceManager *RaceManager) *ChampionshipManager {
 	return &ChampionshipManager{
-		RaceManager: rm,
+		RaceManager: raceManager,
 	}
 }
 
@@ -481,36 +481,6 @@ func (cm *ChampionshipManager) GetChampionshipAndEvent(championshipID string, ev
 	return championship, event, nil
 }
 
-func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID string, date time.Time, action string) error {
-	championship, event, err := cm.GetChampionshipAndEvent(championshipID, eventID)
-
-	if err != nil {
-		return err
-	}
-
-	event.Scheduled = date
-
-	// if there is an existing schedule timer for this event stop it
-	if timer := ChampionshipEventStartTimers[event.ID.String()]; timer != nil {
-		timer.Stop()
-	}
-
-	if action == "add" {
-		// add a scheduled event on date
-		duration := time.Until(date)
-
-		ChampionshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
-			err := cm.StartEvent(championship.ID.String(), event.ID.String())
-
-			if err != nil {
-				logrus.Errorf("couldn't start scheduled race, err: %s", err)
-			}
-		})
-	}
-
-	return cm.UpsertChampionship(championship)
-}
-
 func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
 	cm.mutex.Lock()
 	defer cm.mutex.Unlock()
@@ -657,7 +627,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			welcomeMessage, err := udp.NewSendChat(entrant.CarID, msg)
 
 			if err == nil {
-				err := AssettoProcess.SendUDPMessage(welcomeMessage)
+				err := cm.process.SendUDPMessage(welcomeMessage)
 
 				if err != nil {
 					logrus.Errorf("Unable to send welcome message to: %s, err: %s", entrant.DriverName, err)
@@ -765,7 +735,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			cm.activeChampionship = nil
 
 			// stop the server
-			err := AssettoProcess.Stop()
+			err := cm.process.Stop()
 
 			if err != nil {
 				logrus.Errorf("Could not stop Assetto Process, err: %s", err)
@@ -835,7 +805,7 @@ func (cm *ChampionshipManager) CancelEvent(championshipID string, eventID string
 
 	event.Sessions = make(map[SessionType]*ChampionshipSession)
 
-	if err := AssettoProcess.Stop(); err != nil {
+	if err := cm.process.Stop(); err != nil {
 		return err
 	}
 

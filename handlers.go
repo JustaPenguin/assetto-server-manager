@@ -3,6 +3,7 @@ package servermanager
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -63,9 +64,6 @@ func Router(fs http.FileSystem) http.Handler {
 	r.Group(func(r chi.Router) {
 		r.Use(ReadAccessMiddleware)
 
-		// pages
-		r.Get("/", homeHandler)
-
 		// content
 		r.Get("/cars", carsHandler)
 		r.Get("/tracks", tracksHandler)
@@ -76,23 +74,6 @@ func Router(fs http.FileSystem) http.Handler {
 		// results
 		r.Get("/results", resultsHandler)
 		r.Get("/results/{fileName}", resultHandler)
-
-		r.Get("/logs", serverLogsHandler)
-		r.Get("/api/logs", apiServerLogHandler)
-
-		// championships
-		r.Get("/championships", listChampionshipsHandler)
-		r.Get("/championship/{championshipID}", viewChampionshipHandler)
-		r.Get("/championship/{championshipID}/export", exportChampionshipHandler)
-		r.HandleFunc("/championship/{championshipID}/export-results", exportChampionshipResultsHandler)
-		r.Get("/championship/{championshipID}/ics", championshipICalHandler)
-		r.Get("/championship/{championshipID}/sign-up", championshipSignUpFormHandler)
-		r.Post("/championship/{championshipID}/sign-up", championshipSignUpFormHandler)
-
-		// live timings
-		r.Get("/live-timing", liveTimingHandler)
-		r.Get("/live-timing/get", liveTimingGetHandler)
-		r.Get("/api/live-map", liveMapHandler)
 
 		// account management
 		r.HandleFunc("/accounts/new-password", newPasswordHandler)
@@ -109,52 +90,6 @@ func Router(fs http.FileSystem) http.Handler {
 		// content
 		r.Post("/setups/upload", carSetupsUploadHandler)
 
-		// races
-		r.Get("/quick", quickRaceHandler)
-		r.Post("/quick/submit", quickRaceSubmitHandler)
-		r.Get("/custom", customRaceListHandler)
-		r.Get("/custom/new", customRaceNewOrEditHandler)
-		r.Get("/custom/load/{uuid}", customRaceLoadHandler)
-		r.Post("/custom/schedule/{uuid}", customRaceScheduleHandler)
-		r.Get("/custom/schedule/{uuid}/remove", customRaceScheduleRemoveHandler)
-		r.Get("/custom/edit/{uuid}", customRaceNewOrEditHandler)
-		r.Get("/custom/star/{uuid}", customRaceStarHandler)
-		r.Get("/custom/loop/{uuid}", customRaceLoopHandler)
-		r.Post("/custom/new/submit", customRaceSubmitHandler)
-
-		// server management
-		r.Get("/process/{action}", serverProcessHandler)
-
-		// championships
-		r.Get("/championships/new", newOrEditChampionshipHandler)
-		r.Post("/championships/new/submit", submitNewChampionshipHandler)
-		r.Get("/championship/{championshipID}/edit", newOrEditChampionshipHandler)
-		r.Get("/championship/{championshipID}/event", championshipEventConfigurationHandler)
-		r.Post("/championship/{championshipID}/event/submit", championshipSubmitEventConfigurationHandler)
-		r.Get("/championship/{championshipID}/event/{eventID}/start", championshipStartEventHandler)
-		r.Post("/championship/{championshipID}/event/{eventID}/schedule", championshipScheduleEventHandler)
-		r.Get("/championship/{championshipID}/event/{eventID}/schedule/remove", championshipScheduleEventRemoveHandler)
-		r.Get("/championship/{championshipID}/event/{eventID}/edit", championshipEventConfigurationHandler)
-		r.Get("/championship/{championshipID}/event/{eventID}/practice", championshipStartPracticeEventHandler)
-		r.Get("/championship/{championshipID}/event/{eventID}/cancel", championshipCancelEventHandler)
-		r.Get("/championship/{championshipID}/event/{eventID}/restart", championshipRestartEventHandler)
-		r.Post("/championship/{championshipID}/driver-penalty/{classID}/{driverGUID}", championshipDriverPenaltyHandler)
-		r.Post("/championship/{championshipID}/team-penalty/{classID}/{team}", championshipTeamPenaltyHandler)
-		r.Get("/championship/{championshipID}/entrants", championshipSignedUpEntrantsHandler)
-		r.Get("/championship/{championshipID}/entrants.csv", championshipSignedUpEntrantsCSVHandler)
-		r.Get("/championship/{championshipID}/entrant/{entrantGUID}", championshipModifyEntrantStatusHandler)
-
-		r.Get("/championship/import", importChampionshipHandler)
-		r.Post("/championship/import", importChampionshipHandler)
-		r.Get("/championship/{championshipID}/event/{eventID}/import", championshipEventImportHandler)
-		r.Post("/championship/{championshipID}/event/{eventID}/import", championshipEventImportHandler)
-
-		// penalties
-		r.Post("/penalties/{sessionFile}/{driverGUID}", penaltyHandler)
-
-		// live timings
-		r.Post("/live-timing/save-frames", liveFrameSaveHandler)
-
 		// endpoints
 		r.Post("/api/track/upload", apiTrackUploadHandler)
 		r.Post("/api/car/upload", apiCarUploadHandler)
@@ -165,23 +100,117 @@ func Router(fs http.FileSystem) http.Handler {
 	r.Group(func(r chi.Router) {
 		r.Use(DeleteAccessMiddleware)
 
-		r.Get("/championship/{championshipID}/event/{eventID}/delete", championshipDeleteEventHandler)
-		r.Get("/championship/{championshipID}/delete", deleteChampionshipHandler)
-		r.Get("/custom/delete/{uuid}", customRaceDeleteHandler)
-
 		r.Get("/track/delete/{name}", trackDeleteHandler)
 		r.Get("/car/delete/{name}", carDeleteHandler)
 		r.Get("/weather/delete/{key}", weatherDeleteHandler)
 		r.Get("/setups/delete/{car}/{track}/{setup}", carSetupDeleteHandler)
 	})
 
+	for i, server := range servers {
+		server := server
+
+		r.Route(fmt.Sprintf("/server-%d", i), func(r chi.Router) {
+
+			// readers
+			r.Group(func(r chi.Router) {
+				r.Use(ReadAccessMiddleware)
+
+				// pages
+				r.Get("/", server.homeHandler)
+
+				r.Get("/logs", server.serverLogsHandler)
+				r.Get("/api/logs", server.apiServerLogHandler)
+
+				// championships
+				r.Get("/championships", server.listChampionshipsHandler)
+				r.Get("/championship/{championshipID}", server.viewChampionshipHandler)
+				r.Get("/championship/{championshipID}/export", server.exportChampionshipHandler)
+				r.HandleFunc("/championship/{championshipID}/export-results", server.exportChampionshipResultsHandler)
+				r.Get("/championship/{championshipID}/ics", server.championshipICalHandler)
+				r.Get("/championship/{championshipID}/sign-up", server.championshipSignUpFormHandler)
+				r.Post("/championship/{championshipID}/sign-up", server.championshipSignUpFormHandler)
+
+				// live timings
+				r.Get("/live-timing", server.liveTimingHandler)
+				r.Get("/live-timing/get", server.liveTimingGetHandler)
+				r.Get("/api/live-map", server.liveMapHandler)
+			})
+
+			// writers
+			r.Group(func(r chi.Router) {
+				r.Use(WriteAccessMiddleware)
+
+				// races
+				r.Get("/quick", server.quickRaceHandler)
+				r.Post("/quick/submit", server.quickRaceSubmitHandler)
+				r.Get("/custom", server.customRaceListHandler)
+				r.Get("/custom/new", server.customRaceNewOrEditHandler)
+				r.Get("/custom/load/{uuid}", server.customRaceLoadHandler)
+				r.Post("/custom/schedule/{uuid}", server.customRaceScheduleHandler)
+				r.Get("/custom/schedule/{uuid}/remove", server.customRaceScheduleRemoveHandler)
+				r.Get("/custom/edit/{uuid}", server.customRaceNewOrEditHandler)
+				r.Get("/custom/star/{uuid}", server.customRaceStarHandler)
+				r.Get("/custom/loop/{uuid}", server.customRaceLoopHandler)
+				r.Post("/custom/new/submit", server.customRaceSubmitHandler)
+
+				// server management
+				r.Get("/process/{action}", server.serverProcessHandler)
+
+				// championships
+				r.Get("/championships/new", server.newOrEditChampionshipHandler)
+				r.Post("/championships/new/submit", server.submitNewChampionshipHandler)
+				r.Get("/championship/{championshipID}/edit", server.newOrEditChampionshipHandler)
+				r.Get("/championship/{championshipID}/event", server.championshipEventConfigurationHandler)
+				r.Post("/championship/{championshipID}/event/submit", server.championshipSubmitEventConfigurationHandler)
+				r.Get("/championship/{championshipID}/event/{eventID}/start", server.championshipStartEventHandler)
+				r.Post("/championship/{championshipID}/event/{eventID}/schedule", server.championshipScheduleEventHandler)
+				r.Get("/championship/{championshipID}/event/{eventID}/schedule/remove", server.championshipScheduleEventRemoveHandler)
+				r.Get("/championship/{championshipID}/event/{eventID}/edit", server.championshipEventConfigurationHandler)
+				r.Get("/championship/{championshipID}/event/{eventID}/practice", server.championshipStartPracticeEventHandler)
+				r.Get("/championship/{championshipID}/event/{eventID}/cancel", server.championshipCancelEventHandler)
+				r.Get("/championship/{championshipID}/event/{eventID}/restart", server.championshipRestartEventHandler)
+				r.Post("/championship/{championshipID}/driver-penalty/{classID}/{driverGUID}", server.championshipDriverPenaltyHandler)
+				r.Post("/championship/{championshipID}/team-penalty/{classID}/{team}", server.championshipTeamPenaltyHandler)
+				r.Get("/championship/{championshipID}/entrants", server.championshipSignedUpEntrantsHandler)
+				r.Get("/championship/{championshipID}/entrants.csv", server.championshipSignedUpEntrantsCSVHandler)
+				r.Get("/championship/{championshipID}/entrant/{entrantGUID}", server.championshipModifyEntrantStatusHandler)
+
+				r.Get("/championship/import", server.importChampionshipHandler)
+				r.Post("/championship/import", server.importChampionshipHandler)
+				r.Get("/championship/{championshipID}/event/{eventID}/import", server.championshipEventImportHandler)
+				r.Post("/championship/{championshipID}/event/{eventID}/import", server.championshipEventImportHandler)
+
+				// penalties
+				r.Post("/penalties/{sessionFile}/{driverGUID}", server.penaltyHandler)
+
+				// live timings
+				r.Post("/live-timing/save-frames", server.liveFrameSaveHandler)
+			})
+
+			// deleters
+			r.Group(func(r chi.Router) {
+				r.Use(DeleteAccessMiddleware)
+
+				r.Get("/championship/{championshipID}/event/{eventID}/delete", server.championshipDeleteEventHandler)
+				r.Get("/championship/{championshipID}/delete", server.deleteChampionshipHandler)
+				r.Get("/custom/delete/{uuid}", server.customRaceDeleteHandler)
+			})
+
+			// admins
+			r.Group(func(r chi.Router) {
+				r.Use(AdminAccessMiddleware)
+
+				r.HandleFunc("/server-options", server.serverOptionsHandler)
+			})
+		})
+	}
+
 	// admins
 	r.Group(func(r chi.Router) {
 		r.Use(AdminAccessMiddleware)
 
-		r.HandleFunc("/server-options", serverOptionsHandler)
 		r.HandleFunc("/blacklist", serverBlacklistHandler)
-		r.HandleFunc("/motd", serverMOTDHandler)
+		r.HandleFunc("/motd", serverMOTDHandler) // @TODO make per server
 		r.HandleFunc("/accounts/new", createOrEditAccountHandler)
 		r.HandleFunc("/accounts/edit/{id}", createOrEditAccountHandler)
 		r.HandleFunc("/accounts/delete/{id}", deleteAccountHandler)
@@ -192,7 +221,7 @@ func Router(fs http.FileSystem) http.Handler {
 
 	FileServer(r, "/static", fs)
 
-	return prometheusMonitoringWrapper(r)
+	return MultiServerSelectMiddleware(r, prometheusMonitoringWrapper(r))
 }
 
 func FileServer(r chi.Router, path string, root http.FileSystem) {
@@ -212,8 +241,8 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 }
 
 // homeHandler serves content to /
-func homeHandler(w http.ResponseWriter, r *http.Request) {
-	currentRace, entryList := raceManager.CurrentRace()
+func (ms *MultiServer) homeHandler(w http.ResponseWriter, r *http.Request) {
+	currentRace, entryList := ms.raceManager.CurrentRace()
 
 	var customRace *CustomRace
 
@@ -226,8 +255,8 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
-	serverOpts, err := raceManager.LoadServerOptions()
+func (ms *MultiServer) serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
+	serverOpts, err := ms.raceManager.LoadServerOptions()
 
 	if err != nil {
 		logrus.Errorf("couldn't load server options, err: %s", err)
@@ -243,7 +272,7 @@ func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// save the config
-		err = raceManager.SaveServerOptions(serverOpts)
+		err = ms.raceManager.SaveServerOptions(serverOpts)
 
 		if err != nil {
 			logrus.Errorf("couldn't save config, err: %s", err)
@@ -428,7 +457,7 @@ func AddErrFlashQuick(w http.ResponseWriter, r *http.Request, message string) {
 	_ = session.Save(r, w)
 }
 
-func serverLogsHandler(w http.ResponseWriter, r *http.Request) {
+func (ms *MultiServer) serverLogsHandler(w http.ResponseWriter, r *http.Request) {
 	ViewRenderer.MustLoadTemplate(w, r, "server/logs.html", nil)
 }
 
@@ -436,18 +465,18 @@ type logData struct {
 	ServerLog, ManagerLog, PluginsLog string
 }
 
-func apiServerLogHandler(w http.ResponseWriter, r *http.Request) {
+func (ms *MultiServer) apiServerLogHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	_ = json.NewEncoder(w).Encode(logData{
-		ServerLog:  AssettoProcess.Logs(),
+		ServerLog:  ms.process.Logs(),
 		ManagerLog: logOutput.String(),
 		PluginsLog: pluginsOutput.String(),
 	})
 }
 
-func liveTimingHandler(w http.ResponseWriter, r *http.Request) {
-	currentRace, entryList := raceManager.CurrentRace()
+func (ms *MultiServer) liveTimingHandler(w http.ResponseWriter, r *http.Request) {
+	currentRace, entryList := ms.raceManager.CurrentRace()
 
 	var customRace *CustomRace
 
@@ -455,7 +484,7 @@ func liveTimingHandler(w http.ResponseWriter, r *http.Request) {
 		customRace = &CustomRace{EntryList: entryList, RaceConfig: currentRace.CurrentRaceConfig}
 	}
 
-	frameLinks, err := raceManager.GetLiveFrames()
+	frameLinks, err := ms.raceManager.GetLiveFrames()
 
 	if err != nil {
 		logrus.Errorf("could not get frame links, err: %s", err)
@@ -468,7 +497,7 @@ func liveTimingHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func liveTimingGetHandler(w http.ResponseWriter, r *http.Request) {
+func (ms *MultiServer) liveTimingGetHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	_ = json.NewEncoder(w).Encode(liveInfo)
@@ -484,7 +513,7 @@ func deleteEmpty(s []string) []string {
 	return r
 }
 
-func liveFrameSaveHandler(w http.ResponseWriter, r *http.Request) {
+func (ms *MultiServer) liveFrameSaveHandler(w http.ResponseWriter, r *http.Request) {
 	// Save the frame links from the form
 	err := r.ParseForm()
 
@@ -493,7 +522,7 @@ func liveFrameSaveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = raceManager.UpsertLiveFrames(deleteEmpty(r.Form["frame-link"]))
+	err = ms.raceManager.UpsertLiveFrames(deleteEmpty(r.Form["frame-link"]))
 
 	if err != nil {
 		logrus.Errorf("could not save frame links, err: %s", err)

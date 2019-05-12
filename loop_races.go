@@ -9,21 +9,35 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var sessionTypes []SessionType
-var waitForSecondRace bool
+func NewRaceLooper(process ServerProcess, raceManager *RaceManager) *RaceLooper {
+	return &RaceLooper{
+		process:     process,
+		raceManager: raceManager,
+	}
+}
 
-func LoopRaces() {
+type RaceLooper struct {
+	process     ServerProcess
+	raceManager *RaceManager
+
+	sessionTypes      []SessionType
+	waitForSecondRace bool
+}
+
+// @TODO these need putting into multiserver too
+
+func (rl *RaceLooper) LoopRaces() {
 	var i int
 	ticker := time.NewTicker(30 * time.Second)
 
 	for range ticker.C {
-		currentRace, _ := raceManager.CurrentRace()
+		currentRace, _ := rl.raceManager.CurrentRace()
 
 		if currentRace != nil {
 			continue
 		}
 
-		_, _, looped, _, err := raceManager.ListCustomRaces()
+		_, _, looped, _, err := rl.raceManager.ListCustomRaces()
 
 		if err != nil {
 			logrus.Errorf("couldn't list custom races, err: %s", err)
@@ -36,17 +50,17 @@ func LoopRaces() {
 			}
 
 			// Reset the stored session types
-			sessionTypes = []SessionType{}
+			rl.sessionTypes = []SessionType{}
 
 			for sessionID := range looped[i].RaceConfig.Sessions {
-				sessionTypes = append(sessionTypes, sessionID)
+				rl.sessionTypes = append(rl.sessionTypes, sessionID)
 			}
 
 			if looped[i].RaceConfig.ReversedGridRacePositions != 0 {
-				sessionTypes = append(sessionTypes, SessionTypeSecondRace)
+				rl.sessionTypes = append(rl.sessionTypes, SessionTypeSecondRace)
 			}
 
-			err := raceManager.StartCustomRace(looped[i].UUID.String(), true)
+			err := rl.raceManager.StartCustomRace(looped[i].UUID.String(), true)
 
 			if err != nil {
 				logrus.Errorf("couldn't start auto loop custom race, err: %s", err)
@@ -60,10 +74,10 @@ func LoopRaces() {
 
 // callback check for udp end session, load result file, check session type against sessionTypes
 // if session matches last session in sessionTypes then stop server and clear sessionTypes
-func LoopCallback(message udp.Message) {
+func (rl *RaceLooper) LoopCallback(message udp.Message) {
 	switch a := message.(type) {
 	case udp.EndSession:
-		if sessionTypes == nil {
+		if rl.sessionTypes == nil {
 			logrus.Infof("Session types == nil. ignoring end session callback")
 			return
 		}
@@ -82,19 +96,19 @@ func LoopCallback(message udp.Message) {
 		// If this is a race, and there is a second race configured
 		// then wait for the second race to happen.
 		if results.Type == string(SessionTypeRace) {
-			for _, session := range sessionTypes {
+			for _, session := range rl.sessionTypes {
 				if session == SessionTypeSecondRace {
-					if !waitForSecondRace {
-						waitForSecondRace = true
+					if !rl.waitForSecondRace {
+						rl.waitForSecondRace = true
 						return
 					} else {
-						waitForSecondRace = false
+						rl.waitForSecondRace = false
 					}
 				}
 			}
 		}
 
-		for _, session := range sessionTypes {
+		for _, session := range rl.sessionTypes {
 			if session == SessionTypeRace {
 				endSession = SessionTypeRace
 				break
@@ -112,9 +126,9 @@ func LoopCallback(message udp.Message) {
 		if results.Type == string(endSession) {
 			logrus.Infof("Event end detected, stopping looped session.")
 
-			sessionTypes = nil
+			rl.sessionTypes = nil
 
-			err := AssettoProcess.Stop()
+			err := rl.process.Stop()
 
 			if err != nil {
 				logrus.Errorf("Could not stop server, err: %s", err)

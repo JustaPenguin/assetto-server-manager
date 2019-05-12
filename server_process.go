@@ -32,39 +32,37 @@ const (
 
 type ServerProcess interface {
 	Logs() string
-	Start(cfg ServerConfig, forwardingAddress string, forwardListenPort int) error
+	Start(event RaceEvent, cfg ServerConfig, forwardingAddress string, forwardListenPort int) error
 	Stop() error
 	Restart() error
 	IsRunning() bool
 	EventType() ServerEventType
-	UDPCallback(message udp.Message)
+	SetUDPCallback(callbackFunc udp.CallbackFunc)
 	SendUDPMessage(message udp.Message) error
 
 	Done() <-chan struct{}
 }
 
-var AssettoProcess ServerProcess
-
 // serverProcessHandler modifies the server process.
-func serverProcessHandler(w http.ResponseWriter, r *http.Request) {
+// @TODO this needs to know _which_ server process to modify
+func (ms *MultiServer) serverProcessHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var txt string
-
-	eventType := AssettoProcess.EventType()
+	eventType := ms.process.EventType()
 
 	switch chi.URLParam(r, "action") {
 	case "stop":
 		if eventType == EventTypeChampionship {
-			err = championshipManager.StopActiveEvent()
+			err = ms.championshipManager.StopActiveEvent()
 		} else {
-			err = AssettoProcess.Stop()
+			err = ms.process.Stop()
 		}
 		txt = "stopped"
 	case "restart":
 		if eventType == EventTypeChampionship {
-			err = championshipManager.RestartActiveEvent()
+			err = ms.championshipManager.RestartActiveEvent()
 		} else {
-			err = AssettoProcess.Restart()
+			err = ms.process.Restart()
 		}
 		txt = "restarted"
 	}
@@ -101,11 +99,13 @@ type AssettoServerProcess struct {
 
 	extraProcesses []*exec.Cmd
 
+	raceEvent RaceEvent
 	serverConfig      ServerConfig
 	forwardingAddress string
 	forwardListenPort int
 	udpServerConn     *udp.AssettoServerUDP
 	udpStatusMutex    sync.Mutex
+	udpCallback udp.CallbackFunc
 }
 
 func NewAssettoServerProcess() *AssettoServerProcess {
@@ -132,7 +132,7 @@ func (as *AssettoServerProcess) Logs() string {
 }
 
 // Start the assetto server. If it's already running, an ErrServerAlreadyRunning is returned.
-func (as *AssettoServerProcess) Start(cfg ServerConfig, forwardingAddress string, forwardListenPort int) error {
+func (as *AssettoServerProcess) Start(event RaceEvent, cfg ServerConfig, forwardingAddress string, forwardListenPort int) error {
 	if as.IsRunning() {
 		return ErrServerAlreadyRunning
 	}
@@ -142,6 +142,7 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, forwardingAddress string
 
 	logrus.Debugf("Starting assetto server process")
 
+	as.raceEvent = event
 	as.serverConfig = cfg
 	as.forwardingAddress = forwardingAddress
 	as.forwardListenPort = forwardListenPort
@@ -256,7 +257,7 @@ func (as *AssettoServerProcess) startUDPListener() error {
 		return err
 	}
 
-	as.udpServerConn, err = udp.NewServerClient(host, int(port), as.serverConfig.GlobalServerConfig.FreeUDPPluginLocalPort, true, as.forwardingAddress, as.forwardListenPort, as.UDPCallback)
+	as.udpServerConn, err = udp.NewServerClient(host, int(port), as.serverConfig.GlobalServerConfig.FreeUDPPluginLocalPort, true, as.forwardingAddress, as.forwardListenPort, as.udpCallback)
 
 	if err != nil {
 		return err
@@ -265,16 +266,8 @@ func (as *AssettoServerProcess) startUDPListener() error {
 	return nil
 }
 
-func (as *AssettoServerProcess) UDPCallback(message udp.Message) {
-	panicCapture(func() {
-		if config != nil && config.LiveMap.IsEnabled() {
-			go LiveMapCallback(message)
-		}
-
-		championshipManager.ChampionshipEventCallback(message)
-		LiveTimingCallback(message)
-		LoopCallback(message)
-	})
+func (as *AssettoServerProcess) SetUDPCallback(fn udp.CallbackFunc) {
+	as.udpCallback = fn
 }
 
 var ErrNoOpenUDPConnection = errors.New("servermanager: no open UDP connection found")
@@ -312,7 +305,7 @@ func (as *AssettoServerProcess) Restart() error {
 		}
 	}
 
-	return as.Start(as.serverConfig, as.forwardingAddress, as.forwardListenPort)
+	return as.Start(as.raceEvent, as.serverConfig, as.forwardingAddress, as.forwardListenPort)
 }
 
 // IsRunning of the server. returns true if running
@@ -324,7 +317,7 @@ func (as *AssettoServerProcess) IsRunning() bool {
 }
 
 func (as *AssettoServerProcess) EventType() ServerEventType {
-	if championshipManager.activeChampionship != nil {
+	if as.raceEvent != nil && as.raceEvent.IsChampionship() {
 		return EventTypeChampionship
 	} else {
 		return EventTypeRace

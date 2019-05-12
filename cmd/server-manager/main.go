@@ -1,22 +1,17 @@
 package main
 
 import (
+	"github.com/cj123/assetto-server-manager"
+	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
+	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
+	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/pkg/browser"
+	"github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"os"
 	"runtime"
 	"strings"
-	"time"
-
-	"github.com/cj123/assetto-server-manager"
-	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
-	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
-	"github.com/cj123/assetto-server-manager/pkg/udp"
-	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
-
-	"github.com/etcd-io/bbolt"
-	"github.com/pkg/browser"
-	"github.com/sirupsen/logrus"
 )
 
 var debug = os.Getenv("DEBUG") == "true"
@@ -82,17 +77,11 @@ func main() {
 		return
 	}
 
-	go servermanager.LoopRaces()
-	err = servermanager.InitialiseScheduledCustomRaces()
+	// @TODO properly create the right number of multiservers
+	_, err = servermanager.NewMultiServer(store)
 
 	if err != nil {
-		logrus.Errorf("couldn't initialise scheduled races, err: %s", err)
-	}
-
-	err = servermanager.InitialiseScheduledChampionshipEvents()
-
-	if err != nil {
-		logrus.Errorf("couldn't initialise scheduled championship events, err: %s", err)
+		panic(err)
 	}
 
 	//go startUDPReplay("./assetto/session-logs/brandshatch_sillyold.db")
@@ -117,6 +106,9 @@ func main() {
 	}
 }
 
+/*
+@TODO fixme
+
 func startUDPReplay(file string) {
 	time.Sleep(time.Second * 20)
 
@@ -136,3 +128,4 @@ func startUDPReplay(file string) {
 		logrus.WithError(err).Error("UDP Replay failed")
 	}
 }
+*/

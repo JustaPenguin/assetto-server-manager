@@ -351,14 +351,18 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 	_ = session.Save(r, w)
 	_ = errSession.Save(r, w)
 
-	opts, err := raceManager.LoadServerOptions()
+	// @TODO properly load server
+
+	server := AnyServer()
+
+	opts, err := server.raceManager.LoadServerOptions()
 
 	if err != nil {
 		return err
 	}
 
-	data["server_status"] = AssettoProcess.IsRunning()
-	data["server_event_type"] = AssettoProcess.EventType()
+	data["server_status"] = server.process.IsRunning()
+	data["server_event_type"] = server.process.EventType()
 	data["server_name"] = opts.Name
 	data["custom_css"] = template.CSS(opts.CustomCSS)
 	data["User"] = AccountFromRequest(r)

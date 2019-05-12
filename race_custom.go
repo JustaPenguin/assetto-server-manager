@@ -70,8 +70,8 @@ func (cr *CustomRace) GetEntryList() EntryList {
 	return cr.EntryList
 }
 
-func customRaceListHandler(w http.ResponseWriter, r *http.Request) {
-	recent, starred, looped, scheduled, err := raceManager.ListCustomRaces()
+func (ms *MultiServer) customRaceListHandler(w http.ResponseWriter, r *http.Request) {
+	recent, starred, looped, scheduled, err := ms.raceManager.ListCustomRaces()
 
 	if err != nil {
 		logrus.Errorf("couldn't list custom races, err: %s", err)
@@ -87,8 +87,8 @@ func customRaceListHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func customRaceNewOrEditHandler(w http.ResponseWriter, r *http.Request) {
-	customRaceData, err := raceManager.BuildRaceOpts(r)
+func (ms *MultiServer) customRaceNewOrEditHandler(w http.ResponseWriter, r *http.Request) {
+	customRaceData, err := ms.raceManager.BuildRaceOpts(r)
 
 	if err != nil {
 		logrus.Errorf("couldn't build custom race, err: %s", err)
@@ -99,8 +99,8 @@ func customRaceNewOrEditHandler(w http.ResponseWriter, r *http.Request) {
 	ViewRenderer.MustLoadTemplate(w, r, "custom-race/new.html", customRaceData)
 }
 
-func customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.SetupCustomRace(r)
+func (ms *MultiServer) customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
+	err := ms.raceManager.SetupCustomRace(r, ms.raceScheduler)
 
 	if err != nil {
 		logrus.Errorf("couldn't apply quick race, err: %s", err)
@@ -122,7 +122,7 @@ func customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func customRaceScheduleHandler(w http.ResponseWriter, r *http.Request) {
+func (ms *MultiServer) customRaceScheduleHandler(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		logrus.Errorf("couldn't parse schedule race form, err: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -150,7 +150,7 @@ func customRaceScheduleHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = raceManager.ScheduleRace(raceID, date, r.FormValue("action"))
+	err = ms.raceScheduler.ScheduleRace(raceID, date, r.FormValue("action"))
 
 	if err != nil {
 		logrus.Errorf("couldn't schedule race, err: %s", err)
@@ -162,8 +162,8 @@ func customRaceScheduleHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-func customRaceScheduleRemoveHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.ScheduleRace(chi.URLParam(r, "uuid"), time.Time{}, "remove")
+func (ms *MultiServer) customRaceScheduleRemoveHandler(w http.ResponseWriter, r *http.Request) {
+	err := ms.raceScheduler.ScheduleRace(chi.URLParam(r, "uuid"), time.Time{}, "remove")
 
 	if err != nil {
 		logrus.Errorf("couldn't remove scheduled race, err: %s", err)
@@ -174,8 +174,8 @@ func customRaceScheduleRemoveHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-func customRaceLoadHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.StartCustomRace(chi.URLParam(r, "uuid"), false)
+func (ms *MultiServer) customRaceLoadHandler(w http.ResponseWriter, r *http.Request) {
+	err := ms.raceManager.StartCustomRace(chi.URLParam(r, "uuid"), false)
 
 	if err != nil {
 		logrus.Errorf("couldn't apply custom race, err: %s", err)
@@ -187,8 +187,8 @@ func customRaceLoadHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
-func customRaceDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.DeleteCustomRace(chi.URLParam(r, "uuid"))
+func (ms *MultiServer) customRaceDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	err := ms.raceManager.DeleteCustomRace(chi.URLParam(r, "uuid"))
 
 	if err != nil {
 		logrus.Errorf("couldn't delete custom race, err: %s", err)
@@ -200,8 +200,8 @@ func customRaceDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-func customRaceStarHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.ToggleStarCustomRace(chi.URLParam(r, "uuid"))
+func (ms *MultiServer) customRaceStarHandler(w http.ResponseWriter, r *http.Request) {
+	err := ms.raceManager.ToggleStarCustomRace(chi.URLParam(r, "uuid"))
 
 	if err != nil {
 		logrus.Errorf("couldn't star custom race, err: %s", err)
@@ -212,8 +212,8 @@ func customRaceStarHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-func customRaceLoopHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.ToggleLoopCustomRace(chi.URLParam(r, "uuid"))
+func (ms *MultiServer) customRaceLoopHandler(w http.ResponseWriter, r *http.Request) {
+	err := ms.raceManager.ToggleLoopCustomRace(chi.URLParam(r, "uuid"))
 
 	if err != nil {
 		logrus.Errorf("couldn't add custom race to loop, err: %s", err)

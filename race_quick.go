@@ -6,8 +6,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func quickRaceHandler(w http.ResponseWriter, r *http.Request) {
-	quickRaceData, err := raceManager.BuildRaceOpts(r)
+func (ms *MultiServer) quickRaceHandler(w http.ResponseWriter, r *http.Request) {
+	quickRaceData, err := ms.raceManager.BuildRaceOpts(r)
 
 	if err != nil {
 		logrus.Errorf("couldn't build quick race, err: %s", err)
@@ -18,8 +18,8 @@ func quickRaceHandler(w http.ResponseWriter, r *http.Request) {
 	ViewRenderer.MustLoadTemplate(w, r, "quick-race.html", quickRaceData)
 }
 
-func quickRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.SetupQuickRace(r)
+func (ms *MultiServer) quickRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
+	err := ms.raceManager.SetupQuickRace(r)
 
 	if err == ErrMustSubmitCar {
 		AddErrFlashQuick(w, r, "You must choose at least one car!")

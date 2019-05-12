@@ -15,8 +15,8 @@ import (
 )
 
 // viewChampionshipHandler shows details of a given Championship
-func penaltyHandler(w http.ResponseWriter, r *http.Request) {
-	remove, err := applyPenalty(r)
+func (ms *MultiServer) penaltyHandler(w http.ResponseWriter, r *http.Request) {
+	remove, err := applyPenalty(r, ms)
 
 	if err != nil {
 		AddErrFlashQuick(w, r, "Could not add/remove penalty")
@@ -32,7 +32,7 @@ func penaltyHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-func applyPenalty(r *http.Request) (bool, error) {
+func applyPenalty(r *http.Request, server *MultiServer) (bool, error) {
 	var results *SessionResults
 	var remove bool
 	var penaltyTime float64
@@ -149,7 +149,7 @@ func applyPenalty(r *http.Request) (bool, error) {
 	}
 
 	if results.ChampionshipID != "" {
-		championship, err := championshipManager.LoadChampionship(results.ChampionshipID)
+		championship, err := server.championshipManager.LoadChampionship(results.ChampionshipID)
 
 		if err != nil {
 			logrus.Errorf("Couldn't load championship with ID: %s, err: %s", results.ChampionshipID, err)
@@ -167,7 +167,7 @@ func applyPenalty(r *http.Request) (bool, error) {
 			}
 		}
 
-		err = championshipManager.UpsertChampionship(championship)
+		err = server.championshipManager.UpsertChampionship(championship)
 
 		if err != nil {
 			logrus.Errorf("Couldn't save championship with ID: %s, err: %s", results.ChampionshipID, err)

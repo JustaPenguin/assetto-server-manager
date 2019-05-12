@@ -20,8 +20,6 @@ import (
 )
 
 var (
-	raceManager *RaceManager
-
 	ErrCustomRaceNotFound = errors.New("servermanager: custom race not found")
 )
 
@@ -30,39 +28,42 @@ func init() {
 }
 
 func InitWithStore(store Store) {
-	raceManager = NewRaceManager(store)
-	championshipManager = NewChampionshipManager(raceManager)
 	accountManager = NewAccountManager(store)
-	AssettoProcess = NewAssettoServerProcess()
 
-	err := raceManager.raceStore.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
+	// @TODO load configured servers here and build Servers for each of them.
+	// AssettoProcess = NewAssettoServerProcess()
+	// championshipManager = NewChampionshipManager(raceManager)
+	// raceManager = NewRaceManager(store)
+
+	err := store.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
 
 	if err != nil && err != ErrMetaValueNotSet {
 		logrus.WithError(err).Errorf("Could not load server account options")
 	}
-
-	mapHub = newLiveMapHub()
-	go mapHub.run()
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
 	go func() {
 		for range c {
-			// ^C, handle it
-			if AssettoProcess.IsRunning() {
-				if AssettoProcess.EventType() == EventTypeChampionship {
-					if err := championshipManager.StopActiveEvent(); err != nil {
-						logrus.WithError(err).Errorf("Error stopping event")
-					}
-				} else {
-					if err := AssettoProcess.Stop(); err != nil {
-						logrus.WithError(err).Errorf("Could not stop server")
-					}
-				}
 
-				if p, ok := AssettoProcess.(*AssettoServerProcess); ok {
-					p.stopChildProcesses()
+			for _, server := range servers {
+
+				// ^C, handle it
+				if server.process.IsRunning() {
+					if server.process.EventType() == EventTypeChampionship {
+						if err := server.championshipManager.StopActiveEvent(); err != nil {
+							logrus.WithError(err).Errorf("Error stopping event")
+						}
+					} else {
+						if err := server.process.Stop(); err != nil {
+							logrus.WithError(err).Errorf("Could not stop server")
+						}
+					}
+
+					if p, ok := server.process.(*AssettoServerProcess); ok {
+						p.stopChildProcesses()
+					}
 				}
 			}
 
@@ -77,12 +78,15 @@ type RaceManager struct {
 
 	raceStore Store
 
+	process ServerProcess
+
 	mutex sync.RWMutex
 }
 
-func NewRaceManager(raceStore Store) *RaceManager {
+func NewRaceManager(raceStore Store, process ServerProcess) *RaceManager {
 	return &RaceManager{
 		raceStore: raceStore,
+		process:   process,
 	}
 }
 
@@ -90,7 +94,7 @@ func (rm *RaceManager) CurrentRace() (*ServerConfig, EntryList) {
 	rm.mutex.RLock()
 	defer rm.mutex.RUnlock()
 
-	if !AssettoProcess.IsRunning() {
+	if !rm.process.IsRunning() {
 		return nil, nil
 	}
 
@@ -133,7 +137,8 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 
 	// Reset the stored session types if this isn't a looped race
 	if !loop {
-		sessionTypes = nil
+		// @TODO RESET SESSION TYPES
+		// sessionTypes = nil
 	}
 
 	// load server opts
@@ -170,12 +175,14 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 	} else {
 		config.CurrentRaceConfig.PickupModeEnabled = 1
 	}
+/*
+	@TODO this needs to happen somewhere.
 
 	if !event.IsChampionship() && championshipManager != nil {
 		logrus.Debugf("Starting a non championship event. Setting activeChampionship to nil")
 		championshipManager.activeChampionship = nil
 	}
-
+*/
 	if config.GlobalServerConfig.ShowRaceNameInServerLobby == 1 {
 		// append the race name to the server name
 		if name := event.EventName(); name != "" {
@@ -198,15 +205,15 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 	rm.currentRace = &config
 	rm.currentEntryList = entryList
 
-	if AssettoProcess.IsRunning() {
-		err := AssettoProcess.Stop()
+	if rm.process.IsRunning() {
+		err := rm.process.Stop()
 
 		if err != nil {
 			return err
 		}
 	}
 
-	err = AssettoProcess.Start(config, forwardingAddress, forwardListenPort)
+	err = rm.process.Start(event, config, forwardingAddress, forwardListenPort)
 
 	if err != nil {
 		return err
@@ -587,7 +594,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 	return raceConfig, nil
 }
 
-func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
+func (rm *RaceManager) SetupCustomRace(r *http.Request, scheduler *RaceScheduler) error {
 	if err := r.ParseForm(); err != nil {
 		return err
 	}
@@ -660,7 +667,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 				return err
 			}
 
-			err = rm.ScheduleRace(race.UUID.String(), date, "add")
+			err = scheduler.ScheduleRace(race.UUID.String(), date, "add")
 
 			if err != nil {
 				return err
@@ -953,37 +960,6 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 	}
 
 	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart, race)
-}
-
-func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string) error {
-	race, err := raceManager.raceStore.FindCustomRaceByID(uuid)
-
-	if err != nil {
-		return err
-	}
-
-	race.Scheduled = date
-
-	// if there is an existing schedule timer for this event stop it
-	if timer := CustomRaceStartTimers[race.UUID.String()]; timer != nil {
-		timer.Stop()
-	}
-
-	if action == "add" {
-		// add a scheduled event on date
-		duration := time.Until(date)
-
-		race.Scheduled = date
-		CustomRaceStartTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
-			err := raceManager.StartCustomRace(race.UUID.String(), false)
-
-			if err != nil {
-				logrus.Errorf("couldn't start scheduled race, err: %s", err)
-			}
-		})
-	}
-
-	return raceManager.raceStore.UpsertCustomRace(race)
 }
 
 func (rm *RaceManager) DeleteCustomRace(uuid string) error {
