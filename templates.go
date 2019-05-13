@@ -91,6 +91,40 @@ type Renderer struct {
 	mutex  sync.Mutex
 }
 
+var UseShortenedDriverNames = true
+
+func driverName(name string) string {
+	if UseShortenedDriverNames {
+		nameParts := strings.Split(name, " ")
+
+		if len(nameParts) > 1 && len(nameParts[len(nameParts)-1]) > 1 {
+			nameParts[len(nameParts)-1] = nameParts[len(nameParts)-1][:1] + "."
+		}
+
+		return strings.Join(nameParts, " ")
+	} else {
+		return name
+	}
+}
+
+func driverInitials(name string) string {
+	if UseShortenedDriverNames {
+		nameParts := strings.Split(name, " ")
+
+		if len(nameParts) == 1 {
+			return name
+		}
+
+		for i := range nameParts {
+			nameParts[i] = nameParts[i][:1]
+		}
+
+		return strings.Join(nameParts, "")
+	} else {
+		return name
+	}
+}
+
 func NewRenderer(loader TemplateLoader, reload bool) (*Renderer, error) {
 	tr := &Renderer{
 		templates: make(map[string]*template.Template),
@@ -151,6 +185,7 @@ func (tr *Renderer) init() error {
 	funcs["Version"] = func() string { return BuildTime }
 	funcs["fullTimeFormat"] = fullTimeFormat
 	funcs["localFormat"] = localFormatHelper
+	funcs["driverName"] = driverName
 
 	tr.templates, err = tr.loader.Templates(funcs)
 

@@ -85,7 +85,7 @@
                                         {{ end }}
                                         <td>{{ add $i 1 }}</td>
                                         <td>
-                                            {{ $entrant.Car.Driver.Name }}
+                                            {{ driverName $entrant.Car.Driver.Name }}
 
                                             {{ $driverPenalty := $class.PenaltyForGUID $entrant.Car.Driver.GUID }}
 
@@ -230,7 +230,7 @@
                                                 {{ end }}
                                             {{ end }}
                                             <td>{{ add $i 1 }}</td>
-                                            <td>{{ $entrant.Name }}</td>
+                                            <td>{{ driverName $entrant.Name }}</td>
                                             <td>{{ $entrant.Team }}</td>
                                             <td>{{ prettify $entrant.Model true }}</td>
                                         </tr>
@@ -241,7 +241,7 @@
                                                     <td>{{ $class.Name }}</td>
                                                 {{ end }}
                                                 <td colspan="4">
-                                                    <em>{{ $entrant.Name }}</em>
+                                                    <em>{{ driverName $entrant.Name }}</em>
                                                 </td>
                                             </tr>
                                         {{ end }}
@@ -325,7 +325,7 @@
 
                                         <p class="mb-0">
                                             <small>
-                                                {{ $entrant.Car.Driver.Name }}<br>
+                                                {{ driverName $entrant.Car.Driver.Name }}<br>
                                                 {{ $entrant.Car.Driver.Team }}
                                             </small>
                                         </p>
@@ -518,7 +518,7 @@
                                                                 {{ with $result }}
                                                                     <li>
                                                                         <strong>{{ $class.Name }} Winner</strong><br>
-                                                                        {{ $result.DriverName }}
+                                                                        {{ driverName $result.DriverName }}
                                                                     </li>
                                                                 {{ end }}
                                                             {{ end }}
@@ -535,7 +535,7 @@
 
                                                                     <li>
                                                                         <strong>{{ $posInt }}{{ ordinal $posInt }}</strong>:
-                                                                        {{ $result.DriverName }}
+                                                                        {{ driverName $result.DriverName }}
                                                                     </li>
                                                                 {{ end }}
                                                             {{ end }}
@@ -557,7 +557,7 @@
                                                                 {{ range $pos, $result := (slice ($class.ResultsForClass $sessionDetails.Results.Result) 0 1) }}
                                                                     <li>
                                                                         <strong>{{ $class.Name }} Winner</strong><br>
-                                                                        {{ $result.DriverName }}
+                                                                        {{ driverName $result.DriverName }}
                                                                     </li>
                                                                 {{ end }}
                                                             {{ end }}
@@ -573,7 +573,7 @@
 
                                                                         <li>
                                                                             <strong>{{ $posInt }}{{ ordinal $posInt }}</strong>:
-                                                                            {{ $result.DriverName }}
+                                                                            {{ driverName $result.DriverName }}
                                                                         </li>
                                                                     {{ end }}
                                                                 {{ end }}
@@ -597,16 +597,16 @@
                                                 <span class="badge badge-best">
                                                     Fastest Lap{{ if $eventSetup.HasMultipleRaces }} (1st Race){{ end }}
 
-                                                    : {{ $session.Results.FastestLap.DriverName }}
+                                                    : {{ driverName $session.Results.FastestLap.DriverName }}
                                                 </span><br>
                                             {{ else if eq $sessionName "RACEx2" }}
                                                 <span class="badge badge-best">
                                                     Fastest Lap (2nd Race)
 
-                                                    : {{ $session.Results.FastestLap.DriverName }}
+                                                    : {{ driverName $session.Results.FastestLap.DriverName }}
                                                 </span><br>
                                             {{ else if eq $sessionName "QUALIFY" }}
-                                                <span class="badge badge-success">Best Qualifying: {{ $session.Results.FastestLap.DriverName }}</span><br>
+                                                <span class="badge badge-success">Best Qualifying: {{ driverName $session.Results.FastestLap.DriverName }}</span><br>
                                             {{ end }}
                                         {{ end }}
                                     {{ end }}

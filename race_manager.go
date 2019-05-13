@@ -35,11 +35,19 @@ func InitWithStore(store Store) {
 	accountManager = NewAccountManager(store)
 	AssettoProcess = NewAssettoServerProcess()
 
-	err := raceManager.raceStore.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
+	err := store.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
 
 	if err != nil && err != ErrMetaValueNotSet {
 		logrus.WithError(err).Errorf("Could not load server account options")
 	}
+
+	opts, err := store.LoadServerOptions()
+
+	if err != nil && err != ErrMetaValueNotSet {
+		logrus.WithError(err).Errorf("Could not load server options")
+	}
+
+	UseShortenedDriverNames = opts != nil && opts.UseShortenedDriverNames == 1
 
 	mapHub = newLiveMapHub()
 	go mapHub.run()
