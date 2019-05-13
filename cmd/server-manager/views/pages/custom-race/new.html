@@ -575,9 +575,9 @@
                                 <input type="checkbox"
                                        id="LockedEntryList"
                                        name="LockedEntryList"
-                                       value="{{ $f.LockedEntryList }}"
+                                       value="{{ $f.PickupModeEnabled }}"
 
-                                        {{ if eq $f.LockedEntryList 1 }}
+                                        {{ if eq $f.PickupModeEnabled 0 }}
                                             checked="checked"
                                         {{ end }}
                                 >
