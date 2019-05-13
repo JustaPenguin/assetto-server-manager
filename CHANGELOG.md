@@ -44,6 +44,8 @@ Fixes:
   Entrants in them.
 * Sol session start time should now save properly.
 * Locked entry list option should now work.
+* Fixes a bug where saving a Championship Event using the top Save button would actually cause the event to be duplicated.
+* Reworded the Reverse Grid description
 
 v1.2.2
 ------
