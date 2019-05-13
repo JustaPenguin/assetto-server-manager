@@ -175,8 +175,6 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 
 	if config.CurrentRaceConfig.HasSession(SessionTypeBooking) {
 		config.CurrentRaceConfig.PickupModeEnabled = 0
-	} else {
-		config.CurrentRaceConfig.PickupModeEnabled = 1
 	}
 
 	if !event.IsChampionship() && championshipManager != nil {
