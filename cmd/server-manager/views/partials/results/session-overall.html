@@ -25,7 +25,7 @@
                     {{ with $result.DriverGUID }}
                         <tr>
                             <td>{{ add $pos 1 }}</td>
-                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ $result.DriverName }}
+                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ driverName $result.DriverName }}
                                 {{ if $result.HasPenalty }} <span class="badge badge-danger">Time Penalty: {{ $result.PenaltyTime }}</span> {{ end }}
                                 {{ if $result.Disqualified }} <span class="badge badge-danger">Disqualified</span> {{ end }}</td>
                             <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
@@ -98,7 +98,7 @@
                     {{ with $result.DriverGUID }}
                         <tr>
                             <td>{{ add $pos 1 }}</td>
-                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ $result.DriverName }}</td>
+                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ driverName $result.DriverName }}</td>
                             <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
                             <td>{{ prettify $result.CarModel true }}</td>
                             <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID false }}</td>
@@ -145,7 +145,7 @@
                     {{ with $result.DriverGUID }}
                         <tr>
                             <td>{{ add $pos 1 }}</td>
-                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ $result.DriverName }}</td>
+                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ driverName $result.DriverName }}</td>
                             <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
                             <td>{{ prettify $result.CarModel true }}</td>
                             <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID false }}</td>

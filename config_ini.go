@@ -160,6 +160,7 @@ type GlobalServerConfig struct {
 
 	ShowRaceNameInServerLobby int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager append the Custom Race or Championship name to the Server name in the lobby."`
 	CustomCSS                 string `ini:"-" input:"textarea" help:"Customise the style of Server Manager!"`
+	UseShortenedDriverNames   int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager hide driver's last names, for example 'John Smith' becomes 'John S.'"`
 }
 
 type CurrentRaceConfig struct {
