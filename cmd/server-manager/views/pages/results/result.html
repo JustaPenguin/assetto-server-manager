@@ -71,8 +71,8 @@
                                     {{ range $pos, $event := $sessionResults.Events}}
                                         <tr>
                                             <td>{{ add $pos 1 }}</td>
-                                            <td class="driver-link" data-href="#{{ $event.Driver.GUID }}">{{ $event.Driver.Name }}</td>
-                                            <td class="driver-link" data-href="#{{ $event.OtherDriver.GUID }}">{{ $event.OtherDriver.Name }}</td>
+                                            <td class="driver-link" data-href="#{{ $event.Driver.GUID }}">{{ driverName $event.Driver.Name }}</td>
+                                            <td class="driver-link" data-href="#{{ $event.OtherDriver.GUID }}">{{ driverName $event.OtherDriver.Name }}</td>
                                             <td>{{ $event.Type }}</td>
                                             <td>{{ printf "%.1f" $event.ImpactSpeed }}</td>
                                             <td>{{ $event.GetRelPosition }}</td>
@@ -95,7 +95,7 @@
         <a name={{ $sessionResult.DriverGUID }}></a>
         <div class="card mt-3 border-secondary">
             <div class="card-header">
-                <strong>{{ add $i 1 }}{{ ordinal (add $i 1) }} {{ $sessionResult.DriverName }}
+                <strong>{{ add $i 1 }}{{ ordinal (add $i 1) }} {{ driverName $sessionResult.DriverName }}
                 {{ if eq $sessionResult.DriverGUID "76561198256908075" }} (Ey up you Southern twit){{ end }}</strong> in <strong>
                 {{ prettify $sessionResult.CarModel true }}</strong>
             </div>

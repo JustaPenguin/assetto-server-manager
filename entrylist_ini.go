@@ -116,7 +116,7 @@ func (e EntryList) Entrants() string {
 		if x.Name == "" {
 			numOpenSlots++
 		} else {
-			entrants = append(entrants, x.Name)
+			entrants = append(entrants, driverName(x.Name))
 		}
 	}
 

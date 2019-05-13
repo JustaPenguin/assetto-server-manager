@@ -76,6 +76,7 @@ func Router(fs http.FileSystem) http.Handler {
 		// results
 		r.Get("/results", resultsHandler)
 		r.Get("/results/{fileName}", resultHandler)
+		r.HandleFunc("/results/download/{fileName}", resultFileHandler)
 
 		r.Get("/logs", serverLogsHandler)
 		r.Get("/api/logs", apiServerLogHandler)
@@ -98,7 +99,6 @@ func Router(fs http.FileSystem) http.Handler {
 		r.HandleFunc("/accounts/new-password", newPasswordHandler)
 
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")))
-		FileServer(r, "/results/download", http.Dir(filepath.Join(ServerInstallPath, "results")))
 		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")))
 	})
 
@@ -241,6 +241,8 @@ func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			logrus.Errorf("couldn't submit form, err: %s", err)
 		}
+
+		UseShortenedDriverNames = serverOpts.UseShortenedDriverNames == 1
 
 		// save the config
 		err = raceManager.SaveServerOptions(serverOpts)
