@@ -548,16 +548,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 				VariationRoad:          formValueAsInt(r.Form["VariationRoad"][i]),
 			})
 		} else {
-			timezone := r.FormValue("sol-timezone")
-
-			location, err := time.LoadLocation(timezone)
-
-			if err != nil {
-				logrus.WithError(err).Errorf("could not find location: %s", location)
-				location = time.Local
-			}
-
-			startTime, err := time.ParseInLocation("2006-01-02T15:04", r.Form["DateUnix"][i], location)
+			startTime, err := time.ParseInLocation("2006-01-02T15:04", r.Form["DateUnix"][i], time.UTC)
 
 			if err != nil {
 				return nil, err
