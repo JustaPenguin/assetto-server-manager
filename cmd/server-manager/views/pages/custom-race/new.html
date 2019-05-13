@@ -29,7 +29,11 @@
                 <strong>Track{{ if not .IsChampionship }} & Cars {{ end }}</strong>
 
                 {{ if .IsEditing }}
-                    <button type="submit" class="btn btn-success float-right">Save Race</button>
+                    {{ if $.IsChampionship }}
+                        <button class="btn btn-success float-right" name="action" value="saveChampionship" type="submit">Save Championship Event</button>
+                    {{ else }}
+                        <button type="submit" class="btn btn-success float-right">Save Race</button>
+                    {{ end }}
                 {{ end }}
             </div>
 
@@ -457,9 +461,9 @@
                                                 >
 
                                                 <small> 0 = no additional race<br/>
-                                                    1toX = only those position will be reversed for the next race,<br/>
                                                     -1 = all the positions will be reversed (Retired players will be on the last positions)<br/>
-                                                    1 = A 2nd Race will take place with the grid formed from the 1st Race's results.
+                                                    1 = A 2nd Race will take place with the grid formed from the 1st Race's results<br/>
+                                                    X = first X number of positions will be reversed for the 2nd race
                                                 </small>
                                             </div>
                                         </div>
