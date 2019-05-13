@@ -172,6 +172,11 @@ func LiveMapCallback(message udp.Message) {
 		} else if m.Event() == udp.EventConnectionClosed {
 			delete(connectedCars, m.CarID)
 		}
+		m.DriverName = driverInitials(m.DriverName)
+
+		// because we are modifying m.DriverName here, we must use our own broadcast and return
+		mapHub.broadcast <- liveMapMessage{message.Event(), m}
+		return
 
 	case udp.Version:
 		connectedCars = make(map[udp.CarID]udp.SessionCarInfo)

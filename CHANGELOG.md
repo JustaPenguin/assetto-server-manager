@@ -32,6 +32,8 @@ Added:
 * You can now export all of the results for a championship to Simresults together.
 * Individual events (custom races and championships) can now override the global server password setting.
 * Added the ability to import entire championships.
+* Added the ability to use shortened Driver Names in all areas of the Server Manager web UI to protect people's identities online. 
+  You can enable this in Server Options.
 
 Fixes:
 

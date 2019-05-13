@@ -67,7 +67,7 @@ type Collision struct {
 }
 
 var liveInfo LiveTiming
-var carCounter map[uint8]int
+var carCounter = make(map[uint8]int)
 
 func LiveTimingCallback(response udp.Message) {
 	currentRace, _ := raceManager.CurrentRace()
@@ -230,7 +230,7 @@ func LiveTimingCallback(response udp.Message) {
 
 			liveInfo.Cars[uint8(a.CarID)] = &LiveCar{
 				DriverGUID: a.DriverGUID,
-				DriverName: a.DriverName,
+				DriverName: driverName(a.DriverName),
 				CarMode:    a.CarModel,
 				CarSkin:    a.CarSkin,
 			}

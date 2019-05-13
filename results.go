@@ -32,6 +32,25 @@ type SessionResults struct {
 	ChampionshipID string           `json:"ChampionshipID"`
 }
 
+func (s *SessionResults) MaskDriverNames() {
+	for _, car := range s.Cars {
+		car.Driver.Name = driverName(car.Driver.Name)
+	}
+
+	for _, event := range s.Events {
+		event.Driver.Name = driverName(event.Driver.Name)
+		event.OtherDriver.Name = driverName(event.OtherDriver.Name)
+	}
+
+	for _, lap := range s.Laps {
+		lap.DriverName = driverName(lap.DriverName)
+	}
+
+	for _, result := range s.Result {
+		result.DriverName = driverName(result.DriverName)
+	}
+}
+
 func (s *SessionResults) GetURL() string {
 	return config.HTTP.BaseURL + "/results/download/" + s.SessionFile + ".json"
 }
@@ -178,7 +197,7 @@ func (s *SessionResults) GetDrivers() string {
 
 	for _, car := range s.Cars {
 		if car.Driver.Name != "" {
-			drivers = append(drivers, car.Driver.Name)
+			drivers = append(drivers, driverName(car.Driver.Name))
 		} else {
 			numOpenSlots++
 		}
@@ -582,4 +601,29 @@ func resultHandler(w http.ResponseWriter, r *http.Request) {
 	ViewRenderer.MustLoadTemplate(w, r, "results/result.html", map[string]interface{}{
 		"result": result,
 	})
+}
+
+func resultFileHandler(w http.ResponseWriter, r *http.Request) {
+	fileName := chi.URLParam(r, "fileName")
+
+	result, err := LoadResult(fileName)
+
+	if os.IsNotExist(err) {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	} else if err != nil {
+		logrus.Errorf("could not get result, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if UseShortenedDriverNames {
+		result.MaskDriverNames()
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	enc.Encode(result)
 }
