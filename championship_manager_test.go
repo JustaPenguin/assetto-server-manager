@@ -145,7 +145,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 
 		for i, sessionFile := range championshipEventFixtures {
 			t.Run(sessionFile, func(t *testing.T) {
-				if err := championshipManager.StartEvent(champ.ID.String(), champ.Events[i].ID.String()); err != nil {
+				if err := championshipManager.StartEvent(champ.ID.String(), champ.Events[i].ID.String(), false); err != nil {
 					t.Error(err)
 					return
 				}
@@ -187,7 +187,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 
 		for i, sessionFile := range championshipEventFixtures {
 			t.Run(sessionFile, func(t *testing.T) {
-				if err := championshipManager.StartEvent(champ.ID.String(), champ.Events[i].ID.String()); err != nil {
+				if err := championshipManager.StartEvent(champ.ID.String(), champ.Events[i].ID.String(), false); err != nil {
 					t.Error(err)
 					return
 				}
@@ -237,7 +237,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 
 		for i, sessionFile := range championshipEventFixtures {
 			t.Run(sessionFile, func(t *testing.T) {
-				if err := championshipManager.StartEvent(champ.ID.String(), champ.Events[i].ID.String()); err != nil {
+				if err := championshipManager.StartEvent(champ.ID.String(), champ.Events[i].ID.String(), false); err != nil {
 					t.Error(err)
 					return
 				}
@@ -287,7 +287,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 
 		for i, sessionFile := range championshipEventFixtures {
 			t.Run(sessionFile, func(t *testing.T) {
-				if err := championshipManager.StartEvent(champ.ID.String(), champ.Events[i].ID.String()); err != nil {
+				if err := championshipManager.StartEvent(champ.ID.String(), champ.Events[i].ID.String(), false); err != nil {
 					t.Error(err)
 					return
 				}
@@ -407,7 +407,7 @@ func TestChampionshipManager_ChampionshipEventCallbackOpenChampionshipExample(t 
 	eventNum := 1
 
 	for eventID, file := range eventIDToJSON {
-		err = championshipManager.StartEvent(champ.ID.String(), eventID)
+		err = championshipManager.StartEvent(champ.ID.String(), eventID, false)
 
 		if err != nil {
 			t.Error(err)
