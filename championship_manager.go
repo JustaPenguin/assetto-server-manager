@@ -473,6 +473,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 		}
 	}
 
+	event.RaceSetup.LoopMode = 1
 	event.RaceSetup.MaxClients = len(entryList)
 
 	// track that this is the current event
