@@ -441,22 +441,43 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 		return err
 	}
 
-	if championship.OpenEntrants {
-		event.RaceSetup.PickupModeEnabled = 1
-	} else {
-		event.RaceSetup.PickupModeEnabled = 0
-	}
-
 	event.RaceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
-	event.RaceSetup.MaxClients = championship.NumEntrants()
 
 	config := ConfigIniDefault
 	config.CurrentRaceConfig = event.RaceSetup
 
 	logrus.Infof("Starting Championship Event: %s at %s (%s) with %d entrants", event.RaceSetup.Cars, event.RaceSetup.Track, event.RaceSetup.TrackLayout, event.RaceSetup.MaxClients)
 
+	entryList := event.CombineEntryLists(championship)
+
+	if championship.SignUpForm.Enabled && !championship.OpenEntrants {
+		filteredEntryList := make(EntryList)
+
+		// a sign up championship (which is not open) should remove all empty entrants before the event starts
+		// here we are building a new filtered entry list so grid positions are not 'missing'
+		for _, entrant := range entryList {
+			if entrant.GUID != "" {
+				filteredEntryList.Add(entrant)
+			}
+		}
+
+		entryList = filteredEntryList
+
+		// sign up championships also have pickup mode disabled
+		config.CurrentRaceConfig.PickupModeEnabled = 0
+	} else {
+		if championship.OpenEntrants {
+			config.CurrentRaceConfig.PickupModeEnabled = 1
+		} else {
+			config.CurrentRaceConfig.PickupModeEnabled = 0
+		}
+	}
+
+	event.RaceSetup.LoopMode = 1
+	event.RaceSetup.MaxClients = len(entryList)
+
 	// track that this is the current event
-	return cm.applyConfigAndStart(config, event.CombineEntryLists(championship), &ActiveChampionship{
+	return cm.applyConfigAndStart(config, entryList, &ActiveChampionship{
 		ChampionshipID:      championship.ID,
 		EventID:             event.ID,
 		Name:                championship.Name,
