@@ -441,14 +441,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 		return err
 	}
 
-	if championship.OpenEntrants {
-		event.RaceSetup.PickupModeEnabled = 1
-	} else {
-		event.RaceSetup.PickupModeEnabled = 0
-	}
-
 	event.RaceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
-	event.RaceSetup.MaxClients = championship.NumEntrants()
 
 	config := ConfigIniDefault
 	config.CurrentRaceConfig = event.RaceSetup
@@ -479,6 +472,8 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 			config.CurrentRaceConfig.PickupModeEnabled = 0
 		}
 	}
+
+	event.RaceSetup.MaxClients = len(entryList)
 
 	// track that this is the current event
 	return cm.applyConfigAndStart(config, entryList, &ActiveChampionship{
