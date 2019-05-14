@@ -1187,7 +1187,7 @@ func championshipSubmitEventConfigurationHandler(w http.ResponseWriter, r *http.
 
 // championshipStartEventHandler begins a championship event given by its ID
 func championshipStartEventHandler(w http.ResponseWriter, r *http.Request) {
-	err := championshipManager.StartEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
+	err := championshipManager.StartEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"), false)
 
 	if err != nil {
 		logrus.Errorf("Could not start championship event, err: %s", err)

@@ -1,3 +1,10 @@
+v1.3.1
+------
+
+Fixes:
+
+* You can now start Practice Events for Open Championships that do not have any entrants registered to them.
+
 v1.3.0
 ------
 
