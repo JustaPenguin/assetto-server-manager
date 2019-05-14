@@ -399,54 +399,19 @@ func (cm *ChampionshipManager) DeleteEvent(championshipID string, eventID string
 
 // Start a 2hr long Practice Event based off the existing championship event with eventID
 func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID string) error {
-	championship, err := cm.LoadChampionship(championshipID)
-
-	if err != nil {
-		return err
-	}
-
-	event, err := championship.EventByID(eventID)
-
-	if err != nil {
-		return err
-	}
-
-	config := ConfigIniDefault
-
-	raceSetup := event.RaceSetup
-
-	raceSetup.Sessions = make(map[SessionType]SessionConfig)
-	raceSetup.Sessions[SessionTypePractice] = SessionConfig{
-		Name:   "Practice",
-		Time:   120,
-		IsOpen: 1,
-	}
-
-	raceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
-	raceSetup.LoopMode = 1
-	raceSetup.MaxClients = championship.NumEntrants()
-
-	config.CurrentRaceConfig = raceSetup
-
-	return cm.RaceManager.applyConfigAndStart(config, event.CombineEntryLists(championship), false, normalEvent{
-		OverridePassword:    championship.OverridePassword,
-		ReplacementPassword: championship.ReplacementPassword,
-	})
+	return cm.StartEvent(championshipID, eventID, true)
 }
 
-func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string) error {
+func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string, isPracticeSession bool) error {
 	championship, event, err := cm.GetChampionshipAndEvent(championshipID, eventID)
 
 	if err != nil {
 		return err
 	}
 
-	event.RaceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
-
 	config := ConfigIniDefault
 	config.CurrentRaceConfig = event.RaceSetup
-
-	logrus.Infof("Starting Championship Event: %s at %s (%s) with %d entrants", event.RaceSetup.Cars, event.RaceSetup.Track, event.RaceSetup.TrackLayout, event.RaceSetup.MaxClients)
+	config.CurrentRaceConfig.Cars = strings.Join(championship.ValidCarIDs(), ";")
 
 	entryList := event.CombineEntryLists(championship)
 
@@ -473,17 +438,33 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string)
 		}
 	}
 
-	event.RaceSetup.LoopMode = 1
-	event.RaceSetup.MaxClients = len(entryList)
+	config.CurrentRaceConfig.LoopMode = 1
+	config.CurrentRaceConfig.MaxClients = len(entryList)
 
-	// track that this is the current event
-	return cm.applyConfigAndStart(config, entryList, &ActiveChampionship{
-		ChampionshipID:      championship.ID,
-		EventID:             event.ID,
-		Name:                championship.Name,
-		OverridePassword:    championship.OverridePassword,
-		ReplacementPassword: championship.ReplacementPassword,
-	})
+	if !isPracticeSession {
+		logrus.Infof("Starting Championship Event: %s at %s (%s) with %d entrants", event.RaceSetup.Cars, event.RaceSetup.Track, event.RaceSetup.TrackLayout, event.RaceSetup.MaxClients)
+
+		// track that this is the current event
+		return cm.applyConfigAndStart(config, entryList, &ActiveChampionship{
+			ChampionshipID:      championship.ID,
+			EventID:             event.ID,
+			Name:                championship.Name,
+			OverridePassword:    championship.OverridePassword,
+			ReplacementPassword: championship.ReplacementPassword,
+		})
+	} else {
+		config.CurrentRaceConfig.Sessions = make(map[SessionType]SessionConfig)
+		config.CurrentRaceConfig.Sessions[SessionTypePractice] = SessionConfig{
+			Name:   "Practice",
+			Time:   120,
+			IsOpen: 1,
+		}
+
+		return cm.RaceManager.applyConfigAndStart(config, entryList, false, normalEvent{
+			OverridePassword:    championship.OverridePassword,
+			ReplacementPassword: championship.ReplacementPassword,
+		})
+	}
 }
 
 func (cm *ChampionshipManager) GetChampionshipAndEvent(championshipID string, eventID string) (*Championship, *ChampionshipEvent, error) {
@@ -521,7 +502,7 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 		duration := time.Until(date)
 
 		ChampionshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
-			err := cm.StartEvent(championship.ID.String(), event.ID.String())
+			err := cm.StartEvent(championship.ID.String(), event.ID.String(), false)
 
 			if err != nil {
 				logrus.Errorf("couldn't start scheduled race, err: %s", err)
@@ -870,7 +851,7 @@ func (cm *ChampionshipManager) RestartEvent(championshipID string, eventID strin
 		return err
 	}
 
-	return cm.StartEvent(championshipID, eventID)
+	return cm.StartEvent(championshipID, eventID, false)
 }
 
 var ErrNoActiveEvent = errors.New("servermanager: no active championship event")

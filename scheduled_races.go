@@ -87,7 +87,7 @@ func InitialiseScheduledChampionshipEvents() error {
 				duration := time.Until(event.Scheduled)
 
 				ChampionshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
-					err := championshipManager.StartEvent(championship.ID.String(), event.ID.String())
+					err := championshipManager.StartEvent(championship.ID.String(), event.ID.String(), false)
 
 					if err != nil {
 						logrus.Errorf("couldn't start scheduled race, err: %s", err)
