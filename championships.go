@@ -454,36 +454,28 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 		return false, nil, err
 	}
 
-classLoop:
 	for _, class := range c.Classes {
-		for entrantKey, entrant := range class.Entrants {
+		for _, entrant := range class.Entrants {
 			if entrant.GUID == potentialEntrant.GetGUID() {
-				if class == classForCar {
-					// the person is already in the EntryList and this class, update their information
-					logrus.Debugf("Entrant: %s (%s) already found in EntryList. updating their info...", potentialEntrant.GetName(), potentialEntrant.GetGUID())
-					entrant.Model = potentialEntrant.GetCar()
-					entrant.Skin = potentialEntrant.GetSkin()
-
-					return true, class, nil
-				} else {
-					// the user needs removing from this class
-					logrus.Infof("Entrant: %s (%s) found in EntryList, but changed classes (%s -> %s). removing from original class.", potentialEntrant.GetName(), potentialEntrant.GetGUID(), class.Name, classForCar.Name)
-					delete(class.Entrants, entrantKey)
-					break classLoop
-				}
+				// we found the entrant, but there's a possibility that they changed cars. empty out their
+				// information on this entrant slot and then look for it again in the next loop
+				entrant.GUID = ""
+				entrant.Name = ""
+				entrant.Team = ""
 			}
 		}
 	}
+
 	// now look for empty Entrants in the Entrylist
 	for carNum, entrant := range classForCar.Entrants {
-		if entrant.Name == "" && entrant.GUID == "" {
+		if entrant.Name == "" && entrant.GUID == "" && entrant.Model == potentialEntrant.GetCar() {
 			entrant.Name = potentialEntrant.GetName()
 			entrant.GUID = potentialEntrant.GetGUID()
 			entrant.Model = potentialEntrant.GetCar()
 			entrant.Skin = potentialEntrant.GetSkin()
 			entrant.Team = potentialEntrant.GetTeam()
 
-			logrus.Infof("New championship entrant: %s (%s) has been assigned to %s in %s", entrant.Name, entrant.GUID, carNum, classForCar.Name)
+			logrus.Infof("Championship entrant: %s (%s) has been assigned to %s in %s", entrant.Name, entrant.GUID, carNum, classForCar.Name)
 
 			return true, classForCar, nil
 		}
@@ -1370,6 +1362,11 @@ func championshipTeamPenaltyHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+type entrantSlot struct {
+	Size     int
+	Capacity int
+}
+
 func championshipSignUpFormHandler(w http.ResponseWriter, r *http.Request) {
 	championship, opts, err := championshipManager.BuildChampionshipOpts(r)
 
@@ -1384,6 +1381,21 @@ func championshipSignUpFormHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	signedUpEntrants := make(map[string]*entrantSlot)
+
+	for _, entrant := range championship.AllEntrants() {
+		if _, ok := signedUpEntrants[entrant.Model]; !ok {
+			signedUpEntrants[entrant.Model] = &entrantSlot{}
+		}
+
+		signedUpEntrants[entrant.Model].Capacity++
+
+		if entrant.GUID != "" {
+			signedUpEntrants[entrant.Model].Size++
+		}
+	}
+
+	opts["SignedUpEntrants"] = signedUpEntrants
 	opts["FormData"] = &ChampionshipSignUpResponse{}
 
 	if r.Method == http.MethodPost {

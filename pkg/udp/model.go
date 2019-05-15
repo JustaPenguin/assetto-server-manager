@@ -23,7 +23,6 @@ const (
 	EventError            Event = 60
 	EventLapCompleted     Event = 73
 	EventClientEvent      Event = 130
-	EventSectorCompleted  Event = 88
 
 	// Send
 	EventRealtimeposInterval Event = 200
