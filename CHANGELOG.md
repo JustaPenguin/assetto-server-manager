@@ -4,6 +4,12 @@ v1.3.1
 Fixes:
 
 * You can now start Practice Events for Open Championships that do not have any entrants registered to them.
+* Championship Sign Up Forms now show how many free slots each car has.
+* Championship Sign Up Forms and Open Championships now properly respect the distribution of cars in an EntryList.
+  - If a user rejoins an Open Championship in a different car, their original slot in the EntryList is cleared so that
+    other Championship Entrants may use it instead. (Previously this slot was removed).
+  - Users registering on the Sign Up form can only be put in slots in the EntryList where their requested car matches
+    the car defined in the EntryList.
 
 v1.3.0
 ------
