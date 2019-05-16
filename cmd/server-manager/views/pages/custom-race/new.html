@@ -597,15 +597,17 @@
 
                 <div class="hidden-booking-enabled">
 
-                    {{ range $index, $entrant := .CurrentEntrants.AsSlice }}
-                        <div class="entrant">
-                            {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" $.IsChampionship }}
-                        </div>
-                    {{ else }}
-                        <div class="entrant">
-                            {{ template "entrant" }}
-                        </div>
-                    {{ end }}
+                    <div class="entrants-block">
+                        {{ range $index, $entrant := .CurrentEntrants.AsSlice }}
+                            <div class="entrant">
+                                {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" $.IsChampionship }}
+                            </div>
+                        {{ else }}
+                            <div class="entrant">
+                                {{ template "entrant" }}
+                            </div>
+                        {{ end }}
+                    </div>
 
 
                     {{ if not .IsChampionship }}

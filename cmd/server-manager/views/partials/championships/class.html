@@ -46,21 +46,19 @@
 
         <hr>
 
-        <div id="entrantTemplate" class="entrant">
-            {{ template "entrant" }}
-        </div>
-
-        {{ range $index, $entrant := $class.Entrants.AsSlice }}
-            <div class="entrant">
-                {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" false "IsEditing" $.IsEditing "IsChampionship" true }}
-            </div>
-        {{ else }}
-            {{ if not $.IsEditing }}
+        <div class="entrants-block">
+            {{ range $index, $entrant := $class.Entrants.AsSlice }}
                 <div class="entrant">
-                    {{ template "entrant" }}
+                    {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" false "IsEditing" $.IsEditing "IsChampionship" true }}
                 </div>
+            {{ else }}
+                {{ if not $.IsEditing }}
+                    <div class="entrant">
+                        {{ template "entrant" }}
+                    </div>
+                {{ end }}
             {{ end }}
-        {{ end }}
+        </div>
 
         <div class="row">
             <div class="col-md-8 pt-2">
