@@ -15,6 +15,8 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/sirupsen/logrus"
+
+	"github.com/cj123/assetto-server-manager/pkg/udp"
 )
 
 var (
@@ -468,8 +470,9 @@ func liveTimingHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ViewRenderer.MustLoadTemplate(w, r, "live-timing.html", map[string]interface{}{
-		"RaceDetails": customRace,
-		"FrameLinks":  frameLinks,
+		"RaceDetails":     customRace,
+		"FrameLinks":      frameLinks,
+		"CSSDotSmoothing": udp.RealtimePosIntervalMs,
 	})
 }
 
