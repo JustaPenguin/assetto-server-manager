@@ -16,6 +16,7 @@ Fixes:
     other Championship Entrants may use it instead. (Previously this slot was removed).
   - Users registering on the Sign Up form can only be put in slots in the EntryList where their requested car matches
     the car defined in the EntryList.
+* Fixes a bug where new Entrants could not be added to a Custom Race if all previous Entrants had been deleted from it.
 
 v1.3.0
 ------

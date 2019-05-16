@@ -1187,7 +1187,7 @@ class RaceSetup {
 
                 let $elem = $clonedTemplate.clone();
                 $elem.find("input[type='checkbox']").bootstrapSwitch();
-                $elem.insertAfter($lastElement);
+                $elem.appendTo(that.$parent.find(".entrants-block"));
                 $elem.find(".entryListCar").change(onEntryListCarChange);
                 $elem.find(".btn-delete-entrant").click(deleteEntrant);
 
