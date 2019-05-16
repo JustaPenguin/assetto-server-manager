@@ -1,5 +1,13 @@
 {{ define "title" }}Live Timing{{ end }}
 
+{{ define "extracss" }}
+    <style type="text/css">
+        .dot {
+            transition: {{ $.CSSDotSmoothing }}ms linear;
+        }
+    </style>
+{{ end }}
+
 {{ define "content" }}
     {{ with .RaceDetails }}
 
@@ -46,13 +54,11 @@
                                 <div class="mt-2 text-primary">
                                     <h5><strong>Track Info</strong></h5>
 
-                                    <p> <strong>Description: </strong>{{ $trackInfo.Description }},
-                                        <strong>Latitude: </strong>{{ stripGeotagCrap (index $trackInfo.Geotags 0) true }},
-                                        <strong>Longitude: </strong>{{ stripGeotagCrap (index $trackInfo.Geotags 1) false }},
-                                        <strong>Length: </strong>{{ $trackInfo.Length }},
-                                        <strong>Pit Boxes: </strong>{{ $trackInfo.Pitboxes }},
-                                        <strong>Width: </strong>{{ $trackInfo.Width }},
-                                        <strong>Run: </strong>{{ $trackInfo.Run }}. </p>
+                                    <p> <strong>Description: </strong>{{ $trackInfo.Description }}<br>
+                                        <strong>Length: </strong>{{ $trackInfo.Length }}<br>
+                                        <strong>Pit Boxes: </strong>{{ $trackInfo.Pitboxes }}<br>
+                                        <strong>Width: </strong>{{ $trackInfo.Width }}<br>
+                                        <strong>Run: </strong>{{ $trackInfo.Run }} </p>
                                 </div>
                             {{ end }}
 

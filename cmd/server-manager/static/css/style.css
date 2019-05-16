@@ -464,8 +464,8 @@ td .dot-inactive {
     background-repeat: no-repeat;
     z-index: 99;
     display: inline-grid;
-    -webkit-animation: cssAnimation 5s forwards;
-    animation: cssAnimation 5s forwards;
+    -webkit-animation: cssAnimation 3s forwards;
+    animation: cssAnimation 3s forwards;
 }
 
 @keyframes cssAnimation {
