@@ -304,9 +304,9 @@ func stripGeotagCrap(tag string, north bool) string {
 		return geoTags[0] + "." + geoTags[1]
 	} else if len(geoTags) == 3 {
 		// "50� 13' 57 N" format
-		for _, thing := range geoTags {
+		/*for _, thing := range geoTags {
 			println(thing)
-		}
+		}*/
 	} else if len(geoTags) == 1 {
 		// dunno, some crazy format, just return
 		return geoTags[0]
