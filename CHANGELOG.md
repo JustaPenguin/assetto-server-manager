@@ -1,6 +1,11 @@
 v1.3.1
 ------
 
+Added:
+
+* Live Map smoothing! Thanks to germanrcuriel on GitHub for this one! It makes a huge difference to the Live Map!
+* Tweaked the layout of the Live Timing description.
+
 Fixes:
 
 * You can now start Practice Events for Open Championships that do not have any entrants registered to them.
