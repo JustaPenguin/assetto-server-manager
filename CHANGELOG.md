@@ -4,6 +4,7 @@ v1.3.1
 Added:
 
 * Live Map smoothing! Thanks to germanrcuriel on GitHub for this one! It makes a huge difference to the Live Map!
+* Removed the gray background from the Live Map, replaced it with a drop-shadow. Thanks again to germanrcuriel for this! 
 * Tweaked the layout of the Live Timing description.
 
 Fixes:
