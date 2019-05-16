@@ -363,7 +363,6 @@ footer a {
 #map {
     position: relative;
     border-radius: 0.25rem;
-    background-color: rgba(0,0,0,0.125);
 }
 
 #map.rotated {
@@ -373,8 +372,12 @@ footer a {
 
 #map.rotated .dot, #map.rotated .collision {
     transform: rotate(-90deg) translate(-50%, -50%);
-
     transform-origin: top left;
+}
+
+#map .img {
+    -webkit-filter: drop-shadow(0 0 2px #000);
+    filter: drop-shadow(0 0 2px #000);
 }
 
 .dot {
