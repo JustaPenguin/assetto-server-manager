@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/getsentry/raven-go"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -19,6 +18,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/sprig"
+	"github.com/getsentry/raven-go"
 	"github.com/mattn/go-zglob"
 	"github.com/sirupsen/logrus"
 )
