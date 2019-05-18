@@ -19,9 +19,9 @@ func serverMOTDHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			logrus.WithError(err).Error("couldn't save message of the day")
-			AddErrFlashQuick(w, r, "Failed to save message of the day changes")
+			AddErrorFlash(w, r, "Failed to save message of the day changes")
 		} else {
-			AddFlashQuick(w, r, "Server message of the day successfully changed!")
+			AddFlash(w, r, "Server message of the day successfully changed!")
 		}
 	}
 

@@ -178,6 +178,9 @@ func Router(fs http.FileSystem) http.Handler {
 		r.Get("/car/delete/{name}", carDeleteHandler)
 		r.Get("/weather/delete/{key}", weatherDeleteHandler)
 		r.Get("/setups/delete/{car}/{track}/{setup}", carSetupDeleteHandler)
+
+		r.Get("/autofill-entrants", autoFillEntrantListHandler)
+		r.Get("/autofill-entrants/delete/{entrantID}", autoFillEntrantDeleteHandler)
 	})
 
 	// admins
@@ -254,9 +257,9 @@ func serverOptionsHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			logrus.Errorf("couldn't save config, err: %s", err)
-			AddErrFlashQuick(w, r, "Failed to save server options")
+			AddErrorFlash(w, r, "Failed to save server options")
 		} else {
-			AddFlashQuick(w, r, "Server options successfully saved!")
+			AddFlash(w, r, "Server options successfully saved!")
 		}
 	}
 
@@ -274,9 +277,9 @@ func serverBlacklistHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			logrus.WithError(err).Error("couldn't save blacklist")
-			AddErrFlashQuick(w, r, "Failed to save Server blacklist changes")
+			AddErrorFlash(w, r, "Failed to save Server blacklist changes")
 		} else {
-			AddFlashQuick(w, r, "Server blacklist successfully changed!")
+			AddFlash(w, r, "Server blacklist successfully changed!")
 		}
 	}
 
@@ -290,6 +293,33 @@ func serverBlacklistHandler(w http.ResponseWriter, r *http.Request) {
 	ViewRenderer.MustLoadTemplate(w, r, "server/blacklist.html", map[string]interface{}{
 		"text": string(b),
 	})
+}
+
+func autoFillEntrantListHandler(w http.ResponseWriter, r *http.Request) {
+	entrants, err := raceManager.raceStore.ListEntrants()
+
+	if err != nil {
+		logrus.WithError(err).Error("could not list entrants")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "server/autofill-entrants.html", map[string]interface{}{
+		"Entrants": entrants,
+	})
+}
+
+func autoFillEntrantDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	err := raceManager.raceStore.DeleteEntrant(chi.URLParam(r, "entrantID"))
+
+	if err != nil {
+		logrus.WithError(err).Error("could not delete entrant")
+		AddErrorFlash(w, r, "Could not delete entrant")
+	} else {
+		AddFlash(w, r, "Successfully deleted entrant")
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
 type ContentFile struct {
@@ -318,12 +348,12 @@ func uploadHandler(w http.ResponseWriter, r *http.Request, contentType string) {
 	err = addFiles(files, contentType)
 
 	if err != nil {
-		AddErrFlashQuick(w, r, contentType+"(s) could not be added")
+		AddErrorFlash(w, r, contentType+"(s) could not be added")
 
 		return
 	}
 
-	AddFlashQuick(w, r, contentType+"(s) added successfully!")
+	AddFlash(w, r, contentType+"(s) added successfully!")
 }
 
 // Stores files in the correct location
@@ -417,7 +447,7 @@ func getErrSession(r *http.Request) *sessions.Session {
 }
 
 // Helper function to get message session and add a flash
-func AddFlashQuick(w http.ResponseWriter, r *http.Request, message string) {
+func AddFlash(w http.ResponseWriter, r *http.Request, message string) {
 	session := getSession(r)
 
 	session.AddFlash(message)
@@ -426,7 +456,7 @@ func AddFlashQuick(w http.ResponseWriter, r *http.Request, message string) {
 	_ = session.Save(r, w)
 }
 
-func AddErrFlashQuick(w http.ResponseWriter, r *http.Request, message string) {
+func AddErrorFlash(w http.ResponseWriter, r *http.Request, message string) {
 	session := getErrSession(r)
 
 	session.AddFlash(message)
