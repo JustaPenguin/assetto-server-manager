@@ -169,6 +169,18 @@ func (rs *BoltStore) UpsertEntrant(entrant Entrant) error {
 	})
 }
 
+func (rs *BoltStore) DeleteEntrant(id string) error {
+	return rs.db.Update(func(tx *bbolt.Tx) error {
+		bkt, err := rs.entrantsBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		return bkt.Delete([]byte(id))
+	})
+}
+
 func (rs *BoltStore) ListEntrants() ([]*Entrant, error) {
 	var entrants []*Entrant
 

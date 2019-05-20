@@ -112,7 +112,7 @@ func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logrus.Errorf("could not get car list, err: %s", err)
 
-		AddErrFlashQuick(w, r, "couldn't get car list")
+		AddErrorFlash(w, r, "couldn't get car list")
 
 		http.Redirect(w, r, r.Referer(), http.StatusFound)
 
@@ -139,10 +139,10 @@ func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	if found {
 		// confirm deletion
-		AddFlashQuick(w, r, "Car successfully deleted!")
+		AddFlash(w, r, "Car successfully deleted!")
 	} else {
 		// inform car wasn't found
-		AddErrFlashQuick(w, r, "Sorry, car could not be deleted. Are you sure it was installed?")
+		AddErrorFlash(w, r, "Sorry, car could not be deleted. Are you sure it was installed?")
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)

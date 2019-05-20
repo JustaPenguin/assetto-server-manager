@@ -6,6 +6,7 @@ Added:
 * Live Map smoothing! Thanks to germanrcuriel on GitHub for this one! It makes a huge difference to the Live Map!
 * Removed the gray background from the Live Map, replaced it with a drop-shadow. Thanks again to germanrcuriel for this! 
 * Tweaked the layout of the Live Timing description.
+* You can now delete AutoFill entrants from the new AutoFill entrants page (available for users with Delete permissions or higher)
 
 Fixes:
 
@@ -17,6 +18,7 @@ Fixes:
   - Users registering on the Sign Up form can only be put in slots in the EntryList where their requested car matches
     the car defined in the EntryList.
 * Fixes a bug where new Entrants could not be added to a Custom Race if all previous Entrants had been deleted from it.
+* Fixes a bug where Championship Events with a Second race would sometimes stop running after the first race.
 
 v1.3.0
 ------
