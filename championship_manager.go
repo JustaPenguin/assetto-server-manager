@@ -402,7 +402,7 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 	return cm.StartEvent(championshipID, eventID, true)
 }
 
-func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string, isPracticeSession bool) error {
+func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string, isPreChampionshipPracticeEvent bool) error {
 	championship, event, err := cm.GetChampionshipAndEvent(championshipID, eventID)
 
 	if err != nil {
@@ -415,7 +415,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 
 	entryList := event.CombineEntryLists(championship)
 
-	if championship.SignUpForm.Enabled && !championship.OpenEntrants && !isPracticeSession {
+	if championship.SignUpForm.Enabled && !championship.OpenEntrants && !isPreChampionshipPracticeEvent {
 		filteredEntryList := make(EntryList)
 
 		// a sign up championship (which is not open) should remove all empty entrants before the event starts
@@ -449,7 +449,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 		config.CurrentRaceConfig.MaxClients = len(entryList)
 	}
 
-	if !isPracticeSession {
+	if !isPreChampionshipPracticeEvent {
 		logrus.Infof("Starting Championship Event: %s at %s (%s) with %d entrants", event.RaceSetup.Cars, event.RaceSetup.Track, event.RaceSetup.TrackLayout, event.RaceSetup.MaxClients)
 
 		// track that this is the current event
