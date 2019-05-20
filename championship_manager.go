@@ -402,7 +402,7 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 	return cm.StartEvent(championshipID, eventID, true)
 }
 
-func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string, isPracticeSession bool) error {
+func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string, isPreChampionshipPracticeEvent bool) error {
 	championship, event, err := cm.GetChampionshipAndEvent(championshipID, eventID)
 
 	if err != nil {
@@ -415,7 +415,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 
 	entryList := event.CombineEntryLists(championship)
 
-	if championship.SignUpForm.Enabled && !championship.OpenEntrants {
+	if championship.SignUpForm.Enabled && !championship.OpenEntrants && !isPreChampionshipPracticeEvent {
 		filteredEntryList := make(EntryList)
 
 		// a sign up championship (which is not open) should remove all empty entrants before the event starts
@@ -439,9 +439,17 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 	}
 
 	config.CurrentRaceConfig.LoopMode = 1
-	config.CurrentRaceConfig.MaxClients = len(entryList)
 
-	if !isPracticeSession {
+	if config.CurrentRaceConfig.HasSession(SessionTypeBooking) {
+		logrus.Infof("Championship event has a booking session. Disabling PickupMode, clearing EntryList")
+		// championship events with booking do not have an entry list. pick up mode is disabled.
+		config.CurrentRaceConfig.PickupModeEnabled = 0
+		entryList = nil
+	} else {
+		config.CurrentRaceConfig.MaxClients = len(entryList)
+	}
+
+	if !isPreChampionshipPracticeEvent {
 		logrus.Infof("Starting Championship Event: %s at %s (%s) with %d entrants", event.RaceSetup.Cars, event.RaceSetup.Track, event.RaceSetup.TrackLayout, event.RaceSetup.MaxClients)
 
 		// track that this is the current event
@@ -453,11 +461,20 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 			ReplacementPassword: championship.ReplacementPassword,
 		})
 	} else {
-		config.CurrentRaceConfig.Sessions = make(map[SessionType]SessionConfig)
+		// delete all sessions other than booking (if there is a booking session)
+		delete(config.CurrentRaceConfig.Sessions, SessionTypePractice)
+		delete(config.CurrentRaceConfig.Sessions, SessionTypeQualifying)
+		delete(config.CurrentRaceConfig.Sessions, SessionTypeRace)
+
 		config.CurrentRaceConfig.Sessions[SessionTypePractice] = SessionConfig{
 			Name:   "Practice",
 			Time:   120,
 			IsOpen: 1,
+		}
+
+		if !config.CurrentRaceConfig.HasSession(SessionTypeBooking) {
+			// #271: override pickup mode to ON for practice sessions
+			config.CurrentRaceConfig.PickupModeEnabled = 1
 		}
 
 		return cm.RaceManager.applyConfigAndStart(config, entryList, false, normalEvent{

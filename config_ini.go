@@ -179,7 +179,6 @@ type CurrentRaceConfig struct {
 	AutoClutchAllowed         int    `ini:"AUTOCLUTCH_ALLOWED" input:"checkbox" help:"Autoclutch assist 0 -> OFF; 1 -> ON"`
 	TyreBlanketsAllowed       int    `ini:"TYRE_BLANKETS_ALLOWED" input:"checkbox" help:"at the start of the session or after the pitstop the tyre will have the the optimal temperature"`
 	ForceVirtualMirror        int    `ini:"FORCE_VIRTUAL_MIRROR" input:"checkbox" help:"1 virtual mirror will be enabled for every client, 0 for mirror as optional"`
-	LockedEntryList           int    `ini:"LOCKED_ENTRY_LIST" input:"checkbox" help:"Only players already included in the entry list can join the server"`
 	RacePitWindowStart        int    `ini:"RACE_PIT_WINDOW_START" help:"pit window opens at lap/minute specified"`
 	RacePitWindowEnd          int    `ini:"RACE_PIT_WINDOW_END" help:"pit window closes at lap/minute specified"`
 	ReversedGridRacePositions int    `ini:"REVERSED_GRID_RACE_POSITIONS" help:" 0 = no additional race, 1toX = only those position will be reversed for the next race, -1 = all the position will be reversed (Retired players will be on the last positions)"`
@@ -210,6 +209,9 @@ type CurrentRaceConfig struct {
 
 	Sessions Sessions                  `ini:"-"`
 	Weather  map[string]*WeatherConfig `ini:"-"`
+
+	// Deprecated: Use PickupModeEnabled instead. (PickupModeEnabled == !LockedEntryList)
+	LockedEntryList int `ini:"LOCKED_ENTRY_LIST" input:"checkbox" help:"Only players already included in the entry list can join the server"`
 }
 
 type Sessions map[SessionType]SessionConfig
