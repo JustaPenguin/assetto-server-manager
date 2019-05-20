@@ -3,6 +3,7 @@ package servermanager
 import (
 	"context"
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 	"time"
@@ -50,6 +51,7 @@ type LiveCar struct {
 	LastLapCompleteTimeUnix int64
 	Pos                     int
 	Split                   string
+	TopSpeed                float64
 
 	Collisions []Collision
 }
@@ -216,6 +218,11 @@ func LiveTimingCallback(response udp.Message) {
 		// reset counter for this car
 		carCounter[uint8(a.CarID)] = 0
 
+		speed := math.Sqrt(math.Pow(float64(a.Velocity.X), 2)+math.Pow(float64(a.Velocity.Z), 2)) * 3.6
+
+		if _, ok := liveInfo.Cars[uint8(a.CarID)]; ok && speed >= 1 && speed > liveInfo.Cars[uint8(a.CarID)].TopSpeed {
+			liveInfo.Cars[uint8(a.CarID)].TopSpeed = speed
+		}
 	case udp.SessionCarInfo:
 		if a.Event() == udp.EventNewConnection {
 			for id, car := range liveInfo.DeletedCars {
