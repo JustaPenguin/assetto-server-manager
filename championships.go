@@ -254,6 +254,18 @@ func (c *Championship) IsMultiClass() bool {
 	return len(c.Classes) > 1
 }
 
+func (c *Championship) HasTeamNames() bool {
+	for _, class := range c.Classes {
+		for _, entrant := range class.Entrants {
+			if entrant.Team != "" {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 func (c *Championship) HasScheduledEvents() bool {
 	for _, event := range c.Events {
 		if !event.Scheduled.IsZero() {
