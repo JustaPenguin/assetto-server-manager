@@ -111,13 +111,13 @@ func customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	action := r.FormValue("action")
 
 	if action == "justSave" {
-		AddFlashQuick(w, r, "Custom race saved!")
+		AddFlash(w, r, "Custom race saved!")
 		http.Redirect(w, r, "/custom", http.StatusFound)
 	} else if action == "schedule" {
-		AddFlashQuick(w, r, "Custom race scheduled!")
+		AddFlash(w, r, "Custom race scheduled!")
 		http.Redirect(w, r, "/custom", http.StatusFound)
 	} else {
-		AddFlashQuick(w, r, "Custom race started!")
+		AddFlash(w, r, "Custom race started!")
 		http.Redirect(w, r, "/live-timing", http.StatusFound)
 	}
 }
@@ -158,7 +158,7 @@ func customRaceScheduleHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	AddFlashQuick(w, r, fmt.Sprintf("We have scheduled the race to begin at %s", date.Format(time.RFC1123)))
+	AddFlash(w, r, fmt.Sprintf("We have scheduled the race to begin at %s", date.Format(time.RFC1123)))
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
@@ -183,7 +183,7 @@ func customRaceLoadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	AddFlashQuick(w, r, "Custom race started!")
+	AddFlash(w, r, "Custom race started!")
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
@@ -196,7 +196,7 @@ func customRaceDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	AddFlashQuick(w, r, "Custom race deleted!")
+	AddFlash(w, r, "Custom race deleted!")
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 

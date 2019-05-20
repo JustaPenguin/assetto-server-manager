@@ -1,0 +1,31 @@
+{{ define "title" }}AutoFill Entrants{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">AutoFill Entrants</h1>
+
+    <table class="table table-striped table-bordered">
+        <tr>
+            <th>Name</th>
+            <th>Team</th>
+            <th>GUID</th>
+            <th>Delete</th>
+        </tr>
+
+        {{ range $index, $entrant := $.Entrants }}
+            <tr>
+                <td>
+                    {{ $entrant.Name }}
+                </td>
+                <td>
+                    {{ $entrant.Team }}
+                </td>
+                <td>
+                    {{ $entrant.GUID }}
+                </td>
+                <td class="text-center">
+                    <a href="/autofill-entrants/delete/{{ $entrant.ID }}"><i class="fas fa-trash text-danger"></i></a>
+                </td>
+            </tr>
+        {{ end }}
+    </table>
+{{ end }}

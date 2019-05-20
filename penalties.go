@@ -19,14 +19,14 @@ func penaltyHandler(w http.ResponseWriter, r *http.Request) {
 	remove, err := applyPenalty(r)
 
 	if err != nil {
-		AddErrFlashQuick(w, r, "Could not add/remove penalty")
+		AddErrorFlash(w, r, "Could not add/remove penalty")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 
 	if remove {
-		AddFlashQuick(w, r, "Penalty Removed!")
+		AddFlash(w, r, "Penalty Removed!")
 	} else {
-		AddFlashQuick(w, r, "Penalty Added!")
+		AddFlash(w, r, "Penalty Added!")
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
