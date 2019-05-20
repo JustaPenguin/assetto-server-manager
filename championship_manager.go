@@ -415,7 +415,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 
 	entryList := event.CombineEntryLists(championship)
 
-	if championship.SignUpForm.Enabled && !championship.OpenEntrants {
+	if championship.SignUpForm.Enabled && !championship.OpenEntrants && !isPracticeSession {
 		filteredEntryList := make(EntryList)
 
 		// a sign up championship (which is not open) should remove all empty entrants before the event starts
@@ -459,6 +459,9 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 			Time:   120,
 			IsOpen: 1,
 		}
+
+		// #271: override pickup mode to ON for practice sessions
+		config.CurrentRaceConfig.PickupModeEnabled = 1
 
 		return cm.RaceManager.applyConfigAndStart(config, entryList, false, normalEvent{
 			OverridePassword:    championship.OverridePassword,

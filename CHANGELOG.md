@@ -19,6 +19,8 @@ Fixes:
     the car defined in the EntryList.
 * Fixes a bug where new Entrants could not be added to a Custom Race if all previous Entrants had been deleted from it.
 * Fixes a bug where Championship Events with a Second race would sometimes stop running after the first race.
+* Pickup mode is now enabled for all Championship Practice Events.
+* The "Locked Entry List" option has a more detailed explanation about how it works.
 
 v1.3.0
 ------
