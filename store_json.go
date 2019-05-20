@@ -161,6 +161,31 @@ func (rs *JSONStore) UpsertEntrant(entrant Entrant) error {
 	return rs.encodeFile(entrantsFile, entrants)
 }
 
+func (rs *JSONStore) DeleteEntrant(id string) error {
+	entrants, err := rs.ListEntrants()
+
+	if err != nil {
+		return err
+	}
+
+	deleteIndex := -1
+
+	for index, entrant := range entrants {
+		if entrant.ID() == id {
+			deleteIndex = index
+			break
+		}
+	}
+
+	if deleteIndex < 0 {
+		return nil
+	}
+
+	entrants = append(entrants[:deleteIndex], entrants[deleteIndex+1:]...)
+
+	return rs.encodeFile(entrantsFile, entrants)
+}
+
 func (rs *JSONStore) ListEntrants() ([]*Entrant, error) {
 	var entrants []*Entrant
 
