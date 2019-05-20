@@ -687,12 +687,6 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 				return
 			}
 
-			if sessionType == SessionTypeRace {
-				// keep track of the number of race end events so we can determine if we're on race 2
-				// if the session has ReversedGridPositions != 0
-				cm.activeChampionship.NumRaceStartEvents++
-			}
-
 			_, ok := championship.Events[currentEventIndex].Sessions[sessionType]
 
 			if !ok {
@@ -788,7 +782,9 @@ var (
 func (cm *ChampionshipManager) findSessionWithName(event *ChampionshipEvent, name string) (SessionType, error) {
 	for t, sess := range event.RaceSetup.Sessions {
 		if sess.Name == name {
-			if t == SessionTypeRace && event.RaceSetup.ReversedGridRacePositions != 0 && cm.activeChampionship.NumRaceStartEvents == 1 {
+			savedRace, hasSavedRace := event.Sessions[SessionTypeRace]
+
+			if t == SessionTypeRace && event.RaceSetup.HasMultipleRaces() && hasSavedRace && savedRace.Completed() {
 				// this is a second race session
 				return SessionTypeSecondRace, nil
 			}
