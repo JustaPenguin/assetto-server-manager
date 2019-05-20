@@ -7,6 +7,8 @@ Added:
 * Removed the gray background from the Live Map, replaced it with a drop-shadow. Thanks again to germanrcuriel for this! 
 * Tweaked the layout of the Live Timing description.
 * You can now delete AutoFill entrants from the new AutoFill entrants page (available for users with Delete permissions or higher)
+* Added Top Speed to Live Timings
+* Team Standings are hidden in Championships where no entrant has a team name.
 
 Fixes:
 
@@ -20,6 +22,12 @@ Fixes:
 * Fixes a bug where new Entrants could not be added to a Custom Race if all previous Entrants had been deleted from it.
 * Fixes a bug where Championship Events with a Second race would sometimes stop running after the first race.
 * Fixed an issue where sometimes drivers would not properly disconnect from the Live Map.
+* Pickup mode is now enabled for all Championship Practice Events that don't have Booking Sessions.
+* The "Locked Entry List" option has a more detailed explanation about how it works.
+* Open Championship Events using Booking mode can now be correctly configured. Note that you must create entrant slots in the 
+  Championship setup, otherwise the Championship Events will start without any cars available!
+* Open Championship Events with Booking mode now have a Booking mode for their practice sessions too.
+* The 'Save Race' button at the top of the Custom Race form now saves the race without redirecting you to Live Timings
 
 v1.3.0
 ------
