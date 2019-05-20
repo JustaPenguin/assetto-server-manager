@@ -39,10 +39,12 @@
                     <a class="nav-link active" id="drivers-tab" data-toggle="tab" href="#drivers" role="tab"
                        aria-controls="drivers" aria-selected="true">Driver Standings</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" id="teams-tab" data-toggle="tab" href="#teams" role="tab" aria-controls="teams"
-                       aria-selected="false">Team Standings</a>
-                </li>
+                {{ if $championship.HasTeamNames }}
+                    <li class="nav-item">
+                        <a class="nav-link" id="teams-tab" data-toggle="tab" href="#teams" role="tab" aria-controls="teams"
+                           aria-selected="false">Team Standings</a>
+                    </li>
+                {{ end }}
             {{ else }}
                 <li class="nav-item">
                     <a class="nav-link active" id="entrants-tab" data-toggle="tab" href="#entrants" role="tab" aria-controls="teams"
@@ -65,7 +67,10 @@
                                 {{ if $championship.IsMultiClass }}<th>Class</th>{{ end }}
                                 <th>#</th>
                                 <th>Driver</th>
-                                <th>Team</th>
+
+                                {{ if $championship.HasTeamNames }}
+                                    <th>Team</th>
+                                {{ end }}
                                 <th>Points</th>
                                 {{ if WriteAccess }}
                                     <th>Actions</th>
@@ -93,7 +98,10 @@
                                                 <span class="badge badge-danger ml-2">Points Penalty: {{ $driverPenalty }}</span>
                                             {{ end }}
                                         </td>
-                                        <td>{{ $entrant.TeamSummary }}</td>
+
+                                        {{ if $championship.HasTeamNames }}
+                                            <td>{{ $entrant.TeamSummary }}</td>
+                                        {{ end }}
                                         <td>{{ $entrant.Points }}</td>
 
                                         {{ if WriteAccess }}
@@ -118,9 +126,11 @@
                                                         <button type="submit" name="action" value="set" class="btn btn-danger">Set Penalty</button>
                                                         <button type="submit" name="action" value="remove" class="btn btn-primary">Remove Penalty</button>
 
-                                                        <div class="d-block">
-                                                            <small>Note that penalty points only apply to the driver, not the team. You can add team penalties in the Team Standings tab.</small>
-                                                        </div>
+                                                        {{ if $championship.HasTeamNames }}
+                                                            <div class="d-block">
+                                                                <small>Note that penalty points only apply to the driver, not the team. You can add team penalties in the Team Standings tab.</small>
+                                                            </div>
+                                                        {{ end }}
                                                     </form>
                                                 </div>
                                             </td>
@@ -213,7 +223,9 @@
                                 {{ if $championship.IsMultiClass }}<th>Class</th>{{ end }}
                                 <th>#</th>
                                 <th>Driver</th>
-                                <th>Team</th>
+                                {{ if $championship.HasTeamNames }}
+                                    <th>Team</th>
+                                {{ end }}
                                 <th>Car</th>
                             </tr>
 
@@ -231,7 +243,10 @@
                                             {{ end }}
                                             <td>{{ add $i 1 }}</td>
                                             <td>{{ driverName $entrant.Name }}</td>
-                                            <td>{{ $entrant.Team }}</td>
+
+                                            {{ if $championship.HasTeamNames }}
+                                                <td>{{ $entrant.Team }}</td>
+                                            {{ end }}
                                             <td>{{ prettify $entrant.Model true }}</td>
                                         </tr>
                                     {{ else }}
