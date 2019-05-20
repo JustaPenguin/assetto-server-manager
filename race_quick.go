@@ -22,7 +22,7 @@ func quickRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	err := raceManager.SetupQuickRace(r)
 
 	if err == ErrMustSubmitCar {
-		AddErrFlashQuick(w, r, "You must choose at least one car!")
+		AddErrorFlash(w, r, "You must choose at least one car!")
 		http.Redirect(w, r, r.Referer(), http.StatusFound)
 		return
 	} else if err != nil {
@@ -31,6 +31,6 @@ func quickRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	AddFlashQuick(w, r, "Quick race successfully started!")
+	AddFlash(w, r, "Quick race successfully started!")
 	http.Redirect(w, r, "/", http.StatusFound)
 }

@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/sprig"
+	"github.com/getsentry/raven-go"
 	"github.com/mattn/go-zglob"
 	"github.com/sirupsen/logrus"
 )
@@ -422,6 +423,7 @@ func (tr *Renderer) MustLoadTemplate(w http.ResponseWriter, r *http.Request, vie
 	err := tr.LoadTemplate(w, r, view, data)
 
 	if err != nil {
+		raven.CaptureError(err, nil)
 		logrus.Errorf("Unable to load template: %s, err: %s", view, err)
 		http.Error(w, "unable to load template", http.StatusInternalServerError)
 		return

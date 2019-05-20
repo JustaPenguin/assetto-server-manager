@@ -77,9 +77,9 @@ func serverProcessHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logrus.Errorf("could not change "+noun+" status, err: %s", err)
-		AddErrFlashQuick(w, r, "Unable to change "+noun+" status")
+		AddErrorFlash(w, r, "Unable to change "+noun+" status")
 	} else {
-		AddFlashQuick(w, r, noun+" successfully "+txt)
+		AddFlash(w, r, noun+" successfully "+txt)
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)

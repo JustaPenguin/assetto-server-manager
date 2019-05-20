@@ -134,12 +134,12 @@ func carSetupsUploadHandler(w http.ResponseWriter, r *http.Request) {
 	if carName, err := uploadCarSetup(r); err != nil {
 		logrus.Errorf("Could not upload setup file, err: %s", err)
 		if carName != "" {
-			AddErrFlashQuick(w, r, fmt.Sprintf("Unable to upload setup file for %s", carName))
+			AddErrorFlash(w, r, fmt.Sprintf("Unable to upload setup file for %s", carName))
 		} else {
-			AddErrFlashQuick(w, r, "Unable to upload setup file")
+			AddErrorFlash(w, r, "Unable to upload setup file")
 		}
 	} else {
-		AddFlashQuick(w, r, fmt.Sprintf("The setup file for %s was uploaded successfully!", carName))
+		AddFlash(w, r, fmt.Sprintf("The setup file for %s was uploaded successfully!", carName))
 	}
 
 	http.Redirect(w, r, "/cars?tab=setups", http.StatusFound)
@@ -154,9 +154,9 @@ func carSetupDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logrus.Errorf("Could not remove setup %s/%s/%s, err: %s", carName, trackName, setupName, err)
-		AddErrFlashQuick(w, r, "Couldn't delete setup for "+carName)
+		AddErrorFlash(w, r, "Couldn't delete setup for "+carName)
 	} else {
-		AddFlashQuick(w, r, "Setup successfully deleted!")
+		AddFlash(w, r, "Setup successfully deleted!")
 	}
 
 	http.Redirect(w, r, "/cars?tab=setups", http.StatusFound)

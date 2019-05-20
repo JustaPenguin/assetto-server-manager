@@ -10,6 +10,7 @@ type Store interface {
 	// Entrants
 	UpsertEntrant(entrant Entrant) error
 	ListEntrants() ([]*Entrant, error)
+	DeleteEntrant(id string) error
 
 	// Server Options
 	UpsertServerOptions(so *GlobalServerConfig) error

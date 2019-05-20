@@ -960,10 +960,10 @@ func submitNewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if edited {
-		AddFlashQuick(w, r, "Championship successfully edited!")
+		AddFlash(w, r, "Championship successfully edited!")
 		http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
 	} else {
-		AddFlashQuick(w, r, "We've created the Championship. Now you need to add some Events!")
+		AddFlash(w, r, "We've created the Championship. Now you need to add some Events!")
 		http.Redirect(w, r, "/championship/"+championship.ID.String()+"/event", http.StatusFound)
 	}
 }
@@ -1018,9 +1018,9 @@ func importChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			logrus.Errorf("couldn't import championship, err: %s", err)
-			AddErrFlashQuick(w, r, "Sorry, we couldn't import that championship! Check your JSON formatting.")
+			AddErrorFlash(w, r, "Sorry, we couldn't import that championship! Check your JSON formatting.")
 		} else {
-			AddFlashQuick(w, r, "Championship successfully imported!")
+			AddFlash(w, r, "Championship successfully imported!")
 			http.Redirect(w, r, "/championship/"+championshipID, http.StatusFound)
 		}
 	}
@@ -1090,7 +1090,7 @@ func deleteChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	AddFlashQuick(w, r, "Championship deleted!")
+	AddFlash(w, r, "Championship deleted!")
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
@@ -1103,9 +1103,9 @@ func championshipEventImportHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			logrus.Errorf("Could not import championship event, error: %s", err)
-			AddErrFlashQuick(w, r, "Could not import session files")
+			AddErrorFlash(w, r, "Could not import session files")
 		} else {
-			AddFlashQuick(w, r, "Successfully imported session files!")
+			AddFlash(w, r, "Successfully imported session files!")
 			http.Redirect(w, r, "/championship/"+championshipID, http.StatusFound)
 			return
 		}
@@ -1152,14 +1152,14 @@ func championshipSubmitEventConfigurationHandler(w http.ResponseWriter, r *http.
 	}
 
 	if edited {
-		AddFlashQuick(w, r,
+		AddFlash(w, r,
 			fmt.Sprintf(
 				"Championship race at %s was successfully edited!",
 				prettifyName(event.RaceSetup.Track, false),
 			),
 		)
 	} else {
-		AddFlashQuick(w, r,
+		AddFlash(w, r,
 			fmt.Sprintf(
 				"Championship race at %s was successfully added!",
 				prettifyName(event.RaceSetup.Track, false),
@@ -1184,9 +1184,9 @@ func championshipStartEventHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logrus.Errorf("Could not start championship event, err: %s", err)
 
-		AddErrFlashQuick(w, r, "Couldn't start the Event")
+		AddErrorFlash(w, r, "Couldn't start the Event")
 	} else {
-		AddFlashQuick(w, r, "Event started successfully!")
+		AddFlash(w, r, "Event started successfully!")
 		time.Sleep(time.Second * 1)
 	}
 
@@ -1230,7 +1230,7 @@ func championshipScheduleEventHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	AddFlashQuick(w, r, fmt.Sprintf("We have scheduled the Championship Event to begin at %s", date.Format(time.RFC1123)))
+	AddFlash(w, r, fmt.Sprintf("We have scheduled the Championship Event to begin at %s", date.Format(time.RFC1123)))
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
@@ -1254,9 +1254,9 @@ func championshipDeleteEventHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logrus.Errorf("Could not delete championship event, err: %s", err)
 
-		AddErrFlashQuick(w, r, "Couldn't delete the Event")
+		AddErrorFlash(w, r, "Couldn't delete the Event")
 	} else {
-		AddFlashQuick(w, r, "Event deleted successfully!")
+		AddFlash(w, r, "Event deleted successfully!")
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
@@ -1269,9 +1269,9 @@ func championshipStartPracticeEventHandler(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		logrus.Errorf("Could not start practice championship event, err: %s", err)
 
-		AddErrFlashQuick(w, r, "Couldn't start the Practice Event")
+		AddErrorFlash(w, r, "Couldn't start the Practice Event")
 	} else {
-		AddFlashQuick(w, r, "Practice Event started successfully!")
+		AddFlash(w, r, "Practice Event started successfully!")
 		time.Sleep(time.Second * 1)
 	}
 
@@ -1285,9 +1285,9 @@ func championshipCancelEventHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logrus.Errorf("Could not cancel championship event, err: %s", err)
 
-		AddErrFlashQuick(w, r, "Couldn't cancel the Championship Event")
+		AddErrorFlash(w, r, "Couldn't cancel the Championship Event")
 	} else {
-		AddFlashQuick(w, r, "Event cancelled successfully!")
+		AddFlash(w, r, "Event cancelled successfully!")
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
@@ -1301,9 +1301,9 @@ func championshipRestartEventHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logrus.Errorf("Could not restart championship event, err: %s", err)
 
-		AddErrFlashQuick(w, r, "Couldn't restart the Championship Event")
+		AddErrorFlash(w, r, "Couldn't restart the Championship Event")
 	} else {
-		AddFlashQuick(w, r, "Event restarted successfully!")
+		AddFlash(w, r, "Event restarted successfully!")
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
@@ -1334,9 +1334,9 @@ func championshipDriverPenaltyHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logrus.Errorf("Could not modify championship driver penalty, err: %s", err)
 
-		AddErrFlashQuick(w, r, "Couldn't modify driver penalty")
+		AddErrorFlash(w, r, "Couldn't modify driver penalty")
 	} else {
-		AddFlashQuick(w, r, "Driver penalty successfully modified")
+		AddFlash(w, r, "Driver penalty successfully modified")
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
@@ -1354,9 +1354,9 @@ func championshipTeamPenaltyHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logrus.Errorf("Could not modify championship penalty, err: %s", err)
 
-		AddErrFlashQuick(w, r, "Couldn't modify team penalty")
+		AddErrorFlash(w, r, "Couldn't modify team penalty")
 	} else {
-		AddFlashQuick(w, r, "Team penalty successfully modified")
+		AddFlash(w, r, "Team penalty successfully modified")
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
@@ -1413,12 +1413,12 @@ func championshipSignUpFormHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		} else {
 			if championship.SignUpForm.RequiresApproval {
-				AddFlashQuick(w, r, "Thanks for registering for the championship! Your registration is pending approval by an administrator.")
+				AddFlash(w, r, "Thanks for registering for the championship! Your registration is pending approval by an administrator.")
 				http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
 				return
 			} else {
 				if foundSlot {
-					AddFlashQuick(w, r, "Thanks for registering for the championship!")
+					AddFlash(w, r, "Thanks for registering for the championship!")
 					http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
 					return
 				} else {
@@ -1537,7 +1537,7 @@ func championshipModifyEntrantStatusHandler(w http.ResponseWriter, r *http.Reque
 		switch r.URL.Query().Get("action") {
 		case "accept":
 			if entrant.Status == ChampionshipEntrantAccepted {
-				AddFlashQuick(w, r, "This entrant has already been accepted.")
+				AddFlash(w, r, "This entrant has already been accepted.")
 				break
 			}
 
@@ -1553,9 +1553,9 @@ func championshipModifyEntrantStatusHandler(w http.ResponseWriter, r *http.Reque
 			if foundSlot {
 				entrant.Status = ChampionshipEntrantAccepted
 
-				AddFlashQuick(w, r, "The entrant was successfully accepted!")
+				AddFlash(w, r, "The entrant was successfully accepted!")
 			} else {
-				AddErrFlashQuick(w, r, "There are no more slots available for the given entrant and car. Please check the Championship configuration.")
+				AddErrorFlash(w, r, "There are no more slots available for the given entrant and car. Please check the Championship configuration.")
 			}
 		case "reject":
 			entrant.Status = ChampionshipEntrantRejected
