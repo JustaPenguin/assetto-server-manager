@@ -1613,6 +1613,7 @@ let liveTiming = {
                     let $tdLastLap = $("<td/>");
                     let $tdGap = $("<td/>");
                     let $tdLapNum = $("<td/>");
+                    let $tdTopSpeed = $("<td/>");
                     let $tdEvents = $("<td/>");
 
                     if (!discon) {
@@ -1650,13 +1651,9 @@ let liveTiming = {
                     }
                     $tr.append($tdName);
 
-                    let skin = "";
-                    if (carSet[car].CarSkin !== "") {
-                        skin = " - " + prettifyName(carSet[car].CarSkin, true);
-                    }
 
                     $tdCar.attr("id", carSet[car].CarMode + "-" + carSet[car].DriverGUID);
-                    $tdCar.text(prettifyName(carSet[car].CarMode, true) + skin);
+                    $tdCar.text(prettifyName(carSet[car].CarMode, true));
                     $tr.append($tdCar);
 
                     if (!discon) {
@@ -1679,6 +1676,9 @@ let liveTiming = {
 
                     $tdLapNum.text(carSet[car].LapNum);
                     $tr.append($tdLapNum);
+
+                    $tdTopSpeed.text(carSet[car].TopSpeed.toFixed(1) + "Km/h");
+                    $tr.append($tdTopSpeed);
 
                     if (!discon) {
                         if (carSet[car].Loaded && carSet[car].LoadedTime + 10000 > date.getTime()) {
