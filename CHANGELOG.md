@@ -19,6 +19,7 @@ Fixes:
     the car defined in the EntryList.
 * Fixes a bug where new Entrants could not be added to a Custom Race if all previous Entrants had been deleted from it.
 * Fixes a bug where Championship Events with a Second race would sometimes stop running after the first race.
+* Fixed an issue where sometimes drivers would not properly disconnect from the Live Map.
 
 v1.3.0
 ------

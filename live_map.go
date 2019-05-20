@@ -4,9 +4,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
+
 	"github.com/cj123/ini"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
@@ -25,7 +27,7 @@ const (
 var (
 	websocketLastSeenSessionInfo *udp.SessionInfo
 	websocketTrackMapData        *TrackMapData
-	connectedCars                = make(map[udp.CarID]udp.SessionCarInfo)
+	connectedCars                = sync.Map{}
 )
 
 type liveMapMessage struct {
@@ -62,17 +64,23 @@ func (h *liveMapHub) run() {
 				}
 			}
 		case <-AssettoProcess.Done():
-			for _, client := range connectedCars {
-				client := client
+			connectedCars.Range(func(key, value interface{}) bool {
+				client, ok := value.(udp.SessionCarInfo)
+
+				if !ok {
+					return true
+				}
 
 				client.EventType = udp.EventConnectionClosed
 
 				go func() {
 					h.broadcast <- liveMapMessage{udp.EventConnectionClosed, client}
 				}()
-			}
 
-			connectedCars = make(map[udp.CarID]udp.SessionCarInfo)
+				return true
+			})
+
+			connectedCars = sync.Map{}
 		}
 	}
 }
@@ -139,13 +147,18 @@ func liveMapHandler(w http.ResponseWriter, r *http.Request) {
 		client.receive <- liveMapMessage{222, websocketTrackMapData}
 	}
 
-	for _, car := range connectedCars {
-		client.receive <- liveMapMessage{udp.EventNewConnection, car}
-	}
+	connectedCars.Range(func(key, value interface{}) bool {
+		car, ok := value.(udp.SessionCarInfo)
 
-	for _, car := range connectedCars {
+		if !ok {
+			return true
+		}
+
+		client.receive <- liveMapMessage{udp.EventNewConnection, car}
 		client.receive <- liveMapMessage{udp.EventClientLoaded, udp.ClientLoaded(car.CarID)}
-	}
+
+		return true
+	})
 }
 
 func LiveMapCallback(message udp.Message) {
@@ -168,9 +181,9 @@ func LiveMapCallback(message udp.Message) {
 
 	case udp.SessionCarInfo:
 		if m.Event() == udp.EventNewConnection {
-			connectedCars[m.CarID] = m
+			connectedCars.Store(m.CarID, m)
 		} else if m.Event() == udp.EventConnectionClosed {
-			delete(connectedCars, m.CarID)
+			connectedCars.Delete(m.CarID)
 		}
 		m.DriverName = driverInitials(m.DriverName)
 
@@ -179,7 +192,7 @@ func LiveMapCallback(message udp.Message) {
 		return
 
 	case udp.Version:
-		connectedCars = make(map[udp.CarID]udp.SessionCarInfo)
+		connectedCars = sync.Map{}
 	case udp.CarUpdate, *TrackMapData, udp.CollisionWithEnvironment, udp.CollisionWithCar, udp.ClientLoaded:
 	default:
 		return
