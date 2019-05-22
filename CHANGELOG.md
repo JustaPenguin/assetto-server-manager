@@ -9,6 +9,7 @@ Added:
 * You can now delete AutoFill entrants from the new AutoFill entrants page (available for users with Delete permissions or higher)
 * Added Top Speed to Live Timings
 * Team Standings are hidden in Championships where no entrant has a team name.
+* You can now delete entrants who have registered to a Championship Sign Up Form.
 
 Fixes:
 
