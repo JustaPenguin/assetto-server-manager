@@ -117,7 +117,9 @@ func driverInitials(name string) string {
 		}
 
 		for i := range nameParts {
-			nameParts[i] = nameParts[i][:1]
+			if len(nameParts[i]) > 0 {
+				nameParts[i] = nameParts[i][:1]
+			}
 		}
 
 		return strings.Join(nameParts, "")

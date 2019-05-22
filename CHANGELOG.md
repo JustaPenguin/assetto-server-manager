@@ -28,6 +28,8 @@ Fixes:
   Championship setup, otherwise the Championship Events will start without any cars available!
 * Open Championship Events with Booking mode now have a Booking mode for their practice sessions too.
 * The 'Save Race' button at the top of the Custom Race form now saves the race without redirecting you to Live Timings
+* Fixes a panic that can occur when using shortened driver names if a driver's name ends in a space.
+* Fixes an issue where a driver's initials were not saved correctly when reloading the live map.
 
 v1.3.0
 ------
