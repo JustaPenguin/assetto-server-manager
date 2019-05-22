@@ -276,6 +276,20 @@ func (c *Championship) HasScheduledEvents() bool {
 	return false
 }
 
+func (c *Championship) ClearEntrant(entrantGUID string) {
+	for _, class := range c.Classes {
+		for _, classEntrant := range class.Entrants {
+			if entrantGUID == classEntrant.GUID {
+				// remove the entrant from the championship.
+				classEntrant.Name = ""
+				classEntrant.GUID = ""
+				classEntrant.Team = ""
+				return
+			}
+		}
+	}
+}
+
 var ErrClassNotFound = errors.New("servermanager: championship class not found")
 
 func (c *Championship) FindClassForCarModel(model string) (*ChampionshipClass, error) {
@@ -1541,7 +1555,7 @@ func championshipModifyEntrantStatusHandler(w http.ResponseWriter, r *http.Reque
 
 	entrantGUID := chi.URLParam(r, "entrantGUID")
 
-	for _, entrant := range championship.SignUpForm.Responses {
+	for index, entrant := range championship.SignUpForm.Responses {
 		if entrant.GUID != entrantGUID {
 			continue
 		}
@@ -1571,19 +1585,11 @@ func championshipModifyEntrantStatusHandler(w http.ResponseWriter, r *http.Reque
 			}
 		case "reject":
 			entrant.Status = ChampionshipEntrantRejected
+			championship.ClearEntrant(entrantGUID)
+		case "delete":
+			championship.SignUpForm.Responses = append(championship.SignUpForm.Responses[:index], championship.SignUpForm.Responses[index+1:]...)
+			championship.ClearEntrant(entrantGUID)
 
-		classLoop:
-			for _, class := range championship.Classes {
-				for _, classEntrant := range class.Entrants {
-					if entrantGUID == classEntrant.GUID {
-						// remove the entrant from the championship.
-						classEntrant.Name = ""
-						classEntrant.GUID = ""
-						classEntrant.Team = ""
-						break classLoop
-					}
-				}
-			}
 		default:
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
