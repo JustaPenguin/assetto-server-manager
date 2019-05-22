@@ -199,6 +199,8 @@ func RecordUDPMessages(db *bbolt.DB) (callbackFunc udp.CallbackFunc) {
 	}
 }
 
+var sendMutex sync.Mutex
+
 func ReplayUDPMessages(db *bbolt.DB, multiplier int, callbackFunc udp.CallbackFunc, waitTime time.Duration) error {
 	var loadedEntries Entries
 
@@ -245,6 +247,8 @@ func ReplayUDPMessages(db *bbolt.DB, multiplier int, callbackFunc udp.CallbackFu
 			wg.Add(1)
 
 			go func() {
+				sendMutex.Lock()
+				defer sendMutex.Unlock()
 				callbackFunc(entry.Data)
 				wg.Done()
 			}()
