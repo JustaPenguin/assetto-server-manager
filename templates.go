@@ -189,6 +189,9 @@ func (tr *Renderer) init() error {
 	funcs["fullTimeFormat"] = fullTimeFormat
 	funcs["localFormat"] = localFormatHelper
 	funcs["driverName"] = driverName
+	funcs["trustHTML"] = func(s string) template.HTML {
+		return template.HTML(s)
+	}
 
 	tr.templates, err = tr.loader.Templates(funcs)
 

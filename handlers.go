@@ -73,6 +73,7 @@ func Router(fs http.FileSystem) http.Handler {
 
 		// content
 		r.Get("/cars", carsHandler)
+		r.Get("/car/{car_id}", carDetailsHandler)
 		r.Get("/tracks", tracksHandler)
 		r.Get("/weather", weatherHandler)
 
