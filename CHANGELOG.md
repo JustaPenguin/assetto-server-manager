@@ -1,3 +1,10 @@
+v1.3.2
+------
+
+Fixes:
+
+* Added an explanation as to why the UDP ports specified in Server Options do not match the ones in the server_cfg.ini. 
+
 v1.3.1
 ------
 
