@@ -179,12 +179,21 @@ server:
   # 
   # this assumes that you have installed stracker into a folder called "stracker"
   # next to the server-manager executable.
+  #
+  # each executable specified is run from the directory it is inside, for example,
+  # the command:
+  #
+  # ./stracker/stracker_linux_x86/stracker --stracker_ini stracker-default.ini
+  # now actually performs the following two commands:
+  #
+  # 1. cd ./stracker/stracker_linux_x86
+  # 2. ./stracker --stracker_ini stracker-default.ini
   run_on_start:
     # uncomment the line below for stracker on Linux
-    # - ./stracker/stracker_linux_x86/stracker --stracker_ini ./stracker/stracker.ini
+    # - ./stracker/stracker_linux_x86/stracker --stracker_ini stracker.ini
 
     # uncomment the line below for stracker on Windows
-    # - ./stracker/stracker.exe --stracker_ini ./stracker/stracker.ini
+    # - ./stracker/stracker.exe --stracker_ini stracker.ini
 
 ################################################################################
 #
