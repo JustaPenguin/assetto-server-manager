@@ -155,13 +155,9 @@ server:
   # I envisage a lot of people wishing to use stracker with this, so i've tried
   # to provide a couple of ideas of what this might look like below.
   #
-  # !!! please also note that your stracker.ini must have the following lines set
-  # in the ACPLUGIN settings: !!!
-  #   rcvPort = 12002
-  #   sendPort = 11002
   #
   # where:
-  #   - rcvPort equals the port from the UDP Plugin Address in Server Options
+  #   - rcvPort equals the port from the UDP Plugin Address in Server Options 
   #   - sendPort equals the value of the UDP Plugin Local Port in Server Options
   #
   # otherwise, stracker will not be able to connect to the server manager
