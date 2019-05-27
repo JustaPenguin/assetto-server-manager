@@ -1,3 +1,11 @@
+v1.3.2
+------
+
+Fixes:
+
+* Corrected the sizing of the "Remove IFrame" button on the Live Timings page.
+* Corrected the sizing and positioning of the Live Map when the page is resized.
+
 v1.3.1
 ------
 
