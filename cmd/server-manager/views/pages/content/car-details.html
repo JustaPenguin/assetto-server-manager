@@ -1,0 +1,48 @@
+{{ define "title" }}{{ $.Car.Details.Name }}{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">{{ $.Car.Details.Name }}</h1>
+    <div class="text-center mb-3">
+        <small>({{ $.Car.Name}})</small>
+    </div>
+
+    {{ if gt (len $.Car.Skins) 0 }}
+        {{ $skin := index $.Car.Skins 0 }}
+
+        <div class="row mb-3">
+            <div class="col-md-10">
+                <img class="img img-fluid" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}">
+            </div>
+
+            <div class="col-md-2 car-skins-other">
+                {{ range $index, $skin := $.Car.Skins }}
+                    <div class="car-skin">
+                        <img class="img img-fluid" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}">
+                    </div>
+                {{ end }}
+            </div>
+        </div>
+    {{ end }}
+
+    <div class="mb-2">
+        {{ range $index, $tag := $.Car.Details.Tags }}
+            <span class="badge badge-primary">{{ $tag }}</span>
+        {{ end }}
+    </div>
+
+    {{ with $.Car.Details.Description }}
+        <h2>About</h2>
+
+        <p>{{ trustHTML . }}</p>
+    {{ end }}
+
+    <h2>Sessions</h2>
+
+    <p>This car has been used in {{ len $.Results}} sessions.</p>
+
+    <!-- @TODO total time driven, total distance driven -->
+
+    {{ range $index, $session := $.Results }}
+
+    {{ end }}
+{{ end }}

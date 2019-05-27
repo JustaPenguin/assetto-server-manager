@@ -83,7 +83,7 @@
                             {{ $i }}
                         </td>
                         <td>
-                            <abbr title="{{ $car.Name }}">{{ prettify $car.Name true }}</abbr>
+                            <a href="/car/{{ $car.Name }}"><abbr title="{{ $car.Name }}">{{ prettify $car.Name true }}</abbr></a>
                         </td>
                         <td style="min-width: 120px;">
                             <small>

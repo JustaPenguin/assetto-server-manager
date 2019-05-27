@@ -1,10 +1,13 @@
 package servermanager
 
 import (
+	"encoding/json"
+	"github.com/spkg/bom"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 
 	"github.com/go-chi/chi"
@@ -12,9 +15,10 @@ import (
 )
 
 type Car struct {
-	Name  string
-	Skins []string
-	Tyres map[string]string
+	Name    string
+	Skins   []string
+	Tyres   map[string]string
+	Details CarDetails
 }
 
 func (c Car) PrettyName() string {
@@ -83,6 +87,98 @@ func ListCars() (Cars, error) {
 	})
 
 	return cars, nil
+}
+
+type CarDetails struct {
+	Author      string    `json:"author"`
+	Brand       string    `json:"brand"`
+	Class       string    `json:"class"`
+	Country     string    `json:"country"`
+	Description string    `json:"description"`
+	Name        string    `json:"name"`
+	PowerCurve  [][]json.Number `json:"powerCurve"`
+	Specs       CarSpecs  `json:"specs"`
+	Tags        []string  `json:"tags"`
+	TorqueCurve [][]json.Number `json:"torqueCurve"`
+	URL         string    `json:"url"`
+	Version     string    `json:"version"`
+	Year        int64     `json:"year"`
+}
+
+type CarSpecs struct {
+	Acceleration string `json:"acceleration"`
+	Bhp          string `json:"bhp"`
+	Pwratio      string `json:"pwratio"`
+	Topspeed     string `json:"topspeed"`
+	Torque       string `json:"torque"`
+	Weight       string `json:"weight"`
+}
+
+func loadCarDetails(name string, tyres Tyres) (*Car, error) {
+	carDirectory := filepath.Join(ServerInstallPath, "content", "cars", name)
+	skinFiles, err := ioutil.ReadDir(filepath.Join(carDirectory, "skins"))
+
+	if err != nil {
+		return nil, err
+	}
+
+	var skins []string
+
+	for _, skinFile := range skinFiles {
+		if !skinFile.IsDir() {
+			continue
+		}
+
+		skins = append(skins, skinFile.Name())
+	}
+
+	carDetailsBytes, err := ioutil.ReadFile(filepath.Join(carDirectory, "ui", "ui_car.json"))
+
+	if err != nil {
+		return nil, err
+	}
+
+	carDetailsBytes = bom.Clean(regexp.MustCompile(`\t*\r*\n*`).ReplaceAll(carDetailsBytes, []byte("")))
+
+	var carDetails CarDetails
+
+	if err := json.Unmarshal(carDetailsBytes, &carDetails); err != nil {
+		return nil, err
+	}
+
+	return &Car{
+		Name:    name,
+		Skins:   skins,
+		Tyres:   tyres[name],
+		Details: carDetails,
+	}, nil
+}
+
+func ResultsForCar(car string) ([]SessionResults, error) {
+	results, err := ListAllResults()
+
+	if err != nil {
+		return nil, err
+	}
+
+	var out []SessionResults
+
+	for _, result := range results {
+		hasCar := false
+
+		for _, driver := range result.Result {
+			if driver.CarModel == car {
+				hasCar = true
+				break
+			}
+		}
+
+		if hasCar {
+			out = append(out, result)
+		}
+	}
+
+	return out, nil
 }
 
 func carsHandler(w http.ResponseWriter, r *http.Request) {
@@ -161,4 +257,31 @@ func carSkinURL(car, skin string) string {
 	}
 
 	return "/" + filepath.ToSlash(skinPath)
+}
+
+func carDetailsHandler(w http.ResponseWriter, r *http.Request) {
+	tyres, err := ListTyres()
+
+	if err != nil {
+		panic(err)
+	}
+
+	carName := chi.URLParam(r, "car_id")
+
+	car, err := loadCarDetails(carName, tyres)
+
+	if err != nil {
+		panic(err)
+	}
+
+	results, err := ResultsForCar(carName)
+
+	if err != nil {
+		panic(err)
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "content/car-details.html", map[string]interface{}{
+		"Car": car,
+		"Results": results,
+	})
 }

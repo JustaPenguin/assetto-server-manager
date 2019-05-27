@@ -557,3 +557,17 @@ td .dot-inactive {
     max-height: 500px;
     overflow-y: auto;
 }
+
+.car-skin {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.car-skin:nth-child(1) {
+    margin-top: 0;
+}
+
+.car-skins-other {
+    max-height: 518px;
+    overflow-y: auto;
+}
