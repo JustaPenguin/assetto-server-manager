@@ -152,15 +152,28 @@ server:
   # list of commands to run on server start and kill on server stop. this should
   # contain the full command with arguments to run the given program.
   #
-  # I envisage a lot of people wishing to use stracker with this, so i've tried
-  # to provide a couple of ideas of what this might look like below.
+  # you can use additional plugins with AC Server Manager, but while configuring
+  # them you have to ignore the ports that AC Server Manager writes in the 
+  # server_cfg.ini, as the Server Manager provides an interface to the plugins
+  # instead. The plugin ports in the Server Options page are the ones that must
+  # be used for the plugin configuration. Here are examples for configuring
+  # sTracker and KMR plugins:
   #
+  # sTracker:
+  # - rcvPort must equal the port from the UDP Plugin Address
+  # - sendPort must equal the value of the UDP Plugin Local Port
   #
-  # where:
-  #   - rcvPort equals the port from the UDP Plugin Address in Server Options 
-  #   - sendPort equals the value of the UDP Plugin Local Port in Server Options
+  # KMR: 
+  # - ac_server_http_port must equal the value of HTTP Port
+  # - ac_server_plugin_local_port must equal the value of UDP Plugin Local Port
+  # - ac_server_plugin_address_port must equal the port from the UDP Plugin Address
+  # - web_auth_server_port must equal the port specified in UDP Auth Plugin Address
+  # - UDP Auth Plugin Address has to be configured in the way specified by KMR documentation
   #
-  # otherwise, stracker will not be able to connect to the server manager
+  # Note that AC Server Manager provides an interface for a single plugin only, 
+  # as the AC gameserver does. If you want to chain multiple plugins, please 
+  # follow the documentation of the plugins you're using. Plugins usually 
+  # feature interfaces so additional plugins can be chained between themselves.
   #
   # you can of course add your own commands (whatever you like!) here.
   # 
