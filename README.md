@@ -87,12 +87,13 @@ Follow the steps below to update Server Manager:
 
 1. Back up your current Server Manager database and config.yml.
 2. Download the [latest version of Server Manager](https://github.com/cj123/assetto-server-manager/releases)
-3. Extract the zip file and find the Server Manager executable for your operating system. Replace your current Server Manager
-   executable with it.
+3. Extract the zip file.
 4. Open the Changelog, read the entries between your current version and the new version. 
    There may be configuration changes that you need to make!
 5. Make any necessary configuration changes.
-6. Start the new Server Manager executable.
+6. Find the Server Manager executable for your operating system. Replace your current Server Manager
+   executable with it.
+7. Start the new Server Manager executable.
 
 ## Credits & Thanks
 
