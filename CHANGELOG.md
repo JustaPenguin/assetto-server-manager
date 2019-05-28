@@ -5,6 +5,8 @@ Fixes:
 
 * Corrected the sizing of the "Remove IFrame" button on the Live Timings page.
 * Corrected the sizing and positioning of the Live Map when the page is resized.
+* Added an explanation as to why the UDP ports specified in Server Options do not match the ones in the server_cfg.ini. 
+* Fixes a bug where the EntryList was limited to 18 entrants in Custom Races.
 
 v1.3.1
 ------
