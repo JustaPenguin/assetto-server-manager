@@ -1,3 +1,10 @@
+v1.3.2
+------
+
+Fixes:
+
+* Fixes a bug where the EntryList was limited to 18 entrants in Custom Races.
+
 v1.3.1
 ------
 
