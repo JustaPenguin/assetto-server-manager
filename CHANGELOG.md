@@ -1,7 +1,7 @@
 v1.3.2
 ------
 
-**Please note, this release contains breaking changes for run_on_start** in config.yml. If you are using run_on_start,
+**Please note, this release contains breaking changes for run_on_start in config.yml**. If you are using run_on_start,
 you need to read the following:
 
 Each run_on_start command is now run from the directory that the binary file is in. 
