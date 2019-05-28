@@ -530,7 +530,7 @@
             </div>
 
             <div class="card-body" id="entrants">
-                <div class="form-group row visible-booking-enabled" {{ if and .IsChampionship (not ($f.HasSession "BOOK")) }}style="display: none;"{{ end }}>
+                <div class="form-group row {{ if .IsChampionship }}visible-booking-enabled{{ end }}" {{ if and .IsChampionship (not ($f.HasSession "BOOK")) }}style="display: none;"{{ end }}>
                     <label for="MaxClients" class="col-sm-3 col-form-label">Max Clients</label>
 
                     <div class="col-sm-9">
