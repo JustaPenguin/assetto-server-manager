@@ -296,7 +296,7 @@ func serverBlacklistHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func autoFillEntrantListHandler(w http.ResponseWriter, r *http.Request) {
-	entrants, err := raceManager.raceStore.ListEntrants()
+	entrants, err := raceManager.ListAutoFillEntrants()
 
 	if err != nil {
 		logrus.WithError(err).Error("could not list entrants")
