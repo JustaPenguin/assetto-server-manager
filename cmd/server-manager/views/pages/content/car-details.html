@@ -11,38 +11,80 @@
 
         <div class="row mb-3">
             <div class="col-md-10">
-                <img class="img img-fluid" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}">
+                <img class="img img-fluid car-image" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}">
             </div>
 
             <div class="col-md-2 car-skins-other">
                 {{ range $index, $skin := $.Car.Skins }}
                     <div class="car-skin">
-                        <img class="img img-fluid" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}">
+                        <img class="img img-fluid car-image" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}">
                     </div>
                 {{ end }}
             </div>
         </div>
     {{ end }}
 
-    <div class="mb-2">
-        {{ range $index, $tag := $.Car.Details.Tags }}
-            <span class="badge badge-primary">{{ $tag }}</span>
-        {{ end }}
+    <div class="row mb-2">
+        <div class="col-md-7">
+            {{ range $index, $tag := $.Car.Details.Tags }}
+                <span class="badge badge-primary"><a class="text-white" href="/cars?q=tags:%22{{ urlquery $tag }}%22">{{ $tag }}</a> <a class="delete-tag text-white" href="#" data-tag="{{ $tag }}" data-car="{{ $.Car.Name }}"><i class="fas fa-times ml-2"></i></a></span>
+            {{ end }}
+        </div>
+
+        <div class="col-md-3 text-right">
+            <form>
+                <div class="form-group row">
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control form-control-sm" id="NewTag" name="NewTag" required
+                               placeholder="Add a new tag">
+                    </div>
+
+                    <div class="col-sm-3">
+                        <button class="btn btn-sm btn-primary">Go</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-md-2 text-right">
+            <button class="btn btn-sm btn-success">Upload a Skin</button>
+        </div>
     </div>
 
-    {{ with $.Car.Details.Description }}
-        <h2>About</h2>
 
-        <p>{{ trustHTML . }}</p>
-    {{ end }}
+    <div class="row mb-3">
+        <div class="col-md-10">
 
-    <h2>Sessions</h2>
+            {{ with $.Car.Details.Description }}
+                <div class="pt-2">
+                    <h2>About</h2>
 
-    <p>This car has been used in {{ len $.Results}} sessions.</p>
+                    <p>{{ trustHTML . }}</p>
+                </div>
+            {{ end }}
 
-    <!-- @TODO total time driven, total distance driven -->
+            <h2>Sessions</h2>
 
-    {{ range $index, $session := $.Results }}
+            <p>This car has been used in {{ len $.Results}} sessions.</p>
 
-    {{ end }}
+            <!-- @TODO total time driven, total distance driven, driver who uses it most -->
+
+            {{ range $index, $session := $.Results }}
+
+            {{ end }}
+
+
+            <h2>Setups</h2>
+
+        </div>
+        <div class="col-md-2 border-left">
+            <h2>Tyres</h2>
+
+            <ul class="list-unstyled">
+                {{ range $tyre, $name := $.Car.Tyres }}
+                    <li>{{ $name }} ({{ $tyre }})</li>
+                {{ end }}
+            </ul>
+        </div>
+    </div>
 {{ end }}
