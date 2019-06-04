@@ -312,6 +312,16 @@ type SessionResult struct {
 	ClassID      uuid.UUID     `json:"ClassID"`
 }
 
+func (s *SessionResult) BestLapTyre(results *SessionResults) string {
+	for _, lap := range results.Laps {
+		if lap.LapTime == s.BestLap {
+			return lap.Tyre
+		}
+	}
+
+	return "Unknown"
+}
+
 type SessionLap struct {
 	BallastKG  int       `json:"BallastKG"`
 	CarID      int       `json:"CarId"`
