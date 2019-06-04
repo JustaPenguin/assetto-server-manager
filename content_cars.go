@@ -2,7 +2,8 @@ package servermanager
 
 import (
 	"encoding/json"
-	"github.com/spkg/bom"
+	"github.com/blevesearch/bleve/search/query"
+	"github.com/davecgh/go-spew/spew"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -10,8 +11,10 @@ import (
 	"regexp"
 	"sort"
 
+	"github.com/blevesearch/bleve"
 	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
+	"github.com/spkg/bom"
 )
 
 type Car struct {
@@ -25,7 +28,7 @@ func (c Car) PrettyName() string {
 	return prettifyName(c.Name, true)
 }
 
-type Cars []Car
+type Cars []*Car
 
 func (cs Cars) AsMap() map[string][]string {
 	out := make(map[string][]string)
@@ -57,29 +60,15 @@ func ListCars() (Cars, error) {
 			continue
 		}
 
-		skinFiles, err := ioutil.ReadDir(filepath.Join(ServerInstallPath, "content", "cars", carFile.Name(), "skins"))
+		car, err := loadCarDetails(carFile.Name(), tyres)
 
-		if err != nil && !os.IsNotExist(err) {
-			// just load without skins. non-fatal
-			logrus.Errorf("couldn't read car dir, err: %s", err)
+		if err != nil && os.IsNotExist(err) {
 			continue
+		} else if err != nil {
+			return nil, err
 		}
 
-		var skins []string
-
-		for _, skinFile := range skinFiles {
-			if !skinFile.IsDir() {
-				continue
-			}
-
-			skins = append(skins, skinFile.Name())
-		}
-
-		cars = append(cars, Car{
-			Name:  carFile.Name(),
-			Skins: skins,
-			Tyres: tyres[carFile.Name()],
-		})
+		cars = append(cars, car)
 	}
 
 	sort.Slice(cars, func(i, j int) bool {
@@ -90,19 +79,19 @@ func ListCars() (Cars, error) {
 }
 
 type CarDetails struct {
-	Author      string    `json:"author"`
-	Brand       string    `json:"brand"`
-	Class       string    `json:"class"`
-	Country     string    `json:"country"`
-	Description string    `json:"description"`
-	Name        string    `json:"name"`
+	Author      string          `json:"author"`
+	Brand       string          `json:"brand"`
+	Class       string          `json:"class"`
+	Country     string          `json:"country"`
+	Description string          `json:"description"`
+	Name        string          `json:"name"`
 	PowerCurve  [][]json.Number `json:"powerCurve"`
-	Specs       CarSpecs  `json:"specs"`
-	Tags        []string  `json:"tags"`
+	Specs       CarSpecs        `json:"specs"`
+	Tags        []string        `json:"tags"`
 	TorqueCurve [][]json.Number `json:"torqueCurve"`
-	URL         string    `json:"url"`
-	Version     string    `json:"version"`
-	Year        int64     `json:"year"`
+	URL         string          `json:"url"`
+	Version     string          `json:"version"`
+	Year        int64           `json:"year"`
 }
 
 type CarSpecs struct {
@@ -181,8 +170,20 @@ func ResultsForCar(car string) ([]SessionResults, error) {
 	return out, nil
 }
 
+const searchPageSize = 50
+
 func carsHandler(w http.ResponseWriter, r *http.Request) {
-	opts, err := raceManager.BuildRaceOpts(r)
+	var q query.Query
+
+	searchTerm := r.URL.Query().Get("q")
+
+	if searchTerm == "" {
+		q = bleve.NewMatchAllQuery()
+	} else {
+		q = bleve.NewQueryStringQuery(searchTerm)
+	}
+
+	results, err := carIndex.Search(bleve.NewSearchRequestOptions(q, searchPageSize, 0, false))
 
 	if err != nil {
 		logrus.Errorf("could not get car list, err: %s", err)
@@ -190,9 +191,24 @@ func carsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	opts["ShowSetups"] = r.URL.Query().Get("tab") == "setups"
+	cars := make(map[string]*Car)
 
-	ViewRenderer.MustLoadTemplate(w, r, "content/cars.html", opts)
+	for _, hit := range results.Hits {
+		cars[hit.ID], err = loadCarDetails(hit.ID, nil)
+
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	currentPage := formValueAsInt(r.URL.Query().Get("p"))
+
+
+	ViewRenderer.MustLoadTemplate(w, r, "content/cars.html", map[string]interface{}{
+		"Results": results,
+		"Cars":    cars,
+		"Query":   searchTerm,
+	})
 }
 
 func apiCarUploadHandler(w http.ResponseWriter, r *http.Request) {
@@ -207,11 +223,8 @@ func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logrus.Errorf("could not get car list, err: %s", err)
-
 		AddErrorFlash(w, r, "couldn't get car list")
-
 		http.Redirect(w, r, r.Referer(), http.StatusFound)
-
 		return
 	}
 
@@ -234,10 +247,8 @@ func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if found {
-		// confirm deletion
 		AddFlash(w, r, "Car successfully deleted!")
 	} else {
-		// inform car wasn't found
 		AddErrorFlash(w, r, "Sorry, car could not be deleted. Are you sure it was installed?")
 	}
 
@@ -281,7 +292,48 @@ func carDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ViewRenderer.MustLoadTemplate(w, r, "content/car-details.html", map[string]interface{}{
-		"Car": car,
+		"Car":     car,
 		"Results": results,
 	})
+}
+
+var carIndex bleve.Index
+
+func createCarDetailsIndex() bleve.Index {
+	indexMapping := bleve.NewIndexMapping()
+
+	index, err := bleve.NewMemOnly(indexMapping)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return index
+}
+
+func InitCarIndex() {
+	var err error
+
+	carIndex = createCarDetailsIndex()
+
+	cars, err := ListCars()
+
+	if err != nil {
+		panic(err)
+	}
+
+	for _, car := range cars {
+		err := carIndex.Index(car.Name, car.Details)
+
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	rq := bleve.NewSearchRequest(bleve.NewQueryStringQuery(`tags:"rss"`))
+	rq.Size = 100
+
+	deets, err := carIndex.Search(rq)
+
+	spew.Dump(deets)
 }

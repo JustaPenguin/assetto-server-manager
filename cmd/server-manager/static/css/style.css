@@ -115,6 +115,10 @@ span[data-toggle=tooltip] {
     max-width: 355px;
 }
 
+.car-image {
+    border-radius: 0.25rem;
+}
+
 .entryListCarPreview {
 	border-radius: 0.25rem;
 }
