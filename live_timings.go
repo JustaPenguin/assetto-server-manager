@@ -282,7 +282,7 @@ func LiveTimingCallback(response udp.Message) {
 			liveInfo.Cars[ID].LastLapCompleteTime = time.Now()
 			liveInfo.Cars[ID].LastLapCompleteTimeUnix = unixNanoToMilli(time.Now().UnixNano())
 
-			if lapToDuration(int(a.LapCompletedInternal.LapTime)) < liveInfo.Cars[ID].BestLapTime || liveInfo.Cars[ID].BestLapTime == 0 {
+			if a.Cuts == 0 && (lapToDuration(int(a.LapCompletedInternal.LapTime)) < liveInfo.Cars[ID].BestLapTime || liveInfo.Cars[ID].BestLapTime == 0) {
 				liveInfo.Cars[ID].BestLapTime = lapToDuration(int(a.LapCompletedInternal.LapTime))
 				liveInfo.Cars[ID].BestLap = a.LapCompletedInternal.LapTime
 			}
