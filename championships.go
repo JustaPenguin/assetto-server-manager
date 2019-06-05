@@ -755,6 +755,10 @@ func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*Championsh
 	return out
 }
 
+func (c *ChampionshipClass) StandingsForEvent(event *ChampionshipEvent) []*ChampionshipStanding {
+	return c.Standings([]*ChampionshipEvent{event})
+}
+
 // TeamStanding is the current number of Points a Team has.
 type TeamStanding struct {
 	Team   string
