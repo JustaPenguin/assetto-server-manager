@@ -33,7 +33,13 @@
                             <td>{{ $sessionResults.GetTime $result.TotalTime $result.DriverGUID true }}</td>
                             <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
                                 {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
-                            <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID false }}</td>
+                            <td>
+                                {{ $bestLap := $sessionResults.GetTime $result.BestLap $result.DriverGUID false }}
+                                {{ $bestLap }}<br>
+                                {{ if gt $bestLap 0 }}
+                                    <small class="text-muted">Tyre: {{ $result.BestLapTyre $sessionResults }}</small>
+                                {{ end }}
+                            </td>
                             <td>{{ $sessionResults.GetAverageLapTime $result.DriverGUID }}</td>
                             <td>
                                 {{ $hasHandicap := false }}
@@ -101,7 +107,13 @@
                             <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ driverName $result.DriverName }}</td>
                             <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
                             <td>{{ prettify $result.CarModel true }}</td>
-                            <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID false }}</td>
+                            <td>
+                                {{ $bestLap := $sessionResults.GetTime $result.BestLap $result.DriverGUID false }}
+                                {{ $bestLap }}<br>
+                                {{ if gt $bestLap 0 }}
+                                    <small class="text-muted">Tyre: {{ $result.BestLapTyre $sessionResults }}</small>
+                                {{ end }}
+                            </td>
                             <td>{{ $sessionResults.GetAverageLapTime $result.DriverGUID }}</td>
                             <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
                                 {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
@@ -148,7 +160,13 @@
                             <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ driverName $result.DriverName }}</td>
                             <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
                             <td>{{ prettify $result.CarModel true }}</td>
-                            <td>{{ $sessionResults.GetTime $result.BestLap $result.DriverGUID false }}</td>
+                            <td>
+                                {{ $bestLap := $sessionResults.GetTime $result.BestLap $result.DriverGUID false }}
+                                {{ $bestLap }}<br>
+                                {{ if gt $bestLap 0 }}
+                                    <small class="text-muted">Tyre: {{ $result.BestLapTyre $sessionResults }}</small>
+                                {{ end }}
+                            </td>
                             <td>{{ $sessionResults.GetAverageLapTime $result.DriverGUID }}</td>
                             <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
                                 {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
