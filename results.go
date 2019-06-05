@@ -319,7 +319,7 @@ func (s *SessionResult) BestLapTyre(results *SessionResults) string {
 		}
 	}
 
-	return "Unknown"
+	return "?"
 }
 
 type SessionLap struct {
