@@ -714,6 +714,20 @@ func (rm *RaceManager) applyCurrentRaceSetupToOptions(opts map[string]interface{
 	return nil
 }
 
+func (rm *RaceManager) ListAutoFillEntrants() ([]*Entrant, error) {
+	entrants, err := rm.raceStore.ListEntrants()
+
+	if err != nil {
+		return nil, err
+	}
+
+	sort.Slice(entrants, func(i, j int) bool {
+		return entrants[i].Name < entrants[j].Name
+	})
+
+	return entrants, nil
+}
+
 // BuildRaceOpts builds a quick race form
 func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, error) {
 	cars, err := ListCars()
@@ -771,7 +785,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		replacementPassword = customRace.ReplacementServerPassword()
 	}
 
-	possibleEntrants, err := rm.raceStore.ListEntrants()
+	possibleEntrants, err := rm.ListAutoFillEntrants()
 
 	if err != nil {
 		return nil, err
