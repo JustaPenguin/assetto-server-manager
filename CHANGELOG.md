@@ -15,6 +15,7 @@ This means that previous configuration entries will need updating! The config.ex
 Added:
 
 * Plugins are now run from the directory that their executable file is in. Please read the above note for more information.
+* Added per-Event points breakdowns to Championships!
 
 Fixes:
 
@@ -23,6 +24,7 @@ Fixes:
 * Added an explanation as to why the UDP ports specified in Server Options do not match the ones in the server_cfg.ini. 
 * Fixes a bug where the EntryList was limited to 18 entrants in Custom Races.
 * AutoFill entrants are now alphabetically sorted.
+* Laps which have Cuts > 0 are now excluded from "Best Lap" in Live Timings
 
 v1.3.1
 ------

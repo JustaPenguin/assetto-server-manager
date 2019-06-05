@@ -6,7 +6,7 @@
         <table class="table table-bordered table-striped">
             {{ if eq "RACE" $sessionResults.Type }}
                 <tr>
-                    <th>Position</th>
+                    <th>#</th>
                     <th>Name</th>
                     <th>Team</th>
                     <th>Car</th>
@@ -84,7 +84,7 @@
                 {{ end }}
             {{ else if eq "QUALIFY" $sessionResults.Type }}
                 <tr>
-                    <th>Position</th>
+                    <th>#</th>
                     <th>Name</th>
                     <th>Team</th>
                     <th>Car</th>
@@ -131,7 +131,7 @@
                 {{ end }}
             {{ else if eq "PRACTICE" $sessionResults.Type }}
                 <tr>
-                    <th>Position</th>
+                    <th>#</th>
                     <th>Name</th>
                     <th>Team</th>
                     <th>Car</th>
