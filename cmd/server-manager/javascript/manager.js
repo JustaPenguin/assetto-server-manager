@@ -1291,10 +1291,18 @@ class RaceSetup {
     }
 }
 
+function pad(num, size) {
+    let s = num + "";
+    while (s.length < size) {
+        s = "0" + s;
+    }
+    return s;
+}
+
 function msToTime(s) {
     let hours = (s / 3.6e6 | 0);
     let minutes = ((s % 3.6e6) / 6e4 | 0);
-    let seconds = ((s % 6e4) / 1000 | 0) + '.' + (s % 1000);
+    let seconds = ((s % 6e4) / 1000 | 0) + '.' + pad(s % 1000, 3);
 
     let output = '';
 
