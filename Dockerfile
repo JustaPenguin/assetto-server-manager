@@ -2,7 +2,7 @@ FROM golang:1.12
 
 MAINTAINER Callum Jones <cj@icj.me>
 
-ENV SERVER_MANAGER_VERSION=v1.3.1
+ENV SERVER_MANAGER_VERSION=v1.3.2
 ENV STEAMCMD_URL="http://media.steampowered.com/installer/steamcmd_linux.tar.gz"
 ENV STEAMROOT=/opt/steamcmd
 ENV DEBIAN_FRONTEND noninteractive
