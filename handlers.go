@@ -83,9 +83,6 @@ func Router(fs http.FileSystem) http.Handler {
 		r.Get("/results/{fileName}", resultHandler)
 		r.HandleFunc("/results/download/{fileName}", resultFileHandler)
 
-		r.Get("/logs", serverLogsHandler)
-		r.Get("/api/logs", apiServerLogHandler)
-
 		// championships
 		r.Get("/championships", listChampionshipsHandler)
 		r.Get("/championship/{championshipID}", viewChampionshipHandler)
@@ -129,6 +126,8 @@ func Router(fs http.FileSystem) http.Handler {
 
 		// server management
 		r.Get("/process/{action}", serverProcessHandler)
+		r.Get("/logs", serverLogsHandler)
+		r.Get("/api/logs", apiServerLogHandler)
 
 		// championships
 		r.Get("/championships/new", newOrEditChampionshipHandler)
