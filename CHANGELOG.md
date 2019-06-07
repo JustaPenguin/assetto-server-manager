@@ -17,6 +17,7 @@ Added:
 * Plugins are now run from the directory that their executable file is in. Please read the above note for more information.
 * Results overviews now show the tyre which was used to complete the driver's fastest lap of that session.
 * Added per-Event points breakdowns to Championships!
+* Server Logs are now only accessible by users in the "Write" group or above.
 
 Fixes:
 
