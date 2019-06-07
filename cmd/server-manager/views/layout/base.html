@@ -95,23 +95,27 @@
                         </div>
                     </li>
 
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navBarServerDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Server
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navBarServerDropdown">
-                            {{ if AdminAccess }}
-                                <a class="dropdown-item" href="/server-options">Options</a>
-                                <a class="dropdown-item" href="/accounts">Accounts</a>
-                                <a class="dropdown-item" href="/blacklist">Blacklist</a>
-                                <a class="dropdown-item" href="/motd">MOTD</a>
-                            {{ end }}
-                            {{ if DeleteAccess }}
-                                <a class="dropdown-item" href="/autofill-entrants">AutoFill Entrants</a>
-                            {{ end }}
-                            <a class="dropdown-item" href="/logs">Logs</a>
-                        </div>
-                    </li>
+
+                    {{ if WriteAccess }}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navBarServerDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Server
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navBarServerDropdown">
+                                {{ if AdminAccess }}
+                                    <a class="dropdown-item" href="/server-options">Options</a>
+                                    <a class="dropdown-item" href="/accounts">Accounts</a>
+                                    <a class="dropdown-item" href="/blacklist">Blacklist</a>
+                                    <a class="dropdown-item" href="/motd">MOTD</a>
+                                {{ end }}
+                                {{ if DeleteAccess }}
+                                    <a class="dropdown-item" href="/autofill-entrants">AutoFill Entrants</a>
+                                {{ end }}
+
+                                <a class="dropdown-item" href="/logs">Logs</a>
+                            </div>
+                        </li>
+                    {{ end }}
                 </ul>
 
                 <ul class="navbar-nav">
