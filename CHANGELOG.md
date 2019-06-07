@@ -26,6 +26,7 @@ Fixes:
 * Fixes a bug where the EntryList was limited to 18 entrants in Custom Races.
 * AutoFill entrants are now alphabetically sorted.
 * Laps which have Cuts > 0 are now excluded from "Best Lap" in Live Timings
+* Fixes misleading times in the Live Timings stored times table by adding leading zeroes to millisecond values under 100ms.
 
 v1.3.1
 ------
