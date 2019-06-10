@@ -61,13 +61,6 @@ type LiveCarWID struct {
 	ID  uint8
 }
 
-type Collision struct {
-	Type     string
-	Time     int64
-	OtherCar uint8
-	Speed    float32
-}
-
 var liveInfo LiveTiming
 var carCounter = make(map[uint8]int)
 
@@ -116,15 +109,6 @@ func LiveTimingCallback(response udp.Message) {
 				clear = true
 			}
 
-			// If this is a looped practice event, and the previous event had some cars then keep the cars
-			if (len(liveInfo.Cars) > 0 || len(liveInfo.DeletedCars) > 0) && a.Type == 1 {
-				if liveInfo.Type == a.Type && liveInfo.Track == a.Track && liveInfo.TrackConfig == a.TrackConfig &&
-					liveInfo.Name == a.Name {
-					del = false
-					clear = false
-				}
-			}
-
 			if del {
 				for id := range liveInfo.DeletedCars {
 					delete(oldDelCars, id)
@@ -140,7 +124,6 @@ func LiveTimingCallback(response udp.Message) {
 				Track:               a.Track,
 				TrackConfig:         a.TrackConfig,
 				Name:                a.Name,
-				Type:                a.Type,
 				Time:                a.Time,
 				Laps:                a.Laps,
 				AmbientTemp:         a.AmbientTemp,
@@ -223,68 +206,24 @@ func LiveTimingCallback(response udp.Message) {
 		if _, ok := liveInfo.Cars[uint8(a.CarID)]; ok && speed >= 1 && speed > liveInfo.Cars[uint8(a.CarID)].TopSpeed {
 			liveInfo.Cars[uint8(a.CarID)].TopSpeed = speed
 		}
-	case udp.SessionCarInfo:
-		if a.Event() == udp.EventNewConnection {
-			for id, car := range liveInfo.DeletedCars {
-				if car.DriverGUID == a.DriverGUID && car.CarMode == a.CarModel {
-					logrus.Debugf("Car: %s, %s Reconnected", a.DriverGUID, a.CarModel)
-					liveInfo.Cars[uint8(a.CarID)] = car
-
-					delete(liveInfo.DeletedCars, id)
-					return
-				}
-			}
-
-			liveInfo.Cars[uint8(a.CarID)] = &LiveCar{
-				DriverGUID: a.DriverGUID,
-				DriverName: driverName(a.DriverName),
-				CarMode:    a.CarModel,
-				CarSkin:    a.CarSkin,
-			}
-
-			logrus.Debugf("Car: %s, %s Connected", a.DriverGUID, a.CarModel)
-		} else if a.Event() == udp.EventConnectionClosed {
-			disconnect(uint8(a.CarID))
-		}
-
 	case udp.ClientLoaded:
 		if _, ok := liveInfo.Cars[uint8(a)]; ok {
 			liveInfo.Cars[uint8(a)].Loaded = true
 			liveInfo.Cars[uint8(a)].LoadedTime = unixNanoToMilli(time.Now().UnixNano())
 		}
 
-	case udp.CollisionWithCar:
-		if _, ok := liveInfo.Cars[uint8(a.CarID)]; ok {
-			liveInfo.Cars[uint8(a.CarID)].Collisions = append(liveInfo.Cars[uint8(a.CarID)].Collisions, Collision{
-				Type:     "with other car",
-				Time:     unixNanoToMilli(time.Now().UnixNano()),
-				OtherCar: uint8(a.OtherCarID),
-				Speed:    a.ImpactSpeed,
-			})
-		}
-
-	case udp.CollisionWithEnvironment:
-		if _, ok := liveInfo.Cars[uint8(a.CarID)]; ok {
-			liveInfo.Cars[uint8(a.CarID)].Collisions = append(liveInfo.Cars[uint8(a.CarID)].Collisions, Collision{
-				Type:     "with environment",
-				Time:     unixNanoToMilli(time.Now().UnixNano()),
-				OtherCar: 255,
-				Speed:    a.ImpactSpeed,
-			})
-		}
-
 	case udp.LapCompleted:
-		ID := uint8(a.LapCompletedInternal.CarID)
+		ID := uint8(a.CarID)
 
 		if _, ok := liveInfo.Cars[ID]; ok {
-			liveInfo.Cars[ID].LastLap = lapToDuration(int(a.LapCompletedInternal.LapTime)).String()
+			liveInfo.Cars[ID].LastLap = lapToDuration(int(a.LapTime)).String()
 			liveInfo.Cars[ID].LapNum++
 			liveInfo.Cars[ID].LastLapCompleteTime = time.Now()
 			liveInfo.Cars[ID].LastLapCompleteTimeUnix = unixNanoToMilli(time.Now().UnixNano())
 
-			if a.Cuts == 0 && (lapToDuration(int(a.LapCompletedInternal.LapTime)) < liveInfo.Cars[ID].BestLapTime || liveInfo.Cars[ID].BestLapTime == 0) {
-				liveInfo.Cars[ID].BestLapTime = lapToDuration(int(a.LapCompletedInternal.LapTime))
-				liveInfo.Cars[ID].BestLap = a.LapCompletedInternal.LapTime
+			if a.Cuts == 0 && (lapToDuration(int(a.LapTime)) < liveInfo.Cars[ID].BestLapTime || liveInfo.Cars[ID].BestLapTime == 0) {
+				liveInfo.Cars[ID].BestLapTime = lapToDuration(int(a.LapTime))
+				liveInfo.Cars[ID].BestLap = a.LapTime
 			}
 		} else {
 			return
