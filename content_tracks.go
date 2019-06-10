@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/cj123/ini"
 	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
 	"github.com/spkg/bom"
@@ -190,4 +191,52 @@ func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+type TrackMapData struct {
+	Width       float64 `ini:"WIDTH" json:"width"`
+	Height      float64 `ini:"HEIGHT" json:"height"`
+	Margin      float64 `ini:"MARGIN" json:"margin"`
+	ScaleFactor float64 `ini:"SCALE_FACTOR" json:"scale_factor"`
+	OffsetX     float64 `ini:"X_OFFSET" json:"offset_x"`
+	OffsetZ     float64 `ini:"Z_OFFSET" json:"offset_y"`
+	DrawingSize float64 `ini:"DRAWING_SIZE" json:"drawing_size"`
+}
+
+func LoadTrackMapData(track, trackLayout string) (*TrackMapData, error) {
+	p := filepath.Join(ServerInstallPath, "content", "tracks", track)
+
+	if trackLayout != "" {
+		p = filepath.Join(p, trackLayout)
+	}
+
+	p = filepath.Join(p, "data", "map.ini")
+
+	f, err := os.Open(p)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+
+	i, err := ini.Load(f)
+
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := i.GetSection("PARAMETERS")
+
+	if err != nil {
+		return nil, err
+	}
+
+	var mapData TrackMapData
+
+	if err := s.MapTo(&mapData); err != nil {
+		return nil, err
+	}
+
+	return &mapData, nil
 }

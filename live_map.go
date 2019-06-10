@@ -2,14 +2,10 @@ package servermanager
 
 import (
 	"net/http"
-	"os"
-	"path/filepath"
-	"sync"
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 
-	"github.com/cj123/ini"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
@@ -24,32 +20,39 @@ const (
 	writeWait = 10 * time.Second
 )
 
-var (
-	websocketLastSeenSessionInfo *udp.SessionInfo
-	websocketTrackMapData        *TrackMapData
-	connectedCars                = sync.Map{}
-)
+func newRaceControlMessage(message udp.Message) raceControlMessage {
+	return raceControlMessage{
+		EventType: message.Event(),
+		Message:   message,
+	}
+}
 
-type liveMapMessage struct {
+type raceControlMessage struct {
 	EventType udp.Event
 	Message   udp.Message
 }
 
-type liveMapHub struct {
-	clients   map[*liveMapClient]bool
-	broadcast chan liveMapMessage
-	register  chan *liveMapClient
+type raceControlHub struct {
+	clients   map[*raceControlClient]bool
+	broadcast chan raceControlMessage
+	register  chan *raceControlClient
 }
 
-func newLiveMapHub() *liveMapHub {
-	return &liveMapHub{
-		broadcast: make(chan liveMapMessage),
-		register:  make(chan *liveMapClient),
-		clients:   make(map[*liveMapClient]bool),
+func (h *raceControlHub) Send(message udp.Message) error {
+	h.broadcast <- newRaceControlMessage(message)
+
+	return nil
+}
+
+func newRaceControlHub() *raceControlHub {
+	return &raceControlHub{
+		broadcast: make(chan raceControlMessage),
+		register:  make(chan *raceControlClient),
+		clients:   make(map[*raceControlClient]bool),
 	}
 }
 
-func (h *liveMapHub) run() {
+func (h *raceControlHub) run() {
 	for {
 		select {
 		case client := <-h.register:
@@ -63,36 +66,39 @@ func (h *liveMapHub) run() {
 					delete(h.clients, client)
 				}
 			}
-		case <-AssettoProcess.Done():
-			connectedCars.Range(func(key, value interface{}) bool {
-				client, ok := value.(udp.SessionCarInfo)
+			/*
+					@TODO find a place for me
+				case <-AssettoProcess.Done():
+					connectedCars.Range(func(key, value interface{}) bool {
+						client, ok := value.(udp.SessionCarInfo)
 
-				if !ok {
-					return true
-				}
+						if !ok {
+							return true
+						}
 
-				client.EventType = udp.EventConnectionClosed
+						client.EventType = udp.EventConnectionClosed
 
-				go func() {
-					h.broadcast <- liveMapMessage{udp.EventConnectionClosed, client}
-				}()
+						go func() {
+							h.broadcast <- raceControlMessage{udp.EventConnectionClosed, client}
+						}()
 
-				return true
-			})
+						return true
+					})
 
-			connectedCars = sync.Map{}
+					connectedCars = sync.Map{}
+			*/
 		}
 	}
 }
 
-type liveMapClient struct {
-	hub *liveMapHub
+type raceControlClient struct {
+	hub *raceControlHub
 
 	conn    *websocket.Conn
-	receive chan liveMapMessage
+	receive chan raceControlMessage
 }
 
-func (c *liveMapClient) writePump() {
+func (c *raceControlClient) writePump() {
 	ticker := time.NewTicker(time.Second * 10)
 	defer func() {
 		ticker.Stop()
@@ -123,9 +129,9 @@ func (c *liveMapClient) writePump() {
 	}
 }
 
-var mapHub *liveMapHub
+var mapHub *raceControlHub
 
-func liveMapHandler(w http.ResponseWriter, r *http.Request) {
+func raceControlHandler(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 
 	if err != nil {
@@ -133,123 +139,31 @@ func liveMapHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &liveMapClient{hub: mapHub, conn: c, receive: make(chan liveMapMessage, 256)}
+	client := &raceControlClient{hub: mapHub, conn: c, receive: make(chan raceControlMessage, 256)}
 	client.hub.register <- client
 
 	go client.writePump()
 
-	// new client. receive them the session info if we have it
-	if websocketLastSeenSessionInfo != nil {
-		client.receive <- liveMapMessage{udp.EventNewSession, websocketLastSeenSessionInfo}
-	}
-
-	if websocketTrackMapData != nil {
-		client.receive <- liveMapMessage{222, websocketTrackMapData}
-	}
-
-	connectedCars.Range(func(key, value interface{}) bool {
-		car, ok := value.(udp.SessionCarInfo)
-
-		if !ok {
-			return true
+	/*
+		// new client. send them the session info if we have it
+		if websocketLastSeenSessionInfo != nil {
+			client.receive <- raceControlMessage{udp.EventNewSession, websocketLastSeenSessionInfo}
 		}
 
-		client.receive <- liveMapMessage{udp.EventNewConnection, car}
-		client.receive <- liveMapMessage{udp.EventClientLoaded, udp.ClientLoaded(car.CarID)}
+		if websocketTrackMapData != nil {
+			client.receive <- raceControlMessage{222, websocketTrackMapData}
+		}
 
-		return true
-	})
-}
+		connectedCars.Range(func(key, value interface{}) bool {
+			car, ok := value.(udp.SessionCarInfo)
 
-func LiveMapCallback(message udp.Message) {
-	switch m := message.(type) {
-
-	case udp.SessionInfo:
-		if m.Event() == udp.EventNewSession {
-			var err error
-
-			websocketLastSeenSessionInfo = &m
-			websocketTrackMapData, err = LoadTrackMapData(m.Track, m.TrackConfig)
-
-			if err != nil {
-				logrus.Errorf("Could not load map data, err: %s", err)
-				return
+			if !ok {
+				return true
 			}
 
-			LiveMapCallback(websocketTrackMapData)
-		}
+			client.receive <- raceControlMessage{udp.EventNewConnection, car}
+			client.receive <- raceControlMessage{udp.EventClientLoaded, udp.ClientLoaded(car.CarID)}
 
-	case udp.SessionCarInfo:
-		m.DriverName = driverInitials(m.DriverName)
-
-		if m.Event() == udp.EventNewConnection {
-			connectedCars.Store(m.CarID, m)
-		} else if m.Event() == udp.EventConnectionClosed {
-			connectedCars.Delete(m.CarID)
-		}
-
-		// because we are modifying m.DriverName here, we must use our own broadcast and return
-		mapHub.broadcast <- liveMapMessage{message.Event(), m}
-		return
-
-	case udp.Version:
-		connectedCars = sync.Map{}
-	case udp.CarUpdate, *TrackMapData, udp.CollisionWithEnvironment, udp.CollisionWithCar, udp.ClientLoaded:
-	default:
-		return
-	}
-
-	mapHub.broadcast <- liveMapMessage{message.Event(), message}
-}
-
-type TrackMapData struct {
-	Width       float64 `ini:"WIDTH"`
-	Height      float64 `ini:"HEIGHT"`
-	Margin      float64 `ini:"MARGIN"`
-	ScaleFactor float64 `ini:"SCALE_FACTOR"`
-	OffsetX     float64 `ini:"X_OFFSET"`
-	OffsetZ     float64 `ini:"Z_OFFSET"`
-	DrawingSize float64 `ini:"DRAWING_SIZE"`
-}
-
-func (*TrackMapData) Event() udp.Event {
-	return 222
-}
-
-func LoadTrackMapData(track, trackLayout string) (*TrackMapData, error) {
-	p := filepath.Join(ServerInstallPath, "content", "tracks", track)
-
-	if trackLayout != "" {
-		p = filepath.Join(p, trackLayout)
-	}
-
-	p = filepath.Join(p, "data", "map.ini")
-
-	f, err := os.Open(p)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer f.Close()
-
-	i, err := ini.Load(f)
-
-	if err != nil {
-		return nil, err
-	}
-
-	s, err := i.GetSection("PARAMETERS")
-
-	if err != nil {
-		return nil, err
-	}
-
-	var mapData TrackMapData
-
-	if err := s.MapTo(&mapData); err != nil {
-		return nil, err
-	}
-
-	return &mapData, nil
+			return true
+		})*/
 }

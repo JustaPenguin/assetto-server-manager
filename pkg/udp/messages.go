@@ -292,7 +292,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 		response = SessionCarInfo{
 			CarID:      carID,
 			DriverName: driverName,
-			DriverGUID: driverGUID,
+			DriverGUID: DriverGUID(driverGUID),
 			CarModel:   carMode,
 			CarSkin:    carSkin,
 			EventType:  eventType,
@@ -328,7 +328,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 			CarSkin:     readStringW(r),
 			DriverName:  readStringW(r),
 			DriverTeam:  readStringW(r),
-			DriverGUID:  readStringW(r),
+			DriverGUID:  DriverGUID(readStringW(r)),
 		}
 	case EventEndSession:
 		filename := readStringW(r)
@@ -401,7 +401,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 		sessionInfo.TrackConfig = readString(r, 1)
 		sessionInfo.Name = readString(r, 1)
 
-		err = binary.Read(r, binary.LittleEndian, &sessionInfo.Type)
+		err = binary.Read(r, binary.LittleEndian, &sessionInfo.SessionType)
 
 		if err != nil {
 			return nil, err
@@ -462,7 +462,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 		response = ServerError{errors.New(message)}
 
 	case EventLapCompleted:
-		lapCompleted := LapCompletedInternal{}
+		lapCompleted := lapCompletedInternal{}
 
 		err := binary.Read(r, binary.LittleEndian, &lapCompleted)
 
@@ -470,7 +470,12 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 			return nil, err
 		}
 
-		lc := LapCompleted{LapCompletedInternal: lapCompleted}
+		lc := LapCompleted{
+			CarID:     lapCompleted.CarID,
+			LapTime:   lapCompleted.LapTime,
+			Cuts:      lapCompleted.Cuts,
+			CarsCount: lapCompleted.CarsCount,
+		}
 
 		for i := uint8(0); i < lapCompleted.CarsCount; i++ {
 			var car LapCompletedCar
