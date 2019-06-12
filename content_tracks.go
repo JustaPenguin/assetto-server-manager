@@ -101,11 +101,11 @@ type TrackInfo struct {
 	Country     string      `json:"country"`
 	Description string      `json:"description"`
 	Geotags     []string    `json:"geotags"`
-	Length      json.Number `json:"length"`
+	Length      string      `json:"length"`
 	Pitboxes    json.Number `json:"pitboxes"`
 	Run         string      `json:"run"`
 	Tags        []string    `json:"tags"`
-	Width       json.Number `json:"width"`
+	Width       string      `json:"width"`
 }
 
 func GetTrackInfo(name, layout string) (*TrackInfo, error) {

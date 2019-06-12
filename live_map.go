@@ -118,6 +118,7 @@ func (c *raceControlClient) writePump() {
 			err := c.conn.WriteJSON(message)
 
 			if err != nil {
+				logrus.WithError(err).Errorf("Could not send websocket message")
 				return
 			}
 		case <-ticker.C:
@@ -143,6 +144,8 @@ func raceControlHandler(w http.ResponseWriter, r *http.Request) {
 	client.hub.register <- client
 
 	go client.writePump()
+
+	client.receive <- newRaceControlMessage(RaceControlInst)
 
 	/*
 		// new client. send them the session info if we have it
