@@ -94,13 +94,18 @@ type RaceControl struct {
 	DisconnectedDrivers *DriverMap `json:"DisconnectedDrivers"`
 
 	GUIDsInPositionalOrder []udp.DriverGUID `json:"GUIDsInPositionalOrder"`
-	carIDtoGUID            map[udp.CarID]udp.DriverGUID
+	CarIDToGUID            map[udp.CarID]udp.DriverGUID
 
 	sessionInfoTicker  *time.Ticker
 	sessionInfoContext context.Context
 	sessionInfoCfn     context.CancelFunc
 
 	broadcaster Broadcaster
+}
+
+// RaceControl piggyback's on the udp.Message interface so that the entire data can be sent to newly connected clients.
+func (rc *RaceControl) Event() udp.Event {
+	return 200
 }
 
 func NewRaceControlDriver(carInfo udp.SessionCarInfo) *RaceControlDriver {
@@ -157,7 +162,7 @@ func NewRaceControl(broadcaster Broadcaster) *RaceControl {
 	return &RaceControl{
 		broadcaster: broadcaster,
 
-		carIDtoGUID: make(map[udp.CarID]udp.DriverGUID),
+		CarIDToGUID: make(map[udp.CarID]udp.DriverGUID),
 
 		ConnectedDrivers:    NewDriverMap(),
 		DisconnectedDrivers: NewDriverMap(),
@@ -218,12 +223,20 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 
 	if sendUpdatedRaceControlStatus {
 		// broadcast the race control deets
-		//rc.broadcaster.Send(rc)
+		rc.broadcaster.Send(rc)
 	}
 }
 
 // onVersion occurs when the Assetto Corsa Server starts up for the first time.
 func (rc *RaceControl) onVersion(version udp.Version) error {
+	_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
+		rc.DisconnectedDrivers.Add(driverGUID, driver)
+
+		return nil
+	})
+
+	rc.ConnectedDrivers = NewDriverMap()
+
 	return rc.broadcaster.Send(version)
 }
 
@@ -284,7 +297,6 @@ func (rc *RaceControl) onNewSession(sessionInfo udp.SessionInfo) error {
 			return nil
 		})
 
-
 		_ = rc.DisconnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
 			*driver = *NewRaceControlDriver(driver.CarInfo)
 
@@ -306,6 +318,8 @@ func (rc *RaceControl) onNewSession(sessionInfo udp.SessionInfo) error {
 		return err
 	}
 
+	logrus.Infof("New session detected: %s at %s (%s)", sessionInfo.SessionType.String(), sessionInfo.Track, sessionInfo.TrackConfig)
+
 	go rc.requestSessionInfo()
 
 	return rc.broadcaster.Send(sessionInfo)
@@ -316,7 +330,7 @@ func (rc *RaceControl) clearAllDrivers() {
 	rc.ConnectedDrivers = NewDriverMap()
 	rc.DisconnectedDrivers = NewDriverMap()
 	rc.GUIDsInPositionalOrder = []udp.DriverGUID{}
-	rc.carIDtoGUID = make(map[udp.CarID]udp.DriverGUID)
+	rc.CarIDToGUID = make(map[udp.CarID]udp.DriverGUID)
 }
 
 var sessionInfoRequestInterval = time.Second
@@ -415,7 +429,7 @@ func (rc *RaceControl) onEndSession(sessionFile udp.EndSession) error {
 // onClientConnect stores CarID -> DriverGUID mappings. if a driver is known to have previously been in this event,
 // they will be moved from DisconnectedDrivers to ConnectedDrivers.
 func (rc *RaceControl) onClientConnect(client udp.SessionCarInfo) error {
-	rc.carIDtoGUID[client.CarID] = client.DriverGUID
+	rc.CarIDToGUID[client.CarID] = client.DriverGUID
 
 	var driver *RaceControlDriver
 
@@ -453,9 +467,9 @@ func (rc *RaceControl) onClientDisconnect(client udp.SessionCarInfo) error {
 }
 
 // findConnectedDriverByCarID looks for a driver in ConnectedDrivers by their CarID. This is the only place CarID
-// is used for a look-up, and it uses the carIDtoGUID map to perform the lookup.
+// is used for a look-up, and it uses the CarIDToGUID map to perform the lookup.
 func (rc *RaceControl) findConnectedDriverByCarID(carID udp.CarID) (*RaceControlDriver, error) {
-	driverGUID, ok := rc.carIDtoGUID[carID]
+	driverGUID, ok := rc.CarIDToGUID[carID]
 
 	if !ok {
 		return nil, fmt.Errorf("racecontrol: could not find DriverGUID for CarID: %d", carID)
@@ -566,7 +580,6 @@ func (rc *RaceControl) onLapCompleted(lap udp.LapCompleted) error {
 		rc.GUIDsInPositionalOrder = append(rc.GUIDsInPositionalOrder, driverGUID)
 		return nil
 	})
-
 
 	sort.Slice(rc.GUIDsInPositionalOrder, func(i, j int) bool {
 		driverA, driverAOK := rc.ConnectedDrivers.Get(rc.GUIDsInPositionalOrder[i])

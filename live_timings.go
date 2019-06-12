@@ -317,8 +317,6 @@ func disconnect(id uint8) {
 	if ok {
 		delete(carCounter, id)
 	}
-
-	LiveMapCallback(udp.SessionCarInfo{EventType: udp.EventConnectionClosed, CarID: udp.CarID(id)})
 }
 
 func sendGetSessionInfoAtInterval(ctx context.Context) {

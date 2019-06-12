@@ -95,7 +95,7 @@ func Router(fs http.FileSystem) http.Handler {
 		// live timings
 		r.Get("/live-timing", liveTimingHandler)
 		r.Get("/live-timing/get", liveTimingGetHandler)
-		r.Get("/api/live-map", raceControlHandler)
+		r.Get("/api/race-control", raceControlHandler)
 
 		// account management
 		r.HandleFunc("/accounts/new-password", newPasswordHandler)

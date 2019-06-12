@@ -165,6 +165,8 @@ let liveMap = {
     joined: {},
 
     init: function () {
+        return; // permanently disabled.
+
         const $map = $document.find("#map");
 
         if (!$map.length) {
@@ -358,18 +360,6 @@ let liveMap = {
         liveMap.joined = [];
     }
 };
-
-function getAbbreviation(name) {
-    let parts = name.split(" ");
-
-    if (parts.length < 1) {
-        return name
-    }
-
-    let lastName = parts[parts.length - 1];
-
-    return lastName.slice(0, 3).toUpperCase();
-}
 
 const nameRegex = /^[A-Za-z]{0,5}[0-9]+/;
 

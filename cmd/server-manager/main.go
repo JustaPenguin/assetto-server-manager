@@ -124,7 +124,7 @@ func startUDPReplay(file string) {
 		logrus.WithError(err).Error("Could not open bolt")
 	}
 
-	err = replay.ReplayUDPMessages(db, 10, func(response udp.Message) {
+	err = replay.ReplayUDPMessages(db, 2, func(response udp.Message) {
 		servermanager.RaceControlInst.UDPCallback(response)
 	}, time.Second*2)
 

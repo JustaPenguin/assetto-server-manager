@@ -9,8 +9,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp"
 	"github.com/OneOfOne/struct2ts"
+	"github.com/cj123/assetto-server-manager/pkg/udp"
 )
 
 func main() {
@@ -36,7 +36,7 @@ func main() {
 
 func runStruct2TS(w io.Writer) error {
 	s := struct2ts.New(&struct2ts.Options{
-		Indent: "	",
+		Indent: "    ",
 
 		NoAssignDefaults: false,
 		InterfaceOnly:    false,
@@ -60,6 +60,6 @@ func runStruct2TS(w io.Writer) error {
 	s.Add(udp.Chat{})
 
 	io.WriteString(w, "// this file was automatically generated, DO NOT EDIT\n")
-	io.WriteString(w, `import {ToObject, FromArray, ParseDate, ParseNumber} from "./helpers";` + "\n")
+	io.WriteString(w, `import {ToObject, FromArray, ParseDate, ParseNumber} from "./helpers";`+"\n")
 	return s.RenderTo(w)
 }

@@ -5,6 +5,22 @@ import (
 )
 
 type SessionType uint8
+
+func (s SessionType) String() string {
+	switch s {
+	case 0:
+		return "Booking"
+	case 1:
+		return "Practice"
+	case 2:
+		return "Qualifying"
+	case 3:
+		return "Race"
+	default:
+		return "Unknown"
+	}
+}
+
 type Event uint8
 
 const (
