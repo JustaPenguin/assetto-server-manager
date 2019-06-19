@@ -207,7 +207,7 @@ type SessionInfo struct {
 	Track               string      `json:"Track"`
 	TrackConfig         string      `json:"TrackConfig"`
 	Name                string      `json:"Name"`
-	SessionType         SessionType `json:"SessionType"`
+	Type                SessionType `json:"Type"`
 	Time                uint16      `json:"Time"`
 	Laps                uint16      `json:"Laps"`
 	WaitTime            uint16      `json:"WaitTime"`

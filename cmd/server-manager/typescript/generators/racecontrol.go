@@ -46,7 +46,7 @@ func runStruct2TS(w io.Writer) error {
 		MarkOptional:  false,
 		NoToObject:    false,
 		NoExports:     false,
-		NoHelpers:     true,
+		NoHelpers:     false,
 		NoDate:        false,
 
 		ES6: false,
@@ -55,6 +55,5 @@ func runStruct2TS(w io.Writer) error {
 	s.Add(servermanager.RaceControl{})
 
 	io.WriteString(w, "// this file was automatically generated, DO NOT EDIT\n")
-	io.WriteString(w, `import {ToObject, FromArray, ParseDate, ParseNumber} from "./helpers";`+"\n")
 	return s.RenderTo(w)
 }
