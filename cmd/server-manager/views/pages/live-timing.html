@@ -10,172 +10,107 @@
 
 {{ define "content" }}
     {{ with .RaceDetails }}
+        <h1 class="text-center" id="event-title"></h1>
 
         {{ $trackInfo := trackInfo .RaceConfig.Track .RaceConfig.TrackLayout }}
 
-        <div class="row">
-            <div class="col-lg-6 col-md-12">
-                <div class="card">
-                    {{ if eq $.server_event_type "CHAMPIONSHIP" }}
-                        <h5 class="card-header">Championship Event in Progress</h5>
-                    {{ else }}
-                        <h5 class="card-header">Event in Progress</h5>
-                    {{ end }}
+        <div class="row mt-5">
+            <div class="col-lg-7 col-md-12">
+                <div class="table-responsive table-sm">
+                    <table id="live-table" class="table table-bordered table-striped">
+                        <tr>
+                            <th class="p-1 text-center">#</th>
+                            <th>Driver</th>
+                            <th>Car</th>
+                            <th>Current Lap</th>
+                            <th>Best Lap</th>
+                            <th>Last Lap</th>
+                            <th>Gap</th>
+                            <th>Laps Completed</th>
+                            <th>Top Speed</th>
+                            <th class="live-events">Events</th>
+                        </tr>
 
-                    <div class="card-body row home-race-info">
-                        <div class="col-md-8">
+                        <!-- trs for drivers are appended by javascript -->
+                    </table>
+                </div>
 
-                            {{ template "race-card" . }}
+                <h4 style="padding-left: 1rem; display: none"id="stored-times-header">Stored Times</h4>
+                <div class="table-responsive table-sm p-3">
+                    <table style="display: none;" id="live-table-disconnected" class="table table-bordered table-striped">
+                        <tr>
+                            <th>Driver</th>
+                            <th>Car</th>
+                            <th>Best Lap</th>
+                            <th>Laps Completed</th>
+                            <th>Top Speed</th>
+                        </tr>
 
-                            <div class="row">
-                                <div class="col-8">
-                                    <div id="current-session" class="mt-2 font-weight-bold"></div>
-                                    <div id="race-time" class="mt-2 font-weight-bold"></div>
-                                    <div id="live-info-general" class="mt-2"></div>
-                                </div>
-                                <div class="col-4">
-                                    <div class="float-right">
-                                        <div id="road-temp-wrapper" data-toggle="tooltip"
-                                             title data-original-title="Road Temp">
-                                            <div id="road-temp-text"></div>
-                                            <img src="/static/img/temp-road.png" alt="Road Temp" id="road-temp">
-                                        </div>
-
-                                        <div id="ambient-temp-wrapper" class="mt-1" data-toggle="tooltip"
-                                             title data-original-title="Ambient Temp">
-                                            <div id="ambient-temp-text"></div>
-                                            <img src="/static/img/temp-ambient.png" alt="Ambient Temp" id="ambient-temp">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{ with $trackInfo }}
-                                <div class="mt-2 text-primary">
-                                    <h5><strong>Track Info</strong></h5>
-
-                                    <p> <strong>Description: </strong>{{ $trackInfo.Description }}<br>
-                                        <strong>Length: </strong>{{ $trackInfo.Length }}<br>
-                                        <strong>Pit Boxes: </strong>{{ $trackInfo.Pitboxes }}<br>
-                                        <strong>Width: </strong>{{ $trackInfo.Width }}<br>
-                                        <strong>Run: </strong>{{ $trackInfo.Run }} </p>
-                                </div>
-                            {{ end }}
-
-                        </div>
-                        <div class="col-md-4">
-                            <img class="img img-fluid float-right"
-                                 id="trackImage"
-                                 src="/content/tracks/{{ .RaceConfig.Track }}/ui{{ with .RaceConfig.TrackLayout }}/{{.}}{{ end }}/preview.png"
-                                 alt="{{ .RaceConfig.Track }} {{ .RaceConfig.TrackLayout }}"
-                            >
-                            <img class="img img-fluid float-right mt-1" id="weatherImage" src="/static/img/no-preview-general.png" alt="Current Weather">
-                        </div>
-
-                        <div class="table-responsive table-sm p-3">
-                            <table id="live-table" class="table table-bordered table-striped">
-                                <tr>
-                                    <th>Pos</th>
-                                    <th>Driver</th>
-                                    <th>Car</th>
-                                    <th>Current Lap</th>
-                                    <th>Best Lap</th>
-                                    <th>Last Lap</th>
-                                    <th>Gap</th>
-                                    <th>Laps Completed</th>
-                                    <th>Top Speed</th>
-                                    <th class="live-events">Events</th>
-                                </tr>
-
-                                <!-- trs for drivers are appended by javascript -->
-                            </table>
-                        </div>
-
-                        <h4 style="padding-left: 1rem; display: none"id="stored-times-header">Stored Times</h4>
-                        <div class="table-responsive table-sm p-3">
-                            <table style="display: none;" id="live-table-disconnected" class="table table-bordered table-striped">
-                                <tr>
-                                    <th>Driver</th>
-                                    <th>Car</th>
-                                    <th>Best Lap</th>
-                                    <th>Laps Completed</th>
-                                    <th>Top Speed</th>
-                                </tr>
-
-                                <!-- trs for drivers are appended by javascript -->
-                            </table>
-                        </div>
-                    </div>
+                        <!-- trs for drivers are appended by javascript -->
+                    </table>
                 </div>
             </div>
 
-            <div class="col-lg-6 col-md-12">
-                <div class="card">
-                    <h5 class="card-header">Live Map</h5>
-                    <div class="card-body row">
+            <div class="col-lg-5 col-md-12">
+                {{ if Config.LiveMap.IsEnabled }}
+                    <div class="col-md-12 map-container">
+                        <div id="map">
+                            <img src="" class="img img-fluid img-bordered">
+                        </div>
+                    </div>
+                {{ end }}
 
-                        {{ if Config.LiveMap.IsEnabled }}
-                            <div class="col-md-12 map-container">
-                                <div id="map">
-                                    <img src="" class="img img-fluid img-bordered">
-                                </div>
+                <form action="/live-timing/save-frames" method="post" class="w-100 d-contents">
+                    <!-- Hidden, used for cloning -->
+                    <div class="w-100 live-frame-wrapper d-none">
+                        <div class="embed-responsive embed-responsive-16by9">
+                            <iframe class="embed-responsive-item p-3 live-frame"
+                                    src="">
+                            </iframe>
+                        </div>
+
+                        {{ if WriteAccess }}
+                            <div class="row ml-3 mr-3 mt-2 w-100">
+                                <input type="text" class="live-frame-link form-control pl-1 col-8" name="frame-link"
+                                       placeholder="IFrame content link (track location on map, race live stream etc.)">
+                                <span class="col-1"></span>
+                                <button class="btn btn-primary text-light col-3 remove-live-frame" >Remove IFrame</button>
                             </div>
                         {{ end }}
+                    </div>
 
-                        <form action="/live-timing/save-frames" method="post" class="w-100 d-contents">
-                            <!-- Hidden, used for cloning -->
-                            <div class="w-100 live-frame-wrapper d-none">
+                    {{ with $.FrameLinks }}
+
+                        {{ range $index, $link := $.FrameLinks }}
+                            <div class="w-100 live-frame-wrapper d-contents generated">
                                 <div class="embed-responsive embed-responsive-16by9">
                                     <iframe class="embed-responsive-item p-3 live-frame"
-                                            src="">
+                                            src={{ $link }}>
                                     </iframe>
                                 </div>
 
                                 {{ if WriteAccess }}
                                     <div class="row ml-3 mr-3 mt-2 w-100">
                                         <input type="text" class="live-frame-link form-control pl-1 col-8" name="frame-link"
-                                               placeholder="IFrame content link (track location on map, race live stream etc.)">
-                                        <span class="col-1"></span>
-                                        <button class="btn btn-primary text-light col-3 remove-live-frame" >Remove IFrame</button>
+                                               value={{ $link }}>
+
+                                        <div class="col-4 pl-1">
+
+                                            <button class="btn btn-primary text-light remove-live-frame" >Remove IFrame</button>
+                                        </div>
                                     </div>
                                 {{ end }}
                             </div>
+                        {{ end }}
 
-                            {{ with $.FrameLinks }}
+                    {{ end }}
 
-                                {{ range $index, $link := $.FrameLinks }}
-                                    <div class="w-100 live-frame-wrapper d-contents generated">
-                                        <div class="embed-responsive embed-responsive-16by9">
-                                            <iframe class="embed-responsive-item p-3 live-frame"
-                                                    src={{ $link }}>
-                                            </iframe>
-                                        </div>
+                    {{ if WriteAccess }}
+                        <a class="ml-3 mt-2 mb-2 btn btn-primary text-light" id="add-live-frame">Add IFrame</a>
+                        <button type="submit" class="ml-3 mt-2 mb-2 btn btn-success text-light">Save IFrames</button>
+                    {{ end }}
 
-                                        {{ if WriteAccess }}
-                                            <div class="row ml-3 mr-3 mt-2 w-100">
-                                                <input type="text" class="live-frame-link form-control pl-1 col-8" name="frame-link"
-                                                       value={{ $link }}>
-
-                                                <div class="col-4 pl-1">
-
-                                                    <button class="btn btn-primary text-light remove-live-frame" >Remove IFrame</button>
-                                                </div>
-                                            </div>
-                                        {{ end }}
-                                    </div>
-                                {{ end }}
-
-                            {{ end }}
-
-                            {{ if WriteAccess }}
-                                <a class="ml-3 mt-2 mb-2 btn btn-primary text-light" id="add-live-frame">Add IFrame</a>
-                                <button type="submit" class="ml-3 mt-2 mb-2 btn btn-success text-light">Save IFrames</button>
-                            {{ end }}
-
-                        </form>
-
-                    </div>
-                </div>
+                </form>
             </div>
         </div>
     {{ end }}

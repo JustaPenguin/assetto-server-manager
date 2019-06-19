@@ -28,22 +28,43 @@ func (NilBroadcaster) Send(message udp.Message) error {
 }
 
 type DriverMap struct {
-	Drivers map[udp.DriverGUID]*RaceControlDriver `json:"Drivers"`
+	Drivers                map[udp.DriverGUID]*RaceControlDriver `json:"Drivers"`
+	GUIDsInPositionalOrder []udp.DriverGUID                      `json:"GUIDsInPositionalOrder"`
+
+	driverSortLessFunc driverSortLessFunc
+	driverGroup        RaceControlDriverGroup
 
 	rwMutex sync.RWMutex
 }
 
-func NewDriverMap() *DriverMap {
-	return &DriverMap{Drivers: make(map[udp.DriverGUID]*RaceControlDriver)}
+type RaceControlDriverGroup int
+
+const (
+	ConnectedDrivers    RaceControlDriverGroup = 0
+	DisconnectedDrivers RaceControlDriverGroup = 1
+)
+
+type driverSortLessFunc func(group RaceControlDriverGroup, driverA, driverB *RaceControlDriver) bool
+
+func NewDriverMap(driverGroup RaceControlDriverGroup, driverSortLessFunc driverSortLessFunc) *DriverMap {
+	return &DriverMap{
+		Drivers:            make(map[udp.DriverGUID]*RaceControlDriver),
+		driverSortLessFunc: driverSortLessFunc,
+		driverGroup:        driverGroup,
+	}
 }
 
 func (d *DriverMap) Each(fn func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error) error {
 	d.rwMutex.RLock()
 	defer d.rwMutex.RUnlock()
 
-	for guid, driver := range d.Drivers {
-		guid := guid
-		driver := driver
+	for _, guid := range d.GUIDsInPositionalOrder {
+		driver, ok := d.Drivers[guid]
+
+		if !ok {
+			continue
+		}
+
 		err := fn(guid, driver)
 
 		if err != nil {
@@ -66,8 +87,46 @@ func (d *DriverMap) Get(driverGUID udp.DriverGUID) (*RaceControlDriver, bool) {
 func (d *DriverMap) Add(driverGUID udp.DriverGUID, driver *RaceControlDriver) {
 	d.rwMutex.Lock()
 	defer d.rwMutex.Unlock()
+	defer d.sort()
 
 	d.Drivers[driverGUID] = driver
+
+	for _, guid := range d.GUIDsInPositionalOrder {
+		if guid == driverGUID {
+			return
+		}
+	}
+
+	d.GUIDsInPositionalOrder = append(d.GUIDsInPositionalOrder, driverGUID)
+}
+
+func (d *DriverMap) sort() {
+	sort.Slice(d.GUIDsInPositionalOrder, func(i, j int) bool {
+		driverA, ok := d.Drivers[d.GUIDsInPositionalOrder[i]]
+
+		if !ok {
+			return false
+		}
+
+		driverB, ok := d.Drivers[d.GUIDsInPositionalOrder[j]]
+
+		if !ok {
+			return false
+		}
+
+		return d.driverSortLessFunc(d.driverGroup, driverA, driverB)
+	})
+
+	// correct positions
+	for pos, guid := range d.GUIDsInPositionalOrder {
+		driver, ok := d.Drivers[guid]
+
+		if !ok {
+			continue
+		}
+
+		driver.Position = pos + 1
+	}
 }
 
 func (d *DriverMap) Del(driverGUID udp.DriverGUID) {
@@ -75,6 +134,15 @@ func (d *DriverMap) Del(driverGUID udp.DriverGUID) {
 	defer d.rwMutex.Unlock()
 
 	delete(d.Drivers, driverGUID)
+
+	for index, guid := range d.GUIDsInPositionalOrder {
+		if guid == driverGUID {
+			d.GUIDsInPositionalOrder = append(d.GUIDsInPositionalOrder[:index], d.GUIDsInPositionalOrder[index+1:]...)
+			break
+		}
+	}
+
+	d.sort()
 }
 
 func (d *DriverMap) Len() int {
@@ -85,16 +153,15 @@ func (d *DriverMap) Len() int {
 }
 
 type RaceControl struct {
-	SessionInfo        udp.SessionInfo `json:"SessionInfo"`
-	CurrentSessionType udp.SessionType `json:"CurrentSessionType"`
-	TrackMapData       *TrackMapData   `json:"TrackMapData"`
-	TrackInfo          *TrackInfo      `json:"TrackInfo"`
+	SessionInfo      udp.SessionInfo `json:"SessionInfo"`
+	TrackMapData     *TrackMapData   `json:"TrackMapData"`
+	TrackInfo        *TrackInfo      `json:"TrackInfo"`
+	SessionStartTime time.Time       `json:"SessionStartTime"`
 
 	ConnectedDrivers    *DriverMap `json:"ConnectedDrivers"`
 	DisconnectedDrivers *DriverMap `json:"DisconnectedDrivers"`
 
-	GUIDsInPositionalOrder []udp.DriverGUID `json:"GUIDsInPositionalOrder"`
-	CarIDToGUID            map[udp.CarID]udp.DriverGUID
+	CarIDToGUID map[udp.CarID]udp.DriverGUID
 
 	sessionInfoTicker  *time.Ticker
 	sessionInfoContext context.Context
@@ -159,14 +226,13 @@ type Collision struct {
 }
 
 func NewRaceControl(broadcaster Broadcaster) *RaceControl {
-	return &RaceControl{
+	rc := &RaceControl{
 		broadcaster: broadcaster,
-
-		CarIDToGUID: make(map[udp.CarID]udp.DriverGUID),
-
-		ConnectedDrivers:    NewDriverMap(),
-		DisconnectedDrivers: NewDriverMap(),
 	}
+
+	rc.clearAllDrivers()
+
+	return rc
 }
 
 func (rc *RaceControl) UDPCallback(message udp.Message) {
@@ -222,8 +288,12 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 	}
 
 	if sendUpdatedRaceControlStatus {
-		// broadcast the race control deets
-		rc.broadcaster.Send(rc)
+		err = rc.broadcaster.Send(rc)
+
+		if err != nil {
+			logrus.WithError(err).Error("Unable to broadcast race control message")
+			return
+		}
 	}
 }
 
@@ -235,7 +305,7 @@ func (rc *RaceControl) onVersion(version udp.Version) error {
 		return nil
 	})
 
-	rc.ConnectedDrivers = NewDriverMap()
+	rc.ConnectedDrivers = NewDriverMap(ConnectedDrivers, rc.sort)
 
 	return rc.broadcaster.Send(version)
 }
@@ -268,6 +338,7 @@ func (rc *RaceControl) onCarUpdate(update udp.CarUpdate) (updatedRaceControl boo
 func (rc *RaceControl) onNewSession(sessionInfo udp.SessionInfo) error {
 	oldSessionInfo := rc.SessionInfo
 	rc.SessionInfo = sessionInfo
+	rc.SessionStartTime = time.Now()
 
 	deleteCars := false
 	emptyCarInfo := false
@@ -278,8 +349,8 @@ func (rc *RaceControl) onNewSession(sessionInfo udp.SessionInfo) error {
 		emptyCarInfo = true
 	}
 
-	if rc.ConnectedDrivers.Len() > 0 || rc.DisconnectedDrivers.Len() > 0 && sessionInfo.SessionType == udp.SessionTypePractice {
-		if oldSessionInfo.SessionType == sessionInfo.SessionType && oldSessionInfo.Track == sessionInfo.Track && oldSessionInfo.TrackConfig == sessionInfo.TrackConfig && oldSessionInfo.Name == sessionInfo.Name {
+	if rc.ConnectedDrivers.Len() > 0 || rc.DisconnectedDrivers.Len() > 0 && sessionInfo.Type == udp.SessionTypePractice {
+		if oldSessionInfo.Type == sessionInfo.Type && oldSessionInfo.Track == sessionInfo.Track && oldSessionInfo.TrackConfig == sessionInfo.TrackConfig && oldSessionInfo.Name == sessionInfo.Name {
 			// this is a looped practice event, keep the cars
 			deleteCars = false
 			emptyCarInfo = false
@@ -304,6 +375,13 @@ func (rc *RaceControl) onNewSession(sessionInfo udp.SessionInfo) error {
 		})
 	}
 
+	// clear out last lap completed time each new session
+	_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
+		driver.LastLapCompletedTime = time.Time{}
+
+		return nil
+	})
+
 	var err error
 
 	rc.TrackInfo, err = GetTrackInfo(sessionInfo.Track, sessionInfo.TrackConfig)
@@ -318,7 +396,7 @@ func (rc *RaceControl) onNewSession(sessionInfo udp.SessionInfo) error {
 		return err
 	}
 
-	logrus.Infof("New session detected: %s at %s (%s)", sessionInfo.SessionType.String(), sessionInfo.Track, sessionInfo.TrackConfig)
+	logrus.Infof("New session detected: %s at %s (%s)", sessionInfo.Type.String(), sessionInfo.Track, sessionInfo.TrackConfig)
 
 	go rc.requestSessionInfo()
 
@@ -327,9 +405,8 @@ func (rc *RaceControl) onNewSession(sessionInfo udp.SessionInfo) error {
 
 // clearAllDrivers removes all known information about connected and disconnected drivers from RaceControl
 func (rc *RaceControl) clearAllDrivers() {
-	rc.ConnectedDrivers = NewDriverMap()
-	rc.DisconnectedDrivers = NewDriverMap()
-	rc.GUIDsInPositionalOrder = []udp.DriverGUID{}
+	rc.ConnectedDrivers = NewDriverMap(ConnectedDrivers, rc.sort)
+	rc.DisconnectedDrivers = NewDriverMap(DisconnectedDrivers, rc.sort)
 	rc.CarIDToGUID = make(map[udp.CarID]udp.DriverGUID)
 }
 
@@ -445,6 +522,8 @@ func (rc *RaceControl) onClientConnect(client udp.SessionCarInfo) error {
 		logrus.Debugf("Driver %s (%s) connected in %s (car id: %d)", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID, driver.CarInfo.CarModel, client.CarID)
 	}
 
+	driver.LastLapCompletedTime = time.Now()
+
 	rc.ConnectedDrivers.Add(driver.CarInfo.DriverGUID, driver)
 
 	return rc.broadcaster.Send(client)
@@ -492,6 +571,8 @@ func (rc *RaceControl) onClientLoaded(loadedCar udp.ClientLoaded) error {
 		return err
 	}
 
+	logrus.Debugf("Driver: %s (%s) loaded", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
+
 	driver.LoadedTime = time.Now()
 
 	return rc.broadcaster.Send(loadedCar)
@@ -508,6 +589,8 @@ func (rc *RaceControl) onLapCompleted(lap udp.LapCompleted) error {
 	}
 
 	lapDuration := lapToDuration(int(lap.LapTime))
+
+	logrus.Debugf("Lap completed by driver: %s (%s), %s", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID, lapDuration)
 
 	driver.LastLap = lapDuration
 	driver.NumLaps++
@@ -532,7 +615,7 @@ func (rc *RaceControl) onLapCompleted(lap udp.LapCompleted) error {
 
 	driver.TopSpeedThisLap = 0
 
-	if rc.CurrentSessionType == udp.SessionTypeRace {
+	if rc.SessionInfo.Type == udp.SessionTypeRace {
 		// calculate driver position
 		position := 1
 
@@ -572,51 +655,45 @@ func (rc *RaceControl) onLapCompleted(lap udp.LapCompleted) error {
 		}
 	}
 
-	rc.GUIDsInPositionalOrder = []udp.DriverGUID{}
+	rc.ConnectedDrivers.sort()
 
-	// sort all driver GUIDs every lap complete by position or best lap, depending on session type
+	if rc.SessionInfo.Type != udp.SessionTypeRace {
+		var previousDriver *RaceControlDriver
 
-	_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
-		rc.GUIDsInPositionalOrder = append(rc.GUIDsInPositionalOrder, driverGUID)
-		return nil
-	})
-
-	sort.Slice(rc.GUIDsInPositionalOrder, func(i, j int) bool {
-		driverA, driverAOK := rc.ConnectedDrivers.Get(rc.GUIDsInPositionalOrder[i])
-		driverB, driverBOK := rc.ConnectedDrivers.Get(rc.GUIDsInPositionalOrder[j])
-
-		if rc.CurrentSessionType == udp.SessionTypeRace {
-			return driverAOK && driverBOK && driverA.Position < driverB.Position
-		} else {
-			return driverAOK && driverBOK && driverA.BestLap < driverB.BestLap
-		}
-	})
-
-	if rc.CurrentSessionType == udp.SessionTypeQualifying || rc.CurrentSessionType == udp.SessionTypePractice {
-		for pos, driverGUID := range rc.GUIDsInPositionalOrder {
-			driver, ok := rc.ConnectedDrivers.Get(driverGUID)
-
-			if !ok {
-				continue
-			}
-
-			driver.Position = pos + 1
-
-			if pos == 0 || driver.Position == 1 {
-				driver.Split = time.Duration(0).String()
+		// gaps are calculated vs best lap
+		_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
+			if previousDriver == nil {
+				driver.Split = "0s"
 			} else {
-				driverAhead, ok := rc.ConnectedDrivers.Get(rc.GUIDsInPositionalOrder[pos-1])
-
-				if !ok {
-					continue
-				}
-
-				driver.Split = (driver.BestLap - driverAhead.BestLap).String()
+				driver.Split = (driver.BestLap - previousDriver.BestLap).String()
 			}
-		}
+
+			previousDriver = driver
+
+			return nil
+		})
 	}
 
 	return nil
+}
+
+func (rc *RaceControl) sort(driverGroup RaceControlDriverGroup, driverA, driverB *RaceControlDriver) bool {
+	if driverGroup == ConnectedDrivers {
+		if rc.SessionInfo.Type == udp.SessionTypeRace {
+			return driverA.Position < driverB.Position
+		} else {
+			return driverA.BestLap != 0 && driverA.BestLap < driverB.BestLap
+		}
+	} else if driverGroup == DisconnectedDrivers {
+		// disconnected
+		if rc.SessionInfo.Type == udp.SessionTypeRace {
+			return driverA.LastLapCompletedTime.After(driverB.LastLapCompletedTime)
+		} else {
+			return driverA.BestLap < driverB.BestLap
+		}
+	} else {
+		panic("unknown driver group")
+	}
 }
 
 func metersPerSecondToKilometersPerHour(mps float64) float64 {

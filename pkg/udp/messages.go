@@ -71,7 +71,6 @@ type AssettoServerUDP struct {
 }
 
 func (asu *AssettoServerUDP) Close() error {
-
 	if asu.closed {
 		return nil
 	}
@@ -401,7 +400,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 		sessionInfo.TrackConfig = readString(r, 1)
 		sessionInfo.Name = readString(r, 1)
 
-		err = binary.Read(r, binary.LittleEndian, &sessionInfo.SessionType)
+		err = binary.Read(r, binary.LittleEndian, &sessionInfo.Type)
 
 		if err != nil {
 			return nil, err
