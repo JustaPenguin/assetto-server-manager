@@ -152,10 +152,25 @@ func (d *DriverMap) Len() int {
 	return len(d.Drivers)
 }
 
+type TrackDataGateway interface {
+	TrackInfo(name, layout string) (*TrackInfo, error)
+	TrackMap(name, layout string) (*TrackMapData, error)
+}
+
+type filesystemTrackData struct {}
+
+func (filesystemTrackData) TrackMap(name, layout string) (*TrackMapData, error) {
+	return LoadTrackMapData(name, layout)
+}
+
+func (filesystemTrackData) TrackInfo(name, layout string) (*TrackInfo, error) {
+	return GetTrackInfo(name, layout)
+}
+
 type RaceControl struct {
 	SessionInfo      udp.SessionInfo `json:"SessionInfo"`
-	TrackMapData     *TrackMapData   `json:"TrackMapData"`
-	TrackInfo        *TrackInfo      `json:"TrackInfo"`
+	TrackMapData     TrackMapData    `json:"TrackMapData"`
+	TrackInfo        TrackInfo       `json:"TrackInfo"`
 	SessionStartTime time.Time       `json:"SessionStartTime"`
 
 	ConnectedDrivers    *DriverMap `json:"ConnectedDrivers"`
@@ -167,7 +182,8 @@ type RaceControl struct {
 	sessionInfoContext context.Context
 	sessionInfoCfn     context.CancelFunc
 
-	broadcaster Broadcaster
+	broadcaster      Broadcaster
+	trackDataGateway TrackDataGateway
 }
 
 // RaceControl piggyback's on the udp.Message interface so that the entire data can be sent to newly connected clients.
@@ -225,9 +241,10 @@ type Collision struct {
 	Speed           float64        `json:"Speed"`
 }
 
-func NewRaceControl(broadcaster Broadcaster) *RaceControl {
+func NewRaceControl(broadcaster Broadcaster, trackDataGateway TrackDataGateway) *RaceControl {
 	rc := &RaceControl{
 		broadcaster: broadcaster,
+		trackDataGateway: trackDataGateway,
 	}
 
 	rc.clearAllDrivers()
@@ -242,39 +259,39 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 
 	switch m := message.(type) {
 	case udp.Version:
-		err = rc.onVersion(m)
+		err = rc.OnVersion(m)
 	case udp.SessionInfo:
 		if m.Event() == udp.EventNewSession {
-			err = rc.onNewSession(m)
+			err = rc.OnNewSession(m)
 		} else {
-			err = rc.onSessionUpdate(m)
+			err = rc.OnSessionUpdate(m)
 		}
 
 		sendUpdatedRaceControlStatus = true
 	case udp.EndSession:
-		err = rc.onEndSession(m)
+		err = rc.OnEndSession(m)
 
 		sendUpdatedRaceControlStatus = true
 	case udp.CarUpdate:
-		sendUpdatedRaceControlStatus, err = rc.onCarUpdate(m)
+		sendUpdatedRaceControlStatus, err = rc.OnCarUpdate(m)
 	case udp.SessionCarInfo:
 		if m.Event() == udp.EventNewConnection {
-			err = rc.onClientConnect(m)
+			err = rc.OnClientConnect(m)
 		} else if m.Event() == udp.EventConnectionClosed {
-			err = rc.onClientDisconnect(m)
+			err = rc.OnClientDisconnect(m)
 		}
 
 		sendUpdatedRaceControlStatus = true
 	case udp.ClientLoaded:
-		err = rc.onClientLoaded(m)
+		err = rc.OnClientLoaded(m)
 
 		sendUpdatedRaceControlStatus = true
 	case udp.CollisionWithCar:
-		err = rc.onCollisionWithCar(m)
+		err = rc.OnCollisionWithCar(m)
 	case udp.CollisionWithEnvironment:
-		err = rc.onCollisionWithEnvironment(m)
+		err = rc.OnCollisionWithEnvironment(m)
 	case udp.LapCompleted:
-		err = rc.onLapCompleted(m)
+		err = rc.OnLapCompleted(m)
 
 		sendUpdatedRaceControlStatus = true
 	default:
@@ -297,8 +314,8 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 	}
 }
 
-// onVersion occurs when the Assetto Corsa Server starts up for the first time.
-func (rc *RaceControl) onVersion(version udp.Version) error {
+// OnVersion occurs when the Assetto Corsa Server starts up for the first time.
+func (rc *RaceControl) OnVersion(version udp.Version) error {
 	_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
 		rc.DisconnectedDrivers.Add(driverGUID, driver)
 
@@ -310,9 +327,9 @@ func (rc *RaceControl) onVersion(version udp.Version) error {
 	return rc.broadcaster.Send(version)
 }
 
-// onCarUpdate occurs every udp.RealTimePosInterval and returns car position, speed, etc.
+// OnCarUpdate occurs every udp.RealTimePosInterval and returns car position, speed, etc.
 // drivers top speeds are recorded per lap, as well as their last seen updated.
-func (rc *RaceControl) onCarUpdate(update udp.CarUpdate) (updatedRaceControl bool, err error) {
+func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) (updatedRaceControl bool, err error) {
 	driver, err := rc.findConnectedDriverByCarID(update.CarID)
 
 	if err != nil {
@@ -333,9 +350,9 @@ func (rc *RaceControl) onCarUpdate(update udp.CarUpdate) (updatedRaceControl boo
 	return updatedRaceControl, rc.broadcaster.Send(update)
 }
 
-// onNewSession occurs every new session. If the session is the first in an event and it is not a looped practice,
+// OnNewSession occurs every new session. If the session is the first in an event and it is not a looped practice,
 // then all driver information is cleared.
-func (rc *RaceControl) onNewSession(sessionInfo udp.SessionInfo) error {
+func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 	oldSessionInfo := rc.SessionInfo
 	rc.SessionInfo = sessionInfo
 	rc.SessionStartTime = time.Now()
@@ -384,17 +401,21 @@ func (rc *RaceControl) onNewSession(sessionInfo udp.SessionInfo) error {
 
 	var err error
 
-	rc.TrackInfo, err = GetTrackInfo(sessionInfo.Track, sessionInfo.TrackConfig)
+	trackInfo, err := rc.trackDataGateway.TrackInfo(sessionInfo.Track, sessionInfo.TrackConfig)
 
 	if err != nil {
 		return err
 	}
 
-	rc.TrackMapData, err = LoadTrackMapData(sessionInfo.Track, sessionInfo.TrackConfig)
+	rc.TrackInfo = *trackInfo
+
+	trackMapData, err := rc.trackDataGateway.TrackMap(sessionInfo.Track, sessionInfo.TrackConfig)
 
 	if err != nil {
 		return err
 	}
+
+	rc.TrackMapData = *trackMapData
 
 	logrus.Infof("New session detected: %s at %s (%s)", sessionInfo.Type.String(), sessionInfo.Track, sessionInfo.TrackConfig)
 
@@ -437,18 +458,26 @@ func (rc *RaceControl) requestSessionInfo() {
 		case <-AssettoProcess.Done():
 			rc.sessionInfoTicker.Stop()
 
+			var drivers []*RaceControlDriver
+
 			// the server has just stopped. send disconnect messages for all connected cars.
 			_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
+				// Each takes a read lock, so we cannot call disconnectDriver (which takes a write lock) from inside it.
+				// we must instead append them to a slice and disconnect them outisde the Each call.
+				drivers = append(drivers, driver)
+
+				return nil
+			})
+
+			for _, driver := range drivers {
 				// disconnect the driver
 				err := rc.disconnectDriver(driver)
 
 				if err != nil {
 					logrus.WithError(err).Errorf("Could not disconnect driver: %s (%s)", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
-					return nil
+					continue
 				}
-
-				return nil
-			})
+			}
 		case <-rc.sessionInfoContext.Done():
 			rc.sessionInfoTicker.Stop()
 			return
@@ -459,15 +488,15 @@ func (rc *RaceControl) requestSessionInfo() {
 func (rc *RaceControl) disconnectDriver(driver *RaceControlDriver) error {
 	carInfo := driver.CarInfo
 	carInfo.EventType = udp.EventConnectionClosed
-	return rc.onClientDisconnect(carInfo)
+	return rc.OnClientDisconnect(carInfo)
 }
 
 // driverLastSeenMaxDuration is how long to wait before considering a driver 'timed out'. A timed out driver
 // is force-disconnected.
 var driverLastSeenMaxDuration = time.Second * 5
 
-// onSessionUpdate is called every sessionRequestInterval.
-func (rc *RaceControl) onSessionUpdate(sessionInfo udp.SessionInfo) error {
+// OnSessionUpdate is called every sessionRequestInterval.
+func (rc *RaceControl) OnSessionUpdate(sessionInfo udp.SessionInfo) error {
 	rc.SessionInfo = sessionInfo
 
 	if udp.RealtimePosIntervalMs > 0 {
@@ -496,16 +525,16 @@ func (rc *RaceControl) onSessionUpdate(sessionInfo udp.SessionInfo) error {
 	return nil
 }
 
-// onEndSession is called at the end of every session.
-func (rc *RaceControl) onEndSession(sessionFile udp.EndSession) error {
+// OnEndSession is called at the end of every session.
+func (rc *RaceControl) OnEndSession(sessionFile udp.EndSession) error {
 	rc.sessionInfoCfn()
 
 	return nil
 }
 
-// onClientConnect stores CarID -> DriverGUID mappings. if a driver is known to have previously been in this event,
+// OnClientConnect stores CarID -> DriverGUID mappings. if a driver is known to have previously been in this event,
 // they will be moved from DisconnectedDrivers to ConnectedDrivers.
-func (rc *RaceControl) onClientConnect(client udp.SessionCarInfo) error {
+func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 	rc.CarIDToGUID[client.CarID] = client.DriverGUID
 
 	var driver *RaceControlDriver
@@ -529,8 +558,8 @@ func (rc *RaceControl) onClientConnect(client udp.SessionCarInfo) error {
 	return rc.broadcaster.Send(client)
 }
 
-// onClientDisconnect moves a client from ConnectedDrivers to DisconnectedDrivers.
-func (rc *RaceControl) onClientDisconnect(client udp.SessionCarInfo) error {
+// OnClientDisconnect moves a client from ConnectedDrivers to DisconnectedDrivers.
+func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
 	driver, ok := rc.ConnectedDrivers.Get(client.DriverGUID)
 
 	if !ok {
@@ -563,8 +592,8 @@ func (rc *RaceControl) findConnectedDriverByCarID(carID udp.CarID) (*RaceControl
 	return driver, nil
 }
 
-// onClientLoaded marks a connected client as having loaded in.
-func (rc *RaceControl) onClientLoaded(loadedCar udp.ClientLoaded) error {
+// OnClientLoaded marks a connected client as having loaded in.
+func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 	driver, err := rc.findConnectedDriverByCarID(udp.CarID(loadedCar))
 
 	if err != nil {
@@ -578,10 +607,10 @@ func (rc *RaceControl) onClientLoaded(loadedCar udp.ClientLoaded) error {
 	return rc.broadcaster.Send(loadedCar)
 }
 
-// onLapCompleted occurs every time a driver crosses the line. Lap information is collected for the driver
-// and best lap time and top speed are calculated. onLapCompleted also remembers the car the lap was completed in
+// OnLapCompleted occurs every time a driver crosses the line. Lap information is collected for the driver
+// and best lap time and top speed are calculated. OnLapCompleted also remembers the car the lap was completed in
 // a PreviousCars map on the driver. This is so that lap times between different cars can be compared.
-func (rc *RaceControl) onLapCompleted(lap udp.LapCompleted) error {
+func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 	driver, err := rc.findConnectedDriverByCarID(lap.CarID)
 
 	if err != nil {
@@ -700,8 +729,8 @@ func metersPerSecondToKilometersPerHour(mps float64) float64 {
 	return mps * 3.6
 }
 
-// onCollisionWithCar registers a driver's collision with another car.
-func (rc *RaceControl) onCollisionWithCar(collision udp.CollisionWithCar) error {
+// OnCollisionWithCar registers a driver's collision with another car.
+func (rc *RaceControl) OnCollisionWithCar(collision udp.CollisionWithCar) error {
 	driver, err := rc.findConnectedDriverByCarID(collision.CarID)
 
 	if err != nil {
@@ -725,8 +754,8 @@ func (rc *RaceControl) onCollisionWithCar(collision udp.CollisionWithCar) error 
 	return rc.broadcaster.Send(collision)
 }
 
-// onCollisionWithEnvironment registers a driver's collision with the environment.
-func (rc *RaceControl) onCollisionWithEnvironment(collision udp.CollisionWithEnvironment) error {
+// OnCollisionWithEnvironment registers a driver's collision with the environment.
+func (rc *RaceControl) OnCollisionWithEnvironment(collision udp.CollisionWithEnvironment) error {
 	driver, err := rc.findConnectedDriverByCarID(collision.CarID)
 
 	if err != nil {
