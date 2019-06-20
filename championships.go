@@ -480,14 +480,19 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 		return false, nil, err
 	}
 
+	var oldEntrantTeam string
+
 	for _, class := range c.Classes {
 		for _, entrant := range class.Entrants {
 			if entrant.GUID == potentialEntrant.GetGUID() {
 				// we found the entrant, but there's a possibility that they changed cars. empty out their
 				// information on this entrant slot and then look for it again in the next loop
+				oldEntrantTeam = entrant.Team
+
 				entrant.GUID = ""
 				entrant.Name = ""
 				entrant.Team = ""
+				break
 			}
 		}
 	}
@@ -500,6 +505,11 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 			entrant.Model = potentialEntrant.GetCar()
 			entrant.Skin = potentialEntrant.GetSkin()
 			entrant.Team = potentialEntrant.GetTeam()
+
+			// #386: don't replace a team with no team.
+			if entrant.Team == "" {
+				entrant.Team = oldEntrantTeam
+			}
 
 			logrus.Infof("Championship entrant: %s (%s) has been assigned to %s in %s", entrant.Name, entrant.GUID, carNum, classForCar.Name)
 
