@@ -1,3 +1,10 @@
+v1.3.3
+------
+
+Fixes:
+
+* Open Championships will no longer empty the team name of a driver that has a team name specified.
+
 v1.3.2
 ------
 
