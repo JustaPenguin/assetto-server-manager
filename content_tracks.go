@@ -191,3 +191,77 @@ func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
+
+// disableDRSFile is a file with a tiny DRS zone that is too small to activate DRS in.
+const disableDRSFile = `
+[ZONE_0]
+DETECTION=0.899
+START=0
+END=0.0001 
+`
+
+const (
+	drsZonesFilename       = "drs_zones.ini"
+	drsZonesBackupFilename = "drs_zones.ini.orig"
+)
+
+func ToggleDRSForTrack(track, layout string, drsEnabled bool) error {
+	trackPath := filepath.Join(ServerInstallPath, "content", "tracks", track, layout, "data")
+	drsBackupFile := filepath.Join(trackPath, drsZonesBackupFilename)
+	drsFile := filepath.Join(trackPath, drsZonesFilename)
+
+	// if DRS is enabled
+	if drsEnabled {
+		// if the backup file exists, then rename it back into place
+		if _, err := os.Stat(drsBackupFile); err == nil {
+			logrus.Infof("Enabling DRS for %s (%s)", track, layout)
+			err := os.Rename(drsBackupFile, drsFile)
+
+			if err != nil && !os.IsNotExist(err) {
+				return err
+			}
+
+			return nil
+		} else if os.IsNotExist(err) {
+			// there is no backup file. read the existing DRS file. if it's equal to disableDRSFile then we just want to delete it.
+			currentDRSContents, err := ioutil.ReadFile(drsFile)
+
+			if os.IsNotExist(err) {
+				logrus.Infof("Track: %s (%s) has no drs file. DRS anywhere will be enabled.", track, layout)
+				return nil
+			} else if err != nil {
+				return err
+			}
+
+			if string(currentDRSContents) == disableDRSFile {
+				// the track has no original drs_zones.ini, just remove our file.
+				logrus.Infof("Track: %s (%s) has no drs file. DRS anywhere will be enabled.", track, layout)
+				err := os.Remove(drsFile)
+
+				if err != nil && !os.IsNotExist(err) {
+					return err
+				}
+
+				return nil
+			}
+
+			return nil
+		} else { // err != nil
+			return err
+		}
+	} else {
+		logrus.Infof("Disabling DRS for: %s (%s)", track, layout)
+
+		if _, err := os.Stat(drsBackupFile); os.IsNotExist(err) {
+			// drs is not enabled, move the drs_zones file to backup
+			if err := os.Rename(drsFile, drsBackupFile); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+		} else if err != nil {
+			return err
+		}
+
+		// now write the disabled-drs file
+		return ioutil.WriteFile(drsFile, []byte(disableDRSFile), 0644)
+	}
+}
