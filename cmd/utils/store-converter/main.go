@@ -1,9 +1,47 @@
 package main
 
-import servermanager "github.com/cj123/assetto-server-manager"
+import (
+	"flag"
+	"fmt"
+	"os"
+
+	"github.com/cj123/assetto-server-manager"
+	"github.com/etcd-io/bbolt"
+)
+
+var (
+	oldStore, newStore string
+)
+
+func init() {
+	flag.StringVar(&oldStore, "old", "", "the store to convert (bolt format)")
+	flag.StringVar(&newStore, "new", "", "the store to output (json format)")
+	flag.Parse()
+}
 
 func main() {
-	old := servermanager.NewBoltStore()
+	if oldStore == "" || newStore == "" {
+		fmt.Println("you must specify a store. run with help args to find out more")
+		os.Exit(1)
+	}
+
+	bdb, err := bbolt.Open(oldStore, 0755, nil)
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer bdb.Close()
+
+	old := servermanager.NewBoltStore(bdb).(*servermanager.BoltStore)
+	old.ShowDeleted = true
+	new := servermanager.NewJSONStore(newStore)
+
+	err = convertStore(old, new)
+
+	if err != nil {
+		panic(err)
+	}
 }
 
 func convertStore(old servermanager.Store, new servermanager.Store) error {
@@ -72,7 +110,7 @@ func convertStore(old servermanager.Store, new servermanager.Store) error {
 		return err
 	}
 
-	err = old.UpsertLiveFrames(oldFrames)
+	err = new.UpsertLiveFrames(oldFrames)
 
 	if err != nil {
 		return err
@@ -91,6 +129,37 @@ func convertStore(old servermanager.Store, new servermanager.Store) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	// meta
+	accOpts := &servermanager.ServerAccountOptions{
+		IsOpen: false,
+	}
+
+	err = old.GetMeta("server-account-options", &accOpts)
+
+	if err != nil {
+		return err
+	}
+
+	err = new.SetMeta("server-account-options", accOpts)
+
+	if err != nil {
+		return err
+	}
+
+	var version int
+
+	err = old.GetMeta("version", &version)
+
+	if err != nil {
+		return err
+	}
+
+	err = new.SetMeta("version", version)
+
+	if err != nil {
+		return err
 	}
 
 	return nil

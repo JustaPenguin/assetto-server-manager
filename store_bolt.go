@@ -10,6 +10,8 @@ import (
 
 type BoltStore struct {
 	db *bbolt.DB
+
+	ShowDeleted bool
 }
 
 func NewBoltStore(db *bbolt.DB) Store {
@@ -112,7 +114,7 @@ func (rs *BoltStore) ListCustomRaces() ([]*CustomRace, error) {
 				return err
 			}
 
-			if !race.Deleted.IsZero() {
+			if !race.Deleted.IsZero() && !rs.ShowDeleted {
 				// soft deleted race, move on
 				return nil
 			}
@@ -384,7 +386,7 @@ func (rs *BoltStore) ListChampionships() ([]*Championship, error) {
 				return err
 			}
 
-			if !championship.Deleted.IsZero() {
+			if !championship.Deleted.IsZero() && !rs.ShowDeleted {
 				// championship deleted
 				return nil // continue
 			}
@@ -473,7 +475,7 @@ func (rs *BoltStore) ListAccounts() ([]*Account, error) {
 				return err
 			}
 
-			if !account.Deleted.IsZero() {
+			if !account.Deleted.IsZero() && !rs.ShowDeleted {
 				// account deleted
 				return nil // continue
 			}
