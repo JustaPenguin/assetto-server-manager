@@ -45,7 +45,6 @@ export class RaceControl {
     private readonly liveMap: LiveMap = new LiveMap(this);
     private readonly liveTimings: LiveTimings = new LiveTimings(this, this.liveMap);
     private readonly $eventTitle: JQuery<HTMLHeadElement>;
-
     public status: RaceControlData;
 
     constructor() {
@@ -56,8 +55,13 @@ export class RaceControl {
             return;
         }
 
+        // enable wide-mode
+        $(".container").attr("class", "container-fluid");
+
         let ws = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/api/race-control");
         ws.onmessage = this.handleWebsocketMessage.bind(this);
+
+        setInterval(this.showEventCompletion.bind(this), 1000);
     }
 
     private handleWebsocketMessage(ev: MessageEvent): void {
@@ -71,6 +75,8 @@ export class RaceControl {
             case EventRaceControl:
                 this.status = new RaceControlData(message.Message);
                 this.$eventTitle.text(RaceControl.getSessionType(this.status.SessionInfo.Type) + " at " + this.status.TrackInfo!.name);
+
+                this.buildSessionInfo();
                 break;
         }
 
@@ -91,6 +97,75 @@ export class RaceControl {
             default:
                 return "Unknown session";
         }
+    }
+
+    private showEventCompletion() {
+        let timeRemaining = "";
+
+        // Get lap/laps or time/totalTime
+        if (this.status.SessionInfo.Time > 0) {
+            timeRemaining = msToTime(this.status.SessionInfo.Time * 60 * 1000 - moment.duration(moment().diff(this.status.SessionStartTime)).asMilliseconds(), false, false);
+        } else if (this.status.SessionInfo.Laps > 0) {
+            let lapsCompleted = 0;
+
+            if (this.status.ConnectedDrivers && this.status.ConnectedDrivers.GUIDsInPositionalOrder.length > 0) {
+                let driver = this.status.ConnectedDrivers.Drivers[this.status.ConnectedDrivers.GUIDsInPositionalOrder[0]];
+
+                if (driver.NumLaps > 0) {
+                    lapsCompleted = driver.NumLaps;
+                }
+            }
+
+            timeRemaining = this.status.SessionInfo.Laps - lapsCompleted + " laps remaining";
+        }
+
+        let $raceTime = $("#race-time");
+        $raceTime.text(timeRemaining);
+    }
+
+    private buildSessionInfo() {
+        let $roadTempWrapper = $("#road-temp-wrapper");
+        $roadTempWrapper.attr("style", "background-color: " + getColorForPercentage(this.status.SessionInfo.RoadTemp / 40));
+        $roadTempWrapper.attr("data-original-title", "Road Temp: " + this.status.SessionInfo.RoadTemp + "°C");
+
+        let $roadTempText = $("#road-temp-text");
+        $roadTempText.text(this.status.SessionInfo.RoadTemp + "°C");
+
+        let $ambientTempWrapper = $("#ambient-temp-wrapper");
+        $ambientTempWrapper.attr("style", "background-color: " + getColorForPercentage(this.status.SessionInfo.AmbientTemp / 40));
+        $ambientTempWrapper.attr("data-original-title", "Ambient Temp: " + this.status.SessionInfo.AmbientTemp + "°C");
+
+        let $ambientTempText = $("#ambient-temp-text");
+        $ambientTempText.text(this.status.SessionInfo.AmbientTemp + "°C");
+
+        // @TODO only needs changing every new session or on init (i.e. when no this.status)
+        let $currentWeather = $("#weatherImage");
+
+        // Fix for sol weathers with time info in this format:
+        // sol_05_Broken%20Clouds_type=18_time=0_mult=20_start=1551792960/preview.jpg
+        let pathCorrected = this.status.SessionInfo.WeatherGraphics.split("_");
+
+        for (let i = 0; i < pathCorrected.length; i++) {
+            if (pathCorrected[i].indexOf("type=") !== -1) {
+                pathCorrected.splice(i);
+                break;
+            }
+        }
+
+        let pathFinal = pathCorrected.join("_");
+
+        $.get("/content/weather/" + pathFinal + "/preview.jpg").done(function () {
+            // preview for skin exists
+            $currentWeather.attr("src", "/content/weather/" + pathFinal + "/preview.jpg");
+        }).fail(function () {
+            // preview doesn't exist, load default fall back image
+            $currentWeather.attr("src", "/static/img/no-preview-general.png");
+        });
+
+        $currentWeather.attr("alt", "Current Weather: " + prettifyName(this.status.SessionInfo.WeatherGraphics, false));
+
+        $("#event-name").text(this.status.SessionInfo.Name);
+        $("#event-type").text(RaceControl.getSessionType(this.status.SessionInfo.Type));
     }
 }
 
@@ -350,12 +425,14 @@ class LiveTimings implements WebsocketHandler {
 
     private readonly $connectedDriversTable: JQuery<HTMLTableElement>;
     private readonly $disconnectedDriversTable: JQuery<HTMLTableElement>;
+    private readonly $storedTimes: JQuery<HTMLDivElement>;
 
     constructor(raceControl: RaceControl, liveMap: LiveMap) {
         this.raceControl = raceControl;
         this.liveMap = liveMap;
         this.$connectedDriversTable = $("#live-table");
         this.$disconnectedDriversTable = $("#live-table-disconnected");
+        this.$storedTimes = $("#stored-times");
 
         setInterval(this.populateConnectedDrivers.bind(this), 1000);
 
@@ -379,9 +456,9 @@ class LiveTimings implements WebsocketHandler {
                     }
 
                     if (this.raceControl.status.DisconnectedDrivers!.GUIDsInPositionalOrder.length > 0) {
-                        this.$disconnectedDriversTable.show();
+                        this.$storedTimes.show();
                     } else {
-                        this.$disconnectedDriversTable.hide();
+                        this.$storedTimes.hide();
                     }
                 }
 
@@ -409,8 +486,6 @@ class LiveTimings implements WebsocketHandler {
     private addDriverToTable(driver: Driver, $table: JQuery<HTMLTableElement>): void {
         const addingDriverToDisconnectedTable = ($table === this.$disconnectedDriversTable);
 
-        // remove any previous rows
-        $("#" + driver.CarInfo.DriverGUID).remove();
 
         const $tr = $("<tr/>").attr({"id": driver.CarInfo.DriverGUID});
 
@@ -485,11 +560,11 @@ class LiveTimings implements WebsocketHandler {
         const $tdTopSpeedBestLap = $("<td/>").text(driver.TopSpeedBestLap ? driver.TopSpeedBestLap.toFixed(2) + "Km/h" : "");
         $tr.append($tdTopSpeedBestLap);
 
-        // events
-        const $tdEvents = $("<td/>");
-
         if (!addingDriverToDisconnectedTable) {
-            if (driver.LoadedTime && moment(driver.LoadedTime).add("10s").isSameOrAfter(moment())) {
+            // events
+            const $tdEvents = $("<td/>");
+
+            if (moment(driver.LoadedTime).add("10s").isSameOrAfter(moment())) {
                 // car just loaded
                 let $tag = $("<span/>");
                 $tag.attr({'class': 'badge badge-success live-badge'});
@@ -500,7 +575,7 @@ class LiveTimings implements WebsocketHandler {
 
             if (driver.Collisions) {
                 for (const collision of driver.Collisions) {
-                    if (collision.Time && moment(collision.Time).add("10s").isSameOrAfter(moment())) {
+                    if (moment(collision.Time).add("10s").isSameOrAfter(moment())) {
                         let $tag = $("<span/>");
                         $tag.attr({'class': 'badge badge-danger live-badge'});
                         $tag.text(
@@ -511,9 +586,13 @@ class LiveTimings implements WebsocketHandler {
                     }
                 }
             }
+
+            $tr.append($tdEvents);
         }
 
-        $tr.append($tdEvents);
+        // remove any previous rows
+        $("#" + driver.CarInfo.DriverGUID).remove();
+
         $table.append($tr);
     }
 
@@ -542,3 +621,33 @@ function getAbbreviation(name: string): string {
 
     return lastName.slice(0, 3).toUpperCase();
 }
+
+function getColorForPercentage(pct: number) {
+    let i;
+
+    for (i = 1; i < percentColors.length - 1; i++) {
+        if (pct < percentColors[i].pct) {
+            break;
+        }
+    }
+
+    let lower = percentColors[i - 1];
+    let upper = percentColors[i];
+    let range = upper.pct - lower.pct;
+    let rangePct = (pct - lower.pct) / range;
+    let pctLower = 1 - rangePct;
+    let pctUpper = rangePct;
+    let color = {
+        r: Math.floor(lower.color.r * pctLower + upper.color.r * pctUpper),
+        g: Math.floor(lower.color.g * pctLower + upper.color.g * pctUpper),
+        b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper)
+    };
+
+    return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
+}
+
+let percentColors = [
+    {pct: 0.25, color: {r: 0x00, g: 0x00, b: 0xff}},
+    {pct: 0.625, color: {r: 0x00, g: 0xff, b: 0}},
+    {pct: 1.0, color: {r: 0xff, g: 0x00, b: 0}}
+];

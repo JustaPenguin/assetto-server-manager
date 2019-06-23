@@ -394,7 +394,7 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 
 	// clear out last lap completed time each new session
 	_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
-		driver.LastLapCompletedTime = time.Time{}
+		driver.LastLapCompletedTime = time.Now()
 
 		return nil
 	})

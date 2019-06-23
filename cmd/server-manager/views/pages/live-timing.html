@@ -10,9 +10,54 @@
 
 {{ define "content" }}
     {{ with .RaceDetails }}
-        <h1 class="text-center" id="event-title"></h1>
 
-        {{ $trackInfo := trackInfo .RaceConfig.Track .RaceConfig.TrackLayout }}
+        <div class="text-center">
+            <h1 class="text-center" id="event-title"></h1>
+
+            <span id="race-time" class="mt-2 badge badge-primary" style="font-size: 1em;"></span>
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-sm-6">
+                <div class="card" id="event-details">
+                    <div class="card-header">
+                        Event in Progress
+                    </div>
+
+                    <div class="card-body">
+                        <div id="current-session" class="mt-2 font-weight-bold"></div>
+                        <div id="live-info-general" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6">
+                <div class="card" id="track-details">
+                    <div class="card-header">
+                        Track Information
+                    </div>
+
+                    <div class="card-body">
+                        <img class="img img-fluid"
+                             id="trackImage"
+                             src="/static/img/no-preview-general.png"
+                        >
+                        <img class="img img-fluid" id="weatherImage" src="/static/img/no-preview-general.png" alt="Current Weather">
+
+                        <div id="road-temp-wrapper" data-toggle="tooltip"
+                             title data-original-title="Road Temp">
+                            <div id="road-temp-text"></div>
+                            <img src="/static/img/temp-road.png" alt="Road Temp" id="road-temp">
+                        </div>
+                        <div id="ambient-temp-wrapper" class="mt-1" data-toggle="tooltip"
+                             title data-original-title="Ambient Temp">
+                            <div id="ambient-temp-text"></div>
+                            <img src="/static/img/temp-ambient.png" alt="Ambient Temp" id="ambient-temp">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="row mt-5">
             <div class="col-lg-7 col-md-12">
@@ -35,19 +80,21 @@
                     </table>
                 </div>
 
-                <h4 style="padding-left: 1rem; display: none"id="stored-times-header">Stored Times</h4>
-                <div class="table-responsive table-sm p-3">
-                    <table style="display: none;" id="live-table-disconnected" class="table table-bordered table-striped">
-                        <tr>
-                            <th>Driver</th>
-                            <th>Car</th>
-                            <th>Best Lap</th>
-                            <th>Laps Completed</th>
-                            <th>Top Speed</th>
-                        </tr>
+                <div id="stored-times" style="display: none">
+                    <h4>Stored Times</h4>
+                    <div class="table-responsive table-sm">
+                        <table id="live-table-disconnected" class="table table-bordered table-striped">
+                            <tr>
+                                <th>Driver</th>
+                                <th>Car</th>
+                                <th>Best Lap</th>
+                                <th>Laps Completed</th>
+                                <th>Top Speed</th>
+                            </tr>
 
-                        <!-- trs for drivers are appended by javascript -->
-                    </table>
+                            <!-- trs for drivers are appended by javascript -->
+                        </table>
+                    </div>
                 </div>
             </div>
 
