@@ -30,8 +30,8 @@ $(document).ready(function () {
     });
 
     serverLogs.init();
-    liveTiming.init();
-    liveMap.init();
+    //liveTiming.init();
+    //liveMap.init();
 
 
     // init bootstrap-switch
