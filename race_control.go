@@ -157,7 +157,7 @@ type TrackDataGateway interface {
 	TrackMap(name, layout string) (*TrackMapData, error)
 }
 
-type filesystemTrackData struct {}
+type filesystemTrackData struct{}
 
 func (filesystemTrackData) TrackMap(name, layout string) (*TrackMapData, error) {
 	return LoadTrackMapData(name, layout)
@@ -243,7 +243,7 @@ type Collision struct {
 
 func NewRaceControl(broadcaster Broadcaster, trackDataGateway TrackDataGateway) *RaceControl {
 	rc := &RaceControl{
-		broadcaster: broadcaster,
+		broadcaster:      broadcaster,
 		trackDataGateway: trackDataGateway,
 	}
 
@@ -357,7 +357,7 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 	rc.SessionInfo = sessionInfo
 	rc.SessionStartTime = time.Now()
 
-	deleteCars := false
+	deleteCars := true
 	emptyCarInfo := false
 
 	if sessionInfo.CurrentSessionIndex != 0 || oldSessionInfo.Track == sessionInfo.Track && oldSessionInfo.TrackConfig == sessionInfo.TrackConfig {
@@ -527,7 +527,9 @@ func (rc *RaceControl) OnSessionUpdate(sessionInfo udp.SessionInfo) error {
 
 // OnEndSession is called at the end of every session.
 func (rc *RaceControl) OnEndSession(sessionFile udp.EndSession) error {
-	rc.sessionInfoCfn()
+	if rc.sessionInfoCfn != nil {
+		rc.sessionInfoCfn()
+	}
 
 	return nil
 }

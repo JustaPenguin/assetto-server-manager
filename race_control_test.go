@@ -1,9 +1,11 @@
 package servermanager
 
 import (
-	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/cj123/assetto-server-manager/pkg/udp"
 )
 
 var (
@@ -246,49 +248,461 @@ func (nilTrackData) TrackMap(name, layout string) (*TrackMapData, error) {
 }
 
 func TestRaceControl_OnNewSession(t *testing.T) {
-	raceControl := NewRaceControl(NilBroadcaster{}, nilTrackData{})
+	t.Run("New session, no previous data", func(t *testing.T) {
+		raceControl := NewRaceControl(NilBroadcaster{}, nilTrackData{})
 
-	if err := raceControl.OnVersion(udp.Version(4)); err != nil {
-		t.Error(err)
-		return
-	}
+		if err := raceControl.OnVersion(udp.Version(4)); err != nil {
+			t.Error(err)
+			return
+		}
 
-	// new session
-	err := raceControl.OnNewSession(udp.SessionInfo{
-		Version:             4,
-		SessionIndex:        0,
-		CurrentSessionIndex: 0,
-		SessionCount:        3,
-		ServerName:          "Test Server",
-		Track:               "ks_laguna_seca",
-		TrackConfig:         "",
-		Name:                "Test Practice Session",
-		Type:                udp.SessionTypePractice,
-		Time:                10,
-		Laps:                0,
-		WaitTime:            120,
-		AmbientTemp:         12,
-		RoadTemp:            16,
-		WeatherGraphics:     "01_clear",
-		ElapsedMilliseconds: 10,
+		// new session
+		err := raceControl.OnNewSession(udp.SessionInfo{
+			Version:             4,
+			SessionIndex:        0,
+			CurrentSessionIndex: 0,
+			SessionCount:        3,
+			ServerName:          "Test Server",
+			Track:               "ks_laguna_seca",
+			TrackConfig:         "",
+			Name:                "Test Practice Session",
+			Type:                udp.SessionTypePractice,
+			Time:                10,
+			Laps:                0,
+			WaitTime:            120,
+			AmbientTemp:         12,
+			RoadTemp:            16,
+			WeatherGraphics:     "01_clear",
+			ElapsedMilliseconds: 10,
 
-		EventType: udp.EventNewSession,
+			EventType: udp.EventNewSession,
+		})
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		time.Sleep(time.Millisecond * 10)
+
+		// stop the session info ticker
+		defer raceControl.sessionInfoCfn()
+
+		// this is a completely new session, connected drivers and disconnected drivers should be empty
+		if raceControl.ConnectedDrivers.Len() > 0 || raceControl.DisconnectedDrivers.Len() > 0 {
+			t.Logf("Connected or disconnected drivers has entries, should be len 0")
+			t.Fail()
+			return
+		}
 	})
 
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	t.Run("New session, drivers join, then another new session. Drivers should have lap times cleared but not be disconnected", func(t *testing.T) {
+		raceControl := NewRaceControl(NilBroadcaster{}, nilTrackData{})
 
-	time.Sleep(time.Millisecond * 10)
+		if err := raceControl.OnVersion(udp.Version(4)); err != nil {
+			t.Error(err)
+			return
+		}
 
-	// stop the session info ticker
-	defer raceControl.sessionInfoCfn()
+		// new session
+		err := raceControl.OnNewSession(udp.SessionInfo{
+			Version:             4,
+			SessionIndex:        0,
+			CurrentSessionIndex: 0,
+			SessionCount:        3,
+			ServerName:          "Test Server",
+			Track:               "ks_laguna_seca",
+			TrackConfig:         "",
+			Name:                "Test Practice Session",
+			Type:                udp.SessionTypePractice,
+			Time:                10,
+			Laps:                0,
+			WaitTime:            120,
+			AmbientTemp:         12,
+			RoadTemp:            16,
+			WeatherGraphics:     "01_clear",
+			ElapsedMilliseconds: 10,
 
-	// this is a completely new session, connected drivers and disconnected drivers should be empty
-	if raceControl.ConnectedDrivers.Len() > 0 || raceControl.DisconnectedDrivers.Len() > 0 {
-		t.Logf("Connected or disconnected drivers has entries, should be len 0")
-		t.Fail()
-		return
-	}
+			EventType: udp.EventNewSession,
+		})
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		time.Sleep(time.Millisecond * 10)
+
+		// stop the session info ticker
+		defer raceControl.sessionInfoCfn()
+
+		// join and load all drivers
+		for _, entrant := range drivers {
+			if err := raceControl.OnClientConnect(entrant); err != nil {
+				t.Error(err)
+				return
+			}
+
+			if err := raceControl.OnClientLoaded(udp.ClientLoaded(entrant.CarID)); err != nil {
+				t.Error(err)
+				return
+			}
+		}
+
+		if raceControl.ConnectedDrivers.Len() != len(drivers) || raceControl.DisconnectedDrivers.Len() > 0 {
+			t.Logf("Incorrect driver listings")
+			t.Fail()
+			return
+		}
+
+		// do some laps for each entrant
+		for i := 0; i < 100; i++ {
+			driver := drivers[i%len(drivers)]
+
+			err := raceControl.OnLapCompleted(udp.LapCompleted{
+				CarID:   driver.CarID,
+				LapTime: uint32(rand.Intn(1000000)),
+				Cuts:    0,
+			})
+
+			if err != nil {
+				t.Error(err)
+				return
+			}
+		}
+
+		// disconnect one of the drivers
+		disconnectedDriver := drivers[len(drivers)-1]
+		disconnectedDriver.EventType = udp.EventConnectionClosed
+		err = raceControl.OnClientDisconnect(disconnectedDriver)
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		err = raceControl.OnEndSession(udp.EndSession("FILE.json"))
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		// now go to the next session, lap times should be removed from all drivers, but all should still be connected.
+		err = raceControl.OnNewSession(udp.SessionInfo{
+			Version:             4,
+			SessionIndex:        1,
+			CurrentSessionIndex: 1,
+			SessionCount:        3,
+			ServerName:          "Test Server",
+			Track:               "ks_laguna_seca",
+			TrackConfig:         "",
+			Name:                "Test Practice Session",
+			Type:                udp.SessionTypeQualifying,
+			Time:                10,
+			Laps:                0,
+			WaitTime:            120,
+			AmbientTemp:         12,
+			RoadTemp:            16,
+			WeatherGraphics:     "02_cloudy",
+			ElapsedMilliseconds: 10,
+
+			EventType: udp.EventNewSession,
+		})
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if raceControl.ConnectedDrivers.Len() != len(drivers)-1 || raceControl.DisconnectedDrivers.Len() != 1 {
+			t.Log("Invalid driver list lengths. Expected all drivers to still be in driver lists.")
+			t.Fail()
+			return
+		}
+
+		for _, driver := range raceControl.ConnectedDrivers.Drivers {
+			if driver.BestLap != 0 || driver.TopSpeedBestLap != 0 || driver.Split != "" || driver.Position != 0 || len(driver.Collisions) > 0 {
+				t.Log("Connected driver data carried across from previous session")
+				t.Fail()
+				return
+			}
+		}
+
+		for _, driver := range raceControl.DisconnectedDrivers.Drivers {
+			if driver.BestLap != 0 || driver.TopSpeedBestLap != 0 || driver.Split != "" || driver.Position != 0 || len(driver.Collisions) > 0 {
+				t.Log("Disconnected driver data carried across from previous session")
+				t.Fail()
+				return
+			}
+		}
+	})
+
+	t.Run("Looped practice event, all cars and session information should be kept", func(t *testing.T) {
+		raceControl := NewRaceControl(NilBroadcaster{}, nilTrackData{})
+
+		if err := raceControl.OnVersion(udp.Version(4)); err != nil {
+			t.Error(err)
+			return
+		}
+
+		// new session
+		err := raceControl.OnNewSession(udp.SessionInfo{
+			Version:             4,
+			SessionIndex:        0,
+			CurrentSessionIndex: 0,
+			SessionCount:        1,
+			ServerName:          "Test Server",
+			Track:               "ks_laguna_seca",
+			TrackConfig:         "",
+			Name:                "Test Looped Practice Session",
+			Type:                udp.SessionTypePractice,
+			Time:                10,
+			Laps:                0,
+			WaitTime:            120,
+			AmbientTemp:         12,
+			RoadTemp:            16,
+			WeatherGraphics:     "01_clear",
+			ElapsedMilliseconds: 10,
+
+			EventType: udp.EventNewSession,
+		})
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		time.Sleep(time.Millisecond * 10)
+
+		// stop the session info ticker
+		defer raceControl.sessionInfoCfn()
+
+		// join and load all drivers
+		for _, entrant := range drivers {
+			if err := raceControl.OnClientConnect(entrant); err != nil {
+				t.Error(err)
+				return
+			}
+
+			if err := raceControl.OnClientLoaded(udp.ClientLoaded(entrant.CarID)); err != nil {
+				t.Error(err)
+				return
+			}
+		}
+
+		if raceControl.ConnectedDrivers.Len() != len(drivers) || raceControl.DisconnectedDrivers.Len() > 0 {
+			t.Logf("Incorrect driver listings")
+			t.Fail()
+			return
+		}
+
+		// do some laps for each entrant
+		for i := 0; i < 100; i++ {
+			driver := drivers[i%len(drivers)]
+
+			err := raceControl.OnLapCompleted(udp.LapCompleted{
+				CarID:   driver.CarID,
+				LapTime: uint32(rand.Intn(1000000)),
+				Cuts:    0,
+			})
+
+			if err != nil {
+				t.Error(err)
+				return
+			}
+		}
+
+		// disconnect one of the drivers
+		disconnectedDriver := drivers[len(drivers)-1]
+		disconnectedDriver.EventType = udp.EventConnectionClosed
+		err = raceControl.OnClientDisconnect(disconnectedDriver)
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		err = raceControl.OnEndSession(udp.EndSession("FILE.json"))
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		// now go to the next session, lap times should be removed from all drivers, but all should still be connected.
+		err = raceControl.OnNewSession(udp.SessionInfo{
+			Version:             4,
+			SessionIndex:        0,
+			CurrentSessionIndex: 0,
+			SessionCount:        1,
+			ServerName:          "Test Server",
+			Track:               "ks_laguna_seca",
+			TrackConfig:         "",
+			Name:                "Test Looped Practice Session",
+			Type:                udp.SessionTypePractice,
+			Time:                10,
+			Laps:                0,
+			WaitTime:            120,
+			AmbientTemp:         12,
+			RoadTemp:            16,
+			WeatherGraphics:     "02_cloudy",
+			ElapsedMilliseconds: 10,
+
+			EventType: udp.EventNewSession,
+		})
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if raceControl.ConnectedDrivers.Len() != len(drivers)-1 || raceControl.DisconnectedDrivers.Len() != 1 {
+			t.Log("Invalid driver list lengths. Expected all drivers to still be in driver lists.")
+			t.Fail()
+			return
+		}
+
+		for _, driver := range raceControl.ConnectedDrivers.Drivers {
+			if driver.BestLap == 0 || driver.Position == 0 || driver.LastLap == 0 {
+				t.Log("Connected driver data not carried across from previous session")
+				t.Fail()
+				return
+			}
+		}
+
+		for _, driver := range raceControl.DisconnectedDrivers.Drivers {
+			if driver.BestLap == 0 {
+				t.Log("Disonnected driver data not carried across from previous session")
+				t.Fail()
+				return
+			}
+		}
+	})
+
+	t.Run("Two separate event progressions", func(t *testing.T) {
+		raceControl := NewRaceControl(NilBroadcaster{}, nilTrackData{})
+
+		if err := raceControl.OnVersion(udp.Version(4)); err != nil {
+			t.Error(err)
+			return
+		}
+
+		// new session
+		err := raceControl.OnNewSession(udp.SessionInfo{
+			Version:             4,
+			SessionIndex:        0,
+			CurrentSessionIndex: 0,
+			SessionCount:        3,
+			ServerName:          "Test Server",
+			Track:               "ks_laguna_seca",
+			TrackConfig:         "",
+			Name:                "Test Practice Session",
+			Type:                udp.SessionTypePractice,
+			Time:                10,
+			Laps:                0,
+			WaitTime:            120,
+			AmbientTemp:         12,
+			RoadTemp:            16,
+			WeatherGraphics:     "01_clear",
+			ElapsedMilliseconds: 10,
+
+			EventType: udp.EventNewSession,
+		})
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		time.Sleep(time.Millisecond * 10)
+
+		// stop the session info ticker
+		defer raceControl.sessionInfoCfn()
+
+		// join and load all drivers
+		for _, entrant := range drivers {
+			if err := raceControl.OnClientConnect(entrant); err != nil {
+				t.Error(err)
+				return
+			}
+
+			if err := raceControl.OnClientLoaded(udp.ClientLoaded(entrant.CarID)); err != nil {
+				t.Error(err)
+				return
+			}
+		}
+
+		if raceControl.ConnectedDrivers.Len() != len(drivers) || raceControl.DisconnectedDrivers.Len() > 0 {
+			t.Logf("Incorrect driver listings")
+			t.Fail()
+			return
+		}
+
+		// do some laps for each entrant
+		for i := 0; i < 100; i++ {
+			driver := drivers[i%len(drivers)]
+
+			err := raceControl.OnLapCompleted(udp.LapCompleted{
+				CarID:   driver.CarID,
+				LapTime: uint32(rand.Intn(1000000)),
+				Cuts:    0,
+			})
+
+			if err != nil {
+				t.Error(err)
+				return
+			}
+		}
+
+		// disconnect one of the drivers
+		disconnectedDriver := drivers[len(drivers)-1]
+		disconnectedDriver.EventType = udp.EventConnectionClosed
+		err = raceControl.OnClientDisconnect(disconnectedDriver)
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		err = raceControl.OnEndSession(udp.EndSession("FILE.json"))
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		// now go to the next session, lap times should be removed from all drivers, but all should still be connected.
+		err = raceControl.OnNewSession(udp.SessionInfo{
+			Version:             4,
+			SessionIndex:        0,
+			CurrentSessionIndex: 0,
+			SessionCount:        1,
+			ServerName:          "Test Server",
+			Track:               "spa",
+			TrackConfig:         "",
+			Name:                "Test Practice Session",
+			Type:                udp.SessionTypeQualifying,
+			Time:                10,
+			Laps:                0,
+			WaitTime:            120,
+			AmbientTemp:         12,
+			RoadTemp:            16,
+			WeatherGraphics:     "02_cloudy",
+			ElapsedMilliseconds: 10,
+
+			EventType: udp.EventNewSession,
+		})
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if raceControl.ConnectedDrivers.Len() != 0 || raceControl.DisconnectedDrivers.Len() != 0 {
+			t.Log("Invalid driver list lengths. Expected 0 drivers to still be in driver lists.")
+			t.Fail()
+			return
+		}
+	})
 }
