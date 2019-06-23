@@ -1,3 +1,34 @@
+v1.3.2
+------
+
+**Please note, this release contains breaking changes for run_on_start in config.yml**. If you are using run_on_start,
+you need to read the following:
+
+Each run_on_start command is now run from the directory that the binary file is in. 
+For example, ./stracker/stracker_linux_x86/stracker --stracker_ini stracker-default.ini now actually performs the following two commands:
+
+1. cd ./stracker/stracker_linux_x86
+2. ./stracker --stracker_ini stracker-default.ini
+
+This means that previous configuration entries will need updating! The config.example.yml contains updated examples for how this might work.
+
+Added:
+
+* Plugins are now run from the directory that their executable file is in. Please read the above note for more information.
+* Results overviews now show the tyre which was used to complete the driver's fastest lap of that session.
+* Added per-Event points breakdowns to Championships!
+* Server Logs are now only accessible by users in the "Write" group or above.
+
+Fixes:
+
+* Corrected the sizing of the "Remove IFrame" button on the Live Timings page.
+* Corrected the sizing and positioning of the Live Map when the page is resized.
+* Added an explanation as to why the UDP ports specified in Server Options do not match the ones in the server_cfg.ini. 
+* Fixes a bug where the EntryList was limited to 18 entrants in Custom Races.
+* AutoFill entrants are now alphabetically sorted.
+* Laps which have Cuts > 0 are now excluded from "Best Lap" in Live Timings
+* Fixes misleading times in the Live Timings stored times table by adding leading zeroes to millisecond values under 100ms.
+
 v1.3.1
 ------
 

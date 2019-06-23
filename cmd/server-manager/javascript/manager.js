@@ -183,13 +183,52 @@ let liveMap = {
 
         let $imgContainer = $map.find("img");
 
-        $(window).resize(function () {
+        function correctMapDimensions() {
             if (!loadedImg || !mapImageHasLoaded) {
                 return;
             }
 
-            mapSizeMultiplier = $imgContainer.width() / loadedImg.width;
-        });
+            if (loadedImg.height / loadedImg.width > 1.07) {
+                // rotate the map
+                $map.addClass("rotated");
+
+                $imgContainer.css({
+                    'max-height': $imgContainer.closest(".map-container").width(),
+                    'max-width': 'auto'
+                });
+
+                mapSizeMultiplier = $imgContainer.width() / loadedImg.width;
+
+                $map.closest(".map-container").css({
+                    'max-height': (loadedImg.width * mapSizeMultiplier) + 20,
+                });
+
+                $map.css({
+                    'max-width': (loadedImg.width * mapSizeMultiplier) + 20,
+                });
+            } else {
+                // un-rotate the map
+                $map.removeClass("rotated");
+
+                $map.css({
+                    'max-height': 'inherit',
+                    'max-width': '100%',
+                });
+
+                $map.closest(".map-container").css({
+                    'max-height': 'auto',
+                });
+
+                $imgContainer.css({
+                    'max-height': 'inherit',
+                    'max-width': '100%'
+                });
+
+                mapSizeMultiplier = $imgContainer.width() / loadedImg.width;
+            }
+        }
+
+        $(window).on("resize", correctMapDimensions);
 
         ws.onmessage = function (e) {
             let message = JSON.parse(e.data);
@@ -278,49 +317,8 @@ let liveMap = {
 
                     loadedImg.onload = function () {
                         $imgContainer.attr({'src': trackURL});
-
-                        if (loadedImg.height / loadedImg.width > 1.07) {
-                            // rotate the map
-                            $map.addClass("rotated");
-
-                            $imgContainer.css({
-                                'max-height': $imgContainer.closest(".map-container").width(),
-                                'max-width': 'auto'
-                            });
-
-                            mapSizeMultiplier = $imgContainer.width() / loadedImg.width;
-
-                            $map.closest(".map-container").css({
-                                'max-height': (loadedImg.width * mapSizeMultiplier) + 20,
-                            });
-
-
-                            $map.css({
-                                'max-width': (loadedImg.width * mapSizeMultiplier) + 20,
-                            });
-
-                        } else {
-                            // un-rotate the map
-                            $map.removeClass("rotated");
-
-                            $map.css({
-                                'max-height': 'inherit',
-                                'max-width': '100%',
-                            });
-
-                            $map.closest(".map-container").css({
-                                'max-height': 'auto',
-                            });
-
-                            $imgContainer.css({
-                                'max-height': 'inherit',
-                                'max-width': '100%'
-                            });
-
-                            mapSizeMultiplier = $imgContainer.width() / loadedImg.width;
-                        }
-
                         mapImageHasLoaded = true;
+                        correctMapDimensions();
                     };
 
                     loadedImg.src = trackURL;
@@ -1293,10 +1291,18 @@ class RaceSetup {
     }
 }
 
+function pad(num, size) {
+    let s = num + "";
+    while (s.length < size) {
+        s = "0" + s;
+    }
+    return s;
+}
+
 function msToTime(s) {
     let hours = (s / 3.6e6 | 0);
     let minutes = ((s % 3.6e6) / 6e4 | 0);
-    let seconds = ((s % 6e4) / 1000 | 0) + '.' + (s % 1000);
+    let seconds = ((s % 6e4) / 1000 | 0) + '.' + pad(s % 1000, 3);
 
     let output = '';
 
