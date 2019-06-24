@@ -825,10 +825,19 @@ class RaceSetup {
 
         let $pitBoxes = $document.find("#track-pitboxes");
         let $maxClients = $document.find("#MaxClients");
+        let $pitBoxesWarning = $document.find("#track-pitboxes-warning");
 
         $.getJSON(jsonURL, function (trackInfo) {
             $pitBoxes.closest(".row").show();
             $pitBoxes.text(trackInfo.pitboxes);
+
+            let entrants = $document.find(".entrant").length;
+
+            if (entrants > trackInfo.pitboxes) {
+                $pitBoxesWarning.show()
+            } else {
+                $pitBoxesWarning.hide()
+            }
 
             let overrideAmount = $maxClients.data('value-override');
 
