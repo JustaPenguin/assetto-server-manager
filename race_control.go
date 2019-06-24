@@ -646,35 +646,20 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 
 	driver.TopSpeedThisLap = 0
 
+	rc.ConnectedDrivers.sort()
+
 	if rc.SessionInfo.Type == udp.SessionTypeRace {
-		// calculate driver position
-		position := 1
-
-		_ = rc.ConnectedDrivers.Each(func(otherDriverGUID udp.DriverGUID, otherDriver *RaceControlDriver) error {
-			if otherDriverGUID == driver.CarInfo.DriverGUID {
-				return nil // continue
-			}
-
-			if otherDriver.LastLapCompletedTime.Before(driver.LastLapCompletedTime) && otherDriver.NumLaps >= driver.NumLaps {
-				position++
-			}
-
-			return nil
-		})
-
-		driver.Position = position
-
 		// calculate split
 		if driver.Position == 1 {
 			driver.Split = time.Duration(0).String()
 		} else {
 			_ = rc.ConnectedDrivers.Each(func(otherDriverGUID udp.DriverGUID, otherDriver *RaceControlDriver) error {
 				if otherDriver.Position == driver.Position-1 {
-					driver.Split = time.Since(otherDriver.LastLapCompletedTime).Round(time.Millisecond).String()
-				} else {
 					lapDifference := otherDriver.NumLaps - driver.NumLaps
 
-					if lapDifference == 1 {
+					if lapDifference <= 0 {
+						driver.Split = driver.LastLapCompletedTime.Sub(otherDriver.LastLapCompletedTime).Round(time.Millisecond).String()
+					} else if lapDifference == 1 {
 						driver.Split = "1 lap"
 					} else {
 						driver.Split = fmt.Sprintf("%d laps", lapDifference)
@@ -684,11 +669,7 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 				return nil
 			})
 		}
-	}
-
-	rc.ConnectedDrivers.sort()
-
-	if rc.SessionInfo.Type != udp.SessionTypeRace {
+	} else {
 		var previousDriver *RaceControlDriver
 
 		// gaps are calculated vs best lap
@@ -696,7 +677,11 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 			if previousDriver == nil {
 				driver.Split = "0s"
 			} else {
-				driver.Split = (driver.BestLap - previousDriver.BestLap).String()
+				if driver.BestLap >= previousDriver.BestLap && previousDriver.BestLap != 0 {
+					driver.Split = (driver.BestLap - previousDriver.BestLap).String()
+				} else {
+					driver.Split = "n/a"
+				}
 			}
 
 			previousDriver = driver
@@ -711,9 +696,15 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 func (rc *RaceControl) sort(driverGroup RaceControlDriverGroup, driverA, driverB *RaceControlDriver) bool {
 	if driverGroup == ConnectedDrivers {
 		if rc.SessionInfo.Type == udp.SessionTypeRace {
-			return driverA.Position < driverB.Position
+			return driverA.LastLapCompletedTime.Before(driverB.LastLapCompletedTime) && driverA.NumLaps >= driverB.NumLaps
 		} else {
-			return driverA.BestLap != 0 && driverA.BestLap < driverB.BestLap
+			if driverA.BestLap == 0 {
+				return false
+			} else if driverB.BestLap == 0 {
+				return true
+			}
+
+			return driverA.BestLap < driverB.BestLap
 		}
 	} else if driverGroup == DisconnectedDrivers {
 		// disconnected
