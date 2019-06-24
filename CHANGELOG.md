@@ -7,6 +7,7 @@ Added:
   is replaced with a 'no DRS' file, meaning that players can't activate DRS at any point on the circuit. Note: this changes
   actual track files, so if you're using a multi-server setup pointing to the same content folder, this may cause problems
   if you're running races at the same track simultaneously.
+* Scheduled championship events now show the start time of individual sessions if applicable.
 
 Fixes:
 
