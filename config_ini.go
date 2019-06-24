@@ -205,6 +205,8 @@ type CurrentRaceConfig struct {
 	WindBaseDirection      int `ini:"WIND_BASE_DIRECTION" help:"base direction of the wind (wind is pointing at); 0 = North, 90 = East etc"`
 	WindVariationDirection int `ini:"WIND_VARIATION_DIRECTION" help:"variation (+ or -) of the base direction"`
 
+	DisableDRSZones bool `ini:"-"`
+
 	DynamicTrack DynamicTrackConfig `ini:"-"`
 
 	Sessions Sessions                  `ini:"-"`
