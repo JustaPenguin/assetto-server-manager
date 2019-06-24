@@ -24,6 +24,7 @@ var defaultAddress = "0.0.0.0:8772"
 
 func init() {
 	runtime.LockOSThread()
+	servermanager.InitLogging()
 }
 
 func main() {

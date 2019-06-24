@@ -30,7 +30,7 @@ var (
 	Debug = os.Getenv("DEBUG") == "true"
 )
 
-func init() {
+func InitLogging() {
 	if !Debug {
 		logrus.SetLevel(logrus.InfoLevel)
 	} else {
