@@ -1410,6 +1410,33 @@
                         <small>Seconds of result screen between racing sessions</small>
                     </div>
                 </div>
+
+                <div class="form-group row">
+                    <label for="DisableDRSZones" class="col-sm-3 col-form-label">Disable DRS Zones</label>
+
+                    <div class="col-sm-9">
+
+                        <input
+                                class="form-control"
+                                type="checkbox"
+                                id="DisableDRSZones"
+                                name="DisableDRSZones"
+                                {{ if $f.DisableDRSZones }}
+                                    checked="checked"
+                                {{ end }}
+                        ><br/>
+
+                        <small>
+                            When ON, the track's drs_zones.ini will temporarily be replaced with a file that disables DRS across the entire track.
+                            This is useful for tracks which do not have any clearly defined zones, or for if you want to race without DRS!
+
+                            <strong>
+                                Note: this changes actual track files, so if you're using a multi-server setup pointing to the same content folder,
+                                this may cause problems if you're running races at the same track simultaneously.
+                            </strong>
+                        </small>
+                    </div>
+                </div>
             </div>
         </div>
 

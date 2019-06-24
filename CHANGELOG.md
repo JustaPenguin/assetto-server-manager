@@ -1,9 +1,18 @@
 v1.3.3
 ------
 
+Added:
+
+* You can now disable DRS Zones for any track in Custom Race / Championship Events. The drs_zones.ini file for the track
+  is replaced with a 'no DRS' file, meaning that players can't activate DRS at any point on the circuit. Note: this changes
+  actual track files, so if you're using a multi-server setup pointing to the same content folder, this may cause problems
+  if you're running races at the same track simultaneously.
+
 Fixes:
 
 * Open Championships will no longer empty the team name of a driver that has a team name specified.
+* Fixes an issue where tracks with a default layout and an extra layout (e.g. 'wet' tracks) would not be correctly set up
+  from Quick Race.
 
 v1.3.2
 ------
