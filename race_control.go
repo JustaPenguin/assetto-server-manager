@@ -458,6 +458,8 @@ func (rc *RaceControl) requestSessionInfo() {
 		case <-AssettoProcess.Done():
 			rc.sessionInfoTicker.Stop()
 
+			logrus.Debugf("Assetto Process completed. Disconnecting all connected drivers. Session done.")
+
 			var drivers []*RaceControlDriver
 
 			// the server has just stopped. send disconnect messages for all connected cars.
@@ -571,7 +573,10 @@ func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
 	logrus.Debugf("Driver %s (%s) disconnected", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
 
 	rc.ConnectedDrivers.Del(driver.CarInfo.DriverGUID)
-	rc.DisconnectedDrivers.Add(driver.CarInfo.DriverGUID, driver)
+
+	if driver.NumLaps > 0 {
+		rc.DisconnectedDrivers.Add(driver.CarInfo.DriverGUID, driver)
+	}
 
 	return rc.broadcaster.Send(client)
 }

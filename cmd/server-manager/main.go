@@ -118,7 +118,7 @@ func main() {
 }
 
 func startUDPReplay(file string) {
-	err := replay.ReplayUDPMessages(file, 1, func(response udp.Message) {
+	err := replay.ReplayUDPMessages(file, 4, func(response udp.Message) {
 		servermanager.RaceControlInst.UDPCallback(response)
 	}, time.Minute*1000)
 

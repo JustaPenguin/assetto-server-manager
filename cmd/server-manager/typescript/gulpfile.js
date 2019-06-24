@@ -9,7 +9,7 @@ let uglify = require('gulp-uglify');
 gulp.task('build', buildJS);
 
 gulp.task('watch', () => {
-    return gulp.watch(['typescript/**/*.ts', 'typescript/**/*.js'], buildJS);
+    return gulp.watch(['src/**/*.ts', 'src/**/*.js'], buildJS);
 });
 
 gulp.task('default', gulp.series('build', 'watch'));
@@ -19,7 +19,7 @@ function buildJS() {
         return browserify({
             basedir: '.',
             debug: false,
-            entries: ['typescript/main.ts'],
+            entries: ['src/main.ts'],
             cache: {},
             packageCache: {},
         })
@@ -34,8 +34,8 @@ function buildJS() {
             .pipe(buffer())
             .pipe(sourcemaps.init({loadMaps: true}))
             .pipe(uglify())
-            .pipe(sourcemaps.write('./'))
-            .pipe(gulp.dest('static/js'));
+            .pipe(sourcemaps.write('../static/js'))
+            .pipe(gulp.dest('../static/js'));
 
     } catch (e) {
         console.error(e);
