@@ -9,7 +9,6 @@ import {randomColor} from "randomcolor/randomColor";
 import {msToTime, prettifyName} from "./utils";
 import moment from "moment";
 import ClickEvent = JQuery.ClickEvent;
-import {Md5} from 'ts-md5/dist/md5'
 
 interface WSMessage {
     Message: any;
@@ -164,9 +163,20 @@ export class RaceControl {
         });
 
         $currentWeather.attr("alt", "Current Weather: " + prettifyName(this.status.SessionInfo.WeatherGraphics, false));
+        $("#trackImage").attr("src", this.getTrackImageURL());
 
         $("#event-name").text(this.status.SessionInfo.Name);
         $("#event-type").text(RaceControl.getSessionType(this.status.SessionInfo.Type));
+    }
+
+    private getTrackImageURL(): string {
+        if (!this.status) {
+            return "";
+        }
+
+        const sessionInfo = this.status.SessionInfo;
+
+        return "/content/tracks/" + sessionInfo.Track + "/ui" + (!!sessionInfo.TrackConfig ? "/" + sessionInfo.TrackConfig : "") + "/preview.png";
     }
 }
 
@@ -202,7 +212,7 @@ class LiveMap implements WebsocketHandler {
                 this.trackXOffset = this.raceControl.status.TrackMapData!.offset_x;
                 this.trackZOffset = this.raceControl.status.TrackMapData!.offset_y;
                 this.trackScale = this.raceControl.status.TrackMapData!.scale_factor;
-                this.loadTrackImage();
+                this.loadTrackMapImage();
 
                 for (const connectedGUID in this.raceControl.status.ConnectedDrivers!.Drivers) {
                     const driver = this.raceControl.status.ConnectedDrivers!.Drivers[connectedGUID];
@@ -290,7 +300,7 @@ class LiveMap implements WebsocketHandler {
                 break;
 
             case EventNewSession:
-                this.loadTrackImage();
+                this.loadTrackMapImage();
 
                 break;
 
@@ -335,7 +345,7 @@ class LiveMap implements WebsocketHandler {
         return $dot;
     }
 
-    private getTrackURL(): string {
+    private getTrackMapURL(): string {
         if (!this.raceControl.status) {
             return "";
         }
@@ -347,8 +357,8 @@ class LiveMap implements WebsocketHandler {
 
     trackImage: HTMLImageElement = new Image();
 
-    private loadTrackImage(): void {
-        const trackURL = this.getTrackURL();
+    private loadTrackMapImage(): void {
+        const trackURL = this.getTrackMapURL();
 
         this.trackImage.onload = () => {
             this.$trackMapImage!.attr({
@@ -457,7 +467,7 @@ class LiveTimings implements WebsocketHandler {
                     }
                 }
 
-                break
+                break;
         }
     }
 
@@ -477,15 +487,12 @@ class LiveTimings implements WebsocketHandler {
         }
     }
 
-    // @TODO this should use existing rows and only replace dynamic data, allowing static data to remain unchanged + easy to interact with (e.g. click)
     private addDriverToTable(driver: Driver, $table: JQuery<HTMLTableElement>): void {
         const addingDriverToDisconnectedTable = ($table === this.$disconnectedDriversTable);
-
 
         const $tr = $("<tr/>").attr({"id": driver.CarInfo.DriverGUID});
 
         // car position
-
         if (!addingDriverToDisconnectedTable) {
             const $tdPos = $("<td class='text-center'/>").text(driver.Position === 255 || driver.Position === 0 ? "" : driver.Position);
             $tr.append($tdPos);
@@ -553,7 +560,6 @@ class LiveTimings implements WebsocketHandler {
         const $tdLapNum = $("<td/>").text(driver.NumLaps ? driver.NumLaps : "0");
         $tr.append($tdLapNum);
 
-        // @TODO show best AND last
         const $tdTopSpeedBestLap = $("<td/>").text(driver.TopSpeedBestLap ? driver.TopSpeedBestLap.toFixed(2) + "Km/h" : "");
         $tr.append($tdTopSpeedBestLap);
 
@@ -561,7 +567,7 @@ class LiveTimings implements WebsocketHandler {
             // events
             const $tdEvents = $("<td/>");
 
-            if (moment(driver.LoadedTime).add("10s").isSameOrAfter(moment())) {
+            if (moment(driver.LoadedTime).add("10", "seconds").isSameOrAfter(moment())) {
                 // car just loaded
                 let $tag = $("<span/>");
                 $tag.attr({'class': 'badge badge-success live-badge'});
@@ -572,7 +578,7 @@ class LiveTimings implements WebsocketHandler {
 
             if (driver.Collisions) {
                 for (const collision of driver.Collisions) {
-                    if (moment(collision.Time).add("10s").isSameOrAfter(moment())) {
+                    if (moment(collision.Time).add("10", "seconds").isSameOrAfter(moment())) {
                         let $tag = $("<span/>");
                         $tag.attr({'class': 'badge badge-danger live-badge'});
                         $tag.text(

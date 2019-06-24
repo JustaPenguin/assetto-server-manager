@@ -18,7 +18,7 @@
         </div>
 
         <div class="row mt-5">
-            <div class="col-sm-6">
+            <div class="col-sm-4">
                 <div class="card" id="event-details">
                     <div class="card-header">
                         Event in Progress
@@ -31,28 +31,38 @@
                 </div>
             </div>
 
-            <div class="col-sm-6">
+            <div class="col-sm-8">
                 <div class="card" id="track-details">
                     <div class="card-header">
                         Track Information
                     </div>
 
-                    <div class="card-body">
-                        <img class="img img-fluid"
-                             id="trackImage"
-                             src="/static/img/no-preview-general.png"
-                        >
-                        <img class="img img-fluid" id="weatherImage" src="/static/img/no-preview-general.png" alt="Current Weather">
-
-                        <div id="road-temp-wrapper" data-toggle="tooltip"
-                             title data-original-title="Road Temp">
-                            <div id="road-temp-text"></div>
-                            <img src="/static/img/temp-road.png" alt="Road Temp" id="road-temp">
+                    <div class="card-body row">
+                        <div class="col-12 col-sm-4">
+                            <div id="road-temp-wrapper" data-toggle="tooltip"
+                                 title data-original-title="Road Temp">
+                                <div id="road-temp-text"></div>
+                                <img src="/static/img/temp-road.png" alt="Road Temp" id="road-temp">
+                            </div>
+                            <div id="ambient-temp-wrapper" class="mt-1" data-toggle="tooltip"
+                                 title data-original-title="Ambient Temp">
+                                <div id="ambient-temp-text"></div>
+                                <img src="/static/img/temp-ambient.png" alt="Ambient Temp" id="ambient-temp">
+                            </div>
                         </div>
-                        <div id="ambient-temp-wrapper" class="mt-1" data-toggle="tooltip"
-                             title data-original-title="Ambient Temp">
-                            <div id="ambient-temp-text"></div>
-                            <img src="/static/img/temp-ambient.png" alt="Ambient Temp" id="ambient-temp">
+
+                        <div class="col-12 col-sm-8">
+                            <div class="row">
+                                <div class="col-6">
+                                    <img class="img img-fluid float-right"
+                                         id="trackImage"
+                                         src="/static/img/no-preview-general.png"
+                                    >
+                                </div>
+                                <div class="col-6">
+                                    <img class="img img-fluid float-right" id="weatherImage" src="/static/img/no-preview-general.png" alt="Current Weather">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
