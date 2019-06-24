@@ -179,6 +179,13 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		config.CurrentRaceConfig.PickupModeEnabled = 0
 	}
 
+	// drs zones management
+	err = ToggleDRSForTrack(config.CurrentRaceConfig.Track, config.CurrentRaceConfig.TrackLayout, !config.CurrentRaceConfig.DisableDRSZones)
+
+	if err != nil {
+		return err
+	}
+
 	if !event.IsChampionship() && championshipManager != nil {
 		logrus.Debugf("Starting a non championship event. Setting activeChampionship to nil")
 		championshipManager.activeChampionship = nil
@@ -238,6 +245,10 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 	quickRace.CurrentRaceConfig.Cars = strings.Join(cars, ";")
 	quickRace.CurrentRaceConfig.Track = r.Form.Get("Track")
 	quickRace.CurrentRaceConfig.TrackLayout = r.Form.Get("TrackLayout")
+
+	if quickRace.CurrentRaceConfig.TrackLayout == defaultLayoutName {
+		quickRace.CurrentRaceConfig.TrackLayout = ""
+	}
 
 	tyres, err := ListTyres()
 
@@ -511,6 +522,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		RaceExtraLap:              formValueAsInt(r.FormValue("RaceExtraLap")),
 		MaxContactsPerKilometer:   formValueAsInt(r.FormValue("MaxContactsPerKilometer")),
 		ResultScreenTime:          formValueAsInt(r.FormValue("ResultScreenTime")),
+		DisableDRSZones:           formValueAsInt(r.FormValue("DisableDRSZones")) == 1,
 	}
 
 	if isSol {
