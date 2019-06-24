@@ -492,7 +492,6 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 				entrant.GUID = ""
 				entrant.Name = ""
 				entrant.Team = ""
-				break
 			}
 		}
 	}
