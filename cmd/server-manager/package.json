@@ -22,12 +22,14 @@
     "jquery": "^3.3.1",
     "jquery-ui-bundle": "^1.12.1-migrate",
     "jquery.quicksearch": "^2.4.0",
+    "md5": "^2.2.1",
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.25",
     "multiselect": "^0.9.12",
     "popper.js": "^1.14.7",
     "randomcolor": "^0.5.4",
-    "summernote": "^0.8.11"
+    "summernote": "^0.8.11",
+    "ts-md5": "^1.2.4"
   },
   "devDependencies": {
     "@babel/core": "^7.3.4",

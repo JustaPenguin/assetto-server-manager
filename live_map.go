@@ -101,6 +101,9 @@ type raceControlClient struct {
 func (c *raceControlClient) writePump() {
 	ticker := time.NewTicker(time.Second * 10)
 	defer func() {
+		if rvr := recover(); rvr != nil {
+			logrus.WithField("panic", rvr).Errorf("Recovered from panic")
+		}
 		ticker.Stop()
 		c.conn.Close()
 	}()

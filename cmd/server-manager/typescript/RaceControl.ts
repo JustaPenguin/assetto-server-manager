@@ -7,8 +7,9 @@ import {
 import {CarUpdate, CarUpdateVec} from "./models/UDP";
 import {randomColor} from "randomcolor/randomColor";
 import {msToTime, prettifyName} from "./utils";
-import moment = require("moment");
+import moment from "moment";
 import ClickEvent = JQuery.ClickEvent;
+import {Md5} from 'ts-md5/dist/md5'
 
 interface WSMessage {
     Message: any;
@@ -280,10 +281,7 @@ class LiveMap implements WebsocketHandler {
 
                 $rpmGaugeInner.css({
                     'width': ((update.EngineRPM / maxRPM) * 100).toFixed(0) + "%",
-                    'background': randomColor({
-                        luminosity: 'bright',
-                        seed: driverGUID,
-                    }),
+                    'background': randomColorForDriver(driverGUID),
                 });
 
                 $rpmGaugeOuter.append($rpmGaugeInner);
@@ -330,10 +328,7 @@ class LiveMap implements WebsocketHandler {
         const $driverName = $("<span class='name'/>").text(getAbbreviation(driverData.DriverName));
         const $info = $("<span class='info'/>").text("0").hide();
 
-        const $dot = $("<div class='dot' style='background: " + randomColor({
-            luminosity: 'bright',
-            seed: driverData.DriverGUID,
-        }) + "'/>").append($driverName, $info).hide().appendTo(this.$map);
+        const $dot = $("<div class='dot' style='background: " + randomColorForDriver(driverData.DriverGUID) + "'/>").append($driverName, $info).hide().appendTo(this.$map);
 
         this.dots.set(driverData.DriverGUID, $dot);
 
@@ -538,15 +533,17 @@ class LiveTimings implements WebsocketHandler {
             $tr.append($tdCurrentLapTime);
         }
 
+        if (!addingDriverToDisconnectedTable) {
+            // last lap
+            const $tdLastLap = $("<td/>").text(msToTime(driver.LastLap / 1000000));
+            $tr.append($tdLastLap);
+        }
+
         // best lap
         const $tdBestLapTime = $("<td/>").text(msToTime(driver.BestLap / 1000000));
         $tr.append($tdBestLapTime);
 
         if (!addingDriverToDisconnectedTable) {
-            // last lap
-            const $tdLastLap = $("<td/>").text(msToTime(driver.LastLap / 1000000));
-            $tr.append($tdLastLap);
-
             // gap
             const $tdGap = $("<td/>").text(driver.Split);
             $tr.append($tdGap);
@@ -622,6 +619,18 @@ function getAbbreviation(name: string): string {
     return lastName.slice(0, 3).toUpperCase();
 }
 
+function randomColorForDriver(driverGUID: string): string {
+    return randomColor({
+        seed: driverGUID,
+    })
+}
+
+const percentColors = [
+    {pct: 0.25, color: {r: 0x00, g: 0x00, b: 0xff}},
+    {pct: 0.625, color: {r: 0x00, g: 0xff, b: 0}},
+    {pct: 1.0, color: {r: 0xff, g: 0x00, b: 0}}
+];
+
 function getColorForPercentage(pct: number) {
     let i;
 
@@ -645,9 +654,3 @@ function getColorForPercentage(pct: number) {
 
     return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
 }
-
-let percentColors = [
-    {pct: 0.25, color: {r: 0x00, g: 0x00, b: 0xff}},
-    {pct: 0.625, color: {r: 0x00, g: 0xff, b: 0}},
-    {pct: 1.0, color: {r: 0xff, g: 0x00, b: 0}}
-];

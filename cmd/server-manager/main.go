@@ -14,7 +14,6 @@ import (
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
 
-	"github.com/etcd-io/bbolt"
 	"github.com/pkg/browser"
 	"github.com/sirupsen/logrus"
 )
@@ -95,7 +94,7 @@ func main() {
 		logrus.Errorf("couldn't initialise scheduled championship events, err: %s", err)
 	}
 
-	go startUDPReplay("./assetto/session-logs/2019-03-09_13.36.db")
+	go startUDPReplay("./assetto/session-logs/Tue Feb 19 19:36:35 2019.json")
 
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 
@@ -118,15 +117,9 @@ func main() {
 }
 
 func startUDPReplay(file string) {
-	db, err := bbolt.Open(file, 0644, nil)
-
-	if err != nil {
-		logrus.WithError(err).Error("Could not open bolt")
-	}
-
-	err = replay.ReplayUDPMessages(db, 2, func(response udp.Message) {
+	err := replay.ReplayUDPMessages(file, 1, func(response udp.Message) {
 		servermanager.RaceControlInst.UDPCallback(response)
-	}, time.Second*2)
+	}, time.Minute*1000)
 
 	if err != nil {
 		logrus.WithError(err).Error("UDP Replay failed")
