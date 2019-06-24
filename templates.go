@@ -169,6 +169,7 @@ func (tr *Renderer) init() error {
 	funcs["timeFormat"] = timeFormat
 	funcs["dateFormat"] = dateFormat
 	funcs["timeZone"] = timeZone
+	funcs["hourAndZone"] = hourAndZoneFormat
 	funcs["isBefore"] = isBefore
 	funcs["trackInfo"] = trackInfo
 	funcs["stripGeotagCrap"] = stripGeotagCrap
@@ -224,6 +225,12 @@ func timeFormat(t time.Time) string {
 
 func dateFormat(t time.Time) string {
 	return t.Format("02/01/2006")
+}
+
+func hourAndZoneFormat(t time.Time, plusMinutes int64) string {
+	t = t.Add(time.Minute*time.Duration(plusMinutes))
+
+	return t.Format("3:04 PM (MST)")
 }
 
 func timeZone(t time.Time) string {

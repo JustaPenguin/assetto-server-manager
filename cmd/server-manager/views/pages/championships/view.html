@@ -461,14 +461,21 @@
                     </div>
                 </div>
 
+                {{ $scheduled := .Scheduled}}
+
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-8 mb-3">
                             <div class="row">
-
+                            {{ if $event.Completed }}
                                 <div class="col-sm-4">
+                            {{ else }}
+                                <div class="col-sm-8">
+                            {{ end }}
 
                                     <ul class="list-unstyled">
+                                        {{ $previousTime := 0 }}
+
                                         {{ range $sessionName, $session := $eventSetup.Sessions }}
                                             <li>
                                                 <strong>
@@ -480,10 +487,15 @@
                                                 </strong>:
 
                                                 {{ if ne $session.Time 0 }}
-                                                    {{ $session.Time }} minutes
+                                                    {{ $session.Time }} minutes {{ if and $eventSetup.RaceExtraLap (eq $sessionName "RACE") }} + 1 lap {{ end }}
+                                                    {{ if isBefore $scheduled }} / Starts at {{ hourAndZone $scheduled (int64 $previousTime) }} {{ end }}
+
+                                                    {{ $previousTime = add $previousTime $session.Time }}
                                                 {{ else }}
                                                     {{ with $session.Laps }}
-                                                        {{ . }} laps
+                                                        {{ . }} laps {{ if isBefore $scheduled }} / Starts at {{ hourAndZone $scheduled (int64 $previousTime) }} {{ end }}
+
+                                                        {{ $previousTime = 0 }}
                                                     {{ end }}
                                                 {{ end }}
                                             </li>
