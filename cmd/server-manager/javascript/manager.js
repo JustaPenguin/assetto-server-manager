@@ -873,7 +873,7 @@ class RaceSetup {
     }
 
     /**
-     * organisePitIDs: when ID is changed makes sure that none of the ids are equal
+     * pitIDChangeEvent: event fired when ID is changed by user
      */
     pitIDChangeEvent(e) {
         this.organisePitIDs(e.currentTarget)
@@ -888,15 +888,19 @@ class RaceSetup {
 
         let entrants = $document.find(".entrant").length;
 
+        // we shouldn't end up in this situation often, but avoids looping forever
         if (entrants > pitBoxes) {
             return
         }
 
         for (let i = 0; i < $entrantIDs.length; i++) {
+            // the id can match itself
             if ($($entrantIDs[i]).is($(entrant))) {
                 continue
             }
 
+            // if values are equal we need to change the pit box value until they aren't
+            // looping back to 0 if necessary
             if (($($entrantIDs[i])).val() === $(entrant).val()) {
                 if (($(entrant).val()) < (pitBoxes - 1)) {
                     $(entrant).val(parseInt($(entrant).val()) + 1)
@@ -907,6 +911,7 @@ class RaceSetup {
                 this.organisePitIDs($(entrant))
             }
 
+            // don't go above the number of pit boxes
             if ($(entrant).val() > (pitBoxes - 1)) {
                 $(entrant).val(pitBoxes - 1)
             }
