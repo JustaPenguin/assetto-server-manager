@@ -827,6 +827,7 @@ class RaceSetup {
 
         let $pitBoxes = $document.find("#track-pitboxes");
         let $maxClients = $document.find("#MaxClients");
+        let $pitBoxesWarning = $document.find("#track-pitboxes-warning");
 
         let that = this;
 
@@ -843,6 +844,14 @@ class RaceSetup {
 
                     that.organisePitIDs($($entrantIDs[i]));
                 }
+            }
+
+            let entrants = $document.find(".entrant").length;
+
+            if (entrants > trackInfo.pitboxes) {
+                $pitBoxesWarning.show()
+            } else {
+                $pitBoxesWarning.hide()
             }
 
             let overrideAmount = $maxClients.data('value-override');
@@ -876,6 +885,12 @@ class RaceSetup {
     organisePitIDs(entrant) {
         let $entrantIDs = $document.find(".entrant-id");
         let pitBoxes = parseInt($document.find("#track-pitboxes").text());
+
+        let entrants = $document.find(".entrant").length;
+
+        if (entrants > pitBoxes) {
+            return
+        }
 
         for (let i = 0; i < $entrantIDs.length; i++) {
             if ($($entrantIDs[i]).is($(entrant))) {

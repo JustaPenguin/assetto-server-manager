@@ -21,6 +21,8 @@ Fixes:
 * Fixes an issue where tracks with a default layout and an extra layout (e.g. 'wet' tracks) would not be correctly set up
   from Quick Race.
 * Users with read access or lower can no longer access replacement championship passwords by exporting the championship.
+* Championship overview and add event pages will now warn the user if the selected track has too few pit boxes to accommodate
+  the configured number of entrants.
 
 v1.3.2
 ------
