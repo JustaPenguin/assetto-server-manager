@@ -111,8 +111,8 @@ export class RaceControl {
             if (this.status.ConnectedDrivers && this.status.ConnectedDrivers.GUIDsInPositionalOrder.length > 0) {
                 let driver = this.status.ConnectedDrivers.Drivers[this.status.ConnectedDrivers.GUIDsInPositionalOrder[0]];
 
-                if (driver.NumLaps > 0) {
-                    lapsCompleted = driver.NumLaps;
+                if (driver.TotalNumLaps > 0) {
+                    lapsCompleted = driver.TotalNumLaps;
                 }
             }
 
@@ -445,29 +445,9 @@ class LiveTimings implements WebsocketHandler {
     }
 
     public handleWebsocketMessage(message: WSMessage): void {
-        switch (message.EventType) {
-            case EventRaceControl:
-                this.populateConnectedDrivers();
-
-                if (!!this.raceControl.status.DisconnectedDrivers) {
-                    for (const driverGUID of this.raceControl.status.DisconnectedDrivers!.GUIDsInPositionalOrder) {
-                        const driver = this.raceControl.status.DisconnectedDrivers!.Drivers[driverGUID];
-
-                        if (!driver) {
-                            continue;
-                        }
-
-                        this.addDriverToTable(driver, this.$disconnectedDriversTable);
-                    }
-
-                    if (this.raceControl.status.DisconnectedDrivers!.GUIDsInPositionalOrder.length > 0) {
-                        this.$storedTimes.show();
-                    } else {
-                        this.$storedTimes.hide();
-                    }
-                }
-
-                break;
+        if (message.EventType === EventRaceControl) {
+            this.populateConnectedDrivers();
+            this.populateDisconnectedDrivers();
         }
     }
 
@@ -476,21 +456,73 @@ class LiveTimings implements WebsocketHandler {
             return;
         }
 
-        for (const driverGUID of this.raceControl.status.ConnectedDrivers!.GUIDsInPositionalOrder) {
-            const driver = this.raceControl.status.ConnectedDrivers!.Drivers[driverGUID];
+        for (const driverGUID of this.raceControl.status.ConnectedDrivers.GUIDsInPositionalOrder) {
+            const driver = this.raceControl.status.ConnectedDrivers.Drivers[driverGUID];
 
             if (!driver) {
                 continue;
             }
 
             this.addDriverToTable(driver, this.$connectedDriversTable);
+            this.populatePreviousLapsForDriver(driver);
+        }
+
+        if (this.raceControl.status.ConnectedDrivers.GUIDsInPositionalOrder.length > 0) {
+            this.$connectedDriversTable.show();
+        } else {
+            this.$connectedDriversTable.hide();
+        }
+    }
+
+    private populatePreviousLapsForDriver(driver: Driver): void {
+        for (const carName in driver.Cars) {
+            if (carName === driver.CarInfo.CarModel) {
+                continue;
+            }
+
+            // create a fake new driver from the old driver. override details with their previous car
+            // and add them to the disconnected drivers table. if the user rejoins in this car it will
+            // be removed from the disconnected drivers table and placed into the connected drivers table.
+            const dummyDriver = new Driver(driver);
+            dummyDriver.CarInfo.CarModel = carName;
+
+            this.addDriverToTable(dummyDriver, this.$disconnectedDriversTable);
+        }
+    }
+
+    private populateDisconnectedDrivers(): void {
+        if (!this.raceControl.status || !this.raceControl.status.DisconnectedDrivers) {
+            return;
+        }
+
+        for (const driverGUID of this.raceControl.status.DisconnectedDrivers.GUIDsInPositionalOrder) {
+            const driver = this.raceControl.status.DisconnectedDrivers.Drivers[driverGUID];
+
+            if (!driver) {
+                continue;
+            }
+
+            this.addDriverToTable(driver, this.$disconnectedDriversTable);
+            this.populatePreviousLapsForDriver(driver);
+        }
+
+        if (this.$disconnectedDriversTable.find("tr").length > 1) {
+            this.$storedTimes.show();
+        } else {
+            this.$storedTimes.hide();
         }
     }
 
     private addDriverToTable(driver: Driver, $table: JQuery<HTMLTableElement>): void {
         const addingDriverToDisconnectedTable = ($table === this.$disconnectedDriversTable);
+        const driverID = driver.CarInfo.DriverGUID + "_" + driver.CarInfo.CarModel;
+        const carInfo = driver.Cars[driver.CarInfo.CarModel];
 
-        const $tr = $("<tr/>").attr({"id": driver.CarInfo.DriverGUID});
+        if (!carInfo) {
+            return;
+        }
+
+        const $tr = $("<tr/>").attr({"id": driverID});
 
         // car position
         if (!addingDriverToDisconnectedTable) {
@@ -531,9 +563,9 @@ class LiveTimings implements WebsocketHandler {
         if (!addingDriverToDisconnectedTable) {
             let currentLapTimeText = "";
 
-            if (moment(driver.LastLapCompletedTime).isAfter(moment(this.raceControl.status!.SessionStartTime))) {
+            if (moment(carInfo.LastLapCompletedTime).isAfter(moment(this.raceControl.status!.SessionStartTime))) {
                 // only show current lap time text if the last lap completed time is after session start.
-                currentLapTimeText = msToTime(moment().diff(moment(driver.LastLapCompletedTime)), false);
+                currentLapTimeText = msToTime(moment().diff(moment(carInfo.LastLapCompletedTime)), false);
             }
 
             const $tdCurrentLapTime = $("<td/>").text(currentLapTimeText);
@@ -542,12 +574,12 @@ class LiveTimings implements WebsocketHandler {
 
         if (!addingDriverToDisconnectedTable) {
             // last lap
-            const $tdLastLap = $("<td/>").text(msToTime(driver.LastLap / 1000000));
+            const $tdLastLap = $("<td/>").text(msToTime(carInfo.LastLap / 1000000));
             $tr.append($tdLastLap);
         }
 
         // best lap
-        const $tdBestLapTime = $("<td/>").text(msToTime(driver.BestLap / 1000000));
+        const $tdBestLapTime = $("<td/>").text(msToTime(carInfo.BestLap / 1000000));
         $tr.append($tdBestLapTime);
 
         if (!addingDriverToDisconnectedTable) {
@@ -557,10 +589,10 @@ class LiveTimings implements WebsocketHandler {
         }
 
         // lap number
-        const $tdLapNum = $("<td/>").text(driver.NumLaps ? driver.NumLaps : "0");
+        const $tdLapNum = $("<td/>").text(carInfo.NumLaps ? carInfo.NumLaps : "0");
         $tr.append($tdLapNum);
 
-        const $tdTopSpeedBestLap = $("<td/>").text(driver.TopSpeedBestLap ? driver.TopSpeedBestLap.toFixed(2) + "Km/h" : "");
+        const $tdTopSpeedBestLap = $("<td/>").text(carInfo.TopSpeedBestLap ? carInfo.TopSpeedBestLap.toFixed(2) + "Km/h" : "");
         $tr.append($tdTopSpeedBestLap);
 
         if (!addingDriverToDisconnectedTable) {
@@ -594,7 +626,7 @@ class LiveTimings implements WebsocketHandler {
         }
 
         // remove any previous rows
-        $("#" + driver.CarInfo.DriverGUID).remove();
+        $("#" + driverID).remove();
 
         $table.append($tr);
     }

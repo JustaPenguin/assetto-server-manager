@@ -1,7 +1,7 @@
 // this file was automatically generated using struct2ts github.com/cj123/assetto-server-manager.RaceControl
 // +build ignore
 
-package generators
+package main
 
 import (
 	"flag"

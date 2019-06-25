@@ -176,7 +176,7 @@ type RaceControl struct {
 	ConnectedDrivers    *DriverMap `json:"ConnectedDrivers"`
 	DisconnectedDrivers *DriverMap `json:"DisconnectedDrivers"`
 
-	CarIDToGUID map[udp.CarID]udp.DriverGUID
+	CarIDToGUID map[udp.CarID]udp.DriverGUID `json:"CarIDToGUID"`
 
 	sessionInfoTicker  *time.Ticker
 	sessionInfoContext context.Context
@@ -193,38 +193,44 @@ func (rc *RaceControl) Event() udp.Event {
 
 func NewRaceControlDriver(carInfo udp.SessionCarInfo) *RaceControlDriver {
 	return &RaceControlDriver{
-		CarInfo:      carInfo,
-		PreviousCars: make(map[string]RaceControlCarBestLap),
-		LastSeen:     time.Now(),
+		CarInfo:  carInfo,
+		Cars:     make(map[string]*RaceControlCarLapInfo),
+		LastSeen: time.Now(),
 	}
 }
 
 type RaceControlDriver struct {
-	CarInfo udp.SessionCarInfo `json:"CarInfo"`
+	CarInfo      udp.SessionCarInfo `json:"CarInfo"`
+	TotalNumLaps int
 
 	LoadedTime time.Time `json:"LoadedTime" ts:"date"`
 
-	// Lap Info
-	NumLaps              int           `json:"NumLaps"`
-	LastLap              time.Duration `json:"LastLap"`
-	BestLap              time.Duration `json:"BestLap"`
-	LastLapCompletedTime time.Time     `json:"LastLapCompletedTime" ts:"date"`
-
-	Position        int       `json:"Position"`
-	Split           string    `json:"Split"`
-	TopSpeedThisLap float64   `json:"TopSpeedThisLap"`
-	TopSpeedBestLap float64   `json:"TopSpeedBestLap"`
-	LastSeen        time.Time `json:"LastSeen" ts:"date"`
+	Position int       `json:"Position"`
+	Split    string    `json:"Split"`
+	LastSeen time.Time `json:"LastSeen" ts:"date"`
 
 	Collisions []Collision `json:"Collisions"`
 
-	// PreviousCars is a map of CarModel to the best lap of that car
-	PreviousCars map[string]RaceControlCarBestLap `json:"PreviousCars"`
+	// Cars is a map of CarModel to the information for that car.
+	Cars map[string]*RaceControlCarLapInfo `json:"Cars"`
 }
 
-type RaceControlCarBestLap struct {
-	TopSpeedBestLap float64       `json:"TopSpeedBestLap"`
-	BestLap         time.Duration `json:"BestLap"`
+func (rcd *RaceControlDriver) CurrentCar() *RaceControlCarLapInfo {
+	if car, ok := rcd.Cars[rcd.CarInfo.CarModel]; ok {
+		return car
+	} else {
+		logrus.Warnf("Could not find current car for driver: %s (current car: %s)", rcd.CarInfo.DriverGUID, rcd.CarInfo.CarModel)
+		return &RaceControlCarLapInfo{}
+	}
+}
+
+type RaceControlCarLapInfo struct {
+	TopSpeedThisLap      float64       `json:"TopSpeedThisLap"`
+	TopSpeedBestLap      float64       `json:"TopSpeedBestLap"`
+	BestLap              time.Duration `json:"BestLap"`
+	NumLaps              int           `json:"NumLaps"`
+	LastLap              time.Duration `json:"LastLap"`
+	LastLapCompletedTime time.Time     `json:"LastLapCompletedTime" ts:"date"`
 }
 
 type CollisionType string
@@ -316,14 +322,6 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 
 // OnVersion occurs when the Assetto Corsa Server starts up for the first time.
 func (rc *RaceControl) OnVersion(version udp.Version) error {
-	_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
-		rc.DisconnectedDrivers.Add(driverGUID, driver)
-
-		return nil
-	})
-
-	rc.ConnectedDrivers = NewDriverMap(ConnectedDrivers, rc.sort)
-
 	return rc.broadcaster.Send(version)
 }
 
@@ -340,8 +338,8 @@ func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) (updatedRaceControl boo
 		math.Sqrt(math.Pow(float64(update.Velocity.X), 2) + math.Pow(float64(update.Velocity.Z), 2)),
 	)
 
-	if speed > driver.TopSpeedThisLap {
-		driver.TopSpeedThisLap = speed
+	if speed > driver.CurrentCar().TopSpeedThisLap {
+		driver.CurrentCar().TopSpeedThisLap = speed
 		updatedRaceControl = true
 	}
 
@@ -394,7 +392,7 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 
 	// clear out last lap completed time each new session
 	_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
-		driver.LastLapCompletedTime = time.Now()
+		driver.CurrentCar().LastLapCompletedTime = time.Now()
 
 		return nil
 	})
@@ -555,7 +553,11 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 		logrus.Debugf("Driver %s (%s) connected in %s (car id: %d)", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID, driver.CarInfo.CarModel, client.CarID)
 	}
 
-	driver.LastLapCompletedTime = time.Now()
+	if _, ok := driver.Cars[driver.CarInfo.CarModel]; !ok {
+		driver.Cars[driver.CarInfo.CarModel] = &RaceControlCarLapInfo{}
+	}
+
+	driver.CurrentCar().LastLapCompletedTime = time.Now()
 
 	rc.ConnectedDrivers.Add(driver.CarInfo.DriverGUID, driver)
 
@@ -574,7 +576,7 @@ func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
 
 	rc.ConnectedDrivers.Del(driver.CarInfo.DriverGUID)
 
-	if driver.NumLaps > 0 {
+	if driver.TotalNumLaps > 0 {
 		rc.DisconnectedDrivers.Add(driver.CarInfo.DriverGUID, driver)
 	}
 
@@ -628,28 +630,19 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 
 	logrus.Debugf("Lap completed by driver: %s (%s), %s", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID, lapDuration)
 
-	driver.LastLap = lapDuration
-	driver.NumLaps++
-	driver.LastLapCompletedTime = time.Now()
+	driver.TotalNumLaps++
+	currentCar := driver.CurrentCar()
 
-	if lap.Cuts == 0 && (lapDuration < driver.BestLap || driver.BestLap == 0) {
-		driver.BestLap = lapDuration
-		driver.TopSpeedBestLap = driver.TopSpeedThisLap
+	currentCar.LastLap = lapDuration
+	currentCar.NumLaps++
+	currentCar.LastLapCompletedTime = time.Now()
 
-		previousCar, ok := driver.PreviousCars[driver.CarInfo.CarModel]
-
-		if ok && lapDuration < previousCar.BestLap {
-			previousCar.BestLap = driver.BestLap
-			previousCar.TopSpeedBestLap = driver.TopSpeedBestLap
-		} else if !ok {
-			driver.PreviousCars[driver.CarInfo.CarModel] = RaceControlCarBestLap{
-				BestLap:         driver.BestLap,
-				TopSpeedBestLap: driver.TopSpeedBestLap,
-			}
-		}
+	if lap.Cuts == 0 && (lapDuration < currentCar.BestLap || currentCar.BestLap == 0) {
+		currentCar.BestLap = lapDuration
+		currentCar.TopSpeedBestLap = currentCar.TopSpeedThisLap
 	}
 
-	driver.TopSpeedThisLap = 0
+	currentCar.TopSpeedThisLap = 0
 
 	rc.ConnectedDrivers.sort()
 
@@ -660,10 +653,13 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 		} else {
 			_ = rc.ConnectedDrivers.Each(func(otherDriverGUID udp.DriverGUID, otherDriver *RaceControlDriver) error {
 				if otherDriver.Position == driver.Position-1 {
-					lapDifference := otherDriver.NumLaps - driver.NumLaps
+					driverCar := driver.CurrentCar()
+					otherDriverCar := otherDriver.CurrentCar()
+
+					lapDifference := otherDriverCar.NumLaps - driverCar.NumLaps
 
 					if lapDifference <= 0 {
-						driver.Split = driver.LastLapCompletedTime.Sub(otherDriver.LastLapCompletedTime).Round(time.Millisecond).String()
+						driver.Split = driverCar.LastLapCompletedTime.Sub(otherDriverCar.LastLapCompletedTime).Round(time.Millisecond).String()
 					} else if lapDifference == 1 {
 						driver.Split = "1 lap"
 					} else {
@@ -675,21 +671,23 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 			})
 		}
 	} else {
-		var previousDriver *RaceControlDriver
+		var previousCar *RaceControlCarLapInfo
 
 		// gaps are calculated vs best lap
 		_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
-			if previousDriver == nil {
+			if previousCar == nil {
 				driver.Split = "0s"
 			} else {
-				if driver.BestLap >= previousDriver.BestLap && previousDriver.BestLap != 0 {
-					driver.Split = (driver.BestLap - previousDriver.BestLap).String()
+				car := driver.CurrentCar()
+
+				if car.BestLap >= previousCar.BestLap && car.BestLap != 0 {
+					driver.Split = (car.BestLap - previousCar.BestLap).String()
 				} else {
 					driver.Split = "n/a"
 				}
 			}
 
-			previousDriver = driver
+			previousCar = driver.CurrentCar()
 
 			return nil
 		})
@@ -699,24 +697,31 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 }
 
 func (rc *RaceControl) sort(driverGroup RaceControlDriverGroup, driverA, driverB *RaceControlDriver) bool {
+	driverACar := driverA.CurrentCar()
+	driverBCar := driverB.CurrentCar()
+
 	if driverGroup == ConnectedDrivers {
 		if rc.SessionInfo.Type == udp.SessionTypeRace {
-			return driverA.LastLapCompletedTime.Before(driverB.LastLapCompletedTime) && driverA.NumLaps >= driverB.NumLaps
+			return driverACar.LastLapCompletedTime.Before(driverBCar.LastLapCompletedTime) && driverACar.NumLaps >= driverBCar.NumLaps
 		} else {
-			if driverA.BestLap == 0 {
+			if driverACar.BestLap == 0 && driverBCar.BestLap == 0 {
+				return driverACar.LastLapCompletedTime.Before(driverBCar.LastLapCompletedTime)
+			}
+
+			if driverACar.BestLap == 0 {
 				return false
-			} else if driverB.BestLap == 0 {
+			} else if driverBCar.BestLap == 0 {
 				return true
 			}
 
-			return driverA.BestLap < driverB.BestLap
+			return driverACar.BestLap < driverBCar.BestLap
 		}
 	} else if driverGroup == DisconnectedDrivers {
 		// disconnected
 		if rc.SessionInfo.Type == udp.SessionTypeRace {
-			return driverA.LastLapCompletedTime.After(driverB.LastLapCompletedTime)
+			return driverACar.LastLapCompletedTime.After(driverBCar.LastLapCompletedTime)
 		} else {
-			return driverA.BestLap < driverB.BestLap
+			return driverACar.BestLap < driverBCar.BestLap
 		}
 	} else {
 		panic("unknown driver group")
