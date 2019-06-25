@@ -1,6 +1,9 @@
 v1.3.3
 ------
 
+**Please back up your data store (as defined in config.yml in 'store' -> 'path') before upgrading to this 
+  version!**
+
 Added:
 
 * You can now disable DRS Zones for any track in Custom Race / Championship Events. The drs_zones.ini file for the track
@@ -8,6 +11,9 @@ Added:
   actual track files, so if you're using a multi-server setup pointing to the same content folder, this may cause problems
   if you're running races at the same track simultaneously.
 * Scheduled championship events now show the start time of individual sessions if applicable.
+* You can now explicitly control the Grid/Pit Box position of an entrant in Custom Races and Championships! This is 
+  useful if you want to place teammates next to each other in the pits, avoid broken pit boxes or have a custom
+  starting grid for a race with no qualifying. It should auto fill sensibly if left alone too!
 
 Fixes:
 
