@@ -230,21 +230,33 @@ class RaceControlDriverMapRaceControlDriverCollision {
     }
 }
 
-// struct2ts:github.com/cj123/assetto-server-manager.RaceControlDriverMapRaceControlDriverRaceControlCarBestLap
-class RaceControlDriverMapRaceControlDriverRaceControlCarBestLap {
+// struct2ts:github.com/cj123/assetto-server-manager.RaceControlDriverMapRaceControlDriverRaceControlCarLapInfo
+class RaceControlDriverMapRaceControlDriverRaceControlCarLapInfo {
+    TopSpeedThisLap: number;
     TopSpeedBestLap: number;
     BestLap: number;
+    NumLaps: number;
+    LastLap: number;
+    LastLapCompletedTime: Date;
 
     constructor(data?: any) {
         const d: any = (data && typeof data === 'object') ? ToObject(data) : {};
+        this.TopSpeedThisLap = ('TopSpeedThisLap' in d) ? d.TopSpeedThisLap as number : 0;
         this.TopSpeedBestLap = ('TopSpeedBestLap' in d) ? d.TopSpeedBestLap as number : 0;
         this.BestLap = ('BestLap' in d) ? d.BestLap as number : 0;
+        this.NumLaps = ('NumLaps' in d) ? d.NumLaps as number : 0;
+        this.LastLap = ('LastLap' in d) ? d.LastLap as number : 0;
+        this.LastLapCompletedTime = ('LastLapCompletedTime' in d) ? ParseDate(d.LastLapCompletedTime) : new Date();
     }
 
     toObject(): any {
         const cfg: any = {};
+        cfg.TopSpeedThisLap = 'number';
         cfg.TopSpeedBestLap = 'number';
         cfg.BestLap = 'number';
+        cfg.NumLaps = 'number';
+        cfg.LastLap = 'number';
+        cfg.LastLapCompletedTime = 'string';
         return ToObject(this, cfg);
     }
 }
@@ -252,46 +264,31 @@ class RaceControlDriverMapRaceControlDriverRaceControlCarBestLap {
 // struct2ts:github.com/cj123/assetto-server-manager.RaceControlDriverMapRaceControlDriver
 class RaceControlDriverMapRaceControlDriver {
     CarInfo: RaceControlDriverMapRaceControlDriverSessionCarInfo;
+    TotalNumLaps: number;
     LoadedTime: Date;
-    NumLaps: number;
-    LastLap: number;
-    BestLap: number;
-    LastLapCompletedTime: Date;
     Position: number;
     Split: string;
-    TopSpeedThisLap: number;
-    TopSpeedBestLap: number;
     LastSeen: Date;
     Collisions: RaceControlDriverMapRaceControlDriverCollision[];
-    PreviousCars: { [key: string]: RaceControlDriverMapRaceControlDriverRaceControlCarBestLap };
+    Cars: { [key: string]: RaceControlDriverMapRaceControlDriverRaceControlCarLapInfo };
 
     constructor(data?: any) {
         const d: any = (data && typeof data === 'object') ? ToObject(data) : {};
         this.CarInfo = new RaceControlDriverMapRaceControlDriverSessionCarInfo(d.CarInfo);
+        this.TotalNumLaps = ('TotalNumLaps' in d) ? d.TotalNumLaps as number : 0;
         this.LoadedTime = ('LoadedTime' in d) ? ParseDate(d.LoadedTime) : new Date();
-        this.NumLaps = ('NumLaps' in d) ? d.NumLaps as number : 0;
-        this.LastLap = ('LastLap' in d) ? d.LastLap as number : 0;
-        this.BestLap = ('BestLap' in d) ? d.BestLap as number : 0;
-        this.LastLapCompletedTime = ('LastLapCompletedTime' in d) ? ParseDate(d.LastLapCompletedTime) : new Date();
         this.Position = ('Position' in d) ? d.Position as number : 0;
         this.Split = ('Split' in d) ? d.Split as string : '';
-        this.TopSpeedThisLap = ('TopSpeedThisLap' in d) ? d.TopSpeedThisLap as number : 0;
-        this.TopSpeedBestLap = ('TopSpeedBestLap' in d) ? d.TopSpeedBestLap as number : 0;
         this.LastSeen = ('LastSeen' in d) ? ParseDate(d.LastSeen) : new Date();
         this.Collisions = Array.isArray(d.Collisions) ? d.Collisions.map((v: any) => new RaceControlDriverMapRaceControlDriverCollision(v)) : [];
-        this.PreviousCars = ('PreviousCars' in d) ? d.PreviousCars as { [key: string]: RaceControlDriverMapRaceControlDriverRaceControlCarBestLap } : {};
+        this.Cars = ('Cars' in d) ? d.Cars as { [key: string]: RaceControlDriverMapRaceControlDriverRaceControlCarLapInfo } : {};
     }
 
     toObject(): any {
         const cfg: any = {};
+        cfg.TotalNumLaps = 'number';
         cfg.LoadedTime = 'string';
-        cfg.NumLaps = 'number';
-        cfg.LastLap = 'number';
-        cfg.BestLap = 'number';
-        cfg.LastLapCompletedTime = 'string';
         cfg.Position = 'number';
-        cfg.TopSpeedThisLap = 'number';
-        cfg.TopSpeedBestLap = 'number';
         cfg.LastSeen = 'string';
         return ToObject(this, cfg);
     }
@@ -317,8 +314,8 @@ class RaceControlDriverMap {
 // struct2ts:github.com/cj123/assetto-server-manager.RaceControl
 class RaceControl {
     SessionInfo: RaceControlSessionInfo;
-    TrackMapData: RaceControlTrackMapData | null;
-    TrackInfo: RaceControlTrackInfo | null;
+    TrackMapData: RaceControlTrackMapData;
+    TrackInfo: RaceControlTrackInfo;
     SessionStartTime: Date;
     ConnectedDrivers: RaceControlDriverMap | null;
     DisconnectedDrivers: RaceControlDriverMap | null;
@@ -327,8 +324,8 @@ class RaceControl {
     constructor(data?: any) {
         const d: any = (data && typeof data === 'object') ? ToObject(data) : {};
         this.SessionInfo = new RaceControlSessionInfo(d.SessionInfo);
-        this.TrackMapData = ('TrackMapData' in d) ? new RaceControlTrackMapData(d.TrackMapData) : null;
-        this.TrackInfo = ('TrackInfo' in d) ? new RaceControlTrackInfo(d.TrackInfo) : null;
+        this.TrackMapData = new RaceControlTrackMapData(d.TrackMapData);
+        this.TrackInfo = new RaceControlTrackInfo(d.TrackInfo);
         this.SessionStartTime = ('SessionStartTime' in d) ? ParseDate(d.SessionStartTime) : new Date();
         this.ConnectedDrivers = ('ConnectedDrivers' in d) ? new RaceControlDriverMap(d.ConnectedDrivers) : null;
         this.DisconnectedDrivers = ('DisconnectedDrivers' in d) ? new RaceControlDriverMap(d.DisconnectedDrivers) : null;
@@ -349,7 +346,7 @@ export {
     RaceControlTrackInfo,
     RaceControlDriverMapRaceControlDriverSessionCarInfo,
     RaceControlDriverMapRaceControlDriverCollision,
-    RaceControlDriverMapRaceControlDriverRaceControlCarBestLap,
+    RaceControlDriverMapRaceControlDriverRaceControlCarLapInfo,
     RaceControlDriverMapRaceControlDriver,
     RaceControlDriverMap,
     RaceControl,
