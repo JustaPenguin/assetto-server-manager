@@ -423,6 +423,10 @@ class LiveMap implements WebsocketHandler {
 }
 
 const DriverGUIDDataKey = "driver-guid";
+const SessionTypeRace = 3;
+const SessionTypeQualifying = 2;
+const SessionTypePractice = 1;
+const SessionTypeBooking = 0;
 
 class LiveTimings implements WebsocketHandler {
     private readonly raceControl: RaceControl;
@@ -629,6 +633,42 @@ class LiveTimings implements WebsocketHandler {
         $("#" + driverID).remove();
 
         $table.append($tr);
+
+        if (addingDriverToDisconnectedTable) {
+            this.sortTable($table);
+        }
+    }
+
+    private sortTable($table: JQuery<HTMLTableElement>) {
+        const $tbody = $table.find("tbody");
+
+        const that = this;
+
+        $($tbody.find("tr:not(:nth-child(1))").get().sort(function (a: HTMLTableElement, b: HTMLTableElement): number {
+            if (that.raceControl.status.SessionInfo.Type == SessionTypeRace) {
+                let lapsA = parseInt($(a).find("td:nth-child(4)").text(), 10);
+                let lapsB = parseInt($(b).find("td:nth-child(4)").text(), 10);
+
+                if (lapsA < lapsB) {
+                    return 1;
+                } else if (lapsA === lapsB) {
+                    return 0;
+                } else {
+                    return -1;
+                }
+            } else {
+                let timeA = $(a).find("td:nth-child(3)").text();
+                let timeB = $(b).find("td:nth-child(3)").text();
+
+                if (timeA < timeB) {
+                    return -1;
+                } else if (timeA === timeB) {
+                    return 0;
+                } else {
+                    return 1;
+                }
+            }
+        })).appendTo($tbody);
     }
 
     private toggleDriverSpeed(e: ClickEvent): void {
