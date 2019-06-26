@@ -546,6 +546,8 @@ class RaceSetup {
 
         }
 
+        $document.on("change", ".entrant-id", this.pitIDChangeEvent.bind(this));
+
         this.raceLaps();
         this.showEnabledSessions();
         this.showSolSettings();
@@ -827,9 +829,22 @@ class RaceSetup {
         let $maxClients = $document.find("#MaxClients");
         let $pitBoxesWarning = $document.find("#track-pitboxes-warning");
 
+        let that = this;
+
         $.getJSON(jsonURL, function (trackInfo) {
             $pitBoxes.closest(".row").show();
             $pitBoxes.text(trackInfo.pitboxes);
+
+            let $entrantIDs = $document.find(".entrant-id");
+            $entrantIDs.attr("max", (trackInfo.pitboxes - 1));
+
+            for (let i = 0; i < $entrantIDs.length; i++) {
+                if (($($entrantIDs[i])).val() > (trackInfo.pitboxes - 1)) {
+                    ($($entrantIDs[i])).val(0);
+
+                    that.organisePitIDs($($entrantIDs[i]));
+                }
+            }
 
             let entrants = $document.find(".entrant").length;
 
@@ -855,6 +870,52 @@ class RaceSetup {
             .fail(function () {
                 $pitBoxes.closest(".row").hide()
             })
+    }
+
+    /**
+     * pitIDChangeEvent: event fired when ID is changed by user
+     */
+    pitIDChangeEvent(e) {
+        this.organisePitIDs(e.currentTarget)
+    }
+
+    /**
+     * organisePitIDs: when ID is changed makes sure that none of the ids are equal
+     */
+    organisePitIDs(entrant) {
+        let $entrantIDs = $document.find(".entrant-id");
+        let pitBoxes = parseInt($document.find("#track-pitboxes").text());
+
+        let entrants = $document.find(".entrant").length;
+
+        // we shouldn't end up in this situation often, but avoids looping forever
+        if (entrants > pitBoxes) {
+            return
+        }
+
+        for (let i = 0; i < $entrantIDs.length; i++) {
+            // the id can match itself
+            if ($($entrantIDs[i]).is($(entrant))) {
+                continue
+            }
+
+            // if values are equal we need to change the pit box value until they aren't
+            // looping back to 0 if necessary
+            if (($($entrantIDs[i])).val() === $(entrant).val()) {
+                if (($(entrant).val()) < (pitBoxes - 1)) {
+                    $(entrant).val(parseInt($(entrant).val()) + 1)
+                } else {
+                    $(entrant).val(0)
+                }
+
+                this.organisePitIDs($(entrant))
+            }
+
+            // don't go above the number of pit boxes
+            if ($(entrant).val() > (pitBoxes - 1)) {
+                $(entrant).val(pitBoxes - 1)
+            }
+        }
     }
 
     /**
@@ -1230,6 +1291,10 @@ class RaceSetup {
 
                 $elem.find("[name='EntryList.Ballast']").val(ballast);
                 $elem.find("[name='EntryList.Restrictor']").val(restrictor);
+                let $entrantID = $elem.find("[name='EntryList.EntrantID']");
+
+                $entrantID.val($(".entrant:visible").length - 1);
+                that.organisePitIDs($entrantID);
 
                 populateEntryListCars();
                 showEntrantSkin(chosenCar, chosenSkin, $elem);
@@ -1354,7 +1419,7 @@ let percentColors = [
     {pct: 1.0, color: {r: 0xff, g: 0x00, b: 0}}];
 
 let getColorForPercentage = function (pct) {
-    let i
+    let i;
 
     for (i = 1; i < percentColors.length - 1; i++) {
         if (pct < percentColors[i].pct) {

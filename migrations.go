@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	CurrentMigrationVersion = 7
+	CurrentMigrationVersion = 8
 	versionMetaKey          = "version"
 )
 
@@ -43,6 +43,7 @@ var migrations = []migrationFunc{
 	addIDToChampionshipClasses,
 	enhanceOldChampionshipResultFiles,
 	addResultScreenTimeDefault,
+	addPitBoxDefinitionToEntrants,
 }
 
 func addEntrantIDToChampionships(rs Store) error {
@@ -238,6 +239,60 @@ func addResultScreenTimeDefault(rs Store) error {
 		}
 
 		err := rs.UpsertChampionship(champ)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func addPitBoxDefinitionToEntrants(rs Store) error {
+	logrus.Errorf("Running migration: Add Pit Box Definition To Entrants")
+
+	customRaces, err := rs.ListCustomRaces()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(customRaces, func(i, j int) bool {
+		return customRaces[i].Updated.After(customRaces[j].Updated)
+	})
+
+	for _, customRace := range customRaces {
+		for i, entrant := range customRace.GetEntryList().AsSlice() {
+			entrant.PitBox = i
+		}
+
+		err := rs.UpsertCustomRace(customRace)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	championships, err := rs.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(championships, func(i, j int) bool {
+		return championships[i].Updated.After(championships[j].Updated)
+	})
+
+	for _, championship := range championships {
+		for _, event := range championship.Events {
+			event.championship = championship
+
+			for i, entrant := range event.GetEntryList().AsSlice() {
+				entrant.PitBox = i
+			}
+		}
+
+		err := rs.UpsertChampionship(championship)
 
 		if err != nil {
 			return err
