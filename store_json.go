@@ -360,7 +360,7 @@ func (rs *JSONStore) GetMeta(key string, out interface{}) error {
 	err := rs.decodeFile(filepath.Join(serverMetaDir, key+".json"), out)
 
 	if os.IsNotExist(err) {
-		return ValueNotSet
+		return ErrValueNotSet
 	}
 
 	return err

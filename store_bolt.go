@@ -597,14 +597,14 @@ func (rs *BoltStore) SetMeta(key string, value interface{}) error {
 	})
 }
 
-var ValueNotSet = errors.New("servermanager: value not set")
+var ErrValueNotSet = errors.New("servermanager: value not set")
 
 func (rs *BoltStore) GetMeta(key string, out interface{}) error {
 	err := rs.db.View(func(tx *bbolt.Tx) error {
 		bkt, err := rs.metaBucket(tx)
 
 		if err == bbolt.ErrBucketNotFound {
-			return ValueNotSet
+			return ErrValueNotSet
 		} else if err != nil {
 			return err
 		}
@@ -612,7 +612,7 @@ func (rs *BoltStore) GetMeta(key string, out interface{}) error {
 		val := bkt.Get([]byte(key))
 
 		if val == nil {
-			return ValueNotSet
+			return ErrValueNotSet
 		}
 
 		err = rs.decode(val, &out)
@@ -646,7 +646,7 @@ func (rs *BoltStore) GetAuditEntries() ([]*AuditEntry, error) {
 		bkt, err := rs.auditBucket(tx)
 
 		if err == bbolt.ErrBucketNotFound {
-			return ValueNotSet
+			return ErrValueNotSet
 		} else if err != nil {
 			return err
 		}
@@ -654,7 +654,7 @@ func (rs *BoltStore) GetAuditEntries() ([]*AuditEntry, error) {
 		val := bkt.Get([]byte("audit"))
 
 		if val == nil {
-			return ValueNotSet
+			return ErrValueNotSet
 		}
 
 		err = rs.decode(val, &audits)
@@ -668,7 +668,7 @@ func (rs *BoltStore) GetAuditEntries() ([]*AuditEntry, error) {
 func (rs *BoltStore) AddAuditEntry(entry *AuditEntry) error {
 	entries, err := rs.GetAuditEntries()
 
-	if err != nil && err != ValueNotSet {
+	if err != nil && err != ErrValueNotSet {
 		return err
 	}
 

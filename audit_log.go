@@ -10,12 +10,12 @@ import (
 type AuditEntry struct {
 	UserGroup Group
 	Method    string
-	Url       string
+	URL       string
 	User      string
 	Time      time.Time
 }
 
-var ignoredURLS = [5]string{
+var ignoredURLs = [5]string{
 	"/audit-logs",
 	"/quick",
 	"/logs",
@@ -25,7 +25,7 @@ var ignoredURLS = [5]string{
 
 func AuditLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		for _, url := range ignoredURLS {
+		for _, url := range ignoredURLs {
 			if url == r.URL.String() {
 				next.ServeHTTP(w, r)
 				return
@@ -42,7 +42,7 @@ func AuditLogger(next http.Handler) http.Handler {
 		entry := &AuditEntry{
 			UserGroup: account.Group,
 			Method:    r.Method,
-			Url:       r.URL.String(),
+			URL:       r.URL.String(),
 			User:      account.Name,
 			Time:      time.Now(),
 		}
