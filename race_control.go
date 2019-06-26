@@ -192,11 +192,15 @@ func (rc *RaceControl) Event() udp.Event {
 }
 
 func NewRaceControlDriver(carInfo udp.SessionCarInfo) *RaceControlDriver {
-	return &RaceControlDriver{
+	driver := &RaceControlDriver{
 		CarInfo:  carInfo,
 		Cars:     make(map[string]*RaceControlCarLapInfo),
 		LastSeen: time.Now(),
 	}
+
+	driver.Cars[carInfo.CarModel] = &RaceControlCarLapInfo{}
+
+	return driver
 }
 
 type RaceControlDriver struct {
@@ -683,7 +687,7 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 				if car.BestLap >= previousCar.BestLap && car.BestLap != 0 {
 					driver.Split = (car.BestLap - previousCar.BestLap).String()
 				} else {
-					driver.Split = "n/a"
+					driver.Split = ""
 				}
 			}
 
@@ -705,7 +709,12 @@ func (rc *RaceControl) sort(driverGroup RaceControlDriverGroup, driverA, driverB
 			return driverACar.LastLapCompletedTime.Before(driverBCar.LastLapCompletedTime) && driverACar.NumLaps >= driverBCar.NumLaps
 		} else {
 			if driverACar.BestLap == 0 && driverBCar.BestLap == 0 {
-				return driverACar.LastLapCompletedTime.Before(driverBCar.LastLapCompletedTime)
+				if driverACar.NumLaps == driverBCar.NumLaps {
+					return driverACar.LastLapCompletedTime.Before(driverBCar.LastLapCompletedTime)
+				} else {
+					return driverACar.NumLaps > driverBCar.NumLaps
+				}
+
 			}
 
 			if driverACar.BestLap == 0 {

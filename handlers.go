@@ -94,7 +94,6 @@ func Router(fs http.FileSystem) http.Handler {
 
 		// live timings
 		r.Get("/live-timing", liveTimingHandler)
-		r.Get("/live-timing/get", liveTimingGetHandler)
 		r.Get("/api/race-control", raceControlHandler)
 
 		// account management
@@ -502,13 +501,8 @@ func liveTimingHandler(w http.ResponseWriter, r *http.Request) {
 		"RaceDetails":     customRace,
 		"FrameLinks":      frameLinks,
 		"CSSDotSmoothing": udp.RealtimePosIntervalMs,
+		"WideContainer":   true,
 	})
-}
-
-func liveTimingGetHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	_ = json.NewEncoder(w).Encode(liveInfo)
 }
 
 func deleteEmpty(s []string) []string {

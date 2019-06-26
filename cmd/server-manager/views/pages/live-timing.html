@@ -8,28 +8,59 @@
     </style>
 {{ end }}
 
+{{ define "iframe-block" }}
+    <div class="col-md-6 live-frame-wrapper mt-2 {{ with . }}{{ else }}d-none{{ end }}">
+        <div class="col-12 p-0">
+            <div class="embed-responsive embed-responsive-16by9 p-0">
+                <iframe class="embed-responsive-item p-0 live-frame" src="{{ . }}"></iframe>
+            </div>
+            {{ if WriteAccess }}
+                <div class="mt-2 {{ with . }}{{ else }}ml-0{{ end }} frame-input">
+                    <div class="row">
+                        <div class="col-sm-9">
+                            <input type="text" class="live-frame-link form-control" name="frame-link" value="{{ . }}"
+                                   placeholder="IFrame content link (track location on map, race live stream etc.)">
+                        </div>
+                        <div class="col-sm-3 pl-1">
+                            <button class="btn btn-primary text-light remove-live-frame float-right">Remove IFrame</button>
+                        </div>
+                    </div>
+                </div>
+            {{ end }}
+        </div>
+    </div>
+{{ end }}
+
 {{ define "content" }}
     {{ with .RaceDetails }}
 
+        <div style="position: absolute; top: 90px; right: 20px;">
+            <div id="road-temp-wrapper" data-toggle="tooltip"
+                 title data-original-title="Road Temp">
+                <div id="road-temp-text"></div>
+                <img src="/static/img/temp-road.png" alt="Road Temp" id="road-temp">
+            </div>
+            <div id="ambient-temp-wrapper" class="mt-1" data-toggle="tooltip"
+                 title data-original-title="Ambient Temp">
+                <div id="ambient-temp-text"></div>
+                <img src="/static/img/temp-ambient.png" alt="Ambient Temp" id="ambient-temp">
+            </div>
+        </div>
+
         <div class="text-center">
             <h1 class="text-center" id="event-title"></h1>
+            <div class="text-center text-black-50" id="track-location"></div>
 
             <span id="race-time" class="mt-2 badge badge-primary" style="font-size: 1em;"></span>
         </div>
 
-        <div class="row mt-5">
-            <div class="col-sm-4">
-                <div class="card" id="event-details">
-                    <div class="card-header">
-                        Event in Progress
-                    </div>
 
-                    <div class="card-body">
-                        <div id="current-session" class="mt-2 font-weight-bold"></div>
-                        <div id="live-info-general" class="mt-2"></div>
-                    </div>
-                </div>
-            </div>
+
+        <div class="clearfix"></div>
+
+        <div class="row mt-5">
+
+            <!--
 
             <div class="col-sm-8">
                 <div class="card" id="track-details">
@@ -39,34 +70,39 @@
 
                     <div class="card-body row">
                         <div class="col-12 col-sm-6">
-                            <div id="road-temp-wrapper" data-toggle="tooltip"
-                                 title data-original-title="Road Temp">
-                                <div id="road-temp-text"></div>
-                                <img src="/static/img/temp-road.png" alt="Road Temp" id="road-temp">
-                            </div>
-                            <div id="ambient-temp-wrapper" class="mt-1" data-toggle="tooltip"
-                                 title data-original-title="Ambient Temp">
-                                <div id="ambient-temp-text"></div>
-                                <img src="/static/img/temp-ambient.png" alt="Ambient Temp" id="ambient-temp">
-                            </div>
+
                         </div>
 
                         <div class="col-12 col-sm-6">
                             <div class="row">
-                                <div class="col-6">
+                                <div class="col-2">
+                                    <div class="float-right">
+                                        <div id="road-temp-wrapper" data-toggle="tooltip"
+                                             title data-original-title="Road Temp">
+                                            <div id="road-temp-text"></div>
+                                            <img src="/static/img/temp-road.png" alt="Road Temp" id="road-temp">
+                                        </div>
+                                        <div id="ambient-temp-wrapper" class="mt-1" data-toggle="tooltip"
+                                             title data-original-title="Ambient Temp">
+                                            <div id="ambient-temp-text"></div>
+                                            <img src="/static/img/temp-ambient.png" alt="Ambient Temp" id="ambient-temp">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-5">
                                     <img class="img img-fluid float-right"
                                          id="trackImage"
                                          src="/static/img/no-preview-general.png"
                                     >
                                 </div>
-                                <div class="col-6">
+                                <div class="col-5">
                                     <img class="img img-fluid" id="weatherImage" src="/static/img/no-preview-general.png" alt="Current Weather">
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </div>-->
         </div>
 
         <div class="row mt-5">
@@ -116,59 +152,28 @@
                         </div>
                     </div>
                 {{ end }}
-
-                <form action="/live-timing/save-frames" method="post" class="w-100 d-contents">
-                    <!-- Hidden, used for cloning -->
-                    <div class="w-100 live-frame-wrapper d-none">
-                        <div class="embed-responsive embed-responsive-16by9">
-                            <iframe class="embed-responsive-item p-3 live-frame"
-                                    src="">
-                            </iframe>
-                        </div>
-
-                        {{ if WriteAccess }}
-                            <div class="row ml-3 mr-3 mt-2 w-100">
-                                <input type="text" class="live-frame-link form-control pl-1 col-8" name="frame-link"
-                                       placeholder="IFrame content link (track location on map, race live stream etc.)">
-                                <span class="col-1"></span>
-                                <button class="btn btn-primary text-light col-3 remove-live-frame" >Remove IFrame</button>
-                            </div>
-                        {{ end }}
-                    </div>
-
-                    {{ with $.FrameLinks }}
-
-                        {{ range $index, $link := $.FrameLinks }}
-                            <div class="w-100 live-frame-wrapper d-contents generated">
-                                <div class="embed-responsive embed-responsive-16by9">
-                                    <iframe class="embed-responsive-item p-3 live-frame"
-                                            src={{ $link }}>
-                                    </iframe>
-                                </div>
-
-                                {{ if WriteAccess }}
-                                    <div class="row ml-3 mr-3 mt-2 w-100">
-                                        <input type="text" class="live-frame-link form-control pl-1 col-8" name="frame-link"
-                                               value={{ $link }}>
-
-                                        <div class="col-4 pl-1">
-
-                                            <button class="btn btn-primary text-light remove-live-frame" >Remove IFrame</button>
-                                        </div>
-                                    </div>
-                                {{ end }}
-                            </div>
-                        {{ end }}
-
-                    {{ end }}
-
-                    {{ if WriteAccess }}
-                        <a class="ml-3 mt-2 mb-2 btn btn-primary text-light" id="add-live-frame">Add IFrame</a>
-                        <button type="submit" class="ml-3 mt-2 mb-2 btn btn-success text-light">Save IFrames</button>
-                    {{ end }}
-
-                </form>
             </div>
         </div>
+
+
+        <form action="/live-timing/save-frames" method="post" class="live-frames row mt-2">
+            <!-- Hidden, used for cloning -->
+            {{ template "iframe-block" }}
+
+            {{ with $.FrameLinks }}
+                {{ range $index, $link := $.FrameLinks }}
+                    {{ template "iframe-block" $link }}
+                {{ end }}
+            {{ end }}
+
+            <div class="clearfix"></div>
+
+            {{ if WriteAccess }}
+                <div class="col-12 mt-4">
+                    <a class="btn btn-primary text-light" id="add-live-frame">Add IFrame</a>
+                    <button type="submit" class="btn btn-success text-light">Save IFrames</button>
+                </div>
+            {{ end }}
+        </form>
     {{ end }}
 {{ end }}

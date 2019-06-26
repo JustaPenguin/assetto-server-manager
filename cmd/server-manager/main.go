@@ -96,8 +96,8 @@ func main() {
 		logrus.Errorf("couldn't initialise scheduled championship events, err: %s", err)
 	}
 
-	//go startUDPReplay("./assetto/session-logs/2019-03-09_12.40.json")
-	go MiniRace()
+	go startUDPReplay("./assetto/session-logs/Tue Feb 19 19:36:35 2019.json")
+	//go MiniRace()
 
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 
@@ -120,9 +120,9 @@ func main() {
 }
 
 func startUDPReplay(file string) {
-	err := replay.ReplayUDPMessages(file, 30, func(response udp.Message) {
+	err := replay.ReplayUDPMessages(file, 2, func(response udp.Message) {
 		servermanager.RaceControlInst.UDPCallback(response)
-	}, time.Minute*1000)
+	}, time.Second*2)
 
 	if err != nil {
 		logrus.WithError(err).Error("UDP Replay failed")
@@ -150,7 +150,7 @@ func MiniRace() {
 		WaitTime:            120,
 		AmbientTemp:         12,
 		RoadTemp:            16,
-		WeatherGraphics:     "01_clear",
+		WeatherGraphics:     "3_clear",
 		ElapsedMilliseconds: 10,
 
 		EventType: udp.EventNewSession,
