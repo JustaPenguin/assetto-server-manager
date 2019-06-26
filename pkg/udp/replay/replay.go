@@ -1,16 +1,32 @@
 package replay
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"os"
+	"sort"
+	"sync"
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
+
+	"github.com/etcd-io/bbolt"
+	"github.com/sirupsen/logrus"
 )
 
-var entries []Entry
+type Entries []*Entry
+
+func (e Entries) Len() int {
+	return len(e)
+}
+
+func (e Entries) Less(i, j int) bool {
+	return e[i].Received.Before(e[j].Received)
+}
+
+func (e Entries) Swap(i, j int) {
+	e[i], e[j] = e[j], e[i]
+}
 
 type Entry struct {
 	Received  time.Time
@@ -145,75 +161,101 @@ func (e *Entry) UnmarshalJSON(b []byte) error {
 		}
 
 		e.Data = *data
+	default:
 	}
 
 	return nil
 }
 
-func RecordUDPMessages(filename string) (callbackFunc udp.CallbackFunc) {
+var BucketName = []byte("sessions")
+
+func RecordUDPMessages(db *bbolt.DB) (callbackFunc udp.CallbackFunc) {
 	return func(message udp.Message) {
-		entries = append(entries, Entry{
+		e := Entry{
 			Received:  time.Now(),
 			EventType: message.Event(),
 			Data:      message,
-		})
-
-		f, err := os.Create(filename)
-
-		if err != nil {
-			panic(err)
 		}
 
-		defer f.Close()
+		buf := new(bytes.Buffer)
 
-		encoder := json.NewEncoder(f)
+		encoder := json.NewEncoder(buf)
 		encoder.SetIndent("", "  ")
+		encoder.Encode(e)
 
-		err = encoder.Encode(entries)
+		err := db.Update(func(tx *bbolt.Tx) error {
+			bkt, err := tx.CreateBucketIfNotExists(BucketName)
+
+			if err != nil {
+				return err
+			}
+
+			return bkt.Put([]byte(e.Received.Format(time.RFC3339Nano)), []byte(buf.String()))
+		})
 
 		if err != nil {
-			fmt.Println("err encoding", err)
+			logrus.WithError(err).Errorf("could not save to bucket")
 		}
 	}
 }
 
-func ReplayUDPMessages(filename string, multiplier int, callbackFunc udp.CallbackFunc, waitTime time.Duration) error {
-	var loadedEntries []*Entry
+func ReplayUDPMessages(db *bbolt.DB, multiplier int, callbackFunc udp.CallbackFunc, waitTime time.Duration) error {
+	var loadedEntries Entries
 
-	f, err := os.Open(filename)
+	var wg sync.WaitGroup
 
-	if err != nil {
-		return err
-	}
+	err := db.View(func(tx *bbolt.Tx) error {
+		err := tx.Bucket(BucketName).ForEach(func(k, v []byte) error {
+			var entry *Entry
+			err := json.Unmarshal(v, &entry)
 
-	defer f.Close()
+			if err != nil {
+				return err
+			}
 
-	if err := json.NewDecoder(f).Decode(&loadedEntries); err != nil {
-		return err
-	}
+			loadedEntries = append(loadedEntries, entry)
 
-	if len(loadedEntries) == 0 {
+			return err
+		})
+
+		if err != nil {
+			return err
+		}
+
+		if len(loadedEntries) == 0 {
+			return nil
+		}
+
+		sort.Sort(loadedEntries)
+
+		timeStart := loadedEntries[0].Received
+
+		for _, entry := range loadedEntries {
+			tickDuration := entry.Received.Sub(timeStart) / time.Duration(multiplier)
+
+			if tickDuration > waitTime {
+				tickDuration = waitTime
+			}
+
+			if tickDuration > 0 {
+				tickWhenEventOccurs := time.Tick(tickDuration)
+				<-tickWhenEventOccurs
+			}
+
+			wg.Add(1)
+
+			go func() {
+				callbackFunc(entry.Data)
+				wg.Done()
+			}()
+
+			timeStart = entry.Received
+		}
+
 		return nil
-	}
+	})
 
-	timeStart := loadedEntries[0].Received
+	wg.Wait()
 
-	for _, entry := range loadedEntries {
-		tickDuration := entry.Received.Sub(timeStart) / time.Duration(multiplier)
-
-		if tickDuration > waitTime {
-			tickDuration = waitTime
-		}
-
-		if tickDuration > 0 {
-			tickWhenEventOccurs := time.Tick(tickDuration)
-			<-tickWhenEventOccurs
-		}
-
-		callbackFunc(entry.Data)
-
-		timeStart = entry.Received
-	}
-
-	return nil
+	return err
 }
