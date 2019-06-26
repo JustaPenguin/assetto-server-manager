@@ -609,7 +609,8 @@ func resultHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ViewRenderer.MustLoadTemplate(w, r, "results/result.html", map[string]interface{}{
-		"result": result,
+		"result":        result,
+		"WideContainer": true,
 	})
 }
 

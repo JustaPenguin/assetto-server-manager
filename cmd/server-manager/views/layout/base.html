@@ -43,7 +43,7 @@
     <body>
 
     <nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-primary">
-        <div class="container">
+        <div class="{{ with $.WideContainer }}container-fluid{{ else }}container{{ end }}">
             <a class="navbar-brand" href="/" data-toggle="tooltip" title="{{ $.server_name }}">{{ $.server_name }}</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -190,7 +190,7 @@
         </div>
     </nav>
 
-    <div class="container">
+    <div class="{{ with $.WideContainer }}container-fluid{{ else }}container{{ end }}">
         {{ block "content" . }}{{ end }}
 
 

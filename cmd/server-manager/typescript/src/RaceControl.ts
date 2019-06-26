@@ -9,6 +9,7 @@ import {randomColor} from "randomcolor/randomColor";
 import {msToTime, prettifyName} from "./utils";
 import moment from "moment";
 import ClickEvent = JQuery.ClickEvent;
+import ChangeEvent = JQuery.ChangeEvent;
 
 interface WSMessage {
     Message: any;
@@ -55,12 +56,10 @@ export class RaceControl {
             return;
         }
 
-        // enable wide-mode
-        $(".container").attr("class", "container-fluid");
-
         let ws = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/api/race-control");
         ws.onmessage = this.handleWebsocketMessage.bind(this);
 
+        this.handleIFrames();
         setInterval(this.showEventCompletion.bind(this), 1000);
     }
 
@@ -75,6 +74,7 @@ export class RaceControl {
             case EventRaceControl:
                 this.status = new RaceControlData(message.Message);
                 this.$eventTitle.text(RaceControl.getSessionType(this.status.SessionInfo.Type) + " at " + this.status.TrackInfo!.name);
+                $("#track-location").text(this.status.TrackInfo.city + ", " + this.status.TrackInfo.country);
 
                 this.buildSessionInfo();
                 break;
@@ -177,6 +177,51 @@ export class RaceControl {
         const sessionInfo = this.status.SessionInfo;
 
         return "/content/tracks/" + sessionInfo.Track + "/ui" + (!!sessionInfo.TrackConfig ? "/" + sessionInfo.TrackConfig : "") + "/preview.png";
+    }
+
+    private handleIFrames(): void {
+        const $document = $(document);
+
+        $document.on("change", ".live-frame-link", function (e: ChangeEvent) {
+            let $this = $(e.currentTarget) as JQuery<HTMLInputElement>;
+            let value = $this.val() as string;
+
+            if (value) {
+                let $liveTimingFrame = $this.closest(".live-frame-wrapper").find(".live-frame");
+                $this.closest(".live-frame-wrapper").find(".embed-responsive").attr("class", "embed-responsive embed-responsive-16by9");
+
+                // if somebody pasted an embed code just grab the actual link
+                if (value.startsWith('<iframe')) {
+                    let res = value.split('"');
+
+                    for (let i = 0; i < res.length; i++) {
+                        if (res[i] === " src=") {
+                            if (res[i + 1]) {
+                                $liveTimingFrame.attr("src", res[i + 1]);
+                            }
+
+                            $this.val(res[i + 1]);
+                        }
+                    }
+                } else {
+                    $liveTimingFrame.attr("src", value);
+                }
+            }
+        });
+
+        $document.on("click", ".remove-live-frame", function (e: ClickEvent) {
+            $(e.currentTarget).closest(".live-frame-wrapper").remove();
+        });
+
+        $document.find("#add-live-frame").click(function () {
+            let $copy = $document.find(".live-frame-wrapper").first().clone();
+
+            $copy.removeClass("d-none");
+            $copy.find(".embed-responsive").attr("class", "d-none embed-responsive embed-responsive-16by9");
+            $copy.find(".frame-input").removeClass("ml-0");
+
+            $document.find(".live-frame-wrapper").last().after($copy);
+        });
     }
 }
 
@@ -365,6 +410,8 @@ class LiveMap implements WebsocketHandler {
                 "src": trackURL,
             });
 
+            console.log("load");
+
             this.mapImageHasLoaded = true;
             this.correctMapDimensions();
         };
@@ -379,6 +426,8 @@ class LiveMap implements WebsocketHandler {
             return;
         }
 
+        console.log("correct");
+
         if (this.trackImage.height / this.trackImage.width > LiveMap.mapRotationRatio) {
             // rotate the map
             this.$map.addClass("rotated");
@@ -388,7 +437,9 @@ class LiveMap implements WebsocketHandler {
                 'max-width': 'auto'
             });
 
-            this.mapScaleMultiplier = this.$trackMapImage.width()! / this.trackImage.width;
+            console.log(this.$map.width(), this.trackImage.width);
+
+            this.mapScaleMultiplier = this.$map.width()! / this.trackImage.width;
 
             this.$map.closest(".map-container").css({
                 'max-height': (this.trackImage.width * this.mapScaleMultiplier) + 20,
@@ -413,7 +464,7 @@ class LiveMap implements WebsocketHandler {
                 'max-width': '100%'
             });
 
-            this.mapScaleMultiplier = this.$trackMapImage.width()! / this.trackImage.width;
+            this.mapScaleMultiplier = this.$map.width()! / this.trackImage.width;
         }
     }
 
@@ -469,12 +520,6 @@ class LiveTimings implements WebsocketHandler {
 
             this.addDriverToTable(driver, this.$connectedDriversTable);
             this.populatePreviousLapsForDriver(driver);
-        }
-
-        if (this.raceControl.status.ConnectedDrivers.GUIDsInPositionalOrder.length > 0) {
-            this.$connectedDriversTable.show();
-        } else {
-            this.$connectedDriversTable.hide();
         }
     }
 
@@ -641,7 +686,6 @@ class LiveTimings implements WebsocketHandler {
 
     private sortTable($table: JQuery<HTMLTableElement>) {
         const $tbody = $table.find("tbody");
-
         const that = this;
 
         $($tbody.find("tr:not(:nth-child(1))").get().sort(function (a: HTMLTableElement, b: HTMLTableElement): number {
