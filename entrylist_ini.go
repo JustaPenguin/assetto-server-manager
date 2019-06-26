@@ -167,7 +167,7 @@ func (e Entrant) ID() string {
 	}
 }
 
-func (e Entrant) OverwriteProperties(other *Entrant) {
+func (e *Entrant) OverwriteProperties(other *Entrant) {
 	e.FixedSetup = other.FixedSetup
 	e.Restrictor = other.Restrictor
 	e.SpectatorMode = other.SpectatorMode
