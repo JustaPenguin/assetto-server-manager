@@ -141,7 +141,7 @@ func NewEntrant() *Entrant {
 
 type Entrant struct {
 	InternalUUID uuid.UUID `ini:"-"`
-	PitBox int `ini:"-"`
+	PitBox       int       `ini:"-"`
 
 	Name string `ini:"DRIVERNAME"`
 	Team string `ini:"TEAM"`
