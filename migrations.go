@@ -18,7 +18,7 @@ func Migrate(store Store) error {
 
 	err := store.GetMeta(versionMetaKey, &storeVersion)
 
-	if err != nil && err != ValueNotSet {
+	if err != nil && err != ErrValueNotSet {
 		return err
 	}
 
