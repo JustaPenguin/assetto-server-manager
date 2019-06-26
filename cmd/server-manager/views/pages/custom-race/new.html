@@ -91,7 +91,7 @@
                                     <span id="track-pitboxes-warning" class="text-warning mt-2"
                                         {{ if not (and ($.IsChampionship) (lt (int $.Championship.NumEntrants) (int $trackInfo.Pitboxes))) }} style="display: none;" {{ end }}
                                         >This track has fewer pit boxes than the configured number of entrants in the
-                                        current {{if $.IsChampionship }}championship{{ else }}race{{end}}, and therefore is not eligible for this championship.</span>
+                                        current {{if $.IsChampionship }}Championship{{ else }}Race{{end}}, and therefore is not eligible for it.</span>
                                 </div>
                             </div>
                         {{ end }}

@@ -435,7 +435,6 @@ func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (Entry
 			e.PitBox = i
 		}
 
-
 		if r.Form["EntryList.TransferTeamPoints"] != nil && i < len(r.Form["EntryList.TransferTeamPoints"]) && formValueAsInt(r.Form["EntryList.TransferTeamPoints"][i]) == 1 {
 			e.TransferTeamPoints = true
 		}

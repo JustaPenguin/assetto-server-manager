@@ -228,7 +228,7 @@ func dateFormat(t time.Time) string {
 }
 
 func hourAndZoneFormat(t time.Time, plusMinutes int64) string {
-	t = t.Add(time.Minute*time.Duration(plusMinutes))
+	t = t.Add(time.Minute * time.Duration(plusMinutes))
 
 	return t.Format("3:04 PM (MST)")
 }
