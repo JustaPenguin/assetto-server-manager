@@ -48,7 +48,7 @@
 
         <div class="entrants-block">
             <div id="entrantTemplate" class="entrant">
-                {{ template "entrant" }}
+                {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" true }}
             </div>
 
             {{ range $index, $entrant := $class.Entrants.AsSlice }}
@@ -58,7 +58,7 @@
             {{ else }}
                 {{ if not $.IsEditing }}
                     <div class="entrant">
-                        {{ template "entrant" }}
+                        {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" true }}
                     </div>
                 {{ end }}
             {{ end }}

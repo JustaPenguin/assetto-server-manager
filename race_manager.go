@@ -428,6 +428,13 @@ func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (Entry
 		e.Restrictor = formValueAsInt(r.Form["EntryList.Restrictor"][i])
 		e.FixedSetup = r.Form["EntryList.FixedSetup"][i]
 
+		// The pit box/grid starting position
+		if entrantIDs, ok := r.Form["EntryList.EntrantID"]; ok && i < len(entrantIDs) {
+			e.PitBox = formValueAsInt(entrantIDs[i])
+		} else {
+			e.PitBox = i
+		}
+
 		if r.Form["EntryList.TransferTeamPoints"] != nil && i < len(r.Form["EntryList.TransferTeamPoints"]) && formValueAsInt(r.Form["EntryList.TransferTeamPoints"][i]) == 1 {
 			e.TransferTeamPoints = true
 		}

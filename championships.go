@@ -1045,7 +1045,7 @@ func exportChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 	// sign up responses are hidden for data protection reasons
 	championship.SignUpForm.Responses = nil
 
-	if !AccountFromRequest(r).HasGroupPrivilege(GroupWrite)  {
+	if !AccountFromRequest(r).HasGroupPrivilege(GroupWrite) {
 		// if you don't have write access or above you can't see the replacement password
 		championship.ReplacementPassword = ""
 		championship.OverridePassword = false
