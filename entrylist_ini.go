@@ -27,8 +27,8 @@ func (e EntryList) Write() error {
 		return err
 	}
 
-	for k, v := range e {
-		s, err := f.NewSection(k)
+	for _, v := range e {
+		s, err := f.NewSection(fmt.Sprintf("CAR_%d", v.PitBox))
 
 		if err != nil {
 			return err
@@ -67,11 +67,7 @@ func (e EntryList) AsSlice() []*Entrant {
 	}
 
 	sort.Slice(entrants, func(i, j int) bool {
-		if entrants[i].Team == entrants[j].Team {
-			return entrants[i].Name < entrants[j].Name
-		} else {
-			return entrants[i].Team < entrants[j].Team
-		}
+		return entrants[i].PitBox < entrants[j].PitBox
 	})
 
 	return entrants
@@ -145,6 +141,7 @@ func NewEntrant() *Entrant {
 
 type Entrant struct {
 	InternalUUID uuid.UUID `ini:"-"`
+	PitBox       int       `ini:"-"`
 
 	Name string `ini:"DRIVERNAME"`
 	Team string `ini:"TEAM"`
@@ -170,10 +167,11 @@ func (e Entrant) ID() string {
 	}
 }
 
-func (e Entrant) OverwriteProperties(other *Entrant) {
+func (e *Entrant) OverwriteProperties(other *Entrant) {
 	e.FixedSetup = other.FixedSetup
 	e.Restrictor = other.Restrictor
 	e.SpectatorMode = other.SpectatorMode
 	e.Ballast = other.Ballast
 	e.Skin = other.Skin
+	e.PitBox = other.PitBox
 }
