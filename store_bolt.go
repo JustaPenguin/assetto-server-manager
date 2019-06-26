@@ -597,14 +597,14 @@ func (rs *BoltStore) SetMeta(key string, value interface{}) error {
 	})
 }
 
-var ErrMetaValueNotSet = errors.New("servermanager: value not set")
+var ErrValueNotSet = errors.New("servermanager: value not set")
 
 func (rs *BoltStore) GetMeta(key string, out interface{}) error {
 	err := rs.db.View(func(tx *bbolt.Tx) error {
 		bkt, err := rs.metaBucket(tx)
 
 		if err == bbolt.ErrBucketNotFound {
-			return ErrMetaValueNotSet
+			return ErrValueNotSet
 		} else if err != nil {
 			return err
 		}
@@ -612,7 +612,7 @@ func (rs *BoltStore) GetMeta(key string, out interface{}) error {
 		val := bkt.Get([]byte(key))
 
 		if val == nil {
-			return ErrMetaValueNotSet
+			return ErrValueNotSet
 		}
 
 		err = rs.decode(val, &out)
@@ -621,4 +621,76 @@ func (rs *BoltStore) GetMeta(key string, out interface{}) error {
 	})
 
 	return err
+}
+
+var auditBucketName = []byte("audit")
+
+func (rs *BoltStore) auditBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+	if !tx.Writable() {
+		bkt := tx.Bucket(auditBucketName)
+
+		if bkt == nil {
+			return nil, bbolt.ErrBucketNotFound
+		}
+
+		return bkt, nil
+	}
+
+	return tx.CreateBucketIfNotExists(auditBucketName)
+}
+
+func (rs *BoltStore) GetAuditEntries() ([]*AuditEntry, error) {
+	var audits []*AuditEntry
+
+	err := rs.db.View(func(tx *bbolt.Tx) error {
+		bkt, err := rs.auditBucket(tx)
+
+		if err == bbolt.ErrBucketNotFound {
+			return ErrValueNotSet
+		} else if err != nil {
+			return err
+		}
+
+		val := bkt.Get([]byte("audit"))
+
+		if val == nil {
+			return ErrValueNotSet
+		}
+
+		err = rs.decode(val, &audits)
+
+		return err
+	})
+
+	return audits, err
+}
+
+func (rs *BoltStore) AddAuditEntry(entry *AuditEntry) error {
+	entries, err := rs.GetAuditEntries()
+
+	if err != nil && err != ErrValueNotSet {
+		return err
+	}
+
+	entries = append(entries, entry)
+
+	if len(entries) > maxAuditEntries {
+		entries = entries[20:]
+	}
+
+	return rs.db.Update(func(tx *bbolt.Tx) error {
+		bkt, err := rs.auditBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		enc, err := rs.encode(entries)
+
+		if err != nil {
+			return err
+		}
+
+		return bkt.Put([]byte("audit"), enc)
+	})
 }
