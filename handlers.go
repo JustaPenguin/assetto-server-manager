@@ -107,7 +107,9 @@ func Router(fs http.FileSystem) http.Handler {
 	// writers
 	r.Group(func(r chi.Router) {
 		r.Use(WriteAccessMiddleware)
-		r.Use(AuditLogger)
+		if config.Server.AuditLogging {
+			r.Use(AuditLogger)
+		}
 
 		// content
 		r.Post("/setups/upload", carSetupsUploadHandler)
@@ -169,7 +171,9 @@ func Router(fs http.FileSystem) http.Handler {
 	// deleters
 	r.Group(func(r chi.Router) {
 		r.Use(DeleteAccessMiddleware)
-		r.Use(AuditLogger)
+		if config.Server.AuditLogging {
+			r.Use(AuditLogger)
+		}
 
 		r.Get("/championship/{championshipID}/event/{eventID}/delete", championshipDeleteEventHandler)
 		r.Get("/championship/{championshipID}/delete", deleteChampionshipHandler)
@@ -187,7 +191,9 @@ func Router(fs http.FileSystem) http.Handler {
 	// admins
 	r.Group(func(r chi.Router) {
 		r.Use(AdminAccessMiddleware)
-		r.Use(AuditLogger)
+		if config.Server.AuditLogging {
+			r.Use(AuditLogger)
+		}
 
 		r.HandleFunc("/server-options", serverOptionsHandler)
 		r.HandleFunc("/blacklist", serverBlacklistHandler)
