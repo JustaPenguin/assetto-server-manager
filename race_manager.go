@@ -37,13 +37,13 @@ func InitWithStore(store Store) {
 
 	err := store.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
 
-	if err != nil && err != ErrMetaValueNotSet {
+	if err != nil && err != ValueNotSet {
 		logrus.WithError(err).Errorf("Could not load server account options")
 	}
 
 	opts, err := store.LoadServerOptions()
 
-	if err != nil && err != ErrMetaValueNotSet {
+	if err != nil && err != ValueNotSet {
 		logrus.WithError(err).Errorf("Could not load server options")
 	}
 
