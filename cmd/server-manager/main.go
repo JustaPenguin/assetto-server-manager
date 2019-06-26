@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/etcd-io/bbolt"
+
 	"github.com/cj123/assetto-server-manager"
 	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
 	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
@@ -96,7 +98,7 @@ func main() {
 		logrus.Errorf("couldn't initialise scheduled championship events, err: %s", err)
 	}
 
-	go startUDPReplay("./assetto/session-logs/Tue Feb 19 19:36:35 2019.json")
+	//go startUDPReplay("./assetto/session-logs/brandshatch_sillyold.db")
 	//go MiniRace()
 
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
@@ -120,7 +122,15 @@ func main() {
 }
 
 func startUDPReplay(file string) {
-	err := replay.ReplayUDPMessages(file, 2, func(response udp.Message) {
+	time.Sleep(time.Second * 20)
+
+	db, err := bbolt.Open(file, 0644, nil)
+
+	if err != nil {
+		logrus.WithError(err).Error("Could not open bolt")
+	}
+
+	err = replay.ReplayUDPMessages(db, 1, func(response udp.Message) {
 		servermanager.RaceControlInst.UDPCallback(response)
 	}, time.Second*2)
 

@@ -426,8 +426,6 @@ class LiveMap implements WebsocketHandler {
             return;
         }
 
-        console.log("correct");
-
         if (this.trackImage.height / this.trackImage.width > LiveMap.mapRotationRatio) {
             // rotate the map
             this.$map.addClass("rotated");
@@ -436,8 +434,6 @@ class LiveMap implements WebsocketHandler {
                 'max-height': this.$trackMapImage.closest(".map-container").width()!,
                 'max-width': 'auto'
             });
-
-            console.log(this.$map.width(), this.trackImage.width);
 
             this.mapScaleMultiplier = this.$map.width()! / this.trackImage.width;
 

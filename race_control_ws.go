@@ -66,27 +66,6 @@ func (h *raceControlHub) run() {
 					delete(h.clients, client)
 				}
 			}
-			/*
-					@TODO find a place for me
-				case <-AssettoProcess.Done():
-					connectedCars.Range(func(key, value interface{}) bool {
-						client, ok := value.(udp.SessionCarInfo)
-
-						if !ok {
-							return true
-						}
-
-						client.EventType = udp.EventConnectionClosed
-
-						go func() {
-							h.broadcast <- raceControlMessage{udp.EventConnectionClosed, client}
-						}()
-
-						return true
-					})
-
-					connectedCars = sync.Map{}
-			*/
 		}
 	}
 }
@@ -135,7 +114,7 @@ func (c *raceControlClient) writePump() {
 
 var mapHub *raceControlHub
 
-func raceControlHandler(w http.ResponseWriter, r *http.Request) {
+func raceControlWebsocketHandler(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 
 	if err != nil {
@@ -148,28 +127,6 @@ func raceControlHandler(w http.ResponseWriter, r *http.Request) {
 
 	go client.writePump()
 
+	// new client, send them an initial race control message.
 	client.receive <- newRaceControlMessage(RaceControlInst)
-
-	/*
-		// new client. send them the session info if we have it
-		if websocketLastSeenSessionInfo != nil {
-			client.receive <- raceControlMessage{udp.EventNewSession, websocketLastSeenSessionInfo}
-		}
-
-		if websocketTrackMapData != nil {
-			client.receive <- raceControlMessage{222, websocketTrackMapData}
-		}
-
-		connectedCars.Range(func(key, value interface{}) bool {
-			car, ok := value.(udp.SessionCarInfo)
-
-			if !ok {
-				return true
-			}
-
-			client.receive <- raceControlMessage{udp.EventNewConnection, car}
-			client.receive <- raceControlMessage{udp.EventClientLoaded, udp.ClientLoaded(car.CarID)}
-
-			return true
-		})*/
 }
