@@ -24,10 +24,6 @@ var ignoredURLS = [5]string{
 }
 
 func AuditLogger(next http.Handler) http.Handler {
-	return logRequest(next)
-}
-
-func logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		for _, url := range ignoredURLS {
 			if url == r.URL.String() {
