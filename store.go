@@ -36,4 +36,8 @@ type Store interface {
 	FindAccountByName(name string) (*Account, error)
 	FindAccountByID(id string) (*Account, error)
 	DeleteAccount(id string) error
+
+	// Audit Log
+	GetAuditEntries() ([]*AuditEntry, error)
+	AddAuditEntry(entry *AuditEntry) error
 }

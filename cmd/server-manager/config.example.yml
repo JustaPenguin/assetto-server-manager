@@ -156,6 +156,10 @@ live_map:
 #
 ################################################################################
 server:
+  # audit logging logs the actions of registered users locally on your server.
+  # Only Admins can access the logs, they are intended for tracking if users
+  # have deleted content, started/stopped events when they shouldn't have etc.
+  audit_logging: true
   # list of commands to run on server start and kill on server stop. this should
   # contain the full command with arguments to run the given program.
   #
