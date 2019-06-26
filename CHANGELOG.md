@@ -1,6 +1,9 @@
 v1.3.3
 ------
 
+**Please back up your data store (as defined in config.yml in 'store' -> 'path') before upgrading to this 
+  version!**
+
 Added:
 
 * You can now disable DRS Zones for any track in Custom Race / Championship Events. The drs_zones.ini file for the track
@@ -8,12 +11,19 @@ Added:
   actual track files, so if you're using a multi-server setup pointing to the same content folder, this may cause problems
   if you're running races at the same track simultaneously.
 * Starting a Quick Race now takes you straight to the Race Control page.
+* Scheduled championship events now show the start time of individual sessions if applicable.
+* You can now explicitly control the Grid/Pit Box position of an entrant in Custom Races and Championships! This is 
+  useful if you want to place teammates next to each other in the pits, avoid broken pit boxes or have a custom
+  starting grid for a race with no qualifying. It should auto fill sensibly if left alone too!
 
 Fixes:
 
 * Open Championships will no longer empty the team name of a driver that has a team name specified.
 * Fixes an issue where tracks with a default layout and an extra layout (e.g. 'wet' tracks) would not be correctly set up
   from Quick Race.
+* Users with read access or lower can no longer access replacement championship passwords by exporting the championship.
+* Championship overview and add event pages will now warn the user if the selected track has too few pit boxes to accommodate
+  the configured number of entrants.
 
 v1.3.2
 ------
