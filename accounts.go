@@ -244,7 +244,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 func toggleServerOpenStatusHandler(w http.ResponseWriter, r *http.Request) {
 	err := raceManager.raceStore.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
 
-	if err != nil && err != ErrMetaValueNotSet {
+	if err != nil && err != ValueNotSet {
 		logrus.WithError(err).Errorf("Could not determine server open status")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
