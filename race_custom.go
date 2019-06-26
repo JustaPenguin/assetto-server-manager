@@ -118,7 +118,7 @@ func customRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/custom", http.StatusFound)
 	} else {
 		AddFlash(w, r, "Custom race started!")
-		http.Redirect(w, r, "/live-timing", http.StatusFound)
+		http.Redirect(w, r, "/race-control", http.StatusFound)
 	}
 }
 
@@ -184,7 +184,7 @@ func customRaceLoadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	AddFlash(w, r, "Custom race started!")
-	http.Redirect(w, r, "/", http.StatusFound)
+	http.Redirect(w, r, "/race-control", http.StatusFound)
 }
 
 func customRaceDeleteHandler(w http.ResponseWriter, r *http.Request) {

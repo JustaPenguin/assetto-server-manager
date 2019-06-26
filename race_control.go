@@ -782,3 +782,9 @@ func (rc *RaceControl) OnCollisionWithEnvironment(collision udp.CollisionWithEnv
 
 	return rc.broadcaster.Send(collision)
 }
+
+func lapToDuration(i int) time.Duration {
+	d, _ := time.ParseDuration(fmt.Sprintf("%dms", i))
+
+	return d
+}

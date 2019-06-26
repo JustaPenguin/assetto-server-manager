@@ -92,9 +92,10 @@ func Router(fs http.FileSystem) http.Handler {
 		r.Get("/championship/{championshipID}/sign-up", championshipSignUpFormHandler)
 		r.Post("/championship/{championshipID}/sign-up", championshipSignUpFormHandler)
 
-		// live timings
-		r.Get("/live-timing", liveTimingHandler)
-		r.Get("/api/race-control", raceControlHandler)
+		// race control
+		r.Handle("/live-timing", http.RedirectHandler("/race-control", http.StatusMovedPermanently))
+		r.Get("/race-control", raceControlHandler)
+		r.Get("/api/race-control", raceControlWebsocketHandler)
 
 		// account management
 		r.HandleFunc("/accounts/new-password", newPasswordHandler)
@@ -156,7 +157,7 @@ func Router(fs http.FileSystem) http.Handler {
 		r.Post("/penalties/{sessionFile}/{driverGUID}", penaltyHandler)
 
 		// live timings
-		r.Post("/live-timing/save-frames", liveFrameSaveHandler)
+		r.Post("/race-control/save-frames", liveFrameSaveHandler)
 
 		// endpoints
 		r.Post("/api/track/upload", apiTrackUploadHandler)
@@ -481,7 +482,7 @@ func apiServerLogHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func liveTimingHandler(w http.ResponseWriter, r *http.Request) {
+func raceControlHandler(w http.ResponseWriter, r *http.Request) {
 	currentRace, entryList := raceManager.CurrentRace()
 
 	var customRace *CustomRace
