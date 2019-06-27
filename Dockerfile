@@ -25,9 +25,10 @@ RUN steamcmd.sh +login anonymous +quit; exit 0
 
 # build
 ADD . ${BUILD_DIR}
-WORKDIR ${BUILD_DIR}/cmd/server-manager
+WORKDIR ${BUILD_DIR}/cmd/server-manager/typescript
 RUN npm install
-RUN node_modules/.bin/babel javascript/manager.js -o static/manager.js
+RUN node_modules/.bin/gulp build
+WORKDIR ${BUILD_DIR}/cmd/server-manager
 RUN go get github.com/mjibson/esc
 RUN go generate ./...
 RUN go build -ldflags "-s -w -X github.com/cj123/assetto-server-manager.BuildTime=$SERVER_MANAGER_VERSION"
