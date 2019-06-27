@@ -15,6 +15,10 @@ Added:
 * You can now explicitly control the Grid/Pit Box position of an entrant in Custom Races and Championships! This is 
   useful if you want to place teammates next to each other in the pits, avoid broken pit boxes or have a custom
   starting grid for a race with no qualifying. It should auto fill sensibly if left alone too!
+* Audit logs, Server Manager now locally tracks all actions carried out by registered users. Only admins can access
+  the logs, and logging can be disabled in the config.yml. Logs are intended to help server admins track down users
+  acting maliciously or just making mistakes, for example deleting a whole Championship an hour before it was 
+  meant to start (we're looking at you, Greg).
 
 Fixes:
 
