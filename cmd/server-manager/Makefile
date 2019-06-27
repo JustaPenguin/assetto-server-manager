@@ -11,14 +11,12 @@ clean:
 	rm -rf views/static_embed.go
 	rm -rf static/static_embed.go
 
-run:
-	node_modules/.bin/babel javascript/manager.js --watch --out-file static/manager.js  --source-maps &
+run: assets
 	go build -ldflags "-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${VERSION}"
 	FILESYSTEM_HTML=true DEBUG=true ./server-manager
 
 assets:
-	npm install
-	node_modules/.bin/babel javascript/manager.js -o static/manager.js
+	$(MAKE) -C typescript build
 
 deploy: clean assets
 	# asset embed
