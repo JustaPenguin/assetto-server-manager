@@ -9,14 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/etcd-io/bbolt"
-
 	"github.com/cj123/assetto-server-manager"
 	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
 	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
 
+	"github.com/etcd-io/bbolt"
 	"github.com/pkg/browser"
 	"github.com/sirupsen/logrus"
 )
