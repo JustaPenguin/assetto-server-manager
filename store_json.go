@@ -18,6 +18,8 @@ const (
 	serverOptionsFile = "server_options.json"
 	frameLinksFile    = "frame_links.json"
 	serverMetaDir     = "meta"
+	auditDir          = "audit"
+	maxAuditEntries   = 1000
 )
 
 func NewJSONStore(dir string) Store {
@@ -358,8 +360,36 @@ func (rs *JSONStore) GetMeta(key string, out interface{}) error {
 	err := rs.decodeFile(filepath.Join(serverMetaDir, key+".json"), out)
 
 	if os.IsNotExist(err) {
-		return ErrMetaValueNotSet
+		return ErrValueNotSet
 	}
 
 	return err
+}
+
+func (rs *JSONStore) GetAuditEntries() ([]*AuditEntry, error) {
+	var entries []*AuditEntry
+
+	err := rs.decodeFile(auditDir+".json", &entries)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return entries, nil
+}
+
+func (rs *JSONStore) AddAuditEntry(entry *AuditEntry) error {
+	entries, err := rs.GetAuditEntries()
+
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	entries = append(entries, entry)
+
+	if len(entries) > maxAuditEntries {
+		entries = entries[20:]
+	}
+
+	return rs.encodeFile(auditDir+".json", entries)
 }
