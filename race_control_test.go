@@ -221,6 +221,23 @@ func TestRaceControl_OnClientConnect(t *testing.T) {
 				return
 			}
 		})
+
+	})
+
+	t.Run("Client disconnects having never connected", func(t *testing.T) {
+		raceControl := NewRaceControl(NilBroadcaster{}, nilTrackData{})
+
+		// disconnect the driver
+		driver := drivers[0]
+		driver.CarID = 200 // unknown car id
+
+		err := raceControl.OnClientDisconnect(driver)
+
+		if err == nil {
+			t.Log("Expected an error due to an unknown driver, but none was present")
+			t.Fail()
+			return
+		}
 	})
 }
 
@@ -769,6 +786,259 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 			t.Log("Invalid driver list lengths. Expected 0 drivers to still be in driver lists.")
 			t.Fail()
 			return
+		}
+	})
+}
+
+func TestRaceControl_OnCarUpdate(t *testing.T) {
+	raceControl := NewRaceControl(NilBroadcaster{}, nilTrackData{})
+
+	if err := raceControl.OnVersion(udp.Version(4)); err != nil {
+		t.Error(err)
+		return
+	}
+
+	// new session
+	err := raceControl.OnNewSession(udp.SessionInfo{
+		Version:             4,
+		SessionIndex:        0,
+		CurrentSessionIndex: 0,
+		SessionCount:        1,
+		ServerName:          "Test Server",
+		Track:               "ks_laguna_seca",
+		TrackConfig:         "",
+		Name:                "Test Looped Practice Session",
+		Type:                udp.SessionTypePractice,
+		Time:                10,
+		Laps:                0,
+		WaitTime:            120,
+		AmbientTemp:         12,
+		RoadTemp:            16,
+		WeatherGraphics:     "01_clear",
+		ElapsedMilliseconds: 10,
+
+		EventType: udp.EventNewSession,
+	})
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	time.Sleep(time.Millisecond * 10)
+
+	// stop the session info ticker
+	defer raceControl.sessionInfoCfn()
+
+	// join and load all drivers
+	for _, entrant := range drivers {
+		if err := raceControl.OnClientConnect(entrant); err != nil {
+			t.Error(err)
+			return
+		}
+
+		if err := raceControl.OnClientLoaded(udp.ClientLoaded(entrant.CarID)); err != nil {
+			t.Error(err)
+			return
+		}
+	}
+
+	if raceControl.ConnectedDrivers.Len() != len(drivers) || raceControl.DisconnectedDrivers.Len() > 0 {
+		t.Logf("Incorrect driver listings")
+		t.Fail()
+		return
+	}
+
+	updateRaceControl, err := raceControl.OnCarUpdate(udp.CarUpdate{
+		CarID:               drivers[1].CarID,
+		Pos:                 udp.Vec{X: 100, Y: 20, Z: 3},
+		Velocity:            udp.Vec{X: 10, Y: 20, Z: 20},
+		Gear:                2,
+		EngineRPM:           5000,
+		NormalisedSplinePos: 0.2333,
+	})
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if !updateRaceControl {
+		t.Log("Should have update race control call, top speed increased")
+		t.Fail()
+	}
+
+	if driver, ok := raceControl.ConnectedDrivers.Get(drivers[1].DriverGUID); !ok || (driver.LastPos.X == 0 && driver.LastPos.Y == 0 && driver.LastPos.Z == 0) || driver.CurrentCar().TopSpeedThisLap == 0 {
+		t.Fail()
+	}
+
+	t.Run("Unknown driver", func(t *testing.T) {
+		_, err := raceControl.OnCarUpdate(udp.CarUpdate{
+			CarID:               100, // unknown car
+			Pos:                 udp.Vec{X: 100, Y: 20, Z: 3},
+			Velocity:            udp.Vec{X: 10, Y: 20, Z: 20},
+			Gear:                2,
+			EngineRPM:           5000,
+			NormalisedSplinePos: 0.2333,
+		})
+
+		if err == nil {
+			t.Log("Error was nil, expected error")
+			t.Fail()
+			return
+		}
+	})
+}
+
+type driverLapResult struct {
+	Driver        int
+	LapTime       int
+	ExpectedPos   int
+	ExpectedSplit string
+}
+
+var raceLapTest = []driverLapResult{ // value in comments is 'total lap time (across all laps) for driver thus far'
+	{Driver: 1, LapTime: 1, ExpectedPos: 1, ExpectedSplit: "0s"},  // 1
+	{Driver: 2, LapTime: 2, ExpectedPos: 2, ExpectedSplit: "1ms"}, // 2
+	{Driver: 3, LapTime: 3, ExpectedPos: 3, ExpectedSplit: "1ms"}, // 3
+
+	{Driver: 1, LapTime: 1, ExpectedPos: 1, ExpectedSplit: "0s"},  // 2
+	{Driver: 3, LapTime: 3, ExpectedPos: 2, ExpectedSplit: "4ms"}, // 6
+	{Driver: 2, LapTime: 5, ExpectedPos: 3, ExpectedSplit: "1ms"}, // 7
+
+	{Driver: 3, LapTime: 4, ExpectedPos: 1, ExpectedSplit: "0s"},  // 10
+	{Driver: 2, LapTime: 5, ExpectedPos: 2, ExpectedSplit: "2ms"}, // 12
+	// driver 1 has a bad lap, does not complete on lead lap
+
+	{Driver: 3, LapTime: 4, ExpectedPos: 1, ExpectedSplit: "0s"},   // 14
+	{Driver: 1, LapTime: 13, ExpectedPos: 3, ExpectedSplit: "3ms"}, // 15
+	{Driver: 2, LapTime: 4, ExpectedPos: 2, ExpectedSplit: "2ms"},  // 16
+
+	{Driver: 3, LapTime: 3, ExpectedPos: 1, ExpectedSplit: "0s"},    // 17
+	{Driver: 2, LapTime: 4, ExpectedPos: 2, ExpectedSplit: "3ms"},   // 20
+	{Driver: 1, LapTime: 7, ExpectedPos: 3, ExpectedSplit: "1 lap"}, // 22
+
+	{Driver: 2, LapTime: 1, ExpectedPos: 1, ExpectedSplit: "0s"},  // 21
+	{Driver: 3, LapTime: 5, ExpectedPos: 2, ExpectedSplit: "1ms"}, // 22
+	// driver 1 has another bad lap, will be 2 laps down at crossing the line...
+
+	{Driver: 2, LapTime: 3, ExpectedPos: 1, ExpectedSplit: "0s"},     // 24
+	{Driver: 3, LapTime: 3, ExpectedPos: 2, ExpectedSplit: "1ms"},    // 25
+	{Driver: 1, LapTime: 7, ExpectedPos: 3, ExpectedSplit: "2 laps"}, // 29
+
+	// now driver 1 is setting personal bests, and unlaps himself *Ocon moment*
+	{Driver: 2, LapTime: 3, ExpectedPos: 1, ExpectedSplit: "0s"},     // 27
+	{Driver: 3, LapTime: 4, ExpectedPos: 2, ExpectedSplit: "2ms"},    // 29
+	{Driver: 1, LapTime: 1, ExpectedPos: 3, ExpectedSplit: "2 laps"}, // 30
+
+	{Driver: 2, LapTime: 3, ExpectedPos: 1, ExpectedSplit: "0s"},    // 30
+	{Driver: 1, LapTime: 1, ExpectedPos: 3, ExpectedSplit: "1 lap"}, // 31 - speedy boy
+	{Driver: 3, LapTime: 3, ExpectedPos: 2, ExpectedSplit: "2ms"},   // 32
+}
+
+func TestRaceControl_OnLapCompleted(t *testing.T) {
+	raceControl := NewRaceControl(NilBroadcaster{}, nilTrackData{})
+
+	if err := raceControl.OnVersion(udp.Version(4)); err != nil {
+		t.Error(err)
+		return
+	}
+
+	// new session
+	err := raceControl.OnNewSession(udp.SessionInfo{
+		Version:             4,
+		SessionIndex:        0,
+		CurrentSessionIndex: 0,
+		SessionCount:        1,
+		ServerName:          "Test Server",
+		Track:               "ks_laguna_seca",
+		TrackConfig:         "",
+		Name:                "Test Looped Practice Session",
+		Type:                udp.SessionTypeRace,
+		Time:                10,
+		Laps:                0,
+		WaitTime:            120,
+		AmbientTemp:         12,
+		RoadTemp:            16,
+		WeatherGraphics:     "01_clear",
+		ElapsedMilliseconds: 10,
+
+		EventType: udp.EventNewSession,
+	})
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	time.Sleep(time.Millisecond * 10)
+
+	// stop the session info ticker
+	defer raceControl.sessionInfoCfn()
+
+	driversOnFirstLap := raceLapTest[0:3]
+
+	// join and load all drivers
+	for _, driver := range driversOnFirstLap {
+		if err := raceControl.OnClientConnect(drivers[driver.Driver]); err != nil {
+			t.Error(err)
+			return
+		}
+
+		if err := raceControl.OnClientLoaded(udp.ClientLoaded(drivers[driver.Driver].CarID)); err != nil {
+			t.Error(err)
+			return
+		}
+	}
+
+	if raceControl.ConnectedDrivers.Len() != len(driversOnFirstLap) || raceControl.DisconnectedDrivers.Len() > 0 {
+		t.Logf("Incorrect driver listings")
+		t.Fail()
+		return
+	}
+
+	for _, driver := range raceLapTest {
+		t.Logf("Driver: %d just crossed the line with a %d", driver.Driver, driver.LapTime)
+
+		err = raceControl.OnLapCompleted(udp.LapCompleted{
+			CarID:   drivers[driver.Driver].CarID,
+			LapTime: uint32(driver.LapTime),
+			Cuts:    0,
+		})
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		rcDriver, ok := raceControl.ConnectedDrivers.Get(drivers[driver.Driver].DriverGUID)
+
+		if !ok {
+			t.Fail()
+			return
+		}
+
+		if rcDriver.Position != driver.ExpectedPos {
+			t.Logf("Expected driver %d's position to be %d, was actually: %d", driver.Driver, driver.ExpectedPos, rcDriver.Position)
+			t.Fail()
+		}
+
+		if rcDriver.Split != driver.ExpectedSplit {
+			t.Logf("Expected driver %d's split to be %s, was actually: %s", driver.Driver, driver.ExpectedSplit, rcDriver.Split)
+			t.Fail()
+		}
+	}
+
+	t.Run("Driver not found", func(t *testing.T) {
+		err := raceControl.OnLapCompleted(udp.LapCompleted{
+			CarID:   110,
+			LapTime: 434683,
+			Cuts:    0,
+		})
+
+		if err == nil {
+			t.Log("Expected error on lap completed, none found (invalid driver expected)")
+			t.Fail()
 		}
 	})
 }
