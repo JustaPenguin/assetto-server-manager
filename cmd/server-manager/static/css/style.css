@@ -294,6 +294,8 @@ a.detailed-results:hover {
     height: 60px;
     position: relative;
     margin-top: -10px;
+    margin-left: 10px;
+    float: right;
 }
 
 footer {
