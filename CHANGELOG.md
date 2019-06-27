@@ -18,6 +18,8 @@ Added:
   the logs, and logging can be disabled in the config.yml. Logs are intended to help server admins track down users
   acting maliciously or just making mistakes, for example deleting a whole Championship an hour before it was 
   meant to start (we're looking at you, Greg).
+* Added a link to our new Wiki in the footer! If you want to contribute tips and tricks for Server Manager, the wiki is the place!
+  You can access the wiki here: https://github.com/cj123/assetto-server-manager/wiki
 
 Fixes:
 
