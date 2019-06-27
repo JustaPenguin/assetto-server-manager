@@ -212,6 +212,7 @@ type RaceControlDriver struct {
 	Position int       `json:"Position"`
 	Split    string    `json:"Split"`
 	LastSeen time.Time `json:"LastSeen" ts:"date"`
+	LastPos  udp.Vec   `json:"LastPos"`
 
 	Collisions []Collision `json:"Collisions"`
 
@@ -235,6 +236,7 @@ type RaceControlCarLapInfo struct {
 	NumLaps              int           `json:"NumLaps"`
 	LastLap              time.Duration `json:"LastLap"`
 	LastLapCompletedTime time.Time     `json:"LastLapCompletedTime" ts:"date"`
+	TotalLapTime         time.Duration `json:"TotalLapTime"`
 }
 
 type CollisionType string
@@ -348,6 +350,7 @@ func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) (updatedRaceControl boo
 	}
 
 	driver.LastSeen = time.Now()
+	driver.LastPos = update.Pos
 
 	return updatedRaceControl, rc.broadcaster.Send(update)
 }
@@ -637,6 +640,7 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 	driver.TotalNumLaps++
 	currentCar := driver.CurrentCar()
 
+	currentCar.TotalLapTime += lapDuration
 	currentCar.LastLap = lapDuration
 	currentCar.NumLaps++
 	currentCar.LastLapCompletedTime = time.Now()
@@ -663,7 +667,7 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 					lapDifference := otherDriverCar.NumLaps - driverCar.NumLaps
 
 					if lapDifference <= 0 {
-						driver.Split = driverCar.LastLapCompletedTime.Sub(otherDriverCar.LastLapCompletedTime).Round(time.Millisecond).String()
+						driver.Split = (driverCar.TotalLapTime - otherDriverCar.TotalLapTime).Round(time.Millisecond).String()
 					} else if lapDifference == 1 {
 						driver.Split = "1 lap"
 					} else {
@@ -706,7 +710,11 @@ func (rc *RaceControl) sort(driverGroup RaceControlDriverGroup, driverA, driverB
 
 	if driverGroup == ConnectedDrivers {
 		if rc.SessionInfo.Type == udp.SessionTypeRace {
-			return driverACar.LastLapCompletedTime.Before(driverBCar.LastLapCompletedTime) && driverACar.NumLaps >= driverBCar.NumLaps
+			if driverACar.NumLaps == driverBCar.NumLaps {
+				return driverACar.TotalLapTime < driverBCar.TotalLapTime
+			} else {
+				return driverACar.NumLaps > driverBCar.NumLaps
+			}
 		} else {
 			if driverACar.BestLap == 0 && driverBCar.BestLap == 0 {
 				if driverACar.NumLaps == driverBCar.NumLaps {
