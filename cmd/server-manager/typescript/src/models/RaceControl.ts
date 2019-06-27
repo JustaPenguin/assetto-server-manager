@@ -207,6 +207,28 @@ class RaceControlDriverMapRaceControlDriverSessionCarInfo {
     }
 }
 
+// struct2ts:github.com/cj123/assetto-server-manager/pkg/udp.RaceControlDriverMapRaceControlDriverVec
+class RaceControlDriverMapRaceControlDriverVec {
+    X: number;
+    Y: number;
+    Z: number;
+
+    constructor(data?: any) {
+        const d: any = (data && typeof data === 'object') ? ToObject(data) : {};
+        this.X = ('X' in d) ? d.X as number : 0;
+        this.Y = ('Y' in d) ? d.Y as number : 0;
+        this.Z = ('Z' in d) ? d.Z as number : 0;
+    }
+
+    toObject(): any {
+        const cfg: any = {};
+        cfg.X = 'number';
+        cfg.Y = 'number';
+        cfg.Z = 'number';
+        return ToObject(this, cfg);
+    }
+}
+
 // struct2ts:github.com/cj123/assetto-server-manager.RaceControlDriverMapRaceControlDriverCollision
 class RaceControlDriverMapRaceControlDriverCollision {
     Type: string;
@@ -238,6 +260,7 @@ class RaceControlDriverMapRaceControlDriverRaceControlCarLapInfo {
     NumLaps: number;
     LastLap: number;
     LastLapCompletedTime: Date;
+    TotalLapTime: number;
 
     constructor(data?: any) {
         const d: any = (data && typeof data === 'object') ? ToObject(data) : {};
@@ -247,6 +270,7 @@ class RaceControlDriverMapRaceControlDriverRaceControlCarLapInfo {
         this.NumLaps = ('NumLaps' in d) ? d.NumLaps as number : 0;
         this.LastLap = ('LastLap' in d) ? d.LastLap as number : 0;
         this.LastLapCompletedTime = ('LastLapCompletedTime' in d) ? ParseDate(d.LastLapCompletedTime) : new Date();
+        this.TotalLapTime = ('TotalLapTime' in d) ? d.TotalLapTime as number : 0;
     }
 
     toObject(): any {
@@ -257,6 +281,7 @@ class RaceControlDriverMapRaceControlDriverRaceControlCarLapInfo {
         cfg.NumLaps = 'number';
         cfg.LastLap = 'number';
         cfg.LastLapCompletedTime = 'string';
+        cfg.TotalLapTime = 'number';
         return ToObject(this, cfg);
     }
 }
@@ -269,6 +294,7 @@ class RaceControlDriverMapRaceControlDriver {
     Position: number;
     Split: string;
     LastSeen: Date;
+    LastPos: RaceControlDriverMapRaceControlDriverVec;
     Collisions: RaceControlDriverMapRaceControlDriverCollision[];
     Cars: { [key: string]: RaceControlDriverMapRaceControlDriverRaceControlCarLapInfo };
 
@@ -280,6 +306,7 @@ class RaceControlDriverMapRaceControlDriver {
         this.Position = ('Position' in d) ? d.Position as number : 0;
         this.Split = ('Split' in d) ? d.Split as string : '';
         this.LastSeen = ('LastSeen' in d) ? ParseDate(d.LastSeen) : new Date();
+        this.LastPos = new RaceControlDriverMapRaceControlDriverVec(d.LastPos);
         this.Collisions = Array.isArray(d.Collisions) ? d.Collisions.map((v: any) => new RaceControlDriverMapRaceControlDriverCollision(v)) : [];
         this.Cars = ('Cars' in d) ? d.Cars as { [key: string]: RaceControlDriverMapRaceControlDriverRaceControlCarLapInfo } : {};
     }
@@ -345,6 +372,7 @@ export {
     RaceControlTrackMapData,
     RaceControlTrackInfo,
     RaceControlDriverMapRaceControlDriverSessionCarInfo,
+    RaceControlDriverMapRaceControlDriverVec,
     RaceControlDriverMapRaceControlDriverCollision,
     RaceControlDriverMapRaceControlDriverRaceControlCarLapInfo,
     RaceControlDriverMapRaceControlDriver,

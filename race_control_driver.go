@@ -24,7 +24,7 @@ func NewRaceControlDriver(carInfo udp.SessionCarInfo) *RaceControlDriver {
 
 type RaceControlDriver struct {
 	CarInfo      udp.SessionCarInfo `json:"CarInfo"`
-	TotalNumLaps int
+	TotalNumLaps int                `json:"TotalNumLaps"`
 
 	LoadedTime time.Time `json:"LoadedTime" ts:"date"`
 
