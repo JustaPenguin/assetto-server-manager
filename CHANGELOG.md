@@ -27,6 +27,8 @@ Fixes:
 * Users with read access or lower can no longer access replacement championship passwords by exporting the championship.
 * Championship overview and add event pages will now warn the user if the selected track has too few pit boxes to accommodate
   the configured number of entrants.
+* Changed how process killing is done on Windows, hopefully making stopping plugins more reliable! We've had some mixed results
+  on this one, so we'd like to hear if it's working for you now!
 
 v1.3.2
 ------
