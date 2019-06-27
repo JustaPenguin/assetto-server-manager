@@ -410,8 +410,6 @@ class LiveMap implements WebsocketHandler {
                 "src": trackURL,
             });
 
-            console.log("load");
-
             this.mapImageHasLoaded = true;
             this.correctMapDimensions();
         };
