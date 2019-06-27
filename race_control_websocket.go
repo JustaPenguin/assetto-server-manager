@@ -10,15 +10,26 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
-
 const (
 	// Time allowed to write a message to the peer.
 	writeWait = 10 * time.Second
 )
+
+type Broadcaster interface {
+	Send(message udp.Message) error
+}
+
+type NilBroadcaster struct{}
+
+func (NilBroadcaster) Send(message udp.Message) error {
+	logrus.WithField("message", message).Infof("Message send %d", message.Event())
+	return nil
+}
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
 
 func newRaceControlMessage(message udp.Message) raceControlMessage {
 	return raceControlMessage{
@@ -128,5 +139,5 @@ func raceControlWebsocketHandler(w http.ResponseWriter, r *http.Request) {
 	go client.writePump()
 
 	// new client, send them an initial race control message.
-	client.receive <- newRaceControlMessage(RaceControlInst)
+	client.receive <- newRaceControlMessage(ServerRaceControl)
 }

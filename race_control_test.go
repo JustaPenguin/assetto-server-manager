@@ -1042,3 +1042,184 @@ func TestRaceControl_OnLapCompleted(t *testing.T) {
 		}
 	})
 }
+
+func TestRaceControl_SortDrivers(t *testing.T) {
+	t.Run("Race, connected drivers", func(t *testing.T) {
+		rc := NewRaceControl(NilBroadcaster{}, nilTrackData{})
+		rc.SessionInfo.Type = udp.SessionTypeRace
+
+		d0 := NewRaceControlDriver(drivers[0])
+		d0.CurrentCar().NumLaps = 10
+		d0.CurrentCar().TotalLapTime = 100
+
+		rc.ConnectedDrivers.Add(d0.CarInfo.DriverGUID, d0)
+
+		d1 := NewRaceControlDriver(drivers[1])
+		d1.CurrentCar().NumLaps = 10
+		d1.CurrentCar().TotalLapTime = 88
+
+		rc.ConnectedDrivers.Add(d1.CarInfo.DriverGUID, d1)
+
+		d2 := NewRaceControlDriver(drivers[2])
+		d2.CurrentCar().NumLaps = 7
+		d2.CurrentCar().TotalLapTime = 30
+
+		rc.ConnectedDrivers.Add(d2.CarInfo.DriverGUID, d2)
+
+		rc.ConnectedDrivers.sort()
+
+		if rc.ConnectedDrivers.GUIDsInPositionalOrder[0] != drivers[1].DriverGUID {
+			t.Log("Driver 1 should be in first")
+			t.Fail()
+		}
+
+		if rc.ConnectedDrivers.GUIDsInPositionalOrder[1] != drivers[0].DriverGUID {
+			t.Log("Driver 0 should be in second")
+			t.Fail()
+		}
+
+		if rc.ConnectedDrivers.GUIDsInPositionalOrder[2] != drivers[2].DriverGUID {
+			t.Log("Driver 2 should be in third")
+			t.Fail()
+		}
+	})
+
+	t.Run("Non-race, connected drivers", func(t *testing.T) {
+		t.Run("Two drivers with valid laps, two without", func(t *testing.T) {
+			rc := NewRaceControl(NilBroadcaster{}, nilTrackData{})
+			rc.SessionInfo.Type = udp.SessionTypePractice
+
+			d0 := NewRaceControlDriver(drivers[0])
+			d0.CurrentCar().NumLaps = 10
+			d0.CurrentCar().BestLap = 0
+
+			rc.ConnectedDrivers.Add(d0.CarInfo.DriverGUID, d0)
+
+			d1 := NewRaceControlDriver(drivers[1])
+			d1.CurrentCar().NumLaps = 1
+			d1.CurrentCar().BestLap = 88
+
+			rc.ConnectedDrivers.Add(d1.CarInfo.DriverGUID, d1)
+
+			d2 := NewRaceControlDriver(drivers[2])
+			d2.CurrentCar().NumLaps = 7
+			d2.CurrentCar().BestLap = 0
+
+			rc.ConnectedDrivers.Add(d2.CarInfo.DriverGUID, d2)
+
+			d3 := NewRaceControlDriver(drivers[3])
+			d3.CurrentCar().NumLaps = 11
+			d3.CurrentCar().BestLap = 89
+
+			rc.ConnectedDrivers.Add(d3.CarInfo.DriverGUID, d3)
+
+			rc.ConnectedDrivers.sort()
+
+			if rc.ConnectedDrivers.GUIDsInPositionalOrder[0] != drivers[1].DriverGUID {
+				t.Log("Driver 1 should be in first")
+				t.Fail()
+			}
+
+			if rc.ConnectedDrivers.GUIDsInPositionalOrder[1] != drivers[3].DriverGUID {
+				t.Log("Driver 3 should be in second")
+				t.Fail()
+			}
+
+			if rc.ConnectedDrivers.GUIDsInPositionalOrder[2] != drivers[0].DriverGUID {
+				t.Log("Driver 0 should be in third")
+				t.Fail()
+			}
+
+			if rc.ConnectedDrivers.GUIDsInPositionalOrder[3] != drivers[2].DriverGUID {
+				t.Log("Driver 2 should be in fourth")
+				t.Fail()
+			}
+		})
+	})
+
+	t.Run("Race, disconnected drivers", func(t *testing.T) {
+		rc := NewRaceControl(NilBroadcaster{}, nilTrackData{})
+		rc.SessionInfo.Type = udp.SessionTypeRace
+
+		d0 := NewRaceControlDriver(drivers[0])
+		d0.CurrentCar().LastLapCompletedTime = time.Now().Add(-10 * time.Minute)
+		rc.DisconnectedDrivers.Add(d0.CarInfo.DriverGUID, d0)
+
+		d1 := NewRaceControlDriver(drivers[1])
+		d1.CurrentCar().LastLapCompletedTime = time.Now().Add(-30 * time.Minute)
+		rc.DisconnectedDrivers.Add(d1.CarInfo.DriverGUID, d1)
+
+		d2 := NewRaceControlDriver(drivers[2])
+		d2.CurrentCar().LastLapCompletedTime = time.Now().Add(time.Minute)
+		rc.DisconnectedDrivers.Add(d2.CarInfo.DriverGUID, d2)
+
+		d3 := NewRaceControlDriver(drivers[3])
+		d3.CurrentCar().LastLapCompletedTime = time.Now()
+		rc.DisconnectedDrivers.Add(d3.CarInfo.DriverGUID, d3)
+
+		rc.DisconnectedDrivers.sort()
+
+		if rc.DisconnectedDrivers.GUIDsInPositionalOrder[0] != drivers[2].DriverGUID {
+			t.Log("Driver 2 should be in first")
+			t.Fail()
+		}
+
+		if rc.DisconnectedDrivers.GUIDsInPositionalOrder[1] != drivers[3].DriverGUID {
+			t.Log("Driver 3 should be in second")
+			t.Fail()
+		}
+
+		if rc.DisconnectedDrivers.GUIDsInPositionalOrder[2] != drivers[0].DriverGUID {
+			t.Log("Driver 0 should be in third")
+			t.Fail()
+		}
+
+		if rc.DisconnectedDrivers.GUIDsInPositionalOrder[3] != drivers[1].DriverGUID {
+			t.Log("Driver 1 should be in fourth")
+			t.Fail()
+		}
+	})
+
+	t.Run("Non-Race, disconnected drivers", func(t *testing.T) {
+		rc := NewRaceControl(NilBroadcaster{}, nilTrackData{})
+		rc.SessionInfo.Type = udp.SessionTypeQualifying
+
+		d0 := NewRaceControlDriver(drivers[0])
+		d0.CurrentCar().BestLap = 2000
+		rc.DisconnectedDrivers.Add(d0.CarInfo.DriverGUID, d0)
+
+		d1 := NewRaceControlDriver(drivers[1])
+		d1.CurrentCar().BestLap = 40
+		rc.DisconnectedDrivers.Add(d1.CarInfo.DriverGUID, d1)
+
+		d2 := NewRaceControlDriver(drivers[2])
+		d2.CurrentCar().BestLap = 600
+		rc.DisconnectedDrivers.Add(d2.CarInfo.DriverGUID, d2)
+
+		d3 := NewRaceControlDriver(drivers[3])
+		d3.CurrentCar().BestLap = 3000
+		rc.DisconnectedDrivers.Add(d3.CarInfo.DriverGUID, d3)
+
+		rc.DisconnectedDrivers.sort()
+
+		if rc.DisconnectedDrivers.GUIDsInPositionalOrder[0] != drivers[1].DriverGUID {
+			t.Log("Driver 1 should be in first")
+			t.Fail()
+		}
+
+		if rc.DisconnectedDrivers.GUIDsInPositionalOrder[1] != drivers[2].DriverGUID {
+			t.Log("Driver 2 should be in second")
+			t.Fail()
+		}
+
+		if rc.DisconnectedDrivers.GUIDsInPositionalOrder[2] != drivers[0].DriverGUID {
+			t.Log("Driver 0 should be in third")
+			t.Fail()
+		}
+
+		if rc.DisconnectedDrivers.GUIDsInPositionalOrder[3] != drivers[3].DriverGUID {
+			t.Log("Driver 3 should be in fourth")
+			t.Fail()
+		}
+	})
+}

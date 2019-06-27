@@ -131,7 +131,7 @@ func startUDPReplay(file string) {
 	}
 
 	err = replay.ReplayUDPMessages(db, 1, func(response udp.Message) {
-		servermanager.RaceControlInst.UDPCallback(response)
+		servermanager.ServerRaceControl.UDPCallback(response)
 	}, time.Second*2)
 
 	if err != nil {
@@ -142,7 +142,7 @@ func startUDPReplay(file string) {
 func MiniRace() {
 	time.Sleep(time.Second * 5)
 
-	do := servermanager.RaceControlInst.UDPCallback
+	do := servermanager.ServerRaceControl.UDPCallback
 
 	do(udp.Version(4))
 	do(udp.SessionInfo{
