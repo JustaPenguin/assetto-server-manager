@@ -115,6 +115,16 @@ span[data-toggle=tooltip] {
     max-width: 355px;
 }
 
+#event-title {
+    font-size: 2em;
+    cursor: pointer;
+}
+
+#event-title:hover {
+    text-decoration: none;
+    color: #127ba3;
+}
+
 .entryListCarPreview {
 	border-radius: 0.25rem;
 }

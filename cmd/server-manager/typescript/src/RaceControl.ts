@@ -40,6 +40,7 @@ interface SimpleCollision {
 
 interface WebsocketHandler {
     handleWebsocketMessage(message: WSMessage): void;
+    onTrackChange(track: string, trackLayout: string): void;
 }
 
 export class RaceControl {
@@ -47,6 +48,9 @@ export class RaceControl {
     private readonly liveTimings: LiveTimings = new LiveTimings(this, this.liveMap);
     private readonly $eventTitle: JQuery<HTMLHeadElement>;
     public status: RaceControlData;
+
+    private track: string = "";
+    private trackLayout: string = "";
 
     constructor() {
         this.$eventTitle = $("#event-title");
@@ -80,6 +84,15 @@ export class RaceControl {
                 return;
             case EventRaceControl:
                 this.status = new RaceControlData(message.Message);
+
+                if (this.status.SessionInfo.Track !== this.track || this.status.SessionInfo.TrackConfig !== this.trackLayout) {
+                    this.track = this.status.SessionInfo.Track;
+                    this.trackLayout = this.status.SessionInfo.TrackConfig;
+                    this.liveMap.onTrackChange(this.track, this.trackLayout);
+                    this.liveTimings.onTrackChange(this.track, this.trackLayout);
+                    this.onTrackChange(this.track, this.trackLayout)
+                }
+
                 this.$eventTitle.text(RaceControl.getSessionType(this.status.SessionInfo.Type) + " at " + this.status.TrackInfo!.name);
                 $("#track-location").text(this.status.TrackInfo.city + ", " + this.status.TrackInfo.country);
 
@@ -130,6 +143,16 @@ export class RaceControl {
         $raceTime.text(timeRemaining);
     }
 
+    public onTrackChange(track: string, layout: string): void {
+        $("#trackImage").attr("src", this.getTrackImageURL());
+
+        $("#track-description").text(this.status.TrackInfo.description);
+        $("#track-length").text(this.status.TrackInfo["length"]);
+        $("#track-pitboxes").text(this.status.TrackInfo.pitboxes);
+        $("#track-width").text(this.status.TrackInfo.width);
+        $("#track-run").text(this.status.TrackInfo.run);
+    }
+
     private buildSessionInfo() {
         let $roadTempWrapper = $("#road-temp-wrapper");
         $roadTempWrapper.attr("style", "background-color: " + getColorForPercentage(this.status.SessionInfo.RoadTemp / 40));
@@ -170,7 +193,6 @@ export class RaceControl {
         });
 
         $currentWeather.attr("alt", "Current Weather: " + prettifyName(this.status.SessionInfo.WeatherGraphics, false));
-        $("#trackImage").attr("src", this.getTrackImageURL());
 
         $("#event-name").text(this.status.SessionInfo.Name);
         $("#event-type").text(RaceControl.getSessionType(this.status.SessionInfo.Type));
@@ -264,7 +286,6 @@ class LiveMap implements WebsocketHandler {
                 this.trackXOffset = this.raceControl.status.TrackMapData!.offset_x;
                 this.trackZOffset = this.raceControl.status.TrackMapData!.offset_y;
                 this.trackScale = this.raceControl.status.TrackMapData!.scale_factor;
-                this.loadTrackMapImage();
 
                 for (const connectedGUID in this.raceControl.status.ConnectedDrivers!.Drivers) {
                     const driver = this.raceControl.status.ConnectedDrivers!.Drivers[connectedGUID];
@@ -371,6 +392,10 @@ class LiveMap implements WebsocketHandler {
 
                 break;
         }
+    }
+
+    public onTrackChange(track: string, trackLayout: string): void {
+        this.loadTrackMapImage();
     }
 
     private translateToTrackCoordinate(vec: CarUpdateVec): CarUpdateVec {
@@ -484,13 +509,18 @@ class LiveMap implements WebsocketHandler {
 }
 
 const DriverGUIDDataKey = "driver-guid";
-const SessionTypeRace = 3;
-const SessionTypeQualifying = 2;
-const SessionTypePractice = 1;
-const SessionTypeBooking = 0;
 
-const CollisionWithCar = "with other car";
-const CollisionWithEnvironment = "with environment";
+enum SessionType {
+    Race = 3,
+    Qualifying = 2,
+    Practice = 1,
+    Booking = 0,
+}
+
+enum Collision {
+    WithCar = "with other car",
+    WithEnvironment = "with environment",
+}
 
 class LiveTimings implements WebsocketHandler {
     private readonly raceControl: RaceControl;
@@ -517,6 +547,10 @@ class LiveTimings implements WebsocketHandler {
             this.populateConnectedDrivers();
             this.populateDisconnectedDrivers();
         }
+    }
+
+    public onTrackChange(track: string, trackLayout: string): void {
+
     }
 
     private populateConnectedDrivers(): void {
@@ -573,10 +607,6 @@ class LiveTimings implements WebsocketHandler {
         } else {
             this.$storedTimes.hide();
         }
-    }
-
-    private clearTable($table: JQuery<HTMLTableElement>): void {
-        $table.find("tr.driver-row").remove();
     }
 
     private addDriverToTable(driver: Driver, $table: JQuery<HTMLTableElement>): void {
@@ -680,7 +710,7 @@ class LiveTimings implements WebsocketHandler {
                         let $tag = $("<span/>");
                         $tag.attr({'class': 'badge badge-danger live-badge'});
 
-                        if (collision.Type === CollisionWithCar) {
+                        if (collision.Type === Collision.WithCar) {
                             $tag.text(
                                 "Crash with " + collision.OtherDriverName + " at " + collision.Speed.toFixed(2) + "Km/h"
                             );
@@ -713,7 +743,7 @@ class LiveTimings implements WebsocketHandler {
         const that = this;
 
         $($tbody.find("tr:not(:nth-child(1))").get().sort(function (a: HTMLTableElement, b: HTMLTableElement): number {
-            if (that.raceControl.status.SessionInfo.Type == SessionTypeRace) {
+            if (that.raceControl.status.SessionInfo.Type == SessionType.Race) {
                 let lapsA = parseInt($(a).find("td:nth-child(4)").text(), 10);
                 let lapsB = parseInt($(b).find("td:nth-child(4)").text(), 10);
 

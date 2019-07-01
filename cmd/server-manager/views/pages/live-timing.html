@@ -48,62 +48,28 @@
         </div>
 
         <div class="text-center">
-            <h1 class="text-center" id="event-title"></h1>
+            <a href="#" class="text-center" id="event-title" data-toggle="popover" data-placement="bottom"></a>
             <div class="text-center text-black-50" id="track-location"></div>
 
             <span id="race-time" class="mt-2 badge badge-primary" style="font-size: 1em;"></span>
         </div>
 
+        <div id="popover-content-event-title" class="d-none">
+            <img class="img img-fluid mt-2"
+                 id="trackImage"
+                 src="/static/img/no-preview-general.png"
+            >
 
+            <ul class="list-unstyled mt-2">
+                <li><strong>Description:</strong> <span id="track-description"></span></li>
+                <li><strong>Length:</strong> <span id="track-length"></span></li>
+                <li><strong>Pit Boxes:</strong> <span id="track-pitboxes"></span></li>
+                <li><strong>Width:</strong> <span id="track-width"></span></li>
+                <li><strong>Run:</strong> <span id="track-run"></span></li>
+            </ul>
+        </div>
 
         <div class="clearfix"></div>
-
-        <div class="row mt-5">
-
-            <!--
-
-            <div class="col-sm-8">
-                <div class="card" id="track-details">
-                    <div class="card-header">
-                        Track Information
-                    </div>
-
-                    <div class="card-body row">
-                        <div class="col-12 col-sm-6">
-
-                        </div>
-
-                        <div class="col-12 col-sm-6">
-                            <div class="row">
-                                <div class="col-2">
-                                    <div class="float-right">
-                                        <div id="road-temp-wrapper" data-toggle="tooltip"
-                                             title data-original-title="Road Temp">
-                                            <div id="road-temp-text"></div>
-                                            <img src="/static/img/temp-road.png" alt="Road Temp" id="road-temp">
-                                        </div>
-                                        <div id="ambient-temp-wrapper" class="mt-1" data-toggle="tooltip"
-                                             title data-original-title="Ambient Temp">
-                                            <div id="ambient-temp-text"></div>
-                                            <img src="/static/img/temp-ambient.png" alt="Ambient Temp" id="ambient-temp">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-5">
-                                    <img class="img img-fluid float-right"
-                                         id="trackImage"
-                                         src="/static/img/no-preview-general.png"
-                                    >
-                                </div>
-                                <div class="col-5">
-                                    <img class="img img-fluid" id="weatherImage" src="/static/img/no-preview-general.png" alt="Current Weather">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>-->
-        </div>
 
         <div class="row mt-5">
             <div class="col-lg-7 col-md-12">
