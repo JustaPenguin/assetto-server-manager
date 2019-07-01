@@ -23,7 +23,7 @@ Let's start with an example that shows the sessions API in a nutshell:
 
 	import (
 		"net/http"
-		"github.com/gorilla/sessions"
+		"github.com/cj123/sessions"
 	)
 
 	// Note: Don't store your key in your source code. Pass it via an
@@ -58,14 +58,6 @@ session.Save(r, w), and either display an error message or otherwise handle it.
 
 Save must be called before writing to the response, otherwise the session
 cookie will not be sent to the client.
-
-Important Note: If you aren't using gorilla/mux, you need to wrap your handlers
-with context.ClearHandler as or else you will leak memory! An easy way to do this
-is to wrap the top-level mux when calling http.ListenAndServe:
-
-    http.ListenAndServe(":8080", context.ClearHandler(http.DefaultServeMux))
-
-The ClearHandler function is provided by the gorilla/context package.
 
 That's all you need to know for the basic usage. Let's take a look at other
 options, starting with flash messages.
@@ -102,7 +94,7 @@ so it is easy to register new datatypes for storage in sessions:
 
 	import(
 		"encoding/gob"
-		"github.com/gorilla/sessions"
+		"github.com/cj123/sessions"
 	)
 
 	type Person struct {

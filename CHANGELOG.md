@@ -19,6 +19,8 @@ Added:
   the logs, and logging can be disabled in the config.yml. Logs are intended to help server admins track down users
   acting maliciously or just making mistakes, for example deleting a whole Championship an hour before it was 
   meant to start (we're looking at you, Greg).
+* Added a link to our new Wiki in the footer! If you want to contribute tips and tricks for Server Manager, the wiki is the place!
+  You can access the wiki here: https://github.com/cj123/assetto-server-manager/wiki
 
 Fixes:
 
@@ -28,6 +30,8 @@ Fixes:
 * Users with read access or lower can no longer access replacement championship passwords by exporting the championship.
 * Championship overview and add event pages will now warn the user if the selected track has too few pit boxes to accommodate
   the configured number of entrants.
+* Changed how process killing is done on Windows, hopefully making stopping plugins more reliable! We've had some mixed results
+  on this one, so we'd like to hear if it's working for you now!
 
 v1.3.2
 ------
