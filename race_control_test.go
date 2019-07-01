@@ -42,6 +42,14 @@ var (
 			CarSkin:    "green",
 			EventType:  udp.EventNewConnection,
 		},
+		{
+			CarID:      9,
+			DriverName: "Test 3",
+			DriverGUID: "7827162738278889",
+			CarModel:   "car_model3",
+			CarSkin:    "green",
+			EventType:  udp.EventNewConnection,
+		},
 	}
 )
 
@@ -1164,7 +1172,7 @@ func TestRaceControl_SortDrivers(t *testing.T) {
 		rc.DisconnectedDrivers.Add(d2.CarInfo.DriverGUID, d2)
 
 		d3 := NewRaceControlDriver(drivers[3])
-		d3.CurrentCar().BestLap = 3000
+		d3.CurrentCar().BestLap = 0
 		rc.DisconnectedDrivers.Add(d3.CarInfo.DriverGUID, d3)
 
 		rc.DisconnectedDrivers.sort()
@@ -1182,7 +1190,7 @@ func TestRaceControl_SortDrivers(t *testing.T) {
 		}
 
 		if rc.DisconnectedDrivers.GUIDsInPositionalOrder[3] != drivers[3].DriverGUID {
-			t.Error("Driver 3 should be in fourth")
+			t.Error("Driver 3 should be in fourth (no lap time)")
 		}
 	})
 }

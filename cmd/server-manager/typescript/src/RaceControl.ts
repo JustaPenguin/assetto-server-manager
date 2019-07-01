@@ -4,7 +4,7 @@ import {
     RaceControlDriverMapRaceControlDriverSessionCarInfo as SessionCarInfo
 } from "./models/RaceControl";
 
-import {CarUpdate, CarUpdateVec} from "./models/UDP";
+import {CarUpdate, CarUpdateVec, SessionInfo} from "./models/UDP";
 import {randomColor} from "randomcolor/randomColor";
 import {msToTime, prettifyName} from "./utils";
 import moment from "moment";
@@ -265,7 +265,7 @@ class LiveMap implements WebsocketHandler {
                     if (!this.dots.has(driver.CarInfo.DriverGUID)) {
                         // in the event that a user just loaded the race control page, place the
                         // already loaded dots onto the map
-                        let $driverDot = this.buildDriverDot(driver.CarInfo).show();
+                        let $driverDot = this.buildDriverDot(driver.CarInfo, driver.LastPos as CarUpdateVec).show();
                         this.dots.set(driver.CarInfo.DriverGUID, $driverDot);
                     }
                 }
@@ -375,7 +375,7 @@ class LiveMap implements WebsocketHandler {
         return out;
     }
 
-    private buildDriverDot(driverData: SessionCarInfo): JQuery<HTMLElement> {
+    private buildDriverDot(driverData: SessionCarInfo, lastPos?: CarUpdateVec): JQuery<HTMLElement> {
         if (this.dots.has(driverData.DriverGUID)) {
             return this.dots.get(driverData.DriverGUID)!;
         }
@@ -384,6 +384,15 @@ class LiveMap implements WebsocketHandler {
         const $info = $("<span class='info'/>").text("0").hide();
 
         const $dot = $("<div class='dot' style='background: " + randomColorForDriver(driverData.DriverGUID) + "'/>").append($driverName, $info).hide().appendTo(this.$map);
+
+        if (lastPos) {
+            let dotPos = this.translateToTrackCoordinate(lastPos);
+
+            $dot.css({
+                "left": dotPos.X,
+                "top": dotPos.Z,
+            });
+        }
 
         this.dots.set(driverData.DriverGUID, $dot);
 
@@ -556,6 +565,10 @@ class LiveTimings implements WebsocketHandler {
         }
     }
 
+    private clearTable($table: JQuery<HTMLTableElement>): void {
+        $table.find("tr.driver-row").remove();
+    }
+
     private addDriverToTable(driver: Driver, $table: JQuery<HTMLTableElement>): void {
         const addingDriverToDisconnectedTable = ($table === this.$disconnectedDriversTable);
         const driverID = driver.CarInfo.DriverGUID + "_" + driver.CarInfo.CarModel;
@@ -565,7 +578,7 @@ class LiveTimings implements WebsocketHandler {
             return;
         }
 
-        const $tr = $("<tr/>").attr({"id": driverID});
+        const $tr = $("<tr class='driver-row'/>").attr({"id": driverID});
 
         // car position
         if (!addingDriverToDisconnectedTable) {
