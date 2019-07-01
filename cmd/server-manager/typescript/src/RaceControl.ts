@@ -69,6 +69,9 @@ export class RaceControl {
 
         this.handleIFrames();
         setInterval(this.showEventCompletion.bind(this), 1000);
+        this.$eventTitle.on("click", function(e: ClickEvent) {
+            e.preventDefault();
+        });
     }
 
     private handleWebsocketMessage(ev: MessageEvent): void {
