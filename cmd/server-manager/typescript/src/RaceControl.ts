@@ -433,7 +433,7 @@ class LiveMap implements WebsocketHandler {
                 'max-width': 'auto'
             });
 
-            this.mapScaleMultiplier = this.$map.width()! / this.trackImage.width;
+            this.mapScaleMultiplier = this.$trackMapImage.width()! / this.trackImage.width;
 
             this.$map.closest(".map-container").css({
                 'max-height': (this.trackImage.width * this.mapScaleMultiplier) + 20,
@@ -458,7 +458,7 @@ class LiveMap implements WebsocketHandler {
                 'max-width': '100%'
             });
 
-            this.mapScaleMultiplier = this.$map.width()! / this.trackImage.width;
+            this.mapScaleMultiplier = this.$trackMapImage.width()! / this.trackImage.width;
         }
     }
 
