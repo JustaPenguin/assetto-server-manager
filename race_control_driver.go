@@ -26,7 +26,8 @@ type RaceControlDriver struct {
 	CarInfo      udp.SessionCarInfo `json:"CarInfo"`
 	TotalNumLaps int                `json:"TotalNumLaps"`
 
-	LoadedTime time.Time `json:"LoadedTime" ts:"date"`
+	ConnectedTime time.Time `json:"ConnectedTime" ts:"date"`
+	LoadedTime    time.Time `json:"LoadedTime" ts:"date"`
 
 	Position int       `json:"Position"`
 	Split    string    `json:"Split"`

@@ -296,9 +296,14 @@ func (rc *RaceControl) disconnectDriver(driver *RaceControlDriver) error {
 	return rc.OnClientDisconnect(carInfo)
 }
 
-// driverLastSeenMaxDuration is how long to wait before considering a driver 'timed out'. A timed out driver
-// is force-disconnected.
-var driverLastSeenMaxDuration = time.Second * 5
+var (
+	// driverLastSeenMaxDuration is how long to wait before considering a driver 'timed out'.
+	// A timed out driver is force-disconnected.
+	driverLastSeenMaxDuration = time.Second * 5
+	// driverConnectionTimeout is how long to wait for a connected driver to load. if they exceed this time, they are
+	// considered to be disconnected and are removed from ConnectedDrivers.
+	driverConnectionTimeout = time.Minute
+)
 
 // OnSessionUpdate is called every sessionRequestInterval.
 func (rc *RaceControl) OnSessionUpdate(sessionInfo udp.SessionInfo) error {
@@ -308,7 +313,11 @@ func (rc *RaceControl) OnSessionUpdate(sessionInfo udp.SessionInfo) error {
 		var driversToDisconnect []*RaceControlDriver
 
 		_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
-			if time.Now().Sub(driver.LastSeen) > driverLastSeenMaxDuration {
+			if driver.LoadedTime.IsZero() && time.Now().Sub(driver.ConnectedTime) > driverConnectionTimeout {
+				// driver connected but never loaded
+				driversToDisconnect = append(driversToDisconnect, driver)
+			} else if !driver.LoadedTime.IsZero() && time.Now().Sub(driver.LastSeen) > driverLastSeenMaxDuration {
+				// driver disconnected after loading
 				driversToDisconnect = append(driversToDisconnect, driver)
 			}
 
@@ -362,6 +371,7 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 		driver.Cars[driver.CarInfo.CarModel] = &RaceControlCarLapInfo{}
 	}
 
+	driver.ConnectedTime = time.Now()
 	driver.CurrentCar().LastLapCompletedTime = time.Now()
 
 	rc.ConnectedDrivers.Add(driver.CarInfo.DriverGUID, driver)
