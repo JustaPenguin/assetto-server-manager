@@ -11,7 +11,7 @@ clean:
 	rm -rf views/static_embed.go
 	rm -rf static/static_embed.go
 
-run: assets
+run:
 	go build -ldflags "-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${VERSION}"
 	FILESYSTEM_HTML=true DEBUG=true ./server-manager
 

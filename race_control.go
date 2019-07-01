@@ -516,43 +516,34 @@ func (rc *RaceControl) SortDrivers(driverGroup RaceControlDriverGroup, driverA, 
 	driverACar := driverA.CurrentCar()
 	driverBCar := driverB.CurrentCar()
 
-	switch driverGroup {
-	case ConnectedDrivers:
-		if rc.SessionInfo.Type == udp.SessionTypeRace {
+	if rc.SessionInfo.Type == udp.SessionTypeRace {
+		if driverGroup == ConnectedDrivers {
 			if driverACar.NumLaps == driverBCar.NumLaps {
 				return driverACar.TotalLapTime < driverBCar.TotalLapTime
 			} else {
 				return driverACar.NumLaps > driverBCar.NumLaps
 			}
-		} else {
-			if driverACar.BestLap == 0 && driverBCar.BestLap == 0 {
-				if driverACar.NumLaps == driverBCar.NumLaps {
-					return driverACar.LastLapCompletedTime.Before(driverBCar.LastLapCompletedTime)
-				} else {
-					return driverACar.NumLaps > driverBCar.NumLaps
-				}
-
-			}
-
-			if driverACar.BestLap == 0 {
-				return false
-			} else if driverBCar.BestLap == 0 {
-				return true
-			}
-
-			return driverACar.BestLap < driverBCar.BestLap
-		}
-
-	case DisconnectedDrivers:
-		// disconnected
-		if rc.SessionInfo.Type == udp.SessionTypeRace {
+		} else if driverGroup == DisconnectedDrivers {
 			return driverACar.LastLapCompletedTime.After(driverBCar.LastLapCompletedTime)
 		} else {
-			return driverACar.BestLap < driverBCar.BestLap
+			panic("unknown driver group")
+		}
+	} else {
+		if driverACar.BestLap == 0 && driverBCar.BestLap == 0 {
+			if driverACar.NumLaps == driverBCar.NumLaps {
+				return driverACar.LastLapCompletedTime.Before(driverBCar.LastLapCompletedTime)
+			} else {
+				return driverACar.NumLaps > driverBCar.NumLaps
+			}
 		}
 
-	default:
-		panic("unknown driver group")
+		if driverACar.BestLap == 0 {
+			return false
+		} else if driverBCar.BestLap == 0 {
+			return true
+		}
+
+		return driverACar.BestLap < driverBCar.BestLap
 	}
 }
 

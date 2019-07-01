@@ -4,7 +4,7 @@ let source = require('vinyl-source-stream');
 let tsify = require('tsify');
 let sourcemaps = require('gulp-sourcemaps');
 let buffer = require('vinyl-buffer');
-let uglify = require('gulp-uglify');
+let uglify = require('gulp-uglify-es').default;
 
 gulp.task('build', buildJS);
 
