@@ -4,7 +4,7 @@ import {
     RaceControlDriverMapRaceControlDriverSessionCarInfo as SessionCarInfo
 } from "./models/RaceControl";
 
-import {CarUpdate, CarUpdateVec, SessionInfo} from "./models/UDP";
+import {CarUpdate, CarUpdateVec} from "./models/UDP";
 import {randomColor} from "randomcolor/randomColor";
 import {msToTime, prettifyName} from "./utils";
 import moment from "moment";
@@ -59,6 +59,10 @@ export class RaceControl {
         let ws = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/api/race-control");
         ws.onmessage = this.handleWebsocketMessage.bind(this);
 
+        $(window).on('beforeunload', () => {
+            ws.close();
+        });
+
         this.handleIFrames();
         setInterval(this.showEventCompletion.bind(this), 1000);
     }
@@ -71,6 +75,9 @@ export class RaceControl {
         }
 
         switch (message.EventType) {
+            case EventVersion:
+                location.reload();
+                return;
             case EventRaceControl:
                 this.status = new RaceControlData(message.Message);
                 this.$eventTitle.text(RaceControl.getSessionType(this.status.SessionInfo.Type) + " at " + this.status.TrackInfo!.name);
@@ -229,7 +236,7 @@ class LiveMap implements WebsocketHandler {
     private mapImageHasLoaded: boolean = false;
 
     private readonly $map: JQuery<HTMLDivElement>;
-    private readonly $trackMapImage: JQuery<HTMLImageElement> | undefined;
+    private readonly $trackMapImage: JQuery<HTMLImageElement>;
     private readonly raceControl: RaceControl;
 
     constructor(raceControl: RaceControl) {
@@ -409,31 +416,31 @@ class LiveMap implements WebsocketHandler {
         return "/content/tracks/" + sessionInfo.Track + (!!sessionInfo.TrackConfig ? "/" + sessionInfo.TrackConfig : "") + "/map.png";
     }
 
-    trackImage: HTMLImageElement = new Image();
+    private trackImageWidth: number = 0;
+    private trackImageHeight: number = 0;
 
     private loadTrackMapImage(): void {
         const trackURL = this.getTrackMapURL();
+        let that = this;
 
-        this.trackImage.onload = () => {
-            this.$trackMapImage!.attr({
-                "src": trackURL,
-            });
+        this.$trackMapImage.on("load", function() {
+            that.trackImageWidth = this.width;
+            that.trackImageHeight = this.height;
+            that.mapImageHasLoaded = true;
+            that.correctMapDimensions();
+        });
 
-            this.mapImageHasLoaded = true;
-            this.correctMapDimensions();
-        };
-
-        this.trackImage.src = trackURL
+        this.$trackMapImage.attr({"src": trackURL});
     }
 
     private static mapRotationRatio: number = 1.07;
 
     private correctMapDimensions(): void {
-        if (!this.trackImage || !this.$trackMapImage || !this.mapImageHasLoaded) {
+        if (!this.$trackMapImage || !this.mapImageHasLoaded) {
             return;
         }
 
-        if (this.trackImage.height / this.trackImage.width > LiveMap.mapRotationRatio) {
+        if (this.$trackMapImage.height()! / this.$trackMapImage.width()! > LiveMap.mapRotationRatio) {
             // rotate the map
             this.$map.addClass("rotated");
 
@@ -442,14 +449,14 @@ class LiveMap implements WebsocketHandler {
                 'max-width': 'auto'
             });
 
-            this.mapScaleMultiplier = this.$trackMapImage.width()! / this.trackImage.width;
+            this.mapScaleMultiplier = this.$trackMapImage.width()! / this.trackImageWidth;
 
             this.$map.closest(".map-container").css({
-                'max-height': (this.trackImage.width * this.mapScaleMultiplier) + 20,
+                'max-height': (this.trackImageWidth * this.mapScaleMultiplier) + 20,
             });
 
             this.$map.css({
-                'max-width': (this.trackImage.width * this.mapScaleMultiplier) + 20,
+                'max-width': (this.trackImageWidth * this.mapScaleMultiplier) + 20,
             });
         } else {
             // un-rotate the map
@@ -467,7 +474,7 @@ class LiveMap implements WebsocketHandler {
                 'max-width': '100%'
             });
 
-            this.mapScaleMultiplier = this.$trackMapImage.width()! / this.trackImage.width;
+            this.mapScaleMultiplier = this.$trackMapImage.width()! / this.trackImageWidth;
         }
     }
 
@@ -481,6 +488,9 @@ const SessionTypeRace = 3;
 const SessionTypeQualifying = 2;
 const SessionTypePractice = 1;
 const SessionTypeBooking = 0;
+
+const CollisionWithCar = "with other car";
+const CollisionWithEnvironment = "with environment";
 
 class LiveTimings implements WebsocketHandler {
     private readonly raceControl: RaceControl;
@@ -669,9 +679,16 @@ class LiveTimings implements WebsocketHandler {
                     if (moment(collision.Time).add("10", "seconds").isSameOrAfter(moment())) {
                         let $tag = $("<span/>");
                         $tag.attr({'class': 'badge badge-danger live-badge'});
-                        $tag.text(
-                            "Crash " + collision.Type + " at " + collision.Speed.toFixed(2) + "Km/h"
-                        );
+
+                        if (collision.Type === CollisionWithCar) {
+                            $tag.text(
+                                "Crash with " + collision.OtherDriverName + " at " + collision.Speed.toFixed(2) + "Km/h"
+                            );
+                        } else {
+                            $tag.text(
+                                "Crash " + collision.Type + " at " + collision.Speed.toFixed(2) + "Km/h"
+                            );
+                        }
 
                         $tdEvents.append($tag);
                     }
