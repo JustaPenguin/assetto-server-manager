@@ -63,8 +63,7 @@ func TestRaceControl_OnVersion(t *testing.T) {
 	}
 
 	if raceControl.ConnectedDrivers.Len() != 3 {
-		t.Logf("Invalid driver length: %d", raceControl.ConnectedDrivers.Len())
-		t.Fail()
+		t.Errorf("Invalid driver length: %d", raceControl.ConnectedDrivers.Len())
 		return
 	}
 
@@ -78,14 +77,12 @@ func TestRaceControl_OnVersion(t *testing.T) {
 
 	// now we should have 0 drivers in connected, and 3 in disconnected
 	if raceControl.ConnectedDrivers.Len() != 0 {
-		t.Logf("Was expecting 0 connected drivers, got: %d", raceControl.ConnectedDrivers.Len())
-		t.Fail()
+		t.Errorf("Was expecting 0 connected drivers, got: %d", raceControl.ConnectedDrivers.Len())
 		return
 	}
 
 	if raceControl.DisconnectedDrivers.Len() != 3 {
-		t.Logf("Was expecting 3 disconnected drivers, got: %d", raceControl.DisconnectedDrivers.Len())
-		t.Fail()
+		t.Errorf("Was expecting 3 disconnected drivers, got: %d", raceControl.DisconnectedDrivers.Len())
 		return
 	}
 }
@@ -104,22 +101,19 @@ func TestRaceControl_OnClientConnect(t *testing.T) {
 		}
 
 		if guid, ok := raceControl.CarIDToGUID[drivers[0].CarID]; !ok || guid != drivers[0].DriverGUID {
-			t.Logf("Driver was not correctly added to CarID -> GUID map")
-			t.Fail()
+			t.Errorf("Driver was not correctly added to CarID -> GUID map")
 			return
 		}
 
 		driver, ok := raceControl.ConnectedDrivers.Get(drivers[0].DriverGUID)
 
 		if !ok {
-			t.Logf("Driver was not correctly added to ConnectedDrivers")
-			t.Fail()
+			t.Errorf("Driver was not correctly added to ConnectedDrivers")
 			return
 		}
 
 		if !driver.LoadedTime.IsZero() {
-			t.Logf("Driver has loaded time when it should be zero")
-			t.Fail()
+			t.Errorf("Driver has loaded time when it should be zero")
 			return
 		}
 
@@ -134,14 +128,12 @@ func TestRaceControl_OnClientConnect(t *testing.T) {
 
 			// assert that the driver has been disconnected
 			if _, ok := raceControl.ConnectedDrivers.Get(drivers[0].DriverGUID); ok {
-				t.Log("Driver should have been disconnected, was not. (present in ConnectedDrivers)")
-				t.Fail()
+				t.Errorf("Driver should have been disconnected, was not. (present in ConnectedDrivers)")
 				return
 			}
 
 			if _, ok := raceControl.DisconnectedDrivers.Get(drivers[0].DriverGUID); ok {
-				t.Log("Driver should have been disconnected, was not. (present in DisconnectedDrivers, but no laps completed)")
-				t.Fail()
+				t.Error("Driver should have been disconnected, was not. (present in DisconnectedDrivers, but no laps completed)")
 				return
 			}
 
@@ -155,19 +147,18 @@ func TestRaceControl_OnClientConnect(t *testing.T) {
 
 			// assert that the driver has been reconnected
 			if _, ok := raceControl.ConnectedDrivers.Get(drivers[0].DriverGUID); !ok {
-				t.Log("Driver should have been connected, was not. (not present in ConnectedDrivers)")
-				t.Fail()
+				t.Error("Driver should have been connected, was not. (not present in ConnectedDrivers)")
 				return
 			}
 
 			if _, ok := raceControl.DisconnectedDrivers.Get(drivers[0].DriverGUID); ok {
-				t.Log("Driver should have been connected, was not. (present in DisconnectedDrivers)")
-				t.Fail()
+				t.Error("Driver should have been connected, was not. (present in DisconnectedDrivers)")
 				return
 			}
+
 		})
 
-		t.Run("Client disconnects and reconnects having done some laps laps", func(t *testing.T) {
+		t.Run("Client disconnects and reconnects having done some laps", func(t *testing.T) {
 			err := raceControl.OnLapCompleted(udp.LapCompleted{
 				CarID:   drivers[0].CarID,
 				LapTime: 10000,
@@ -189,35 +180,41 @@ func TestRaceControl_OnClientConnect(t *testing.T) {
 
 			// assert that the driver has been disconnected
 			if _, ok := raceControl.ConnectedDrivers.Get(drivers[0].DriverGUID); ok {
-				t.Log("Driver should have been disconnected, was not. (present in ConnectedDrivers)")
-				t.Fail()
+				t.Error("Driver should have been disconnected, was not. (present in ConnectedDrivers)")
 				return
 			}
 
 			if _, ok := raceControl.DisconnectedDrivers.Get(drivers[0].DriverGUID); !ok {
-				t.Log("Driver should have been disconnected, was not. (not present in DisconnectedDrivers, has completed laps)")
-				t.Fail()
+				t.Error("Driver should have been disconnected, was not. (not present in DisconnectedDrivers, has completed laps)")
 				return
 			}
 
+			driver := drivers[0]
+			driver.CarModel = "newCar"
+
 			// reconnect!
-			err = raceControl.OnClientConnect(drivers[0])
+			err = raceControl.OnClientConnect(driver)
 
 			if err != nil {
 				t.Error(err)
 				return
 			}
 
+			connectedDriver, connected := raceControl.ConnectedDrivers.Get(drivers[0].DriverGUID)
+
 			// assert that the driver has been reconnected
-			if _, ok := raceControl.ConnectedDrivers.Get(drivers[0].DriverGUID); !ok {
-				t.Log("Driver should have been connected, was not. (not present in ConnectedDrivers)")
-				t.Fail()
+			if !connected {
+				t.Error("Driver should have been connected, was not. (not present in ConnectedDrivers)")
+				return
+			}
+
+			if len(connectedDriver.Cars) != 2 {
+				t.Error("Expected connected driver to have two cars")
 				return
 			}
 
 			if _, ok := raceControl.DisconnectedDrivers.Get(drivers[0].DriverGUID); ok {
-				t.Log("Driver should have been connected, was not. (present in DisconnectedDrivers)")
-				t.Fail()
+				t.Error("Driver should have been connected, was not. (present in DisconnectedDrivers)")
 				return
 			}
 		})
@@ -234,8 +231,7 @@ func TestRaceControl_OnClientConnect(t *testing.T) {
 		err := raceControl.OnClientDisconnect(driver)
 
 		if err == nil {
-			t.Log("Expected an error due to an unknown driver, but none was present")
-			t.Fail()
+			t.Error("Expected an error due to an unknown driver, but none was present")
 			return
 		}
 	})
@@ -262,8 +258,7 @@ func TestRaceControl_OnClientLoaded(t *testing.T) {
 		}
 
 		if !driver.LoadedTime.IsZero() {
-			t.Logf("Driver: %s has loaded time", driverGUID)
-			t.Fail()
+			t.Errorf("Driver: %s has loaded time", driverGUID)
 			return nil
 		}
 
@@ -280,24 +275,21 @@ func TestRaceControl_OnClientLoaded(t *testing.T) {
 	driver, ok := raceControl.ConnectedDrivers.Get(drivers[1].DriverGUID)
 
 	if !ok || driver.LoadedTime.IsZero() {
-		t.Logf("Driver 2 not marked as loaded")
-		t.Fail()
+		t.Errorf("Driver 2 not marked as loaded")
 		return
 	}
 
 	driver2, ok := raceControl.ConnectedDrivers.Get(drivers[2].DriverGUID)
 
 	if !ok || !driver2.LoadedTime.IsZero() {
-		t.Logf("Driver 2 should not be marked as loaded")
-		t.Fail()
+		t.Errorf("Driver 2 should not be marked as loaded")
 		return
 	}
 
 	driver3, ok := raceControl.ConnectedDrivers.Get(drivers[3].DriverGUID)
 
 	if !ok || !driver3.LoadedTime.IsZero() {
-		t.Logf("Driver 4 should not be marked as loaded")
-		t.Fail()
+		t.Errorf("Driver 4 should not be marked as loaded")
 		return
 	}
 
@@ -305,8 +297,7 @@ func TestRaceControl_OnClientLoaded(t *testing.T) {
 		err := raceControl.OnClientLoaded(udp.ClientLoaded(10))
 
 		if err == nil {
-			t.Logf("Expected error for non-existent driver, no error reported.")
-			t.Fail()
+			t.Errorf("Expected error for non-existent driver, no error reported.")
 			return
 		}
 	})
@@ -365,8 +356,7 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 
 		// this is a completely new session, connected drivers and disconnected drivers should be empty
 		if raceControl.ConnectedDrivers.Len() > 0 || raceControl.DisconnectedDrivers.Len() > 0 {
-			t.Logf("Connected or disconnected drivers has entries, should be len 0")
-			t.Fail()
+			t.Errorf("Connected or disconnected drivers has entries, should be len 0")
 			return
 		}
 	})
@@ -425,8 +415,7 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 		}
 
 		if raceControl.ConnectedDrivers.Len() != len(drivers) || raceControl.DisconnectedDrivers.Len() > 0 {
-			t.Logf("Incorrect driver listings")
-			t.Fail()
+			t.Errorf("Incorrect driver listings")
 			return
 		}
 
@@ -490,9 +479,13 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 			return
 		}
 
+		if raceControl.SessionInfo.Type != udp.SessionTypeQualifying {
+			t.Error("Invalid session type detected, should be qualifying")
+			return
+		}
+
 		if raceControl.ConnectedDrivers.Len() != len(drivers)-1 || raceControl.DisconnectedDrivers.Len() != 1 {
-			t.Log("Invalid driver list lengths. Expected all drivers to still be in driver lists.")
-			t.Fail()
+			t.Error("Invalid driver list lengths. Expected all drivers to still be in driver lists.")
 			return
 		}
 
@@ -500,8 +493,7 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 			car := driver.CurrentCar()
 
 			if car.BestLap != 0 || car.TopSpeedBestLap != 0 || driver.Split != "" || driver.Position != 0 || len(driver.Collisions) > 0 {
-				t.Log("Connected driver data carried across from previous session")
-				t.Fail()
+				t.Error("Connected driver data carried across from previous session")
 				return
 			}
 		}
@@ -510,8 +502,7 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 			car := driver.CurrentCar()
 
 			if car.BestLap != 0 || car.TopSpeedBestLap != 0 || driver.Split != "" || driver.Position != 0 || len(driver.Collisions) > 0 {
-				t.Log("Disconnected driver data carried across from previous session")
-				t.Fail()
+				t.Error("Disconnected driver data carried across from previous session")
 				return
 			}
 		}
@@ -571,8 +562,7 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 		}
 
 		if raceControl.ConnectedDrivers.Len() != len(drivers) || raceControl.DisconnectedDrivers.Len() > 0 {
-			t.Logf("Incorrect driver listings")
-			t.Fail()
+			t.Error("Incorrect driver listings")
 			return
 		}
 
@@ -637,8 +627,7 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 		}
 
 		if raceControl.ConnectedDrivers.Len() != len(drivers)-1 || raceControl.DisconnectedDrivers.Len() != 1 {
-			t.Log("Invalid driver list lengths. Expected all drivers to still be in driver lists.")
-			t.Fail()
+			t.Error("Invalid driver list lengths. Expected all drivers to still be in driver lists.")
 			return
 		}
 
@@ -646,8 +635,7 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 			car := driver.CurrentCar()
 
 			if car.BestLap == 0 || driver.Position == 0 || car.LastLap == 0 {
-				t.Log("Connected driver data not carried across from previous session")
-				t.Fail()
+				t.Error("Connected driver data not carried across from previous session")
 				return
 			}
 		}
@@ -656,8 +644,7 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 			car := driver.CurrentCar()
 
 			if car.BestLap == 0 {
-				t.Log("Disonnected driver data not carried across from previous session")
-				t.Fail()
+				t.Error("Disconnected driver data not carried across from previous session")
 				return
 			}
 		}
@@ -717,8 +704,7 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 		}
 
 		if raceControl.ConnectedDrivers.Len() != len(drivers) || raceControl.DisconnectedDrivers.Len() > 0 {
-			t.Logf("Incorrect driver listings")
-			t.Fail()
+			t.Error("Incorrect driver listings")
 			return
 		}
 
@@ -783,8 +769,7 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 		}
 
 		if raceControl.ConnectedDrivers.Len() != 0 || raceControl.DisconnectedDrivers.Len() != 0 {
-			t.Log("Invalid driver list lengths. Expected 0 drivers to still be in driver lists.")
-			t.Fail()
+			t.Error("Invalid driver list lengths. Expected 0 drivers to still be in driver lists.")
 			return
 		}
 	})
@@ -844,8 +829,7 @@ func TestRaceControl_OnCarUpdate(t *testing.T) {
 	}
 
 	if raceControl.ConnectedDrivers.Len() != len(drivers) || raceControl.DisconnectedDrivers.Len() > 0 {
-		t.Logf("Incorrect driver listings")
-		t.Fail()
+		t.Error("Incorrect driver listings")
 		return
 	}
 
@@ -864,8 +848,7 @@ func TestRaceControl_OnCarUpdate(t *testing.T) {
 	}
 
 	if !updateRaceControl {
-		t.Log("Should have update race control call, top speed increased")
-		t.Fail()
+		t.Error("Should have update race control call, top speed increased")
 	}
 
 	if driver, ok := raceControl.ConnectedDrivers.Get(drivers[1].DriverGUID); !ok || (driver.LastPos.X == 0 && driver.LastPos.Y == 0 && driver.LastPos.Z == 0) || driver.CurrentCar().TopSpeedThisLap == 0 {
@@ -883,8 +866,7 @@ func TestRaceControl_OnCarUpdate(t *testing.T) {
 		})
 
 		if err == nil {
-			t.Log("Error was nil, expected error")
-			t.Fail()
+			t.Error("Error was nil, expected error")
 			return
 		}
 	})
@@ -992,8 +974,7 @@ func TestRaceControl_OnLapCompleted(t *testing.T) {
 	}
 
 	if raceControl.ConnectedDrivers.Len() != len(driversOnFirstLap) || raceControl.DisconnectedDrivers.Len() > 0 {
-		t.Logf("Incorrect driver listings")
-		t.Fail()
+		t.Error("Incorrect driver listings")
 		return
 	}
 
@@ -1019,13 +1000,11 @@ func TestRaceControl_OnLapCompleted(t *testing.T) {
 		}
 
 		if rcDriver.Position != driver.ExpectedPos {
-			t.Logf("Expected driver %d's position to be %d, was actually: %d", driver.Driver, driver.ExpectedPos, rcDriver.Position)
-			t.Fail()
+			t.Errorf("Expected driver %d's position to be %d, was actually: %d", driver.Driver, driver.ExpectedPos, rcDriver.Position)
 		}
 
 		if rcDriver.Split != driver.ExpectedSplit {
-			t.Logf("Expected driver %d's split to be %s, was actually: %s", driver.Driver, driver.ExpectedSplit, rcDriver.Split)
-			t.Fail()
+			t.Errorf("Expected driver %d's split to be %s, was actually: %s", driver.Driver, driver.ExpectedSplit, rcDriver.Split)
 		}
 	}
 
@@ -1037,8 +1016,7 @@ func TestRaceControl_OnLapCompleted(t *testing.T) {
 		})
 
 		if err == nil {
-			t.Log("Expected error on lap completed, none found (invalid driver expected)")
-			t.Fail()
+			t.Error("Expected error on lap completed, none found (invalid driver expected)")
 		}
 	})
 }
@@ -1069,18 +1047,15 @@ func TestRaceControl_SortDrivers(t *testing.T) {
 		rc.ConnectedDrivers.sort()
 
 		if rc.ConnectedDrivers.GUIDsInPositionalOrder[0] != drivers[1].DriverGUID {
-			t.Log("Driver 1 should be in first")
-			t.Fail()
+			t.Error("Driver 1 should be in first")
 		}
 
 		if rc.ConnectedDrivers.GUIDsInPositionalOrder[1] != drivers[0].DriverGUID {
-			t.Log("Driver 0 should be in second")
-			t.Fail()
+			t.Error("Driver 0 should be in second")
 		}
 
 		if rc.ConnectedDrivers.GUIDsInPositionalOrder[2] != drivers[2].DriverGUID {
-			t.Log("Driver 2 should be in third")
-			t.Fail()
+			t.Error("Driver 2 should be in third")
 		}
 	})
 
@@ -1116,23 +1091,19 @@ func TestRaceControl_SortDrivers(t *testing.T) {
 			rc.ConnectedDrivers.sort()
 
 			if rc.ConnectedDrivers.GUIDsInPositionalOrder[0] != drivers[1].DriverGUID {
-				t.Log("Driver 1 should be in first")
-				t.Fail()
+				t.Error("Driver 1 should be in first")
 			}
 
 			if rc.ConnectedDrivers.GUIDsInPositionalOrder[1] != drivers[3].DriverGUID {
-				t.Log("Driver 3 should be in second")
-				t.Fail()
+				t.Error("Driver 3 should be in second")
 			}
 
 			if rc.ConnectedDrivers.GUIDsInPositionalOrder[2] != drivers[0].DriverGUID {
-				t.Log("Driver 0 should be in third")
-				t.Fail()
+				t.Error("Driver 0 should be in third")
 			}
 
 			if rc.ConnectedDrivers.GUIDsInPositionalOrder[3] != drivers[2].DriverGUID {
-				t.Log("Driver 2 should be in fourth")
-				t.Fail()
+				t.Error("Driver 2 should be in fourth")
 			}
 		})
 	})
@@ -1160,23 +1131,19 @@ func TestRaceControl_SortDrivers(t *testing.T) {
 		rc.DisconnectedDrivers.sort()
 
 		if rc.DisconnectedDrivers.GUIDsInPositionalOrder[0] != drivers[2].DriverGUID {
-			t.Log("Driver 2 should be in first")
-			t.Fail()
+			t.Error("Driver 2 should be in first")
 		}
 
 		if rc.DisconnectedDrivers.GUIDsInPositionalOrder[1] != drivers[3].DriverGUID {
-			t.Log("Driver 3 should be in second")
-			t.Fail()
+			t.Error("Driver 3 should be in second")
 		}
 
 		if rc.DisconnectedDrivers.GUIDsInPositionalOrder[2] != drivers[0].DriverGUID {
-			t.Log("Driver 0 should be in third")
-			t.Fail()
+			t.Error("Driver 0 should be in third")
 		}
 
 		if rc.DisconnectedDrivers.GUIDsInPositionalOrder[3] != drivers[1].DriverGUID {
-			t.Log("Driver 1 should be in fourth")
-			t.Fail()
+			t.Error("Driver 1 should be in fourth")
 		}
 	})
 
@@ -1203,23 +1170,299 @@ func TestRaceControl_SortDrivers(t *testing.T) {
 		rc.DisconnectedDrivers.sort()
 
 		if rc.DisconnectedDrivers.GUIDsInPositionalOrder[0] != drivers[1].DriverGUID {
-			t.Log("Driver 1 should be in first")
-			t.Fail()
+			t.Error("Driver 1 should be in first")
 		}
 
 		if rc.DisconnectedDrivers.GUIDsInPositionalOrder[1] != drivers[2].DriverGUID {
-			t.Log("Driver 2 should be in second")
-			t.Fail()
+			t.Error("Driver 2 should be in second")
 		}
 
 		if rc.DisconnectedDrivers.GUIDsInPositionalOrder[2] != drivers[0].DriverGUID {
-			t.Log("Driver 0 should be in third")
-			t.Fail()
+			t.Error("Driver 0 should be in third")
 		}
 
 		if rc.DisconnectedDrivers.GUIDsInPositionalOrder[3] != drivers[3].DriverGUID {
-			t.Log("Driver 3 should be in fourth")
-			t.Fail()
+			t.Error("Driver 3 should be in fourth")
+		}
+	})
+}
+
+func TestRaceControl_OnSessionUpdate(t *testing.T) {
+	t.Run("Session update", func(t *testing.T) {
+
+		raceControl := NewRaceControl(NilBroadcaster{}, nilTrackData{})
+
+		if err := raceControl.OnVersion(udp.Version(4)); err != nil {
+			t.Error(err)
+			return
+		}
+
+		sessionInfo := udp.SessionInfo{
+			Version:             4,
+			SessionIndex:        0,
+			CurrentSessionIndex: 0,
+			SessionCount:        1,
+			ServerName:          "Test Server",
+			Track:               "ks_laguna_seca",
+			TrackConfig:         "",
+			Name:                "Test Looped Practice Session",
+			Type:                udp.SessionTypePractice,
+			Time:                10,
+			Laps:                0,
+			WaitTime:            120,
+			AmbientTemp:         12,
+			RoadTemp:            16,
+			WeatherGraphics:     "01_clear",
+			ElapsedMilliseconds: 10,
+
+			EventType: udp.EventNewSession,
+		}
+
+		// new session
+		err := raceControl.OnNewSession(sessionInfo)
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		time.Sleep(time.Millisecond * 10)
+
+		// stop the session info ticker
+		defer raceControl.sessionInfoCfn()
+
+		// join and load all drivers
+		for _, entrant := range drivers {
+			if err := raceControl.OnClientConnect(entrant); err != nil {
+				t.Error(err)
+				return
+			}
+
+			if err := raceControl.OnClientLoaded(udp.ClientLoaded(entrant.CarID)); err != nil {
+				t.Error(err)
+				return
+			}
+		}
+
+		sessionInfo.EventType = udp.EventSessionInfo
+		sessionInfo.AmbientTemp = 100
+
+		err = raceControl.OnSessionUpdate(sessionInfo)
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if raceControl.SessionInfo.AmbientTemp != 100 {
+			t.Errorf("Expected ambient temp of 100, got %d", raceControl.SessionInfo.AmbientTemp)
+			return
+		}
+	})
+
+	t.Run("Driver disconnect", func(t *testing.T) {
+		raceControl := NewRaceControl(NilBroadcaster{}, nilTrackData{})
+
+		if err := raceControl.OnVersion(udp.Version(4)); err != nil {
+			t.Error(err)
+			return
+		}
+
+		sessionInfo := udp.SessionInfo{
+			Version:             4,
+			SessionIndex:        0,
+			CurrentSessionIndex: 0,
+			SessionCount:        1,
+			ServerName:          "Test Server",
+			Track:               "ks_laguna_seca",
+			TrackConfig:         "",
+			Name:                "Test Looped Practice Session",
+			Type:                udp.SessionTypePractice,
+			Time:                10,
+			Laps:                0,
+			WaitTime:            120,
+			AmbientTemp:         12,
+			RoadTemp:            16,
+			WeatherGraphics:     "01_clear",
+			ElapsedMilliseconds: 10,
+
+			EventType: udp.EventNewSession,
+		}
+
+		// new session
+		err := raceControl.OnNewSession(sessionInfo)
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		time.Sleep(time.Millisecond * 10)
+
+		// stop the session info ticker
+		defer raceControl.sessionInfoCfn()
+
+		// join all drivers
+		for _, entrant := range drivers {
+			if err := raceControl.OnClientConnect(entrant); err != nil {
+				t.Error(err)
+				return
+			}
+		}
+
+		udp.RealtimePosIntervalMs = 1 // enable driver disconnect tracking
+
+		defer func() {
+			udp.RealtimePosIntervalMs = 0 // disable driver disconnect tracking
+		}()
+
+		t.Run("No drivers loaded", func(t *testing.T) {
+			driverLastSeenMaxDuration = time.Millisecond
+
+			sessionInfo.EventType = udp.EventSessionInfo
+			sessionInfo.AmbientTemp = 100
+
+			time.Sleep(time.Millisecond)
+
+			err = raceControl.OnSessionUpdate(sessionInfo)
+
+			if err != nil {
+				t.Error(err)
+				return
+			}
+
+			if raceControl.ConnectedDrivers.Len() != len(drivers) {
+				t.Errorf("Expected %d drivers, got %d. Drivers were wrongly disconnected", len(drivers), raceControl.ConnectedDrivers.Len())
+				return
+			}
+		})
+
+		// load all drivers
+		for _, entrant := range drivers {
+			if err := raceControl.OnClientLoaded(udp.ClientLoaded(entrant.CarID)); err != nil {
+				t.Error(err)
+				return
+			}
+		}
+
+		t.Run("Driver three should be disconnected", func(t *testing.T) {
+			driverLastSeenMaxDuration = time.Minute
+
+			for index, entrant := range drivers {
+				d, _ := raceControl.ConnectedDrivers.Get(entrant.DriverGUID)
+
+				if index == 2 {
+					// give the driver a lap so we can check for their existence in the DisconnectedDrivers map
+					d.TotalNumLaps++
+
+					d.LastSeen = time.Now().Add(-time.Minute * 2)
+				} else {
+					d.LastSeen = time.Now()
+				}
+			}
+
+			err := raceControl.OnSessionUpdate(sessionInfo)
+
+			if err != nil {
+				t.Error(err)
+				return
+			}
+
+			_, disconnected := raceControl.DisconnectedDrivers.Get(drivers[2].DriverGUID)
+			_, connected := raceControl.ConnectedDrivers.Get(drivers[2].DriverGUID)
+
+			if !disconnected || connected {
+				t.Error("Expected driver 2 to be disconnected, but they were not", connected, disconnected)
+				return
+			}
+
+			if raceControl.DisconnectedDrivers.Len() > 1 {
+				t.Error("Only expected one driver to be disconnected")
+				return
+			}
+		})
+	})
+
+	t.Run("Driver 1 connects but doesn't load", func(t *testing.T) {
+		raceControl := NewRaceControl(NilBroadcaster{}, nilTrackData{})
+
+		if err := raceControl.OnVersion(udp.Version(4)); err != nil {
+			t.Error(err)
+			return
+		}
+
+		sessionInfo := udp.SessionInfo{
+			Version:             4,
+			SessionIndex:        0,
+			CurrentSessionIndex: 0,
+			SessionCount:        1,
+			ServerName:          "Test Server",
+			Track:               "ks_laguna_seca",
+			TrackConfig:         "",
+			Name:                "Test Looped Practice Session",
+			Type:                udp.SessionTypePractice,
+			Time:                10,
+			Laps:                0,
+			WaitTime:            120,
+			AmbientTemp:         12,
+			RoadTemp:            16,
+			WeatherGraphics:     "01_clear",
+			ElapsedMilliseconds: 10,
+
+			EventType: udp.EventNewSession,
+		}
+
+		// new session
+		err := raceControl.OnNewSession(sessionInfo)
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		time.Sleep(time.Millisecond * 10)
+
+		// stop the session info ticker
+		defer raceControl.sessionInfoCfn()
+
+		// join all drivers
+		for _, entrant := range drivers {
+			if err := raceControl.OnClientConnect(entrant); err != nil {
+				t.Error(err)
+				return
+			}
+		}
+
+		udp.RealtimePosIntervalMs = 1 // enable driver disconnect tracking
+
+		defer func() {
+			udp.RealtimePosIntervalMs = 0 // disable driver disconnect tracking
+		}()
+
+		for _, entrant := range drivers[1:] {
+			if err := raceControl.OnClientLoaded(udp.ClientLoaded(entrant.CarID)); err != nil {
+				t.Error(err)
+				return
+			}
+		}
+
+		driverConnectionTimeout = time.Millisecond * 500
+
+		time.Sleep(time.Millisecond * 600)
+
+		sessionInfo.EventType = udp.EventSessionInfo
+		sessionInfo.AmbientTemp = 100
+
+		err = raceControl.OnSessionUpdate(sessionInfo)
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if raceControl.ConnectedDrivers.Len() != len(drivers)-1 {
+			t.Error("Expected one driver to be missing from connected drivers")
+			return
 		}
 	})
 }
