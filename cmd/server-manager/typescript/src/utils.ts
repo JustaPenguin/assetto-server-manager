@@ -31,15 +31,22 @@ export function msToTime(s: number, millisecondPrecision: boolean = true, trimLe
         return "";
     }
 
+    let out = "";
+
+    if (s < 0) {
+        out = "-";
+        s = Math.abs(s);
+    }
+
     let formatString = (millisecondPrecision ? "HH:mm:ss.SSS" : "HH:mm:ss");
     let formatted = moment.utc(s).format(formatString);
 
     if (trimLeadingZeroes && formatted.startsWith("00:")) {
         // remove leading hours
-        return formatted.substring(3);
+        return out+formatted.substring(3);
     }
 
-    return formatted;
+    return out+formatted;
 }
 
 function pad(num, size) {
