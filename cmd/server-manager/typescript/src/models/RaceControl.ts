@@ -234,6 +234,7 @@ class RaceControlDriverMapRaceControlDriverCollision {
     Type: string;
     Time: Date;
     OtherDriverGUID: string;
+    OtherDriverName: string;
     Speed: number;
 
     constructor(data?: any) {
@@ -241,6 +242,7 @@ class RaceControlDriverMapRaceControlDriverCollision {
         this.Type = ('Type' in d) ? d.Type as string : '';
         this.Time = ('Time' in d) ? ParseDate(d.Time) : new Date();
         this.OtherDriverGUID = ('OtherDriverGUID' in d) ? d.OtherDriverGUID as string : '';
+        this.OtherDriverName = ('OtherDriverName' in d) ? d.OtherDriverName as string : '';
         this.Speed = ('Speed' in d) ? d.Speed as number : 0;
     }
 
@@ -290,6 +292,7 @@ class RaceControlDriverMapRaceControlDriverRaceControlCarLapInfo {
 class RaceControlDriverMapRaceControlDriver {
     CarInfo: RaceControlDriverMapRaceControlDriverSessionCarInfo;
     TotalNumLaps: number;
+    ConnectedTime: Date;
     LoadedTime: Date;
     Position: number;
     Split: string;
@@ -302,6 +305,7 @@ class RaceControlDriverMapRaceControlDriver {
         const d: any = (data && typeof data === 'object') ? ToObject(data) : {};
         this.CarInfo = new RaceControlDriverMapRaceControlDriverSessionCarInfo(d.CarInfo);
         this.TotalNumLaps = ('TotalNumLaps' in d) ? d.TotalNumLaps as number : 0;
+        this.ConnectedTime = ('ConnectedTime' in d) ? ParseDate(d.ConnectedTime) : new Date();
         this.LoadedTime = ('LoadedTime' in d) ? ParseDate(d.LoadedTime) : new Date();
         this.Position = ('Position' in d) ? d.Position as number : 0;
         this.Split = ('Split' in d) ? d.Split as string : '';
@@ -314,6 +318,7 @@ class RaceControlDriverMapRaceControlDriver {
     toObject(): any {
         const cfg: any = {};
         cfg.TotalNumLaps = 'number';
+        cfg.ConnectedTime = 'string';
         cfg.LoadedTime = 'string';
         cfg.Position = 'number';
         cfg.LastSeen = 'string';

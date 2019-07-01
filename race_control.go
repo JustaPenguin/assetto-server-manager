@@ -48,6 +48,7 @@ type Collision struct {
 	Type            CollisionType  `json:"Type"`
 	Time            time.Time      `json:"Time" ts:"date"`
 	OtherDriverGUID udp.DriverGUID `json:"OtherDriverGUID"`
+	OtherDriverName string         `json:"OtherDriverName"`
 	Speed           float64        `json:"Speed"`
 }
 
@@ -569,6 +570,7 @@ func (rc *RaceControl) OnCollisionWithCar(collision udp.CollisionWithCar) error 
 
 	if err == nil {
 		c.OtherDriverGUID = otherDriver.CarInfo.DriverGUID
+		c.OtherDriverName = otherDriver.CarInfo.DriverName
 	}
 
 	driver.Collisions = append(driver.Collisions, c)
