@@ -2,6 +2,8 @@
 
 let $document;
 
+let moment = require("moment");
+
 // entry-point
 $(document).ready(function () {
     console.log("initialising server manager javascript");
@@ -30,6 +32,7 @@ $(document).ready(function () {
     });
 
     serverLogs.init();
+    initUploaders();
 
     // init bootstrap-switch
     $.fn.bootstrapSwitch.defaults.size = 'small';
@@ -1268,6 +1271,38 @@ let serverLogs = {
         }
     },
 };
+
+
+function initUploaders() {
+    $("#input-folder-car").on("change", function() {
+        handleCarFiles(this.files);
+    });
+
+    $("#drop-zone.car-drop").on("drop", function(e) {
+        handleCarDropFiles(e);
+    });
+
+    $("#drop-zone").on("dragover", dragOverHandler);
+    $("#drop-zone").on("dragleave", dragOutHandler);
+    $("#only-ks").on("change", toggleKS);
+
+    $("#input-folder-track").on("change", function() {
+        handleTrackFiles(this.files);
+    });
+
+    $("#drop-zone.track-drop").on("drop", function(e) {
+        handleTrackDropFiles(e);
+    });
+
+    $("#input-folder-weather").on("change", function() {
+        handleWeatherFiles(this.files);
+    });
+
+    $("#drop-zone.weather-drop").on("drop", function(e) {
+        handleWeatherDropFiles(e);
+    });
+}
+
 
 function postWithProgressBar(path, data, onSuccess, onFail, $progressBar) {
     $progressBar.closest(".progress").show();
