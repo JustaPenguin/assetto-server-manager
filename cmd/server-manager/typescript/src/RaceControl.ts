@@ -48,6 +48,7 @@ export class RaceControl {
     private readonly liveTimings: LiveTimings = new LiveTimings(this, this.liveMap);
     private readonly $eventTitle: JQuery<HTMLHeadElement>;
     public status: RaceControlData;
+    private firstLoad: boolean = true;
 
     private track: string = "";
     private trackLayout: string = "";
@@ -100,6 +101,15 @@ export class RaceControl {
                 $("#track-location").text(this.status.TrackInfo.city + ", " + this.status.TrackInfo.country);
 
                 this.buildSessionInfo();
+
+                if (this.firstLoad) {
+                    this.showTrackWeatherImage();
+                }
+
+                this.firstLoad = false;
+                break;
+            case EventNewSession:
+                this.showTrackWeatherImage();
                 break;
         }
 
@@ -171,7 +181,11 @@ export class RaceControl {
         let $ambientTempText = $("#ambient-temp-text");
         $ambientTempText.text(this.status.SessionInfo.AmbientTemp + "°C");
 
-        // @TODO only needs changing every new session or on init (i.e. when no this.status)
+        $("#event-name").text(this.status.SessionInfo.Name);
+        $("#event-type").text(RaceControl.getSessionType(this.status.SessionInfo.Type));
+    }
+
+    private showTrackWeatherImage(): void {
         let $currentWeather = $("#weatherImage");
 
         // Fix for sol weathers with time info in this format:
@@ -189,16 +203,13 @@ export class RaceControl {
 
         $.get("/content/weather/" + pathFinal + "/preview.jpg").done(function () {
             // preview for skin exists
-            $currentWeather.attr("src", "/content/weather/" + pathFinal + "/preview.jpg");
+            $currentWeather.attr("src", "/content/weather/" + pathFinal + "/preview.jpg").show();
         }).fail(function () {
             // preview doesn't exist, load default fall back image
-            $currentWeather.attr("src", "/static/img/no-preview-general.png");
+            $currentWeather.hide();
         });
 
         $currentWeather.attr("alt", "Current Weather: " + prettifyName(this.status.SessionInfo.WeatherGraphics, false));
-
-        $("#event-name").text(this.status.SessionInfo.Name);
-        $("#event-type").text(RaceControl.getSessionType(this.status.SessionInfo.Type));
     }
 
     private getTrackImageURL(): string {

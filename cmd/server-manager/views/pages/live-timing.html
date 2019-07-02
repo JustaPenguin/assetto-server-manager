@@ -34,22 +34,24 @@
 {{ define "content" }}
     {{ with .RaceDetails }}
 
-        <div style="position: absolute; top: 90px; right: 20px;">
-            <div id="road-temp-wrapper" data-toggle="tooltip"
-                 title data-original-title="Road Temp">
-                <div id="road-temp-text"></div>
-                <img src="/static/img/temp-road.png" alt="Road Temp" id="road-temp">
-            </div>
-            <div id="ambient-temp-wrapper" class="mt-1" data-toggle="tooltip"
-                 title data-original-title="Ambient Temp">
-                <div id="ambient-temp-text"></div>
-                <img src="/static/img/temp-ambient.png" alt="Ambient Temp" id="ambient-temp">
+        <div class="race-control-weather-info">
+            <img class="img img-fluid mt-1 d-lg-inline-block d-none" id="weatherImage" src="/static/img/no-preview-general.png" alt="Current Weather">
+
+            <div class="d-inline-block">
+                <div id="road-temp-wrapper" data-toggle="tooltip" data-original-title="Road Temp">
+                    <div id="road-temp-text"></div>
+                    <img src="/static/img/temp-road.png" alt="Road Temp" id="road-temp">
+                </div>
+                <div id="ambient-temp-wrapper" class="mt-1" data-toggle="tooltip" data-original-title="Ambient Temp">
+                    <div id="ambient-temp-text"></div>
+                    <img src="/static/img/temp-ambient.png" alt="Ambient Temp" id="ambient-temp">
+                </div>
             </div>
         </div>
 
-        <div class="text-center">
-            <a href="#" class="text-center" id="event-title" data-toggle="popover" data-placement="bottom"></a>
-            <div class="text-center text-black-50" id="track-location"></div>
+        <div class="text-center pl-5 pr-5">
+            <a href="#" id="event-title" data-toggle="popover" data-placement="bottom"></a>
+            <div class="text-black-50" id="track-location"></div>
 
             <span id="race-time" class="mt-2 badge badge-primary" style="font-size: 1em;"></span>
         </div>
@@ -76,14 +78,14 @@
                 <div class="table-responsive table-sm">
                     <table id="live-table" class="table table-bordered table-striped">
                         <tr>
-                            <th class="p-1 text-center">#</th>
+                            <th class="p-1 text-center">&num;</th>
                             <th>Driver</th>
                             <th>Car</th>
                             <th>Current Lap</th>
                             <th>Last Lap</th>
                             <th>Best Lap</th>
                             <th>Gap</th>
-                            <th>Laps Completed</th>
+                            <th>&num; Laps</th>
                             <th>Top Speed</th>
                             <th class="live-events">Events</th>
                         </tr>
@@ -100,7 +102,7 @@
                                 <th>Driver</th>
                                 <th>Car</th>
                                 <th>Best Lap</th>
-                                <th>Laps Completed</th>
+                                <th>&num; Laps</th>
                                 <th>Top Speed</th>
                             </tr>
 
