@@ -1255,7 +1255,7 @@ func TestRaceControl_OnSessionUpdate(t *testing.T) {
 		sessionInfo.EventType = udp.EventSessionInfo
 		sessionInfo.AmbientTemp = 100
 
-		err = raceControl.OnSessionUpdate(sessionInfo)
+		_, err = raceControl.OnSessionUpdate(sessionInfo)
 
 		if err != nil {
 			t.Error(err)
@@ -1332,7 +1332,7 @@ func TestRaceControl_OnSessionUpdate(t *testing.T) {
 
 			time.Sleep(time.Millisecond)
 
-			err = raceControl.OnSessionUpdate(sessionInfo)
+			shouldUpdate, err := raceControl.OnSessionUpdate(sessionInfo)
 
 			if err != nil {
 				t.Error(err)
@@ -1341,6 +1341,11 @@ func TestRaceControl_OnSessionUpdate(t *testing.T) {
 
 			if raceControl.ConnectedDrivers.Len() != len(drivers) {
 				t.Errorf("Expected %d drivers, got %d. Drivers were wrongly disconnected", len(drivers), raceControl.ConnectedDrivers.Len())
+				return
+			}
+
+			if !shouldUpdate {
+				t.Error("Expected sessionupdate to recommend a websocket update, but it did not")
 				return
 			}
 		})
@@ -1369,7 +1374,7 @@ func TestRaceControl_OnSessionUpdate(t *testing.T) {
 				}
 			}
 
-			err := raceControl.OnSessionUpdate(sessionInfo)
+			_, err := raceControl.OnSessionUpdate(sessionInfo)
 
 			if err != nil {
 				t.Error(err)
@@ -1461,7 +1466,7 @@ func TestRaceControl_OnSessionUpdate(t *testing.T) {
 		sessionInfo.EventType = udp.EventSessionInfo
 		sessionInfo.AmbientTemp = 100
 
-		err = raceControl.OnSessionUpdate(sessionInfo)
+		_, err = raceControl.OnSessionUpdate(sessionInfo)
 
 		if err != nil {
 			t.Error(err)
