@@ -761,7 +761,7 @@ class LiveTimings implements WebsocketHandler {
                 let lapsA = parseInt($(a).find("td:nth-child(4)").text(), 10);
                 let lapsB = parseInt($(b).find("td:nth-child(4)").text(), 10);
 
-                if (lapsA < lapsB) {
+                if (lapsA !== 0 && lapsB !== 0 && lapsA < lapsB) {
                     return 1;
                 } else if (lapsA === lapsB) {
                     return 0;
@@ -772,7 +772,7 @@ class LiveTimings implements WebsocketHandler {
                 let timeA = $(a).find("td:nth-child(3)").text();
                 let timeB = $(b).find("td:nth-child(3)").text();
 
-                if (timeA < timeB) {
+                if (timeA !== "" && timeB !== "" && timeA < timeB) {
                     return -1;
                 } else if (timeA === timeB) {
                     return 0;

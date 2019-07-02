@@ -2,7 +2,7 @@ import "jquery";
 import "bootstrap";
 import "bootstrap-switch";
 import "@fortawesome/fontawesome-free/js/all";
-import "summernote";
+import "summernote/dist/summernote-bs4";
 import "./libs/jquery.quicksearch.js";
 import "multiselect";
 import "moment";
