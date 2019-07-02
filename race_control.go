@@ -74,11 +74,11 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 	case udp.SessionInfo:
 		if m.Event() == udp.EventNewSession {
 			err = rc.OnNewSession(m)
+			sendUpdatedRaceControlStatus = true
 		} else {
-			err = rc.OnSessionUpdate(m)
+			sendUpdatedRaceControlStatus, err = rc.OnSessionUpdate(m)
 		}
 
-		sendUpdatedRaceControlStatus = true
 	case udp.EndSession:
 		err = rc.OnEndSession(m)
 
@@ -307,7 +307,8 @@ var (
 )
 
 // OnSessionUpdate is called every sessionRequestInterval.
-func (rc *RaceControl) OnSessionUpdate(sessionInfo udp.SessionInfo) error {
+func (rc *RaceControl) OnSessionUpdate(sessionInfo udp.SessionInfo) (bool, error) {
+	oldSessionInfo := rc.SessionInfo
 	rc.SessionInfo = sessionInfo
 
 	if udp.RealtimePosIntervalMs > 0 {
@@ -332,12 +333,14 @@ func (rc *RaceControl) OnSessionUpdate(sessionInfo udp.SessionInfo) error {
 			err := rc.disconnectDriver(driver)
 
 			if err != nil {
-				return err
+				return false, err
 			}
 		}
 	}
 
-	return nil
+	sessionHasChanged := oldSessionInfo.AmbientTemp != rc.SessionInfo.AmbientTemp || oldSessionInfo.RoadTemp != rc.SessionInfo.RoadTemp || oldSessionInfo.WeatherGraphics != rc.SessionInfo.WeatherGraphics
+
+	return sessionHasChanged, nil
 }
 
 // OnEndSession is called at the end of every session.

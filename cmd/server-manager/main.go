@@ -1,7 +1,6 @@
 package main
 
 import (
-	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -20,9 +19,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var debug = os.Getenv("DEBUG") == "true"
+var (
+	defaultAddress = "0.0.0.0:8772"
+)
 
-var defaultAddress = "0.0.0.0:8772"
+const (
+	udpRealtimePosRefreshIntervalMin = 100
+)
 
 func init() {
 	runtime.LockOSThread()
@@ -70,8 +73,8 @@ func main() {
 	}
 
 	if config.LiveMap.IsEnabled() {
-		if config.LiveMap.IntervalMs < 200 {
-			udp.RealtimePosIntervalMs = 200
+		if config.LiveMap.IntervalMs < udpRealtimePosRefreshIntervalMin {
+			udp.RealtimePosIntervalMs = udpRealtimePosRefreshIntervalMin
 		} else {
 			udp.RealtimePosIntervalMs = config.LiveMap.IntervalMs
 		}
@@ -136,189 +139,4 @@ func startUDPReplay(file string) {
 	if err != nil {
 		logrus.WithError(err).Error("UDP Replay failed")
 	}
-}
-
-func MiniRace() {
-	time.Sleep(time.Second * 5)
-
-	do := servermanager.ServerRaceControl.UDPCallback
-
-	do(udp.Version(4))
-	do(udp.SessionInfo{
-		Version:             4,
-		SessionIndex:        0,
-		CurrentSessionIndex: 0,
-		SessionCount:        3,
-		ServerName:          "Test Server",
-		Track:               "ks_laguna_seca",
-		TrackConfig:         "",
-		Name:                "Test Practice Session",
-		Type:                udp.SessionTypePractice,
-		Time:                10,
-		Laps:                0,
-		WaitTime:            120,
-		AmbientTemp:         12,
-		RoadTemp:            16,
-		WeatherGraphics:     "3_clear",
-		ElapsedMilliseconds: 10,
-
-		EventType: udp.EventNewSession,
-	})
-	do(udp.SessionCarInfo{
-		CarID:      1,
-		DriverName: "Test 1",
-		DriverGUID: "7827162738272615",
-		CarModel:   "ford_gt",
-		CarSkin:    "red_01",
-		EventType:  udp.EventNewConnection,
-	})
-
-	time.Sleep(time.Second * 2)
-
-	do(udp.ClientLoaded(1))
-
-	for i := 0; i < 10; i++ {
-		time.Sleep(time.Second * 3)
-
-		do(udp.LapCompleted{
-			CarID:     1,
-			LapTime:   uint32(rand.Intn(10000)),
-			Cuts:      0,
-			CarsCount: 1,
-		})
-	}
-
-	do(udp.SessionCarInfo{
-		CarID:      1,
-		DriverName: "Test 1",
-		DriverGUID: "7827162738272615",
-		CarModel:   "ford_gt",
-		CarSkin:    "red_01",
-		EventType:  udp.EventConnectionClosed,
-	})
-
-	time.Sleep(2 * time.Second)
-
-	do(udp.SessionCarInfo{
-		CarID:      1,
-		DriverName: "Test 1",
-		DriverGUID: "7827162738272615",
-		CarModel:   "ferrari_fxx_k",
-		CarSkin:    "red_01",
-		EventType:  udp.EventNewConnection,
-	})
-
-	do(udp.ClientLoaded(1))
-
-	for i := 0; i < 6; i++ {
-		time.Sleep(time.Second * 3)
-
-		do(udp.LapCompleted{
-			CarID:     1,
-			LapTime:   uint32(rand.Intn(1000000)),
-			Cuts:      0,
-			CarsCount: 1,
-		})
-	}
-
-	do(udp.SessionCarInfo{
-		CarID:      1,
-		DriverName: "Test 1",
-		DriverGUID: "7827162738272615",
-		CarModel:   "ferrari_fxx_k",
-		CarSkin:    "red_01",
-		EventType:  udp.EventConnectionClosed,
-	})
-
-	time.Sleep(2 * time.Second)
-
-	do(udp.SessionCarInfo{
-		CarID:      4,
-		DriverName: "Test 1",
-		DriverGUID: "7827162738272615",
-		CarModel:   "ferrari_fxx_k",
-		CarSkin:    "red_01",
-		EventType:  udp.EventNewConnection,
-	})
-
-	do(udp.SessionCarInfo{
-		CarID:      30,
-		DriverName: "Test 2",
-		DriverGUID: "7827162738272677",
-		CarModel:   "ferrari_fxx_k",
-		CarSkin:    "red_01",
-		EventType:  udp.EventNewConnection,
-	})
-
-	do(udp.ClientLoaded(1))
-	do(udp.ClientLoaded(30))
-
-	for i := 0; i < 20; i++ {
-		time.Sleep(time.Second * 3)
-
-		do(udp.LapCompleted{
-			CarID:     4,
-			LapTime:   uint32(rand.Intn(10000)),
-			Cuts:      0,
-			CarsCount: 1,
-		})
-
-		do(udp.LapCompleted{
-			CarID:     30,
-			LapTime:   uint32(rand.Intn(1000000)),
-			Cuts:      0,
-			CarsCount: 1,
-		})
-	}
-
-	do(udp.SessionCarInfo{
-		CarID:      4,
-		DriverName: "Test 1",
-		DriverGUID: "7827162738272615",
-		CarModel:   "ferrari_fxx_k",
-		CarSkin:    "red_01",
-		EventType:  udp.EventConnectionClosed,
-	})
-
-	do(udp.SessionCarInfo{
-		CarID:      30,
-		DriverName: "Test 2",
-		DriverGUID: "7827162738272677",
-		CarModel:   "ferrari_fxx_k",
-		CarSkin:    "red_01",
-		EventType:  udp.EventConnectionClosed,
-	})
-
-	do(udp.SessionCarInfo{
-		CarID:      1,
-		DriverName: "Test 1",
-		DriverGUID: "7827162738272615",
-		CarModel:   "ford_gt",
-		CarSkin:    "red_01",
-		EventType:  udp.EventNewConnection,
-	})
-
-	time.Sleep(time.Second * 2)
-
-	do(udp.ClientLoaded(1))
-
-	for i := 0; i < 2; i++ {
-		time.Sleep(time.Second * 3)
-
-		do(udp.LapCompleted{
-			CarID:     1,
-			LapTime:   uint32(rand.Intn(10000)),
-			Cuts:      0,
-			CarsCount: 1,
-		})
-	}
-
-	do(udp.SessionCarInfo{
-		CarID:      1,
-		DriverName: "Test 1",
-		DriverGUID: "7827162738272615",
-		CarModel:   "ford_gt",
-		CarSkin:    "red_01",
-		EventType:  udp.EventConnectionClosed,
-	})
 }
