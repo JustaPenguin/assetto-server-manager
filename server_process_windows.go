@@ -7,20 +7,14 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-
-	"github.com/sirupsen/logrus"
 )
 
 const serverExecutablePath = "acServer.exe"
 
 func kill(process *os.Process) error {
-	err := process.Kill()
-
-	if err != nil {
-		logrus.WithError(err).Errorf("Initial attempt at killing windows process (process.Kill) failed")
-		return exec.Command("taskkill", "/T", "/PID", fmt.Sprintf("%d", process.Pid)).Run()
-	}
-
+	//apparently running Process.Kill() and THEN Taskill is a no-go
+	//using only taskkill /t /f works instead, so it's pointless to use Process.Kill() at all - Alberto
+	exec.Command("TASKKILL", "/T", "/F", "/PID", fmt.Sprintf("%d", process.Pid)).Run()
 	return nil
 }
 
