@@ -455,16 +455,11 @@ class LiveMap implements WebsocketHandler {
         return "/content/tracks/" + sessionInfo.Track + (!!sessionInfo.TrackConfig ? "/" + sessionInfo.TrackConfig : "") + "/map.png";
     }
 
-    private trackImageWidth: number = 0;
-    private trackImageHeight: number = 0;
-
     private loadTrackMapImage(): void {
         const trackURL = this.getTrackMapURL();
         let that = this;
 
         this.$trackMapImage.on("load", function() {
-            that.trackImageWidth = this.width;
-            that.trackImageHeight = this.height;
             that.mapImageHasLoaded = true;
             that.correctMapDimensions();
         });
@@ -488,14 +483,14 @@ class LiveMap implements WebsocketHandler {
                 'max-width': 'auto'
             });
 
-            this.mapScaleMultiplier = this.$trackMapImage.width()! / this.trackImageWidth;
+            this.mapScaleMultiplier = this.$trackMapImage.width()! / this.raceControl.status.TrackMapData.width;
 
             this.$map.closest(".map-container").css({
-                'max-height': (this.trackImageWidth * this.mapScaleMultiplier) + 20,
+                'max-height': (this.raceControl.status.TrackMapData.width * this.mapScaleMultiplier) + 20,
             });
 
             this.$map.css({
-                'max-width': (this.trackImageWidth * this.mapScaleMultiplier) + 20,
+                'max-width': (this.raceControl.status.TrackMapData.width * this.mapScaleMultiplier) + 20,
             });
         } else {
             // un-rotate the map
@@ -513,7 +508,7 @@ class LiveMap implements WebsocketHandler {
                 'max-width': '100%'
             });
 
-            this.mapScaleMultiplier = this.$trackMapImage.width()! / this.trackImageWidth;
+            this.mapScaleMultiplier = this.$trackMapImage.width()! / this.raceControl.status.TrackMapData.width;
         }
     }
 
