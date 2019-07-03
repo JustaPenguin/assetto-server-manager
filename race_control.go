@@ -28,8 +28,9 @@ type RaceControl struct {
 	sessionInfoContext context.Context
 	sessionInfoCfn     context.CancelFunc
 
-	broadcaster      Broadcaster
-	trackDataGateway TrackDataGateway
+	broadcaster             Broadcaster
+	trackDataGateway        TrackDataGateway
+	driverGUIDUpdateCounter map[udp.DriverGUID]int
 }
 
 // RaceControl piggyback's on the udp.Message interface so that the entire data can be sent to newly connected clients.
@@ -139,6 +140,28 @@ func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) (updatedRaceControl boo
 		return updatedRaceControl, err
 	}
 
+	for guid := range rc.driverGUIDUpdateCounter {
+		rc.driverGUIDUpdateCounter[guid]++
+
+		// driver has missed 5 car updates, alt+f4/game crash?
+		if rc.driverGUIDUpdateCounter[guid] > rc.ConnectedDrivers.Len()*5 {
+			disconnectedDriver, ok := rc.ConnectedDrivers.Get(guid)
+
+			if ok {
+				logrus.Debugf("Driver: %s (%s) has missed 5 car updates, disconnecting", disconnectedDriver.CarInfo.DriverName, disconnectedDriver.CarInfo.DriverGUID)
+				err := rc.disconnectDriver(disconnectedDriver)
+
+				if err != nil {
+					logrus.WithError(err).Errorf("Could not disconnect driver: %s (%s)", disconnectedDriver.CarInfo.DriverName, disconnectedDriver.CarInfo.DriverGUID)
+					continue
+				}
+			}
+		}
+	}
+
+	// reset the counter for this car
+	rc.driverGUIDUpdateCounter[driver.CarInfo.DriverGUID] = 0
+
 	speed := metersPerSecondToKilometersPerHour(
 		math.Sqrt(math.Pow(float64(update.Velocity.X), 2) + math.Pow(float64(update.Velocity.Z), 2)),
 	)
@@ -160,6 +183,7 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 	oldSessionInfo := rc.SessionInfo
 	rc.SessionInfo = sessionInfo
 	rc.SessionStartTime = time.Now()
+	rc.driverGUIDUpdateCounter = make(map[udp.DriverGUID]int)
 
 	deleteCars := true
 	emptyCarInfo := false
@@ -233,6 +257,7 @@ func (rc *RaceControl) clearAllDrivers() {
 	rc.ConnectedDrivers = NewDriverMap(ConnectedDrivers, rc.SortDrivers)
 	rc.DisconnectedDrivers = NewDriverMap(DisconnectedDrivers, rc.SortDrivers)
 	rc.CarIDToGUID = make(map[udp.CarID]udp.DriverGUID)
+	rc.driverGUIDUpdateCounter = make(map[udp.DriverGUID]int)
 }
 
 var sessionInfoRequestInterval = time.Second
@@ -294,49 +319,15 @@ func (rc *RaceControl) requestSessionInfo() {
 func (rc *RaceControl) disconnectDriver(driver *RaceControlDriver) error {
 	carInfo := driver.CarInfo
 	carInfo.EventType = udp.EventConnectionClosed
+	delete(rc.driverGUIDUpdateCounter, driver.CarInfo.DriverGUID)
+
 	return rc.OnClientDisconnect(carInfo)
 }
-
-var (
-	// driverLastSeenMaxDuration is how long to wait before considering a driver 'timed out'.
-	// A timed out driver is force-disconnected.
-	driverLastSeenMaxDuration = time.Second * 5
-	// driverConnectionTimeout is how long to wait for a connected driver to load. if they exceed this time, they are
-	// considered to be disconnected and are removed from ConnectedDrivers.
-	driverConnectionTimeout = time.Minute
-)
 
 // OnSessionUpdate is called every sessionRequestInterval.
 func (rc *RaceControl) OnSessionUpdate(sessionInfo udp.SessionInfo) (bool, error) {
 	oldSessionInfo := rc.SessionInfo
 	rc.SessionInfo = sessionInfo
-
-	if udp.RealtimePosIntervalMs > 0 {
-		var driversToDisconnect []*RaceControlDriver
-
-		_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
-			if driver.LoadedTime.IsZero() && time.Now().Sub(driver.ConnectedTime) > driverConnectionTimeout {
-				// driver connected but never loaded
-				driversToDisconnect = append(driversToDisconnect, driver)
-			} else if !driver.LoadedTime.IsZero() && time.Now().Sub(driver.LastSeen) > driverLastSeenMaxDuration {
-				// driver disconnected after loading
-				driversToDisconnect = append(driversToDisconnect, driver)
-			}
-
-			return nil
-		})
-
-		for _, driver := range driversToDisconnect {
-			logrus.Infof("Driver: %s (%s) has not been seen in %s. Forcing a disconnect message.", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID, driverLastSeenMaxDuration)
-
-			// disconnect the driver
-			err := rc.disconnectDriver(driver)
-
-			if err != nil {
-				return false, err
-			}
-		}
-	}
 
 	sessionHasChanged := oldSessionInfo.AmbientTemp != rc.SessionInfo.AmbientTemp || oldSessionInfo.RoadTemp != rc.SessionInfo.RoadTemp || oldSessionInfo.WeatherGraphics != rc.SessionInfo.WeatherGraphics
 
@@ -602,19 +593,4 @@ func lapToDuration(i int) time.Duration {
 	d, _ := time.ParseDuration(fmt.Sprintf("%dms", i))
 
 	return d
-}
-
-type TrackDataGateway interface {
-	TrackInfo(name, layout string) (*TrackInfo, error)
-	TrackMap(name, layout string) (*TrackMapData, error)
-}
-
-type filesystemTrackData struct{}
-
-func (filesystemTrackData) TrackMap(name, layout string) (*TrackMapData, error) {
-	return LoadTrackMapData(name, layout)
-}
-
-func (filesystemTrackData) TrackInfo(name, layout string) (*TrackInfo, error) {
-	return GetTrackInfo(name, layout)
 }

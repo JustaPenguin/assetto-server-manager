@@ -878,6 +878,71 @@ func TestRaceControl_OnCarUpdate(t *testing.T) {
 			return
 		}
 	})
+
+	t.Run("Driver disconnect", func(t *testing.T) {
+		for i := 0; i < 100; i++ {
+			for _, entrant := range drivers {
+				_, err := raceControl.OnCarUpdate(udp.CarUpdate{
+					CarID:               entrant.CarID,
+					Pos:                 udp.Vec{X: rand.Float32() * 100, Y: rand.Float32() * 100, Z: rand.Float32() * 100},
+					Velocity:            udp.Vec{X: rand.Float32() * 100, Y: rand.Float32() * 100, Z: rand.Float32() * 100},
+					Gear:                uint8(rand.Intn(6)),
+					EngineRPM:           uint16(rand.Intn(4000)),
+					NormalisedSplinePos: rand.Float32(),
+				})
+
+				if err != nil {
+					t.Error(err)
+					return
+				}
+
+				err = raceControl.OnLapCompleted(udp.LapCompleted{
+					CarID:   entrant.CarID,
+					LapTime: uint32(rand.Intn(50000)),
+					Cuts:    0,
+				})
+
+				if err != nil {
+					t.Error(err)
+					return
+				}
+			}
+		}
+
+		if raceControl.ConnectedDrivers.Len() != len(drivers) {
+			t.Error("Expected all drivers to be connected")
+			return
+		}
+
+		// run 6 updates but not for driver 0
+		for i := 0; i < 6; i++ {
+			for _, entrant := range drivers[1:] {
+				_, err := raceControl.OnCarUpdate(udp.CarUpdate{
+					CarID:               entrant.CarID,
+					Pos:                 udp.Vec{X: rand.Float32() * 100, Y: rand.Float32() * 100, Z: rand.Float32() * 100},
+					Velocity:            udp.Vec{X: rand.Float32() * 100, Y: rand.Float32() * 100, Z: rand.Float32() * 100},
+					Gear:                uint8(rand.Intn(6)),
+					EngineRPM:           uint16(rand.Intn(4000)),
+					NormalisedSplinePos: rand.Float32(),
+				})
+
+				if err != nil {
+					t.Error(err)
+					return
+				}
+			}
+		}
+
+		if raceControl.ConnectedDrivers.Len() != len(drivers)-1 {
+			t.Error("Expected all but one driver to be connected")
+			return
+		}
+
+		if _, ok := raceControl.DisconnectedDrivers.Get(drivers[0].DriverGUID); !ok {
+			t.Error("Expected to find driver 0 in disconnected drivers")
+			return
+		}
+	})
 }
 
 type driverLapResult struct {
@@ -1267,215 +1332,13 @@ func TestRaceControl_OnSessionUpdate(t *testing.T) {
 			return
 		}
 	})
+}
 
-	t.Run("Driver disconnect", func(t *testing.T) {
-		raceControl := NewRaceControl(NilBroadcaster{}, nilTrackData{})
+func TestRaceControl_Event(t *testing.T) {
+	rc := NewRaceControl(NilBroadcaster{}, nilTrackData{})
 
-		if err := raceControl.OnVersion(udp.Version(4)); err != nil {
-			t.Error(err)
-			return
-		}
-
-		sessionInfo := udp.SessionInfo{
-			Version:             4,
-			SessionIndex:        0,
-			CurrentSessionIndex: 0,
-			SessionCount:        1,
-			ServerName:          "Test Server",
-			Track:               "ks_laguna_seca",
-			TrackConfig:         "",
-			Name:                "Test Looped Practice Session",
-			Type:                udp.SessionTypePractice,
-			Time:                10,
-			Laps:                0,
-			WaitTime:            120,
-			AmbientTemp:         12,
-			RoadTemp:            16,
-			WeatherGraphics:     "01_clear",
-			ElapsedMilliseconds: 10,
-
-			EventType: udp.EventNewSession,
-		}
-
-		// new session
-		err := raceControl.OnNewSession(sessionInfo)
-
-		if err != nil {
-			t.Error(err)
-			return
-		}
-
-		time.Sleep(time.Millisecond * 10)
-
-		// stop the session info ticker
-		defer raceControl.sessionInfoCfn()
-
-		// join all drivers
-		for _, entrant := range drivers {
-			if err := raceControl.OnClientConnect(entrant); err != nil {
-				t.Error(err)
-				return
-			}
-		}
-
-		udp.RealtimePosIntervalMs = 1 // enable driver disconnect tracking
-
-		defer func() {
-			udp.RealtimePosIntervalMs = 0 // disable driver disconnect tracking
-		}()
-
-		t.Run("No drivers loaded", func(t *testing.T) {
-			driverLastSeenMaxDuration = time.Millisecond
-
-			sessionInfo.EventType = udp.EventSessionInfo
-			sessionInfo.AmbientTemp = 100
-
-			time.Sleep(time.Millisecond)
-
-			shouldUpdate, err := raceControl.OnSessionUpdate(sessionInfo)
-
-			if err != nil {
-				t.Error(err)
-				return
-			}
-
-			if raceControl.ConnectedDrivers.Len() != len(drivers) {
-				t.Errorf("Expected %d drivers, got %d. Drivers were wrongly disconnected", len(drivers), raceControl.ConnectedDrivers.Len())
-				return
-			}
-
-			if !shouldUpdate {
-				t.Error("Expected sessionupdate to recommend a websocket update, but it did not")
-				return
-			}
-		})
-
-		// load all drivers
-		for _, entrant := range drivers {
-			if err := raceControl.OnClientLoaded(udp.ClientLoaded(entrant.CarID)); err != nil {
-				t.Error(err)
-				return
-			}
-		}
-
-		t.Run("Driver three should be disconnected", func(t *testing.T) {
-			driverLastSeenMaxDuration = time.Minute
-
-			for index, entrant := range drivers {
-				d, _ := raceControl.ConnectedDrivers.Get(entrant.DriverGUID)
-
-				if index == 2 {
-					// give the driver a lap so we can check for their existence in the DisconnectedDrivers map
-					d.TotalNumLaps++
-
-					d.LastSeen = time.Now().Add(-time.Minute * 2)
-				} else {
-					d.LastSeen = time.Now()
-				}
-			}
-
-			_, err := raceControl.OnSessionUpdate(sessionInfo)
-
-			if err != nil {
-				t.Error(err)
-				return
-			}
-
-			_, disconnected := raceControl.DisconnectedDrivers.Get(drivers[2].DriverGUID)
-			_, connected := raceControl.ConnectedDrivers.Get(drivers[2].DriverGUID)
-
-			if !disconnected || connected {
-				t.Error("Expected driver 2 to be disconnected, but they were not", connected, disconnected)
-				return
-			}
-
-			if raceControl.DisconnectedDrivers.Len() > 1 {
-				t.Error("Only expected one driver to be disconnected")
-				return
-			}
-		})
-	})
-
-	t.Run("Driver 1 connects but doesn't load", func(t *testing.T) {
-		raceControl := NewRaceControl(NilBroadcaster{}, nilTrackData{})
-
-		if err := raceControl.OnVersion(udp.Version(4)); err != nil {
-			t.Error(err)
-			return
-		}
-
-		sessionInfo := udp.SessionInfo{
-			Version:             4,
-			SessionIndex:        0,
-			CurrentSessionIndex: 0,
-			SessionCount:        1,
-			ServerName:          "Test Server",
-			Track:               "ks_laguna_seca",
-			TrackConfig:         "",
-			Name:                "Test Looped Practice Session",
-			Type:                udp.SessionTypePractice,
-			Time:                10,
-			Laps:                0,
-			WaitTime:            120,
-			AmbientTemp:         12,
-			RoadTemp:            16,
-			WeatherGraphics:     "01_clear",
-			ElapsedMilliseconds: 10,
-
-			EventType: udp.EventNewSession,
-		}
-
-		// new session
-		err := raceControl.OnNewSession(sessionInfo)
-
-		if err != nil {
-			t.Error(err)
-			return
-		}
-
-		time.Sleep(time.Millisecond * 10)
-
-		// stop the session info ticker
-		defer raceControl.sessionInfoCfn()
-
-		// join all drivers
-		for _, entrant := range drivers {
-			if err := raceControl.OnClientConnect(entrant); err != nil {
-				t.Error(err)
-				return
-			}
-		}
-
-		udp.RealtimePosIntervalMs = 1 // enable driver disconnect tracking
-
-		defer func() {
-			udp.RealtimePosIntervalMs = 0 // disable driver disconnect tracking
-		}()
-
-		for _, entrant := range drivers[1:] {
-			if err := raceControl.OnClientLoaded(udp.ClientLoaded(entrant.CarID)); err != nil {
-				t.Error(err)
-				return
-			}
-		}
-
-		driverConnectionTimeout = time.Millisecond * 500
-
-		time.Sleep(time.Millisecond * 600)
-
-		sessionInfo.EventType = udp.EventSessionInfo
-		sessionInfo.AmbientTemp = 100
-
-		_, err = raceControl.OnSessionUpdate(sessionInfo)
-
-		if err != nil {
-			t.Error(err)
-			return
-		}
-
-		if raceControl.ConnectedDrivers.Len() != len(drivers)-1 {
-			t.Error("Expected one driver to be missing from connected drivers")
-			return
-		}
-	})
+	if rc.Event() != 200 {
+		t.Error("Expected Race Control event to be 200")
+		return
+	}
 }
