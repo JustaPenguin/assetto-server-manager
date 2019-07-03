@@ -94,7 +94,7 @@ export class RaceControl {
                     this.trackLayout = this.status.SessionInfo.TrackConfig;
                     this.liveMap.onTrackChange(this.track, this.trackLayout);
                     this.liveTimings.onTrackChange(this.track, this.trackLayout);
-                    this.onTrackChange(this.track, this.trackLayout)
+                    this.onTrackChange(this.track, this.trackLayout);
                 }
 
                 this.$eventTitle.text(RaceControl.getSessionType(this.status.SessionInfo.Type) + " at " + this.status.TrackInfo!.name);

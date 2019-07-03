@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"sync"
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
@@ -22,15 +23,17 @@ type RaceControl struct {
 	ConnectedDrivers    *DriverMap `json:"ConnectedDrivers"`
 	DisconnectedDrivers *DriverMap `json:"DisconnectedDrivers"`
 
-	CarIDToGUID map[udp.CarID]udp.DriverGUID `json:"CarIDToGUID"`
+	CarIDToGUID      map[udp.CarID]udp.DriverGUID `json:"CarIDToGUID"`
+	carIDToGUIDMutex sync.RWMutex
 
 	sessionInfoTicker  *time.Ticker
 	sessionInfoContext context.Context
 	sessionInfoCfn     context.CancelFunc
 
-	broadcaster             Broadcaster
-	trackDataGateway        TrackDataGateway
-	driverGUIDUpdateCounter map[udp.DriverGUID]int
+	broadcaster                  Broadcaster
+	trackDataGateway             TrackDataGateway
+	driverGUIDUpdateCounter      map[udp.DriverGUID]int
+	driverGUIDUpdateCounterMutex sync.RWMutex
 }
 
 // RaceControl piggyback's on the udp.Message interface so that the entire data can be sent to newly connected clients.
@@ -140,6 +143,10 @@ func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) (updatedRaceControl boo
 		return updatedRaceControl, err
 	}
 
+	var driversToDisconnect []*RaceControlDriver
+
+	rc.driverGUIDUpdateCounterMutex.Lock()
+
 	for guid := range rc.driverGUIDUpdateCounter {
 		rc.driverGUIDUpdateCounter[guid]++
 
@@ -148,19 +155,27 @@ func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) (updatedRaceControl boo
 			disconnectedDriver, ok := rc.ConnectedDrivers.Get(guid)
 
 			if ok {
-				logrus.Debugf("Driver: %s (%s) has missed 5 car updates, disconnecting", disconnectedDriver.CarInfo.DriverName, disconnectedDriver.CarInfo.DriverGUID)
-				err := rc.disconnectDriver(disconnectedDriver)
-
-				if err != nil {
-					logrus.WithError(err).Errorf("Could not disconnect driver: %s (%s)", disconnectedDriver.CarInfo.DriverName, disconnectedDriver.CarInfo.DriverGUID)
-					continue
-				}
+				driversToDisconnect = append(driversToDisconnect, disconnectedDriver)
 			}
 		}
 	}
 
+	rc.driverGUIDUpdateCounterMutex.Unlock()
+
+	for _, driver := range driversToDisconnect {
+		logrus.Debugf("Driver: %s (%s) has missed 5 car updates, disconnecting", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
+		err := rc.disconnectDriver(driver)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("Could not disconnect driver: %s (%s)", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
+			continue
+		}
+	}
+
 	// reset the counter for this car
+	rc.driverGUIDUpdateCounterMutex.Lock()
 	rc.driverGUIDUpdateCounter[driver.CarInfo.DriverGUID] = 0
+	rc.driverGUIDUpdateCounterMutex.Unlock()
 
 	speed := metersPerSecondToKilometersPerHour(
 		math.Sqrt(math.Pow(float64(update.Velocity.X), 2) + math.Pow(float64(update.Velocity.Z), 2)),
@@ -194,7 +209,7 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 		emptyCarInfo = true
 	}
 
-	if rc.ConnectedDrivers.Len() > 0 || rc.DisconnectedDrivers.Len() > 0 && sessionInfo.Type == udp.SessionTypePractice {
+	if (rc.ConnectedDrivers.Len() > 0 || rc.DisconnectedDrivers.Len() > 0) && sessionInfo.Type == udp.SessionTypePractice {
 		if oldSessionInfo.Type == sessionInfo.Type && oldSessionInfo.Track == sessionInfo.Track && oldSessionInfo.TrackConfig == sessionInfo.TrackConfig && oldSessionInfo.Name == sessionInfo.Name {
 			// this is a looped practice event, keep the cars
 			deleteCars = false
@@ -256,8 +271,12 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 func (rc *RaceControl) clearAllDrivers() {
 	rc.ConnectedDrivers = NewDriverMap(ConnectedDrivers, rc.SortDrivers)
 	rc.DisconnectedDrivers = NewDriverMap(DisconnectedDrivers, rc.SortDrivers)
+	rc.carIDToGUIDMutex.Lock()
 	rc.CarIDToGUID = make(map[udp.CarID]udp.DriverGUID)
+	rc.carIDToGUIDMutex.Unlock()
+	rc.driverGUIDUpdateCounterMutex.Lock()
 	rc.driverGUIDUpdateCounter = make(map[udp.DriverGUID]int)
+	rc.driverGUIDUpdateCounterMutex.Unlock()
 }
 
 var sessionInfoRequestInterval = time.Second
@@ -319,7 +338,9 @@ func (rc *RaceControl) requestSessionInfo() {
 func (rc *RaceControl) disconnectDriver(driver *RaceControlDriver) error {
 	carInfo := driver.CarInfo
 	carInfo.EventType = udp.EventConnectionClosed
+	rc.driverGUIDUpdateCounterMutex.Lock()
 	delete(rc.driverGUIDUpdateCounter, driver.CarInfo.DriverGUID)
+	rc.driverGUIDUpdateCounterMutex.Unlock()
 
 	return rc.OnClientDisconnect(carInfo)
 }
@@ -346,7 +367,9 @@ func (rc *RaceControl) OnEndSession(sessionFile udp.EndSession) error {
 // OnClientConnect stores CarID -> DriverGUID mappings. if a driver is known to have previously been in this event,
 // they will be moved from DisconnectedDrivers to ConnectedDrivers.
 func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
+	rc.carIDToGUIDMutex.Lock()
 	rc.CarIDToGUID[client.CarID] = client.DriverGUID
+	rc.carIDToGUIDMutex.Unlock()
 
 	var driver *RaceControlDriver
 
@@ -396,7 +419,9 @@ func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
 // findConnectedDriverByCarID looks for a driver in ConnectedDrivers by their CarID. This is the only place CarID
 // is used for a look-up, and it uses the CarIDToGUID map to perform the lookup.
 func (rc *RaceControl) findConnectedDriverByCarID(carID udp.CarID) (*RaceControlDriver, error) {
+	rc.carIDToGUIDMutex.RLock()
 	driverGUID, ok := rc.CarIDToGUID[carID]
+	rc.carIDToGUIDMutex.RUnlock()
 
 	if !ok {
 		return nil, fmt.Errorf("racecontrol: could not find DriverGUID for CarID: %d", carID)
