@@ -11,7 +11,7 @@ import (
 
 const serverExecutablePath = "acServer.exe"
 
-func kill(process *os.Process) error {	
+func kill(process *os.Process) error {
 	return exec.Command("TASKKILL", "/T", "/F", "/PID", fmt.Sprintf("%d", process.Pid)).Run()
 }
 
