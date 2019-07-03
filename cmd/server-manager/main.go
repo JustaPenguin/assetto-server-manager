@@ -134,7 +134,7 @@ func startUDPReplay(file string) {
 
 	err = replay.ReplayUDPMessages(db, 1, func(response udp.Message) {
 		servermanager.ServerRaceControl.UDPCallback(response)
-	}, time.Minute*100)
+	}, time.Second)
 
 	if err != nil {
 		logrus.WithError(err).Error("UDP Replay failed")

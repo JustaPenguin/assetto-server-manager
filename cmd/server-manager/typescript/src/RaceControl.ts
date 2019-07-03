@@ -431,7 +431,7 @@ class LiveMap implements WebsocketHandler {
 
         const $dot = $("<div class='dot' style='background: " + randomColorForDriver(driverData.DriverGUID) + "'/>").append($driverName, $info).hide().appendTo(this.$map);
 
-        if (lastPos) {
+        if (lastPos !== undefined) {
             let dotPos = this.translateToTrackCoordinate(lastPos);
 
             $dot.css({
@@ -605,6 +605,8 @@ class LiveTimings implements WebsocketHandler {
             return;
         }
 
+        this.clearTable(this.$disconnectedDriversTable);
+
         for (const driverGUID of this.raceControl.status.DisconnectedDrivers.GUIDsInPositionalOrder) {
             const driver = this.raceControl.status.DisconnectedDrivers.Drivers[driverGUID];
 
@@ -623,16 +625,22 @@ class LiveTimings implements WebsocketHandler {
         }
     }
 
+    private clearTable($table: JQuery<HTMLTableElement>): void {
+        $table.find(".driver-row").remove();
+    }
+
     private addDriverToTable(driver: Driver, $table: JQuery<HTMLTableElement>): void {
         const addingDriverToDisconnectedTable = ($table === this.$disconnectedDriversTable);
-        const driverID = driver.CarInfo.DriverGUID + "_" + driver.CarInfo.CarModel;
         const carInfo = driver.Cars[driver.CarInfo.CarModel];
 
         if (!carInfo) {
             return;
         }
 
-        const $tr = $("<tr class='driver-row'/>").attr({"id": driverID});
+        const $tr = $("<tr class='driver-row'/>").attr({
+            "data-guid": driver.CarInfo.DriverGUID,
+            "data-car-model": driver.CarInfo.CarModel,
+        });
 
         // car position
         if (!addingDriverToDisconnectedTable) {
@@ -743,7 +751,16 @@ class LiveTimings implements WebsocketHandler {
         }
 
         // remove any previous rows
-        $("#" + driverID).remove();
+        if (!addingDriverToDisconnectedTable) {
+            // on the connected drivers table, we don't want to see any previous drivers that have our current guid, so remove them.
+            this.$connectedDriversTable.find("[data-guid='" + driver.CarInfo.DriverGUID + "']").remove();
+            this.$disconnectedDriversTable.find("[data-guid='" + driver.CarInfo.DriverGUID + "'][data-car-model='" + driver.CarInfo.CarModel + "']").remove();
+        } else {
+            // @TODO this is wrong
+            this.$connectedDriversTable.find("[data-guid='" + driver.CarInfo.DriverGUID + "']").remove();
+            // on the disconnected drivers table we want to remove the specific driver/car combo we're adding.
+            this.$disconnectedDriversTable.find("[data-guid='" + driver.CarInfo.DriverGUID + "'][data-car-model='" + driver.CarInfo.CarModel + "']").remove();
+        }
 
         $table.append($tr);
 

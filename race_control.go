@@ -203,7 +203,7 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 	deleteCars := true
 	emptyCarInfo := false
 
-	if sessionInfo.CurrentSessionIndex != 0 || oldSessionInfo.Track == sessionInfo.Track && oldSessionInfo.TrackConfig == sessionInfo.TrackConfig {
+	if sessionInfo.CurrentSessionIndex != 0 && oldSessionInfo.Track == sessionInfo.Track && oldSessionInfo.TrackConfig == sessionInfo.TrackConfig {
 		// only remove cars on the first session (avoid deleting between practice/qualify/race)
 		deleteCars = false
 		emptyCarInfo = true
@@ -228,11 +228,9 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 			return nil
 		})
 
-		_ = rc.DisconnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
-			*driver = *NewRaceControlDriver(driver.CarInfo)
-
-			return nil
-		})
+		// all disconnected drivers are removed when car info is emptied, otherwise we are just showing empty entries in
+		// the disconnected drivers table, which is pointless.
+		rc.DisconnectedDrivers = NewDriverMap(DisconnectedDrivers, rc.SortDrivers)
 	}
 
 	// clear out last lap completed time each new session
@@ -260,7 +258,7 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 
 	rc.TrackMapData = *trackMapData
 
-	logrus.Infof("New session detected: %s at %s (%s)", sessionInfo.Type.String(), sessionInfo.Track, sessionInfo.TrackConfig)
+	logrus.Debugf("New session detected: %s at %s (%s) [deleteCars: %t, emptyCarInfo: %t]", sessionInfo.Type.String(), sessionInfo.Track, sessionInfo.TrackConfig, deleteCars, emptyCarInfo)
 
 	go rc.requestSessionInfo()
 
