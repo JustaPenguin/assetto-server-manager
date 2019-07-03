@@ -100,7 +100,7 @@ func main() {
 		logrus.Errorf("couldn't initialise scheduled championship events, err: %s", err)
 	}
 
-	go startUDPReplay("./assetto/session-logs/Tue Feb 19 19:36:35 2019.db")
+	//go startUDPReplay("./assetto/session-logs/Tue Feb 19 19:36:35 2019.db")
 	//go MiniRace()
 
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
