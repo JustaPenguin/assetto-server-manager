@@ -492,8 +492,8 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 			return
 		}
 
-		if raceControl.ConnectedDrivers.Len() != len(drivers)-1 || raceControl.DisconnectedDrivers.Len() != 1 {
-			t.Error("Invalid driver list lengths. Expected all drivers to still be in driver lists.")
+		if raceControl.ConnectedDrivers.Len() != len(drivers)-1 || raceControl.DisconnectedDrivers.Len() != 0 {
+			t.Error("Invalid driver list lengths. Expected all connected drivers to still be in driver lists, disconnected list to be empty.")
 			return
 		}
 
