@@ -193,6 +193,21 @@ func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+type TrackDataGateway interface {
+	TrackInfo(name, layout string) (*TrackInfo, error)
+	TrackMap(name, layout string) (*TrackMapData, error)
+}
+
+type filesystemTrackData struct{}
+
+func (filesystemTrackData) TrackMap(name, layout string) (*TrackMapData, error) {
+	return LoadTrackMapData(name, layout)
+}
+
+func (filesystemTrackData) TrackInfo(name, layout string) (*TrackInfo, error) {
+	return GetTrackInfo(name, layout)
+}
+
 type TrackMapData struct {
 	Width       float64 `ini:"WIDTH" json:"width"`
 	Height      float64 `ini:"HEIGHT" json:"height"`
