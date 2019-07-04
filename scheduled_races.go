@@ -119,7 +119,7 @@ type ScheduledEvent interface {
 	GetScheduledTime() time.Time
 	GetSummary() string
 	GetURL() string
-	GetEntryList() EntryList
+	ReadOnlyEntryList() EntryList
 }
 
 func BuildICalEvent(event ScheduledEvent) *components.Event {
@@ -165,7 +165,7 @@ func BuildICalEvent(event ScheduledEvent) *components.Event {
 		}
 	}
 
-	entryList := event.GetEntryList()
+	entryList := event.ReadOnlyEntryList()
 
 	description += fmt.Sprintf("\n%d entrants in: %s", len(entryList), carList(entryList))
 
