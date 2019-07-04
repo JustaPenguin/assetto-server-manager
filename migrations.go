@@ -265,7 +265,7 @@ func addPitBoxDefinitionToEntrants(rs Store) error {
 	})
 
 	for _, customRace := range customRaces {
-		for i, entrant := range customRace.GetEntryList().AsSlice() {
+		for i, entrant := range customRace.EntryList.AsSlice() {
 			entrant.PitBox = i
 		}
 
