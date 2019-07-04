@@ -342,6 +342,12 @@ footer a {
     right: 20px;
 }
 
+.race-control-event-info {
+    position: absolute;
+    top: 90px;
+    left: 20px;
+}
+
 #road-temp {
     width: 100%;
     height: 100%;
