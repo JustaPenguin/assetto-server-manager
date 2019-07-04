@@ -353,6 +353,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		}
 
 		e := NewEntrant()
+		e.PitBox = i
 		e.Model = model
 		e.Skin = skin
 

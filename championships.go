@@ -852,7 +852,7 @@ func (cr *ChampionshipEvent) GetURL() string {
 	return "/championship/" + cr.championship.ID.String()
 }
 
-func (cr *ChampionshipEvent) GetEntryList() EntryList {
+func (cr *ChampionshipEvent) ReadOnlyEntryList() EntryList {
 	return cr.CombineEntryLists(cr.championship)
 }
 

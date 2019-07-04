@@ -66,7 +66,7 @@ func (cr *CustomRace) GetURL() string {
 	return ""
 }
 
-func (cr *CustomRace) GetEntryList() EntryList {
+func (cr *CustomRace) ReadOnlyEntryList() EntryList {
 	return cr.EntryList
 }
 
