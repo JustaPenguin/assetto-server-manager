@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	CurrentMigrationVersion = 8
+	CurrentMigrationVersion = 9
 	versionMetaKey          = "version"
 )
 
@@ -43,6 +43,9 @@ var migrations = []migrationFunc{
 	addIDToChampionshipClasses,
 	enhanceOldChampionshipResultFiles,
 	addResultScreenTimeDefault,
+	// migration 8 (below) has been left intentionally blank, as it is now migration 9
+	// due to it needing re-running in some environments.
+	func(Store) error { return nil },
 	addPitBoxDefinitionToEntrants,
 }
 
@@ -262,7 +265,7 @@ func addPitBoxDefinitionToEntrants(rs Store) error {
 	})
 
 	for _, customRace := range customRaces {
-		for i, entrant := range customRace.GetEntryList().AsSlice() {
+		for i, entrant := range customRace.EntryList.AsSlice() {
 			entrant.PitBox = i
 		}
 
@@ -287,7 +290,7 @@ func addPitBoxDefinitionToEntrants(rs Store) error {
 		for _, event := range championship.Events {
 			event.championship = championship
 
-			for i, entrant := range event.GetEntryList().AsSlice() {
+			for i, entrant := range event.EntryList.AsSlice() {
 				entrant.PitBox = i
 			}
 		}
