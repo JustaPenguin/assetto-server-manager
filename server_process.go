@@ -286,7 +286,7 @@ func (as *AssettoServerProcess) startUDPListener() error {
 func (as *AssettoServerProcess) UDPCallback(message udp.Message) {
 	panicCapture(func() {
 		if config != nil && config.LiveMap.IsEnabled() {
-			ServerRaceControl.UDPCallback(message)
+// @TODO			ServerRaceControl.UDPCallback(message)
 		}
 
 		championshipManager.ChampionshipEventCallback(message)

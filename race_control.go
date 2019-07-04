@@ -88,7 +88,7 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 
 		sendUpdatedRaceControlStatus = true
 	case udp.CarUpdate:
-		sendUpdatedRaceControlStatus, err = rc.OnCarUpdate(m)
+		err = rc.OnCarUpdate(m)
 	case udp.SessionCarInfo:
 		if m.Event() == udp.EventNewConnection {
 			err = rc.OnClientConnect(m)
@@ -103,8 +103,10 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 		sendUpdatedRaceControlStatus = true
 	case udp.CollisionWithCar:
 		err = rc.OnCollisionWithCar(m)
+		sendUpdatedRaceControlStatus = true
 	case udp.CollisionWithEnvironment:
 		err = rc.OnCollisionWithEnvironment(m)
+		sendUpdatedRaceControlStatus = true
 	case udp.LapCompleted:
 		err = rc.OnLapCompleted(m)
 
@@ -136,11 +138,11 @@ func (rc *RaceControl) OnVersion(version udp.Version) error {
 
 // OnCarUpdate occurs every udp.RealTimePosInterval and returns car position, speed, etc.
 // drivers top speeds are recorded per lap, as well as their last seen updated.
-func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) (updatedRaceControl bool, err error) {
+func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) error  {
 	driver, err := rc.findConnectedDriverByCarID(update.CarID)
 
 	if err != nil {
-		return updatedRaceControl, err
+		return err
 	}
 
 	var driversToDisconnect []*RaceControlDriver
@@ -183,13 +185,12 @@ func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) (updatedRaceControl boo
 
 	if speed > driver.CurrentCar().TopSpeedThisLap {
 		driver.CurrentCar().TopSpeedThisLap = speed
-		updatedRaceControl = true
 	}
 
 	driver.LastSeen = time.Now()
 	driver.LastPos = update.Pos
 
-	return updatedRaceControl, rc.broadcaster.Send(update)
+	return rc.broadcaster.Send(update)
 }
 
 // OnNewSession occurs every new session. If the session is the first in an event and it is not a looped practice,
@@ -370,8 +371,6 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 	rc.carIDToGUIDMutex.Unlock()
 
 	var driver *RaceControlDriver
-
-	client.DriverName = driverName(client.DriverName)
 
 	if disconnectedDriver, ok := rc.DisconnectedDrivers.Get(client.DriverGUID); ok {
 		driver = disconnectedDriver

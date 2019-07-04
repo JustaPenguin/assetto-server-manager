@@ -33,6 +33,15 @@
 
 {{ define "content" }}
     {{ with .RaceDetails }}
+        <div class="race-control-event-info">
+            {{ range $sessionName, $session := .RaceConfig.Sessions }}
+                <span data-toggle="tooltip" title="{{ $sessionName.String }}" class="badge badge-primary">{{ trunc 1 $sessionName.String }}</span>
+            {{ end }}
+
+            <br>
+
+            <small class="mr-1" data-toggle="tooltip" title="{{ .EntryList.Entrants }}" >{{ len .EntryList }} <i class="fa fa-user"></i></small>
+        </div>
 
         <div class="race-control-weather-info">
             <img class="img img-fluid mt-1 d-lg-inline-block d-none" id="weatherImage" src="/static/img/no-preview-general.png" alt="Current Weather">
@@ -49,7 +58,7 @@
             </div>
         </div>
 
-        <div class="text-center pl-5 pr-5">
+        <div class="text-center pl-5 pr-5" style="margin-top: -15px">
             <a href="#" id="event-title" data-toggle="popover" data-placement="bottom"></a>
             <div class="text-black-50" id="track-location"></div>
 
@@ -73,8 +82,8 @@
 
         <div class="clearfix"></div>
 
-        <div class="row mt-5">
-            <div class="col-lg-7 col-md-12">
+        <div class="row">
+            <div class="col-lg-7 col-md-12 mt-5">
                 <div class="table-responsive table-sm">
                     <table id="live-table" class="table table-bordered table-striped">
                         <tr>
@@ -112,7 +121,7 @@
                 </div>
             </div>
 
-            <div class="col-lg-5 col-md-12">
+            <div class="col-lg-5 col-md-12 mt-5">
                 {{ if Config.LiveMap.IsEnabled }}
                     <div class="map-container">
                         <div id="map">
