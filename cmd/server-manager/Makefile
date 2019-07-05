@@ -21,8 +21,8 @@ assets:
 	node_modules/.bin/babel javascript/manager.js -o static/manager.js
 
 asset-embed:
-    go get -u github.com/mjibson/esc
-    go generate ./...
+	go get -u github.com/mjibson/esc
+	go generate ./...
 
 deploy: clean assets asset-embed
 	# directory structure
