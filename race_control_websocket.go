@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
@@ -110,7 +111,7 @@ func (c *raceControlClient) writePump() {
 
 			err := c.conn.WriteJSON(message)
 
-			if err != nil {
+			if err != nil && !strings.HasSuffix(err.Error(), "write: broken pipe") {
 				logrus.WithError(err).Errorf("Could not send websocket message")
 				return
 			}

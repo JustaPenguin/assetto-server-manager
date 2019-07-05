@@ -588,7 +588,7 @@ class LiveTimings implements WebsocketHandler {
             // create a fake new driver from the old driver. override details with their previous car
             // and add them to the disconnected drivers table. if the user rejoins in this car it will
             // be removed from the disconnected drivers table and placed into the connected drivers table.
-            const dummyDriver = new Driver(driver);
+            const dummyDriver = JSON.parse(JSON.stringify(driver));
             dummyDriver.CarInfo.CarModel = carName;
 
             this.addDriverToTable(dummyDriver, this.$disconnectedDriversTable);
@@ -750,7 +750,7 @@ class LiveTimings implements WebsocketHandler {
             this.$disconnectedDriversTable.find("[data-guid='" + driver.CarInfo.DriverGUID + "'][data-car-model='" + driver.CarInfo.CarModel + "']").remove();
         }
 
-        if (addingDriverToDisconnectedTable && carInfo.NumLaps === 0) {
+        if (addingDriverToDisconnectedTable && (!carInfo.NumLaps || carInfo.NumLaps === 0)) {
             return;
         }
 
