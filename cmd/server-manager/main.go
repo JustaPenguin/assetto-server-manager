@@ -1,7 +1,6 @@
 package main
 
 import (
-	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -101,9 +100,6 @@ func main() {
 		logrus.Errorf("couldn't initialise scheduled championship events, err: %s", err)
 	}
 
-	go startUDPReplay("./assetto/session-logs/2019-04-05_13.27.db")
-	//go TestRace()
-
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 
 	if err != nil {
@@ -139,70 +135,5 @@ func startUDPReplay(file string) {
 
 	if err != nil {
 		logrus.WithError(err).Error("UDP Replay failed")
-	}
-}
-
-func TestRace() {
-	time.Sleep(time.Second * 10)
-
-	do := servermanager.ServerRaceControl.UDPCallback
-
-	rand.Seed(time.Now().Unix())
-
-	do(udp.Version(4))
-	do(udp.SessionInfo{
-		Version:             4,
-		SessionIndex:        0,
-		CurrentSessionIndex: 0,
-		SessionCount:        3,
-		ServerName:          "Test Server",
-		Track:               "ks_laguna_seca",
-		TrackConfig:         "",
-		Name:                "Test Practice Session",
-		Type:                udp.SessionTypePractice,
-		Time:                10,
-		Laps:                0,
-		WaitTime:            120,
-		AmbientTemp:         12,
-		RoadTemp:            16,
-		WeatherGraphics:     "01_clear",
-		ElapsedMilliseconds: 10,
-
-		EventType: udp.EventNewSession,
-	})
-
-	for _, car := range []string{"ks_lamborghini_huracan", "bmw_m3", "ferrari_fxx_k", "ks_lamborghini_huracan"} {
-		id := udp.CarID(rand.Intn(30))
-
-		do(udp.SessionCarInfo{
-			CarID:      id,
-			DriverName: "Callum",
-			DriverGUID: "78273827382738273",
-			CarModel:   car,
-			CarSkin:    "purple",
-			EventType:  udp.EventNewConnection,
-		})
-
-		do(udp.ClientLoaded(id))
-
-		for i := 0; i < rand.Intn(140)+10; i++ {
-			do(udp.LapCompleted{
-				CarID:   id,
-				LapTime: 1000000+uint32(rand.Intn(300000)),
-				Cuts:    0,
-			})
-			time.Sleep(time.Second)
-		}
-
-		do(udp.SessionCarInfo{
-			CarID:      id,
-			DriverName: "Callum",
-			DriverGUID: "78273827382738273",
-			CarModel:   car,
-			CarSkin:    "purple",
-			EventType:  udp.EventConnectionClosed,
-		})
-
-		time.Sleep(time.Second * 5)
 	}
 }

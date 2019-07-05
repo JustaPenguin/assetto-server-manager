@@ -138,7 +138,7 @@ func (rc *RaceControl) OnVersion(version udp.Version) error {
 
 // OnCarUpdate occurs every udp.RealTimePosInterval and returns car position, speed, etc.
 // drivers top speeds are recorded per lap, as well as their last seen updated.
-func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) error  {
+func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) error {
 	driver, err := rc.findConnectedDriverByCarID(update.CarID)
 
 	if err != nil {
@@ -165,7 +165,7 @@ func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) error  {
 	rc.driverGUIDUpdateCounterMutex.Unlock()
 
 	for _, driver := range driversToDisconnect {
-		logrus.Debugf("Driver: %s (%s) has missed 5 car updates, disconnecting", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
+		logrus.Debugf("Driver: %s (%s) has missed 10 car updates, disconnecting", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
 		err := rc.disconnectDriver(driver)
 
 		if err != nil {
@@ -189,6 +189,14 @@ func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) error  {
 
 	driver.LastSeen = time.Now()
 	driver.LastPos = update.Pos
+
+	if len(driversToDisconnect) > 0 {
+		err := rc.broadcaster.Send(rc)
+
+		if err != nil {
+			return err
+		}
+	}
 
 	return rc.broadcaster.Send(update)
 }
@@ -327,6 +335,11 @@ func (rc *RaceControl) requestSessionInfo() {
 					continue
 				}
 			}
+
+			if err := rc.broadcaster.Send(rc); err != nil {
+				logrus.WithError(err).Errorf("Couldn't broadcast race control")
+			}
+
 		case <-rc.sessionInfoContext.Done():
 			rc.sessionInfoTicker.Stop()
 			return
