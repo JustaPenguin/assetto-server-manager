@@ -20,11 +20,11 @@ assets:
 	npm install
 	node_modules/.bin/babel javascript/manager.js -o static/manager.js
 
-deploy: clean assets
-	# asset embed
-	go get -u github.com/mjibson/esc
-	go generate ./...
+asset-embed:
+    go get -u github.com/mjibson/esc
+    go generate ./...
 
+deploy: clean assets asset-embed
 	# directory structure
 	mkdir -p build/linux build/windows
 	cp config.example.yml build/linux/config.yml
