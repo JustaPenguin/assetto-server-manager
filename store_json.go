@@ -38,6 +38,16 @@ type JSONStore struct {
 	mutex sync.RWMutex
 }
 
+func (rs *JSONStore) DoPreMigration() error {
+	if rs.base != rs.shared{
+		tryMoveFile(filepath.Join(rs.base, accountsDir), filepath.Join(rs.shared, accountsDir))
+		tryMoveFile(filepath.Join(rs.base, championshipsDir), filepath.Join(rs.shared, championshipsDir))
+		tryMoveFile(filepath.Join(rs.base, customRacesDir), filepath.Join(rs.shared, customRacesDir))
+		tryMoveFile(filepath.Join(rs.base, entrantsFile), filepath.Join(rs.shared, entrantsFile))
+	}
+	return nil
+}
+
 func (rs *JSONStore) listFiles(dir string) ([]string, error) {
 	files, err := ioutil.ReadDir(dir)
 
