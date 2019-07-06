@@ -2,6 +2,9 @@ language: go
 go:
   - 1.12
 
+services:
+  - docker
+
 addons:
   apt:
     packages:
@@ -20,10 +23,14 @@ script:
   - VERSION=${TRAVIS_TAG} make deploy
 
 deploy:
-  provider: releases
-  api_key: $OAUTH_TOKEN
-  file:
-    - cmd/server-manager/server-manager_$TRAVIS_TAG.zip
-  skip_cleanup: true
-  on:
-    tags: true
+  - provider: releases
+    api_key: $OAUTH_TOKEN
+    file:
+      - cmd/server-manager/server-manager_$TRAVIS_TAG.zip
+    skip_cleanup: true
+    on:
+      tags: true
+
+  - provider: script
+    script: VERSION=${TRAVIS_TAG} docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD && make docker
+    skip_cleanup: true
