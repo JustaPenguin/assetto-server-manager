@@ -16,7 +16,7 @@ const (
 	serverOptionsFile = "server_options.json"
 	frameLinksFile    = "frame_links.json"
 	serverMetaDir     = "meta"
-	auditDir          = "audit"
+	auditFile         = "audit.json"
 	//shared data
 	accountsDir       = "accounts"
 	championshipsDir  = "championships"
@@ -371,7 +371,7 @@ func (rs *JSONStore) GetMeta(key string, out interface{}) error {
 func (rs *JSONStore) GetAuditEntries() ([]*AuditEntry, error) {
 	var entries []*AuditEntry
 
-	err := rs.decodeFile(rs.base, auditDir+".json", &entries)
+	err := rs.decodeFile(rs.base, auditFile, &entries)
 
 	if err != nil {
 		return nil, err
@@ -393,5 +393,5 @@ func (rs *JSONStore) AddAuditEntry(entry *AuditEntry) error {
 		entries = entries[20:]
 	}
 
-	return rs.encodeFile(rs.base, auditDir+".json", entries)
+	return rs.encodeFile(rs.base, auditFile, entries)
 }
