@@ -18,11 +18,11 @@ run:
 assets:
 	$(MAKE) -C typescript build
 
-deploy: clean assets
-	# asset embed
+asset-embed:
 	go get -u github.com/mjibson/esc
 	go generate ./...
 
+deploy: clean assets asset-embed
 	# directory structure
 	mkdir -p build/linux build/windows
 	cp config.example.yml build/linux/config.yml

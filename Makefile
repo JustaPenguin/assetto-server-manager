@@ -16,6 +16,9 @@ test:
 assets:
 	$(MAKE) -C cmd/server-manager assets
 
+asset-embed:
+	$(MAKE) -C cmd/server-manager asset-embed
+
 build:
 	$(MAKE) -C cmd/server-manager build
 
