@@ -36,8 +36,8 @@ deploy: clean assets asset-embed
 	rsrc -ico ../../misc/windows/icon.ico -arch amd64 -o rsrc.syso
 
 	# build
-	GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${VERSION}" -o build/linux/server-manager
-	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${VERSION}" -o build/windows/server-manager.exe
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${VERSION}" -o build/linux/server-manager
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${VERSION}" -o build/windows/server-manager.exe
 
 	cp ../../README.md build/README.txt
 	cp ../../INSTALL.txt build/INSTALL.txt

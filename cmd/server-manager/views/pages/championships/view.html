@@ -467,11 +467,13 @@
                     <div class="row">
                         <div class="col-md-8 mb-3">
                             <div class="row">
-                                {{ if lt (int $trackInfo.Pitboxes.Int64) (int $championship.NumEntrants) }}
-                                    <div class="col-sm-12 text-warning">
-                                        This track has fewer pit boxes than the configured number of entrants in the
-                                        current championship, and therefore is not eligible for this championship.
-                                    </div>
+                                {{ with $trackInfo }}
+                                    {{ if lt (int $trackInfo.Pitboxes.Int64) (int $championship.NumEntrants) }}
+                                        <div class="col-sm-12 text-warning">
+                                            This track has fewer pit boxes than the configured number of entrants in the
+                                            current championship, and therefore is not eligible for this championship.
+                                        </div>
+                                    {{ end }}
                                 {{ end }}
                             </div>
 
