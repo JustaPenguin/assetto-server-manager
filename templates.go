@@ -215,7 +215,6 @@ func formatDuration(d time.Duration, trimLeadingZeroes bool) string {
 	return duration
 }
 
-
 func templateDict(values ...interface{}) (map[string]interface{}, error) {
 	if len(values)%2 != 0 {
 		return nil, errors.New("invalid dict call")
