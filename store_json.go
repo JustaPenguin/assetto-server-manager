@@ -13,6 +13,7 @@ import (
 const (
 	customRacesDir    = "custom_races"
 	championshipsDir  = "championships"
+	raceWeekendsDir   = "race_weekends"
 	accountsDir       = "accounts"
 	entrantsFile      = "entrants.json"
 	serverOptionsFile = "server_options.json"
@@ -392,4 +393,54 @@ func (rs *JSONStore) AddAuditEntry(entry *AuditEntry) error {
 	}
 
 	return rs.encodeFile(auditDir+".json", entries)
+}
+
+func (rs *JSONStore) ListRaceWeekends() ([]*RaceWeekend, error) {
+	files, err := rs.listFiles(raceWeekendsDir)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var raceWeekends []*RaceWeekend
+
+	for _, file := range files {
+		rw, err := rs.LoadRaceWeekend(file)
+
+		if err != nil || !rw.Deleted.IsZero() {
+			continue
+		}
+
+		raceWeekends = append(raceWeekends, rw)
+	}
+
+	return raceWeekends, nil
+}
+
+func (rs *JSONStore) UpsertRaceWeekend(rw *RaceWeekend) error {
+	return rs.encodeFile(filepath.Join(raceWeekendsDir, rw.ID.String()+".json"), rw)
+}
+
+func (rs *JSONStore) LoadRaceWeekend(id string) (*RaceWeekend, error) {
+	var raceWeekend *RaceWeekend
+
+	err := rs.decodeFile(filepath.Join(raceWeekendsDir, id+".json"), &raceWeekend)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return raceWeekend, nil
+}
+
+func (rs *JSONStore) DeleteRaceWeekend(id string) error {
+	rw, err := rs.LoadRaceWeekend(id)
+
+	if err != nil {
+		return err
+	}
+
+	rw.Deleted = time.Now()
+
+	return rs.UpsertRaceWeekend(rw)
 }

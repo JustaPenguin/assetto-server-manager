@@ -23,6 +23,7 @@ var (
 	championshipsBucketName = []byte("championships")
 	accountsBucketName      = []byte("accounts")
 	frameLinksBucketName    = []byte("frameLinks")
+	raceWeekendsBucketName  = []byte("raceWeekends")
 
 	serverOptionsKey = []byte("serverOptions")
 )
@@ -693,4 +694,111 @@ func (rs *BoltStore) AddAuditEntry(entry *AuditEntry) error {
 
 		return bkt.Put([]byte("audit"), enc)
 	})
+}
+
+func (rs *BoltStore) raceWeekendsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+	if !tx.Writable() {
+		bkt := tx.Bucket(raceWeekendsBucketName)
+
+		if bkt == nil {
+			return nil, bbolt.ErrBucketNotFound
+		}
+
+		return bkt, nil
+	}
+
+	return tx.CreateBucketIfNotExists(raceWeekendsBucketName)
+}
+
+func (rs *BoltStore) UpsertRaceWeekend(rw *RaceWeekend) error {
+	rw.Updated = time.Now()
+
+	return rs.db.Update(func(tx *bbolt.Tx) error {
+		b, err := rs.raceWeekendsBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		data, err := rs.encode(rw)
+
+		if err != nil {
+			return err
+		}
+
+		return b.Put([]byte(rw.ID.String()), data)
+	})
+}
+
+func (rs *BoltStore) ListRaceWeekends() ([]*RaceWeekend, error) {
+	var raceWeekends []*RaceWeekend
+
+	err := rs.db.View(func(tx *bbolt.Tx) error {
+		b, err := rs.raceWeekendsBucket(tx)
+
+		if err == bbolt.ErrBucketNotFound {
+			return nil
+		} else if err != nil {
+			return err
+		}
+
+		return b.ForEach(func(k, v []byte) error {
+			var raceWeekend *RaceWeekend
+
+			err := rs.decode(v, &raceWeekend)
+
+			if err != nil {
+				return err
+			}
+
+			if !raceWeekend.Deleted.IsZero() {
+				// race weekend deleted
+				return nil // continue
+			}
+
+			raceWeekends = append(raceWeekends, raceWeekend)
+
+			return nil
+		})
+	})
+
+	return raceWeekends, err
+}
+
+func (rs *BoltStore) LoadRaceWeekend(id string) (*RaceWeekend, error) {
+	var raceWeekend *RaceWeekend
+
+	err := rs.db.View(func(tx *bbolt.Tx) error {
+		b, err := rs.raceWeekendsBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		data := b.Get([]byte(id))
+
+		if data == nil {
+			return ErrChampionshipNotFound
+		}
+
+		return rs.decode(data, &raceWeekend)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return raceWeekend, err
+}
+
+func (rs *BoltStore) DeleteRaceWeekend(id string) error {
+	raceWeekend, err := rs.LoadRaceWeekend(id)
+
+	if err != nil {
+		return err
+	}
+
+	raceWeekend.Deleted = time.Now()
+
+	return rs.UpsertRaceWeekend(raceWeekend)
 }
