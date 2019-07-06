@@ -34,6 +34,7 @@ Added:
 * Added a link to our new Wiki in the footer! If you want to contribute tips and tricks for Server Manager, the wiki is the place!
   You can access the wiki here: https://github.com/cj123/assetto-server-manager/wiki
 * The Server Manager javascript is now minified, which should make the pages load quicker!
+* Results tables now use the same time format as Live Timings (e.g. 01:23.234 instead of 1m23.234s).
 
 Fixes:
 
@@ -45,6 +46,7 @@ Fixes:
   the configured number of entrants.
 * Changed how process killing is done on Windows, hopefully making stopping plugins more reliable! We've had some mixed results
   on this one, so we'd like to hear if it's working for you now!
+* Result tables now hide the Team column if no driver in the results has a team.
 
 v1.3.2
 ------
