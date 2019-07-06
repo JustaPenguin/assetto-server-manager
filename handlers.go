@@ -93,7 +93,7 @@ func Router(fs http.FileSystem) http.Handler {
 		r.Post("/championship/{championshipID}/sign-up", championshipSignUpFormHandler)
 
 		// race control
-		r.Get("/live-timing", raceControlHandler)
+		r.Get("/live-timing", liveTimingHandler)
 		r.Get("/api/race-control", raceControlWebsocketHandler)
 
 		// account management
@@ -491,7 +491,7 @@ func apiServerLogHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func raceControlHandler(w http.ResponseWriter, r *http.Request) {
+func liveTimingHandler(w http.ResponseWriter, r *http.Request) {
 	currentRace, entryList := raceManager.CurrentRace()
 
 	var customRace *CustomRace

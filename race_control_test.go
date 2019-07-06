@@ -841,7 +841,7 @@ func TestRaceControl_OnCarUpdate(t *testing.T) {
 		return
 	}
 
-	updateRaceControl, err := raceControl.OnCarUpdate(udp.CarUpdate{
+	err = raceControl.OnCarUpdate(udp.CarUpdate{
 		CarID:               drivers[1].CarID,
 		Pos:                 udp.Vec{X: 100, Y: 20, Z: 3},
 		Velocity:            udp.Vec{X: 10, Y: 20, Z: 20},
@@ -855,16 +855,12 @@ func TestRaceControl_OnCarUpdate(t *testing.T) {
 		return
 	}
 
-	if !updateRaceControl {
-		t.Error("Should have update race control call, top speed increased")
-	}
-
 	if driver, ok := raceControl.ConnectedDrivers.Get(drivers[1].DriverGUID); !ok || (driver.LastPos.X == 0 && driver.LastPos.Y == 0 && driver.LastPos.Z == 0) || driver.CurrentCar().TopSpeedThisLap == 0 {
 		t.Fail()
 	}
 
 	t.Run("Unknown driver", func(t *testing.T) {
-		_, err := raceControl.OnCarUpdate(udp.CarUpdate{
+		err := raceControl.OnCarUpdate(udp.CarUpdate{
 			CarID:               100, // unknown car
 			Pos:                 udp.Vec{X: 100, Y: 20, Z: 3},
 			Velocity:            udp.Vec{X: 10, Y: 20, Z: 20},
@@ -882,7 +878,7 @@ func TestRaceControl_OnCarUpdate(t *testing.T) {
 	t.Run("Driver disconnect", func(t *testing.T) {
 		for i := 0; i < 100; i++ {
 			for _, entrant := range drivers {
-				_, err := raceControl.OnCarUpdate(udp.CarUpdate{
+				err := raceControl.OnCarUpdate(udp.CarUpdate{
 					CarID:               entrant.CarID,
 					Pos:                 udp.Vec{X: rand.Float32() * 100, Y: rand.Float32() * 100, Z: rand.Float32() * 100},
 					Velocity:            udp.Vec{X: rand.Float32() * 100, Y: rand.Float32() * 100, Z: rand.Float32() * 100},
@@ -917,7 +913,7 @@ func TestRaceControl_OnCarUpdate(t *testing.T) {
 		// run 6 updates but not for driver 0
 		for i := 0; i < 6; i++ {
 			for _, entrant := range drivers[1:] {
-				_, err := raceControl.OnCarUpdate(udp.CarUpdate{
+				err := raceControl.OnCarUpdate(udp.CarUpdate{
 					CarID:               entrant.CarID,
 					Pos:                 udp.Vec{X: rand.Float32() * 100, Y: rand.Float32() * 100, Z: rand.Float32() * 100},
 					Velocity:            udp.Vec{X: rand.Float32() * 100, Y: rand.Float32() * 100, Z: rand.Float32() * 100},
