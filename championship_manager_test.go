@@ -104,7 +104,7 @@ var championshipEventFixtures = []string{
 }
 
 func init() {
-	InitWithStore(NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store")))
+	InitWithStore(NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"),filepath.Join(os.TempDir(), "asm-race-store-shared")))
 	AssettoProcess = dummyServerProcess{}
 }
 
