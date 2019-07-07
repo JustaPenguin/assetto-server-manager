@@ -6,14 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
 	"path/filepath"
 	"reflect"
 	"regexp"
-	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -504,149 +502,4 @@ func (a *AssetHelper) GetURL(location string) string {
 	u.RawQuery = q.Encode()
 
 	return u.String()
-}
-
-func tryMoveFile(sourcePath string, destPath string) error {	
-	sourceExists, err := pathExists(sourcePath)
-	if err != nil {
-		logrus.Errorf("tryMoveFile() 512: %s", err)
-		return err
-	}
-
-	destExists, err := pathExists(destPath)
-	if err != nil {
-		logrus.Errorf("tryMoveFile() 518: %s", err)
-		return err
-	}
-
-	if sourceExists && !destExists {
-		isSourceDir, err := isDirectory(sourcePath)
-
-		if err == nil {
-			if !isSourceDir {
-				err = os.MkdirAll(filepath.Dir(destPath), 0755)
-			} 
-		} else {
-			logrus.Errorf("tryMoveFile() 530: %s", err)
-			return err
-		}
-
-		if err == nil{
-			if !isSourceDir {
-			err = os.Rename(sourcePath, destPath)
-			} else {
-			err = rMoveFiles(sourcePath, destPath)
-			}
-
-			if err != nil{
-				logrus.Errorf("tryMoveFile() 542: %s", err)
-				return err
-			} else {
-				logrus.Infof("JSON migration : moved %s to %s", sourcePath, destPath)
-			}
-		} else {
-			logrus.Errorf("tryMoveFile() 548: %s", err)
-			return err
-		}
-	}
-	return nil
-}
-
-func pathExists(path string) (bool, error) {
-	_, err := os.Stat(path)
-	if err == nil { 
-		return true, nil 
-	}
-
-	if os.IsNotExist(err) { 
-		return false, nil 
-	} else {
-		logrus.Errorf("pathExists: %s", err)
-	}
-
-	return true, err
-}
-
-func isDirectory(path string) (bool, error) {
-	exists, err := pathExists(path)
-	if err != nil{
-		logrus.Errorf("isDirectory() 573: %s", err)
-		return false, err
-	}
-
-	if exists {
-		fileInfo, err := os.Stat(path)
-		if err != nil{
-			logrus.Errorf("isDirectory() 580: %s", err)
-			return false, err
-		}
-		return fileInfo.IsDir(), err
-	}
-	return false, nil
-}
-
-func getFileList(dir string) ([]os.FileInfo, error) {
-	isDir, err := isDirectory(dir)
-	if err != nil || !isDir{
-		logrus.Errorf("listFiles() 592: %s", err)
-		return nil, err
-	}
-
-	files, err := ioutil.ReadDir(dir)
-	var list []os.FileInfo
-
-	for _, file := range files {
-		if file.IsDir() {
-			continue
-		}
-
-		list = append(list, file)
-	}
-
-	return list, nil
-}
-
-func rMoveFiles(sourceDir string, destinationDir string) error {	
-	isDir, err := isDirectory(sourceDir)
-	if err != nil || !isDir{
-		logrus.Errorf("rMoveFiles() 613: %s", err)
-		return err
-	}
-
-	filesToMove, err  := getFileList(sourceDir)
-
-	if err != nil{
-		logrus.Errorf("rMoveFiles() 620: %s", err)
-		return err
-	}
-
-	destExists, err := pathExists(destinationDir)
-
-	if err != nil{
-		logrus.Errorf("rMoveFiles() 627: %s", err)
-		return err
-	}
-
-	if !destExists {
-		err = os.MkdirAll(destinationDir, 0755)
-	}
-
-	if err != nil{
-		logrus.Errorf("rMoveFiles() 636: %s", err)
-		return err
-	}
-
-	for _, file := range filesToMove {
-		if file.IsDir() {
-			continue
-		}
-		err = os.Rename(filepath.Join(sourceDir,file.Name()), filepath.Join(destinationDir,file.Name()))
-
-		if err != nil{
-			logrus.Errorf("rMoveFiles() 647: %s", err)
-		}
-	}
-
-	os.Remove(sourceDir)
-	return nil
 }
