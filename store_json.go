@@ -13,12 +13,12 @@ import (
 const (
 	maxAuditEntries   = 1000
 	//private data
+	accountsDir       = "accounts"
 	serverOptionsFile = "server_options.json"
 	frameLinksFile    = "frame_links.json"
 	serverMetaDir     = "meta"
 	auditFile         = "audit.json"
 	//shared data
-	accountsDir       = "accounts"
 	championshipsDir  = "championships"
 	customRacesDir    = "custom_races"
 	entrantsFile      = "entrants.json"
@@ -40,7 +40,6 @@ type JSONStore struct {
 
 func (rs *JSONStore) DoPreMigration() error {
 	if rs.base != rs.shared{
-		tryMoveFile(filepath.Join(rs.base, accountsDir), filepath.Join(rs.shared, accountsDir))
 		tryMoveFile(filepath.Join(rs.base, championshipsDir), filepath.Join(rs.shared, championshipsDir))
 		tryMoveFile(filepath.Join(rs.base, customRacesDir), filepath.Join(rs.shared, customRacesDir))
 		tryMoveFile(filepath.Join(rs.base, entrantsFile), filepath.Join(rs.shared, entrantsFile))
@@ -299,7 +298,7 @@ func (rs *JSONStore) ListPrevFrames() ([]string, error) {
 }
 
 func (rs *JSONStore) ListAccounts() ([]*Account, error) {
-	files, err := rs.listFiles(filepath.Join(rs.shared, accountsDir))
+	files, err := rs.listFiles(filepath.Join(rs.base, accountsDir))
 
 	if err != nil {
 		return nil, err
@@ -321,13 +320,13 @@ func (rs *JSONStore) ListAccounts() ([]*Account, error) {
 }
 
 func (rs *JSONStore) UpsertAccount(a *Account) error {
-	return rs.encodeFile(rs.shared, filepath.Join(accountsDir, a.Name+".json"), a)
+	return rs.encodeFile(rs.base, filepath.Join(accountsDir, a.Name+".json"), a)
 }
 
 func (rs *JSONStore) FindAccountByName(name string) (*Account, error) {
 	var account *Account
 
-	err := rs.decodeFile(rs.shared, filepath.Join(accountsDir, name+".json"), &account)
+	err := rs.decodeFile(rs.base, filepath.Join(accountsDir, name+".json"), &account)
 
 	if err != nil {
 		return nil, err
