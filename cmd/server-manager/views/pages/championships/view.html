@@ -106,7 +106,7 @@
 
                                         {{ if WriteAccess }}
                                             <td >
-                                                <button type="button" class="btn {{ if $championship.IsMultiClass}}btn-default{{ else }}btn-warning{{ end }} btn-sm" data-placement="left"
+                                                <button type="button" class="btn {{ if $championship.IsMultiClass}}btn-light{{ else }}btn-warning{{ end }} btn-sm" data-placement="left"
                                                         data-toggle="popover" title="Penalty Details" data-html="true"
                                                         id="point-penalty-{{ $entrant.Car.Driver.GUID }}"
                                                 >
@@ -182,7 +182,7 @@
 
                                         {{ if WriteAccess }}
                                             <td >
-                                                <button type="button" class="btn {{ if $championship.IsMultiClass}}btn-default{{ else }}btn-warning{{ end }} btn-sm" data-placement="left"
+                                                <button type="button" class="btn {{ if $championship.IsMultiClass}}btn-light{{ else }}btn-warning{{ end }} btn-sm" data-placement="left"
                                                         data-toggle="popover" title="Penalty Details" data-html="true"
                                                         id="point-penalty-{{ sha1sum $team.Team }}"
                                                 >
