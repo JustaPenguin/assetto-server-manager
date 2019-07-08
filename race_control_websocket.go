@@ -124,7 +124,7 @@ func (c *raceControlClient) writePump() {
 	}
 }
 
-var mapHub *raceControlHub
+var raceControlWebsocketHub *raceControlHub
 
 func raceControlWebsocketHandler(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
@@ -134,7 +134,7 @@ func raceControlWebsocketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &raceControlClient{hub: mapHub, conn: c, receive: make(chan raceControlMessage, 256)}
+	client := &raceControlClient{hub: raceControlWebsocketHub, conn: c, receive: make(chan raceControlMessage, 256)}
 	client.hub.register <- client
 
 	go client.writePump()
