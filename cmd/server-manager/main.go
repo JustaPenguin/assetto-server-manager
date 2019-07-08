@@ -131,6 +131,7 @@ func startUDPReplay(file string) {
 
 	err = replay.ReplayUDPMessages(db, 1, func(response udp.Message) {
 		servermanager.ServerRaceControl.UDPCallback(response)
+		servermanager.LoopCallback(response)
 	}, time.Millisecond*500)
 
 	if err != nil {
