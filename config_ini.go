@@ -159,7 +159,7 @@ type GlobalServerConfig struct {
 	FreeUDPPluginAddress   string `ini:"-" show:"-"`
 
 	ShowRaceNameInServerLobby int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager append the Custom Race or Championship name to the Server name in the lobby."`
-	CustomCSS                 string `ini:"-" input:"textarea" help:"Customise the style of Server Manager!"`
+	CustomCSS                 string `ini:"-" input:"textarea" help:"Customise the style of Server Manager! You can <a href='https://github.com/cj123/assetto-server-manager/wiki/Custom-CSS-Examples'>view some examples</a> on the Server Manager Wiki!"`
 	UseShortenedDriverNames   int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager hide driver's last names, for example 'John Smith' becomes 'John S.'"`
 }
 
