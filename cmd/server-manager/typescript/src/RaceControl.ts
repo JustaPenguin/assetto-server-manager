@@ -742,7 +742,7 @@ class LiveTimings implements WebsocketHandler {
         // remove this driver and car from our current table.
         $table.find("[data-guid='" + driver.CarInfo.DriverGUID + "'][data-car-model='" + driver.CarInfo.CarModel + "']").remove();
 
-        if (addingDriverToConnectedTable) {
+        if (!addingDriverToConnectedTable) {
             // if we're adding to the disconnected table, ensure we've removed this driver and car from the connected table.
             this.$connectedDriversTable.find("[data-guid='" + driver.CarInfo.DriverGUID + "'][data-car-model='" + driver.CarInfo.CarModel + "']").remove();
         } else {
