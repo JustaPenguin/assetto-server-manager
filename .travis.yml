@@ -32,5 +32,5 @@ deploy:
       tags: true
 
   - provider: script
-    script: VERSION=${TRAVIS_TAG} docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD && make docker
+    script: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD && VERSION=${TRAVIS_TAG}; make docker
     skip_cleanup: true
