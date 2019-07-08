@@ -577,7 +577,7 @@ func (s sessionEntrantWrapper) GetSkin() string {
 }
 
 func (s sessionEntrantWrapper) GetGUID() string {
-	return s.DriverGUID
+	return string(s.DriverGUID)
 }
 
 func (s sessionEntrantWrapper) GetTeam() string {
@@ -666,7 +666,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 				entrant.DriverName,
 				championship.Name,
 				championshipText,
-				championship.GetPlayerSummary(entrant.DriverGUID),
+				championship.GetPlayerSummary(string(entrant.DriverGUID)),
 				visitServer,
 			),
 			60,

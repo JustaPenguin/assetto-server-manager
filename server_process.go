@@ -285,12 +285,8 @@ func (as *AssettoServerProcess) startUDPListener() error {
 
 func (as *AssettoServerProcess) UDPCallback(message udp.Message) {
 	panicCapture(func() {
-		if config != nil && config.LiveMap.IsEnabled() {
-			go LiveMapCallback(message)
-		}
-
+		ServerRaceControl.UDPCallback(message)
 		championshipManager.ChampionshipEventCallback(message)
-		LiveTimingCallback(message)
 		LoopCallback(message)
 	})
 }
@@ -393,8 +389,8 @@ func (as *AssettoServerProcess) Stop() error {
 		as.doneCh <- struct{}{}
 	}()
 
-	if liveInfo.endSessionFunc != nil {
-		liveInfo.endSessionFunc()
+	if ServerRaceControl.sessionInfoCfn != nil {
+		ServerRaceControl.sessionInfoCfn()
 	}
 
 	return nil

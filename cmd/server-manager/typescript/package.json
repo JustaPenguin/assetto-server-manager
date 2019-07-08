@@ -1,0 +1,54 @@
+{
+  "name": "server-manager",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^5.7.2",
+    "@types/bootstrap": "^4.3.0",
+    "@types/jquery": "^3.3.29",
+    "@types/jqueryui": "^1.12.7",
+    "@types/moment-timezone": "^0.5.12",
+    "@types/node": "^11.11.3",
+    "bootstrap": "4.2.1",
+    "bootstrap-switch": "3.3.4",
+    "jquery": "^3.3.1",
+    "jquery-ui-bundle": "^1.12.1-migrate",
+    "jquery.quicksearch": "^2.4.0",
+    "moment": "^2.24.0",
+    "moment-timezone": "^0.5.25",
+    "multiselect": "^0.9.12",
+    "popper.js": "^1.14.7",
+    "randomcolor": "^0.5.4",
+    "summernote": "^0.8.11"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.3.4",
+    "@babel/preset-env": "^7.3.4",
+    "babelify": "^10.0.0",
+    "browserify": "^16.2.3",
+    "browserify-shim": "^3.8.14",
+    "gulp": "^4.0.1",
+    "gulp-sourcemaps": "^2.6.5",
+    "gulp-typescript": "^5.0.1",
+    "gulp-uglify-es": "^1.0.4",
+    "gulp-watch": "^5.0.1",
+    "tsify": "^4.0.1",
+    "typescript": "^3.3.3333",
+    "vinyl-buffer": "^1.0.1",
+    "vinyl-source-stream": "^2.0.0"
+  },
+  "browserify-shim": {
+    "./node_modules/jquery/dist/jquery.js": "$"
+  },
+  "browserify": {
+    "transform": [
+      "browserify-shim"
+    ]
+  }
+}
