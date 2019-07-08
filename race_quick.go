@@ -32,5 +32,5 @@ func quickRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	AddFlash(w, r, "Quick race successfully started!")
-	http.Redirect(w, r, "/", http.StatusFound)
+	http.Redirect(w, r, "/live-timing", http.StatusFound)
 }

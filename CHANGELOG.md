@@ -6,10 +6,23 @@ v1.3.3
 
 Added:
 
+* We have made significant changes to Live Timings in this update, including:
+  - A new page layout which should hopefully give more space for the Live Timings table, with the map slightly reduced in size.
+  - Live Timings and the Live Map now both use the same source for data, meaning that your browser doesn't need to make as many requests to find out information.
+  - Live Timings now use a more standard time format (e.g. 01:23.234 instead of 1m23.234s).
+  - Crashes involving Drivers now show the name of the other Driver that was involved in the crash.
+  - Track information has been moved into a popover which appears when you click the session title on the Live Timings page.
+  - Firefox map resizing bugs are now properly fixed.
+  - Various other small bugs are fixed too.
+  - A new grid layout for the IFrames on the Live Timings page. On larger screens, you can place two iframes side by side.
+  
+  This is quite a large change in terms of code. If you find any problems with Live Timings, please let us know and we will sort them out!
+
 * You can now disable DRS Zones for any track in Custom Race / Championship Events. The drs_zones.ini file for the track
   is replaced with a 'no DRS' file, meaning that players can't activate DRS at any point on the circuit. Note: this changes
   actual track files, so if you're using a multi-server setup pointing to the same content folder, this may cause problems
   if you're running races at the same track simultaneously.
+* Starting a Quick Race now takes you straight to the Race Control page.
 * Scheduled championship events now show the start time of individual sessions if applicable.
 * You can now explicitly control the Grid/Pit Box position of an entrant in Custom Races and Championships! This is 
   useful if you want to place teammates next to each other in the pits, avoid broken pit boxes or have a custom
@@ -20,6 +33,8 @@ Added:
   meant to start (we're looking at you, Greg).
 * Added a link to our new Wiki in the footer! If you want to contribute tips and tricks for Server Manager, the wiki is the place!
   You can access the wiki here: https://github.com/cj123/assetto-server-manager/wiki
+* The Server Manager javascript is now minified, which should make the pages load quicker!
+* Results tables now use the same time format as Live Timings (e.g. 01:23.234 instead of 1m23.234s).
 
 Fixes:
 
@@ -31,6 +46,7 @@ Fixes:
   the configured number of entrants.
 * Changed how process killing is done on Windows, hopefully making stopping plugins more reliable! We've had some mixed results
   on this one, so we'd like to hear if it's working for you now!
+* Result tables now hide the Team column if no driver in the results has a team.
 
 v1.3.2
 ------
