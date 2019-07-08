@@ -15,7 +15,7 @@
     "@types/jqueryui": "^1.12.7",
     "@types/moment-timezone": "^0.5.12",
     "@types/node": "^11.11.3",
-    "bootstrap": "4.2.1",
+    "bootstrap": "4.3.1",
     "bootstrap-switch": "3.3.4",
     "jquery": "^3.3.1",
     "jquery-ui-bundle": "^1.12.1-migrate",
