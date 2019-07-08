@@ -49,8 +49,10 @@ func InitWithStore(store Store) {
 
 	UseShortenedDriverNames = opts != nil && opts.UseShortenedDriverNames == 1
 
-	mapHub = newLiveMapHub()
-	go mapHub.run()
+	raceControlWebsocketHub = newRaceControlHub()
+	go raceControlWebsocketHub.run()
+
+	ServerRaceControl = NewRaceControl(raceControlWebsocketHub, filesystemTrackData{})
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)

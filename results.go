@@ -51,6 +51,24 @@ func (s *SessionResults) MaskDriverNames() {
 	}
 }
 
+func (s *SessionResults) DriversHaveTeams() bool {
+	teams := make(map[string]string)
+
+	for _, car := range s.Cars {
+		teams[car.Driver.GUID] = car.Driver.Team
+	}
+
+	for _, driver := range s.Result {
+		if driver.TotalTime > 0 {
+			if team, ok := teams[driver.DriverGUID]; ok && team != "" {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 func (s *SessionResults) GetURL() string {
 	return config.HTTP.BaseURL + "/results/download/" + s.SessionFile + ".json"
 }
@@ -609,7 +627,8 @@ func resultHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ViewRenderer.MustLoadTemplate(w, r, "results/result.html", map[string]interface{}{
-		"result": result,
+		"result":        result,
+		"WideContainer": true,
 	})
 }
 

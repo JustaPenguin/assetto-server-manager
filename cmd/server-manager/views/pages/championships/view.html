@@ -478,13 +478,7 @@
                             </div>
 
                             <div class="row">
-
-                            {{ if isBefore $scheduled }}
-                                <div class="col-sm-4">
-                            {{ else }}
-                                <div class="col-sm-8">
-                            {{ end }}
-
+                                <div class="{{ if isBefore $scheduled }}col-sm-8{{ else }}col-sm-4{{ end }}">
                                     <ul class="list-unstyled">
                                         {{ $previousTime := 0 }}
 

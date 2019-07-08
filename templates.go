@@ -190,6 +190,7 @@ func (tr *Renderer) init() error {
 	funcs["fullTimeFormat"] = fullTimeFormat
 	funcs["localFormat"] = localFormatHelper
 	funcs["driverName"] = driverName
+	funcs["formatDuration"] = formatDuration
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
@@ -198,6 +199,20 @@ func (tr *Renderer) init() error {
 	}
 
 	return nil
+}
+
+func formatDuration(d time.Duration, trimLeadingZeroes bool) string {
+	hours := d.Hours()
+	minutes := d.Minutes() - float64(int(hours)*60)
+	seconds := d.Seconds() - float64(int(hours)*60*60) - float64(int(minutes)*60)
+
+	duration := fmt.Sprintf("%02d:%02d:%06.3f", int(hours), int(minutes), seconds)
+
+	if trimLeadingZeroes && strings.HasPrefix(duration, "00:") {
+		return duration[3:]
+	}
+
+	return duration
 }
 
 func templateDict(values ...interface{}) (map[string]interface{}, error) {

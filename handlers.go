@@ -30,7 +30,7 @@ var (
 	Debug = os.Getenv("DEBUG") == "true"
 )
 
-func init() {
+func InitLogging() {
 	if !Debug {
 		logrus.SetLevel(logrus.InfoLevel)
 	} else {
@@ -92,10 +92,9 @@ func Router(fs http.FileSystem) http.Handler {
 		r.Get("/championship/{championshipID}/sign-up", championshipSignUpFormHandler)
 		r.Post("/championship/{championshipID}/sign-up", championshipSignUpFormHandler)
 
-		// live timings
+		// race control
 		r.Get("/live-timing", liveTimingHandler)
-		r.Get("/live-timing/get", liveTimingGetHandler)
-		r.Get("/api/live-map", liveMapHandler)
+		r.Get("/api/race-control", raceControlWebsocketHandler)
 
 		// account management
 		r.HandleFunc("/accounts/new-password", newPasswordHandler)
@@ -512,13 +511,8 @@ func liveTimingHandler(w http.ResponseWriter, r *http.Request) {
 		"RaceDetails":     customRace,
 		"FrameLinks":      frameLinks,
 		"CSSDotSmoothing": udp.RealtimePosIntervalMs,
+		"WideContainer":   true,
 	})
-}
-
-func liveTimingGetHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	_ = json.NewEncoder(w).Encode(liveInfo)
 }
 
 func deleteEmpty(s []string) []string {
