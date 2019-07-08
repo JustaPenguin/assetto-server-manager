@@ -353,10 +353,6 @@ func (rc *RaceControl) requestSessionInfo() {
 func (rc *RaceControl) disconnectDriver(driver *RaceControlDriver) error {
 	carInfo := driver.CarInfo
 	carInfo.EventType = udp.EventConnectionClosed
-	rc.driverGUIDUpdateCounterMutex.Lock()
-	delete(rc.driverGUIDUpdateCounter, driver.CarInfo.DriverGUID)
-	rc.driverGUIDUpdateCounterMutex.Unlock()
-
 	return rc.OnClientDisconnect(carInfo)
 }
 
@@ -412,6 +408,10 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 
 // OnClientDisconnect moves a client from ConnectedDrivers to DisconnectedDrivers.
 func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
+	rc.driverGUIDUpdateCounterMutex.Lock()
+	delete(rc.driverGUIDUpdateCounter, client.DriverGUID)
+	rc.driverGUIDUpdateCounterMutex.Unlock()
+
 	driver, ok := rc.ConnectedDrivers.Get(client.DriverGUID)
 
 	if !ok {
