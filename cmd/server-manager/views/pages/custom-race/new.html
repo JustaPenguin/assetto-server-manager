@@ -1090,7 +1090,7 @@
             <div class="card-body">
 
 
-                <div class="form-group row">
+                <div class="form-group row legal-tyres">
                     <label for="LegalTyres" class="col-sm-3 col-form-label">Legal Tyres</label>
 
                     {{ $allTyres := .Tyres }}
@@ -1105,8 +1105,6 @@
                                 <option value="{{ $tyre }}">{{ prettify ($allTyres.Name $tyre (varSplit $f.Cars)) false }} ({{ $tyre }})</option>
                             {{ end }}
                         </select>
-
-                        <small>List of tyres short names that are allowed</small>
                     </div>
                 </div>
 
