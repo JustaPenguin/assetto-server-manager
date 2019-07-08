@@ -47,6 +47,7 @@ Fixes:
 * Changed how process killing is done on Windows, hopefully making stopping plugins more reliable! We've had some mixed results
   on this one, so we'd like to hear if it's working for you now!
 * Result tables now hide the Team column if no driver in the results has a team.
+* Improved the allowed tyres UI to more clearly show which is enabled and which is disabled.
 
 v1.3.2
 ------
