@@ -111,8 +111,19 @@ span[data-toggle=tooltip] {
 
 #weatherImage {
     border-radius: 0.25rem;
-    width: 100%;
-    max-width: 355px;
+    max-height: 94px;
+    margin-top: 0 !important;
+    vertical-align: top;
+}
+
+#event-title {
+    font-size: 2em;
+    cursor: pointer;
+}
+
+#event-title:hover {
+    text-decoration: none;
+    color: #127ba3;
 }
 
 .entryListCarPreview {
@@ -323,6 +334,18 @@ footer a {
     height: 45px;
     border-radius: 10px;
     cursor: default;
+}
+
+.race-control-weather-info {
+    position: absolute;
+    top: 90px;
+    right: 20px;
+}
+
+.race-control-event-info {
+    position: absolute;
+    top: 90px;
+    left: 20px;
 }
 
 #road-temp {
@@ -558,4 +581,15 @@ td .dot-inactive {
     font-size: 0.9rem;
     max-height: 500px;
     overflow-y: auto;
+}
+
+@media screen and (max-width: 1200px) and (min-width: 991px) {
+    .navbar .container {
+        width: 100%;
+        padding-right: 15px !important;
+        padding-left: 15px !important;
+        margin-right: auto !important;
+        margin-left: auto !important;
+        max-width: 100% !important;
+    }
 }

@@ -19,12 +19,17 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var debug = os.Getenv("DEBUG") == "true"
+var (
+	defaultAddress = "0.0.0.0:8772"
+)
 
-var defaultAddress = "0.0.0.0:8772"
+const (
+	udpRealtimePosRefreshIntervalMin = 100
+)
 
 func init() {
 	runtime.LockOSThread()
+	servermanager.InitLogging()
 }
 
 func main() {
@@ -68,8 +73,8 @@ func main() {
 	}
 
 	if config.LiveMap.IsEnabled() {
-		if config.LiveMap.IntervalMs < 200 {
-			udp.RealtimePosIntervalMs = 200
+		if config.LiveMap.IntervalMs < udpRealtimePosRefreshIntervalMin {
+			udp.RealtimePosIntervalMs = udpRealtimePosRefreshIntervalMin
 		} else {
 			udp.RealtimePosIntervalMs = config.LiveMap.IntervalMs
 		}
@@ -94,8 +99,6 @@ func main() {
 	if err != nil {
 		logrus.Errorf("couldn't initialise scheduled championship events, err: %s", err)
 	}
-
-	//go startUDPReplay("./assetto/session-logs/brandshatch_sillyold.db")
 
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 
@@ -127,10 +130,9 @@ func startUDPReplay(file string) {
 	}
 
 	err = replay.ReplayUDPMessages(db, 1, func(response udp.Message) {
-		servermanager.LiveTimingCallback(response)
-		servermanager.LiveMapCallback(response)
+		servermanager.ServerRaceControl.UDPCallback(response)
 		servermanager.LoopCallback(response)
-	}, time.Second*2)
+	}, time.Millisecond*500)
 
 	if err != nil {
 		logrus.WithError(err).Error("UDP Replay failed")

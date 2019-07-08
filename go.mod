@@ -4,6 +4,7 @@ require (
 	github.com/Masterminds/goutils v1.1.0 // indirect
 	github.com/Masterminds/semver v1.4.2 // indirect
 	github.com/Masterminds/sprig v2.18.0+incompatible
+	github.com/OneOfOne/struct2ts v1.0.4 // indirect
 	github.com/certifi/gocertifi v0.0.0-20190506164543-d2eda7129713 // indirect
 	github.com/cj123/ini v1.42.0
 	github.com/cj123/sessions v1.1.5
@@ -32,7 +33,7 @@ require (
 	github.com/smartystreets/assertions v0.0.0-20190215210624-980c5ac6f3ac // indirect
 	github.com/smartystreets/goconvey v0.0.0-20190306220146-200a235640ff // indirect
 	github.com/spkg/bom v0.0.0-20160624110644-59b7046e48ad
-	github.com/stretchr/testify v1.3.0 // indirect
+	github.com/tkrajina/typescriptify-golang-structs v0.0.7 // indirect
 	go.etcd.io/bbolt v1.3.2 // indirect
 	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 	golang.org/x/net v0.0.0-20190311183353-d8887717615a

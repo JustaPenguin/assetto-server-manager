@@ -132,7 +132,7 @@
                                                 <td>{{ $sessionResults.GetPosForLap $sessionResult.DriverGUID $lapCount }}</td>
                                             {{ end }}
                                             <td>
-                                                {{ $sessionLap.GetLapTime }}
+                                                {{ formatDuration $sessionLap.GetLapTime true }}
 
                                                 {{ if $sessionResults.IsFastestLap $sessionLap.LapTime $sessionLap.Cuts }}
                                                     <div class="float-right mr-1">
@@ -155,7 +155,7 @@
 
                                             {{ range $x, $null := $sessionResults.GetNumSectors }}
                                                 <td>
-                                                    {{ $sessionLap.GetSector $x }}
+                                                    {{ formatDuration ($sessionLap.GetSector $x) true }}
 
                                                     {{ if $sessionResults.IsFastestSector $x (index $sessionLap.Sectors $x) $sessionLap.Cuts }}
                                                         <div class="float-right mr-1">
@@ -185,10 +185,4 @@
         <div class="clearfix"></div>
     {{ end }}
 </div>
-{{ end }}
-
-{{ define "thirdpartyjs" }}
-    <script type="text/javascript">
-        $(".container").attr("class", "container-fluid");
-    </script>
 {{ end }}
