@@ -619,7 +619,7 @@ class LiveTimings implements WebsocketHandler {
     }
 
     private addDriverToTable(driver: Driver, $table: JQuery<HTMLTableElement>): void {
-        const addingDriverToDisconnectedTable = ($table === this.$disconnectedDriversTable);
+        const addingDriverToConnectedTable = ($table === this.$connectedDriversTable);
         const carInfo = driver.Cars[driver.CarInfo.CarModel];
 
         if (!carInfo) {
@@ -632,7 +632,7 @@ class LiveTimings implements WebsocketHandler {
         });
 
         // car position
-        if (!addingDriverToDisconnectedTable) {
+        if (addingDriverToConnectedTable) {
             const $tdPos = $("<td class='text-center'/>").text(driver.Position === 255 || driver.Position === 0 ? "" : driver.Position);
             $tr.append($tdPos);
         }
@@ -640,7 +640,7 @@ class LiveTimings implements WebsocketHandler {
         // driver name
         const $tdName = $("<td/>").text(driver.CarInfo.DriverName);
 
-        if (!addingDriverToDisconnectedTable) {
+        if (addingDriverToConnectedTable) {
             // driver dot
             const driverDot = this.liveMap.getDotForDriverGUID(driver.CarInfo.DriverGUID);
 
@@ -667,7 +667,7 @@ class LiveTimings implements WebsocketHandler {
         const $tdCar = $("<td/>").text(prettifyName(driver.CarInfo.CarModel, true));
         $tr.append($tdCar);
 
-        if (!addingDriverToDisconnectedTable) {
+        if (addingDriverToConnectedTable) {
             let currentLapTimeText = "";
 
             if (moment(carInfo.LastLapCompletedTime).isAfter(moment(this.raceControl.status!.SessionStartTime))) {
@@ -679,7 +679,7 @@ class LiveTimings implements WebsocketHandler {
             $tr.append($tdCurrentLapTime);
         }
 
-        if (!addingDriverToDisconnectedTable) {
+        if (addingDriverToConnectedTable) {
             // last lap
             const $tdLastLap = $("<td/>").text(msToTime(carInfo.LastLap / 1000000));
             $tr.append($tdLastLap);
@@ -689,7 +689,7 @@ class LiveTimings implements WebsocketHandler {
         const $tdBestLapTime = $("<td/>").text(msToTime(carInfo.BestLap / 1000000));
         $tr.append($tdBestLapTime);
 
-        if (!addingDriverToDisconnectedTable) {
+        if (addingDriverToConnectedTable) {
             // gap
             const $tdGap = $("<td/>").text(driver.Split);
             $tr.append($tdGap);
@@ -702,7 +702,7 @@ class LiveTimings implements WebsocketHandler {
         const $tdTopSpeedBestLap = $("<td/>").text(carInfo.TopSpeedBestLap ? carInfo.TopSpeedBestLap.toFixed(2) + "Km/h" : "");
         $tr.append($tdTopSpeedBestLap);
 
-        if (!addingDriverToDisconnectedTable) {
+        if (addingDriverToConnectedTable) {
             // events
             const $tdEvents = $("<td/>");
 
@@ -742,7 +742,7 @@ class LiveTimings implements WebsocketHandler {
         // remove this driver and car from our current table.
         $table.find("[data-guid='" + driver.CarInfo.DriverGUID + "'][data-car-model='" + driver.CarInfo.CarModel + "']").remove();
 
-        if (addingDriverToDisconnectedTable) {
+        if (addingDriverToConnectedTable) {
             // if we're adding to the disconnected table, ensure we've removed this driver and car from the connected table.
             this.$connectedDriversTable.find("[data-guid='" + driver.CarInfo.DriverGUID + "'][data-car-model='" + driver.CarInfo.CarModel + "']").remove();
         } else {
@@ -750,13 +750,13 @@ class LiveTimings implements WebsocketHandler {
             this.$disconnectedDriversTable.find("[data-guid='" + driver.CarInfo.DriverGUID + "'][data-car-model='" + driver.CarInfo.CarModel + "']").remove();
         }
 
-        if (addingDriverToDisconnectedTable && (!carInfo.NumLaps || carInfo.NumLaps === 0)) {
+        if (!addingDriverToConnectedTable && (!carInfo.NumLaps || carInfo.NumLaps === 0)) {
             return;
         }
 
         $table.append($tr);
 
-        if (addingDriverToDisconnectedTable) {
+        if (!addingDriverToConnectedTable) {
             this.sortTable($table);
         }
     }
@@ -830,7 +830,7 @@ const percentColors = [
     {pct: 1.0, color: {r: 0xff, g: 0x00, b: 0}}
 ];
 
-function getColorForPercentage(pct: number) {
+function getColorForPercentage(pct: number): string {
     let i;
 
     for (i = 1; i < percentColors.length - 1; i++) {

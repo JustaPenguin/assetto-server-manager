@@ -165,7 +165,7 @@ func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) error {
 	rc.driverGUIDUpdateCounterMutex.Unlock()
 
 	for _, driver := range driversToDisconnect {
-		logrus.Debugf("Driver: %s (%s) has missed 10 car updates, disconnecting", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
+		logrus.Debugf("Driver: %s (%s) has missed 5 car updates, disconnecting", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
 		err := rc.disconnectDriver(driver)
 
 		if err != nil {
@@ -207,7 +207,10 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 	oldSessionInfo := rc.SessionInfo
 	rc.SessionInfo = sessionInfo
 	rc.SessionStartTime = time.Now()
+
+	rc.driverGUIDUpdateCounterMutex.Lock()
 	rc.driverGUIDUpdateCounter = make(map[udp.DriverGUID]int)
+	rc.driverGUIDUpdateCounterMutex.Unlock()
 
 	deleteCars := true
 	emptyCarInfo := false
