@@ -52,6 +52,11 @@ Fixes:
 * Result tables now hide the Team column if no driver in the results has a team.
 * Improved the allowed tyres UI to more clearly show which is enabled and which is disabled.
 
+Removed:
+
+* In an effort to reduce the build size and complexity, we have removed the old Entrant autofill method. This has been
+  replaced by the more obvious dropdown in the Entrant box.
+
 v1.3.2
 ------
 
