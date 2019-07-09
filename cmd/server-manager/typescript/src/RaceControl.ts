@@ -426,7 +426,7 @@ class LiveMap implements WebsocketHandler {
             return this.dots.get(driverData.DriverGUID)!;
         }
 
-        const $driverName = $("<span class='name'/>").text(getAbbreviation(driverData.DriverName));
+        const $driverName = $("<span class='name'/>").text(driverData.DriverInitials);
         const $info = $("<span class='info'/>").text("0").hide();
 
         const $dot = $("<div class='dot' style='background: " + randomColorForDriver(driverData.DriverGUID) + "'/>").append($driverName, $info).hide().appendTo(this.$map);
@@ -804,18 +804,6 @@ class LiveTimings implements WebsocketHandler {
         $driverDot.find(".info").toggle();
         $target.find(".dot").toggleClass("dot-inactive");
     }
-}
-
-function getAbbreviation(name: string): string {
-    let parts = name.split(" ");
-
-    if (parts.length < 1) {
-        return name
-    }
-
-    let lastName = parts[parts.length - 1];
-
-    return lastName.slice(0, 3).toUpperCase();
 }
 
 function randomColorForDriver(driverGUID: string): string {
