@@ -131,11 +131,12 @@ func (CollisionWithEnvironment) Event() Event {
 }
 
 type SessionCarInfo struct {
-	CarID      CarID      `json:"CarID"`
-	DriverName string     `json:"DriverName"`
-	DriverGUID DriverGUID `json:"DriverGUID"`
-	CarModel   string     `json:"CarModel"`
-	CarSkin    string     `json:"CarSkin"`
+	CarID          CarID      `json:"CarID"`
+	DriverName     string     `json:"DriverName"`
+	DriverGUID     DriverGUID `json:"DriverGUID"`
+	CarModel       string     `json:"CarModel"`
+	CarSkin        string     `json:"CarSkin"`
+	DriverInitials string     `json:"DriverInitials"`
 
 	EventType Event `json:"EventType"`
 }
