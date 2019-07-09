@@ -116,6 +116,12 @@ store:
   # where to save the server manager data
   path: server_manager.db
 
+  # shared data path: Set the same directory for multiple AC Server Manager
+  # instances to share championship, entrants and custom events across them.
+  # Leave blank to use the same path as the one set up here.
+  # works only with JSON database
+  shared_data_path: 
+
 ################################################################################
 #
 #  user management - this is now mostly done via the web interface.
