@@ -382,6 +382,9 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 	rc.CarIDToGUID[client.CarID] = client.DriverGUID
 	rc.carIDToGUIDMutex.Unlock()
 
+	client.DriverInitials = driverInitials(client.DriverName)
+	client.DriverName = driverName(client.DriverName)
+
 	var driver *RaceControlDriver
 
 	if disconnectedDriver, ok := rc.DisconnectedDrivers.Get(client.DriverGUID); ok {
