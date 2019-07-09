@@ -797,10 +797,6 @@ class RaceSetup {
         $(document).on("change", ".entrant-autofill", function (e) {
             autoFillEntrant(e.currentTarget, $(e.currentTarget).val());
         });
-
-        $(document).on('keydown.autocomplete', ".entryListName", function () {
-            $(this).autocomplete(opts);
-        });
     }
 
     initEntrantsList() {
