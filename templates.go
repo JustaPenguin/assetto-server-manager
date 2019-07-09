@@ -122,9 +122,15 @@ func driverInitials(name string) string {
 			}
 		}
 
-		return strings.Join(nameParts, "")
+		return strings.ToUpper(strings.Join(nameParts, ""))
 	} else {
-		return name
+		nameParts := strings.Split(name, " ")
+
+		if len(nameParts) > 0 && len(nameParts[len(nameParts)-1]) >= 3 {
+			return strings.ToUpper(nameParts[len(nameParts)-1][:3])
+		}
+
+		return strings.ToUpper(name)
 	}
 }
 
