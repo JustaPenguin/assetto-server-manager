@@ -35,6 +35,9 @@ Added:
   You can access the wiki here: https://github.com/cj123/assetto-server-manager/wiki
 * The Server Manager javascript is now minified, which should make the pages load quicker!
 * Results tables now use the same time format as Live Timings (e.g. 01:23.234 instead of 1m23.234s).
+* You can now split the JSON store into two separate directories: private and shared. This is useful for multiserver setups,
+  where multiple instances of Server Manager can share the same database for Championships, Custom Races and AutoFill Entrants.
+  Check out the config.yml for more details. Thanks to WraithStar for contributing this!
 
 Fixes:
 
