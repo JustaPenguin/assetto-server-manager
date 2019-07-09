@@ -61,8 +61,8 @@ type SteamConfig struct {
 }
 
 type StoreConfig struct {
-	Type string `yaml:"type"`
-	Path string `yaml:"path"`
+	Type       string `yaml:"type"`
+	Path       string `yaml:"path"`
 	SharedPath string `yaml:"shared_data_path"`
 }
 

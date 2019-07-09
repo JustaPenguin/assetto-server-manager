@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	maxAuditEntries   = 1000
+	maxAuditEntries = 1000
 	// private data
 	accountsDir       = "accounts"
 	serverOptionsFile = "server_options.json"
@@ -21,34 +21,34 @@ const (
 	serverMetaDir     = "meta"
 	auditFile         = "audit.json"
 	// shared data
-	championshipsDir  = "championships"
-	customRacesDir    = "custom_races"
-	entrantsFile      = "entrants.json"
+	championshipsDir = "championships"
+	customRacesDir   = "custom_races"
+	entrantsFile     = "entrants.json"
 )
 
 func NewJSONStore(dir string, sharedDir string) Store {
 	return &JSONStore{
-		base: dir,
+		base:   dir,
 		shared: sharedDir,
 	}
 }
 
 type JSONStore struct {
-	base string
+	base   string
 	shared string
 
 	mutex sync.RWMutex
 }
 
 func (rs *JSONStore) DoPreMigration() error {
-	if rs.base != rs.shared{
+	if rs.base != rs.shared {
 		err := tryMoveFile(filepath.Join(rs.base, championshipsDir), filepath.Join(rs.shared, championshipsDir))
 
 		if err != nil {
 			logrus.Errorf("JSON migration error: %s", err)
 			return err
 		}
-		
+
 		err = tryMoveFile(filepath.Join(rs.base, customRacesDir), filepath.Join(rs.shared, customRacesDir))
 
 		if err != nil {
@@ -63,7 +63,7 @@ func (rs *JSONStore) DoPreMigration() error {
 			return err
 		}
 	}
-	
+
 	return nil
 }
 
