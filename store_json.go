@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -40,10 +42,28 @@ type JSONStore struct {
 
 func (rs *JSONStore) DoPreMigration() error {
 	if rs.base != rs.shared{
-		tryMoveFile(filepath.Join(rs.base, championshipsDir), filepath.Join(rs.shared, championshipsDir))
-		tryMoveFile(filepath.Join(rs.base, customRacesDir), filepath.Join(rs.shared, customRacesDir))
-		tryMoveFile(filepath.Join(rs.base, entrantsFile), filepath.Join(rs.shared, entrantsFile))
+		err := tryMoveFile(filepath.Join(rs.base, championshipsDir), filepath.Join(rs.shared, championshipsDir))
+
+		if err != nil {
+			logrus.Errorf("JSON migration error: %s", err)
+			return err
+		}
+		
+		err = tryMoveFile(filepath.Join(rs.base, customRacesDir), filepath.Join(rs.shared, customRacesDir))
+
+		if err != nil {
+			logrus.Errorf("JSON migration error: %s", err)
+			return err
+		}
+
+		err = tryMoveFile(filepath.Join(rs.base, entrantsFile), filepath.Join(rs.shared, entrantsFile))
+
+		if err != nil {
+			logrus.Errorf("JSON migration error: %s", err)
+			return err
+		}
 	}
+	
 	return nil
 }
 
