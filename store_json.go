@@ -8,18 +8,18 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 const (
 	maxAuditEntries = 1000
+
 	// private data
 	accountsDir       = "accounts"
 	serverOptionsFile = "server_options.json"
 	frameLinksFile    = "frame_links.json"
 	serverMetaDir     = "meta"
 	auditFile         = "audit.json"
+
 	// shared data
 	championshipsDir = "championships"
 	customRacesDir   = "custom_races"
@@ -38,33 +38,6 @@ type JSONStore struct {
 	shared string
 
 	mutex sync.RWMutex
-}
-
-func (rs *JSONStore) DoPreMigration() error {
-	if rs.base != rs.shared {
-		err := tryMoveFile(filepath.Join(rs.base, championshipsDir), filepath.Join(rs.shared, championshipsDir))
-
-		if err != nil {
-			logrus.Errorf("JSON migration error: %s", err)
-			return err
-		}
-
-		err = tryMoveFile(filepath.Join(rs.base, customRacesDir), filepath.Join(rs.shared, customRacesDir))
-
-		if err != nil {
-			logrus.Errorf("JSON migration error: %s", err)
-			return err
-		}
-
-		err = tryMoveFile(filepath.Join(rs.base, entrantsFile), filepath.Join(rs.shared, entrantsFile))
-
-		if err != nil {
-			logrus.Errorf("JSON migration error: %s", err)
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (rs *JSONStore) listFiles(dir string) ([]string, error) {

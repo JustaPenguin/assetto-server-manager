@@ -40,7 +40,4 @@ type Store interface {
 	// Audit Log
 	GetAuditEntries() ([]*AuditEntry, error)
 	AddAuditEntry(entry *AuditEntry) error
-
-	// Pre-migration
-	DoPreMigration() error
 }

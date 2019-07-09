@@ -2,6 +2,8 @@ package servermanager
 
 import (
 	"html/template"
+	"os"
+	"path/filepath"
 	"sort"
 
 	"github.com/google/uuid"
@@ -22,7 +24,13 @@ func Migrate(store Store) error {
 		return err
 	}
 
-	store.DoPreMigration()
+	if jsonStore, ok := store.(*JSONStore); ok {
+		err := separateJSONStores(jsonStore)
+
+		if err != nil {
+			return err
+		}
+	}
 
 	for i := storeVersion; i < CurrentMigrationVersion; i++ {
 		err := migrations[i](store)
@@ -298,6 +306,48 @@ func addPitBoxDefinitionToEntrants(rs Store) error {
 		}
 
 		err := rs.UpsertChampionship(championship)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func moveStoreFiles(oldPath string, newPath string) error {
+	if _, err := os.Stat(oldPath); os.IsNotExist(err) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	logrus.WithField("from", oldPath).WithField("to", newPath).Infof("Migrating JSON private store to shared store")
+
+	return os.Rename(oldPath, newPath)
+}
+
+func separateJSONStores(rs *JSONStore) error {
+	if rs.base != rs.shared {
+		err := os.MkdirAll(rs.shared, 0755)
+
+		if err != nil {
+			return err
+		}
+
+		err = moveStoreFiles(filepath.Join(rs.base, championshipsDir), filepath.Join(rs.shared, championshipsDir))
+
+		if err != nil {
+			return err
+		}
+
+		err = moveStoreFiles(filepath.Join(rs.base, customRacesDir), filepath.Join(rs.shared, customRacesDir))
+
+		if err != nil {
+			return err
+		}
+
+		err = moveStoreFiles(filepath.Join(rs.base, entrantsFile), filepath.Join(rs.shared, entrantsFile))
 
 		if err != nil {
 			return err
