@@ -694,3 +694,8 @@ func (rs *BoltStore) AddAuditEntry(entry *AuditEntry) error {
 		return bkt.Put([]byte("audit"), enc)
 	})
 }
+
+func (rs *BoltStore) DoPreMigration() error {
+	//only done with JSON database
+	return nil
+}
