@@ -12,13 +12,13 @@ import (
 
 const (
 	maxAuditEntries   = 1000
-	//private data
+	// private data
 	accountsDir       = "accounts"
 	serverOptionsFile = "server_options.json"
 	frameLinksFile    = "frame_links.json"
 	serverMetaDir     = "meta"
 	auditFile         = "audit.json"
-	//shared data
+	// shared data
 	championshipsDir  = "championships"
 	customRacesDir    = "custom_races"
 	entrantsFile      = "entrants.json"
