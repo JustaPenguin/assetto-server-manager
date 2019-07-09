@@ -22,6 +22,8 @@ func Migrate(store Store) error {
 		return err
 	}
 
+	store.DoPreMigration()
+
 	for i := storeVersion; i < CurrentMigrationVersion; i++ {
 		err := migrations[i](store)
 
