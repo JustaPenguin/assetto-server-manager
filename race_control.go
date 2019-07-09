@@ -359,7 +359,11 @@ func (rc *RaceControl) disconnectDriver(driver *RaceControlDriver) error {
 // OnSessionUpdate is called every sessionRequestInterval.
 func (rc *RaceControl) OnSessionUpdate(sessionInfo udp.SessionInfo) (bool, error) {
 	oldSessionInfo := rc.SessionInfo
-	rc.SessionInfo = sessionInfo
+
+	rc.SessionInfo.AmbientTemp = sessionInfo.AmbientTemp
+	rc.SessionInfo.RoadTemp = sessionInfo.RoadTemp
+	rc.SessionInfo.WeatherGraphics = sessionInfo.WeatherGraphics
+	rc.SessionInfo.ElapsedMilliseconds = sessionInfo.ElapsedMilliseconds
 
 	sessionHasChanged := oldSessionInfo.AmbientTemp != rc.SessionInfo.AmbientTemp || oldSessionInfo.RoadTemp != rc.SessionInfo.RoadTemp || oldSessionInfo.WeatherGraphics != rc.SessionInfo.WeatherGraphics
 
