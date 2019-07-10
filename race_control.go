@@ -165,7 +165,7 @@ func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) error {
 	rc.driverGUIDUpdateCounterMutex.Unlock()
 
 	for _, driver := range driversToDisconnect {
-		logrus.Debugf("Driver: %s (%s) has missed 10 car updates, disconnecting", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
+		logrus.Debugf("Driver: %s (%s) has missed 5 car updates, disconnecting", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
 		err := rc.disconnectDriver(driver)
 
 		if err != nil {
@@ -207,7 +207,10 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 	oldSessionInfo := rc.SessionInfo
 	rc.SessionInfo = sessionInfo
 	rc.SessionStartTime = time.Now()
+
+	rc.driverGUIDUpdateCounterMutex.Lock()
 	rc.driverGUIDUpdateCounter = make(map[udp.DriverGUID]int)
+	rc.driverGUIDUpdateCounterMutex.Unlock()
 
 	deleteCars := true
 	emptyCarInfo := false
@@ -350,17 +353,19 @@ func (rc *RaceControl) requestSessionInfo() {
 func (rc *RaceControl) disconnectDriver(driver *RaceControlDriver) error {
 	carInfo := driver.CarInfo
 	carInfo.EventType = udp.EventConnectionClosed
-	rc.driverGUIDUpdateCounterMutex.Lock()
-	delete(rc.driverGUIDUpdateCounter, driver.CarInfo.DriverGUID)
-	rc.driverGUIDUpdateCounterMutex.Unlock()
-
 	return rc.OnClientDisconnect(carInfo)
 }
 
 // OnSessionUpdate is called every sessionRequestInterval.
 func (rc *RaceControl) OnSessionUpdate(sessionInfo udp.SessionInfo) (bool, error) {
 	oldSessionInfo := rc.SessionInfo
-	rc.SessionInfo = sessionInfo
+
+	// we can't just copy over the session information, we must copy individual
+	// parts of it, as the session type is incorrect.
+	rc.SessionInfo.AmbientTemp = sessionInfo.AmbientTemp
+	rc.SessionInfo.RoadTemp = sessionInfo.RoadTemp
+	rc.SessionInfo.WeatherGraphics = sessionInfo.WeatherGraphics
+	rc.SessionInfo.ElapsedMilliseconds = sessionInfo.ElapsedMilliseconds
 
 	sessionHasChanged := oldSessionInfo.AmbientTemp != rc.SessionInfo.AmbientTemp || oldSessionInfo.RoadTemp != rc.SessionInfo.RoadTemp || oldSessionInfo.WeatherGraphics != rc.SessionInfo.WeatherGraphics
 
@@ -382,6 +387,9 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 	rc.carIDToGUIDMutex.Lock()
 	rc.CarIDToGUID[client.CarID] = client.DriverGUID
 	rc.carIDToGUIDMutex.Unlock()
+
+	client.DriverInitials = driverInitials(client.DriverName)
+	client.DriverName = driverName(client.DriverName)
 
 	var driver *RaceControlDriver
 
@@ -409,6 +417,10 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 
 // OnClientDisconnect moves a client from ConnectedDrivers to DisconnectedDrivers.
 func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
+	rc.driverGUIDUpdateCounterMutex.Lock()
+	delete(rc.driverGUIDUpdateCounter, client.DriverGUID)
+	rc.driverGUIDUpdateCounterMutex.Unlock()
+
 	driver, ok := rc.ConnectedDrivers.Get(client.DriverGUID)
 
 	if !ok {

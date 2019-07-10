@@ -39,7 +39,7 @@ A web interface to manage an Assetto Corsa Server.
 ### Docker
 
 A docker image is available under the name `seejy/assetto-server-manager`. We recommend using docker-compose
-to set up a docker environment for the server manager. This docker image has steamcmd pre-installed.
+to set up a docker environment for the server manager. Note that this docker image **does not** have steamcmd pre-installed.
 
 See [Manual](#Manual) to set up server manager without Docker.
 

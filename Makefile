@@ -1,3 +1,4 @@
+VERSION?=unstable
 
 # enable go modules
 GO111MODULE=on
@@ -27,3 +28,7 @@ deploy: clean test
 
 run:
 	$(MAKE) -C cmd/server-manager run
+
+docker: deploy
+	docker build -t seejy/assetto-server-manager:${VERSION} .
+	docker push seejy/assetto-server-manager:${VERSION}

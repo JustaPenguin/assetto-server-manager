@@ -22,8 +22,8 @@ Added:
   is replaced with a 'no DRS' file, meaning that players can't activate DRS at any point on the circuit. Note: this changes
   actual track files, so if you're using a multi-server setup pointing to the same content folder, this may cause problems
   if you're running races at the same track simultaneously.
-* Starting a Quick Race now takes you straight to the Race Control page.
-* Scheduled championship events now show the start time of individual sessions if applicable.
+* Starting a Quick Race now takes you straight to the Live Timings page.
+* Scheduled Championship events now show the start time of individual sessions if applicable.
 * You can now explicitly control the Grid/Pit Box position of an entrant in Custom Races and Championships! This is 
   useful if you want to place teammates next to each other in the pits, avoid broken pit boxes or have a custom
   starting grid for a race with no qualifying. It should auto fill sensibly if left alone too!
@@ -35,6 +35,9 @@ Added:
   You can access the wiki here: https://github.com/cj123/assetto-server-manager/wiki
 * The Server Manager javascript is now minified, which should make the pages load quicker!
 * Results tables now use the same time format as Live Timings (e.g. 01:23.234 instead of 1m23.234s).
+* You can now split the JSON store into two separate directories: private and shared. This is useful for multiserver setups,
+  where multiple instances of Server Manager can share the same database for Championships, Custom Races and AutoFill Entrants.
+  Check out the config.yml for more details. Thanks to WraithStar for contributing this!
 
 Fixes:
 
@@ -47,6 +50,12 @@ Fixes:
 * Changed how process killing is done on Windows, hopefully making stopping plugins more reliable! We've had some mixed results
   on this one, so we'd like to hear if it's working for you now!
 * Result tables now hide the Team column if no driver in the results has a team.
+* Improved the allowed tyres UI to more clearly show which is enabled and which is disabled.
+
+Removed:
+
+* In an effort to reduce the build size and complexity, we have removed the old Entrant autofill method. This has been
+  replaced by the more obvious dropdown in the Entrant box.
 
 v1.3.2
 ------

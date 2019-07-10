@@ -106,7 +106,7 @@
 
                                         {{ if WriteAccess }}
                                             <td >
-                                                <button type="button" class="btn {{ if $championship.IsMultiClass}}btn-default{{ else }}btn-warning{{ end }} btn-sm" data-placement="left"
+                                                <button type="button" class="btn {{ if $championship.IsMultiClass}}btn-light{{ else }}btn-warning{{ end }} btn-sm" data-placement="left"
                                                         data-toggle="popover" title="Penalty Details" data-html="true"
                                                         id="point-penalty-{{ $entrant.Car.Driver.GUID }}"
                                                 >
@@ -182,7 +182,7 @@
 
                                         {{ if WriteAccess }}
                                             <td >
-                                                <button type="button" class="btn {{ if $championship.IsMultiClass}}btn-default{{ else }}btn-warning{{ end }} btn-sm" data-placement="left"
+                                                <button type="button" class="btn {{ if $championship.IsMultiClass}}btn-light{{ else }}btn-warning{{ end }} btn-sm" data-placement="left"
                                                         data-toggle="popover" title="Penalty Details" data-html="true"
                                                         id="point-penalty-{{ sha1sum $team.Team }}"
                                                 >
@@ -467,11 +467,13 @@
                     <div class="row">
                         <div class="col-md-8 mb-3">
                             <div class="row">
-                                {{ if lt (int $trackInfo.Pitboxes.Int64) (int $championship.NumEntrants) }}
-                                    <div class="col-sm-12 text-warning">
-                                        This track has fewer pit boxes than the configured number of entrants in the
-                                        current championship, and therefore is not eligible for this championship.
-                                    </div>
+                                {{ with $trackInfo }}
+                                    {{ if lt (int $trackInfo.Pitboxes.Int64) (int $championship.NumEntrants) }}
+                                        <div class="col-sm-12 text-warning">
+                                            This track has fewer pit boxes than the configured number of entrants in the
+                                            current championship, and therefore is not eligible for this championship.
+                                        </div>
+                                    {{ end }}
                                 {{ end }}
                             </div>
 
@@ -855,6 +857,7 @@
                                                  aria-labelledby="results-points-{{ $eventIndex}}-tab">
 
 
+                                                {{ $championshipHasTeamNames := $championship.HasTeamNames }}
 
                                                 <div class="table-responsive">
                                                     <table class="table table-bordered table-striped">
@@ -864,7 +867,9 @@
                                                             {{ end }}
                                                             <th>#</th>
                                                             <th>Name</th>
-                                                            <th>Team</th>
+                                                            {{ if $championshipHasTeamNames }}
+                                                                <th>Team</th>
+                                                            {{ end }}
                                                             <th>Car</th>
                                                             <th>Points</th>
                                                         </tr>
@@ -880,7 +885,9 @@
                                                                     {{ end }}
                                                                     <td>{{ add $pos 1 }}</td>
                                                                     <td>{{ driverName $standing.Car.Driver.Name }}</td>
-                                                                    <td>{{ $standing.Car.Driver.Team }}</td>
+                                                                    {{ if $championshipHasTeamNames }}
+                                                                        <td>{{ $standing.Car.Driver.Team }}</td>
+                                                                    {{ end }}
                                                                     <td>{{ prettify $standing.Car.Model true }}</td>
                                                                     <td>{{ $standing.Points }}</td>
                                                                 </tr>

@@ -45,8 +45,10 @@ $(document).ready(function () {
     $("[data-toggle=popover]").each(function (i, obj) {
         $(this).popover({
             html: true,
+            sanitize: false,
             content: function () {
                 let id = $(this).attr('id');
+
                 return $('#popover-content-' + id).html();
             }
         });
@@ -796,10 +798,6 @@ class RaceSetup {
 
         $(document).on("change", ".entrant-autofill", function (e) {
             autoFillEntrant(e.currentTarget, $(e.currentTarget).val());
-        });
-
-        $(document).on('keydown.autocomplete', ".entryListName", function () {
-            $(this).autocomplete(opts);
         });
     }
 

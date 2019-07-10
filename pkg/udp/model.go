@@ -75,10 +75,10 @@ type CarID uint8
 type DriverGUID string
 
 type lapCompletedInternal struct {
-	CarID     CarID  `json:"CarID"`
-	LapTime   uint32 `json:"LapTime"`
-	Cuts      uint8  `json:"Cuts"`
-	CarsCount uint8  `json:"CarsCount"`
+	CarID     CarID
+	LapTime   uint32
+	Cuts      uint8
+	CarsCount uint8
 }
 
 func (LapCompleted) Event() Event {
@@ -131,11 +131,12 @@ func (CollisionWithEnvironment) Event() Event {
 }
 
 type SessionCarInfo struct {
-	CarID      CarID      `json:"CarID"`
-	DriverName string     `json:"DriverName"`
-	DriverGUID DriverGUID `json:"DriverGUID"`
-	CarModel   string     `json:"CarModel"`
-	CarSkin    string     `json:"CarSkin"`
+	CarID          CarID      `json:"CarID"`
+	DriverName     string     `json:"DriverName"`
+	DriverGUID     DriverGUID `json:"DriverGUID"`
+	CarModel       string     `json:"CarModel"`
+	CarSkin        string     `json:"CarSkin"`
+	DriverInitials string     `json:"DriverInitials"`
 
 	EventType Event `json:"EventType"`
 }
