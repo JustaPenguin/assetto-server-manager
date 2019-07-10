@@ -360,6 +360,8 @@ func (rc *RaceControl) disconnectDriver(driver *RaceControlDriver) error {
 func (rc *RaceControl) OnSessionUpdate(sessionInfo udp.SessionInfo) (bool, error) {
 	oldSessionInfo := rc.SessionInfo
 
+	// we can't just copy over the session information, we must copy individual
+	// parts of it, as the session type is incorrect.
 	rc.SessionInfo.AmbientTemp = sessionInfo.AmbientTemp
 	rc.SessionInfo.RoadTemp = sessionInfo.RoadTemp
 	rc.SessionInfo.WeatherGraphics = sessionInfo.WeatherGraphics
