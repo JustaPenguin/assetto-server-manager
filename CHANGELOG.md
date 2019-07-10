@@ -22,7 +22,7 @@ Added:
   is replaced with a 'no DRS' file, meaning that players can't activate DRS at any point on the circuit. Note: this changes
   actual track files, so if you're using a multi-server setup pointing to the same content folder, this may cause problems
   if you're running races at the same track simultaneously.
-* Starting a Quick Race now takes you straight to the Race Control page.
+* Starting a Quick Race now takes you straight to the Live Timings page.
 * Scheduled Championship events now show the start time of individual sessions if applicable.
 * You can now explicitly control the Grid/Pit Box position of an entrant in Custom Races and Championships! This is 
   useful if you want to place teammates next to each other in the pits, avoid broken pit boxes or have a custom
