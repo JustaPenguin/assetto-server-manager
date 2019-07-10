@@ -857,6 +857,7 @@
                                                  aria-labelledby="results-points-{{ $eventIndex}}-tab">
 
 
+                                                {{ $championshipHasTeamNames := $championship.HasTeamNames }}
 
                                                 <div class="table-responsive">
                                                     <table class="table table-bordered table-striped">
@@ -866,7 +867,9 @@
                                                             {{ end }}
                                                             <th>#</th>
                                                             <th>Name</th>
-                                                            <th>Team</th>
+                                                            {{ if $championshipHasTeamNames }}
+                                                                <th>Team</th>
+                                                            {{ end }}
                                                             <th>Car</th>
                                                             <th>Points</th>
                                                         </tr>
@@ -882,7 +885,9 @@
                                                                     {{ end }}
                                                                     <td>{{ add $pos 1 }}</td>
                                                                     <td>{{ driverName $standing.Car.Driver.Name }}</td>
-                                                                    <td>{{ $standing.Car.Driver.Team }}</td>
+                                                                    {{ if $championshipHasTeamNames }}
+                                                                        <td>{{ $standing.Car.Driver.Team }}</td>
+                                                                    {{ end }}
                                                                     <td>{{ prettify $standing.Car.Model true }}</td>
                                                                     <td>{{ $standing.Points }}</td>
                                                                 </tr>
