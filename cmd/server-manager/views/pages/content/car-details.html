@@ -1,90 +1,106 @@
 {{ define "title" }}{{ $.Car.Details.Name }}{{ end }}
 
 {{ define "content" }}
-    <h1 class="text-center">{{ $.Car.Details.Name }}</h1>
-    <div class="text-center mb-3">
-        <small>({{ $.Car.Name}})</small>
-    </div>
+    <div class="car-details">
+        <h1 class="text-center">{{ $.Car.Details.Name }}</h1>
 
-    {{ if gt (len $.Car.Skins) 0 }}
-        {{ $skin := index $.Car.Skins 0 }}
+        <div class="text-center mb-3">
+            <small>({{ $.Car.Name}})</small>
+        </div>
+
+        {{ if gt (len $.Car.Skins) 0 }}
+            {{ $skin := index $.Car.Skins 0 }}
+
+            <div class="row mb-3">
+                <div class="col-md-10">
+                    <img class="img img-fluid car-image" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}">
+                </div>
+
+                <div class="col-md-2 car-skins">
+                    {{ range $index, $skin := $.Car.Skins }}
+                        <div class="car-skin">
+                            <img class="img img-fluid car-image" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}" title="{{ prettify $skin true }}">
+                        </div>
+                    {{ end }}
+                </div>
+            </div>
+        {{ end }}
+
+        <div class="row mb-2">
+            <div class="col-md-7">
+                {{ range $index, $tag := $.Car.Details.Tags }}
+                    <span class="badge badge-primary"><a class="text-white" href="/cars?q=tags:%22{{ urlquery $tag }}%22">{{ $tag }}</a> <a class="delete-tag text-white" href="#" data-tag="{{ $tag }}" data-car="{{ $.Car.Name }}"><i class="fas fa-times ml-2"></i></a></span>
+                {{ end }}
+            </div>
+
+            <div class="col-md-3 text-right">
+                <form>
+                    <div class="form-group row">
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control form-control-sm" id="NewTag" name="NewTag" required
+                                   placeholder="Add a new tag">
+                        </div>
+
+                        <div class="col-sm-3">
+                            <button class="btn btn-sm btn-primary">Go</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="col-md-2 text-right">
+                <button class="btn btn-sm btn-success">Upload a Skin</button>
+            </div>
+        </div>
+
 
         <div class="row mb-3">
             <div class="col-md-10">
-                <img class="img img-fluid car-image" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}">
-            </div>
 
-            <div class="col-md-2 car-skins-other">
-                {{ range $index, $skin := $.Car.Skins }}
-                    <div class="car-skin">
-                        <img class="img img-fluid car-image" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}" title="{{ prettify $skin true }}">
+                {{ with $.Car.Details.Description }}
+                    <div class="pt-2">
+                        <h2>About</h2>
+
+                        <p>{{ trustHTML . }}</p>
                     </div>
                 {{ end }}
+
+            </div>
+            <div class="col-md-2 border-left">
+                <h2>Tyres</h2>
+
+                <ul class="list-unstyled">
+                    {{ range $tyre, $name := $.Car.Tyres }}
+                        <li>{{ $name }} ({{ $tyre }})</li>
+                    {{ end }}
+                </ul>
             </div>
         </div>
-    {{ end }}
 
-    <div class="row mb-2">
-        <div class="col-md-7">
-            {{ range $index, $tag := $.Car.Details.Tags }}
-                <span class="badge badge-primary"><a class="text-white" href="/cars?q=tags:%22{{ urlquery $tag }}%22">{{ $tag }}</a> <a class="delete-tag text-white" href="#" data-tag="{{ $tag }}" data-car="{{ $.Car.Name }}"><i class="fas fa-times ml-2"></i></a></span>
-            {{ end }}
-        </div>
+        <div class="row mb-3">
+            <div class="col-12">
+                <h2>Setups</h2>
 
-        <div class="col-md-3 text-right">
-            <form>
-                <div class="form-group row">
-                    <div class="col-sm-9">
-                        <input type="text" class="form-control form-control-sm" id="NewTag" name="NewTag" required
-                               placeholder="Add a new tag">
-                    </div>
+                <!-- @TODO setups + upload -->
 
-                    <div class="col-sm-3">
-                        <button class="btn btn-sm btn-primary">Go</button>
-                    </div>
+                <h2>Sessions</h2>
+
+                <p>This car has been used in {{ len $.Results }} sessions.</p>
+
+                <!-- @TODO total time driven, total distance driven, driver who uses it most -->
+
+                <div class="list-group overflow-auto mt-2 mb-2" style="max-height: 300px;">
+                    {{ range $index, $session := $.Results }}
+                        <a class="list-group-item list-group-item-action" href="/results/{{ $session.SessionFile }}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-2 text-primary"><strong>{{ title (lower $session.Type) }}</strong></h5>
+                                <small>{{ fullTimeFormat $session.Date }}</small>
+                            </div>
+                            <p class="mb-1">{{ prettify $session.TrackName false }} {{ with $session.TrackConfig }}({{ prettify . true }}){{ end }}</p>
+                        </a>
+                    {{ end }}
                 </div>
-            </form>
-        </div>
-
-        <div class="col-md-2 text-right">
-            <button class="btn btn-sm btn-success">Upload a Skin</button>
-        </div>
-    </div>
-
-
-    <div class="row mb-3">
-        <div class="col-md-10">
-
-            {{ with $.Car.Details.Description }}
-                <div class="pt-2">
-                    <h2>About</h2>
-
-                    <p>{{ trustHTML . }}</p>
-                </div>
-            {{ end }}
-
-            <h2>Sessions</h2>
-
-            <p>This car has been used in {{ len $.Results}} sessions.</p>
-
-            <!-- @TODO total time driven, total distance driven, driver who uses it most -->
-
-            {{ range $index, $session := $.Results }}
-
-            {{ end }}
-
-
-            <h2>Setups</h2>
-
-        </div>
-        <div class="col-md-2 border-left">
-            <h2>Tyres</h2>
-
-            <ul class="list-unstyled">
-                {{ range $tyre, $name := $.Car.Tyres }}
-                    <li>{{ $name }} ({{ $tyre }})</li>
-                {{ end }}
-            </ul>
+            </div>
         </div>
     </div>
 {{ end }}
