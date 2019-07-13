@@ -17,7 +17,7 @@
             <div class="col-md-2 car-skins-other">
                 {{ range $index, $skin := $.Car.Skins }}
                     <div class="car-skin">
-                        <img class="img img-fluid car-image" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}">
+                        <img class="img img-fluid car-image" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}" title="{{ prettify $skin true }}">
                     </div>
                 {{ end }}
             </div>

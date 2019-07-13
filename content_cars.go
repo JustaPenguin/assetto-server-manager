@@ -201,7 +201,7 @@ func carsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	currentPage := formValueAsInt(r.URL.Query().Get("p"))
+	//currentPage := formValueAsInt(r.URL.Query().Get("p"))
 
 	ViewRenderer.MustLoadTemplate(w, r, "content/cars.html", map[string]interface{}{
 		"Results": results,
