@@ -323,7 +323,7 @@ func (rc *RaceControl) requestSessionInfo() {
 			// the server has just stopped. send disconnect messages for all connected cars.
 			_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
 				// Each takes a read lock, so we cannot call disconnectDriver (which takes a write lock) from inside it.
-				// we must instead append them to a slice and disconnect them outisde the Each call.
+				// we must instead append them to a slice and disconnect them outside the Each call.
 				drivers = append(drivers, driver)
 
 				return nil
