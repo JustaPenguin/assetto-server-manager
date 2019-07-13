@@ -480,11 +480,15 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 		return false, nil, err
 	}
 
+	var oldEntrantTeam string
+
 	for _, class := range c.Classes {
 		for _, entrant := range class.Entrants {
 			if entrant.GUID == potentialEntrant.GetGUID() {
 				// we found the entrant, but there's a possibility that they changed cars. empty out their
 				// information on this entrant slot and then look for it again in the next loop
+				oldEntrantTeam = entrant.Team
+
 				entrant.GUID = ""
 				entrant.Name = ""
 				entrant.Team = ""
@@ -500,6 +504,11 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 			entrant.Model = potentialEntrant.GetCar()
 			entrant.Skin = potentialEntrant.GetSkin()
 			entrant.Team = potentialEntrant.GetTeam()
+
+			// #386: don't replace a team with no team.
+			if entrant.Team == "" {
+				entrant.Team = oldEntrantTeam
+			}
 
 			logrus.Infof("Championship entrant: %s (%s) has been assigned to %s in %s", entrant.Name, entrant.GUID, carNum, classForCar.Name)
 
@@ -755,6 +764,10 @@ func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*Championsh
 	return out
 }
 
+func (c *ChampionshipClass) StandingsForEvent(event *ChampionshipEvent) []*ChampionshipStanding {
+	return c.Standings([]*ChampionshipEvent{event})
+}
+
 // TeamStanding is the current number of Points a Team has.
 type TeamStanding struct {
 	Team   string
@@ -839,7 +852,7 @@ func (cr *ChampionshipEvent) GetURL() string {
 	return "/championship/" + cr.championship.ID.String()
 }
 
-func (cr *ChampionshipEvent) GetEntryList() EntryList {
+func (cr *ChampionshipEvent) ReadOnlyEntryList() EntryList {
 	return cr.CombineEntryLists(cr.championship)
 }
 
@@ -1031,6 +1044,12 @@ func exportChampionshipHandler(w http.ResponseWriter, r *http.Request) {
 
 	// sign up responses are hidden for data protection reasons
 	championship.SignUpForm.Responses = nil
+
+	if !AccountFromRequest(r).HasGroupPrivilege(GroupWrite) {
+		// if you don't have write access or above you can't see the replacement password
+		championship.ReplacementPassword = ""
+		championship.OverridePassword = false
+	}
 
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")

@@ -86,6 +86,13 @@
                                 <div class="col-sm-9 pit-boxes">
                                     <span id="track-pitboxes">{{ $trackInfo.Pitboxes }}</span>
                                 </div>
+
+                                <div class="col-sm-12">
+                                    <span id="track-pitboxes-warning" class="text-warning mt-2"
+                                        {{ if not (and ($.IsChampionship) (lt (int $.Championship.NumEntrants) (int $trackInfo.Pitboxes))) }} style="display: none;" {{ end }}
+                                        >This track has fewer pit boxes than the configured number of entrants in the
+                                        current {{if $.IsChampionship }}Championship{{ else }}Race{{end}}, and therefore is not eligible for it.</span>
+                                </div>
                             </div>
                         {{ end }}
                     </div>
@@ -530,7 +537,7 @@
             </div>
 
             <div class="card-body" id="entrants">
-                <div class="form-group row visible-booking-enabled" {{ if and .IsChampionship (not ($f.HasSession "BOOK")) }}style="display: none;"{{ end }}>
+                <div class="form-group row {{ if .IsChampionship }}visible-booking-enabled{{ end }}" {{ if and .IsChampionship (not ($f.HasSession "BOOK")) }}style="display: none;"{{ end }}>
                     <label for="MaxClients" class="col-sm-3 col-form-label">Max Clients</label>
 
                     <div class="col-sm-9">
@@ -1083,7 +1090,7 @@
             <div class="card-body">
 
 
-                <div class="form-group row">
+                <div class="form-group row legal-tyres">
                     <label for="LegalTyres" class="col-sm-3 col-form-label">Legal Tyres</label>
 
                     {{ $allTyres := .Tyres }}
@@ -1098,8 +1105,6 @@
                                 <option value="{{ $tyre }}">{{ prettify ($allTyres.Name $tyre (varSplit $f.Cars)) false }} ({{ $tyre }})</option>
                             {{ end }}
                         </select>
-
-                        <small>List of tyres short names that are allowed</small>
                     </div>
                 </div>
 
@@ -1408,6 +1413,33 @@
                         >
 
                         <small>Seconds of result screen between racing sessions</small>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="DisableDRSZones" class="col-sm-3 col-form-label">Disable DRS Zones</label>
+
+                    <div class="col-sm-9">
+
+                        <input
+                                class="form-control"
+                                type="checkbox"
+                                id="DisableDRSZones"
+                                name="DisableDRSZones"
+                                {{ if $f.DisableDRSZones }}
+                                    checked="checked"
+                                {{ end }}
+                        ><br/>
+
+                        <small>
+                            When ON, the track's drs_zones.ini will temporarily be replaced with a file that disables DRS across the entire track.
+                            This is useful for tracks which do not have any clearly defined zones, or for if you want to race without DRS!
+
+                            <strong>
+                                Note: this changes actual track files, so if you're using a multi-server setup pointing to the same content folder,
+                                this may cause problems if you're running races at the same track simultaneously.
+                            </strong>
+                        </small>
                     </div>
                 </div>
             </div>

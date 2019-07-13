@@ -1,0 +1,27 @@
+{{ define "title" }}Audit Logs{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">Audit Logs</h1>
+
+    <table class="table table-bordered table-striped">
+        <thead>
+        <tr>
+            <th scope="col">Time</th>
+            <th scope="col">User</th>
+            <th scope="col">Permission Group</th>
+            <th scope="col">URL</th>
+            <th scope="col">Method</th>
+        </tr>
+        </thead>
+
+        {{ range $i, $entry := .auditLogs }}
+            <tr>
+                <td>{{ fullTimeFormat $entry.Time }}</td>
+                <td>{{ $entry.User }}</td>
+                <td>{{ $entry.UserGroup }}</td>
+                <td>{{ $entry.URL }}</td>
+                <td>{{ $entry.Method }}</td>
+            </tr>
+        {{ end }}
+    </table>
+{{ end }}

@@ -30,7 +30,7 @@ var (
 	Debug = os.Getenv("DEBUG") == "true"
 )
 
-func init() {
+func InitLogging() {
 	if !Debug {
 		logrus.SetLevel(logrus.InfoLevel)
 	} else {
@@ -84,9 +84,6 @@ func Router(fs http.FileSystem) http.Handler {
 		r.Get("/results/{fileName}", resultHandler)
 		r.HandleFunc("/results/download/{fileName}", resultFileHandler)
 
-		r.Get("/logs", serverLogsHandler)
-		r.Get("/api/logs", apiServerLogHandler)
-
 		// championships
 		r.Get("/championships", listChampionshipsHandler)
 		r.Get("/championship/{championshipID}", viewChampionshipHandler)
@@ -96,10 +93,9 @@ func Router(fs http.FileSystem) http.Handler {
 		r.Get("/championship/{championshipID}/sign-up", championshipSignUpFormHandler)
 		r.Post("/championship/{championshipID}/sign-up", championshipSignUpFormHandler)
 
-		// live timings
+		// race control
 		r.Get("/live-timing", liveTimingHandler)
-		r.Get("/live-timing/get", liveTimingGetHandler)
-		r.Get("/api/live-map", liveMapHandler)
+		r.Get("/api/race-control", raceControlWebsocketHandler)
 
 		// account management
 		r.HandleFunc("/accounts/new-password", newPasswordHandler)
@@ -111,6 +107,9 @@ func Router(fs http.FileSystem) http.Handler {
 	// writers
 	r.Group(func(r chi.Router) {
 		r.Use(WriteAccessMiddleware)
+		if config.Server.AuditLogging {
+			r.Use(AuditLogger)
+		}
 
 		// content
 		r.Post("/setups/upload", carSetupsUploadHandler)
@@ -130,6 +129,8 @@ func Router(fs http.FileSystem) http.Handler {
 
 		// server management
 		r.Get("/process/{action}", serverProcessHandler)
+		r.Get("/logs", serverLogsHandler)
+		r.Get("/api/logs", apiServerLogHandler)
 
 		// championships
 		r.Get("/championships/new", newOrEditChampionshipHandler)
@@ -170,6 +171,9 @@ func Router(fs http.FileSystem) http.Handler {
 	// deleters
 	r.Group(func(r chi.Router) {
 		r.Use(DeleteAccessMiddleware)
+		if config.Server.AuditLogging {
+			r.Use(AuditLogger)
+		}
 
 		r.Get("/championship/{championshipID}/event/{eventID}/delete", championshipDeleteEventHandler)
 		r.Get("/championship/{championshipID}/delete", deleteChampionshipHandler)
@@ -187,10 +191,14 @@ func Router(fs http.FileSystem) http.Handler {
 	// admins
 	r.Group(func(r chi.Router) {
 		r.Use(AdminAccessMiddleware)
+		if config.Server.AuditLogging {
+			r.Use(AuditLogger)
+		}
 
 		r.HandleFunc("/server-options", serverOptionsHandler)
 		r.HandleFunc("/blacklist", serverBlacklistHandler)
 		r.HandleFunc("/motd", serverMOTDHandler)
+		r.HandleFunc("/audit-logs", serverAuditLogsHandler)
 		r.HandleFunc("/accounts/new", createOrEditAccountHandler)
 		r.HandleFunc("/accounts/edit/{id}", createOrEditAccountHandler)
 		r.HandleFunc("/accounts/delete/{id}", deleteAccountHandler)
@@ -297,7 +305,7 @@ func serverBlacklistHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func autoFillEntrantListHandler(w http.ResponseWriter, r *http.Request) {
-	entrants, err := raceManager.raceStore.ListEntrants()
+	entrants, err := raceManager.ListAutoFillEntrants()
 
 	if err != nil {
 		logrus.WithError(err).Error("could not list entrants")
@@ -504,13 +512,8 @@ func liveTimingHandler(w http.ResponseWriter, r *http.Request) {
 		"RaceDetails":     customRace,
 		"FrameLinks":      frameLinks,
 		"CSSDotSmoothing": udp.RealtimePosIntervalMs,
+		"WideContainer":   true,
 	})
-}
-
-func liveTimingGetHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	_ = json.NewEncoder(w).Encode(liveInfo)
 }
 
 func deleteEmpty(s []string) []string {

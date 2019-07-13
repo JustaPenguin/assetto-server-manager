@@ -106,7 +106,7 @@
 
                                         {{ if WriteAccess }}
                                             <td >
-                                                <button type="button" class="btn {{ if $championship.IsMultiClass}}btn-default{{ else }}btn-warning{{ end }} btn-sm" data-placement="left"
+                                                <button type="button" class="btn {{ if $championship.IsMultiClass}}btn-light{{ else }}btn-warning{{ end }} btn-sm" data-placement="left"
                                                         data-toggle="popover" title="Penalty Details" data-html="true"
                                                         id="point-penalty-{{ $entrant.Car.Driver.GUID }}"
                                                 >
@@ -182,7 +182,7 @@
 
                                         {{ if WriteAccess }}
                                             <td >
-                                                <button type="button" class="btn {{ if $championship.IsMultiClass}}btn-default{{ else }}btn-warning{{ end }} btn-sm" data-placement="left"
+                                                <button type="button" class="btn {{ if $championship.IsMultiClass}}btn-light{{ else }}btn-warning{{ end }} btn-sm" data-placement="left"
                                                         data-toggle="popover" title="Penalty Details" data-html="true"
                                                         id="point-penalty-{{ sha1sum $team.Team }}"
                                                 >
@@ -461,14 +461,27 @@
                     </div>
                 </div>
 
+                {{ $scheduled := .Scheduled}}
+
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-8 mb-3">
                             <div class="row">
+                                {{ with $trackInfo }}
+                                    {{ if lt (int $trackInfo.Pitboxes.Int64) (int $championship.NumEntrants) }}
+                                        <div class="col-sm-12 text-warning">
+                                            This track has fewer pit boxes than the configured number of entrants in the
+                                            current championship, and therefore is not eligible for this championship.
+                                        </div>
+                                    {{ end }}
+                                {{ end }}
+                            </div>
 
-                                <div class="col-sm-4">
-
+                            <div class="row">
+                                <div class="{{ if isBefore $scheduled }}col-sm-8{{ else }}col-sm-4{{ end }}">
                                     <ul class="list-unstyled">
+                                        {{ $previousTime := 0 }}
+
                                         {{ range $sessionName, $session := $eventSetup.Sessions }}
                                             <li>
                                                 <strong>
@@ -480,10 +493,15 @@
                                                 </strong>:
 
                                                 {{ if ne $session.Time 0 }}
-                                                    {{ $session.Time }} minutes
+                                                    {{ $session.Time }} minutes {{ if and $eventSetup.RaceExtraLap (eq $sessionName "RACE") }} + 1 lap {{ end }}
+                                                    {{ if isBefore $scheduled }} / Starts at {{ hourAndZone $scheduled (int64 $previousTime) }} {{ end }}
+
+                                                    {{ $previousTime = add $previousTime $session.Time }}
                                                 {{ else }}
                                                     {{ with $session.Laps }}
-                                                        {{ . }} laps
+                                                        {{ . }} laps {{ if isBefore $scheduled }} / Starts at {{ hourAndZone $scheduled (int64 $previousTime) }} {{ end }}
+
+                                                        {{ $previousTime = 0 }}
                                                     {{ end }}
                                                 {{ end }}
                                             </li>
@@ -770,59 +788,117 @@
                     <div class="row">
                         <div class="col-md-12">
                             {{ if (or $event.InProgress $event.Completed) }}
-                            <div {{ if $event.Completed }} class="collapse" id="event-{{ $eventIndex }}" {{ end }}>
+                                <div {{ if $event.Completed }} class="collapse" id="event-{{ $eventIndex }}" {{ end }}>
 
-                                <ul class="nav nav-tabs mt-3" role="tablist">
-                                    {{ $sessionCount := 1 }}
-                                    {{ $sessionsLen := len $event.Sessions }}
+                                    <ul class="nav nav-tabs mt-3" role="tablist">
+                                        {{ $sessionCount := 1 }}
+                                        {{ $sessionsLen := len $event.Sessions }}
 
-                                    {{ range $sessionName, $sessionDetails := $event.Sessions }}
-                                        <li class="nav-item">
-                                            <a class="nav-link  {{ if eq $sessionCount $sessionsLen }} active {{ end }}"
-                                               id="results-{{ $sessionCount }}-{{ $eventIndex}}-tab" data-toggle="tab"
-                                               href="#results-{{ $sessionCount }}-{{ $eventIndex}}"
-                                               role="tab"
-                                               {{ if eq $sessionName "RACE" }}aria-selected="true" {{ end }}>
+                                        {{ range $sessionName, $sessionDetails := $event.Sessions }}
+                                            <li class="nav-item">
+                                                <a class="nav-link  {{ if and (not $event.Completed) (eq $sessionCount $sessionsLen) }} active {{ end }}"
+                                                   id="results-{{ $sessionCount }}-{{ $eventIndex}}-tab" data-toggle="tab"
+                                                   href="#results-{{ $sessionCount }}-{{ $eventIndex}}"
+                                                   role="tab"
+                                                   {{ if eq $sessionName "RACE" }}aria-selected="true" {{ end }}>
 
-                                                {{ if and $eventSetup.HasMultipleRaces (eq $sessionName "RACE") }}
-                                                    1st Race
+                                                    {{ if and $eventSetup.HasMultipleRaces (eq $sessionName "RACE") }}
+                                                        1st Race
+                                                    {{ else }}
+                                                        {{ $sessionName.String }}
+                                                    {{ end }}
+                                                </a>
+                                            </li>
+
+                                            {{ $sessionCount = add $sessionCount 1 }}
+                                        {{ end }}
+
+                                        {{ if $event.Completed }}
+                                            <li class="nav-item">
+                                                <a class="nav-link active"
+                                                   id="results-points-{{ $eventIndex}}-tab" data-toggle="tab"
+                                                   href="#results-points-{{ $eventIndex}}"
+                                                   role="tab"
+                                                >
+                                                    Points
+                                                </a>
+                                            </li>
+                                        {{ end }}
+                                    </ul>
+                                    <div class="tab-content">
+                                        {{ $sessionCount = 1 }}
+
+                                        {{ range $sessionName, $sessionDetails := $event.Sessions }}
+                                            <div class="tab-pane fade {{ if and (not $event.Completed) (eq $sessionCount $sessionsLen) }} show active {{ end }}"
+                                                 id="results-{{ $sessionCount }}-{{ $eventIndex}}" role="tabpanel"
+                                                 aria-labelledby="results-{{ $sessionCount }}-{{ $eventIndex}}-tab">
+
+                                                {{ if $sessionDetails.Completed }}
+
+                                                    <p class="text-center mt-2 mb-2">
+                                                        <a class="detailed-results" href="/results/{{ $sessionDetails.Results.SessionFile }}">View detailed results breakdown for this Session</a>
+                                                    </p>
+
+                                                    {{ template "session-overall" $sessionDetails.Results }}
+                                                {{ else if $sessionDetails.InProgress }}
+                                                    <p class="text-center mt-5 pb-2"><strong>Session in Progress</strong>: Looks like there aren't any results yet. Check back later.</p>
                                                 {{ else }}
-                                                    {{ $sessionName.String }}
+                                                    <p class="text-center mt-5 pb-2"><strong>Awaiting Start</strong>: Looks like this session hasn't started yet. Check back later.</p>
                                                 {{ end }}
-                                            </a>
-                                        </li>
+                                            </div>
 
-                                        {{ $sessionCount = add $sessionCount 1 }}
-                                    {{ end }}
-                                </ul>
-                                <div class="tab-content">
-                                    {{ $sessionCount = 1 }}
+                                            {{ $sessionCount = add $sessionCount 1 }}
+                                        {{ end }}
 
-                                    {{ range $sessionName, $sessionDetails := $event.Sessions }}
-                                        <div class="tab-pane fade {{ if eq $sessionCount $sessionsLen }} show active {{ end }}"
-                                             id="results-{{ $sessionCount }}-{{ $eventIndex}}" role="tabpanel"
-                                             aria-labelledby="results-{{ $sessionCount }}-{{ $eventIndex}}-tab">
 
-                                            {{ if $sessionDetails.Completed }}
+                                        {{ if $event.Completed }}
+                                            <div class="tab-pane fade show active"
+                                                 id="results-points-{{ $eventIndex}}" role="tabpanel"
+                                                 aria-labelledby="results-points-{{ $eventIndex}}-tab">
 
-                                                <p class="text-center mt-2 mb-2">
-                                                    <a class="detailed-results" href="/results/{{ $sessionDetails.Results.SessionFile }}">View detailed results breakdown for this Session</a>
-                                                </p>
 
-                                                {{ template "session-overall" $sessionDetails.Results }}
-                                            {{ else if $sessionDetails.InProgress }}
-                                                <p class="text-center mt-5 pb-2"><strong>Session in Progress</strong>: Looks like there aren't any results yet. Check back later.</p>
-                                            {{ else }}
-                                                <p class="text-center mt-5 pb-2"><strong>Awaiting Start</strong>: Looks like this session hasn't started yet. Check back later.</p>
-                                            {{ end }}
-                                        </div>
+                                                {{ $championshipHasTeamNames := $championship.HasTeamNames }}
 
-                                        {{ $sessionCount = add $sessionCount 1 }}
-                                    {{ else }}
-                                    {{ end }}
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered table-striped">
+                                                        <tr>
+                                                            {{ if $championship.IsMultiClass }}
+                                                                <th>Class</th>
+                                                            {{ end }}
+                                                            <th>#</th>
+                                                            <th>Name</th>
+                                                            {{ if $championshipHasTeamNames }}
+                                                                <th>Team</th>
+                                                            {{ end }}
+                                                            <th>Car</th>
+                                                            <th>Points</th>
+                                                        </tr>
+
+                                                        {{ range $classIndex, $class := $championship.Classes }}
+                                                            {{ $eventStandings := $class.StandingsForEvent $event }}
+                                                            {{ range $pos, $standing := $eventStandings }}
+                                                                <tr {{ if $championship.IsMultiClass }}style="color: white; background: {{ classColor $classIndex }}"{{ end }}>
+                                                                    {{ if $championship.IsMultiClass }}
+                                                                        {{ if eq $pos 0 }}
+                                                                            <td rowspan="{{ len $eventStandings }}">{{ $class.Name }}</td>
+                                                                        {{ end }}
+                                                                    {{ end }}
+                                                                    <td>{{ add $pos 1 }}</td>
+                                                                    <td>{{ driverName $standing.Car.Driver.Name }}</td>
+                                                                    {{ if $championshipHasTeamNames }}
+                                                                        <td>{{ $standing.Car.Driver.Team }}</td>
+                                                                    {{ end }}
+                                                                    <td>{{ prettify $standing.Car.Model true }}</td>
+                                                                    <td>{{ $standing.Points }}</td>
+                                                                </tr>
+                                                            {{ end }}
+                                                        {{ end }}
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        {{ end }}
+                                    </div>
                                 </div>
-
-                            </div>
                             {{ end }}
                         </div>
                     </div>

@@ -43,7 +43,7 @@
     <body>
 
     <nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-primary">
-        <div class="container">
+        <div class="{{ with $.WideContainer }}container-fluid{{ else }}container{{ end }}">
             <a class="navbar-brand" href="/" data-toggle="tooltip" title="{{ $.server_name }}">{{ $.server_name }}</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -95,23 +95,28 @@
                         </div>
                     </li>
 
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navBarServerDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Server
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navBarServerDropdown">
-                            {{ if AdminAccess }}
-                                <a class="dropdown-item" href="/server-options">Options</a>
-                                <a class="dropdown-item" href="/accounts">Accounts</a>
-                                <a class="dropdown-item" href="/blacklist">Blacklist</a>
-                                <a class="dropdown-item" href="/motd">MOTD</a>
-                            {{ end }}
-                            {{ if DeleteAccess }}
-                                <a class="dropdown-item" href="/autofill-entrants">AutoFill Entrants</a>
-                            {{ end }}
-                            <a class="dropdown-item" href="/logs">Logs</a>
-                        </div>
-                    </li>
+
+                    {{ if WriteAccess }}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navBarServerDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Server
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navBarServerDropdown">
+                                {{ if AdminAccess }}
+                                    <a class="dropdown-item" href="/server-options">Options</a>
+                                    <a class="dropdown-item" href="/accounts">Accounts</a>
+                                    <a class="dropdown-item" href="/blacklist">Blacklist</a>
+                                    <a class="dropdown-item" href="/motd">MOTD</a>
+                                    <a class="dropdown-item" href="/audit-logs">Audit Logs</a>
+                                {{ end }}
+                                {{ if DeleteAccess }}
+                                    <a class="dropdown-item" href="/autofill-entrants">AutoFill Entrants</a>
+                                {{ end }}
+
+                                <a class="dropdown-item" href="/logs">Logs</a>
+                            </div>
+                        </li>
+                    {{ end }}
                 </ul>
 
                 <ul class="navbar-nav">
@@ -186,7 +191,7 @@
         </div>
     </nav>
 
-    <div class="container">
+    <div class="{{ with $.WideContainer }}container-fluid{{ else }}container{{ end }}">
         {{ block "content" . }}{{ end }}
 
 
@@ -200,21 +205,23 @@
             {{ end }}
         {{ end }}
 
-        <footer class="pt-4 my-md-5 pt-md-5 border-top row">
-            <div class="col-sm-4">
-                <a href="https://github.com/cj123/assetto-server-manager" class="mr-3"><i class="fab fa-github"></i> GitHub</a>
-                <a href="https://github.com/cj123/assetto-server-manager/issues" class="mr-3"><i class="fas fa-bug"></i> Submit a Bug Report</a><br>
-                <a href="https://paypal.me/JustaPenguinUK" class="mr-3"><i class="fas fa-heart"></i> Donate</a>
-                <a href="/events.ics" data-toggle="tooltip" title="Subscribe to a calendar feed for all Scheduled Events!">
-                    <i class="fas fa-calendar"></i> Scheduled Events
-                </a>
+        <footer class="pt-4 my-md-5 pt-md-5 border-top">
+            <div class="row">
+                <div class="col-sm-7">
+                    <a href="https://github.com/cj123/assetto-server-manager" class="mr-3"><i class="fab fa-github"></i> GitHub</a>
+                    <a href="https://github.com/cj123/assetto-server-manager/issues" class="mr-3"><i class="fas fa-bug"></i> Submit a Bug Report</a>
+                    <a href="https://paypal.me/JustaPenguinUK" class="mr-3"><i class="fas fa-heart"></i> Donate</a>
+                    <a href="/events.ics" class="mr-3" data-toggle="tooltip" title="Subscribe to a calendar feed for all Scheduled Events!">
+                        <i class="fas fa-calendar"></i> Scheduled Events
+                    </a>
+                    <a href="https://github.com/cj123/assetto-server-manager/wiki"><i class="fas fa-book"></i> Wiki</a>
+                </div>
+                <div class="col-sm-5 text-right">
+                    <img src="/static/img/racer.png" class="img img-footer float-right">
+                    Assetto Corsa Server Manager {{ Version }}<br> &copy; <a href="https://justapengu.in">Just a Penguin</a> 2010-{{ now.Format "2006" }}
+                </div>
             </div>
-            <div class="col-sm-4 text-center">
-                <img src="/static/img/racer.png" class="img img-footer">
-            </div>
-            <div class="col-sm-4 text-right">
-                Assetto Corsa Server Manager {{ Version }}<br> &copy; <a href="https://justapengu.in">Just a Penguin</a> 2010-{{ now.Format "2006" }}
-            </div>
+
         </footer>
     </div>
 
@@ -247,19 +254,7 @@
     </div>
 
     {{ block "javascript" . }}
-        <script defer src="{{ asset "/static/js/font-awesome.js" }}"></script>
-        <script src="{{ asset "/static/js/jquery-3.3.1.min.js" }}"></script>
-        <script src="{{ asset "/static/js/jquery-ui.min.js" }}"></script>
-        <script src="{{ asset "/static/js/moment.js" }}"></script>
-        <script src="{{ asset "/static/js/moment-timezone-with-data.min.js" }}"></script>
-        <script src="{{ asset "/static/js/jquery.quicksearch.js" }}"></script>
-        <script src="{{ asset "/static/js/jquery.multi-select.js" }}"></script>
-        <script src="{{ asset "/static/js/randomColor.min.js" }}"></script>
-        <script src="{{ asset "/static/js/bootstrap-switch.min.js" }}"></script>
-        <script src="{{ asset "/static/js/popper.min.js" }}"></script>
-        <script src="{{ asset "/static/js/bootstrap.bundle.min.js" }}"></script>
-        <script src="{{ asset "/static/js/summernote-bs4.min.js" }}"></script>
-        <script src="{{ asset "/static/manager.js" }}"></script>
+        <script src="{{ asset "/static/js/bundle.js" }}"></script>
     {{ end }}
 
     {{ block "thirdpartyjs" . }}

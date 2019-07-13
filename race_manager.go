@@ -37,20 +37,22 @@ func InitWithStore(store Store) {
 
 	err := store.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
 
-	if err != nil && err != ErrMetaValueNotSet {
+	if err != nil && err != ErrValueNotSet {
 		logrus.WithError(err).Errorf("Could not load server account options")
 	}
 
 	opts, err := store.LoadServerOptions()
 
-	if err != nil && err != ErrMetaValueNotSet {
+	if err != nil && err != ErrValueNotSet {
 		logrus.WithError(err).Errorf("Could not load server options")
 	}
 
 	UseShortenedDriverNames = opts != nil && opts.UseShortenedDriverNames == 1
 
-	mapHub = newLiveMapHub()
-	go mapHub.run()
+	raceControlWebsocketHub = newRaceControlHub()
+	go raceControlWebsocketHub.run()
+
+	ServerRaceControl = NewRaceControl(raceControlWebsocketHub, filesystemTrackData{})
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -177,6 +179,13 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		config.CurrentRaceConfig.PickupModeEnabled = 0
 	}
 
+	// drs zones management
+	err = ToggleDRSForTrack(config.CurrentRaceConfig.Track, config.CurrentRaceConfig.TrackLayout, !config.CurrentRaceConfig.DisableDRSZones)
+
+	if err != nil {
+		return err
+	}
+
 	if !event.IsChampionship() && championshipManager != nil {
 		logrus.Debugf("Starting a non championship event. Setting activeChampionship to nil")
 		championshipManager.activeChampionship = nil
@@ -236,6 +245,10 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 	quickRace.CurrentRaceConfig.Cars = strings.Join(cars, ";")
 	quickRace.CurrentRaceConfig.Track = r.Form.Get("Track")
 	quickRace.CurrentRaceConfig.TrackLayout = r.Form.Get("TrackLayout")
+
+	if quickRace.CurrentRaceConfig.TrackLayout == defaultLayoutName {
+		quickRace.CurrentRaceConfig.TrackLayout = ""
+	}
 
 	tyres, err := ListTyres()
 
@@ -340,6 +353,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		}
 
 		e := NewEntrant()
+		e.PitBox = i
 		e.Model = model
 		e.Skin = skin
 
@@ -416,6 +430,13 @@ func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (Entry
 		e.Ballast = formValueAsInt(r.Form["EntryList.Ballast"][i])
 		e.Restrictor = formValueAsInt(r.Form["EntryList.Restrictor"][i])
 		e.FixedSetup = r.Form["EntryList.FixedSetup"][i]
+
+		// The pit box/grid starting position
+		if entrantIDs, ok := r.Form["EntryList.EntrantID"]; ok && i < len(entrantIDs) {
+			e.PitBox = formValueAsInt(entrantIDs[i])
+		} else {
+			e.PitBox = i
+		}
 
 		if r.Form["EntryList.TransferTeamPoints"] != nil && i < len(r.Form["EntryList.TransferTeamPoints"]) && formValueAsInt(r.Form["EntryList.TransferTeamPoints"][i]) == 1 {
 			e.TransferTeamPoints = true
@@ -509,6 +530,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		RaceExtraLap:              formValueAsInt(r.FormValue("RaceExtraLap")),
 		MaxContactsPerKilometer:   formValueAsInt(r.FormValue("MaxContactsPerKilometer")),
 		ResultScreenTime:          formValueAsInt(r.FormValue("ResultScreenTime")),
+		DisableDRSZones:           formValueAsInt(r.FormValue("DisableDRSZones")) == 1,
 	}
 
 	if isSol {
@@ -714,6 +736,20 @@ func (rm *RaceManager) applyCurrentRaceSetupToOptions(opts map[string]interface{
 	return nil
 }
 
+func (rm *RaceManager) ListAutoFillEntrants() ([]*Entrant, error) {
+	entrants, err := rm.raceStore.ListEntrants()
+
+	if err != nil {
+		return nil, err
+	}
+
+	sort.Slice(entrants, func(i, j int) bool {
+		return entrants[i].Name < entrants[j].Name
+	})
+
+	return entrants, nil
+}
+
 // BuildRaceOpts builds a quick race form
 func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, error) {
 	cars, err := ListCars()
@@ -771,7 +807,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		replacementPassword = customRace.ReplacementServerPassword()
 	}
 
-	possibleEntrants, err := rm.raceStore.ListEntrants()
+	possibleEntrants, err := rm.ListAutoFillEntrants()
 
 	if err != nil {
 		return nil, err

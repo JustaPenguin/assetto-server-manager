@@ -111,8 +111,19 @@ span[data-toggle=tooltip] {
 
 #weatherImage {
     border-radius: 0.25rem;
-    width: 100%;
-    max-width: 355px;
+    max-height: 94px;
+    margin-top: 0 !important;
+    vertical-align: top;
+}
+
+#event-title {
+    font-size: 2em;
+    cursor: pointer;
+}
+
+#event-title:hover {
+    text-decoration: none;
+    color: #127ba3;
 }
 
 .car-image {
@@ -298,6 +309,8 @@ a.detailed-results:hover {
     height: 60px;
     position: relative;
     margin-top: -10px;
+    margin-left: 10px;
+    float: right;
 }
 
 footer {
@@ -325,6 +338,18 @@ footer a {
     height: 45px;
     border-radius: 10px;
     cursor: default;
+}
+
+.race-control-weather-info {
+    position: absolute;
+    top: 90px;
+    right: 20px;
+}
+
+.race-control-event-info {
+    position: absolute;
+    top: 90px;
+    left: 20px;
 }
 
 #road-temp {
@@ -562,6 +587,7 @@ td .dot-inactive {
     overflow-y: auto;
 }
 
+<<<<<<< HEAD
 .car-skin {
     margin-top: 0.5em;
     margin-bottom: 0.5em;
@@ -574,4 +600,24 @@ td .dot-inactive {
 .car-skins-other {
     max-height: 518px;
     overflow-y: auto;
+
+
+}
+@media screen and (max-width: 1200px) and (min-width: 991px) {
+    .navbar .container {
+        width: 100%;
+        padding-right: 15px !important;
+        padding-left: 15px !important;
+        margin-right: auto !important;
+        margin-left: auto !important;
+        max-width: 100% !important;
+    }
+}
+
+.legal-tyres .ms-selectable .ms-list {
+    border-color: #FF4136;
+}
+
+.legal-tyres .ms-selection .ms-list {
+    border-color: #28B62C;
 }

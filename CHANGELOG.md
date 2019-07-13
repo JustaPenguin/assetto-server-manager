@@ -1,3 +1,93 @@
+v1.3.3
+------
+
+**Please back up your data store (as defined in config.yml in 'store' -> 'path') before upgrading to this 
+  version!**
+
+Added:
+
+* We have made significant changes to Live Timings in this update, including:
+  - A new page layout which should hopefully give more space for the Live Timings table, with the map slightly reduced in size.
+  - Live Timings and the Live Map now both use the same source for data, meaning that your browser doesn't need to make as many requests to find out information.
+  - Live Timings now use a more standard time format (e.g. 01:23.234 instead of 1m23.234s).
+  - Crashes involving Drivers now show the name of the other Driver that was involved in the crash.
+  - Track information has been moved into a popover which appears when you click the session title on the Live Timings page.
+  - Firefox map resizing bugs are now properly fixed.
+  - Various other small bugs are fixed too.
+  - A new grid layout for the IFrames on the Live Timings page. On larger screens, you can place two iframes side by side.
+  
+  This is quite a large change in terms of code. If you find any problems with Live Timings, please let us know and we will sort them out!
+
+* You can now disable DRS Zones for any track in Custom Race / Championship Events. The drs_zones.ini file for the track
+  is replaced with a 'no DRS' file, meaning that players can't activate DRS at any point on the circuit. Note: this changes
+  actual track files, so if you're using a multi-server setup pointing to the same content folder, this may cause problems
+  if you're running races at the same track simultaneously.
+* Starting a Quick Race now takes you straight to the Live Timings page.
+* Scheduled Championship events now show the start time of individual sessions if applicable.
+* You can now explicitly control the Grid/Pit Box position of an entrant in Custom Races and Championships! This is 
+  useful if you want to place teammates next to each other in the pits, avoid broken pit boxes or have a custom
+  starting grid for a race with no qualifying. It should auto fill sensibly if left alone too!
+* Audit logs, Server Manager now locally tracks all actions carried out by registered users. Only admins can access
+  the logs, and logging can be disabled in the config.yml. Logs are intended to help server admins track down users
+  acting maliciously or just making mistakes, for example deleting a whole Championship an hour before it was 
+  meant to start (we're looking at you, Greg).
+* Added a link to our new Wiki in the footer! If you want to contribute tips and tricks for Server Manager, the wiki is the place!
+  You can access the wiki here: https://github.com/cj123/assetto-server-manager/wiki
+* The Server Manager javascript is now minified, which should make the pages load quicker!
+* Results tables now use the same time format as Live Timings (e.g. 01:23.234 instead of 1m23.234s).
+* You can now split the JSON store into two separate directories: private and shared. This is useful for multiserver setups,
+  where multiple instances of Server Manager can share the same database for Championships, Custom Races and AutoFill Entrants.
+  Check out the config.yml for more details. Thanks to WraithStar for contributing this!
+
+Fixes:
+
+* Open Championships will no longer empty the team name of a driver that has a team name specified.
+* Fixes an issue where tracks with a default layout and an extra layout (e.g. 'wet' tracks) would not be correctly set up
+  from Quick Race.
+* Users with read access or lower can no longer access replacement championship passwords by exporting the championship.
+* Championship overview and add event pages will now warn the user if the selected track has too few pit boxes to accommodate
+  the configured number of entrants.
+* Changed how process killing is done on Windows, hopefully making stopping plugins more reliable! We've had some mixed results
+  on this one, so we'd like to hear if it's working for you now!
+* Result tables now hide the Team column if no driver in the results has a team.
+* Improved the allowed tyres UI to more clearly show which is enabled and which is disabled.
+
+Removed:
+
+* In an effort to reduce the build size and complexity, we have removed the old Entrant autofill method. This has been
+  replaced by the more obvious dropdown in the Entrant box.
+
+v1.3.2
+------
+
+**Please note, this release contains breaking changes for run_on_start in config.yml**. If you are using run_on_start,
+you need to read the following:
+
+Each run_on_start command is now run from the directory that the binary file is in. 
+For example, ./stracker/stracker_linux_x86/stracker --stracker_ini stracker-default.ini now actually performs the following two commands:
+
+1. cd ./stracker/stracker_linux_x86
+2. ./stracker --stracker_ini stracker-default.ini
+
+This means that previous configuration entries will need updating! The config.example.yml contains updated examples for how this might work.
+
+Added:
+
+* Plugins are now run from the directory that their executable file is in. Please read the above note for more information.
+* Results overviews now show the tyre which was used to complete the driver's fastest lap of that session.
+* Added per-Event points breakdowns to Championships!
+* Server Logs are now only accessible by users in the "Write" group or above.
+
+Fixes:
+
+* Corrected the sizing of the "Remove IFrame" button on the Live Timings page.
+* Corrected the sizing and positioning of the Live Map when the page is resized.
+* Added an explanation as to why the UDP ports specified in Server Options do not match the ones in the server_cfg.ini. 
+* Fixes a bug where the EntryList was limited to 18 entrants in Custom Races.
+* AutoFill entrants are now alphabetically sorted.
+* Laps which have Cuts > 0 are now excluded from "Best Lap" in Live Timings
+* Fixes misleading times in the Live Timings stored times table by adding leading zeroes to millisecond values under 100ms.
+
 v1.3.1
 ------
 
