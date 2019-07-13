@@ -122,9 +122,15 @@ func driverInitials(name string) string {
 			}
 		}
 
-		return strings.Join(nameParts, "")
+		return strings.ToUpper(strings.Join(nameParts, ""))
 	} else {
-		return name
+		nameParts := strings.Split(name, " ")
+
+		if len(nameParts) > 0 && len(nameParts[len(nameParts)-1]) >= 3 {
+			return strings.ToUpper(nameParts[len(nameParts)-1][:3])
+		}
+
+		return strings.ToUpper(name)
 	}
 }
 
@@ -169,6 +175,7 @@ func (tr *Renderer) init() error {
 	funcs["timeFormat"] = timeFormat
 	funcs["dateFormat"] = dateFormat
 	funcs["timeZone"] = timeZone
+	funcs["hourAndZone"] = hourAndZoneFormat
 	funcs["isBefore"] = isBefore
 	funcs["trackInfo"] = trackInfo
 	funcs["stripGeotagCrap"] = stripGeotagCrap
@@ -192,6 +199,7 @@ func (tr *Renderer) init() error {
 	funcs["trustHTML"] = func(s string) template.HTML {
 		return template.HTML(s)
 	}
+	funcs["formatDuration"] = formatDuration
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
@@ -200,6 +208,20 @@ func (tr *Renderer) init() error {
 	}
 
 	return nil
+}
+
+func formatDuration(d time.Duration, trimLeadingZeroes bool) string {
+	hours := d.Hours()
+	minutes := d.Minutes() - float64(int(hours)*60)
+	seconds := d.Seconds() - float64(int(hours)*60*60) - float64(int(minutes)*60)
+
+	duration := fmt.Sprintf("%02d:%02d:%06.3f", int(hours), int(minutes), seconds)
+
+	if trimLeadingZeroes && strings.HasPrefix(duration, "00:") {
+		return duration[3:]
+	}
+
+	return duration
 }
 
 func templateDict(values ...interface{}) (map[string]interface{}, error) {
@@ -227,6 +249,12 @@ func timeFormat(t time.Time) string {
 
 func dateFormat(t time.Time) string {
 	return t.Format("02/01/2006")
+}
+
+func hourAndZoneFormat(t time.Time, plusMinutes int64) string {
+	t = t.Add(time.Minute * time.Duration(plusMinutes))
+
+	return t.Format("3:04 PM (MST)")
 }
 
 func timeZone(t time.Time) string {

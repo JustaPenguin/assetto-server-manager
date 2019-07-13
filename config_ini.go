@@ -141,8 +141,8 @@ type GlobalServerConfig struct {
 	UDPPort                   int    `ini:"UDP_PORT" show:"open" min:"0" max:"65535" help:"UDP port number: open this port on your server's firewall"`
 	TCPPort                   int    `ini:"TCP_PORT" show:"open" min:"0" max:"65535" help:"TCP port number: open this port on your server's firewall"`
 	HTTPPort                  int    `ini:"HTTP_PORT" show:"open" min:"0" max:"65535" help:"Lobby port number: open these ports (both UDP and TCP) on your server's firewall"`
-	UDPPluginLocalPort        int    `ini:"UDP_PLUGIN_LOCAL_PORT" show:"open" min:"0" max:"65535" help:"The port on which to listen for UDP messages from a plugin"`
-	UDPPluginAddress          string `ini:"UDP_PLUGIN_ADDRESS" show:"open" help:"The address of the plugin to which UDP messages are sent"`
+	UDPPluginLocalPort        int    `ini:"UDP_PLUGIN_LOCAL_PORT" show:"open" min:"0" max:"65535" help:"The port on which to listen for UDP messages from a plugin. Please note that Server Manager proxies UDP ports so that it can use them as well, for things such as Championships, Live Timings and the Map. This means that the UDP ports you see in the server_cfg.ini will be different to the ones you specify here. This is not an issue, and messages will be correctly sent/received on the UDP ports you specify here as well."`
+	UDPPluginAddress          string `ini:"UDP_PLUGIN_ADDRESS" show:"open" help:"The address of the plugin to which UDP messages are sent.  Please note that Server Manager proxies UDP ports so that it can use them as well, for things such as Championships, Live Timings and the Map. This means that the UDP ports you see in the server_cfg.ini will be different to the ones you specify here. This is not an issue, and messages will be correctly sent/received on the UDP ports you specify here as well."`
 	AuthPluginAddress         string `ini:"AUTH_PLUGIN_ADDRESS" show:"open" help:"The address of the auth plugin"`
 	RegisterToLobby           int    `ini:"REGISTER_TO_LOBBY" show:"open" input:"checkbox" help:"Register the AC Server to the main lobby"`
 	ClientSendIntervalInHertz int    `ini:"CLIENT_SEND_INTERVAL_HZ" show:"open" help:"Refresh rate of packet sending by the server. 10Hz = ~100ms. Higher number = higher MP quality = higher bandwidth resources needed. Really high values can create connection issues"`
@@ -159,7 +159,7 @@ type GlobalServerConfig struct {
 	FreeUDPPluginAddress   string `ini:"-" show:"-"`
 
 	ShowRaceNameInServerLobby int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager append the Custom Race or Championship name to the Server name in the lobby."`
-	CustomCSS                 string `ini:"-" input:"textarea" help:"Customise the style of Server Manager!"`
+	CustomCSS                 string `ini:"-" input:"textarea" help:"Customise the style of Server Manager! You can <a href='https://github.com/cj123/assetto-server-manager/wiki/Custom-CSS-Examples'>view some examples</a> on the Server Manager Wiki!"`
 	UseShortenedDriverNames   int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager hide driver's last names, for example 'John Smith' becomes 'John S.'"`
 }
 
@@ -204,6 +204,8 @@ type CurrentRaceConfig struct {
 	WindBaseSpeedMax       int `ini:"WIND_BASE_SPEED_MAX" help:"Max speed of session possible (max 40)"`
 	WindBaseDirection      int `ini:"WIND_BASE_DIRECTION" help:"base direction of the wind (wind is pointing at); 0 = North, 90 = East etc"`
 	WindVariationDirection int `ini:"WIND_VARIATION_DIRECTION" help:"variation (+ or -) of the base direction"`
+
+	DisableDRSZones bool `ini:"-"`
 
 	DynamicTrack DynamicTrackConfig `ini:"-"`
 

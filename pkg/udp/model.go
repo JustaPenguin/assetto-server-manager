@@ -4,6 +4,23 @@ import (
 	"golang.org/x/text/encoding/unicode/utf32"
 )
 
+type SessionType uint8
+
+func (s SessionType) String() string {
+	switch s {
+	case 0:
+		return "Booking"
+	case 1:
+		return "Practice"
+	case 2:
+		return "Qualifying"
+	case 3:
+		return "Race"
+	default:
+		return "Unknown"
+	}
+}
+
 type Event uint8
 
 const (
@@ -35,6 +52,11 @@ const (
 	EventNextSession         Event = 207
 	EventRestartSession      Event = 208
 	EventAdminCommand        Event = 209
+
+	SessionTypeRace       SessionType = 3
+	SessionTypeQualifying SessionType = 2
+	SessionTypePractice   SessionType = 1
+	SessionTypeBooking    SessionType = 0
 )
 
 type Message interface {
@@ -50,8 +72,9 @@ func (ServerError) Event() Event {
 }
 
 type CarID uint8
+type DriverGUID string
 
-type LapCompletedInternal struct {
+type lapCompletedInternal struct {
 	CarID     CarID
 	LapTime   uint32
 	Cuts      uint8
@@ -63,28 +86,33 @@ func (LapCompleted) Event() Event {
 }
 
 type LapCompleted struct {
-	LapCompletedInternal
+	CarID     CarID  `json:"CarID"`
+	LapTime   uint32 `json:"LapTime"`
+	Cuts      uint8  `json:"Cuts"`
+	CarsCount uint8  `json:"CarsCount"`
 
-	Cars []*LapCompletedCar
+	Cars []*LapCompletedCar `json:"Cars"`
 }
 
 type LapCompletedCar struct {
-	CarID     CarID
-	LapTime   uint32
-	Laps      uint16
-	Completed uint8
+	CarID     CarID  `json:"CarID"`
+	LapTime   uint32 `json:"LapTime"`
+	Laps      uint16 `json:"Laps"`
+	Completed uint8  `json:"Completed"`
 }
 
 type Vec struct {
-	X, Y, Z float32
+	X float32 `json:"X"`
+	Y float32 `json:"Y"`
+	Z float32 `json:"Z"`
 }
 
 type CollisionWithCar struct {
-	CarID       CarID
-	OtherCarID  uint8
-	ImpactSpeed float32
-	WorldPos    Vec
-	RelPos      Vec
+	CarID       CarID   `json:"CarID"`
+	OtherCarID  CarID   `json:"OtherCarID"`
+	ImpactSpeed float32 `json:"ImpactSpeed"`
+	WorldPos    Vec     `json:"WorldPos"`
+	RelPos      Vec     `json:"RelPos"`
 }
 
 func (CollisionWithCar) Event() Event {
@@ -92,10 +120,10 @@ func (CollisionWithCar) Event() Event {
 }
 
 type CollisionWithEnvironment struct {
-	CarID       CarID
-	ImpactSpeed float32
-	WorldPos    Vec
-	RelPos      Vec
+	CarID       CarID   `json:"CarID"`
+	ImpactSpeed float32 `json:"ImpactSpeed"`
+	WorldPos    Vec     `json:"WorldPos"`
+	RelPos      Vec     `json:"RelPos"`
 }
 
 func (CollisionWithEnvironment) Event() Event {
@@ -103,13 +131,14 @@ func (CollisionWithEnvironment) Event() Event {
 }
 
 type SessionCarInfo struct {
-	CarID      CarID
-	DriverName string
-	DriverGUID string
-	CarModel   string
-	CarSkin    string
+	CarID          CarID      `json:"CarID"`
+	DriverName     string     `json:"DriverName"`
+	DriverGUID     DriverGUID `json:"DriverGUID"`
+	CarModel       string     `json:"CarModel"`
+	CarSkin        string     `json:"CarSkin"`
+	DriverInitials string     `json:"DriverInitials"`
 
-	EventType Event
+	EventType Event `json:"EventType"`
 }
 
 func (s SessionCarInfo) Event() Event {
@@ -117,8 +146,8 @@ func (s SessionCarInfo) Event() Event {
 }
 
 type Chat struct {
-	CarID   CarID
-	Message string
+	CarID   CarID  `json:"CarID"`
+	Message string `json:"Message"`
 }
 
 func (Chat) Event() Event {
@@ -126,13 +155,13 @@ func (Chat) Event() Event {
 }
 
 type CarInfo struct {
-	CarID       CarID
-	IsConnected bool
-	CarModel    string
-	CarSkin     string
-	DriverName  string
-	DriverTeam  string
-	DriverGUID  string
+	CarID       CarID      `json:"CarID"`
+	IsConnected bool       `json:"IsConnected"`
+	CarModel    string     `json:"CarModel"`
+	CarSkin     string     `json:"CarSkin"`
+	DriverName  string     `json:"DriverName"`
+	DriverTeam  string     `json:"DriverTeam"`
+	DriverGUID  DriverGUID `json:"DriverGUID"`
 }
 
 func (CarInfo) Event() Event {
@@ -140,12 +169,12 @@ func (CarInfo) Event() Event {
 }
 
 type CarUpdate struct {
-	CarID               CarID
-	Pos                 Vec
-	Velocity            Vec
-	Gear                uint8
-	EngineRPM           uint16
-	NormalisedSplinePos float32
+	CarID               CarID   `json:"CarID"`
+	Pos                 Vec     `json:"Pos"`
+	Velocity            Vec     `json:"Velocity"`
+	Gear                uint8   `json:"Gear"`
+	EngineRPM           uint16  `json:"EngineRPM"`
+	NormalisedSplinePos float32 `json:"NormalisedSplinePos"`
 }
 
 func (CarUpdate) Event() Event {
@@ -171,24 +200,24 @@ func (ClientLoaded) Event() Event {
 }
 
 type SessionInfo struct {
-	Version             uint8
-	SessionIndex        uint8
-	CurrentSessionIndex uint8
-	SessionCount        uint8
-	ServerName          string
-	Track               string
-	TrackConfig         string
-	Name                string
-	Type                uint8
-	Time                uint16
-	Laps                uint16
-	WaitTime            uint16
-	AmbientTemp         uint8
-	RoadTemp            uint8
-	WeatherGraphics     string
-	ElapsedMilliseconds int32
+	Version             uint8       `json:"Version"`
+	SessionIndex        uint8       `json:"SessionIndex"`
+	CurrentSessionIndex uint8       `json:"CurrentSessionIndex"`
+	SessionCount        uint8       `json:"SessionCount"`
+	ServerName          string      `json:"ServerName"`
+	Track               string      `json:"Track"`
+	TrackConfig         string      `json:"TrackConfig"`
+	Name                string      `json:"Name"`
+	Type                SessionType `json:"Type"`
+	Time                uint16      `json:"Time"`
+	Laps                uint16      `json:"Laps"`
+	WaitTime            uint16      `json:"WaitTime"`
+	AmbientTemp         uint8       `json:"AmbientTemp"`
+	RoadTemp            uint8       `json:"RoadTemp"`
+	WeatherGraphics     string      `json:"WeatherGraphics"`
+	ElapsedMilliseconds int32       `json:"ElapsedMilliseconds"`
 
-	EventType Event
+	EventType Event `json:"EventType"`
 }
 
 func (s SessionInfo) Event() Event {

@@ -61,12 +61,17 @@ type SteamConfig struct {
 }
 
 type StoreConfig struct {
-	Type string `yaml:"type"`
-	Path string `yaml:"path"`
+	Type       string `yaml:"type"`
+	Path       string `yaml:"path"`
+	SharedPath string `yaml:"shared_data_path"`
 }
 
 func (s *StoreConfig) BuildStore() (Store, error) {
 	var rs Store
+
+	if s.SharedPath == "" {
+		s.SharedPath = s.Path
+	}
 
 	switch s.Type {
 	case "boltdb":
@@ -78,7 +83,7 @@ func (s *StoreConfig) BuildStore() (Store, error) {
 
 		rs = NewBoltStore(bbdb)
 	case "json":
-		rs = NewJSONStore(s.Path)
+		rs = NewJSONStore(s.Path, s.SharedPath)
 	default:
 		return nil, fmt.Errorf("invalid store type (%s), must be either boltdb/json", s.Type)
 	}
@@ -91,7 +96,8 @@ func (s *StoreConfig) BuildStore() (Store, error) {
 }
 
 type ServerExtraConfig struct {
-	RunOnStart []string `yaml:"run_on_start"`
+	RunOnStart   []string `yaml:"run_on_start"`
+	AuditLogging bool     `yaml:"audit_logging"`
 }
 
 func ReadConfig(location string) (conf *Configuration, err error) {

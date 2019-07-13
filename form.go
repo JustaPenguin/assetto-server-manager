@@ -141,7 +141,7 @@ func (f Form) buildOpts(val reflect.Value, t reflect.Type, parentName string) []
 				Name:     strings.Join(camelcase.Split(typeField.Name), " "),
 				Key:      typeField.Name,
 				Value:    valField.Interface(),
-				HelpText: typeField.Tag.Get("help"),
+				HelpText: template.HTML(typeField.Tag.Get("help")),
 				Type:     formType,
 				Opts:     make(map[string]bool),
 				Hidden:   formShow == "open" && IsHosted && !f.forceShowAllOptions,
@@ -172,7 +172,7 @@ type FormOption struct {
 	Name     string
 	Key      string
 	Type     string
-	HelpText string
+	HelpText template.HTML
 	Value    interface{}
 	Min, Max string
 	Hidden   bool

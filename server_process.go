@@ -184,19 +184,37 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, forwardingAddress string
 	for _, command := range config.Server.RunOnStart {
 		parts := strings.Split(command, " ")
 
+		if len(parts) == 0 {
+			continue
+		}
+
+		commandFullPath, err := filepath.Abs(parts[0])
+
+		if err != nil {
+			as.cmd = nil
+			return err
+		}
+
 		var cmd *exec.Cmd
 
 		if len(parts) > 1 {
-			cmd = buildCommand(as.ctx, parts[0], parts[1:]...)
+			cmd = buildCommand(as.ctx, commandFullPath, parts[1:]...)
 		} else {
-			cmd = buildCommand(as.ctx, parts[0])
+			cmd = buildCommand(as.ctx, commandFullPath)
+		}
+
+		pluginDir, err := filepath.Abs(filepath.Dir(command))
+
+		if err != nil {
+			logrus.WithError(err).Warnf("Could not determine plugin directory. Setting working dir to: %s", wd)
+			pluginDir = wd
 		}
 
 		cmd.Stdout = pluginsOutput
 		cmd.Stderr = pluginsOutput
-		cmd.Dir = wd
+		cmd.Dir = pluginDir
 
-		err := cmd.Start()
+		err = cmd.Start()
 
 		if err != nil {
 			logrus.Errorf("Could not run extra command: %s, err: %s", command, err)
@@ -267,12 +285,8 @@ func (as *AssettoServerProcess) startUDPListener() error {
 
 func (as *AssettoServerProcess) UDPCallback(message udp.Message) {
 	panicCapture(func() {
-		if config != nil && config.LiveMap.IsEnabled() {
-			go LiveMapCallback(message)
-		}
-
+		ServerRaceControl.UDPCallback(message)
 		championshipManager.ChampionshipEventCallback(message)
-		LiveTimingCallback(message)
 		LoopCallback(message)
 	})
 }
@@ -375,8 +389,8 @@ func (as *AssettoServerProcess) Stop() error {
 		as.doneCh <- struct{}{}
 	}()
 
-	if liveInfo.endSessionFunc != nil {
-		liveInfo.endSessionFunc()
+	if ServerRaceControl.sessionInfoCfn != nil {
+		ServerRaceControl.sessionInfoCfn()
 	}
 
 	return nil
