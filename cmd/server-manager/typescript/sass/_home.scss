@@ -1,0 +1,49 @@
+
+@media screen and (min-width: 400px) {
+  a.card {
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+}
+
+a.card h2 {
+  color: black;
+}
+
+
+a.card:hover {
+  text-decoration: none;
+}
+
+.home-race-info {
+  min-height: 200px;
+}
+
+@media screen and (max-width: 768px) {
+  .home-race-info .race-info {
+    min-height: 200px;
+  }
+
+  .home-race-info .button-bar {
+    position: relative;
+    width: auto;
+    margin-bottom: 10px;
+  }
+
+  .home-race-info .float-right {
+    float: unset !important;
+  }
+
+  .home-race-info .btn {
+    width: 100%;
+  }
+
+  #trackImage {
+    padding-left: 0 !important;
+    width: 100%;
+  }
+}
+
+.home-race-info .race-info, .home-race-info .race-info small {
+  font-size: 1.1em;
+}
