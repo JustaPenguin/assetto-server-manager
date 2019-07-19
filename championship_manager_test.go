@@ -60,7 +60,7 @@ var TestEntryList = EntryList{
 
 type dummyServerProcess struct{}
 
-func (dummyServerProcess) Start(cfg ServerConfig, forwardingAddress string, forwardListenPort int) error {
+func (dummyServerProcess) Start(cfg ServerConfig, forwardingAddress string, forwardListenPort int, eventType ServerEventType) error {
 	return nil
 }
 
@@ -103,9 +103,10 @@ var championshipEventFixtures = []string{
 	// "barbagello-no-end-sessions.db",
 }
 
+var championshipManager *ChampionshipManager
+
 func init() {
-	InitWithStore(NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"), filepath.Join(os.TempDir(), "asm-race-store-shared")))
-	AssettoProcess = dummyServerProcess{}
+	championshipManager = NewChampionshipManager(NewRaceManager(NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"), filepath.Join(os.TempDir(), "asm-race-store-shared")), dummyServerProcess{}, NewCarManager()))
 }
 
 func doReplay(filename string, multiplier int, callbackFunc udp.CallbackFunc, waitTime time.Duration) error {
