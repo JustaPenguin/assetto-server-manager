@@ -44,27 +44,27 @@ type raceControlMessage struct {
 	Message   udp.Message
 }
 
-type raceControlHub struct {
+type RaceControlHub struct {
 	clients   map[*raceControlClient]bool
 	broadcast chan raceControlMessage
 	register  chan *raceControlClient
 }
 
-func (h *raceControlHub) Send(message udp.Message) error {
+func (h *RaceControlHub) Send(message udp.Message) error {
 	h.broadcast <- newRaceControlMessage(message)
 
 	return nil
 }
 
-func newRaceControlHub() *raceControlHub {
-	return &raceControlHub{
+func newRaceControlHub() *RaceControlHub {
+	return &RaceControlHub{
 		broadcast: make(chan raceControlMessage),
 		register:  make(chan *raceControlClient),
 		clients:   make(map[*raceControlClient]bool),
 	}
 }
 
-func (h *raceControlHub) run() {
+func (h *RaceControlHub) run() {
 	for {
 		select {
 		case client := <-h.register:
@@ -83,7 +83,7 @@ func (h *raceControlHub) run() {
 }
 
 type raceControlClient struct {
-	hub *raceControlHub
+	hub *RaceControlHub
 
 	conn    *websocket.Conn
 	receive chan raceControlMessage
@@ -124,9 +124,79 @@ func (c *raceControlClient) writePump() {
 	}
 }
 
-var raceControlWebsocketHub *raceControlHub
+type RaceControlHandler struct {
+	*BaseHandler
 
-func raceControlWebsocketHandler(w http.ResponseWriter, r *http.Request) {
+	store          Store
+	raceManager    *RaceManager
+	raceControl    *RaceControl
+	raceControlHub *RaceControlHub
+}
+
+func NewRaceControlHandler(baseHandler *BaseHandler, store Store, raceManager *RaceManager, raceControl *RaceControl, raceControlHub *RaceControlHub) *RaceControlHandler {
+	return &RaceControlHandler{
+		BaseHandler:    baseHandler,
+		store:          store,
+		raceManager:    raceManager,
+		raceControl:    raceControl,
+		raceControlHub: raceControlHub,
+	}
+}
+
+func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request) {
+	currentRace, entryList := rch.raceManager.CurrentRace()
+
+	var customRace *CustomRace
+
+	if currentRace != nil {
+		customRace = &CustomRace{EntryList: entryList, RaceConfig: currentRace.CurrentRaceConfig}
+	}
+
+	frameLinks, err := rch.store.ListPrevFrames()
+
+	if err != nil {
+		logrus.Errorf("could not get frame links, err: %s", err)
+		return
+	}
+
+	rch.viewRenderer.MustLoadTemplate(w, r, "live-timing.html", map[string]interface{}{
+		"RaceDetails":     customRace,
+		"FrameLinks":      frameLinks,
+		"CSSDotSmoothing": udp.RealtimePosIntervalMs,
+		"WideContainer":   true,
+	})
+}
+
+func deleteEmpty(s []string) []string {
+	var r []string
+	for _, str := range s {
+		if str != "" {
+			r = append(r, str)
+		}
+	}
+	return r
+}
+
+func (rch *RaceControlHandler) saveIFrames(w http.ResponseWriter, r *http.Request) {
+	// Save the frame links from the form
+	err := r.ParseForm()
+
+	if err != nil {
+		logrus.Errorf("could not load parse form, err: %s", err)
+		return
+	}
+
+	err = rch.store.UpsertLiveFrames(deleteEmpty(r.Form["frame-link"]))
+
+	if err != nil {
+		logrus.Errorf("could not save frame links, err: %s", err)
+		return
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (rch *RaceControlHandler) websocket(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 
 	if err != nil {
@@ -134,11 +204,11 @@ func raceControlWebsocketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &raceControlClient{hub: raceControlWebsocketHub, conn: c, receive: make(chan raceControlMessage, 256)}
+	client := &raceControlClient{hub: rch.raceControlHub, conn: c, receive: make(chan raceControlMessage, 256)}
 	client.hub.register <- client
 
 	go client.writePump()
 
 	// new client, send them an initial race control message.
-	client.receive <- newRaceControlMessage(ServerRaceControl)
+	client.receive <- newRaceControlMessage(rch.raceControl)
 }

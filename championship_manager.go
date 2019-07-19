@@ -31,40 +31,13 @@ type ChampionshipManager struct {
 
 	activeChampionship *ActiveChampionship
 	mutex              sync.Mutex
+
+	championshipEventStartTimers map[string]*time.Timer
 }
 
-type ActiveChampionship struct {
-	Name                    string
-	ChampionshipID, EventID uuid.UUID
-	SessionType             SessionType
-	OverridePassword        bool
-	ReplacementPassword     string
-
-	loadedEntrants map[udp.CarID]udp.SessionCarInfo
-
-	NumLapsCompleted   int
-	NumRaceStartEvents int
-}
-
-func (a *ActiveChampionship) IsChampionship() bool {
-	return true
-}
-
-func (a *ActiveChampionship) OverrideServerPassword() bool {
-	return a.OverridePassword
-}
-
-func (a *ActiveChampionship) ReplacementServerPassword() string {
-	return a.ReplacementPassword
-}
-
-func (a *ActiveChampionship) EventName() string {
-	return a.Name
-}
-
-func NewChampionshipManager(rm *RaceManager) *ChampionshipManager {
+func NewChampionshipManager(raceManager *RaceManager) *ChampionshipManager {
 	return &ChampionshipManager{
-		RaceManager: rm,
+		RaceManager: raceManager,
 	}
 }
 
@@ -510,7 +483,7 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 	event.Scheduled = date
 
 	// if there is an existing schedule timer for this event stop it
-	if timer := ChampionshipEventStartTimers[event.ID.String()]; timer != nil {
+	if timer := cm.championshipEventStartTimers[event.ID.String()]; timer != nil {
 		timer.Stop()
 	}
 
@@ -518,7 +491,7 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 		// add a scheduled event on date
 		duration := time.Until(date)
 
-		ChampionshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+		cm.championshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
 			err := cm.StartEvent(championship.ID.String(), event.ID.String(), false)
 
 			if err != nil {
@@ -534,7 +507,7 @@ func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
 	cm.mutex.Lock()
 	defer cm.mutex.Unlock()
 
-	if cm.activeChampionship == nil {
+	if cm.process.EventType() != EventTypeChampionship {
 		return
 	}
 
@@ -621,7 +594,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 
 		if championship.OpenEntrants && a.Event() == udp.EventNewConnection {
 			// a person joined, check to see if they need adding to the championship
-			foundSlot, classForCar, err := championship.AddEntrantFromSessionData(sessionEntrantWrapper(a))
+			foundSlot, classForCar, err := cm.AddEntrantFromSessionData(championship, sessionEntrantWrapper(a))
 
 			if err != nil {
 				saveChampionship = false
@@ -676,7 +649,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			welcomeMessage, err := udp.NewSendChat(entrant.CarID, msg)
 
 			if err == nil {
-				err := AssettoProcess.SendUDPMessage(welcomeMessage)
+				err := cm.process.SendUDPMessage(welcomeMessage)
 
 				if err != nil {
 					logrus.Errorf("Unable to send welcome message to: %s, err: %s", entrant.DriverName, err)
@@ -717,7 +690,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			previousSessionNumLaps := cm.activeChampionship.NumLapsCompleted
 
 			defer func() {
-				if cm.activeChampionship == nil {
+				if cm.process.EventType() != EventTypeChampionship {
 					return
 				}
 
@@ -778,7 +751,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			cm.activeChampionship = nil
 
 			// stop the server
-			err := AssettoProcess.Stop()
+			err := cm.process.Stop()
 
 			if err != nil {
 				logrus.Errorf("Could not stop Assetto Process, err: %s", err)
@@ -850,7 +823,7 @@ func (cm *ChampionshipManager) CancelEvent(championshipID string, eventID string
 
 	event.Sessions = make(map[SessionType]*ChampionshipSession)
 
-	if err := AssettoProcess.Stop(); err != nil {
+	if err := cm.process.Stop(); err != nil {
 		return err
 	}
 
@@ -870,7 +843,7 @@ func (cm *ChampionshipManager) RestartEvent(championshipID string, eventID strin
 var ErrNoActiveEvent = errors.New("servermanager: no active championship event")
 
 func (cm *ChampionshipManager) RestartActiveEvent() error {
-	if cm.activeChampionship == nil {
+	if cm.process.EventType() != EventTypeChampionship {
 		return ErrNoActiveEvent
 	}
 
@@ -878,7 +851,7 @@ func (cm *ChampionshipManager) RestartActiveEvent() error {
 }
 
 func (cm *ChampionshipManager) StopActiveEvent() error {
-	if cm.activeChampionship == nil {
+	if cm.process.EventType() != EventTypeChampionship {
 		return ErrNoActiveEvent
 	}
 
@@ -976,7 +949,7 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 					continue
 				}
 
-				foundFreeSlot, _, err := championship.AddEntrantFromSessionData(car)
+				foundFreeSlot, _, err := cm.AddEntrantFromSessionData(championship, car)
 
 				if err != nil {
 					return err
@@ -1004,6 +977,34 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 	}
 
 	return cm.UpsertChampionship(championship)
+}
+
+func (cm *ChampionshipManager) AddEntrantFromSessionData(championship *Championship, potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
+	foundFreeSlot, class, err := championship.AddEntrantFromSession(potentialEntrant)
+
+	if err != nil {
+		return foundFreeSlot, class, err
+	}
+
+	if foundFreeSlot {
+		newEntrant := NewEntrant()
+
+		newEntrant.GUID = potentialEntrant.GetGUID()
+		newEntrant.Name = potentialEntrant.GetName()
+		newEntrant.Team = potentialEntrant.GetTeam()
+
+		e := make(EntryList)
+
+		e.Add(newEntrant)
+
+		err := cm.SaveEntrantsForAutoFill(e)
+
+		if err != nil {
+			logrus.Errorf("Couldn't add entrant (GUID: %s, Name: %s) to autofill list", newEntrant.GUID, newEntrant.Name)
+		}
+	}
+
+	return foundFreeSlot, class, nil
 }
 
 func (cm *ChampionshipManager) BuildICalFeed(championshipID string, w io.Writer) error {
@@ -1166,7 +1167,7 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 
 	if !championship.SignUpForm.RequiresApproval {
 		// check to see if there is room in the entrylist for the user in their specific car
-		foundSlot, _, err = championship.AddEntrantFromSessionData(signUpResponse)
+		foundSlot, _, err = cm.AddEntrantFromSessionData(championship, signUpResponse)
 
 		if err != nil {
 			return signUpResponse, foundSlot, err
@@ -1182,4 +1183,48 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 	championship.SignUpForm.Responses = append(championship.SignUpForm.Responses, signUpResponse)
 
 	return signUpResponse, foundSlot, cm.UpsertChampionship(championship)
+}
+
+func (cm *ChampionshipManager) InitScheduledChampionships() error {
+	cm.championshipEventStartTimers = make(map[string]*time.Timer)
+	championships, err := cm.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	for _, championship := range championships {
+		championship := championship
+
+		for _, event := range championship.Events {
+			event := event
+
+			if event.Scheduled.After(time.Now()) {
+				// add a scheduled event on date
+				duration := time.Until(event.Scheduled)
+
+				cm.championshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+					err := cm.StartEvent(championship.ID.String(), event.ID.String(), false)
+
+					if err != nil {
+						logrus.Errorf("couldn't start scheduled race, err: %s", err)
+					}
+				})
+
+				return cm.UpsertChampionship(championship)
+			} else {
+				emptyTime := time.Time{}
+				if event.Scheduled != emptyTime {
+					logrus.Infof("Looks like the server was offline whilst a scheduled event was meant to start!"+
+						" Start time: %s. The schedule has been cleared. Start the event manually if you wish to run it.", event.Scheduled.String())
+
+					event.Scheduled = emptyTime
+
+					return cm.UpsertChampionship(championship)
+				}
+			}
+		}
+	}
+
+	return nil
 }

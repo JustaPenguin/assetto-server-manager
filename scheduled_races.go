@@ -14,105 +14,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var CustomRaceStartTimers map[string]*time.Timer
-var ChampionshipEventStartTimers map[string]*time.Timer
-
-func InitialiseScheduledCustomRaces() error {
-	CustomRaceStartTimers = make(map[string]*time.Timer)
-
-	races, err := raceManager.raceStore.ListCustomRaces()
-
-	if err != nil {
-		return err
-	}
-
-	for _, race := range races {
-		race := race
-
-		if race.Scheduled.After(time.Now()) {
-			// add a scheduled event on date
-			duration := time.Until(race.Scheduled)
-
-			CustomRaceStartTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
-				err := raceManager.StartCustomRace(race.UUID.String(), false)
-
-				if err != nil {
-					logrus.Errorf("couldn't start scheduled race, err: %s", err)
-				}
-			})
-
-			err := raceManager.raceStore.UpsertCustomRace(race)
-
-			if err != nil {
-				return err
-			}
-		} else {
-			emptyTime := time.Time{}
-			if race.Scheduled != emptyTime {
-				logrus.Infof("Looks like the server was offline whilst a scheduled event was meant to start!"+
-					" Start time: %s. The schedule has been cleared. Start the event manually if you wish to run it.", race.Scheduled.String())
-
-				race.Scheduled = emptyTime
-
-				err := raceManager.raceStore.UpsertCustomRace(race)
-
-				if err != nil {
-					return err
-				}
-			}
-
-		}
-	}
-
-	return nil
-}
-
-func InitialiseScheduledChampionshipEvents() error {
-	ChampionshipEventStartTimers = make(map[string]*time.Timer)
-
-	championships, err := championshipManager.ListChampionships()
-
-	if err != nil {
-		return err
-	}
-
-	for _, championship := range championships {
-		championship := championship
-
-		for _, event := range championship.Events {
-			event := event
-
-			if event.Scheduled.After(time.Now()) {
-				// add a scheduled event on date
-				duration := time.Until(event.Scheduled)
-
-				ChampionshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
-					err := championshipManager.StartEvent(championship.ID.String(), event.ID.String(), false)
-
-					if err != nil {
-						logrus.Errorf("couldn't start scheduled race, err: %s", err)
-					}
-				})
-
-				return championshipManager.UpsertChampionship(championship)
-			} else {
-				emptyTime := time.Time{}
-				if event.Scheduled != emptyTime {
-					logrus.Infof("Looks like the server was offline whilst a scheduled event was meant to start!"+
-						" Start time: %s. The schedule has been cleared. Start the event manually if you wish to run it.", event.Scheduled.String())
-
-					event.Scheduled = emptyTime
-
-					return championshipManager.UpsertChampionship(championship)
-				}
-
-			}
-		}
-	}
-
-	return nil
-}
-
 type ScheduledEvent interface {
 	GetID() uuid.UUID
 	GetRaceSetup() CurrentRaceConfig
@@ -175,8 +76,22 @@ func BuildICalEvent(event ScheduledEvent) *components.Event {
 	return icalEvent
 }
 
-func buildScheduledRaces(w io.Writer) error {
-	_, _, _, customRaces, err := raceManager.ListCustomRaces()
+type ScheduledRacesHandler struct {
+	store               Store
+	raceManager         *RaceManager
+	championshipManager *ChampionshipManager
+}
+
+func NewScheduledRacesHandler(store Store, raceManager *RaceManager, championshipManager *ChampionshipManager) *ScheduledRacesHandler {
+	return &ScheduledRacesHandler{
+		store:               store,
+		raceManager:         raceManager,
+		championshipManager: championshipManager,
+	}
+}
+
+func (rs *ScheduledRacesHandler) buildScheduledRaces(w io.Writer) error {
+	_, _, _, customRaces, err := rs.raceManager.ListCustomRaces()
 
 	if err != nil {
 		return err
@@ -188,7 +103,7 @@ func buildScheduledRaces(w io.Writer) error {
 		scheduled = append(scheduled, race)
 	}
 
-	championships, err := championshipManager.ListChampionships()
+	championships, err := rs.championshipManager.ListChampionships()
 
 	if err != nil {
 		return err
@@ -224,11 +139,11 @@ func buildScheduledRaces(w io.Writer) error {
 	return err
 }
 
-func allScheduledRacesICalHandler(w http.ResponseWriter, r *http.Request) {
+func (rs *ScheduledRacesHandler) allScheduledRacesICalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/calendar; charset=utf-8")
 	w.Header().Add("Content-Disposition", "inline; filename=championship.ics")
 
-	err := buildScheduledRaces(w)
+	err := rs.buildScheduledRaces(w)
 
 	if err != nil {
 		logrus.WithError(err).Error("could not build scheduled races feed")
