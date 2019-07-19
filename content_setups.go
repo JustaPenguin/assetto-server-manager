@@ -17,9 +17,7 @@ import (
 // it is a map of car name => track name => []setup
 type CarSetups map[string]map[string][]string
 
-func ListSetups() (CarSetups, error) {
-	setups := make(CarSetups)
-
+func ListAllSetups() (CarSetups, error) {
 	setupDirectory := filepath.Join(ServerInstallPath, "setups")
 
 	if _, err := os.Stat(setupDirectory); os.IsNotExist(err) {
@@ -31,6 +29,8 @@ func ListSetups() (CarSetups, error) {
 	} else if err != nil {
 		return nil, err
 	}
+
+	setups := make(CarSetups)
 
 	err := filepath.Walk(setupDirectory, func(path string, file os.FileInfo, _ error) error {
 		if file.IsDir() || filepath.Ext(file.Name()) != ".ini" {
@@ -54,6 +54,39 @@ func ListSetups() (CarSetups, error) {
 		if len(trackParts) > 0 {
 			trackName := trackParts[len(trackParts)-1]
 			setups[name][trackName] = append(setups[name][trackName], file.Name())
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return setups, nil
+}
+
+func ListSetupsForCar(model string) (map[string][]string, error) {
+	setups := make(map[string][]string)
+
+	setupDirectory := filepath.Join(ServerInstallPath, "setups", model)
+
+	if _, err := os.Stat(setupDirectory); os.IsNotExist(err) {
+		return setups, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	err := filepath.Walk(setupDirectory, func(path string, file os.FileInfo, _ error) error {
+		if file.IsDir() || filepath.Ext(file.Name()) != ".ini" {
+			return nil
+		}
+
+		trackParts := strings.Split(filepath.ToSlash(filepath.Dir(path)), "/")
+
+		if len(trackParts) > 0 {
+			trackName := trackParts[len(trackParts)-1]
+			setups[trackName] = append(setups[trackName], file.Name())
 		}
 
 		return nil
@@ -142,7 +175,7 @@ func carSetupsUploadHandler(w http.ResponseWriter, r *http.Request) {
 		AddFlash(w, r, fmt.Sprintf("The setup file for %s was uploaded successfully!", carName))
 	}
 
-	http.Redirect(w, r, "/cars?tab=setups", http.StatusFound)
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
 func carSetupDeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -159,5 +192,5 @@ func carSetupDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		AddFlash(w, r, "Setup successfully deleted!")
 	}
 
-	http.Redirect(w, r, "/cars?tab=setups", http.StatusFound)
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }

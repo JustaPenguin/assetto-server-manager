@@ -2,8 +2,7 @@ package servermanager
 
 import (
 	"encoding/json"
-	"github.com/blevesearch/bleve/search/query"
-	"github.com/davecgh/go-spew/spew"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -12,6 +11,7 @@ import (
 	"sort"
 
 	"github.com/blevesearch/bleve"
+	"github.com/blevesearch/bleve/search/query"
 	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
 	"github.com/spkg/bom"
@@ -94,6 +94,60 @@ type CarDetails struct {
 	Year        int64           `json:"year"`
 }
 
+func (cd *CarDetails) AddTag(name string) {
+	for _, tag := range cd.Tags {
+		if tag == name {
+			// tag exists
+			return
+		}
+	}
+
+	cd.Tags = append(cd.Tags, name)
+}
+
+func (cd *CarDetails) DelTag(name string) {
+	deleteIndex := -1
+
+	for index, tag := range cd.Tags {
+		if tag == name {
+			deleteIndex = index
+		}
+	}
+
+	if deleteIndex == -1 {
+		return
+	}
+
+	cd.Tags = append(cd.Tags[:deleteIndex], cd.Tags[deleteIndex+1:]...)
+}
+
+func (cd *CarDetails) Save(carName string) error {
+	f, err := os.Create(filepath.Join(ServerInstallPath, "content", "cars", carName, "ui", "ui_car.json"))
+
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "   ")
+
+	return enc.Encode(cd)
+}
+
+func (cd *CarDetails) Load(carName string) error {
+	carDetailsBytes, err := ioutil.ReadFile(filepath.Join(ServerInstallPath, "content", "cars", carName, "ui", "ui_car.json"))
+
+	if err != nil {
+		return err
+	}
+
+	carDetailsBytes = bom.Clean(regexp.MustCompile(`\t*\r*\n*`).ReplaceAll(carDetailsBytes, []byte("")))
+
+	return json.Unmarshal(carDetailsBytes, &cd)
+}
+
 type CarSpecs struct {
 	Acceleration string `json:"acceleration"`
 	Bhp          string `json:"bhp"`
@@ -121,17 +175,9 @@ func loadCarDetails(name string, tyres Tyres) (*Car, error) {
 		skins = append(skins, skinFile.Name())
 	}
 
-	carDetailsBytes, err := ioutil.ReadFile(filepath.Join(carDirectory, "ui", "ui_car.json"))
+	carDetails := CarDetails{}
 
-	if err != nil {
-		return nil, err
-	}
-
-	carDetailsBytes = bom.Clean(regexp.MustCompile(`\t*\r*\n*`).ReplaceAll(carDetailsBytes, []byte("")))
-
-	var carDetails CarDetails
-
-	if err := json.Unmarshal(carDetailsBytes, &carDetails); err != nil {
+	if err := carDetails.Load(name); err != nil {
 		return nil, err
 	}
 
@@ -290,10 +336,69 @@ func carDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	setups, err := ListSetupsForCar(carName)
+
+	if err != nil {
+		panic(err)
+	}
+
+	tracks, err := ListTracks()
+
+	if err != nil {
+		panic(err)
+	}
+
 	ViewRenderer.MustLoadTemplate(w, r, "content/car-details.html", map[string]interface{}{
-		"Car":     car,
-		"Results": results,
+		"Car":       car,
+		"Results":   results,
+		"Setups":    setups,
+		"TrackOpts": tracks,
 	})
+}
+
+func carTagManagerHandler(w http.ResponseWriter, r *http.Request) {
+	// adding a new tag
+	car := chi.URLParam(r, "car_id")
+
+	if r.Method == http.MethodPost {
+		tag := r.FormValue("new-tag")
+
+		// load car details file
+		carDetails := CarDetails{}
+
+		if err := carDetails.Load(car); err != nil {
+			panic(err)
+		}
+
+		carDetails.AddTag(tag)
+
+		if err := carDetails.Save(car); err != nil {
+			panic(err)
+		}
+
+		AddFlash(w, r, fmt.Sprintf("Successfully added the tag: %s", tag))
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+		return
+	} else {
+		tag := r.URL.Query().Get("delete")
+
+		// load car details file
+		carDetails := CarDetails{}
+
+		if err := carDetails.Load(car); err != nil {
+			panic(err)
+		}
+
+		carDetails.DelTag(tag)
+
+		if err := carDetails.Save(car); err != nil {
+			panic(err)
+		}
+
+		AddFlash(w, r, fmt.Sprintf("Successfully deleted the tag: %s", tag))
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+		return
+	}
 }
 
 var carIndex bleve.Index
@@ -310,7 +415,7 @@ func createCarDetailsIndex() bleve.Index {
 	return index
 }
 
-func InitCarIndex() {
+func InitCarIndex() error {
 	var err error
 
 	carIndex = createCarDetailsIndex()
@@ -318,21 +423,16 @@ func InitCarIndex() {
 	cars, err := ListCars()
 
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	for _, car := range cars {
 		err := carIndex.Index(car.Name, car.Details)
 
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
 
-	rq := bleve.NewSearchRequest(bleve.NewQueryStringQuery(`tags:"rss"`))
-	rq.Size = 100
-
-	deets, err := carIndex.Search(rq)
-
-	spew.Dump(deets)
+	return nil
 }

@@ -813,7 +813,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		return nil, err
 	}
 
-	fixedSetups, err := ListSetups()
+	fixedSetups, err := ListAllSetups()
 
 	if err != nil {
 		return nil, err

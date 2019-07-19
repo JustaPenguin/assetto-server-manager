@@ -113,6 +113,7 @@ func Router(fs http.FileSystem) http.Handler {
 
 		// content
 		r.Post("/setups/upload", carSetupsUploadHandler)
+		r.HandleFunc("/car/{car_id}/tags", carTagManagerHandler)
 
 		// races
 		r.Get("/quick", quickRaceHandler)
