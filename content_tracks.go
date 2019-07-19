@@ -132,19 +132,29 @@ func GetTrackInfo(name, layout string) (*TrackInfo, error) {
 	return trackInfo, err
 }
 
-func tracksHandler(w http.ResponseWriter, r *http.Request) {
+type TracksHandler struct {
+	*BaseHandler
+}
+
+func NewTracksHandler(baseHandler *BaseHandler) *TracksHandler {
+	return &TracksHandler{
+		BaseHandler: baseHandler,
+	}
+}
+
+func (th *TracksHandler) list(w http.ResponseWriter, r *http.Request) {
 	tracks, err := ListTracks()
 
 	if err != nil {
 		logrus.Errorf("could not get track list, err: %s", err)
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "content/tracks.html", map[string]interface{}{
+	th.viewRenderer.MustLoadTemplate(w, r, "content/tracks.html", map[string]interface{}{
 		"tracks": tracks,
 	})
 }
 
-func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {
+func (th *TracksHandler) delete(w http.ResponseWriter, r *http.Request) {
 	trackName := chi.URLParam(r, "name")
 	tracksPath := filepath.Join(ServerInstallPath, "content", "tracks")
 

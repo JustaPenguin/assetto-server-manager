@@ -112,7 +112,7 @@ func ReadConfig(location string) (conf *Configuration, err error) {
 	err = yaml.NewDecoder(f).Decode(&conf)
 
 	config = conf
-	store = sessions.NewCookieStore([]byte(conf.HTTP.SessionKey))
+	sessionsStore = sessions.NewCookieStore([]byte(conf.HTTP.SessionKey))
 
 	if config.Accounts.AdminPasswordOverride != "" {
 		logrus.Infof("WARNING! Admin Password Override is set. Please only have this set if you are resetting your admin account password!")

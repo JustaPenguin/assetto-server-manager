@@ -17,9 +17,6 @@ import (
 	"github.com/spkg/bom"
 )
 
-// @TODO resolver me
-var carManager *CarManager
-
 type Car struct {
 	Name    string
 	Skins   []string
@@ -323,7 +320,7 @@ func (cm *CarManager) Search(term string, from int) (*bleve.SearchResult, map[st
 	cars := make(map[string]*Car)
 
 	for _, hit := range results.Hits {
-		cars[hit.ID], err = carManager.LoadCar(hit.ID, nil)
+		cars[hit.ID], err = cm.LoadCar(hit.ID, nil)
 
 		if err != nil {
 			return nil, nil, err
@@ -374,13 +371,13 @@ func (cm *CarManager) LoadCarDetailsForTemplate(carName string) (map[string]inte
 		return nil, err
 	}
 
-	car, err := carManager.LoadCar(carName, tyres)
+	car, err := cm.LoadCar(carName, tyres)
 
 	if err != nil {
 		return nil, err
 	}
 
-	results, err := carManager.ResultsForCar(carName)
+	results, err := cm.ResultsForCar(carName)
 
 	if err != nil {
 		return nil, err
@@ -406,9 +403,22 @@ func (cm *CarManager) LoadCarDetailsForTemplate(carName string) (map[string]inte
 	}, nil
 }
 
-func carsHandler(w http.ResponseWriter, r *http.Request) {
+type CarsHandler struct {
+	*BaseHandler
+
+	carManager *CarManager
+}
+
+func NewCarsHandler(baseHandler *BaseHandler, carManager *CarManager) *CarsHandler {
+	return &CarsHandler{
+		BaseHandler: baseHandler,
+		carManager:  carManager,
+	}
+}
+
+func (ch *CarsHandler) list(w http.ResponseWriter, r *http.Request) {
 	searchTerm := r.URL.Query().Get("q")
-	results, cars, err := carManager.Search(searchTerm, 0) // @TODO pagination
+	results, cars, err := ch.carManager.Search(searchTerm, 0) // @TODO pagination
 
 	if err != nil {
 		logrus.WithError(err).Error("Could not perform search")
@@ -416,16 +426,16 @@ func carsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "content/cars.html", map[string]interface{}{
+	ch.viewRenderer.MustLoadTemplate(w, r, "content/cars.html", map[string]interface{}{
 		"Results": results,
 		"Cars":    cars,
 		"Query":   searchTerm,
 	})
 }
 
-func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
+func (ch *CarsHandler) delete(w http.ResponseWriter, r *http.Request) {
 	carName := chi.URLParam(r, "name")
-	err := carManager.DeleteCar(carName)
+	err := ch.carManager.DeleteCar(carName)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Could not delete car: %s", carName)
@@ -453,9 +463,9 @@ func carSkinURL(car, skin string) string {
 	return "/" + filepath.ToSlash(skinPath)
 }
 
-func carDetailsHandler(w http.ResponseWriter, r *http.Request) {
+func (ch *CarsHandler) view(w http.ResponseWriter, r *http.Request) {
 	carName := chi.URLParam(r, "car_id")
-	templateParams, err := carManager.LoadCarDetailsForTemplate(carName)
+	templateParams, err := ch.carManager.LoadCarDetailsForTemplate(carName)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Could not load car details for: %s", carName)
@@ -463,16 +473,16 @@ func carDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "content/car-details.html", templateParams)
+	ch.viewRenderer.MustLoadTemplate(w, r, "content/car-details.html", templateParams)
 }
 
-func carTagManagerHandler(w http.ResponseWriter, r *http.Request) {
+func (ch *CarsHandler) tags(w http.ResponseWriter, r *http.Request) {
 	// adding a new tag
 	car := chi.URLParam(r, "car_id")
 
 	if r.Method == http.MethodPost {
 		tag := r.FormValue("new-tag")
-		err := carManager.AddTag(car, tag)
+		err := ch.carManager.AddTag(car, tag)
 
 		if err == nil {
 			AddFlash(w, r, fmt.Sprintf("Successfully added the tag: %s", tag))
@@ -481,7 +491,7 @@ func carTagManagerHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		tag := r.URL.Query().Get("delete")
-		err := carManager.DelTag(car, tag)
+		err := ch.carManager.DelTag(car, tag)
 
 		if err == nil {
 			AddFlash(w, r, fmt.Sprintf("Successfully deleted the tag: %s", tag))
