@@ -147,10 +147,6 @@ func weatherHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func apiWeatherUploadHandler(w http.ResponseWriter, r *http.Request) {
-	uploadHandler(w, r, "Weather")
-}
-
 func weatherDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	weatherKey := chi.URLParam(r, "key")
 	weatherPath := filepath.Join(ServerInstallPath, "content", "weather")

@@ -144,10 +144,6 @@ func tracksHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func apiTrackUploadHandler(w http.ResponseWriter, r *http.Request) {
-	uploadHandler(w, r, "Track")
-}
-
 func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	trackName := chi.URLParam(r, "name")
 	tracksPath := filepath.Join(ServerInstallPath, "content", "tracks")
@@ -156,11 +152,8 @@ func trackDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logrus.Errorf("could not get track list, err: %s", err)
-
 		AddErrorFlash(w, r, "couldn't get track list")
-
 		http.Redirect(w, r, r.Referer(), http.StatusFound)
-
 		return
 	}
 

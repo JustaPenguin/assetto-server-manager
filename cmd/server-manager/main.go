@@ -113,12 +113,6 @@ func main() {
 		_ = browser.OpenURL("http://" + strings.Replace(config.HTTP.Hostname, "0.0.0.0", "127.0.0.1", 1))
 	}
 
-	err = servermanager.InitCarIndex()
-
-	if err != nil {
-		panic(err)
-	}
-
 	router := servermanager.Router(filesystem)
 
 	if err := http.Serve(listener, router); err != nil {
