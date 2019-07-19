@@ -3,6 +3,10 @@
     max-height: 518px;
     overflow-y: auto;
 
+    &:not(#hero-skin) {
+      cursor: pointer;
+    }
+
     .car-skin {
       margin-top: 0.5em;
       margin-bottom: 0.5em;

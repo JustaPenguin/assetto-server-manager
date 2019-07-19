@@ -9,9 +9,11 @@ import "moment-timezone";
 import "./javascript/manager.js";
 import { RaceControl } from "./RaceControl";
 import "./Font";
+import {CarDetail} from "./CarDetail";
 
 $(() => {
     new RaceControl();
+    new CarDetail();
 });
 
 declare global {

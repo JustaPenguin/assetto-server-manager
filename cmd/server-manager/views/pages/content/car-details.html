@@ -12,14 +12,14 @@
             {{ $skin := index $.Car.Skins 0 }}
 
             <div class="row mb-3">
-                <div class="col-md-10">
-                    <img class="img img-fluid car-image" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}">
+                <div class="col-8 col-md-10">
+                    <img class="img img-fluid car-image" id="hero-skin" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}">
                 </div>
 
-                <div class="col-md-2 car-skins">
+                <div class="col-4 col-md-2 car-skins">
                     {{ range $index, $skin := $.Car.Skins }}
                         <div class="car-skin">
-                            <img class="img img-fluid car-image" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}" title="{{ prettify $skin true }}">
+                            <img class="img img-fluid car-image" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}" title="{{ prettify $skin true }}" data-toggle="tooltip" data-placement="bottom">
                         </div>
                     {{ end }}
                 </div>
@@ -27,30 +27,48 @@
         {{ end }}
 
         <div class="row mb-2">
-            <div class="col-md-7">
+            <div class="col-md-7" id="tags">
                 {{ range $index, $tag := $.Car.Details.Tags }}
-                    <span class="badge badge-primary"><a class="text-white" href="/cars?q=tags:%22{{ urlquery $tag }}%22">{{ $tag }}</a> <a class="delete-tag text-white" href="#" data-tag="{{ $tag }}" data-car="{{ $.Car.Name }}"><i class="fas fa-times ml-2"></i></a></span>
+                    <span class="badge badge-primary">
+                        <a class="text-white"
+                           href="/cars?q=tags:%22{{ urlquery $tag }}%22"
+                        >{{ $tag }}</a>
+
+                        {{ if WriteAccess }}
+                            <a class="delete-tag text-white"
+                               href="/car/{{ $.Car.Name }}/tags?delete={{ $tag }}"
+                               data-tag="{{ $tag }}"
+                               data-car="{{ $.Car.Name }}"
+                               data-toggle="tooltip"
+                               title="Delete this tag"
+                            >
+                                <i class="fas fa-times ml-2"></i>
+                            </a>
+                        {{ end }}
+                    </span>
                 {{ end }}
             </div>
 
-            <div class="col-md-3 text-right">
-                <form>
-                    <div class="form-group row">
-                        <div class="col-sm-9">
-                            <input type="text" class="form-control form-control-sm" id="NewTag" name="NewTag" required
-                                   placeholder="Add a new tag">
-                        </div>
+            {{ if WriteAccess }}
+                <div class="col-md-3 text-right">
+                    <form id="add-tag" method="post" action="/car/{{ $.Car.Name }}/tags">
+                        <div class="form-group row">
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control form-control-sm" id="new-tag" name="new-tag" required
+                                       placeholder="Add a new tag">
+                            </div>
 
-                        <div class="col-sm-3">
-                            <button class="btn btn-sm btn-primary">Go</button>
+                            <div class="col-sm-3">
+                                <button type="submit" class="btn btn-sm btn-primary">Go</button>
+                            </div>
                         </div>
-                    </div>
-                </form>
-            </div>
+                    </form>
+                </div>
 
-            <div class="col-md-2 text-right">
-                <button class="btn btn-sm btn-success">Upload a Skin</button>
-            </div>
+                <div class="col-md-2 text-right">
+                    <button class="btn btn-sm btn-success">Upload a Skin</button>
+                </div>
+            {{ end }}
         </div>
 
 
@@ -81,7 +99,82 @@
             <div class="col-12">
                 <h2>Setups</h2>
 
-                <!-- @TODO setups + upload -->
+                {{ if gt (len $.Setups) 0 }}
+                    <table class="table table-bordered table-striped">
+                        <tr>
+                            <th>Track</th>
+                            <th>Setup File</th>
+                            {{ if DeleteAccess }}
+                                <th class="text-center">Delete</th>
+                            {{ end }}
+                        </tr>
+                        {{ range $trackName, $setups := $.Setups }}
+                            {{ range $index, $setup := $setups }}
+                                <tr>
+                                    {{ if eq $index 0 }}
+                                        <td rowspan="{{ len $setups }}">
+                                            {{ prettify $trackName false }}
+                                        </td>
+                                    {{ end }}
+
+                                    <td>
+                                        <a href="{{ printf "/setups/download/%s/%s/%s" $.Car.Name $trackName $setup }}">
+                                            {{ $setup }}
+                                        </a>
+                                    </td>
+
+                                    {{ if DeleteAccess }}
+                                        <td class="text-center">
+                                            <a href="{{ printf "/setups/delete/%s/%s/%s" $.Car.Name $trackName $setup }}"><i class="fas fa-trash text-danger"></i></a>
+                                        </td>
+                                    {{ end }}
+                                </tr>
+                            {{ end }}
+                        {{ end }}
+                    </table>
+                {{ else }}
+                    <p>There are no setups for this car. You can upload one below.</p>
+                {{ end }}
+
+
+                {{ if WriteAccess }}
+                    <form method="post" action="/setups/upload" enctype="multipart/form-data" class="mb-5">
+                        <div class="form-group row">
+                            <label for="Track" class="col-sm-3 col-form-label">
+                                Track
+                            </label>
+
+                            <div class="col-sm-9">
+                                <select class="form-control" name="Track" id="Track">
+                                    <option value="generic">Generic</option>
+
+                                    {{ range $index, $track := .TrackOpts }}
+                                        <option value="{{ $track.Name }}">
+                                            {{ prettify $track.Name false }}
+                                        </option>
+                                    {{ end }}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="SetupFile" class="col-sm-3 col-form-label">
+                                Setup File
+                            </label>
+
+                            <div class="col-sm-9">
+                                <div class="custom-file">
+                                    <input type="file" class="custom-file-input" id="SetupFile" name="SetupFile" accept=".ini">
+                                    <label class="custom-file-label" for="SetupFile">Choose Setup</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success float-right">Upload Setup</button>
+
+                        <div class="clearfix"></div>
+                    </form>
+                {{ end }}
 
                 <h2>Sessions</h2>
 
