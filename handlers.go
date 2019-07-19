@@ -164,9 +164,9 @@ func Router(fs http.FileSystem) http.Handler {
 		r.Post("/live-timing/save-frames", liveFrameSaveHandler)
 
 		// endpoints
-		r.Post("/api/track/upload", apiTrackUploadHandler)
-		r.Post("/api/car/upload", apiCarUploadHandler)
-		r.Post("/api/weather/upload", apiWeatherUploadHandler)
+		r.Post("/api/track/upload", uploadHandler("Track"))
+		r.Post("/api/car/upload", uploadHandler("Car"))
+		r.Post("/api/weather/upload", uploadHandler("Weather"))
 	})
 
 	// deleters
@@ -343,27 +343,29 @@ type ContentFile struct {
 var base64HeaderRegex = regexp.MustCompile("^(data:.+;base64,)")
 
 // Stores Files encoded into r.Body
-func uploadHandler(w http.ResponseWriter, r *http.Request, contentType string) {
-	var files []ContentFile
+func uploadHandler(contentType string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var files []ContentFile
 
-	decoder := json.NewDecoder(r.Body)
+		decoder := json.NewDecoder(r.Body)
 
-	err := decoder.Decode(&files)
+		err := decoder.Decode(&files)
 
-	if err != nil {
-		logrus.Errorf("could not decode "+strings.ToLower(contentType)+" json, err: %s", err)
-		return
+		if err != nil {
+			logrus.Errorf("could not decode "+strings.ToLower(contentType)+" json, err: %s", err)
+			return
+		}
+
+		err = addFiles(files, contentType)
+
+		if err != nil {
+			AddErrorFlash(w, r, contentType+"(s) could not be added")
+
+			return
+		}
+
+		AddFlash(w, r, contentType+"(s) added successfully!")
 	}
-
-	err = addFiles(files, contentType)
-
-	if err != nil {
-		AddErrorFlash(w, r, contentType+"(s) could not be added")
-
-		return
-	}
-
-	AddFlash(w, r, contentType+"(s) added successfully!")
 }
 
 // Stores files in the correct location

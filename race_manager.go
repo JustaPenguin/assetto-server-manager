@@ -30,12 +30,28 @@ func init() {
 }
 
 func InitWithStore(store Store) {
+	carManager = NewCarManager()
+
+	/* @TODO temporary */
+	err := carManager.CreateSearchIndex()
+
+	if err != nil {
+		panic(err)
+	}
+
+	err = carManager.IndexAllCars()
+
+	if err != nil {
+		panic(err)
+	}
+	/* @TODO end-temporary */
+
 	raceManager = NewRaceManager(store)
 	championshipManager = NewChampionshipManager(raceManager)
 	accountManager = NewAccountManager(store)
 	AssettoProcess = NewAssettoServerProcess()
 
-	err := store.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
+	err = store.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
 
 	if err != nil && err != ErrValueNotSet {
 		logrus.WithError(err).Errorf("Could not load server account options")
@@ -335,7 +351,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		numPitboxes = MaxClientsOverride
 	}
 
-	allCars, err := ListCars()
+	allCars, err := carManager.ListCars()
 
 	if err != nil {
 		return err
@@ -392,7 +408,7 @@ func formValueAsFloat(val string) float64 {
 func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (EntryList, error) {
 	entryList := EntryList{}
 
-	allCars, err := ListCars()
+	allCars, err := carManager.ListCars()
 
 	if err != nil {
 		return nil, err
@@ -752,7 +768,7 @@ func (rm *RaceManager) ListAutoFillEntrants() ([]*Entrant, error) {
 
 // BuildRaceOpts builds a quick race form
 func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, error) {
-	cars, err := ListCars()
+	cars, err := carManager.ListCars()
 
 	if err != nil {
 		return nil, err

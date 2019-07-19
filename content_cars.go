@@ -17,6 +17,9 @@ import (
 	"github.com/spkg/bom"
 )
 
+// @TODO resolver me
+var carManager *CarManager
+
 type Car struct {
 	Name    string
 	Skins   []string
@@ -38,44 +41,6 @@ func (cs Cars) AsMap() map[string][]string {
 	}
 
 	return out
-}
-
-func ListCars() (Cars, error) {
-	var cars Cars
-
-	carFiles, err := ioutil.ReadDir(filepath.Join(ServerInstallPath, "content", "cars"))
-
-	if err != nil {
-		return nil, err
-	}
-
-	tyres, err := ListTyres()
-
-	if err != nil {
-		return nil, err
-	}
-
-	for _, carFile := range carFiles {
-		if !carFile.IsDir() {
-			continue
-		}
-
-		car, err := loadCarDetails(carFile.Name(), tyres)
-
-		if err != nil && os.IsNotExist(err) {
-			continue
-		} else if err != nil {
-			return nil, err
-		}
-
-		cars = append(cars, car)
-	}
-
-	sort.Slice(cars, func(i, j int) bool {
-		return cars[i].PrettyName() < cars[j].PrettyName()
-	})
-
-	return cars, nil
 }
 
 type CarDetails struct {
@@ -157,7 +122,54 @@ type CarSpecs struct {
 	Weight       string `json:"weight"`
 }
 
-func loadCarDetails(name string, tyres Tyres) (*Car, error) {
+type CarManager struct {
+	carIndex bleve.Index
+}
+
+func NewCarManager() *CarManager {
+	return &CarManager{}
+}
+
+func (cm *CarManager) ListCars() (Cars, error) {
+	var cars Cars
+
+	carFiles, err := ioutil.ReadDir(filepath.Join(ServerInstallPath, "content", "cars"))
+
+	if err != nil {
+		return nil, err
+	}
+
+	tyres, err := ListTyres()
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, carFile := range carFiles {
+		if !carFile.IsDir() {
+			continue
+		}
+
+		car, err := cm.LoadCar(carFile.Name(), tyres)
+
+		if err != nil && os.IsNotExist(err) {
+			continue
+		} else if err != nil {
+			return nil, err
+		}
+
+		cars = append(cars, car)
+	}
+
+	sort.Slice(cars, func(i, j int) bool {
+		return cars[i].PrettyName() < cars[j].PrettyName()
+	})
+
+	return cars, nil
+}
+
+// LoadCar reads a car from the content folder on the filesystem
+func (cm *CarManager) LoadCar(name string, tyres Tyres) (*Car, error) {
 	carDirectory := filepath.Join(ServerInstallPath, "content", "cars", name)
 	skinFiles, err := ioutil.ReadDir(filepath.Join(carDirectory, "skins"))
 
@@ -189,7 +201,8 @@ func loadCarDetails(name string, tyres Tyres) (*Car, error) {
 	}, nil
 }
 
-func ResultsForCar(car string) ([]SessionResults, error) {
+// ResultsForCar finds results for a given car.
+func (cm *CarManager) ResultsForCar(car string) ([]SessionResults, error) {
 	results, err := ListAllResults()
 
 	if err != nil {
@@ -216,38 +229,192 @@ func ResultsForCar(car string) ([]SessionResults, error) {
 	return out, nil
 }
 
-const searchPageSize = 50
+// DeleteCar removes a car from the file system and search index.
+func (cm *CarManager) DeleteCar(carName string) error {
+	carsPath := filepath.Join(ServerInstallPath, "content", "cars")
 
-func carsHandler(w http.ResponseWriter, r *http.Request) {
-	var q query.Query
-
-	searchTerm := r.URL.Query().Get("q")
-
-	if searchTerm == "" {
-		q = bleve.NewMatchAllQuery()
-	} else {
-		q = bleve.NewQueryStringQuery(searchTerm)
-	}
-
-	results, err := carIndex.Search(bleve.NewSearchRequestOptions(q, searchPageSize, 0, false))
+	existingCars, err := cm.ListCars()
 
 	if err != nil {
-		logrus.Errorf("could not get car list, err: %s", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
+		return err
+	}
+
+	for _, car := range existingCars {
+		if car.Name != carName {
+			continue
+		}
+
+		err := os.RemoveAll(filepath.Join(carsPath, carName))
+
+		if err != nil {
+			return err
+		}
+
+		break
+	}
+
+	return cm.DeIndexCar(carName)
+}
+
+const searchPageSize = 50
+
+// CreateSearchIndex builds a search index for the cars
+// @TODO this really should use a filesystem index.
+func (cm *CarManager) CreateSearchIndex() error {
+	indexMapping := bleve.NewIndexMapping()
+
+	index, err := bleve.NewMemOnly(indexMapping)
+
+	if err != nil {
+		return err
+	}
+
+	cm.carIndex = index
+
+	return nil
+}
+
+// IndexCar indexes an individual car.
+func (cm *CarManager) IndexCar(car *Car) error {
+	return cm.carIndex.Index(car.Name, car.Details)
+}
+
+// DeIndexCar removes a car from the index.
+func (cm *CarManager) DeIndexCar(name string) error {
+	return cm.carIndex.Delete(name)
+}
+
+// IndexAllCars loads all current cars and adds them to the search index
+// @TODO building the index and doing this should be a migration
+func (cm *CarManager) IndexAllCars() error {
+	cars, err := cm.ListCars()
+
+	if err != nil {
+		return err
+	}
+
+	for _, car := range cars {
+		err := cm.IndexCar(car)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Search looks for cars in the search index.
+func (cm *CarManager) Search(term string, from int) (*bleve.SearchResult, map[string]*Car, error) {
+	var q query.Query
+
+	if term == "" {
+		q = bleve.NewMatchAllQuery()
+	} else {
+		q = bleve.NewQueryStringQuery(term)
+	}
+
+	results, err := cm.carIndex.Search(bleve.NewSearchRequestOptions(q, searchPageSize, from, false))
+
+	if err != nil {
+		return nil, nil, err
 	}
 
 	cars := make(map[string]*Car)
 
 	for _, hit := range results.Hits {
-		cars[hit.ID], err = loadCarDetails(hit.ID, nil)
+		cars[hit.ID], err = carManager.LoadCar(hit.ID, nil)
 
 		if err != nil {
-			panic(err)
+			return nil, nil, err
 		}
 	}
 
-	//currentPage := formValueAsInt(r.URL.Query().Get("p"))
+	return results, cars, nil
+}
+
+func (cm *CarManager) AddTag(carName, tag string) error {
+	car, err := cm.LoadCar(carName, nil)
+
+	if err != nil {
+		return err
+	}
+
+	car.Details.AddTag(tag)
+
+	return cm.SaveCarDetails(carName, car)
+}
+
+func (cm *CarManager) DelTag(carName, tag string) error {
+	car, err := cm.LoadCar(carName, nil)
+
+	if err != nil {
+		return err
+	}
+
+	car.Details.DelTag(tag)
+
+	return cm.SaveCarDetails(carName, car)
+}
+
+// SaveCarDetails saves a car's details, and indexes that car.
+func (cm *CarManager) SaveCarDetails(carName string, car *Car) error {
+	if err := car.Details.Save(carName); err != nil {
+		return err
+	}
+
+	return cm.IndexCar(car)
+}
+
+// LoadCarDetailsForTemplate loads all necessary items to generate the car details template.
+func (cm *CarManager) LoadCarDetailsForTemplate(carName string) (map[string]interface{}, error) {
+	tyres, err := ListTyres()
+
+	if err != nil {
+		return nil, err
+	}
+
+	car, err := carManager.LoadCar(carName, tyres)
+
+	if err != nil {
+		return nil, err
+	}
+
+	results, err := carManager.ResultsForCar(carName)
+
+	if err != nil {
+		return nil, err
+	}
+
+	setups, err := ListSetupsForCar(carName)
+
+	if err != nil {
+		return nil, err
+	}
+
+	tracks, err := ListTracks()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"Car":       car,
+		"Results":   results,
+		"Setups":    setups,
+		"TrackOpts": tracks,
+	}, nil
+}
+
+func carsHandler(w http.ResponseWriter, r *http.Request) {
+	searchTerm := r.URL.Query().Get("q")
+	results, cars, err := carManager.Search(searchTerm, 0) // @TODO pagination
+
+	if err != nil {
+		logrus.WithError(err).Error("Could not perform search")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 
 	ViewRenderer.MustLoadTemplate(w, r, "content/cars.html", map[string]interface{}{
 		"Results": results,
@@ -256,47 +423,18 @@ func carsHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func apiCarUploadHandler(w http.ResponseWriter, r *http.Request) {
-	uploadHandler(w, r, "Car")
-}
-
 func carDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	carName := chi.URLParam(r, "name")
-	carsPath := filepath.Join(ServerInstallPath, "content", "cars")
-
-	existingCars, err := ListCars()
+	err := carManager.DeleteCar(carName)
 
 	if err != nil {
-		logrus.Errorf("could not get car list, err: %s", err)
+		logrus.WithError(err).Errorf("Could not delete car: %s", carName)
 		AddErrorFlash(w, r, "couldn't get car list")
 		http.Redirect(w, r, r.Referer(), http.StatusFound)
 		return
 	}
 
-	var found bool
-
-	for _, car := range existingCars {
-		if car.Name == carName {
-			// Delete car
-			found = true
-
-			err := os.RemoveAll(filepath.Join(carsPath, carName))
-
-			if err != nil {
-				found = false
-				logrus.Errorf("could not remove car files, err: %s", err)
-			}
-
-			break
-		}
-	}
-
-	if found {
-		AddFlash(w, r, "Car successfully deleted!")
-	} else {
-		AddErrorFlash(w, r, "Sorry, car could not be deleted. Are you sure it was installed?")
-	}
-
+	AddFlash(w, r, fmt.Sprintf("Car %s successfully deleted!", carName))
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
@@ -316,44 +454,16 @@ func carSkinURL(car, skin string) string {
 }
 
 func carDetailsHandler(w http.ResponseWriter, r *http.Request) {
-	tyres, err := ListTyres()
-
-	if err != nil {
-		panic(err)
-	}
-
 	carName := chi.URLParam(r, "car_id")
-
-	car, err := loadCarDetails(carName, tyres)
-
-	if err != nil {
-		panic(err)
-	}
-
-	results, err := ResultsForCar(carName)
+	templateParams, err := carManager.LoadCarDetailsForTemplate(carName)
 
 	if err != nil {
-		panic(err)
+		logrus.WithError(err).Errorf("Could not load car details for: %s", carName)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
-	setups, err := ListSetupsForCar(carName)
-
-	if err != nil {
-		panic(err)
-	}
-
-	tracks, err := ListTracks()
-
-	if err != nil {
-		panic(err)
-	}
-
-	ViewRenderer.MustLoadTemplate(w, r, "content/car-details.html", map[string]interface{}{
-		"Car":       car,
-		"Results":   results,
-		"Setups":    setups,
-		"TrackOpts": tracks,
-	})
+	ViewRenderer.MustLoadTemplate(w, r, "content/car-details.html", templateParams)
 }
 
 func carTagManagerHandler(w http.ResponseWriter, r *http.Request) {
@@ -362,77 +472,23 @@ func carTagManagerHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 		tag := r.FormValue("new-tag")
+		err := carManager.AddTag(car, tag)
 
-		// load car details file
-		carDetails := CarDetails{}
-
-		if err := carDetails.Load(car); err != nil {
-			panic(err)
+		if err == nil {
+			AddFlash(w, r, fmt.Sprintf("Successfully added the tag: %s", tag))
+		} else {
+			AddFlash(w, r, "Could not add tag")
 		}
-
-		carDetails.AddTag(tag)
-
-		if err := carDetails.Save(car); err != nil {
-			panic(err)
-		}
-
-		AddFlash(w, r, fmt.Sprintf("Successfully added the tag: %s", tag))
-		http.Redirect(w, r, r.Referer(), http.StatusFound)
-		return
 	} else {
 		tag := r.URL.Query().Get("delete")
+		err := carManager.DelTag(car, tag)
 
-		// load car details file
-		carDetails := CarDetails{}
-
-		if err := carDetails.Load(car); err != nil {
-			panic(err)
-		}
-
-		carDetails.DelTag(tag)
-
-		if err := carDetails.Save(car); err != nil {
-			panic(err)
-		}
-
-		AddFlash(w, r, fmt.Sprintf("Successfully deleted the tag: %s", tag))
-		http.Redirect(w, r, r.Referer(), http.StatusFound)
-		return
-	}
-}
-
-var carIndex bleve.Index
-
-func createCarDetailsIndex() bleve.Index {
-	indexMapping := bleve.NewIndexMapping()
-
-	index, err := bleve.NewMemOnly(indexMapping)
-
-	if err != nil {
-		panic(err)
-	}
-
-	return index
-}
-
-func InitCarIndex() error {
-	var err error
-
-	carIndex = createCarDetailsIndex()
-
-	cars, err := ListCars()
-
-	if err != nil {
-		return err
-	}
-
-	for _, car := range cars {
-		err := carIndex.Index(car.Name, car.Details)
-
-		if err != nil {
-			return err
+		if err == nil {
+			AddFlash(w, r, fmt.Sprintf("Successfully deleted the tag: %s", tag))
+		} else {
+			AddFlash(w, r, "Could not delete tag")
 		}
 	}
 
-	return nil
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
