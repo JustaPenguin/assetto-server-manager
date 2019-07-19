@@ -171,20 +171,6 @@ func (r *Resolver) resolveCarManager() *CarManager {
 
 	r.carManager = NewCarManager()
 
-	/* @TODO temporary */
-	err := r.carManager.CreateSearchIndex()
-
-	if err != nil {
-		panic(err)
-	}
-
-	err = r.carManager.IndexAllCars()
-
-	if err != nil {
-		panic(err)
-	}
-	/* @TODO end-temporary */
-
 	return r.carManager
 }
 
