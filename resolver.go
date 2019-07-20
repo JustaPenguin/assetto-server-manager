@@ -34,6 +34,7 @@ type Resolver struct {
 	penaltiesHandler            *PenaltiesHandler
 	resultsHandler              *ResultsHandler
 	scheduledRacesHandler       *ScheduledRacesHandler
+	contentUploadHandler        *ContentUploadHandler
 	raceControlHandler          *RaceControlHandler
 	serverAdministrationHandler *ServerAdministrationHandler
 }
@@ -271,6 +272,16 @@ func (r *Resolver) resolveServerAdministrationHandler() *ServerAdministrationHan
 	return r.serverAdministrationHandler
 }
 
+func (r *Resolver) resolveContentUploadHandler() *ContentUploadHandler {
+	if r.contentUploadHandler != nil {
+		return r.contentUploadHandler
+	}
+
+	r.contentUploadHandler = NewContentUploadHandler(r.resolveBaseHandler(), r.resolveCarManager())
+
+	return r.contentUploadHandler
+}
+
 func (r *Resolver) resolveRaceControlHub() *RaceControlHub {
 	if r.raceControlHub != nil {
 		return r.raceControlHub
@@ -321,6 +332,7 @@ func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
 		r.resolveWeatherHandler(),
 		r.resolvePenaltiesHandler(),
 		r.resolveResultsHandler(),
+		r.resolveContentUploadHandler(),
 		r.resolveServerAdministrationHandler(),
 		r.resolveRaceControlHandler(),
 		r.resolveScheduledRacesHandler(),
