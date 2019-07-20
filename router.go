@@ -53,6 +53,7 @@ func Router(
 	weatherHandler *WeatherHandler,
 	penaltiesHandler *PenaltiesHandler,
 	resultsHandler *ResultsHandler,
+	contentUploadHandler *ContentUploadHandler,
 	serverAdministrationHandler *ServerAdministrationHandler,
 	raceControlHandler *RaceControlHandler,
 	raceScheduler *ScheduledRacesHandler,
@@ -171,9 +172,9 @@ func Router(
 		r.Post("/live-timing/save-frames", raceControlHandler.saveIFrames)
 
 		// endpoints
-		r.Post("/api/track/upload", uploadHandler("Track"))
-		r.Post("/api/car/upload", uploadHandler("Car"))
-		r.Post("/api/weather/upload", uploadHandler("Weather"))
+		r.Post("/api/track/upload", contentUploadHandler.upload(ContentTypeTrack))
+		r.Post("/api/car/upload", contentUploadHandler.upload(ContentTypeCar))
+		r.Post("/api/weather/upload", contentUploadHandler.upload(ContentTypeWeather))
 	})
 
 	// deleters

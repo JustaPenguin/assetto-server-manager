@@ -13,6 +13,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type ContentType string
+
+const (
+	ContentTypeCar     = "Car"
+	ContentTypeTrack   = "Track"
+	ContentTypeWeather = "Weather"
+)
+
 type ContentFile struct {
 	Name     string `json:"name"`
 	FileType string `json:"type"`
@@ -23,42 +31,53 @@ type ContentFile struct {
 
 var base64HeaderRegex = regexp.MustCompile("^(data:.+;base64,)")
 
+type ContentUploadHandler struct {
+	*BaseHandler
+
+	carManager *CarManager
+}
+
+func NewContentUploadHandler(baseHandler *BaseHandler, carManager *CarManager) *ContentUploadHandler {
+	return &ContentUploadHandler{
+		BaseHandler: baseHandler,
+		carManager:  carManager,
+	}
+}
+
 // Stores Files encoded into r.Body
-func uploadHandler(contentType string) http.HandlerFunc {
+func (cuh *ContentUploadHandler) upload(contentType ContentType) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var files []ContentFile
 
-		decoder := json.NewDecoder(r.Body)
-
-		err := decoder.Decode(&files)
+		err := json.NewDecoder(r.Body).Decode(&files)
 
 		if err != nil {
-			logrus.Errorf("could not decode "+strings.ToLower(contentType)+" json, err: %s", err)
+			logrus.WithError(err).Errorf("could not decode %s json", contentType)
 			return
 		}
 
-		err = addFiles(files, contentType)
+		err = cuh.addFiles(files, contentType)
 
 		if err != nil {
-			AddErrorFlash(w, r, contentType+"(s) could not be added")
-
+			logrus.WithError(err).Error("couldn't upload file")
+			AddErrorFlash(w, r, string(contentType)+"(s) could not be added")
 			return
 		}
 
-		AddFlash(w, r, contentType+"(s) added successfully!")
+		AddFlash(w, r, string(contentType)+"(s) added successfully!")
 	}
 }
 
 // Stores files in the correct location
-func addFiles(files []ContentFile, contentType string) error {
+func (cuh *ContentUploadHandler) addFiles(files []ContentFile, contentType ContentType) error {
 	var contentPath string
 
 	switch contentType {
-	case "Track":
+	case ContentTypeTrack:
 		contentPath = filepath.Join(ServerInstallPath, "content", "tracks")
-	case "Car":
+	case ContentTypeCar:
 		contentPath = filepath.Join(ServerInstallPath, "content", "cars")
-	case "Weather":
+	case ContentTypeWeather:
 		contentPath = filepath.Join(ServerInstallPath, "content", "weather")
 	}
 
@@ -71,7 +90,7 @@ func addFiles(files []ContentFile, contentType string) error {
 			fileDecoded, err = base64.StdEncoding.DecodeString(base64HeaderRegex.ReplaceAllString(file.Data, ""))
 
 			if err != nil {
-				logrus.Errorf("could not decode "+contentType+" file data, err: %s", err)
+				logrus.WithError(err).Errorf("could not decode %s file data", contentType)
 				return err
 			}
 		}
@@ -94,16 +113,16 @@ func addFiles(files []ContentFile, contentType string) error {
 		err := os.MkdirAll(filepath.Dir(path), 0755)
 
 		if err != nil {
-			logrus.Errorf("could not create "+contentType+" file directory, err: %s", err)
+			logrus.WithError(err).Errorf("could not create %s file directory", contentType)
 			return err
 		}
 
-		if contentType == "Car" {
+		if contentType == ContentTypeCar {
 			if _, name := filepath.Split(file.FilePath); name == "data.acd" {
 				err := addTyresFromDataACD(file.FilePath, fileDecoded)
 
 				if err != nil {
-					logrus.Errorf("Could not create tyres for new car (%s), err: %s", file.FilePath, err)
+					logrus.WithError(err).Errorf("Could not create tyres for new car (%s)", file.FilePath)
 				}
 			} else if name == "tyres.ini" {
 				// it seems some cars don't pack their data into an ACD file, it's just in a folder called 'data'
@@ -111,7 +130,7 @@ func addFiles(files []ContentFile, contentType string) error {
 				err := addTyresFromTyresIni(file.FilePath, fileDecoded)
 
 				if err != nil {
-					logrus.Errorf("Could not create tyres for new car (%s), err: %s", file.FilePath, err)
+					logrus.WithError(err).Errorf("Could not create tyres for new car (%s)", file.FilePath)
 				}
 			}
 		}
@@ -119,7 +138,16 @@ func addFiles(files []ContentFile, contentType string) error {
 		err = ioutil.WriteFile(path, fileDecoded, 0644)
 
 		if err != nil {
-			logrus.Errorf("could not write file, err: %s", err)
+			logrus.WithError(err).Error("could not write file")
+			return err
+		}
+	}
+
+	if contentType == ContentTypeCar {
+		// @TODO can we improve this by just indexing the individual cars which were uploaded?
+		err := cuh.carManager.IndexAllCars()
+
+		if err != nil {
 			return err
 		}
 	}

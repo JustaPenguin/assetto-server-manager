@@ -477,7 +477,6 @@ func (ch *CarsHandler) view(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ch *CarsHandler) tags(w http.ResponseWriter, r *http.Request) {
-	// adding a new tag
 	car := chi.URLParam(r, "car_id")
 
 	if r.Method == http.MethodPost {
