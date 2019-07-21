@@ -148,7 +148,7 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 
 	if cfg.GlobalServerConfig.EnableContentManagerWrapper == 1 && cfg.GlobalServerConfig.ContentManagerWrapperPort > 0 {
 		go func() {
-			err := as.contentManagerWrapper.Start(as, cfg.GlobalServerConfig.ContentManagerWrapperPort, cfg, entryList, event.EventDescription())
+			err := as.contentManagerWrapper.Start(as, cfg.GlobalServerConfig.ContentManagerWrapperPort, cfg, entryList, event)
 
 			if err != nil {
 				logrus.WithError(err).Error("Could not start Content Manager wrapper server")

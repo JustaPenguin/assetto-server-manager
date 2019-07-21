@@ -85,19 +85,24 @@ type CMCar struct {
 }
 
 type ContentManagerWrapper struct {
+	store Store
+
 	sessionInfo udp.SessionInfo
 
 	reverseProxy *httputil.ReverseProxy
 	serverConfig ServerConfig
 	entryList    EntryList
+	event        RaceEvent
 
 	srv         *http.Server
 	description string
 	mutex       sync.Mutex
 }
 
-func NewContentManagerWrapper() *ContentManagerWrapper {
-	return &ContentManagerWrapper{}
+func NewContentManagerWrapper(store Store) *ContentManagerWrapper {
+	return &ContentManagerWrapper{
+		store: store,
+	}
 }
 
 func (cmw *ContentManagerWrapper) UDPCallback(message udp.Message) {
@@ -107,11 +112,15 @@ func (cmw *ContentManagerWrapper) UDPCallback(message udp.Message) {
 	}
 }
 
-func (cmw *ContentManagerWrapper) setDescriptionText(description string) error {
-	text, err := html2text.FromString(description, html2text.Options{PrettyTables: true})
+func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
+	text, err := html2text.FromString(event.EventDescription(), html2text.Options{PrettyTables: true})
 
 	if err != nil {
 		return err
+	}
+
+	if u := event.GetURL(); event.IsChampionship() && u != "" {
+		text += fmt.Sprintf("\n\nView the Championship points here: %s", u)
 	}
 
 	cmw.description = text
@@ -119,7 +128,7 @@ func (cmw *ContentManagerWrapper) setDescriptionText(description string) error {
 	return nil
 }
 
-func (cmw *ContentManagerWrapper) Start(process ServerProcess, servePort int, serverConfig ServerConfig, entryList EntryList, eventDescription string) error {
+func (cmw *ContentManagerWrapper) Start(process ServerProcess, servePort int, serverConfig ServerConfig, entryList EntryList, event RaceEvent) error {
 	cmw.mutex.Lock()
 	defer cmw.mutex.Unlock()
 
@@ -131,12 +140,13 @@ func (cmw *ContentManagerWrapper) Start(process ServerProcess, servePort int, se
 		return err
 	}
 
-	if err := cmw.setDescriptionText(eventDescription); err != nil {
+	if err := cmw.setDescriptionText(event); err != nil {
 		logrus.WithError(err).Warn("could not set description text")
 	}
 
 	cmw.serverConfig = serverConfig
 	cmw.entryList = entryList
+	cmw.event = event
 	cmw.reverseProxy = httputil.NewSingleHostReverseProxy(u)
 
 	cmw.srv = &http.Server{Addr: fmt.Sprintf(":%d", servePort)}
@@ -294,11 +304,27 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 	sessionInfo.IP = geoInfo.IP
 	sessionInfo.Country = []string{geoInfo.CountryName, geoInfo.CountryCode}
 
+	var description string
+
+	if cmw.event.IsChampionship() {
+		if champ, ok := cmw.event.(*ActiveChampionship); ok {
+			championship, err := cmw.store.LoadChampionship(champ.ChampionshipID.String())
+
+			if err == nil {
+				description = championship.GetPlayerSummary(guid) + "\n\n"
+			} else {
+				logrus.WithError(err).Warn("can't load championship info")
+			}
+		}
+	}
+
+	description += cmw.description
+
 	return &ContentManagerWrapperData{
 		ACHTTPSessionInfo: *sessionInfo,
 		Players:           *players,
 
-		Description: cmw.description,
+		Description: description,
 
 		AmbientTemperature: live.AmbientTemp,
 		RoadTemperature:    live.RoadTemp,
