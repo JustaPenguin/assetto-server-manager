@@ -66,6 +66,10 @@ func (cr *CustomRace) GetURL() string {
 	return ""
 }
 
+func (cr *CustomRace) EventDescription() string {
+	return ""
+}
+
 func (cr *CustomRace) ReadOnlyEntryList() EntryList {
 	return cr.EntryList
 }

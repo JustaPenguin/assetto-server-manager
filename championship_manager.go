@@ -432,6 +432,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 			Name:                championship.Name,
 			OverridePassword:    championship.OverridePassword,
 			ReplacementPassword: championship.ReplacementPassword,
+			Description:         string(championship.Info),
 		})
 	} else {
 		// delete all sessions other than booking (if there is a booking session)
@@ -507,7 +508,7 @@ func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
 	cm.mutex.Lock()
 	defer cm.mutex.Unlock()
 
-	if cm.process.EventType() != EventTypeChampionship || cm.activeChampionship == nil {
+	if !cm.process.Event().IsChampionship() || cm.activeChampionship == nil {
 		return
 	}
 
@@ -690,7 +691,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			previousSessionNumLaps := cm.activeChampionship.NumLapsCompleted
 
 			defer func() {
-				if cm.process.EventType() != EventTypeChampionship || cm.activeChampionship == nil {
+				if !cm.process.Event().IsChampionship() || cm.activeChampionship == nil {
 					return
 				}
 
@@ -843,7 +844,7 @@ func (cm *ChampionshipManager) RestartEvent(championshipID string, eventID strin
 var ErrNoActiveEvent = errors.New("servermanager: no active championship event")
 
 func (cm *ChampionshipManager) RestartActiveEvent() error {
-	if cm.process.EventType() != EventTypeChampionship || cm.activeChampionship == nil {
+	if !cm.process.Event().IsChampionship() || cm.activeChampionship == nil {
 		return ErrNoActiveEvent
 	}
 
@@ -851,7 +852,7 @@ func (cm *ChampionshipManager) RestartActiveEvent() error {
 }
 
 func (cm *ChampionshipManager) StopActiveEvent() error {
-	if cm.process.EventType() != EventTypeChampionship || cm.activeChampionship == nil {
+	if !cm.process.Event().IsChampionship() || cm.activeChampionship == nil {
 		return ErrNoActiveEvent
 	}
 

@@ -6,19 +6,26 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/sirupsen/logrus"
+	"github.com/cj123/assetto-server-manager/pkg/udp"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"sync"
 	"time"
+
+	"github.com/jaytaylor/html2text"
+	"github.com/sirupsen/logrus"
 )
 
-const ContentManagerSeparator = 'ℹ'
+// contentManagerWrapperSeparator is a special character used by Content Manager to determine which port
+// the content manager wrapper is running on. The server name shows "<server name> <separator><port>",
+// which Content Manager uses to split the string and find the port.
+const contentManagerWrapperSeparator = 'ℹ'
 
 type ContentManagerWrapperData struct {
 	ACHTTPSessionInfo
+	Players ACHTTPPlayers `json:"players"`
 
-	// session info
 	Description string `json:"description"`
 
 	AmbientTemperature uint8  `json:"ambientTemperature"`
@@ -29,34 +36,29 @@ type ContentManagerWrapperData struct {
 	Grip               int    `json:"grip"`
 	GripTransfer       int    `json:"gripTransfer"`
 
-	// rules
 	Assists          CMAssists `json:"assists"`
-	MaxContactsPerKm int       `json:"maxContactsPerKm"`
+	MaxContactsPerKM int       `json:"maxContactsPerKm"`
 
-	// server info
 	City             string    `json:"city"`
 	PasswordChecksum [2]string `json:"passwordChecksum"`
 	WrappedPort      int       `json:"wrappedPort"`
 
-	// entrants
-	Players ACHTTPPlayers `json:"players"`
-
 	Content   CMContent `json:"content"`
-	Frequency int       `json:"frequency"` // refresh frequency?
-	Until     int64     `json:"until"`     // no idea
+	Frequency int       `json:"frequency"`
+	Until     int64     `json:"until"`
 }
 
 type CMAssists struct {
-	AbsState            int  `json:"absState"`
-	AllowedTyresOut     int  `json:"allowedTyresOut"`
-	AutoclutchAllowed   bool `json:"autoclutchAllowed"`
-	DamageMultiplier    int  `json:"damageMultiplier"`
-	ForceVirtualMirror  bool `json:"forceVirtualMirror"`
-	FuelRate            int  `json:"fuelRate"`
-	StabilityAllowed    bool `json:"stabilityAllowed"`
-	TcState             int  `json:"tcState"`
-	TyreBlanketsAllowed bool `json:"tyreBlanketsAllowed"`
-	TyreWearRate        int  `json:"tyreWearRate"`
+	ABSState             int  `json:"absState"`
+	AllowedTyresOut      int  `json:"allowedTyresOut"`
+	AutoClutchAllowed    bool `json:"autoclutchAllowed"`
+	DamageMultiplier     int  `json:"damageMultiplier"`
+	ForceVirtualMirror   bool `json:"forceVirtualMirror"`
+	FuelRate             int  `json:"fuelRate"`
+	StabilityAllowed     bool `json:"stabilityAllowed"`
+	TractionControlState int  `json:"tcState"`
+	TyreBlanketsAllowed  bool `json:"tyreBlanketsAllowed"`
+	TyreWearRate         int  `json:"tyreWearRate"`
 }
 
 type CMContent struct {
@@ -81,22 +83,44 @@ type CMCar struct {
 }
 
 type ContentManagerWrapper struct {
-	raceControl *RaceControl
-	process     ServerProcess
+	sessionInfo udp.SessionInfo
 
 	reverseProxy *httputil.ReverseProxy
 	serverConfig ServerConfig
 	entryList    EntryList
+
+	srv         *http.Server
+	description string
+	mutex       sync.Mutex
 }
 
-func NewContentManagerWrapper(process ServerProcess, raceControl *RaceControl) *ContentManagerWrapper {
-	return &ContentManagerWrapper{
-		raceControl: raceControl,
-		process:     process,
+func NewContentManagerWrapper() *ContentManagerWrapper {
+	return &ContentManagerWrapper{}
+}
+
+func (cmw *ContentManagerWrapper) UDPCallback(message udp.Message) {
+	switch m := message.(type) {
+	case udp.SessionInfo:
+		cmw.sessionInfo = m
 	}
 }
 
-func (cmw *ContentManagerWrapper) Start(servePort int, serverConfig ServerConfig, entryList EntryList) error {
+func (cmw *ContentManagerWrapper) setDescriptionText(description string) error {
+	text, err := html2text.FromString(description, html2text.Options{PrettyTables: true})
+
+	if err != nil {
+		return err
+	}
+
+	cmw.description = text
+
+	return nil
+}
+
+func (cmw *ContentManagerWrapper) Start(process ServerProcess, servePort int, serverConfig ServerConfig, entryList EntryList, eventDescription string) error {
+	cmw.mutex.Lock()
+	defer cmw.mutex.Unlock()
+
 	logrus.Infof("Starting content manager wrapper server on port %d", servePort)
 
 	u, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", serverConfig.GlobalServerConfig.HTTPPort))
@@ -105,28 +129,31 @@ func (cmw *ContentManagerWrapper) Start(servePort int, serverConfig ServerConfig
 		return err
 	}
 
+	if err := cmw.setDescriptionText(eventDescription); err != nil {
+		logrus.WithError(err).Warn("could not set description text")
+	}
+
 	cmw.serverConfig = serverConfig
 	cmw.entryList = entryList
 	cmw.reverseProxy = httputil.NewSingleHostReverseProxy(u)
 
-	srv := &http.Server{Addr: fmt.Sprintf(":%d", servePort)}
-	srv.Handler = cmw
+	cmw.srv = &http.Server{Addr: fmt.Sprintf(":%d", servePort)}
+	cmw.srv.Handler = cmw
 
-	go func() {
-		<-cmw.process.Done()
-		logrus.Infof("Shutting down content manager wrapper server on port %d", servePort)
-		err := srv.Shutdown(context.Background())
-
-		if err != nil {
-			logrus.WithError(err).Error("Could not shutdown content manager wrapper server")
-		}
-	}()
-
-	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	if err := cmw.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return err
 	}
 
 	return nil
+}
+
+func (cmw *ContentManagerWrapper) Stop() {
+	logrus.Infof("Shutting down content manager wrapper server")
+	err := cmw.srv.Shutdown(context.Background())
+
+	if err != nil {
+		logrus.WithError(err).Error("Could not shutdown content manager wrapper server")
+	}
 }
 
 func (cmw *ContentManagerWrapper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -144,7 +171,9 @@ func (cmw *ContentManagerWrapper) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	enc := json.NewEncoder(w)
-	enc.SetIndent("", "    ")
+	if Debug {
+		enc.SetIndent("", "    ")
+	}
 	_ = enc.Encode(details)
 }
 
@@ -212,6 +241,10 @@ func (cmw *ContentManagerWrapper) getPlayers(guid string) (*ACHTTPPlayers, error
 }
 
 func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*ContentManagerWrapperData, error) {
+	race := cmw.serverConfig.CurrentRaceConfig
+	global := cmw.serverConfig.GlobalServerConfig
+	live := cmw.sessionInfo
+
 	sessionInfo, err := cmw.getSessionInfo()
 
 	if err != nil {
@@ -220,7 +253,9 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 
 	for index, duration := range sessionInfo.Durations {
 		// convert durations to seconds
-		sessionInfo.Durations[index] = duration * 60
+		if !(race.HasSession(SessionTypeRace) && index == len(sessionInfo.Durations)-1 && race.Sessions[SessionTypeRace].Laps > 0) {
+			sessionInfo.Durations[index] = duration * 60
+		}
 	}
 
 	players, err := cmw.getPlayers(guid)
@@ -234,11 +269,6 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 			players.Cars[entrantNum].ID = contentManagerIDChecksum(entrant.GUID)
 		}
 	}
-
-	race := cmw.serverConfig.CurrentRaceConfig
-	global := cmw.serverConfig.GlobalServerConfig
-	live := cmw.raceControl
-
 	var passwordChecksum [2]string
 
 	if global.Password != "" {
@@ -261,31 +291,31 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 		ACHTTPSessionInfo: *sessionInfo,
 		Players:           *players,
 
-		Description: "this is a test",
+		Description: cmw.description,
 
-		AmbientTemperature: live.SessionInfo.AmbientTemp,
-		RoadTemperature:    live.SessionInfo.RoadTemp,
+		AmbientTemperature: live.AmbientTemp,
+		RoadTemperature:    live.RoadTemp,
 		WindDirection:      race.WindBaseDirection,
 		WindSpeed:          race.WindBaseSpeedMin,
-		CurrentWeatherID:   live.SessionInfo.WeatherGraphics,
+		CurrentWeatherID:   live.WeatherGraphics,
 		Grip:               race.DynamicTrack.SessionStart,
 		GripTransfer:       race.DynamicTrack.SessionTransfer,
 
 		// rules
 		Assists: CMAssists{
-			AbsState:            race.ABSAllowed,
-			AllowedTyresOut:     race.AllowedTyresOut,
-			AutoclutchAllowed:   race.AutoClutchAllowed == 1,
-			DamageMultiplier:    race.DamageMultiplier,
-			ForceVirtualMirror:  race.ForceVirtualMirror == 1,
-			FuelRate:            race.FuelRate,
-			StabilityAllowed:    race.StabilityControlAllowed == 1,
-			TcState:             race.TractionControlAllowed,
-			TyreBlanketsAllowed: race.TyreBlanketsAllowed == 1,
-			TyreWearRate:        race.TyreWearRate,
+			ABSState:             race.ABSAllowed,
+			AllowedTyresOut:      race.AllowedTyresOut,
+			AutoClutchAllowed:    race.AutoClutchAllowed == 1,
+			DamageMultiplier:     race.DamageMultiplier,
+			ForceVirtualMirror:   race.ForceVirtualMirror == 1,
+			FuelRate:             race.FuelRate,
+			StabilityAllowed:     race.StabilityControlAllowed == 1,
+			TractionControlState: race.TractionControlAllowed,
+			TyreBlanketsAllowed:  race.TyreBlanketsAllowed == 1,
+			TyreWearRate:         race.TyreWearRate,
 		},
 
-		MaxContactsPerKm: race.MaxContactsPerKilometer,
+		MaxContactsPerKM: race.MaxContactsPerKilometer,
 
 		// server info
 		City:             geoInfo.City,
