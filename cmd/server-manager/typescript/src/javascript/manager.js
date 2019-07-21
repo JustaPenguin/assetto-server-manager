@@ -2200,6 +2200,10 @@ let championships = {
     $linkTemplate: null,
 
     initSummerNote: function () {
+        if ($(".championship").length === 0 && $("#championship-form").length === 0) {
+            return;
+        }
+
         let $summerNote = $document.find("#summernote");
         let $ChampionshipInfoHolder = $document.find("#ChampionshipInfoHolder");
 

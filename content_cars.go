@@ -407,6 +407,19 @@ func (cm *CarManager) LoadCarDetailsForTemplate(carName string) (map[string]inte
 	}, nil
 }
 
+func (cm *CarManager) UpdateCarMetadata(carName string, r *http.Request) error {
+	car, err := cm.LoadCar(carName, nil)
+
+	if err != nil {
+		return err
+	}
+
+	car.Details.Notes = r.FormValue("Notes")
+	car.Details.DownloadURL = r.FormValue("DownloadURL")
+
+	return car.Details.Save(carName)
+}
+
 type CarsHandler struct {
 	*BaseHandler
 
@@ -488,7 +501,7 @@ func (ch *CarsHandler) view(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ch *CarsHandler) tags(w http.ResponseWriter, r *http.Request) {
-	car := chi.URLParam(r, "car_id")
+	car := chi.URLParam(r, "name")
 
 	if r.Method == http.MethodPost {
 		tag := r.FormValue("new-tag")
@@ -510,5 +523,18 @@ func (ch *CarsHandler) tags(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (ch *CarsHandler) metadata(w http.ResponseWriter, r *http.Request) {
+	car := chi.URLParam(r, "name")
+
+	if err := ch.carManager.UpdateCarMetadata(car, r); err != nil {
+		logrus.WithError(err).Errorf("Could not update car metadata for %s", car)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	AddFlash(w, r, "Car metadata updated successfully!")
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }

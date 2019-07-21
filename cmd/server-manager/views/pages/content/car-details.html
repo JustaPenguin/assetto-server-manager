@@ -3,7 +3,6 @@
 {{ define "content" }}
     <div class="car-details">
         <h1 class="text-center">{{ $.Car.Details.Name }}</h1>
-
         <div class="text-center mb-3">
             <small>({{ $.Car.Name}})</small>
         </div>
@@ -26,65 +25,84 @@
             </div>
         {{ end }}
 
-        <div class="row mb-2">
-            <div class="col-md-7" id="tags">
-                {{ range $index, $tag := $.Car.Details.Tags }}
-                    <span class="badge badge-primary">
-                        <a class="text-white"
-                           href="/cars?q=tags:%22{{ urlquery $tag }}%22"
-                        >{{ $tag }}</a>
-
-                        {{ if WriteAccess }}
-                            <a class="delete-tag text-white"
-                               href="/car/{{ $.Car.Name }}/tags?delete={{ $tag }}"
-                               data-tag="{{ $tag }}"
-                               data-car="{{ $.Car.Name }}"
-                               data-toggle="tooltip"
-                               title="Delete this tag"
-                            >
-                                <i class="fas fa-times ml-2"></i>
-                            </a>
-                        {{ end }}
-                    </span>
-                {{ end }}
-            </div>
-
-            {{ if WriteAccess }}
-                <div class="col-md-3 text-right">
-                    <form id="add-tag" method="post" action="/car/{{ $.Car.Name }}/tags">
-                        <div class="form-group row">
-                            <div class="col-sm-9">
-                                <input type="text" class="form-control form-control-sm" id="new-tag" name="new-tag" required
-                                       placeholder="Add a new tag">
-                            </div>
-
-                            <div class="col-sm-3">
-                                <button type="submit" class="btn btn-sm btn-primary">Go</button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <div class="col-md-2 text-right">
-                    <button class="btn btn-sm btn-success">Upload a Skin</button>
-                </div>
-            {{ end }}
-        </div>
-
-
         <div class="row mb-3">
             <div class="col-md-10">
+                <div class="row">
+                    <div class="{{ if WriteAccess }}col-md-9{{ else }}col-md-12{{ end }}" id="tags">
+                        {{ range $index, $tag := $.Car.Details.Tags }}
+                            <span class="badge badge-primary">
+                                <a class="text-white"
+                                   href="/cars?q=tags:%22{{ urlquery $tag }}%22"
+                                >{{ $tag }}</a>
 
-                <div class="pt-2">
-                {{ with $.Car.Details.Description }}
-                    <p>{{ trustHTML . }}</p>
-                {{ else }}
-                    <p>This car does not have a description.</p>
-                {{ end }}
+                                {{ if WriteAccess }}
+                                    <a class="delete-tag text-white"
+                                       href="/car/{{ $.Car.Name }}/tags?delete={{ $tag }}"
+                                       data-tag="{{ $tag }}"
+                                       data-car="{{ $.Car.Name }}"
+                                       data-toggle="tooltip"
+                                       title="Delete this tag"
+                                    >
+                                        <i class="fas fa-times ml-2"></i>
+                                    </a>
+                                {{ end }}
+                            </span>
+                        {{ end }}
+                    </div>
+
+                    {{ if WriteAccess }}
+                        <div class="col-md-3 text-right">
+                            <form id="add-tag" method="post" action="/car/{{ $.Car.Name }}/tags">
+                                <div class="form-group row">
+                                    <div class="col-sm-9">
+                                        <input type="text" class="form-control form-control-sm" id="new-tag" name="new-tag" required
+                                               placeholder="Add a new tag">
+                                    </div>
+
+                                    <div class="col-sm-3">
+                                        <button type="submit" class="btn btn-sm btn-primary">Go</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="col-md-2 text-right">
+                        </div>
+                    {{ end }}
                 </div>
 
+                <div class="pt-2">
+                    {{ with $.Car.Details.Notes }}
+                        <h2>Notes</h2>
+
+                        <p>{{ trustHTML . }}</p>
+                    {{ end }}
+
+                    {{ with $.Car.Details.Description }}
+                        {{ with $.Car.Details.Notes }}
+                            <h2>Description</h2>
+                        {{ end }}
+
+                        <p>{{ trustHTML . }}</p>
+                    {{ end }}
+                </div>
             </div>
+
             <div class="col-md-2 border-left">
+                <div class="mb-4">
+                    {{ with $.Car.Details.DownloadURL }}
+                        <div class="pb-2 text-center">
+                            <a href="{{ . }}" class="btn btn-success d-block w-100" target="_blank">Download Car</a>
+                        </div>
+                    {{ end }}
+
+                    {{ if WriteAccess }}
+                        <div class="pb-2 text-center">
+                            <button class="btn btn-primary d-block w-100">Upload a Skin</button>
+                        </div>
+                    {{ end }}
+                </div>
+
                 <h3>Tyres</h3>
 
                 <ul class="list-unstyled">
@@ -151,7 +169,7 @@
 
 
                 {{ if WriteAccess }}
-                    <form method="post" action="/setups/upload" enctype="multipart/form-data" class="mb-5">
+                    <form method="post" action="/setups/upload" enctype="multipart/form-data" class="mb-2">
                         <div class="form-group row">
                             <label for="Track" class="col-sm-3 col-form-label">
                                 Track
@@ -208,48 +226,50 @@
                 </div>
 
                 {{ if WriteAccess }}
-                    <div class="card mt-3 border-info mt-5 mb-3">
-                        <div class="card-header text-white bg-primary">
-                            <strong>Car Metadata</strong>
-                        </div>
-                        <div class="card-body">
-
-                            <div class="form-group row">
-                                <label for="DownloadURL" class="col-sm-3 col-form-label">Download URL</label>
-
-                                <div class="col-sm-9">
-
-                                    <input
-                                            class="form-control"
-                                            type="url"
-                                            id="CustomRaceName"
-                                            name="CustomRaceName"
-                                            value="{{ $.Car.Details.DownloadURL }}"
-                                            placeholder=""
-                                    >
-
-                                    <small>Download links for cars will be shown in Championship pages and in Content Manager's server information screen.</small>
-                                </div>
+                    <form method="post" action="/car/{{ $.Car.Name }}/metadata">
+                        <div class="card mt-3 border-info mt-5 mb-3">
+                            <div class="card-header text-white bg-primary">
+                                <strong>Car Metadata</strong>
                             </div>
+                            <div class="card-body">
 
-                            <div class="form-group row">
-                                <label for="summernote" class="col-sm-3 col-form-label">Notes</label>
+                                <div class="form-group row">
+                                    <label for="DownloadURL" class="col-sm-3 col-form-label">Download URL</label>
 
-                                <div class="col-sm-9" id="championship-info">
-                                    <textarea id="summernote" name="Notes"></textarea>
-                                    <div class="clearfix"></div>
+                                    <div class="col-sm-9">
 
-                                    <small>Notes will be shown to all users when they visit this car page.</small>
+                                        <input
+                                                class="form-control"
+                                                type="url"
+                                                id="DownloadURL"
+                                                name="DownloadURL"
+                                                value="{{ $.Car.Details.DownloadURL }}"
+                                                placeholder="e.g. http://racedepartment.com/..."
+                                        >
+
+                                        <small>Download links for cars will be shown in Championship pages and in Content Manager's server information screen.</small>
+                                    </div>
                                 </div>
 
-                            </div>
+                                <div class="form-group row">
+                                    {{ with $.Car.Details.Notes }}<div class="d-none" id="CarNotes">{{ trustHTML . }}</div>{{ end }}
 
+                                    <label for="summernote" class="col-sm-3 col-form-label">Notes</label>
 
-                            <div class="float-right">
-                                <button class="btn btn-primary mt-5" type="submit">Save Car Metadata</button>
+                                    <div class="col-sm-9" id="championship-info">
+                                        <textarea id="summernote" name="Notes"></textarea>
+                                        <div class="clearfix"></div>
+
+                                        <small>Notes will be shown to all users when they visit this car page.</small>
+                                    </div>
+                                </div>
+
+                                <div class="float-right mt-5">
+                                    <button class="btn btn-primary" type="submit">Save Car Metadata</button>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </form>
                 {{ end }}
 
                 {{ if DeleteAccess }}
@@ -263,12 +283,11 @@
 
                             <a onclick="return confirm('Are you sure you want to permanently delete this car and all associated skins?');"
                                class="btn btn-danger float-right"
-                               href="/car/delete/{{ $.Car.Name }}">
+                               href="/car/{{ $.Car.Name }}/delete">
                                 Delete Car
                             </a>
 
                             <div class="clearfix"></div>
-
                         </div>
                     </div>
                 {{ end }}
