@@ -1,5 +1,4 @@
 import ClickEvent = JQuery.ClickEvent;
-import SubmitEvent = JQuery.SubmitEvent;
 
 export class CarDetail {
     public constructor() {
@@ -12,6 +11,7 @@ export class CarDetail {
         // make the car skins and hero-skin the same height
         CarDetail.fixCarImageHeights();
         $(window).on("resize", CarDetail.fixCarImageHeights);
+        CarDetail.initSummerNote();
     }
 
     private static onCarSkinClick(e: ClickEvent) {
@@ -25,5 +25,20 @@ export class CarDetail {
 
     private static fixCarImageHeights() {
         $(".car-skins").height($("#hero-skin").height()!);
+    }
+
+    private static initSummerNote() {
+        let $summerNote = $("#summernote");
+        let $carNotes = $("#CarNotes");
+
+        if ($carNotes.length > 0) {
+            $summerNote.summernote('code', $carNotes.html());
+        }
+
+        $summerNote.summernote({
+            placeholder: 'You can use this text input to attach notes to each car!',
+            tabsize: 2,
+            height: 200,
+        });
     }
 }
