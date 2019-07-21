@@ -16,10 +16,11 @@ type Resolver struct {
 	championshipManager *ChampionshipManager
 	accountManager      *AccountManager
 
-	viewRenderer   *Renderer
-	serverProcess  ServerProcess
-	raceControl    *RaceControl
-	raceControlHub *RaceControlHub
+	viewRenderer          *Renderer
+	serverProcess         ServerProcess
+	raceControl           *RaceControl
+	raceControlHub        *RaceControlHub
+	contentManagerWrapper *ContentManagerWrapper
 
 	// handlers
 	baseHandler                 *BaseHandler
@@ -91,6 +92,19 @@ func (r *Resolver) resolveServerProcess() ServerProcess {
 	return r.serverProcess
 }
 
+func (r *Resolver) resolveContentManagerWrapper() *ContentManagerWrapper {
+	if r.contentManagerWrapper != nil {
+		return r.contentManagerWrapper
+	}
+
+	r.contentManagerWrapper = NewContentManagerWrapper(
+		r.resolveServerProcess(),
+		r.resolveRaceControl(),
+	)
+
+	return r.contentManagerWrapper
+}
+
 func (r *Resolver) resolveRaceManager() *RaceManager {
 	if r.raceManager != nil {
 		return r.raceManager
@@ -100,6 +114,7 @@ func (r *Resolver) resolveRaceManager() *RaceManager {
 		r.store,
 		r.resolveServerProcess(),
 		r.resolveCarManager(),
+		r.resolveContentManagerWrapper(),
 	)
 
 	return r.raceManager
