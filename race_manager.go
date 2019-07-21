@@ -156,6 +156,10 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		}
 	}
 
+	if config.GlobalServerConfig.EnableContentManagerWrapper == 1 && config.GlobalServerConfig.ContentManagerWrapperPort > 0 {
+		config.GlobalServerConfig.Name += fmt.Sprintf(" %c%d", contentManagerWrapperSeparator, config.GlobalServerConfig.ContentManagerWrapperPort)
+	}
+
 	err = config.Write()
 
 	if err != nil {

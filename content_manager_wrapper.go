@@ -6,12 +6,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/cj123/assetto-server-manager/pkg/udp"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
+
+	"github.com/cj123/assetto-server-manager/pkg/udp"
 
 	"github.com/jaytaylor/html2text"
 	"github.com/sirupsen/logrus"
@@ -283,7 +285,12 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 		geoInfo = &GeoIP{}
 	}
 
-	sessionInfo.Name = global.Name
+	serverNameSplit := strings.Split(sessionInfo.Name, fmt.Sprintf(" %c", contentManagerWrapperSeparator))
+
+	if len(serverNameSplit) > 0 {
+		sessionInfo.Name = serverNameSplit[0]
+	}
+
 	sessionInfo.IP = geoInfo.IP
 	sessionInfo.Country = []string{geoInfo.CountryName, geoInfo.CountryCode}
 
