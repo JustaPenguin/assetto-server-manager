@@ -31,55 +31,5 @@
 
     <div class="clearfix"></div>
 
-    <nav aria-label="Page Navigation">
-        <ul class="pagination justify-content-center pagination-sm">
-            {{ $currentPage := .currentPage }}
-            {{ $start := (max 0 (sub $currentPage (mod $currentPage 10))) }}
-            {{ $end := (min (len .pages) (add $currentPage (sub 10 (mod $currentPage 10)))) }}
-
-            <li class="page-item {{ if eq $currentPage 0 }}disabled{{ end }}">
-                <a class="page-link"
-                   {{ if eq $currentPage 0 }}tabindex="-1"{{ end }}
-                   href="?page=0">
-                    <i class="fas fa-fast-backward fa-fw"></i>
-                </a>
-            </li>
-
-
-            <li class="page-item {{ if eq $start 0 }}disabled{{ end }}">
-                <a class="page-link"
-                {{ if eq $start 0 }}tabindex="-1"{{ end }}
-                   href="?page={{ sub $start 10 }}">
-                    <i class="fas fa-caret-left fa-fw"></i>
-                </a>
-            </li>
-
-
-            {{ range $i, $no := (slice .pages $start $end) }}
-                <li class="page-item {{ if eq $currentPage $no }}disabled{{ end }}">
-                    <a class="page-link"
-                       href="?page={{ $no }}">
-                        {{ $no }}
-                    </a>
-                </li>
-            {{ end }}
-
-
-            <li class="page-item {{ if or (gt $end (add (len .pages) -1)) (eq (len .pages) 0) }}disabled{{ end }}">
-                <a class="page-link"
-                {{ if gt $end (add (len .pages) -1) }}tabindex="-1"{{ end }}
-                   href="?page={{ $end }}">
-                    <i class="fas fa-caret-right fa-fw"></i>
-                </a>
-            </li>
-
-            <li class="page-item {{ if or (eq $currentPage (add (len .pages) -1)) (eq (len .pages) 0) }}disabled{{ end }}">
-                <a class="page-link"
-                   {{ if eq $currentPage (add (len .pages) -1) }}tabindex="-1"{{ end }}
-                   href="?page={{ add (len .pages) -1 }}">
-                    <i class="fas fa-fast-forward fa-fw"></i>
-                </a>
-            </li>
-        </ul>
-    </nav>
+    {{ template "pagination" dict "CurrentPage" .currentPage "NumPages" (len .pages) "_request" $._request }}
 {{ end }}

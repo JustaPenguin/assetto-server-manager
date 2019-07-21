@@ -205,6 +205,7 @@ func (tr *Renderer) init() error {
 		return template.HTML(s)
 	}
 	funcs["formatDuration"] = formatDuration
+	funcs["appendQuery"] = appendQuery
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
@@ -213,6 +214,14 @@ func (tr *Renderer) init() error {
 	}
 
 	return nil
+}
+
+func appendQuery(r *http.Request, query, value string) string {
+	q := r.URL.Query()
+	q.Set(query, value)
+	r.URL.RawQuery = q.Encode()
+
+	return r.URL.String()
 }
 
 func formatDuration(d time.Duration, trimLeadingZeroes bool) string {

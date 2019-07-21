@@ -54,6 +54,9 @@ type CarDetails struct {
 	URL         string          `json:"url"`
 	Version     string          `json:"version"`
 	Year        int64           `json:"year"`
+
+	DownloadURL string `json:"downloadURL"`
+	Notes       string `json:"notes"`
 }
 
 func (cd *CarDetails) AddTag(name string) {
@@ -311,7 +314,8 @@ func (cm *CarManager) Search(term string, from int) (*bleve.SearchResult, map[st
 		q = bleve.NewQueryStringQuery(term)
 	}
 
-	results, err := cm.carIndex.Search(bleve.NewSearchRequestOptions(q, searchPageSize, from, false))
+	request := bleve.NewSearchRequestOptions(q, searchPageSize, from, false)
+	results, err := cm.carIndex.Search(request)
 
 	if err != nil {
 		return nil, nil, err
@@ -418,7 +422,8 @@ func NewCarsHandler(baseHandler *BaseHandler, carManager *CarManager) *CarsHandl
 
 func (ch *CarsHandler) list(w http.ResponseWriter, r *http.Request) {
 	searchTerm := r.URL.Query().Get("q")
-	results, cars, err := ch.carManager.Search(searchTerm, 0) // @TODO pagination
+	page := formValueAsInt(r.URL.Query().Get("page"))
+	results, cars, err := ch.carManager.Search(searchTerm, page*searchPageSize)
 
 	if err != nil {
 		logrus.WithError(err).Error("Could not perform search")
@@ -427,9 +432,12 @@ func (ch *CarsHandler) list(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ch.viewRenderer.MustLoadTemplate(w, r, "content/cars.html", map[string]interface{}{
-		"Results": results,
-		"Cars":    cars,
-		"Query":   searchTerm,
+		"Results":     results,
+		"Cars":        cars,
+		"Query":       searchTerm,
+		"CurrentPage": page,
+		"NumPages":    int((float64(results.Total) / float64(searchPageSize)) + 0.5),
+		"PageSize":    searchPageSize,
 	})
 }
 
@@ -445,7 +453,7 @@ func (ch *CarsHandler) delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	AddFlash(w, r, fmt.Sprintf("Car %s successfully deleted!", carName))
-	http.Redirect(w, r, r.Referer(), http.StatusFound)
+	http.Redirect(w, r, "/cars", http.StatusFound)
 }
 
 const defaultSkinURL = "/static/img/no-preview-car.png"
@@ -467,7 +475,10 @@ func (ch *CarsHandler) view(w http.ResponseWriter, r *http.Request) {
 	carName := chi.URLParam(r, "car_id")
 	templateParams, err := ch.carManager.LoadCarDetailsForTemplate(carName)
 
-	if err != nil {
+	if os.IsNotExist(err) {
+		http.NotFound(w, r)
+		return
+	} else if err != nil {
 		logrus.WithError(err).Errorf("Could not load car details for: %s", carName)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
