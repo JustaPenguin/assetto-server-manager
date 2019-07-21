@@ -60,20 +60,12 @@ var TestEntryList = EntryList{
 
 type dummyServerProcess struct{}
 
-func (dummyServerProcess) Start(cfg ServerConfig, forwardingAddress string, forwardListenPort int, eventType ServerEventType) error {
-	return nil
-}
-
-func (dummyServerProcess) UDPCallback(message udp.Message) {
-
-}
-
-func (dummyServerProcess) SendUDPMessage(message udp.Message) error {
-	return nil
-}
-
 func (dummyServerProcess) Logs() string {
 	return ""
+}
+
+func (dummyServerProcess) Start(cfg ServerConfig, entryList EntryList, forwardingAddress string, forwardListenPort int, event RaceEvent) error {
+	return nil
 }
 
 func (dummyServerProcess) Stop() error {
@@ -88,12 +80,20 @@ func (dummyServerProcess) IsRunning() bool {
 	return true
 }
 
-func (dummyServerProcess) Done() <-chan struct{} {
+func (dummyServerProcess) Event() RaceEvent {
+	return &ActiveChampionship{}
+}
+
+func (dummyServerProcess) UDPCallback(message udp.Message) {
+
+}
+
+func (dummyServerProcess) SendUDPMessage(message udp.Message) error {
 	return nil
 }
 
-func (dummyServerProcess) EventType() ServerEventType {
-	return EventTypeChampionship
+func (dummyServerProcess) Done() <-chan struct{} {
+	return nil
 }
 
 var championshipEventFixtures = []string{

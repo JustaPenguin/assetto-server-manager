@@ -24,11 +24,10 @@ var (
 )
 
 type RaceManager struct {
-	process               ServerProcess
-	raceStore             Store
-	carManager            *CarManager
-	raceScheduler         *ScheduledRacesHandler
-	contentManagerWrapper *ContentManagerWrapper
+	process       ServerProcess
+	raceStore     Store
+	carManager    *CarManager
+	raceScheduler *ScheduledRacesHandler
 
 	currentRace      *ServerConfig
 	currentEntryList EntryList
@@ -47,13 +46,11 @@ func NewRaceManager(
 	raceStore Store,
 	process ServerProcess,
 	carManager *CarManager,
-	contentManagerWrapper *ContentManagerWrapper,
 ) *RaceManager {
 	return &RaceManager{
-		raceStore:             raceStore,
-		process:               process,
-		carManager:            carManager,
-		contentManagerWrapper: contentManagerWrapper,
+		raceStore:  raceStore,
+		process:    process,
+		carManager: carManager,
 	}
 }
 
@@ -75,6 +72,7 @@ type RaceEvent interface {
 	OverrideServerPassword() bool
 	ReplacementServerPassword() string
 	EventName() string
+	EventDescription() string
 }
 
 type normalEvent struct {
@@ -96,6 +94,10 @@ func (n normalEvent) OverrideServerPassword() bool {
 
 func (n normalEvent) ReplacementServerPassword() string {
 	return n.ReplacementPassword
+}
+
+func (n normalEvent) EventDescription() string {
+	return ""
 }
 
 func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool, event RaceEvent) error {
@@ -154,20 +156,6 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		}
 	}
 
-	// add content manager wrapper info
-	if config.GlobalServerConfig.EnableContentManagerWrapper == 1 && config.GlobalServerConfig.ContentManagerWrapperPort > 0 {
-		wrapperConfig := config
-		config.GlobalServerConfig.Name += fmt.Sprintf(" %c%d", ContentManagerSeparator, config.GlobalServerConfig.ContentManagerWrapperPort)
-
-		go func() {
-			err := rm.contentManagerWrapper.Start(wrapperConfig.GlobalServerConfig.ContentManagerWrapperPort, wrapperConfig, entryList)
-
-			if err != nil {
-				logrus.WithError(err).Error("Could not start Content Manager wrapper server")
-			}
-		}()
-	}
-
 	err = config.Write()
 
 	if err != nil {
@@ -191,13 +179,7 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		}
 	}
 
-	eventType := EventTypeRace
-
-	if event.IsChampionship() {
-		eventType = EventTypeChampionship
-	}
-
-	err = rm.process.Start(config, forwardingAddress, forwardListenPort, eventType)
+	err = rm.process.Start(config, entryList, forwardingAddress, forwardListenPort, event)
 
 	if err != nil {
 		return err

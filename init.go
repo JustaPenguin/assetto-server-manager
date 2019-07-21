@@ -40,7 +40,7 @@ func InitWithResolver(resolver *Resolver) error {
 		for range c {
 			// ^C, handle it
 			if process.IsRunning() {
-				if process.EventType() == EventTypeChampionship {
+				if process.Event().IsChampionship() {
 					if err := championshipManager.StopActiveEvent(); err != nil {
 						logrus.WithError(err).Errorf("Error stopping event")
 					}

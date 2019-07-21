@@ -932,6 +932,7 @@ type ActiveChampionship struct {
 	SessionType             SessionType
 	OverridePassword        bool
 	ReplacementPassword     string
+	Description             string
 
 	loadedEntrants map[udp.CarID]udp.SessionCarInfo
 
@@ -953,4 +954,8 @@ func (a *ActiveChampionship) ReplacementServerPassword() string {
 
 func (a *ActiveChampionship) EventName() string {
 	return a.Name
+}
+
+func (a *ActiveChampionship) EventDescription() string {
+	return a.Description
 }
