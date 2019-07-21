@@ -48,7 +48,7 @@
         <div id="car-info-panel"></div>
     {{ end }}
 
-    <form method="get" action="/cars" class="row mt-4 mb-4">
+    <form method="get" action="/cars" class="row mt-4 mb-2">
         <div class="col-8 col-md-10">
             <input name="q" placeholder="Search for cars" class="form-control" value="{{ $.Query }}" autocomplete="off">
         </div>
@@ -60,6 +60,19 @@
 
     {{ with .Results }}
         {{- /*gotype: github.com/blevesearch/bleve.SearchResult */ -}}
+
+        <div class="text-black-50 mb-2">
+            <div class="float-left">
+                {{ $pageStart := mul $.CurrentPage $.PageSize }}
+                <small>Showing results {{ $pageStart }}-{{ add $pageStart (len .Hits) }} of {{ .Total }}</small>
+            </div>
+
+            <div class="float-right">
+                <small>Search completed in {{ .Took }}</small>
+            </div>
+
+            <div class="clearfix"></div>
+        </div>
 
         {{ range $index, $hit := .Hits }}
             {{ $carID := $hit.ID }}
@@ -84,10 +97,14 @@
                     </div>
                 </div>
             </a>
-
+        {{ else }}
+            <p>Your search returned no results. Please try a different query.</p>
         {{ end }}
 
-        <div class="text-center text-black-50 mt-2"><small>Search completed in {{ .Took }}</small></div>
+
+        {{ if gt (len .Hits) 0 }}
+            {{ template "pagination" dict "CurrentPage" $.CurrentPage "NumPages" $.NumPages "_request" $._request }}
+        {{ end }}
     {{ end }}
 
     <div class="clearfix"></div>
