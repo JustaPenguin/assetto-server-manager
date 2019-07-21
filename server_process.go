@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"net"
 	"os"
 	"os/exec"
@@ -148,11 +147,8 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 	}
 
 	if cfg.GlobalServerConfig.EnableContentManagerWrapper == 1 && cfg.GlobalServerConfig.ContentManagerWrapperPort > 0 {
-		wrapperConfig := cfg
-		cfg.GlobalServerConfig.Name += fmt.Sprintf(" %c%d", contentManagerWrapperSeparator, cfg.GlobalServerConfig.ContentManagerWrapperPort)
-
 		go func() {
-			err := as.contentManagerWrapper.Start(as, wrapperConfig.GlobalServerConfig.ContentManagerWrapperPort, wrapperConfig, entryList, event.EventDescription())
+			err := as.contentManagerWrapper.Start(as, cfg.GlobalServerConfig.ContentManagerWrapperPort, cfg, entryList, event.EventDescription())
 
 			if err != nil {
 				logrus.WithError(err).Error("Could not start Content Manager wrapper server")
