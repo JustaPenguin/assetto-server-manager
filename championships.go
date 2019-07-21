@@ -940,6 +940,14 @@ type ActiveChampionship struct {
 	NumRaceStartEvents int
 }
 
+func (a *ActiveChampionship) GetURL() string {
+	if config.HTTP.BaseURL != "" {
+		return config.HTTP.BaseURL + "/championship/" + a.ChampionshipID.String()
+	} else {
+		return ""
+	}
+}
+
 func (a *ActiveChampionship) IsChampionship() bool {
 	return true
 }

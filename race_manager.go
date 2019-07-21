@@ -73,6 +73,7 @@ type RaceEvent interface {
 	ReplacementServerPassword() string
 	EventName() string
 	EventDescription() string
+	GetURL() string
 }
 
 type normalEvent struct {
@@ -97,6 +98,10 @@ func (n normalEvent) ReplacementServerPassword() string {
 }
 
 func (n normalEvent) EventDescription() string {
+	return ""
+}
+
+func (n normalEvent) GetURL() string {
 	return ""
 }
 
