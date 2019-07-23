@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -48,7 +49,8 @@ type CarDetails struct {
 	Description string          `json:"description"`
 	Name        string          `json:"name"`
 	PowerCurve  [][]json.Number `json:"powerCurve"`
-	Specs       CarSpecs        `json:"specs"`
+	SpecsFull   CarSpecs        `json:"specs"`
+	Specs       CarSpecsNumeric `json:"spec"`
 	Tags        []string        `json:"tags"`
 	TorqueCurve [][]json.Number `json:"torqueCurve"`
 	URL         string          `json:"url"`
@@ -110,16 +112,52 @@ func (cd *CarDetails) Load(carName string) error {
 
 	carDetailsBytes = bom.Clean(regexp.MustCompile(`\t*\r*\n*`).ReplaceAll(carDetailsBytes, []byte("")))
 
-	return json.Unmarshal(carDetailsBytes, &cd)
+	err = json.Unmarshal(carDetailsBytes, &cd)
+
+	if err != nil {
+		return err
+	}
+
+	cd.Specs = cd.SpecsFull.Numeric()
+
+	return nil
 }
 
 type CarSpecs struct {
 	Acceleration string `json:"acceleration"`
-	Bhp          string `json:"bhp"`
-	Pwratio      string `json:"pwratio"`
-	Topspeed     string `json:"topspeed"`
+	BHP          string `json:"bhp"`
+	PWRatio      string `json:"pwratio"`
+	TopSpeed     string `json:"topspeed"`
 	Torque       string `json:"torque"`
 	Weight       string `json:"weight"`
+}
+
+type CarSpecsNumeric struct {
+	Acceleration int `json:"acceleration"`
+	BHP          int `json:"bhp"`
+	PWRatio      int `json:"pwratio"`
+	TopSpeed     int `json:"topspeed"`
+	Torque       int `json:"torque"`
+	Weight       int `json:"weight"`
+}
+
+var keepNumericRegex = regexp.MustCompile(`[0-9]+`)
+
+func toNumber(str string) int {
+	str = keepNumericRegex.FindString(str)
+
+	return formValueAsInt(str)
+}
+
+func (cs CarSpecs) Numeric() CarSpecsNumeric {
+	return CarSpecsNumeric{
+		Acceleration: toNumber(cs.Acceleration),
+		BHP:          toNumber(cs.BHP),
+		PWRatio:      toNumber(cs.PWRatio),
+		TopSpeed:     toNumber(cs.TopSpeed),
+		Torque:       toNumber(cs.Torque),
+		Weight:       toNumber(cs.Weight),
+	}
 }
 
 type CarManager struct {
@@ -259,17 +297,39 @@ func (cm *CarManager) DeleteCar(carName string) error {
 const searchPageSize = 50
 
 // CreateSearchIndex builds a search index for the cars
-// @TODO this really should use a filesystem index.
-func (cm *CarManager) CreateSearchIndex() error {
+func (cm *CarManager) CreateOrOpenSearchIndex() error {
 	indexMapping := bleve.NewIndexMapping()
+	/*
+		fm := bleve.NewNumericFieldMapping()
 
-	index, err := bleve.NewMemOnly(indexMapping)
+		carMapping := bleve.NewDocumentMapping()
+		carMapping.AddFieldMappingsAt("specs.weight", fm)
 
-	if err != nil {
+		indexMapping.AddDocumentMapping("car", carMapping)
+		indexMapping.TypeField = "Type"
+	*/
+	indexPath := filepath.Join(ServerInstallPath, "search-index", "cars")
+
+	var err error
+
+	cm.carIndex, err = bleve.Open(indexPath)
+
+	if err == bleve.ErrorIndexPathDoesNotExist {
+		logrus.Infof("Creating car search index")
+		cm.carIndex, err = bleve.New(indexPath, indexMapping)
+
+		if err != nil {
+			return err
+		}
+
+		err = cm.IndexAllCars()
+
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
 		return err
 	}
-
-	cm.carIndex = index
 
 	return nil
 }
@@ -285,8 +345,8 @@ func (cm *CarManager) DeIndexCar(name string) error {
 }
 
 // IndexAllCars loads all current cars and adds them to the search index
-// @TODO building the index and doing this should be a migration
 func (cm *CarManager) IndexAllCars() error {
+	logrus.Infof("Building search index for all cars")
 	cars, err := cm.ListCars()
 
 	if err != nil {
@@ -301,11 +361,13 @@ func (cm *CarManager) IndexAllCars() error {
 		}
 	}
 
+	logrus.Infof("Search index build is complete")
+
 	return nil
 }
 
 // Search looks for cars in the search index.
-func (cm *CarManager) Search(term string, from int) (*bleve.SearchResult, map[string]*Car, error) {
+func (cm *CarManager) Search(ctx context.Context, term string, from int) (*bleve.SearchResult, map[string]*Car, error) {
 	var q query.Query
 
 	if term == "" {
@@ -315,7 +377,7 @@ func (cm *CarManager) Search(term string, from int) (*bleve.SearchResult, map[st
 	}
 
 	request := bleve.NewSearchRequestOptions(q, searchPageSize, from, false)
-	results, err := cm.carIndex.Search(request)
+	results, err := cm.carIndex.SearchInContext(ctx, request)
 
 	if err != nil {
 		return nil, nil, err
@@ -436,7 +498,7 @@ func NewCarsHandler(baseHandler *BaseHandler, carManager *CarManager) *CarsHandl
 func (ch *CarsHandler) list(w http.ResponseWriter, r *http.Request) {
 	searchTerm := r.URL.Query().Get("q")
 	page := formValueAsInt(r.URL.Query().Get("page"))
-	results, cars, err := ch.carManager.Search(searchTerm, page*searchPageSize)
+	results, cars, err := ch.carManager.Search(r.Context(), searchTerm, page*searchPageSize)
 
 	if err != nil {
 		logrus.WithError(err).Error("Could not perform search")

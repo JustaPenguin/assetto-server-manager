@@ -68,10 +68,80 @@
             </div>
 
             <div class="float-right">
-                <small>Search completed in {{ .Took }}</small>
+                <small>Search completed in {{ .Took }} | <a href="#" data-toggle="collapse" data-target="#searchHelp" aria-expanded="false" aria-controls="searchHelp">Search Help</a></small>
             </div>
 
             <div class="clearfix"></div>
+        </div>
+
+        <div class="collapse" id="searchHelp">
+            <div class="card card-body">
+                <h4>Search Help</h4>
+
+                <p>You can type in the search much like you would use Google or any other search field.</p>
+
+                <ul>
+                    <li>
+                        <strong>Basic Search</strong> -  for example if you wanted to find cars which relate to Ferrari,
+                        you can type: <code>ferrari</code>
+                    </li>
+                    <li>
+                        <strong>Boolean Searches</strong> - say you wanted to find Ferrari cars that are not vintage,
+                        you could use: <code>+ferrari -vintage</code>.
+                    </li>
+                    <li>
+                        <strong>Searching by Specific Fields</strong> - the entire of the car's details can be searched
+                        across. For example, if you want to find cars with a specific tag - say, "italy" - you can use: <code>tags:"italy"</code><br><br>
+
+                        <small>
+                            The entire list of car fields is:
+
+                            <code>author</code>,
+                            <code>brand</code>,
+                            <code>class</code>,
+                            <code>country</code>,
+                            <code>description</code>,
+                            <code>name</code>,
+                            <code>url</code>,
+                            <code>version</code>,
+                            <code>year</code>,
+                            <code>notes</code>,
+                            <code>spec.acceleration</code>,
+                            <code>spec.bhp</code>,
+                            <code>spec.pwratio</code>,
+                            <code>spec.torque</code>,
+                            <code>spec.weight</code>
+                        </small>
+                    </li>
+
+                    <li>
+                        <strong>Searching Numeric Values</strong> - you can search numeric values, for example <code>spec.weight:>600</code> will
+                        list all cars with a weight above 600kg.<br><br>
+
+                        <small>
+                            All available numeric values are:
+
+                            <code>year</code>,
+                            <code>spec.acceleration</code>,
+                            <code>spec.bhp</code>,
+                            <code>spec.pwratio</code>,
+                            <code>spec.torque</code>,
+                            <code>spec.weight</code>
+                        </small>
+                    </li>
+                </ul>
+
+
+                <p>Of course, you can combine all of the above things into one query! That might look like the following:</p>
+
+                <div class="text-center">
+                    <code>+ferrari -vintage +tags:"semiautomatic" +spec.bhp:>600</code><br>
+                    <em>"must be a ferrari", "must not be vintage", "must have the tag 'semiautomatic'", "must have a BHP greater than 600".</em>
+                </div>
+                <br>
+
+                <p>Server Manager uses Bleve to provide searching. Bleve is incredibly powerful and offers a great amount of control over search queries. We've covered some examples of how to make the most out of searching here, but please refer to <a href="https://blevesearch.com/docs/Query-String-Query/">Bleve's Documentation</a> for more detailed examples and syntax.</p>
+            </div>
         </div>
 
         {{ range $index, $hit := .Hits }}

@@ -76,13 +76,7 @@ func InitWithResolver(resolver *Resolver) error {
 
 	carManager := resolver.resolveCarManager()
 
-	err = carManager.CreateSearchIndex()
-
-	if err != nil {
-		return err
-	}
-
-	err = carManager.IndexAllCars()
+	err = carManager.CreateOrOpenSearchIndex()
 
 	if err != nil {
 		return err
