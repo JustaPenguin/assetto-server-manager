@@ -32,7 +32,7 @@
                         {{ range $index, $tag := $.Car.Details.Tags }}
                             <span class="badge badge-primary">
                                 <a class="text-white"
-                                   href="/cars?q=tags:%22{{ urlquery $tag }}%22"
+                                   href="/cars?q=%2Btags:%22{{ urlquery $tag }}%22"
                                 >{{ $tag }}</a>
 
                                 {{ if WriteAccess }}
@@ -126,10 +126,10 @@
 
                 <ul class="list-unstyled">
                     {{ with $.Car.Details.Author }}<li><strong>Author:</strong> {{ . }}</li>{{ end }}
-                    {{ with $.Car.Details.Brand }}<li><strong>Brand:</strong> {{ . }}</li>{{ end }}
-                    {{ with $.Car.Details.Class }}<li><strong>Class:</strong> {{ . }}</li>{{ end }}
-                    {{ with $.Car.Details.Country }}<li><strong>Country:</strong> {{ . }}</li>{{ end }}
-                    {{ with $.Car.Details.Year }}<li><strong>Year:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.Brand }}<li><strong>Brand:</strong> <a href="/cars?q=%2Bbrand:{{ . }}">{{ . }}</a></li>{{ end }}
+                    {{ with $.Car.Details.Class }}<li><strong>Class:</strong> <a href="/cars?q=%2Bclass:{{ . }}">{{ . }}</a></li>{{ end }}
+                    {{ with $.Car.Details.Country }}<li><strong>Country:</strong> <a href="/cars?q=%2Bcountry:{{ . }}">{{ . }}</a></li>{{ end }}
+                    {{ with $.Car.Details.Year }}<li><strong>Year:</strong> <a href="/cars?q=%2Byear:{{ . }}">{{ . }}</a></li>{{ end }}
                     {{ with $.Car.Details.Version }}<li><strong>Version:</strong> {{ . }}</li>{{ end }}
                 </ul>
 
