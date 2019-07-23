@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -506,12 +507,14 @@ func (ch *CarsHandler) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	numPages := int(math.Ceil(float64(float64(results.Total)) / float64(searchPageSize)))
+
 	ch.viewRenderer.MustLoadTemplate(w, r, "content/cars.html", map[string]interface{}{
 		"Results":     results,
 		"Cars":        cars,
 		"Query":       searchTerm,
 		"CurrentPage": page,
-		"NumPages":    int((float64(results.Total) / float64(searchPageSize)) + 0.5),
+		"NumPages":    numPages,
 		"PageSize":    searchPageSize,
 	})
 }
