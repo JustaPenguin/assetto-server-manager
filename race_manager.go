@@ -27,7 +27,6 @@ type RaceManager struct {
 	process       ServerProcess
 	raceStore     Store
 	carManager    *CarManager
-	raceScheduler *ScheduledRacesHandler
 
 	currentRace      *ServerConfig
 	currentEntryList EntryList
