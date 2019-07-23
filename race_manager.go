@@ -3,7 +3,6 @@ package servermanager
 import (
 	"errors"
 	"fmt"
-	"github.com/cj123/assetto-server-manager/pkg/udp"
 	"math/rand"
 	"net/http"
 	"path/filepath"
@@ -12,6 +11,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/cj123/assetto-server-manager/pkg/udp"
 
 	"github.com/etcd-io/bbolt"
 	"github.com/go-chi/chi"
@@ -24,10 +25,9 @@ var (
 )
 
 type RaceManager struct {
-	process       ServerProcess
-	raceStore     Store
-	carManager    *CarManager
-	raceScheduler *ScheduledRacesHandler
+	process    ServerProcess
+	raceStore  Store
+	carManager *CarManager
 
 	currentRace      *ServerConfig
 	currentEntryList EntryList

@@ -90,7 +90,15 @@ func (cd *CarDetails) DelTag(name string) {
 }
 
 func (cd *CarDetails) Save(carName string) error {
-	f, err := os.Create(filepath.Join(ServerInstallPath, "content", "cars", carName, "ui", "ui_car.json"))
+	uiDirectory := filepath.Join(ServerInstallPath, "content", "cars", carName, "ui")
+
+	err := os.MkdirAll(uiDirectory, 0755)
+
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create(filepath.Join(uiDirectory, "ui_car.json"))
 
 	if err != nil {
 		return err
@@ -228,7 +236,10 @@ func (cm *CarManager) LoadCar(name string, tyres Tyres) (*Car, error) {
 
 	carDetails := CarDetails{}
 
-	if err := carDetails.Load(name); err != nil {
+	if err := carDetails.Load(name); err != nil && os.IsNotExist(err) {
+		// the car details don't exist, just create some fake ones.
+		carDetails.Name = prettifyName(name, true)
+	} else if err != nil {
 		return nil, err
 	}
 
