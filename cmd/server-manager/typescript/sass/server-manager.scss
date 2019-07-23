@@ -17,3 +17,7 @@
 @import "custom-race";
 @import "championships";
 @import "car-details";
+@import '@fullcalendar/core/main';
+@import '@fullcalendar/timegrid/main';
+@import '@fullcalendar/daygrid/main';
+@import '@fullcalendar/list/main';
