@@ -12,6 +12,7 @@ export class CarDetail {
         CarDetail.fixCarImageHeights();
         $(window).on("resize", CarDetail.fixCarImageHeights);
         CarDetail.initSummerNote();
+        CarDetail.initSkinUpload();
     }
 
     private static onCarSkinClick(e: ClickEvent) {
@@ -21,6 +22,8 @@ export class CarDetail {
             "src": $currentTarget.attr("src"),
             "alt": $currentTarget.attr("alt"),
         });
+
+        $("select[name='skin-delete']").val($currentTarget.data("skin"));
     }
 
     private static fixCarImageHeights() {
@@ -40,5 +43,35 @@ export class CarDetail {
             tabsize: 2,
             height: 200,
         });
+    }
+
+    private static initSkinUpload() {
+        $("#input-folder-skin").on("change", () => {
+            console.log("HI");
+            $("#upload-skin").show();
+        });
+
+        $("#skin-upload").on("submit", () => {
+            const chooseFilesButton = $("#input-folder-skin").get(0) as HTMLInputElement;
+
+            if (!chooseFilesButton.files) {
+                return false;
+            }
+
+            // filter out files we're not interested in
+            let list = new DataTransfer();
+
+            for (let file of chooseFilesButton.files) {
+                if (file.name === "livery.png" || file.name === "preview.jpg" || file.name === "ui_skin.json") {
+                    list.items.add(file);
+                }
+            }
+
+            chooseFilesButton.files = list.files;
+
+            return true;
+        });
+
+
     }
 }

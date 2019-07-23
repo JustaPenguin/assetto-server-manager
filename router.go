@@ -123,6 +123,7 @@ func Router(
 		r.Post("/setups/upload", carSetupsUploadHandler)
 		r.HandleFunc("/car/{name}/tags", carsHandler.tags)
 		r.Post("/car/{name}/metadata", carsHandler.metadata)
+		r.Post("/car/{name}/skin", carsHandler.uploadSkin)
 
 		// races
 		r.Get("/quick", quickRaceHandler.create)
@@ -191,6 +192,7 @@ func Router(
 
 		r.Get("/track/delete/{name}", tracksHandler.delete)
 		r.Get("/car/{name}/delete", carsHandler.delete)
+		r.Post("/car/{name}/skin/delete", carsHandler.deleteSkin)
 		r.Get("/weather/delete/{key}", weatherHandler.delete)
 		r.Get("/setups/delete/{car}/{track}/{setup}", carSetupDeleteHandler)
 

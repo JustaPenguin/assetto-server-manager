@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -494,6 +496,52 @@ func (cm *CarManager) UpdateCarMetadata(carName string, r *http.Request) error {
 	return car.Details.Save(carName)
 }
 
+func (cm *CarManager) UploadSkin(carName string, files map[string][]*multipart.FileHeader) error {
+	carDirectory := filepath.Join(ServerInstallPath, "content", "cars", carName, "skins")
+
+	for _, files := range files {
+		for _, fh := range files {
+			if err := cm.uploadSkinFile(carDirectory, fh); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (cm *CarManager) uploadSkinFile(carDirectory string, header *multipart.FileHeader) error {
+	r, err := header.Open()
+
+	if err != nil {
+		return err
+	}
+
+	defer r.Close()
+
+	fileDirectory := filepath.Join(carDirectory, filepath.Dir(header.Filename))
+
+	if err := os.MkdirAll(fileDirectory, 0755); err != nil {
+		return err
+	}
+
+	w, err := os.Create(filepath.Join(fileDirectory, filepath.Base(header.Filename)))
+
+	if err != nil {
+		return err
+	}
+
+	defer w.Close()
+
+	_, err = io.Copy(w, r)
+
+	return err
+}
+
+func (cm *CarManager) DeleteSkin(car, skin string) error {
+	return os.RemoveAll(filepath.Join(ServerInstallPath, "content", "cars", car, "skins", skin))
+}
+
 type CarsHandler struct {
 	*BaseHandler
 
@@ -612,5 +660,46 @@ func (ch *CarsHandler) metadata(w http.ResponseWriter, r *http.Request) {
 	}
 
 	AddFlash(w, r, "Car metadata updated successfully!")
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (ch *CarsHandler) uploadSkin(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(32 << 20)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	car := chi.URLParam(r, "name")
+
+	err = ch.carManager.UploadSkin(car, r.MultipartForm.File)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("could not upload car skin for %s", car)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	AddFlash(w, r, "Car skin uploaded successfully!")
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (ch *CarsHandler) deleteSkin(w http.ResponseWriter, r *http.Request) {
+	car := chi.URLParam(r, "name")
+	skin := r.FormValue("skin-delete")
+
+	if skin == "" {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	if err := ch.carManager.DeleteSkin(car, skin); err != nil {
+		logrus.WithError(err).Errorf("could not delete car skin for %s", car)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	AddFlash(w, r, "Car skin deleted successfully!")
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }

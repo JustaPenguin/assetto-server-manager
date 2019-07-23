@@ -15,9 +15,3 @@ $(() => {
     new RaceControl();
     new CarDetail();
 });
-
-declare global {
-   interface JQuery {
-      bootstrapSwitch: any;
-   }
-}

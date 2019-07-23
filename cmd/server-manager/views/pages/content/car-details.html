@@ -18,7 +18,7 @@
                 <div class="col-4 col-md-2 car-skins">
                     {{ range $index, $skin := $.Car.Skins }}
                         <div class="car-skin">
-                            <img class="img img-fluid car-image" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}" title="{{ prettify $skin true }}" data-toggle="tooltip" data-placement="bottom">
+                            <img class="img img-fluid car-image" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}" title="{{ prettify $skin true }}" data-skin="{{ $skin }}" data-toggle="tooltip" data-placement="bottom">
                         </div>
                     {{ end }}
                 </div>
@@ -54,12 +54,12 @@
                         <div class="col-md-3 text-right">
                             <form id="add-tag" method="post" action="/car/{{ $.Car.Name }}/tags">
                                 <div class="form-group row">
-                                    <div class="col-sm-9">
+                                    <div class="col-9">
                                         <input type="text" class="form-control form-control-sm" id="new-tag" name="new-tag" required
                                                placeholder="Add a new tag">
                                     </div>
 
-                                    <div class="col-sm-3">
+                                    <div class="col-3">
                                         <button type="submit" class="btn btn-sm btn-primary">Go</button>
                                     </div>
                                 </div>
@@ -89,58 +89,8 @@
                         <p>There is no description for this car.</p>
                     {{ end }}
                 </div>
-            </div>
 
-            <div class="col-md-2 border-left">
-                <div class="mb-4">
-                    {{ with $.Car.Details.DownloadURL }}
-                        <div class="pb-2 text-center">
-                            <a href="{{ . }}" class="btn btn-success d-block w-100" target="_blank">Download Car</a>
-                        </div>
-                    {{ end }}
 
-                    {{ if WriteAccess }}
-                        <div class="pb-2 text-center">
-                            <button class="btn btn-primary d-block w-100">Upload a Skin</button>
-                        </div>
-                    {{ end }}
-                </div>
-
-                <h3>Tyres</h3>
-
-                <ul class="list-unstyled">
-                    {{ range $tyre, $name := $.Car.Tyres }}
-                        <li>{{ $name }} ({{ $tyre }})</li>
-                    {{ end }}
-                </ul>
-
-                <h3>Specs</h3>
-
-                <ul class="list-unstyled">
-                    {{ with $.Car.Details.SpecsFull.Acceleration }}<li><strong>Acceleration:</strong> {{ . }}</li>{{ end }}
-                    {{ with $.Car.Details.SpecsFull.BHP }}<li><strong>BHP:</strong> {{ . }}</li>{{ end }}
-                    {{ with $.Car.Details.SpecsFull.PWRatio }}<li><strong>Power Ratio:</strong> {{ . }}</li>{{ end }}
-                    {{ with $.Car.Details.SpecsFull.TopSpeed }}<li><strong>Top Speed:</strong> {{ . }}</li>{{ end }}
-                    {{ with $.Car.Details.SpecsFull.Torque }}<li><strong>Torque:</strong> {{ . }}</li>{{ end }}
-                    {{ with $.Car.Details.SpecsFull.Weight }}<li><strong>Weight:</strong> {{ . }}</li>{{ end }}
-                </ul>
-
-                <h3>About</h3>
-
-                <ul class="list-unstyled">
-                    {{ with $.Car.Details.Author }}<li><strong>Author:</strong> {{ . }}</li>{{ end }}
-                    {{ with $.Car.Details.Brand }}<li><strong>Brand:</strong> <a href="/cars?q=%2Bbrand:{{ . }}">{{ . }}</a></li>{{ end }}
-                    {{ with $.Car.Details.Class }}<li><strong>Class:</strong> <a href="/cars?q=%2Bclass:{{ . }}">{{ . }}</a></li>{{ end }}
-                    {{ with $.Car.Details.Country }}<li><strong>Country:</strong> <a href="/cars?q=%2Bcountry:{{ . }}">{{ . }}</a></li>{{ end }}
-                    {{ with $.Car.Details.Year }}<li><strong>Year:</strong> <a href="/cars?q=%2Byear:{{ . }}">{{ . }}</a></li>{{ end }}
-                    {{ with $.Car.Details.Version }}<li><strong>Version:</strong> {{ . }}</li>{{ end }}
-                </ul>
-
-            </div>
-        </div>
-
-        <div class="row mb-3">
-            <div class="col-12">
                 <h2>Setups</h2>
 
                 {{ if gt (len $.Setups) 0 }}
@@ -242,6 +192,53 @@
                     {{ end }}
                 </div>
 
+            </div>
+
+            <div class="col-md-2 border-left">
+                <div class="mb-4">
+                    {{ with $.Car.Details.DownloadURL }}
+                        <div class="pb-2 text-center">
+                            <a href="{{ . }}" class="btn btn-success d-block w-100" target="_blank">Download Car</a>
+                        </div>
+                    {{ end }}
+                </div>
+
+                <h4>Tyres</h4>
+
+                <ul class="list-unstyled">
+                    {{ range $tyre, $name := $.Car.Tyres }}
+                        <li>{{ $name }} ({{ $tyre }})</li>
+                    {{ end }}
+                </ul>
+
+                <h4>Specs</h4>
+
+                <ul class="list-unstyled">
+                    {{ with $.Car.Details.SpecsFull.Acceleration }}<li><strong>Acceleration:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.SpecsFull.BHP }}<li><strong>BHP:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.SpecsFull.PWRatio }}<li><strong>Power Ratio:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.SpecsFull.TopSpeed }}<li><strong>Top Speed:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.SpecsFull.Torque }}<li><strong>Torque:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.SpecsFull.Weight }}<li><strong>Weight:</strong> {{ . }}</li>{{ end }}
+                </ul>
+
+                <h4>About</h4>
+
+                <ul class="list-unstyled">
+                    {{ with $.Car.Details.Author }}<li><strong>Author:</strong> <a href="/cars?q=%2Bauthor:{{ . }}">{{ . }}</a></li>{{ end }}
+                    {{ with $.Car.Details.Brand }}<li><strong>Brand:</strong> <a href="/cars?q=%2Bbrand:{{ . }}">{{ . }}</a></li>{{ end }}
+                    {{ with $.Car.Details.Class }}<li><strong>Class:</strong> <a href="/cars?q=%2Bclass:{{ . }}">{{ . }}</a></li>{{ end }}
+                    {{ with $.Car.Details.Country }}<li><strong>Country:</strong> <a href="/cars?q=%2Bcountry:{{ . }}">{{ . }}</a></li>{{ end }}
+                    {{ with $.Car.Details.Year }}<li><strong>Year:</strong> <a href="/cars?q=%2Byear:{{ . }}">{{ . }}</a></li>{{ end }}
+                    {{ with $.Car.Details.Version }}<li><strong>Version:</strong> {{ . }}</li>{{ end }}
+                </ul>
+
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-12">
+
                 {{ if WriteAccess }}
                     <form method="post" action="/car/{{ $.Car.Name }}/metadata">
                         <div class="card mt-3 border-info mt-5 mb-3">
@@ -287,6 +284,53 @@
                             </div>
                         </div>
                     </form>
+
+                    <div class="card mt-3 border-secondary mb-3">
+                        <div class="card-header bg-secondary">
+                            <strong>Skins</strong>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" action="/car/{{ $.Car.Name }}/skin" id="skin-upload" enctype="multipart/form-data">
+                                <div class="form-group row">
+                                    <label for="input-folder-skin" class="col-sm-3 col-form-label">Skin Upload</label>
+
+                                    <div class="col-sm-9">
+                                        <div class="btn-file btn btn-secondary d-inline-block align-top">
+                                            Choose a Skin
+                                            <input id="input-folder-skin" name="input-folder-skin[]" type="file"
+                                                   multiple webkitdirectory value="Choose Folder"/>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary" id="upload-skin" style="display: none;">
+                                            Upload
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            {{ if DeleteAccess }}
+                                <hr>
+
+                                <form action="/car/{{ $.Car.Name }}/skin/delete" method="post">
+                                    <div class="form-group row">
+                                        <label for="skin-delete" class="col-sm-3 col-form-label">Delete Skin</label>
+
+                                        <div class="col-sm-9">
+                                            <select class="form-control" name="skin-delete">
+                                                {{ range $index, $skin := $.Car.Skins }}
+                                                    <option value="{{ $skin }}">{{ prettify $skin true }}</option>
+                                                {{ end }}
+                                            </select>
+
+                                            <div class="mt-2">
+                                                <button type="submit" class="btn btn-danger">Delete Skin</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            {{ end }}
+                        </div>
+                    </div>
                 {{ end }}
 
                 {{ if DeleteAccess }}
