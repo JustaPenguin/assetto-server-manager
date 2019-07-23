@@ -111,6 +111,17 @@
                     {{ end }}
                 </ul>
 
+                <h3>Specs</h3>
+
+                <ul class="list-unstyled">
+                    {{ with $.Car.Details.SpecsFull.Acceleration }}<li><strong>Acceleration:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.SpecsFull.BHP }}<li><strong>BHP:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.SpecsFull.PWRatio }}<li><strong>Power Ratio:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.SpecsFull.TopSpeed }}<li><strong>Top Speed:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.SpecsFull.Torque }}<li><strong>Torque:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.SpecsFull.Weight }}<li><strong>Weight:</strong> {{ . }}</li>{{ end }}
+                </ul>
+
                 <h3>About</h3>
 
                 <ul class="list-unstyled">
@@ -121,6 +132,7 @@
                     {{ with $.Car.Details.Year }}<li><strong>Year:</strong> {{ . }}</li>{{ end }}
                     {{ with $.Car.Details.Version }}<li><strong>Version:</strong> {{ . }}</li>{{ end }}
                 </ul>
+
             </div>
         </div>
 
@@ -162,7 +174,9 @@
                         {{ end }}
                     </table>
 
-                    <p>You can upload setups for this car using the form below.</p>
+                    {{ if WriteAccess }}
+                        <p>You can upload setups for this car using the form below.</p>
+                    {{ end }}
                 {{ else }}
                     <p>There are no setups for this car. You can upload one below.</p>
                 {{ end }}
