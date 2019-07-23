@@ -76,14 +76,17 @@
                         <h2>Notes</h2>
 
                         <p>{{ trustHTML . }}</p>
+
+                        <h2>Description</h2>
+                    {{ end }}
+
+                    {{ with $.Car.Details.Notes }}
                     {{ end }}
 
                     {{ with $.Car.Details.Description }}
-                        {{ with $.Car.Details.Notes }}
-                            <h2>Description</h2>
-                        {{ end }}
-
                         <p>{{ trustHTML . }}</p>
+                    {{ else }}
+                        <p>There is no description for this car.</p>
                     {{ end }}
                 </div>
             </div>
