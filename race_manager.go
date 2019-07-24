@@ -711,7 +711,7 @@ func (rm *RaceManager) ListAutoFillEntrants() ([]*Entrant, error) {
 
 // BuildRaceOpts builds a quick race form
 func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, error) {
-	cars, err := rm.carManager.ListCars()
+	_, cars, err := rm.carManager.Search(r.Context(), "", 0, 100000)
 
 	if err != nil {
 		return nil, err

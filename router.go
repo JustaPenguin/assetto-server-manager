@@ -81,6 +81,7 @@ func Router(
 
 		// content
 		r.Get("/cars", carsHandler.list)
+		r.Get("/cars/search.json", carsHandler.searchJSON)
 		r.Get("/car/{car_id}", carsHandler.view)
 		r.Get("/tracks", tracksHandler.list)
 		r.Get("/weather", weatherHandler.list)
