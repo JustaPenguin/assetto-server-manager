@@ -2,7 +2,6 @@ import "jquery";
 import "bootstrap";
 import "bootstrap-switch";
 import "summernote/dist/summernote-bs4";
-import "./libs/jquery.quicksearch.js";
 import "multiselect";
 import "moment";
 import "moment-timezone";
@@ -10,14 +9,19 @@ import "./javascript/manager.js";
 import { RaceControl } from "./RaceControl";
 import "./Font";
 import {CarDetail} from "./CarDetail";
+import {CarSearch} from "./CarSearch";
 
 $(() => {
     new RaceControl();
     new CarDetail();
+
+    $(".race-setup").each(function (index, elem) {
+        new CarSearch($(elem));
+    });
 });
 
 declare global {
-   interface JQuery {
-      bootstrapSwitch: any;
-   }
+    interface JQuery {
+        multiSelect: any;
+    }
 }

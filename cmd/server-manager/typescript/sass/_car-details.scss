@@ -16,4 +16,14 @@
       }
     }
   }
+
+  #input-folder-skin {
+    &:hover {
+      cursor: pointer;
+    }
+  }
+
+  .btn:hover {
+    cursor: pointer;
+  }
 }
