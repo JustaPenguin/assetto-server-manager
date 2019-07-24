@@ -2,7 +2,7 @@ import ClickEvent = JQuery.ClickEvent;
 
 export class CarDetail {
     public constructor() {
-        if ($(".car-details").length == 0) {
+        if (!$(".car-details").length) {
             return;
         }
 
@@ -47,7 +47,6 @@ export class CarDetail {
 
     private static initSkinUpload() {
         $("#input-folder-skin").on("change", () => {
-            console.log("HI");
             $("#upload-skin").show();
         });
 
@@ -71,7 +70,5 @@ export class CarDetail {
 
             return true;
         });
-
-
     }
 }
