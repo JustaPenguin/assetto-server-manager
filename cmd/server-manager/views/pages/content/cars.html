@@ -68,20 +68,24 @@
             </div>
 
             <div class="float-right">
-                <small>Search completed in {{ .Took }}</small>
+                <small>Search completed in {{ .Took }} | <a href="#" data-toggle="collapse" data-target="#searchHelp" aria-expanded="false" aria-controls="searchHelp">Search Help</a></small>
             </div>
 
             <div class="clearfix"></div>
         </div>
 
-        {{ range $index, $hit := .Hits }}
-            {{ $carID := $hit.ID }}
-            {{ $car := index $.Cars $hit.ID }}
+        <div class="collapse" id="searchHelp">
+            <div class="card card-body">
+                {{ template "search-help" }}
+            </div>
+        </div>
 
-            <a class="card mt-2 mb-2 pt-0 pb-0" href="/car/{{ $carID }}">
+        {{ range $index, $car := $.Cars }}
+
+            <a class="card mt-2 mb-2 pt-0 pb-0" href="/car/{{ $car.Name }}">
                 <div class="card-body row">
                     <div class="col-12 col-sm-4 col-md-2">
-                        <img class="img img-fluid car-image" src="{{ carSkinURL $carID (index $car.Skins 0) }}" alt="">
+                        <img class="img img-fluid car-image" src="{{ carSkinURL $car.Name (index $car.Skins 0) }}" alt="">
                     </div>
 
                     <div class="d-block d-sm-none pt-2">&nbsp;</div>

@@ -1,9 +1,13 @@
 package servermanager
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"math"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -48,7 +52,8 @@ type CarDetails struct {
 	Description string          `json:"description"`
 	Name        string          `json:"name"`
 	PowerCurve  [][]json.Number `json:"powerCurve"`
-	Specs       CarSpecs        `json:"specs"`
+	SpecsFull   CarSpecs        `json:"specs"`
+	Specs       CarSpecsNumeric `json:"spec"`
 	Tags        []string        `json:"tags"`
 	TorqueCurve [][]json.Number `json:"torqueCurve"`
 	URL         string          `json:"url"`
@@ -87,7 +92,15 @@ func (cd *CarDetails) DelTag(name string) {
 }
 
 func (cd *CarDetails) Save(carName string) error {
-	f, err := os.Create(filepath.Join(ServerInstallPath, "content", "cars", carName, "ui", "ui_car.json"))
+	uiDirectory := filepath.Join(ServerInstallPath, "content", "cars", carName, "ui")
+
+	err := os.MkdirAll(uiDirectory, 0755)
+
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create(filepath.Join(uiDirectory, "ui_car.json"))
 
 	if err != nil {
 		return err
@@ -110,16 +123,52 @@ func (cd *CarDetails) Load(carName string) error {
 
 	carDetailsBytes = bom.Clean(regexp.MustCompile(`\t*\r*\n*`).ReplaceAll(carDetailsBytes, []byte("")))
 
-	return json.Unmarshal(carDetailsBytes, &cd)
+	err = json.Unmarshal(carDetailsBytes, &cd)
+
+	if err != nil {
+		return err
+	}
+
+	cd.Specs = cd.SpecsFull.Numeric()
+
+	return nil
 }
 
 type CarSpecs struct {
 	Acceleration string `json:"acceleration"`
-	Bhp          string `json:"bhp"`
-	Pwratio      string `json:"pwratio"`
-	Topspeed     string `json:"topspeed"`
+	BHP          string `json:"bhp"`
+	PWRatio      string `json:"pwratio"`
+	TopSpeed     string `json:"topspeed"`
 	Torque       string `json:"torque"`
 	Weight       string `json:"weight"`
+}
+
+type CarSpecsNumeric struct {
+	Acceleration int `json:"acceleration"`
+	BHP          int `json:"bhp"`
+	PWRatio      int `json:"pwratio"`
+	TopSpeed     int `json:"topspeed"`
+	Torque       int `json:"torque"`
+	Weight       int `json:"weight"`
+}
+
+var keepNumericRegex = regexp.MustCompile(`[0-9]+`)
+
+func toNumber(str string) int {
+	str = keepNumericRegex.FindString(str)
+
+	return formValueAsInt(str)
+}
+
+func (cs CarSpecs) Numeric() CarSpecsNumeric {
+	return CarSpecsNumeric{
+		Acceleration: toNumber(cs.Acceleration),
+		BHP:          toNumber(cs.BHP),
+		PWRatio:      toNumber(cs.PWRatio),
+		TopSpeed:     toNumber(cs.TopSpeed),
+		Torque:       toNumber(cs.Torque),
+		Weight:       toNumber(cs.Weight),
+	}
 }
 
 type CarManager struct {
@@ -189,7 +238,10 @@ func (cm *CarManager) LoadCar(name string, tyres Tyres) (*Car, error) {
 
 	carDetails := CarDetails{}
 
-	if err := carDetails.Load(name); err != nil {
+	if err := carDetails.Load(name); err != nil && os.IsNotExist(err) {
+		// the car details don't exist, just create some fake ones.
+		carDetails.Name = prettifyName(name, true)
+	} else if err != nil {
 		return nil, err
 	}
 
@@ -259,17 +311,39 @@ func (cm *CarManager) DeleteCar(carName string) error {
 const searchPageSize = 50
 
 // CreateSearchIndex builds a search index for the cars
-// @TODO this really should use a filesystem index.
-func (cm *CarManager) CreateSearchIndex() error {
+func (cm *CarManager) CreateOrOpenSearchIndex() error {
 	indexMapping := bleve.NewIndexMapping()
+	/*
+		fm := bleve.NewNumericFieldMapping()
 
-	index, err := bleve.NewMemOnly(indexMapping)
+		carMapping := bleve.NewDocumentMapping()
+		carMapping.AddFieldMappingsAt("specs.weight", fm)
 
-	if err != nil {
+		indexMapping.AddDocumentMapping("car", carMapping)
+		indexMapping.TypeField = "Type"
+	*/
+	indexPath := filepath.Join(ServerInstallPath, "search-index", "cars")
+
+	var err error
+
+	cm.carIndex, err = bleve.Open(indexPath)
+
+	if err == bleve.ErrorIndexPathDoesNotExist {
+		logrus.Infof("Creating car search index")
+		cm.carIndex, err = bleve.New(indexPath, indexMapping)
+
+		if err != nil {
+			return err
+		}
+
+		err = cm.IndexAllCars()
+
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
 		return err
 	}
-
-	cm.carIndex = index
 
 	return nil
 }
@@ -285,8 +359,8 @@ func (cm *CarManager) DeIndexCar(name string) error {
 }
 
 // IndexAllCars loads all current cars and adds them to the search index
-// @TODO building the index and doing this should be a migration
 func (cm *CarManager) IndexAllCars() error {
+	logrus.Infof("Building search index for all cars")
 	cars, err := cm.ListCars()
 
 	if err != nil {
@@ -301,11 +375,13 @@ func (cm *CarManager) IndexAllCars() error {
 		}
 	}
 
+	logrus.Infof("Search index build is complete")
+
 	return nil
 }
 
 // Search looks for cars in the search index.
-func (cm *CarManager) Search(term string, from int) (*bleve.SearchResult, map[string]*Car, error) {
+func (cm *CarManager) Search(ctx context.Context, term string, from, size int) (*bleve.SearchResult, Cars, error) {
 	var q query.Query
 
 	if term == "" {
@@ -314,21 +390,23 @@ func (cm *CarManager) Search(term string, from int) (*bleve.SearchResult, map[st
 		q = bleve.NewQueryStringQuery(term)
 	}
 
-	request := bleve.NewSearchRequestOptions(q, searchPageSize, from, false)
-	results, err := cm.carIndex.Search(request)
+	request := bleve.NewSearchRequestOptions(q, size, from, false)
+	results, err := cm.carIndex.SearchInContext(ctx, request)
 
 	if err != nil {
 		return nil, nil, err
 	}
 
-	cars := make(map[string]*Car)
+	var cars Cars
 
 	for _, hit := range results.Hits {
-		cars[hit.ID], err = cm.LoadCar(hit.ID, nil)
+		car, err := cm.LoadCar(hit.ID, nil)
 
 		if err != nil {
 			return nil, nil, err
 		}
+
+		cars = append(cars, car)
 	}
 
 	return results, cars, nil
@@ -420,6 +498,52 @@ func (cm *CarManager) UpdateCarMetadata(carName string, r *http.Request) error {
 	return car.Details.Save(carName)
 }
 
+func (cm *CarManager) UploadSkin(carName string, files map[string][]*multipart.FileHeader) error {
+	carDirectory := filepath.Join(ServerInstallPath, "content", "cars", carName, "skins")
+
+	for _, files := range files {
+		for _, fh := range files {
+			if err := cm.uploadSkinFile(carDirectory, fh); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (cm *CarManager) uploadSkinFile(carDirectory string, header *multipart.FileHeader) error {
+	r, err := header.Open()
+
+	if err != nil {
+		return err
+	}
+
+	defer r.Close()
+
+	fileDirectory := filepath.Join(carDirectory, filepath.Dir(header.Filename))
+
+	if err := os.MkdirAll(fileDirectory, 0755); err != nil {
+		return err
+	}
+
+	w, err := os.Create(filepath.Join(fileDirectory, filepath.Base(header.Filename)))
+
+	if err != nil {
+		return err
+	}
+
+	defer w.Close()
+
+	_, err = io.Copy(w, r)
+
+	return err
+}
+
+func (cm *CarManager) DeleteSkin(car, skin string) error {
+	return os.RemoveAll(filepath.Join(ServerInstallPath, "content", "cars", car, "skins", skin))
+}
+
 type CarsHandler struct {
 	*BaseHandler
 
@@ -436,7 +560,7 @@ func NewCarsHandler(baseHandler *BaseHandler, carManager *CarManager) *CarsHandl
 func (ch *CarsHandler) list(w http.ResponseWriter, r *http.Request) {
 	searchTerm := r.URL.Query().Get("q")
 	page := formValueAsInt(r.URL.Query().Get("page"))
-	results, cars, err := ch.carManager.Search(searchTerm, page*searchPageSize)
+	results, cars, err := ch.carManager.Search(r.Context(), searchTerm, page*searchPageSize, searchPageSize)
 
 	if err != nil {
 		logrus.WithError(err).Error("Could not perform search")
@@ -444,14 +568,50 @@ func (ch *CarsHandler) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	numPages := int(math.Ceil(float64(float64(results.Total)) / float64(searchPageSize)))
+
 	ch.viewRenderer.MustLoadTemplate(w, r, "content/cars.html", map[string]interface{}{
 		"Results":     results,
 		"Cars":        cars,
 		"Query":       searchTerm,
 		"CurrentPage": page,
-		"NumPages":    int((float64(results.Total) / float64(searchPageSize)) + 0.5),
+		"NumPages":    numPages,
 		"PageSize":    searchPageSize,
 	})
+}
+
+type carSearchResult struct {
+	CarName string   `json:"CarName"`
+	CarID   string   `json:"CarID"`
+	Tags    []string `json:"Tags"`
+}
+
+func (ch *CarsHandler) searchJSON(w http.ResponseWriter, r *http.Request) {
+	searchTerm := r.URL.Query().Get("q")
+
+	_, cars, err := ch.carManager.Search(r.Context(), searchTerm, 0, 100000)
+
+	if err != nil {
+		logrus.WithError(err).Error("Could not perform search")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	var searchResults []carSearchResult
+
+	for _, car := range cars {
+		searchResults = append(searchResults, carSearchResult{
+			CarName: car.Details.Name,
+			CarID:   car.Name,
+			Tags:    car.Details.Tags,
+		})
+	}
+
+	enc := json.NewEncoder(w)
+	if Debug {
+		enc.SetIndent("", "    ")
+	}
+	_ = enc.Encode(searchResults)
 }
 
 func (ch *CarsHandler) delete(w http.ResponseWriter, r *http.Request) {
@@ -536,5 +696,46 @@ func (ch *CarsHandler) metadata(w http.ResponseWriter, r *http.Request) {
 	}
 
 	AddFlash(w, r, "Car metadata updated successfully!")
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (ch *CarsHandler) uploadSkin(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(32 << 20)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	car := chi.URLParam(r, "name")
+
+	err = ch.carManager.UploadSkin(car, r.MultipartForm.File)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("could not upload car skin for %s", car)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	AddFlash(w, r, "Car skin uploaded successfully!")
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (ch *CarsHandler) deleteSkin(w http.ResponseWriter, r *http.Request) {
+	car := chi.URLParam(r, "name")
+	skin := r.FormValue("skin-delete")
+
+	if skin == "" {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	if err := ch.carManager.DeleteSkin(car, skin); err != nil {
+		logrus.WithError(err).Errorf("could not delete car skin for %s", car)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	AddFlash(w, r, "Car skin deleted successfully!")
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
