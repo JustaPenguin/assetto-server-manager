@@ -381,7 +381,7 @@ func (cm *CarManager) IndexAllCars() error {
 }
 
 // Search looks for cars in the search index.
-func (cm *CarManager) Search(ctx context.Context, term string, from int) (*bleve.SearchResult, map[string]*Car, error) {
+func (cm *CarManager) Search(ctx context.Context, term string, from, size int) (*bleve.SearchResult, Cars, error) {
 	var q query.Query
 
 	if term == "" {
@@ -390,21 +390,23 @@ func (cm *CarManager) Search(ctx context.Context, term string, from int) (*bleve
 		q = bleve.NewQueryStringQuery(term)
 	}
 
-	request := bleve.NewSearchRequestOptions(q, searchPageSize, from, false)
+	request := bleve.NewSearchRequestOptions(q, size, from, false)
 	results, err := cm.carIndex.SearchInContext(ctx, request)
 
 	if err != nil {
 		return nil, nil, err
 	}
 
-	cars := make(map[string]*Car)
+	var cars Cars
 
 	for _, hit := range results.Hits {
-		cars[hit.ID], err = cm.LoadCar(hit.ID, nil)
+		car, err := cm.LoadCar(hit.ID, nil)
 
 		if err != nil {
 			return nil, nil, err
 		}
+
+		cars = append(cars, car)
 	}
 
 	return results, cars, nil
@@ -558,7 +560,7 @@ func NewCarsHandler(baseHandler *BaseHandler, carManager *CarManager) *CarsHandl
 func (ch *CarsHandler) list(w http.ResponseWriter, r *http.Request) {
 	searchTerm := r.URL.Query().Get("q")
 	page := formValueAsInt(r.URL.Query().Get("page"))
-	results, cars, err := ch.carManager.Search(r.Context(), searchTerm, page*searchPageSize)
+	results, cars, err := ch.carManager.Search(r.Context(), searchTerm, page*searchPageSize, searchPageSize)
 
 	if err != nil {
 		logrus.WithError(err).Error("Could not perform search")
@@ -576,6 +578,40 @@ func (ch *CarsHandler) list(w http.ResponseWriter, r *http.Request) {
 		"NumPages":    numPages,
 		"PageSize":    searchPageSize,
 	})
+}
+
+type carSearchResult struct {
+	CarName string   `json:"CarName"`
+	CarID   string   `json:"CarID"`
+	Tags    []string `json:"Tags"`
+}
+
+func (ch *CarsHandler) searchJSON(w http.ResponseWriter, r *http.Request) {
+	searchTerm := r.URL.Query().Get("q")
+
+	_, cars, err := ch.carManager.Search(r.Context(), searchTerm, 0, 100000)
+
+	if err != nil {
+		logrus.WithError(err).Error("Could not perform search")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	var searchResults []carSearchResult
+
+	for _, car := range cars {
+		searchResults = append(searchResults, carSearchResult{
+			CarName: car.Details.Name,
+			CarID:   car.Name,
+			Tags:    car.Details.Tags,
+		})
+	}
+
+	enc := json.NewEncoder(w)
+	if Debug {
+		enc.SetIndent("", "    ")
+	}
+	_ = enc.Encode(searchResults)
 }
 
 func (ch *CarsHandler) delete(w http.ResponseWriter, r *http.Request) {
