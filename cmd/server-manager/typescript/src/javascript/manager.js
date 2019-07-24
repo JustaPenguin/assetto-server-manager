@@ -943,7 +943,14 @@ class RaceSetup {
                 for (let val of cars.values()) {
                     let $opt = $("<option />");
                     $opt.attr({'value': val});
-                    $opt.text(prettifyName(val, true));
+                    // use the text from the cars dropdown to populate the name, fallback to prettify if necessary
+                    let realCarName = that.$carsDropdown.find("option[value='"+val+"']").text();
+
+                    if (!realCarName) {
+                        realCarName = prettifyName(val, true);
+                    }
+
+                    $opt.text(realCarName);
 
                     if (val === selected) {
                         $opt.attr({"selected": "selected"});
