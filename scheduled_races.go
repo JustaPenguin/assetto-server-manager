@@ -21,6 +21,7 @@ type ScheduledEvent interface {
 	GetScheduledTime() time.Time
 	GetSummary() string
 	GetURL() string
+	HasSignUpForm() bool
 	ReadOnlyEntryList() EntryList
 }
 
@@ -95,7 +96,9 @@ func NewScheduledRacesHandler(baseHandler *BaseHandler, store Store, raceManager
 }
 
 func (rs *ScheduledRacesHandler) calendar(w http.ResponseWriter, r *http.Request) {
-	rs.viewRenderer.MustLoadTemplate(w, r, "calendar.html", nil)
+	rs.viewRenderer.MustLoadTemplate(w, r, "calendar.html", map[string]interface{}{
+		"WideContainer":   true,
+	})
 }
 
 func (rs *ScheduledRacesHandler) calendarJSON(w http.ResponseWriter, r *http.Request) {
@@ -186,7 +189,9 @@ type calendarObject struct {
 	Start time.Time `json:"start"`
 	End time.Time `json:"end"`
 	Title string `json:"title"`
-	URL string `json:"url"` // @TODO for onclick, see eventClick callback
+	Description string `json:"description"`
+	URL string `json:"url"`
+	SignUpURL string `json:"signUpURL"`
 	ClassNames []string `json:"classNames"`
 	Editable bool `json:"editable"`
 	StartEditable bool `json:"startEditable"`
@@ -239,7 +244,27 @@ func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter) error {
 		start := scheduledEvent.GetScheduledTime()
 		end := scheduledEvent.GetScheduledTime()
 
-		for _, session := range scheduledEvent.GetRaceSetup().Sessions.AsSlice() {
+		var sessionTypes []SessionType
+
+		if _, ok := scheduledEvent.GetRaceSetup().Sessions[SessionTypeBooking]; ok {
+			sessionTypes = append(sessionTypes, SessionTypeBooking)
+		}
+
+		if _, ok := scheduledEvent.GetRaceSetup().Sessions[SessionTypePractice]; ok {
+			sessionTypes = append(sessionTypes, SessionTypePractice)
+		}
+
+		if _, ok := scheduledEvent.GetRaceSetup().Sessions[SessionTypeQualifying]; ok {
+			sessionTypes = append(sessionTypes, SessionTypeQualifying)
+		}
+
+		if _, ok := scheduledEvent.GetRaceSetup().Sessions[SessionTypeRace]; ok {
+			sessionTypes = append(sessionTypes, SessionTypeRace)
+		}
+
+		sessionTypes = append(sessionTypes, "Default")
+
+		for x, session := range scheduledEvent.GetRaceSetup().Sessions.AsSlice() {
 			// calculate session start/end
 			start = start.Add(prevSessionTime)
 
@@ -252,27 +277,53 @@ func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter) error {
 
 			end = end.Add(prevSessionTime)
 
+			var signUpURL string
+			pageURL := scheduledEvent.GetURL()
+
+			// get correct URL
+			if scheduledEvent.HasSignUpForm() {
+				signUpURL = pageURL + "/sign-up"
+			}
+
 			// select colours
 			var backgroundColor, borderColor, textColor string
 
-			switch session.Name {
-			case "Practice":
-				backgroundColor = "#0a84ff"
-			case "Qualify":
-				backgroundColor = "#23a127"
-			case "Race":
-				backgroundColor = "#FF4136"
+			var classNames []string
+			classNames = append(classNames, "calendar-card")
+
+			switch sessionTypes[x] {
+			case SessionTypeBooking:
+				borderColor = "#c480ff"
+			case SessionTypePractice:
+				borderColor = "#5dc972"
+			case SessionTypeQualifying:
+				borderColor = "#ffd080"
+			case SessionTypeRace:
+				borderColor = "#ff8080"
+			case "Default":
+				borderColor = "#5dc972"
 			}
 
-			// @TODO make clear that championships are championships
-			// @TODO hover background color change?
 			if scheduledEvent.GetURL() != "" {
-				borderColor = "white"
-				textColor = "white"
+				classNames = append(classNames, "calendar-link")
+
+				switch sessionTypes[x] {
+				case SessionTypeBooking:
+					backgroundColor = "#c480ff"
+				case SessionTypePractice:
+					backgroundColor = "#5dc972"
+				case SessionTypeQualifying:
+					backgroundColor = "#ffd080"
+				case SessionTypeRace:
+					backgroundColor = "#ff8080"
+				case "Default":
+					backgroundColor = "#5dc972"
+				}
 			} else {
-				borderColor = "black"
-				textColor = "black"
+				backgroundColor = "white"
 			}
+
+			textColor = "#303030"
 
 			calendarObjects = append(calendarObjects, calendarObject{
 				ID:               scheduledEvent.GetID().String() + session.Name,
@@ -281,8 +332,10 @@ func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter) error {
 				Start:            start,
 				End:              end,
 				Title:            generateSummary(scheduledEvent.GetRaceSetup(), session.Name) + " " + scheduledEvent.GetSummary(),
-				URL:              scheduledEvent.GetURL(),
-				ClassNames:       nil,
+				Description:      carList(scheduledEvent.GetRaceSetup().Cars) + ": " + scheduledEvent.ReadOnlyEntryList().Entrants(),
+				URL:              pageURL,
+				SignUpURL:        signUpURL,
+				ClassNames:       classNames,
 				Editable:         false,
 				StartEditable:    false,
 				DurationEditable: false,

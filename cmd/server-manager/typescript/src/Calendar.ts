@@ -1,6 +1,7 @@
 import { Calendar } from '@fullcalendar/core';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
+import bootstrapPlugin from '@fullcalendar/bootstrap';
 
 document.addEventListener('DOMContentLoaded', function() {
     let calendarEl = document.getElementById('calendar');
@@ -10,9 +11,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     let calendar = new Calendar(calendarEl, {
-        plugins: [ timeGridPlugin, listPlugin ],
+        plugins: [ timeGridPlugin, listPlugin, bootstrapPlugin ],
         defaultView: 'timeGridThreeDay',
         events: '/calendar.json',
+        themeSystem: 'bootstrap',
 
         header: {
             center: 'timeGridWeek,timeGridThreeDay,listWeek' // buttons for switching between views
@@ -25,10 +27,32 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         },
 
+        eventRender: function(info) {
+            let $title = $(info.el).find('.fc-title');
+            let $time = $(info.el).find('.fc-time');
+
+
+            if (info.event.extendedProps.signUpURL) {
+                $time.append('<a class="calendar-signup-link" href="'+info.event.extendedProps.signUpURL+'">Event Sign Up</a>')
+            }
+
+            $title.append('<div class="hr-line-solid-no-margin"></div><span class="calendar-small">'+info.event.extendedProps.description+'</span></div>');
+
+            let $listTitle = $(info.el).find('.fc-list-item-title');
+
+            if (info.event.extendedProps.signUpURL) {
+                $listTitle.append('</div><a class="calendar-signup-link" href="'+info.event.extendedProps.signUpURL+'">Event Sign Up</a>')
+            }
+
+            $listTitle.append('<div class="ml-2"></div><span class="calendar-small">'+info.event.extendedProps.description+'</span></div>');
+        },
+
         nowIndicator: true,
         allDaySlot: false,
-        timeGridEventMinHeight: 100, // @TODO scroll on overflow?
-        aspectRatio: 1,
+        timeGridEventMinHeight: 100,
+        height: 800,
+
+        contentHeight: 1000,
     });
 
     calendar.render();
