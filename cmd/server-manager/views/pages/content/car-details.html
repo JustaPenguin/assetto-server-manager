@@ -212,12 +212,12 @@
                 <h4>Specs</h4>
 
                 <ul class="list-unstyled">
-                    {{ with $.Car.Details.SpecsFull.Acceleration }}<li><strong>Acceleration:</strong> {{ . }}</li>{{ end }}
-                    {{ with $.Car.Details.SpecsFull.BHP }}<li><strong>BHP:</strong> {{ . }}</li>{{ end }}
-                    {{ with $.Car.Details.SpecsFull.PWRatio }}<li><strong>Power Ratio:</strong> {{ . }}</li>{{ end }}
-                    {{ with $.Car.Details.SpecsFull.TopSpeed }}<li><strong>Top Speed:</strong> {{ . }}</li>{{ end }}
-                    {{ with $.Car.Details.SpecsFull.Torque }}<li><strong>Torque:</strong> {{ . }}</li>{{ end }}
-                    {{ with $.Car.Details.SpecsFull.Weight }}<li><strong>Weight:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.SpecsNumeric.Acceleration }}<li><strong>Acceleration:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.SpecsNumeric.BHP }}<li><strong>BHP:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.SpecsNumeric.PWRatio }}<li><strong>Power Ratio:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.SpecsNumeric.TopSpeed }}<li><strong>Top Speed:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.SpecsNumeric.Torque }}<li><strong>Torque:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.SpecsNumeric.Weight }}<li><strong>Weight:</strong> {{ . }}</li>{{ end }}
                 </ul>
 
                 <h4>About</h4>
