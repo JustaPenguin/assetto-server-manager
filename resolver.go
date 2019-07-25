@@ -16,10 +16,11 @@ type Resolver struct {
 	championshipManager *ChampionshipManager
 	accountManager      *AccountManager
 
-	viewRenderer   *Renderer
-	serverProcess  ServerProcess
-	raceControl    *RaceControl
-	raceControlHub *RaceControlHub
+	viewRenderer          *Renderer
+	serverProcess         ServerProcess
+	raceControl           *RaceControl
+	raceControlHub        *RaceControlHub
+	contentManagerWrapper *ContentManagerWrapper
 
 	// handlers
 	baseHandler                 *BaseHandler
@@ -59,6 +60,7 @@ func (r *Resolver) UDPCallback(message udp.Message) {
 	r.resolveRaceControl().UDPCallback(message)
 	r.resolveChampionshipManager().ChampionshipEventCallback(message)
 	r.resolveRaceManager().LoopCallback(message)
+	r.resolveContentManagerWrapper().UDPCallback(message)
 }
 
 func (r *Resolver) initViewRenderer() error {
@@ -86,9 +88,19 @@ func (r *Resolver) resolveServerProcess() ServerProcess {
 		return r.serverProcess
 	}
 
-	r.serverProcess = NewAssettoServerProcess(r.UDPCallback)
+	r.serverProcess = NewAssettoServerProcess(r.UDPCallback, r.resolveContentManagerWrapper())
 
 	return r.serverProcess
+}
+
+func (r *Resolver) resolveContentManagerWrapper() *ContentManagerWrapper {
+	if r.contentManagerWrapper != nil {
+		return r.contentManagerWrapper
+	}
+
+	r.contentManagerWrapper = NewContentManagerWrapper(r.ResolveStore(), r.resolveCarManager())
+
+	return r.contentManagerWrapper
 }
 
 func (r *Resolver) resolveRaceManager() *RaceManager {
