@@ -3,7 +3,7 @@
     {{ $numPages := .NumPages }}
     {{ $request := ._request }}
 
-    {{ if gt $numPages 0 }}
+    {{ if gt $numPages 1 }}
         <nav aria-label="Page Navigation">
             <ul class="pagination justify-content-center pagination-sm">
                 {{ $start := int (max 0 (sub $currentPage (mod $currentPage 10))) }}

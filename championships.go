@@ -3,12 +3,13 @@ package servermanager
 import (
 	"errors"
 	"fmt"
-	"github.com/cj123/assetto-server-manager/pkg/udp"
 	"html/template"
 	"sort"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/cj123/assetto-server-manager/pkg/udp"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"

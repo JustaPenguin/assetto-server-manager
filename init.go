@@ -76,17 +76,13 @@ func InitWithResolver(resolver *Resolver) error {
 
 	carManager := resolver.resolveCarManager()
 
-	err = carManager.CreateSearchIndex()
+	go func() {
+		err = carManager.CreateOrOpenSearchIndex()
 
-	if err != nil {
-		return err
-	}
-
-	err = carManager.IndexAllCars()
-
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			logrus.WithError(err).Error("Could not open search index")
+		}
+	}()
 
 	return nil
 }
