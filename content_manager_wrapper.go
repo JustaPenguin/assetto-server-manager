@@ -85,7 +85,8 @@ type CMCar struct {
 }
 
 type ContentManagerWrapper struct {
-	store Store
+	store      Store
+	carManager *CarManager
 
 	sessionInfo udp.SessionInfo
 
@@ -99,9 +100,10 @@ type ContentManagerWrapper struct {
 	mutex       sync.Mutex
 }
 
-func NewContentManagerWrapper(store Store) *ContentManagerWrapper {
+func NewContentManagerWrapper(store Store, carManager *CarManager) *ContentManagerWrapper {
 	return &ContentManagerWrapper{
-		store: store,
+		store:      store,
+		carManager: carManager,
 	}
 }
 
@@ -123,6 +125,21 @@ func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 		text += fmt.Sprintf("\n\nView the Championship points here: %s", u)
 	}
 
+	for _, carName := range strings.Split(cmw.serverConfig.CurrentRaceConfig.Cars, ";") {
+		car, err := cmw.carManager.LoadCar(carName, nil)
+
+		if err != nil {
+			logrus.WithError(err).Warnf("Could not load car details for: %s, skipping attaching download URLs to Content Manager Wrapper", carName)
+			continue
+		}
+
+		if car.Details.DownloadURL == "" {
+			continue
+		}
+
+		text += fmt.Sprintf("\n* %s Download: %s", car.Details.Name, car.Details.DownloadURL)
+	}
+
 	cmw.description = text
 
 	return nil
@@ -140,14 +157,14 @@ func (cmw *ContentManagerWrapper) Start(process ServerProcess, servePort int, se
 		return err
 	}
 
-	if err := cmw.setDescriptionText(event); err != nil {
-		logrus.WithError(err).Warn("could not set description text")
-	}
-
 	cmw.serverConfig = serverConfig
 	cmw.entryList = entryList
 	cmw.event = event
 	cmw.reverseProxy = httputil.NewSingleHostReverseProxy(u)
+
+	if err := cmw.setDescriptionText(event); err != nil {
+		logrus.WithError(err).Warn("could not set description text")
+	}
 
 	cmw.srv = &http.Server{Addr: fmt.Sprintf(":%d", servePort)}
 	cmw.srv.Handler = cmw
