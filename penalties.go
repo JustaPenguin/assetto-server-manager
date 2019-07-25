@@ -1,11 +1,8 @@
 package servermanager
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"time"
@@ -14,9 +11,21 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// viewChampionshipHandler shows details of a given Championship
-func penaltyHandler(w http.ResponseWriter, r *http.Request) {
-	remove, err := applyPenalty(r)
+type PenaltiesHandler struct {
+	*BaseHandler
+
+	championshipManager *ChampionshipManager
+}
+
+func NewPenaltiesHandler(baseHandler *BaseHandler, championshipManager *ChampionshipManager) *PenaltiesHandler {
+	return &PenaltiesHandler{
+		BaseHandler:         baseHandler,
+		championshipManager: championshipManager,
+	}
+}
+
+func (ph *PenaltiesHandler) managePenalty(w http.ResponseWriter, r *http.Request) {
+	remove, err := ph.applyPenalty(r)
 
 	if err != nil {
 		AddErrorFlash(w, r, "Could not add/remove penalty")
@@ -32,7 +41,7 @@ func penaltyHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-func applyPenalty(r *http.Request) (bool, error) {
+func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
 	var results *SessionResults
 	var remove bool
 	var penaltyTime float64
@@ -149,7 +158,7 @@ func applyPenalty(r *http.Request) (bool, error) {
 	}
 
 	if results.ChampionshipID != "" {
-		championship, err := championshipManager.LoadChampionship(results.ChampionshipID)
+		championship, err := ph.championshipManager.LoadChampionship(results.ChampionshipID)
 
 		if err != nil {
 			logrus.Errorf("Couldn't load championship with ID: %s, err: %s", results.ChampionshipID, err)
@@ -167,7 +176,7 @@ func applyPenalty(r *http.Request) (bool, error) {
 			}
 		}
 
-		err = championshipManager.UpsertChampionship(championship)
+		err = ph.championshipManager.UpsertChampionship(championship)
 
 		if err != nil {
 			logrus.Errorf("Couldn't save championship with ID: %s, err: %s", results.ChampionshipID, err)
@@ -176,23 +185,4 @@ func applyPenalty(r *http.Request) (bool, error) {
 	}
 
 	return remove, nil
-}
-
-// saveResults takes a full json filepath (including the json extension) and saves the results to that file.
-func saveResults(jsonFileName string, results *SessionResults) error {
-	path := filepath.Join(ServerInstallPath, "results", jsonFileName)
-
-	file, err := os.Create(path)
-
-	if err != nil {
-		return err
-	}
-
-	defer file.Close()
-
-	encoder := json.NewEncoder(file)
-
-	encoder.SetIndent("", "\t")
-
-	return encoder.Encode(results)
 }

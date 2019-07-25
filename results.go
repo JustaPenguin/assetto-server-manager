@@ -586,7 +586,17 @@ func LoadResult(fileName string) (*SessionResults, error) {
 	return result, nil
 }
 
-func resultsHandler(w http.ResponseWriter, r *http.Request) {
+type ResultsHandler struct {
+	*BaseHandler
+}
+
+func NewResultsHandler(baseHandler *BaseHandler) *ResultsHandler {
+	return &ResultsHandler{
+		BaseHandler: baseHandler,
+	}
+}
+
+func (rh *ResultsHandler) list(w http.ResponseWriter, r *http.Request) {
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 
 	if err != nil {
@@ -604,14 +614,14 @@ func resultsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "results/index.html", map[string]interface{}{
+	rh.viewRenderer.MustLoadTemplate(w, r, "results/index.html", map[string]interface{}{
 		"results":     results,
 		"pages":       pages,
 		"currentPage": page,
 	})
 }
 
-func resultHandler(w http.ResponseWriter, r *http.Request) {
+func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
 	var result *SessionResults
 	fileName := chi.URLParam(r, "fileName")
 
@@ -626,13 +636,13 @@ func resultHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "results/result.html", map[string]interface{}{
+	rh.viewRenderer.MustLoadTemplate(w, r, "results/result.html", map[string]interface{}{
 		"result":        result,
 		"WideContainer": true,
 	})
 }
 
-func resultFileHandler(w http.ResponseWriter, r *http.Request) {
+func (rh *ResultsHandler) file(w http.ResponseWriter, r *http.Request) {
 	fileName := chi.URLParam(r, "fileName")
 
 	result, err := LoadResult(fileName)
@@ -654,5 +664,23 @@ func resultFileHandler(w http.ResponseWriter, r *http.Request) {
 
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
-	enc.Encode(result)
+	_ = enc.Encode(result)
+}
+
+// saveResults takes a full json filepath (including the json extension) and saves the results to that file.
+func saveResults(jsonFileName string, results *SessionResults) error {
+	path := filepath.Join(ServerInstallPath, "results", jsonFileName)
+
+	file, err := os.Create(path)
+
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "\t")
+
+	return encoder.Encode(results)
 }

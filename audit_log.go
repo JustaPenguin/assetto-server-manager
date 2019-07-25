@@ -23,7 +23,20 @@ var ignoredURLs = [5]string{
 	"/api/logs",
 }
 
-func AuditLogger(next http.Handler) http.Handler {
+type AuditLogHandler struct {
+	*BaseHandler
+
+	store Store
+}
+
+func NewAuditLogHandler(baseHandler *BaseHandler, store Store) *AuditLogHandler {
+	return &AuditLogHandler{
+		BaseHandler: baseHandler,
+		store:       store,
+	}
+}
+
+func (alh *AuditLogHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		for _, url := range ignoredURLs {
 			if url == r.URL.String() {
@@ -47,7 +60,7 @@ func AuditLogger(next http.Handler) http.Handler {
 			Time:      time.Now(),
 		}
 
-		err := raceManager.raceStore.AddAuditEntry(entry)
+		err := alh.store.AddAuditEntry(entry)
 
 		if err != nil {
 			logrus.WithError(err).Error("Couldn't add audit entry for request")
@@ -57,9 +70,9 @@ func AuditLogger(next http.Handler) http.Handler {
 	})
 }
 
-func serverAuditLogsHandler(w http.ResponseWriter, r *http.Request) {
+func (alh *AuditLogHandler) viewLogs(w http.ResponseWriter, r *http.Request) {
 	// load server audits
-	auditLogs, err := raceManager.raceStore.GetAuditEntries()
+	auditLogs, err := alh.store.GetAuditEntries()
 
 	if err != nil {
 		logrus.WithError(err).Error("couldn't find audit logs")
@@ -72,7 +85,7 @@ func serverAuditLogsHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// render audit log page
-	ViewRenderer.MustLoadTemplate(w, r, "server/audit-logs.html", map[string]interface{}{
+	alh.viewRenderer.MustLoadTemplate(w, r, "server/audit-logs.html", map[string]interface{}{
 		"auditLogs": auditLogs,
 	})
 }

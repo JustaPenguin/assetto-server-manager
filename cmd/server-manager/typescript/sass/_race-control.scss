@@ -1,0 +1,225 @@
+#trackImage {
+  border-radius: 0.25rem;
+  width: 100%;
+  max-width: 355px;
+}
+
+#weatherImage {
+  border-radius: 0.25rem;
+  max-height: 94px;
+  margin-top: 0 !important;
+  vertical-align: top;
+}
+
+#event-title {
+  font-size: 2em;
+  cursor: pointer;
+}
+
+#event-title:hover {
+  text-decoration: none;
+  color: #127ba3;
+}
+
+
+#road-temp-wrapper {
+  display: block;
+  width: 45px;
+  height: 45px;
+  border-radius: 10px;
+  cursor: default;
+}
+
+.race-control-weather-info {
+  position: absolute;
+  top: 90px;
+  right: 20px;
+}
+
+.race-control-event-info {
+  position: absolute;
+  top: 90px;
+  left: 20px;
+}
+
+#road-temp {
+  width: 100%;
+  height: 100%;
+}
+
+#road-temp-text {
+  display: block;
+  position: absolute;
+  margin: 7px;
+  margin-top: 15px;
+  font-weight: bold;
+  color: white;
+}
+
+#ambient-temp-wrapper {
+  display: block;
+  width: 45px;
+  height: 45px;
+  border-radius: 10px;
+  cursor: default;
+}
+
+#ambient-temp {
+  width: 100%;
+  height: 100%;
+}
+
+#ambient-temp-text {
+  display: block;
+  position: absolute;
+  margin: 13px;
+  margin-left: 10px;
+  font-size: 80%;
+  font-weight: bold;
+  color: white;
+}
+
+#map {
+  position: relative;
+  border-radius: 0.25rem;
+}
+
+#map.rotated {
+  transform: rotate(90deg) translateY(-100%);
+  transform-origin: top left;
+}
+
+#map.rotated .dot, #map.rotated .collision {
+  transform: rotate(-90deg) translate(-50%, -50%);
+  transform-origin: top left;
+}
+
+#map .img {
+  -webkit-filter: drop-shadow(0 0 2px #000);
+  filter: drop-shadow(0 0 2px #000);
+}
+
+.dot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 100%;
+  width: 10px;
+  height: 10px;
+  content: " ";
+  z-index: 100;
+  display: inline-grid;
+}
+
+.dot .name {
+  position: relative;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.65);
+  color: white;
+  border-radius: 4px;
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 75%;
+  padding-left: 4px;
+  padding-right: 4px;
+  font-weight: bold;
+}
+
+.dot .info {
+  position: relative;
+  top: 12px;
+  left: 10px;
+  min-width: 80px;
+  background: rgba(0, 0, 0, 0.45);
+  color: white;
+  border-radius: 4px;
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 80%;
+  padding-left: 4px;
+  padding-right: 4px;
+  font-weight: bold;
+}
+
+.popover {
+  max-width: 278px !important;
+}
+
+.driver {
+  display: block;
+}
+
+td .dot {
+  position: relative;
+  transform: none;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+td .dot-inactive {
+  position: relative;
+  transform: none;
+  display: inline-block;
+  margin-right: 10px;
+  border: 2px solid black;
+}
+
+.rpm-outer {
+  width: 100%;
+  height: 8px;
+  margin-bottom: 4px;
+  border-radius: 10px;
+  background: lightgrey;
+}
+
+.rpm-inner {
+  border-radius: 10px;
+  height: 8px;
+}
+
+.collision {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 100%;
+  width: 40px;
+  height: 40px;
+  background-image: url("/static/img/splosion.gif");
+  background-size: contain;
+  background-repeat: no-repeat;
+  z-index: 99;
+  display: inline-grid;
+  -webkit-animation: cssAnimation 3s forwards;
+  animation: cssAnimation 3s forwards;
+}
+
+@keyframes cssAnimation {
+  0% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@-webkit-keyframes cssAnimation {
+  0% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.live-badge {
+  display: block !important;
+  width: fit-content;
+  margin-top: 4px;
+}
+
+.live-events {
+  width: 220px;
+}

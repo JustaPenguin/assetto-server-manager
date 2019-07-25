@@ -1,0 +1,29 @@
+.car-details {
+  .car-skins {
+    max-height: 518px;
+    overflow-y: auto;
+
+    &:not(#hero-skin) {
+      cursor: pointer;
+    }
+
+    .car-skin {
+      margin-top: 0.5em;
+      margin-bottom: 0.5em;
+
+      &:nth-child(1) {
+        margin-top: 0;
+      }
+    }
+  }
+
+  #input-folder-skin {
+    &:hover {
+      cursor: pointer;
+    }
+  }
+
+  .btn:hover {
+    cursor: pointer;
+  }
+}

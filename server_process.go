@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"net"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,7 +15,6 @@ import (
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 
-	"github.com/go-chi/chi"
 	"github.com/mitchellh/go-ps"
 	"github.com/sirupsen/logrus"
 )
@@ -32,7 +30,7 @@ const (
 
 type ServerProcess interface {
 	Logs() string
-	Start(cfg ServerConfig, forwardingAddress string, forwardListenPort int) error
+	Start(cfg ServerConfig, forwardingAddress string, forwardListenPort int, eventType ServerEventType) error
 	Stop() error
 	Restart() error
 	IsRunning() bool
@@ -41,48 +39,6 @@ type ServerProcess interface {
 	SendUDPMessage(message udp.Message) error
 
 	Done() <-chan struct{}
-}
-
-var AssettoProcess ServerProcess
-
-// serverProcessHandler modifies the server process.
-func serverProcessHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
-	var txt string
-
-	eventType := AssettoProcess.EventType()
-
-	switch chi.URLParam(r, "action") {
-	case "stop":
-		if eventType == EventTypeChampionship {
-			err = championshipManager.StopActiveEvent()
-		} else {
-			err = AssettoProcess.Stop()
-		}
-		txt = "stopped"
-	case "restart":
-		if eventType == EventTypeChampionship {
-			err = championshipManager.RestartActiveEvent()
-		} else {
-			err = AssettoProcess.Restart()
-		}
-		txt = "restarted"
-	}
-
-	noun := "Server"
-
-	if eventType == EventTypeChampionship {
-		noun = "Championship"
-	}
-
-	if err != nil {
-		logrus.Errorf("could not change "+noun+" status, err: %s", err)
-		AddErrorFlash(w, r, "Unable to change "+noun+" status")
-	} else {
-		AddFlash(w, r, noun+" successfully "+txt)
-	}
-
-	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
 var ErrServerAlreadyRunning = errors.New("servermanager: assetto corsa server is already running")
@@ -106,15 +62,18 @@ type AssettoServerProcess struct {
 	forwardListenPort int
 	udpServerConn     *udp.AssettoServerUDP
 	udpStatusMutex    sync.Mutex
+	callbackFunc      udp.CallbackFunc
+	eventType         ServerEventType
 }
 
-func NewAssettoServerProcess() *AssettoServerProcess {
+func NewAssettoServerProcess(callbackFunc udp.CallbackFunc) *AssettoServerProcess {
 	ctx, cfn := context.WithCancel(context.Background())
 
 	return &AssettoServerProcess{
-		ctx:    ctx,
-		cfn:    cfn,
-		doneCh: make(chan struct{}),
+		ctx:          ctx,
+		cfn:          cfn,
+		doneCh:       make(chan struct{}),
+		callbackFunc: callbackFunc,
 	}
 }
 
@@ -132,7 +91,7 @@ func (as *AssettoServerProcess) Logs() string {
 }
 
 // Start the assetto server. If it's already running, an ErrServerAlreadyRunning is returned.
-func (as *AssettoServerProcess) Start(cfg ServerConfig, forwardingAddress string, forwardListenPort int) error {
+func (as *AssettoServerProcess) Start(cfg ServerConfig, forwardingAddress string, forwardListenPort int, eventType ServerEventType) error {
 	if as.IsRunning() {
 		return ErrServerAlreadyRunning
 	}
@@ -145,6 +104,7 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, forwardingAddress string
 	as.serverConfig = cfg
 	as.forwardingAddress = forwardingAddress
 	as.forwardListenPort = forwardListenPort
+	as.eventType = eventType
 
 	if err := as.startUDPListener(); err != nil {
 		return err
@@ -285,9 +245,7 @@ func (as *AssettoServerProcess) startUDPListener() error {
 
 func (as *AssettoServerProcess) UDPCallback(message udp.Message) {
 	panicCapture(func() {
-		ServerRaceControl.UDPCallback(message)
-		championshipManager.ChampionshipEventCallback(message)
-		LoopCallback(message)
+		as.callbackFunc(message)
 	})
 }
 
@@ -326,7 +284,7 @@ func (as *AssettoServerProcess) Restart() error {
 		}
 	}
 
-	return as.Start(as.serverConfig, as.forwardingAddress, as.forwardListenPort)
+	return as.Start(as.serverConfig, as.forwardingAddress, as.forwardListenPort, as.eventType)
 }
 
 // IsRunning of the server. returns true if running
@@ -338,11 +296,7 @@ func (as *AssettoServerProcess) IsRunning() bool {
 }
 
 func (as *AssettoServerProcess) EventType() ServerEventType {
-	if championshipManager.activeChampionship != nil {
-		return EventTypeChampionship
-	} else {
-		return EventTypeRace
-	}
+	return as.eventType
 }
 
 // Stop the assetto server.
@@ -388,10 +342,6 @@ func (as *AssettoServerProcess) Stop() error {
 	go func() {
 		as.doneCh <- struct{}{}
 	}()
-
-	if ServerRaceControl.sessionInfoCfn != nil {
-		ServerRaceControl.sessionInfoCfn()
-	}
 
 	return nil
 }

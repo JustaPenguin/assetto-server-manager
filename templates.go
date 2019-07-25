@@ -82,16 +82,6 @@ func (fs *filesystemTemplateLoader) Templates(funcs template.FuncMap) (map[strin
 	return templates, nil
 }
 
-// Renderer is the template engine.
-type Renderer struct {
-	templates map[string]*template.Template
-
-	loader TemplateLoader
-
-	reload bool
-	mutex  sync.Mutex
-}
-
 var UseShortenedDriverNames = true
 
 func driverName(name string) string {
@@ -134,10 +124,25 @@ func driverInitials(name string) string {
 	}
 }
 
-func NewRenderer(loader TemplateLoader, reload bool) (*Renderer, error) {
+// Renderer is the template engine.
+type Renderer struct {
+	store   Store
+	process ServerProcess
+	loader  TemplateLoader
+
+	templates map[string]*template.Template
+
+	reload bool
+	mutex  sync.Mutex
+}
+
+func NewRenderer(loader TemplateLoader, store Store, process ServerProcess, reload bool) (*Renderer, error) {
 	tr := &Renderer{
+		store:   store,
+		process: process,
+		loader:  loader,
+
 		templates: make(map[string]*template.Template),
-		loader:    loader,
 		reload:    reload,
 	}
 
@@ -196,7 +201,11 @@ func (tr *Renderer) init() error {
 	funcs["fullTimeFormat"] = fullTimeFormat
 	funcs["localFormat"] = localFormatHelper
 	funcs["driverName"] = driverName
+	funcs["trustHTML"] = func(s string) template.HTML {
+		return template.HTML(s)
+	}
 	funcs["formatDuration"] = formatDuration
+	funcs["appendQuery"] = appendQuery
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
@@ -205,6 +214,14 @@ func (tr *Renderer) init() error {
 	}
 
 	return nil
+}
+
+func appendQuery(r *http.Request, query, value string) string {
+	q := r.URL.Query()
+	q.Set(query, value)
+	r.URL.RawQuery = q.Encode()
+
+	return r.URL.String()
 }
 
 func formatDuration(d time.Duration, trimLeadingZeroes bool) string {
@@ -417,14 +434,14 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 	_ = session.Save(r, w)
 	_ = errSession.Save(r, w)
 
-	opts, err := raceManager.LoadServerOptions()
+	opts, err := tr.store.LoadServerOptions()
 
 	if err != nil {
 		return err
 	}
 
-	data["server_status"] = AssettoProcess.IsRunning()
-	data["server_event_type"] = AssettoProcess.EventType()
+	data["server_status"] = tr.process.IsRunning()
+	data["server_event_type"] = tr.process.EventType()
 	data["server_name"] = opts.Name
 	data["custom_css"] = template.CSS(opts.CustomCSS)
 	data["User"] = AccountFromRequest(r)
