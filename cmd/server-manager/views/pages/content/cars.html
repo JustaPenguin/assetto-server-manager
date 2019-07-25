@@ -84,9 +84,11 @@
 
             <a class="card mt-2 mb-2 pt-0 pb-0" href="/car/{{ $car.Name }}">
                 <div class="card-body row">
-                    <div class="col-12 col-sm-4 col-md-2">
-                        <img class="img img-fluid car-image" src="{{ carSkinURL $car.Name (index $car.Skins 0) }}" alt="">
-                    </div>
+                    {{ with $car.Skins }}
+                        <div class="col-12 col-sm-4 col-md-2">
+                            <img class="img img-fluid car-image" src="{{ carSkinURL $car.Name (index $car.Skins 0) }}" alt="">
+                        </div>
+                    {{ end }}
 
                     <div class="d-block d-sm-none pt-2">&nbsp;</div>
 
