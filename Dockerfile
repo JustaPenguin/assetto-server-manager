@@ -9,7 +9,7 @@ ENV SERVER_INSTALL_DIR ${SERVER_MANAGER_DIR}/assetto
 RUN adduser -D -s /bin/bash ${SERVER_USER}
 
 # dependencies
-RUN apk update && apk add ca-certificates nodejs npm
+RUN apk update && apk add ca-certificates
 
 ADD cmd/server-manager/build/linux/server-manager /usr/bin/server-manager
 
@@ -19,9 +19,6 @@ RUN mkdir ${SERVER_INSTALL_DIR}
 
 RUN chown -R ${SERVER_USER}:${SERVER_USER} ${SERVER_MANAGER_DIR}
 RUN chown -R ${SERVER_USER}:${SERVER_USER} ${SERVER_INSTALL_DIR}
-
-# ac server wrapper
-RUN npm install -g ac-server-wrapper
 
 USER ${SERVER_USER}
 WORKDIR ${SERVER_MANAGER_DIR}

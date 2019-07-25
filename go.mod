@@ -34,12 +34,15 @@ require (
 	github.com/heindl/caldav-go v0.0.0-20160315204950-22453f8a38b5
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
+	github.com/jaytaylor/html2text v0.0.0-20190408195923-01ec452cbe43
 	github.com/jmhodges/levigo v1.0.0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
+	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mattn/go-zglob v0.0.1
 	github.com/mitchellh/go-ps v0.0.0-20170309133038-4fdf99ab2936
 	github.com/mitchellh/go-wordwrap v1.0.0
+	github.com/olekukonko/tablewriter v0.0.1 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/prometheus/client_golang v0.9.2
@@ -48,6 +51,7 @@ require (
 	github.com/sirupsen/logrus v1.3.0
 	github.com/smartystreets/assertions v0.0.0-20190215210624-980c5ac6f3ac // indirect
 	github.com/spkg/bom v0.0.0-20160624110644-59b7046e48ad
+	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/steveyen/gtreap v0.0.0-20150807155958-0abe01ef9be2 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tecbot/gorocksdb v0.0.0-20190519120508-025c3cf4ffb4 // indirect

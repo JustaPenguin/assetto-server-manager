@@ -188,18 +188,18 @@ func (sah *ServerAdministrationHandler) serverProcess(w http.ResponseWriter, r *
 	var err error
 	var txt string
 
-	eventType := sah.process.EventType()
+	event := sah.process.Event()
 
 	switch chi.URLParam(r, "action") {
 	case "stop":
-		if eventType == EventTypeChampionship {
+		if event.IsChampionship() {
 			err = sah.championshipManager.StopActiveEvent()
 		} else {
 			err = sah.process.Stop()
 		}
 		txt = "stopped"
 	case "restart":
-		if eventType == EventTypeChampionship {
+		if event.IsChampionship() {
 			err = sah.championshipManager.RestartActiveEvent()
 		} else {
 			err = sah.process.Restart()
@@ -209,7 +209,7 @@ func (sah *ServerAdministrationHandler) serverProcess(w http.ResponseWriter, r *
 
 	noun := "Server"
 
-	if eventType == EventTypeChampionship {
+	if event.IsChampionship() {
 		noun = "Championship"
 	}
 

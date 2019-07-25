@@ -123,7 +123,7 @@
                     {{ if .server_status  }}
                         <li class="nav-item dropdown mr-2 {{ if not WriteAccess }} mt-2 {{ end }}">
                             {{ if WriteAccess }}
-                                {{ if eq .server_event_type "CHAMPIONSHIP" }}
+                                {{ if .server_event.IsChampionship }}
                                     <a class="nav-link dropdown-toggle" href="#" id="navBarStatusDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                         <span class="badge badge-warning">Championship in Progress</span>
                                     </a>
@@ -138,7 +138,7 @@
                                         class="dropdown-item"
                                         href="/process/restart"
 
-                                        {{ if eq .server_event_type "CHAMPIONSHIP" }}
+                                        {{ if .server_event.IsChampionship }}
                                             onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
                                         {{ end }}
                                     >
@@ -148,7 +148,7 @@
                                         class="dropdown-item"
                                         href="/process/stop"
 
-                                        {{ if eq .server_event_type "CHAMPIONSHIP" }}
+                                        {{ if .server_event.IsChampionship }}
                                             onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
                                         {{ end }}
                                     >
@@ -156,7 +156,7 @@
                                     </a>
                                 </div>
                             {{ else }}
-                                {{ if eq .server_event_type "CHAMPIONSHIP" }}
+                                {{ if .server_event.IsChampionship }}
                                     <span class="badge badge-warning">Championship in Progress</span>
                                 {{ else }}
                                     <span class="badge badge-success">Assetto Server Running</span>
