@@ -24,9 +24,9 @@ var (
 )
 
 type RaceManager struct {
-	process       ServerProcess
-	raceStore     Store
-	carManager    *CarManager
+	process    ServerProcess
+	raceStore  Store
+	carManager *CarManager
 
 	currentRace      *ServerConfig
 	currentEntryList EntryList

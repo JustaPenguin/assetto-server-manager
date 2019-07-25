@@ -88,7 +88,7 @@ type ScheduledRacesHandler struct {
 
 func NewScheduledRacesHandler(baseHandler *BaseHandler, store Store, raceManager *RaceManager, championshipManager *ChampionshipManager) *ScheduledRacesHandler {
 	return &ScheduledRacesHandler{
-		BaseHandler: 		 baseHandler,
+		BaseHandler:         baseHandler,
 		store:               store,
 		raceManager:         raceManager,
 		championshipManager: championshipManager,
@@ -97,7 +97,7 @@ func NewScheduledRacesHandler(baseHandler *BaseHandler, store Store, raceManager
 
 func (rs *ScheduledRacesHandler) calendar(w http.ResponseWriter, r *http.Request) {
 	rs.viewRenderer.MustLoadTemplate(w, r, "calendar.html", map[string]interface{}{
-		"WideContainer":   true,
+		"WideContainer": true,
 	})
 }
 
@@ -183,27 +183,27 @@ func (rs *ScheduledRacesHandler) allScheduledRacesICalHandler(w http.ResponseWri
 }
 
 type calendarObject struct {
-	ID string `json:"id"`
-	GroupID string `json:"groupId"`
-	AllDay bool `json:"allDay"`
-	Start time.Time `json:"start"`
-	End time.Time `json:"end"`
-	Title string `json:"title"`
-	Description string `json:"description"`
-	URL string `json:"url"`
-	SignUpURL string `json:"signUpURL"`
-	ClassNames []string `json:"classNames"`
-	Editable bool `json:"editable"`
-	StartEditable bool `json:"startEditable"`
-	DurationEditable bool `json:"durationEditable"`
-	ResourceEditable bool `json:"resourceEditable"`
-	Rendering string `json:"rendering"`
-	Overlap bool `json:"overlap"`
+	ID               string    `json:"id"`
+	GroupID          string    `json:"groupId"`
+	AllDay           bool      `json:"allDay"`
+	Start            time.Time `json:"start"`
+	End              time.Time `json:"end"`
+	Title            string    `json:"title"`
+	Description      string    `json:"description"`
+	URL              string    `json:"url"`
+	SignUpURL        string    `json:"signUpURL"`
+	ClassNames       []string  `json:"classNames"`
+	Editable         bool      `json:"editable"`
+	StartEditable    bool      `json:"startEditable"`
+	DurationEditable bool      `json:"durationEditable"`
+	ResourceEditable bool      `json:"resourceEditable"`
+	Rendering        string    `json:"rendering"`
+	Overlap          bool      `json:"overlap"`
 
-	Constraint string `json:"constraint"`
+	Constraint      string `json:"constraint"`
 	BackgroundColor string `json:"backgroundColor"`
-	BorderColor string `json:"borderColor"`
-	TextColor string `json:"textColor"`
+	BorderColor     string `json:"borderColor"`
+	TextColor       string `json:"textColor"`
 }
 
 func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter) error {
@@ -217,24 +217,24 @@ func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter) error {
 
 	if len(scheduled) == 0 {
 		calendarObjects = append(calendarObjects, calendarObject{
-			ID: "no-events",
-			GroupID: "no-events",
-			AllDay: false,
-			Start: time.Now(),
-			End: time.Now().Add(time.Hour*3),
-			Title: "Looks like there are no scheduled events!",
-			URL: "",
-			ClassNames: nil,
-			Editable: false,
-			StartEditable: false,
+			ID:               "no-events",
+			GroupID:          "no-events",
+			AllDay:           false,
+			Start:            time.Now(),
+			End:              time.Now().Add(time.Hour * 3),
+			Title:            "Looks like there are no scheduled events!",
+			URL:              "",
+			ClassNames:       nil,
+			Editable:         false,
+			StartEditable:    false,
 			DurationEditable: false,
 			ResourceEditable: false,
-			Rendering: "",
-			Overlap: true,
-			Constraint: "",
-			BackgroundColor: "red",
-			BorderColor: "white",
-			TextColor: "white",
+			Rendering:        "",
+			Overlap:          true,
+			Constraint:       "",
+			BackgroundColor:  "red",
+			BorderColor:      "white",
+			TextColor:        "white",
 		})
 	}
 
@@ -353,7 +353,6 @@ func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter) error {
 	return json.NewEncoder(w).Encode(calendarObjects)
 }
 
-
 func generateSummary(raceSetup CurrentRaceConfig, eventType string) string {
 	var summary string
 
@@ -366,7 +365,7 @@ func generateSummary(raceSetup CurrentRaceConfig, eventType string) string {
 			summary += fmt.Sprintf(" (%s)", prettifyName(raceSetup.TrackLayout, true))
 		}
 	} else {
-		summary = fmt.Sprintf(eventType + " at %s", trackInfo.Name)
+		summary = fmt.Sprintf(eventType+" at %s", trackInfo.Name)
 	}
 
 	return summary
