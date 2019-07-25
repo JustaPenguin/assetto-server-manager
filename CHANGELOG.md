@@ -1,3 +1,11 @@
+v1.4.0
+------
+
+Added:
+
+* A calendar that automatically populates with scheduled events! Intended to help users see when events are planned and
+  sign up for them if required.
+
 v1.3.3
 ------
 
