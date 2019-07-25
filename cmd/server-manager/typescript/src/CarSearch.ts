@@ -4,7 +4,7 @@ import KeyPressEvent = JQuery.KeyPressEvent;
 interface SearchResult {
     CarName: string;
     CarID: string;
-    Tags: string[];
+    // Tags: string[];
 }
 
 export class CarSearch {
@@ -15,7 +15,7 @@ export class CarSearch {
     public constructor($parent: JQuery<HTMLElement>) {
         this.$parent = $parent;
         this.$searchField = $parent.find(".car-search") as JQuery<HTMLInputElement>;
-        this.$searchButton = $parent.find(".car-search-btn")as JQuery<HTMLButtonElement>;
+        this.$searchButton = $parent.find(".car-search-btn") as JQuery<HTMLButtonElement>;
 
         if (!this.$searchField.length) {
             return;

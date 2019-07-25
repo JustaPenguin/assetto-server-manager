@@ -264,7 +264,7 @@ func (r *Resolver) resolveScheduledRacesHandler() *ScheduledRacesHandler {
 		return r.scheduledRacesHandler
 	}
 
-	r.scheduledRacesHandler = NewScheduledRacesHandler(r.store, r.resolveRaceManager(), r.resolveChampionshipManager())
+	r.scheduledRacesHandler = NewScheduledRacesHandler(r.resolveBaseHandler(), r.store, r.resolveRaceManager(), r.resolveChampionshipManager())
 
 	return r.scheduledRacesHandler
 }

@@ -56,7 +56,7 @@ func Router(
 	contentUploadHandler *ContentUploadHandler,
 	serverAdministrationHandler *ServerAdministrationHandler,
 	raceControlHandler *RaceControlHandler,
-	raceScheduler *ScheduledRacesHandler,
+	scheduledRacesHandler *ScheduledRacesHandler,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -86,7 +86,7 @@ func Router(
 		r.Get("/tracks", tracksHandler.list)
 		r.Get("/weather", weatherHandler.list)
 
-		r.Get("/events.ics", raceScheduler.allScheduledRacesICalHandler)
+		r.Get("/events.ics", scheduledRacesHandler.allScheduledRacesICalHandler)
 
 		// results
 		r.Get("/results", resultsHandler.list)
@@ -106,6 +106,10 @@ func Router(
 		r.Get("/live-timing", raceControlHandler.liveTiming)
 		r.Get("/api/race-control", raceControlHandler.websocket)
 
+		// calendar
+		r.Get("/calendar", scheduledRacesHandler.calendar)
+		r.Get("/calendar.json", scheduledRacesHandler.calendarJSON)
+
 		// account management
 		r.HandleFunc("/accounts/new-password", accountHandler.newPassword)
 
@@ -123,7 +127,7 @@ func Router(
 		// content
 		r.Post("/setups/upload", carSetupsUploadHandler)
 		r.HandleFunc("/car/{name}/tags", carsHandler.tags)
-		r.Post("/car/{name}/metadata", carsHandler.metadata)
+		r.Post("/car/{name}/metadata", carsHandler.saveMetadata)
 		r.Post("/car/{name}/skin", carsHandler.uploadSkin)
 
 		// races
