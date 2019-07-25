@@ -72,6 +72,8 @@ type RaceEvent interface {
 	OverrideServerPassword() bool
 	ReplacementServerPassword() string
 	EventName() string
+	EventDescription() string
+	GetURL() string
 }
 
 type normalEvent struct {
@@ -93,6 +95,14 @@ func (n normalEvent) OverrideServerPassword() bool {
 
 func (n normalEvent) ReplacementServerPassword() string {
 	return n.ReplacementPassword
+}
+
+func (n normalEvent) EventDescription() string {
+	return ""
+}
+
+func (n normalEvent) GetURL() string {
+	return ""
 }
 
 func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool, event RaceEvent) error {
@@ -151,6 +161,10 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		}
 	}
 
+	if config.GlobalServerConfig.EnableContentManagerWrapper == 1 && config.GlobalServerConfig.ContentManagerWrapperPort > 0 {
+		config.GlobalServerConfig.Name += fmt.Sprintf(" %c%d", contentManagerWrapperSeparator, config.GlobalServerConfig.ContentManagerWrapperPort)
+	}
+
 	err = config.Write()
 
 	if err != nil {
@@ -174,13 +188,7 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		}
 	}
 
-	eventType := EventTypeRace
-
-	if event.IsChampionship() {
-		eventType = EventTypeChampionship
-	}
-
-	err = rm.process.Start(config, forwardingAddress, forwardListenPort, eventType)
+	err = rm.process.Start(config, entryList, forwardingAddress, forwardListenPort, event)
 
 	if err != nil {
 		return err
