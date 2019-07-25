@@ -441,7 +441,7 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 	}
 
 	data["server_status"] = tr.process.IsRunning()
-	data["server_event_type"] = tr.process.EventType()
+	data["server_event"] = tr.process.Event()
 	data["server_name"] = opts.Name
 	data["custom_css"] = template.CSS(opts.CustomCSS)
 	data["User"] = AccountFromRequest(r)
