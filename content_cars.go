@@ -47,20 +47,20 @@ func (cs Cars) AsMap() map[string][]string {
 }
 
 type CarDetails struct {
-	Author      string          `json:"author"`
-	Brand       string          `json:"brand"`
-	Class       string          `json:"class"`
-	Country     string          `json:"country"`
-	Description string          `json:"description"`
-	Name        string          `json:"name"`
-	PowerCurve  [][]json.Number `json:"powerCurve"`
-	SpecsFull   CarSpecs        `json:"specs"`
-	Specs       CarSpecsNumeric `json:"spec"`
-	Tags        []string        `json:"tags"`
-	TorqueCurve [][]json.Number `json:"torqueCurve"`
-	URL         string          `json:"url"`
-	Version     string          `json:"version"`
-	Year        int64           `json:"year"`
+	Author       string          `json:"author"`
+	Brand        string          `json:"brand"`
+	Class        string          `json:"class"`
+	Country      string          `json:"country"`
+	Description  string          `json:"description"`
+	Name         string          `json:"name"`
+	PowerCurve   [][]json.Number `json:"powerCurve"`
+	Specs        CarSpecs        `json:"specs"`
+	SpecsNumeric CarSpecsNumeric `json:"spec"`
+	Tags         []string        `json:"tags"`
+	TorqueCurve  [][]json.Number `json:"torqueCurve"`
+	URL          string          `json:"url"`
+	Version      string          `json:"version"`
+	Year         int64           `json:"year"`
 
 	DownloadURL string `json:"downloadURL"`
 	Notes       string `json:"notes"`
@@ -131,7 +131,7 @@ func (cd *CarDetails) Load(carName string) error {
 		return err
 	}
 
-	cd.Specs = cd.SpecsFull.Numeric()
+	cd.SpecsNumeric = cd.Specs.Numeric()
 
 	return nil
 }
@@ -226,18 +226,18 @@ func (cm *CarManager) LoadCar(name string, tyres Tyres) (*Car, error) {
 	carDirectory := filepath.Join(ServerInstallPath, "content", "cars", name)
 	skinFiles, err := ioutil.ReadDir(filepath.Join(carDirectory, "skins"))
 
-	if err != nil {
-		return nil, err
-	}
-
 	var skins []string
 
-	for _, skinFile := range skinFiles {
-		if !skinFile.IsDir() {
-			continue
-		}
+	if err == nil {
+		for _, skinFile := range skinFiles {
+			if !skinFile.IsDir() {
+				continue
+			}
 
-		skins = append(skins, skinFile.Name())
+			skins = append(skins, skinFile.Name())
+		}
+	} else {
+		logrus.WithError(err).Warnf("Could not load skins for car: %s", name)
 	}
 
 	carDetails := CarDetails{}
@@ -316,7 +316,6 @@ const searchPageSize = 50
 
 // CreateSearchIndex builds a search index for the cars
 func (cm *CarManager) CreateOrOpenSearchIndex() error {
-	indexMapping := bleve.NewIndexMapping()
 	indexPath := filepath.Join(ServerInstallPath, "search-index", "cars")
 
 	var err error
@@ -325,6 +324,7 @@ func (cm *CarManager) CreateOrOpenSearchIndex() error {
 
 	if err == bleve.ErrorIndexPathDoesNotExist {
 		logrus.Infof("Creating car search index")
+		indexMapping := bleve.NewIndexMapping()
 		cm.carIndex, err = bleve.New(indexPath, indexMapping)
 
 		if err != nil {
@@ -360,6 +360,20 @@ func (cm *CarManager) IndexAllCars() error {
 
 	logrus.Infof("Building search index for all cars")
 	started := time.Now()
+
+	results, _, err := cm.Search(context.Background(), "", 0, 100000)
+
+	if err == nil {
+		for _, result := range results.Hits {
+			err := cm.DeIndexCar(result.ID)
+
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		logrus.WithError(err).Warnf("could not de-index cars")
+	}
 
 	cars, err := cm.ListCars()
 
@@ -581,9 +595,9 @@ func (ch *CarsHandler) list(w http.ResponseWriter, r *http.Request) {
 }
 
 type carSearchResult struct {
-	CarName string   `json:"CarName"`
-	CarID   string   `json:"CarID"`
-	Tags    []string `json:"Tags"`
+	CarName string `json:"CarName"`
+	CarID   string `json:"CarID"`
+	// Tags    []string `json:"Tags"`
 }
 
 func (ch *CarsHandler) searchJSON(w http.ResponseWriter, r *http.Request) {
@@ -603,7 +617,7 @@ func (ch *CarsHandler) searchJSON(w http.ResponseWriter, r *http.Request) {
 		searchResults = append(searchResults, carSearchResult{
 			CarName: car.Details.Name,
 			CarID:   car.Name,
-			Tags:    car.Details.Tags,
+			// Tags:    car.Details.Tags,
 		})
 	}
 
@@ -686,7 +700,7 @@ func (ch *CarsHandler) tags(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-func (ch *CarsHandler) metadata(w http.ResponseWriter, r *http.Request) {
+func (ch *CarsHandler) saveMetadata(w http.ResponseWriter, r *http.Request) {
 	car := chi.URLParam(r, "name")
 
 	if err := ch.carManager.UpdateCarMetadata(car, r); err != nil {
