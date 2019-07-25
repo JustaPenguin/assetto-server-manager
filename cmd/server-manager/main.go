@@ -68,20 +68,19 @@ func main() {
 		ServeHTTPWithError(config.HTTP.Hostname, "Initialise resolver (internal error)", err)
 		return
 	}
-
-	err = servermanager.InitWithResolver(resolver)
-
-	if err != nil {
-		ServeHTTPWithError(config.HTTP.Hostname, "Initialise server manager (internal error)", err)
-		return
-	}
-
 	servermanager.SetAssettoInstallPath(config.Steam.InstallPath)
 
 	err = servermanager.InstallAssettoCorsaServer(config.Steam.Username, config.Steam.Password, config.Steam.ForceUpdate)
 
 	if err != nil {
 		ServeHTTPWithError(defaultAddress, "Install assetto corsa server with steamcmd. Likely you do not have steamcmd installed correctly.", err)
+		return
+	}
+
+	err = servermanager.InitWithResolver(resolver)
+
+	if err != nil {
+		ServeHTTPWithError(config.HTTP.Hostname, "Initialise server manager (internal error)", err)
 		return
 	}
 

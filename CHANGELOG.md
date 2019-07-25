@@ -5,6 +5,15 @@ Added:
 
 * A calendar that automatically populates with scheduled events! Intended to help users see when events are planned and
   sign up for them if required.
+* New Car Details pages! You can now manage your car collection right in Server Manager!
+* Car Search! Search for cars by name, tags, BHP, weight, etc. Car search is connected into Quick Races, Custom Races, Championships. Check out the 'Search Help' on any pages with the search bar to find out what kind of things you can search for!
+* Skin Upload - you can now upload individual skins on the Car Details page
+* Skin Delete - you can now delete individual skins on the Car Details page.
+* Improved asset handling - this is a bit behind-the-scenes, but we've made some efforts to make Server Manager's styles (and fonts!) load quicker.
+* Car Notes and Download links - you can now add notes and download links to a car.
+* Car Tags - you can now add and remove tags to cars. This means if you have a group of cars you use regularly, you can add a tag to them and just search for that tag!
+
+Note, all of the new Car features work best when you have uploaded your cars to Server Manager. If you haven't, the pages will still work, but won't be anywhere near as cool!
 
 v1.3.3
 ------

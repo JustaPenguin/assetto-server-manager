@@ -81,6 +81,8 @@ func (cuh *ContentUploadHandler) addFiles(files []ContentFile, contentType Conte
 		contentPath = filepath.Join(ServerInstallPath, "content", "weather")
 	}
 
+	uploadedCars := make(map[string]bool)
+
 	for _, file := range files {
 		var fileDecoded []byte
 
@@ -133,6 +135,8 @@ func (cuh *ContentUploadHandler) addFiles(files []ContentFile, contentType Conte
 					logrus.WithError(err).Errorf("Could not create tyres for new car (%s)", file.FilePath)
 				}
 			}
+
+			uploadedCars[parts[0]] = true
 		}
 
 		err = ioutil.WriteFile(path, fileDecoded, 0644)
@@ -144,11 +148,19 @@ func (cuh *ContentUploadHandler) addFiles(files []ContentFile, contentType Conte
 	}
 
 	if contentType == ContentTypeCar {
-		// @TODO can we improve this by just indexing the individual cars which were uploaded?
-		err := cuh.carManager.IndexAllCars()
+		// index the cars that have been uploaded.
+		for car := range uploadedCars {
+			car, err := cuh.carManager.LoadCar(car, nil)
 
-		if err != nil {
-			return err
+			if err != nil {
+				return err
+			}
+
+			err = cuh.carManager.IndexCar(car)
+
+			if err != nil {
+				return err
+			}
 		}
 	}
 
