@@ -31,6 +31,11 @@ import {faGithub} from "@fortawesome/free-brands-svg-icons/faGithub";
 import {faPlayCircle as faPlayCircleRegular} from "@fortawesome/free-regular-svg-icons/faPlayCircle";
 import {faPlayCircle as faPlayCircleSolid} from "@fortawesome/free-solid-svg-icons/faPlayCircle";
 import {faTimes} from "@fortawesome/free-solid-svg-icons/faTimes";
+import {faChevronLeft} from "@fortawesome/free-solid-svg-icons/faChevronLeft";
+import {faChevronRight} from "@fortawesome/free-solid-svg-icons/faChevronRight";
+import {faCalendarCheck} from "@fortawesome/free-solid-svg-icons/faCalendarCheck";
+import {faClipboardList} from "@fortawesome/free-solid-svg-icons/faClipboardList";
+import {faUsersCog} from "@fortawesome/free-solid-svg-icons/faUsersCog";
 
 library.add(
     faUser,
@@ -63,6 +68,11 @@ library.add(
     faServer,
     faGithub,
     faTimes,
+    faChevronLeft,
+    faChevronRight,
+    faCalendarCheck,
+    faClipboardList,
+    faUsersCog,
 );
 
 dom.watch();

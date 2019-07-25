@@ -46,6 +46,10 @@ func (cr *CustomRace) IsChampionship() bool {
 	return false
 }
 
+func (cr *CustomRace) HasSignUpForm() bool {
+	return false
+}
+
 func (cr *CustomRace) GetID() uuid.UUID {
 	return cr.UUID
 }
