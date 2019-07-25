@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"sync"
+	"time"
 
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/search/query"
@@ -173,6 +175,8 @@ func (cs CarSpecs) Numeric() CarSpecsNumeric {
 
 type CarManager struct {
 	carIndex bleve.Index
+
+	searchIndexRebuildMutex sync.Mutex
 }
 
 func NewCarManager() *CarManager {
@@ -313,15 +317,6 @@ const searchPageSize = 50
 // CreateSearchIndex builds a search index for the cars
 func (cm *CarManager) CreateOrOpenSearchIndex() error {
 	indexMapping := bleve.NewIndexMapping()
-	/*
-		fm := bleve.NewNumericFieldMapping()
-
-		carMapping := bleve.NewDocumentMapping()
-		carMapping.AddFieldMappingsAt("specs.weight", fm)
-
-		indexMapping.AddDocumentMapping("car", carMapping)
-		indexMapping.TypeField = "Type"
-	*/
 	indexPath := filepath.Join(ServerInstallPath, "search-index", "cars")
 
 	var err error
@@ -360,7 +355,12 @@ func (cm *CarManager) DeIndexCar(name string) error {
 
 // IndexAllCars loads all current cars and adds them to the search index
 func (cm *CarManager) IndexAllCars() error {
+	cm.searchIndexRebuildMutex.Lock()
+	defer cm.searchIndexRebuildMutex.Unlock()
+
 	logrus.Infof("Building search index for all cars")
+	started := time.Now()
+
 	cars, err := cm.ListCars()
 
 	if err != nil {
@@ -375,7 +375,7 @@ func (cm *CarManager) IndexAllCars() error {
 		}
 	}
 
-	logrus.Infof("Search index build is complete")
+	logrus.Infof("Search index build is complete (took: %s)", time.Now().Sub(started).String())
 
 	return nil
 }
@@ -737,5 +737,18 @@ func (ch *CarsHandler) deleteSkin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	AddFlash(w, r, "Car skin deleted successfully!")
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (ch *CarsHandler) rebuildSearchIndex(w http.ResponseWriter, r *http.Request) {
+	go func() {
+		err := ch.carManager.IndexAllCars()
+
+		if err != nil {
+			logrus.WithError(err).Error("could not rebuild search index")
+		}
+	}()
+
+	AddFlash(w, r, "Started re-indexing cars!")
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
