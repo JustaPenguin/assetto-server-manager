@@ -3,7 +3,7 @@
 {{ define "content" }}
     <h1 class="text-center">Options</h1>
 
-    <p>These configuration options are applied globally - they are set to each race setup started by Server Manager.</p>
+    <p>These configuration options are applied globally - they are applied to each race setup started by Server Manager.</p>
 
     <form method="post" action="/server-options">
         {{ range $k, $v := .form.Fields }}
@@ -14,4 +14,15 @@
 
         <div class="clearfix"></div>
     </form>
+
+    <hr>
+
+    <h3>Maintenance</h3>
+
+    <p>
+        You can use the button below to rebuild the Search Index. You shouldn't need to do this often - if at all - but
+        if you have manually added content to your content folder, you will need to use this so that the content shows up in the Search.
+        Note that this process can take a long time.
+    </p>
+    <a class="btn btn-primary" href="/search-index">Rebuild Search Index</a>
 {{ end }}

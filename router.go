@@ -218,6 +218,7 @@ func Router(
 		r.HandleFunc("/accounts/reset-password/{id}", accountHandler.resetPassword)
 		r.HandleFunc("/accounts/toggle-open", accountHandler.toggleServerOpenStatus)
 		r.HandleFunc("/accounts", accountHandler.manageAccounts)
+		r.HandleFunc("/search-index", carsHandler.rebuildSearchIndex)
 	})
 
 	FileServer(r, "/static", fs)
