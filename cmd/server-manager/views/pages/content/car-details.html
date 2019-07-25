@@ -178,8 +178,6 @@
 
                 <p>This car has been used in {{ len $.Results }} sessions.</p>
 
-                <!-- @TODO total time driven, total distance driven, driver who uses it most -->
-
                 <div class="list-group overflow-auto mt-3 mb-3" style="max-height: 300px;">
                     {{ range $index, $session := $.Results }}
                         <a class="list-group-item list-group-item-action" href="/results/{{ $session.SessionFile }}">

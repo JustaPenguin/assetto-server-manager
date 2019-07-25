@@ -21,8 +21,6 @@ export class CarSearch {
             return;
         }
 
-        //this.doSearch();
-
         this.$searchButton.on("click", (e: ClickEvent) => {
             e.preventDefault();
             this.doSearch();
