@@ -123,7 +123,7 @@ func Router(
 		// content
 		r.Post("/setups/upload", carSetupsUploadHandler)
 		r.HandleFunc("/car/{name}/tags", carsHandler.tags)
-		r.Post("/car/{name}/metadata", carsHandler.metadata)
+		r.Post("/car/{name}/metadata", carsHandler.saveMetadata)
 		r.Post("/car/{name}/skin", carsHandler.uploadSkin)
 
 		// races
