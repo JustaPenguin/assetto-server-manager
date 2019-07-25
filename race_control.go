@@ -12,9 +12,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var ServerRaceControl *RaceControl
-
 type RaceControl struct {
+	process ServerProcess
+
 	SessionInfo      udp.SessionInfo `json:"SessionInfo"`
 	TrackMapData     TrackMapData    `json:"TrackMapData"`
 	TrackInfo        TrackInfo       `json:"TrackInfo"`
@@ -56,10 +56,11 @@ type Collision struct {
 	Speed           float64        `json:"Speed"`
 }
 
-func NewRaceControl(broadcaster Broadcaster, trackDataGateway TrackDataGateway) *RaceControl {
+func NewRaceControl(broadcaster Broadcaster, trackDataGateway TrackDataGateway, process ServerProcess) *RaceControl {
 	rc := &RaceControl{
 		broadcaster:      broadcaster,
 		trackDataGateway: trackDataGateway,
+		process:          process,
 	}
 
 	rc.clearAllDrivers()
@@ -303,7 +304,7 @@ func (rc *RaceControl) requestSessionInfo() {
 	for {
 		select {
 		case <-rc.sessionInfoTicker.C:
-			err := AssettoProcess.SendUDPMessage(udp.GetSessionInfo{})
+			err := rc.process.SendUDPMessage(udp.GetSessionInfo{})
 
 			if err == ErrNoOpenUDPConnection {
 				logrus.WithError(err).Errorf("Couldn't send session info udp request. Breaking loop.")
@@ -313,7 +314,7 @@ func (rc *RaceControl) requestSessionInfo() {
 				logrus.WithError(err).Errorf("Couldn't send session info udp request")
 			}
 
-		case <-AssettoProcess.Done():
+		case <-rc.process.Done():
 			rc.sessionInfoTicker.Stop()
 
 			logrus.Debugf("Assetto Process completed. Disconnecting all connected drivers. Session done.")
@@ -323,7 +324,7 @@ func (rc *RaceControl) requestSessionInfo() {
 			// the server has just stopped. send disconnect messages for all connected cars.
 			_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
 				// Each takes a read lock, so we cannot call disconnectDriver (which takes a write lock) from inside it.
-				// we must instead append them to a slice and disconnect them outisde the Each call.
+				// we must instead append them to a slice and disconnect them outside the Each call.
 				drivers = append(drivers, driver)
 
 				return nil

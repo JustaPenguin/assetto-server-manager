@@ -6,8 +6,21 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func quickRaceHandler(w http.ResponseWriter, r *http.Request) {
-	quickRaceData, err := raceManager.BuildRaceOpts(r)
+type QuickRaceHandler struct {
+	*BaseHandler
+
+	raceManager *RaceManager
+}
+
+func NewQuickRaceHandler(baseHandler *BaseHandler, raceManager *RaceManager) *QuickRaceHandler {
+	return &QuickRaceHandler{
+		BaseHandler: baseHandler,
+		raceManager: raceManager,
+	}
+}
+
+func (qrh *QuickRaceHandler) create(w http.ResponseWriter, r *http.Request) {
+	quickRaceData, err := qrh.raceManager.BuildRaceOpts(r)
 
 	if err != nil {
 		logrus.Errorf("couldn't build quick race, err: %s", err)
@@ -15,11 +28,11 @@ func quickRaceHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "quick-race.html", quickRaceData)
+	qrh.viewRenderer.MustLoadTemplate(w, r, "quick-race.html", quickRaceData)
 }
 
-func quickRaceSubmitHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.SetupQuickRace(r)
+func (qrh *QuickRaceHandler) submit(w http.ResponseWriter, r *http.Request) {
+	err := qrh.raceManager.SetupQuickRace(r)
 
 	if err == ErrMustSubmitCar {
 		AddErrorFlash(w, r, "You must choose at least one car!")

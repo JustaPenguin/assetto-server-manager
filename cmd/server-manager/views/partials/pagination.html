@@ -1,0 +1,61 @@
+{{ define "pagination" }}
+    {{ $currentPage := .CurrentPage }}
+    {{ $numPages := .NumPages }}
+    {{ $request := ._request }}
+
+    {{ if gt $numPages 1 }}
+        <nav aria-label="Page Navigation">
+            <ul class="pagination justify-content-center pagination-sm">
+                {{ $start := int (max 0 (sub $currentPage (mod $currentPage 10))) }}
+                {{ $end := int (min $numPages (add $currentPage (sub 10 (mod $currentPage 10)))) }}
+
+                {{ if eq $end 1 }}
+                    {{ $end = 2 }}
+                {{ end }}
+
+                <li class="page-item {{ if eq $currentPage 0 }}disabled{{ end }}">
+                    <a class="page-link"
+                       {{ if eq $currentPage 0 }}tabindex="-1"{{ end }}
+                       href="{{ appendQuery $._request "page" "0" }}">
+                        <i class="fas fa-fast-backward fa-fw"></i>
+                    </a>
+                </li>
+
+
+                <li class="page-item {{ if eq $start 0 }}disabled{{ end }}">
+                    <a class="page-link"
+                       {{ if eq $start 0 }}tabindex="-1"{{ end }}
+                       href="{{ appendQuery $._request "page" (sub $start 10 | toString) }}">
+                        <i class="fas fa-caret-left fa-fw"></i>
+                    </a>
+                </li>
+
+                {{ range $i, $no := (untilStep $start $end 1) }}
+                    <li class="page-item {{ if eq $currentPage $no }}disabled{{ end }}">
+                        <a class="page-link"
+                           href="{{ appendQuery $._request "page" ($no | toString) }}">
+                            {{ add $no 1 }}
+                        </a>
+                    </li>
+                {{ end }}
+
+
+                <li class="page-item {{ if or (gt $end (add $numPages -1)) (eq $numPages 0) }}disabled{{ end }}">
+                    <a class="page-link"
+                       {{ if gt $end (add $numPages -1) }}tabindex="-1"{{ end }}
+                       href="{{ appendQuery $._request "page" ($end | toString) }}">
+                        <i class="fas fa-caret-right fa-fw"></i>
+                    </a>
+                </li>
+
+                <li class="page-item {{ if or (eq $currentPage (add $numPages -1)) (eq $numPages 0) }}disabled{{ end }}">
+                    <a class="page-link"
+                       {{ if eq $currentPage (add $numPages -1) }}tabindex="-1"{{ end }}
+                       href="{{ appendQuery $._request "page" ((add $numPages -1) | toString) }}">
+                        <i class="fas fa-fast-forward fa-fw"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    {{ end }}
+{{ end }}
