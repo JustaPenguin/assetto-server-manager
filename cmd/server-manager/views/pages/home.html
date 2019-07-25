@@ -86,6 +86,15 @@
             </a>
         </div>
 
+        <div class="col-md-6 col-lg-4 mt-4">
+            <a class="card" href="/calendar">
+                <div class="card-body text-center">
+                    <h1 class="text-center"><i class="fas fa-calendar-check fa-2x"></i></h1>
+                    <h2>Calendar</h2>
+                </div>
+            </a>
+        </div>
+
         {{ if AdminAccess }}
             <div class="col-md-6 col-lg-4 mt-4">
                 <a class="card" href="/server-options">
@@ -168,6 +177,26 @@
                     <div class="card-body text-center">
                         <h1 class="text-center"><i class="fas fa-comment-alt fa-2x"></i></h1>
                         <h2>Message of the Day</h2>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-4 mt-4">
+                <a class="card" href="/audit-logs">
+                    <div class="card-body text-center">
+                        <h1 class="text-center"><i class="fas fa-clipboard-list fa-2x"></i></h1>
+                        <h2>Audit Logs</h2>
+                    </div>
+                </a>
+            </div>
+        {{ end }}
+
+        {{ if DeleteAccess }}
+            <div class="col-md-6 col-lg-4 mt-4">
+                <a class="card" href="/autofill-entrants">
+                    <div class="card-body text-center">
+                        <h1 class="text-center"><i class="fas fa-users-cog fa-2x"></i></h1>
+                        <h2>AutoFill Entrants</h2>
                     </div>
                 </a>
             </div>

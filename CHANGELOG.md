@@ -3,6 +3,8 @@ v1.4.0
 
 Added:
 
+* A calendar that automatically populates with scheduled events! Intended to help users see when events are planned and
+  sign up for them if required.
 * New Car Details pages! You can now manage your car collection right in Server Manager!
 * Car Search! Search for cars by name, tags, BHP, weight, etc. Car search is connected into Quick Races, Custom Races, Championships. Check out the 'Search Help' on any pages with the search bar to find out what kind of things you can search for!
 * Skin Upload - you can now upload individual skins on the Car Details page

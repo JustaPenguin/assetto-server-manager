@@ -820,6 +820,10 @@ func (cr *ChampionshipEvent) GetURL() string {
 	return "/championship/" + cr.championship.ID.String()
 }
 
+func (cr *ChampionshipEvent) HasSignUpForm() bool {
+	return cr.championship.SignUpForm.Enabled
+}
+
 func (cr *ChampionshipEvent) ReadOnlyEntryList() EntryList {
 	return cr.CombineEntryLists(cr.championship)
 }
