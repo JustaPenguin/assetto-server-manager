@@ -177,6 +177,10 @@ func (cmw *ContentManagerWrapper) Start(process ServerProcess, servePort int, se
 }
 
 func (cmw *ContentManagerWrapper) Stop() {
+	if cmw.srv == nil {
+		return
+	}
+
 	logrus.Infof("Shutting down content manager wrapper server")
 	err := cmw.srv.Shutdown(context.Background())
 

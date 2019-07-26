@@ -10,6 +10,7 @@ import {msToTime, prettifyName} from "./utils";
 import moment from "moment";
 import ClickEvent = JQuery.ClickEvent;
 import ChangeEvent = JQuery.ChangeEvent;
+import ReconnectingWebSocket from "reconnecting-websocket";
 
 interface WSMessage {
     Message: any;
@@ -61,7 +62,10 @@ export class RaceControl {
             return;
         }
 
-        let ws = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/api/race-control");
+        let ws = new ReconnectingWebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/api/race-control", [], {
+            minReconnectionDelay: 0,
+        });
+
         ws.onmessage = this.handleWebsocketMessage.bind(this);
 
         $(window).on('beforeunload', () => {
@@ -555,6 +559,17 @@ class LiveTimings implements WebsocketHandler {
         if (message.EventType === EventRaceControl) {
             this.populateConnectedDrivers();
             this.populateDisconnectedDrivers();
+        } else if (message.EventType === EventConnectionClosed) {
+            const closedConnection = message.Message as SessionCarInfo;
+
+            if (this.raceControl.status.ConnectedDrivers) {
+                const driver = this.raceControl.status.ConnectedDrivers.Drivers[closedConnection.DriverGUID];
+
+                if (driver && driver.LoadedTime.toString() === "0001-01-01T00:00:00Z") {
+                    // a driver joined but never loaded. remove them from the connected drivers table.
+                    this.$connectedDriversTable.find("tr[data-guid='" + closedConnection.DriverGUID + "']").remove();
+                }
+            }
         }
     }
 
