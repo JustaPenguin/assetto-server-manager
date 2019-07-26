@@ -54,14 +54,24 @@ http:
   # change '0.0.0.0' to 'localhost' if you don't want server manager to be
   # available on the web.
   hostname: 0.0.0.0:8772
+
   # session key is used to encrypt the http session
   session_key: RANDOMLY_GENERATE_THIS
+
   # server manager base URL is the URL that the server manager is accessible on
   # only used for links in championship welcome message in game
   # you can leave this blank if not required
   # example: https://opengt3.assettocorsaservers.com <-- requires https:// or
   # http://, no closing / at the end
   server_manager_base_URL:
+
+  # session store type can be one of: 'cookie' or 'filesystem'
+  # if it is 'filesystem', you must set the session_store_path below.
+  session_store_type: cookie
+
+  # session store path is where to save the session store
+  # (if using 'filesystem' above)
+  session_store_path: ""
 
 ################################################################################
 #
