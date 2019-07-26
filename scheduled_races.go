@@ -232,9 +232,9 @@ func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter) error {
 			Rendering:        "",
 			Overlap:          true,
 			Constraint:       "",
-			BackgroundColor:  "red",
-			BorderColor:      "white",
-			TextColor:        "white",
+			BackgroundColor:  "#c480ff",
+			BorderColor:      "#c480ff",
+			TextColor:        "#303030",
 		})
 	}
 
