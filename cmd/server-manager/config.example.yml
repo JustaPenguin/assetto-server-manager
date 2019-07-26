@@ -67,6 +67,8 @@ http:
 
   # session store type can be one of: 'cookie' or 'filesystem'
   # if it is 'filesystem', you must set the session_store_path below.
+  # cookie is best for most users, but if you are running multiple Server
+  # Manager instances on the same IP address, you should use filesystem.
   session_store_type: cookie
 
   # session store path is where to save the session store
