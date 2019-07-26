@@ -96,6 +96,10 @@ func (dummyServerProcess) Done() <-chan struct{} {
 	return nil
 }
 
+func (dummyServerProcess) GetServerConfig() ServerConfig {
+	return ConfigIniDefault
+}
+
 var championshipEventFixtures = []string{
 	"barbagello.db",
 	"red-bull-ring.db",
