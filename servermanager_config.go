@@ -109,7 +109,9 @@ func ReadConfig(location string) (conf *Configuration, err error) {
 
 	defer f.Close()
 
-	err = yaml.NewDecoder(f).Decode(&conf)
+	if err := yaml.NewDecoder(f).Decode(&conf); err != nil {
+		return nil, err
+	}
 
 	config = conf
 	sessionsStore = sessions.NewCookieStore([]byte(conf.HTTP.SessionKey))
