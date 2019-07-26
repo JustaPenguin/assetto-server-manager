@@ -10,6 +10,7 @@ import {msToTime, prettifyName} from "./utils";
 import moment from "moment";
 import ClickEvent = JQuery.ClickEvent;
 import ChangeEvent = JQuery.ChangeEvent;
+import ReconnectingWebSocket from "reconnecting-websocket";
 
 interface WSMessage {
     Message: any;
@@ -61,7 +62,10 @@ export class RaceControl {
             return;
         }
 
-        let ws = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/api/race-control");
+        let ws = new ReconnectingWebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/api/race-control", [], {
+            minReconnectionDelay: 0,
+        });
+
         ws.onmessage = this.handleWebsocketMessage.bind(this);
 
         $(window).on('beforeunload', () => {
