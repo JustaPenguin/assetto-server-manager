@@ -326,6 +326,7 @@ func (r *Resolver) resolveRaceControlHandler() *RaceControlHandler {
 		r.resolveRaceManager(),
 		r.resolveRaceControl(),
 		r.resolveRaceControlHub(),
+		r.resolveServerProcess(),
 	)
 
 	return r.raceControlHandler
