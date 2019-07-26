@@ -1,5 +1,7 @@
 "use strict";
 
+import {CarSearch} from "../CarSearch";
+
 let $document;
 
 let moment = require("moment");
@@ -2151,7 +2153,7 @@ let championships = {
 
             $(this).before($cloned);
             new RaceSetup($cloned);
-
+            new CarSearch($cloned);
 
             let maxClients = $("#MaxClients").val();
 
