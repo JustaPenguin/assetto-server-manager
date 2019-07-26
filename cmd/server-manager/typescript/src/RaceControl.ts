@@ -555,6 +555,17 @@ class LiveTimings implements WebsocketHandler {
         if (message.EventType === EventRaceControl) {
             this.populateConnectedDrivers();
             this.populateDisconnectedDrivers();
+        } else if (message.EventType === EventConnectionClosed) {
+            const closedConnection = message.Message as SessionCarInfo;
+
+            if (this.raceControl.status.ConnectedDrivers) {
+                const driver = this.raceControl.status.ConnectedDrivers.Drivers[closedConnection.DriverGUID];
+
+                if (driver.LoadedTime.toString() === "0001-01-01T00:00:00Z") {
+                    // a driver joined but never loaded. remove them from the connected drivers table.
+                    this.$connectedDriversTable.find("tr[data-guid='" + closedConnection.DriverGUID + "']").remove();
+                }
+            }
         }
     }
 

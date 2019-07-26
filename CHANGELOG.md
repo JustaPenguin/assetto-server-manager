@@ -19,6 +19,7 @@ Note, all of the new Car features work best when you have uploaded your cars to 
 Fixes:
 
 * Improved error handling when parsing config.yml, this should give an error with more detail rather than crashing.
+* Fixes a bug where drivers who connect but do not load were left in the Connected Drivers table in Live Timings.
 
 v1.3.3
 ------
