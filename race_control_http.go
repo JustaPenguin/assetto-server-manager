@@ -167,7 +167,7 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 
 	linkString := ""
 
-	if rch.GetServerConfig().GlobalServerConfig.ShowCMJoinLink == 1 {
+	if rch.GetServerConfig().GlobalServerConfig.ShowContentManagerJoinLink == 1 {
 		link, err := rch.getCMJoinLink()
 
 		if err != nil {
