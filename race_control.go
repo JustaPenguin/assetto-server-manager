@@ -3,7 +3,9 @@ package servermanager
 import (
 	"context"
 	"fmt"
+	"github.com/mitchellh/go-wordwrap"
 	"math"
+	"strings"
 	"sync"
 	"time"
 
@@ -465,6 +467,46 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 
 	if err != nil {
 		return err
+	}
+
+	serverConfig := rc.process.GetServerConfig()
+
+	solWarning := ""
+	LiveLink := ""
+
+	if serverConfig.CurrentRaceConfig.IsSol == 1 {
+		solWarning = fmt.Sprintf("This server is running Sol with a %d time progression multiplier. For the best "+
+			"experience please install Sol, and remember the other drivers may be driving in night conditions.", serverConfig.CurrentRaceConfig.TimeOfDayMultiplier)
+	}
+
+	if config.HTTP.BaseURL != "" {
+		LiveLink = fmt.Sprintf("You can view live timings for this event at %s", config.HTTP.BaseURL+"/live-timing")
+	}
+
+	wrapped := strings.Split(wordwrap.WrapString(
+
+		fmt.Sprintf(
+			"Hi, %s! Welcome to the %s server! %s Make this race count! %s\n",
+			driver.CarInfo.DriverName,
+			serverConfig.GlobalServerConfig.Name,
+			solWarning,
+			LiveLink,
+		),
+		60,
+	), "\n")
+
+	for _, msg := range wrapped {
+		welcomeMessage, err := udp.NewSendChat(driver.CarInfo.CarID, msg)
+
+		if err == nil {
+			err := rc.process.SendUDPMessage(welcomeMessage)
+
+			if err != nil {
+				logrus.Errorf("Unable to send welcome message to: %s, err: %s", driver.CarInfo.DriverName, err)
+			}
+		} else {
+			logrus.Errorf("Unable to build welcome message to: %s, err: %s", driver.CarInfo.DriverName, err)
+		}
 	}
 
 	logrus.Debugf("Driver: %s (%s) loaded", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
