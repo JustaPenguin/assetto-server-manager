@@ -1,6 +1,9 @@
 package servermanager
 
 import (
+	"crypto/md5"
+	"encoding/hex"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -244,7 +247,25 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 	}
 	path += "*"
 
-	r.Get(path, fs.ServeHTTP)
+	r.Get(path, AssetCacheHeaders(fs.ServeHTTP))
+}
+
+const maxAge30Days = 2592000
+
+func etag(url string) string {
+	h := md5.New()
+	h.Write([]byte(BuildTime + url))
+
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func AssetCacheHeaders(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Cache-Control", fmt.Sprintf("public, max-age=%d", maxAge30Days))
+		w.Header().Add("ETag", fmt.Sprintf(`W/"%s"`, etag(r.URL.String())))
+
+		next(w, r)
+	}
 }
 
 var sessionsStore sessions.Store
