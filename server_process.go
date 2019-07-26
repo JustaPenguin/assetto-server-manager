@@ -312,6 +312,10 @@ func (as *AssettoServerProcess) IsRunning() bool {
 }
 
 func (as *AssettoServerProcess) Event() RaceEvent {
+	if as.event == nil {
+		return normalEvent{}
+	}
+
 	return as.event
 }
 
@@ -354,7 +358,9 @@ func (as *AssettoServerProcess) Stop() error {
 		loopNum++
 	}
 
-	as.contentManagerWrapper.Stop()
+	if as.serverConfig.GlobalServerConfig.EnableContentManagerWrapper == 1 && as.serverConfig.GlobalServerConfig.ContentManagerWrapperPort > 0 {
+		as.contentManagerWrapper.Stop()
+	}
 
 	as.cmd = nil
 	go func() {

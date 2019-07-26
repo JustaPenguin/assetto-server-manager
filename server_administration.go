@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/go-chi/chi"
+	"github.com/mitchellh/go-wordwrap"
 	"github.com/sirupsen/logrus"
 )
 
@@ -52,9 +53,9 @@ const MOTDFilename = "motd.txt"
 
 func (sah *ServerAdministrationHandler) motd(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		text := r.FormValue("motd")
+		wrapped := wordwrap.WrapString(r.FormValue("motd"), 140)
 
-		err := ioutil.WriteFile(filepath.Join(ServerInstallPath, MOTDFilename), []byte(text), 0644)
+		err := ioutil.WriteFile(filepath.Join(ServerInstallPath, MOTDFilename), []byte(wrapped), 0644)
 
 		if err != nil {
 			logrus.WithError(err).Error("couldn't save message of the day")

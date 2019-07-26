@@ -15,6 +15,7 @@ Added:
 * Improved Content Manager integration! You can now enable a "Content Manager Wrapper" in Server Options, which provides extra information to entrants in the Content Manager server information! If enabled, Content Manager Wrapper shows download links for the cars that you have uploaded (if they have a Download URL set), Championship information positions, and more! As well, the Content Manager Wrapper will make loading server information quicker.
 * Added a Content Manager join link to the live timings page. This join link can be turned on/off on the server settings page.
 * Added a generic welcome message for all drivers on connect, it will also warn the driver if the server is running Sol.
+* Server Manager now uses gzip compression where possible. This should improve page load times considerably!
 
 Note, all of the new Car features work best when you have uploaded your cars to Server Manager. If you haven't, the pages will still work, but won't be anywhere near as cool!
 
@@ -22,6 +23,8 @@ Fixes:
 
 * Improved error handling when parsing config.yml, this should give an error with more detail rather than crashing.
 * MOTD text will now be automatically wrapped to prevent large horizontal messages on join
+* Fixes a bug where drivers who connect but do not load were left in the Connected Drivers table in Live Timings.
+* Live Timings will now reconnect automatically if your connection drops.
 
 v1.3.3
 ------

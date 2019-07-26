@@ -130,7 +130,7 @@ func (c *raceControlClient) writePump() {
 
 type RaceControlHandler struct {
 	*BaseHandler
-	ServerProcess
+	serverProcess ServerProcess
 
 	store          Store
 	raceManager    *RaceManager
@@ -145,7 +145,7 @@ func NewRaceControlHandler(baseHandler *BaseHandler, store Store, raceManager *R
 		raceManager:    raceManager,
 		raceControl:    raceControl,
 		raceControlHub: raceControlHub,
-		ServerProcess:  serverProcess,
+		serverProcess:  serverProcess,
 	}
 }
 
@@ -167,7 +167,7 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 
 	linkString := ""
 
-	if rch.GetServerConfig().GlobalServerConfig.ShowCMJoinLink == 1 {
+	if rch.serverProcess.GetServerConfig().GlobalServerConfig.ShowContentManagerJoinLink == 1 {
 		link, err := rch.getCMJoinLink()
 
 		if err != nil {
@@ -202,7 +202,7 @@ func (rch *RaceControlHandler) getCMJoinLink() (*url.URL, error) {
 
 	queryString := cmUrl.Query()
 	queryString.Set("ip", geoIP.IP)
-	queryString.Set("httpPort", strconv.Itoa(rch.GetServerConfig().GlobalServerConfig.HTTPPort))
+	queryString.Set("httpPort", strconv.Itoa(rch.serverProcess.GetServerConfig().GlobalServerConfig.HTTPPort))
 
 	cmUrl.RawQuery = queryString.Encode()
 
