@@ -19,6 +19,7 @@ Note, all of the new Car features work best when you have uploaded your cars to 
 Fixes:
 
 * Improved error handling when parsing config.yml, this should give an error with more detail rather than crashing.
+* Live Timings will now reconnect automatically if your connection drops.
 
 v1.3.3
 ------
