@@ -37,6 +37,7 @@ type ServerProcess interface {
 	Event() RaceEvent
 	UDPCallback(message udp.Message)
 	SendUDPMessage(message udp.Message) error
+	GetServerConfig() ServerConfig
 
 	Done() <-chan struct{}
 }
@@ -367,6 +368,10 @@ func (as *AssettoServerProcess) Stop() error {
 	}()
 
 	return nil
+}
+
+func (as *AssettoServerProcess) GetServerConfig() ServerConfig {
+	return as.serverConfig
 }
 
 func FreeUDPPort() (int, error) {

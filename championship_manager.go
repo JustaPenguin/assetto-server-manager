@@ -636,8 +636,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 		wrapped := strings.Split(wordwrap.WrapString(
 
 			fmt.Sprintf(
-				"Hi, %s! Welcome to the %s%s! %s%s Make this race count!\n",
-				entrant.DriverName,
+				"This event is part of the %s%s! %s%s\n",
 				championship.Name,
 				championshipText,
 				championship.GetPlayerSummary(string(entrant.DriverGUID)),
