@@ -22,6 +22,7 @@ var ConfigIniDefault = ServerConfig{
 		AuthPluginAddress:         "",
 		NumberOfThreads:           2,
 		ShowRaceNameInServerLobby: 1,
+		ShowCMJoinLink:            1,
 	},
 
 	CurrentRaceConfig: CurrentRaceConfig{
