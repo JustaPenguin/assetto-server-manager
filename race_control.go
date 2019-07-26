@@ -479,7 +479,7 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 			"experience please install Sol, and remember the other drivers may be driving in night conditions.", serverConfig.CurrentRaceConfig.TimeOfDayMultiplier)
 	}
 
-	if config.HTTP.BaseURL != "" {
+	if config != nil && config.HTTP.BaseURL != "" {
 		LiveLink = fmt.Sprintf("You can view live timings for this event at %s", config.HTTP.BaseURL+"/live-timing")
 	}
 
