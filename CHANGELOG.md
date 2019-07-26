@@ -16,6 +16,10 @@ Added:
 
 Note, all of the new Car features work best when you have uploaded your cars to Server Manager. If you haven't, the pages will still work, but won't be anywhere near as cool!
 
+Fixes:
+
+* Improved error handling when parsing config.yml, this should give an error with more detail rather than crashing.
+
 v1.3.3
 ------
 
