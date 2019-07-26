@@ -34,6 +34,7 @@
     "multiselect": "^0.9.12",
     "popper.js": "^1.14.7",
     "randomcolor": "^0.5.4",
+    "reconnecting-websocket": "^4.1.10",
     "summernote": "^0.8.11"
   },
   "devDependencies": {
