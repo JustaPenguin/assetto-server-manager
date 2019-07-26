@@ -62,6 +62,7 @@ func Router(
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
+	r.Use(middleware.DefaultCompress)
 	r.Use(panicHandler)
 
 	r.HandleFunc("/login", accountHandler.login)
