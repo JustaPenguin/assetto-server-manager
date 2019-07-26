@@ -3,14 +3,13 @@ package servermanager
 import (
 	"context"
 	"fmt"
-	"github.com/mitchellh/go-wordwrap"
 	"math"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
-
+	"github.com/mitchellh/go-wordwrap"
 	"github.com/sirupsen/logrus"
 )
 
@@ -472,7 +471,7 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 	serverConfig := rc.process.GetServerConfig()
 
 	solWarning := ""
-	LiveLink := ""
+	liveLink := ""
 
 	if serverConfig.CurrentRaceConfig.IsSol == 1 {
 		solWarning = fmt.Sprintf("This server is running Sol with a %d time progression multiplier. For the best "+
@@ -480,7 +479,7 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 	}
 
 	if config != nil && config.HTTP.BaseURL != "" {
-		LiveLink = fmt.Sprintf("You can view live timings for this event at %s", config.HTTP.BaseURL+"/live-timing")
+		liveLink = fmt.Sprintf("You can view live timings for this event at %s", config.HTTP.BaseURL+"/live-timing")
 	}
 
 	wrapped := strings.Split(wordwrap.WrapString(
@@ -490,7 +489,7 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 			driver.CarInfo.DriverName,
 			serverConfig.GlobalServerConfig.Name,
 			solWarning,
-			LiveLink,
+			liveLink,
 		),
 		60,
 	), "\n")
