@@ -448,18 +448,17 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 		return false, nil, err
 	}
 
-	var oldEntrantTeam string
+	var oldEntrant *Entrant
 
 	for _, class := range c.Classes {
 		for _, entrant := range class.Entrants {
 			if entrant.GUID == potentialEntrant.GetGUID() {
-				// we found the entrant, but there's a possibility that they changed cars. empty out their
-				// information on this entrant slot and then look for it again in the next loop
-				oldEntrantTeam = entrant.Team
+				// we found the entrant, but there's a possibility that they changed cars
+				// keep the old entrant so we can swap its properties with the one that is being written to
+				oldEntrant = entrant
 
 				entrant.GUID = ""
 				entrant.Name = ""
-				entrant.Team = ""
 			}
 		}
 	}
@@ -467,15 +466,19 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 	// now look for empty Entrants in the Entrylist
 	for carNum, entrant := range classForCar.Entrants {
 		if entrant.Name == "" && entrant.GUID == "" && entrant.Model == potentialEntrant.GetCar() {
+			if oldEntrant != nil {
+				// swap the old entrant properties
+				oldEntrant.SwapProperties(entrant)
+			}
+
 			entrant.Name = potentialEntrant.GetName()
 			entrant.GUID = potentialEntrant.GetGUID()
 			entrant.Model = potentialEntrant.GetCar()
 			entrant.Skin = potentialEntrant.GetSkin()
-			entrant.Team = potentialEntrant.GetTeam()
 
 			// #386: don't replace a team with no team.
-			if entrant.Team == "" {
-				entrant.Team = oldEntrantTeam
+			if potentialEntrant.GetTeam() != "" {
+				entrant.Team = potentialEntrant.GetTeam()
 			}
 
 			logrus.Infof("Championship entrant: %s (%s) has been assigned to %s in %s", entrant.Name, entrant.GUID, carNum, classForCar.Name)
