@@ -8,12 +8,7 @@
         <title>{{ block "title" . }}{{ end }} / {{ $.server_name }}</title>
 
         {{ block "stylesheets" . }}
-            <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/style.css" }}">
-            <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/multi-select.dist.css" }}">
-            <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/bootstrap-switch.min.css" }}">
-            <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/jquery-ui.min.css" }}">
-            <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/bootstrap.min.css" }}">
-            <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/summernote-bs4.css" }}">
+            <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/server-manager.css" }}">
 
             <style type="text/css">
                 {{ .custom_css }}
@@ -52,16 +47,17 @@
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav mr-auto">
                     {{ if WriteAccess }}
-                        <li class="nav-item">
-                            <a class="nav-link" href="/quick">Quick Race</a>
-                        </li>
+
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Custom Races
+                                Races
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <a class="dropdown-item" href="/custom">View Existing</a>
-                                <a class="dropdown-item" href="/custom/new">Create New</a>
+                                <a class="dropdown-item" href="/quick">Quick</a>
+                                <div class="dropdown-divider"></div>
+                                <h4 class="dropdown-header font-italic">Custom</h4>
+                                <a class="dropdown-item pl-4-5" href="/custom">View Existing</a>
+                                <a class="dropdown-item pl-4-5" href="/custom/new">Create New</a>
                             </div>
                         </li>
 
@@ -95,6 +91,10 @@
                         </div>
                     </li>
 
+                    <li class="nav-item">
+                        <a class="nav-link" href="/calendar">Calendar</a>
+                    </li>
+
 
                     {{ if WriteAccess }}
                         <li class="nav-item dropdown">
@@ -123,7 +123,7 @@
                     {{ if .server_status  }}
                         <li class="nav-item dropdown mr-2 {{ if not WriteAccess }} mt-2 {{ end }}">
                             {{ if WriteAccess }}
-                                {{ if eq .server_event_type "CHAMPIONSHIP" }}
+                                {{ if .server_event.IsChampionship }}
                                     <a class="nav-link dropdown-toggle" href="#" id="navBarStatusDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                         <span class="badge badge-warning">Championship in Progress</span>
                                     </a>
@@ -138,7 +138,7 @@
                                         class="dropdown-item"
                                         href="/process/restart"
 
-                                        {{ if eq .server_event_type "CHAMPIONSHIP" }}
+                                        {{ if .server_event.IsChampionship }}
                                             onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
                                         {{ end }}
                                     >
@@ -148,7 +148,7 @@
                                         class="dropdown-item"
                                         href="/process/stop"
 
-                                        {{ if eq .server_event_type "CHAMPIONSHIP" }}
+                                        {{ if .server_event.IsChampionship }}
                                             onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
                                         {{ end }}
                                     >
@@ -156,7 +156,7 @@
                                     </a>
                                 </div>
                             {{ else }}
-                                {{ if eq .server_event_type "CHAMPIONSHIP" }}
+                                {{ if .server_event.IsChampionship }}
                                     <span class="badge badge-warning">Championship in Progress</span>
                                 {{ else }}
                                     <span class="badge badge-success">Assetto Server Running</span>

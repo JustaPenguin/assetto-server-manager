@@ -1,3 +1,32 @@
+v1.4.0
+------
+
+Added:
+
+* A calendar that automatically populates with scheduled events! Intended to help users see when events are planned and
+  sign up for them if required.
+* New Car Details pages! You can now manage your car collection right in Server Manager!
+* Car Search! Search for cars by name, tags, BHP, weight, etc. Car search is connected into Quick Races, Custom Races, Championships. Check out the 'Search Help' on any pages with the search bar to find out what kind of things you can search for!
+* Skin Upload - you can now upload individual skins on the Car Details page
+* Skin Delete - you can now delete individual skins on the Car Details page.
+* Improved asset handling - this is a bit behind-the-scenes, but we've made some efforts to make Server Manager's styles (and fonts!) load quicker.
+* Car Notes and Download links - you can now add notes and download links to a car.
+* Car Tags - you can now add and remove tags to cars. This means if you have a group of cars you use regularly, you can add a tag to them and just search for that tag!
+* Improved Content Manager integration! You can now enable a "Content Manager Wrapper" in Server Options, which provides extra information to entrants in the Content Manager server information! If enabled, Content Manager Wrapper shows download links for the cars that you have uploaded (if they have a Download URL set), Championship information positions, and more! As well, the Content Manager Wrapper will make loading server information quicker.
+* Added an option to config.yml to use a filesystem session store instead of a cookie session store. This should fix issues that people were having with login not being persisted when running multiple Server Manager instances on the same address but different port. Now, you can specify a different filesystem store for each instance of Server Manager. Check out the config.yml 'http' section for more information on this.
+* Added a Content Manager join link to the Live Timings page. This join link can be turned on/off on the server settings page.
+* Added a generic welcome message for all drivers on connect, it will also warn the driver if the server is running Sol.
+* Server Manager now uses gzip compression where possible. This should improve page load times considerably!
+
+Note, all of the new Car features work best when you have uploaded your cars to Server Manager. If you haven't, the pages will still work, but won't be anywhere near as cool!
+
+Fixes:
+
+* Improved error handling when parsing config.yml, this should give an error with more detail rather than crashing.
+* MOTD text will now be automatically wrapped to prevent large horizontal messages on join.
+* Fixes a bug where drivers who connect but do not load were left in the Connected Drivers table in Live Timings.
+* Live Timings will now reconnect automatically if your connection drops.
+
 v1.3.3
 ------
 

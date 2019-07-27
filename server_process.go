@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"net"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,7 +15,6 @@ import (
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 
-	"github.com/go-chi/chi"
 	"github.com/mitchellh/go-ps"
 	"github.com/sirupsen/logrus"
 )
@@ -32,63 +30,24 @@ const (
 
 type ServerProcess interface {
 	Logs() string
-	Start(cfg ServerConfig, forwardingAddress string, forwardListenPort int) error
+	Start(cfg ServerConfig, entryList EntryList, forwardingAddress string, forwardListenPort int, event RaceEvent) error
 	Stop() error
 	Restart() error
 	IsRunning() bool
-	EventType() ServerEventType
+	Event() RaceEvent
 	UDPCallback(message udp.Message)
 	SendUDPMessage(message udp.Message) error
+	GetServerConfig() ServerConfig
 
 	Done() <-chan struct{}
-}
-
-var AssettoProcess ServerProcess
-
-// serverProcessHandler modifies the server process.
-func serverProcessHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
-	var txt string
-
-	eventType := AssettoProcess.EventType()
-
-	switch chi.URLParam(r, "action") {
-	case "stop":
-		if eventType == EventTypeChampionship {
-			err = championshipManager.StopActiveEvent()
-		} else {
-			err = AssettoProcess.Stop()
-		}
-		txt = "stopped"
-	case "restart":
-		if eventType == EventTypeChampionship {
-			err = championshipManager.RestartActiveEvent()
-		} else {
-			err = AssettoProcess.Restart()
-		}
-		txt = "restarted"
-	}
-
-	noun := "Server"
-
-	if eventType == EventTypeChampionship {
-		noun = "Championship"
-	}
-
-	if err != nil {
-		logrus.Errorf("could not change "+noun+" status, err: %s", err)
-		AddErrorFlash(w, r, "Unable to change "+noun+" status")
-	} else {
-		AddFlash(w, r, noun+" successfully "+txt)
-	}
-
-	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
 var ErrServerAlreadyRunning = errors.New("servermanager: assetto corsa server is already running")
 
 // AssettoServerProcess manages the assetto corsa server process.
 type AssettoServerProcess struct {
+	contentManagerWrapper *ContentManagerWrapper
+
 	cmd *exec.Cmd
 
 	out   *logBuffer
@@ -102,19 +61,24 @@ type AssettoServerProcess struct {
 	extraProcesses []*exec.Cmd
 
 	serverConfig      ServerConfig
+	entryList         EntryList
 	forwardingAddress string
 	forwardListenPort int
 	udpServerConn     *udp.AssettoServerUDP
 	udpStatusMutex    sync.Mutex
+	callbackFunc      udp.CallbackFunc
+	event             RaceEvent
 }
 
-func NewAssettoServerProcess() *AssettoServerProcess {
+func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, contentManagerWrapper *ContentManagerWrapper) *AssettoServerProcess {
 	ctx, cfn := context.WithCancel(context.Background())
 
 	return &AssettoServerProcess{
-		ctx:    ctx,
-		cfn:    cfn,
-		doneCh: make(chan struct{}),
+		ctx:                   ctx,
+		cfn:                   cfn,
+		doneCh:                make(chan struct{}),
+		callbackFunc:          callbackFunc,
+		contentManagerWrapper: contentManagerWrapper,
 	}
 }
 
@@ -132,7 +96,7 @@ func (as *AssettoServerProcess) Logs() string {
 }
 
 // Start the assetto server. If it's already running, an ErrServerAlreadyRunning is returned.
-func (as *AssettoServerProcess) Start(cfg ServerConfig, forwardingAddress string, forwardListenPort int) error {
+func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, forwardingAddress string, forwardListenPort int, event RaceEvent) error {
 	if as.IsRunning() {
 		return ErrServerAlreadyRunning
 	}
@@ -143,8 +107,10 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, forwardingAddress string
 	logrus.Debugf("Starting assetto server process")
 
 	as.serverConfig = cfg
+	as.entryList = entryList
 	as.forwardingAddress = forwardingAddress
 	as.forwardListenPort = forwardListenPort
+	as.event = event
 
 	if err := as.startUDPListener(); err != nil {
 		return err
@@ -179,6 +145,16 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, forwardingAddress string
 	if err != nil {
 		as.cmd = nil
 		return err
+	}
+
+	if cfg.GlobalServerConfig.EnableContentManagerWrapper == 1 && cfg.GlobalServerConfig.ContentManagerWrapperPort > 0 {
+		go func() {
+			err := as.contentManagerWrapper.Start(as, cfg.GlobalServerConfig.ContentManagerWrapperPort, cfg, entryList, event)
+
+			if err != nil {
+				logrus.WithError(err).Error("Could not start Content Manager wrapper server")
+			}
+		}()
 	}
 
 	for _, command := range config.Server.RunOnStart {
@@ -285,9 +261,7 @@ func (as *AssettoServerProcess) startUDPListener() error {
 
 func (as *AssettoServerProcess) UDPCallback(message udp.Message) {
 	panicCapture(func() {
-		ServerRaceControl.UDPCallback(message)
-		championshipManager.ChampionshipEventCallback(message)
-		LoopCallback(message)
+		as.callbackFunc(message)
 	})
 }
 
@@ -326,7 +300,7 @@ func (as *AssettoServerProcess) Restart() error {
 		}
 	}
 
-	return as.Start(as.serverConfig, as.forwardingAddress, as.forwardListenPort)
+	return as.Start(as.serverConfig, as.entryList, as.forwardingAddress, as.forwardListenPort, as.event)
 }
 
 // IsRunning of the server. returns true if running
@@ -337,12 +311,12 @@ func (as *AssettoServerProcess) IsRunning() bool {
 	return as.cmd != nil && as.cmd.Process != nil
 }
 
-func (as *AssettoServerProcess) EventType() ServerEventType {
-	if championshipManager.activeChampionship != nil {
-		return EventTypeChampionship
-	} else {
-		return EventTypeRace
+func (as *AssettoServerProcess) Event() RaceEvent {
+	if as.event == nil {
+		return normalEvent{}
 	}
+
+	return as.event
 }
 
 // Stop the assetto server.
@@ -384,16 +358,20 @@ func (as *AssettoServerProcess) Stop() error {
 		loopNum++
 	}
 
+	if as.serverConfig.GlobalServerConfig.EnableContentManagerWrapper == 1 && as.serverConfig.GlobalServerConfig.ContentManagerWrapperPort > 0 {
+		as.contentManagerWrapper.Stop()
+	}
+
 	as.cmd = nil
 	go func() {
 		as.doneCh <- struct{}{}
 	}()
 
-	if ServerRaceControl.sessionInfoCfn != nil {
-		ServerRaceControl.sessionInfoCfn()
-	}
-
 	return nil
+}
+
+func (as *AssettoServerProcess) GetServerConfig() ServerConfig {
+	return as.serverConfig
 }
 
 func FreeUDPPort() (int, error) {

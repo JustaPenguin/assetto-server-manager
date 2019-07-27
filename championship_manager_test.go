@@ -60,20 +60,12 @@ var TestEntryList = EntryList{
 
 type dummyServerProcess struct{}
 
-func (dummyServerProcess) Start(cfg ServerConfig, forwardingAddress string, forwardListenPort int) error {
-	return nil
-}
-
-func (dummyServerProcess) UDPCallback(message udp.Message) {
-
-}
-
-func (dummyServerProcess) SendUDPMessage(message udp.Message) error {
-	return nil
-}
-
 func (dummyServerProcess) Logs() string {
 	return ""
+}
+
+func (dummyServerProcess) Start(cfg ServerConfig, entryList EntryList, forwardingAddress string, forwardListenPort int, event RaceEvent) error {
+	return nil
 }
 
 func (dummyServerProcess) Stop() error {
@@ -88,12 +80,24 @@ func (dummyServerProcess) IsRunning() bool {
 	return true
 }
 
+func (dummyServerProcess) Event() RaceEvent {
+	return &ActiveChampionship{}
+}
+
+func (dummyServerProcess) UDPCallback(message udp.Message) {
+
+}
+
+func (dummyServerProcess) SendUDPMessage(message udp.Message) error {
+	return nil
+}
+
 func (dummyServerProcess) Done() <-chan struct{} {
 	return nil
 }
 
-func (dummyServerProcess) EventType() ServerEventType {
-	return EventTypeChampionship
+func (dummyServerProcess) GetServerConfig() ServerConfig {
+	return ConfigIniDefault
 }
 
 var championshipEventFixtures = []string{
@@ -103,9 +107,10 @@ var championshipEventFixtures = []string{
 	// "barbagello-no-end-sessions.db",
 }
 
+var championshipManager *ChampionshipManager
+
 func init() {
-	InitWithStore(NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"), filepath.Join(os.TempDir(), "asm-race-store-shared")))
-	AssettoProcess = dummyServerProcess{}
+	championshipManager = NewChampionshipManager(NewRaceManager(NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"), filepath.Join(os.TempDir(), "asm-race-store-shared")), dummyServerProcess{}, NewCarManager()))
 }
 
 func doReplay(filename string, multiplier int, callbackFunc udp.CallbackFunc, waitTime time.Duration) error {

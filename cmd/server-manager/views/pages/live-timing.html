@@ -32,6 +32,7 @@
 {{ end }}
 
 {{ define "content" }}
+    {{ $CMJoinLink := .CMJoinLink }}
     {{ with .RaceDetails }}
         <div class="race-control-event-info">
             {{ range $sessionName, $session := .RaceConfig.Sessions }}
@@ -41,6 +42,10 @@
             <br>
 
             <small class="mr-1" data-toggle="tooltip" title="{{ .EntryList.Entrants }}" >{{ len .EntryList }} <i class="fa fa-user"></i></small>
+
+            <br>
+
+            {{ with $CMJoinLink }} <a id="cm-join-link" href="{{ . }}" class="btn btn-success btn-sm mt-1">Join</a> {{ end }}
         </div>
 
         <div class="race-control-weather-info">

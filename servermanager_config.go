@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -47,9 +48,40 @@ func (l *LiveMapConfig) IsEnabled() bool {
 }
 
 type HTTPConfig struct {
-	Hostname   string `yaml:"hostname"`
-	SessionKey string `yaml:"session_key"`
-	BaseURL    string `yaml:"server_manager_base_URL"`
+	Hostname         string `yaml:"hostname"`
+	SessionKey       string `yaml:"session_key"`
+	SessionStoreType string `yaml:"session_store_type"`
+	SessionStorePath string `yaml:"session_store_path"`
+	BaseURL          string `yaml:"server_manager_base_URL"`
+}
+
+const (
+	sessionStoreCookie     = "cookie"
+	sessionStoreFilesystem = "filesystem"
+)
+
+func (h *HTTPConfig) createSessionStore() (sessions.Store, error) {
+	switch h.SessionStoreType {
+	case sessionStoreFilesystem:
+		if info, err := os.Stat(h.SessionStorePath); os.IsNotExist(err) {
+			err := os.MkdirAll(h.SessionStorePath, 0755)
+
+			if err != nil {
+				return nil, err
+			}
+		} else if err != nil {
+			return nil, err
+		} else if !info.IsDir() {
+			return nil, errors.New("servermanager: session store location must be a directory")
+		}
+
+		return sessions.NewFilesystemStore(h.SessionStorePath, []byte(h.SessionKey)), nil
+
+	case sessionStoreCookie:
+		fallthrough
+	default:
+		return sessions.NewCookieStore([]byte(h.SessionKey)), nil
+	}
 }
 
 type SteamConfig struct {
@@ -109,10 +141,16 @@ func ReadConfig(location string) (conf *Configuration, err error) {
 
 	defer f.Close()
 
-	err = yaml.NewDecoder(f).Decode(&conf)
+	if err := yaml.NewDecoder(f).Decode(&conf); err != nil {
+		return nil, err
+	}
 
 	config = conf
-	store = sessions.NewCookieStore([]byte(conf.HTTP.SessionKey))
+	sessionsStore, err = conf.HTTP.createSessionStore()
+
+	if err != nil {
+		return nil, err
+	}
 
 	if config.Accounts.AdminPasswordOverride != "" {
 		logrus.Infof("WARNING! Admin Password Override is set. Please only have this set if you are resetting your admin account password!")

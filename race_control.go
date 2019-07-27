@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
-
+	"github.com/mitchellh/go-wordwrap"
 	"github.com/sirupsen/logrus"
 )
 
-var ServerRaceControl *RaceControl
-
 type RaceControl struct {
+	process ServerProcess
+
 	SessionInfo      udp.SessionInfo `json:"SessionInfo"`
 	TrackMapData     TrackMapData    `json:"TrackMapData"`
 	TrackInfo        TrackInfo       `json:"TrackInfo"`
@@ -56,10 +57,11 @@ type Collision struct {
 	Speed           float64        `json:"Speed"`
 }
 
-func NewRaceControl(broadcaster Broadcaster, trackDataGateway TrackDataGateway) *RaceControl {
+func NewRaceControl(broadcaster Broadcaster, trackDataGateway TrackDataGateway, process ServerProcess) *RaceControl {
 	rc := &RaceControl{
 		broadcaster:      broadcaster,
 		trackDataGateway: trackDataGateway,
+		process:          process,
 	}
 
 	rc.clearAllDrivers()
@@ -303,7 +305,7 @@ func (rc *RaceControl) requestSessionInfo() {
 	for {
 		select {
 		case <-rc.sessionInfoTicker.C:
-			err := AssettoProcess.SendUDPMessage(udp.GetSessionInfo{})
+			err := rc.process.SendUDPMessage(udp.GetSessionInfo{})
 
 			if err == ErrNoOpenUDPConnection {
 				logrus.WithError(err).Errorf("Couldn't send session info udp request. Breaking loop.")
@@ -313,7 +315,7 @@ func (rc *RaceControl) requestSessionInfo() {
 				logrus.WithError(err).Errorf("Couldn't send session info udp request")
 			}
 
-		case <-AssettoProcess.Done():
+		case <-rc.process.Done():
 			rc.sessionInfoTicker.Stop()
 
 			logrus.Debugf("Assetto Process completed. Disconnecting all connected drivers. Session done.")
@@ -323,7 +325,7 @@ func (rc *RaceControl) requestSessionInfo() {
 			// the server has just stopped. send disconnect messages for all connected cars.
 			_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
 				// Each takes a read lock, so we cannot call disconnectDriver (which takes a write lock) from inside it.
-				// we must instead append them to a slice and disconnect them outisde the Each call.
+				// we must instead append them to a slice and disconnect them outside the Each call.
 				drivers = append(drivers, driver)
 
 				return nil
@@ -464,6 +466,46 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 
 	if err != nil {
 		return err
+	}
+
+	serverConfig := rc.process.GetServerConfig()
+
+	solWarning := ""
+	liveLink := ""
+
+	if serverConfig.CurrentRaceConfig.IsSol == 1 {
+		solWarning = fmt.Sprintf("This server is running Sol with a %d time progression multiplier. For the best "+
+			"experience please install Sol, and remember the other drivers may be driving in night conditions.", serverConfig.CurrentRaceConfig.TimeOfDayMultiplier)
+	}
+
+	if config != nil && config.HTTP.BaseURL != "" {
+		liveLink = fmt.Sprintf("You can view live timings for this event at %s", config.HTTP.BaseURL+"/live-timing")
+	}
+
+	wrapped := strings.Split(wordwrap.WrapString(
+
+		fmt.Sprintf(
+			"Hi, %s! Welcome to the %s server! %s Make this race count! %s\n",
+			driver.CarInfo.DriverName,
+			serverConfig.GlobalServerConfig.Name,
+			solWarning,
+			liveLink,
+		),
+		60,
+	), "\n")
+
+	for _, msg := range wrapped {
+		welcomeMessage, err := udp.NewSendChat(driver.CarInfo.CarID, msg)
+
+		if err == nil {
+			err := rc.process.SendUDPMessage(welcomeMessage)
+
+			if err != nil {
+				logrus.Errorf("Unable to send welcome message to: %s, err: %s", driver.CarInfo.DriverName, err)
+			}
+		} else {
+			logrus.Errorf("Unable to build welcome message to: %s, err: %s", driver.CarInfo.DriverName, err)
+		}
 	}
 
 	logrus.Debugf("Driver: %s (%s) loaded", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)

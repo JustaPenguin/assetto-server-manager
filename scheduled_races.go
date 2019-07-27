@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,111 +15,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var CustomRaceStartTimers map[string]*time.Timer
-var ChampionshipEventStartTimers map[string]*time.Timer
-
-func InitialiseScheduledCustomRaces() error {
-	CustomRaceStartTimers = make(map[string]*time.Timer)
-
-	races, err := raceManager.raceStore.ListCustomRaces()
-
-	if err != nil {
-		return err
-	}
-
-	for _, race := range races {
-		race := race
-
-		if race.Scheduled.After(time.Now()) {
-			// add a scheduled event on date
-			duration := time.Until(race.Scheduled)
-
-			CustomRaceStartTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
-				err := raceManager.StartCustomRace(race.UUID.String(), false)
-
-				if err != nil {
-					logrus.Errorf("couldn't start scheduled race, err: %s", err)
-				}
-			})
-
-			err := raceManager.raceStore.UpsertCustomRace(race)
-
-			if err != nil {
-				return err
-			}
-		} else {
-			emptyTime := time.Time{}
-			if race.Scheduled != emptyTime {
-				logrus.Infof("Looks like the server was offline whilst a scheduled event was meant to start!"+
-					" Start time: %s. The schedule has been cleared. Start the event manually if you wish to run it.", race.Scheduled.String())
-
-				race.Scheduled = emptyTime
-
-				err := raceManager.raceStore.UpsertCustomRace(race)
-
-				if err != nil {
-					return err
-				}
-			}
-
-		}
-	}
-
-	return nil
-}
-
-func InitialiseScheduledChampionshipEvents() error {
-	ChampionshipEventStartTimers = make(map[string]*time.Timer)
-
-	championships, err := championshipManager.ListChampionships()
-
-	if err != nil {
-		return err
-	}
-
-	for _, championship := range championships {
-		championship := championship
-
-		for _, event := range championship.Events {
-			event := event
-
-			if event.Scheduled.After(time.Now()) {
-				// add a scheduled event on date
-				duration := time.Until(event.Scheduled)
-
-				ChampionshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
-					err := championshipManager.StartEvent(championship.ID.String(), event.ID.String(), false)
-
-					if err != nil {
-						logrus.Errorf("couldn't start scheduled race, err: %s", err)
-					}
-				})
-
-				return championshipManager.UpsertChampionship(championship)
-			} else {
-				emptyTime := time.Time{}
-				if event.Scheduled != emptyTime {
-					logrus.Infof("Looks like the server was offline whilst a scheduled event was meant to start!"+
-						" Start time: %s. The schedule has been cleared. Start the event manually if you wish to run it.", event.Scheduled.String())
-
-					event.Scheduled = emptyTime
-
-					return championshipManager.UpsertChampionship(championship)
-				}
-
-			}
-		}
-	}
-
-	return nil
-}
-
 type ScheduledEvent interface {
 	GetID() uuid.UUID
 	GetRaceSetup() CurrentRaceConfig
 	GetScheduledTime() time.Time
 	GetSummary() string
 	GetURL() string
+	HasSignUpForm() bool
 	ReadOnlyEntryList() EntryList
 }
 
@@ -175,11 +78,43 @@ func BuildICalEvent(event ScheduledEvent) *components.Event {
 	return icalEvent
 }
 
-func buildScheduledRaces(w io.Writer) error {
-	_, _, _, customRaces, err := raceManager.ListCustomRaces()
+type ScheduledRacesHandler struct {
+	*BaseHandler
+
+	store               Store
+	raceManager         *RaceManager
+	championshipManager *ChampionshipManager
+}
+
+func NewScheduledRacesHandler(baseHandler *BaseHandler, store Store, raceManager *RaceManager, championshipManager *ChampionshipManager) *ScheduledRacesHandler {
+	return &ScheduledRacesHandler{
+		BaseHandler:         baseHandler,
+		store:               store,
+		raceManager:         raceManager,
+		championshipManager: championshipManager,
+	}
+}
+
+func (rs *ScheduledRacesHandler) calendar(w http.ResponseWriter, r *http.Request) {
+	rs.viewRenderer.MustLoadTemplate(w, r, "calendar.html", map[string]interface{}{
+		"WideContainer": true,
+	})
+}
+
+func (rs *ScheduledRacesHandler) calendarJSON(w http.ResponseWriter, r *http.Request) {
+	err := rs.generateJSON(w)
 
 	if err != nil {
-		return err
+		logrus.Errorf("could not find scheduled events, err: %s", err)
+		return
+	}
+}
+
+func (rs *ScheduledRacesHandler) getScheduledRaces() ([]ScheduledEvent, error) {
+	_, _, _, customRaces, err := rs.raceManager.ListCustomRaces()
+
+	if err != nil {
+		return nil, err
 	}
 
 	var scheduled []ScheduledEvent
@@ -188,10 +123,10 @@ func buildScheduledRaces(w io.Writer) error {
 		scheduled = append(scheduled, race)
 	}
 
-	championships, err := championshipManager.ListChampionships()
+	championships, err := rs.championshipManager.ListChampionships()
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, championship := range championships {
@@ -203,6 +138,16 @@ func buildScheduledRaces(w io.Writer) error {
 			event.championship = championship
 			scheduled = append(scheduled, event)
 		}
+	}
+
+	return scheduled, nil
+}
+
+func (rs *ScheduledRacesHandler) buildScheduledRaces(w io.Writer) error {
+	scheduled, err := rs.getScheduledRaces()
+
+	if err != nil {
+		return err
 	}
 
 	cal := components.NewCalendar()
@@ -224,15 +169,204 @@ func buildScheduledRaces(w io.Writer) error {
 	return err
 }
 
-func allScheduledRacesICalHandler(w http.ResponseWriter, r *http.Request) {
+func (rs *ScheduledRacesHandler) allScheduledRacesICalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/calendar; charset=utf-8")
 	w.Header().Add("Content-Disposition", "inline; filename=championship.ics")
 
-	err := buildScheduledRaces(w)
+	err := rs.buildScheduledRaces(w)
 
 	if err != nil {
 		logrus.WithError(err).Error("could not build scheduled races feed")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
+}
+
+type calendarObject struct {
+	ID               string    `json:"id"`
+	GroupID          string    `json:"groupId"`
+	AllDay           bool      `json:"allDay"`
+	Start            time.Time `json:"start"`
+	End              time.Time `json:"end"`
+	Title            string    `json:"title"`
+	Description      string    `json:"description"`
+	URL              string    `json:"url"`
+	SignUpURL        string    `json:"signUpURL"`
+	ClassNames       []string  `json:"classNames"`
+	Editable         bool      `json:"editable"`
+	StartEditable    bool      `json:"startEditable"`
+	DurationEditable bool      `json:"durationEditable"`
+	ResourceEditable bool      `json:"resourceEditable"`
+	Rendering        string    `json:"rendering"`
+	Overlap          bool      `json:"overlap"`
+
+	Constraint      string `json:"constraint"`
+	BackgroundColor string `json:"backgroundColor"`
+	BorderColor     string `json:"borderColor"`
+	TextColor       string `json:"textColor"`
+}
+
+func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter) error {
+	scheduled, err := rs.getScheduledRaces()
+
+	if err != nil {
+		return err
+	}
+
+	var calendarObjects []calendarObject
+
+	if len(scheduled) == 0 {
+		calendarObjects = append(calendarObjects, calendarObject{
+			ID:               "no-events",
+			GroupID:          "no-events",
+			AllDay:           false,
+			Start:            time.Now(),
+			End:              time.Now().Add(time.Hour * 3),
+			Title:            "Looks like there are no scheduled events!",
+			URL:              "",
+			ClassNames:       nil,
+			Editable:         false,
+			StartEditable:    false,
+			DurationEditable: false,
+			ResourceEditable: false,
+			Rendering:        "",
+			Overlap:          true,
+			Constraint:       "",
+			BackgroundColor:  "#c480ff",
+			BorderColor:      "#c480ff",
+			TextColor:        "#303030",
+		})
+	}
+
+	for _, scheduledEvent := range scheduled {
+
+		var prevSessionTime time.Duration
+		start := scheduledEvent.GetScheduledTime()
+		end := scheduledEvent.GetScheduledTime()
+
+		var sessionTypes []SessionType
+
+		if _, ok := scheduledEvent.GetRaceSetup().Sessions[SessionTypeBooking]; ok {
+			sessionTypes = append(sessionTypes, SessionTypeBooking)
+		}
+
+		if _, ok := scheduledEvent.GetRaceSetup().Sessions[SessionTypePractice]; ok {
+			sessionTypes = append(sessionTypes, SessionTypePractice)
+		}
+
+		if _, ok := scheduledEvent.GetRaceSetup().Sessions[SessionTypeQualifying]; ok {
+			sessionTypes = append(sessionTypes, SessionTypeQualifying)
+		}
+
+		if _, ok := scheduledEvent.GetRaceSetup().Sessions[SessionTypeRace]; ok {
+			sessionTypes = append(sessionTypes, SessionTypeRace)
+		}
+
+		sessionTypes = append(sessionTypes, "Default")
+
+		for x, session := range scheduledEvent.GetRaceSetup().Sessions.AsSlice() {
+			// calculate session start/end
+			start = start.Add(prevSessionTime)
+
+			if session.Time > 0 {
+				prevSessionTime = time.Minute * time.Duration(session.Time)
+			} else {
+				// approximate, probably fine
+				prevSessionTime = 3 * time.Minute * time.Duration(session.Laps)
+			}
+
+			end = end.Add(prevSessionTime)
+
+			var signUpURL string
+			pageURL := scheduledEvent.GetURL()
+
+			// get correct URL
+			if scheduledEvent.HasSignUpForm() {
+				signUpURL = pageURL + "/sign-up"
+			}
+
+			// select colours
+			var backgroundColor, borderColor, textColor string
+
+			var classNames []string
+			classNames = append(classNames, "calendar-card")
+
+			switch sessionTypes[x] {
+			case SessionTypeBooking:
+				borderColor = "#c480ff"
+			case SessionTypePractice:
+				borderColor = "#5dc972"
+			case SessionTypeQualifying:
+				borderColor = "#ffd080"
+			case SessionTypeRace:
+				borderColor = "#ff8080"
+			case "Default":
+				borderColor = "#5dc972"
+			}
+
+			if scheduledEvent.GetURL() != "" {
+				classNames = append(classNames, "calendar-link")
+
+				switch sessionTypes[x] {
+				case SessionTypeBooking:
+					backgroundColor = "#c480ff"
+				case SessionTypePractice:
+					backgroundColor = "#5dc972"
+				case SessionTypeQualifying:
+					backgroundColor = "#ffd080"
+				case SessionTypeRace:
+					backgroundColor = "#ff8080"
+				case "Default":
+					backgroundColor = "#5dc972"
+				}
+			} else {
+				backgroundColor = "white"
+			}
+
+			textColor = "#303030"
+
+			calendarObjects = append(calendarObjects, calendarObject{
+				ID:               scheduledEvent.GetID().String() + session.Name,
+				GroupID:          scheduledEvent.GetID().String(),
+				AllDay:           false,
+				Start:            start,
+				End:              end,
+				Title:            generateSummary(scheduledEvent.GetRaceSetup(), session.Name) + " " + scheduledEvent.GetSummary(),
+				Description:      carList(scheduledEvent.GetRaceSetup().Cars) + ": " + scheduledEvent.ReadOnlyEntryList().Entrants(),
+				URL:              pageURL,
+				SignUpURL:        signUpURL,
+				ClassNames:       classNames,
+				Editable:         false,
+				StartEditable:    false,
+				DurationEditable: false,
+				ResourceEditable: false,
+				Rendering:        "",
+				Overlap:          true,
+				Constraint:       "",
+				BackgroundColor:  backgroundColor,
+				BorderColor:      borderColor,
+				TextColor:        textColor,
+			})
+		}
+	}
+
+	return json.NewEncoder(w).Encode(calendarObjects)
+}
+
+func generateSummary(raceSetup CurrentRaceConfig, eventType string) string {
+	var summary string
+
+	trackInfo := trackInfo(raceSetup.Track, raceSetup.TrackLayout)
+
+	if trackInfo == nil {
+		summary = eventType + " at " + prettifyName(raceSetup.Track, false)
+
+		if raceSetup.TrackLayout != "" {
+			summary += fmt.Sprintf(" (%s)", prettifyName(raceSetup.TrackLayout, true))
+		}
+	} else {
+		summary = fmt.Sprintf(eventType+" at %s", trackInfo.Name)
+	}
+
+	return summary
 }

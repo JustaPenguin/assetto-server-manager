@@ -106,37 +106,25 @@
                     </div>
                 </div>
 
-                {{ if not .IsChampionship }}
-
-                    <div class="form-group row">
+                <div class="form-group row">
+                    {{ if not .IsChampionship }}
                         <label for="Cars" class="col-sm-2 col-form-label">
                             Cars
                         </label>
+                    {{ end }}
+                    <div class="col-sm-10">
+                        {{ if not .IsChampionship }}
 
-                        <div class="col-sm-10">
-                            <select multiple required class="form-control Cars" id="Cars" name="Cars" size="15">
-                                {{ range $index, $car := .CarOpts }}
-
-                                    {{ $selected := false }}
-
-                                    {{ range $j, $selectedCar := varSplit $f.Cars }}
-                                        {{ if eq $selectedCar $car.Name }}
-                                            {{ $selected = true }}
-                                        {{ end }}
-                                    {{ end }}
-
-                                    <option value="{{ $car.Name }}" {{ if $selected }} selected="selected" {{ end }}>{{ prettify $car.Name true }}</option>
+                            {{ template "cars" dict "CarOpts" $.CarOpts "Current" $f }}
+                        {{ else }}
+                            <select multiple class="Cars" id="Cars" name="Cars" style="display: none;">
+                                {{ range $index, $car := $.Championship.ValidCarIDs }}
+                                    <option value="{{ $car }}" selected="selected">{{ prettify $car true }}</option>
                                 {{ end }}
                             </select>
-                        </div>
-                    </div>
-                {{ else }}
-                    <select multiple class="Cars" id="Cars" name="Cars" style="display: none;">
-                        {{ range $index, $car := $.Championship.ValidCarIDs }}
-                            <option value="{{ $car }}" selected="selected">{{ prettify $car true }}</option>
                         {{ end }}
-                    </select>
-                {{ end }}
+                    </div>
+                </div>
             </div>
         </div>
 
