@@ -451,9 +451,14 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 			config.CurrentRaceConfig.PickupModeEnabled = 1
 		}
 
-		return cm.RaceManager.applyConfigAndStart(config, entryList, false, normalEvent{
+		return cm.RaceManager.applyConfigAndStart(config, entryList, false, &ActiveChampionship{
+			ChampionshipID:      championship.ID,
+			EventID:             event.ID,
+			Name:                championship.Name,
 			OverridePassword:    championship.OverridePassword,
 			ReplacementPassword: championship.ReplacementPassword,
+			Description:         string(championship.Info),
+			IsPracticeSession:   true,
 		})
 	}
 }
