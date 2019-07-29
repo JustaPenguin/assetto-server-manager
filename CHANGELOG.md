@@ -26,6 +26,8 @@ Fixes:
 * MOTD text will now be automatically wrapped to prevent large horizontal messages on join.
 * Fixes a bug where drivers who connect but do not load were left in the Connected Drivers table in Live Timings.
 * Live Timings will now reconnect automatically if your connection drops.
+* Only upload official ks content is now working again!
+* Fixes an issue where Open Championship EntryLists would not be correctly preserved when assigning car slots to pre-existing Entrants. 
 
 v1.3.3
 ------

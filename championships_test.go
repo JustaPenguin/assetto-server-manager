@@ -389,4 +389,53 @@ func TestChampionship_AddEntrantFromSession(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("Entrant joined and was placed in a different grid slot. Their extra properties (especially InternalUUID) should persist (#441)", func(t *testing.T) {
+		potentialEntrant := &SessionCar{
+			Driver: SessionDriver{
+				GUID:      "78987656782716273",
+				GuidsList: []string{"78987656782716273"},
+				Name:      "Driver 1",
+				Team:      "Team Name",
+			},
+			Model: "ferrari_fxx_k",
+			Skin:  "skin_01",
+		}
+
+		class := NewChampionshipClass("FXX K")
+		e := NewEntrant()
+		e.Model = "ferrari_fxx_k"
+
+		class.Entrants.Add(e)
+
+		e2 := NewEntrant()
+		e2.Model = "ferrari_fxx_k"
+		e2.GUID = "78987656782716273"
+
+		class.Entrants.Add(e2)
+
+		champ := &Championship{}
+		champ.AddClass(class)
+
+		emptySlotUUID := e.InternalUUID
+		currentInternalUUID := e2.InternalUUID
+
+		_, _, err := champ.AddEntrantFromSession(potentialEntrant)
+
+		if err != nil {
+			t.Error(err)
+		}
+
+		for _, entrant := range class.Entrants {
+			if entrant.GUID == "78987656782716273" && entrant.InternalUUID != currentInternalUUID {
+				t.Log("Expected entrant guid to have carried over, it did not")
+				t.Fail()
+			}
+
+			if entrant.GUID == "" && entrant.InternalUUID != emptySlotUUID {
+				t.Log("Expected entrant guid swap")
+				t.Fail()
+			}
+		}
+	})
 }
