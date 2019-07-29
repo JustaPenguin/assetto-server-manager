@@ -1,3 +1,25 @@
+.card-car {
+  h3 {
+    color: $link-color;
+  }
+
+  &:hover {
+    cursor: pointer;
+
+    h3 {
+      color: $link-hover-color;
+    }
+  }
+
+  .delete-car {
+    color: $danger;
+
+    position: absolute;
+    top: 0;
+    right: 15px;
+  }
+}
+
 .car-details {
   .car-skins {
     max-height: 518px;
