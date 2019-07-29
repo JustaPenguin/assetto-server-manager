@@ -107,8 +107,22 @@ func Router(
 		r.Post("/championship/{championshipID}/sign-up", championshipsHandler.signUpForm)
 
 		// race control
-		r.Get("/live-timing", raceControlHandler.liveTiming)
-		r.Get("/api/race-control", raceControlHandler.websocket)
+		r.Group(func(r chi.Router) {
+			r.Use(func(next http.Handler) http.Handler {
+				fn := func(w http.ResponseWriter, req *http.Request) {
+					if config.Server.PerformanceMode {
+						http.NotFound(w, req)
+					} else {
+						next.ServeHTTP(w, req)
+					}
+				}
+
+				return http.HandlerFunc(fn)
+			})
+
+			r.Get("/live-timing", raceControlHandler.liveTiming)
+			r.Get("/api/race-control", raceControlHandler.websocket)
+		})
 
 		// calendar
 		r.Get("/calendar", scheduledRacesHandler.calendar)
