@@ -487,7 +487,7 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 		fmt.Sprintf(
 			"Hi, %s! Welcome to the %s server! %s Make this race count! %s\n",
 			driver.CarInfo.DriverName,
-			serverConfig.GlobalServerConfig.Name,
+			serverConfig.GlobalServerConfig.GetName(),
 			solWarning,
 			liveLink,
 		),

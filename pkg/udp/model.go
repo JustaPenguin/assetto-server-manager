@@ -1,6 +1,8 @@
 package udp
 
 import (
+	"regexp"
+
 	"golang.org/x/text/encoding/unicode/utf32"
 )
 
@@ -259,6 +261,9 @@ func (SendChat) Event() Event {
 }
 
 func NewSendChat(carID CarID, data string) (*SendChat, error) {
+	// the Assetto Corsa chat seems to not cope well with non-ascii characters. remove them.
+	data = regexp.MustCompile("[[:^ascii:]]").ReplaceAllLiteralString(data, "")
+
 	strlen := len(data)
 
 	encoded, err := utf32.UTF32(utf32.LittleEndian, utf32.IgnoreBOM).NewEncoder().Bytes([]byte(data))
