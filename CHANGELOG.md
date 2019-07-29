@@ -17,6 +17,7 @@ Added:
 * Added a Content Manager join link to the Live Timings page. This join link can be turned on/off on the server settings page.
 * Added a generic welcome message for all drivers on connect, it will also warn the driver if the server is running Sol.
 * Server Manager now uses gzip compression where possible. This should improve page load times considerably!
+* Added server "Performance Mode" option to config.yml. If this mode is enabled server manager will disable live timings completely, reducing cpu utilisation. This setting may be used in the future to disable further advanced options in order to improve performance.
 
 Note, all of the new Car features work best when you have uploaded your cars to Server Manager. If you haven't, the pages will still work, but won't be anywhere near as cool!
 
