@@ -166,6 +166,16 @@ type GlobalServerConfig struct {
 	ShowContentManagerJoinLink  int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager display Content Manager join links on the Live Timing page."`
 }
 
+func (gsc GlobalServerConfig) GetName() string {
+	split := strings.Split(gsc.Name, fmt.Sprintf(" %c", contentManagerWrapperSeparator))
+
+	if len(split) > 0 {
+		return split[0]
+	}
+
+	return gsc.Name
+}
+
 type CurrentRaceConfig struct {
 	Cars                      string `ini:"CARS" show:"quick" input:"multiSelect" formopts:"CarOpts" help:"Models of cars allowed in the server"`
 	Track                     string `ini:"TRACK" show:"quick" input:"dropdown" formopts:"TrackOpts" help:"Track name"`
