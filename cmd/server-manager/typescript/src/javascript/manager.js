@@ -1257,7 +1257,7 @@ function initUploaders() {
 
     $("#drop-zone").on("dragover", dragOverHandler);
     $("#drop-zone").on("dragleave", dragOutHandler);
-    $("#only-ks").on("change", toggleKS);
+    $("#only-ks").on("switchChange.bootstrapSwitch", toggleKS);
 
     $("#input-folder-track").on("change", function() {
         handleTrackFiles(this.files);
