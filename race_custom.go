@@ -139,7 +139,11 @@ func (crh *CustomRaceHandler) submit(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/custom", http.StatusFound)
 	} else {
 		AddFlash(w, r, "Custom race started!")
-		http.Redirect(w, r, "/live-timing", http.StatusFound)
+		if config.Server.PerformanceMode {
+			http.Redirect(w, r, "/", http.StatusFound)
+		} else {
+			http.Redirect(w, r, "/live-timing", http.StatusFound)
+		}
 	}
 }
 
@@ -205,7 +209,12 @@ func (crh *CustomRaceHandler) start(w http.ResponseWriter, r *http.Request) {
 	}
 
 	AddFlash(w, r, "Custom race started!")
-	http.Redirect(w, r, "/live-timing", http.StatusFound)
+
+	if config.Server.PerformanceMode {
+		http.Redirect(w, r, "/", http.StatusFound)
+	} else {
+		http.Redirect(w, r, "/live-timing", http.StatusFound)
+	}
 }
 
 func (crh *CustomRaceHandler) delete(w http.ResponseWriter, r *http.Request) {

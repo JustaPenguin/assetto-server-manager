@@ -178,6 +178,9 @@ server:
   # Only Admins can access the logs, they are intended for tracking if users
   # have deleted content, started/stopped events when they shouldn't have etc.
   audit_logging: true
+  # performance mode disables live timing entirely, and prioritises low cpu
+  # usage.
+  performance_mode: false
   # list of commands to run on server start and kill on server stop. this should
   # contain the full command with arguments to run the given program.
   #

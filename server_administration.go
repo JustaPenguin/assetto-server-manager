@@ -45,7 +45,8 @@ func (sah *ServerAdministrationHandler) home(w http.ResponseWriter, r *http.Requ
 	}
 
 	sah.viewRenderer.MustLoadTemplate(w, r, "home.html", map[string]interface{}{
-		"RaceDetails": customRace,
+		"RaceDetails":     customRace,
+		"PerformanceMode": config.Server.PerformanceMode,
 	})
 }
 

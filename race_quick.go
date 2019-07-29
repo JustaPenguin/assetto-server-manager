@@ -45,5 +45,10 @@ func (qrh *QuickRaceHandler) submit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	AddFlash(w, r, "Quick race successfully started!")
-	http.Redirect(w, r, "/live-timing", http.StatusFound)
+
+	if config.Server.PerformanceMode {
+		http.Redirect(w, r, "/", http.StatusFound)
+	} else {
+		http.Redirect(w, r, "/live-timing", http.StatusFound)
+	}
 }
