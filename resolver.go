@@ -57,7 +57,9 @@ func NewResolver(templateLoader TemplateLoader, reloadTemplates bool, store Stor
 }
 
 func (r *Resolver) UDPCallback(message udp.Message) {
-	r.resolveRaceControl().UDPCallback(message)
+	if !config.Server.PerformanceMode {
+		r.resolveRaceControl().UDPCallback(message)
+	}
 	r.resolveChampionshipManager().ChampionshipEventCallback(message)
 	r.resolveRaceManager().LoopCallback(message)
 	r.resolveContentManagerWrapper().UDPCallback(message)
