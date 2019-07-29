@@ -11,10 +11,12 @@ import "./Font";
 import {CarDetail} from "./CarDetail";
 import "./Calendar";
 import {CarSearch} from "./CarSearch";
+import {CarList} from "./CarList";
 
 $(() => {
     new RaceControl();
     new CarDetail();
+    new CarList();
 
     $(".race-setup").each(function (index, elem) {
         new CarSearch($(elem));
