@@ -19,6 +19,7 @@ import (
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/search/query"
 	"github.com/go-chi/chi"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spkg/bom"
 )
@@ -60,10 +61,35 @@ type CarDetails struct {
 	TorqueCurve  [][]json.Number `json:"torqueCurve"`
 	URL          string          `json:"url"`
 	Version      string          `json:"version"`
-	Year         int64           `json:"year"`
+	Year         ShouldBeAnInt   `json:"year"`
 
 	DownloadURL string `json:"downloadURL"`
 	Notes       string `json:"notes"`
+}
+
+// ShouldBeAnInt can be used in JSON struct definitions in places where the value provided should be an int, but isn't.
+type ShouldBeAnInt int
+
+func (i *ShouldBeAnInt) UnmarshalJSON(b []byte) error {
+	var number int
+
+	err := json.Unmarshal(b, &number)
+
+	if err != nil {
+		var str string
+
+		err := json.Unmarshal(b, &str)
+
+		if err != nil {
+			return err
+		}
+
+		*i = ShouldBeAnInt(formValueAsInt(str))
+	} else {
+		*i = ShouldBeAnInt(number)
+	}
+
+	return nil
 }
 
 func (cd *CarDetails) AddTag(name string) {
@@ -417,7 +443,7 @@ func (cm *CarManager) Search(ctx context.Context, term string, from, size int) (
 		car, err := cm.LoadCar(hit.ID, nil)
 
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, errors.Wrap(err, hit.ID)
 		}
 
 		cars = append(cars, car)

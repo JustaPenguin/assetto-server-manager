@@ -82,7 +82,7 @@
 
         {{ range $index, $car := $.Cars }}
 
-            <a class="card mt-2 mb-2 pt-0 pb-0" href="/car/{{ $car.Name }}">
+            <div class="card mt-2 mb-2 pt-0 pb-0 card-car" data-href="/car/{{ $car.Name }}">
                 <div class="card-body row">
                     {{ with $car.Skins }}
                         <div class="col-12 col-sm-4 col-md-2">
@@ -95,14 +95,22 @@
                     <div class="col-12 col-sm-8 col-md-10">
                         <h3>{{ $car.Details.Name }}</h3>
 
+                        {{ if DeleteAccess }}
+                            <a class="delete-car" href="/car/{{ $car.Name }}/delete"><i class="fa fa-trash"></i></a>
+                        {{ end }}
+
                         <br>
 
                         {{ range $index, $tag := $car.Details.Tags }}
-                            <span class="badge badge-dark">{{ $tag }}</span>
+                            <span class="badge badge-primary">
+                                <a class="text-white"
+                                   href="/cars?q=%2Btags:%22{{ urlquery $tag }}%22"
+                                >{{ $tag }}</a>
+                            </span>
                         {{ end }}
                     </div>
                 </div>
-            </a>
+            </div>
         {{ else }}
             <p>Your search returned no results. Please try a different query.</p>
         {{ end }}
