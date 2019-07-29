@@ -1,10 +1,11 @@
 package servermanager
 
 import (
-	"errors"
+	"html/template"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 )
 
 // RaceWeekends are a collection of events, where one event influences the EntryList of the next.
@@ -19,7 +20,8 @@ type RaceWeekend struct {
 
 	Name string
 
-	Events []*RaceWeekendEvent
+	Entrants EntryList
+	Events   []*RaceWeekendEvent
 }
 
 func NewRaceWeekend() *RaceWeekend {
@@ -27,6 +29,10 @@ func NewRaceWeekend() *RaceWeekend {
 		ID:      uuid.New(),
 		Created: time.Now(),
 	}
+}
+
+func (rw *RaceWeekend) AddEvent() {
+
 }
 
 var (
@@ -50,10 +56,12 @@ type RaceWeekendEvent struct {
 	Updated time.Time
 	Deleted time.Time
 
-	InheritsID uuid.UUID
+	InheritsIDs []uuid.UUID
+
+	Filters []EntryListFilter
 
 	RaceConfig CurrentRaceConfig
-	EntryList  EntryList
+	Results    *SessionResults
 }
 
 func NewRaceWeekendEvent() *RaceWeekendEvent {
@@ -64,5 +72,71 @@ func NewRaceWeekendEvent() *RaceWeekendEvent {
 }
 
 func (rwe *RaceWeekendEvent) IsBase() bool {
-	return rwe.InheritsID == uuid.Nil
+	return rwe.InheritsIDs == nil
+}
+
+type RaceWeekendEntrant struct {
+	*Entrant
+
+	PreviousSessionResults *SessionResult
+	PreviousSessionCar     *SessionCar
+}
+
+type RaceWeekendEntryList map[string]*RaceWeekendEntrant
+
+var ErrRaceWeekendEventDependencyIncomplete = errors.New("servermanager: race weekend event dependency incomplete")
+
+func (rwe *RaceWeekendEvent) GetEntryList(rw *RaceWeekend) (EntryList, error) {
+	var entryList EntryList
+
+	if rwe.IsBase() {
+		entryList = rw.Entrants
+	} else {
+		entryList = make(EntryList)
+
+		for _, inheritedID := range rwe.InheritsIDs {
+			// find previous event
+			previousEvent, err := rw.FindEventByID(inheritedID.String())
+
+			if err != nil {
+				return nil, err
+			}
+
+			if previousEvent.Results == nil {
+				return nil, ErrRaceWeekendEventDependencyIncomplete
+			}
+
+			for pos, result := range previousEvent.Results.Result {
+				e := NewEntrant()
+
+				car, err := previousEvent.Results.FindCarByGUID(result.DriverGUID)
+
+				if err != nil {
+					return nil, err
+				}
+
+				e.AssignFromResult(result, car)
+				e.PitBox = pos
+
+				entryList.Add(e)
+			}
+		}
+	}
+
+	for _, filter := range rwe.Filters {
+		err := filter.Filter(entryList)
+
+		if err != nil {
+			return nil, errors.Wrapf(err, "could not apply filter: %s", filter.Name())
+		}
+	}
+
+	return entryList, nil
+}
+
+// An EntryListFilter takes a given EntryList, and (based on some criteria) filters out invalid Entrants
+type EntryListFilter interface {
+	Name() string
+	Filter(e EntryList) error
+	Render() *template.HTML
 }

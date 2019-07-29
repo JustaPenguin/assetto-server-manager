@@ -105,7 +105,7 @@ func (n normalEvent) GetURL() string {
 	return ""
 }
 
-func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool, event RaceEvent) error {
+func (rm *RaceManager) applyConfigAndStart(raceConfig CurrentRaceConfig, entryList EntryList, loop bool, event RaceEvent) error {
 	rm.mutex.Lock()
 	defer rm.mutex.Unlock()
 
@@ -121,7 +121,11 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		return err
 	}
 
-	config.GlobalServerConfig = *serverOpts
+	config := ServerConfig{
+		CurrentRaceConfig:  raceConfig,
+		GlobalServerConfig: *serverOpts,
+	}
+
 	forwardingAddress := config.GlobalServerConfig.UDPPluginAddress
 	forwardListenPort := config.GlobalServerConfig.UDPPluginLocalPort
 
@@ -205,16 +209,16 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 	}
 
 	// load default config values
-	quickRace := ConfigIniDefault
+	quickRace := ConfigIniDefault.CurrentRaceConfig
 
 	cars := r.Form["Cars"]
 
-	quickRace.CurrentRaceConfig.Cars = strings.Join(cars, ";")
-	quickRace.CurrentRaceConfig.Track = r.Form.Get("Track")
-	quickRace.CurrentRaceConfig.TrackLayout = r.Form.Get("TrackLayout")
+	quickRace.Cars = strings.Join(cars, ";")
+	quickRace.Track = r.Form.Get("Track")
+	quickRace.TrackLayout = r.Form.Get("TrackLayout")
 
-	if quickRace.CurrentRaceConfig.TrackLayout == defaultLayoutName {
-		quickRace.CurrentRaceConfig.TrackLayout = ""
+	if quickRace.TrackLayout == defaultLayoutName {
+		quickRace.TrackLayout = ""
 	}
 
 	tyres, err := ListTyres()
@@ -239,9 +243,9 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		quickRaceTyres = append(quickRaceTyres, tyre)
 	}
 
-	quickRace.CurrentRaceConfig.LegalTyres = strings.Join(quickRaceTyres, ";")
+	quickRace.LegalTyres = strings.Join(quickRaceTyres, ";")
 
-	quickRace.CurrentRaceConfig.Sessions = make(map[SessionType]SessionConfig)
+	quickRace.Sessions = make(map[SessionType]SessionConfig)
 
 	qualifyingTime, err := strconv.ParseInt(r.Form.Get("Qualifying.Time"), 10, 0)
 
@@ -249,7 +253,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		return err
 	}
 
-	quickRace.CurrentRaceConfig.AddSession(SessionTypeQualifying, SessionConfig{
+	quickRace.AddSession(SessionTypeQualifying, SessionConfig{
 		Name:   "Qualify",
 		Time:   int(qualifyingTime),
 		IsOpen: 1,
@@ -267,7 +271,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		return err
 	}
 
-	quickRace.CurrentRaceConfig.AddSession(SessionTypeRace, SessionConfig{
+	quickRace.AddSession(SessionTypeRace, SessionConfig{
 		Name:     "Race",
 		Time:     int(raceTime),
 		Laps:     int(raceLaps),
@@ -283,19 +287,19 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 
 	var numPitboxes int
 
-	trackInfo, err := GetTrackInfo(quickRace.CurrentRaceConfig.Track, quickRace.CurrentRaceConfig.TrackLayout)
+	trackInfo, err := GetTrackInfo(quickRace.Track, quickRace.TrackLayout)
 
 	if err == nil {
 		boxes, err := trackInfo.Pitboxes.Int64()
 
 		if err != nil {
-			numPitboxes = quickRace.CurrentRaceConfig.MaxClients
+			numPitboxes = quickRace.MaxClients
 		} else {
 			numPitboxes = int(boxes)
 		}
 
 	} else {
-		numPitboxes = quickRace.CurrentRaceConfig.MaxClients
+		numPitboxes = quickRace.MaxClients
 	}
 
 	if numPitboxes > MaxClientsOverride && MaxClientsOverride > 0 {
@@ -327,7 +331,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		entryList.Add(e)
 	}
 
-	quickRace.CurrentRaceConfig.MaxClients = numPitboxes
+	quickRace.MaxClients = numPitboxes
 
 	return rm.applyConfigAndStart(quickRace, entryList, false, normalEvent{})
 }
@@ -659,7 +663,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 			return nil
 		}
 
-		return rm.applyConfigAndStart(completeConfig, entryList, false, race)
+		return rm.applyConfigAndStart(completeConfig.CurrentRaceConfig, entryList, false, race)
 	}
 }
 
@@ -944,15 +948,12 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 		return err
 	}
 
-	cfg := ConfigIniDefault
-	cfg.CurrentRaceConfig = race.RaceConfig
-
 	// Required for our nice auto loop stuff
 	if forceRestart {
-		cfg.CurrentRaceConfig.LoopMode = 1
+		race.RaceConfig.LoopMode = 1
 	}
 
-	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart, race)
+	return rm.applyConfigAndStart(race.RaceConfig, race.EntryList, forceRestart, race)
 }
 
 func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string) error {

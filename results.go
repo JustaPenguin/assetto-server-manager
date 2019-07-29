@@ -32,6 +32,18 @@ type SessionResults struct {
 	ChampionshipID string           `json:"ChampionshipID"`
 }
 
+var ErrSessionCarNotFound = errors.New("servermanager: session car not found")
+
+func (s *SessionResults) FindCarByGUID(guid string) (*SessionCar, error) {
+	for _, car := range s.Cars {
+		if car.GetGUID() == guid {
+			return car, nil
+		}
+	}
+
+	return nil, ErrSessionCarNotFound
+}
+
 func (s *SessionResults) MaskDriverNames() {
 	for _, car := range s.Cars {
 		car.Driver.Name = driverName(car.Driver.Name)

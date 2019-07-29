@@ -186,3 +186,13 @@ func (e *Entrant) SwapProperties(other *Entrant) {
 	e.Ballast, other.Ballast = other.Ballast, e.Ballast
 	e.PitBox, other.PitBox = other.PitBox, e.PitBox
 }
+
+func (e *Entrant) AssignFromResult(result *SessionResult, car *SessionCar) {
+	e.Name = result.DriverName
+	e.Team = car.Driver.Team
+	e.GUID = result.DriverGUID
+	e.Model = result.CarModel
+	e.Skin = car.Skin
+	e.Restrictor = car.Restrictor
+	e.Ballast = car.BallastKG
+}
