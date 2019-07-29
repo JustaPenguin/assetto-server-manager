@@ -121,8 +121,10 @@ func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 		return err
 	}
 
-	if u := event.GetURL(); event.IsChampionship() && u != "" {
-		text += fmt.Sprintf("\n\nView the Championship points here: %s", u)
+	if champ, ok := cmw.event.(*ActiveChampionship); ok {
+		if u := champ.GetURL(); u != "" {
+			text += fmt.Sprintf("\n\nView the Championship points here: %s", u)
+		}
 	}
 
 	for _, carName := range strings.Split(cmw.serverConfig.CurrentRaceConfig.Cars, ";") {
@@ -327,15 +329,13 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 
 	var description string
 
-	if cmw.event.IsChampionship() {
-		if champ, ok := cmw.event.(*ActiveChampionship); ok {
-			championship, err := cmw.store.LoadChampionship(champ.ChampionshipID.String())
+	if champ, ok := cmw.event.(*ActiveChampionship); ok {
+		championship, err := cmw.store.LoadChampionship(champ.ChampionshipID.String())
 
-			if err == nil {
-				description = championship.GetPlayerSummary(guid) + "\n\n"
-			} else {
-				logrus.WithError(err).Warn("can't load championship info")
-			}
+		if err == nil {
+			description = championship.GetPlayerSummary(guid) + "\n\n"
+		} else {
+			logrus.WithError(err).Warn("can't load championship info")
 		}
 	}
 
@@ -351,7 +351,7 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 		RoadTemperature:    live.RoadTemp,
 		WindDirection:      race.WindBaseDirection,
 		WindSpeed:          race.WindBaseSpeedMin,
-		CurrentWeatherID:   live.WeatherGraphics,
+		CurrentWeatherID:   getSolWeatherPrettyName(live.WeatherGraphics),
 		Grip:               race.DynamicTrack.SessionStart,
 		GripTransfer:       race.DynamicTrack.SessionTransfer,
 
@@ -380,6 +380,26 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 		Frequency: global.ClientSendIntervalInHertz,
 		Until:     time.Now().Add(time.Second * time.Duration(sessionInfo.Timeleft)).Unix(),
 	}, nil
+}
+
+func getSolWeatherPrettyName(weatherName string) string {
+	if !strings.HasPrefix(weatherName, "sol_") {
+		return weatherName
+	}
+
+	parts := strings.Split(weatherName, "_type")
+
+	if len(parts) == 0 {
+		return weatherName
+	}
+
+	// remove sol_ prefix and transform to lower case
+	solName := strings.ToLower(strings.TrimPrefix(parts[0], "sol_"))
+
+	// remove underscores, convert to title case
+	solName = strings.Title(strings.Replace(solName, "_", " ", -1))
+
+	return "Sol: " + solName
 }
 
 func contentManagerPasswordChecksum(serverName, password string) string {
