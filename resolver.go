@@ -316,6 +316,11 @@ func (r *Resolver) resolveRaceControl() *RaceControl {
 }
 
 func (r *Resolver) resolveRaceControlHandler() *RaceControlHandler {
+
+	if config.Server.PerformanceMode {
+		return nil
+	}
+
 	if r.raceControlHandler != nil {
 		return r.raceControlHandler
 	}
