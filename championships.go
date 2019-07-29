@@ -941,6 +941,7 @@ type ActiveChampionship struct {
 	OverridePassword        bool
 	ReplacementPassword     string
 	Description             string
+	IsPracticeSession       bool
 
 	loadedEntrants map[udp.CarID]udp.SessionCarInfo
 
@@ -957,7 +958,7 @@ func (a *ActiveChampionship) GetURL() string {
 }
 
 func (a *ActiveChampionship) IsChampionship() bool {
-	return true
+	return !a.IsPracticeSession
 }
 
 func (a *ActiveChampionship) OverrideServerPassword() bool {
@@ -969,6 +970,10 @@ func (a *ActiveChampionship) ReplacementServerPassword() string {
 }
 
 func (a *ActiveChampionship) EventName() string {
+	if a.IsPracticeSession {
+		return a.Name + " - Looping Practice"
+	}
+
 	return a.Name
 }
 
