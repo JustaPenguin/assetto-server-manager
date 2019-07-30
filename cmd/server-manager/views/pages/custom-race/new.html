@@ -1,6 +1,8 @@
 {{ define "title" }}
     {{ if .IsChampionship }}
         Championship Event
+    {{ else if .IsRaceWeekend }}
+        Race Weekend Session
     {{ else }}
         Custom Race
     {{ end }}
@@ -13,6 +15,8 @@
     <h1 class="text-center">
         {{ if .IsChampionship }}
             Championship Event
+        {{ else if .IsRaceWeekend }}
+            Race Weekend Session
         {{ else }}
             Custom Race
         {{ end }}
@@ -20,17 +24,32 @@
 
     {{ if .IsChampionship }}
         <p>Configure an Event for the <strong>{{ .Championship.Name }}</strong> Championship.</p>
+    {{ else if .IsRaceWeekend }}
+        <p>Configure a Session for the <strong>{{ .RaceWeekend.Name }}</strong> Race Weekend.</p>
     {{ end }}
 
-    <form class="race-setup" method="post" {{ if .IsChampionship }} action="/championship/{{ .Championship.ID.String }}/event/submit" {{ else }} action="/custom/new/submit" {{ end}} data-safe-submit>
+    <form class="race-setup"
+          method="post"
+          {{ if .IsChampionship }}
+              action="/championship/{{ .Championship.ID.String }}/event/submit"
+          {{ else if .IsRaceWeekend }}
+              id="race-weekend-session"
+              action="/championship/{{ .RaceWeekend.ID.String }}/session/submit"
+          {{ else }}
+              action="/custom/new/submit"
+          {{ end }}
+          data-safe-submit
+    >
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">
-                <strong>Track{{ if not .IsChampionship }} & Cars {{ end }}</strong>
+                <strong>Track{{ if not (or .IsChampionship .IsRaceWeekend) }} & Cars {{ end }}</strong>
 
                 {{ if .IsEditing }}
                     {{ if $.IsChampionship }}
                         <button class="btn btn-success float-right" name="action" value="saveChampionship" type="submit">Save Championship Event</button>
+                    {{ else if $.IsRaceWeekend }}
+                        <button class="btn btn-success float-right" name="action" value="saveRaceWeekend" type="submit">Save Race Weekend Session</button>
                     {{ else }}
                         <button type="submit" class="btn btn-success float-right" name="action" value="justSave">Save Race</button>
                     {{ end }}
@@ -107,21 +126,26 @@
                 </div>
 
                 <div class="form-group row">
-                    {{ if not .IsChampionship }}
+                    {{ if not (or .IsChampionship .IsRaceWeekend) }}
                         <label for="Cars" class="col-sm-2 col-form-label">
                             Cars
                         </label>
                     {{ end }}
                     <div class="col-sm-10">
-                        {{ if not .IsChampionship }}
-
-                            {{ template "cars" dict "CarOpts" $.CarOpts "Current" $f }}
-                        {{ else }}
+                        {{ if $.IsChampionship }}
                             <select multiple class="Cars" id="Cars" name="Cars" style="display: none;">
                                 {{ range $index, $car := $.Championship.ValidCarIDs }}
                                     <option value="{{ $car }}" selected="selected">{{ prettify $car true }}</option>
                                 {{ end }}
                             </select>
+                        {{ else if $.IsRaceWeekend }}
+                            <select multiple class="Cars" id="Cars" name="Cars" style="display: none;">
+                                {{ range $index, $car := $.RaceWeekend.EntryList.CarIDs }}
+                                    <option value="{{ $car }}" selected="selected">{{ prettify $car true }}</option>
+                                {{ end }}
+                            </select>
+                        {{ else }}
+                            {{ template "cars" dict "CarOpts" $.CarOpts "Current" $f }}
                         {{ end }}
                     </div>
                 </div>
@@ -157,29 +181,45 @@
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">
-                <strong>Sessions</strong>
+                <strong>Session{{ if not $.IsRaceWeekend }}s{{ end }}</strong>
             </div>
 
             <div class="card-body">
-                <ul class="nav nav-tabs" role="tablist">
 
+                {{ if $.IsRaceWeekend }}
+                    <div class="form-group row">
+                        <label for="SessionType" class="col-sm-3 col-form-label">Session Type</label>
+
+                        <div class="col-sm-9">
+                            <select name="SessionType" id="SessionType" class="form-control">
+                                {{ range $index, $sessionType := .AvailableSessions }}
+                                    <option value="{{ $sessionType }}">{{ $sessionType.String }}</option>
+                                {{ end }}
+                            </select>
+                        </div>
+                    </div>
+
+                    <hr>
+                {{ else }}
+                    <ul class="nav nav-tabs" role="tablist">
+                        {{ range $index, $sessionType := .AvailableSessions }}
+
+                            {{ $hasSession := $f.HasSession $sessionType }}
+
+                            <li class="nav-item">
+                                <a class="nav-link {{ if eq $index 0 }}active{{ end }} {{ if $hasSession }} text-success {{ end }}" id="session-{{ $sessionType }}-tab"
+                                   data-toggle="tab" href="#session-{{ $sessionType }}"
+                                   role="tab"
+                                   aria-controls="{{ $sessionType }}" aria-selected="true">{{ $sessionType.String }}</a>
+                            </li>
+                        {{ end }}
+                    </ul>
+                {{ end }}
+
+
+                <div class="tab-content sessions">
                     {{ range $index, $sessionType := .AvailableSessions }}
-
-                        {{ $hasSession := $f.HasSession $sessionType }}
-
-                        <li class="nav-item">
-                            <a class="nav-link {{ if eq $index 0 }}active{{ end }} {{ if $hasSession }} text-success {{ end }}" id="session-{{ $sessionType }}-tab"
-                               data-toggle="tab" href="#session-{{ $sessionType }}"
-                               role="tab"
-                               aria-controls="{{ $sessionType }}" aria-selected="true">{{ $sessionType.String }}</a>
-                        </li>
-                    {{ end }}
-                </ul>
-                <div class="tab-content">
-
-
-                    {{ range $index, $sessionType := .AvailableSessions }}
-                        <div class="tab-pane fade {{ if eq $index 0 }}show active{{ end }} pt-5"
+                        <div class="tab-pane fade {{ if eq $index 0 }}show active{{ end }} {{ if not $.IsRaceWeekend }}pt-5{{ end }}"
                              id="session-{{ $sessionType }}" role="tabpanel"
                              aria-labelledby="session-{{ $sessionType }}-tab">
 
@@ -187,7 +227,7 @@
                             {{ $hasSession := $f.HasSession $sessionType }}
                             {{ $session := index $f.Sessions $sessionType }}
 
-                            <div class="form-group row">
+                            <div class="form-group row" {{ if $.IsRaceWeekend }} style="display: none" {{ end }}>
                                 <label class="col-sm-3 col-form-label">Enabled</label>
 
                                 <div class="col-sm-9">
@@ -518,8 +558,8 @@
             </div>
         </div>
 
-
-        <div class="card mt-3 border-secondary">
+        {{ if not $.IsRaceWeekend }}
+            <div class="card mt-3 border-secondary">
             <div class="card-header">
                 <strong>Entry List</strong>
             </div>
@@ -629,7 +669,7 @@
                 <div class="clearfix"></div>
             </div>
         </div>
-
+        {{ end }}
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">
@@ -1464,6 +1504,8 @@
                    </div>
                 </div>
             </div>
+        {{ else if $.IsRaceWeekend }}
+
         {{ else }}
             <div class="card mt-3 border-info">
                 <div class="card-header text-white bg-info">

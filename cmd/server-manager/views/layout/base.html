@@ -46,22 +46,30 @@
 
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav mr-auto">
-                    {{ if WriteAccess }}
 
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Races
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Races
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            {{ if WriteAccess }}
                                 <a class="dropdown-item" href="/quick">Quick</a>
                                 <div class="dropdown-divider"></div>
                                 <h4 class="dropdown-header font-italic">Custom</h4>
                                 <a class="dropdown-item pl-4-5" href="/custom">View Existing</a>
                                 <a class="dropdown-item pl-4-5" href="/custom/new">Create New</a>
-                            </div>
-                        </li>
 
-                    {{ end }}
+                                <div class="dropdown-divider"></div>
+                            {{ end }}
+
+
+                            <h4 class="dropdown-header font-italic">Race Weekends</h4>
+                            <a class="dropdown-item pl-4-5" href="/race-weekends">View Existing</a>
+                            {{ if WriteAccess }}
+                                <a class="dropdown-item pl-4-5" href="/race-weekends/new">Create New</a>
+                            {{ end }}
+                        </div>
+                    </li>
 
                     <li class="nav-item">
                         <a class="nav-link" href="/results">Results</a>

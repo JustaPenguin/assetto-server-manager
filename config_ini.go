@@ -53,7 +53,7 @@ var AvailableSessions = []SessionType{
 	SessionTypeBooking,
 }
 
-var AvailableSessionsClosedChampionship = []SessionType{
+var AvailableSessionsNoBooking = []SessionType{
 	SessionTypeRace,
 	SessionTypeQualifying,
 	SessionTypePractice,

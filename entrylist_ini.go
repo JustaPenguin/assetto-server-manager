@@ -133,6 +133,23 @@ func (e EntryList) FindEntrantByInternalUUID(internalUUID uuid.UUID) *Entrant {
 	return &Entrant{}
 }
 
+// CarIDs returns a unique list of car IDs used in the EntryList
+func (e EntryList) CarIDs() []string {
+	cars := make(map[string]bool)
+
+	for _, entrant := range e {
+		cars[entrant.Model] = true
+	}
+
+	var out []string
+
+	for car := range cars {
+		out = append(out, car)
+	}
+
+	return out
+}
+
 func NewEntrant() *Entrant {
 	return &Entrant{
 		InternalUUID: uuid.New(),

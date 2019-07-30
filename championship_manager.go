@@ -284,7 +284,7 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (map[
 	}
 
 	if !championship.OpenEntrants {
-		opts["AvailableSessions"] = AvailableSessionsClosedChampionship
+		opts["AvailableSessions"] = AvailableSessionsNoBooking
 	}
 
 	err = cm.applyCurrentRaceSetupToOptions(opts, opts["Current"].(CurrentRaceConfig))

@@ -15,6 +15,7 @@ type Resolver struct {
 	carManager          *CarManager
 	championshipManager *ChampionshipManager
 	accountManager      *AccountManager
+	raceWeekendManager  *RaceWeekendManager
 
 	viewRenderer          *Renderer
 	serverProcess         ServerProcess
@@ -38,6 +39,7 @@ type Resolver struct {
 	contentUploadHandler        *ContentUploadHandler
 	raceControlHandler          *RaceControlHandler
 	serverAdministrationHandler *ServerAdministrationHandler
+	raceWeekendHandler          *RaceWeekendHandler
 }
 
 func NewResolver(templateLoader TemplateLoader, reloadTemplates bool, store Store) (*Resolver, error) {
@@ -332,6 +334,26 @@ func (r *Resolver) resolveRaceControlHandler() *RaceControlHandler {
 	return r.raceControlHandler
 }
 
+func (r *Resolver) resolveRaceWeekendManager() *RaceWeekendManager {
+	if r.raceWeekendManager != nil {
+		return r.raceWeekendManager
+	}
+
+	r.raceWeekendManager = NewRaceWeekendManager(r.resolveRaceManager(), r.ResolveStore(), r.resolveServerProcess())
+
+	return r.raceWeekendManager
+}
+
+func (r *Resolver) resolveRaceWeekendHandler() *RaceWeekendHandler {
+	if r.raceWeekendHandler != nil {
+		return r.raceWeekendHandler
+	}
+
+	r.raceWeekendHandler = NewRaceWeekendHandler(r.resolveBaseHandler(), r.resolveRaceWeekendManager())
+
+	return r.raceWeekendHandler
+}
+
 func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
 	return Router(
 		fs,
@@ -349,6 +371,7 @@ func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
 		r.resolveServerAdministrationHandler(),
 		r.resolveRaceControlHandler(),
 		r.resolveScheduledRacesHandler(),
+		r.resolveRaceWeekendHandler(),
 	)
 }
 

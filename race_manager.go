@@ -818,6 +818,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		"PossibleEntrants":    possibleEntrants,
 		"FixedSetups":         fixedSetups,
 		"IsChampionship":      false, // this flag is overridden by championship setup
+		"IsRaceWeekend":       false, // this flag is overridden by race weekend setup
 		"IsEditing":           isEditing,
 		"EditingID":           templateIDForEditing,
 		"CustomRaceName":      customRaceName,

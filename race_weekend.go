@@ -20,8 +20,8 @@ type RaceWeekend struct {
 
 	Name string
 
-	Entrants EntryList
-	Events   []*RaceWeekendEvent
+	EntryList EntryList
+	Sessions  []*RaceWeekendSession
 }
 
 func NewRaceWeekend() *RaceWeekend {
@@ -31,8 +31,10 @@ func NewRaceWeekend() *RaceWeekend {
 	}
 }
 
-func (rw *RaceWeekend) AddEvent() {
+func (rw *RaceWeekend) AddSession(s *RaceWeekendSession, parent *RaceWeekendSession) {
+	s.InheritsIDs = append(s.InheritsIDs, parent.ID)
 
+	rw.Sessions = append(rw.Sessions, s)
 }
 
 var (
@@ -40,8 +42,8 @@ var (
 	ErrRaceWeekendEventNotFound = errors.New("servermanager: race weekend event not found")
 )
 
-func (rw *RaceWeekend) FindEventByID(id string) (*RaceWeekendEvent, error) {
-	for _, event := range rw.Events {
+func (rw *RaceWeekend) FindSessionByID(id string) (*RaceWeekendSession, error) {
+	for _, event := range rw.Sessions {
 		if event.ID.String() == id {
 			return event, nil
 		}
@@ -50,7 +52,7 @@ func (rw *RaceWeekend) FindEventByID(id string) (*RaceWeekendEvent, error) {
 	return nil, ErrRaceWeekendEventNotFound
 }
 
-type RaceWeekendEvent struct {
+type RaceWeekendSession struct {
 	ID      uuid.UUID
 	Created time.Time
 	Updated time.Time
@@ -64,39 +66,30 @@ type RaceWeekendEvent struct {
 	Results    *SessionResults
 }
 
-func NewRaceWeekendEvent() *RaceWeekendEvent {
-	return &RaceWeekendEvent{
+func NewRaceWeekendSession() *RaceWeekendSession {
+	return &RaceWeekendSession{
 		ID:      uuid.New(),
 		Created: time.Now(),
 	}
 }
 
-func (rwe *RaceWeekendEvent) IsBase() bool {
+func (rwe *RaceWeekendSession) IsBase() bool {
 	return rwe.InheritsIDs == nil
 }
 
-type RaceWeekendEntrant struct {
-	*Entrant
-
-	PreviousSessionResults *SessionResult
-	PreviousSessionCar     *SessionCar
-}
-
-type RaceWeekendEntryList map[string]*RaceWeekendEntrant
-
 var ErrRaceWeekendEventDependencyIncomplete = errors.New("servermanager: race weekend event dependency incomplete")
 
-func (rwe *RaceWeekendEvent) GetEntryList(rw *RaceWeekend) (EntryList, error) {
+func (rwe *RaceWeekendSession) GetEntryList(rw *RaceWeekend) (EntryList, error) {
 	var entryList EntryList
 
 	if rwe.IsBase() {
-		entryList = rw.Entrants
+		entryList = rw.EntryList
 	} else {
 		entryList = make(EntryList)
 
 		for _, inheritedID := range rwe.InheritsIDs {
 			// find previous event
-			previousEvent, err := rw.FindEventByID(inheritedID.String())
+			previousEvent, err := rw.FindSessionByID(inheritedID.String())
 
 			if err != nil {
 				return nil, err

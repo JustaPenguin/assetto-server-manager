@@ -8,12 +8,14 @@
             <div class="row">
 
                 {{ if not $.IsChampionship }}
-                    <div class="col-md-3 form-group-row row">
-                        <label class="col-sm-6 col-form-label col-form-label-sm" for="EntryList.EntrantID">Grid/Pit ID</label>
+                    <div class="col-md-3">
+                        <div class="row form-group-row">
+                            <label class="col-sm-6 col-form-label col-form-label-sm" for="EntryList.EntrantID">Grid/Pit ID</label>
 
-                        <div class="col-sm-6">
-                            <input type="number" name="EntryList.EntrantID" class="form-control form-control-sm entrant-id"
-                                   min="0" max="" {{ with $entrant.PitBox }}value="{{ . }}" {{ else }}value="0"{{ end }}>
+                            <div class="col-sm-6">
+                                <input type="number" name="EntryList.EntrantID" class="form-control form-control-sm entrant-id"
+                                       min="0" max="" {{ with $entrant.PitBox }}value="{{ . }}" {{ else }}value="0"{{ end }}>
+                            </div>
                         </div>
                     </div>
                 {{ end }}
@@ -29,13 +31,9 @@
                         </select>
                     </div>
 
-                {{ if not $.IsChampionship }}
-                    <div class="col-md-5">
-                {{ else }}
-                    <div class="col-md-8">
-                {{ end }}
+                    <div class="{{ if not $.IsChampionship }}col-md-5{{ else }}col-md-8{{ end }}">
                         <div class="float-right">
-                            {{ if $.IsEditing }}
+                            {{ if and $.IsChampionship $.IsEditing }}
                                 <div class="d-inline-block mr-4">
                                     <span data-toggle="tooltip" title="Overwrite all Championship Event specific settings (skin, restrictor, ballast, setup) with the settings defined in this entrant" class="pr-3"><small>Overwrite All Event Settings?</small></span>
 
