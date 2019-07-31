@@ -34,7 +34,7 @@
               action="/championship/{{ .Championship.ID.String }}/event/submit"
           {{ else if .IsRaceWeekend }}
               id="race-weekend-session"
-              action="/championship/{{ .RaceWeekend.ID.String }}/session/submit"
+              action="/race-weekend/{{ .RaceWeekend.ID.String }}/session/submit"
           {{ else }}
               action="/custom/new/submit"
           {{ end }}
@@ -192,8 +192,14 @@
 
                         <div class="col-sm-9">
                             <select name="SessionType" id="SessionType" class="form-control">
+
+
                                 {{ range $index, $sessionType := .AvailableSessions }}
-                                    <option value="{{ $sessionType }}">{{ $sessionType.String }}</option>
+                                    {{ $hasSession := $f.HasSession $sessionType }}
+
+                                    <option value="{{ $sessionType }}" {{ if $hasSession }}selected="selected"{{ end }}>
+                                        {{ $sessionType.String }}
+                                    </option>
                                 {{ end }}
                             </select>
                         </div>
@@ -219,12 +225,12 @@
 
                 <div class="tab-content sessions">
                     {{ range $index, $sessionType := .AvailableSessions }}
-                        <div class="tab-pane fade {{ if eq $index 0 }}show active{{ end }} {{ if not $.IsRaceWeekend }}pt-5{{ end }}"
+                        {{ $hasSession := $f.HasSession $sessionType }}
+
+                        <div class="tab-pane fade  {{ if not $.IsRaceWeekend }} {{ if eq $index 0 }}show active{{ end }} pt-5 {{ else if $hasSession }} show active {{ end }}"
                              id="session-{{ $sessionType }}" role="tabpanel"
                              aria-labelledby="session-{{ $sessionType }}-tab">
 
-
-                            {{ $hasSession := $f.HasSession $sessionType }}
                             {{ $session := index $f.Sessions $sessionType }}
 
                             <div class="form-group row" {{ if $.IsRaceWeekend }} style="display: none" {{ end }}>
@@ -241,7 +247,6 @@
                                             checked="checked"
                                             {{ end }}
                                     >
-
 
                                     {{ if eq $sessionType "BOOK" }}
                                         <br><br>
@@ -267,18 +272,22 @@
                                     <div class="form-group row">
                                         <div class="col-sm-3">
                                             <select id="TimeOrLaps" class="form-control">
-                                                <option value="Time" {{ if ne $session.Time 0 }} selected="selected" {{ end }}>Time</option>
+                                                <option value="Time" {{ if or (ne $session.Time 0) (eq $session.Laps 0) }} selected="selected" {{ end }}>Time</option>
                                                 <option value="Laps" {{ if ne $session.Laps 0 }} selected="selected" {{ end }}>Laps</option>
                                             </select>
                                         </div>
 
-                                        <div class="col-sm-9" id="RaceTime" {{ if eq $session.Time 0 }}style="display: none;"{{ end }}>
+                                        <div class="col-sm-9" id="RaceTime" {{ if not (or (ne $session.Time 0) (eq $session.Laps 0)) }}style="display: none;"{{ end }}>
                                             <input
                                                     type="number"
                                                     id="Race.Time"
                                                     name="Race.Time"
                                                     class="form-control"
-                                                    value="{{ $session.Time }}"
+                                                    {{ if and (eq $session.Time 0) (eq $session.Laps 0) }}
+                                                        value="15"
+                                                    {{ else }}
+                                                        value="{{ $session.Time }}"
+                                                    {{ end }}
 
 
                                                     step="1"
@@ -477,31 +486,32 @@
 
                                     <hr>
 
-                                    <div class="form-group row col-md-12">
-                                        <label for="ReversedGridRacePositions" class="col-sm-3 col-form-label" data-toggle="tooltip" title="The race session will be restarted in reversed grid order based on the standings of the previous race. Players disqualified in the first race will start from the back of the grid in the second race, regardless of their position being within the reversed grid range.">
-                                            Reversed Grid Race Positions
-                                        </label>
+                                    {{ if not $.IsRaceWeekend }}
+                                        <div class="form-group row col-md-12">
+                                            <label for="ReversedGridRacePositions" class="col-sm-3 col-form-label" data-toggle="tooltip" title="The race session will be restarted in reversed grid order based on the standings of the previous race. Players disqualified in the first race will start from the back of the grid in the second race, regardless of their position being within the reversed grid range.">
+                                                Reversed Grid Race Positions
+                                            </label>
 
-                                        <div class="col-sm-9">
-                                            <input
-                                                    type="number"
-                                                    id="ReversedGridRacePositions"
-                                                    name="ReversedGridRacePositions"
-                                                    class="form-control"
-                                                    value="{{ $f.ReversedGridRacePositions }}"
+                                            <div class="col-sm-9">
+                                                <input
+                                                        type="number"
+                                                        id="ReversedGridRacePositions"
+                                                        name="ReversedGridRacePositions"
+                                                        class="form-control"
+                                                        value="{{ $f.ReversedGridRacePositions }}"
 
 
-                                                    step="1"
-                                            >
+                                                        step="1"
+                                                >
 
-                                            <small> 0 = no additional race<br/>
-                                                -1 = all the positions will be reversed (Retired players will be on the last positions)<br/>
-                                                1 = A 2nd Race will take place with the grid formed from the 1st Race's results<br/>
-                                                X = first X number of positions will be reversed for the 2nd race
-                                            </small>
+                                                <small> 0 = no additional race<br/>
+                                                    -1 = all the positions will be reversed (Retired players will be on the last positions)<br/>
+                                                    1 = A 2nd Race will take place with the grid formed from the 1st Race's results<br/>
+                                                    X = first X number of positions will be reversed for the 2nd race
+                                                </small>
+                                            </div>
                                         </div>
-                                    </div>
-
+                                    {{ end }}
 
                                     <div class="form-group row col-md-12 race-extra-lap" {{ if and (eq $session.Time 0) (ne $session.Laps 0) }} style="display: none;" {{ end }}>
                                         <label for="RaceExtraLap" class="col-sm-3 col-form-label">Extra Lap</label>
@@ -1488,7 +1498,7 @@
                     {{ else }}
                         <p>
                             When this event is saved, it will be added to the <strong>{{ .Championship.Name }}</strong> Championship.
-                            You can add more events below, or, if you're done creating the championship, you can complete its setup here.
+                            You can add more events below, or, if you're done creating the Championship, you can complete its setup here.
                         </p>
                     {{ end }}
 
@@ -1505,7 +1515,36 @@
                 </div>
             </div>
         {{ else if $.IsRaceWeekend }}
+            <div class="card mt-3 border-info">
+                <div class="card-header text-white bg-info">
+                    <strong>Save Race Weekend Session</strong>
+                </div>
+                <div class="card-body">
 
+                    {{ if .IsEditing }}
+                        <p>
+                            This edited setup will overwrite the {{ add .EditingID 1 }}{{ ordinal (add .EditingID 1) }}
+                            Session in the <strong>{{ .RaceWeekend.Name }}</strong> Race Weekend.
+                        </p>
+                    {{ else }}
+                        <p>
+                            When this Session is saved, it will be added to the <strong>{{ .RaceWeekend.Name }}</strong> Race Weekend.
+                            You can add more sessions below, or, if you're done creating the Race Weekend, you can complete its setup here.
+                        </p>
+                    {{ end }}
+
+                    <div class="float-right">
+
+                        {{ if not .IsEditing }}
+                            <button class="btn btn-primary mt-5" data-toggle="tooltip" name="action" value="addAnotherSession" type="submit" title="Save this setup and then configure another">Add another Session</button>
+                            <button class="btn btn-success mt-5" data-toggle="tooltip" name="action" value="saveRaceWeekend" type="submit" title="Save this session setup and finish creating the Race Weekend">Finish Creating Race Weekend</button>
+                        {{ else }}
+                            <input type="hidden" name="Editing" id="Editing" value="{{ .EditingID }}">
+                            <button class="btn btn-primary mt-5" data-toggle="tooltip" name="action" value="saveRaceWeekend" type="submit">Save Session</button>
+                        {{ end }}
+                    </div>
+                </div>
+            </div>
         {{ else }}
             <div class="card mt-3 border-info">
                 <div class="card-header text-white bg-info">

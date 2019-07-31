@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // RaceWeekends are a collection of events, where one event influences the EntryList of the next.
@@ -32,9 +33,32 @@ func NewRaceWeekend() *RaceWeekend {
 }
 
 func (rw *RaceWeekend) AddSession(s *RaceWeekendSession, parent *RaceWeekendSession) {
-	s.InheritsIDs = append(s.InheritsIDs, parent.ID)
+	if parent != nil {
+		s.ParentIDs = append(s.ParentIDs, parent.ID)
+	}
 
 	rw.Sessions = append(rw.Sessions, s)
+}
+
+func (rw *RaceWeekend) SessionCanBeRun(s *RaceWeekendSession) bool {
+	if s.IsBase() {
+		return true
+	}
+
+	for _, parentID := range s.ParentIDs {
+		parent, err := rw.FindSessionByID(parentID.String())
+
+		if err == ErrRaceWeekendEventNotFound {
+			logrus.Warnf("Race weekend event for id: %s not found", parentID.String())
+			continue
+		}
+
+		if !rw.SessionCanBeRun(parent) {
+			return false
+		}
+	}
+
+	return true
 }
 
 var (
@@ -58,12 +82,15 @@ type RaceWeekendSession struct {
 	Updated time.Time
 	Deleted time.Time
 
-	InheritsIDs []uuid.UUID
+	ParentIDs []uuid.UUID
 
 	Filters []EntryListFilter
 
 	RaceConfig CurrentRaceConfig
-	Results    *SessionResults
+
+	StartedTime   time.Time
+	CompletedTime time.Time
+	Results       *SessionResults
 }
 
 func NewRaceWeekendSession() *RaceWeekendSession {
@@ -73,21 +100,39 @@ func NewRaceWeekendSession() *RaceWeekendSession {
 	}
 }
 
-func (rwe *RaceWeekendSession) IsBase() bool {
-	return rwe.InheritsIDs == nil
+func (rws *RaceWeekendSession) SessionInfo() SessionConfig {
+	for _, sess := range rws.RaceConfig.Sessions {
+		return sess
+	}
+
+	return SessionConfig{}
+}
+
+// InProgress indicates whether a RaceWeekendSession has been started but not stopped
+func (rws *RaceWeekendSession) InProgress() bool {
+	return !rws.StartedTime.IsZero() && rws.CompletedTime.IsZero()
+}
+
+// Completed RaceWeekendSessions have a non-zero CompletedTime
+func (rws *RaceWeekendSession) Completed() bool {
+	return !rws.CompletedTime.IsZero()
+}
+
+func (rws *RaceWeekendSession) IsBase() bool {
+	return rws.ParentIDs == nil
 }
 
 var ErrRaceWeekendEventDependencyIncomplete = errors.New("servermanager: race weekend event dependency incomplete")
 
-func (rwe *RaceWeekendSession) GetEntryList(rw *RaceWeekend) (EntryList, error) {
+func (rws *RaceWeekendSession) GetEntryList(rw *RaceWeekend) (EntryList, error) {
 	var entryList EntryList
 
-	if rwe.IsBase() {
+	if rws.IsBase() {
 		entryList = rw.EntryList
 	} else {
 		entryList = make(EntryList)
 
-		for _, inheritedID := range rwe.InheritsIDs {
+		for _, inheritedID := range rws.ParentIDs {
 			// find previous event
 			previousEvent, err := rw.FindSessionByID(inheritedID.String())
 
@@ -116,7 +161,7 @@ func (rwe *RaceWeekendSession) GetEntryList(rw *RaceWeekend) (EntryList, error) 
 		}
 	}
 
-	for _, filter := range rwe.Filters {
+	for _, filter := range rws.Filters {
 		err := filter.Filter(entryList)
 
 		if err != nil {

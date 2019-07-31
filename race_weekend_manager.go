@@ -1,8 +1,12 @@
 package servermanager
 
 import (
+	"errors"
 	"net/http"
+	"strings"
+	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/go-chi/chi"
 )
 
@@ -22,6 +26,10 @@ func NewRaceWeekendManager(raceManager *RaceManager, store Store, process Server
 
 func (rwm *RaceWeekendManager) ListRaceWeekends() ([]*RaceWeekend, error) {
 	return rwm.store.ListRaceWeekends()
+}
+
+func (rwm *RaceWeekendManager) LoadRaceWeekend(id string) (*RaceWeekend, error) {
+	return rwm.store.LoadRaceWeekend(id)
 }
 
 func (rwm *RaceWeekendManager) BuildRaceWeekendTemplateOpts(r *http.Request) (map[string]interface{}, error) {
@@ -60,7 +68,7 @@ func (rwm *RaceWeekendManager) SaveRaceWeekend(r *http.Request) (raceWeekend *Ra
 	}
 
 	if raceWeekendID := r.FormValue("Editing"); raceWeekendID != "" {
-		raceWeekend, err = rwm.store.LoadRaceWeekend(raceWeekendID)
+		raceWeekend, err = rwm.LoadRaceWeekend(raceWeekendID)
 
 		if err != nil {
 			return nil, edited, err
@@ -83,7 +91,7 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (map
 	}
 
 	// here we customise the opts to tell the template that this is a race weekend session.
-	raceWeekend, err := rwm.store.LoadRaceWeekend(chi.URLParam(r, "raceWeekendID"))
+	raceWeekend, err := rwm.LoadRaceWeekend(chi.URLParam(r, "raceWeekendID"))
 
 	if err != nil {
 		return nil, err
@@ -116,9 +124,11 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (map
 		// override Current race config if there is a previous championship race configured
 		if len(raceWeekend.Sessions) > 0 {
 			opts["Current"] = raceWeekend.Sessions[len(raceWeekend.Sessions)-1].RaceConfig
+			spew.Dump(raceWeekend.Sessions[len(raceWeekend.Sessions)-1].RaceConfig.Sessions)
+
 			opts["RaceWeekendHasAtLeastOneSession"] = true
 		} else {
-			current := ConfigIniDefault.CurrentRaceConfig
+			current := ConfigIniDefault().CurrentRaceConfig
 			delete(current.Sessions, SessionTypeBooking)
 			delete(current.Sessions, SessionTypeQualifying)
 			delete(current.Sessions, SessionTypeRace)
@@ -139,25 +149,87 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (map
 	return opts, nil
 }
 
-func (rwm *RaceWeekendManager) StartEvent(raceWeekendID string, raceWeekendEventID string) error {
-	raceWeekend, err := rwm.store.LoadRaceWeekend(raceWeekendID)
+func (rwm *RaceWeekendManager) SaveRaceWeekendSession(r *http.Request) (raceWeekend *RaceWeekend, session *RaceWeekendSession, edited bool, err error) {
+	if err := r.ParseForm(); err != nil {
+		return nil, nil, false, err
+	}
+
+	raceWeekend, err = rwm.LoadRaceWeekend(chi.URLParam(r, "raceWeekendID"))
+
+	if err != nil {
+		return nil, nil, false, err
+	}
+
+	raceConfig, err := rwm.raceManager.BuildCustomRaceFromForm(r)
+
+	if err != nil {
+		return nil, nil, false, err
+	}
+
+	raceConfig.Cars = strings.Join(raceWeekend.EntryList.CarIDs(), ";")
+
+	// remove all but the active session from the setup.
+	activeSession := r.FormValue("SessionType")
+
+	for session := range raceConfig.Sessions {
+		if session.String() != activeSession {
+			delete(raceConfig.Sessions, session)
+		}
+	}
+
+	if sessionID := r.FormValue("Editing"); sessionID != "" {
+		edited = true
+
+		session, err = raceWeekend.FindSessionByID(sessionID)
+
+		if err != nil {
+			return nil, nil, true, err
+		}
+
+		// we're editing an existing session
+		session.RaceConfig = *raceConfig
+	} else {
+		// creating a new event
+		session = NewRaceWeekendSession()
+		session.RaceConfig = *raceConfig
+
+		raceWeekend.AddSession(session, nil) // @TODO how do we link sessions?
+	}
+
+	return raceWeekend, session, edited, rwm.store.UpsertRaceWeekend(raceWeekend)
+}
+
+var ErrIncompleteSessionDependencies = errors.New("servermanager: incomplete session dependencies")
+
+func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSessionID string) error {
+	raceWeekend, err := rwm.LoadRaceWeekend(raceWeekendID)
 
 	if err != nil {
 		return err
 	}
 
-	event, err := raceWeekend.FindSessionByID(raceWeekendEventID)
+	session, err := raceWeekend.FindSessionByID(raceWeekendSessionID)
 
 	if err != nil {
 		return err
 	}
 
-	entryList, err := event.GetEntryList(raceWeekend)
+	if !raceWeekend.SessionCanBeRun(session) {
+		return ErrIncompleteSessionDependencies
+	}
+
+	session.StartedTime = time.Now()
+
+	if err := rwm.store.UpsertRaceWeekend(raceWeekend); err != nil {
+		return err
+	}
+
+	entryList, err := session.GetEntryList(raceWeekend)
 
 	if err != nil {
 		return err
 	}
 
 	// @TODO replace normalEvent with something better here
-	return rwm.raceManager.applyConfigAndStart(event.RaceConfig, entryList, false, normalEvent{})
+	return rwm.raceManager.applyConfigAndStart(session.RaceConfig, entryList, false, normalEvent{})
 }

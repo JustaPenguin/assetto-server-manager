@@ -278,7 +278,9 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (map[
 			opts["Current"] = championship.Events[len(championship.Events)-1].RaceSetup
 			opts["ChampionshipHasAtLeastOnceRace"] = true
 		} else {
-			opts["Current"] = ConfigIniDefault.CurrentRaceConfig
+			defaultConfig := ConfigIniDefault()
+
+			opts["Current"] = defaultConfig.CurrentRaceConfig
 			opts["ChampionshipHasAtLeastOnceRace"] = false
 		}
 	}

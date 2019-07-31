@@ -304,7 +304,9 @@ func (rs *BoltStore) UpsertServerOptions(so *GlobalServerConfig) error {
 
 func (rs *BoltStore) LoadServerOptions() (*GlobalServerConfig, error) {
 	// start with defaults
-	so := &ConfigIniDefault.GlobalServerConfig
+	defaultConfig := ConfigIniDefault()
+
+	so := &defaultConfig.GlobalServerConfig
 
 	err := rs.db.View(func(tx *bbolt.Tx) error {
 		bkt, err := rs.serverOptionsBucket(tx)

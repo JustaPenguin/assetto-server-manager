@@ -209,7 +209,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 	}
 
 	// load default config values
-	quickRace := ConfigIniDefault.CurrentRaceConfig
+	quickRace := ConfigIniDefault().CurrentRaceConfig
 
 	cars := r.Form["Cars"]
 
@@ -598,7 +598,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		}
 	}
 
-	completeConfig := ConfigIniDefault
+	completeConfig := ConfigIniDefault()
 	completeConfig.CurrentRaceConfig = *raceConfig
 
 	overridePassword := r.FormValue("OverridePassword") == "1"
@@ -741,7 +741,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		return nil, err
 	}
 
-	race := ConfigIniDefault
+	race := ConfigIniDefault()
 
 	templateID := r.URL.Query().Get("from")
 

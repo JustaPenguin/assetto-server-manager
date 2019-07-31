@@ -1,8 +1,12 @@
 package servermanager
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/davecgh/go-spew/spew"
+	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
 )
 
@@ -30,6 +34,22 @@ func (rwh *RaceWeekendHandler) list(w http.ResponseWriter, r *http.Request) {
 
 	rwh.viewRenderer.MustLoadTemplate(w, r, "race-weekend/index.html", map[string]interface{}{
 		"RaceWeekends": raceWeekends,
+	})
+}
+
+func (rwh *RaceWeekendHandler) view(w http.ResponseWriter, r *http.Request) {
+	raceWeekend, err := rwh.raceWeekendManager.LoadRaceWeekend(chi.URLParam(r, "raceWeekendID"))
+
+	if err != nil {
+		logrus.Errorf("couldn't load race weekend, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	spew.Dump(raceWeekend)
+
+	rwh.viewRenderer.MustLoadTemplate(w, r, "race-weekend/view.html", map[string]interface{}{
+		"RaceWeekend": raceWeekend,
 	})
 }
 
@@ -73,4 +93,54 @@ func (rwh *RaceWeekendHandler) sessionConfiguration(w http.ResponseWriter, r *ht
 	}
 
 	rwh.viewRenderer.MustLoadTemplate(w, r, "custom-race/new.html", raceWeekendSessionOpts)
+}
+
+func (rwh *RaceWeekendHandler) submitSessionConfiguration(w http.ResponseWriter, r *http.Request) {
+	raceWeekend, session, edited, err := rwh.raceWeekendManager.SaveRaceWeekendSession(r)
+
+	if err != nil {
+		logrus.Errorf("couldn't build race weekend session, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if edited {
+		AddFlash(w, r,
+			fmt.Sprintf(
+				"Race Weekend session at %s was successfully edited!",
+				prettifyName(session.RaceConfig.Track, false),
+			),
+		)
+	} else {
+		AddFlash(w, r,
+			fmt.Sprintf(
+				"Race Weekend session at %s was successfully added!",
+				prettifyName(session.RaceConfig.Track, false),
+			),
+		)
+	}
+
+	if r.FormValue("action") == "saveRaceWeekend" {
+		// end the race creation flow
+		http.Redirect(w, r, "/race-weekend/"+raceWeekend.ID.String(), http.StatusFound)
+		return
+	} else {
+		// add another session
+		http.Redirect(w, r, "/race-weekend/"+raceWeekend.ID.String()+"/session", http.StatusFound)
+	}
+}
+
+func (rwh *RaceWeekendHandler) startSession(w http.ResponseWriter, r *http.Request) {
+	err := rwh.raceWeekendManager.StartSession(chi.URLParam(r, "raceWeekendID"), chi.URLParam(r, "sessionID"))
+
+	if err != nil {
+		logrus.Errorf("Could not start Race Weekend session, err: %s", err)
+
+		AddErrorFlash(w, r, "Couldn't start the Session")
+	} else {
+		AddFlash(w, r, "Session started successfully!")
+		time.Sleep(time.Second * 1)
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }

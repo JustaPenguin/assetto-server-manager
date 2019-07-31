@@ -1,0 +1,58 @@
+{{ define "title" }}{{ $.RaceWeekend.Name }} Race Weekend{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">{{ $.RaceWeekend.Name }}</h1>
+
+
+    {{ range $sessionIndex, $session := $.RaceWeekend.Sessions }}
+        {{ $raceConfig := $session.RaceConfig }}
+        {{ $trackInfo := trackInfo $raceConfig.Track $raceConfig.TrackLayout }}
+
+        <div class="card mt-3 border-secondary ">
+            <div class="card-header">
+                {{ $acSession := $session.SessionInfo }}
+
+                <strong>{{ $acSession.Name }}</strong>
+
+                at
+
+                {{ with $trackInfo }}
+                    {{ $trackInfo.Name }}
+                {{ else }}
+                    {{ prettify $raceConfig.Track false }} {{ prettify $raceConfig.TrackLayout true }}
+                {{ end }}
+
+                in
+
+                {{ carList $.RaceWeekend.EntryList.CarIDs }}
+
+                <div class="float-right">
+                    {{ if ne $acSession.Time 0 }}
+                        {{ $acSession.Time }} minutes,
+                    {{ else }}
+                        {{ with $acSession.Laps }}
+                            {{ . }} laps,
+                        {{ end }}
+                    {{ end }}
+
+
+                    {{ if not ($.RaceWeekend.SessionCanBeRun $session) }}
+                        <span class="text-primary">Not all parent sessions completed</span>
+                    {{ else if $session.Completed }}
+                        <span class="text-success">Complete</span>
+                    {{ else if $session.InProgress }}
+                        <span class="text-info">In Progress</span>
+                    {{ else }}
+                        <span class="text-danger">Not started</span>
+                    {{ end }}
+                </div>
+            </div>
+
+            <div class="card-body">
+                {{ if WriteAccess }}
+                    <a class="btn btn-success" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/start">Start Session</a>
+                {{ end }}
+            </div>
+        </div>
+    {{ end }}
+{{ end }}

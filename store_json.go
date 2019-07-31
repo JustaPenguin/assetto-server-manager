@@ -215,7 +215,9 @@ func (rs *JSONStore) LoadServerOptions() (*GlobalServerConfig, error) {
 	err := rs.decodeFile(rs.base, serverOptionsFile, &out)
 
 	if os.IsNotExist(err) {
-		return &ConfigIniDefault.GlobalServerConfig, rs.UpsertServerOptions(&ConfigIniDefault.GlobalServerConfig)
+		defaultConfig := ConfigIniDefault()
+
+		return &defaultConfig.GlobalServerConfig, rs.UpsertServerOptions(&defaultConfig.GlobalServerConfig)
 	} else if err != nil {
 		return nil, err
 	}

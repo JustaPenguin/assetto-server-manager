@@ -123,6 +123,7 @@ func Router(
 
 		// race weekends
 		r.Get("/race-weekends", raceWeekendHandler.list)
+		r.Get("/race-weekend/{raceWeekendID}", raceWeekendHandler.view)
 	})
 
 	// writers
@@ -196,8 +197,9 @@ func Router(
 		r.Post("/race-weekends/new/submit", raceWeekendHandler.submit)
 		r.Get("/race-weekend/{raceWeekendID}/edit", raceWeekendHandler.createOrEdit)
 		r.Get("/race-weekend/{raceWeekendID}/session", raceWeekendHandler.sessionConfiguration)
-		// @TODO r.Post("/race-weekend/{raceWeekendID}/session/submit", raceWeekendHandler.submitEventConfiguration)
+		r.Post("/race-weekend/{raceWeekendID}/session/submit", raceWeekendHandler.submitSessionConfiguration)
 		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/edit", raceWeekendHandler.sessionConfiguration)
+		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/start", raceWeekendHandler.startSession)
 	})
 
 	// deleters
