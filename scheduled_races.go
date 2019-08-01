@@ -13,6 +13,7 @@ import (
 	"github.com/heindl/caldav-go/icalendar/components"
 	"github.com/heindl/caldav-go/icalendar/values"
 	"github.com/sirupsen/logrus"
+	"github.com/teambition/rrule-go"
 )
 
 type ScheduledEvent interface {
@@ -23,6 +24,10 @@ type ScheduledEvent interface {
 	GetURL() string
 	HasSignUpForm() bool
 	ReadOnlyEntryList() EntryList
+	HasRecurrenceRule() bool
+	GetRecurrenceRule() (*rrule.RRule, error)
+	SetRecurrenceRule(input string) error
+	ClearRecurrenceRule()
 }
 
 func BuildICalEvent(event ScheduledEvent) *components.Event {
@@ -102,7 +107,7 @@ func (rs *ScheduledRacesHandler) calendar(w http.ResponseWriter, r *http.Request
 }
 
 func (rs *ScheduledRacesHandler) calendarJSON(w http.ResponseWriter, r *http.Request) {
-	err := rs.generateJSON(w)
+	err := rs.generateJSON(w, r)
 
 	if err != nil {
 		logrus.Errorf("could not find scheduled events, err: %s", err)
@@ -206,7 +211,20 @@ type calendarObject struct {
 	TextColor       string `json:"textColor"`
 }
 
-func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter) error {
+func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter, r *http.Request) error {
+
+	start, err := time.Parse(time.RFC3339, r.URL.Query().Get("start"))
+
+	if err != nil {
+		return err
+	}
+
+	end, err := time.Parse(time.RFC3339, r.URL.Query().Get("end"))
+
+	if err != nil {
+		return err
+	}
+
 	scheduled, err := rs.getScheduledRaces()
 
 	if err != nil {
@@ -236,6 +254,40 @@ func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter) error {
 			BorderColor:      "#c480ff",
 			TextColor:        "#303030",
 		})
+	}
+
+	var recurring []ScheduledEvent
+
+	for _, scheduledEvent := range scheduled {
+		if scheduledEvent.HasRecurrenceRule() {
+			customRace, ok := scheduledEvent.(*CustomRace)
+
+			if !ok {
+				continue
+			}
+
+			rule, err := customRace.GetRecurrenceRule()
+
+			if err != nil {
+				return err
+			}
+
+			for _, startTime := range rule.Between(start, end, true) {
+				newEvent := *customRace
+				newEvent.Scheduled = startTime
+				newEvent.UUID = uuid.New()
+
+				if customRace.GetScheduledTime() == newEvent.GetScheduledTime() {
+					continue
+				}
+
+				recurring = append(recurring, &newEvent)
+			}
+		}
+	}
+
+	for _, recurringEvent := range recurring {
+		scheduled = append(scheduled, recurringEvent)
 	}
 
 	for _, scheduledEvent := range scheduled {
