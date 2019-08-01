@@ -2,13 +2,13 @@ package servermanager
 
 import (
 	"fmt"
-	"github.com/teambition/rrule-go"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"github.com/teambition/rrule-go"
 )
 
 type CustomRace struct {
