@@ -1,13 +1,12 @@
 package servermanager
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/go-chi/chi"
+	"github.com/google/uuid"
 )
 
 type RaceWeekendManager struct {
@@ -113,7 +112,9 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (map
 		opts["EditingID"] = editSessionID
 		opts["CurrentEntrants"], err = session.GetEntryList(raceWeekend)
 
-		if err != nil {
+		if err == ErrRaceWeekendEventDependencyIncomplete {
+			opts["CurrentEntrants"] = raceWeekend.EntryList
+		} else if err != nil {
 			return nil, err
 		}
 	} else {
@@ -124,7 +125,6 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (map
 		// override Current race config if there is a previous championship race configured
 		if len(raceWeekend.Sessions) > 0 {
 			opts["Current"] = raceWeekend.Sessions[len(raceWeekend.Sessions)-1].RaceConfig
-			spew.Dump(raceWeekend.Sessions[len(raceWeekend.Sessions)-1].RaceConfig.Sessions)
 
 			opts["RaceWeekendHasAtLeastOneSession"] = true
 		} else {
@@ -196,10 +196,26 @@ func (rwm *RaceWeekendManager) SaveRaceWeekendSession(r *http.Request) (raceWeek
 		raceWeekend.AddSession(session, nil) // @TODO how do we link sessions?
 	}
 
+	// empty out previous parent IDs
+	session.ParentIDs = []uuid.UUID{}
+
+	// assign parents
+	for _, parentID := range r.Form["ParentSessions"] {
+		if parentID == "no_parent" {
+			break
+		}
+
+		id, err := uuid.Parse(parentID)
+
+		if err != nil {
+			return nil, nil, false, err
+		}
+
+		session.ParentIDs = append(session.ParentIDs, id)
+	}
+
 	return raceWeekend, session, edited, rwm.store.UpsertRaceWeekend(raceWeekend)
 }
-
-var ErrIncompleteSessionDependencies = errors.New("servermanager: incomplete session dependencies")
 
 func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSessionID string) error {
 	raceWeekend, err := rwm.LoadRaceWeekend(raceWeekendID)
@@ -215,7 +231,7 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 	}
 
 	if !raceWeekend.SessionCanBeRun(session) {
-		return ErrIncompleteSessionDependencies
+		return ErrRaceWeekendEventDependencyIncomplete
 	}
 
 	session.StartedTime = time.Now()
@@ -232,4 +248,50 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 
 	// @TODO replace normalEvent with something better here
 	return rwm.raceManager.applyConfigAndStart(session.RaceConfig, entryList, false, normalEvent{})
+}
+
+func (rwm *RaceWeekendManager) RestartSession(raceWeekendID string, raceWeekendSessionID string) error {
+	err := rwm.CancelSession(raceWeekendID, raceWeekendSessionID)
+
+	if err != nil {
+		return err
+	}
+
+	return rwm.StartSession(raceWeekendID, raceWeekendSessionID)
+}
+
+func (rwm *RaceWeekendManager) CancelSession(raceWeekendID string, raceWeekendSessionID string) error {
+	raceWeekend, err := rwm.LoadRaceWeekend(raceWeekendID)
+
+	if err != nil {
+		return err
+	}
+
+	session, err := raceWeekend.FindSessionByID(raceWeekendSessionID)
+
+	if err != nil {
+		return err
+	}
+
+	session.StartedTime = time.Time{}
+	session.CompletedTime = time.Time{}
+	session.Results = nil
+
+	if err := rwm.process.Stop(); err != nil {
+		return err
+	}
+
+	return rwm.store.UpsertRaceWeekend(raceWeekend)
+}
+
+func (rwm *RaceWeekendManager) DeleteSession(raceWeekendID string, raceWeekendSessionID string) error {
+	raceWeekend, err := rwm.LoadRaceWeekend(raceWeekendID)
+
+	if err != nil {
+		return err
+	}
+
+	raceWeekend.DelSession(raceWeekendSessionID)
+
+	return rwm.store.UpsertRaceWeekend(raceWeekend)
 }

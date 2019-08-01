@@ -40,6 +40,22 @@ func (rw *RaceWeekend) AddSession(s *RaceWeekendSession, parent *RaceWeekendSess
 	rw.Sessions = append(rw.Sessions, s)
 }
 
+func (rw *RaceWeekend) DelSession(sessionID string) {
+	toDelete := -1
+
+	for sessionIndex, sess := range rw.Sessions {
+		if sess.ID.String() == sessionID {
+			toDelete = sessionIndex
+		}
+	}
+
+	if toDelete < 0 {
+		return
+	}
+
+	rw.Sessions = append(rw.Sessions[:toDelete], rw.Sessions[toDelete+1:]...)
+}
+
 func (rw *RaceWeekend) SessionCanBeRun(s *RaceWeekendSession) bool {
 	if s.IsBase() {
 		return true
@@ -48,12 +64,15 @@ func (rw *RaceWeekend) SessionCanBeRun(s *RaceWeekendSession) bool {
 	for _, parentID := range s.ParentIDs {
 		parent, err := rw.FindSessionByID(parentID.String())
 
-		if err == ErrRaceWeekendEventNotFound {
+		if err == RaceWeekendSessionNotFound {
 			logrus.Warnf("Race weekend event for id: %s not found", parentID.String())
 			continue
+		} else if err != nil {
+			logrus.WithError(err).Errorf("an unknown error occurred while checking session dependencies")
+			return false
 		}
 
-		if !rw.SessionCanBeRun(parent) {
+		if !rw.SessionCanBeRun(parent) || !parent.Completed() {
 			return false
 		}
 	}
@@ -62,8 +81,8 @@ func (rw *RaceWeekend) SessionCanBeRun(s *RaceWeekendSession) bool {
 }
 
 var (
-	ErrRaceWeekendNotFound      = errors.New("servermanager: race weekend not found")
-	ErrRaceWeekendEventNotFound = errors.New("servermanager: race weekend event not found")
+	ErrRaceWeekendNotFound     = errors.New("servermanager: race weekend not found")
+	RaceWeekendSessionNotFound = errors.New("servermanager: race weekend session not found")
 )
 
 func (rw *RaceWeekend) FindSessionByID(id string) (*RaceWeekendSession, error) {
@@ -73,7 +92,29 @@ func (rw *RaceWeekend) FindSessionByID(id string) (*RaceWeekendSession, error) {
 		}
 	}
 
-	return nil, ErrRaceWeekendEventNotFound
+	return nil, RaceWeekendSessionNotFound
+}
+
+func (rw *RaceWeekend) GetNumSiblings(session *RaceWeekendSession) int {
+	numSiblings := 0
+
+	for _, sess := range rw.Sessions {
+		for _, parentID := range sess.ParentIDs {
+
+			if parentID == session.ID && len(sess.ParentIDs) > 1 {
+				numSiblings += len(sess.ParentIDs)
+				break
+			}
+		}
+	}
+
+	return numSiblings
+}
+
+func (rw *RaceWeekend) GetColumnWidth(session *RaceWeekendSession) int {
+	numSiblings := rw.GetNumSiblings(session)
+
+	return int(12.0 / float64(numSiblings))
 }
 
 type RaceWeekendSession struct {

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
 )
@@ -45,8 +44,6 @@ func (rwh *RaceWeekendHandler) view(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
-
-	spew.Dump(raceWeekend)
 
 	rwh.viewRenderer.MustLoadTemplate(w, r, "race-weekend/view.html", map[string]interface{}{
 		"RaceWeekend": raceWeekend,
@@ -140,6 +137,50 @@ func (rwh *RaceWeekendHandler) startSession(w http.ResponseWriter, r *http.Reque
 	} else {
 		AddFlash(w, r, "Session started successfully!")
 		time.Sleep(time.Second * 1)
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (rwh *RaceWeekendHandler) restartSession(w http.ResponseWriter, r *http.Request) {
+	err := rwh.raceWeekendManager.RestartSession(chi.URLParam(r, "raceWeekendID"), chi.URLParam(r, "sessionID"))
+
+	if err != nil {
+		logrus.Errorf("Could not restart Race Weekend session, err: %s", err)
+
+		AddErrorFlash(w, r, "Couldn't restart the Session")
+	} else {
+		AddFlash(w, r, "Session restarted successfully!")
+		time.Sleep(time.Second * 1)
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (rwh *RaceWeekendHandler) cancelSession(w http.ResponseWriter, r *http.Request) {
+	err := rwh.raceWeekendManager.CancelSession(chi.URLParam(r, "raceWeekendID"), chi.URLParam(r, "sessionID"))
+
+	if err != nil {
+		logrus.Errorf("Could not cancel Race Weekend session, err: %s", err)
+
+		AddErrorFlash(w, r, "Couldn't cancel the Session")
+	} else {
+		AddFlash(w, r, "Session canceled successfully!")
+		time.Sleep(time.Second * 1)
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (rwh *RaceWeekendHandler) deleteSession(w http.ResponseWriter, r *http.Request) {
+	err := rwh.raceWeekendManager.DeleteSession(chi.URLParam(r, "raceWeekendID"), chi.URLParam(r, "sessionID"))
+
+	if err != nil {
+		logrus.Errorf("Could not delete Race Weekend session, err: %s", err)
+
+		AddErrorFlash(w, r, "Couldn't delete the Session")
+	} else {
+		AddFlash(w, r, "Session deleted successfully!")
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)

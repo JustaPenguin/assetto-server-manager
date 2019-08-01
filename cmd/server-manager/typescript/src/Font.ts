@@ -36,6 +36,8 @@ import {faChevronRight} from "@fortawesome/free-solid-svg-icons/faChevronRight";
 import {faCalendarCheck} from "@fortawesome/free-solid-svg-icons/faCalendarCheck";
 import {faClipboardList} from "@fortawesome/free-solid-svg-icons/faClipboardList";
 import {faUsersCog} from "@fortawesome/free-solid-svg-icons/faUsersCog";
+import {faArrowRight} from "@fortawesome/free-solid-svg-icons/faArrowRight";
+import {faArrowDown} from "@fortawesome/free-solid-svg-icons/faArrowDown";
 
 library.add(
     faUser,
@@ -73,6 +75,8 @@ library.add(
     faCalendarCheck,
     faClipboardList,
     faUsersCog,
+    faArrowRight,
+    faArrowDown,
 );
 
 dom.watch();

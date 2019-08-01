@@ -200,6 +200,8 @@ func Router(
 		r.Post("/race-weekend/{raceWeekendID}/session/submit", raceWeekendHandler.submitSessionConfiguration)
 		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/edit", raceWeekendHandler.sessionConfiguration)
 		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/start", raceWeekendHandler.startSession)
+		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/restart", raceWeekendHandler.restartSession)
+		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/cancel", raceWeekendHandler.cancelSession)
 	})
 
 	// deleters
@@ -221,6 +223,9 @@ func Router(
 
 		r.Get("/autofill-entrants", serverAdministrationHandler.autoFillEntrantList)
 		r.Get("/autofill-entrants/delete/{entrantID}", serverAdministrationHandler.autoFillEntrantDelete)
+
+		// race weekend
+		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/delete", raceWeekendHandler.deleteSession)
 	})
 
 	// admins

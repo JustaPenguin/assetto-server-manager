@@ -1521,6 +1521,28 @@
                 </div>
                 <div class="card-body">
 
+
+                    <div class="form-group row">
+                        <label for="ParentSessions" class="col-sm-3 col-form-label">Parent Session(s)</label>
+
+                        <div class="col-sm-9">
+                            <select name="ParentSessions" id="ParentSessions" class="form-control" multiple>
+                                <option value="no_parent">No parent</option>
+
+                                {{ range $index, $session := $.RaceWeekend.Sessions }}
+                                    {{ if not (and $.IsEditing (eq $session.ID.String $.EditingID)) }}
+                                        <option value="{{ $session.ID.String }}">{{ $session.SessionInfo.Name }}</option>
+                                    {{ end }}
+                                {{ end }}
+                            </select>
+
+                            <small>
+                                The parent session specifies the Session which is used to build the EntryList for this session.
+                                The results output of the parent session (plus any applied filters) forms the starting grid for this session.
+                            </small>
+                        </div>
+                    </div>
+
                     {{ if .IsEditing }}
                         <p>
                             This edited setup will overwrite the {{ add .EditingID 1 }}{{ ordinal (add .EditingID 1) }}
