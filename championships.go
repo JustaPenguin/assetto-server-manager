@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
-
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"github.com/teambition/rrule-go"
 )
 
 // ChampionshipClassColors are sequentially selected to indicate different classes within a Championship
@@ -829,6 +829,22 @@ func (cr *ChampionshipEvent) HasSignUpForm() bool {
 
 func (cr *ChampionshipEvent) ReadOnlyEntryList() EntryList {
 	return cr.CombineEntryLists(cr.championship)
+}
+
+func (cr *ChampionshipEvent) SetRecurrenceRule(input string) error {
+	return nil
+}
+
+func (cr *ChampionshipEvent) GetRecurrenceRule() (*rrule.RRule, error) {
+	return nil, nil
+}
+
+func (cr *ChampionshipEvent) HasRecurrenceRule() bool {
+	return false
+}
+
+func (cr *ChampionshipEvent) ClearRecurrenceRule() {
+	return
 }
 
 func (cr *ChampionshipEvent) GetID() uuid.UUID {

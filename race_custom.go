@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"github.com/teambition/rrule-go"
 )
 
 type CustomRace struct {
@@ -15,12 +16,14 @@ type CustomRace struct {
 	HasCustomName, OverridePassword bool
 	ReplacementPassword             string
 
-	Created       time.Time
-	Updated       time.Time
-	Deleted       time.Time
-	Scheduled     time.Time
-	UUID          uuid.UUID
-	Starred, Loop bool
+	Created          time.Time
+	Updated          time.Time
+	Deleted          time.Time
+	Scheduled        time.Time
+	ScheduledInitial time.Time
+	Recurrence       string
+	UUID             uuid.UUID
+	Starred, Loop    bool
 
 	RaceConfig CurrentRaceConfig
 	EntryList  EntryList
@@ -76,6 +79,40 @@ func (cr *CustomRace) EventDescription() string {
 
 func (cr *CustomRace) ReadOnlyEntryList() EntryList {
 	return cr.EntryList
+}
+
+func (cr *CustomRace) SetRecurrenceRule(input string) error {
+	rule, err := rrule.StrToRRule(input)
+	if err != nil {
+		return err
+	}
+
+	rule.DTStart(cr.ScheduledInitial)
+
+	cr.Recurrence = rule.String()
+
+	return nil
+}
+
+func (cr *CustomRace) GetRecurrenceRule() (*rrule.RRule, error) {
+	rule, err := rrule.StrToRRule(cr.Recurrence)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// dtstart is not saved in the string and must be reinitiated
+	rule.DTStart(cr.ScheduledInitial)
+
+	return rule, nil
+}
+
+func (cr *CustomRace) HasRecurrenceRule() bool {
+	return cr.Recurrence != ""
+}
+
+func (cr *CustomRace) ClearRecurrenceRule() {
+	cr.Recurrence = ""
 }
 
 type CustomRaceHandler struct {
@@ -175,7 +212,7 @@ func (crh *CustomRaceHandler) schedule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = crh.raceManager.ScheduleRace(raceID, date, r.FormValue("action"))
+	err = crh.raceManager.ScheduleRace(raceID, date, r.FormValue("action"), r.FormValue("event-schedule-recurrence"))
 
 	if err != nil {
 		logrus.Errorf("couldn't schedule race, err: %s", err)
@@ -188,7 +225,7 @@ func (crh *CustomRaceHandler) schedule(w http.ResponseWriter, r *http.Request) {
 }
 
 func (crh *CustomRaceHandler) removeSchedule(w http.ResponseWriter, r *http.Request) {
-	err := crh.raceManager.ScheduleRace(chi.URLParam(r, "uuid"), time.Time{}, "remove")
+	err := crh.raceManager.ScheduleRace(chi.URLParam(r, "uuid"), time.Time{}, "remove", "")
 
 	if err != nil {
 		logrus.Errorf("couldn't remove scheduled race, err: %s", err)

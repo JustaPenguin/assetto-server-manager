@@ -646,7 +646,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 				return err
 			}
 
-			err = rm.ScheduleRace(race.UUID.String(), date, "add")
+			err = rm.ScheduleRace(race.UUID.String(), date, "add", r.FormValue("event-schedule-recurrence"))
 
 			if err != nil {
 				return err
@@ -955,7 +955,7 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart, race)
 }
 
-func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string) error {
+func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, recurrence string) error {
 	race, err := rm.raceStore.FindCustomRaceByID(uuid)
 
 	if err != nil {
@@ -970,20 +970,82 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string) 
 	}
 
 	if action == "add" {
+		if date.IsZero() {
+			return errors.New("can't schedule race for zero time")
+		}
+
 		// add a scheduled event on date
 		duration := time.Until(date)
 
-		race.Scheduled = date
+		if recurrence != "already-set" {
+			if recurrence != "" {
+				err := race.SetRecurrenceRule(recurrence)
+
+				if err != nil {
+					return err
+				}
+
+				// only set once when the event is first scheduled
+				race.ScheduledInitial = date
+			} else {
+				race.ClearRecurrenceRule()
+			}
+		}
+
 		rm.customRaceStartTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
-			err := rm.StartCustomRace(race.UUID.String(), false)
+			err := rm.StartScheduledRace(race)
 
 			if err != nil {
-				logrus.Errorf("couldn't start scheduled race, err: %s", err)
+				logrus.WithError(err).Errorf("Couldn't start scheduled race: %s, %s.", race.Name, race.UUID.String())
 			}
 		})
+
+	} else {
+		race.ClearRecurrenceRule()
 	}
 
 	return rm.raceStore.UpsertCustomRace(race)
+}
+
+func (rm *RaceManager) StartScheduledRace(race *CustomRace) error {
+	err := rm.StartCustomRace(race.UUID.String(), false)
+
+	if err != nil {
+		return err
+	}
+
+	if race.HasRecurrenceRule() {
+		// this function carries out a save
+		return rm.ScheduleNextFromRecurrence(race)
+	} else {
+		race.Scheduled = time.Time{}
+
+		return rm.raceStore.UpsertCustomRace(race)
+	}
+}
+
+func (rm *RaceManager) ScheduleNextFromRecurrence(race *CustomRace) error {
+	// set the scheduled time to the next iteration of the recurrence rule
+	return rm.ScheduleRace(race.UUID.String(), rm.FindNextRecurrence(race, race.Scheduled), "add", "already-set")
+}
+
+func (rm *RaceManager) FindNextRecurrence(race *CustomRace, start time.Time) time.Time {
+	rule, err := race.GetRecurrenceRule()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Couldn't get recurrence rule for race: %s, %s", race.Name, race.Recurrence)
+		return time.Time{}
+	}
+
+	next := rule.After(start, false)
+
+	if next.After(time.Now()) {
+		return next
+	} else {
+		rm.FindNextRecurrence(race, next)
+	}
+
+	return time.Time{}
 }
 
 func (rm *RaceManager) DeleteCustomRace(uuid string) error {
@@ -1186,30 +1248,39 @@ func (rm *RaceManager) InitScheduledRaces() error {
 			duration := time.Until(race.Scheduled)
 
 			rm.customRaceStartTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
-				err := rm.StartCustomRace(race.UUID.String(), false)
+				err := rm.StartScheduledRace(race)
 
 				if err != nil {
-					logrus.Errorf("couldn't start scheduled race, err: %s", err)
+					logrus.WithError(err).Errorf("Couldn't start scheduled race: %s, %s", race.Name, race.UUID.String())
 				}
 			})
-
-			err := rm.raceStore.UpsertCustomRace(race)
-
-			if err != nil {
-				return err
-			}
 		} else {
-			emptyTime := time.Time{}
-			if race.Scheduled != emptyTime {
-				logrus.Infof("Looks like the server was offline whilst a scheduled event was meant to start!"+
-					" Start time: %s. The schedule has been cleared. Start the event manually if you wish to run it.", race.Scheduled.String())
+			if race.HasRecurrenceRule() {
+				emptyTime := time.Time{}
+				if race.Scheduled != emptyTime {
+					logrus.Infof("Looks like the server was offline whilst a recurring scheduled event was meant to start!"+
+						" Start time: %s. The schedule has been cleared, and the next recurrence time has been set."+
+						" Start the event manually if you wish to run it.", race.Scheduled.String())
+				}
 
-				race.Scheduled = emptyTime
-
-				err := rm.raceStore.UpsertCustomRace(race)
+				err := rm.ScheduleNextFromRecurrence(race)
 
 				if err != nil {
-					return err
+					logrus.WithError(err).Errorf("Couldn't schedule next recurring race: %s, %s, %s", race.Name, race.UUID.String(), race.Recurrence)
+				}
+			} else {
+				emptyTime := time.Time{}
+				if race.Scheduled != emptyTime {
+					logrus.Infof("Looks like the server was offline whilst a scheduled event was meant to start!"+
+						" Start time: %s. The schedule has been cleared. Start the event manually if you wish to run it.", race.Scheduled.String())
+
+					race.Scheduled = emptyTime
+
+					err := rm.raceStore.UpsertCustomRace(race)
+
+					if err != nil {
+						return err
+					}
 				}
 			}
 		}
