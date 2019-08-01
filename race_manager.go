@@ -1259,7 +1259,7 @@ func (rm *RaceManager) InitScheduledRaces() error {
 				emptyTime := time.Time{}
 				if race.Scheduled != emptyTime {
 					logrus.Infof("Looks like the server was offline whilst a recurring scheduled event was meant to start!"+
-						" Start time: %s. The schedule has been cleared, and the next recurrence time has been set." +
+						" Start time: %s. The schedule has been cleared, and the next recurrence time has been set."+
 						" Start the event manually if you wish to run it.", race.Scheduled.String())
 				}
 
