@@ -3,7 +3,6 @@ package servermanager
 import (
 	"errors"
 	"fmt"
-	"github.com/teambition/rrule-go"
 	"html/template"
 	"sort"
 	"strings"
@@ -11,9 +10,9 @@ import (
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
-
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"github.com/teambition/rrule-go"
 )
 
 // ChampionshipClassColors are sequentially selected to indicate different classes within a Championship
