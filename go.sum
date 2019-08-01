@@ -156,6 +156,8 @@ github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/syndtr/goleveldb v1.0.0 h1:fBdIW9lB4Iz0n9khmH8w27SJ3QEJ7+IgjPEwGSZiFdE=
 github.com/syndtr/goleveldb v1.0.0/go.mod h1:ZVVdQEZoIme9iO1Ch2Jdy24qqXrMMOU6lpPAyBWyWuQ=
+github.com/teambition/rrule-go v1.4.2 h1:U4x0BJ6qm8M7bZNf329wveGOPeczPwXmen2aC1GBMNc=
+github.com/teambition/rrule-go v1.4.2/go.mod h1:VRA+qwyK0TAPzamcF20cLogRQsOVDCgPIcHxn8Nvbr8=
 github.com/tecbot/gorocksdb v0.0.0-20190519120508-025c3cf4ffb4 h1:ktZy3TUr3YgNRAufBhDmvfLcRdlOU3CNy6p5haZkfkM=
 github.com/tecbot/gorocksdb v0.0.0-20190519120508-025c3cf4ffb4/go.mod h1:ahpPrc7HpcfEWDQRZEmnXMzHY03mLDYMCxeDzy46i+8=
 github.com/tinylib/msgp v1.1.0 h1:9fQd+ICuRIu/ue4vxJZu6/LzxN0HwMds2nq/0cFvxHU=

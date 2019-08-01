@@ -1559,6 +1559,19 @@
 
                             <input type='hidden' name="CustomRaceScheduledTimezone" class="event-schedule-timezone">
                         </div>
+
+                        <div class="form-group row">
+                            <label for="CustomRaceScheduled" class="col-sm-3 col-form-label">Recurrence Rule</label>
+
+                            <div class="col-sm-5">
+                                <input type='text' class='form-control' name='event-schedule-recurrence' id='event-schedule-recurrence'>
+                                <small>visit <a href="https://www.textmagic.com/free-tools/rrule-generator">RRule Generator</a>
+                                    to generate a recurrence rule. Leave blank if not required. A recurrence rule is only
+                                    valid alongside a scheduled time, and will treat the scheduled time as the start time
+                                    for the rule.</small>
+                            </div>
+
+                        </div>
                     {{ end }}
 
 

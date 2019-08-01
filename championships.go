@@ -3,6 +3,7 @@ package servermanager
 import (
 	"errors"
 	"fmt"
+	"github.com/teambition/rrule-go"
 	"html/template"
 	"sort"
 	"strings"
@@ -829,6 +830,22 @@ func (cr *ChampionshipEvent) HasSignUpForm() bool {
 
 func (cr *ChampionshipEvent) ReadOnlyEntryList() EntryList {
 	return cr.CombineEntryLists(cr.championship)
+}
+
+func (cr *ChampionshipEvent) SetRecurrenceRule(input string) error {
+	return nil
+}
+
+func (cr *ChampionshipEvent) GetRecurrenceRule() (*rrule.RRule, error) {
+	return nil, nil
+}
+
+func (cr *ChampionshipEvent) HasRecurrenceRule() bool {
+	return false
+}
+
+func (cr *ChampionshipEvent) ClearRecurrenceRule() {
+	return
 }
 
 func (cr *ChampionshipEvent) GetID() uuid.UUID {
