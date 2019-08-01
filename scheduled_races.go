@@ -286,9 +286,7 @@ func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter, r *http.Req
 		}
 	}
 
-	for _, recurringEvent := range recurring {
-		scheduled = append(scheduled, recurringEvent)
-	}
+	scheduled = append(scheduled, recurring...)
 
 	for _, scheduledEvent := range scheduled {
 
