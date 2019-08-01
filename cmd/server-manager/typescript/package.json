@@ -35,6 +35,7 @@
     "popper.js": "^1.14.7",
     "randomcolor": "^0.5.4",
     "reconnecting-websocket": "^4.1.10",
+    "rrule": "^2.6.2",
     "summernote": "^0.8.11"
   },
   "devDependencies": {
