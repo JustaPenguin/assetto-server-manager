@@ -7,6 +7,7 @@ Added:
   sign up for them if required.
 * New Car Details pages! You can now manage your car collection right in Server Manager!
 * Car Search! Search for cars by name, tags, BHP, weight, etc. Car search is connected into Quick Races, Custom Races, Championships. Check out the 'Search Help' on any pages with the search bar to find out what kind of things you can search for!
+* Scheduled Race recurrence! You can now set scheduled races to recur at regular intervals.
 * Skin Upload - you can now upload individual skins on the Car Details page
 * Skin Delete - you can now delete individual skins on the Car Details page.
 * Improved asset handling - this is a bit behind-the-scenes, but we've made some efforts to make Server Manager's styles (and fonts!) load quicker.
