@@ -96,6 +96,7 @@ func (sah *ServerAdministrationHandler) options(w http.ResponseWriter, r *http.R
 		}
 
 		UseShortenedDriverNames = serverOpts.UseShortenedDriverNames == 1
+		UseFallBackSorting = serverOpts.FallBackResultsSorting == 1
 
 		// save the config
 		err = sah.raceManager.SaveServerOptions(serverOpts)
