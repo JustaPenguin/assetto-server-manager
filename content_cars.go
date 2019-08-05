@@ -22,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spkg/bom"
+	"golang.org/x/sync/errgroup"
 )
 
 type Car struct {
@@ -390,12 +391,18 @@ func (cm *CarManager) IndexAllCars() error {
 	results, _, err := cm.Search(context.Background(), "", 0, 100000)
 
 	if err == nil {
-		for _, result := range results.Hits {
-			err := cm.DeIndexCar(result.ID)
+		errs, _ := errgroup.WithContext(context.Background())
 
-			if err != nil {
-				return err
-			}
+		for _, result := range results.Hits {
+			result := result
+
+			errs.Go(func() error {
+				return cm.DeIndexCar(result.ID)
+			})
+		}
+
+		if err := errs.Wait(); err != nil {
+			return err
 		}
 	} else {
 		logrus.WithError(err).Warnf("could not de-index cars")
@@ -407,12 +414,18 @@ func (cm *CarManager) IndexAllCars() error {
 		return err
 	}
 
-	for _, car := range cars {
-		err := cm.IndexCar(car)
+	errs, _ := errgroup.WithContext(context.Background())
 
-		if err != nil {
-			return err
-		}
+	for _, car := range cars {
+		car := car
+
+		errs.Go(func() error {
+			return cm.IndexCar(car)
+		})
+	}
+
+	if err := errs.Wait(); err != nil {
+		return err
 	}
 
 	logrus.Infof("Search index build is complete (took: %s)", time.Now().Sub(started).String())
