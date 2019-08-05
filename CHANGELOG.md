@@ -30,6 +30,7 @@ Fixes:
 * Live Timings will now reconnect automatically if your connection drops.
 * Only upload official ks content is now working again!
 * Fixes an issue where Open Championship EntryLists would not be correctly preserved when assigning car slots to pre-existing Entrants. 
+* Added a server wide fallback sorting option for events where AC has outputted an incorrect driver order in the result json file. Only enable this if you have sorting issues. If you have championship events where the sorting is incorrect you will need to re-import the results files using Manage Event, Import Results.
 
 v1.3.3
 ------
