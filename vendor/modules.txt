@@ -158,11 +158,13 @@ github.com/willf/bitset
 golang.org/x/crypto/scrypt
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/pbkdf2
-# golang.org/x/net v0.0.0-20190311183353-d8887717615a
+# golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 golang.org/x/net/publicsuffix
 golang.org/x/net/context
 golang.org/x/net/html
 golang.org/x/net/html/atom
+# golang.org/x/sync v0.0.0-20190423024810-112230192c58
+golang.org/x/sync/errgroup
 # golang.org/x/sys v0.0.0-20190309122539-980fc434d28e
 golang.org/x/sys/unix
 golang.org/x/sys/windows
