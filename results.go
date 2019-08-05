@@ -194,6 +194,40 @@ func (s *SessionResults) IsDriversFastestSector(guid string, sector, time, cuts 
 	return fastest
 }
 
+func (s *SessionResults) FallBackSort() {
+	// sort the results by laps completed then race time
+	// this is a fall back for when assetto's sorting is terrible
+	// this is a permanent change that cannot be undone
+	// sort results.Result, if disqualified go to back, if time penalty sort by laps completed then lap time
+
+	sort.Slice(s.Result, func(i, j int) bool {
+		if !s.Result[i].Disqualified && !s.Result[j].Disqualified {
+
+			// if both drivers aren't disqualified
+			if s.GetLaps(s.Result[i].DriverGUID) == s.GetLaps(s.Result[j].DriverGUID) {
+				// if their number of laps are equal, compare last lap pos
+				return s.GetLastLapPos(s.Result[i].DriverGUID) < s.GetLastLapPos(s.Result[j].DriverGUID)
+			}
+
+			return s.GetLaps(s.Result[i].DriverGUID) >= s.GetLaps(s.Result[j].DriverGUID)
+
+		} else if s.Result[i].Disqualified && s.Result[j].Disqualified {
+
+			// if both drivers ARE disqualified, compare their lap times / num laps
+			if s.GetLaps(s.Result[i].DriverGUID) == s.GetLaps(s.Result[j].DriverGUID) {
+				// if their number of laps are equal, compare last lap pos
+				return s.GetLastLapPos(s.Result[i].DriverGUID) < s.GetLastLapPos(s.Result[j].DriverGUID)
+			}
+
+			return s.GetLaps(s.Result[i].DriverGUID) >= s.GetLaps(s.Result[j].DriverGUID)
+
+		} else {
+			// driver i is closer to the front than j if they are not disqualified and j is
+			return s.Result[j].Disqualified
+		}
+	})
+}
+
 func (s *SessionResults) GetDate() string {
 	return s.Date.Format(time.RFC822)
 }
@@ -284,6 +318,18 @@ func (s *SessionResults) GetLastLapTime(driverGuid string) time.Duration {
 	}
 
 	return 1
+}
+
+func (s *SessionResults) GetLastLapPos(driverGuid string) int {
+	var driverLaps int
+
+	for i := range s.Laps {
+		if s.Laps[i].DriverGUID == driverGuid {
+			driverLaps++
+		}
+	}
+
+	return s.GetPosForLap(driverGuid, int64(driverLaps))
 }
 
 func (s *SessionResults) GetCuts(driverGuid string) int {
@@ -546,6 +592,8 @@ func getResultDate(name string) (time.Time, error) {
 	return time.Date(year, time.Month(month), day, hour, minute, 0, 0, time.Local), nil
 }
 
+var UseFallBackSorting = false
+
 func LoadResult(fileName string) (*SessionResults, error) {
 	var result *SessionResults
 
@@ -582,6 +630,10 @@ func LoadResult(fileName string) (*SessionResults, error) {
 	}
 
 	result.Result = validResults
+
+	if UseFallBackSorting {
+		result.FallBackSort()
+	}
 
 	return result, nil
 }
