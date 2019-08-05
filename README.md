@@ -119,7 +119,7 @@ will run, such as the path to steamcmd, default account information and more. **
      # run makefile commands to build and run server manager
      make clean
      make assets
-     make assets-embed
+     make asset-embed
      make run
     ```
 6. Server Manager should now be running! You can find the UI in your browser at your 
