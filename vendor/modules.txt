@@ -150,6 +150,8 @@ github.com/spkg/bom
 github.com/ssor/bom
 # github.com/steveyen/gtreap v0.0.0-20150807155958-0abe01ef9be2
 github.com/steveyen/gtreap
+# github.com/teambition/rrule-go v1.4.2
+github.com/teambition/rrule-go
 # github.com/tinylib/msgp v1.1.0
 github.com/tinylib/msgp/msgp
 # github.com/willf/bitset v1.1.10

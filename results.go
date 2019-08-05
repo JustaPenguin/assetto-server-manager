@@ -224,7 +224,7 @@ func (s *SessionResults) FallBackSort() {
 
 			return s.GetLaps(s.Result[i].DriverGUID) >= s.GetLaps(s.Result[j].DriverGUID)
 
-		}  else {
+		} else {
 			// driver i is closer to the front than j if they are not disqualified and j is
 			return s.Result[j].Disqualified
 		}
