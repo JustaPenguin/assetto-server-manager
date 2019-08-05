@@ -1,3 +1,10 @@
+v1.3.4
+------
+
+Fixes:
+
+* Fixed an entry list issue that made some cars impossible to connect to if the pit ID selection had a gap in it. Any gaps in the pit IDs will now be closed automatically (e.g. 1-2-4 becomes 0-1-2). If you want gaps in your entry list please add dummy cars to it.
+
 v1.3.3
 ------
 
