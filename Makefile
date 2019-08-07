@@ -34,6 +34,6 @@ deploy: clean generate test
 run:
 	$(MAKE) -C cmd/server-manager run
 
-docker: deploy
-	docker build -t seejy/assetto-server-manager:${VERSION} .
+docker:
+	docker build --build-arg SM_VERSION=${VERSION} -t seejy/assetto-server-manager:${VERSION} .
 	docker push seejy/assetto-server-manager:${VERSION}
