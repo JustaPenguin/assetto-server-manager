@@ -67,17 +67,6 @@ type Account struct {
 	LastSeenVersion string
 }
 
-func prepareVersionString(s string) string {
-	if !strings.HasPrefix(s, "v") {
-		s = "v" + s
-	}
-
-	// remove any trailing tags e.g. v1.4.3-docker becomes v1.4.3
-	s = strings.Split(s, "-")[0]
-
-	return s
-}
-
 func (a Account) HasSeenCurrentVersion() bool {
 	return a.HasSeenVersion(BuildVersion)
 }
@@ -87,13 +76,13 @@ func (a Account) HasSeenVersion(version string) bool {
 		return true // open accounts don't see version releases
 	}
 
-	newVersion, err := semver.NewVersion(prepareVersionString(version))
+	newVersion, err := semver.NewVersion(version)
 
 	if err != nil {
 		return true
 	}
 
-	currentVersion, err := semver.NewVersion(prepareVersionString(a.LastSeenVersion))
+	currentVersion, err := semver.NewVersion(a.LastSeenVersion)
 
 	if err != nil {
 		return true
