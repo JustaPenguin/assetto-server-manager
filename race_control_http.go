@@ -172,9 +172,9 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 
 		if err != nil {
 			logrus.Errorf("could not get CM join link, err: %s", err)
+		} else {
+			linkString = link.String()
 		}
-
-		linkString = link.String()
 	}
 
 	rch.viewRenderer.MustLoadTemplate(w, r, "live-timing.html", map[string]interface{}{
