@@ -23,8 +23,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// BuildTime is the time Server Manager was built at
-var BuildTime string
+// BuildVersion is the time Server Manager was built at
+var BuildVersion string
 
 type TemplateLoader interface {
 	Init() error
@@ -194,10 +194,10 @@ func (tr *Renderer) init() error {
 	}
 	funcs["carSkinURL"] = carSkinURL
 	funcs["dict"] = templateDict
-	funcs["asset"] = NewAssetHelper("/", "", "", map[string]string{"cb": BuildTime}).GetURL
+	funcs["asset"] = NewAssetHelper("/", "", "", map[string]string{"cb": BuildVersion}).GetURL
 	funcs["SessionType"] = func(s string) SessionType { return SessionType(s) }
 	funcs["Config"] = func() *Configuration { return config }
-	funcs["Version"] = func() string { return BuildTime }
+	funcs["Version"] = func() string { return BuildVersion }
 	funcs["fullTimeFormat"] = fullTimeFormat
 	funcs["localFormat"] = localFormatHelper
 	funcs["driverName"] = driverName

@@ -82,6 +82,7 @@ func Router(
 
 		// pages
 		r.Get("/", serverAdministrationHandler.home)
+		r.Get("/changelog", serverAdministrationHandler.changelog)
 
 		// content
 		r.Get("/cars", carsHandler.list)
@@ -268,7 +269,7 @@ const maxAge30Days = 2592000
 
 func etag(url string) string {
 	h := md5.New()
-	h.Write([]byte(BuildTime + url))
+	h.Write([]byte(BuildVersion + url))
 
 	return hex.EncodeToString(h.Sum(nil))
 }

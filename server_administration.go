@@ -2,6 +2,8 @@ package servermanager
 
 import (
 	"encoding/json"
+	"fmt"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -9,6 +11,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/mitchellh/go-wordwrap"
+	"github.com/russross/blackfriday"
 	"github.com/sirupsen/logrus"
 )
 
@@ -224,4 +227,24 @@ func (sah *ServerAdministrationHandler) serverProcess(w http.ResponseWriter, r *
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (sah *ServerAdministrationHandler) changelog(w http.ResponseWriter, r *http.Request) {
+	changelog, err := LoadChangelog()
+
+	if err != nil {
+		logrus.WithError(err).Error("could not load changelog")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	changelogHTML := template.HTML(blackfriday.Run(changelog))
+
+	if r.URL.Query().Get("rawhtml") == "true" {
+		_, _ = fmt.Fprintf(w, "%s", changelogHTML)
+	} else {
+		sah.viewRenderer.MustLoadTemplate(w, r, "changelog.html", map[string]interface{}{
+			"Changelog": changelogHTML,
+		})
+	}
 }
