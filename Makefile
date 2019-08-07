@@ -16,6 +16,7 @@ test:
 	go test -mod vendor
 
 generate:
+	go get -u github.com/mjibson/esc
 	go generate -mod vendor .
 
 assets:
