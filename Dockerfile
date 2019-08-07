@@ -23,7 +23,7 @@ ENV SERVER_MANAGER_DIR /home/${SERVER_USER}/server-manager/
 ENV SERVER_INSTALL_DIR ${SERVER_MANAGER_DIR}/assetto
 
 # dependencies for plugins, e.g. stracker, kissmyrank
-RUN apt-get update && apt-get install -y lib32gcc1 lib32stdc++6 zlib1g zlib1g lib32z1 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y lib32gcc1 lib32stdc++6 zlib1g zlib1g lib32z1 ca-certificates && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -ms /bin/bash ${SERVER_USER}
 
