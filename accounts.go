@@ -67,14 +67,33 @@ type Account struct {
 	LastSeenVersion string
 }
 
+func prepareVersionString(s string) string {
+	if !strings.HasPrefix(s, "v") {
+		s = "v" + s
+	}
+
+	// remove any trailing tags e.g. v1.4.3-docker becomes v1.4.3
+	s = strings.Split(s, "-")[0]
+
+	return s
+}
+
+func (a Account) HasSeenCurrentVersion() bool {
+	return a.HasSeenVersion(BuildVersion)
+}
+
 func (a Account) HasSeenVersion(version string) bool {
-	newVersion, err := semver.NewVersion(version)
+	if a.Name == OpenAccount.Name {
+		return true // open accounts don't see version releases
+	}
+
+	newVersion, err := semver.NewVersion(prepareVersionString(version))
 
 	if err != nil {
 		return true
 	}
 
-	currentVersion, err := semver.NewVersion(a.LastSeenVersion)
+	currentVersion, err := semver.NewVersion(prepareVersionString(a.LastSeenVersion))
 
 	if err != nil {
 		return true
@@ -181,6 +200,23 @@ func (ah *AccountHandler) DeleteAccessMiddleware(next http.Handler) http.Handler
 
 func (ah *AccountHandler) AdminAccessMiddleware(next http.Handler) http.Handler {
 	return ah.MustLoginMiddleware(GroupAdmin, next)
+}
+
+func (ah *AccountHandler) dismissChangelog(w http.ResponseWriter, r *http.Request) {
+	account := AccountFromRequest(r)
+
+	if account.Name == OpenAccount.Name {
+		// don't save the open account
+		return
+	}
+
+	err := ah.accountManager.SetCurrentVersion(account)
+
+	if err != nil {
+		logrus.WithError(err).Error("could not save current account version")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 }
 
 func AccountFromRequest(r *http.Request) *Account {
@@ -429,6 +465,12 @@ func (am *AccountManager) resetPassword(accountID string) (*Account, error) {
 	account.PasswordHash = ""
 
 	return account, am.store.UpsertAccount(account)
+}
+
+func (am *AccountManager) SetCurrentVersion(account *Account) error {
+	account.LastSeenVersion = BuildVersion
+
+	return am.store.UpsertAccount(account)
 }
 
 func (am *AccountManager) changePassword(account *Account, password string) error {

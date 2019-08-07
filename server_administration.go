@@ -2,8 +2,6 @@ package servermanager
 
 import (
 	"encoding/json"
-	"fmt"
-	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -11,7 +9,6 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/mitchellh/go-wordwrap"
-	"github.com/russross/blackfriday"
 	"github.com/sirupsen/logrus"
 )
 
@@ -238,13 +235,7 @@ func (sah *ServerAdministrationHandler) changelog(w http.ResponseWriter, r *http
 		return
 	}
 
-	changelogHTML := template.HTML(blackfriday.Run(changelog))
-
-	if r.URL.Query().Get("rawhtml") == "true" {
-		_, _ = fmt.Fprintf(w, "%s", changelogHTML)
-	} else {
-		sah.viewRenderer.MustLoadTemplate(w, r, "changelog.html", map[string]interface{}{
-			"Changelog": changelogHTML,
-		})
-	}
+	sah.viewRenderer.MustLoadTemplate(w, r, "changelog.html", map[string]interface{}{
+		"Changelog": changelog,
+	})
 }

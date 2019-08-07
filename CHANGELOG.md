@@ -19,6 +19,7 @@ Added:
 * Added a generic welcome message for all drivers on connect, it will also warn the driver if the server is running Sol.
 * Server Manager now uses gzip compression where possible. This should improve page load times considerably!
 * Added server "Performance Mode" option to config.yml. If this mode is enabled server manager will disable live timings completely, reducing cpu utilisation. This setting may be used in the future to disable further advanced options in order to improve performance.
+* You'll now see this Changelog in Server Manager once per account every time you upgrade. You can also view the Changelog in Server Manager itself at any time using the link in the footer!
 
 Note, all of the new Car features work best when you have uploaded your cars to Server Manager. If you haven't, the pages will still work, but won't be anywhere near as cool!
 
@@ -32,6 +33,7 @@ Fixes:
 * Fixes an issue where Open Championship EntryLists would not be correctly preserved when assigning car slots to pre-existing Entrants. 
 * Added a server wide fallback sorting option for events where AC has outputted an incorrect driver order in the result json file. Only enable this if you have sorting issues. If you have championship events where the sorting is incorrect you will need to re-import the results files using Manage Event, Import Results.
 * Fixes an issue where the sessions "Time" / "Laps" selector did not show an input field when loading a previously saved race setup.
+* Some errors which were being seen often are now 'warnings' not errors, so you won't see them as often.
 
 ---
 
