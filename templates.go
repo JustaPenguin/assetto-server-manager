@@ -206,6 +206,7 @@ func (tr *Renderer) init() error {
 	}
 	funcs["formatDuration"] = formatDuration
 	funcs["appendQuery"] = appendQuery
+	funcs["ChangelogHTML"] = changelogHTML
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
@@ -214,6 +215,17 @@ func (tr *Renderer) init() error {
 	}
 
 	return nil
+}
+
+func changelogHTML() template.HTML {
+	changelog, err := LoadChangelog()
+
+	if err != nil {
+		logrus.WithError(err).Error("could not load changelog")
+		return "An error occurred loading the changelog"
+	}
+
+	return changelog
 }
 
 func appendQuery(r *http.Request, query, value string) string {

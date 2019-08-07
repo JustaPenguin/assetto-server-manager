@@ -13,11 +13,13 @@ import "./Calendar";
 import {CarSearch} from "./CarSearch";
 import {CarList} from "./CarList";
 import "./RaceList";
+import {ChangelogPopup} from "./ChangelogPopup";
 
 $(() => {
     new RaceControl();
     new CarDetail();
     new CarList();
+    new ChangelogPopup();
 
     $(".race-setup").each(function (index, elem) {
         new CarSearch($(elem));

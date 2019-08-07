@@ -1,5 +1,5 @@
 # set the version if it's not already set
-VERSION?=$(shell date +'%y.%m.%d-%H-%M')
+VERSION?=dev-$(shell date +'%y.%m.%d-%H-%M')
 
 export GO111MODULE=on
 

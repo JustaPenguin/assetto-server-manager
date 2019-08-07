@@ -100,7 +100,7 @@ func addAdminAccount(rs Store) error {
 }
 
 func championshipLinksToSummerNote(rs Store) error {
-	logrus.Infof("Converting old championship links to new markdown format")
+	logrus.Infof("Running migration: Converting old championship links to new markdown format")
 
 	championships, err := rs.ListChampionships()
 
@@ -361,6 +361,7 @@ func separateJSONStores(rs *JSONStore) error {
 const lastReleaseVersionPreChangelogShowUpdate = "v1.3.4"
 
 func addLastSeenVersionToAccounts(s Store) error {
+	logrus.Errorf("Running migration: Add Last Seen Version to Accounts")
 	accounts, err := s.ListAccounts()
 
 	if err != nil {
