@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	CurrentMigrationVersion = 9
+	CurrentMigrationVersion = 10
 	versionMetaKey          = "version"
 )
 
@@ -57,6 +57,7 @@ var migrations = []migrationFunc{
 	// due to it needing re-running in some environments.
 	func(Store) error { return nil },
 	addPitBoxDefinitionToEntrants,
+	addLastSeenVersionToAccounts,
 }
 
 func addEntrantIDToChampionships(rs Store) error {
@@ -348,6 +349,28 @@ func separateJSONStores(rs *JSONStore) error {
 		}
 
 		err = moveStoreFiles(filepath.Join(rs.base, entrantsFile), filepath.Join(rs.shared, entrantsFile))
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+const lastReleaseVersionPreChangelogShowUpdate = "v1.3.4"
+
+func addLastSeenVersionToAccounts(s Store) error {
+	accounts, err := s.ListAccounts()
+
+	if err != nil {
+		return err
+	}
+
+	for _, account := range accounts {
+		account.LastSeenVersion = lastReleaseVersionPreChangelogShowUpdate
+
+		err := s.UpsertAccount(account)
 
 		if err != nil {
 			return err

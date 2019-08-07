@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/cj123/sessions"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
@@ -43,8 +44,9 @@ func init() {
 
 func NewAccount() *Account {
 	return &Account{
-		ID:      uuid.New(),
-		Created: time.Now(),
+		ID:              uuid.New(),
+		Created:         time.Now(),
+		LastSeenVersion: BuildVersion,
 	}
 }
 
@@ -62,6 +64,23 @@ type Account struct {
 	PasswordSalt string
 
 	DefaultPassword string
+	LastSeenVersion string
+}
+
+func (a Account) HasSeenVersion(version string) bool {
+	newVersion, err := semver.NewVersion(version)
+
+	if err != nil {
+		return true
+	}
+
+	currentVersion, err := semver.NewVersion(a.LastSeenVersion)
+
+	if err != nil {
+		return true
+	}
+
+	return newVersion.Equal(currentVersion) || newVersion.LessThan(currentVersion)
 }
 
 func (a Account) NeedsPasswordReset() bool {
@@ -98,8 +117,9 @@ const (
 )
 
 var OpenAccount = &Account{
-	Name:  "Free Access",
-	Group: GroupRead,
+	Name:            "Free Access",
+	Group:           GroupRead,
+	LastSeenVersion: BuildVersion,
 }
 
 // MustLoginMiddleware determines whether an account needs to log in to access a given Group page
