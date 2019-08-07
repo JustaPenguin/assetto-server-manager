@@ -19,6 +19,7 @@ Added:
 * Added a generic welcome message for all drivers on connect, it will also warn the driver if the server is running Sol.
 * Server Manager now uses gzip compression where possible. This should improve page load times considerably!
 * Added server "Performance Mode" option to config.yml. If this mode is enabled server manager will disable live timings completely, reducing cpu utilisation. This setting may be used in the future to disable further advanced options in order to improve performance.
+* You'll now see this Changelog in Server Manager once per account every time you upgrade. You can also view the Changelog in Server Manager itself at any time using the link in the footer!
 
 Note, all of the new Car features work best when you have uploaded your cars to Server Manager. If you haven't, the pages will still work, but won't be anywhere near as cool!
 
@@ -32,6 +33,9 @@ Fixes:
 * Fixes an issue where Open Championship EntryLists would not be correctly preserved when assigning car slots to pre-existing Entrants. 
 * Added a server wide fallback sorting option for events where AC has outputted an incorrect driver order in the result json file. Only enable this if you have sorting issues. If you have championship events where the sorting is incorrect you will need to re-import the results files using Manage Event, Import Results.
 * Fixes an issue where the sessions "Time" / "Laps" selector did not show an input field when loading a previously saved race setup.
+* Some errors which were being seen often are now 'warnings' not errors, so you won't see them as often.
+
+---
 
 v1.3.3
 ------
@@ -92,6 +96,8 @@ Removed:
 * In an effort to reduce the build size and complexity, we have removed the old Entrant autofill method. This has been
   replaced by the more obvious dropdown in the Entrant box.
 
+---
+
 v1.3.2
 ------
 
@@ -122,6 +128,8 @@ Fixes:
 * AutoFill entrants are now alphabetically sorted.
 * Laps which have Cuts > 0 are now excluded from "Best Lap" in Live Timings
 * Fixes misleading times in the Live Timings stored times table by adding leading zeroes to millisecond values under 100ms.
+
+---
 
 v1.3.1
 ------
@@ -156,6 +164,8 @@ Fixes:
 * The 'Save Race' button at the top of the Custom Race form now saves the race without redirecting you to Live Timings
 * Fixes a panic that can occur when using shortened driver names if a driver's name ends in a space.
 * Fixes an issue where a driver's initials were not saved correctly when reloading the live map.
+
+---
 
 v1.3.0
 ------
@@ -208,10 +218,14 @@ Fixes:
 * Fixes a bug where saving a Championship Event using the top Save button would actually cause the event to be duplicated.
 * Reworded the Reverse Grid description
 
+---
+
 v1.2.2
 ------
 
 Fixes a bug where new Championship Entrants couldn't be added.
+
+---
 
 v1.2.1
 ------
@@ -241,6 +255,8 @@ Fixes:
 * Fixed live map extra data toggle.
 * Detected improper disconnects (game crashes, alt+f4 etc.) in live timing.
 * Fixes an issue where configured car skins would be lost in Open Championships.
+
+---
 
 v1.2.0
 ------
@@ -298,9 +314,9 @@ Added:
   - If a driver changes class, an entirely new entry is made but the old one is not deleted - new points earned go to the 
     new team and new driver entry.
   
-  A byproduct of this is that once points have been added to a Championship Class, they cannot be removed. That is, if you
-  have 6 drivers in a Championship Class and you remove 2, there will still be 6 points inputs in the Class. This is so
-  that previous Championship Events have the correct number of points for their calculations.
+  - A byproduct of this is that once points have been added to a Championship Class, they cannot be removed. That is, if you
+    have 6 drivers in a Championship Class and you remove 2, there will still be 6 points inputs in the Class. This is so
+    that previous Championship Events have the correct number of points for their calculations.
 * Added logging to server-manager.log - this should make debugging issues easier.
 * Moved "Result Screen Time" option to Custom Race / Championship Event configuration instead of Server Options
 * Added disconnected table to live timing page, shows best times of disconnected drivers from the current session.
@@ -325,10 +341,14 @@ Fixes:
 * Fixes incorrectly decoded utf32 strings coming through UDP data.
 * Booking Mode now works correctly. Closed Championships have booking mode disabled for all events.
 
+---
+
 v1.1.3
 ------
 
 * Fixes an issue with Championship Practice Events not working after updating the cars in the Championship entry list.
+
+---
 
 v1.1.2
 ------
@@ -346,10 +366,14 @@ v1.1.2
 * Fixed scheduled events for time zones outside of UTC.
 * Improved some page layouts on mobile devices
 
+---
+
 v1.1.1
 ------
 
 * Fixed a bug that caused some scheduled races to not start correctly.
+
+---
 
 v1.1.0
 ------
@@ -378,6 +402,8 @@ config.yml to get live map functionality!
 * Overhauled UDP proxying to work with sending messages as well as existing support for receiving.
   (This is what makes KissMyRank etc work!)
 
+---
+
 v1.0.2
 ------
 
@@ -388,6 +414,8 @@ v1.0.2
 * Fixed an issue with named Custom Race entrants losing their car/skin on race start
 * Collision speeds on Live Timings page are now rounded to 2 decimal places
 
+---
+
 v1.0.1
 ------
 
@@ -396,6 +424,8 @@ v1.0.1
 * Average Lap Time on Results pages is now calculated lap times that meet the following conditions:
     "if lap doesnt cut and if lap is < 107% of average for that driver so far and if lap isn't lap 1"
 * Fixed an issue with Quick Race Time/Laps selector not defaulting to the correct value.
+
+---
 
 v1.0.0
 ------
