@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y build-essential libssl-dev curl nodejs 
 
 ADD . ${BUILD_DIR}
 WORKDIR ${BUILD_DIR}
+RUN rm -rf cmd/server-manager/typescript/node_modules
 RUN VERSION=${SM_VERSION} make deploy
 RUN mv cmd/server-manager/build/linux/server-manager /usr/bin/
 
