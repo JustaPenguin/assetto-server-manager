@@ -8,9 +8,9 @@ import {CarUpdate, CarUpdateVec} from "./models/UDP";
 import {randomColor} from "randomcolor/randomColor";
 import {msToTime, prettifyName} from "./utils";
 import moment from "moment";
+import ReconnectingWebSocket from "reconnecting-websocket";
 import ClickEvent = JQuery.ClickEvent;
 import ChangeEvent = JQuery.ChangeEvent;
-import ReconnectingWebSocket from "reconnecting-websocket";
 
 interface WSMessage {
     Message: any;
@@ -754,10 +754,11 @@ class LiveTimings implements WebsocketHandler {
         if (addingDriverToConnectedTable) {
             // events
             const $tdEvents = $tr.find(".events");
+            const loadedID = driver.CarInfo.DriverGUID + "-loaded";
 
-            if (moment(driver.LoadedTime).add("10", "seconds").isSameOrAfter(moment()) && !$("#" + driver.CarInfo.DriverGUID + "-" + "loaded").length) {
+            if (moment(driver.LoadedTime).add("10", "seconds").isSameOrAfter(moment()) && !$("#" + loadedID).length) {
                 // car just loaded
-                let $tag = $("<span/>").attr("id", driver.CarInfo.DriverGUID + "-" + "loaded");
+                let $tag = $("<span/>").attr("id", loadedID);
                 $tag.attr({'class': 'badge badge-success live-badge'});
                 $tag.text("Loaded");
 
