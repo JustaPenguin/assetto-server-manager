@@ -22,7 +22,7 @@ generate:
 assets:
 	$(MAKE) -C cmd/server-manager assets
 
-asset-embed:
+asset-embed: generate
 	$(MAKE) -C cmd/server-manager asset-embed
 
 build:
