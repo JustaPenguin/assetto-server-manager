@@ -20,7 +20,7 @@ assets:
 
 asset-embed:
 	go get -u github.com/mjibson/esc
-	go -mod vendor generate ./...
+	go generate -mod vendor ./...
 
 deploy: clean assets asset-embed
 	# directory structure
