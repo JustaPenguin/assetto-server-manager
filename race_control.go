@@ -308,7 +308,7 @@ func (rc *RaceControl) requestSessionInfo() {
 			err := rc.process.SendUDPMessage(udp.GetSessionInfo{})
 
 			if err == ErrNoOpenUDPConnection {
-				logrus.WithError(err).Errorf("Couldn't send session info udp request. Breaking loop.")
+				logrus.WithError(err).Warnf("Couldn't send session info udp request. Breaking loop.")
 				rc.sessionInfoTicker.Stop()
 				return
 			} else if err != nil {

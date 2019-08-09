@@ -225,3 +225,17 @@ func (sah *ServerAdministrationHandler) serverProcess(w http.ResponseWriter, r *
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
+
+func (sah *ServerAdministrationHandler) changelog(w http.ResponseWriter, r *http.Request) {
+	changelog, err := LoadChangelog()
+
+	if err != nil {
+		logrus.WithError(err).Error("could not load changelog")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	sah.viewRenderer.MustLoadTemplate(w, r, "changelog.html", map[string]interface{}{
+		"Changelog": changelog,
+	})
+}
