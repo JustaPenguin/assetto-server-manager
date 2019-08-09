@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/cj123/sessions"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
@@ -43,8 +44,9 @@ func init() {
 
 func NewAccount() *Account {
 	return &Account{
-		ID:      uuid.New(),
-		Created: time.Now(),
+		ID:              uuid.New(),
+		Created:         time.Now(),
+		LastSeenVersion: BuildVersion,
 	}
 }
 
@@ -62,6 +64,31 @@ type Account struct {
 	PasswordSalt string
 
 	DefaultPassword string
+	LastSeenVersion string
+}
+
+func (a Account) HasSeenCurrentVersion() bool {
+	return a.HasSeenVersion(BuildVersion)
+}
+
+func (a Account) HasSeenVersion(version string) bool {
+	if a.Name == OpenAccount.Name {
+		return true // open accounts don't see version releases
+	}
+
+	newVersion, err := semver.NewVersion(version)
+
+	if err != nil {
+		return true
+	}
+
+	currentVersion, err := semver.NewVersion(a.LastSeenVersion)
+
+	if err != nil {
+		return true
+	}
+
+	return newVersion.Equal(currentVersion) || newVersion.LessThan(currentVersion)
 }
 
 func (a Account) NeedsPasswordReset() bool {
@@ -98,8 +125,9 @@ const (
 )
 
 var OpenAccount = &Account{
-	Name:  "Free Access",
-	Group: GroupRead,
+	Name:            "Free Access",
+	Group:           GroupRead,
+	LastSeenVersion: BuildVersion,
 }
 
 // MustLoginMiddleware determines whether an account needs to log in to access a given Group page
@@ -161,6 +189,23 @@ func (ah *AccountHandler) DeleteAccessMiddleware(next http.Handler) http.Handler
 
 func (ah *AccountHandler) AdminAccessMiddleware(next http.Handler) http.Handler {
 	return ah.MustLoginMiddleware(GroupAdmin, next)
+}
+
+func (ah *AccountHandler) dismissChangelog(w http.ResponseWriter, r *http.Request) {
+	account := AccountFromRequest(r)
+
+	if account.Name == OpenAccount.Name {
+		// don't save the open account
+		return
+	}
+
+	err := ah.accountManager.SetCurrentVersion(account)
+
+	if err != nil {
+		logrus.WithError(err).Error("could not save current account version")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 }
 
 func AccountFromRequest(r *http.Request) *Account {
@@ -409,6 +454,12 @@ func (am *AccountManager) resetPassword(accountID string) (*Account, error) {
 	account.PasswordHash = ""
 
 	return account, am.store.UpsertAccount(account)
+}
+
+func (am *AccountManager) SetCurrentVersion(account *Account) error {
+	account.LastSeenVersion = BuildVersion
+
+	return am.store.UpsertAccount(account)
 }
 
 func (am *AccountManager) changePassword(account *Account, password string) error {

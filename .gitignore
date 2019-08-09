@@ -27,3 +27,4 @@ server-manager.log
 # End of https://www.gitignore.io/api/go
 *.syso
 *.map
+changelog_embed.go

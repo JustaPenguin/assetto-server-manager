@@ -227,12 +227,12 @@
                                     <div class="form-group row">
                                         <div class="col-sm-3">
                                             <select id="TimeOrLaps" class="form-control">
-                                                <option value="Time" {{ if ne $session.Time 0 }} selected="selected" {{ end }}>Time</option>
+                                                <option value="Time" {{ if or (ne $session.Time 0) (eq $session.Laps 0) }} selected="selected" {{ end }}>Time</option>
                                                 <option value="Laps" {{ if ne $session.Laps 0 }} selected="selected" {{ end }}>Laps</option>
                                             </select>
                                         </div>
 
-                                        <div class="col-sm-9" id="RaceTime" {{ if eq $session.Time 0 }}style="display: none;"{{ end }}>
+                                        <div class="col-sm-9" id="RaceTime" {{ if not (or (ne $session.Time 0) (eq $session.Laps 0)) }}style="display: none;"{{ end }}>
                                             <input
                                                     type="number"
                                                     id="Race.Time"
@@ -1575,13 +1575,13 @@
                     {{ end }}
 
 
-                    <div class="float-right">
+                    <div class="float-right mt-5">
                         {{ if not .IsEditing }}
-                            <button class="btn btn-primary mt-5" data-toggle="tooltip" id="save-race-button" name="action" value="justSave" type="submit" title="Save this setup without starting the race">Save Custom Race</button>
-                            <button class="btn btn-success mt-5" data-toggle="tooltip" id="start-race-button" name="action" value="startRace" type="submit" title="Save this setup and begin the race">Start Race</button>
+                            <button class="btn btn-primary" data-toggle="tooltip" id="save-race-button" name="action" value="justSave" type="submit" title="Save this setup without starting the race">Save Custom Race</button>
+                            <button class="btn btn-success" data-toggle="tooltip" id="start-race-button" name="action" value="startRace" type="submit" title="Save this setup and begin the race">Start Race</button>
                         {{ else }}
                             <input type="hidden" name="Editing" id="Editing" value="{{ .EditingID }}">
-                            <button class="btn btn-primary mt-5" data-toggle="tooltip" name="action" value="justSave" type="submit">Save Race</button>
+                            <button class="btn btn-primary" data-toggle="tooltip" name="action" value="justSave" type="submit">Save Race</button>
                         {{ end }}
                     </div>
                 </div>
