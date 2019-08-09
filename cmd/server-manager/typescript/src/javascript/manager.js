@@ -285,8 +285,6 @@ class RaceSetup {
 
         }
 
-        $document.on("change", ".entrant-id", this.pitIDChangeEvent.bind(this));
-
         this.raceLaps();
         this.showEnabledSessions();
         this.showSolSettings();
@@ -980,7 +978,6 @@ class RaceSetup {
                 let $entrantID = $elem.find("[name='EntryList.EntrantID']");
 
                 $entrantID.val($(".entrant:visible").length - 1);
-                that.organisePitIDs($entrantID);
 
                 populateEntryListCars();
                 showEntrantSkin(chosenCar, chosenSkin, $elem);
