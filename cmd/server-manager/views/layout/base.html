@@ -19,6 +19,10 @@
 
         {{ end }}
 
+        <script type="text/javascript">
+            var ShowUpgradePopup = {{ not .User.HasSeenCurrentVersion }};
+        </script>
+
         {{ if $.MonitoringEnabled }}
             <!-- Global site tag (gtag.js) - Google Analytics -->
             <script async src="https://www.googletagmanager.com/gtag/js?id=UA-85378001-6"></script>
@@ -219,9 +223,7 @@
                     <a href="https://github.com/cj123/assetto-server-manager" class="mr-3"><i class="fab fa-github"></i> GitHub</a>
                     <a href="https://github.com/cj123/assetto-server-manager/issues" class="mr-3"><i class="fas fa-bug"></i> Submit a Bug Report</a>
                     <a href="https://paypal.me/JustaPenguinUK" class="mr-3"><i class="fas fa-heart"></i> Donate</a>
-                    <a href="/events.ics" class="mr-3" data-toggle="tooltip" title="Subscribe to a calendar feed for all Scheduled Events!">
-                        <i class="fas fa-calendar"></i> Scheduled Events
-                    </a>
+                    <a href="/changelog" class="mr-3"><i class="fas fa-pencil-alt"></i> Changelog</a>
                     <a href="https://github.com/cj123/assetto-server-manager/wiki"><i class="fas fa-book"></i> Wiki</a>
                 </div>
                 <div class="col-sm-5 text-right">
@@ -260,6 +262,34 @@
             </div>
         </div>
     </div>
+
+    {{ if not $.User.HasSeenCurrentVersion }}
+        <div class="modal" tabindex="-1" role="dialog" id="changelog-modal">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Server Manager was upgraded to {{ Version }}!</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            Welcome to this new version of Server Manager! We update Server Manager regularly with cool
+                            new features and bug fixes! Please read below to find out the changes in the new release.
+                        </p>
+
+                        <div id="changelog-text">
+                            {{ ChangelogHTML }}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {{ end }}
 
     {{ block "javascript" . }}
         <script src="{{ asset "/static/js/bundle.js" }}"></script>

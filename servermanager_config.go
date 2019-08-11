@@ -128,8 +128,9 @@ func (s *StoreConfig) BuildStore() (Store, error) {
 }
 
 type ServerExtraConfig struct {
-	RunOnStart   []string `yaml:"run_on_start"`
-	AuditLogging bool     `yaml:"audit_logging"`
+	RunOnStart      []string `yaml:"run_on_start"`
+	AuditLogging    bool     `yaml:"audit_logging"`
+	PerformanceMode bool     `yaml:"performance_mode"`
 }
 
 func ReadConfig(location string) (conf *Configuration, err error) {

@@ -17,7 +17,9 @@
                     {{ template "race-card" . }}
 
                     <div class="button-bar">
-                        <a href="/live-timing" class="btn btn-primary">Live Timings</a>
+                        {{ if not $.PerformanceMode }}
+                            <a href="/live-timing" class="btn btn-primary">Live Timings</a>
+                        {{ end }}
 
 
                         {{ if WriteAccess }}

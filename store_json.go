@@ -163,7 +163,20 @@ func (rs *JSONStore) UpsertEntrant(entrant Entrant) error {
 		return err
 	}
 
-	entrants = append(entrants, &entrant)
+	isNew := true
+
+	for _, newEntrant := range entrants {
+		if newEntrant.GUID == entrant.GUID {
+			newEntrant = &entrant
+			isNew = false
+
+			break
+		}
+	}
+
+	if isNew {
+		entrants = append(entrants, &entrant)
+	}
 
 	return rs.encodeFile(rs.shared, entrantsFile, entrants)
 }

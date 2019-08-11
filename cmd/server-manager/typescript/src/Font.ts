@@ -38,6 +38,7 @@ import {faClipboardList} from "@fortawesome/free-solid-svg-icons/faClipboardList
 import {faUsersCog} from "@fortawesome/free-solid-svg-icons/faUsersCog";
 import {faArrowRight} from "@fortawesome/free-solid-svg-icons/faArrowRight";
 import {faArrowDown} from "@fortawesome/free-solid-svg-icons/faArrowDown";
+import {faPencilAlt} from "@fortawesome/free-solid-svg-icons/faPencilAlt";
 
 library.add(
     faUser,
@@ -77,6 +78,7 @@ library.add(
     faUsersCog,
     faArrowRight,
     faArrowDown,
+    faPencilAlt,
 );
 
 dom.watch();

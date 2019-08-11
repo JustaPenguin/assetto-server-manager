@@ -29,6 +29,7 @@ func InitWithResolver(resolver *Resolver) error {
 	}
 
 	UseShortenedDriverNames = opts != nil && opts.UseShortenedDriverNames == 1
+	UseFallBackSorting = opts != nil && opts.FallBackResultsSorting == 1
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)

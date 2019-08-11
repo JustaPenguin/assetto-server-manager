@@ -83,6 +83,7 @@ func Router(
 
 		// pages
 		r.Get("/", serverAdministrationHandler.home)
+		r.Get("/changelog", serverAdministrationHandler.changelog)
 
 		// content
 		r.Get("/cars", carsHandler.list)
@@ -108,8 +109,22 @@ func Router(
 		r.Post("/championship/{championshipID}/sign-up", championshipsHandler.signUpForm)
 
 		// race control
-		r.Get("/live-timing", raceControlHandler.liveTiming)
-		r.Get("/api/race-control", raceControlHandler.websocket)
+		r.Group(func(r chi.Router) {
+			r.Use(func(next http.Handler) http.Handler {
+				fn := func(w http.ResponseWriter, req *http.Request) {
+					if config.Server.PerformanceMode {
+						http.NotFound(w, req)
+					} else {
+						next.ServeHTTP(w, req)
+					}
+				}
+
+				return http.HandlerFunc(fn)
+			})
+
+			r.Get("/live-timing", raceControlHandler.liveTiming)
+			r.Get("/api/race-control", raceControlHandler.websocket)
+		})
 
 		// calendar
 		r.Get("/calendar", scheduledRacesHandler.calendar)
@@ -117,6 +132,7 @@ func Router(
 
 		// account management
 		r.HandleFunc("/accounts/new-password", accountHandler.newPassword)
+		r.HandleFunc("/accounts/dismiss-changelog", accountHandler.dismissChangelog)
 
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")))
 		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")))
@@ -273,7 +289,7 @@ const maxAge30Days = 2592000
 
 func etag(url string) string {
 	h := md5.New()
-	h.Write([]byte(BuildTime + url))
+	h.Write([]byte(BuildVersion + url))
 
 	return hex.EncodeToString(h.Sum(nil))
 }

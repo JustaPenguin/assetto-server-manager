@@ -59,7 +59,9 @@ func NewResolver(templateLoader TemplateLoader, reloadTemplates bool, store Stor
 }
 
 func (r *Resolver) UDPCallback(message udp.Message) {
-	r.resolveRaceControl().UDPCallback(message)
+	if !config.Server.PerformanceMode {
+		r.resolveRaceControl().UDPCallback(message)
+	}
 	r.resolveChampionshipManager().ChampionshipEventCallback(message)
 	r.resolveRaceManager().LoopCallback(message)
 	r.resolveContentManagerWrapper().UDPCallback(message)
@@ -318,6 +320,11 @@ func (r *Resolver) resolveRaceControl() *RaceControl {
 }
 
 func (r *Resolver) resolveRaceControlHandler() *RaceControlHandler {
+
+	if config.Server.PerformanceMode {
+		return nil
+	}
+
 	if r.raceControlHandler != nil {
 		return r.raceControlHandler
 	}

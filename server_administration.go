@@ -45,7 +45,8 @@ func (sah *ServerAdministrationHandler) home(w http.ResponseWriter, r *http.Requ
 	}
 
 	sah.viewRenderer.MustLoadTemplate(w, r, "home.html", map[string]interface{}{
-		"RaceDetails": customRace,
+		"RaceDetails":     customRace,
+		"PerformanceMode": config.Server.PerformanceMode,
 	})
 }
 
@@ -95,6 +96,7 @@ func (sah *ServerAdministrationHandler) options(w http.ResponseWriter, r *http.R
 		}
 
 		UseShortenedDriverNames = serverOpts.UseShortenedDriverNames == 1
+		UseFallBackSorting = serverOpts.FallBackResultsSorting == 1
 
 		// save the config
 		err = sah.raceManager.SaveServerOptions(serverOpts)
@@ -222,4 +224,18 @@ func (sah *ServerAdministrationHandler) serverProcess(w http.ResponseWriter, r *
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (sah *ServerAdministrationHandler) changelog(w http.ResponseWriter, r *http.Request) {
+	changelog, err := LoadChangelog()
+
+	if err != nil {
+		logrus.WithError(err).Error("could not load changelog")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	sah.viewRenderer.MustLoadTemplate(w, r, "changelog.html", map[string]interface{}{
+		"Changelog": changelog,
+	})
 }
