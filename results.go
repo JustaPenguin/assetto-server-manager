@@ -198,6 +198,40 @@ func (s *SessionResults) FallBackSort() {
 	// sort the results by laps completed then race time
 	// this is a fall back for when assetto's sorting is terrible
 	// sort results.Result, if disqualified go to back, if time penalty sort by laps completed then lap time
+
+cars:
+	for i := range s.Cars {
+		for z := range s.Result {
+			if s.Cars[i].Driver.GUID == s.Result[z].DriverGUID {
+				continue cars
+			}
+		}
+
+		var bestLap int
+
+		for y := range s.Laps {
+			if s.IsDriversFastestLap(s.Cars[i].Driver.GUID, s.Laps[y].LapTime, s.Laps[y].Cuts) {
+				bestLap = s.Laps[y].LapTime
+				break
+			}
+		}
+
+		s.Result = append(s.Result, &SessionResult{
+			BallastKG:    s.Cars[i].BallastKG,
+			BestLap:      bestLap,
+			CarID:        s.Cars[i].CarID,
+			CarModel:     s.Cars[i].Model,
+			DriverGUID:   s.Cars[i].Driver.GUID,
+			DriverName:   s.Cars[i].Driver.Name,
+			Restrictor:   s.Cars[i].Restrictor,
+			TotalTime:    0,
+			HasPenalty:   false,
+			PenaltyTime:  time.Duration(0),
+			LapPenalty:   0,
+			Disqualified: false,
+		})
+	}
+
 	for i := range s.Result {
 		s.Result[i].TotalTime = 0
 
