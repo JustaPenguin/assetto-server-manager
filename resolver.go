@@ -15,6 +15,8 @@ type Resolver struct {
 	carManager          *CarManager
 	championshipManager *ChampionshipManager
 	accountManager      *AccountManager
+	discordManager      *DiscordManager
+	notificationManager *NotificationHandler
 
 	viewRenderer          *Renderer
 	serverProcess         ServerProcess
@@ -114,6 +116,7 @@ func (r *Resolver) resolveRaceManager() *RaceManager {
 		r.store,
 		r.resolveServerProcess(),
 		r.resolveCarManager(),
+		r.resolveNotificationManager(),
 	)
 
 	return r.raceManager
@@ -337,6 +340,26 @@ func (r *Resolver) resolveRaceControlHandler() *RaceControlHandler {
 	)
 
 	return r.raceControlHandler
+}
+
+func (r *Resolver) resolveDiscordManager() *DiscordManager {
+	if r.discordManager != nil {
+		return r.discordManager
+	}
+
+	r.discordManager = NewDiscordManager()
+
+	return r.discordManager
+}
+
+func (r *Resolver) resolveNotificationManager() *NotificationHandler {
+	if r.notificationManager != nil {
+		return r.notificationManager
+	}
+
+	r.notificationManager = NewNotificationManager(r)
+
+	return r.notificationManager
 }
 
 func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {

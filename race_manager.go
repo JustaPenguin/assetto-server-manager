@@ -25,9 +25,10 @@ var (
 )
 
 type RaceManager struct {
-	process    ServerProcess
-	raceStore  Store
-	carManager *CarManager
+	process             ServerProcess
+	raceStore           Store
+	carManager          *CarManager
+	notificationManager *NotificationHandler
 
 	currentRace      *ServerConfig
 	currentEntryList EntryList
@@ -39,18 +40,21 @@ type RaceManager struct {
 	loopedRaceWaitForSecondRace bool
 
 	// scheduled races
-	customRaceStartTimers map[string]*time.Timer
+	customRaceStartTimers    map[string]*time.Timer
+	customRaceReminderTimers map[string]*time.Timer
 }
 
 func NewRaceManager(
 	raceStore Store,
 	process ServerProcess,
 	carManager *CarManager,
+	notificationManager *NotificationHandler,
 ) *RaceManager {
 	return &RaceManager{
-		raceStore:  raceStore,
-		process:    process,
-		carManager: carManager,
+		raceStore:           raceStore,
+		process:             process,
+		carManager:          carManager,
+		notificationManager: notificationManager,
 	}
 }
 
@@ -192,6 +196,10 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 
 	if err != nil {
 		return err
+	}
+
+	if !loop {
+		rm.notificationManager.SendRaceStartMessage(config, event)
 	}
 
 	return nil
@@ -969,6 +977,10 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 		timer.Stop()
 	}
 
+	if timer := rm.customRaceReminderTimers[race.UUID.String()]; timer != nil {
+		timer.Stop()
+	}
+
 	if action == "add" {
 		if date.IsZero() {
 			return errors.New("can't schedule race for zero time")
@@ -998,6 +1010,12 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 			if err != nil {
 				logrus.WithError(err).Errorf("Couldn't start scheduled race: %s, %s.", race.Name, race.UUID.String())
 			}
+		})
+
+		duration = time.Until(date.Add(-10 * time.Minute))
+
+		rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+			rm.notificationManager.SendRaceReminderMessage(race)
 		})
 
 	} else {
@@ -1233,6 +1251,7 @@ func (rm *RaceManager) clearLoopedRaceSessionTypes() {
 
 func (rm *RaceManager) InitScheduledRaces() error {
 	rm.customRaceStartTimers = make(map[string]*time.Timer)
+	rm.customRaceReminderTimers = make(map[string]*time.Timer)
 
 	races, err := rm.raceStore.ListCustomRaces()
 
@@ -1254,6 +1273,15 @@ func (rm *RaceManager) InitScheduledRaces() error {
 					logrus.WithError(err).Errorf("Couldn't start scheduled race: %s, %s", race.Name, race.UUID.String())
 				}
 			})
+
+			if race.Scheduled.Add(-10 * time.Minute).After(time.Now()) {
+				// add reminder
+				duration = time.Until(race.Scheduled.Add(-10 * time.Minute))
+
+				rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+					rm.notificationManager.SendRaceReminderMessage(race)
+				})
+			}
 		} else {
 			if race.HasRecurrenceRule() {
 				emptyTime := time.Time{}
