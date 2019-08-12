@@ -233,6 +233,7 @@ class RaceControlDriverMapRaceControlDriverVec {
 
 // struct2ts:github.com/cj123/assetto-server-manager.RaceControlDriverMapRaceControlDriverCollision
 class RaceControlDriverMapRaceControlDriverCollision {
+    ID: string;
     Type: string;
     Time: Date;
     OtherDriverGUID: string;
@@ -241,6 +242,7 @@ class RaceControlDriverMapRaceControlDriverCollision {
 
     constructor(data?: any) {
         const d: any = (data && typeof data === 'object') ? ToObject(data) : {};
+        this.ID = ('ID' in d) ? d.ID as string : '';
         this.Type = ('Type' in d) ? d.Type as string : '';
         this.Time = ('Time' in d) ? ParseDate(d.Time) : new Date();
         this.OtherDriverGUID = ('OtherDriverGUID' in d) ? d.OtherDriverGUID as string : '';

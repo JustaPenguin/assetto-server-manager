@@ -8,9 +8,9 @@ import {CarUpdate, CarUpdateVec} from "./models/UDP";
 import {randomColor} from "randomcolor/randomColor";
 import {msToTime, prettifyName} from "./utils";
 import moment from "moment";
+import ReconnectingWebSocket from "reconnecting-websocket";
 import ClickEvent = JQuery.ClickEvent;
 import ChangeEvent = JQuery.ChangeEvent;
-import ReconnectingWebSocket from "reconnecting-websocket";
 
 interface WSMessage {
     Message: any;
@@ -41,6 +41,7 @@ interface SimpleCollision {
 
 interface WebsocketHandler {
     handleWebsocketMessage(message: WSMessage): void;
+
     onTrackChange(track: string, trackLayout: string): void;
 }
 
@@ -74,7 +75,7 @@ export class RaceControl {
 
         this.handleIFrames();
         setInterval(this.showEventCompletion.bind(this), 1000);
-        this.$eventTitle.on("click", function(e: ClickEvent) {
+        this.$eventTitle.on("click", function (e: ClickEvent) {
             e.preventDefault();
         });
     }
@@ -463,7 +464,7 @@ class LiveMap implements WebsocketHandler {
         const trackURL = this.getTrackMapURL();
         let that = this;
 
-        this.$trackMapImage.on("load", function() {
+        this.$trackMapImage.on("load", function () {
             that.mapImageHasLoaded = true;
             that.correctMapDimensions();
         });
@@ -633,29 +634,46 @@ class LiveTimings implements WebsocketHandler {
         }
     }
 
-    private addDriverToTable(driver: Driver, $table: JQuery<HTMLTableElement>): void {
-        const addingDriverToConnectedTable = ($table === this.$connectedDriversTable);
-        const carInfo = driver.Cars[driver.CarInfo.CarModel];
+    private static CONNECTED_ROW_HTML = `
+        <tr class="driver-row">
+            <td class="driver-pos text-center"></td>
+            <td class="driver-name driver-link"></td>
+            <td class="driver-car"></td>
+            <td class="current-lap"></td>
+            <td class="last-lap"></td>
+            <td class="best-lap"></td>
+            <td class="gap"></td>
+            <td class="num-laps"></td>
+            <td class="top-speed"></td>
+            <td class="events"></td>
+        </tr>
+    `;
 
-        if (!carInfo) {
-            return;
-        }
+    private static DISCONNECTED_ROW_HTML = `
+        <tr class="driver-row">
+            <td class="driver-name"></td>
+            <td class="driver-car"></td>
+            <td class="best-lap"></td>
+            <td class="num-laps"></td>
+            <td class="top-speed"></td>
+        </tr>
+    `;
 
-        const $tr = $("<tr class='driver-row'/>").attr({
+    private newRowForDriver(driver: Driver, addingToConnectedTable: boolean): JQuery<HTMLElement> {
+        const $tr = $(addingToConnectedTable ? LiveTimings.CONNECTED_ROW_HTML : LiveTimings.DISCONNECTED_ROW_HTML);
+        $tr.attr({
             "data-guid": driver.CarInfo.DriverGUID,
             "data-car-model": driver.CarInfo.CarModel,
         });
 
-        // car position
-        if (addingDriverToConnectedTable) {
-            const $tdPos = $("<td class='text-center'/>").text(driver.Position === 255 || driver.Position === 0 ? "" : driver.Position);
-            $tr.append($tdPos);
+        if (!addingToConnectedTable) {
+            $tr.find(".driver-pos").remove();
         }
 
-        // driver name
-        const $tdName = $("<td/>").text(driver.CarInfo.DriverName);
+        const $tdName = $tr.find(".driver-name");
+        $tdName.text(driver.CarInfo.DriverName);
 
-        if (addingDriverToConnectedTable) {
+        if (addingToConnectedTable) {
             // driver dot
             const driverDot = this.liveMap.getDotForDriverGUID(driver.CarInfo.DriverGUID);
 
@@ -676,11 +694,33 @@ class LiveTimings implements WebsocketHandler {
             $tdName.data(DriverGUIDDataKey, driver.CarInfo.DriverGUID);
         }
 
-        $tr.append($tdName);
+        return $tr;
+    }
+
+    private addDriverToTable(driver: Driver, $table: JQuery<HTMLTableElement>): void {
+        const addingDriverToConnectedTable = ($table === this.$connectedDriversTable);
+        const carInfo = driver.Cars[driver.CarInfo.CarModel];
+
+        if (!carInfo) {
+            return;
+        }
+
+        let $tr = $table.find("[data-guid='" + driver.CarInfo.DriverGUID + "']");
+
+        let addTrToTable = false;
+
+        if (!$tr.length) {
+            addTrToTable = true;
+            $tr = this.newRowForDriver(driver, addingDriverToConnectedTable) as JQuery<HTMLTableElement>;
+        }
+
+        // car position
+        if (addingDriverToConnectedTable) {
+            $tr.find(".driver-pos").text(driver.Position === 255 || driver.Position === 0 ? "" : driver.Position);
+        }
 
         // car model
-        const $tdCar = $("<td/>").text(prettifyName(driver.CarInfo.CarModel, true));
-        $tr.append($tdCar);
+        $tr.find(".driver-car").text(prettifyName(driver.CarInfo.CarModel, true));
 
         if (addingDriverToConnectedTable) {
             let currentLapTimeText = "";
@@ -690,50 +730,52 @@ class LiveTimings implements WebsocketHandler {
                 currentLapTimeText = msToTime(moment().diff(moment(carInfo.LastLapCompletedTime)), false);
             }
 
-            const $tdCurrentLapTime = $("<td/>").text(currentLapTimeText);
-            $tr.append($tdCurrentLapTime);
+            $tr.find(".current-lap").text(currentLapTimeText);
         }
 
         if (addingDriverToConnectedTable) {
             // last lap
-            const $tdLastLap = $("<td/>").text(msToTime(carInfo.LastLap / 1000000));
-            $tr.append($tdLastLap);
+            $tr.find(".last-lap").text(msToTime(carInfo.LastLap / 1000000));
         }
 
         // best lap
-        const $tdBestLapTime = $("<td/>").text(msToTime(carInfo.BestLap / 1000000));
-        $tr.append($tdBestLapTime);
+        $tr.find(".best-lap").text(msToTime(carInfo.BestLap / 1000000));
 
         if (addingDriverToConnectedTable) {
             // gap
-            const $tdGap = $("<td/>").text(driver.Split);
-            $tr.append($tdGap);
+            $tr.find(".gap").text(driver.Split);
         }
 
         // lap number
-        const $tdLapNum = $("<td/>").text(carInfo.NumLaps ? carInfo.NumLaps : "0");
-        $tr.append($tdLapNum);
+        $tr.find(".num-laps").text(carInfo.NumLaps ? carInfo.NumLaps : "0");
 
-        const $tdTopSpeedBestLap = $("<td/>").text(carInfo.TopSpeedBestLap ? carInfo.TopSpeedBestLap.toFixed(2) + "Km/h" : "");
-        $tr.append($tdTopSpeedBestLap);
+        $tr.find(".top-speed").text(carInfo.TopSpeedBestLap ? carInfo.TopSpeedBestLap.toFixed(2) + "Km/h" : "");
 
         if (addingDriverToConnectedTable) {
             // events
-            const $tdEvents = $("<td/>");
+            const $tdEvents = $tr.find(".events");
+            const loadedID = driver.CarInfo.DriverGUID + "-loaded";
 
-            if (moment(driver.LoadedTime).add("10", "seconds").isSameOrAfter(moment())) {
+            if (moment(driver.LoadedTime).add("10", "seconds").isSameOrAfter(moment()) && !$("#" + loadedID).length) {
                 // car just loaded
-                let $tag = $("<span/>");
+                let $tag = $("<span/>").attr("id", loadedID);
                 $tag.attr({'class': 'badge badge-success live-badge'});
                 $tag.text("Loaded");
 
                 $tdEvents.append($tag);
+
+                setTimeout(() => {
+                    $tag.remove();
+                }, 10000);
             }
 
             if (driver.Collisions) {
                 for (const collision of driver.Collisions) {
-                    if (moment(collision.Time).add("10", "seconds").isSameOrAfter(moment())) {
+                    const collisionID = driver.CarInfo.DriverGUID + "-collision-" + collision.ID;
+
+                    if (moment(collision.Time).add("10", "seconds").isSameOrAfter(moment()) && !$("#" + collisionID).length) {
                         let $tag = $("<span/>");
+                        $tag.attr("id", collisionID);
                         $tag.attr({'class': 'badge badge-danger live-badge'});
 
                         if (collision.Type === Collision.WithCar) {
@@ -747,15 +789,14 @@ class LiveTimings implements WebsocketHandler {
                         }
 
                         $tdEvents.append($tag);
+
+                        setTimeout(() => {
+                            $tag.remove();
+                        }, 10000);
                     }
                 }
             }
-
-            $tr.append($tdEvents);
         }
-
-        // remove this driver and car from our current table.
-        $table.find("[data-guid='" + driver.CarInfo.DriverGUID + "'][data-car-model='" + driver.CarInfo.CarModel + "']").remove();
 
         if (!addingDriverToConnectedTable) {
             // if we're adding to the disconnected table, ensure we've removed this driver and car from the connected table.
@@ -769,7 +810,13 @@ class LiveTimings implements WebsocketHandler {
             return;
         }
 
-        $table.append($tr);
+        if (addTrToTable) {
+            $table.append($tr);
+        } else {
+            if (driver.Position > 0 && addingDriverToConnectedTable) {
+                $table.find("tr").eq(driver.Position - 1).after($tr.detach());
+            }
+        }
 
         if (!addingDriverToConnectedTable) {
             this.sortTable($table);

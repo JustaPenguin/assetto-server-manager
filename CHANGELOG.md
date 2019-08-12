@@ -34,6 +34,7 @@ Fixes:
 * Added a server wide fallback sorting option for events where AC has outputted an incorrect driver order in the result json file. Only enable this if you have sorting issues. If you have championship events where the sorting is incorrect you will need to re-import the results files using Manage Event, Import Results.
 * Fixes an issue where the sessions "Time" / "Laps" selector did not show an input field when loading a previously saved race setup.
 * Some errors which were being seen often are now 'warnings' not errors, so you won't see them as often.
+* Reworked the Live Timings table to perform better and prevent scrolling issues.
 * Removed the strict frontend sorting of pit IDs when creating an event. Now you can put cars wherever you like, but they will then be automatically sorted based on weighting. E.g. 0-3-5-5-6 becomes 0-1-2-3-4. Please try to avoid multiple entrants with the same pit ID, as their pitbox will essentially become random.
 * Entrants in the autofill list should no longer duplicate when using the json store, although you will need to manually remove any existing duplicates.
 
