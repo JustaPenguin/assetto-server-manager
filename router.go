@@ -82,6 +82,7 @@ func Router(
 
 		// pages
 		r.Get("/", serverAdministrationHandler.home)
+		r.Get("/changelog", serverAdministrationHandler.changelog)
 
 		// content
 		r.Get("/cars", carsHandler.list)
@@ -130,6 +131,7 @@ func Router(
 
 		// account management
 		r.HandleFunc("/accounts/new-password", accountHandler.newPassword)
+		r.HandleFunc("/accounts/dismiss-changelog", accountHandler.dismissChangelog)
 
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")))
 		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")))
@@ -268,7 +270,7 @@ const maxAge30Days = 2592000
 
 func etag(url string) string {
 	h := md5.New()
-	h.Write([]byte(BuildTime + url))
+	h.Write([]byte(BuildVersion + url))
 
 	return hex.EncodeToString(h.Sum(nil))
 }

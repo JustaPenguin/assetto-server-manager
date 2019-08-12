@@ -395,9 +395,11 @@
                         Export
                     </a>
 
-                    <a class="dropdown-item" id="simres-group" target="_blank" href="/championship/{{ $championship.ID.String }}/export-results">
-                        View in Simresults
-                    </a>
+                    {{ if gt $championship.Progress 0.0 }}
+                        <a class="dropdown-item" id="simres-group" target="_blank" href="/championship/{{ $championship.ID.String }}/export-results">
+                            View in Simresults
+                        </a>
+                    {{ end }}
 
                     {{ if $championship.HasScheduledEvents }}
                         <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/ics">

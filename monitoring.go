@@ -50,7 +50,7 @@ func InitMonitoring() {
 		logrus.WithError(err).Error("could not initialise raven monitoring")
 	}
 
-	raven.SetRelease(BuildTime)
+	raven.SetRelease(BuildVersion)
 
 	panicHandler = raven.Recoverer
 	panicCapture = func(fn func()) {

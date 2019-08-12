@@ -16,6 +16,10 @@ type EntryList map[string]*Entrant
 
 // Write the EntryList to the server location
 func (e EntryList) Write() error {
+	for i, entrant := range e.AsSlice() {
+		entrant.PitBox = i
+	}
+
 	f := ini.NewFile([]ini.DataSource{nil}, ini.LoadOptions{
 		IgnoreInlineComment: true,
 	})
