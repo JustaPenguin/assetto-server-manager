@@ -140,8 +140,12 @@ github.com/prometheus/procfs
 github.com/prometheus/procfs/nfs
 github.com/prometheus/procfs/xfs
 github.com/prometheus/procfs/internal/util
+# github.com/russross/blackfriday v2.0.0+incompatible
+github.com/russross/blackfriday
 # github.com/sethvargo/go-diceware v0.0.0-20181024230814-74428ac65346
 github.com/sethvargo/go-diceware/diceware
+# github.com/shurcooL/sanitized_anchor_name v1.0.0
+github.com/shurcooL/sanitized_anchor_name
 # github.com/sirupsen/logrus v1.3.0
 github.com/sirupsen/logrus
 # github.com/spkg/bom v0.0.0-20160624110644-59b7046e48ad

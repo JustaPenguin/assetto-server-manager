@@ -2,7 +2,7 @@ module github.com/cj123/assetto-server-manager
 
 require (
 	github.com/Masterminds/goutils v1.1.0 // indirect
-	github.com/Masterminds/semver v1.4.2 // indirect
+	github.com/Masterminds/semver v1.4.2
 	github.com/Masterminds/sprig v2.18.0+incompatible
 	github.com/RoaringBitmap/roaring v0.4.17 // indirect
 	github.com/Smerity/govarint v0.0.0-20150407073650-7265e41f48f1 // indirect
@@ -49,7 +49,9 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v0.9.2
 	github.com/remyoudompheng/bigfft v0.0.0-20190512091148-babf20351dd7 // indirect
+	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/sethvargo/go-diceware v0.0.0-20181024230814-74428ac65346
+	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.3.0
 	github.com/smartystreets/assertions v0.0.0-20190215210624-980c5ac6f3ac // indirect
 	github.com/spkg/bom v0.0.0-20160624110644-59b7046e48ad
@@ -64,7 +66,7 @@ require (
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	golang.org/x/sys v0.0.0-20190309122539-980fc434d28e // indirect
 	golang.org/x/text v0.3.0
-	golang.org/x/tools v0.0.0-20190807223507-b346f7fd45de // indirect
+	golang.org/x/tools v0.0.0-20190809145639-6d4652c779c4 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/ini.v1 v1.42.0 // indirect
 	gopkg.in/yaml.v2 v2.2.2
