@@ -32,7 +32,8 @@ type ChampionshipManager struct {
 	activeChampionship *ActiveChampionship
 	mutex              sync.Mutex
 
-	championshipEventStartTimers map[string]*time.Timer
+	championshipEventStartTimers    map[string]*time.Timer
+	championshipEventReminderTimers map[string]*time.Timer
 }
 
 func NewChampionshipManager(raceManager *RaceManager) *ChampionshipManager {
@@ -493,6 +494,10 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 		timer.Stop()
 	}
 
+	if timer := cm.championshipEventReminderTimers[event.ID.String()]; timer != nil {
+		timer.Stop()
+	}
+
 	if action == "add" {
 		// add a scheduled event on date
 		duration := time.Until(date)
@@ -503,6 +508,12 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 			if err != nil {
 				logrus.Errorf("couldn't start scheduled race, err: %s", err)
 			}
+		})
+
+		duration = time.Until(date.Add(-10 * time.Minute))
+
+		cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+			cm.notificationManager.SendChampionshipReminderMessage(championship, event)
 		})
 	}
 
@@ -1192,6 +1203,7 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 
 func (cm *ChampionshipManager) InitScheduledChampionships() error {
 	cm.championshipEventStartTimers = make(map[string]*time.Timer)
+	cm.championshipEventReminderTimers = make(map[string]*time.Timer)
 	championships, err := cm.ListChampionships()
 
 	if err != nil {
@@ -1215,6 +1227,15 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 						logrus.Errorf("couldn't start scheduled race, err: %s", err)
 					}
 				})
+
+				if event.Scheduled.Add(-10 * time.Minute).After(time.Now()) {
+					// add reminder
+					duration = time.Until(event.Scheduled.Add(-10 * time.Minute))
+
+					cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+						cm.notificationManager.SendChampionshipReminderMessage(championship, event)
+					})
+				}
 
 				return cm.UpsertChampionship(championship)
 			} else {
