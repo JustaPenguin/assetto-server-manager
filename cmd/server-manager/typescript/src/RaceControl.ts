@@ -666,10 +666,6 @@ class LiveTimings implements WebsocketHandler {
             "data-car-model": driver.CarInfo.CarModel,
         });
 
-        if (!addingToConnectedTable) {
-            $tr.find(".driver-pos").remove();
-        }
-
         const $tdName = $tr.find(".driver-name");
         $tdName.text(driver.CarInfo.DriverName);
 
