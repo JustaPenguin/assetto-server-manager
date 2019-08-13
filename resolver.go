@@ -347,7 +347,8 @@ func (r *Resolver) resolveDiscordManager() *DiscordManager {
 		return r.discordManager
 	}
 
-	r.discordManager = NewDiscordManager()
+	// if manager errors, it will log the error and return discordManager flagged as disabled, so no need to handle err
+	r.discordManager, _ = NewDiscordManager(r.store)
 
 	return r.discordManager
 }
@@ -357,7 +358,7 @@ func (r *Resolver) resolveNotificationManager() *NotificationHandler {
 		return r.notificationManager
 	}
 
-	r.notificationManager = NewNotificationManager(r)
+	r.notificationManager = NewNotificationManager(r.resolveDiscordManager())
 
 	return r.notificationManager
 }
