@@ -3,19 +3,22 @@ package servermanager
 import (
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"net/url"
 )
 
 // NotificationHandler is the generic notification handler, which calls the individual notification
 // managers.  Initially, only a Discord manager is implemented.
 type NotificationHandler struct {
 	discordManager *DiscordManager
+	store          Store
 	testing        bool
 }
 
-func NewNotificationManager(discord *DiscordManager) *NotificationHandler {
+func NewNotificationManager(discord *DiscordManager, store Store) *NotificationHandler {
 	return &NotificationHandler{
 		discordManager: discord,
-		testing:        true,
+		store:          store,
+		testing:        false,
 	}
 }
 
@@ -26,6 +29,18 @@ func (nm *NotificationHandler) SendMessage(msg string) error {
 	// Call all message senders here ... atm just discord.  The manager will know if it's enabled or not, so just call it
 	if !nm.testing {
 		err = nm.discordManager.SendMessage(msg)
+	}
+
+	return err
+}
+
+// SendMessage sends a message (surprise surprise)
+func (nm *NotificationHandler) SendMessageWithLink(msg string, linkText string, link *url.URL) error {
+	var err error
+
+	// Call all message senders here ... atm just discord.  The manager will know if it's enabled or not, so just call it
+	if !nm.testing {
+		err = nm.discordManager.SendEmbed(msg, linkText, link)
 	}
 
 	return err
@@ -51,24 +66,32 @@ func (nm *NotificationHandler) SendRaceStartMessage(config ServerConfig, event R
 	}
 
 	// @TODO figure out how to show links in Discord messages
-	linkString := ""
 
 	if config.GlobalServerConfig.ShowContentManagerJoinLink == 1 {
 		link, err := getCMJoinLink(config)
+		linkText := ""
 
 		if err != nil {
 			logrus.Errorf("could not get CM join link, err: %s", err)
 		} else {
-			linkString = fmt.Sprintf("\nJoin at %s", link.String())
+			linkText = "Content Manager join link"
 		}
-	}
 
-	return nm.SendMessage(fmt.Sprintf("Race %s at %s is starting now%s%s", event.EventName(), trackInfo.Name, linkString, passwordString))
+		return nm.SendMessageWithLink(fmt.Sprintf("Race %s at %s is starting now%s", event.EventName(), trackInfo.Name, passwordString), linkText, link)
+	} else {
+		return nm.SendMessage(fmt.Sprintf("Race %s at %s is starting now%s", event.EventName(), trackInfo.Name, passwordString))
+	}
 }
 
 // SendRaceReminderMessage sends a reminder a configurable number of minutes prior to a race starting
 func (nm *NotificationHandler) SendRaceReminderMessage(event RaceEvent) error {
-	return nm.SendMessage(fmt.Sprintf("Race %s starts in 10 minutes", event.EventName()))
+	serverOpts, err := nm.store.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	return nm.SendMessage(fmt.Sprintf("Race %s starts in %s minutes", event.EventName(), serverOpts.NotificationReminderTimer))
 }
 
 // SendRaceReminderMessage sends a reminder a configurable number of minutes prior to a championship race starting
@@ -80,5 +103,11 @@ func (nm *NotificationHandler) SendChampionshipReminderMessage(championship *Cha
 		return err
 	}
 
-	return nm.SendMessage(fmt.Sprintf("%s race at %s starts in 10 minutes", championship.Name, trackInfo.Name))
+	serverOpts, err := nm.store.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	return nm.SendMessage(fmt.Sprintf("%s race at %s starts in %s minutes", championship.Name, trackInfo.Name, serverOpts.NotificationReminderTimer))
 }

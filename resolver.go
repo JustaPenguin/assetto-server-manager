@@ -358,7 +358,7 @@ func (r *Resolver) resolveNotificationManager() *NotificationHandler {
 		return r.notificationManager
 	}
 
-	r.notificationManager = NewNotificationManager(r.resolveDiscordManager())
+	r.notificationManager = NewNotificationManager(r.resolveDiscordManager(), r.store)
 
 	return r.notificationManager
 }
