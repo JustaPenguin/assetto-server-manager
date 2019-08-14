@@ -165,8 +165,9 @@ type GlobalServerConfig struct {
 	EnableContentManagerWrapper int    `ini:"-" input:"checkbox" help:"When on, this option makes Server Manager provide extra information to Content Manager. This includes more detail about connected clients, event descriptions and download links. A side-effect of this is that your server name will contain a new piece of information (an 'i' character followed by a port - which Content Manager requires). Also - if enabled - this wrapper uses a GeoIP functionality provided by <a href='https://freegeoip.app''>freegeoip.app</a>."`
 	ContentManagerWrapperPort   int    `ini:"-" min:"0" max:"65535" help:"The port on which to serve Content Manager with the above information. Please make sure this port is open on your firewall."`
 	ShowContentManagerJoinLink  int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager display Content Manager join links on the Live Timing page."`
-	DiscordAPIToken             string `ini:"-" help:"If set, will enable reminder messages to the Dicord channel ID specified below"`
-	DiscordChannelID            string `ini:"-" help:"If Discord is enabled, send reminders to this channel ID"`
+	DiscordAPIToken             string `ini:"-" help:"If set, will enable race start and scheduled reminder messages to the Discord channel ID specified below"`
+	DiscordChannelID            string `ini:"-" help:"If Discord is enabled, this is the channel ID it will send messages to"`
+	NotificationReminderTimer   int    `ini:"-" min:"0" max:"65535" help:"If Discord is enabled, a reminder will be sent this many minutes prior to race start.  If 0, only race start messages will be sent."`
 }
 
 func (gsc GlobalServerConfig) GetName() string {

@@ -1,6 +1,7 @@
 module github.com/cj123/assetto-server-manager
 
 require (
+	github.com/Clinet/discordgo-embed v0.0.0-20190411043415-d754bc1a576c
 	github.com/Masterminds/goutils v1.1.0 // indirect
 	github.com/Masterminds/semver v1.4.2
 	github.com/Masterminds/sprig v2.18.0+incompatible
@@ -43,7 +44,6 @@ require (
 	github.com/mattn/go-zglob v0.0.1
 	github.com/mitchellh/go-ps v0.0.0-20170309133038-4fdf99ab2936
 	github.com/mitchellh/go-wordwrap v1.0.0
-	github.com/mjibson/esc v0.2.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.1 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pkg/errors v0.8.1
@@ -66,7 +66,6 @@ require (
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	golang.org/x/sys v0.0.0-20190309122539-980fc434d28e // indirect
 	golang.org/x/text v0.3.0
-	golang.org/x/tools v0.0.0-20190809145639-6d4652c779c4 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/ini.v1 v1.42.0 // indirect
 	gopkg.in/yaml.v2 v2.2.2

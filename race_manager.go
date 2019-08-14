@@ -970,6 +970,12 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 		return err
 	}
 
+	serverOpts, err := rm.raceStore.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
 	race.Scheduled = date
 
 	// if there is an existing schedule timer for this event stop it
@@ -1012,11 +1018,13 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 			}
 		})
 
-		duration = time.Until(date.Add(-10 * time.Minute))
+		if serverOpts.NotificationReminderTimer > 0 {
+			duration = time.Until(date.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
 
-		rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
-			rm.notificationManager.SendRaceReminderMessage(race)
-		})
+			rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+				rm.notificationManager.SendRaceReminderMessage(race)
+			})
+		}
 
 	} else {
 		race.ClearRecurrenceRule()
@@ -1259,6 +1267,12 @@ func (rm *RaceManager) InitScheduledRaces() error {
 		return err
 	}
 
+	serverOpts, err := rm.raceStore.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
 	for _, race := range races {
 		race := race
 
@@ -1274,13 +1288,15 @@ func (rm *RaceManager) InitScheduledRaces() error {
 				}
 			})
 
-			if race.Scheduled.Add(-10 * time.Minute).After(time.Now()) {
-				// add reminder
-				duration = time.Until(race.Scheduled.Add(-10 * time.Minute))
+			if serverOpts.NotificationReminderTimer > 0 {
+				if race.Scheduled.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute).After(time.Now()) {
+					// add reminder
+					duration = time.Until(race.Scheduled.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
 
-				rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
-					rm.notificationManager.SendRaceReminderMessage(race)
-				})
+					rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+						rm.notificationManager.SendRaceReminderMessage(race)
+					})
+				}
 			}
 		} else {
 			if race.HasRecurrenceRule() {
