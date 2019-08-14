@@ -46,6 +46,8 @@ func NewDiscordManager(store Store) (*DiscordManager, error) {
 			}, err
 		}
 	} else {
+		logrus.Infof("Discord notification bot not enabled")
+
 		return &DiscordManager{
 			store:   store,
 			discord: nil,
@@ -53,11 +55,21 @@ func NewDiscordManager(store Store) (*DiscordManager, error) {
 		}, nil
 	}
 
+	logrus.Infof("Discord notification bot connected")
+
 	return &DiscordManager{
 		store:   store,
 		discord: session,
 		enabled: true,
 	}, nil
+}
+
+func (dm *DiscordManager) Stop() error {
+	if dm.enabled {
+		return dm.discord.Close()
+	}
+
+	return nil
 }
 
 // SendMessage sends a message to the configured channel and logs any errors

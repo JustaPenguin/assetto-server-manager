@@ -199,7 +199,7 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 	}
 
 	if !loop {
-		rm.notificationManager.SendRaceStartMessage(config, event)
+		_ = rm.notificationManager.SendRaceStartMessage(config, event)
 	}
 
 	return nil
@@ -1022,7 +1022,7 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 			duration = time.Until(date.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
 
 			rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
-				rm.notificationManager.SendRaceReminderMessage(race)
+				_ = rm.notificationManager.SendRaceReminderMessage(race)
 			})
 		}
 
@@ -1294,7 +1294,7 @@ func (rm *RaceManager) InitScheduledRaces() error {
 					duration = time.Until(race.Scheduled.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
 
 					rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
-						rm.notificationManager.SendRaceReminderMessage(race)
+						_ = rm.notificationManager.SendRaceReminderMessage(race)
 					})
 				}
 			}

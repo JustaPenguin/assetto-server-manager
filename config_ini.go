@@ -164,10 +164,11 @@ type GlobalServerConfig struct {
 	FallBackResultsSorting      int    `ini:"-" input:"checkbox" help:"When on results will use a fallback method of sorting. Only enable this if you are experiencing results that are in the wrong order in the json file."`
 	EnableContentManagerWrapper int    `ini:"-" input:"checkbox" help:"When on, this option makes Server Manager provide extra information to Content Manager. This includes more detail about connected clients, event descriptions and download links. A side-effect of this is that your server name will contain a new piece of information (an 'i' character followed by a port - which Content Manager requires). Also - if enabled - this wrapper uses a GeoIP functionality provided by <a href='https://freegeoip.app''>freegeoip.app</a>."`
 	ContentManagerWrapperPort   int    `ini:"-" min:"0" max:"65535" help:"The port on which to serve Content Manager with the above information. Please make sure this port is open on your firewall."`
-	ShowContentManagerJoinLink  int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager display Content Manager join links on the Live Timing page."`
+	ShowContentManagerJoinLink  int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager display Content Manager join links on the Live Timing page and in race start notifications."`
 	DiscordAPIToken             string `ini:"-" help:"If set, will enable race start and scheduled reminder messages to the Discord channel ID specified below"`
 	DiscordChannelID            string `ini:"-" help:"If Discord is enabled, this is the channel ID it will send messages to"`
 	NotificationReminderTimer   int    `ini:"-" min:"0" max:"65535" help:"If Discord is enabled, a reminder will be sent this many minutes prior to race start.  If 0, only race start messages will be sent."`
+	ShowPasswordInNotifications int    `ini:"-" show:"open" input:"checkbox" help:"Show the server password in race start notifications"`
 }
 
 func (gsc GlobalServerConfig) GetName() string {
