@@ -142,7 +142,7 @@ export class RaceControl {
 
         // Get lap/laps or time/totalTime
         if (this.status.SessionInfo.Time > 0) {
-            timeRemaining = msToTime(this.status.SessionInfo.Time * 60 * 1000 - moment.duration(moment().diff(this.status.SessionStartTime)).asMilliseconds(), false, false);
+            timeRemaining = msToTime(this.status.SessionInfo.Time * 60 * 1000 - moment.duration(moment().utc().diff(moment(this.status.SessionStartTime).utc())).asMilliseconds(), false, false);
         } else if (this.status.SessionInfo.Laps > 0) {
             let lapsCompleted = 0;
 
@@ -721,9 +721,9 @@ class LiveTimings implements WebsocketHandler {
         if (addingDriverToConnectedTable) {
             let currentLapTimeText = "";
 
-            if (moment(carInfo.LastLapCompletedTime).isAfter(moment(this.raceControl.status!.SessionStartTime))) {
+            if (moment(carInfo.LastLapCompletedTime).utc().isAfter(moment(this.raceControl.status!.SessionStartTime).utc())) {
                 // only show current lap time text if the last lap completed time is after session start.
-                currentLapTimeText = msToTime(moment().diff(moment(carInfo.LastLapCompletedTime)), false);
+                currentLapTimeText = msToTime(moment().utc().diff(moment(carInfo.LastLapCompletedTime).utc()), false);
             }
 
             $tr.find(".current-lap").text(currentLapTimeText);
@@ -752,7 +752,7 @@ class LiveTimings implements WebsocketHandler {
             const $tdEvents = $tr.find(".events");
             const loadedID = driver.CarInfo.DriverGUID + "-loaded";
 
-            if (moment(driver.LoadedTime).add("10", "seconds").isSameOrAfter(moment()) && !$("#" + loadedID).length) {
+            if (moment(driver.LoadedTime).utc().add("10", "seconds").isSameOrAfter(moment().utc()) && !$("#" + loadedID).length) {
                 // car just loaded
                 let $tag = $("<span/>").attr("id", loadedID);
                 $tag.attr({'class': 'badge badge-success live-badge'});
@@ -769,7 +769,7 @@ class LiveTimings implements WebsocketHandler {
                 for (const collision of driver.Collisions) {
                     const collisionID = driver.CarInfo.DriverGUID + "-collision-" + collision.ID;
 
-                    if (moment(collision.Time).add("10", "seconds").isSameOrAfter(moment()) && !$("#" + collisionID).length) {
+                    if (moment(collision.Time).utc().add("10", "seconds").isSameOrAfter(moment().utc()) && !$("#" + collisionID).length) {
                         let $tag = $("<span/>");
                         $tag.attr("id", collisionID);
                         $tag.attr({'class': 'badge badge-danger live-badge'});
