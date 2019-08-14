@@ -23,6 +23,9 @@ export class RaceWeekendSession {
             const $newSession = this.$raceWeekendSession.find("#session-" + val);
             $newSession.addClass(["show", "active"]);
             $newSession.find(".session-details").show();
+
+            this.$raceWeekendSession.find(".session-enabler").prop("checked", false);
+            this.$raceWeekendSession.find("#" + val + "\\.Enabled").prop("checked", true);
         });
     }
 }

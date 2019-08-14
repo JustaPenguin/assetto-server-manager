@@ -10,9 +10,16 @@
             {{ $trackInfo := trackInfo $raceConfig.Track $raceConfig.TrackLayout }}
 
             {{ $numSiblings := $.RaceWeekend.GetNumSiblings $session }}
-            {{ $parentIsAbove := $.RaceWeekend.IsParentAbove $session }}
+            {{ $numParentsLeft := $.RaceWeekend.NumParentsLeft $session }}
+            {{ $numParentsAbove := $.RaceWeekend.NumParentsAbove $session }}
 
             <div class="{{ if eq $numSiblings 0 }}col-md-12{{ else }}col-md-{{ $.RaceWeekend.GetColumnWidth $session }}{{ end }}">
+
+                Left: {{ $numParentsLeft }}
+                Above: {{ $numParentsAbove }}
+
+
+
                 <div class="card mt-3 border-secondary">
                     <div class="card-header">
                         {{ $acSession := $session.SessionInfo }}

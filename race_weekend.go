@@ -9,10 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// RaceWeekends are a collection of events, where one event influences the EntryList of the next.
-// 'Base' events are configured much like Custom Races (but they only have one session!),
-// Inherited Events are also like Custom Races, but their EntryList is just an ordered set
-// of finishing positions from the Event that is inherited.
+// RaceWeekends are a collection of sessions, where one session influences the EntryList of the next.
 type RaceWeekend struct {
 	ID      uuid.UUID
 	Created time.Time
@@ -65,7 +62,7 @@ func (rw *RaceWeekend) SessionCanBeRun(s *RaceWeekendSession) bool {
 		parent, err := rw.FindSessionByID(parentID.String())
 
 		if err == RaceWeekendSessionNotFound {
-			logrus.Warnf("Race weekend event for id: %s not found", parentID.String())
+			logrus.Warnf("Race weekend session for id: %s not found", parentID.String())
 			continue
 		} else if err != nil {
 			logrus.WithError(err).Errorf("an unknown error occurred while checking session dependencies")
@@ -80,15 +77,64 @@ func (rw *RaceWeekend) SessionCanBeRun(s *RaceWeekendSession) bool {
 	return true
 }
 
+func (rw *RaceWeekend) NumParentsLeft(session *RaceWeekendSession) int {
+	return len(session.ParentIDs) - rw.NumParentsAbove(session)
+}
+
+func (rw *RaceWeekend) NumParentsAbove(session *RaceWeekendSession) int {
+	numParentsAbove := 0
+
+	// a parent is above a session if the parent and this session share no similar children
+	sessionChildren := rw.FindChildren(session)
+
+	for _, otherSessionID := range session.ParentIDs {
+		otherSession, err := rw.FindSessionByID(otherSessionID.String())
+
+		if err != nil {
+			continue
+		}
+
+		otherSessionChildren := rw.FindChildren(otherSession)
+
+		childrenInCommon := 0
+
+		for _, child := range sessionChildren {
+			for _, otherChild := range otherSessionChildren {
+				if child.ID == otherChild.ID {
+					childrenInCommon++
+				}
+			}
+		}
+
+		if childrenInCommon == 0 {
+			numParentsAbove++
+		}
+	}
+
+	return numParentsAbove
+}
+
+func (rw *RaceWeekend) FindChildren(session *RaceWeekendSession) []*RaceWeekendSession {
+	var children []*RaceWeekendSession
+
+	for _, otherSession := range rw.Sessions {
+		if otherSession.HasParent(session.ID.String()) {
+			children = append(children, otherSession)
+		}
+	}
+
+	return children
+}
+
 var (
 	ErrRaceWeekendNotFound     = errors.New("servermanager: race weekend not found")
 	RaceWeekendSessionNotFound = errors.New("servermanager: race weekend session not found")
 )
 
 func (rw *RaceWeekend) FindSessionByID(id string) (*RaceWeekendSession, error) {
-	for _, event := range rw.Sessions {
-		if event.ID.String() == id {
-			return event, nil
+	for _, sess := range rw.Sessions {
+		if sess.ID.String() == id {
+			return sess, nil
 		}
 	}
 
@@ -133,6 +179,7 @@ type RaceWeekendSession struct {
 	CompletedTime time.Time
 	Results       *SessionResults
 }
++
 
 func NewRaceWeekendSession() *RaceWeekendSession {
 	return &RaceWeekendSession{
@@ -163,7 +210,17 @@ func (rws *RaceWeekendSession) IsBase() bool {
 	return rws.ParentIDs == nil
 }
 
-var ErrRaceWeekendEventDependencyIncomplete = errors.New("servermanager: race weekend event dependency incomplete")
+func (rws *RaceWeekendSession) HasParent(id string) bool {
+	for _, parentID := range rws.ParentIDs {
+		if parentID.String() == id {
+			return true
+		}
+	}
+
+	return false
+}
+
+var ErrRaceWeekendSessionDependencyIncomplete = errors.New("servermanager: race weekend session dependency incomplete")
 
 func (rws *RaceWeekendSession) GetEntryList(rw *RaceWeekend) (EntryList, error) {
 	var entryList EntryList
@@ -182,7 +239,7 @@ func (rws *RaceWeekendSession) GetEntryList(rw *RaceWeekend) (EntryList, error) 
 			}
 
 			if previousEvent.Results == nil {
-				return nil, ErrRaceWeekendEventDependencyIncomplete
+				return nil, ErrRaceWeekendSessionDependencyIncomplete
 			}
 
 			for pos, result := range previousEvent.Results.Result {

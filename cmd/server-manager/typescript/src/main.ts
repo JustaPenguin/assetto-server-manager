@@ -6,14 +6,15 @@ import "multiselect";
 import "moment";
 import "moment-timezone";
 import "./javascript/manager.js";
-import {RaceControl} from "./RaceControl";
 import "./Font";
-import {CarDetail} from "./CarDetail";
 import "./Calendar";
+import "./RaceList";
+
+import {RaceControl} from "./RaceControl";
+import {CarDetail} from "./CarDetail";
 import {CarSearch} from "./CarSearch";
 import {CarList} from "./CarList";
 import {RaceWeekendSession} from "./RaceWeekend";
-import "./RaceList";
 import {ChangelogPopup} from "./ChangelogPopup";
 
 $(() => {

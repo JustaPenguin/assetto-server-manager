@@ -112,7 +112,7 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (map
 		opts["EditingID"] = editSessionID
 		opts["CurrentEntrants"], err = session.GetEntryList(raceWeekend)
 
-		if err == ErrRaceWeekendEventDependencyIncomplete {
+		if err == ErrRaceWeekendSessionDependencyIncomplete {
 			opts["CurrentEntrants"] = raceWeekend.EntryList
 		} else if err != nil {
 			return nil, err
@@ -231,7 +231,7 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 	}
 
 	if !raceWeekend.SessionCanBeRun(session) {
-		return ErrRaceWeekendEventDependencyIncomplete
+		return ErrRaceWeekendSessionDependencyIncomplete
 	}
 
 	session.StartedTime = time.Now()
