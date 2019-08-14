@@ -22,6 +22,10 @@ func NewNotificationManager(discord *DiscordManager, store Store) *NotificationH
 	}
 }
 
+func (nm *NotificationHandler) Stop() error {
+	return nm.discordManager.Stop()
+}
+
 // SendMessage sends a message (surprise surprise)
 func (nm *NotificationHandler) SendMessage(msg string) error {
 	var err error
@@ -54,18 +58,27 @@ func (nm *NotificationHandler) SendRaceStartMessage(config ServerConfig, event R
 		return err
 	}
 
-	// @TODO add option for displaying password
-	passwordString := "\nNo password"
+	serverOpts, err := nm.store.LoadServerOptions()
 
-	if event.OverrideServerPassword() {
-		if event.ReplacementServerPassword() != "" {
-			passwordString = fmt.Sprintf("\nPassword is '%s' (no quotes)", event.ReplacementServerPassword())
-		}
-	} else if config.GlobalServerConfig.Password != "" {
-		passwordString = fmt.Sprintf("\nPassword is '%s' (no quotes)", config.GlobalServerConfig.Password)
+	if err != nil {
+		return err
 	}
 
-	// @TODO figure out how to show links in Discord messages
+	msg := fmt.Sprintf("Race %s at %s is starting now", event.EventName(), trackInfo.Name)
+
+	if serverOpts.ShowPasswordInNotifications == 1 {
+		passwordString := "\nNo password"
+
+		if event.OverrideServerPassword() {
+			if event.ReplacementServerPassword() != "" {
+				passwordString = fmt.Sprintf("\nPassword is '%s' (no quotes)", event.ReplacementServerPassword())
+			}
+		} else if config.GlobalServerConfig.Password != "" {
+			passwordString = fmt.Sprintf("\nPassword is '%s' (no quotes)", config.GlobalServerConfig.Password)
+		}
+
+		msg += passwordString
+	}
 
 	if config.GlobalServerConfig.ShowContentManagerJoinLink == 1 {
 		link, err := getCMJoinLink(config)
@@ -77,9 +90,9 @@ func (nm *NotificationHandler) SendRaceStartMessage(config ServerConfig, event R
 			linkText = "Content Manager join link"
 		}
 
-		return nm.SendMessageWithLink(fmt.Sprintf("Race %s at %s is starting now%s", event.EventName(), trackInfo.Name, passwordString), linkText, link)
+		return nm.SendMessageWithLink(msg, linkText, link)
 	} else {
-		return nm.SendMessage(fmt.Sprintf("Race %s at %s is starting now%s", event.EventName(), trackInfo.Name, passwordString))
+		return nm.SendMessage(msg)
 	}
 }
 

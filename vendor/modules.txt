@@ -1,3 +1,5 @@
+# github.com/Clinet/discordgo-embed v0.0.0-20190411043415-d754bc1a576c
+github.com/Clinet/discordgo-embed
 # github.com/Masterminds/goutils v1.1.0
 github.com/Masterminds/goutils
 # github.com/Masterminds/semver v1.4.2
@@ -53,6 +55,8 @@ github.com/blevesearch/go-porterstemmer
 github.com/blevesearch/segment
 # github.com/boltdb/bolt v1.3.1
 github.com/boltdb/bolt
+# github.com/bwmarrin/discordgo v0.19.0
+github.com/bwmarrin/discordgo
 # github.com/certifi/gocertifi v0.0.0-20190506164543-d2eda7129713
 github.com/certifi/gocertifi
 # github.com/cj123/ini v1.42.0
@@ -162,8 +166,12 @@ github.com/tinylib/msgp/msgp
 github.com/willf/bitset
 # golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 golang.org/x/crypto/scrypt
+golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/pbkdf2
+golang.org/x/crypto/internal/subtle
+golang.org/x/crypto/poly1305
+golang.org/x/crypto/salsa20/salsa
 # golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 golang.org/x/net/publicsuffix
 golang.org/x/net/context
@@ -174,6 +182,7 @@ golang.org/x/sync/errgroup
 # golang.org/x/sys v0.0.0-20190309122539-980fc434d28e
 golang.org/x/sys/unix
 golang.org/x/sys/windows
+golang.org/x/sys/cpu
 # golang.org/x/text v0.3.0
 golang.org/x/text/encoding/unicode/utf32
 golang.org/x/text/encoding
