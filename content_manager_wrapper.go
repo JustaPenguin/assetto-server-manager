@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -452,4 +453,27 @@ func geoIP() (*GeoIP, error) {
 	}
 
 	return geoIPData, nil
+}
+
+func getCMJoinLink(config ServerConfig) (*url.URL, error) {
+	// get the join link for the current session
+	geoIP, err := geoIP()
+
+	if err != nil {
+		return nil, err
+	}
+
+	cmUrl, err := url.Parse(CMJoinLinkBase)
+
+	if err != nil {
+		return nil, err
+	}
+
+	queryString := cmUrl.Query()
+	queryString.Set("ip", geoIP.IP)
+	queryString.Set("httpPort", strconv.Itoa(config.GlobalServerConfig.HTTPPort))
+
+	cmUrl.RawQuery = queryString.Encode()
+
+	return cmUrl, nil
 }
