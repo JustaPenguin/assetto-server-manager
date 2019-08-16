@@ -1,3 +1,10 @@
+v1.4.1
+------
+
+Fixes:
+
+* Moved the "Sleep Time" option to the Server Options page. Fixed an issue where it was not correctly set to '1' (a value that kunos explicitly recommends)
+
 v1.4.0
 ------
 
