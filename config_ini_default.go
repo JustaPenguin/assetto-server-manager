@@ -23,6 +23,7 @@ var ConfigIniDefault = ServerConfig{
 		NumberOfThreads:            2,
 		ShowRaceNameInServerLobby:  1,
 		ShowContentManagerJoinLink: 1,
+		SleepTime:                 1,
 	},
 
 	CurrentRaceConfig: CurrentRaceConfig{
@@ -32,7 +33,6 @@ var ConfigIniDefault = ServerConfig{
 		SunAngle:                  48,
 		PickupModeEnabled:         1,
 		LoopMode:                  1,
-		SleepTime:                 1,
 		RaceOverTime:              180,
 		FuelRate:                  100,
 		DamageMultiplier:          0,
