@@ -155,7 +155,7 @@ type GlobalServerConfig struct {
 	NumberOfThreads           int    `ini:"NUM_THREADS" show:"open" min:"1" help:"Number of threads to run on"`
 	WelcomeMessage            string `ini:"WELCOME_MESSAGE" show:"-" help:"Path to the file that contains the server welcome message"`
 
-	SleepTime int `ini:"SLEEP_TIME" help:"The use of this setting is not fully known. Leave the value as 1 unless you really know what you're doing."`
+	SleepTime int `ini:"SLEEP_TIME" help:"The use of this setting is not fully known. Leave the value as 1 unless you really know what you're doing. (Values other than 1 cause excessive CPU usage)"`
 
 	FreeUDPPluginLocalPort int    `ini:"-" show:"-"`
 	FreeUDPPluginAddress   string `ini:"-" show:"-"`

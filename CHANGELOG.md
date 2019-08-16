@@ -3,7 +3,8 @@ v1.4.1
 
 Fixes:
 
-* Moved the "Sleep Time" option to the Server Options page. Fixed an issue where it was not correctly set to '1' (a value that kunos explicitly recommends)
+* Added the "Sleep Time" option to the Server Options page. Added a migration to set the Sleep Time option to 1 for all users.
+  This fixes an issue where it was not correctly set to 1 (a value that kunos explicitly recommends), which on smaller servers could cause 100% CPU usage.
 
 v1.4.0
 ------

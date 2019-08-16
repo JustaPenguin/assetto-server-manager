@@ -23,7 +23,7 @@ var ConfigIniDefault = ServerConfig{
 		NumberOfThreads:            2,
 		ShowRaceNameInServerLobby:  1,
 		ShowContentManagerJoinLink: 1,
-		SleepTime:                 1,
+		SleepTime:                  1,
 	},
 
 	CurrentRaceConfig: CurrentRaceConfig{
