@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	CurrentMigrationVersion = 10
+	CurrentMigrationVersion = 11
 	versionMetaKey          = "version"
 )
 
@@ -58,6 +58,7 @@ var migrations = []migrationFunc{
 	func(Store) error { return nil },
 	addPitBoxDefinitionToEntrants,
 	addLastSeenVersionToAccounts,
+	addSleepTime1ToServerOptions,
 }
 
 func addEntrantIDToChampionships(rs Store) error {
@@ -379,4 +380,17 @@ func addLastSeenVersionToAccounts(s Store) error {
 	}
 
 	return nil
+}
+
+func addSleepTime1ToServerOptions(s Store) error {
+	logrus.Errorf("Running migration: Set Server Options Sleep Time to 1")
+	opts, err := s.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	opts.SleepTime = 1
+
+	return s.UpsertServerOptions(opts)
 }
