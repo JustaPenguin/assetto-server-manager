@@ -428,6 +428,18 @@ func (c *Championship) Progress() float64 {
 	return (numCompletedRaces / numRaces) * 100
 }
 
+func (c *Championship) NumPendingSignUps() int {
+	num := 0
+
+	for _, response := range c.SignUpForm.Responses {
+		if response.Status == ChampionshipEntrantPending {
+			num++
+		}
+	}
+
+	return num
+}
+
 type PotentialChampionshipEntrant interface {
 	GetName() string
 	GetTeam() string
@@ -436,7 +448,7 @@ type PotentialChampionshipEntrant interface {
 	GetGUID() string
 }
 
-func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
+func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrant *Entrant, entrantClass *ChampionshipClass, err error) {
 	c.entryListMutex.Lock()
 	defer c.entryListMutex.Unlock()
 
@@ -445,7 +457,7 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 	if err != nil {
 		logrus.Errorf("Could not find class for car: %s in championship", potentialEntrant.GetCar())
 
-		return false, nil, err
+		return false, nil, nil, err
 	}
 
 	var oldEntrant *Entrant
@@ -483,11 +495,11 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 
 			logrus.Infof("Championship entrant: %s (%s) has been assigned to %s in %s", entrant.Name, entrant.GUID, carNum, classForCar.Name)
 
-			return true, classForCar, nil
+			return true, entrant, classForCar, nil
 		}
 	}
 
-	return false, classForCar, nil
+	return false, nil, classForCar, nil
 }
 
 // EnhanceResults takes a set of SessionResults and attaches Championship information to them.

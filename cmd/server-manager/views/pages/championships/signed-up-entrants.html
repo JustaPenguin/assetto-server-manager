@@ -9,6 +9,10 @@
         {{- /*gotype: github.com/cj123/assetto-server-manager.Championship*/ -}}
         {{ $championship := .}}
 
+        <div class="float-left">
+            <a class="btn btn-primary" href="/championship/{{ $championship.ID.String }}">Back to Championship</a>
+        </div>
+
         <div class="float-right mb-5">
             {{ if $championship.SignUpForm.AskForEmail }}
                 <div class="dropdown show" style="display: inline-block">
