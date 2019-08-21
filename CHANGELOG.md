@@ -3,6 +3,7 @@ v1.4.2
 
 Added:
 
+* Championship Events now show the best qualifying and fastest lap in each class.
 * You can now rename drivers on results pages.
 
 Fixes:
