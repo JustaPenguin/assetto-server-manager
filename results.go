@@ -397,6 +397,26 @@ func (s *SessionResults) FastestLap() *SessionLap {
 	return laps[0]
 }
 
+func (s *SessionResults) FastestLapInClass(classID uuid.UUID) *SessionLap {
+	if len(s.Laps) == 0 {
+		return nil
+	}
+
+	var laps []*SessionLap
+
+	for _, lap := range s.Laps {
+		if lap.ClassID == classID {
+			laps = append(laps, lap)
+		}
+	}
+
+	sort.Slice(laps, func(i, j int) bool {
+		return laps[i].Cuts == 0 && laps[i].LapTime < laps[j].LapTime
+	})
+
+	return laps[0]
+}
+
 type SessionResult struct {
 	BallastKG    int           `json:"BallastKG"`
 	BestLap      int           `json:"BestLap"`
