@@ -1,3 +1,10 @@
+v1.4.2
+------
+
+Fixes:
+
+* Fixes an issue where search indexing could fail due to a car with malformed details JSON. Cars which have malformed details JSON (that we can't clean up) will now load without any car details, allowing search indexing to continue.
+
 v1.4.1
 ------
 
