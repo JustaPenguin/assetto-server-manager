@@ -3,15 +3,19 @@ v1.4.2
 
 Added:
 
+* You can now rename drivers on results pages.
+
+Fixes:
+
+* Results in the results listings now only show entrants that took part in a session, rather than all registered entrants for that session.
 * Added a popup to alert admins when there are pending Registration Requests for a Championship.
 * Added a "Back to Championship" button on the Championship Registration Request management page.
 * The Championship EntryList displayed before events start now shows the car skins.
 * Championship Entrants are now shown in the order of their pitboxes in the Championship Entrant overview table (shown only when championship progress is 0%).
-
-Fixes:
-
 * Fixed an issue where registered users did not have their skin set up on individual Championship Events.
 * Fixes an issue where search indexing could fail due to a car with malformed details JSON. Cars which have malformed details JSON (that we can't clean up) will now load without any car details, allowing search indexing to continue.
+
+---
 
 v1.4.1
 ------
@@ -20,6 +24,8 @@ Fixes:
 
 * Added the "Sleep Time" option to the Server Options page. Added a migration to set the Sleep Time option to 1 for all users.
   This fixes an issue where it was not correctly set to 1 (a value that kunos explicitly recommends), which on smaller servers could cause 100% CPU usage.
+
+---
 
 v1.4.0
 ------
