@@ -11,8 +11,8 @@ import (
 
 	"github.com/cj123/ini"
 	"github.com/go-chi/chi"
+	"github.com/dimchansky/utfbom"
 	"github.com/sirupsen/logrus"
-	"github.com/spkg/bom"
 )
 
 type Track struct {
@@ -127,7 +127,7 @@ func GetTrackInfo(name, layout string) (*TrackInfo, error) {
 
 	var trackInfo *TrackInfo
 
-	err = json.NewDecoder(bom.NewReader(f)).Decode(&trackInfo)
+	err = json.NewDecoder(utfbom.SkipOnly(f)).Decode(&trackInfo)
 
 	return trackInfo, err
 }
