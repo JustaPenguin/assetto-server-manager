@@ -1,3 +1,10 @@
+v1.4.2
+------
+
+Added:
+
+* Championship Events now show the best qualifying and fastest lap in each class.
+
 v1.4.1
 ------
 
