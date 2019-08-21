@@ -195,6 +195,9 @@ func Router(
 		// penalties
 		r.Post("/penalties/{sessionFile}/{driverGUID}", penaltiesHandler.managePenalty)
 
+		// results
+		r.Post("/results/{fileName}/edit", resultsHandler.edit)
+
 		// live timings
 		r.Post("/live-timing/save-frames", raceControlHandler.saveIFrames)
 

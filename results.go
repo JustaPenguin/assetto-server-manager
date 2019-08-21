@@ -51,6 +51,36 @@ func (s *SessionResults) MaskDriverNames() {
 	}
 }
 
+func (s *SessionResults) RenameDriver(guid, newName string) {
+	for _, car := range s.Cars {
+		if car.Driver.GUID == guid {
+			car.Driver.Name = newName
+		}
+	}
+
+	for _, event := range s.Events {
+		if event.Driver.GUID == guid {
+			event.Driver.Name = newName
+		}
+
+		if event.OtherDriver.GUID == guid {
+			event.OtherDriver.Name = newName
+		}
+	}
+
+	for _, lap := range s.Laps {
+		if lap.DriverGUID == guid {
+			lap.DriverName = newName
+		}
+	}
+
+	for _, result := range s.Result {
+		if result.DriverGUID == guid {
+			result.DriverName = newName
+		}
+	}
+}
+
 func (s *SessionResults) DriversHaveTeams() bool {
 	teams := make(map[string]string)
 
@@ -282,18 +312,10 @@ func (s *SessionResults) GetNumSectors() []int {
 func (s *SessionResults) GetDrivers() string {
 	var drivers []string
 
-	numOpenSlots := 0
-
-	for _, car := range s.Cars {
-		if car.Driver.Name != "" {
-			drivers = append(drivers, driverName(car.Driver.Name))
-		} else {
-			numOpenSlots++
+	for _, car := range s.Result {
+		if car.DriverName != "" {
+			drivers = append(drivers, driverName(car.DriverName))
 		}
-	}
-
-	if numOpenSlots > 0 {
-		drivers = append(drivers, fmt.Sprintf("%d open slots", numOpenSlots))
 	}
 
 	return strings.Join(drivers, ", ")
@@ -754,6 +776,46 @@ func (rh *ResultsHandler) file(w http.ResponseWriter, r *http.Request) {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	_ = enc.Encode(result)
+}
+
+func (rh *ResultsHandler) edit(w http.ResponseWriter, r *http.Request) {
+	fileName := chi.URLParam(r, "fileName")
+
+	results, err := LoadResult(fileName + ".json")
+
+	if os.IsNotExist(err) {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	} else if err != nil {
+		logrus.WithError(err).Error("could not load results")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	for key, vals := range r.Form {
+		if strings.HasPrefix(key, "guid:") {
+			guid := strings.TrimPrefix(key, "guid:")
+			name := vals[0]
+
+			results.RenameDriver(guid, name)
+		}
+	}
+
+	err = saveResults(results.SessionFile+".json", results)
+
+	if err != nil {
+		logrus.WithError(err).Error("could not load results")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	AddFlash(w, r, "Drivers successfully edited")
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
 // saveResults takes a full json filepath (including the json extension) and saves the results to that file.
