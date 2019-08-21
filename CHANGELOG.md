@@ -5,6 +5,10 @@ Added:
 
 * You can now rename drivers on results pages.
 
+Fixes:
+
+* Results in the results listings now only show entrants that took part in a session, rather than all registered entrants for that session.
+
 v1.4.1
 ------
 

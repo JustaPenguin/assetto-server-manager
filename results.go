@@ -312,18 +312,10 @@ func (s *SessionResults) GetNumSectors() []int {
 func (s *SessionResults) GetDrivers() string {
 	var drivers []string
 
-	numOpenSlots := 0
-
-	for _, car := range s.Cars {
-		if car.Driver.Name != "" {
-			drivers = append(drivers, driverName(car.Driver.Name))
-		} else {
-			numOpenSlots++
+	for _, car := range s.Result {
+		if car.DriverName != "" {
+			drivers = append(drivers, driverName(car.DriverName))
 		}
-	}
-
-	if numOpenSlots > 0 {
-		drivers = append(drivers, fmt.Sprintf("%d open slots", numOpenSlots))
 	}
 
 	return strings.Join(drivers, ", ")
