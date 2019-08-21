@@ -6,6 +6,7 @@ Added:
 * Added a popup to alert admins when there are pending Registration Requests for a Championship.
 * Added a "Back to Championship" button on the Championship Registration Request management page.
 * The Championship EntryList displayed before events start now shows the car skins.
+* Championship Entrants are now shown in the order of their pitboxes in the Championship Entrant overview table (shown only when championship progress is 0%).
 
 Fixes:
 

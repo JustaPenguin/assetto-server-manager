@@ -255,7 +255,7 @@
                                                     <td rowspan="{{ sub (len $entrants) 1 }}">{{ $class.Name }}</td>
                                                 {{ end }}
                                             {{ end }}
-                                            <td>{{ add $i 1 }}</td>
+                                            <td><span data-toggle="tooltip" title="Pit Box: {{ $entrant.PitBox }}">{{ add $i 1 }}</span></td>
                                             <td>{{ driverName $entrant.Name }}</td>
 
                                             {{ if $championship.HasTeamNames }}
