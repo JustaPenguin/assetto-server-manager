@@ -18,10 +18,10 @@ import (
 
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/search/query"
+	"github.com/dimchansky/utfbom"
 	"github.com/go-chi/chi"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/spkg/bom"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -144,13 +144,21 @@ func (cd *CarDetails) Save(carName string) error {
 }
 
 func (cd *CarDetails) Load(carName string) error {
-	carDetailsBytes, err := ioutil.ReadFile(filepath.Join(ServerInstallPath, "content", "cars", carName, "ui", "ui_car.json"))
+	f, err := os.Open(filepath.Join(ServerInstallPath, "content", "cars", carName, "ui", "ui_car.json"))
 
 	if err != nil {
 		return err
 	}
 
-	carDetailsBytes = bom.Clean(regexp.MustCompile(`\t*\r*\n*`).ReplaceAll(carDetailsBytes, []byte("")))
+	defer f.Close()
+
+	carDetailsBytes, err := ioutil.ReadAll(utfbom.SkipOnly(f))
+
+	if err != nil {
+		return err
+	}
+
+	carDetailsBytes = regexp.MustCompile(`\t*\r*\n*`).ReplaceAll(carDetailsBytes, []byte(""))
 
 	err = json.Unmarshal(carDetailsBytes, &cd)
 
@@ -269,11 +277,13 @@ func (cm *CarManager) LoadCar(name string, tyres Tyres) (*Car, error) {
 
 	carDetails := CarDetails{}
 
-	if err := carDetails.Load(name); err != nil && os.IsNotExist(err) {
-		// the car details don't exist, just create some fake ones.
+	if err := carDetails.Load(name); err != nil {
+		if !os.IsNotExist(err) {
+			logrus.WithError(err).Errorf("could not parse car details json for: %s (likely this is invalid/malformed JSON). falling back to empty car details", name)
+		}
+
+		// the car details don't exist or can't be loaded, just create some fake ones.
 		carDetails.Name = prettifyName(name, true)
-	} else if err != nil {
-		return nil, err
 	}
 
 	return &Car{
