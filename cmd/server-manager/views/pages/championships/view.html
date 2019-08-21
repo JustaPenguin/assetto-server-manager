@@ -647,19 +647,50 @@
                                     {{ range $sessionName, $session := $event.Sessions }}
                                         {{ with $session.Results }}
                                             {{ if eq $sessionName "RACE" }}
-                                                <span class="badge badge-best">
-                                                    Fastest Lap{{ if $eventSetup.HasMultipleRaces }} (1st Race){{ end }}
+                                                <span class="badge badge-best {{ if $championship.IsMultiClass }}text-left{{ end }}">
+                                                    Fastest Lap{{ if $eventSetup.HasMultipleRaces }} (1st Race){{ end }}{{ if not $championship.IsMultiClass }}:{{ end }}
 
-                                                    : {{ driverName $session.Results.FastestLap.DriverName }}
+                                                    {{ if $championship.IsMultiClass }}
+                                                        <span class="font-weight-normal">
+                                                            {{ range $classIndex, $class := $championship.Classes }}
+                                                                <br>
+                                                                {{ $class.Name }}: {{ driverName ($session.Results.FastestLapInClass $class.ID).DriverName }}
+                                                            {{ end }}
+                                                        </span>
+                                                    {{ else }}
+                                                        {{ driverName $session.Results.FastestLap.DriverName }}
+                                                    {{ end }}
                                                 </span><br>
                                             {{ else if eq $sessionName "RACEx2" }}
-                                                <span class="badge badge-best">
-                                                    Fastest Lap (2nd Race)
+                                                <span class="badge badge-best {{ if $championship.IsMultiClass }}text-left{{ end }}">
+                                                    Fastest Lap (2nd Race){{ if not $championship.IsMultiClass }}:{{ end }}
 
-                                                    : {{ driverName $session.Results.FastestLap.DriverName }}
+                                                    {{ if $championship.IsMultiClass }}
+                                                        <span class="font-weight-normal">
+                                                            {{ range $classIndex, $class := $championship.Classes }}
+                                                                <br>
+                                                                {{ $class.Name }}: {{ driverName ($session.Results.FastestLapInClass $class.ID).DriverName }}
+                                                            {{ end }}
+                                                        </span>
+                                                    {{ else }}
+                                                        {{ driverName $session.Results.FastestLap.DriverName }}
+                                                    {{ end }}
                                                 </span><br>
                                             {{ else if eq $sessionName "QUALIFY" }}
-                                                <span class="badge badge-success">Best Qualifying: {{ driverName $session.Results.FastestLap.DriverName }}</span><br>
+                                                <span class="badge badge-success {{ if $championship.IsMultiClass }}text-left{{ end }}">
+                                                    Best Qualifying{{ if not $championship.IsMultiClass }}:{{ end }}
+
+                                                    {{ if $championship.IsMultiClass }}
+                                                        <span class="font-weight-normal">
+                                                            {{ range $classIndex, $class := $championship.Classes }}
+                                                                <br>
+                                                                {{ $class.Name }}: {{ driverName ($session.Results.FastestLapInClass $class.ID).DriverName }}
+                                                            {{ end }}
+                                                        </span>
+                                                    {{ else }}
+                                                        {{ driverName $session.Results.FastestLap.DriverName }}
+                                                    {{ end }}
+                                                </span><br>
                                             {{ end }}
                                         {{ end }}
                                     {{ end }}
