@@ -92,11 +92,7 @@ func (e EntryList) PrettyList() []*Entrant {
 	}
 
 	sort.Slice(entrants, func(i, j int) bool {
-		if entrants[i].Team == entrants[j].Team {
-			return entrants[i].Name < entrants[j].Name
-		} else {
-			return entrants[i].Team < entrants[j].Team
-		}
+		return entrants[i].PitBox < entrants[j].PitBox
 	})
 
 	entrants = append(entrants, &Entrant{

@@ -63,6 +63,36 @@ func (s *SessionResults) MaskDriverNames() {
 	}
 }
 
+func (s *SessionResults) RenameDriver(guid, newName string) {
+	for _, car := range s.Cars {
+		if car.Driver.GUID == guid {
+			car.Driver.Name = newName
+		}
+	}
+
+	for _, event := range s.Events {
+		if event.Driver.GUID == guid {
+			event.Driver.Name = newName
+		}
+
+		if event.OtherDriver.GUID == guid {
+			event.OtherDriver.Name = newName
+		}
+	}
+
+	for _, lap := range s.Laps {
+		if lap.DriverGUID == guid {
+			lap.DriverName = newName
+		}
+	}
+
+	for _, result := range s.Result {
+		if result.DriverGUID == guid {
+			result.DriverName = newName
+		}
+	}
+}
+
 func (s *SessionResults) DriversHaveTeams() bool {
 	teams := make(map[string]string)
 
@@ -210,6 +240,40 @@ func (s *SessionResults) FallBackSort() {
 	// sort the results by laps completed then race time
 	// this is a fall back for when assetto's sorting is terrible
 	// sort results.Result, if disqualified go to back, if time penalty sort by laps completed then lap time
+
+cars:
+	for i := range s.Cars {
+		for z := range s.Result {
+			if s.Cars[i].Driver.GUID == s.Result[z].DriverGUID {
+				continue cars
+			}
+		}
+
+		var bestLap int
+
+		for y := range s.Laps {
+			if s.IsDriversFastestLap(s.Cars[i].Driver.GUID, s.Laps[y].LapTime, s.Laps[y].Cuts) {
+				bestLap = s.Laps[y].LapTime
+				break
+			}
+		}
+
+		s.Result = append(s.Result, &SessionResult{
+			BallastKG:    s.Cars[i].BallastKG,
+			BestLap:      bestLap,
+			CarID:        s.Cars[i].CarID,
+			CarModel:     s.Cars[i].Model,
+			DriverGUID:   s.Cars[i].Driver.GUID,
+			DriverName:   s.Cars[i].Driver.Name,
+			Restrictor:   s.Cars[i].Restrictor,
+			TotalTime:    0,
+			HasPenalty:   false,
+			PenaltyTime:  time.Duration(0),
+			LapPenalty:   0,
+			Disqualified: false,
+		})
+	}
+
 	for i := range s.Result {
 		s.Result[i].TotalTime = 0
 
@@ -260,18 +324,10 @@ func (s *SessionResults) GetNumSectors() []int {
 func (s *SessionResults) GetDrivers() string {
 	var drivers []string
 
-	numOpenSlots := 0
-
-	for _, car := range s.Cars {
-		if car.Driver.Name != "" {
-			drivers = append(drivers, driverName(car.Driver.Name))
-		} else {
-			numOpenSlots++
+	for _, car := range s.Result {
+		if car.DriverName != "" {
+			drivers = append(drivers, driverName(car.DriverName))
 		}
-	}
-
-	if numOpenSlots > 0 {
-		drivers = append(drivers, fmt.Sprintf("%d open slots", numOpenSlots))
 	}
 
 	return strings.Join(drivers, ", ")
@@ -367,6 +423,26 @@ func (s *SessionResults) FastestLap() *SessionLap {
 	laps := make([]*SessionLap, len(s.Laps))
 
 	copy(laps, s.Laps)
+
+	sort.Slice(laps, func(i, j int) bool {
+		return laps[i].Cuts == 0 && laps[i].LapTime < laps[j].LapTime
+	})
+
+	return laps[0]
+}
+
+func (s *SessionResults) FastestLapInClass(classID uuid.UUID) *SessionLap {
+	if len(s.Laps) == 0 {
+		return nil
+	}
+
+	var laps []*SessionLap
+
+	for _, lap := range s.Laps {
+		if lap.ClassID == classID {
+			laps = append(laps, lap)
+		}
+	}
 
 	sort.Slice(laps, func(i, j int) bool {
 		return laps[i].Cuts == 0 && laps[i].LapTime < laps[j].LapTime
@@ -732,6 +808,46 @@ func (rh *ResultsHandler) file(w http.ResponseWriter, r *http.Request) {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	_ = enc.Encode(result)
+}
+
+func (rh *ResultsHandler) edit(w http.ResponseWriter, r *http.Request) {
+	fileName := chi.URLParam(r, "fileName")
+
+	results, err := LoadResult(fileName + ".json")
+
+	if os.IsNotExist(err) {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	} else if err != nil {
+		logrus.WithError(err).Error("could not load results")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	for key, vals := range r.Form {
+		if strings.HasPrefix(key, "guid:") {
+			guid := strings.TrimPrefix(key, "guid:")
+			name := vals[0]
+
+			results.RenameDriver(guid, name)
+		}
+	}
+
+	err = saveResults(results.SessionFile+".json", results)
+
+	if err != nil {
+		logrus.WithError(err).Error("could not load results")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	AddFlash(w, r, "Drivers successfully edited")
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
 // saveResults takes a full json filepath (including the json extension) and saves the results to that file.

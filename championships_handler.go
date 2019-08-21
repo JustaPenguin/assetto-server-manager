@@ -653,7 +653,7 @@ func (ch *ChampionshipsHandler) modifyEntrantStatus(w http.ResponseWriter, r *ht
 			}
 
 			// add the entrant to the entrylist
-			foundSlot, _, err := ch.championshipManager.AddEntrantFromSessionData(championship, entrant)
+			foundSlot, _, err := ch.championshipManager.AddEntrantFromSessionData(championship, entrant, true)
 
 			if err != nil {
 				logrus.WithError(err).Error("couldn't add entrant to championship")

@@ -179,7 +179,6 @@ type RaceWeekendSession struct {
 	CompletedTime time.Time
 	Results       *SessionResults
 }
-+
 
 func NewRaceWeekendSession() *RaceWeekendSession {
 	return &RaceWeekendSession{

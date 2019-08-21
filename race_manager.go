@@ -494,7 +494,6 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		MaxBallastKilograms:       formValueAsInt(r.FormValue("MaxBallastKilograms")),
 		AllowedTyresOut:           formValueAsInt(r.FormValue("AllowedTyresOut")),
 		LoopMode:                  formValueAsInt(r.FormValue("LoopMode")),
-		SleepTime:                 formValueAsInt(r.FormValue("SleepTime")),
 		RaceOverTime:              formValueAsInt(r.FormValue("RaceOverTime")),
 		StartRule:                 formValueAsInt(r.FormValue("StartRule")),
 		MaxClients:                formValueAsInt(r.FormValue("MaxClients")),

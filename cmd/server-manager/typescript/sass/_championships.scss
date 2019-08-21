@@ -1,7 +1,17 @@
 
-.table-championship tr td:last-child {
-  max-width: 270px;
-  text-align: center;
+.table-championship {
+  tr {
+    td {
+      &:first-child {
+        max-width: 300px;
+      }
+
+      &:last-child {
+        max-width: 270px;
+        text-align: center;
+      }
+    }
+  }
 }
 
 .championship-signup-question {

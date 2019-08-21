@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/google/uuid"
 	"github.com/mitchellh/go-wordwrap"
 	"github.com/sirupsen/logrus"
 )
@@ -50,6 +51,7 @@ const (
 )
 
 type Collision struct {
+	ID              string         `json:"ID"`
 	Type            CollisionType  `json:"Type"`
 	Time            time.Time      `json:"Time" ts:"date"`
 	OtherDriverGUID udp.DriverGUID `json:"OtherDriverGUID"`
@@ -644,6 +646,7 @@ func (rc *RaceControl) OnCollisionWithCar(collision udp.CollisionWithCar) error 
 	}
 
 	c := Collision{
+		ID:    uuid.New().String(),
 		Type:  CollisionWithCar,
 		Time:  time.Now(),
 		Speed: metersPerSecondToKilometersPerHour(float64(collision.ImpactSpeed)),
@@ -670,6 +673,7 @@ func (rc *RaceControl) OnCollisionWithEnvironment(collision udp.CollisionWithEnv
 	}
 
 	driver.Collisions = append(driver.Collisions, Collision{
+		ID:    uuid.New().String(),
 		Type:  CollisionWithEnvironment,
 		Time:  time.Now(),
 		Speed: metersPerSecondToKilometersPerHour(float64(collision.ImpactSpeed)),
