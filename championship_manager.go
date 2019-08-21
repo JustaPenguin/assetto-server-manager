@@ -600,7 +600,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 
 		if championship.OpenEntrants && a.Event() == udp.EventNewConnection {
 			// a person joined, check to see if they need adding to the championship
-			foundSlot, classForCar, err := cm.AddEntrantFromSessionData(championship, sessionEntrantWrapper(a))
+			foundSlot, classForCar, err := cm.AddEntrantFromSessionData(championship, sessionEntrantWrapper(a), false)
 
 			if err != nil {
 				saveChampionship = false
@@ -954,7 +954,7 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 					continue
 				}
 
-				foundFreeSlot, _, err := cm.AddEntrantFromSessionData(championship, car)
+				foundFreeSlot, _, err := cm.AddEntrantFromSessionData(championship, car, false)
 
 				if err != nil {
 					return err
@@ -984,14 +984,23 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 	return cm.UpsertChampionship(championship)
 }
 
-func (cm *ChampionshipManager) AddEntrantFromSessionData(championship *Championship, potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
-	foundFreeSlot, class, err := championship.AddEntrantFromSession(potentialEntrant)
+func (cm *ChampionshipManager) AddEntrantFromSessionData(championship *Championship, potentialEntrant PotentialChampionshipEntrant, overwriteSkinForAllEvents bool) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
+	foundFreeSlot, entrant, class, err := championship.AddEntrantFromSession(potentialEntrant)
 
 	if err != nil {
 		return foundFreeSlot, class, err
 	}
 
 	if foundFreeSlot {
+		if overwriteSkinForAllEvents {
+			// the user's skin setup should be applied to all event settings
+			for _, event := range championship.Events {
+				eventEntrant := event.EntryList.FindEntrantByInternalUUID(entrant.InternalUUID)
+
+				eventEntrant.Skin = potentialEntrant.GetSkin()
+			}
+		}
+
 		newEntrant := NewEntrant()
 
 		newEntrant.GUID = potentialEntrant.GetGUID()
@@ -1172,7 +1181,7 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 
 	if !championship.SignUpForm.RequiresApproval {
 		// check to see if there is room in the entrylist for the user in their specific car
-		foundSlot, _, err = cm.AddEntrantFromSessionData(championship, signUpResponse)
+		foundSlot, _, err = cm.AddEntrantFromSessionData(championship, signUpResponse, true)
 
 		if err != nil {
 			return signUpResponse, foundSlot, err
