@@ -1,3 +1,10 @@
+v1.4.2
+------
+
+Added:
+
+* You can now rename drivers on results pages.
+
 v1.4.1
 ------
 
