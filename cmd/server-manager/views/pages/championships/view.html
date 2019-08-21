@@ -24,6 +24,20 @@
                     <a class="btn btn-primary float-right" href="/championship/{{ $championship.ID.String }}/sign-up">Register Now</a>
                 </div>
             </div>
+
+            {{ $numPendingSignups := $championship.NumPendingSignUps }}
+
+            {{ if and WriteAccess (gt $numPendingSignups 0) }}
+                <div class="card border-success mb-3 mt-3">
+                    <div class="card-header bg-success text-white"><strong>Registration Request{{ if gt $numPendingSignups 1 }}s{{ end }} pending approval!</strong></div>
+
+                    <div class="card-body">
+                        There {{ if eq $numPendingSignups 1 }}is{{ else }}are{{ end }} {{ $championship.NumPendingSignUps }} Registration Request{{ if gt $numPendingSignups 1 }}s{{ end }} pending approval!
+
+                        <a class="btn btn-success float-right" href="/championship/{{ $championship.ID.String }}/entrants">Manage Registration Requests</a>
+                    </div>
+                </div>
+            {{ end }}
         {{ end }}
 
 
@@ -247,7 +261,7 @@
                                             {{ if $championship.HasTeamNames }}
                                                 <td>{{ $entrant.Team }}</td>
                                             {{ end }}
-                                            <td>{{ prettify $entrant.Model true }}</td>
+                                            <td>{{ prettify $entrant.Model true }} / {{ prettify $entrant.Skin false }}</td>
                                         </tr>
                                     {{ else }}
                                         {{ if $championship.OpenEntrants }}
@@ -387,7 +401,7 @@
 
                     {{ if and $writeAccess $championship.SignUpForm.Enabled }}
                         <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/entrants">
-                            View Registration Requests
+                            Manage Registration Requests
                         </a>
                     {{ end }}
 

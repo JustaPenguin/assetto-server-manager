@@ -218,7 +218,7 @@ func TestChampionship_AddEntrantFromSession(t *testing.T) {
 		champ := &Championship{}
 		champ.AddClass(class)
 
-		foundSlot, _, err := champ.AddEntrantFromSession(potentialEntrant)
+		foundSlot, _, _, err := champ.AddEntrantFromSession(potentialEntrant)
 
 		if err != nil {
 			t.Error(err)
@@ -262,7 +262,7 @@ func TestChampionship_AddEntrantFromSession(t *testing.T) {
 		champ := &Championship{}
 		champ.AddClass(class)
 
-		foundSlot, _, err := champ.AddEntrantFromSession(potentialEntrant)
+		foundSlot, _, _, err := champ.AddEntrantFromSession(potentialEntrant)
 
 		if err != nil {
 			t.Error(err)
@@ -293,7 +293,7 @@ func TestChampionship_AddEntrantFromSession(t *testing.T) {
 		// re-add the entrant, this time with no team
 		potentialEntrant.Driver.Team = ""
 
-		foundSlot, _, err = champ.AddEntrantFromSession(potentialEntrant)
+		foundSlot, _, _, err = champ.AddEntrantFromSession(potentialEntrant)
 
 		if err != nil {
 			t.Error(err)
@@ -336,7 +336,7 @@ func TestChampionship_AddEntrantFromSession(t *testing.T) {
 		champ := &Championship{}
 		champ.AddClass(class)
 
-		foundSlot, _, err := champ.AddEntrantFromSession(potentialEntrant)
+		foundSlot, _, _, err := champ.AddEntrantFromSession(potentialEntrant)
 
 		if err != nil {
 			t.Error(err)
@@ -367,7 +367,7 @@ func TestChampionship_AddEntrantFromSession(t *testing.T) {
 		// re-add the entrant, this time with a new team name
 		potentialEntrant.Driver.Team = "New Team Name"
 
-		foundSlot, _, err = champ.AddEntrantFromSession(potentialEntrant)
+		foundSlot, _, _, err = champ.AddEntrantFromSession(potentialEntrant)
 
 		if err != nil {
 			t.Error(err)
@@ -420,7 +420,7 @@ func TestChampionship_AddEntrantFromSession(t *testing.T) {
 		emptySlotUUID := e.InternalUUID
 		currentInternalUUID := e2.InternalUUID
 
-		_, _, err := champ.AddEntrantFromSession(potentialEntrant)
+		_, _, _, err := champ.AddEntrantFromSession(potentialEntrant)
 
 		if err != nil {
 			t.Error(err)
