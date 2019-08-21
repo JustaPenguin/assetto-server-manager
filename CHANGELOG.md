@@ -11,6 +11,7 @@ Added:
 Fixes:
 
 * Fixed an issue where registered users did not have their skin set up on individual Championship Events.
+* Fixes an issue where search indexing could fail due to a car with malformed details JSON. Cars which have malformed details JSON (that we can't clean up) will now load without any car details, allowing search indexing to continue.
 
 v1.4.1
 ------
