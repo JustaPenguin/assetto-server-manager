@@ -3,6 +3,7 @@ v1.4.2
 
 Added:
 
+* Added configurable server join and content manager messages. Check out the "Messages" page for more details.
 * Championship Events now show the best qualifying and fastest lap in each class.
 * You can now rename drivers on results pages.
 

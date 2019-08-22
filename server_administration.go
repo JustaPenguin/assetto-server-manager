@@ -15,6 +15,7 @@ import (
 type ServerAdministrationHandler struct {
 	*BaseHandler
 
+	store               Store
 	raceManager         *RaceManager
 	championshipManager *ChampionshipManager
 	process             ServerProcess
@@ -22,12 +23,14 @@ type ServerAdministrationHandler struct {
 
 func NewServerAdministrationHandler(
 	baseHandler *BaseHandler,
+	store Store,
 	raceManager *RaceManager,
 	championshipManager *ChampionshipManager,
 	process ServerProcess,
 ) *ServerAdministrationHandler {
 	return &ServerAdministrationHandler{
 		BaseHandler:         baseHandler,
+		store:               store,
 		raceManager:         raceManager,
 		championshipManager: championshipManager,
 		process:             process,
@@ -53,16 +56,38 @@ func (sah *ServerAdministrationHandler) home(w http.ResponseWriter, r *http.Requ
 const MOTDFilename = "motd.txt"
 
 func (sah *ServerAdministrationHandler) motd(w http.ResponseWriter, r *http.Request) {
+	opts, err := sah.store.LoadServerOptions()
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't load server options")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
 	if r.Method == http.MethodPost {
 		wrapped := wordwrap.WrapString(r.FormValue("motd"), 140)
+
+		success := true
 
 		err := ioutil.WriteFile(filepath.Join(ServerInstallPath, MOTDFilename), []byte(wrapped), 0644)
 
 		if err != nil {
 			logrus.WithError(err).Error("couldn't save message of the day")
-			AddErrorFlash(w, r, "Failed to save message of the day changes")
-		} else {
-			AddFlash(w, r, "Server message of the day successfully changed!")
+			AddErrorFlash(w, r, "Failed to save message changes")
+			success = false
+		}
+
+		opts.ServerJoinMessage = r.FormValue("serverJoinMessage")
+		opts.ContentManagerWelcomeMessage = r.FormValue("contentManagerWelcomeMessage")
+
+		if err := sah.store.UpsertServerOptions(opts); err != nil {
+			logrus.WithError(err).Error("couldn't save messages")
+			AddErrorFlash(w, r, "Failed to save message changes")
+			success = false
+		}
+
+		if success {
+			AddFlash(w, r, "Messages successfully saved!")
 		}
 	}
 
@@ -75,7 +100,8 @@ func (sah *ServerAdministrationHandler) motd(w http.ResponseWriter, r *http.Requ
 	}
 
 	sah.viewRenderer.MustLoadTemplate(w, r, "server/motd.html", map[string]interface{}{
-		"text": string(b),
+		"motdText": string(b),
+		"Opts":     opts,
 	})
 }
 
