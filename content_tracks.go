@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/cj123/ini"
-	"github.com/go-chi/chi"
 	"github.com/dimchansky/utfbom"
+	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
 )
 
