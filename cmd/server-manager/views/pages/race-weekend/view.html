@@ -4,7 +4,7 @@
     <h1 class="text-center">{{ $.RaceWeekend.Name }}</h1>
 
     <div class="row">
-        {{ range $sessionIndex, $session := $.RaceWeekend.Sessions }}
+        {{ range $sessionIndex, $session := $.RaceWeekend.SortedSessions }}
 
             {{ $raceConfig := $session.RaceConfig }}
             {{ $trackInfo := trackInfo $raceConfig.Track $raceConfig.TrackLayout }}
@@ -13,12 +13,24 @@
             {{ $numParentsLeft := $.RaceWeekend.NumParentsLeft $session }}
             {{ $numParentsAbove := $.RaceWeekend.NumParentsAbove $session }}
 
-            <div class="{{ if eq $numSiblings 0 }}col-md-12{{ else }}col-md-{{ $.RaceWeekend.GetColumnWidth $session }}{{ end }}">
-
-                Left: {{ $numParentsLeft }}
-                Above: {{ $numParentsAbove }}
+            <div  draggable="true" style="width: {{ if eq $numSiblings 0 }}100%{{ else }}{{ columnWidth ($.RaceWeekend.GetNumSiblings $session) }}%{{ end }}; {{ if eq $numParentsAbove 0 }}margin-top: 35px;{{ end }}; padding-left: 20px; padding-right: 20px; position: relative;">
 
 
+                {{ if gt $numParentsAbove 0 }}
+                    <div class="row">
+                        {{ range until $numParentsAbove }}
+                            <div class="text-center" style="width: {{ columnWidth $numParentsAbove }}%;">
+                                <i class="fa fa-arrow-down" style="margin-top: 15px;"></i>
+                            </div>
+                        {{ end }}
+                    </div>
+                {{ end }}
+
+                {{ if gt $numParentsLeft 0 }}
+                    <div class="flow-right" style="position: absolute; top: 50%; left: -7px;">
+                        <i class="fa fa-arrow-right"></i>
+                    </div>
+                {{ end }}
 
                 <div class="card mt-3 border-secondary">
                     <div class="card-header">
@@ -40,22 +52,23 @@
 -->
                         <div class="float-right">
                             {{ if ne $acSession.Time 0 }}
-                                {{ $acSession.Time }} minutes,
+                                {{ $acSession.Time }} minutes
                             {{ else }}
                                 {{ with $acSession.Laps }}
-                                    {{ . }} laps,
+                                    {{ . }} laps
                                 {{ end }}
                             {{ end }}
 
+                            -
 
                             {{ if not ($.RaceWeekend.SessionCanBeRun $session) }}
-                                <span class="text-primary">Not all parent sessions completed</span>
+                                <span class="text-danger">Not available</span>
                             {{ else if $session.Completed }}
                                 <span class="text-success">Complete</span>
                             {{ else if $session.InProgress }}
                                 <span class="text-info">In Progress</span>
                             {{ else }}
-                                <span class="text-danger">Not started</span>
+                                <span class="text-warning">Ready to Start</span>
                             {{ end }}
                         </div>
                     </div>

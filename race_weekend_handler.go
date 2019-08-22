@@ -47,6 +47,7 @@ func (rwh *RaceWeekendHandler) view(w http.ResponseWriter, r *http.Request) {
 
 	rwh.viewRenderer.MustLoadTemplate(w, r, "race-weekend/view.html", map[string]interface{}{
 		"RaceWeekend": raceWeekend,
+		"WideContainer":   true,
 	})
 }
 

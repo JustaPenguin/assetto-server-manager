@@ -1,5 +1,7 @@
 import ChangeEvent = JQuery.ChangeEvent;
 
+import {jsPlumb} from "jsplumb";
+
 export class RaceWeekendSession {
     private $raceWeekendSession: JQuery<HTMLElement>;
 
@@ -29,3 +31,9 @@ export class RaceWeekendSession {
         });
     }
 }
+
+const plumb = jsPlumb.getInstance();
+
+plumb.bind("ready", () => {
+    console.log("PLUMBED");
+});

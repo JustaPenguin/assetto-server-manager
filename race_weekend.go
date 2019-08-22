@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"html/template"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -77,6 +78,21 @@ func (rw *RaceWeekend) SessionCanBeRun(s *RaceWeekendSession) bool {
 	return true
 }
 
+func (rw *RaceWeekend) SortedSessions() []*RaceWeekendSession {
+	sessions := make([]*RaceWeekendSession, len(rw.Sessions))
+
+	copy(sessions, rw.Sessions)
+
+	sort.Slice(sessions, func(i, j int) bool {
+		iChildren := rw.FindTotalNumParents(sessions[i])
+		jChildren := rw.FindTotalNumParents(sessions[j])
+
+		return iChildren < jChildren
+	})
+
+	return sessions
+}
+
 func (rw *RaceWeekend) NumParentsLeft(session *RaceWeekendSession) int {
 	return len(session.ParentIDs) - rw.NumParentsAbove(session)
 }
@@ -112,6 +128,26 @@ func (rw *RaceWeekend) NumParentsAbove(session *RaceWeekendSession) int {
 	}
 
 	return numParentsAbove
+}
+
+func (rw *RaceWeekend) FindTotalNumParents(session *RaceWeekendSession) int {
+	if len(session.ParentIDs) == 0 {
+		return 0
+	}
+
+	out := len(session.ParentIDs)
+
+	for _, otherSessID := range session.ParentIDs {
+		sess, err := rw.FindSessionByID(otherSessID.String())
+
+		if err != nil {
+			continue
+		}
+
+		out += rw.FindTotalNumParents(sess)
+	}
+
+	return out
 }
 
 func (rw *RaceWeekend) FindChildren(session *RaceWeekendSession) []*RaceWeekendSession {
@@ -155,12 +191,6 @@ func (rw *RaceWeekend) GetNumSiblings(session *RaceWeekendSession) int {
 	}
 
 	return numSiblings
-}
-
-func (rw *RaceWeekend) GetColumnWidth(session *RaceWeekendSession) int {
-	numSiblings := rw.GetNumSiblings(session)
-
-	return int(12.0 / float64(numSiblings))
 }
 
 type RaceWeekendSession struct {
