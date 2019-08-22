@@ -1,6 +1,7 @@
 import ChangeEvent = JQuery.ChangeEvent;
-
 import {jsPlumb} from "jsplumb";
+import dagre, {graphlib} from "dagre";
+import Graph = graphlib.Graph;
 
 export class RaceWeekendSession {
     private $raceWeekendSession: JQuery<HTMLElement>;
@@ -32,8 +33,64 @@ export class RaceWeekendSession {
     }
 }
 
-const plumb = jsPlumb.getInstance();
+const jsp = jsPlumb.getInstance();
 
-plumb.bind("ready", () => {
-    console.log("PLUMBED");
+jsp.bind("ready", () => {
+    jsp.importDefaults({
+        ConnectionsDetachable: false,
+        ReattachConnections: false,
+    });
+
+    $(".race-weekend-session").each((index, element) => {
+        const $session = $(element);
+
+        // @ts-ignore
+        jsp.draggable(element, {grid: [20, 20]});
+
+        const parentIDs = JSON.parse($session.data("parent-ids")) as string[];
+
+        for (let parentID of parentIDs) {
+            jsp.connect({
+                source: $session.attr("id"),
+                target: parentID,
+                anchor: "AutoDefault",
+
+                connector: ["Flowchart", {}],
+            });
+        }
+    });
+
+    // construct dagre graph from JsPlumb graph
+    const g = new Graph();
+    g.setGraph({});
+    g.setDefaultEdgeLabel(function () {
+        return {};
+    });
+
+    $('.race-weekend-session').each((idx, node) => {
+        const n = $(node);
+        g.setNode(n.attr('id')!, {
+            width: Math.round(n.width()!),
+            height: Math.round(n.height()!)
+        });
+    });
+
+    for (const edge of jsp.getAllConnections() as any[]) {
+        g.setEdge(
+            edge.target.id,
+            edge.source.id
+        );
+    }
+
+    // calculate the layout (i.e. node positions)
+    dagre.layout(g);
+
+    // Applying the calculated layout
+    g.nodes().forEach(
+        function (n) {
+            $('#' + n).css('left', g.node(n).x + 'px');
+            $('#' + n).css('top', g.node(n).y + 'px');
+        });
+
+    jsp.repaintEverything();
 });

@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"fmt"
 	"html/template"
 	"sort"
 	"time"
@@ -223,6 +224,10 @@ func (rws *RaceWeekendSession) SessionInfo() SessionConfig {
 	}
 
 	return SessionConfig{}
+}
+
+func (rws *RaceWeekendSession) ParentsDataAttr() template.HTMLAttr {
+	return template.HTMLAttr(fmt.Sprintf("data-parent-ids='%s'", jsonEncode(rws.ParentIDs)))
 }
 
 // InProgress indicates whether a RaceWeekendSession has been started but not stopped

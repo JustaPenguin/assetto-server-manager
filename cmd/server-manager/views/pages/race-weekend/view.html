@@ -3,41 +3,20 @@
 {{ define "content" }}
     <h1 class="text-center">{{ $.RaceWeekend.Name }}</h1>
 
-    <div class="row">
+    <div style="position: relative; height: {{ mul (len $.RaceWeekend.Sessions) 300 }}px">
+
         {{ range $sessionIndex, $session := $.RaceWeekend.SortedSessions }}
 
             {{ $raceConfig := $session.RaceConfig }}
             {{ $trackInfo := trackInfo $raceConfig.Track $raceConfig.TrackLayout }}
 
-            {{ $numSiblings := $.RaceWeekend.GetNumSiblings $session }}
-            {{ $numParentsLeft := $.RaceWeekend.NumParentsLeft $session }}
-            {{ $numParentsAbove := $.RaceWeekend.NumParentsAbove $session }}
-
-            <div  draggable="true" style="width: {{ if eq $numSiblings 0 }}100%{{ else }}{{ columnWidth ($.RaceWeekend.GetNumSiblings $session) }}%{{ end }}; {{ if eq $numParentsAbove 0 }}margin-top: 35px;{{ end }}; padding-left: 20px; padding-right: 20px; position: relative;">
-
-
-                {{ if gt $numParentsAbove 0 }}
-                    <div class="row">
-                        {{ range until $numParentsAbove }}
-                            <div class="text-center" style="width: {{ columnWidth $numParentsAbove }}%;">
-                                <i class="fa fa-arrow-down" style="margin-top: 15px;"></i>
-                            </div>
-                        {{ end }}
-                    </div>
-                {{ end }}
-
-                {{ if gt $numParentsLeft 0 }}
-                    <div class="flow-right" style="position: absolute; top: 50%; left: -7px;">
-                        <i class="fa fa-arrow-right"></i>
-                    </div>
-                {{ end }}
-
-                <div class="card mt-3 border-secondary">
+            <div class="race-weekend-session" id="{{ $session.ID.String }}" {{ $session.ParentsDataAttr }}>
+                <div class="card border-secondary">
                     <div class="card-header">
                         {{ $acSession := $session.SessionInfo }}
 
                         <strong>{{ $acSession.Name }}</strong>
-<!--
+    <!--
                         at
 
                         {{ with $trackInfo }}
@@ -49,7 +28,7 @@
                         in
 
                         {{ carList $.RaceWeekend.EntryList.CarIDs }}
--->
+    -->
                         <div class="float-right">
                             {{ if ne $acSession.Time 0 }}
                                 {{ $acSession.Time }} minutes

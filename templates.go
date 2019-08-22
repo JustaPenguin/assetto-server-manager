@@ -172,6 +172,9 @@ func (tr *Renderer) init() error {
 	}
 
 	funcs := sprig.FuncMap()
+	funcs["htmlAttr"] = func(s string) template.HTMLAttr {
+		return template.HTMLAttr(s)
+	}
 	funcs["ordinal"] = ordinal
 	funcs["prettify"] = prettifyName
 	funcs["carList"] = carList

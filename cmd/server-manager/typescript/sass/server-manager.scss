@@ -18,8 +18,9 @@
 @import "championships";
 @import "car-details";
 @import "calendar";
-@import '@fullcalendar/core/main';
-@import '@fullcalendar/timegrid/main';
-@import '@fullcalendar/daygrid/main';
-@import '@fullcalendar/list/main';
-@import '@fullcalendar/bootstrap/main';
+@import "race-weekend";
+@import "@fullcalendar/core/main";
+@import "@fullcalendar/timegrid/main";
+@import "@fullcalendar/daygrid/main";
+@import "@fullcalendar/list/main";
+@import "@fullcalendar/bootstrap/main";
