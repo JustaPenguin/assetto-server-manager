@@ -169,8 +169,8 @@ type GlobalServerConfig struct {
 	ShowContentManagerJoinLink  int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager display Content Manager join links on the Live Timing page."`
 
 	// Messages
-	ContentManagerWelcomeMessage string `ini:"-"`
-	ServerJoinMessage            string `ini:"-"`
+	ContentManagerWelcomeMessage string `ini:"-" show:"-"`
+	ServerJoinMessage            string `ini:"-" show:"-"`
 }
 
 func (gsc GlobalServerConfig) GetName() string {
