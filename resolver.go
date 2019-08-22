@@ -278,6 +278,7 @@ func (r *Resolver) resolveServerAdministrationHandler() *ServerAdministrationHan
 
 	r.serverAdministrationHandler = NewServerAdministrationHandler(
 		r.resolveBaseHandler(),
+		r.ResolveStore(),
 		r.resolveRaceManager(),
 		r.resolveChampionshipManager(),
 		r.resolveServerProcess(),
