@@ -653,8 +653,10 @@
                                                     {{ if $championship.IsMultiClass }}
                                                         <span class="font-weight-normal">
                                                             {{ range $classIndex, $class := $championship.Classes }}
-                                                                <br>
-                                                                {{ $class.Name }}: {{ driverName ($session.Results.FastestLapInClass $class.ID).DriverName }}
+                                                                {{ with ($session.Results.FastestLapInClass $class.ID) }}
+                                                                    <br>
+                                                                    {{ $class.Name }}: {{ driverName .DriverName }}
+                                                                {{ end }}
                                                             {{ end }}
                                                         </span>
                                                     {{ else }}
@@ -668,8 +670,10 @@
                                                     {{ if $championship.IsMultiClass }}
                                                         <span class="font-weight-normal">
                                                             {{ range $classIndex, $class := $championship.Classes }}
-                                                                <br>
-                                                                {{ $class.Name }}: {{ driverName ($session.Results.FastestLapInClass $class.ID).DriverName }}
+                                                                {{ with ($session.Results.FastestLapInClass $class.ID) }}
+                                                                    <br>
+                                                                    {{ $class.Name }}: {{ driverName .DriverName }}
+                                                                {{ end }}
                                                             {{ end }}
                                                         </span>
                                                     {{ else }}
@@ -683,8 +687,10 @@
                                                     {{ if $championship.IsMultiClass }}
                                                         <span class="font-weight-normal">
                                                             {{ range $classIndex, $class := $championship.Classes }}
-                                                                <br>
-                                                                {{ $class.Name }}: {{ driverName ($session.Results.FastestLapInClass $class.ID).DriverName }}
+                                                                {{ with ($session.Results.FastestLapInClass $class.ID) }}
+                                                                    <br>
+                                                                    {{ $class.Name }}: {{ driverName .DriverName }}
+                                                                {{ end }}
                                                             {{ end }}
                                                         </span>
                                                     {{ else }}

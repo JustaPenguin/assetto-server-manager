@@ -420,7 +420,7 @@ func (s *SessionResults) FastestLap() *SessionLap {
 }
 
 func (s *SessionResults) FastestLapInClass(classID uuid.UUID) *SessionLap {
-	if len(s.Laps) == 0 {
+	if len(s.Laps) == 0 || s.Laps == nil {
 		return nil
 	}
 
@@ -430,6 +430,10 @@ func (s *SessionResults) FastestLapInClass(classID uuid.UUID) *SessionLap {
 		if lap.ClassID == classID {
 			laps = append(laps, lap)
 		}
+	}
+
+	if len(laps) == 0 {
+		return nil
 	}
 
 	sort.Slice(laps, func(i, j int) bool {
