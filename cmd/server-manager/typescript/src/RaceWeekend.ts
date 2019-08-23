@@ -50,13 +50,20 @@ jsp.bind("ready", () => {
         const parentIDs = JSON.parse($session.data("parent-ids")) as string[];
 
         for (let parentID of parentIDs) {
-            jsp.connect({
-                source: $session.attr("id"),
-                target: parentID,
+            let conn = jsp.connect({
+                source: parentID,
+                target: $session.attr("id"),
                 anchor: "AutoDefault",
+                // @ts-ignore
+                endpoint: ["Rectangle", {width: 10, height: 10}],
 
                 connector: ["Flowchart", {}],
             });
+
+            if (conn) {
+                // @ts-ignore
+                conn.addOverlay(["Arrow", {width: 10, height: 10, id: "arrow"}]);
+            }
         }
     });
 
@@ -77,8 +84,8 @@ jsp.bind("ready", () => {
 
     for (const edge of jsp.getAllConnections() as any[]) {
         g.setEdge(
-            edge.target.id,
-            edge.source.id
+            edge.source.id,
+            edge.target.id
         );
     }
 
