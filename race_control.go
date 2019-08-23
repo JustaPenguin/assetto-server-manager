@@ -382,7 +382,7 @@ func (rc *RaceControl) OnEndSession(sessionFile udp.EndSession) error {
 		rc.sessionInfoCfn()
 	}
 
-	if config.ACSR.Enabled {
+	if config != nil && config.ACSR.Enabled {
 		go ACSRSendResult(string(sessionFile))
 	}
 
