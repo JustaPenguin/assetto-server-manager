@@ -461,6 +461,7 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 	}
 
 	var oldEntrant *Entrant
+	var oldEntrantClass *ChampionshipClass
 
 	for _, class := range c.Classes {
 		for _, entrant := range class.Entrants {
@@ -468,6 +469,7 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 				// we found the entrant, but there's a possibility that they changed cars
 				// keep the old entrant so we can swap its properties with the one that is being written to
 				oldEntrant = entrant
+				oldEntrantClass = class
 
 				entrant.GUID = ""
 				entrant.Name = ""
@@ -480,7 +482,7 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 		if entrant.Name == "" && entrant.GUID == "" && entrant.Model == potentialEntrant.GetCar() {
 			if oldEntrant != nil {
 				// swap the old entrant properties
-				oldEntrant.SwapProperties(entrant)
+				oldEntrant.SwapProperties(entrant, oldEntrantClass == classForCar)
 			}
 
 			entrant.Name = potentialEntrant.GetName()
@@ -657,7 +659,7 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 		race, raceOK := event.Sessions[SessionTypeRace]
 
 		if raceOK && race.Results != nil {
-			fastestLap := race.Results.FastestLap()
+			fastestLap := race.Results.FastestLapInClass(c.ID)
 
 			for pos, driver := range c.ResultsForClass(race.Results.Result) {
 				if driver.TotalTime <= 0 || driver.Disqualified {
@@ -675,7 +677,7 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 		race2, race2OK := event.Sessions[SessionTypeSecondRace]
 
 		if race2OK && race2.Results != nil {
-			fastestLap := race2.Results.FastestLap()
+			fastestLap := race2.Results.FastestLapInClass(c.ID)
 
 			for pos, driver := range c.ResultsForClass(race2.Results.Result) {
 				if driver.TotalTime <= 0 || driver.Disqualified {
@@ -692,17 +694,60 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 	}
 }
 
+var championshipStandingSessionOrder = []SessionType{
+	SessionTypeSecondRace,
+	SessionTypeRace,
+	SessionTypeQualifying,
+	SessionTypePractice,
+	SessionTypeBooking,
+}
+
 // Standings returns the current Driver Standings for the Championship.
 func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*ChampionshipStanding {
 	var out []*ChampionshipStanding
+
+	for _, event := range events {
+		for _, session := range event.Sessions {
+			if session.Results == nil {
+				continue
+			}
+
+			// sort session result cars by the last car they completed a lap in (reversed).
+			// this means that below when we're looking for the car that matches a driver, we find
+			// the most recent car that they drove.
+
+			// sorting occurs outside the standings call below for performance reasons.
+			sort.Slice(session.Results.Cars, func(i, j int) bool {
+				carI := session.Results.Cars[i]
+				carJ := session.Results.Cars[j]
+
+				carILastLap := 0
+				carJLastLap := 0
+
+				for _, lap := range session.Results.Laps {
+					if lap.CarID == carI.CarID && lap.Timestamp > carILastLap {
+						carILastLap = lap.Timestamp
+					}
+
+					if lap.CarID == carJ.CarID && lap.Timestamp > carJLastLap {
+						carJLastLap = lap.Timestamp
+					}
+				}
+
+				return carILastLap > carJLastLap
+			})
+		}
+	}
 
 	standings := make(map[string]*ChampionshipStanding)
 
 	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64) {
 		var car *SessionCar
 
-		for _, session := range event.Sessions {
-			if session.Results == nil {
+		for _, sessionType := range championshipStandingSessionOrder {
+			session, ok := event.Sessions[sessionType]
+
+			if !ok || session.Results == nil {
 				continue
 			}
 
