@@ -106,6 +106,54 @@ func (s *SessionResults) GetAverageLapTime(guid string) time.Duration {
 	return s.GetTime(int(float64(totalTimeForAverage)/float64(lapsForAverage)), guid, false)
 }
 
+func (s *SessionResults) GetOverallAverageLapTime() time.Duration {
+	var totalTime, driverLapCount, lapsForAverage, totalTimeForAverage int
+
+	for _, lap := range s.Laps {
+		avgSoFar := (float64(totalTime) / float64(lapsForAverage)) * 1.07
+
+		// if lap doesnt cut and if lap is < 107% of average for that driver so far and if lap isn't lap 1
+		if lap.Cuts == 0 && driverLapCount != 0 && (float64(lap.LapTime) < avgSoFar || totalTime == 0) {
+			totalTimeForAverage += lap.LapTime
+			lapsForAverage++
+		}
+
+		driverLapCount++
+		totalTime += lap.LapTime
+	}
+
+	d, _ := time.ParseDuration(fmt.Sprintf("%dms", int(float64(totalTimeForAverage)/float64(lapsForAverage))))
+
+	return d
+}
+
+func (s *SessionResults) GetConsistency(guid string) float64 {
+	var bestLap int
+
+	for _, lap := range s.Laps {
+		if lap.DriverGUID == guid {
+			if s.IsDriversFastestLap(guid, lap.LapTime, lap.Cuts) {
+				bestLap = lap.LapTime
+			}
+		}
+	}
+
+	var percentage float64
+
+	average := s.GetAverageLapTime(guid)
+	best := s.GetTime(bestLap, guid, false)
+
+	if average != 0 && best != 0 {
+		consistency := average.Seconds() - best.Seconds()
+
+		percentage = 100 - ((consistency / best.Seconds()) * 100)
+	} else {
+		percentage = 0
+	}
+
+	return percentage
+}
+
 // lapNum is the drivers current lap
 func (s *SessionResults) GetPosForLap(guid string, lapNum int64) int {
 	var pos int
@@ -542,8 +590,8 @@ func listResults(page int) ([]SessionResults, []int, error) {
 	}
 
 	sort.Slice(resultFiles, func(i, j int) bool {
-		d1, _ := getResultDate(resultFiles[i].Name())
-		d2, _ := getResultDate(resultFiles[j].Name())
+		d1, _ := GetResultDate(resultFiles[i].Name())
+		d2, _ := GetResultDate(resultFiles[j].Name())
 
 		return d1.After(d2)
 	})
@@ -592,8 +640,8 @@ func ListAllResults() ([]SessionResults, error) {
 	}
 
 	sort.Slice(resultFiles, func(i, j int) bool {
-		d1, _ := getResultDate(resultFiles[i].Name())
-		d2, _ := getResultDate(resultFiles[j].Name())
+		d1, _ := GetResultDate(resultFiles[i].Name())
+		d2, _ := GetResultDate(resultFiles[j].Name())
 
 		return d1.After(d2)
 	})
@@ -613,7 +661,7 @@ func ListAllResults() ([]SessionResults, error) {
 	return results, nil
 }
 
-func getResultDate(name string) (time.Time, error) {
+func GetResultDate(name string) (time.Time, error) {
 	dateSplit := strings.Split(name, "_")
 	dateSplit = dateSplit[0 : len(dateSplit)-1]
 	date := strings.Join(dateSplit, "_")
@@ -648,7 +696,7 @@ func LoadResult(fileName string) (*SessionResults, error) {
 		return nil, err
 	}
 
-	date, err := getResultDate(fileName)
+	date, err := GetResultDate(fileName)
 
 	if err != nil {
 		return nil, err

@@ -22,6 +22,7 @@ type Configuration struct {
 	Accounts      AccountsConfig      `yaml:"accounts"`
 	Monitoring    MonitoringConfig    `yaml:"monitoring"`
 	Championships ChampionshipsConfig `yaml:"championships"`
+	ACSR          ACSRConfig          `yaml:"acsr"`
 }
 
 type ChampionshipsConfig struct {
@@ -82,6 +83,11 @@ func (h *HTTPConfig) createSessionStore() (sessions.Store, error) {
 	default:
 		return sessions.NewCookieStore([]byte(h.SessionKey)), nil
 	}
+}
+
+type ACSRConfig struct {
+	URL     string `yaml:"string"`
+	Enabled bool   `yaml:"enable"`
 }
 
 type SteamConfig struct {

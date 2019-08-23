@@ -99,6 +99,16 @@ func main() {
 		return
 	}
 
+	/*sessions, err := servermanager.ListAllResults()
+
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
+	for _, session := range sessions {
+		go servermanager.ACSRSendResult(session.SessionFile)
+	}*/
+
 	logrus.Infof("starting assetto server manager on: %s", config.HTTP.Hostname)
 
 	if runtime.GOOS == "windows" {
