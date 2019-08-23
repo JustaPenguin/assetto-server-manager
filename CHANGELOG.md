@@ -1,3 +1,36 @@
+v1.4.2
+------
+
+Added:
+
+* Added configurable server join and content manager messages. Check out the "Messages" page for more details.
+* Championship Events now show the best qualifying and fastest lap in each class.
+* You can now rename drivers on results pages.
+
+Fixes:
+
+* Results in the results listings now only show entrants that took part in a session, rather than all registered entrants for that session.
+* Added a popup to alert admins when there are pending Registration Requests for a Championship.
+* Added a "Back to Championship" button on the Championship Registration Request management page.
+* The Championship EntryList displayed before events start now shows the car skins.
+* Championship Entrants are now shown in the order of their pitboxes in the Championship Entrant overview table (shown only when championship progress is 0%).
+* Fixed an issue where registered users did not have their skin set up on individual Championship Events.
+* Fixes an issue where search indexing could fail due to a car with malformed details JSON. Cars which have malformed details JSON (that we can't clean up) will now load without any car details, allowing search indexing to continue.
+* Fixes an issue that caused incorrect ordering of Multiclass Open Championship results. If your Multiclass Open Championships have incorrect classes, you can re-import the Championship event results to fix the issue. 
+* Fixes an issue where fastest laps were only awarded to the fastest class in a Multiclass Championship.
+
+---
+
+v1.4.1
+------
+
+Fixes:
+
+* Added the "Sleep Time" option to the Server Options page. Added a migration to set the Sleep Time option to 1 for all users.
+  This fixes an issue where it was not correctly set to 1 (a value that kunos explicitly recommends), which on smaller servers could cause 100% CPU usage.
+
+---
+
 v1.4.0
 ------
 
@@ -48,13 +81,6 @@ Fixes:
 * Fixed an entry list issue that made some cars impossible to connect to if the pit ID selection had a gap in it. Any gaps in the pit IDs will now be closed automatically (e.g. 1-2-4 becomes 0-1-2). If you want gaps in your entry list please add dummy cars to it.
 
 ---
-
-v1.3.4
-------
-
-Fixes:
-
-* Fixed an entry list issue that made some cars impossible to connect to if the pit ID selection had a gap in it. Any gaps in the pit IDs will now be closed automatically (e.g. 1-2-4 becomes 0-1-2). If you want gaps in your entry list please add dummy cars to it.
 
 v1.3.3
 ------

@@ -480,8 +480,7 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 	liveLink := ""
 
 	if serverConfig.CurrentRaceConfig.IsSol == 1 {
-		solWarning = fmt.Sprintf("This server is running Sol with a %d time progression multiplier. For the best "+
-			"experience please install Sol, and remember the other drivers may be driving in night conditions.", serverConfig.CurrentRaceConfig.TimeOfDayMultiplier)
+		solWarning = "This server is running Sol. For the best experience please install Sol, and remember the other drivers may be driving in night conditions."
 	}
 
 	if config != nil && config.HTTP.BaseURL != "" {
@@ -489,11 +488,11 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 	}
 
 	wrapped := strings.Split(wordwrap.WrapString(
-
 		fmt.Sprintf(
-			"Hi, %s! Welcome to the %s server! %s Make this race count! %s\n",
+			"Hi, %s! Welcome to the %s server! %s %s Make this race count! %s\n",
 			driver.CarInfo.DriverName,
 			serverConfig.GlobalServerConfig.GetName(),
+			serverConfig.GlobalServerConfig.ServerJoinMessage,
 			solWarning,
 			liveLink,
 		),

@@ -115,11 +115,19 @@ func (cmw *ContentManagerWrapper) UDPCallback(message udp.Message) {
 }
 
 func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
-	text, err := html2text.FromString(event.EventDescription(), html2text.Options{PrettyTables: true})
+	text := cmw.serverConfig.GlobalServerConfig.ContentManagerWelcomeMessage
+
+	eventDescriptionAsText, err := html2text.FromString(event.EventDescription(), html2text.Options{PrettyTables: true})
 
 	if err != nil {
 		return err
 	}
+
+	if len(text) > 0 {
+		text += "\n\n"
+	}
+
+	text += eventDescriptionAsText
 
 	if champ, ok := cmw.event.(*ActiveChampionship); ok {
 		if u := champ.GetURL(); u != "" {

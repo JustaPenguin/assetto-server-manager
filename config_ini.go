@@ -155,6 +155,8 @@ type GlobalServerConfig struct {
 	NumberOfThreads           int    `ini:"NUM_THREADS" show:"open" min:"1" help:"Number of threads to run on"`
 	WelcomeMessage            string `ini:"WELCOME_MESSAGE" show:"-" help:"Path to the file that contains the server welcome message"`
 
+	SleepTime int `ini:"SLEEP_TIME" help:"The use of this setting is not fully known. Leave the value as 1 unless you really know what you're doing. (Values other than 1 cause excessive CPU usage)"`
+
 	FreeUDPPluginLocalPort int    `ini:"-" show:"-"`
 	FreeUDPPluginAddress   string `ini:"-" show:"-"`
 
@@ -165,6 +167,10 @@ type GlobalServerConfig struct {
 	EnableContentManagerWrapper int    `ini:"-" input:"checkbox" help:"When on, this option makes Server Manager provide extra information to Content Manager. This includes more detail about connected clients, event descriptions and download links. A side-effect of this is that your server name will contain a new piece of information (an 'i' character followed by a port - which Content Manager requires). Also - if enabled - this wrapper uses a GeoIP functionality provided by <a href='https://freegeoip.app''>freegeoip.app</a>."`
 	ContentManagerWrapperPort   int    `ini:"-" min:"0" max:"65535" help:"The port on which to serve Content Manager with the above information. Please make sure this port is open on your firewall."`
 	ShowContentManagerJoinLink  int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager display Content Manager join links on the Live Timing page."`
+
+	// Messages
+	ContentManagerWelcomeMessage string `ini:"-" show:"-"`
+	ServerJoinMessage            string `ini:"-" show:"-"`
 }
 
 func (gsc GlobalServerConfig) GetName() string {
@@ -208,7 +214,6 @@ type CurrentRaceConfig struct {
 	LoopMode          int `ini:"LOOP_MODE" input:"checkbox" help:"the server restarts from the first track, to disable this set it to 0"`
 
 	MaxClients   int `ini:"MAX_CLIENTS" help:"max number of clients (must be <= track's number of pits)"`
-	SleepTime    int `ini:"SLEEP_TIME" help:"TODO"`
 	RaceOverTime int `ini:"RACE_OVER_TIME" help:"time remaining in seconds to finish the race from the moment the first one passes on the finish line"`
 	StartRule    int `ini:"START_RULE" min:"0" max:"2" help:"0 is car locked until start;   1 is teleport   ; 2 is drive-through (if race has 3 or less laps then the Teleport penalty is enabled)"`
 
