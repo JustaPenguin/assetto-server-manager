@@ -86,8 +86,8 @@ func (h *HTTPConfig) createSessionStore() (sessions.Store, error) {
 }
 
 type ACSRConfig struct {
-	URL     string `yaml:"string"`
-	Enabled bool   `yaml:"enable"`
+	URL     string `yaml:"url"`
+	Enabled bool   `yaml:"enabled"`
 }
 
 type SteamConfig struct {

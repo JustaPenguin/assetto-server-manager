@@ -237,7 +237,7 @@ acsr:
   # Server Manager servers (that have acsr enabled). By default all data is
   # anonymised BEFORE being sent to the acsr server, in order to see your
   # performance data sign up for an account at acsr.me
-  enable: true
+  enabled: true
   # the acsr server that acsr results are sent to, shouldn't be changed
   url: https://www.acsr.me
 
