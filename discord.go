@@ -6,23 +6,26 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
 	"net/url"
+	"time"
 )
 
 type DiscordManager struct {
 	store   Store
 	discord *discordgo.Session
+	r       *Resolver
 	enabled bool
 }
 
 // NewDiscordManager instantiates the DiscordManager type.  On error, it will log the error and return the type
 // flagged as disabled
-func NewDiscordManager(store Store) (*DiscordManager, error) {
+func NewDiscordManager(store Store, r *Resolver) (*DiscordManager, error) {
 	opts, err := store.LoadServerOptions()
 
 	if err != nil {
 		logrus.Errorf("couldn't load server options, err: %s", err)
 		return &DiscordManager{
 			store:   store,
+			r:       r,
 			discord: nil,
 			enabled: false,
 		}, err
@@ -42,6 +45,7 @@ func NewDiscordManager(store Store) (*DiscordManager, error) {
 			return &DiscordManager{
 				store:   store,
 				discord: nil,
+				r:       r,
 				enabled: false,
 			}, err
 		}
@@ -51,17 +55,56 @@ func NewDiscordManager(store Store) (*DiscordManager, error) {
 		return &DiscordManager{
 			store:   store,
 			discord: nil,
+			r:       r,
 			enabled: false,
 		}, nil
 	}
 
 	logrus.Infof("Discord notification bot connected")
 
-	return &DiscordManager{
+	dm := &DiscordManager{
 		store:   store,
 		discord: session,
+		r:       r,
 		enabled: true,
-	}, nil
+	}
+
+	session.AddHandler(dm.CommandHandler)
+
+	return dm, nil
+}
+
+func (dm *DiscordManager) CommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+	if m.Author.ID == s.State.User.ID {
+		return
+	}
+
+	if m.Content == "!schedule" {
+		rs := dm.r.resolveScheduledRacesHandler()
+
+		start := time.Now()
+		end := start.AddDate(0, 0, 7)
+
+		calendar, err := rs.buildCalendar(start, end)
+
+		if err != nil {
+			return
+		}
+
+		var msg = ""
+
+		for _, event := range calendar {
+			msg += event.Start.Format("Mon, 02 Jan 2006 15:04:05 MST") + "\n"
+			msg += event.Title + "\n"
+			msg += event.Description + "\n\n"
+		}
+
+		_, err = s.ChannelMessageSend(m.ChannelID, msg)
+
+		if err != nil {
+			logrus.Errorf("couldn't open discord session, err: %s", err)
+		}
+	}
 }
 
 func (dm *DiscordManager) Stop() error {
