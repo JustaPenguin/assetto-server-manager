@@ -1,0 +1,32 @@
+"AppState"
+{
+	"appid"		"302550"
+	"Universe"		"1"
+	"name"		"Assetto Corsa Dedicated Server"
+	"StateFlags"		"4"
+	"installdir"		"Assetto Corsa Dedicated Server"
+	"LastUpdated"		"1565263577"
+	"UpdateResult"		"0"
+	"SizeOnDisk"		"29881252"
+	"buildid"		"2429760"
+	"LastOwner"		"76561198930528521"
+	"BytesToDownload"		"6837696"
+	"BytesDownloaded"		"6837696"
+	"AutoUpdateBehavior"		"0"
+	"AllowOtherDownloadsWhileRunning"		"0"
+	"ScheduledAutoUpdate"		"0"
+	"InstalledDepots"
+	{
+		"302551"
+		{
+			"manifest"		"3128270656591460876"
+		}
+	}
+	"MountedDepots"
+	{
+		"302551"		"3128270656591460876"
+	}
+	"UserConfig"
+	{
+	}
+}

@@ -1,0 +1,12 @@
+{
+	"name": "Silverstone - International",
+	"description": "Circuit of Silverstone",
+	"tags" : ["circuit","original","drift","Great Britain"],
+	"geotags": ["lat", "lon"],
+	"country": "Great Britain",
+	"city": "Silverstone",
+	"length": "3619",
+	"width": "14",
+	"pitboxes": "24",
+	"run": "clockwise"
+}

@@ -1,0 +1,230 @@
+################################################################################
+#
+#                      Assetto Server Manager Configuration
+#                 https://github.com/cj123/assetto-server-manager
+#
+#                       Thanks for using server manager!
+#
+#
+# note that changes to this file require a restart of server manager to work! :)
+#
+#
+# The below file is in YAML configuration format. Spacing is important within
+# YAML, and can cause server manager not to launch correctly. You can validate
+# this file online at: http://www.yamllint.com/
+#
+################################################################################
+
+################################################################################
+#
+#  steam settings - server manager can install the assetto corsa
+#                   server for you using steamcmd (if you'd like)
+#
+################################################################################
+steam:
+  # steam username and password. we recommend creating a separate account with
+  # steamguard disabled to use this application. Assetto Corsa Server is FREE
+  # so you don't need to worry about purchasing it again.
+  #
+  # server manager uses this information ONLY to install the
+  # assetto corsa server.
+  #
+  # however, if you do not wish to provide server manager with this information,
+  # leave it blank and install assetto corsa server to the path you specified in
+  # install_path (default: 'assetto')
+  username: cheesegrits3
+  password: qQGxsnipD03V
+
+  # where to install assetto corsa server
+  install_path: assetto
+
+  # the path to the executable to run. relative to the install_path by default
+  executable_path: acServer
+
+  # set this to true to force an install every time the server manager is loaded
+  force_update: false
+
+################################################################################
+#
+#  http settings
+#
+################################################################################
+http:
+  # hostname is the hostname the HTTP server should listen on.
+  # change '0.0.0.0' to 'localhost' if you don't want server manager to be
+  # available on the web.
+  hostname: 0.0.0.0:8772
+  # session key is used to encrypt the http session
+  session_key: RANDOMLY_GENERATE_THIS
+  # server manager base URL is the URL that the server manager is accessible on
+  # only used for links in championship welcome message in game
+  # you can leave this blank if not required
+  # example: https://opengt3.assettocorsaservers.com <-- requires https:// or
+  # http://, no closing / at the end
+  server_manager_base_URL:
+
+################################################################################
+#
+#  monitoring - enabling monitoring allows us to find out more information
+#  about how you're using Server Manager, as well as seeing any issues that may
+#  occur so we can collect and fix them. We understand that you may not wish
+#  for us to do any monitoring, so you can disable it by setting 'enabled'
+#  to false
+#
+################################################################################
+#  with monitoring enabled, the following systems are in place:
+#
+#  1. Sentry (https://sentry.io) monitoring of both Server Manager's backend
+#     code and frontend javascript. This lets us see application errors when
+#     they occur.
+#
+#  2. Google Analytics (https://analytics.google.com) tracking so we can see how
+#     many people use Server Manager, when they use it and where they are in
+#     the world.
+#
+#  3. Prometheus Monitoring - this provides more technical debugging in terms of
+#     memory and CPU usage, etc. This is *NOT* sent to us. We have added this in
+#     so that anybody who wants to monitor Server Manager for themselves can do
+#     so with Prometheus. We use it internally at assettocorsaservers.com to
+#     track our Server installs to help us improve our service.
+#
+#     you can access the prometheus endpoint at:
+#                <your servermanager domain>/metrics
+#
+#
+# once again, if you do not wish for Server Manager to do these things, simply
+# set 'enabled' to false and monitoring will not take place.
+################################################################################
+monitoring:
+  enabled: true
+
+################################################################################
+#
+#  data storage - where server manager keeps your data!
+#
+################################################################################
+store:
+  # store type: this can be one of:
+  #  - 'json'   - saves each custom race, championship as separate JSON files
+  #               in the directory specified by store_path
+  #  - 'boltdb' - saves all content inside a single database file specified by
+  #               store_path
+  #
+  # boltdb is recommended for most users.
+  type: boltdb
+
+  # where to save the server manager data
+  path: server_manager.db
+
+  # shared data path: Set the same directory for multiple AC Server Manager
+  # instances to share championship, entrants and custom events across them.
+  # Leave blank to use the same path as the one set up here.
+  # works only with JSON database
+  shared_data_path: 
+
+################################################################################
+#
+#  user management - this is now mostly done via the web interface.
+#
+################################################################################
+accounts:
+  # admin password override is used to override the admin password in the case
+  # that you have forgotten it. set it to e.g. 'password' and log in with:
+  # username: admin
+  # password: password
+  # and you will be prompted to change your admin password back to something you
+  # can remember
+  # 
+  # If you are logging in for the first time, do not use this override system.
+  # Instead, log in by using these credentials:
+  # username: admin
+  # password: servermanager
+  # As soon as you log in, you will be immediately asked to set a new password.
+  #
+  admin_password_override:
+
+################################################################################
+#
+#  live map config
+#
+################################################################################
+live_map:
+  # how often to refresh the map data in milliseconds. This value can't be below
+  # 200. If you find that championship events do not finish properly, try
+  # changing this to a higher number.
+  # set this to 0 to disable live map.
+  refresh_interval_ms: 500
+
+
+################################################################################
+#
+#  server config - configure plugins, e.g. stracker here.
+#
+################################################################################
+server:
+  # audit logging logs the actions of registered users locally on your server.
+  # Only Admins can access the logs, they are intended for tracking if users
+  # have deleted content, started/stopped events when they shouldn't have etc.
+  audit_logging: true
+  # list of commands to run on server start and kill on server stop. this should
+  # contain the full command with arguments to run the given program.
+  #
+  # you can use additional plugins with AC Server Manager, but while configuring
+  # them you have to ignore the ports that AC Server Manager writes in the 
+  # server_cfg.ini, as the Server Manager provides an interface to the plugins
+  # instead. The plugin ports in the Server Options page are the ones that must
+  # be used for the plugin configuration. Here are examples for configuring
+  # sTracker and KMR plugins:
+  #
+  # sTracker:
+  # - rcvPort must equal the port from the UDP Plugin Address
+  # - sendPort must equal the value of the UDP Plugin Local Port
+  #
+  # KMR: 
+  # - ac_server_http_port must equal the value of HTTP Port
+  # - ac_server_plugin_local_port must equal the value of UDP Plugin Local Port
+  # - ac_server_plugin_address_port must equal the port from the UDP Plugin Address
+  # - web_auth_server_port must equal the port specified in UDP Auth Plugin Address
+  # - UDP Auth Plugin Address has to be configured in the way specified by KMR documentation
+  #
+  # Note that AC Server Manager provides an interface for a single plugin only, 
+  # as the AC gameserver does. If you want to chain multiple plugins, please 
+  # follow the documentation of the plugins you're using. Plugins usually 
+  # feature interfaces so additional plugins can be chained between themselves.
+  #
+  # you can of course add your own commands (whatever you like!) here.
+  # 
+  # this assumes that you have installed stracker into a folder called "stracker"
+  # next to the server-manager executable.
+  #
+  # each executable specified is run from the directory it is inside, for example,
+  # the command:
+  #
+  # ./stracker/stracker_linux_x86/stracker --stracker_ini stracker-default.ini
+  # now actually performs the following two commands:
+  #
+  # 1. cd ./stracker/stracker_linux_x86
+  # 2. ./stracker --stracker_ini stracker-default.ini
+  run_on_start:
+    # uncomment the line below for stracker on Linux
+    # - ./stracker/stracker_linux_x86/stracker --stracker_ini stracker.ini
+
+    # uncomment the line below for stracker on Windows
+    # - ./stracker/stracker.exe --stracker_ini stracker.ini
+
+################################################################################
+#
+#  championships
+#
+################################################################################
+championships:
+  # reCAPTCHA is used to protect registration requests to championships. You
+  # must specify a site_key and secret_key to enable reCAPTCHA
+  # Register for reCAPTCHA here: https://www.google.com/recaptcha
+  # Please note you must register for reCAPTCHA v2.
+  #
+  # Note: reCAPTCHA is NOT required, but highly recommended if you are running
+  # Championship Sign Up Forms
+  recaptcha:
+    site_key:
+    secret_key:
