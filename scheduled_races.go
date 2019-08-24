@@ -212,7 +212,6 @@ type calendarObject struct {
 }
 
 func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter, r *http.Request) error {
-
 	start, err := time.Parse(time.RFC3339, r.URL.Query().Get("start"))
 
 	if err != nil {
@@ -225,10 +224,20 @@ func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter, r *http.Req
 		return err
 	}
 
-	scheduled, err := rs.getScheduledRaces()
+	calendarObjects, err := rs.buildCalendar(start, end)
 
 	if err != nil {
 		return err
+	}
+
+	return json.NewEncoder(w).Encode(calendarObjects)
+}
+
+func (rs *ScheduledRacesHandler) buildCalendar(start time.Time, end time.Time) ([]calendarObject, error) {
+	scheduled, err := rs.getScheduledRaces()
+
+	if err != nil {
+		return nil, err
 	}
 
 	var calendarObjects []calendarObject
@@ -269,7 +278,7 @@ func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter, r *http.Req
 			rule, err := customRace.GetRecurrenceRule()
 
 			if err != nil {
-				return err
+				return nil, err
 			}
 
 			for _, startTime := range rule.Between(start, end, true) {
@@ -400,7 +409,7 @@ func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter, r *http.Req
 		}
 	}
 
-	return json.NewEncoder(w).Encode(calendarObjects)
+	return calendarObjects, nil
 }
 
 func generateSummary(raceSetup CurrentRaceConfig, eventType string) string {
