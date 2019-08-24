@@ -16,7 +16,7 @@ type Resolver struct {
 	championshipManager *ChampionshipManager
 	accountManager      *AccountManager
 	discordManager      *DiscordManager
-	notificationManager *NotificationHandler
+	notificationManager *NotificationManager
 
 	viewRenderer          *Renderer
 	serverProcess         ServerProcess
@@ -348,12 +348,12 @@ func (r *Resolver) resolveDiscordManager() *DiscordManager {
 	}
 
 	// if manager errors, it will log the error and return discordManager flagged as disabled, so no need to handle err
-	r.discordManager, _ = NewDiscordManager(r.store)
+	r.discordManager, _ = NewDiscordManager(r.store, r)
 
 	return r.discordManager
 }
 
-func (r *Resolver) resolveNotificationManager() *NotificationHandler {
+func (r *Resolver) resolveNotificationManager() *NotificationManager {
 	if r.notificationManager != nil {
 		return r.notificationManager
 	}
