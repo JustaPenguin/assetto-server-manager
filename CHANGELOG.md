@@ -18,6 +18,7 @@ Fixes:
 * Fixes an issue where search indexing could fail due to a car with malformed details JSON. Cars which have malformed details JSON (that we can't clean up) will now load without any car details, allowing search indexing to continue.
 * Fixes an issue that caused incorrect ordering of Multiclass Open Championship results. If your Multiclass Open Championships have incorrect classes, you can re-import the Championship event results to fix the issue. 
 * Fixes an issue where fastest laps were only awarded to the fastest class in a Multiclass Championship.
+* Fixes an issue where Sol session start times would change to an incorrect time when editing an event.
 
 ---
 
