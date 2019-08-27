@@ -248,6 +248,11 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		return err
 	}
 
+	// @TODO i think the session IsOpen needs to be true
+	for _, session := range session.RaceConfig.Sessions {
+		session.IsOpen = 1
+	}
+
 	// @TODO replace normalEvent with something better here
 	return rwm.raceManager.applyConfigAndStart(session.RaceConfig, entryList, false, normalEvent{})
 }

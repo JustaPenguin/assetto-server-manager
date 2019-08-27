@@ -64,7 +64,7 @@ func ConfigIniDefault() ServerConfig {
 			MaxContactsPerKilometer:   -1,
 			ResultScreenTime:          90,
 
-			Sessions: map[SessionType]SessionConfig{
+			Sessions: map[SessionType]*SessionConfig{
 				SessionTypePractice: {
 					Name:   "Practice",
 					Time:   10,

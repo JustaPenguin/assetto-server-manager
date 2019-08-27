@@ -440,7 +440,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 		delete(event.RaceSetup.Sessions, SessionTypeQualifying)
 		delete(event.RaceSetup.Sessions, SessionTypeRace)
 
-		event.RaceSetup.Sessions[SessionTypePractice] = SessionConfig{
+		event.RaceSetup.Sessions[SessionTypePractice] = &SessionConfig{
 			Name:   "Practice",
 			Time:   120,
 			IsOpen: 1,

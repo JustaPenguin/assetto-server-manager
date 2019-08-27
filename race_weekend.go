@@ -55,7 +55,7 @@ func (rw *RaceWeekend) DelSession(sessionID string) {
 	rw.Sessions = append(rw.Sessions[:toDelete], rw.Sessions[toDelete+1:]...)
 
 	for _, session := range rw.Sessions {
-
+		session.RemoveParent(sessionID)
 	}
 }
 
@@ -244,12 +244,12 @@ func NewRaceWeekendSession() *RaceWeekendSession {
 	}
 }
 
-func (rws *RaceWeekendSession) SessionInfo() SessionConfig {
+func (rws *RaceWeekendSession) SessionInfo() *SessionConfig {
 	for _, sess := range rws.RaceConfig.Sessions {
 		return sess
 	}
 
-	return SessionConfig{}
+	return &SessionConfig{}
 }
 
 func (rws *RaceWeekendSession) SessionType() SessionType {
@@ -258,6 +258,22 @@ func (rws *RaceWeekendSession) SessionType() SessionType {
 	}
 
 	return ""
+}
+
+func (rws *RaceWeekendSession) RemoveParent(parentID string) {
+	foundIndex := -1
+
+	for index, id := range rws.ParentIDs {
+		if id.String() == parentID {
+			foundIndex = index
+		}
+	}
+
+	if foundIndex < 0 {
+		return
+	}
+
+	rws.ParentIDs = append(rws.ParentIDs[:foundIndex], rws.ParentIDs[foundIndex+1:]...)
 }
 
 func (rws *RaceWeekendSession) ParentsDataAttr() template.HTMLAttr {

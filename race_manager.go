@@ -245,7 +245,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 
 	quickRace.LegalTyres = strings.Join(quickRaceTyres, ";")
 
-	quickRace.Sessions = make(map[SessionType]SessionConfig)
+	quickRace.Sessions = make(map[SessionType]*SessionConfig)
 
 	qualifyingTime, err := strconv.ParseInt(r.Form.Get("Qualifying.Time"), 10, 0)
 
@@ -253,7 +253,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		return err
 	}
 
-	quickRace.AddSession(SessionTypeQualifying, SessionConfig{
+	quickRace.AddSession(SessionTypeQualifying, &SessionConfig{
 		Name:   "Qualify",
 		Time:   int(qualifyingTime),
 		IsOpen: 1,
@@ -271,7 +271,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		return err
 	}
 
-	quickRace.AddSession(SessionTypeRace, SessionConfig{
+	quickRace.AddSession(SessionTypeRace, &SessionConfig{
 		Name:     "Race",
 		Time:     int(raceTime),
 		Laps:     int(raceLaps),
@@ -515,7 +515,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 			continue
 		}
 
-		raceConfig.AddSession(session, SessionConfig{
+		raceConfig.AddSession(session, &SessionConfig{
 			Name:     r.FormValue(sessName + ".Name"),
 			Time:     formValueAsInt(r.FormValue(sessName + ".Time")),
 			Laps:     formValueAsInt(r.FormValue(sessName + ".Laps")),
