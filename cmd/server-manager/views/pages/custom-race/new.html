@@ -561,6 +561,27 @@
                     <div class="hidden-booking-enabled">
 
                         <div class="form-group row">
+                            <label for="PickupModeEnabled" class="col-sm-3 col-form-label">Pickup Mode</label>
+
+
+                            <div class="col-sm-9">
+                                <input type="checkbox"
+                                       id="PickupModeEnabled"
+                                       name="PickupModeEnabled"
+                                       value="{{ $f.PickupModeEnabled }}"
+
+                                        {{ if eq $f.PickupModeEnabled 1 }}
+                                            checked="checked"
+                                        {{ end }}
+                                >
+
+                                <br>
+
+                                <small>Only players already included in the entry list can join the server. This setting uses the PickupModeEnabled option in the Assetto Corsa configuration file. Note, sessions with Loop Mode ON will require players to rejoin the server when the server loops.</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
                             <label for="LockedEntryList" class="col-sm-3 col-form-label">Locked Entry List</label>
 
 
@@ -568,16 +589,16 @@
                                 <input type="checkbox"
                                        id="LockedEntryList"
                                        name="LockedEntryList"
-                                       value="{{ $f.PickupModeEnabled }}"
+                                       value="{{ $f.LockedEntryList }}"
 
-                                        {{ if eq $f.PickupModeEnabled 0 }}
+                                        {{ if eq $f.LockedEntryList 1 }}
                                             checked="checked"
                                         {{ end }}
                                 >
 
                                 <br>
 
-                                <small>Only players already included in the entry list can join the server. This setting uses the PickupModeEnabled option in the Assetto Corsa configuration file. Note, when Locked Entry List is ON, sessions with Loop Mode ON will require players to rejoin the server when the server loops.</small>
+                                <small>Only players already included in the entry list can join the server</small>
                             </div>
                         </div>
 
