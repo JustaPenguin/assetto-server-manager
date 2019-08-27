@@ -926,7 +926,7 @@
                                         <div class="sol-settings" {{ if not $f.IsSol }} style="display: none;" {{ end }}>
 
                                             <div class="form-group row">
-                                                <label class="col-sm-3 col-form-label col-form-label-sm">Session Start Date/Time (<span class='timezone'></span>)</label>
+                                                <label class="col-sm-3 col-form-label col-form-label-sm">Session Start Date/Time</label>
 
                                                 <div class="col-sm-9 p-0" id='date-time-picker'>
                                                     <input
@@ -934,12 +934,10 @@
                                                             id="DateUnix"
                                                             name="DateUnix"
                                                             class="form-control"
-                                                            value="{{ ($weather.UnixToTime $weather.CMWFXDateUnModified) | date "2006-01-02T15:04" }}"
+                                                            value="{{ dateInZone "2006-01-02T15:04" ($weather.UnixToTime $weather.CMWFXDateUnModified) "UTC" }}"
                                                     >
                                                 </div>
                                             </div>
-
-                                            <input type='hidden' name="sol-timezone" class="sol-timezone">
 
                                             <div class="form-group row">
                                                 <label class="col-sm-3 col-form-label col-form-label-sm">Time Progression Multiplier</label>
