@@ -1,0 +1,66 @@
+{{ define "title" }}Create a Password{{ end }}
+
+{{ define "content" }}
+    <div class="col-sm-8 offset-sm-2">
+        <form method="post" action="/accounts/update">
+            <div class="card mb-3">
+                <div class="card-header"><strong>Update Account Details</strong></div>
+                <div class="card-body">
+                    <p><small>These account details are not mandatory, but are recommended. If you fill in these details
+                            you will be added to the list of entrants that race organisers can add to events and your details
+                            will be automatically filled out for you if you register for a closed event.</small></p>
+
+                    <div class="form-group row">
+                        <label for="DriverName" class="col-sm-3 col-form-label">Driver Name</label>
+
+                        <div class="col-sm-9">
+                            <input
+                                    type="text"
+                                    id="DriverName"
+                                    name="DriverName"
+                                    class="form-control"
+                                    placeholder=""
+                                    value="{{ .account.DriverName }}"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="DriverGUID" class="col-sm-3 col-form-label">GUID</label>
+
+                        <div class="col-sm-9">
+                            <input
+                                    type="text"
+                                    id="DriverGUID"
+                                    name="DriverGUID"
+                                    class="form-control"
+                                    placeholder=""
+                                    value="{{ .account.GUID }}"
+                            >
+                            <small>You can find your Steam ID at <a href="https://steamid.io/"
+                                                                    target="_blank">steamid.io</a> or in your Steam Profile URL. Note that we require the
+                                <strong>SteamID64</strong>.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="DriverTeam" class="col-sm-3 col-form-label">Team</label>
+
+                        <div class="col-sm-9">
+                            <input
+                                    type="text"
+                                    id="DriverTeam"
+                                    name="DriverTeam"
+                                    class="form-control"
+                                    placeholder=""
+                                    value="{{ .account.Team }}"
+                            >
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary float-right" type="submit">Submit</button>
+                </div>
+            </div>
+        </form>
+    </div>
+{{ end }}

@@ -131,6 +131,7 @@ func Router(
 
 		// account management
 		r.HandleFunc("/accounts/new-password", accountHandler.newPassword)
+		r.HandleFunc("/accounts/update", accountHandler.update)
 		r.HandleFunc("/accounts/dismiss-changelog", accountHandler.dismissChangelog)
 
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")))
