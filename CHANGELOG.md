@@ -3,6 +3,7 @@ v1.4.2
 
 Added:
 
+* Added configurable server join and content manager messages. Check out the "Messages" page for more details.
 * Championship Events now show the best qualifying and fastest lap in each class.
 * You can now rename drivers on results pages.
 
@@ -15,6 +16,8 @@ Fixes:
 * Championship Entrants are now shown in the order of their pitboxes in the Championship Entrant overview table (shown only when championship progress is 0%).
 * Fixed an issue where registered users did not have their skin set up on individual Championship Events.
 * Fixes an issue where search indexing could fail due to a car with malformed details JSON. Cars which have malformed details JSON (that we can't clean up) will now load without any car details, allowing search indexing to continue.
+* Fixes an issue that caused incorrect ordering of Multiclass Open Championship results. If your Multiclass Open Championships have incorrect classes, you can re-import the Championship event results to fix the issue. 
+* Fixes an issue where fastest laps were only awarded to the fastest class in a Multiclass Championship.
 
 ---
 

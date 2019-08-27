@@ -193,14 +193,17 @@ func (e *Entrant) OverwriteProperties(other *Entrant) {
 	e.PitBox = other.PitBox
 }
 
-func (e *Entrant) SwapProperties(other *Entrant) {
-	e.Model, other.Model = other.Model, e.Model
-	e.Skin, other.Skin = other.Skin, e.Skin
+func (e *Entrant) SwapProperties(other *Entrant, entrantRemainedInClass bool) {
+	if entrantRemainedInClass {
+		e.Model, other.Model = other.Model, e.Model
+		e.Skin, other.Skin = other.Skin, e.Skin
+		e.FixedSetup, other.FixedSetup = other.FixedSetup, e.FixedSetup
+		e.Restrictor, other.Restrictor = other.Restrictor, e.Restrictor
+		e.Ballast, other.Ballast = other.Ballast, e.Ballast
+	}
+
 	e.Team, other.Team = other.Team, e.Team
 	e.InternalUUID, other.InternalUUID = other.InternalUUID, e.InternalUUID
-	e.FixedSetup, other.FixedSetup = other.FixedSetup, e.FixedSetup
-	e.Restrictor, other.Restrictor = other.Restrictor, e.Restrictor
-	e.Ballast, other.Ballast = other.Ballast, e.Ballast
 	e.PitBox, other.PitBox = other.PitBox, e.PitBox
 }
 

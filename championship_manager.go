@@ -934,8 +934,17 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 		SessionTypeSecondRace: r.FormValue("SecondRaceResult"),
 	}
 
-	for sessionType, sessionFile := range sessions {
-		if sessionFile == "" {
+	sessionsOrdered := []SessionType{
+		SessionTypePractice,
+		SessionTypeQualifying,
+		SessionTypeRace,
+		SessionTypeSecondRace,
+	}
+
+	for _, sessionType := range sessionsOrdered {
+		sessionFile, ok := sessions[sessionType]
+
+		if !ok || sessionFile == "" {
 			continue
 		}
 

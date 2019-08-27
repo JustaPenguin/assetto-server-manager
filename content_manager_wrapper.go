@@ -115,11 +115,19 @@ func (cmw *ContentManagerWrapper) UDPCallback(message udp.Message) {
 }
 
 func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
-	text, err := html2text.FromString(event.EventDescription(), html2text.Options{PrettyTables: true})
+	text := cmw.serverConfig.GlobalServerConfig.ContentManagerWelcomeMessage
+
+	eventDescriptionAsText, err := html2text.FromString(event.EventDescription(), html2text.Options{PrettyTables: true})
 
 	if err != nil {
 		return err
 	}
+
+	if len(text) > 0 {
+		text += "\n\n"
+	}
+
+	text += eventDescriptionAsText
 
 	if champ, ok := cmw.event.(*ActiveChampionship); ok {
 		if u := champ.GetURL(); u != "" {
@@ -372,7 +380,6 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 		MaxContactsPerKM: race.MaxContactsPerKilometer,
 
 		// server info
-		City:             geoInfo.City,
 		PasswordChecksum: passwordChecksum,
 		WrappedPort:      global.ContentManagerWrapperPort,
 
@@ -418,20 +425,12 @@ func contentManagerIDChecksum(guid string) string {
 
 var geoIPData *GeoIP
 
-const geoIPURL = "https://freegeoip.app/json/"
+const geoIPURL = "https://geoip.cj.workers.dev"
 
 type GeoIP struct {
-	City        string  `json:"city"`
-	CountryCode string  `json:"country_code"`
-	CountryName string  `json:"country_name"`
-	IP          string  `json:"ip"`
-	Latitude    float64 `json:"latitude"`
-	Longitude   float64 `json:"longitude"`
-	MetroCode   int64   `json:"metro_code"`
-	RegionCode  string  `json:"region_code"`
-	RegionName  string  `json:"region_name"`
-	TimeZone    string  `json:"time_zone"`
-	ZipCode     string  `json:"zip_code"`
+	CountryCode string `json:"country_code"`
+	CountryName string `json:"country_name"`
+	IP          string `json:"ip"`
 }
 
 func geoIP() (*GeoIP, error) {
