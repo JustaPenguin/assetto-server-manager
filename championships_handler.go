@@ -95,6 +95,7 @@ func (ch *ChampionshipsHandler) view(w http.ResponseWriter, r *http.Request) {
 	ch.viewRenderer.MustLoadTemplate(w, r, "championships/view.html", map[string]interface{}{
 		"Championship":    championship,
 		"EventInProgress": eventInProgress,
+		"Account":         AccountFromRequest(r),
 	})
 }
 
@@ -506,8 +507,19 @@ func (ch *ChampionshipsHandler) signUpForm(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
+	account := AccountFromRequest(r)
+
+	if account != OpenAccount {
+		opts["FormData"] = &ChampionshipSignUpResponse{
+			Name: account.DriverName,
+			GUID: account.GUID,
+			Team: account.Team,
+		}
+	} else {
+		opts["FormData"] = &ChampionshipSignUpResponse{}
+	}
+
 	opts["SignedUpEntrants"] = signedUpEntrants
-	opts["FormData"] = &ChampionshipSignUpResponse{}
 
 	if r.Method == http.MethodPost {
 		signUpResponse, foundSlot, err := ch.championshipManager.HandleChampionshipSignUp(r)
