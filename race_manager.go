@@ -542,12 +542,11 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 				return nil, err
 			}
 
-			startTimeZoned := startTime.In(time.FixedZone("UTC+10", 10*60*60))
 			timeMulti := r.Form["TimeMulti"][i]
 			timeMultiInt := formValueAsInt(timeMulti)
 
 			// This is probably a bit hacky, and may need removing with a future Sol update
-			startTimeFinal := startTimeZoned.Add(-(time.Duration(timeMultiInt) * 5 * time.Hour))
+			startTimeFinal := startTime.Add(-(time.Duration(timeMultiInt) * 5 * time.Hour))
 
 			raceConfig.AddWeather(&WeatherConfig{
 				Graphics: weatherName + "_type=" + strconv.Itoa(WFXType) + "_time=0_mult=" +
