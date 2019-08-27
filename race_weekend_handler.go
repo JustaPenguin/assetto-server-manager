@@ -61,8 +61,6 @@ func (rwh *RaceWeekendHandler) createOrEdit(w http.ResponseWriter, r *http.Reque
 	rwh.viewRenderer.MustLoadTemplate(w, r, "race-weekend/new.html", raceWeekendOpts)
 }
 
-// submit creates a given Championship and redirects the user to begin
-// the flow of adding events to the new Championship
 func (rwh *RaceWeekendHandler) submit(w http.ResponseWriter, r *http.Request) {
 	raceWeekend, edited, err := rwh.raceWeekendManager.SaveRaceWeekend(r)
 
@@ -85,7 +83,7 @@ func (rwh *RaceWeekendHandler) sessionConfiguration(w http.ResponseWriter, r *ht
 	raceWeekendSessionOpts, err := rwh.raceWeekendManager.BuildRaceWeekendSessionOpts(r)
 
 	if err != nil {
-		logrus.Errorf("couldn't build championship race, err: %s", err)
+		logrus.Errorf("couldn't build race weekend session, err: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -185,4 +183,36 @@ func (rwh *RaceWeekendHandler) deleteSession(w http.ResponseWriter, r *http.Requ
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (rwh *RaceWeekendHandler) importSessionResults(w http.ResponseWriter, r *http.Request) {
+	raceWeekendID := chi.URLParam(r, "raceWeekendID")
+	sessionID := chi.URLParam(r, "sessionID")
+
+	if r.Method == http.MethodPost {
+		err := rwh.raceWeekendManager.ImportSession(raceWeekendID, sessionID, r)
+
+		if err != nil {
+			logrus.Errorf("Could not import race weekend session, error: %s", err)
+			AddErrorFlash(w, r, "Could not import race weekend session files")
+		} else {
+			AddFlash(w, r, "Successfully imported session files!")
+			http.Redirect(w, r, "/race-weekend/"+raceWeekendID, http.StatusFound)
+			return
+		}
+	}
+
+	session, results, err := rwh.raceWeekendManager.ListAvailableResultsFilesForSession(raceWeekendID, sessionID)
+
+	if err != nil {
+		logrus.Errorf("Couldn't load session files, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	rwh.viewRenderer.MustLoadTemplate(w, r, "race-weekend/import-session.html", map[string]interface{}{
+		"Results":       results,
+		"RaceWeekendID": raceWeekendID,
+		"Session":       session,
+	})
 }

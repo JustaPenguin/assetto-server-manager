@@ -1532,8 +1532,10 @@
                                 {{ $numSessions := len $.RaceWeekend.Sessions }}
 
                                 {{ range $index, $session := $.RaceWeekend.Sessions }}
-                                    {{ if not (and $.IsEditing (eq $session.ID.String $.EditingID)) }}
-                                        <option value="{{ $session.ID.String }}" {{ if eq (sub $numSessions 1) $index }}selected="selected"{{ end }}>{{ $session.SessionInfo.Name }}</option>
+                                    {{ if not (and $.IsEditing ($.RaceWeekend.HasParentRecursive $session $.EditingID)) }}
+                                        {{ if not (and $.IsEditing (eq $session.ID.String $.EditingID)) }}
+                                            <option value="{{ $session.ID.String }}" {{ if or (and (not $.IsEditing) (eq (sub $numSessions 1) $index)) (and $.IsEditing ($.RaceWeekendSession.HasParent $session.ID.String)) }}selected="selected"{{ end }}>{{ $session.SessionInfo.Name }}</option>
+                                        {{ end }}
                                     {{ end }}
                                 {{ end }}
                             </select>

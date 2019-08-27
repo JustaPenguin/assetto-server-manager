@@ -108,6 +108,7 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (map
 		}
 
 		opts["Current"] = session.RaceConfig
+		opts["RaceWeekendSession"] = session
 		opts["IsEditing"] = true
 		opts["EditingID"] = editSessionID
 		opts["CurrentEntrants"], err = session.GetEntryList(raceWeekend)
@@ -134,6 +135,7 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (map
 			delete(current.Sessions, SessionTypeRace)
 
 			opts["Current"] = current
+			opts["RaceWeekendSession"] = NewRaceWeekendSession()
 			opts["RaceWeekendHasAtLeastOneSession"] = false
 		}
 	}
@@ -294,4 +296,62 @@ func (rwm *RaceWeekendManager) DeleteSession(raceWeekendID string, raceWeekendSe
 	raceWeekend.DelSession(raceWeekendSessionID)
 
 	return rwm.store.UpsertRaceWeekend(raceWeekend)
+}
+
+func (rwm *RaceWeekendManager) ImportSession(raceWeekendID string, raceWeekendSessionID string, r *http.Request) error {
+	if err := r.ParseForm(); err != nil {
+		return err
+	}
+
+	raceWeekend, err := rwm.LoadRaceWeekend(raceWeekendID)
+
+	if err != nil {
+		return err
+	}
+
+	session, err := raceWeekend.FindSessionByID(raceWeekendSessionID)
+
+	if err != nil {
+		return err
+	}
+
+	session.Results, err = LoadResult(r.FormValue("ResultFile") + ".json")
+
+	if err != nil {
+		return err
+	}
+
+	session.CompletedTime = session.Results.Date
+
+	return rwm.store.UpsertRaceWeekend(raceWeekend)
+}
+
+func (rwm *RaceWeekendManager) ListAvailableResultsFilesForSession(raceWeekendID string, raceWeekendSessionID string) (*RaceWeekendSession, []SessionResults, error) {
+	raceWeekend, err := rwm.LoadRaceWeekend(raceWeekendID)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	session, err := raceWeekend.FindSessionByID(raceWeekendSessionID)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	results, err := ListAllResults()
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var filteredResults []SessionResults
+
+	for _, result := range results {
+		if result.TrackName == session.RaceConfig.Track && result.TrackConfig == session.RaceConfig.TrackLayout {
+			filteredResults = append(filteredResults, result)
+		}
+	}
+
+	return session, filteredResults, nil
 }

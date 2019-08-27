@@ -53,6 +53,10 @@ func (rw *RaceWeekend) DelSession(sessionID string) {
 	}
 
 	rw.Sessions = append(rw.Sessions[:toDelete], rw.Sessions[toDelete+1:]...)
+
+	for _, session := range rw.Sessions {
+
+	}
 }
 
 func (rw *RaceWeekend) SessionCanBeRun(s *RaceWeekendSession) bool {
@@ -163,6 +167,28 @@ func (rw *RaceWeekend) FindChildren(session *RaceWeekendSession) []*RaceWeekendS
 	return children
 }
 
+func (rw *RaceWeekend) HasParentRecursive(session *RaceWeekendSession, otherSessionID string) bool {
+	if session.HasParent(otherSessionID) {
+		return true
+	} else if len(session.ParentIDs) == 0 {
+		return false
+	}
+
+	for _, parentID := range session.ParentIDs {
+		sess, err := rw.FindSessionByID(parentID.String())
+
+		if err != nil {
+			continue
+		}
+
+		if rw.HasParentRecursive(sess, otherSessionID) {
+			return true
+		}
+	}
+
+	return false
+}
+
 var (
 	ErrRaceWeekendNotFound     = errors.New("servermanager: race weekend not found")
 	RaceWeekendSessionNotFound = errors.New("servermanager: race weekend session not found")
@@ -226,6 +252,14 @@ func (rws *RaceWeekendSession) SessionInfo() SessionConfig {
 	return SessionConfig{}
 }
 
+func (rws *RaceWeekendSession) SessionType() SessionType {
+	for sessType := range rws.RaceConfig.Sessions {
+		return sessType
+	}
+
+	return ""
+}
+
 func (rws *RaceWeekendSession) ParentsDataAttr() template.HTMLAttr {
 	return template.HTMLAttr(fmt.Sprintf("data-parent-ids='%s'", jsonEncode(rws.ParentIDs)))
 }
@@ -269,14 +303,24 @@ func (rws *RaceWeekendSession) GetEntryList(rw *RaceWeekend) (EntryList, error) 
 			previousEvent, err := rw.FindSessionByID(inheritedID.String())
 
 			if err != nil {
-				return nil, err
+				continue
 			}
 
 			if previousEvent.Results == nil {
 				return nil, ErrRaceWeekendSessionDependencyIncomplete
 			}
 
-			for pos, result := range previousEvent.Results.Result {
+			results := previousEvent.Results.Result
+
+			for _, filter := range rws.Filters {
+				results, err = filter.Filter(results)
+
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			for pos, result := range results {
 				e := NewEntrant()
 
 				car, err := previousEvent.Results.FindCarByGUID(result.DriverGUID)
@@ -293,20 +337,5 @@ func (rws *RaceWeekendSession) GetEntryList(rw *RaceWeekend) (EntryList, error) 
 		}
 	}
 
-	for _, filter := range rws.Filters {
-		err := filter.Filter(entryList)
-
-		if err != nil {
-			return nil, errors.Wrapf(err, "could not apply filter: %s", filter.Name())
-		}
-	}
-
 	return entryList, nil
-}
-
-// An EntryListFilter takes a given EntryList, and (based on some criteria) filters out invalid Entrants
-type EntryListFilter interface {
-	Name() string
-	Filter(e EntryList) error
-	Render() *template.HTML
 }
