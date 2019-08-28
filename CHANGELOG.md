@@ -1,3 +1,39 @@
+v1.4.2
+------
+
+Added:
+
+* Added configurable server join and content manager messages. Check out the "Messages" page for more details.
+* Championship Events now show the best qualifying and fastest lap in each class.
+* You can now rename drivers on results pages.
+* Drivers can now add their Driver Name, GUID and Team to their account. This will highlight their results on all result pages, add them to the autofill entrant list and automatically input their information if they sign up for an event with a sign up form
+
+Fixes:
+
+* Results in the results listings now only show entrants that took part in a session, rather than all registered entrants for that session.
+* Added a popup to alert admins when there are pending Registration Requests for a Championship.
+* Added a "Back to Championship" button on the Championship Registration Request management page.
+* The Championship EntryList displayed before events start now shows the car skins.
+* Championship Entrants are now shown in the order of their pitboxes in the Championship Entrant overview table (shown only when championship progress is 0%).
+* Fixed an issue where registered users did not have their skin set up on individual Championship Events.
+* Fixes an issue where search indexing could fail due to a car with malformed details JSON. Cars which have malformed details JSON (that we can't clean up) will now load without any car details, allowing search indexing to continue.
+* Fixes an issue that caused incorrect ordering of Multiclass Open Championship results. If your Multiclass Open Championships have incorrect classes, you can re-import the Championship event results to fix the issue. 
+* Fixes an issue where fastest laps were only awarded to the fastest class in a Multiclass Championship.
+* Fixes an issue where Sol session start times would change to an incorrect time when editing an event.
+* Locked Entry List and Pickup Mode options are now available to be changed in non-Championship events. Do with them what you will.
+
+---
+
+v1.4.1
+------
+
+Fixes:
+
+* Added the "Sleep Time" option to the Server Options page. Added a migration to set the Sleep Time option to 1 for all users.
+  This fixes an issue where it was not correctly set to 1 (a value that kunos explicitly recommends), which on smaller servers could cause 100% CPU usage.
+
+---
+
 v1.4.0
 ------
 
@@ -34,6 +70,7 @@ Fixes:
 * Added a server wide fallback sorting option for events where AC has outputted an incorrect driver order in the result json file. Only enable this if you have sorting issues. If you have championship events where the sorting is incorrect you will need to re-import the results files using Manage Event, Import Results.
 * Fixes an issue where the sessions "Time" / "Laps" selector did not show an input field when loading a previously saved race setup.
 * Some errors which were being seen often are now 'warnings' not errors, so you won't see them as often.
+* Reworked the Live Timings table to perform better and prevent scrolling issues.
 * Removed the strict frontend sorting of pit IDs when creating an event. Now you can put cars wherever you like, but they will then be automatically sorted based on weighting. E.g. 0-3-5-5-6 becomes 0-1-2-3-4. Please try to avoid multiple entrants with the same pit ID, as their pitbox will essentially become random.
 * Entrants in the autofill list should no longer duplicate when using the json store, although you will need to manually remove any existing duplicates.
 
@@ -47,13 +84,6 @@ Fixes:
 * Fixed an entry list issue that made some cars impossible to connect to if the pit ID selection had a gap in it. Any gaps in the pit IDs will now be closed automatically (e.g. 1-2-4 becomes 0-1-2). If you want gaps in your entry list please add dummy cars to it.
 
 ---
-
-v1.3.4
-------
-
-Fixes:
-
-* Fixed an entry list issue that made some cars impossible to connect to if the pit ID selection had a gap in it. Any gaps in the pit IDs will now be closed automatically (e.g. 1-2-4 becomes 0-1-2). If you want gaps in your entry list please add dummy cars to it.
 
 v1.3.3
 ------

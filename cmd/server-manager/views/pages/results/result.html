@@ -2,17 +2,23 @@
 
 {{ define "content" }}
 <div class="results">
-    <a class="btn btn-primary" href="/results">
+    {{ $sessionResults := .result }}
+    {{ $account := .account }}
+
+
+    <h1 class="text-center">{{ prettify $sessionResults.TrackName false }} {{ with $sessionResults.TrackConfig }} - {{ prettify . true }} {{ end }}</h1>
+    <div class="text-center">{{ $sessionResults.GetDate }}</div>
+
+    <a class="btn btn-primary float-left" href="/results">
         Back to Results
     </a>
 
-    {{ $sessionResults := .result }}
+    <div class="clearfix"></div>
 
     <a name={{ $sessionResults.GetDate }}></a>
     <div class="card mt-3 border-secondary">
         <div class="card-header">
-            <strong>{{ prettify $sessionResults.TrackName false }} {{ with $sessionResults.TrackConfig }} - {{ prettify . true }} {{ end }}</strong>
-            on {{ $sessionResults.GetDate }}
+            <strong>Overview</strong>
 
             <div class="float-right">
                 {{ with $sessionResults.ChampionshipID }}
@@ -41,6 +47,15 @@
                                role="tab"
                                aria-controls="main" aria-selected="true"><strong>Events</strong></a>
                         </li>
+
+                        {{ if WriteAccess }}
+                            <li class="nav-item">
+                                <a class="nav-link" id="session-admin-tab"
+                                   data-toggle="tab" href="#session-admin"
+                                   role="tab"
+                                   aria-controls="main" aria-selected="true"><strong>Edit Results</strong></a>
+                            </li>
+                        {{ end }}
                     </ul>
 
                     <div class="tab-content pt-2">
@@ -49,7 +64,7 @@
                              aria-labelledby="session-main-tab">
 
 
-                            {{ template "session-overall" $sessionResults }}
+                            {{ template "session-overall" dict "sessionResults" $sessionResults "account" $account }}
                         </div>
 
                         <div class="tab-pane fade"
@@ -69,11 +84,17 @@
                                     </tr>
 
                                     {{ range $pos, $event := $sessionResults.Events}}
-                                        <tr>
+                                        <tr {{ if eq $account.GUID $event.Driver.GUID }}style="font-weight: bold"{{ end }}>
                                             <td>{{ add $pos 1 }}</td>
                                             <td class="driver-link" data-href="#{{ $event.Driver.GUID }}">{{ driverName $event.Driver.Name }}</td>
                                             <td class="driver-link" data-href="#{{ $event.OtherDriver.GUID }}">{{ driverName $event.OtherDriver.Name }}</td>
-                                            <td>{{ $event.Type }}</td>
+                                            <td>
+                                                {{ if eq $event.Type "COLLISION_WITH_ENV"}}
+                                                    Collision with environment
+                                                {{ else }}
+                                                    Collision with car
+                                                {{ end }}
+                                            </td>
                                             <td>{{ printf "%.1f" $event.ImpactSpeed }}</td>
                                             <td>{{ $event.GetRelPosition }}</td>
                                             <td>{{ $event.GetWorldPosition }}</td>
@@ -84,6 +105,36 @@
 
                         </div>
 
+                        {{ if WriteAccess }}
+                            <div class="tab-pane fade"
+                                 id="session-admin" role="tabpanel"
+                                 aria-labelledby="session-admin-tab">
+
+                                <form method="post" action="/results/{{ $sessionResults.SessionFile}}/edit" class="mt-2">
+                                    <p>You can use this form to edit the names of the drivers in the results file. Note that the original results file will be overwritten.</p>
+
+                                    {{ range $index, $car := $sessionResults.Result }}
+                                        <div class="form-group row">
+                                            <label for="guid:{{ $car.DriverGUID }}" class="col-sm-3 col-form-label">Driver GUID: {{ $car.DriverGUID }}</label>
+
+                                            <div class="col-sm-9">
+                                                <input
+                                                        type="text"
+                                                        id="guid:{{ $car.DriverGUID }}"
+                                                        name="guid:{{ $car.DriverGUID }}"
+                                                        class="form-control"
+                                                        value="{{ $car.DriverName }}"
+                                                >
+                                            </div>
+                                        </div>
+                                    {{ end }}
+
+                                    <button type="submit" class="btn btn-primary float-right">Edit Names</button>
+
+                                    <div class="clearfix"></div>
+                                </form>
+                            </div>
+                        {{ end }}
                     </div>
                 </div>
             </div>
@@ -94,7 +145,7 @@
     {{ range $i, $sessionResult := .result.Result }}
         <a name={{ $sessionResult.DriverGUID }}></a>
         <div class="card mt-3 border-secondary">
-            <div class="card-header">
+            <div class="card-header {{ if eq $account.GUID $sessionResult.DriverGUID }}bg-success text-white{{ end }}">
                 <strong>{{ add $i 1 }}{{ ordinal (add $i 1) }} {{ driverName $sessionResult.DriverName }}
                 {{ if eq $sessionResult.DriverGUID "76561198256908075" }} (Ey up you Southern twit){{ end }}</strong> in <strong>
                 {{ prettify $sessionResult.CarModel true }}</strong>

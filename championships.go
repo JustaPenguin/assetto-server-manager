@@ -428,6 +428,18 @@ func (c *Championship) Progress() float64 {
 	return (numCompletedRaces / numRaces) * 100
 }
 
+func (c *Championship) NumPendingSignUps() int {
+	num := 0
+
+	for _, response := range c.SignUpForm.Responses {
+		if response.Status == ChampionshipEntrantPending {
+			num++
+		}
+	}
+
+	return num
+}
+
 type PotentialChampionshipEntrant interface {
 	GetName() string
 	GetTeam() string
@@ -436,7 +448,7 @@ type PotentialChampionshipEntrant interface {
 	GetGUID() string
 }
 
-func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
+func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrant *Entrant, entrantClass *ChampionshipClass, err error) {
 	c.entryListMutex.Lock()
 	defer c.entryListMutex.Unlock()
 
@@ -445,10 +457,11 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 	if err != nil {
 		logrus.Errorf("Could not find class for car: %s in championship", potentialEntrant.GetCar())
 
-		return false, nil, err
+		return false, nil, nil, err
 	}
 
 	var oldEntrant *Entrant
+	var oldEntrantClass *ChampionshipClass
 
 	for _, class := range c.Classes {
 		for _, entrant := range class.Entrants {
@@ -456,6 +469,7 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 				// we found the entrant, but there's a possibility that they changed cars
 				// keep the old entrant so we can swap its properties with the one that is being written to
 				oldEntrant = entrant
+				oldEntrantClass = class
 
 				entrant.GUID = ""
 				entrant.Name = ""
@@ -468,7 +482,7 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 		if entrant.Name == "" && entrant.GUID == "" && entrant.Model == potentialEntrant.GetCar() {
 			if oldEntrant != nil {
 				// swap the old entrant properties
-				oldEntrant.SwapProperties(entrant)
+				oldEntrant.SwapProperties(entrant, oldEntrantClass == classForCar)
 			}
 
 			entrant.Name = potentialEntrant.GetName()
@@ -483,11 +497,11 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 
 			logrus.Infof("Championship entrant: %s (%s) has been assigned to %s in %s", entrant.Name, entrant.GUID, carNum, classForCar.Name)
 
-			return true, classForCar, nil
+			return true, entrant, classForCar, nil
 		}
 	}
 
-	return false, classForCar, nil
+	return false, nil, classForCar, nil
 }
 
 // EnhanceResults takes a set of SessionResults and attaches Championship information to them.
@@ -645,7 +659,7 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 		race, raceOK := event.Sessions[SessionTypeRace]
 
 		if raceOK && race.Results != nil {
-			fastestLap := race.Results.FastestLap()
+			fastestLap := race.Results.FastestLapInClass(c.ID)
 
 			for pos, driver := range c.ResultsForClass(race.Results.Result) {
 				if driver.TotalTime <= 0 || driver.Disqualified {
@@ -663,7 +677,7 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 		race2, race2OK := event.Sessions[SessionTypeSecondRace]
 
 		if race2OK && race2.Results != nil {
-			fastestLap := race2.Results.FastestLap()
+			fastestLap := race2.Results.FastestLapInClass(c.ID)
 
 			for pos, driver := range c.ResultsForClass(race2.Results.Result) {
 				if driver.TotalTime <= 0 || driver.Disqualified {
@@ -680,17 +694,60 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 	}
 }
 
+var championshipStandingSessionOrder = []SessionType{
+	SessionTypeSecondRace,
+	SessionTypeRace,
+	SessionTypeQualifying,
+	SessionTypePractice,
+	SessionTypeBooking,
+}
+
 // Standings returns the current Driver Standings for the Championship.
 func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*ChampionshipStanding {
 	var out []*ChampionshipStanding
+
+	for _, event := range events {
+		for _, session := range event.Sessions {
+			if session.Results == nil {
+				continue
+			}
+
+			// sort session result cars by the last car they completed a lap in (reversed).
+			// this means that below when we're looking for the car that matches a driver, we find
+			// the most recent car that they drove.
+
+			// sorting occurs outside the standings call below for performance reasons.
+			sort.Slice(session.Results.Cars, func(i, j int) bool {
+				carI := session.Results.Cars[i]
+				carJ := session.Results.Cars[j]
+
+				carILastLap := 0
+				carJLastLap := 0
+
+				for _, lap := range session.Results.Laps {
+					if lap.CarID == carI.CarID && lap.Timestamp > carILastLap {
+						carILastLap = lap.Timestamp
+					}
+
+					if lap.CarID == carJ.CarID && lap.Timestamp > carJLastLap {
+						carJLastLap = lap.Timestamp
+					}
+				}
+
+				return carILastLap > carJLastLap
+			})
+		}
+	}
 
 	standings := make(map[string]*ChampionshipStanding)
 
 	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64) {
 		var car *SessionCar
 
-		for _, session := range event.Sessions {
-			if session.Results == nil {
+		for _, sessionType := range championshipStandingSessionOrder {
+			session, ok := event.Sessions[sessionType]
+
+			if !ok || session.Results == nil {
 				continue
 			}
 

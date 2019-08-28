@@ -54,7 +54,7 @@
         </div>
 
         <div class="col-4 col-md-2">
-            <button type="submit" class="btn btn-success w-100">Search</button>
+            <button type="submit" class="btn btn-primary w-100">Search</button>
         </div>
     </form>
 
@@ -102,8 +102,8 @@
                         <br>
 
                         {{ range $index, $tag := $car.Details.Tags }}
-                            <span class="badge badge-primary">
-                                <a class="text-white"
+                            <span class="badge badge-secondary">
+                                <a class="text-black-50"
                                    href="/cars?q=%2Btags:%22{{ urlquery $tag }}%22"
                                 >{{ $tag }}</a>
                             </span>

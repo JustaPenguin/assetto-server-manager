@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/google/uuid"
 	"github.com/mitchellh/go-wordwrap"
 	"github.com/sirupsen/logrus"
 )
@@ -50,6 +51,7 @@ const (
 )
 
 type Collision struct {
+	ID              string         `json:"ID"`
 	Type            CollisionType  `json:"Type"`
 	Time            time.Time      `json:"Time" ts:"date"`
 	OtherDriverGUID udp.DriverGUID `json:"OtherDriverGUID"`
@@ -474,8 +476,7 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 	liveLink := ""
 
 	if serverConfig.CurrentRaceConfig.IsSol == 1 {
-		solWarning = fmt.Sprintf("This server is running Sol with a %d time progression multiplier. For the best "+
-			"experience please install Sol, and remember the other drivers may be driving in night conditions.", serverConfig.CurrentRaceConfig.TimeOfDayMultiplier)
+		solWarning = "This server is running Sol. For the best experience please install Sol, and remember the other drivers may be driving in night conditions."
 	}
 
 	if config != nil && config.HTTP.BaseURL != "" {
@@ -483,11 +484,11 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 	}
 
 	wrapped := strings.Split(wordwrap.WrapString(
-
 		fmt.Sprintf(
-			"Hi, %s! Welcome to the %s server! %s Make this race count! %s\n",
+			"Hi, %s! Welcome to the %s server! %s %s Make this race count! %s\n",
 			driver.CarInfo.DriverName,
 			serverConfig.GlobalServerConfig.GetName(),
+			serverConfig.GlobalServerConfig.ServerJoinMessage,
 			solWarning,
 			liveLink,
 		),
@@ -644,6 +645,7 @@ func (rc *RaceControl) OnCollisionWithCar(collision udp.CollisionWithCar) error 
 	}
 
 	c := Collision{
+		ID:    uuid.New().String(),
 		Type:  CollisionWithCar,
 		Time:  time.Now(),
 		Speed: metersPerSecondToKilometersPerHour(float64(collision.ImpactSpeed)),
@@ -670,6 +672,7 @@ func (rc *RaceControl) OnCollisionWithEnvironment(collision udp.CollisionWithEnv
 	}
 
 	driver.Collisions = append(driver.Collisions, Collision{
+		ID:    uuid.New().String(),
 		Type:  CollisionWithEnvironment,
 		Time:  time.Now(),
 		Speed: metersPerSecondToKilometersPerHour(float64(collision.ImpactSpeed)),
