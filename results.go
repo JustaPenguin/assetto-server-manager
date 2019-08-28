@@ -1,6 +1,8 @@
 package servermanager
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -30,6 +32,51 @@ type SessionResults struct {
 	Date           time.Time        `json:"Date"`
 	SessionFile    string           `json:"SessionFile"`
 	ChampionshipID string           `json:"ChampionshipID"`
+}
+
+func (s *SessionResults) Anonymize() {
+	for _, car := range s.Cars {
+		car.Driver.GUID = GetMD5Hash(car.Driver.GUID)
+		car.Driver.Name = shortenDriverName(car.Driver.Name)
+
+		for _, guid := range car.Driver.GuidsList {
+			guid = GetMD5Hash(guid)
+		}
+	}
+
+	for _, event := range s.Events {
+		event.Driver.GUID = GetMD5Hash(event.Driver.GUID)
+		event.OtherDriver.GUID = GetMD5Hash(event.OtherDriver.GUID)
+
+		event.Driver.Name = shortenDriverName(event.Driver.Name)
+		event.OtherDriver.Name = shortenDriverName(event.OtherDriver.Name)
+
+		for i, guid := range event.Driver.GuidsList {
+			event.Driver.GuidsList[i] = GetMD5Hash(guid)
+		}
+
+		for i, guid := range event.OtherDriver.GuidsList {
+			event.Driver.GuidsList[i] = GetMD5Hash(guid)
+		}
+	}
+
+	for _, lap := range s.Laps {
+		lap.DriverGUID = GetMD5Hash(lap.DriverGUID)
+
+		lap.DriverName = shortenDriverName(lap.DriverName)
+	}
+
+	for _, result := range s.Result {
+		result.DriverGUID = GetMD5Hash(result.DriverGUID)
+
+		result.DriverName = shortenDriverName(result.DriverName)
+	}
+}
+
+func GetMD5Hash(guid string) string {
+	hasher := md5.New()
+	hasher.Write([]byte(guid))
+	return hex.EncodeToString(hasher.Sum(nil))
 }
 
 func (s *SessionResults) MaskDriverNames() {

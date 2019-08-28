@@ -106,7 +106,7 @@ func main() {
 	}
 
 	for _, session := range sessions {
-		go servermanager.ACSRSendResult(session.SessionFile)
+		go servermanager.ACSRSendResult(session.SessionFile + ".json")
 	}*/
 
 	logrus.Infof("starting assetto server manager on: %s", config.HTTP.Hostname)

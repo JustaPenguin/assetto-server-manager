@@ -18,6 +18,8 @@ func ACSRSendResult(sessionFile string) {
 		return
 	}
 
+	result.Anonymize()
+
 	output, err := json.Marshal(result)
 	if err != nil {
 		logrus.Error(err)
@@ -31,5 +33,5 @@ func ACSRSendResult(sessionFile string) {
 		return
 	}
 
-	logrus.Debug("Dummy result files sent")
+	logrus.Debug("result file sent to ACSR")
 }
