@@ -104,7 +104,7 @@ func (nm *NotificationManager) SendRaceReminderMessage(event RaceEvent) error {
 		return err
 	}
 
-	return nm.SendMessage(fmt.Sprintf("Race %s starts in %s minutes", event.EventName(), serverOpts.NotificationReminderTimer))
+	return nm.SendMessage(fmt.Sprintf("Race %s starts in %d minutes", event.EventName(), serverOpts.NotificationReminderTimer))
 }
 
 // SendRaceReminderMessage sends a reminder a configurable number of minutes prior to a championship race starting
@@ -122,5 +122,5 @@ func (nm *NotificationManager) SendChampionshipReminderMessage(championship *Cha
 		return err
 	}
 
-	return nm.SendMessage(fmt.Sprintf("%s race at %s starts in %s minutes", championship.Name, trackInfo.Name, serverOpts.NotificationReminderTimer))
+	return nm.SendMessage(fmt.Sprintf("%s race at %s starts in %d minutes", championship.Name, trackInfo.Name, serverOpts.NotificationReminderTimer))
 }
