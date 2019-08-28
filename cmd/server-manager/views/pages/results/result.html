@@ -3,6 +3,7 @@
 {{ define "content" }}
 <div class="results">
     {{ $sessionResults := .result }}
+    {{ $account := .account }}
 
 
     <h1 class="text-center">{{ prettify $sessionResults.TrackName false }} {{ with $sessionResults.TrackConfig }} - {{ prettify . true }} {{ end }}</h1>
@@ -63,7 +64,7 @@
                              aria-labelledby="session-main-tab">
 
 
-                            {{ template "session-overall" $sessionResults }}
+                            {{ template "session-overall" dict "sessionResults" $sessionResults "account" $account }}
                         </div>
 
                         <div class="tab-pane fade"
@@ -83,7 +84,7 @@
                                     </tr>
 
                                     {{ range $pos, $event := $sessionResults.Events}}
-                                        <tr>
+                                        <tr {{ if eq $account.GUID $event.Driver.GUID }}style="font-weight: bold"{{ end }}>
                                             <td>{{ add $pos 1 }}</td>
                                             <td class="driver-link" data-href="#{{ $event.Driver.GUID }}">{{ driverName $event.Driver.Name }}</td>
                                             <td class="driver-link" data-href="#{{ $event.OtherDriver.GUID }}">{{ driverName $event.OtherDriver.Name }}</td>
@@ -144,7 +145,7 @@
     {{ range $i, $sessionResult := .result.Result }}
         <a name={{ $sessionResult.DriverGUID }}></a>
         <div class="card mt-3 border-secondary">
-            <div class="card-header">
+            <div class="card-header {{ if eq $account.GUID $sessionResult.DriverGUID }}bg-success text-white{{ end }}">
                 <strong>{{ add $i 1 }}{{ ordinal (add $i 1) }} {{ driverName $sessionResult.DriverName }}
                 {{ if eq $sessionResult.DriverGUID "76561198256908075" }} (Ey up you Southern twit){{ end }}</strong> in <strong>
                 {{ prettify $sessionResult.CarModel true }}</strong>
