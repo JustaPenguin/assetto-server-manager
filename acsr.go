@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 )
 
 // Sends a result file to ACSR, called OnEndSession
 func ACSRSendResult(sessionFile string) {
-	result, err := LoadResult(sessionFile + ".json")
+	result, err := LoadResult(filepath.Base(sessionFile))
 
 	if err != nil {
 		logrus.Error(err)
