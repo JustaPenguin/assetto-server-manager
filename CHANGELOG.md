@@ -6,6 +6,7 @@ Added:
 * Added configurable server join and content manager messages. Check out the "Messages" page for more details.
 * Championship Events now show the best qualifying and fastest lap in each class.
 * You can now rename drivers on results pages.
+* Drivers can now add their Driver Name, GUID and Team to their account. This will highlight their results on all result pages, add them to the autofill entrant list and automatically input their information if they sign up for an event with a sign up form
 
 Fixes:
 
