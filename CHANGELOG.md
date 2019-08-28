@@ -6,6 +6,7 @@ Added:
 * Added configurable server join and content manager messages. Check out the "Messages" page for more details.
 * Championship Events now show the best qualifying and fastest lap in each class.
 * You can now rename drivers on results pages.
+* Drivers can now add their Driver Name, GUID and Team to their account. This will highlight their results on all result pages, add them to the autofill entrant list and automatically input their information if they sign up for an event with a sign up form
 
 Fixes:
 
@@ -18,6 +19,8 @@ Fixes:
 * Fixes an issue where search indexing could fail due to a car with malformed details JSON. Cars which have malformed details JSON (that we can't clean up) will now load without any car details, allowing search indexing to continue.
 * Fixes an issue that caused incorrect ordering of Multiclass Open Championship results. If your Multiclass Open Championships have incorrect classes, you can re-import the Championship event results to fix the issue. 
 * Fixes an issue where fastest laps were only awarded to the fastest class in a Multiclass Championship.
+* Fixes an issue where Sol session start times would change to an incorrect time when editing an event.
+* Locked Entry List and Pickup Mode options are now available to be changed in non-Championship events. Do with them what you will.
 
 ---
 

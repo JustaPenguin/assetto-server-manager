@@ -6,6 +6,7 @@
         {{ $entrants := .Championship.AllEntrants }}
         {{ $writeAccess := WriteAccess }}
         {{ $eventInProgress := .EventInProgress }}
+        {{ $account := .Account }}
 
         <h1 class="text-center">{{ $championship.Name }}</h1>
 
@@ -96,7 +97,11 @@
                                 {{ $entrants := ($class.Standings $championship.Events) }}
 
                                 {{ range $i, $entrant := $entrants }}
-                                    <tr {{ if $championship.IsMultiClass }}style="color: white; background: {{ classColor $classIndex }}"{{ end }}>
+                                    <tr style="
+                                    {{ if eq $account.GUID $entrant.Car.Driver.GUID }}font-weight: bold;{{ end }}
+                                    {{ if $championship.IsMultiClass }}
+                                        color: white; background: {{ classColor $classIndex }}
+                                    {{ end }}">
                                         {{ if $championship.IsMultiClass }}
                                             {{ if eq $i 0 }}
                                                 <td rowspan="{{ len $entrants }}">{{ $class.Name }}</td>
@@ -249,7 +254,11 @@
 
                                 {{ range $i, $entrant := $entrants }}
                                     {{ if ne $entrant.GUID "OPEN_SLOTS" }}
-                                        <tr {{ if $championship.IsMultiClass }}style="color: white; background: {{ classColor $classIndex }}"{{ end }}>
+                                        <tr style="
+                                            {{ if eq $account.GUID $entrant.Car.Driver.GUID }}font-weight: bold;{{ end }}
+                                            {{ if $championship.IsMultiClass }}
+                                                color: white; background: {{ classColor $classIndex }}
+                                            {{ end }}">
                                             {{ if $championship.IsMultiClass }}
                                                 {{ if eq $i 0 }}
                                                     <td rowspan="{{ sub (len $entrants) 1 }}">{{ $class.Name }}</td>
@@ -346,14 +355,14 @@
                                          alt="Car Skin"
                                          class="card-img-top"
                                     >
-                                    <div class="card-body p-1 text-center">
+                                    <div class="card-body p-1 text-center" {{ if eq $account.GUID $entrant.Car.Driver.GUID }}style="font-weight: bold"{{ end }}>
                                         {{ if $championship.IsMultiClass }}
                                             <small>{{ $class.Name }}</small><br>
                                         {{ end }}
                                         {{ add $i 1 }}{{ ordinal (add $i 1) }} Place
 
                                         <p class="mb-0">
-                                            <small>
+                                            <small {{ if eq $account.GUID $entrant.Car.Driver.GUID }}style="font-weight: bold"{{ end }}>
                                                 {{ driverName $entrant.Car.Driver.Name }}<br>
                                                 {{ $entrant.Car.Driver.Team }}
                                             </small>
@@ -892,7 +901,7 @@
                                                         <a class="detailed-results" href="/results/{{ $sessionDetails.Results.SessionFile }}">View detailed results breakdown for this Session</a>
                                                     </p>
 
-                                                    {{ template "session-overall" $sessionDetails.Results }}
+                                                    {{ template "session-overall" dict "sessionResults" $sessionDetails.Results "account" $account }}
                                                 {{ else if $sessionDetails.InProgress }}
                                                     <p class="text-center mt-5 pb-2"><strong>Session in Progress</strong>: Looks like there aren't any results yet. Check back later.</p>
                                                 {{ else }}
@@ -930,7 +939,11 @@
                                                         {{ range $classIndex, $class := $championship.Classes }}
                                                             {{ $eventStandings := $class.StandingsForEvent $event }}
                                                             {{ range $pos, $standing := $eventStandings }}
-                                                                <tr {{ if $championship.IsMultiClass }}style="color: white; background: {{ classColor $classIndex }}"{{ end }}>
+                                                                <tr style="
+                                                                {{ if eq $account.GUID $standing.Car.Driver.GUID }}font-weight: bold;{{ end }}
+                                                                {{ if $championship.IsMultiClass }}
+                                                                    color: white; background: {{ classColor $classIndex }}
+                                                                {{ end }}">
                                                                     {{ if $championship.IsMultiClass }}
                                                                         {{ if eq $pos 0 }}
                                                                             <td rowspan="{{ len $eventStandings }}">{{ $class.Name }}</td>

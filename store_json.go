@@ -326,6 +326,8 @@ func (rs *JSONStore) ListAccounts() ([]*Account, error) {
 }
 
 func (rs *JSONStore) UpsertAccount(a *Account) error {
+	a.Updated = time.Now()
+
 	return rs.encodeFile(rs.base, filepath.Join(accountsDir, a.Name+".json"), a)
 }
 
