@@ -171,7 +171,8 @@ type GlobalServerConfig struct {
 	// Messages
 	ContentManagerWelcomeMessage string `ini:"-" show:"-"`
 	ServerJoinMessage            string `ini:"-" show:"-"`
-	ShowContentManagerJoinLink  int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager display Content Manager join links on the Live Timing page and in race start notifications."`
+
+	// Discord Integration
 	DiscordAPIToken             string `ini:"-" help:"If set, will enable race start and scheduled reminder messages to the Discord channel ID specified below.  Use your bot's user token, not the OAuth token."`
 	DiscordChannelID            string `ini:"-" help:"If Discord is enabled, this is the channel ID it will send messages to"`
 	NotificationReminderTimer   int    `ini:"-" min:"0" max:"65535" help:"If Discord is enabled, a reminder will be sent this many minutes prior to race start.  If 0, only race start messages will be sent."`
