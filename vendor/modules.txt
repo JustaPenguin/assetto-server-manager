@@ -69,6 +69,8 @@ github.com/couchbase/vellum/regexp
 github.com/couchbase/vellum/utf8
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
+# github.com/dimchansky/utfbom v1.1.0
+github.com/dimchansky/utfbom
 # github.com/edsrzf/mmap-go v1.0.0
 github.com/edsrzf/mmap-go
 # github.com/etcd-io/bbolt v1.3.2
@@ -152,8 +154,6 @@ github.com/sethvargo/go-diceware/diceware
 github.com/shurcooL/sanitized_anchor_name
 # github.com/sirupsen/logrus v1.3.0
 github.com/sirupsen/logrus
-# github.com/spkg/bom v0.0.0-20160624110644-59b7046e48ad
-github.com/spkg/bom
 # github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf
 github.com/ssor/bom
 # github.com/steveyen/gtreap v0.0.0-20150807155958-0abe01ef9be2

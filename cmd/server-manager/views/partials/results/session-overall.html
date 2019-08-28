@@ -1,6 +1,7 @@
 {{ define "session-overall" }}
 
-    {{ $sessionResults := . }}
+    {{ $sessionResults := .sessionResults }}
+    {{ $account := .account }}
     {{ $driversHaveTeams := $sessionResults.DriversHaveTeams }}
 
     <div class="table-responsive">
@@ -26,7 +27,7 @@
 
                 {{ range $pos, $result := $sessionResults.Result}}
                     {{ with $result.DriverGUID }}
-                        <tr>
+                        <tr {{ if eq $account.GUID $result.DriverGUID }}style="font-weight: bold"{{ end }}>
                             <td>{{ add $pos 1 }}</td>
                             <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ driverName $result.DriverName }}
                                 {{ if $result.HasPenalty }} <span class="badge badge-danger">Time Penalty: {{ $result.PenaltyTime }}</span> {{ end }}
@@ -110,7 +111,7 @@
 
                 {{ range $pos, $result := $sessionResults.Result }}
                     {{ with $result.DriverGUID }}
-                        <tr>
+                        <tr {{ if eq $account.GUID $result.DriverGUID }}style="font-weight: bold"{{ end }}>
                             <td>{{ add $pos 1 }}</td>
                             <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ driverName $result.DriverName }}</td>
                             {{ if $driversHaveTeams }}
@@ -167,7 +168,7 @@
 
                 {{ range $pos, $result := $sessionResults.Result }}
                     {{ with $result.DriverGUID }}
-                        <tr>
+                        <tr {{ if eq $account.GUID $result.DriverGUID }}style="font-weight: bold"{{ end }}>
                             <td>{{ add $pos 1 }}</td>
                             <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ driverName $result.DriverName }}</td>
                             {{ if $driversHaveTeams }}

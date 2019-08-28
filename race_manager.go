@@ -433,17 +433,12 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 
 	gasPenaltyDisabled := formValueAsInt(r.FormValue("RaceGasPenaltyDisabled"))
 	lockedEntryList := formValueAsInt(r.FormValue("LockedEntryList"))
+	pickupModeEnabled := formValueAsInt(r.FormValue("PickupModeEnabled"))
 
 	if gasPenaltyDisabled == 0 {
 		gasPenaltyDisabled = 1
 	} else {
 		gasPenaltyDisabled = 0
-	}
-
-	if lockedEntryList == 0 {
-		lockedEntryList = 1
-	} else {
-		lockedEntryList = 0
 	}
 
 	trackLayout := r.FormValue("TrackLayout")
@@ -489,7 +484,8 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		},
 
 		// rules
-		PickupModeEnabled:         lockedEntryList,
+		PickupModeEnabled:         pickupModeEnabled,
+		LockedEntryList:           lockedEntryList,
 		RacePitWindowStart:        formValueAsInt(r.FormValue("RacePitWindowStart")),
 		RacePitWindowEnd:          formValueAsInt(r.FormValue("RacePitWindowEnd")),
 		ReversedGridRacePositions: formValueAsInt(r.FormValue("ReversedGridRacePositions")),
@@ -498,7 +494,6 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		MaxBallastKilograms:       formValueAsInt(r.FormValue("MaxBallastKilograms")),
 		AllowedTyresOut:           formValueAsInt(r.FormValue("AllowedTyresOut")),
 		LoopMode:                  formValueAsInt(r.FormValue("LoopMode")),
-		SleepTime:                 formValueAsInt(r.FormValue("SleepTime")),
 		RaceOverTime:              formValueAsInt(r.FormValue("RaceOverTime")),
 		StartRule:                 formValueAsInt(r.FormValue("StartRule")),
 		MaxClients:                formValueAsInt(r.FormValue("MaxClients")),
@@ -551,12 +546,11 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 				return nil, err
 			}
 
-			startTimeZoned := startTime.In(time.FixedZone("UTC+10", 10*60*60))
 			timeMulti := r.Form["TimeMulti"][i]
 			timeMultiInt := formValueAsInt(timeMulti)
 
 			// This is probably a bit hacky, and may need removing with a future Sol update
-			startTimeFinal := startTimeZoned.Add(-(time.Duration(timeMultiInt) * 5 * time.Hour))
+			startTimeFinal := startTime.Add(-(time.Duration(timeMultiInt) * 5 * time.Hour))
 
 			raceConfig.AddWeather(&WeatherConfig{
 				Graphics: weatherName + "_type=" + strconv.Itoa(WFXType) + "_time=0_mult=" +

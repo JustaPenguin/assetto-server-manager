@@ -561,6 +561,27 @@
                     <div class="hidden-booking-enabled">
 
                         <div class="form-group row">
+                            <label for="PickupModeEnabled" class="col-sm-3 col-form-label">Pickup Mode</label>
+
+
+                            <div class="col-sm-9">
+                                <input type="checkbox"
+                                       id="PickupModeEnabled"
+                                       name="PickupModeEnabled"
+                                       value="{{ $f.PickupModeEnabled }}"
+
+                                        {{ if eq $f.PickupModeEnabled 1 }}
+                                            checked="checked"
+                                        {{ end }}
+                                >
+
+                                <br>
+
+                                <small>If 0 the server start in booking mode (do not use it). Warning: in pickup mode you have to list a least one car in the entry list. Note, when Pickup Mode is OFF, sessions with Loop Mode ON will require players to rejoin the server when the server loops.</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
                             <label for="LockedEntryList" class="col-sm-3 col-form-label">Locked Entry List</label>
 
 
@@ -568,16 +589,16 @@
                                 <input type="checkbox"
                                        id="LockedEntryList"
                                        name="LockedEntryList"
-                                       value="{{ $f.PickupModeEnabled }}"
+                                       value="{{ $f.LockedEntryList }}"
 
-                                        {{ if eq $f.PickupModeEnabled 0 }}
+                                        {{ if eq $f.LockedEntryList 1 }}
                                             checked="checked"
                                         {{ end }}
                                 >
 
                                 <br>
 
-                                <small>Only players already included in the entry list can join the server. This setting uses the PickupModeEnabled option in the Assetto Corsa configuration file. Note, when Locked Entry List is ON, sessions with Loop Mode ON will require players to rejoin the server when the server loops.</small>
+                                <small>Only players already included in the entry list can join the server</small>
                             </div>
                         </div>
 
@@ -926,7 +947,7 @@
                                         <div class="sol-settings" {{ if not $f.IsSol }} style="display: none;" {{ end }}>
 
                                             <div class="form-group row">
-                                                <label class="col-sm-3 col-form-label col-form-label-sm">Session Start Date/Time (<span class='timezone'></span>)</label>
+                                                <label class="col-sm-3 col-form-label col-form-label-sm">Session Start Date/Time</label>
 
                                                 <div class="col-sm-9 p-0" id='date-time-picker'>
                                                     <input
@@ -934,12 +955,10 @@
                                                             id="DateUnix"
                                                             name="DateUnix"
                                                             class="form-control"
-                                                            value="{{ ($weather.UnixToTime $weather.CMWFXDateUnModified) | date "2006-01-02T15:04" }}"
+                                                            value="{{ dateInZone "2006-01-02T15:04" ($weather.UnixToTime $weather.CMWFXDateUnModified) "UTC" }}"
                                                     >
                                                 </div>
                                             </div>
-
-                                            <input type='hidden' name="sol-timezone" class="sol-timezone">
 
                                             <div class="form-group row">
                                                 <label class="col-sm-3 col-form-label col-form-label-sm">Time Progression Multiplier</label>
@@ -1561,16 +1580,16 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="CustomRaceScheduled" class="col-sm-3 col-form-label">Recurrence Rule</label>
+                            <label for="event-schedule-recurrence" class="col-sm-3 col-form-label">Recurrence Rule</label>
 
                             <div class="col-sm-5">
                                 <input type='text' class='form-control' name='event-schedule-recurrence' id='event-schedule-recurrence'>
-                                <small>visit <a href="https://www.textmagic.com/free-tools/rrule-generator">RRule Generator</a>
-                                    to generate a recurrence rule. Leave blank if not required. A recurrence rule is only
-                                    valid alongside a scheduled time, and will treat the scheduled time as the start time
-                                    for the rule.</small>
+                                <small>
+                                    Visit
+                                    <a target="_blank" href="https://www.textmagic.com/free-tools/rrule-generator">RRule Generator</a>
+                                    to generate a recurrence rule. Leave blank if not required. Only valid alongside scheduled time.
+                                </small>
                             </div>
-
                         </div>
                     {{ end }}
 
