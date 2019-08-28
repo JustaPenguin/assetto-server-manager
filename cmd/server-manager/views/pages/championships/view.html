@@ -97,9 +97,11 @@
                                 {{ $entrants := ($class.Standings $championship.Events) }}
 
                                 {{ range $i, $entrant := $entrants }}
-                                    <tr {{ if $championship.IsMultiClass }}style="
+                                    <tr style="
                                     {{ if eq $account.GUID $entrant.Car.Driver.GUID }}font-weight: bold;{{ end }}
-                                            color: white; background: {{ classColor $classIndex }} "{{ end }}>
+                                    {{ if $championship.IsMultiClass }}
+                                        color: white; background: {{ classColor $classIndex }}
+                                    {{ end }}">
                                         {{ if $championship.IsMultiClass }}
                                             {{ if eq $i 0 }}
                                                 <td rowspan="{{ len $entrants }}">{{ $class.Name }}</td>
@@ -252,9 +254,11 @@
 
                                 {{ range $i, $entrant := $entrants }}
                                     {{ if ne $entrant.GUID "OPEN_SLOTS" }}
-                                        <tr {{ if $championship.IsMultiClass }}style="
-                                        {{ if eq $account.GUID $entrant.Car.Driver.GUID }}font-weight: bold;{{ end }}
-                                                color: white; background: {{ classColor $classIndex }}"{{ end }}>
+                                        <tr style="
+                                            {{ if eq $account.GUID $entrant.Car.Driver.GUID }}font-weight: bold;{{ end }}
+                                            {{ if $championship.IsMultiClass }}
+                                                color: white; background: {{ classColor $classIndex }}
+                                            {{ end }}">
                                             {{ if $championship.IsMultiClass }}
                                                 {{ if eq $i 0 }}
                                                     <td rowspan="{{ sub (len $entrants) 1 }}">{{ $class.Name }}</td>
@@ -935,8 +939,11 @@
                                                         {{ range $classIndex, $class := $championship.Classes }}
                                                             {{ $eventStandings := $class.StandingsForEvent $event }}
                                                             {{ range $pos, $standing := $eventStandings }}
-                                                                <tr {{ if $championship.IsMultiClass }}style="{{ if eq $account.GUID $standing.Car.Driver.GUID }}font-weight: bold;{{ end }}
-                                                                        color: white; background: {{ classColor $classIndex }}"{{ end }}>
+                                                                <tr style="
+                                                                {{ if eq $account.GUID $standing.Car.Driver.GUID }}font-weight: bold;{{ end }}
+                                                                {{ if $championship.IsMultiClass }}
+                                                                    color: white; background: {{ classColor $classIndex }}
+                                                                {{ end }}">
                                                                     {{ if $championship.IsMultiClass }}
                                                                         {{ if eq $pos 0 }}
                                                                             <td rowspan="{{ len $eventStandings }}">{{ $class.Name }}</td>
