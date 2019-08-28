@@ -60,6 +60,8 @@ type Account struct {
 	Name  string
 	Group Group
 
+	DriverName, GUID, Team string
+
 	PasswordHash string
 	PasswordSalt string
 
@@ -323,26 +325,88 @@ func (ah *AccountHandler) toggleServerOpenStatus(w http.ResponseWriter, r *http.
 }
 
 func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
+	account := AccountFromRequest(r)
+
 	if r.Method == http.MethodPost {
-		password, repeatPassword := r.FormValue("Password"), r.FormValue("RepeatPassword")
+		var set = true
 
-		if password == repeatPassword {
-			account := AccountFromRequest(r)
+		password, repeatPassword, currentPassword := r.FormValue("Password"), r.FormValue("RepeatPassword"), r.FormValue("CurrentPassword")
 
-			if err := ah.accountManager.changePassword(account, password); err == nil {
-				AddFlash(w, r, "Your password was successfully changed!")
-				http.Redirect(w, r, "/", http.StatusFound)
-				return
-			} else {
+		if !account.NeedsPasswordReset() {
+			currentPasswordHash, err := hashPassword([]byte(currentPassword), []byte(account.PasswordSalt))
+
+			if err != nil {
 				AddErrorFlash(w, r, "Unable to change your password")
-				logrus.WithError(err).Errorf("Could not change password for account id: %s", account.ID.String())
+				set = false
 			}
-		} else {
-			AddErrorFlash(w, r, "Your passwords must match")
+
+			if !(subtle.ConstantTimeCompare([]byte(currentPasswordHash), []byte(account.PasswordHash)) == 1) {
+				AddErrorFlash(w, r, "Unable to change your password")
+				set = false
+			}
+		}
+
+		if set {
+			if password == repeatPassword {
+				updateDetails := account.NeedsPasswordReset()
+
+				if err := ah.accountManager.changePassword(account, password); err == nil {
+					AddFlash(w, r, "Your password was successfully changed!")
+					if updateDetails {
+						http.Redirect(w, r, "/accounts/update", http.StatusFound)
+					} else {
+						http.Redirect(w, r, "/", http.StatusFound)
+					}
+					return
+				} else {
+					AddErrorFlash(w, r, "Unable to change your password")
+					logrus.WithError(err).Errorf("Could not change password for account id: %s", account.ID.String())
+				}
+			} else {
+				AddErrorFlash(w, r, "Your passwords must match")
+			}
 		}
 	}
 
-	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new-password.html", nil)
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new-password.html", map[string]interface{}{
+		"newAccount": account.NeedsPasswordReset(),
+	})
+}
+
+func (ah *AccountHandler) update(w http.ResponseWriter, r *http.Request) {
+	account := AccountFromRequest(r)
+
+	if r.Method == http.MethodPost {
+		driverName, guid, team := r.FormValue("DriverName"), r.FormValue("DriverGUID"), r.FormValue("DriverTeam")
+
+		if driverName != "" || guid != "" || team != "" {
+			err := ah.accountManager.updateDetails(account, driverName, guid, team)
+
+			if err != nil {
+				AddErrorFlash(w, r, "Unable to update account details")
+				logrus.WithError(err).Errorf("Could not update details for account id: %s", account.ID.String())
+			} else {
+				err := ah.store.UpsertEntrant(Entrant{
+					Name: account.DriverName,
+					GUID: account.GUID,
+					Team: account.Team,
+				})
+
+				if err != nil {
+					logrus.WithError(err).Errorf("Successfully updated details, but could not add to autofill "+
+						"entry list. Account id: %s", account.ID.String())
+				}
+
+				AddFlash(w, r, "Your details were successfully changed!")
+				http.Redirect(w, r, "/", http.StatusFound)
+				return
+			}
+		}
+	}
+
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/update.html", map[string]interface{}{
+		"account": account,
+	})
 }
 
 func (ah *AccountHandler) deleteAccount(w http.ResponseWriter, r *http.Request) {
@@ -478,6 +542,14 @@ func (am *AccountManager) changePassword(account *Account, password string) erro
 	account.DefaultPassword = ""
 	account.PasswordSalt = salt
 	account.PasswordHash = pass
+
+	return am.store.UpsertAccount(account)
+}
+
+func (am *AccountManager) updateDetails(account *Account, name, guid, team string) error {
+	account.DriverName = name
+	account.GUID = guid
+	account.Team = team
 
 	return am.store.UpsertAccount(account)
 }

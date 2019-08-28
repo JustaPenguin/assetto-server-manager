@@ -191,6 +191,8 @@
                                 <a class="dropdown-item" href="/login">Login</a>
                             {{ else }}
                                 <h6 class="dropdown-header">Logged in as {{ .User.Name }} ({{ .User.Group }})</h6>
+                                <a class="dropdown-item" href="/accounts/update">Update Details</a>
+                                <a class="dropdown-item" href="/accounts/new-password">Update Password</a>
                                 <a class="dropdown-item" href="/logout">Logout</a>
                             {{ end }}
                         </div>
