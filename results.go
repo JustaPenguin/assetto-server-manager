@@ -821,6 +821,7 @@ func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
 
 	rh.viewRenderer.MustLoadTemplate(w, r, "results/result.html", map[string]interface{}{
 		"result":        result,
+		"account":       AccountFromRequest(r),
 		"WideContainer": true,
 	})
 }
