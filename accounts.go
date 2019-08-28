@@ -330,8 +330,7 @@ func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		var set = true
 
-		password, repeatPassword, currentPassword := r.FormValue("Password"), r.FormValue("RepeatPassword"),
-			r.FormValue("CurrentPassword")
+		password, repeatPassword, currentPassword := r.FormValue("Password"), r.FormValue("RepeatPassword"), r.FormValue("CurrentPassword")
 
 		if !account.NeedsPasswordReset() {
 			currentPasswordHash, err := hashPassword([]byte(currentPassword), []byte(account.PasswordSalt))
@@ -349,8 +348,6 @@ func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 
 		if set {
 			if password == repeatPassword {
-				account := AccountFromRequest(r)
-
 				updateDetails := account.NeedsPasswordReset()
 
 				if err := ah.accountManager.changePassword(account, password); err == nil {
@@ -389,13 +386,11 @@ func (ah *AccountHandler) update(w http.ResponseWriter, r *http.Request) {
 				AddErrorFlash(w, r, "Unable to update account details")
 				logrus.WithError(err).Errorf("Could not update details for account id: %s", account.ID.String())
 			} else {
-				entrant := &Entrant{
+				err := ah.store.UpsertEntrant(Entrant{
 					Name: account.Name,
 					GUID: account.GUID,
 					Team: account.Team,
-				}
-
-				err := ah.store.UpsertEntrant(*entrant)
+				})
 
 				if err != nil {
 					logrus.WithError(err).Errorf("Successfully updated details, but could not add to autofill "+
