@@ -387,7 +387,7 @@ func (ah *AccountHandler) update(w http.ResponseWriter, r *http.Request) {
 				logrus.WithError(err).Errorf("Could not update details for account id: %s", account.ID.String())
 			} else {
 				err := ah.store.UpsertEntrant(Entrant{
-					Name: account.Name,
+					Name: account.DriverName,
 					GUID: account.GUID,
 					Team: account.Team,
 				})
