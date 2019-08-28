@@ -46,6 +46,7 @@ require (
 	github.com/mattn/go-zglob v0.0.1
 	github.com/mitchellh/go-ps v0.0.0-20170309133038-4fdf99ab2936
 	github.com/mitchellh/go-wordwrap v1.0.0
+	github.com/mjibson/esc v0.2.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.1 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pkg/errors v0.8.1
