@@ -226,12 +226,12 @@
                 <div class="tab-content sessions">
                     {{ range $index, $sessionType := .AvailableSessions }}
                         {{ $hasSession := $f.HasSession $sessionType }}
+                        {{ $session := $f.GetSession $sessionType }}
 
                         <div class="tab-pane fade  {{ if not $.IsRaceWeekend }} {{ if eq $index 0 }}show active{{ end }} pt-5 {{ else if $hasSession }} show active {{ end }}"
                              id="session-{{ $sessionType }}" role="tabpanel"
                              aria-labelledby="session-{{ $sessionType }}-tab">
 
-                            {{ $session := index $f.Sessions $sessionType }}
 
                             <div class="form-group row" {{ if $.IsRaceWeekend }} style="display: none" {{ end }}>
                                 <label class="col-sm-3 col-form-label">Enabled</label>

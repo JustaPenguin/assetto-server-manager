@@ -267,6 +267,16 @@ func (c CurrentRaceConfig) HasSession(sess SessionType) bool {
 	return ok
 }
 
+func (c CurrentRaceConfig) GetSession(sessionType SessionType) *SessionConfig {
+	sess, ok := c.Sessions[sessionType]
+
+	if !ok {
+		return &SessionConfig{}
+	}
+
+	return sess
+}
+
 func (c *CurrentRaceConfig) AddSession(sessionType SessionType, config *SessionConfig) {
 	if c.Sessions == nil {
 		c.Sessions = make(map[SessionType]*SessionConfig)

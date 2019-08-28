@@ -1,6 +1,18 @@
 .race-weekend-session {
-  width: 600px;
+  width: 500px;
   display: block;
-  max-height: 400px;
   position: absolute;
+}
+
+.jtk-connector {
+  // @TODO blending with things can cause problems
+  mix-blend-mode: hard-light;
+  z-index: 1000;
+}
+
+#race-weekend-graph-container {
+  position: relative;
+  padding-bottom: 250px;
+  max-width: 100%;
+  overflow-x: auto;
 }

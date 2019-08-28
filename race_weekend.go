@@ -307,51 +307,52 @@ func (rws *RaceWeekendSession) HasParent(id string) bool {
 var ErrRaceWeekendSessionDependencyIncomplete = errors.New("servermanager: race weekend session dependency incomplete")
 
 func (rws *RaceWeekendSession) GetEntryList(rw *RaceWeekend) (EntryList, error) {
-	var entryList EntryList
-
 	if rws.IsBase() {
-		entryList = rw.EntryList
-	} else {
-		entryList = make(EntryList)
+		// base race weekend sessions just return the race weekend EntryList
+		return rw.EntryList, nil
+	}
 
-		for _, inheritedID := range rws.ParentIDs {
-			// find previous event
-			previousEvent, err := rw.FindSessionByID(inheritedID.String())
+	entryList := make(EntryList)
+
+	for _, inheritedID := range rws.ParentIDs {
+		// find previous event
+		previousEvent, err := rw.FindSessionByID(inheritedID.String())
+
+		if err != nil {
+			continue
+		}
+
+		if previousEvent.Results == nil {
+			return nil, ErrRaceWeekendSessionDependencyIncomplete
+		}
+
+		results := previousEvent.Results.Result
+
+		for _, filter := range rws.Filters {
+			results, err = filter.Filter(results)
 
 			if err != nil {
-				continue
-			}
-
-			if previousEvent.Results == nil {
-				return nil, ErrRaceWeekendSessionDependencyIncomplete
-			}
-
-			results := previousEvent.Results.Result
-
-			for _, filter := range rws.Filters {
-				results, err = filter.Filter(results)
-
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			for pos, result := range results {
-				e := NewEntrant()
-
-				car, err := previousEvent.Results.FindCarByGUID(result.DriverGUID)
-
-				if err != nil {
-					return nil, err
-				}
-
-				e.AssignFromResult(result, car)
-				e.PitBox = pos
-
-				entryList.Add(e)
+				return nil, err
 			}
 		}
+
+		for pos, result := range results {
+			e := NewEntrant()
+
+			car, err := previousEvent.Results.FindCarByGUID(result.DriverGUID)
+
+			if err != nil {
+				return nil, err
+			}
+
+			e.AssignFromResult(result, car)
+			e.PitBox = pos
+
+			entryList.Add(e)
+		}
 	}
+
+	// @TODO what do we do if there are duplicate drivers in the entrylist?
 
 	return entryList, nil
 }

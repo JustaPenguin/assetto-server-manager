@@ -58,6 +58,8 @@ jsp.bind("ready", () => {
                 endpoint: ["Rectangle", {width: 10, height: 10}],
 
                 connector: ["Flowchart", {}],
+
+                connectorStyle: {stroke: "#999"},
             });
 
             if (conn) {
@@ -69,7 +71,9 @@ jsp.bind("ready", () => {
 
     // construct dagre graph from JsPlumb graph
     const g = new Graph();
-    g.setGraph({});
+    g.setGraph({
+        nodesep: 550,
+    });
     g.setDefaultEdgeLabel(function () {
         return {};
     });
@@ -89,15 +93,17 @@ jsp.bind("ready", () => {
         );
     }
 
-    // calculate the layout (i.e. node positions)
+    // calculate node positions
     dagre.layout(g);
 
-    // Applying the calculated layout
-    g.nodes().forEach(
-        function (n) {
-            $('#' + n).css('left', g.node(n).x + 'px');
-            $('#' + n).css('top', g.node(n).y + 'px');
-        });
+    $("#race-weekend-graph-container").height(g.graph().height + "px");
+
+    // apply node positions
+    g.nodes().forEach((n) => {
+        let $n = $('#' + n);
+        $n.css('left', g.node(n).x + 'px');
+        $n.css('top', g.node(n).y + 'px');
+    });
 
     jsp.repaintEverything();
 });
