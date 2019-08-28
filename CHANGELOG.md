@@ -20,6 +20,7 @@ Fixes:
 * Fixes an issue that caused incorrect ordering of Multiclass Open Championship results. If your Multiclass Open Championships have incorrect classes, you can re-import the Championship event results to fix the issue. 
 * Fixes an issue where fastest laps were only awarded to the fastest class in a Multiclass Championship.
 * Fixes an issue where Sol session start times would change to an incorrect time when editing an event.
+* Locked Entry List and Pickup Mode options are now available to be changed in non-Championship events. Do with them what you will.
 
 ---
 
