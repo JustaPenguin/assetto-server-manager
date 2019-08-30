@@ -486,6 +486,16 @@ func (s *SessionResults) GetLastLapPos(driverGuid string) int {
 	return s.GetPosForLap(driverGuid, int64(driverLaps))
 }
 
+func (s *SessionResults) GetDriverPosition(driverGuid string) int {
+	for i := range s.Result {
+		if s.Result[i].DriverGUID == driverGuid {
+			return i+1
+		}
+	}
+
+	return 0
+}
+
 func (s *SessionResults) GetCuts(driverGuid string) int {
 	var i int
 
