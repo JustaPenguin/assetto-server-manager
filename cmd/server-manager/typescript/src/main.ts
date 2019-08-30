@@ -14,12 +14,14 @@ import {CarSearch} from "./CarSearch";
 import {CarList} from "./CarList";
 import "./RaceList";
 import {ChangelogPopup} from "./ChangelogPopup";
+import {Messages} from "./Messages";
 
 $(() => {
     new RaceControl();
     new CarDetail();
     new CarList();
     new ChangelogPopup();
+    Messages.initSummerNote();
 
     $(".race-setup").each(function (index, elem) {
         new CarSearch($(elem));
