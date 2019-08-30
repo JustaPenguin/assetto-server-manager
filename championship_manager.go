@@ -32,7 +32,8 @@ type ChampionshipManager struct {
 	activeChampionship *ActiveChampionship
 	mutex              sync.Mutex
 
-	championshipEventStartTimers map[string]*time.Timer
+	championshipEventStartTimers    map[string]*time.Timer
+	championshipEventReminderTimers map[string]*time.Timer
 }
 
 func NewChampionshipManager(raceManager *RaceManager) *ChampionshipManager {
@@ -486,10 +487,20 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 		return err
 	}
 
+	serverOpts, err := cm.raceStore.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
 	event.Scheduled = date
 
 	// if there is an existing schedule timer for this event stop it
 	if timer := cm.championshipEventStartTimers[event.ID.String()]; timer != nil {
+		timer.Stop()
+	}
+
+	if timer := cm.championshipEventReminderTimers[event.ID.String()]; timer != nil {
 		timer.Stop()
 	}
 
@@ -504,6 +515,14 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 				logrus.Errorf("couldn't start scheduled race, err: %s", err)
 			}
 		})
+
+		if serverOpts.NotificationReminderTimer > 0 {
+			duration = time.Until(date.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
+
+			cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+				cm.notificationManager.SendChampionshipReminderMessage(championship, event)
+			})
+		}
 	}
 
 	return cm.UpsertChampionship(championship)
@@ -1210,7 +1229,14 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 
 func (cm *ChampionshipManager) InitScheduledChampionships() error {
 	cm.championshipEventStartTimers = make(map[string]*time.Timer)
+	cm.championshipEventReminderTimers = make(map[string]*time.Timer)
 	championships, err := cm.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	serverOpts, err := cm.raceStore.LoadServerOptions()
 
 	if err != nil {
 		return err
@@ -1233,6 +1259,17 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 						logrus.Errorf("couldn't start scheduled race, err: %s", err)
 					}
 				})
+
+				if serverOpts.NotificationReminderTimer > 0 {
+					if event.Scheduled.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute).After(time.Now()) {
+						// add reminder
+						duration = time.Until(event.Scheduled.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
+
+						cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+							cm.notificationManager.SendChampionshipReminderMessage(championship, event)
+						})
+					}
+				}
 
 				return cm.UpsertChampionship(championship)
 			} else {

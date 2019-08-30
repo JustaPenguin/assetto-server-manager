@@ -1,6 +1,7 @@
 module github.com/cj123/assetto-server-manager
 
 require (
+	github.com/Clinet/discordgo-embed v0.0.0-20190411043415-d754bc1a576c
 	github.com/Masterminds/goutils v1.1.0 // indirect
 	github.com/Masterminds/semver v1.4.2
 	github.com/Masterminds/sprig v2.18.0+incompatible
@@ -12,6 +13,7 @@ require (
 	github.com/blevesearch/go-porterstemmer v1.0.2 // indirect
 	github.com/blevesearch/segment v0.0.0-20160915185041-762005e7a34f // indirect
 	github.com/boltdb/bolt v1.3.1 // indirect
+	github.com/bwmarrin/discordgo v0.19.0
 	github.com/certifi/gocertifi v0.0.0-20190506164543-d2eda7129713 // indirect
 	github.com/cj123/ini v1.42.0
 	github.com/cj123/sessions v1.1.5
