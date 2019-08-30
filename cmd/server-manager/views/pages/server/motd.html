@@ -22,8 +22,10 @@
             <h3>Content Manager Welcome Message</h3>
 
             {{ if and $.Opts.EnableContentManagerWrapper (gt $.Opts.ContentManagerWrapperPort 0) }}
-                <label for="contentManagerWelcomeMessage">Shown to Content Manager users before they join the server.</label>
-                <textarea id="contentManagerWelcomeMessage" name="contentManagerWelcomeMessage" class="form-control md-textarea text-area">{{ $.Opts.ContentManagerWelcomeMessage }}</textarea>
+                <div class="d-none" id="ContentManagerMessageContent">{{ trustHTML $.Opts.ContentManagerWelcomeMessage }}</div>
+
+                <label for="contentManagerWelcomeMessage">Shown to Content Manager users before they join the server.</label><br>
+                <textarea id="contentManagerWelcomeMessage" name="contentManagerWelcomeMessage"></textarea>
             {{ else }}
                 Enable Content Manager Wrapper in <a href="/server-options">Server Options</a> to show this message.
             {{ end }}

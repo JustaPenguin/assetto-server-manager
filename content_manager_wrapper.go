@@ -116,7 +116,11 @@ func (cmw *ContentManagerWrapper) UDPCallback(message udp.Message) {
 }
 
 func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
-	text := cmw.serverConfig.GlobalServerConfig.ContentManagerWelcomeMessage
+	text, err := html2text.FromString(cmw.serverConfig.GlobalServerConfig.ContentManagerWelcomeMessage)
+
+	if err != nil {
+		return err
+	}
 
 	eventDescriptionAsText, err := html2text.FromString(event.EventDescription(), html2text.Options{PrettyTables: true})
 
