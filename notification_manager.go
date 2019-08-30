@@ -4,19 +4,23 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"net/url"
+	"strings"
+	"time"
 )
 
 // NotificationManager is the generic notification handler, which calls the individual notification
 // managers.  Initially, only a Discord manager is implemented.
 type NotificationManager struct {
 	discordManager *DiscordManager
+	carManager     *CarManager
 	store          Store
 	testing        bool
 }
 
-func NewNotificationManager(discord *DiscordManager, store Store) *NotificationManager {
+func NewNotificationManager(discord *DiscordManager, cars *CarManager, store Store) *NotificationManager {
 	return &NotificationManager{
 		discordManager: discord,
+		carManager:     cars,
 		store:          store,
 		testing:        false,
 	}
@@ -94,6 +98,46 @@ func (nm *NotificationManager) SendRaceStartMessage(config ServerConfig, event R
 	} else {
 		return nm.SendMessage(msg)
 	}
+}
+
+// SendRaceScheduledMessage sends a notification when a race is scheduled
+func (nm *NotificationManager) SendRaceScheduledMessage(event *CustomRace, date time.Time) error {
+	var dateStr = date.Format("Mon, 02 Jan 2006 15:04:05 MST")
+
+	var aCarNames = []string{}
+
+	for _, carName := range strings.Split(event.RaceConfig.Cars, ";") {
+		car, err := nm.carManager.LoadCar(carName, nil)
+
+		if err != nil {
+			logrus.WithError(err).Warnf("Could not load car details for: %s", carName)
+			continue
+		}
+
+		aCarNames = append(aCarNames, car.Details.Name)
+	}
+
+	carNames := strings.Join(aCarNames, ", ")
+
+	trackInfo, err := GetTrackInfo(event.RaceConfig.Track, event.RaceConfig.TrackLayout)
+
+	if err != nil {
+		logrus.WithError(err).Warnf("Could not load track details, skipping notification: %s, %s", event.RaceConfig.Track, event.RaceConfig.TrackLayout)
+		return err
+	}
+
+	var msg = "A new event has been scheduled\n"
+	eventName := event.EventName()
+
+	if eventName != "" {
+		msg += fmt.Sprintf("Event name: %s\n", eventName)
+	}
+
+	msg += fmt.Sprintf("Date: %s\n", dateStr)
+	msg += fmt.Sprintf("Track: %s\n", trackInfo.Name)
+	msg += fmt.Sprintf("Car(s): %s\n", carNames)
+
+	return nm.SendMessage(msg)
 }
 
 // SendRaceReminderMessage sends a reminder a configurable number of minutes prior to a race starting

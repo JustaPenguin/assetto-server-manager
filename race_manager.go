@@ -1013,6 +1013,8 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 		})
 
 		if serverOpts.NotificationReminderTimer > 0 {
+			_ = rm.notificationManager.SendRaceScheduledMessage(race, date)
+
 			duration = time.Until(date.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
 
 			rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {

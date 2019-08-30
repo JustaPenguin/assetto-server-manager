@@ -359,7 +359,7 @@ func (r *Resolver) resolveNotificationManager() *NotificationManager {
 		return r.notificationManager
 	}
 
-	r.notificationManager = NewNotificationManager(r.resolveDiscordManager(), r.store)
+	r.notificationManager = NewNotificationManager(r.resolveDiscordManager(), r.resolveCarManager(), r.store)
 
 	return r.notificationManager
 }
