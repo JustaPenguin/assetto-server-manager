@@ -229,11 +229,11 @@ func NewRRule(arg ROption) (*RRule, error) {
 // obvious user error.
 func validateBounds(arg ROption) error {
 	bounds := []struct {
-		field     []int
-		param     string
-		bound     []int
+		field []int
+		param string
+		bound []int
 		plusMinus bool // If the bound also applies for -x to -y.
-	}{
+	} {
 		{arg.Bysecond, "bysecond", []int{0, 59}, false},
 		{arg.Byminute, "byminute", []int{0, 59}, false},
 		{arg.Byhour, "byhour", []int{0, 23}, false},
