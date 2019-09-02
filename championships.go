@@ -632,7 +632,7 @@ func (c *Championship) AttachClassIDToResults(results *SessionResults) {
 		class, err := c.FindClassForCarModel(lap.CarModel)
 
 		if err != nil {
-			logrus.Warnf("Couldn't find class for car model: %s (entrant: %s/%s)", lap.DriverName, lap.DriverGUID)
+			logrus.Warnf("Couldn't find class for car model: %s (entrant: %s/%s)", lap.CarModel, lap.DriverName, lap.DriverGUID)
 			continue
 		}
 
@@ -643,7 +643,7 @@ func (c *Championship) AttachClassIDToResults(results *SessionResults) {
 		class, err := c.FindClassForCarModel(result.CarModel)
 
 		if err != nil {
-			logrus.Warnf("Couldn't find class for car model: %s (entrant: %s/%s)", result.DriverName, result.DriverGUID)
+			logrus.Warnf("Couldn't find class for car model: %s (entrant: %s/%s)", result.CarModel, result.DriverName, result.DriverGUID)
 			continue
 		}
 
