@@ -26,6 +26,11 @@ func NewNotificationManager(discord *DiscordManager, cars *CarManager, store Sto
 	}
 }
 
+// check to see if any notification handlers need to process option changes
+func (nm *NotificationManager) SaveServerOptions(soOld *GlobalServerConfig, soNew *GlobalServerConfig) error {
+	return nm.discordManager.SaveServerOptions(soOld, soNew)
+}
+
 func (nm *NotificationManager) Stop() error {
 	return nm.discordManager.Stop()
 }

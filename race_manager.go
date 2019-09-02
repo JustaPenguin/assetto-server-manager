@@ -1105,7 +1105,19 @@ func (rm *RaceManager) ToggleLoopCustomRace(uuid string) error {
 }
 
 func (rm *RaceManager) SaveServerOptions(so *GlobalServerConfig) error {
-	return rm.raceStore.UpsertServerOptions(so)
+	serverOpts, err := rm.raceStore.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	err = rm.raceStore.UpsertServerOptions(so)
+
+	if err != nil {
+		return err
+	}
+
+	return rm.notificationManager.SaveServerOptions(serverOpts, so)
 }
 
 func (rm *RaceManager) LoadServerOptions() (*GlobalServerConfig, error) {

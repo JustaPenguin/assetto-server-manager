@@ -74,6 +74,37 @@ func NewDiscordManager(store Store, r *Resolver) (*DiscordManager, error) {
 	return dm, nil
 }
 
+func (dm *DiscordManager) SaveServerOptions(soOld *GlobalServerConfig, soNew *GlobalServerConfig) error {
+	if soNew.DiscordAPIToken != "" && (soOld.DiscordAPIToken != soNew.DiscordAPIToken) {
+		// existing token changed, so stop
+		if soOld.DiscordAPIToken != "" && dm.enabled {
+			dm.Stop()
+		}
+
+		// token added (or changed), so attempt to connect
+		session, err := discordgo.New("Bot " + soNew.DiscordAPIToken)
+
+		if err == nil {
+			err = session.Open()
+		}
+
+		if err != nil {
+			logrus.Errorf("couldn't open discord session, err: %s", err)
+			return err
+		}
+
+		dm.discord = session
+		dm.enabled = true
+
+		session.AddHandler(dm.CommandHandler)
+	} else if soNew.DiscordAPIToken == "" && soOld.DiscordAPIToken != "" {
+		// token removed, so close session (also sets enabled to false)
+		_ = dm.Stop()
+	}
+
+	return nil
+}
+
 func (dm *DiscordManager) CommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
@@ -109,6 +140,7 @@ func (dm *DiscordManager) CommandHandler(s *discordgo.Session, m *discordgo.Mess
 
 func (dm *DiscordManager) Stop() error {
 	if dm.enabled {
+		dm.enabled = false
 		return dm.discord.Close()
 	}
 
