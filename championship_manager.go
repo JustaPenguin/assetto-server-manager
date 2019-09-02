@@ -401,9 +401,8 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 
 		entryList = filteredEntryList
 
-		// sign up championships also have pickup mode disabled
 		config.CurrentRaceConfig.PickupModeEnabled = 1
-		config.CurrentRaceConfig.LockedEntryList = 0
+		config.CurrentRaceConfig.LockedEntryList = 1
 	} else {
 		if championship.OpenEntrants {
 			config.CurrentRaceConfig.PickupModeEnabled = 1
