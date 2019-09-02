@@ -1104,20 +1104,32 @@ func (rm *RaceManager) ToggleLoopCustomRace(uuid string) error {
 	return rm.raceStore.UpsertCustomRace(race)
 }
 
-func (rm *RaceManager) SaveServerOptions(so *GlobalServerConfig) error {
-	serverOpts, err := rm.raceStore.LoadServerOptions()
+func (rm *RaceManager) SaveServerOptions(newServerOpts *GlobalServerConfig) error {
+	oldServerOpts, err := rm.raceStore.LoadServerOptions()
 
 	if err != nil {
 		return err
 	}
 
-	err = rm.raceStore.UpsertServerOptions(so)
+	err = rm.raceStore.UpsertServerOptions(newServerOpts)
 
 	if err != nil {
 		return err
 	}
 
-	return rm.notificationManager.SaveServerOptions(serverOpts, so)
+	err = rm.notificationManager.SaveServerOptions(oldServerOpts, newServerOpts)
+
+	if err != nil {
+		return err
+	}
+
+	err = rm.RescheduleNotifications(oldServerOpts, newServerOpts)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (rm *RaceManager) LoadServerOptions() (*GlobalServerConfig, error) {
@@ -1333,6 +1345,48 @@ func (rm *RaceManager) InitScheduledRaces() error {
 					if err != nil {
 						return err
 					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// reschedule notifications if notification time changed
+func (rm *RaceManager) RescheduleNotifications(oldServerOpts *GlobalServerConfig, newServerOpts *GlobalServerConfig) error {
+	if newServerOpts.NotificationReminderTimer == oldServerOpts.NotificationReminderTimer {
+		return nil
+	}
+
+	// stop all existing timers
+	for _, timer := range rm.customRaceReminderTimers {
+		timer.Stop()
+	}
+
+	// rebuild the timers
+	rm.customRaceReminderTimers = make(map[string]*time.Timer)
+
+	if newServerOpts.NotificationReminderTimer > 0 {
+		races, err := rm.raceStore.ListCustomRaces()
+
+		if err != nil {
+			return err
+		}
+
+		for _, race := range races {
+			race := race
+
+			if race.Scheduled.After(time.Now()) {
+				duration := time.Until(race.Scheduled)
+
+				if race.Scheduled.Add(time.Duration(0-newServerOpts.NotificationReminderTimer) * time.Minute).After(time.Now()) {
+					// add reminder
+					duration = time.Until(race.Scheduled.Add(time.Duration(0-newServerOpts.NotificationReminderTimer) * time.Minute))
+
+					rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+						_ = rm.notificationManager.SendRaceReminderMessage(race)
+					})
 				}
 			}
 		}

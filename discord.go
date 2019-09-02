@@ -74,15 +74,15 @@ func NewDiscordManager(store Store, r *Resolver) (*DiscordManager, error) {
 	return dm, nil
 }
 
-func (dm *DiscordManager) SaveServerOptions(soOld *GlobalServerConfig, soNew *GlobalServerConfig) error {
-	if soNew.DiscordAPIToken != "" && (soOld.DiscordAPIToken != soNew.DiscordAPIToken) {
+func (dm *DiscordManager) SaveServerOptions(oldServerOpts *GlobalServerConfig, newServerOpts *GlobalServerConfig) error {
+	if newServerOpts.DiscordAPIToken != "" && (oldServerOpts.DiscordAPIToken != newServerOpts.DiscordAPIToken) {
 		// existing token changed, so stop
-		if soOld.DiscordAPIToken != "" && dm.enabled {
+		if oldServerOpts.DiscordAPIToken != "" && dm.enabled {
 			dm.Stop()
 		}
 
 		// token added (or changed), so attempt to connect
-		session, err := discordgo.New("Bot " + soNew.DiscordAPIToken)
+		session, err := discordgo.New("Bot " + newServerOpts.DiscordAPIToken)
 
 		if err == nil {
 			err = session.Open()
@@ -97,7 +97,7 @@ func (dm *DiscordManager) SaveServerOptions(soOld *GlobalServerConfig, soNew *Gl
 		dm.enabled = true
 
 		session.AddHandler(dm.CommandHandler)
-	} else if soNew.DiscordAPIToken == "" && soOld.DiscordAPIToken != "" {
+	} else if newServerOpts.DiscordAPIToken == "" && oldServerOpts.DiscordAPIToken != "" {
 		// token removed, so close session (also sets enabled to false)
 		_ = dm.Stop()
 	}
