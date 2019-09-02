@@ -60,9 +60,11 @@ type ChampionshipPoints struct {
 // NewChampionship creates a Championship with a given name, creating a UUID for the championship as well.
 func NewChampionship(name string) *Championship {
 	return &Championship{
-		ID:      uuid.New(),
-		Name:    name,
-		Created: time.Now(),
+		ID:                  uuid.New(),
+		Name:                name,
+		Created:             time.Now(),
+		OpenEntrants:        false,
+		PersistOpenEntrants: true,
 	}
 }
 
@@ -87,6 +89,10 @@ type Championship struct {
 	// provided by a join message. The EntryList for each class will still need creating, but
 	// can omit names/GUIDs/teams as necessary. These can then be edited after the fact.
 	OpenEntrants bool
+
+	// PersistOpenEntrants (used with OpenEntrants) indicates that drivers who join the Championship
+	// should be added to the Championship EntryList. This is ON by default.
+	PersistOpenEntrants bool
 
 	// SignUpForm gives anyone on the web access to a Championship Sign Up Form so that they can
 	// mark themselves for participation in this Championship.
@@ -384,8 +390,19 @@ func (c *Championship) ValidCarIDs() []string {
 func (c *Championship) NumEntrants() int {
 	entrants := 0
 
-	for _, class := range c.Classes {
-		entrants += len(class.Entrants)
+	if c.SignUpForm.Enabled && !c.OpenEntrants {
+		// closed sign up form championships report only the taken slots as their num entrants
+		for _, class := range c.Classes {
+			for _, entrant := range class.Entrants {
+				if entrant.GUID != "" {
+					entrants++
+				}
+			}
+		}
+	} else {
+		for _, class := range c.Classes {
+			entrants += len(class.Entrants)
+		}
 	}
 
 	return entrants
@@ -512,6 +529,8 @@ func (c *Championship) EnhanceResults(results *SessionResults) {
 
 	results.ChampionshipID = c.ID.String()
 
+	c.AttachClassIDToResults(results)
+
 	// update names / teams to the values we know to be correct due to championship setup
 	for _, class := range c.Classes {
 		for _, entrant := range class.Entrants {
@@ -605,6 +624,30 @@ func (c *ChampionshipClass) AttachEntrantToResult(entrant *Entrant, results *Ses
 			result.DriverName = entrant.Name
 			result.ClassID = c.ID
 		}
+	}
+}
+
+func (c *Championship) AttachClassIDToResults(results *SessionResults) {
+	for _, lap := range results.Laps {
+		class, err := c.FindClassForCarModel(lap.CarModel)
+
+		if err != nil {
+			logrus.Warnf("Couldn't find class for car model: %s (entrant: %s/%s)", lap.CarModel, lap.DriverName, lap.DriverGUID)
+			continue
+		}
+
+		lap.ClassID = class.ID
+	}
+
+	for _, result := range results.Result {
+		class, err := c.FindClassForCarModel(result.CarModel)
+
+		if err != nil {
+			logrus.Warnf("Couldn't find class for car model: %s (entrant: %s/%s)", result.CarModel, result.DriverName, result.DriverGUID)
+			continue
+		}
+
+		result.ClassID = class.ID
 	}
 }
 
