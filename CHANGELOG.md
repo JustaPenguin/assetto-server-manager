@@ -7,6 +7,8 @@ Added:
 * Championship Events now show the best qualifying and fastest lap in each class.
 * You can now rename drivers on results pages.
 * Drivers can now add their Driver Name, GUID and Team to their account. This will highlight their results on all result pages, add them to the autofill entrant list and automatically input their information if they sign up for an event with a sign up form
+* Added a "Persist Open Championship Entrants" option. When turned off, this prevents the Championship Entry List from filling up, so you can run multiple Championship events in a quick-fire fashion without needing to edit the Entry List between each one. (Championship Points will continue to work correctly).
+* Championship Sign Up Forms now replace your existing sign up with a new one if you sign up with the same GUID and email, so you can request to change cars.
 
 Fixes:
 

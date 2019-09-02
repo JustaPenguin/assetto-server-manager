@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	CurrentMigrationVersion = 11
+	CurrentMigrationVersion = 12
 	versionMetaKey          = "version"
 )
 
@@ -59,6 +59,7 @@ var migrations = []migrationFunc{
 	addPitBoxDefinitionToEntrants,
 	addLastSeenVersionToAccounts,
 	addSleepTime1ToServerOptions,
+	addPersistOpenEntrantsToChampionship,
 }
 
 func addEntrantIDToChampionships(rs Store) error {
@@ -383,7 +384,7 @@ func addLastSeenVersionToAccounts(s Store) error {
 }
 
 func addSleepTime1ToServerOptions(s Store) error {
-	logrus.Errorf("Running migration: Set Server Options Sleep Time to 1")
+	logrus.Infof("Running migration: Set Server Options Sleep Time to 1")
 	opts, err := s.LoadServerOptions()
 
 	if err != nil {
@@ -393,4 +394,32 @@ func addSleepTime1ToServerOptions(s Store) error {
 	opts.SleepTime = 1
 
 	return s.UpsertServerOptions(opts)
+}
+
+func addPersistOpenEntrantsToChampionship(s Store) error {
+	logrus.Infof("Running migration: enable 'Persist Open Entrants' in Championships")
+
+	championships, err := s.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(championships, func(i, j int) bool {
+		return championships[i].Updated.Before(championships[j].Updated)
+	})
+
+	for _, champ := range championships {
+		if champ.OpenEntrants {
+			champ.PersistOpenEntrants = true
+		}
+
+		err := s.UpsertChampionship(champ)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
