@@ -1,40 +1,51 @@
 {{ define "title" }}{{ $.RaceWeekend.Name }} Race Weekend{{ end }}
 
 {{ define "content" }}
-    <h1 class="text-center">{{ $.RaceWeekend.Name }}</h1>
 
-    <p class="text-center"><em>A Race Weekend in the following car{{ if gt (len $.RaceWeekend.EntryList.CarIDs) 0 }}s{{ end }}: {{ carList ($.RaceWeekend.EntryList.CarIDs) }}</em></p>
+    <div class="container">
 
-    <div class="float-right">
-        {{ if WriteAccess }}
-            <a class="btn btn-success" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session">Add more Sessions</a>
+        <h1 class="text-center">{{ $.RaceWeekend.Name }}</h1>
+        <p class="text-center"><em>A Race Weekend in the following car{{ if gt (len $.RaceWeekend.EntryList.CarIDs) 1 }}s{{ end }}: {{ carList ($.RaceWeekend.EntryList.CarIDs) }}</em></p>
+
+        {{ if gt $.RaceWeekend.Progress 0.0 }}
+            <div class="progress mb-5 mt-5">
+                <div class="progress-bar bg-success progress-bar-striped" id="progress-bar" role="progressbar" style="width: {{ int $.RaceWeekend.Progress }}%;" aria-valuenow="{{ int $.RaceWeekend.Progress }}" aria-valuemin="0" aria-valuemax="100">{{ int $.RaceWeekend.Progress }}%</div>
+            </div>
         {{ end }}
 
-        <div class="dropdown show" style="display: inline-block">
-            <a class="btn btn-warning dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                Manage Race Weekend
-            </a>
 
-            <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+        <div class="float-right">
+            {{ if WriteAccess }}
+                <a class="btn btn-success" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session">Add more Sessions</a>
+            {{ end }}
 
-                {{ if WriteAccess }}
-                    <a class="dropdown-item" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/edit">
-                        Edit
-                    </a>
-                {{ end }}
-
-
-                <a class="dropdown-item" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/export">
-                    Export
+            <div class="dropdown show" style="display: inline-block">
+                <a class="btn btn-warning dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Manage Race Weekend
                 </a>
+
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                    {{ if WriteAccess }}
+                        <a class="dropdown-item" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/edit">
+                            Edit
+                        </a>
+                    {{ end }}
+
+                    <a class="dropdown-item" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/export">
+                        Export
+                    </a>
+                </div>
             </div>
         </div>
+
+        <div class="clearfix"></div>
+
+        <h2>Sessions</h2>
+
+        <p>This Race Weekend has {{ len $.RaceWeekend.Sessions }} sessions.</p>
+
+        <hr>
     </div>
-
-    <div class="clearfix"></div>
-
-
-    <h2>Sessions</h2>
 
     {{ $sortedSessions := $.RaceWeekend.SortedSessions }}
 
@@ -157,60 +168,62 @@
         {{ end }}
     </div>
 
-    <h2>Results</h2>
+    <div class="container">
+        <h2>Results</h2>
 
-    <div class="accordion" id="sessionResults">
-        {{ range $sessionIndex, $session := $sortedSessions }}
-            <div class="card">
-                <div class="card-header" id="results-link-{{ $session.ID.String }}" data-toggle="collapse" data-target="#results-{{ $session.ID.String }}" aria-expanded="true" aria-controls="results-{{ $session.ID.String }}">
-                    {{ $acSession := $session.SessionInfo }}
+        <div class="accordion" id="sessionResults">
+            {{ range $sessionIndex, $session := $sortedSessions }}
+                <div class="card">
+                    <div class="card-header" id="results-link-{{ $session.ID.String }}" data-toggle="collapse" data-target="#results-{{ $session.ID.String }}" aria-expanded="true" aria-controls="results-{{ $session.ID.String }}">
+                        {{ $acSession := $session.SessionInfo }}
 
-                    <strong>
-                        {{ $acSession.Name }}
-                    </strong>
+                        <strong>
+                            {{ $acSession.Name }}
+                        </strong>
 
-                    <div class="float-right">
-                        {{ if ne $acSession.Time 0 }}
-                            {{ $acSession.Time }} minutes
-                        {{ else }}
-                            {{ with $acSession.Laps }}
-                                {{ . }} laps
+                        <div class="float-right">
+                            {{ if ne $acSession.Time 0 }}
+                                {{ $acSession.Time }} minutes
+                            {{ else }}
+                                {{ with $acSession.Laps }}
+                                    {{ . }} laps
+                                {{ end }}
                             {{ end }}
-                        {{ end }}
 
-                        -
+                            -
 
-                        {{ if not ($.RaceWeekend.SessionCanBeRun $session) }}
-                            <span class="text-danger" data-toggle="tooltip" title="This session cannot be run until all parent sessions have been run.">
-                                    Not available
-                                </span>
-                        {{ else if $session.Completed }}
-                            <span class="text-success">Complete</span>
-                        {{ else if $session.InProgress }}
-                            <span class="text-info">In Progress</span>
-                        {{ else }}
-                            <span class="text-warning">Ready to Start</span>
-                        {{ end }}
+                            {{ if not ($.RaceWeekend.SessionCanBeRun $session) }}
+                                <span class="text-danger" data-toggle="tooltip" title="This session cannot be run until all parent sessions have been run.">
+                                        Not available
+                                    </span>
+                            {{ else if $session.Completed }}
+                                <span class="text-success">Complete</span>
+                            {{ else if $session.InProgress }}
+                                <span class="text-info">In Progress</span>
+                            {{ else }}
+                                <span class="text-warning">Ready to Start</span>
+                            {{ end }}
+                        </div>
+                    </div>
+
+                    <div id="results-{{ $session.ID.String }}" class="collapse {{ if eq $sessionIndex 0 }}show{{ end }}" aria-labelledby="results-link-{{ $session.ID.String }}" data-parent="#sessionResults">
+                        <div class="card-body pt-0 pb-0 pl-2 pr-2">
+                            {{ if $session.Completed }}
+
+                                <p class="text-center mt-2 mb-2">
+                                    <a class="detailed-results" href="/results/{{ $session.Results.SessionFile }}">View detailed results breakdown for this Session</a>
+                                </p>
+
+                                {{ template "session-overall" dict "sessionResults" $session.Results "account" $.Account }}
+                            {{ else if $session.InProgress }}
+                                <p class="text-center mt-4 pb-2"><strong>Session in Progress</strong>: Looks like there aren't any results yet. Check back later.</p>
+                            {{ else }}
+                                <p class="text-center mt-4 pb-2"><strong>Awaiting Start</strong>: Looks like this session hasn't started yet. Check back later.</p>
+                            {{ end }}
+                        </div>
                     </div>
                 </div>
-
-                <div id="results-{{ $session.ID.String }}" class="collapse {{ if eq $sessionIndex 0 }}show{{ end }}" aria-labelledby="results-link-{{ $session.ID.String }}" data-parent="#sessionResults">
-                    <div class="card-body pt-0 pb-0 pl-2 pr-2">
-                        {{ if $session.Completed }}
-
-                            <p class="text-center mt-2 mb-2">
-                                <a class="detailed-results" href="/results/{{ $session.Results.SessionFile }}">View detailed results breakdown for this Session</a>
-                            </p>
-
-                            {{ template "session-overall" dict "sessionResults" $session.Results "account" $.Account }}
-                        {{ else if $session.InProgress }}
-                            <p class="text-center mt-5 pb-2"><strong>Session in Progress</strong>: Looks like there aren't any results yet. Check back later.</p>
-                        {{ else }}
-                            <p class="text-center mt-5 pb-2"><strong>Awaiting Start</strong>: Looks like this session hasn't started yet. Check back later.</p>
-                        {{ end }}
-                    </div>
-                </div>
-            </div>
-        {{ end }}
+            {{ end }}
+        </div>
     </div>
 {{ end }}

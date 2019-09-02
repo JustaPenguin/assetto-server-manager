@@ -217,3 +217,21 @@ func (rwh *RaceWeekendHandler) importSessionResults(w http.ResponseWriter, r *ht
 		"Session":       session,
 	})
 }
+
+func (rwh *RaceWeekendHandler) manageFilters(w http.ResponseWriter, r *http.Request) {
+	raceWeekendID := chi.URLParam(r, "raceWeekendID")
+	parentSessionID := r.URL.Query().Get("parentSessionID")
+	childSessionID := r.URL.Query().Get("childSessionID")
+
+	raceWeekend, parentSession, childSession, err := rwh.raceWeekendManager.FindConnectedSessions(raceWeekendID, parentSessionID, childSessionID)
+
+	if err != nil {
+		panic(err) // @TODO
+	}
+
+	rwh.viewRenderer.MustLoadPartial(w, r, "race-weekend/popups/manage-filters.html", map[string]interface{}{
+		"RaceWeekend":   raceWeekend,
+		"ParentSession": parentSession,
+		"ChildSession":  childSession,
+	})
+}

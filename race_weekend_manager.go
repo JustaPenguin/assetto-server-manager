@@ -360,3 +360,25 @@ func (rwm *RaceWeekendManager) ListAvailableResultsFilesForSession(raceWeekendID
 
 	return session, filteredResults, nil
 }
+
+func (rwm *RaceWeekendManager) FindConnectedSessions(raceWeekendID, parentSessionID, childSessionID string) (*RaceWeekend, *RaceWeekendSession, *RaceWeekendSession, error) {
+	raceWeekend, err := rwm.LoadRaceWeekend(raceWeekendID)
+
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	parentSession, err := raceWeekend.FindSessionByID(parentSessionID)
+
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	childSession, err := raceWeekend.FindSessionByID(childSessionID)
+
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	return raceWeekend, parentSession, childSession, nil
+}

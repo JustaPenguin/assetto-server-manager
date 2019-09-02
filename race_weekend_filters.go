@@ -1,5 +1,11 @@
 package servermanager
 
+var raceWeekendFilters = make(map[string]EntryListFilter)
+
+func RegisterRaceWeekendFilter(f EntryListFilter) {
+	raceWeekendFilters[f.Name()] = f
+}
+
 // An EntryListFilter takes a given EntryList, and (based on some criteria) filters out invalid Entrants
 type EntryListFilter interface {
 	Name() string
@@ -15,6 +21,7 @@ func (f FilterError) Error() string {
 }
 
 type EntrantPositionFilter struct {
+	Enabled         bool
 	Start           int
 	End             int
 	ReverseEntrants bool
@@ -45,6 +52,10 @@ func filterDisqualifiedResults(results []*SessionResult) []*SessionResult {
 }
 
 func (epf EntrantPositionFilter) Filter(results []*SessionResult) ([]*SessionResult, error) {
+	if !epf.Enabled {
+		return results, nil
+	}
+
 	results = filterDisqualifiedResults(results)
 
 	if epf.Start < 0 || epf.Start >= len(results) || epf.End < 0 || epf.End >= len(results) {
@@ -64,4 +75,33 @@ func (epf EntrantPositionFilter) Filter(results []*SessionResult) ([]*SessionRes
 	} else {
 		return split, nil
 	}
+}
+
+type EntrantOffsetFilter struct {
+	Enabled bool
+	Offset  int
+}
+
+func (e EntrantOffsetFilter) Name() string {
+	return "Entrant Offset Filter"
+}
+
+func (e EntrantOffsetFilter) Description() string {
+	return "The results from the parent session will start from the defined offset"
+}
+
+func (e EntrantOffsetFilter) Key() string {
+	return "ENTRANT_OFFSET_FILTER"
+}
+
+func (e EntrantOffsetFilter) Filter(results []*SessionResult) ([]*SessionResult, error) {
+	out := make([]*SessionResult, 0)
+
+	for i := 0; i < e.Offset; i++ {
+		out = append(out, &SessionResult{})
+	}
+
+	out = append(out, results...)
+
+	return out, nil
 }

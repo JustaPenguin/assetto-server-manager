@@ -98,6 +98,24 @@ func (rw *RaceWeekend) SortedSessions() []*RaceWeekendSession {
 	return sessions
 }
 
+func (rw *RaceWeekend) Progress() float64 {
+	numSessions := float64(len(rw.Sessions))
+
+	if numSessions == 0 {
+		return 0
+	}
+
+	numCompletedSessions := float64(0)
+
+	for _, session := range rw.Sessions {
+		if session.Completed() {
+			numCompletedSessions++
+		}
+	}
+
+	return (numCompletedSessions / numSessions) * 100
+}
+
 func (rw *RaceWeekend) NumParentsLeft(session *RaceWeekendSession) int {
 	return len(session.ParentIDs) - rw.NumParentsAbove(session)
 }
@@ -242,6 +260,10 @@ func NewRaceWeekendSession() *RaceWeekendSession {
 		ID:      uuid.New(),
 		Created: time.Now(),
 	}
+}
+
+func (rws *RaceWeekendSession) Name() string {
+	return rws.SessionInfo().Name
 }
 
 func (rws *RaceWeekendSession) SessionInfo() *SessionConfig {

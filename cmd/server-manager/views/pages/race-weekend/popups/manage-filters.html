@@ -1,0 +1,18 @@
+{{ define "partial" }}
+<div>
+    <h2>Filters: {{ $.ParentSession.Name }} &rarr; {{ $.ChildSession.Name }}</h2>
+
+    <p>Define filters between the two sessions.</p>
+
+    {{ if $.ParentSession.Completed }}
+        Results
+
+        {{ template "session-overall" dict "sessionResults" $.ParentSession.Results "account" $.User }}
+    {{ end }}
+
+
+    <select>
+        <option value="">Entrant Position Filter</option>
+    </select>
+</div>
+{{ end }}

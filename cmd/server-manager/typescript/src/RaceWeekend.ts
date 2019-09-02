@@ -1,5 +1,5 @@
 import ChangeEvent = JQuery.ChangeEvent;
-import {jsPlumb} from "jsplumb";
+import {Connection, jsPlumb} from "jsplumb";
 import dagre, {graphlib} from "dagre";
 import Graph = graphlib.Graph;
 
@@ -45,7 +45,7 @@ jsp.bind("ready", () => {
         const $session = $(element);
 
         // @ts-ignore
-        jsp.draggable(element, {grid: [20, 20]});
+        jsp.draggable(element, {grid: [10, 10]});
 
         const parentIDs = JSON.parse($session.data("parent-ids")) as string[];
 
@@ -55,18 +55,27 @@ jsp.bind("ready", () => {
                 target: $session.attr("id"),
                 anchor: "AutoDefault",
                 // @ts-ignore
-                endpoint: ["Rectangle", {width: 10, height: 10}],
+                endpoint: ["Blank", {width: 10, height: 10}],
 
                 connector: ["Flowchart", {}],
 
-                connectorStyle: {stroke: "#999"},
             });
 
             if (conn) {
                 // @ts-ignore
-                conn.addOverlay(["Arrow", {width: 10, height: 10, id: "arrow"}]);
+                conn.addOverlay(["PlainArrow", {width: 20, height: 20, id: "arrow"}]);
             }
         }
+    });
+
+    jsp.bind("click", (conn: Connection, originalEvent: Event): void => {
+        const [ep1, ep2] = conn.endpoints;
+
+        let session1ID = $(ep1.getElement()).attr("id");
+        let session2ID = $(ep2.getElement()).attr("id");
+
+
+        console.log(session1ID, session2ID);
     });
 
     // construct dagre graph from JsPlumb graph
@@ -96,7 +105,10 @@ jsp.bind("ready", () => {
     // calculate node positions
     dagre.layout(g);
 
-    $("#race-weekend-graph-container").height(g.graph().height + "px");
+    $("#race-weekend-graph-container").css({
+        "height": (g.graph().height! + 200) + "px",
+        "width": (g.graph().width! + 350) + "px",
+    });
 
     // apply node positions
     g.nodes().forEach((n) => {
