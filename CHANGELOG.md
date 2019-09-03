@@ -23,6 +23,7 @@ Fixes:
 * Fixes an issue where fastest laps were only awarded to the fastest class in a Multiclass Championship.
 * Fixes an issue where Sol session start times would change to an incorrect time when editing an event.
 * Locked Entry List and Pickup Mode options are now available to be changed in non-Championship events. Do with them what you will.
+* Fixes an issue where Championship Sign Up forms couldn't assign a car when users were not allowed car choice.
 
 ---
 

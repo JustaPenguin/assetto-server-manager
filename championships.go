@@ -522,6 +522,36 @@ type PotentialChampionshipEntrant interface {
 	GetGUID() string
 }
 
+var ErrEntryListFull = errors.New("servermanager: entry list is full")
+
+func (c *Championship) AddEntrantInFirstFreeSlot(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrant *Entrant, entrantClass *ChampionshipClass, err error) {
+	c.entryListMutex.Lock()
+	defer c.entryListMutex.Unlock()
+
+	for _, class := range c.Classes {
+		for _, entrant := range class.Entrants {
+			if entrant.GUID == potentialEntrant.GetGUID() {
+				return true, entrant, class, nil
+			}
+		}
+	}
+
+	for _, class := range c.Classes {
+		for _, entrant := range class.Entrants {
+			if entrant.Name == "" && entrant.GUID == "" {
+				// take the slot
+				entrant.Name = potentialEntrant.GetName()
+				entrant.GUID = potentialEntrant.GetGUID()
+				entrant.Team = potentialEntrant.GetTeam()
+
+				return true, entrant, class, nil
+			}
+		}
+	}
+
+	return false, nil, nil, ErrEntryListFull
+}
+
 func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrant *Entrant, entrantClass *ChampionshipClass, err error) {
 	c.entryListMutex.Lock()
 	defer c.entryListMutex.Unlock()
