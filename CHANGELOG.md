@@ -7,6 +7,8 @@ Added:
 * Championship Events now show the best qualifying and fastest lap in each class.
 * You can now rename drivers on results pages.
 * Drivers can now add their Driver Name, GUID and Team to their account. This will highlight their results on all result pages, add them to the autofill entrant list and automatically input their information if they sign up for an event with a sign up form
+* Added a "Persist Open Championship Entrants" option. When turned off, this prevents the Championship Entry List from filling up, so you can run multiple Championship events in a quick-fire fashion without needing to edit the Entry List between each one. (Championship Points will continue to work correctly).
+* Championship Sign Up Forms now replace your existing sign up with a new one if you sign up with the same GUID and email, so you can request to change cars.
 
 Fixes:
 
@@ -21,6 +23,7 @@ Fixes:
 * Fixes an issue where fastest laps were only awarded to the fastest class in a Multiclass Championship.
 * Fixes an issue where Sol session start times would change to an incorrect time when editing an event.
 * Locked Entry List and Pickup Mode options are now available to be changed in non-Championship events. Do with them what you will.
+* Fixes an issue where Championship Sign Up forms couldn't assign a car when users were not allowed car choice.
 
 ---
 

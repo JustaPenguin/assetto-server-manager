@@ -134,6 +134,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 
 	championship.Name = r.FormValue("ChampionshipName")
 	championship.OpenEntrants = r.FormValue("ChampionshipOpenEntrants") == "on" || r.FormValue("ChampionshipOpenEntrants") == "1"
+	championship.PersistOpenEntrants = r.FormValue("ChampionshipPersistOpenEntrants") == "on" || r.FormValue("ChampionshipPersistOpenEntrants") == "1"
 	championship.SignUpForm.Enabled = r.FormValue("Championship.SignUpForm.Enabled") == "on" || r.FormValue("Championship.SignUpForm.Enabled") == "1"
 	championship.SignUpForm.AskForEmail = r.FormValue("Championship.SignUpForm.AskForEmail") == "on" || r.FormValue("Championship.SignUpForm.AskForEmail") == "1"
 	championship.SignUpForm.AskForTeam = r.FormValue("Championship.SignUpForm.AskForTeam") == "on" || r.FormValue("Championship.SignUpForm.AskForTeam") == "1"
@@ -402,13 +403,15 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 
 		entryList = filteredEntryList
 
-		// sign up championships also have pickup mode disabled
-		config.CurrentRaceConfig.PickupModeEnabled = 0
+		config.CurrentRaceConfig.PickupModeEnabled = 1
+		config.CurrentRaceConfig.LockedEntryList = 1
 	} else {
 		if championship.OpenEntrants {
 			config.CurrentRaceConfig.PickupModeEnabled = 1
+			config.CurrentRaceConfig.LockedEntryList = 0
 		} else {
-			config.CurrentRaceConfig.PickupModeEnabled = 0
+			config.CurrentRaceConfig.PickupModeEnabled = 1
+			config.CurrentRaceConfig.LockedEntryList = 1
 		}
 	}
 
@@ -617,9 +620,9 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 
 		}
 
-		if championship.OpenEntrants && a.Event() == udp.EventNewConnection {
+		if championship.OpenEntrants && championship.PersistOpenEntrants && a.Event() == udp.EventNewConnection {
 			// a person joined, check to see if they need adding to the championship
-			foundSlot, classForCar, err := cm.AddEntrantFromSessionData(championship, sessionEntrantWrapper(a), false)
+			foundSlot, classForCar, err := cm.AddEntrantFromSessionData(championship, sessionEntrantWrapper(a), false, false)
 
 			if err != nil {
 				saveChampionship = false
@@ -658,7 +661,6 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 		}
 
 		wrapped := strings.Split(wordwrap.WrapString(
-
 			fmt.Sprintf(
 				"This event is part of the %s%s! %s%s\n",
 				championship.Name,
@@ -973,7 +975,7 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 			return err
 		}
 
-		if championship.OpenEntrants {
+		if championship.OpenEntrants && championship.PersistOpenEntrants {
 			// if the championship is open, we might have entrants in this session file who have not
 			// raced in this championship before. add them to the championship as they would be added
 			// if they joined during a race.
@@ -982,7 +984,7 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 					continue
 				}
 
-				foundFreeSlot, _, err := cm.AddEntrantFromSessionData(championship, car, false)
+				foundFreeSlot, _, err := cm.AddEntrantFromSessionData(championship, car, false, false)
 
 				if err != nil {
 					return err
@@ -1012,14 +1014,20 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 	return cm.UpsertChampionship(championship)
 }
 
-func (cm *ChampionshipManager) AddEntrantFromSessionData(championship *Championship, potentialEntrant PotentialChampionshipEntrant, overwriteSkinForAllEvents bool) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
-	foundFreeSlot, entrant, class, err := championship.AddEntrantFromSession(potentialEntrant)
+func (cm *ChampionshipManager) AddEntrantFromSessionData(championship *Championship, potentialEntrant PotentialChampionshipEntrant, overwriteSkinForAllEvents bool, takeFirstFreeSlot bool) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
+	var entrant *Entrant
 
-	if err != nil {
-		return foundFreeSlot, class, err
+	if takeFirstFreeSlot {
+		foundFreeEntrantSlot, entrant, entrantClass, err = championship.AddEntrantInFirstFreeSlot(potentialEntrant)
+	} else {
+		foundFreeEntrantSlot, entrant, entrantClass, err = championship.AddEntrantFromSession(potentialEntrant)
 	}
 
-	if foundFreeSlot {
+	if err != nil {
+		return foundFreeEntrantSlot, entrantClass, err
+	}
+
+	if foundFreeEntrantSlot {
 		if overwriteSkinForAllEvents {
 			// the user's skin setup should be applied to all event settings
 			for _, event := range championship.Events {
@@ -1046,7 +1054,7 @@ func (cm *ChampionshipManager) AddEntrantFromSessionData(championship *Champions
 		}
 	}
 
-	return foundFreeSlot, class, nil
+	return foundFreeEntrantSlot, entrantClass, nil
 }
 
 func (cm *ChampionshipManager) BuildICalFeed(championshipID string, w io.Writer) error {
@@ -1198,18 +1206,14 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 	}
 
 	for _, entrant := range championship.SignUpForm.Responses {
-		if entrant.GUID == signUpResponse.GUID {
-			return signUpResponse, false, ValidationError("This GUID is already registered.")
-		}
-
-		if championship.SignUpForm.AskForEmail && entrant.Email == signUpResponse.Email {
+		if championship.SignUpForm.AskForEmail && entrant.Email == signUpResponse.Email && entrant.GUID != signUpResponse.GUID {
 			return signUpResponse, false, ValidationError("Someone has already registered with this email address.")
 		}
 	}
 
 	if !championship.SignUpForm.RequiresApproval {
 		// check to see if there is room in the entrylist for the user in their specific car
-		foundSlot, _, err = cm.AddEntrantFromSessionData(championship, signUpResponse, true)
+		foundSlot, _, err = cm.AddEntrantFromSessionData(championship, signUpResponse, true, championship.SignUpForm.HideCarChoice)
 
 		if err != nil {
 			return signUpResponse, foundSlot, err
@@ -1222,7 +1226,19 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 		}
 	}
 
-	championship.SignUpForm.Responses = append(championship.SignUpForm.Responses, signUpResponse)
+	updatingRegistration := false
+
+	for index, response := range championship.SignUpForm.Responses {
+		if response.GUID == signUpResponse.GUID {
+			championship.SignUpForm.Responses[index] = signUpResponse
+			updatingRegistration = true
+			break
+		}
+	}
+
+	if !updatingRegistration {
+		championship.SignUpForm.Responses = append(championship.SignUpForm.Responses, signUpResponse)
+	}
 
 	return signUpResponse, foundSlot, cm.UpsertChampionship(championship)
 }

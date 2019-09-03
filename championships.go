@@ -60,9 +60,11 @@ type ChampionshipPoints struct {
 // NewChampionship creates a Championship with a given name, creating a UUID for the championship as well.
 func NewChampionship(name string) *Championship {
 	return &Championship{
-		ID:      uuid.New(),
-		Name:    name,
-		Created: time.Now(),
+		ID:                  uuid.New(),
+		Name:                name,
+		Created:             time.Now(),
+		OpenEntrants:        false,
+		PersistOpenEntrants: true,
 	}
 }
 
@@ -87,6 +89,10 @@ type Championship struct {
 	// provided by a join message. The EntryList for each class will still need creating, but
 	// can omit names/GUIDs/teams as necessary. These can then be edited after the fact.
 	OpenEntrants bool
+
+	// PersistOpenEntrants (used with OpenEntrants) indicates that drivers who join the Championship
+	// should be added to the Championship EntryList. This is ON by default.
+	PersistOpenEntrants bool
 
 	// SignUpForm gives anyone on the web access to a Championship Sign Up Form so that they can
 	// mark themselves for participation in this Championship.
@@ -179,70 +185,116 @@ func (csr ChampionshipSignUpResponse) GetGUID() string {
 	return csr.GUID
 }
 
+func (c *Championship) FindLastResultForDriver(guid string) (out *SessionResult, teamName string) {
+	events := make([]*ChampionshipEvent, 0)
+
+	for _, event := range c.Events {
+		if event.Completed() {
+			events = append(events, event)
+		}
+	}
+
+	sort.Slice(events, func(i, j int) bool {
+		return events[i].CompletedTime.Before(events[j].CompletedTime)
+	})
+
+	for _, event := range events {
+		startedTime := time.Time{}
+
+		for _, session := range event.Sessions {
+			if session.StartedTime.After(startedTime) && session.Results != nil {
+				startedTime = session.StartedTime
+
+				for _, result := range session.Results.Result {
+					if result.DriverGUID == guid {
+						out = result
+						break
+					}
+				}
+
+				teamName = session.Results.GetTeamName(guid)
+			}
+		}
+	}
+
+	return out, teamName
+}
+
 func (c *Championship) GetPlayerSummary(guid string) string {
 	if c.Progress() == 0 {
 		return "This is the first event of the Championship!"
 	}
 
-	for _, class := range c.Classes {
-		for _, entrant := range class.Entrants {
-			if entrant.GUID == guid {
-				standings := class.Standings(c.Events)
-				teamstandings := class.TeamStandings(c.Events)
+	result, teamName := c.FindLastResultForDriver(guid)
 
-				var driverPos, teamPos int
-				var driverPoints, teamPoints float64
+	if result == nil {
+		return ""
+	}
 
-				for pos, standing := range standings {
-					if standing.Car.Driver.GUID == guid {
-						driverPos = pos + 1
-						driverPoints = standing.Points
-					}
-				}
+	class, err := c.ClassByID(result.ClassID.String())
 
-				var driverAhead string
-				var driverAheadPoints float64
+	if err != nil {
+		logrus.WithError(err).Warnf("Could not find class by id: %s", result.ClassID.String())
+		return ""
+	}
 
-				if driverPos >= 2 {
-					driverAhead = standings[driverPos-2].Car.Driver.Name
-					driverAheadPoints = standings[driverPos-2].Points
-				}
+	standings := class.Standings(c.Events)
+	teamStandings := class.TeamStandings(c.Events)
 
-				for pos, standing := range teamstandings {
-					if standing.Team == entrant.Team {
-						teamPos = pos + 1
-						teamPoints = standing.Points
-					}
-				}
+	var driverPos, teamPos int
+	var driverPoints, teamPoints float64
 
-				var teamAhead string
-				var teamAheadPoints float64
-
-				if teamPos >= 2 {
-					teamAhead = teamstandings[teamPos-2].Team
-					teamAheadPoints = teamstandings[teamPos-2].Points
-				}
-
-				out := fmt.Sprintf("You are currently %d%s with %.2f points. ", driverPos, ordinal(int64(driverPos)), driverPoints)
-
-				if driverAhead != "" {
-					out += fmt.Sprintf("The driver ahead of you is %s with %.2f points. ", driverAhead, driverAheadPoints)
-				}
-
-				if entrant.Team != "" {
-					out += fmt.Sprintf("Your team '%s' has %.2f points. ", entrant.Team, teamPoints)
-
-					if teamAhead != "" {
-						out += fmt.Sprintf("The team ahead is '%s' with %.2f points. ", teamAhead, teamAheadPoints)
-					}
-				}
-
-				return out
-			}
+	for pos, standing := range standings {
+		if standing.Car.Driver.GUID == guid {
+			driverPos = pos + 1
+			driverPoints = standing.Points
 		}
 	}
 
-	return ""
+	var driverAhead string
+	var driverAheadPoints float64
+
+	if driverPos >= 2 {
+		driverAhead = standings[driverPos-2].Car.Driver.Name
+		driverAheadPoints = standings[driverPos-2].Points
+	}
+
+	for pos, standing := range teamStandings {
+		if standing.Team == teamName {
+			teamPos = pos + 1
+			teamPoints = standing.Points
+		}
+	}
+
+	classText := ""
+
+	if class.Name != "" {
+		classText = fmt.Sprintf("in the class '%s' ", class.Name)
+	}
+
+	out := fmt.Sprintf("You are currently %d%s %swith %.2f points. ", driverPos, ordinal(int64(driverPos)), classText, driverPoints)
+
+	if driverAhead != "" {
+		out += fmt.Sprintf("The driver ahead of you is %s with %.2f points. ", driverAhead, driverAheadPoints)
+	}
+
+	if teamName != "" {
+		var teamAhead string
+		var teamAheadPoints float64
+
+		if teamPos >= 2 {
+			teamAhead = teamStandings[teamPos-2].Team
+			teamAheadPoints = teamStandings[teamPos-2].Points
+		}
+
+		out += fmt.Sprintf("Your team '%s' has %.2f points. ", teamName, teamPoints)
+
+		if teamAhead != "" {
+			out += fmt.Sprintf("The team ahead is '%s' with %.2f points. ", teamAhead, teamAheadPoints)
+		}
+	}
+
+	return out
 }
 
 // IsMultiClass is true if the Championship has more than one Class
@@ -255,6 +307,17 @@ func (c *Championship) HasTeamNames() bool {
 		for _, entrant := range class.Entrants {
 			if entrant.Team != "" {
 				return true
+			}
+		}
+	}
+	for _, event := range c.Events {
+		for _, session := range event.Sessions {
+			if session.Completed() && session.Results != nil {
+				for _, car := range session.Results.Cars {
+					if car.Driver.Team != "" {
+						return true
+					}
+				}
 			}
 		}
 	}
@@ -384,8 +447,19 @@ func (c *Championship) ValidCarIDs() []string {
 func (c *Championship) NumEntrants() int {
 	entrants := 0
 
-	for _, class := range c.Classes {
-		entrants += len(class.Entrants)
+	if c.SignUpForm.Enabled && !c.OpenEntrants {
+		// closed sign up form championships report only the taken slots as their num entrants
+		for _, class := range c.Classes {
+			for _, entrant := range class.Entrants {
+				if entrant.GUID != "" {
+					entrants++
+				}
+			}
+		}
+	} else {
+		for _, class := range c.Classes {
+			entrants += len(class.Entrants)
+		}
 	}
 
 	return entrants
@@ -446,6 +520,40 @@ type PotentialChampionshipEntrant interface {
 	GetCar() string
 	GetSkin() string
 	GetGUID() string
+}
+
+var ErrEntryListFull = errors.New("servermanager: entry list is full")
+
+func (c *Championship) AddEntrantInFirstFreeSlot(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrant *Entrant, entrantClass *ChampionshipClass, err error) {
+	c.entryListMutex.Lock()
+	defer c.entryListMutex.Unlock()
+
+	for _, class := range c.Classes {
+		for _, entrant := range class.Entrants {
+			if entrant.GUID == potentialEntrant.GetGUID() {
+				// update the entrant details
+				entrant.Name = potentialEntrant.GetName()
+				entrant.Team = potentialEntrant.GetTeam()
+
+				return true, entrant, class, nil
+			}
+		}
+	}
+
+	for _, class := range c.Classes {
+		for _, entrant := range class.Entrants {
+			if entrant.Name == "" && entrant.GUID == "" {
+				// take the slot
+				entrant.Name = potentialEntrant.GetName()
+				entrant.GUID = potentialEntrant.GetGUID()
+				entrant.Team = potentialEntrant.GetTeam()
+
+				return true, entrant, class, nil
+			}
+		}
+	}
+
+	return false, nil, nil, ErrEntryListFull
 }
 
 func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrant *Entrant, entrantClass *ChampionshipClass, err error) {
@@ -511,6 +619,8 @@ func (c *Championship) EnhanceResults(results *SessionResults) {
 	}
 
 	results.ChampionshipID = c.ID.String()
+
+	c.AttachClassIDToResults(results)
 
 	// update names / teams to the values we know to be correct due to championship setup
 	for _, class := range c.Classes {
@@ -605,6 +715,30 @@ func (c *ChampionshipClass) AttachEntrantToResult(entrant *Entrant, results *Ses
 			result.DriverName = entrant.Name
 			result.ClassID = c.ID
 		}
+	}
+}
+
+func (c *Championship) AttachClassIDToResults(results *SessionResults) {
+	for _, lap := range results.Laps {
+		class, err := c.FindClassForCarModel(lap.CarModel)
+
+		if err != nil {
+			logrus.Warnf("Couldn't find class for car model: %s (entrant: %s/%s)", lap.CarModel, lap.DriverName, lap.DriverGUID)
+			continue
+		}
+
+		lap.ClassID = class.ID
+	}
+
+	for _, result := range results.Result {
+		class, err := c.FindClassForCarModel(result.CarModel)
+
+		if err != nil {
+			logrus.Warnf("Couldn't find class for car model: %s (entrant: %s/%s)", result.CarModel, result.DriverName, result.DriverGUID)
+			continue
+		}
+
+		result.ClassID = class.ID
 	}
 }
 
