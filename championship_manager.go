@@ -642,7 +642,6 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 		}
 
 		wrapped := strings.Split(wordwrap.WrapString(
-
 			fmt.Sprintf(
 				"This event is part of the %s%s! %s%s\n",
 				championship.Name,
