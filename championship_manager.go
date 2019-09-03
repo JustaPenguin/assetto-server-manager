@@ -603,7 +603,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 
 		if championship.OpenEntrants && championship.PersistOpenEntrants && a.Event() == udp.EventNewConnection {
 			// a person joined, check to see if they need adding to the championship
-			foundSlot, classForCar, err := cm.AddEntrantFromSessionData(championship, sessionEntrantWrapper(a), false)
+			foundSlot, classForCar, err := cm.AddEntrantFromSessionData(championship, sessionEntrantWrapper(a), false, false)
 
 			if err != nil {
 				saveChampionship = false
@@ -965,7 +965,7 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 					continue
 				}
 
-				foundFreeSlot, _, err := cm.AddEntrantFromSessionData(championship, car, false)
+				foundFreeSlot, _, err := cm.AddEntrantFromSessionData(championship, car, false, false)
 
 				if err != nil {
 					return err
@@ -995,14 +995,20 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 	return cm.UpsertChampionship(championship)
 }
 
-func (cm *ChampionshipManager) AddEntrantFromSessionData(championship *Championship, potentialEntrant PotentialChampionshipEntrant, overwriteSkinForAllEvents bool) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
-	foundFreeSlot, entrant, class, err := championship.AddEntrantFromSession(potentialEntrant)
+func (cm *ChampionshipManager) AddEntrantFromSessionData(championship *Championship, potentialEntrant PotentialChampionshipEntrant, overwriteSkinForAllEvents bool, takeFirstFreeSlot bool) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
+	var entrant *Entrant
 
-	if err != nil {
-		return foundFreeSlot, class, err
+	if takeFirstFreeSlot {
+		foundFreeEntrantSlot, entrant, entrantClass, err = championship.AddEntrantInFirstFreeSlot(potentialEntrant)
+	} else {
+		foundFreeEntrantSlot, entrant, entrantClass, err = championship.AddEntrantFromSession(potentialEntrant)
 	}
 
-	if foundFreeSlot {
+	if err != nil {
+		return foundFreeEntrantSlot, entrantClass, err
+	}
+
+	if foundFreeEntrantSlot {
 		if overwriteSkinForAllEvents {
 			// the user's skin setup should be applied to all event settings
 			for _, event := range championship.Events {
@@ -1029,7 +1035,7 @@ func (cm *ChampionshipManager) AddEntrantFromSessionData(championship *Champions
 		}
 	}
 
-	return foundFreeSlot, class, nil
+	return foundFreeEntrantSlot, entrantClass, nil
 }
 
 func (cm *ChampionshipManager) BuildICalFeed(championshipID string, w io.Writer) error {
@@ -1188,7 +1194,7 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 
 	if !championship.SignUpForm.RequiresApproval {
 		// check to see if there is room in the entrylist for the user in their specific car
-		foundSlot, _, err = cm.AddEntrantFromSessionData(championship, signUpResponse, true)
+		foundSlot, _, err = cm.AddEntrantFromSessionData(championship, signUpResponse, true, championship.SignUpForm.HideCarChoice)
 
 		if err != nil {
 			return signUpResponse, foundSlot, err
