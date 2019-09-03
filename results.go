@@ -347,7 +347,7 @@ func (s *SessionResults) GetTeamName(driverGUID string) string {
 		}
 	}
 
-	return "Unknown"
+	return ""
 }
 
 func (s *SessionResults) GetLaps(driverGUID string) int {
