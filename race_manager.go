@@ -1365,7 +1365,6 @@ func (rm *RaceManager) RescheduleNotifications(oldServerOpts *GlobalServerConfig
 	}
 
 	// rebuild the timers
-	// @TODO make sure this isn't a memory leak, as I'm not sure how Go handles GC of arrays/slices
 	rm.customRaceReminderTimers = make(map[string]*time.Timer)
 
 	if newServerOpts.NotificationReminderTimer > 0 {
