@@ -255,7 +255,7 @@
                                 {{ range $i, $entrant := $entrants }}
                                     {{ if ne $entrant.GUID "OPEN_SLOTS" }}
                                         <tr style="
-                                            {{ if eq $account.GUID $entrant.Car.Driver.GUID }}font-weight: bold;{{ end }}
+                                            {{ if eq $account.GUID $entrant.GUID }}font-weight: bold;{{ end }}
                                             {{ if $championship.IsMultiClass }}
                                                 color: white; background: {{ classColor $classIndex }}
                                             {{ end }}">

@@ -82,6 +82,24 @@
                 </div>
 
                 <div class="form-group row">
+                    <label for="ChampionshipPersistOpenEntrants" class="col-sm-3 col-form-label">Persist Open Championship Entrants</label>
+
+                    <div class="col-sm-9">
+                        <input type="checkbox" id="ChampionshipPersistOpenEntrants" name="ChampionshipPersistOpenEntrants"
+                               {{ if $f.PersistOpenEntrants }} checked="checked" {{ end }}><br><br>
+
+                        <small>
+                            With this option enabled, when a Driver joins an Open Championship Event their details will
+                            be added to the Entry List below. This option is enabled by default. With this option disabled,
+                            Entrants will not be added to the Entry List for a Championship and Events will start with an
+                            'empty' Entry List each time (i.e. no drivers are added to the car choices you configure).
+                            <strong>Their results will still persist to the Championship</strong>.
+                            Turn this off if you are running a Championship with a lot of changing Entrants (e.g. quick fire events all in one go).
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-group row">
                     <label for="OverridePassword" class="col-sm-3 col-form-label">Override Server Password</label>
 
                     <div class="col-sm-9">

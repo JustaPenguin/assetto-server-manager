@@ -24,7 +24,7 @@ func FuncMap() template.FuncMap {
 	return HtmlFuncMap()
 }
 
-// HermeticTextFuncMap returns a 'text/template'.FuncMap with only repeatable functions.
+// HermeticTxtFuncMap returns a 'text/template'.FuncMap with only repeatable functions.
 func HermeticTxtFuncMap() ttemplate.FuncMap {
 	r := TxtFuncMap()
 	for _, name := range nonhermeticFunctions {
@@ -42,7 +42,7 @@ func HermeticHtmlFuncMap() template.FuncMap {
 	return r
 }
 
-// TextFuncMap returns a 'text/template'.FuncMap
+// TxtFuncMap returns a 'text/template'.FuncMap
 func TxtFuncMap() ttemplate.FuncMap {
 	return ttemplate.FuncMap(GenericFuncMap())
 }
@@ -75,10 +75,6 @@ var nonhermeticFunctions = []string{
 	"dateModify",
 
 	// Strings
-	"cryptoRandAlphaNum",
-	"cryptoRandAlpha",
-	"cryptoRandAscii",
-	"cryptoRandNumeric",
 	"randAlphaNum",
 	"randAlpha",
 	"randAscii",
@@ -104,6 +100,7 @@ var genericMap = map[string]interface{}{
 	"dateModify":     dateModify,
 	"ago":            dateAgo,
 	"toDate":         toDate,
+	"unixEpoch":      unixEpoch,
 
 	// Strings
 	"abbrev":     abbrev,
@@ -120,26 +117,22 @@ var genericMap = map[string]interface{}{
 	// Deprecated: Use trimAll.
 	"trimall": func(a, b string) string { return strings.Trim(b, a) },
 	// Switch order so that "$foo" | trimall "$"
-	"trimAll":            func(a, b string) string { return strings.Trim(b, a) },
-	"trimSuffix":         func(a, b string) string { return strings.TrimSuffix(b, a) },
-	"trimPrefix":         func(a, b string) string { return strings.TrimPrefix(b, a) },
-	"nospace":            util.DeleteWhiteSpace,
-	"initials":           initials,
-	"cryptoRandAlphaNum": cryptoRandAlphaNumeric,
-	"cryptoRandAlpha":    cryptoRandAlpha,
-	"cryptoRandAscii":    cryptoRandAscii,
-	"cryptoRandNumeric":  cryptoRandNumeric,
-	"randAlphaNum":       randAlphaNumeric,
-	"randAlpha":          randAlpha,
-	"randAscii":          randAscii,
-	"randNumeric":        randNumeric,
-	"swapcase":           util.SwapCase,
-	"shuffle":            xstrings.Shuffle,
-	"snakecase":          xstrings.ToSnakeCase,
-	"camelcase":          xstrings.ToCamelCase,
-	"kebabcase":          xstrings.ToKebabCase,
-	"wrap":               func(l int, s string) string { return util.Wrap(s, l) },
-	"wrapWith":           func(l int, sep, str string) string { return util.WrapCustom(str, l, sep, true) },
+	"trimAll":      func(a, b string) string { return strings.Trim(b, a) },
+	"trimSuffix":   func(a, b string) string { return strings.TrimSuffix(b, a) },
+	"trimPrefix":   func(a, b string) string { return strings.TrimPrefix(b, a) },
+	"nospace":      util.DeleteWhiteSpace,
+	"initials":     initials,
+	"randAlphaNum": randAlphaNumeric,
+	"randAlpha":    randAlpha,
+	"randAscii":    randAscii,
+	"randNumeric":  randNumeric,
+	"swapcase":     util.SwapCase,
+	"shuffle":      xstrings.Shuffle,
+	"snakecase":    xstrings.ToSnakeCase,
+	"camelcase":    xstrings.ToCamelCase,
+	"kebabcase":    xstrings.ToKebabCase,
+	"wrap":         func(l int, s string) string { return util.Wrap(s, l) },
+	"wrapWith":     func(l int, sep, str string) string { return util.WrapCustom(str, l, sep, true) },
 	// Switch order so that "foobar" | contains "foo"
 	"contains":   func(substr string, str string) bool { return strings.Contains(str, substr) },
 	"hasPrefix":  func(substr string, str string) bool { return strings.HasPrefix(str, substr) },
