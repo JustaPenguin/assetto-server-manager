@@ -1,18 +1,138 @@
 {{ define "partial" }}
 <div>
-    <h2>Filters: {{ $.ParentSession.Name }} &rarr; {{ $.ChildSession.Name }}</h2>
 
-    <p>Define filters between the two sessions.</p>
+    <h3>Configure {{ $.ChildSession.Name }} Entry List</h3>
 
-    {{ if $.ParentSession.Completed }}
-        Results
+    <div class="row">
+        <div class="col-md-6">
 
-        {{ template "session-overall" dict "sessionResults" $.ParentSession.Results "account" $.User }}
-    {{ end }}
+            <form>
+                <div class="card border-warning">
+                    <div class="card-body">
+                        <p>Take the drivers from the <strong>{{ $.ParentSession.Name }}</strong> Results between:</p>
 
+                        <div class="form-group row">
+                            <label for="ResultsStart" class="col-sm-6 col-form-label">Start</label>
 
-    <select>
-        <option value="">Entrant Position Filter</option>
-    </select>
+                            <div class="col-sm-6">
+                                <input
+                                        type="number"
+                                        id="ResultsStart"
+                                        name="ResultsStart"
+                                        class="form-control"
+                                        value="1"
+                                        step="1"
+                                >
+
+                                <small>
+
+                                </small>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="ResultsEnd" class="col-sm-6 col-form-label">End</label>
+
+                            <div class="col-sm-6">
+                                <input
+                                        type="number"
+                                        id="ResultsEnd"
+                                        name="ResultsEnd"
+                                        class="form-control"
+                                        value="20"
+                                        step="1"
+                                >
+
+                                <small>
+
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-2 mb-2">
+                    <i class="fa fa-arrow-down"></i>
+                </div>
+
+                <div class="card border-primary">
+                    <div class="card-body">
+                        <div class="form-group row">
+                            <label for="ReverseGrid" class="col-sm-6 col-form-label">Reverse the order of the results?</label>
+
+                            <div class="col-sm-6">
+                                <input
+                                        type="checkbox"
+                                        id="ReverseGrid"
+                                        name="ReverseGrid"
+                                >
+
+                                <small>
+
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-2 mb-2">
+                    <i class="fa fa-arrow-down"></i>
+                </div>
+
+                <div class="card border-success">
+                    <div class="card-body">
+
+                        <p>Then place the resulting drivers into the Entry List for <strong>{{ $.ChildSession.Name }}</strong> between:</p>
+
+                        <div class="form-group row">
+                            <label for="GridStart" class="col-sm-6 col-form-label">Grid Start</label>
+
+                            <div class="col-sm-6">
+                                <input
+                                        type="number"
+                                        id="GridStart"
+                                        name="GridStart"
+                                        class="form-control"
+                                        value="1"
+                                        step="1"
+                                >
+
+                                <small>
+
+                                </small>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="GridEnd" class="col-sm-6 col-form-label">Grid End</label>
+
+                            <div class="col-sm-6">
+                                <input
+                                        type="number"
+                                        id="GridEnd"
+                                        name="GridEnd"
+                                        class="form-control"
+                                        value="20"
+                                        step="1"
+                                >
+
+                                <small>
+
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-md-6">
+            <h4>{{ $.ParentSession.Name }} Results</h4>
+            <div id="results-preview"></div>
+
+            <h4>{{ $.ChildSession.Name }} Expected Grid</h4>
+            <div id="grid-preview"></div>
+
+        </div>
+    </div>
+
 </div>
 {{ end }}

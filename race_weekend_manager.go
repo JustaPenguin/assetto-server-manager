@@ -1,6 +1,8 @@
 package servermanager
 
 import (
+	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"net/http"
 	"strings"
 	"time"
@@ -381,4 +383,81 @@ func (rwm *RaceWeekendManager) FindConnectedSessions(raceWeekendID, parentSessio
 	}
 
 	return raceWeekend, parentSession, childSession, nil
+}
+
+type RaceWeekendGridPreview struct {
+	Results map[int]string
+	Grid    map[int]string
+}
+
+func NewRaceWeekendGridPreview() *RaceWeekendGridPreview {
+	return &RaceWeekendGridPreview{
+		Results: make(map[int]string),
+		Grid:    make(map[int]string),
+	}
+}
+
+func (rwm *RaceWeekendManager) PreviewGrid(raceWeekendID, parentSessionID, childSessionID string, filter *EntrantPositionFilter) (*RaceWeekendGridPreview, error) {
+	raceWeekend, parentSession, _, err := rwm.FindConnectedSessions(raceWeekendID, parentSessionID, childSessionID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	preview := NewRaceWeekendGridPreview()
+
+	var sessionResults *SessionResults
+
+	if parentSession.Completed() && parentSession.Results != nil {
+		sessionResults = parentSession.Results
+
+		// build grid from actual results
+		for i, driver := range parentSession.Results.Result {
+			preview.Results[i+1] = driver.DriverName
+		}
+	} else {
+		sessionResults = &SessionResults{}
+
+		// @TODO this should go up to the number of entrants we expect to have taken part in this session
+		// @TODO (i.e. it must be recursively based on parent session limits... if it can be :P)
+		for i := 1; i <= len(raceWeekend.EntryList); i++ {
+			dummyDriverName := fmt.Sprintf("Driver %d", i)
+			dummyDriverCar := "dummy_car"
+
+			sessionResults.Result = append(sessionResults.Result, &SessionResult{
+				DriverName: dummyDriverName,
+				DriverGUID: dummyDriverName,
+				CarModel:   dummyDriverCar,
+				CarID:      i,
+			})
+
+			sessionResults.Cars = append(sessionResults.Cars, &SessionCar{
+				CarID: i,
+				Model: dummyDriverCar,
+				Driver: SessionDriver{
+					GUID: dummyDriverName,
+					Name: dummyDriverName,
+				},
+			})
+
+			preview.Results[i] = fmt.Sprintf("Driver %d", i)
+		}
+	}
+
+	outputEntryList := make(EntryList)
+
+	// apply filtering to these drivers and get the output.
+	err = filter.Filter(sessionResults, outputEntryList)
+
+	if err != nil {
+		return nil, err
+	}
+
+	spew.Dump(outputEntryList)
+
+	for _, entrant := range outputEntryList.AsSlice() {
+		preview.Grid[entrant.PitBox+1] = entrant.Name
+	}
+
+	return preview, nil
 }

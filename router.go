@@ -77,6 +77,9 @@ func Router(
 		r.Mount("/debug/", middleware.Profiler())
 	}
 
+	// @TODO move me to writers
+	r.Post("/race-weekend/{raceWeekendID}/grid-preview", raceWeekendHandler.gridPreview)
+
 	// readers
 	r.Group(func(r chi.Router) {
 		r.Use(accountHandler.ReadAccessMiddleware)

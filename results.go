@@ -34,9 +34,9 @@ type SessionResults struct {
 
 var ErrSessionCarNotFound = errors.New("servermanager: session car not found")
 
-func (s *SessionResults) FindCarByGUID(guid string) (*SessionCar, error) {
+func (s *SessionResults) FindCarByGUIDAndModel(guid, model string) (*SessionCar, error) {
 	for _, car := range s.Cars {
-		if car.GetGUID() == guid {
+		if car.GetGUID() == guid && car.GetCar() == model {
 			return car, nil
 		}
 	}

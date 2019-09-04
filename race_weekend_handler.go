@@ -1,7 +1,9 @@
 package servermanager
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"net/http"
 	"time"
 
@@ -234,4 +236,28 @@ func (rwh *RaceWeekendHandler) manageFilters(w http.ResponseWriter, r *http.Requ
 		"ParentSession": parentSession,
 		"ChildSession":  childSession,
 	})
+}
+
+func (rwh *RaceWeekendHandler) gridPreview(w http.ResponseWriter, r *http.Request) {
+	raceWeekendID := chi.URLParam(r, "raceWeekendID")
+	parentSessionID := r.URL.Query().Get("parentSessionID")
+	childSessionID := r.URL.Query().Get("childSessionID")
+
+	var filter *EntrantPositionFilter
+
+	if err := json.NewDecoder(r.Body).Decode(&filter); err != nil {
+		panic(err) // @TODO
+	}
+
+	previewResponse, err := rwh.raceWeekendManager.PreviewGrid(raceWeekendID, parentSessionID, childSessionID, filter)
+
+	if err != nil {
+		panic(err) // @TODO
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+
+	spew.Dump(previewResponse)
+
+	_ = json.NewEncoder(w).Encode(previewResponse)
 }

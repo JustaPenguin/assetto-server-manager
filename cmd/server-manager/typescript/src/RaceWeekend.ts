@@ -1,7 +1,8 @@
 import ChangeEvent = JQuery.ChangeEvent;
 import {Connection, jsPlumb} from "jsplumb";
 import dagre, {graphlib} from "dagre";
-import Graph = graphlib.Graph;
+
+declare var RaceWeekendID: string;
 
 export class RaceWeekendSession {
     private $raceWeekendSession: JQuery<HTMLElement>;
@@ -75,11 +76,20 @@ jsp.bind("ready", () => {
         let session2ID = $(ep2.getElement()).attr("id");
 
 
-        console.log(session1ID, session2ID);
+        const modalContentURL = `/race-weekend/${RaceWeekendID}/filters?parentSessionID=${session1ID}&childSessionID=${session2ID}`;
+
+        $.get(modalContentURL).then((data: string) => {
+            let $filtersModal = $("#filters-modal");
+            $filtersModal.find(".modal-body").html(data);
+            $filtersModal.find("input[type='checkbox']").bootstrapSwitch();
+            $filtersModal.modal();
+
+            new RaceWeekendSessionTransition($filtersModal, session1ID!, session2ID!);
+        });
     });
 
     // construct dagre graph from JsPlumb graph
-    const g = new Graph();
+    const g = new graphlib.Graph();
     g.setGraph({
         nodesep: 550,
     });
@@ -119,3 +129,76 @@ jsp.bind("ready", () => {
 
     jsp.repaintEverything();
 });
+
+export class RaceWeekendSessionTransition {
+    private $elem: JQuery<HTMLElement>;
+    private parentSessionID: string;
+    private childSessionID: string;
+
+    private resultStart!: number;
+    private resultEnd!: number;
+    private reverseOrder!: boolean;
+    private gridStart!: number;
+    private gridEnd!: number;
+
+    public constructor($elem: JQuery<HTMLElement>, parentSessionID: string, childSessionID: string) {
+        this.$elem = $elem;
+        this.parentSessionID = parentSessionID;
+        this.childSessionID = childSessionID;
+
+        this.updateValues();
+        this.registerEvents();
+    }
+
+    private registerEvents(): void {
+        this.$elem.find("input").on("change", () => {
+            this.updateValues();
+        });
+
+        this.$elem.find("input").on("switchChange.bootstrapSwitch", () => {
+            this.updateValues();
+        })
+    }
+
+    private updateValues(): void {
+        this.resultStart = parseInt(this.$elem.find("#ResultsStart").val() as string);
+        this.resultEnd = parseInt(this.$elem.find("#ResultsEnd").val() as string);
+        this.reverseOrder = this.$elem.find("#ReverseGrid").is(":checked");
+        this.gridStart = parseInt(this.$elem.find("#GridStart").val() as string);
+        this.gridEnd = parseInt(this.$elem.find("#GridEnd").val() as string);
+
+        $.ajax(`/race-weekend/${RaceWeekendID}/grid-preview?parentSessionID=${this.parentSessionID}&childSessionID=${this.childSessionID}`, {
+            data: JSON.stringify({
+                ResultStart: this.resultStart,
+                ResultEnd: this.resultEnd,
+                ReverseEntrants: this.reverseOrder,
+                EntryListStart: this.gridStart,
+                EntryListEnd: this.gridEnd,
+            }),
+
+            contentType: "application/json",
+            type: "POST",
+        }).then((response: GridPreview) => {
+            console.log(response);
+
+            let $resultsPreview = $("#results-preview");
+            let $gridPreview = $("#grid-preview");
+
+            $resultsPreview.empty();
+            $gridPreview.empty();
+
+            for (const [key, value] of Object.entries(response.Results)) {
+                $resultsPreview.append(`${key}. ${value}<br>`);
+            }
+
+            for (const [key, value] of Object.entries(response.Grid)) {
+                $gridPreview.append(`${key}. ${value}<br>`);
+            }
+        });
+    }
+}
+
+interface GridPreview {
+    Grid: Map<number, string>;
+    Results: Map<number, string>;
+}

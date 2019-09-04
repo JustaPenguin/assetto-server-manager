@@ -50,7 +50,13 @@ func (e EntryList) Write() error {
 
 // Add an Entrant to the EntryList
 func (e EntryList) Add(entrant *Entrant) {
-	e[fmt.Sprintf("CAR_%d", len(e))] = entrant
+	e.AddInPitBox(entrant, len(e))
+}
+
+// AddInPitBox adds an Entrant in a specific pitbox - overwriting any entrant that was in that pitbox previously.
+func (e EntryList) AddInPitBox(entrant *Entrant, pitBox int) {
+	entrant.PitBox = pitBox
+	e[fmt.Sprintf("CAR_%d", pitBox)] = entrant
 }
 
 // Remove an Entrant from the EntryList

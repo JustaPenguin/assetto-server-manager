@@ -18,6 +18,9 @@ type RaceWeekend struct {
 	Updated time.Time
 	Deleted time.Time
 
+	// Filters is a map of Parent ID -> Child ID -> Filter
+	Filters map[string]map[string]*EntrantPositionFilter
+
 	Name string
 
 	EntryList EntryList
@@ -29,6 +32,22 @@ func NewRaceWeekend() *RaceWeekend {
 		ID:      uuid.New(),
 		Created: time.Now(),
 	}
+}
+
+func (rw *RaceWeekend) AddFilter(parentID, childID string, filter *EntrantPositionFilter) {
+	if rw.Filters == nil {
+		rw.Filters = make(map[string]map[string]*EntrantPositionFilter)
+	}
+
+	if _, ok := rw.Filters[parentID]; !ok {
+		rw.Filters[parentID] = make(map[string]*EntrantPositionFilter)
+	}
+
+	rw.Filters[parentID][childID] = filter
+}
+
+func (rw *RaceWeekend) RemoveFilter(parentID, childID string) {
+	delete(rw.Filters[parentID], childID)
 }
 
 func (rw *RaceWeekend) AddSession(s *RaceWeekendSession, parent *RaceWeekendSession) {
@@ -246,8 +265,6 @@ type RaceWeekendSession struct {
 
 	ParentIDs []uuid.UUID
 
-	Filters []EntryListFilter
-
 	RaceConfig CurrentRaceConfig
 
 	StartedTime   time.Time
@@ -334,47 +351,51 @@ func (rws *RaceWeekendSession) GetEntryList(rw *RaceWeekend) (EntryList, error) 
 		return rw.EntryList, nil
 	}
 
-	entryList := make(EntryList)
+	/*
+		entryList := make(EntryList)
 
-	for _, inheritedID := range rws.ParentIDs {
-		// find previous event
-		previousEvent, err := rw.FindSessionByID(inheritedID.String())
-
-		if err != nil {
-			continue
-		}
-
-		if previousEvent.Results == nil {
-			return nil, ErrRaceWeekendSessionDependencyIncomplete
-		}
-
-		results := previousEvent.Results.Result
-
-		for _, filter := range rws.Filters {
-			results, err = filter.Filter(results)
+		for _, inheritedID := range rws.ParentIDs {
+			// find previous event
+			previousEvent, err := rw.FindSessionByID(inheritedID.String())
 
 			if err != nil {
-				return nil, err
+				continue
+			}
+
+			if previousEvent.Results == nil {
+				return nil, ErrRaceWeekendSessionDependencyIncomplete
+			}
+
+			results := previousEvent.Results.Result
+
+			for _, filter := range rws.Filters {
+				results, err = filter.Filter(results)
+
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			for pos, result := range results {
+				e := NewEntrant()
+
+				car, err := previousEvent.Results.FindCarByGUID(result.DriverGUID)
+
+				if err != nil {
+					return nil, err
+				}
+
+				e.AssignFromResult(result, car)
+				e.PitBox = pos
+
+				entryList.Add(e)
 			}
 		}
 
-		for pos, result := range results {
-			e := NewEntrant()
+		// @TODO what do we do if there are duplicate drivers in the entrylist?
 
-			car, err := previousEvent.Results.FindCarByGUID(result.DriverGUID)
+		return entryList, nil
+	*/
 
-			if err != nil {
-				return nil, err
-			}
-
-			e.AssignFromResult(result, car)
-			e.PitBox = pos
-
-			entryList.Add(e)
-		}
-	}
-
-	// @TODO what do we do if there are duplicate drivers in the entrylist?
-
-	return entryList, nil
+	return rw.EntryList, nil // @TODO stubbed
 }
