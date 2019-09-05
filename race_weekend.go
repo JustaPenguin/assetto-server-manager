@@ -408,33 +408,15 @@ func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) []*RaceWe
 			out = append(out, NewRaceWeekendSessionEntrant(rws.ID, car, result))
 		}
 	} else {
-		if len(rws.ParentIDs) == 0 {
-			for _, entrant := range raceWeekend.EntryList.AsSlice() {
-				out = append(out, NewRaceWeekendSessionEntrant(rws.ID, entrant.AsSessionCar(), entrant.AsSessionResult()))
-			}
-		} else {
-			entryListSize := 0
+		// if a session is not completed, we work on the assumption that the finishing grid is equal to the entrylist
+		entryList, err := rws.GetEntryList(raceWeekend, nil, "")
 
-			for _, parentID := range rws.ParentIDs {
-				parentSession, err := raceWeekend.FindSessionByID(parentID.String())
+		if err != nil {
+			panic(err)
+		}
 
-				if err != nil {
-					logrus.WithError(err).Error("could not find parent session")
-					continue
-				}
-
-				finishingGrid := parentSession.FinishingGrid(raceWeekend)
-
-				if len(finishingGrid) > entryListSize {
-					entryListSize = len(finishingGrid)
-				}
-			}
-
-			for i := 1; i <= entryListSize; i++ {
-				result, car := NewDummyDriver(i)
-
-				out = append(out, NewRaceWeekendSessionEntrant(rws.ID, car, result))
-			}
+		for _, entrant := range entryList.AsSlice() {
+			out = append(out, NewRaceWeekendSessionEntrant(rws.ID, entrant.AsSessionCar(), entrant.AsSessionResult()))
 		}
 	}
 
