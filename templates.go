@@ -416,10 +416,6 @@ func jsonEncode(v interface{}) template.JS {
 }
 
 func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, data map[string]interface{}) error {
-	if data == nil {
-		data = make(map[string]interface{})
-	}
-
 	session := getSession(r)
 
 	if flashes := session.Flashes(); len(flashes) > 0 {
@@ -476,6 +472,10 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 		return fmt.Errorf("unable to find template: %s", filepath.ToSlash(view))
 	}
 
+	if data == nil {
+		data = make(map[string]interface{})
+	}
+
 	if err := tr.addData(w, r, data); err != nil {
 		return err
 	}
@@ -518,6 +518,10 @@ func (tr *Renderer) LoadPartial(w http.ResponseWriter, r *http.Request, partial 
 
 	if !ok {
 		return errors.New("partial not found")
+	}
+
+	if data == nil {
+		data = make(map[string]interface{})
 	}
 
 	if err := tr.addData(w, r, data); err != nil {
