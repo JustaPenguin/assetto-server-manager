@@ -97,7 +97,7 @@ func (dummyServerProcess) Done() <-chan struct{} {
 }
 
 func (dummyServerProcess) GetServerConfig() ServerConfig {
-	return ConfigIniDefault
+	return ConfigIniDefault()
 }
 
 var championshipEventFixtures = []string{
@@ -138,7 +138,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 
 		for range championshipEventFixtures {
 			e := NewChampionshipEvent()
-			e.RaceSetup = ConfigIniDefault.CurrentRaceConfig
+			e.RaceSetup = ConfigIniDefault().CurrentRaceConfig
 
 			champ.Events = append(champ.Events, e)
 		}
@@ -180,7 +180,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 
 		for range championshipEventFixtures {
 			e := NewChampionshipEvent()
-			e.RaceSetup = ConfigIniDefault.CurrentRaceConfig
+			e.RaceSetup = ConfigIniDefault().CurrentRaceConfig
 
 			champ.Events = append(champ.Events, e)
 		}
@@ -230,7 +230,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 
 		for range championshipEventFixtures {
 			e := NewChampionshipEvent()
-			e.RaceSetup = ConfigIniDefault.CurrentRaceConfig
+			e.RaceSetup = ConfigIniDefault().CurrentRaceConfig
 
 			champ.Events = append(champ.Events, e)
 		}
@@ -280,7 +280,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 
 		for range championshipEventFixtures {
 			e := NewChampionshipEvent()
-			e.RaceSetup = ConfigIniDefault.CurrentRaceConfig
+			e.RaceSetup = ConfigIniDefault().CurrentRaceConfig
 
 			champ.Events = append(champ.Events, e)
 		}
