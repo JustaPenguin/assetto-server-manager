@@ -1,9 +1,5 @@
 package servermanager
 
-import (
-	"github.com/sirupsen/logrus"
-)
-
 type FilterError string
 
 func (f FilterError) Error() string {
@@ -31,20 +27,20 @@ func (epf EntrantPositionFilter) Key() string {
 	return "ENTRANT_POSITION_FILTER"
 }
 
-func filterDisqualifiedResults(results []*SessionResult) []*SessionResult {
-	var out []*SessionResult
+func filterDisqualifiedResults(entrants []*RaceWeekendSessionEntrant) []*RaceWeekendSessionEntrant {
+	var out []*RaceWeekendSessionEntrant
 
-	for _, result := range results {
-		if !result.Disqualified {
-			out = append(out, result)
+	for _, entrant := range entrants {
+		if !entrant.Results.Disqualified {
+			out = append(out, entrant)
 		}
 	}
 
 	return out
 }
 
-func (epf EntrantPositionFilter) Filter(results *SessionResults, entryList EntryList) error {
-	results.Result = filterDisqualifiedResults(results.Result)
+func (epf EntrantPositionFilter) Filter(entrants []*RaceWeekendSessionEntrant, entryList EntryList) error {
+	entrants = filterDisqualifiedResults(entrants)
 
 	if epf.ResultEnd < epf.ResultStart {
 		// normalise result end to be greater than result start
@@ -56,11 +52,19 @@ func (epf EntrantPositionFilter) Filter(results *SessionResults, entryList Entry
 		epf.EntryListEnd, epf.EntryListStart = epf.EntryListStart, epf.EntryListEnd
 	}
 
+	if epf.ResultEnd > len(entrants) {
+		epf.ResultEnd = len(entrants)
+	}
+
+	if epf.EntryListEnd > len(entrants) {
+		epf.EntryListEnd = len(entrants)
+	}
+
 	// shift down one, remove the user friendliness
 	epf.ResultStart--
 	epf.EntryListStart--
 
-	if epf.ResultStart < 0 || epf.ResultStart > len(results.Result) || epf.ResultEnd < 0 || epf.ResultEnd > len(results.Result) {
+	if epf.ResultStart < 0 || epf.ResultStart > len(entrants) || epf.ResultEnd < 0 || epf.ResultEnd > len(entrants) {
 		return FilterError("Invalid bounds for Start or End")
 	}
 
@@ -68,7 +72,7 @@ func (epf EntrantPositionFilter) Filter(results *SessionResults, entryList Entry
 		return FilterError("Interval between result and entrylist splits must be equal.")
 	}
 
-	split := results.Result[epf.ResultStart:epf.ResultEnd]
+	split := entrants[epf.ResultStart:epf.ResultEnd]
 
 	splitIndex := 0
 
@@ -77,19 +81,7 @@ func (epf EntrantPositionFilter) Filter(results *SessionResults, entryList Entry
 	}
 
 	for pitBox := epf.EntryListStart; pitBox < epf.EntryListEnd; pitBox++ {
-		entrantAsResult := split[splitIndex]
-
-		e := NewEntrant()
-		car, err := results.FindCarByGUIDAndModel(entrantAsResult.DriverGUID, entrantAsResult.CarModel)
-
-		if err != nil {
-			logrus.WithError(err).Warnf("could not find car for guid/model: %s/%s", entrantAsResult.DriverGUID, entrantAsResult.CarModel)
-			continue
-		}
-
-		e.AssignFromResult(entrantAsResult, car)
-
-		entryList.AddInPitBox(e, pitBox)
+		entryList.AddInPitBox(split[splitIndex].GetEntrant(), pitBox)
 
 		if epf.ReverseEntrants {
 			splitIndex--

@@ -222,3 +222,30 @@ func (e *Entrant) AssignFromResult(result *SessionResult, car *SessionCar) {
 	e.Restrictor = car.Restrictor
 	e.Ballast = car.BallastKG
 }
+
+func (e *Entrant) AsSessionCar() *SessionCar {
+	return &SessionCar{
+		BallastKG: e.Ballast,
+		CarID:     e.PitBox,
+		Driver: SessionDriver{
+			GUID:      e.GUID,
+			GuidsList: []string{e.GUID},
+			Name:      e.Name,
+			Team:      e.Team,
+		},
+		Model:      e.Model,
+		Restrictor: e.Restrictor,
+		Skin:       e.Skin,
+	}
+}
+
+func (e *Entrant) AsSessionResult() *SessionResult {
+	return &SessionResult{
+		BallastKG:  e.Ballast,
+		CarID:      e.PitBox,
+		CarModel:   e.Model,
+		DriverGUID: e.GUID,
+		DriverName: e.Name,
+		Restrictor: e.Restrictor,
+	}
+}

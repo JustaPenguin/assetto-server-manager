@@ -1,8 +1,6 @@
 package servermanager
 
 import (
-	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"net/http"
 	"strings"
 	"time"
@@ -113,7 +111,7 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (map
 		opts["RaceWeekendSession"] = session
 		opts["IsEditing"] = true
 		opts["EditingID"] = editSessionID
-		opts["CurrentEntrants"], err = session.GetEntryList(raceWeekend)
+		opts["CurrentEntrants"], err = session.GetEntryList(raceWeekend, nil, "")
 
 		if err == ErrRaceWeekendSessionDependencyIncomplete {
 			opts["CurrentEntrants"] = raceWeekend.EntryList
@@ -244,7 +242,7 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		return err
 	}
 
-	entryList, err := session.GetEntryList(raceWeekend)
+	entryList, err := session.GetEntryList(raceWeekend, nil, "")
 
 	if err != nil {
 		return err
@@ -386,6 +384,7 @@ func (rwm *RaceWeekendManager) FindConnectedSessions(raceWeekendID, parentSessio
 }
 
 type RaceWeekendGridPreview struct {
+	// @TODO make these map[int]RaceWeekendSessionEntrant
 	Results map[int]string
 	Grid    map[int]string
 }
@@ -398,7 +397,7 @@ func NewRaceWeekendGridPreview() *RaceWeekendGridPreview {
 }
 
 func (rwm *RaceWeekendManager) PreviewGrid(raceWeekendID, parentSessionID, childSessionID string, filter *EntrantPositionFilter) (*RaceWeekendGridPreview, error) {
-	raceWeekend, parentSession, _, err := rwm.FindConnectedSessions(raceWeekendID, parentSessionID, childSessionID)
+	raceWeekend, parentSession, childSession, err := rwm.FindConnectedSessions(raceWeekendID, parentSessionID, childSessionID)
 
 	if err != nil {
 		return nil, err
@@ -406,58 +405,31 @@ func (rwm *RaceWeekendManager) PreviewGrid(raceWeekendID, parentSessionID, child
 
 	preview := NewRaceWeekendGridPreview()
 
-	var sessionResults *SessionResults
-
-	if parentSession.Completed() && parentSession.Results != nil {
-		sessionResults = parentSession.Results
-
-		// build grid from actual results
-		for i, driver := range parentSession.Results.Result {
-			preview.Results[i+1] = driver.DriverName
-		}
-	} else {
-		sessionResults = &SessionResults{}
-
-		// @TODO this should go up to the number of entrants we expect to have taken part in this session
-		// @TODO (i.e. it must be recursively based on parent session limits... if it can be :P)
-		for i := 1; i <= len(raceWeekend.EntryList); i++ {
-			dummyDriverName := fmt.Sprintf("Driver %d", i)
-			dummyDriverCar := "dummy_car"
-
-			sessionResults.Result = append(sessionResults.Result, &SessionResult{
-				DriverName: dummyDriverName,
-				DriverGUID: dummyDriverName,
-				CarModel:   dummyDriverCar,
-				CarID:      i,
-			})
-
-			sessionResults.Cars = append(sessionResults.Cars, &SessionCar{
-				CarID: i,
-				Model: dummyDriverCar,
-				Driver: SessionDriver{
-					GUID: dummyDriverName,
-					Name: dummyDriverName,
-				},
-			})
-
-			preview.Results[i] = fmt.Sprintf("Driver %d", i)
-		}
+	for i, result := range parentSession.FinishingGrid(raceWeekend) {
+		preview.Results[i+1] = result.Car.GetName()
 	}
 
-	outputEntryList := make(EntryList)
-
-	// apply filtering to these drivers and get the output.
-	err = filter.Filter(sessionResults, outputEntryList)
+	entryList, err := childSession.GetEntryList(raceWeekend, filter, parentSessionID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	spew.Dump(outputEntryList)
-
-	for _, entrant := range outputEntryList.AsSlice() {
+	for _, entrant := range entryList.AsSlice() {
 		preview.Grid[entrant.PitBox+1] = entrant.Name
 	}
 
 	return preview, nil
+}
+
+func (rwm *RaceWeekendManager) UpdateGrid(raceWeekendID, parentSessionID, childSessionID string, filter *EntrantPositionFilter) error {
+	raceWeekend, err := rwm.LoadRaceWeekend(raceWeekendID)
+
+	if err != nil {
+		return err
+	}
+
+	raceWeekend.AddFilter(parentSessionID, childSessionID, filter)
+
+	return rwm.store.UpsertRaceWeekend(raceWeekend)
 }

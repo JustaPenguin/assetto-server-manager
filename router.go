@@ -78,7 +78,6 @@ func Router(
 	}
 
 	// @TODO move me to writers
-	r.Post("/race-weekend/{raceWeekendID}/grid-preview", raceWeekendHandler.gridPreview)
 
 	// readers
 	r.Group(func(r chi.Router) {
@@ -228,6 +227,8 @@ func Router(
 		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/import", raceWeekendHandler.importSessionResults)
 		r.Post("/race-weekend/{raceWeekendID}/session/{sessionID}/import", raceWeekendHandler.importSessionResults)
 		r.Get("/race-weekend/{raceWeekendID}/filters", raceWeekendHandler.manageFilters)
+		r.Post("/race-weekend/{raceWeekendID}/grid-preview", raceWeekendHandler.gridPreview)
+		r.Post("/race-weekend/{raceWeekendID}/grid", raceWeekendHandler.updateGrid)
 	})
 
 	// deleters

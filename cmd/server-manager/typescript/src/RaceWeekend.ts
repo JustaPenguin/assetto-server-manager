@@ -80,7 +80,7 @@ jsp.bind("ready", () => {
 
         $.get(modalContentURL).then((data: string) => {
             let $filtersModal = $("#filters-modal");
-            $filtersModal.find(".modal-body").html(data);
+            $filtersModal.html(data);
             $filtersModal.find("input[type='checkbox']").bootstrapSwitch();
             $filtersModal.modal();
 
@@ -157,6 +157,20 @@ export class RaceWeekendSessionTransition {
 
         this.$elem.find("input").on("switchChange.bootstrapSwitch", () => {
             this.updateValues();
+        });
+
+        this.$elem.find("#save-filters").on("click", () => {
+            this.saveValues();
+        });
+    }
+
+    private packageValues(): string {
+        return JSON.stringify({
+            ResultStart: this.resultStart,
+            ResultEnd: this.resultEnd,
+            ReverseEntrants: this.reverseOrder,
+            EntryListStart: this.gridStart,
+            EntryListEnd: this.gridEnd,
         })
     }
 
@@ -168,13 +182,7 @@ export class RaceWeekendSessionTransition {
         this.gridEnd = parseInt(this.$elem.find("#GridEnd").val() as string);
 
         $.ajax(`/race-weekend/${RaceWeekendID}/grid-preview?parentSessionID=${this.parentSessionID}&childSessionID=${this.childSessionID}`, {
-            data: JSON.stringify({
-                ResultStart: this.resultStart,
-                ResultEnd: this.resultEnd,
-                ReverseEntrants: this.reverseOrder,
-                EntryListStart: this.gridStart,
-                EntryListEnd: this.gridEnd,
-            }),
+            data: this.packageValues(),
 
             contentType: "application/json",
             type: "POST",
@@ -195,6 +203,17 @@ export class RaceWeekendSessionTransition {
                 $gridPreview.append(`${key}. ${value}<br>`);
             }
         });
+    }
+
+    private saveValues(): void {
+        $.ajax(`/race-weekend/${RaceWeekendID}/grid?parentSessionID=${this.parentSessionID}&childSessionID=${this.childSessionID}`, {
+            data: this.packageValues(),
+
+            contentType: "application/json",
+            type: "POST",
+        }).then(() => {
+            $("#filters-modal").modal("hide");
+        }); // @TODO error handling
     }
 }
 

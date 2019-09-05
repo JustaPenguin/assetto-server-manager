@@ -231,10 +231,17 @@ func (rwh *RaceWeekendHandler) manageFilters(w http.ResponseWriter, r *http.Requ
 		panic(err) // @TODO
 	}
 
+	filter, err := raceWeekend.GetFilterOrUseDefault(parentSessionID, childSessionID)
+
+	if err != nil {
+		panic(err) // @TODO
+	}
+
 	rwh.viewRenderer.MustLoadPartial(w, r, "race-weekend/popups/manage-filters.html", map[string]interface{}{
 		"RaceWeekend":   raceWeekend,
 		"ParentSession": parentSession,
 		"ChildSession":  childSession,
+		"Filter":        filter,
 	})
 }
 
@@ -257,7 +264,25 @@ func (rwh *RaceWeekendHandler) gridPreview(w http.ResponseWriter, r *http.Reques
 
 	w.Header().Add("Content-Type", "application/json")
 
-	spew.Dump(previewResponse)
+	spew.Dump(previewResponse) // @TODO
 
 	_ = json.NewEncoder(w).Encode(previewResponse)
+}
+
+func (rwh *RaceWeekendHandler) updateGrid(w http.ResponseWriter, r *http.Request) {
+	raceWeekendID := chi.URLParam(r, "raceWeekendID")
+	parentSessionID := r.URL.Query().Get("parentSessionID")
+	childSessionID := r.URL.Query().Get("childSessionID")
+
+	var filter *EntrantPositionFilter
+
+	if err := json.NewDecoder(r.Body).Decode(&filter); err != nil {
+		panic(err) // @TODO
+	}
+
+	if err := rwh.raceWeekendManager.UpdateGrid(raceWeekendID, parentSessionID, childSessionID, filter); err != nil {
+		panic(err) // @TODO
+	}
+
+	w.WriteHeader(http.StatusCreated)
 }
