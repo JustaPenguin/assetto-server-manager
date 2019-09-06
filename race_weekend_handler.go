@@ -250,7 +250,7 @@ func (rwh *RaceWeekendHandler) gridPreview(w http.ResponseWriter, r *http.Reques
 	parentSessionID := r.URL.Query().Get("parentSessionID")
 	childSessionID := r.URL.Query().Get("childSessionID")
 
-	var filter *EntrantPositionFilter
+	var filter *RaceWeekendSessionToSessionFilter
 
 	if err := json.NewDecoder(r.Body).Decode(&filter); err != nil {
 		panic(err) // @TODO
@@ -274,7 +274,7 @@ func (rwh *RaceWeekendHandler) updateGrid(w http.ResponseWriter, r *http.Request
 	parentSessionID := r.URL.Query().Get("parentSessionID")
 	childSessionID := r.URL.Query().Get("childSessionID")
 
-	var filter *EntrantPositionFilter
+	var filter *RaceWeekendSessionToSessionFilter
 
 	if err := json.NewDecoder(r.Body).Decode(&filter); err != nil {
 		panic(err) // @TODO

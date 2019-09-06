@@ -8,6 +8,10 @@
   // @TODO blending with things can cause problems
   mix-blend-mode: hard-light;
   z-index: 1000;
+
+  &:hover {
+    cursor: pointer;
+  }
 }
 
 #race-weekend-graph-container {

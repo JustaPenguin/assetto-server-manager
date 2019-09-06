@@ -1,30 +1,24 @@
 package servermanager
 
+import (
+	"fmt"
+
+	"github.com/google/uuid"
+)
+
 type FilterError string
 
 func (f FilterError) Error() string {
 	return string(f)
 }
 
-type EntrantPositionFilter struct {
+type RaceWeekendSessionToSessionFilter struct {
 	ResultStart     int
 	ResultEnd       int
 	ReverseEntrants bool
 
 	EntryListStart int
 	EntryListEnd   int
-}
-
-func (epf EntrantPositionFilter) Name() string {
-	return "Entrant Position Filter"
-}
-
-func (epf EntrantPositionFilter) Description() string {
-	return "Choose a start and finish position. Entrants between start and end will remain, others will be removed"
-}
-
-func (epf EntrantPositionFilter) Key() string {
-	return "ENTRANT_POSITION_FILTER"
 }
 
 func filterDisqualifiedResults(entrants []*RaceWeekendSessionEntrant) []*RaceWeekendSessionEntrant {
@@ -39,51 +33,47 @@ func filterDisqualifiedResults(entrants []*RaceWeekendSessionEntrant) []*RaceWee
 	return out
 }
 
-func (epf EntrantPositionFilter) Filter(entrants []*RaceWeekendSessionEntrant, entryList EntryList) error {
-	entrants = filterDisqualifiedResults(entrants)
+// Filter takes a set of RaceWeekendSessionEntrants formed by the results of the parent session and filters them into a child session entry list.
+func (f RaceWeekendSessionToSessionFilter) Filter(parentSessionID uuid.UUID, parentSessionResults []*RaceWeekendSessionEntrant, childSessionEntryList RaceWeekendEntryList) error {
+	parentSessionResults = filterDisqualifiedResults(parentSessionResults)
 
-	if epf.ResultEnd < epf.ResultStart {
+	if f.ResultEnd < f.ResultStart {
 		// normalise result end to be greater than result start
-		epf.ResultEnd, epf.ResultStart = epf.ResultStart, epf.ResultEnd
+		f.ResultEnd, f.ResultStart = f.ResultStart, f.ResultEnd
 	}
 
-	if epf.EntryListEnd < epf.EntryListStart {
+	if f.EntryListEnd < f.EntryListStart {
 		// normalise entrylist end to be greater than entrylist start
-		epf.EntryListEnd, epf.EntryListStart = epf.EntryListStart, epf.EntryListEnd
-	}
-
-	if epf.ResultEnd > len(entrants) {
-		epf.ResultEnd = len(entrants)
-	}
-
-	if epf.EntryListEnd > len(entrants) {
-		epf.EntryListEnd = len(entrants)
+		f.EntryListEnd, f.EntryListStart = f.EntryListStart, f.EntryListEnd
 	}
 
 	// shift down one, remove the user friendliness
-	epf.ResultStart--
-	epf.EntryListStart--
+	f.ResultStart--
+	f.EntryListStart--
 
-	if epf.ResultStart < 0 || epf.ResultStart > len(entrants) || epf.ResultEnd < 0 || epf.ResultEnd > len(entrants) {
+	if f.ResultStart < 0 || f.ResultStart > len(parentSessionResults) || f.ResultEnd < 0 || f.ResultEnd > len(parentSessionResults) {
 		return FilterError("Invalid bounds for Start or End")
 	}
 
-	if epf.ResultEnd-epf.ResultStart != epf.EntryListEnd-epf.EntryListStart {
-		return FilterError("Interval between result and entrylist splits must be equal.")
+	if f.ResultEnd-f.ResultStart != f.EntryListEnd-f.EntryListStart {
+		return FilterError(fmt.Sprintf("Interval between result and entrylist splits must be equal. (%d vs %d)", f.ResultEnd-f.ResultStart, f.EntryListEnd-f.EntryListStart))
 	}
 
-	split := entrants[epf.ResultStart:epf.ResultEnd]
+	split := parentSessionResults[f.ResultStart:f.ResultEnd]
 
 	splitIndex := 0
 
-	if epf.ReverseEntrants {
+	if f.ReverseEntrants {
 		splitIndex = len(split) - 1
 	}
 
-	for pitBox := epf.EntryListStart; pitBox < epf.EntryListEnd; pitBox++ {
-		entryList.AddInPitBox(split[splitIndex].GetEntrant(), pitBox)
+	for pitBox := f.EntryListStart; pitBox < f.EntryListEnd; pitBox++ {
+		entrant := split[splitIndex]
+		entrant.SessionID = parentSessionID
 
-		if epf.ReverseEntrants {
+		childSessionEntryList.AddInPitBox(entrant, pitBox)
+
+		if f.ReverseEntrants {
 			splitIndex--
 		} else {
 			splitIndex++

@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -111,7 +112,7 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (map
 		opts["RaceWeekendSession"] = session
 		opts["IsEditing"] = true
 		opts["EditingID"] = editSessionID
-		opts["CurrentEntrants"], err = session.GetEntryList(raceWeekend, nil, "")
+		opts["CurrentEntrants"], err = session.GetRaceWeekendEntryList(raceWeekend, nil, "")
 
 		if err == ErrRaceWeekendSessionDependencyIncomplete {
 			opts["CurrentEntrants"] = raceWeekend.EntryList
@@ -242,7 +243,7 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		return err
 	}
 
-	entryList, err := session.GetEntryList(raceWeekend, nil, "")
+	raceWeekendEntryList, err := session.GetRaceWeekendEntryList(raceWeekend, nil, "")
 
 	if err != nil {
 		return err
@@ -254,7 +255,7 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 	}
 
 	// @TODO replace normalEvent with something better here
-	return rwm.raceManager.applyConfigAndStart(session.RaceConfig, entryList, false, normalEvent{})
+	return rwm.raceManager.applyConfigAndStart(session.RaceConfig, raceWeekendEntryList.AsEntryList(), false, normalEvent{})
 }
 
 func (rwm *RaceWeekendManager) RestartSession(raceWeekendID string, raceWeekendSessionID string) error {
@@ -396,7 +397,7 @@ func NewRaceWeekendGridPreview() *RaceWeekendGridPreview {
 	}
 }
 
-func (rwm *RaceWeekendManager) PreviewGrid(raceWeekendID, parentSessionID, childSessionID string, filter *EntrantPositionFilter) (*RaceWeekendGridPreview, error) {
+func (rwm *RaceWeekendManager) PreviewGrid(raceWeekendID, parentSessionID, childSessionID string, filter *RaceWeekendSessionToSessionFilter) (*RaceWeekendGridPreview, error) {
 	raceWeekend, parentSession, childSession, err := rwm.FindConnectedSessions(raceWeekendID, parentSessionID, childSessionID)
 
 	if err != nil {
@@ -409,20 +410,26 @@ func (rwm *RaceWeekendManager) PreviewGrid(raceWeekendID, parentSessionID, child
 		preview.Results[i+1] = result.Car.GetName()
 	}
 
-	entryList, err := childSession.GetEntryList(raceWeekend, filter, parentSessionID)
+	entryList, err := childSession.GetRaceWeekendEntryList(raceWeekend, filter, parentSessionID)
 
 	if err != nil {
 		return nil, err
 	}
 
 	for _, entrant := range entryList.AsSlice() {
-		preview.Grid[entrant.PitBox+1] = entrant.Name
+		sess, err := raceWeekend.FindSessionByID(entrant.SessionID.String())
+
+		if err != nil {
+			continue
+		}
+
+		preview.Grid[entrant.PitBox+1] = fmt.Sprintf("%s (%s)", entrant.Car.GetName(), sess.Name())
 	}
 
 	return preview, nil
 }
 
-func (rwm *RaceWeekendManager) UpdateGrid(raceWeekendID, parentSessionID, childSessionID string, filter *EntrantPositionFilter) error {
+func (rwm *RaceWeekendManager) UpdateGrid(raceWeekendID, parentSessionID, childSessionID string, filter *RaceWeekendSessionToSessionFilter) error {
 	raceWeekend, err := rwm.LoadRaceWeekend(raceWeekendID)
 
 	if err != nil {
