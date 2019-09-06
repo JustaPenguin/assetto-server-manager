@@ -334,7 +334,7 @@
 
                                 {{ end }}
 
-                                {{ if ne $sessionType "BOOK" }}
+                                {{ if and (ne $sessionType "BOOK") (not $.IsRaceWeekend) }}
 
                                     <div class="form-group row">
                                         <label for="{{ $sessionType }}.IsOpen" class="col-sm-3 col-form-label">

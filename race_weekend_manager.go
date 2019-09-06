@@ -249,13 +249,24 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		return err
 	}
 
-	// @TODO i think the session IsOpen needs to be true
+	entryList := raceWeekendEntryList.AsEntryList()
+
+	session.RaceConfig.MaxClients = len(entryList)
+
+	// @TODO should cars be built from the entrylist?
+	session.RaceConfig.Cars = strings.Join(entryList.CarIDs(), ";")
+
+	// @TODO what do we need to do with locked entry list, pickup mode?
+	session.RaceConfig.LockedEntryList = 1
+	session.RaceConfig.PickupModeEnabled = 0
+
+	// all race weekend sessions must be open so players can join
 	for _, session := range session.RaceConfig.Sessions {
 		session.IsOpen = 1
 	}
 
 	// @TODO replace normalEvent with something better here
-	return rwm.raceManager.applyConfigAndStart(session.RaceConfig, raceWeekendEntryList.AsEntryList(), false, normalEvent{})
+	return rwm.raceManager.applyConfigAndStart(session.RaceConfig, entryList, false, normalEvent{})
 }
 
 func (rwm *RaceWeekendManager) RestartSession(raceWeekendID string, raceWeekendSessionID string) error {

@@ -256,6 +256,8 @@ func (rwh *RaceWeekendHandler) gridPreview(w http.ResponseWriter, r *http.Reques
 		panic(err) // @TODO
 	}
 
+	spew.Dump(filter)
+
 	previewResponse, err := rwh.raceWeekendManager.PreviewGrid(raceWeekendID, parentSessionID, childSessionID, filter)
 
 	if err != nil {

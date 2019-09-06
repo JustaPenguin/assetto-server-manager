@@ -79,7 +79,6 @@ func (rw *RaceWeekend) GetFilterOrUseDefault(parentID, childID string) (*RaceWee
 				ResultEnd:       len(parentSession.Results.Result),
 				ReverseEntrants: false,
 				EntryListStart:  1,
-				EntryListEnd:    len(parentSession.Results.Result),
 			}
 		} else {
 			filter = &RaceWeekendSessionToSessionFilter{
@@ -87,7 +86,6 @@ func (rw *RaceWeekend) GetFilterOrUseDefault(parentID, childID string) (*RaceWee
 				ResultEnd:       len(rw.EntryList),
 				ReverseEntrants: false,
 				EntryListStart:  1,
-				EntryListEnd:    len(rw.EntryList),
 			}
 		}
 	} else if err != nil {

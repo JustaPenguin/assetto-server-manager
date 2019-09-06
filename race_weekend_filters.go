@@ -1,8 +1,6 @@
 package servermanager
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 )
 
@@ -18,7 +16,6 @@ type RaceWeekendSessionToSessionFilter struct {
 	ReverseEntrants bool
 
 	EntryListStart int
-	EntryListEnd   int
 }
 
 func filterDisqualifiedResults(entrants []*RaceWeekendSessionEntrant) []*RaceWeekendSessionEntrant {
@@ -37,29 +34,20 @@ func filterDisqualifiedResults(entrants []*RaceWeekendSessionEntrant) []*RaceWee
 func (f RaceWeekendSessionToSessionFilter) Filter(parentSessionID uuid.UUID, parentSessionResults []*RaceWeekendSessionEntrant, childSessionEntryList RaceWeekendEntryList) error {
 	parentSessionResults = filterDisqualifiedResults(parentSessionResults)
 
-	if f.ResultEnd < f.ResultStart {
-		// normalise result end to be greater than result start
-		f.ResultEnd, f.ResultStart = f.ResultStart, f.ResultEnd
+	resultStart, resultEnd, entryListStart := f.ResultStart, f.ResultEnd, f.EntryListStart
+
+	resultStart--
+	entryListStart--
+
+	if resultStart > len(parentSessionResults) {
+		return nil
 	}
 
-	if f.EntryListEnd < f.EntryListStart {
-		// normalise entrylist end to be greater than entrylist start
-		f.EntryListEnd, f.EntryListStart = f.EntryListStart, f.EntryListEnd
+	if resultEnd > len(parentSessionResults) {
+		resultEnd = len(parentSessionResults)
 	}
 
-	// shift down one, remove the user friendliness
-	f.ResultStart--
-	f.EntryListStart--
-
-	if f.ResultStart < 0 || f.ResultStart > len(parentSessionResults) || f.ResultEnd < 0 || f.ResultEnd > len(parentSessionResults) {
-		return FilterError("Invalid bounds for Start or End")
-	}
-
-	if f.ResultEnd-f.ResultStart != f.EntryListEnd-f.EntryListStart {
-		return FilterError(fmt.Sprintf("Interval between result and entrylist splits must be equal. (%d vs %d)", f.ResultEnd-f.ResultStart, f.EntryListEnd-f.EntryListStart))
-	}
-
-	split := parentSessionResults[f.ResultStart:f.ResultEnd]
+	split := parentSessionResults[resultStart:resultEnd]
 
 	splitIndex := 0
 
@@ -67,7 +55,7 @@ func (f RaceWeekendSessionToSessionFilter) Filter(parentSessionID uuid.UUID, par
 		splitIndex = len(split) - 1
 	}
 
-	for pitBox := f.EntryListStart; pitBox < f.EntryListEnd; pitBox++ {
+	for pitBox := entryListStart; pitBox < entryListStart+(resultEnd-resultStart); pitBox++ {
 		entrant := split[splitIndex]
 		entrant.SessionID = parentSessionID
 

@@ -37,6 +37,7 @@
                                                     class="form-control"
                                                     value="{{ $.Filter.ResultStart }}"
                                                     step="1"
+                                                    min="1"
                                             >
 
                                             <small>
@@ -55,6 +56,7 @@
                                                     class="form-control"
                                                     value="{{ $.Filter.ResultEnd }}"
                                                     step="1"
+                                                    min="1"
                                             >
 
                                             <small>
@@ -99,7 +101,7 @@
                             <div class="card border-success">
                                 <div class="card-body">
 
-                                    <p>Then place the resulting drivers into the Entry List for <strong>{{ $.ChildSession.Name }}</strong> between:</p>
+                                    <p>Then place the resulting drivers into the Entry List for <strong>{{ $.ChildSession.Name }}</strong> from:</p>
 
                                     <div class="form-group row">
                                         <label for="GridStart" class="col-sm-6 col-form-label">Grid Start</label>
@@ -112,24 +114,7 @@
                                                     class="form-control"
                                                     value="{{ $.Filter.EntryListStart }}"
                                                     step="1"
-                                            >
-
-                                            <small>
-
-                                            </small>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="GridEnd" class="col-sm-6 col-form-label">Grid End</label>
-
-                                        <div class="col-sm-6">
-                                            <input
-                                                    type="number"
-                                                    id="GridEnd"
-                                                    name="GridEnd"
-                                                    class="form-control"
-                                                    value="{{ $.Filter.EntryListEnd }}"
-                                                    step="1"
+                                                    min="1"
                                             >
 
                                             <small>

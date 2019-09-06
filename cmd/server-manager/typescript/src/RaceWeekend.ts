@@ -139,7 +139,6 @@ export class RaceWeekendSessionTransition {
     private resultEnd!: number;
     private reverseOrder!: boolean;
     private gridStart!: number;
-    private gridEnd!: number;
 
     public constructor($elem: JQuery<HTMLElement>, parentSessionID: string, childSessionID: string) {
         this.$elem = $elem;
@@ -170,7 +169,6 @@ export class RaceWeekendSessionTransition {
             ResultEnd: this.resultEnd,
             ReverseEntrants: this.reverseOrder,
             EntryListStart: this.gridStart,
-            EntryListEnd: this.gridEnd,
         })
     }
 
@@ -179,7 +177,6 @@ export class RaceWeekendSessionTransition {
         this.resultEnd = parseInt(this.$elem.find("#ResultsEnd").val() as string);
         this.reverseOrder = this.$elem.find("#ReverseGrid").is(":checked");
         this.gridStart = parseInt(this.$elem.find("#GridStart").val() as string);
-        this.gridEnd = parseInt(this.$elem.find("#GridEnd").val() as string);
 
         $.ajax(`/race-weekend/${RaceWeekendID}/grid-preview?parentSessionID=${this.parentSessionID}&childSessionID=${this.childSessionID}`, {
             data: this.packageValues(),
