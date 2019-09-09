@@ -7,6 +7,8 @@
         <div class="card">
             {{ if $.server_event.IsChampionship }}
                 <h5 class="card-header">Championship Event in Progress</h5>
+            {{ else if $.server_event.IsRaceWeekend }}
+                <h5 class="card-header">Race Weekend in Progress</h5>
             {{ else }}
                 <h5 class="card-header">Event in Progress</h5>
             {{ end }}

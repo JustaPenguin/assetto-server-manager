@@ -397,6 +397,12 @@ func NewDummyDriver(pos int) (*SessionResult, *SessionCar) {
 func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) []*RaceWeekendSessionEntrant {
 	var out []*RaceWeekendSessionEntrant
 
+	entryList, err := rws.GetRaceWeekendEntryList(raceWeekend, nil, "")
+
+	if err != nil {
+		panic(err)
+	}
+
 	if rws.Completed() {
 		for _, result := range rws.Results.Result {
 			car, err := rws.Results.FindCarByGUIDAndModel(result.DriverGUID, result.CarModel)
@@ -407,14 +413,24 @@ func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) []*RaceWe
 
 			out = append(out, NewRaceWeekendSessionEntrant(rws.ID, car, result))
 		}
+
+		// look for entrants not in our session results who started the session.
+		for _, entrant := range entryList {
+			foundEntrant := false
+
+			for _, driver := range out {
+				if driver.Car.GetGUID() == entrant.Car.GetGUID() {
+					foundEntrant = true
+					break
+				}
+			}
+
+			if !foundEntrant {
+				out = append(out, NewRaceWeekendSessionEntrant(rws.ID, entrant.Car, entrant.Results))
+			}
+		}
 	} else {
 		// if a session is not completed, we work on the assumption that the finishing grid is equal to the entrylist
-		entryList, err := rws.GetRaceWeekendEntryList(raceWeekend, nil, "")
-
-		if err != nil {
-			panic(err)
-		}
-
 		out = entryList.AsSlice()
 	}
 
@@ -564,4 +580,44 @@ func (e RaceWeekendEntryList) AsEntryList() EntryList {
 	}
 
 	return entryList
+}
+
+type ActiveRaceWeekend struct {
+	Name                     string
+	RaceWeekendID, SessionID uuid.UUID
+	OverridePassword         bool
+	ReplacementPassword      string
+	Description              string
+}
+
+func (a ActiveRaceWeekend) IsChampionship() bool {
+	return false // @TODO
+}
+
+func (a ActiveRaceWeekend) IsRaceWeekend() bool {
+	return true
+}
+
+func (a ActiveRaceWeekend) OverrideServerPassword() bool {
+	return a.OverridePassword
+}
+
+func (a ActiveRaceWeekend) ReplacementServerPassword() string {
+	return a.ReplacementPassword
+}
+
+func (a ActiveRaceWeekend) EventName() string {
+	return "Race Weekend: " + a.Name
+}
+
+func (a ActiveRaceWeekend) EventDescription() string {
+	return a.Description
+}
+
+func (a ActiveRaceWeekend) GetURL() string {
+	if config.HTTP.BaseURL != "" {
+		return config.HTTP.BaseURL + "/race-weekend/" + a.RaceWeekendID.String()
+	} else {
+		return ""
+	}
 }

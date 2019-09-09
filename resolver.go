@@ -63,6 +63,7 @@ func (r *Resolver) UDPCallback(message udp.Message) {
 		r.resolveRaceControl().UDPCallback(message)
 	}
 	r.resolveChampionshipManager().ChampionshipEventCallback(message)
+	r.resolveRaceWeekendManager().UDPCallback(message)
 	r.resolveRaceManager().LoopCallback(message)
 	r.resolveContentManagerWrapper().UDPCallback(message)
 }

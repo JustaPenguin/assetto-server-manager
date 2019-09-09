@@ -135,16 +135,15 @@
                     {{ if .server_status  }}
                         <li class="nav-item dropdown mr-2 {{ if not WriteAccess }} mt-2 {{ end }}">
                             {{ if WriteAccess }}
-                                {{ if .server_event.IsChampionship }}
-                                    <a class="nav-link dropdown-toggle" href="#" id="navBarStatusDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <a class="nav-link dropdown-toggle" href="#" id="navBarStatusDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    {{ if .server_event.IsChampionship }}
                                         <span class="badge badge-warning">Championship in Progress</span>
-                                    </a>
-                                {{ else }}
-                                    <a class="nav-link dropdown-toggle" href="#" id="navBarStatusDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    {{ else if .server_event.IsRaceWeekend }}
+                                        <span class="badge badge-warning">Race Weekend in Progress</span>
+                                    {{ else }}
                                         <span class="badge badge-success">Assetto Server Running</span>
-                                    </a>
-                                {{ end }}
-
+                                    {{ end }}
+                                </a>
                                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navBarStatusDropdown">
                                     <a
                                         class="dropdown-item"
@@ -170,6 +169,8 @@
                             {{ else }}
                                 {{ if .server_event.IsChampionship }}
                                     <span class="badge badge-warning">Championship in Progress</span>
+                                {{ else if .server_event.IsRaceWeekend }}
+                                    <span class="badge badge-warning">Race Weekend in Progress</span>
                                 {{ else }}
                                     <span class="badge badge-success">Assetto Server Running</span>
                                 {{ end }}

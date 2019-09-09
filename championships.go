@@ -1168,6 +1168,10 @@ func (a *ActiveChampionship) IsChampionship() bool {
 	return !a.IsPracticeSession
 }
 
+func (a *ActiveChampionship) IsRaceWeekend() bool {
+	return false // @TODO maybe this needs to be true at some point?
+}
+
 func (a *ActiveChampionship) OverrideServerPassword() bool {
 	return a.OverridePassword
 }

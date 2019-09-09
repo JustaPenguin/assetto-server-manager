@@ -2,9 +2,14 @@ package servermanager
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"net/http"
+	"path/filepath"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/cj123/assetto-server-manager/pkg/udp"
 
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
@@ -14,6 +19,9 @@ type RaceWeekendManager struct {
 	raceManager *RaceManager
 	store       Store
 	process     ServerProcess
+
+	activeRaceWeekend *ActiveRaceWeekend
+	mutex             sync.Mutex
 }
 
 func NewRaceWeekendManager(raceManager *RaceManager, store Store, process ServerProcess) *RaceWeekendManager {
@@ -220,6 +228,18 @@ func (rwm *RaceWeekendManager) SaveRaceWeekendSession(r *http.Request) (raceWeek
 	return raceWeekend, session, edited, rwm.store.UpsertRaceWeekend(raceWeekend)
 }
 
+func (rwm *RaceWeekendManager) applyConfigAndStart(config CurrentRaceConfig, entryList EntryList, raceWeekend *ActiveRaceWeekend) error {
+	err := rwm.raceManager.applyConfigAndStart(config, entryList, false, raceWeekend)
+
+	if err != nil {
+		return err
+	}
+
+	rwm.activeRaceWeekend = raceWeekend
+
+	return nil
+}
+
 func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSessionID string) error {
 	raceWeekend, err := rwm.LoadRaceWeekend(raceWeekendID)
 
@@ -253,20 +273,69 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 
 	session.RaceConfig.MaxClients = len(entryList)
 
-	// @TODO should cars be built from the entrylist?
 	session.RaceConfig.Cars = strings.Join(entryList.CarIDs(), ";")
 
-	// @TODO what do we need to do with locked entry list, pickup mode?
 	session.RaceConfig.LockedEntryList = 1
 	session.RaceConfig.PickupModeEnabled = 0
 
 	// all race weekend sessions must be open so players can join
-	for _, session := range session.RaceConfig.Sessions {
-		session.IsOpen = 1
+	for _, acSession := range session.RaceConfig.Sessions {
+		acSession.IsOpen = 1
 	}
 
 	// @TODO replace normalEvent with something better here
-	return rwm.raceManager.applyConfigAndStart(session.RaceConfig, entryList, false, normalEvent{})
+	return rwm.applyConfigAndStart(session.RaceConfig, entryList, &ActiveRaceWeekend{
+		Name:                raceWeekend.Name,
+		RaceWeekendID:       raceWeekend.ID,
+		SessionID:           session.ID,
+		OverridePassword:    false, // @TODO
+		ReplacementPassword: "",    // @TODO
+		Description:         "",    // @TODO?
+	})
+}
+
+func (rwm *RaceWeekendManager) UDPCallback(message udp.Message) {
+	rwm.mutex.Lock()
+	defer rwm.mutex.Unlock()
+
+	if !rwm.process.Event().IsRaceWeekend() || rwm.activeRaceWeekend == nil {
+		return
+	}
+
+	switch m := message.(type) {
+	case udp.EndSession:
+		filename := filepath.Base(string(m))
+		logrus.Infof("Race Weekend: End session found, result file: %s", filename)
+
+		results, err := LoadResult(filename)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("Could not read session results for race weekend: %s, session: %s", rwm.activeRaceWeekend.RaceWeekendID.String(), rwm.activeRaceWeekend.SessionID.String())
+			return
+		}
+
+		raceWeekend, err := rwm.LoadRaceWeekend(rwm.activeRaceWeekend.RaceWeekendID.String())
+
+		if err != nil {
+			logrus.WithError(err).Errorf("Could not load active race weekend")
+			return
+		}
+
+		session, err := raceWeekend.FindSessionByID(rwm.activeRaceWeekend.SessionID.String())
+
+		if err != nil {
+			logrus.WithError(err).Errorf("Could not load active race weekend session")
+			return
+		}
+
+		session.CompletedTime = time.Now()
+		session.Results = results
+
+		if err := rwm.store.UpsertRaceWeekend(raceWeekend); err != nil {
+			logrus.WithError(err).Errorf("Could not persist race weekend: %s", raceWeekend.ID.String())
+			return
+		}
+	}
 }
 
 func (rwm *RaceWeekendManager) RestartSession(raceWeekendID string, raceWeekendSessionID string) error {
@@ -313,6 +382,14 @@ func (rwm *RaceWeekendManager) DeleteSession(raceWeekendID string, raceWeekendSe
 	raceWeekend.DelSession(raceWeekendSessionID)
 
 	return rwm.store.UpsertRaceWeekend(raceWeekend)
+}
+
+func (rwm *RaceWeekendManager) StopActiveSession() error {
+	if !rwm.process.Event().IsRaceWeekend() || rwm.activeRaceWeekend == nil {
+		return ErrNoActiveEvent
+	}
+
+	return rwm.CancelSession(rwm.activeRaceWeekend.RaceWeekendID.String(), rwm.activeRaceWeekend.SessionID.String())
 }
 
 func (rwm *RaceWeekendManager) ImportSession(raceWeekendID string, raceWeekendSessionID string, r *http.Request) error {

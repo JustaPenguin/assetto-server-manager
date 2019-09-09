@@ -69,6 +69,7 @@ var ErrEntryListTooBig = errors.New("servermanager: EntryList exceeds MaxClients
 
 type RaceEvent interface {
 	IsChampionship() bool
+	IsRaceWeekend() bool
 	OverrideServerPassword() bool
 	ReplacementServerPassword() string
 	EventName() string
@@ -79,6 +80,10 @@ type RaceEvent interface {
 type normalEvent struct {
 	OverridePassword    bool
 	ReplacementPassword string
+}
+
+func (normalEvent) IsRaceWeekend() bool {
+	return false
 }
 
 func (normalEvent) IsChampionship() bool {
@@ -888,8 +893,14 @@ func (rm *RaceManager) SaveEntrantsForAutoFill(entryList EntryList) error {
 	return nil
 }
 
-func (rm *RaceManager) SaveCustomRace(name string, overridePassword bool, replacementPassword string,
-	config CurrentRaceConfig, entryList EntryList, starred bool) (*CustomRace, error) {
+func (rm *RaceManager) SaveCustomRace(
+	name string,
+	overridePassword bool,
+	replacementPassword string,
+	config CurrentRaceConfig,
+	entryList EntryList,
+	starred bool,
+) (*CustomRace, error) {
 
 	hasCustomRaceName := true
 
