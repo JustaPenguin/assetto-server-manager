@@ -14,7 +14,7 @@ import {RaceControl} from "./RaceControl";
 import {CarDetail} from "./CarDetail";
 import {CarSearch} from "./CarSearch";
 import {CarList} from "./CarList";
-import {RaceWeekendSession} from "./RaceWeekend";
+import {RaceWeekendSession, RaceWeekendView} from "./RaceWeekend";
 import {ChangelogPopup} from "./ChangelogPopup";
 import {Messages} from "./Messages";
 
@@ -22,6 +22,7 @@ $(() => {
     new RaceControl();
     new CarDetail();
     new CarList();
+    new RaceWeekendView();
     new RaceWeekendSession();
     new ChangelogPopup();
     Messages.initSummerNote();

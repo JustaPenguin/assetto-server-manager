@@ -62,19 +62,7 @@
                         {{ $acSession := $session.SessionInfo }}
 
                         <strong>{{ $acSession.Name }}</strong>
-    <!--
-                        at
 
-                        {{ with $trackInfo }}
-                            {{ $trackInfo.Name }}
-                        {{ else }}
-                            {{ prettify $raceConfig.Track false }} {{ prettify $raceConfig.TrackLayout true }}
-                        {{ end }}
-
-                        in
-
-                        {{ carList $.RaceWeekend.EntryList.CarIDs }}
-    -->
                         <div class="float-right">
                             {{ if ne $acSession.Time 0 }}
                                 {{ $acSession.Time }} minutes
@@ -102,7 +90,7 @@
 
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-sm-8">
+                            <div class="col-8">
                                 {{ with $trackInfo }}
                                     {{ .Name }}{{ with .Country }}, {{ . }}{{ end }}
                                 {{ else }}
@@ -110,7 +98,7 @@
                                 {{ end }}
                             </div>
 
-                            <div class="col-sm-4">
+                            <div class="col-4">
                                 <img class="img img-fluid ml-2 float-right image-track mb-2"
                                      src="/content/tracks/{{ $raceConfig.Track }}/ui{{ with $raceConfig.TrackLayout }}/{{.}}{{ end }}/preview.png"
                                      alt="{{ $raceConfig.Track }} {{ $raceConfig.TrackLayout }}"
@@ -119,7 +107,7 @@
                         </div>
 
                         {{ if $session.Completed }}
-                            <a class="btn btn-primary" href="#">View Results</a>
+                            <a class="btn btn-primary view-results" href="#">View Results</a>
                         {{ end }}
 
                         {{ if WriteAccess }}
@@ -168,7 +156,7 @@
         {{ end }}
     </div>
 
-    <div class="container">
+    <div class="container" id="race-weekend-results">
         <h2>Results</h2>
 
         <div class="accordion" id="sessionResults">
@@ -229,7 +217,7 @@
 
 
     <div class="modal" tabindex="-1" role="dialog" id="filters-modal">
-
+        <!-- content controlled by js -->
     </div>
 
 

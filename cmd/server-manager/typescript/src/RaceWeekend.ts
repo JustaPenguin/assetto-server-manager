@@ -130,6 +130,27 @@ jsp.bind("ready", () => {
     jsp.repaintEverything();
 });
 
+export class RaceWeekendView {
+    public constructor() {
+        $(".view-results").on("click", this.onViewResultsClick);
+    }
+
+    private onViewResultsClick(e: JQuery.ClickEvent) {
+        e.preventDefault();
+
+        let $raceWeekendSession = $(this).closest(".race-weekend-session");
+        let sessionID = $raceWeekendSession.attr("id");
+
+        let $results = $("#results-" + sessionID);
+
+        $('html, body').animate({
+            scrollTop: ($("#race-weekend-results").offset()!.top) - 200,
+        },500, () => {
+            $results.collapse('show');
+        });
+    }
+}
+
 export class RaceWeekendSessionTransition {
     private $elem: JQuery<HTMLElement>;
     private parentSessionID: string;
