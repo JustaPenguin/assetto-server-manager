@@ -104,10 +104,17 @@ func (nm *NotificationManager) SendRaceStartMessage(config ServerConfig, event R
 
 		if err != nil {
 			logrus.Errorf("could not get CM join link, err: %s", err)
+
 			return nm.SendMessage(msg)
 		} else {
 			linkText = "Content Manager join link"
-			return nm.SendMessageWithLink(msg, linkText, link)
+
+			// delay sending message by 20 seconds to give server time to register with lobby so CM link works
+			time.AfterFunc(time.Duration(20)*time.Second, func() {
+				_ = nm.SendMessageWithLink(msg, linkText, link)
+			})
+
+			return nil
 		}
 	} else {
 		return nm.SendMessage(msg)
