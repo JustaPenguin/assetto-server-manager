@@ -28,7 +28,7 @@ func (rwh *RaceWeekendHandler) list(w http.ResponseWriter, r *http.Request) {
 	raceWeekends, err := rwh.raceWeekendManager.ListRaceWeekends()
 
 	if err != nil {
-		logrus.Errorf("couldn't list weekends, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't list weekends")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -42,7 +42,7 @@ func (rwh *RaceWeekendHandler) view(w http.ResponseWriter, r *http.Request) {
 	raceWeekend, err := rwh.raceWeekendManager.LoadRaceWeekend(chi.URLParam(r, "raceWeekendID"))
 
 	if err != nil {
-		logrus.Errorf("couldn't load race weekend, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't load race weekend")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -58,10 +58,25 @@ func (rwh *RaceWeekendHandler) createOrEdit(w http.ResponseWriter, r *http.Reque
 	raceWeekendOpts, err := rwh.raceWeekendManager.BuildRaceWeekendTemplateOpts(r)
 
 	if err != nil {
-		panic(err)
+		logrus.WithError(err).Errorf("couldn't load race weekend")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	rwh.viewRenderer.MustLoadTemplate(w, r, "race-weekend/new.html", raceWeekendOpts)
+}
+
+func (rwh *RaceWeekendHandler) delete(w http.ResponseWriter, r *http.Request) {
+	err := rwh.raceWeekendManager.DeleteRaceWeekend(chi.URLParam(r, "raceWeekendID"))
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't delete race weekend")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	AddFlash(w, r, "Race Weekend successfully deleted!")
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
 func (rwh *RaceWeekendHandler) submit(w http.ResponseWriter, r *http.Request) {

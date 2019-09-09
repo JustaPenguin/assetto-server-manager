@@ -237,6 +237,16 @@ func (rw *RaceWeekend) FindTotalNumParents(session *RaceWeekendSession) int {
 	return out
 }
 
+func (rw *RaceWeekend) HasTeamNames() bool {
+	for _, entrant := range rw.EntryList {
+		if entrant.Team != "" {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (rw *RaceWeekend) FindChildren(session *RaceWeekendSession) []*RaceWeekendSession {
 	var children []*RaceWeekendSession
 

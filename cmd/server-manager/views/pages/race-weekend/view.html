@@ -13,6 +13,36 @@
             </div>
         {{ end }}
 
+        <h2>Entrants</h2>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <tr>
+                    <th>#</th>
+                    <th>Driver</th>
+                    {{ if $.RaceWeekend.HasTeamNames }}
+                        <th>Team</th>
+                    {{ end }}
+                    <th>Car</th>
+                </tr>
+                {{ $num := 1 }}
+
+                {{ range $i, $entrant := $.RaceWeekend.EntryList }}
+                    <tr>
+                        <td>{{ $num }}</td>
+                        <td>{{ driverName $entrant.Name }}</td>
+
+                        {{ if $.RaceWeekend.HasTeamNames }}
+                            <td>{{ $entrant.Team }}</td>
+                        {{ end }}
+                        <td>{{ prettify $entrant.Model true }} / {{ prettify $entrant.Skin false }}</td>
+                    </tr>
+
+                    {{ $num = add $num 1 }}
+                {{ end }}
+            </table>
+        </div>
+
 
         <div class="float-right">
             {{ if WriteAccess }}
@@ -164,10 +194,19 @@
                 <div class="card">
                     <div class="card-header" id="results-link-{{ $session.ID.String }}" data-toggle="collapse" data-target="#results-{{ $session.ID.String }}" aria-expanded="true" aria-controls="results-{{ $session.ID.String }}">
                         {{ $acSession := $session.SessionInfo }}
+                        {{ $trackInfo := trackInfo $session.RaceConfig.Track $session.RaceConfig.TrackLayout }}
 
                         <strong>
                             {{ $acSession.Name }}
                         </strong>
+
+                        at
+
+                        {{ with $trackInfo }}
+                            {{ .Name }}
+                        {{ else }}
+                            {{ prettify $session.RaceConfig.Track false }} {{ with $session.RaceConfig.TrackLayout }}({{ prettify . true }}){{ end }}
+                        {{ end }}
 
                         <div class="float-right">
                             {{ if ne $acSession.Time 0 }}

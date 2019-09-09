@@ -376,7 +376,7 @@
                                                     id="{{ $sessionType }}.WaitTime"
                                                     name="{{ $sessionType }}.WaitTime"
                                                     class="form-control"
-                                                    value="{{ $session.WaitTime }}"
+                                                    value="{{ if $.IsRaceWeekend }}120{{ else }}{{ $session.WaitTime }}{{ end }}"
 
 
                                                     step="1"
@@ -1438,7 +1438,7 @@
                 </div>
 
 
-                {{ if not $.IsChampionship }}
+                {{ if and (not $.IsChampionship) (not $.IsRaceWeekend) }}
                     <div class="form-group row">
                         <label for="LoopMode" class="col-sm-3 col-form-label">Loop Mode</label>
 

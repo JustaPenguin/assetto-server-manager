@@ -77,8 +77,6 @@ func Router(
 		r.Mount("/debug/", middleware.Profiler())
 	}
 
-	// @TODO move me to writers
-
 	// readers
 	r.Group(func(r chi.Router) {
 		r.Use(accountHandler.ReadAccessMiddleware)
@@ -143,6 +141,8 @@ func Router(
 		// race weekends
 		r.Get("/race-weekends", raceWeekendHandler.list)
 		r.Get("/race-weekend/{raceWeekendID}", raceWeekendHandler.view)
+		r.Get("/race-weekend/{raceWeekendID}/filters", raceWeekendHandler.manageFilters)
+		r.Post("/race-weekend/{raceWeekendID}/grid-preview", raceWeekendHandler.gridPreview)
 	})
 
 	// writers
@@ -217,6 +217,7 @@ func Router(
 		// race weekend
 		r.Get("/race-weekends/new", raceWeekendHandler.createOrEdit)
 		r.Post("/race-weekends/new/submit", raceWeekendHandler.submit)
+		r.Get("/race-weekend/{raceWeekendID}/delete", raceWeekendHandler.delete)
 		r.Get("/race-weekend/{raceWeekendID}/edit", raceWeekendHandler.createOrEdit)
 		r.Get("/race-weekend/{raceWeekendID}/session", raceWeekendHandler.sessionConfiguration)
 		r.Post("/race-weekend/{raceWeekendID}/session/submit", raceWeekendHandler.submitSessionConfiguration)
@@ -226,8 +227,6 @@ func Router(
 		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/cancel", raceWeekendHandler.cancelSession)
 		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/import", raceWeekendHandler.importSessionResults)
 		r.Post("/race-weekend/{raceWeekendID}/session/{sessionID}/import", raceWeekendHandler.importSessionResults)
-		r.Get("/race-weekend/{raceWeekendID}/filters", raceWeekendHandler.manageFilters)
-		r.Post("/race-weekend/{raceWeekendID}/grid-preview", raceWeekendHandler.gridPreview)
 		r.Post("/race-weekend/{raceWeekendID}/grid", raceWeekendHandler.updateGrid)
 	})
 

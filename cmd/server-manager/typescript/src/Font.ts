@@ -39,6 +39,7 @@ import {faUsersCog} from "@fortawesome/free-solid-svg-icons/faUsersCog";
 import {faArrowRight} from "@fortawesome/free-solid-svg-icons/faArrowRight";
 import {faArrowDown} from "@fortawesome/free-solid-svg-icons/faArrowDown";
 import {faPencilAlt} from "@fortawesome/free-solid-svg-icons/faPencilAlt";
+import {faCarCrash} from "@fortawesome/free-solid-svg-icons/faCarCrash";
 
 library.add(
     faUser,
@@ -79,6 +80,7 @@ library.add(
     faArrowRight,
     faArrowDown,
     faPencilAlt,
+    faCarCrash,
 );
 
 dom.watch();

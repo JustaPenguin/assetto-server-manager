@@ -31,7 +31,11 @@
 
                                         <div class="col-sm-6">
                                             <input
-                                                    type="number"
+                                                    {{ if WriteAccess }}
+                                                        type="number"
+                                                    {{ else }}
+                                                        type="hidden"
+                                                    {{ end }}
                                                     id="ResultsStart"
                                                     name="ResultsStart"
                                                     class="form-control"
@@ -40,9 +44,9 @@
                                                     min="1"
                                             >
 
-                                            <small>
-
-                                            </small>
+                                            {{ if not WriteAccess }}
+                                                <label class="col-form-label">{{ $.Filter.ResultStart }}</label>
+                                            {{ end }}
                                         </div>
                                     </div>
                                     <div class="form-group row">
@@ -50,7 +54,11 @@
 
                                         <div class="col-sm-6">
                                             <input
-                                                    type="number"
+                                                    {{ if WriteAccess }}
+                                                        type="number"
+                                                    {{ else }}
+                                                        type="hidden"
+                                                    {{ end }}
                                                     id="ResultsEnd"
                                                     name="ResultsEnd"
                                                     class="form-control"
@@ -59,9 +67,9 @@
                                                     min="1"
                                             >
 
-                                            <small>
-
-                                            </small>
+                                            {{ if not WriteAccess }}
+                                                <label class="col-form-label">{{ $.Filter.ResultEnd }}</label>
+                                            {{ end }}
                                         </div>
                                     </div>
                                 </div>
@@ -78,7 +86,11 @@
 
                                         <div class="col-sm-6">
                                             <input
-                                                    type="checkbox"
+                                                    {{ if WriteAccess }}
+                                                        type="checkbox"
+                                                    {{ else }}
+                                                        type="hidden"
+                                                    {{ end }}
                                                     id="ReverseGrid"
                                                     name="ReverseGrid"
                                                     {{ if $.Filter.ReverseEntrants }}
@@ -86,9 +98,15 @@
                                                     {{ end }}
                                             >
 
-                                            <small>
-
-                                            </small>
+                                            {{ if not WriteAccess }}
+                                                <label class="col-form-label">
+                                                    {{ if $.Filter.ReverseEntrants }}
+                                                        Yes
+                                                    {{ else }}
+                                                        No
+                                                    {{ end }}
+                                                </label>
+                                            {{ end }}
                                         </div>
                                     </div>
                                 </div>
@@ -108,7 +126,11 @@
 
                                         <div class="col-sm-6">
                                             <input
-                                                    type="number"
+                                                    {{ if WriteAccess }}
+                                                        type="number"
+                                                    {{ else }}
+                                                        type="hidden"
+                                                    {{ end }}
                                                     id="GridStart"
                                                     name="GridStart"
                                                     class="form-control"
@@ -117,9 +139,9 @@
                                                     min="1"
                                             >
 
-                                            <small>
-
-                                            </small>
+                                            {{ if not WriteAccess }}
+                                                <label class="col-form-label">{{ $.Filter.EntryListStart }}</label>
+                                            {{ end }}
                                         </div>
                                     </div>
                                 </div>
@@ -143,7 +165,9 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="save-filters">Save changes</button>
+                {{ if WriteAccess }}
+                    <button type="button" class="btn btn-primary" id="save-filters">Save changes</button>
+                {{ end }}
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>
         </div>

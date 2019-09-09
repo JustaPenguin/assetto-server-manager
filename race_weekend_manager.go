@@ -81,6 +81,8 @@ func (rwm *RaceWeekendManager) SaveRaceWeekend(r *http.Request) (raceWeekend *Ra
 		if err != nil {
 			return nil, edited, err
 		}
+
+		edited = true
 	} else {
 		raceWeekend = NewRaceWeekend()
 	}
@@ -382,6 +384,10 @@ func (rwm *RaceWeekendManager) DeleteSession(raceWeekendID string, raceWeekendSe
 	raceWeekend.DelSession(raceWeekendSessionID)
 
 	return rwm.store.UpsertRaceWeekend(raceWeekend)
+}
+
+func (rwm *RaceWeekendManager) DeleteRaceWeekend(id string) error {
+	return rwm.store.DeleteRaceWeekend(id)
 }
 
 func (rwm *RaceWeekendManager) StopActiveSession() error {
