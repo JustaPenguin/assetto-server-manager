@@ -27,6 +27,7 @@ type RaceWeekend struct {
 	Sessions  []*RaceWeekendSession
 }
 
+// NewRaceWeekend creates a RaceWeekend
 func NewRaceWeekend() *RaceWeekend {
 	return &RaceWeekend{
 		ID:      uuid.New(),
@@ -34,6 +35,8 @@ func NewRaceWeekend() *RaceWeekend {
 	}
 }
 
+// AddFilter creates a link between parentID and childID with a filter that specifies how to take the Results of parent
+// and modify them to make an EntryList for child
 func (rw *RaceWeekend) AddFilter(parentID, childID string, filter *RaceWeekendSessionToSessionFilter) {
 	if rw.Filters == nil {
 		rw.Filters = make(map[string]map[string]*RaceWeekendSessionToSessionFilter)
@@ -46,12 +49,14 @@ func (rw *RaceWeekend) AddFilter(parentID, childID string, filter *RaceWeekendSe
 	rw.Filters[parentID][childID] = filter
 }
 
+// RemoveFilter removes the link between parent and child
 func (rw *RaceWeekend) RemoveFilter(parentID, childID string) {
 	delete(rw.Filters[parentID], childID)
 }
 
 var ErrRaceWeekendFilterNotFound = errors.New("servermanager: race weekend filter not found")
 
+// GetFilter returns the Filter between parentID and childID, erroring if no Filter is found.
 func (rw *RaceWeekend) GetFilter(parentID, childID string) (*RaceWeekendSessionToSessionFilter, error) {
 	if parentFilters, ok := rw.Filters[parentID]; ok {
 		if childFilter, ok := parentFilters[childID]; ok {
@@ -62,6 +67,9 @@ func (rw *RaceWeekend) GetFilter(parentID, childID string) (*RaceWeekendSessionT
 	return nil, ErrRaceWeekendFilterNotFound
 }
 
+// GetFilterOrUseDefault attempts to find a filter between parentID and childID. If a filter is not found, a 'default' filter
+// is created. The default filter takes all entrants from the parent results and applies them directly to the child entrylist,
+// in their finishing order.
 func (rw *RaceWeekend) GetFilterOrUseDefault(parentID, childID string) (*RaceWeekendSessionToSessionFilter, error) {
 	filter, err := rw.GetFilter(parentID, childID)
 
@@ -95,6 +103,7 @@ func (rw *RaceWeekend) GetFilterOrUseDefault(parentID, childID string) (*RaceWee
 	return filter, nil
 }
 
+// AddSession adds a RaceWeekendSession to a RaceWeekend, with an optional parent session (can be nil).
 func (rw *RaceWeekend) AddSession(s *RaceWeekendSession, parent *RaceWeekendSession) {
 	if parent != nil {
 		s.ParentIDs = append(s.ParentIDs, parent.ID)
@@ -103,6 +112,8 @@ func (rw *RaceWeekend) AddSession(s *RaceWeekendSession, parent *RaceWeekendSess
 	rw.Sessions = append(rw.Sessions, s)
 }
 
+// DelSession removes a RaceWeekendSession from a RaceWeekend. This also removes any parent links from the
+// removed session to any other sessions.
 func (rw *RaceWeekend) DelSession(sessionID string) {
 	toDelete := -1
 
@@ -123,6 +134,8 @@ func (rw *RaceWeekend) DelSession(sessionID string) {
 	}
 }
 
+// SessionCanBeRun determines whether a RaceWeekendSession has all of its parent dependencies met to be allowed to run
+// (i.e. all parent RaceWeekendSessions must be complete to allow it to run)
 func (rw *RaceWeekend) SessionCanBeRun(s *RaceWeekendSession) bool {
 	if s.IsBase() {
 		return true
@@ -147,6 +160,7 @@ func (rw *RaceWeekend) SessionCanBeRun(s *RaceWeekendSession) bool {
 	return true
 }
 
+// SortedSessions returns the RaceWeekendSessions in order by the number of parents the sessions have.
 func (rw *RaceWeekend) SortedSessions() []*RaceWeekendSession {
 	sessions := make([]*RaceWeekendSession, len(rw.Sessions))
 
@@ -162,6 +176,7 @@ func (rw *RaceWeekend) SortedSessions() []*RaceWeekendSession {
 	return sessions
 }
 
+// Progress indicates how far (0 -> 1) a RaceWeekend has progressed.
 func (rw *RaceWeekend) Progress() float64 {
 	numSessions := float64(len(rw.Sessions))
 
@@ -180,43 +195,7 @@ func (rw *RaceWeekend) Progress() float64 {
 	return (numCompletedSessions / numSessions) * 100
 }
 
-func (rw *RaceWeekend) NumParentsLeft(session *RaceWeekendSession) int {
-	return len(session.ParentIDs) - rw.NumParentsAbove(session)
-}
-
-func (rw *RaceWeekend) NumParentsAbove(session *RaceWeekendSession) int {
-	numParentsAbove := 0
-
-	// a parent is above a session if the parent and this session share no similar children
-	sessionChildren := rw.FindChildren(session)
-
-	for _, otherSessionID := range session.ParentIDs {
-		otherSession, err := rw.FindSessionByID(otherSessionID.String())
-
-		if err != nil {
-			continue
-		}
-
-		otherSessionChildren := rw.FindChildren(otherSession)
-
-		childrenInCommon := 0
-
-		for _, child := range sessionChildren {
-			for _, otherChild := range otherSessionChildren {
-				if child.ID == otherChild.ID {
-					childrenInCommon++
-				}
-			}
-		}
-
-		if childrenInCommon == 0 {
-			numParentsAbove++
-		}
-	}
-
-	return numParentsAbove
-}
-
+// FindTotalNumParents recursively finds all parents for a given session, including their parents etc...
 func (rw *RaceWeekend) FindTotalNumParents(session *RaceWeekendSession) int {
 	if len(session.ParentIDs) == 0 {
 		return 0
@@ -237,6 +216,7 @@ func (rw *RaceWeekend) FindTotalNumParents(session *RaceWeekendSession) int {
 	return out
 }
 
+// HasTeamNames indicates whether a RaceWeekend entrylist has team names in it
 func (rw *RaceWeekend) HasTeamNames() bool {
 	for _, entrant := range rw.EntryList {
 		if entrant.Team != "" {
@@ -247,18 +227,7 @@ func (rw *RaceWeekend) HasTeamNames() bool {
 	return false
 }
 
-func (rw *RaceWeekend) FindChildren(session *RaceWeekendSession) []*RaceWeekendSession {
-	var children []*RaceWeekendSession
-
-	for _, otherSession := range rw.Sessions {
-		if otherSession.HasParent(session.ID.String()) {
-			children = append(children, otherSession)
-		}
-	}
-
-	return children
-}
-
+// HasParentRecursive looks for otherSessionID in session's parents, grandparents, etc...
 func (rw *RaceWeekend) HasParentRecursive(session *RaceWeekendSession, otherSessionID string) bool {
 	if session.HasParent(otherSessionID) {
 		return true
@@ -286,6 +255,7 @@ var (
 	RaceWeekendSessionNotFound = errors.New("servermanager: race weekend session not found")
 )
 
+// FindSessionByID finds a RaceWeekendSession by its unique identifier
 func (rw *RaceWeekend) FindSessionByID(id string) (*RaceWeekendSession, error) {
 	for _, sess := range rw.Sessions {
 		if sess.ID.String() == id {
@@ -296,38 +266,19 @@ func (rw *RaceWeekend) FindSessionByID(id string) (*RaceWeekendSession, error) {
 	return nil, RaceWeekendSessionNotFound
 }
 
-func (rw *RaceWeekend) GetNumSiblings(session *RaceWeekendSession) int {
-	numSiblings := 0
-
-	for _, sess := range rw.Sessions {
-		for _, parentID := range sess.ParentIDs {
-
-			if parentID == session.ID && len(sess.ParentIDs) > 1 {
-				numSiblings += len(sess.ParentIDs)
-				break
-			}
-		}
-	}
-
-	return numSiblings
-}
-
+// A RaceWeekendSessionEntrant is someone who has entered at least one RaceWeekend event.
 type RaceWeekendSessionEntrant struct {
+	// SessionID is the last session the Entrant participated in
 	SessionID uuid.UUID
-	Results   *SessionResult
-	Car       *SessionCar
-
+	// Results are the results of the last session the Entrant participated in
+	Results *SessionResult
+	// Car is the car from the EntryList that matches the results of the last session the Entrant participated in
+	Car *SessionCar
+	// PitBox is used to determine the starting pitbox of the Entrant.
 	PitBox int
 }
 
-func (se *RaceWeekendSessionEntrant) GetEntrant() *Entrant {
-	e := NewEntrant()
-
-	e.AssignFromResult(se.Results, se.Car)
-
-	return e
-}
-
+// NewRaceWeekendSessionEntrant creates a RaceWeekendSessionEntrant
 func NewRaceWeekendSessionEntrant(previousSessionID uuid.UUID, car *SessionCar, results *SessionResult) *RaceWeekendSessionEntrant {
 	return &RaceWeekendSessionEntrant{
 		SessionID: previousSessionID,
@@ -336,6 +287,17 @@ func NewRaceWeekendSessionEntrant(previousSessionID uuid.UUID, car *SessionCar, 
 	}
 }
 
+// GetEntrant returns the RaceWeekendSessionEntrant as an EntryList Entrant (used for building the final entry_list.ini)
+func (se *RaceWeekendSessionEntrant) GetEntrant() *Entrant {
+	e := NewEntrant()
+
+	e.AssignFromResult(se.Results, se.Car)
+
+	return e
+}
+
+// A RaceWeekendSession is a single session within a RaceWeekend. It can have parent sessions. It must have a RaceConfig.
+// Once completed, a RaceWeekendSession will contain Results from that session.
 type RaceWeekendSession struct {
 	ID      uuid.UUID
 	Created time.Time
@@ -351,6 +313,7 @@ type RaceWeekendSession struct {
 	Results       *SessionResults
 }
 
+// NewRaceWeekendSession creates an empty RaceWeekendSession
 func NewRaceWeekendSession() *RaceWeekendSession {
 	return &RaceWeekendSession{
 		ID:      uuid.New(),
@@ -358,10 +321,12 @@ func NewRaceWeekendSession() *RaceWeekendSession {
 	}
 }
 
+// Name of the RaceWeekendSession
 func (rws *RaceWeekendSession) Name() string {
 	return rws.SessionInfo().Name
 }
 
+// SessionInfo returns the information about the Assetto Corsa Session (i.e. practice, qualifying, race)
 func (rws *RaceWeekendSession) SessionInfo() *SessionConfig {
 	for _, sess := range rws.RaceConfig.Sessions {
 		return sess
@@ -370,6 +335,7 @@ func (rws *RaceWeekendSession) SessionInfo() *SessionConfig {
 	return &SessionConfig{}
 }
 
+// SessionType returns the type of the RaceWeekendSession (practice, qualifying, race)
 func (rws *RaceWeekendSession) SessionType() SessionType {
 	for sessType := range rws.RaceConfig.Sessions {
 		return sessType
@@ -378,32 +344,7 @@ func (rws *RaceWeekendSession) SessionType() SessionType {
 	return ""
 }
 
-func NewDummyDriver(pos int) (*SessionResult, *SessionCar) {
-	driverName := fmt.Sprintf("Driver %d", pos)
-	driverGUID := fmt.Sprintf("%d", pos)
-	driverCar := "dummy_car"
-
-	result := &SessionResult{
-		CarID:      pos,
-		CarModel:   driverCar,
-		DriverGUID: driverGUID,
-		DriverName: driverName,
-	}
-
-	car := &SessionCar{
-		CarID: pos,
-		Driver: SessionDriver{
-			GUID:      driverGUID,
-			GuidsList: []string{driverGUID},
-			Name:      driverName,
-		},
-		Model: driverCar,
-	}
-
-	return result, car
-}
-
-// FinishingGrid returns the finishing grid of the session, if complete. Otherwise, it returns a stubbed driver list from 1 to N
+// FinishingGrid returns the finishing grid of the session, if complete. Otherwise, it returns the EntryList of that session
 func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) []*RaceWeekendSessionEntrant {
 	var out []*RaceWeekendSessionEntrant
 
@@ -447,6 +388,7 @@ func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) []*RaceWe
 	return out
 }
 
+// RemoveParent removes a parent RaceWeekendSession from this session
 func (rws *RaceWeekendSession) RemoveParent(parentID string) {
 	foundIndex := -1
 
@@ -463,6 +405,7 @@ func (rws *RaceWeekendSession) RemoveParent(parentID string) {
 	rws.ParentIDs = append(rws.ParentIDs[:foundIndex], rws.ParentIDs[foundIndex+1:]...)
 }
 
+// ParentsDataAttr returns a html-safe data attribute for identifying parent sessions of a given RaceWeekendSession in the frontend
 func (rws *RaceWeekendSession) ParentsDataAttr() template.HTMLAttr {
 	return template.HTMLAttr(fmt.Sprintf("data-parent-ids='%s'", jsonEncode(rws.ParentIDs)))
 }
@@ -477,10 +420,12 @@ func (rws *RaceWeekendSession) Completed() bool {
 	return !rws.CompletedTime.IsZero() && rws.Results != nil
 }
 
+// IsBase indicates that a RaceWeekendSession has no parent
 func (rws *RaceWeekendSession) IsBase() bool {
 	return rws.ParentIDs == nil || len(rws.ParentIDs) == 0
 }
 
+// HasParent determines if a RaceWeekendSession has a parent with id
 func (rws *RaceWeekendSession) HasParent(id string) bool {
 	for _, parentID := range rws.ParentIDs {
 		if parentID.String() == id {
@@ -493,6 +438,7 @@ func (rws *RaceWeekendSession) HasParent(id string) bool {
 
 var ErrRaceWeekendSessionDependencyIncomplete = errors.New("servermanager: race weekend session dependency incomplete")
 
+// GetRaceWeekendEntryList returns the RaceWeekendEntryList for the given session, built from the parent session(s) results and applied filters.
 func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, overrideFilter *RaceWeekendSessionToSessionFilter, overrideFilterSessionID string) (RaceWeekendEntryList, error) {
 	if rws.IsBase() {
 		// base race weekend sessions just return the race weekend EntryList
@@ -533,6 +479,7 @@ func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, override
 	return entryList, nil
 }
 
+// EntryListToRaceWeekendEntryList converts an EntryList to a RaceWeekendEntryList for a given RaceWeekendSession
 func EntryListToRaceWeekendEntryList(e EntryList, sessionID uuid.UUID) RaceWeekendEntryList {
 	out := make(RaceWeekendEntryList)
 
@@ -545,6 +492,7 @@ func EntryListToRaceWeekendEntryList(e EntryList, sessionID uuid.UUID) RaceWeeke
 	return out
 }
 
+// A RaceWeekendEntryList is a collection of RaceWeekendSessionEntrants
 type RaceWeekendEntryList map[string]*RaceWeekendSessionEntrant
 
 // Add an Entrant to the EntryList
@@ -568,6 +516,7 @@ func (e RaceWeekendEntryList) Delete(entrant *RaceWeekendSessionEntrant) {
 	}
 }
 
+// AsSlice returns the RaceWeekendEntryList as a slice of its RaceWeekendSessionEntrants, ordered by their PitBoxes
 func (e RaceWeekendEntryList) AsSlice() []*RaceWeekendSessionEntrant {
 	var entrants []*RaceWeekendSessionEntrant
 
@@ -582,6 +531,7 @@ func (e RaceWeekendEntryList) AsSlice() []*RaceWeekendSessionEntrant {
 	return entrants
 }
 
+// AsEntryList returns a RaceWeekendEntryList as an EntryList
 func (e RaceWeekendEntryList) AsEntryList() EntryList {
 	entryList := make(EntryList)
 
@@ -592,6 +542,7 @@ func (e RaceWeekendEntryList) AsEntryList() EntryList {
 	return entryList
 }
 
+// ActiveRaceWeekend indicates which RaceWeekend and RaceWeekendSession are currently running on the server.
 type ActiveRaceWeekend struct {
 	Name                     string
 	RaceWeekendID, SessionID uuid.UUID

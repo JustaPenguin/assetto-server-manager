@@ -206,7 +206,7 @@ func (rwm *RaceWeekendManager) SaveRaceWeekendSession(r *http.Request) (raceWeek
 		session = NewRaceWeekendSession()
 		session.RaceConfig = *raceConfig
 
-		raceWeekend.AddSession(session, nil) // @TODO how do we link sessions?
+		raceWeekend.AddSession(session, nil)
 	}
 
 	// empty out previous parent IDs
@@ -285,7 +285,6 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		acSession.IsOpen = 1
 	}
 
-	// @TODO replace normalEvent with something better here
 	return rwm.applyConfigAndStart(session.RaceConfig, entryList, &ActiveRaceWeekend{
 		Name:                raceWeekend.Name,
 		RaceWeekendID:       raceWeekend.ID,
@@ -336,6 +335,10 @@ func (rwm *RaceWeekendManager) UDPCallback(message udp.Message) {
 		if err := rwm.store.UpsertRaceWeekend(raceWeekend); err != nil {
 			logrus.WithError(err).Errorf("Could not persist race weekend: %s", raceWeekend.ID.String())
 			return
+		}
+
+		if err := rwm.process.Stop(); err != nil {
+			logrus.WithError(err).Error("Could not stop assetto server process")
 		}
 	}
 }
