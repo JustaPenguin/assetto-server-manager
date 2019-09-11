@@ -38,7 +38,7 @@
                             {{ end }}
                             <td>{{ prettify $result.CarModel true }}</td>
                             <td>{{ formatDuration ($sessionResults.GetTime $result.TotalTime $result.DriverGUID true) false }}</td>
-                            <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
+                            <td>{{ $sessionResults.GetNumLaps $result.DriverGUID }} laps /
                                 {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
                             <td>
                                 {{ $bestLap := $sessionResults.GetTime $result.BestLap $result.DriverGUID false }}
@@ -126,7 +126,7 @@
                                 {{ end }}
                             </td>
                             <td>{{ formatDuration ($sessionResults.GetAverageLapTime $result.DriverGUID) true }}</td>
-                            <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
+                            <td>{{ $sessionResults.GetNumLaps $result.DriverGUID }} laps /
                                 {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
                             <td>
                                 {{ $hasHandicap := false }}
@@ -183,7 +183,7 @@
                                 {{ end }}
                             </td>
                             <td>{{ formatDuration ($sessionResults.GetAverageLapTime $result.DriverGUID) true }}</td>
-                            <td>{{ $sessionResults.GetLaps $result.DriverGUID }} laps /
+                            <td>{{ $sessionResults.GetNumLaps $result.DriverGUID }} laps /
                                 {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
                             <td>
                                 {{ $hasHandicap := false }}

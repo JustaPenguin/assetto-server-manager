@@ -145,6 +145,9 @@
                                 {{ if $.RaceWeekend.SessionCanBeRun $session }}
                                     <a class="btn btn-success" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/start">Start Session</a>
                                 {{ end }}
+
+
+                                <a class="btn btn-primary" href="#">Manage Entry List</a>
                             {{ else if $session.InProgress }}
                                 <a onClick="return confirm('I understand that this will restart this entire session and any current results will be lost.') "
                                    class="btn btn-warning" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/restart">

@@ -253,10 +253,11 @@ func (rwh *RaceWeekendHandler) manageFilters(w http.ResponseWriter, r *http.Requ
 	}
 
 	rwh.viewRenderer.MustLoadPartial(w, r, "race-weekend/popups/manage-filters.html", map[string]interface{}{
-		"RaceWeekend":   raceWeekend,
-		"ParentSession": parentSession,
-		"ChildSession":  childSession,
-		"Filter":        filter,
+		"RaceWeekend":      raceWeekend,
+		"ParentSession":    parentSession,
+		"ChildSession":     childSession,
+		"Filter":           filter,
+		"AvailableSorters": RaceWeekendEntryListSorters,
 	})
 }
 

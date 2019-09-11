@@ -305,6 +305,7 @@ type RaceWeekendSession struct {
 	Deleted time.Time
 
 	ParentIDs []uuid.UUID
+	SortType  string
 
 	RaceConfig CurrentRaceConfig
 
@@ -356,6 +357,11 @@ func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) []*RaceWe
 
 	if rws.Completed() {
 		for _, result := range rws.Results.Result {
+			if result.DriverGUID == "" || result.Disqualified {
+				// filter out invalid results
+				continue
+			}
+
 			car, err := rws.Results.FindCarByGUIDAndModel(result.DriverGUID, result.CarModel)
 
 			if err != nil {
@@ -376,13 +382,13 @@ func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) []*RaceWe
 				}
 			}
 
-			if !foundEntrant {
+			if !foundEntrant && entrant.Car.GetGUID() != "" {
 				out = append(out, NewRaceWeekendSessionEntrant(rws.ID, entrant.Car, entrant.Results))
 			}
 		}
 	} else {
 		// if a session is not completed, we work on the assumption that the finishing grid is equal to the entrylist
-		out = entryList.AsSlice()
+		out = entryList.Sorted()
 	}
 
 	return out
@@ -445,18 +451,18 @@ func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, override
 		return EntryListToRaceWeekendEntryList(rw.EntryList, rws.ID), nil
 	}
 
-	entryList := make(RaceWeekendEntryList)
+	entryList := make(RaceWeekendEntryList, 0)
 
 	for _, parentSessionID := range rws.ParentIDs {
 		parentSession, err := rw.FindSessionByID(parentSessionID.String())
 
 		if err != nil {
-			return nil, err // @TODO return or continue?
+			return nil, err
 		}
 
 		if overrideFilter != nil && parentSessionID.String() == overrideFilterSessionID {
 			// override filters are provided when users are modifying filters for their race weekend setups
-			err = overrideFilter.Filter(parentSessionID, parentSession.FinishingGrid(rw), entryList)
+			err = overrideFilter.Filter(parentSession, rws, parentSession.FinishingGrid(rw), &entryList)
 
 			if err != nil {
 				return nil, err
@@ -465,10 +471,10 @@ func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, override
 			sessionToSessionFilter, err := rw.GetFilterOrUseDefault(parentSessionID.String(), rws.ID.String())
 
 			if err != nil {
-				return nil, err // @TODO return or continue?
+				return nil, err
 			}
 
-			err = sessionToSessionFilter.Filter(parentSessionID, parentSession.FinishingGrid(rw), entryList)
+			err = sessionToSessionFilter.Filter(parentSession, rws, parentSession.FinishingGrid(rw), &entryList)
 
 			if err != nil {
 				return nil, err
@@ -476,12 +482,19 @@ func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, override
 		}
 	}
 
+	// sort entryList here
+	sorter := GetRaceWeekendEntryListSort(rws.SortType)
+
+	if err := sorter(rws, entryList); err != nil {
+		return nil, err
+	}
+
 	return entryList, nil
 }
 
 // EntryListToRaceWeekendEntryList converts an EntryList to a RaceWeekendEntryList for a given RaceWeekendSession
 func EntryListToRaceWeekendEntryList(e EntryList, sessionID uuid.UUID) RaceWeekendEntryList {
-	out := make(RaceWeekendEntryList)
+	out := make(RaceWeekendEntryList, 0, len(e))
 
 	for _, entrant := range e {
 		rwe := NewRaceWeekendSessionEntrant(sessionID, entrant.AsSessionCar(), entrant.AsSessionResult())
@@ -493,34 +506,40 @@ func EntryListToRaceWeekendEntryList(e EntryList, sessionID uuid.UUID) RaceWeeke
 }
 
 // A RaceWeekendEntryList is a collection of RaceWeekendSessionEntrants
-type RaceWeekendEntryList map[string]*RaceWeekendSessionEntrant
+type RaceWeekendEntryList []*RaceWeekendSessionEntrant
 
 // Add an Entrant to the EntryList
-func (e RaceWeekendEntryList) Add(entrant *RaceWeekendSessionEntrant) {
-	e.AddInPitBox(entrant, len(e))
+func (e *RaceWeekendEntryList) Add(entrant *RaceWeekendSessionEntrant) {
+	e.AddInPitBox(entrant, len(*e))
 }
 
 // AddInPitBox adds an Entrant in a specific pitbox - overwriting any entrant that was in that pitbox previously.
-func (e RaceWeekendEntryList) AddInPitBox(entrant *RaceWeekendSessionEntrant, pitBox int) {
+func (e *RaceWeekendEntryList) AddInPitBox(entrant *RaceWeekendSessionEntrant, pitBox int) {
 	entrant.PitBox = pitBox
-	e[fmt.Sprintf("CAR_%d", pitBox)] = entrant
+	*e = append(*e, entrant)
 }
 
 // Remove an Entrant from the EntryList
-func (e RaceWeekendEntryList) Delete(entrant *RaceWeekendSessionEntrant) {
-	for k, v := range e {
+func (e *RaceWeekendEntryList) Delete(entrant *RaceWeekendSessionEntrant) {
+	toDelete := -1
+
+	for k, v := range *e {
 		if v == entrant {
-			delete(e, k)
-			return
+			toDelete = k
+			break
 		}
+	}
+
+	if toDelete >= 0 {
+		*e = append((*e)[:toDelete], (*e)[toDelete+1:]...)
 	}
 }
 
-// AsSlice returns the RaceWeekendEntryList as a slice of its RaceWeekendSessionEntrants, ordered by their PitBoxes
-func (e RaceWeekendEntryList) AsSlice() []*RaceWeekendSessionEntrant {
+// Sorted returns the RaceWeekendEntryList ordered by Entrant PitBoxes
+func (e *RaceWeekendEntryList) Sorted() []*RaceWeekendSessionEntrant {
 	var entrants []*RaceWeekendSessionEntrant
 
-	for _, x := range e {
+	for _, x := range *e {
 		entrants = append(entrants, x)
 	}
 

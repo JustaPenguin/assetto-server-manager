@@ -513,7 +513,7 @@ func (rwm *RaceWeekendManager) PreviewGrid(raceWeekendID, parentSessionID, child
 		return nil, err
 	}
 
-	for _, entrant := range entryList.AsSlice() {
+	for _, entrant := range entryList.Sorted() {
 		sess, err := raceWeekend.FindSessionByID(entrant.SessionID.String())
 
 		if err != nil {
