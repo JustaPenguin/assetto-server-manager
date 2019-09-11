@@ -28,7 +28,7 @@ type SessionResults struct {
 	Result         []*SessionResult `json:"Result"`
 	TrackConfig    string           `json:"TrackConfig"`
 	TrackName      string           `json:"TrackName"`
-	Type           SessionType           `json:"Type"`
+	Type           SessionType      `json:"Type"`
 	Date           time.Time        `json:"Date"`
 	SessionFile    string           `json:"SessionFile"`
 	ChampionshipID string           `json:"ChampionshipID"`
@@ -489,7 +489,7 @@ func (s *SessionResults) GetLastLapPos(driverGuid string) int {
 func (s *SessionResults) GetDriverPosition(driverGuid string) int {
 	for i := range s.Result {
 		if s.Result[i].DriverGUID == driverGuid {
-			return i+1
+			return i + 1
 		}
 	}
 
