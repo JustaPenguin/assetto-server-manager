@@ -32,14 +32,14 @@ var RaceWeekendEntryListSorters = []RaceWeekendEntryListSorterDescription{
 		SortFunc: TotalRaceTimeRaceWeekendEntryListSort,
 	},
 	{
-		Name:     "Least Collisions",
-		Key:      "least_collisions",
-		SortFunc: LeastCollisionsRaceWeekendEntryListSort,
+		Name:     "Fewest Collisions",
+		Key:      "fewest_collisions",
+		SortFunc: FewestCollisionsRaceWeekendEntryListSort,
 	},
 	{
-		Name:     "Least Cuts",
-		Key:      "least_cuts",
-		SortFunc: LeastCutsRaceWeekendEntryListSort,
+		Name:     "Fewest Cuts",
+		Key:      "fewest_cuts",
+		SortFunc: FewestCutsRaceWeekendEntryListSort,
 	},
 	{
 		Name:     "Safety (Collisions then Cuts)",
@@ -127,7 +127,7 @@ func lessBestLapTime(session *RaceWeekendSession, entrantI, entrantJ *RaceWeeken
 	return entrantI.Results.BestLap < entrantJ.Results.BestLap
 }
 
-func LeastCollisionsRaceWeekendEntryListSort(session *RaceWeekendSession, entrants []*RaceWeekendSessionEntrant) error {
+func FewestCollisionsRaceWeekendEntryListSort(session *RaceWeekendSession, entrants []*RaceWeekendSessionEntrant) error {
 	sort.Slice(entrants, func(i, j int) bool {
 		entrantI, entrantJ := entrants[i], entrants[j]
 		entrantICrashes := session.Results.GetCrashes(entrantI.Car.Driver.GUID)
@@ -147,7 +147,7 @@ func LeastCollisionsRaceWeekendEntryListSort(session *RaceWeekendSession, entran
 	return nil
 }
 
-func LeastCutsRaceWeekendEntryListSort(session *RaceWeekendSession, entrants []*RaceWeekendSessionEntrant) error {
+func FewestCutsRaceWeekendEntryListSort(session *RaceWeekendSession, entrants []*RaceWeekendSessionEntrant) error {
 	sort.Slice(entrants, func(i, j int) bool {
 		entrantI, entrantJ := entrants[i], entrants[j]
 		entrantICuts := session.Results.GetCuts(entrantI.Car.Driver.GUID)

@@ -9,7 +9,8 @@ func (f FilterError) Error() string {
 type RaceWeekendSessionToSessionFilter struct {
 	ResultStart     int
 	ResultEnd       int
-	ReverseEntrants bool
+
+	NumEntrantsToReverse int
 
 	EntryListStart int
 
@@ -26,10 +27,26 @@ func (f RaceWeekendSessionToSessionFilter) Filter(parentSession, childSession *R
 			return err
 		}
 
-		if f.ReverseEntrants {
-			for i := len(parentSessionResults)/2 - 1; i >= 0; i-- {
-				opp := len(parentSessionResults) - 1 - i
-				parentSessionResults[i], parentSessionResults[opp] = parentSessionResults[opp], parentSessionResults[i]
+		if f.NumEntrantsToReverse != 0 {
+			if f.NumEntrantsToReverse > len(parentSessionResults) {
+				f.NumEntrantsToReverse = len(parentSessionResults)
+			}
+
+			var toReverse []*RaceWeekendSessionEntrant
+
+			if f.NumEntrantsToReverse > 0 {
+				toReverse = parentSessionResults[:f.NumEntrantsToReverse]
+			} else {
+				toReverse = parentSessionResults
+			}
+
+			for i := len(toReverse)/2 - 1; i >= 0; i-- {
+				opp := len(toReverse) - 1 - i
+				toReverse[i], toReverse[opp] = toReverse[opp], toReverse[i]
+			}
+
+			for i := 0; i < len(toReverse); i++ {
+				parentSessionResults[i] = toReverse[i]
 			}
 		}
 	}

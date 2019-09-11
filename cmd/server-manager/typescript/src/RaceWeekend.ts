@@ -178,7 +178,7 @@ export class RaceWeekendSessionTransition {
 
     private resultStart!: number;
     private resultEnd!: number;
-    private reverseOrder!: boolean;
+    private reverseNumber!: number;
     private gridStart!: number;
     private sortType!: string;
 
@@ -209,7 +209,7 @@ export class RaceWeekendSessionTransition {
         return JSON.stringify({
             ResultStart: this.resultStart,
             ResultEnd: this.resultEnd,
-            ReverseEntrants: this.reverseOrder,
+            NumEntrantsToReverse: this.reverseNumber,
             EntryListStart: this.gridStart,
             SortType: this.sortType,
         })
@@ -218,7 +218,7 @@ export class RaceWeekendSessionTransition {
     private updateValues(): void {
         this.resultStart = parseInt(this.$elem.find("#ResultsStart").val() as string);
         this.resultEnd = parseInt(this.$elem.find("#ResultsEnd").val() as string);
-        this.reverseOrder = this.$elem.find("#ReverseGrid").is(":checked");
+        this.reverseNumber = parseInt(this.$elem.find("#ReverseGrid").val() as string);
         this.gridStart = parseInt(this.$elem.find("#GridStart").val() as string);
         this.sortType = this.$elem.find("#ResultsSort").val() as string;
 
