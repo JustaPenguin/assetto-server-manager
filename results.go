@@ -28,7 +28,7 @@ type SessionResults struct {
 	Result         []*SessionResult `json:"Result"`
 	TrackConfig    string           `json:"TrackConfig"`
 	TrackName      string           `json:"TrackName"`
-	Type           string           `json:"Type"`
+	Type           SessionType           `json:"Type"`
 	Date           time.Time        `json:"Date"`
 	SessionFile    string           `json:"SessionFile"`
 	ChampionshipID string           `json:"ChampionshipID"`

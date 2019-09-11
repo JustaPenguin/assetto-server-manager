@@ -187,7 +187,7 @@ func (rs *ScheduledRacesHandler) allScheduledRacesICalHandler(w http.ResponseWri
 	}
 }
 
-type calendarObject struct {
+type CalendarObject struct {
 	ID               string    `json:"id"`
 	GroupID          string    `json:"groupId"`
 	AllDay           bool      `json:"allDay"`
@@ -231,10 +231,10 @@ func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter, r *http.Req
 		return err
 	}
 
-	var calendarObjects []calendarObject
+	var calendarObjects []CalendarObject
 
 	if len(scheduled) == 0 {
-		calendarObjects = append(calendarObjects, calendarObject{
+		calendarObjects = append(calendarObjects, CalendarObject{
 			ID:               "no-events",
 			GroupID:          "no-events",
 			AllDay:           false,
@@ -288,6 +288,10 @@ func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter, r *http.Req
 
 	scheduled = append(scheduled, recurring...)
 
+	return BuildCalObject(w, scheduled, calendarObjects)
+}
+
+func BuildCalObject(w http.ResponseWriter, scheduled []ScheduledEvent, calendarObjects []CalendarObject) error {
 	for _, scheduledEvent := range scheduled {
 
 		var prevSessionTime time.Duration
@@ -375,13 +379,13 @@ func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter, r *http.Req
 
 			textColor = "#303030"
 
-			calendarObjects = append(calendarObjects, calendarObject{
+			calendarObjects = append(calendarObjects, CalendarObject{
 				ID:               scheduledEvent.GetID().String() + session.Name,
 				GroupID:          scheduledEvent.GetID().String(),
 				AllDay:           false,
 				Start:            start,
 				End:              end,
-				Title:            generateSummary(scheduledEvent.GetRaceSetup(), session.Name) + " " + scheduledEvent.GetSummary(),
+				Title:            GenerateSummary(scheduledEvent.GetRaceSetup(), session.Name) + " " + scheduledEvent.GetSummary(),
 				Description:      carList(scheduledEvent.GetRaceSetup().Cars) + ": " + scheduledEvent.ReadOnlyEntryList().Entrants(),
 				URL:              pageURL,
 				SignUpURL:        signUpURL,
@@ -403,7 +407,7 @@ func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter, r *http.Req
 	return json.NewEncoder(w).Encode(calendarObjects)
 }
 
-func generateSummary(raceSetup CurrentRaceConfig, eventType string) string {
+func GenerateSummary(raceSetup CurrentRaceConfig, eventType string) string {
 	var summary string
 
 	trackInfo := trackInfo(raceSetup.Track, raceSetup.TrackLayout)

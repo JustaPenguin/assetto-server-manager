@@ -99,14 +99,14 @@ func main() {
 		return
 	}
 
-	/*sessions, err := servermanager.ListAllResults()
+	/*championships, err := store.ListChampionships()
 
 	if err != nil {
 		logrus.Fatal(err)
 	}
 
-	for _, session := range sessions {
-		go servermanager.ACSRSendResult(session.SessionFile + ".json")
+	for _, championship := range championships {
+		go servermanager.ACSRSendResult(championship)
 	}*/
 
 	logrus.Infof("starting assetto server manager on: %s", config.HTTP.Hostname)

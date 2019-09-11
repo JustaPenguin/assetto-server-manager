@@ -58,7 +58,15 @@ func (cm *ChampionshipManager) LoadChampionship(id string) (*Championship, error
 }
 
 func (cm *ChampionshipManager) UpsertChampionship(c *Championship) error {
-	return cm.raceStore.UpsertChampionship(c)
+	err := cm.raceStore.UpsertChampionship(c)
+
+	if err != nil {
+		return err
+	}
+
+	ACSRSendResult(c)
+
+	return nil
 }
 
 func (cm *ChampionshipManager) DeleteChampionship(id string) error {
@@ -763,6 +771,12 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			if err != nil {
 				logrus.Errorf("Could not stop Assetto Process, err: %s", err)
 			}
+		}
+
+		// @TODO add acsr bool to championship, check here
+		// @TODO acsr bool should also force locked entry list + sign up forms
+		if config != nil && config.ACSR.Enabled {
+			go ACSRSendResult(championship)
 		}
 	default:
 		saveChampionship = false
