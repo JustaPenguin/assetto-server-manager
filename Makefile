@@ -13,11 +13,11 @@ test:
 	mkdir -p cmd/server-manager/assetto/cfg
 	mkdir -p cmd/server-manager/assetto/results
 	cp -R fixtures/results/*.json cmd/server-manager/assetto/results
-	go test -mod vendor
+	go test
 
 generate:
 	go get -u github.com/mjibson/esc
-	go generate -mod vendor .
+	go generate .
 
 assets:
 	$(MAKE) -C cmd/server-manager assets

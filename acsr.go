@@ -4,34 +4,46 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
-	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 )
 
-// Sends a result file to ACSR, called OnEndSession
-func ACSRSendResult(sessionFile string) {
-	result, err := LoadResult(filepath.Base(sessionFile))
+// Sends a championship to ACSR, called OnEndSession and when a championship is created
+func ACSRSendResult(championship *Championship) {
+	for _, event := range championship.Events {
+		for _, session := range event.Sessions {
+			if session.Completed() {
+				session.Results.Anonymize()
+			}
+		}
+	}
+
+	output, err := json.Marshal(championship)
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
+
+	client := http.Client{}
+
+	req, err := http.NewRequest("POST", config.ACSR.URL+"/submit-result", bytes.NewBuffer(output))
 
 	if err != nil {
 		logrus.Error(err)
 		return
 	}
 
-	result.Anonymize()
+	q := req.URL.Query()
+	q.Add("baseurl", config.HTTP.BaseURL)
+	req.URL.RawQuery = q.Encode()
+	req.Header.Set("Content-Type", "application/json")
 
-	output, err := json.Marshal(result)
-	if err != nil {
-		logrus.Error(err)
-		return
-	}
-
-	_, err = http.Post(config.ACSR.URL+"/submit-result", "application/json", bytes.NewBuffer(output))
+	_, err = client.Do(req)
 
 	if err != nil {
 		logrus.Error(err)
 		return
 	}
 
-	logrus.Debug("result file sent to ACSR")
+	logrus.Debug("updated championship sent to ACSR")
 }

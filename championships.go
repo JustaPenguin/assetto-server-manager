@@ -297,6 +297,14 @@ func (c *Championship) GetPlayerSummary(guid string) string {
 	return out
 }
 
+func (c *Championship) GetURL() string {
+	if config.HTTP.BaseURL != "" {
+		return config.HTTP.BaseURL + "/championship/" + c.ID.String()
+	} else {
+		return ""
+	}
+}
+
 // IsMultiClass is true if the Championship has more than one Class
 func (c *Championship) IsMultiClass() bool {
 	return len(c.Classes) > 1
