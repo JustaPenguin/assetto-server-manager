@@ -7,14 +7,41 @@ func (f FilterError) Error() string {
 }
 
 type RaceWeekendSessionToSessionFilter struct {
-	ResultStart     int
-	ResultEnd       int
+	ResultStart int
+	ResultEnd   int
 
 	NumEntrantsToReverse int
 
 	EntryListStart int
 
 	SortType string
+}
+
+func reverseEntrants(numToReverse int, entrants []*RaceWeekendSessionEntrant) {
+	if numToReverse == 0 {
+		return
+	}
+
+	if numToReverse > len(entrants) {
+		numToReverse = len(entrants)
+	}
+
+	var toReverse []*RaceWeekendSessionEntrant
+
+	if numToReverse > 0 {
+		toReverse = entrants[:numToReverse]
+	} else {
+		toReverse = entrants
+	}
+
+	for i := len(toReverse)/2 - 1; i >= 0; i-- {
+		opp := len(toReverse) - 1 - i
+		toReverse[i], toReverse[opp] = toReverse[opp], toReverse[i]
+	}
+
+	for i := 0; i < len(toReverse); i++ {
+		entrants[i] = toReverse[i]
+	}
 }
 
 // Filter takes a set of RaceWeekendSessionEntrants formed by the results of the parent session and filters them into a child session entry list.
@@ -27,28 +54,7 @@ func (f RaceWeekendSessionToSessionFilter) Filter(parentSession, childSession *R
 			return err
 		}
 
-		if f.NumEntrantsToReverse != 0 {
-			if f.NumEntrantsToReverse > len(parentSessionResults) {
-				f.NumEntrantsToReverse = len(parentSessionResults)
-			}
-
-			var toReverse []*RaceWeekendSessionEntrant
-
-			if f.NumEntrantsToReverse > 0 {
-				toReverse = parentSessionResults[:f.NumEntrantsToReverse]
-			} else {
-				toReverse = parentSessionResults
-			}
-
-			for i := len(toReverse)/2 - 1; i >= 0; i-- {
-				opp := len(toReverse) - 1 - i
-				toReverse[i], toReverse[opp] = toReverse[opp], toReverse[i]
-			}
-
-			for i := 0; i < len(toReverse); i++ {
-				parentSessionResults[i] = toReverse[i]
-			}
-		}
+		reverseEntrants(f.NumEntrantsToReverse, parentSessionResults)
 	}
 
 	resultStart, resultEnd, entryListStart := f.ResultStart, f.ResultEnd, f.EntryListStart

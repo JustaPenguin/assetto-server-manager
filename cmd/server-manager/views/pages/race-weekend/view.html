@@ -147,7 +147,7 @@
                                 {{ end }}
 
 
-                                <a class="btn btn-primary" href="#">Manage Entry List</a>
+                                <a class="btn btn-primary manage-entrylist" href="#">Manage Entry List</a>
                             {{ else if $session.InProgress }}
                                 <a onClick="return confirm('I understand that this will restart this entire session and any current results will be lost.') "
                                    class="btn btn-warning" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/restart">
@@ -182,6 +182,8 @@
                                     {{ end }}
                                 </div>
                             </div>
+                        {{ else }}
+                            <a class="btn btn-secondary manage-entrylist" href="#">View Entry List</a>
                         {{ end }}
                     </div>
                 </div>

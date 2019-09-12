@@ -3,7 +3,6 @@ package servermanager
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"net/http"
 	"time"
 
@@ -243,13 +242,17 @@ func (rwh *RaceWeekendHandler) manageFilters(w http.ResponseWriter, r *http.Requ
 	raceWeekend, parentSession, childSession, err := rwh.raceWeekendManager.FindConnectedSessions(raceWeekendID, parentSessionID, childSessionID)
 
 	if err != nil {
-		panic(err) // @TODO
+		logrus.WithError(err).Errorf("Couldn't load connected sessions")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	filter, err := raceWeekend.GetFilterOrUseDefault(parentSessionID, childSessionID)
 
 	if err != nil {
-		panic(err) // @TODO
+		logrus.WithError(err).Errorf("Couldn't load session filters")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	rwh.viewRenderer.MustLoadPartial(w, r, "race-weekend/popups/manage-filters.html", map[string]interface{}{
@@ -269,20 +272,19 @@ func (rwh *RaceWeekendHandler) gridPreview(w http.ResponseWriter, r *http.Reques
 	var filter *RaceWeekendSessionToSessionFilter
 
 	if err := json.NewDecoder(r.Body).Decode(&filter); err != nil {
-		panic(err) // @TODO
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
-
-	spew.Dump(filter)
 
 	previewResponse, err := rwh.raceWeekendManager.PreviewGrid(raceWeekendID, parentSessionID, childSessionID, filter)
 
 	if err != nil {
-		panic(err) // @TODO
+		logrus.WithError(err).Errorf("Couldn't preview session grid")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
-
-	spew.Dump(previewResponse) // @TODO
 
 	_ = json.NewEncoder(w).Encode(previewResponse)
 }
@@ -295,11 +297,65 @@ func (rwh *RaceWeekendHandler) updateGrid(w http.ResponseWriter, r *http.Request
 	var filter *RaceWeekendSessionToSessionFilter
 
 	if err := json.NewDecoder(r.Body).Decode(&filter); err != nil {
-		panic(err) // @TODO
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	if err := rwh.raceWeekendManager.UpdateGrid(raceWeekendID, parentSessionID, childSessionID, filter); err != nil {
+		logrus.WithError(err).Errorf("Couldn't update session grid")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (rwh *RaceWeekendHandler) manageEntryList(w http.ResponseWriter, r *http.Request) {
+	raceWeekendID := chi.URLParam(r, "raceWeekendID")
+	sessionID := r.URL.Query().Get("sessionID")
+
+	raceWeekend, session, err := rwh.raceWeekendManager.FindSession(raceWeekendID, sessionID)
+
+	if err != nil {
 		panic(err) // @TODO
+	}
+
+	rwh.viewRenderer.MustLoadPartial(w, r, "race-weekend/popups/manage-entrylist.html", map[string]interface{}{
+		"RaceWeekend":      raceWeekend,
+		"Session":          session,
+		"AvailableSorters": RaceWeekendEntryListSorters,
+	})
+}
+
+func (rwh *RaceWeekendHandler) entryListPreview(w http.ResponseWriter, r *http.Request) {
+	raceWeekendID := chi.URLParam(r, "raceWeekendID")
+	sessionID := r.URL.Query().Get("sessionID")
+	sortType := r.URL.Query().Get("sortType")
+	reverseNumber := formValueAsInt(r.URL.Query().Get("reverseGrid"))
+
+	previewResponse, err := rwh.raceWeekendManager.PreviewSessionEntryList(raceWeekendID, sessionID, sortType, reverseNumber)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Couldn't preview session grid")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+
+	_ = json.NewEncoder(w).Encode(previewResponse)
+}
+
+func (rwh *RaceWeekendHandler) updateEntryList(w http.ResponseWriter, r *http.Request) {
+	raceWeekendID := chi.URLParam(r, "raceWeekendID")
+	parentSessionID := r.URL.Query().Get("sessionID")
+	sortType := r.URL.Query().Get("sortType")
+	reverseNumber := formValueAsInt(r.URL.Query().Get("reverseGrid"))
+
+	if err := rwh.raceWeekendManager.UpdateSessionSorting(raceWeekendID, parentSessionID, sortType, reverseNumber); err != nil {
+		logrus.WithError(err).Errorf("Couldn't update session entrylist sorting")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	w.WriteHeader(http.StatusCreated)

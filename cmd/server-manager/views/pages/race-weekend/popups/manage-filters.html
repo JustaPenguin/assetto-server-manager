@@ -27,7 +27,7 @@
                                     <p>Sort the drivers from the <strong>{{ $.ParentSession.Name }}</strong> Results by:</p>
 
                                     <div class="form-group row">
-                                        <label for="ResultsSort" class="col-sm-4 col-form-label">Sort</label>
+                                        <label for="ResultsSort" class="col-sm-4 col-form-label">Sort By</label>
 
                                         <div class="col-sm-8">
                                             {{ if WriteAccess }}
@@ -52,8 +52,6 @@
 
                                     <div class="form-group row">
                                         <label for="ReverseGrid" class="col-sm-4 col-form-label">Reverse?</label>
-
-                                        <!-- reverse what? from N.. M ? -->
 
                                         <div class="col-sm-8">
                                             <input
@@ -202,7 +200,7 @@
                 {{ if WriteAccess }}
                     <button type="button" class="btn btn-primary" id="save-filters">Save changes</button>
                 {{ end }}
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ if WriteAccess }}Cancel{{ else }}Close{{ end }}</button>
             </div>
         </div>
     </div>

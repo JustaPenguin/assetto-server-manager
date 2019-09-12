@@ -4,272 +4,339 @@ import dagre, {graphlib} from "dagre";
 
 declare var RaceWeekendID: string;
 
-export class RaceWeekendSession {
-    private $raceWeekendSession: JQuery<HTMLElement>;
+export namespace RaceWeekend {
+    export class Session {
+        private readonly $raceWeekendSession: JQuery<HTMLElement>;
 
-    public constructor() {
-        this.$raceWeekendSession = $("#race-weekend-session");
+        public constructor() {
+            this.$raceWeekendSession = $("#race-weekend-session");
 
-        if (!this.$raceWeekendSession.length) {
-            return;
+            if (!this.$raceWeekendSession.length) {
+                return;
+            }
+
+            this.initSessionTypeSwitch();
         }
 
-        this.initSessionTypeSwitch();
-    }
+        private initSessionTypeSwitch(): void {
+            const $sessionSwitcher = this.$raceWeekendSession.find("#SessionType");
 
-    private initSessionTypeSwitch(): void {
-        const $sessionSwitcher = this.$raceWeekendSession.find("#SessionType");
+            $sessionSwitcher.on("change", (e: ChangeEvent) => {
+                const val = $(e.currentTarget).val();
+                this.$raceWeekendSession.find(".sessions .tab-pane").removeClass(["show", "active"]);
 
-        $sessionSwitcher.on("change", (e: ChangeEvent) => {
-            const val = $(e.currentTarget).val();
-            this.$raceWeekendSession.find(".sessions .tab-pane").removeClass(["show", "active"]);
+                const $newSession = this.$raceWeekendSession.find("#session-" + val);
+                $newSession.addClass(["show", "active"]);
+                $newSession.find(".session-details").show();
 
-            const $newSession = this.$raceWeekendSession.find("#session-" + val);
-            $newSession.addClass(["show", "active"]);
-            $newSession.find(".session-details").show();
-
-            this.$raceWeekendSession.find(".session-enabler").prop("checked", false);
-            this.$raceWeekendSession.find("#" + val + "\\.Enabled").prop("checked", true);
-        });
-    }
-}
-
-export class RaceWeekendView {
-    private jsp: jsPlumbInstance = jsPlumb.getInstance();
-
-    public constructor() {
-        this.jsp.bind("ready", () => {
-            this.initJsPlumb();
-        });
-
-        $(".view-results").on("click", this.onViewResultsClick);
-    }
-
-    private initJsPlumb(): void {
-        this.jsp.importDefaults({
-            ConnectionsDetachable: false,
-            ReattachConnections: false,
-        });
-
-        $(".race-weekend-session").each((index, element) => {
-            const $session = $(element);
-
-            // @ts-ignore
-            this.jsp.draggable(element, {grid: [10, 10]});
-
-            const parentIDs = JSON.parse($session.data("parent-ids")) as string[];
-
-            for (let parentID of parentIDs) {
-                let conn = this.jsp.connect({
-                    source: parentID,
-                    target: $session.attr("id"),
-                    anchor: "AutoDefault",
-                    // @ts-ignore
-                    endpoint: ["Blank", {width: 10, height: 10}],
-
-                    connector: ["Flowchart", {}],
-
-                });
-
-                if (conn) {
-                    // @ts-ignore
-                    conn.addOverlay(["PlainArrow", {width: 20, height: 20, id: "arrow"}]);
-                }
-            }
-        });
-
-        this.jsp.bind("click", (conn: Connection, originalEvent: Event): void => {
-            const [ep1, ep2] = conn.endpoints;
-
-            let session1ID = $(ep1.getElement()).attr("id");
-            let session2ID = $(ep2.getElement()).attr("id");
-
-            this.openManageFilterModal(session1ID!, session2ID!);
-        });
-
-        // construct dagre graph from JsPlumb graph
-        const g = new graphlib.Graph();
-        g.setGraph({
-            nodesep: 550,
-        });
-        g.setDefaultEdgeLabel(function () {
-            return {};
-        });
-
-        $('.race-weekend-session').each((idx, node) => {
-            const n = $(node);
-            g.setNode(n.attr('id')!, {
-                width: Math.round(n.width()!),
-                height: Math.round(n.height()!)
+                this.$raceWeekendSession.find(".session-enabler").prop("checked", false);
+                this.$raceWeekendSession.find("#" + val + "\\.Enabled").prop("checked", true);
             });
-        });
+        }
+    }
 
-        for (const edge of this.jsp.getAllConnections() as any[]) {
-            g.setEdge(
-                edge.source.id,
-                edge.target.id
-            );
+    export class View {
+        private readonly jsp: jsPlumbInstance = jsPlumb.getInstance();
+
+        public constructor() {
+            this.jsp.bind("ready", () => {
+                this.initJsPlumb();
+            });
+
+            $(".view-results").on("click", this.onViewResultsClick);
+            $(".manage-entrylist").on("click", this.openManageEntryListModal);
         }
 
-        // calculate node positions
-        dagre.layout(g);
+        private initJsPlumb(): void {
+            this.jsp.importDefaults({
+                ConnectionsDetachable: false,
+                ReattachConnections: false,
+            });
 
-        $("#race-weekend-graph-container").css({
-            "height": (g.graph().height! + 200) + "px",
-            "width": (g.graph().width! + 350) + "px",
-        });
+            $(".race-weekend-session").each((index, element) => {
+                const $session = $(element);
 
-        // apply node positions
-        g.nodes().forEach((n) => {
-            let $n = $('#' + n);
-            $n.css('left', g.node(n).x + 'px');
-            $n.css('top', g.node(n).y + 'px');
-        });
+                // @ts-ignore
+                this.jsp.draggable(element, {grid: [10, 10]});
 
-        this.jsp.repaintEverything();
-    }
+                const parentIDs = JSON.parse($session.data("parent-ids")) as string[];
 
-    private openManageFilterModal(session1ID: string, session2ID: string): void {
-        const modalContentURL = `/race-weekend/${RaceWeekendID}/filters?parentSessionID=${session1ID}&childSessionID=${session2ID}`;
+                for (let parentID of parentIDs) {
+                    let conn = this.jsp.connect({
+                        source: parentID,
+                        target: $session.attr("id"),
+                        anchor: "AutoDefault",
+                        // @ts-ignore
+                        endpoint: ["Blank", {width: 10, height: 10}],
 
-        $.get(modalContentURL).then((data: string) => {
-            let $filtersModal = $("#filters-modal");
-            $filtersModal.html(data);
-            $filtersModal.find("input[type='checkbox']").bootstrapSwitch();
-            $filtersModal.modal();
+                        connector: ["Flowchart", {}],
 
-            new RaceWeekendSessionTransition($filtersModal, session1ID, session2ID);
-        });
-    }
+                    });
 
-    private openManageEntryListModal(sessionID: string): void {
-        const modalContentURL = `/race-weekend/${RaceWeekendID}/entrylist?sessionID=${sessionID}`;
+                    if (conn) {
+                        // @ts-ignore
+                        conn.addOverlay(["PlainArrow", {width: 20, height: 20, id: "arrow"}]);
+                    }
+                }
+            });
 
-        $.get(modalContentURL).then((data: string) => {
-            let $filtersModal = $("#filters-modal");
-            $filtersModal.html(data);
-            $filtersModal.find("input[type='checkbox']").bootstrapSwitch();
-            $filtersModal.modal();
+            this.jsp.bind("click", (conn: Connection, originalEvent: Event): void => {
+                const [ep1, ep2] = conn.endpoints;
 
-            //new RaceWeekendEntryListPreview(sessionID);
-        });
-    }
+                let session1ID = $(ep1.getElement()).attr("id");
+                let session2ID = $(ep2.getElement()).attr("id");
 
-    private onViewResultsClick(e: JQuery.ClickEvent) {
-        e.preventDefault();
+                this.openManageFilterModal(session1ID!, session2ID!);
+            });
 
-        let $raceWeekendSession = $(this).closest(".race-weekend-session");
-        let sessionID = $raceWeekendSession.attr("id");
+            // construct dagre graph from JsPlumb graph
+            const g = new graphlib.Graph();
+            g.setGraph({
+                nodesep: 550,
+            });
+            g.setDefaultEdgeLabel(function () {
+                return {};
+            });
 
-        let $results = $("#results-" + sessionID);
+            $('.race-weekend-session').each((idx, node) => {
+                const n = $(node);
+                g.setNode(n.attr('id')!, {
+                    width: Math.round(n.width()!),
+                    height: Math.round(n.height()!)
+                });
+            });
 
-        $('html, body').animate({
-            scrollTop: ($("#race-weekend-results").offset()!.top) - 200,
-        },500, () => {
-            $results.collapse('show');
-        });
-    }
-}
-
-export class RaceWeekendSessionTransition {
-    private $elem: JQuery<HTMLElement>;
-    private parentSessionID: string;
-    private childSessionID: string;
-
-    private resultStart!: number;
-    private resultEnd!: number;
-    private reverseNumber!: number;
-    private gridStart!: number;
-    private sortType!: string;
-
-    public constructor($elem: JQuery<HTMLElement>, parentSessionID: string, childSessionID: string) {
-        this.$elem = $elem;
-        this.parentSessionID = parentSessionID;
-        this.childSessionID = childSessionID;
-
-        this.updateValues();
-        this.registerEvents();
-    }
-
-    private registerEvents(): void {
-        this.$elem.find("input, select").on("change", () => {
-            this.updateValues();
-        });
-
-        this.$elem.find("input").on("switchChange.bootstrapSwitch", () => {
-            this.updateValues();
-        });
-
-        this.$elem.find("#save-filters").on("click", () => {
-            this.saveValues();
-        });
-    }
-
-    private packageValues(): string {
-        return JSON.stringify({
-            ResultStart: this.resultStart,
-            ResultEnd: this.resultEnd,
-            NumEntrantsToReverse: this.reverseNumber,
-            EntryListStart: this.gridStart,
-            SortType: this.sortType,
-        })
-    }
-
-    private updateValues(): void {
-        this.resultStart = parseInt(this.$elem.find("#ResultsStart").val() as string);
-        this.resultEnd = parseInt(this.$elem.find("#ResultsEnd").val() as string);
-        this.reverseNumber = parseInt(this.$elem.find("#ReverseGrid").val() as string);
-        this.gridStart = parseInt(this.$elem.find("#GridStart").val() as string);
-        this.sortType = this.$elem.find("#ResultsSort").val() as string;
-
-        $.ajax(`/race-weekend/${RaceWeekendID}/grid-preview?parentSessionID=${this.parentSessionID}&childSessionID=${this.childSessionID}`, {
-            data: this.packageValues(),
-
-            contentType: "application/json",
-            type: "POST",
-        }).then((response: GridPreview) => {
-            let results: string[] = [];
-            let grid: string[] = [];
-
-            for (const [key, value] of Object.entries(response.Results)) {
-                results.push(`${key}. ${value}`);
+            for (const edge of this.jsp.getAllConnections() as any[]) {
+                g.setEdge(
+                    edge.source.id,
+                    edge.target.id
+                );
             }
 
-            for (const [key, value] of Object.entries(response.Grid)) {
-                grid.push(`${key}. ${value}`);
-            }
+            // calculate node positions
+            dagre.layout(g);
 
-            let $table = $("table#grid-preview");
-            $table.find("tr:not(:first-child)").remove();
+            $("#race-weekend-graph-container").css({
+                "height": (g.graph().height! + 200) + "px",
+                "width": (g.graph().width! + 350) + "px",
+            });
 
-            for (let i = 0; i < results.length; i++) {
-                let $row = $("<tr>");
-                $row.append($("<td>").text(results[i]));
+            // apply node positions
+            g.nodes().forEach((n) => {
+                let $n = $('#' + n);
+                $n.css('left', g.node(n).x + 'px');
+                $n.css('top', g.node(n).y + 'px');
+            });
 
-                if (i < grid.length) {
-                    $row.append($("<td>").text(grid[i]));
-                } else {
-                    $row.append($("<td>"));
+            this.jsp.repaintEverything();
+        }
+
+        private openManageFilterModal(session1ID: string, session2ID: string): void {
+            const modalContentURL = `/race-weekend/${RaceWeekendID}/filters?parentSessionID=${session1ID}&childSessionID=${session2ID}`;
+
+            $.get(modalContentURL).then((data: string) => {
+                let $filtersModal = $("#filters-modal");
+                $filtersModal.html(data);
+                $filtersModal.find("input[type='checkbox']").bootstrapSwitch();
+                $filtersModal.modal();
+
+                new SessionTransition($filtersModal, session1ID, session2ID);
+            });
+        }
+
+        private openManageEntryListModal(e: JQuery.ClickEvent): void {
+            e.preventDefault();
+
+            const sessionID = $(e.currentTarget).closest(".race-weekend-session").attr("id") as string;
+
+            const modalContentURL = `/race-weekend/${RaceWeekendID}/entrylist?sessionID=${sessionID}`;
+
+            $.get(modalContentURL).then((data: string) => {
+                let $filtersModal = $("#filters-modal");
+                $filtersModal.html(data);
+                $filtersModal.find("input[type='checkbox']").bootstrapSwitch();
+                $filtersModal.modal();
+
+                new EntryListPreview($filtersModal, sessionID);
+            });
+        }
+
+        private onViewResultsClick(e: JQuery.ClickEvent) {
+            e.preventDefault();
+
+            let $raceWeekendSession = $(this).closest(".race-weekend-session");
+            let sessionID = $raceWeekendSession.attr("id");
+
+            let $results = $("#results-" + sessionID);
+
+            $('html, body').animate({
+                scrollTop: ($("#race-weekend-results").offset()!.top) - 200,
+            }, 500, () => {
+                $results.collapse('show');
+            });
+        }
+    }
+
+    abstract class PreviewModal {
+        protected readonly $elem: JQuery<HTMLElement>;
+
+        protected constructor($elem: JQuery<HTMLElement>) {
+            this.$elem = $elem;
+        }
+
+        protected registerEvents(): void {
+            this.$elem.find("input, select").on("change", () => {
+                this.updateValues();
+            });
+
+            this.$elem.find("input").on("switchChange.bootstrapSwitch", () => {
+                this.updateValues();
+            });
+
+            this.$elem.find("#save-filters").on("click", () => {
+                this.saveValues();
+            });
+        }
+
+        protected abstract updateValues(): void;
+        protected abstract saveValues(): void;
+    }
+
+    class SessionTransition extends PreviewModal {
+        private readonly parentSessionID: string;
+        private readonly childSessionID: string;
+
+        private resultStart!: number;
+        private resultEnd!: number;
+        private reverseGrid: number = 0;
+        private gridStart!: number;
+        private sortType!: string;
+
+        public constructor($elem: JQuery<HTMLElement>, parentSessionID: string, childSessionID: string) {
+            super($elem);
+
+            this.parentSessionID = parentSessionID;
+            this.childSessionID = childSessionID;
+
+            this.updateValues();
+            this.registerEvents();
+        }
+
+        private packageValues(): string {
+            return JSON.stringify({
+                ResultStart: this.resultStart,
+                ResultEnd: this.resultEnd,
+                NumEntrantsToReverse: this.reverseGrid,
+                EntryListStart: this.gridStart,
+                SortType: this.sortType,
+            })
+        }
+
+        protected updateValues(): void {
+            this.resultStart = parseInt(this.$elem.find("#ResultsStart").val() as string);
+            this.resultEnd = parseInt(this.$elem.find("#ResultsEnd").val() as string);
+            this.reverseGrid = parseInt(this.$elem.find("#ReverseGrid").val() as string);
+            this.gridStart = parseInt(this.$elem.find("#GridStart").val() as string);
+            this.sortType = this.$elem.find("#ResultsSort").val() as string;
+
+            $.ajax(`/race-weekend/${RaceWeekendID}/grid-preview?parentSessionID=${this.parentSessionID}&childSessionID=${this.childSessionID}`, {
+                data: this.packageValues(),
+
+                contentType: "application/json",
+                type: "POST",
+            }).then((response: GridPreview) => {
+                let results: string[] = [];
+                let grid: string[] = [];
+
+                for (const [key, value] of Object.entries(response.Results)) {
+                    results.push(`${key}. ${value}`);
                 }
 
-                $table.append($row);
-            }
-        });
+                for (const [key, value] of Object.entries(response.Grid)) {
+                    grid.push(`${key}. ${value}`);
+                }
+
+                let $table = $("table#grid-preview");
+                $table.find("tr:not(:first-child)").remove();
+
+                for (let i = 0; i < results.length; i++) {
+                    let $row = $("<tr>");
+                    $row.append($("<td>").text(results[i]));
+
+                    if (i < grid.length) {
+                        $row.append($("<td>").text(grid[i]));
+                    } else {
+                        $row.append($("<td>"));
+                    }
+
+                    $table.append($row);
+                }
+            });
+        }
+
+        protected saveValues(): void {
+            $.ajax(`/race-weekend/${RaceWeekendID}/update-grid?parentSessionID=${this.parentSessionID}&childSessionID=${this.childSessionID}`, {
+                data: this.packageValues(),
+
+                contentType: "application/json",
+                type: "POST",
+            }).then(() => {
+                $("#filters-modal").modal("hide");
+            }); // @TODO error handling
+        }
     }
 
-    private saveValues(): void {
-        $.ajax(`/race-weekend/${RaceWeekendID}/grid?parentSessionID=${this.parentSessionID}&childSessionID=${this.childSessionID}`, {
-            data: this.packageValues(),
-
-            contentType: "application/json",
-            type: "POST",
-        }).then(() => {
-            $("#filters-modal").modal("hide");
-        }); // @TODO error handling
+    interface GridPreview {
+        Grid: Map<number, string>;
+        Results: Map<number, string>;
     }
-}
 
-interface GridPreview {
-    Grid: Map<number, string>;
-    Results: Map<number, string>;
+    class EntryListPreview extends PreviewModal {
+        private readonly sessionID: string;
+        private sortType: string = "";
+        private reverseGrid: number = 0;
+
+        public constructor($elem: JQuery<HTMLElement>, sessionID: string) {
+            super($elem);
+
+            this.sessionID = sessionID;
+
+            this.updateValues();
+            this.registerEvents();
+        }
+
+        protected updateValues(): void {
+            this.sortType = this.$elem.find("#SortType").val() as string;
+            this.reverseGrid = parseInt(this.$elem.find("#ReverseGrid").val() as string);
+
+            $.ajax(`/race-weekend/${RaceWeekendID}/entrylist-preview?sessionID=${this.sessionID}&sortType=${this.sortType}&reverseGrid=${this.reverseGrid}`, {
+                type: "GET",
+            }).then((response: GridPreview) => {
+                let grid: string[] = [];
+
+                for (const [key, value] of Object.entries(response.Grid)) {
+                    grid.push(value);
+                }
+
+                let $table = $("table#entrylist-preview");
+                $table.find("tr:not(:first-child)").remove();
+
+                for (let i = 0; i < grid.length; i++) {
+                    let $row = $("<tr>");
+                    $row.append($("<td>").text(i+1));
+                    $row.append($("<td>").text(grid[i]));
+
+                    $table.append($row);
+                }
+            });
+        }
+
+        protected saveValues(): void {
+            $.ajax(`/race-weekend/${RaceWeekendID}/update-entrylist?sessionID=${this.sessionID}&sortType=${this.sortType}&reverseGrid=${this.reverseGrid}`, {
+                type: "GET",
+            }).then(() => {
+                $("#filters-modal").modal("hide");
+            }); // @TODO error handling
+        }
+    }
 }

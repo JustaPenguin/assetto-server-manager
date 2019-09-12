@@ -2,7 +2,6 @@ package servermanager
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 type RaceWeekendManager struct {
@@ -459,6 +459,22 @@ func (rwm *RaceWeekendManager) ListAvailableResultsFilesForSession(raceWeekendID
 	return session, filteredResults, nil
 }
 
+func (rwm *RaceWeekendManager) FindSession(raceWeekendID, sessionID string) (*RaceWeekend, *RaceWeekendSession, error) {
+	raceWeekend, err := rwm.LoadRaceWeekend(raceWeekendID)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	session, err := raceWeekend.FindSessionByID(sessionID)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return raceWeekend, session, nil
+}
+
 func (rwm *RaceWeekendManager) FindConnectedSessions(raceWeekendID, parentSessionID, childSessionID string) (*RaceWeekend, *RaceWeekendSession, *RaceWeekendSession, error) {
 	raceWeekend, err := rwm.LoadRaceWeekend(raceWeekendID)
 
@@ -482,7 +498,6 @@ func (rwm *RaceWeekendManager) FindConnectedSessions(raceWeekendID, parentSessio
 }
 
 type RaceWeekendGridPreview struct {
-	// @TODO make these map[int]RaceWeekendSessionEntrant
 	Results map[int]string
 	Grid    map[int]string
 }
@@ -534,6 +549,68 @@ func (rwm *RaceWeekendManager) UpdateGrid(raceWeekendID, parentSessionID, childS
 	}
 
 	raceWeekend.AddFilter(parentSessionID, childSessionID, filter)
+
+	return rwm.store.UpsertRaceWeekend(raceWeekend)
+}
+
+func (rwm *RaceWeekendManager) PreviewSessionEntryList(raceWeekendID, sessionID, sortType string, reverseGrid int) (*RaceWeekendGridPreview, error) {
+	raceWeekend, session, err := rwm.FindSession(raceWeekendID, sessionID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	session.SortType = sortType
+	session.NumEntrantsToReverse = reverseGrid
+
+	entryList, err := session.GetRaceWeekendEntryList(raceWeekend, nil, "")
+
+	if err != nil {
+		return nil, err
+	}
+
+	preview := NewRaceWeekendGridPreview()
+
+	for i, entrant := range entryList.Sorted() {
+		entrantSession, err := raceWeekend.FindSessionByID(entrant.SessionID.String())
+
+		if err != nil {
+			continue
+		}
+
+		sessionText := entrantSession.Name()
+
+		if entrantSession.Completed() {
+			foundEntrant := false
+
+			for i, result := range entrantSession.Results.Result {
+				if result.DriverGUID == entrant.Car.Driver.GUID {
+					sessionText += fmt.Sprintf(" - %d%s", i+1, ordinal(int64(i+1)))
+					foundEntrant = true
+					break
+				}
+			}
+
+			if !foundEntrant {
+				sessionText += " - No Time"
+			}
+		}
+
+		preview.Grid[i+1] = fmt.Sprintf("%s (%s)", entrant.Car.GetName(), sessionText)
+	}
+
+	return preview, nil
+}
+
+func (rwm *RaceWeekendManager) UpdateSessionSorting(raceWeekendID, sessionID string, sortType string, numEntrantsToReverse int) error {
+	raceWeekend, session, err := rwm.FindSession(raceWeekendID, sessionID)
+
+	if err != nil {
+		return err
+	}
+
+	session.SortType = sortType
+	session.NumEntrantsToReverse = numEntrantsToReverse
 
 	return rwm.store.UpsertRaceWeekend(raceWeekend)
 }

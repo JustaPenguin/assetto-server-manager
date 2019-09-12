@@ -18,7 +18,7 @@ type RaceWeekendEntryListSorterDescription struct {
 var RaceWeekendEntryListSorters = []RaceWeekendEntryListSorterDescription{
 	{
 		Name:     "No Sort (Use Finishing Grid)",
-		Key:      "no_sort",
+		Key:      "", // key intentionally left blank
 		SortFunc: UnchangedRaceWeekendEntryListSort,
 	},
 	{
@@ -50,6 +50,11 @@ var RaceWeekendEntryListSorters = []RaceWeekendEntryListSorterDescription{
 		Name:     "Random",
 		Key:      "random",
 		SortFunc: RandomRaceWeekendEntryListSort,
+	},
+	{
+		Name:     "Alphabetical (Using Driver Name)",
+		Key:      "alphabetical",
+		SortFunc: AlphabeticalRaceWeekendEntryListSort,
 	},
 }
 
@@ -90,48 +95,48 @@ func TotalRaceTimeRaceWeekendEntryListSort(session *RaceWeekendSession, entrants
 }
 
 func lessTotalEntrantTime(session *RaceWeekendSession, entrantI, entrantJ *RaceWeekendSessionEntrant) bool {
-	if session.Results.GetNumLaps(entrantI.Car.Driver.GUID) == session.Results.GetNumLaps(entrantJ.Car.Driver.GUID) {
+	if entrantI.SessionResults.GetNumLaps(entrantI.Car.Driver.GUID) == entrantJ.SessionResults.GetNumLaps(entrantJ.Car.Driver.GUID) {
 		// drivers have completed the same number of laps, so compare their total time
-		entrantITime := session.Results.GetTime(entrantI.Results.TotalTime, entrantI.Car.Driver.GUID, true)
-		entrantJTime := session.Results.GetTime(entrantJ.Results.TotalTime, entrantJ.Car.Driver.GUID, true)
+		entrantITime := entrantI.SessionResults.GetTime(entrantI.EntrantResult.TotalTime, entrantI.Car.Driver.GUID, true)
+		entrantJTime := entrantJ.SessionResults.GetTime(entrantJ.EntrantResult.TotalTime, entrantJ.Car.Driver.GUID, true)
 
 		return entrantITime < entrantJTime
 	} else {
-		return session.Results.GetNumLaps(entrantI.Car.Driver.GUID) > session.Results.GetNumLaps(entrantJ.Car.Driver.GUID)
+		return entrantI.SessionResults.GetNumLaps(entrantI.Car.Driver.GUID) > entrantJ.SessionResults.GetNumLaps(entrantJ.Car.Driver.GUID)
 	}
 }
 
 func lessBestLapTime(session *RaceWeekendSession, entrantI, entrantJ *RaceWeekendSessionEntrant) bool {
-	if entrantI.Results.BestLap == 0 {
+	if entrantI.EntrantResult.BestLap == 0 {
 		// entrantI has a zero best lap. they must be not-less than J
 		return false
 	}
 
-	if entrantJ.Results.BestLap == 0 {
+	if entrantJ.EntrantResult.BestLap == 0 {
 		// entrantJ has a zero best lap. entrantI must be less than J
 		return true
 	}
 
-	if entrantI.Results.BestLap == entrantJ.Results.BestLap {
+	if entrantI.EntrantResult.BestLap == entrantJ.EntrantResult.BestLap {
 		// if equal, compare safety
-		entrantICrashes := session.Results.GetCrashes(entrantI.Car.Driver.GUID)
-		entrantJCrashes := session.Results.GetCrashes(entrantJ.Car.Driver.GUID)
+		entrantICrashes := entrantI.SessionResults.GetCrashes(entrantI.Car.Driver.GUID)
+		entrantJCrashes := entrantJ.SessionResults.GetCrashes(entrantJ.Car.Driver.GUID)
 
 		if entrantICrashes == entrantJCrashes {
-			return session.Results.GetCuts(entrantI.Car.Driver.GUID) < session.Results.GetCuts(entrantJ.Car.Driver.GUID)
+			return entrantI.SessionResults.GetCuts(entrantI.Car.Driver.GUID) < entrantJ.SessionResults.GetCuts(entrantJ.Car.Driver.GUID)
 		}
 
 		return entrantICrashes < entrantJCrashes
 	}
 
-	return entrantI.Results.BestLap < entrantJ.Results.BestLap
+	return entrantI.EntrantResult.BestLap < entrantJ.EntrantResult.BestLap
 }
 
 func FewestCollisionsRaceWeekendEntryListSort(session *RaceWeekendSession, entrants []*RaceWeekendSessionEntrant) error {
 	sort.Slice(entrants, func(i, j int) bool {
 		entrantI, entrantJ := entrants[i], entrants[j]
-		entrantICrashes := session.Results.GetCrashes(entrantI.Car.Driver.GUID)
-		entrantJCrashes := session.Results.GetCrashes(entrantJ.Car.Driver.GUID)
+		entrantICrashes := entrantI.SessionResults.GetCrashes(entrantI.Car.Driver.GUID)
+		entrantJCrashes := entrantJ.SessionResults.GetCrashes(entrantJ.Car.Driver.GUID)
 
 		if entrantICrashes == entrantJCrashes {
 			if session.SessionType() == SessionTypeRace {
@@ -150,8 +155,8 @@ func FewestCollisionsRaceWeekendEntryListSort(session *RaceWeekendSession, entra
 func FewestCutsRaceWeekendEntryListSort(session *RaceWeekendSession, entrants []*RaceWeekendSessionEntrant) error {
 	sort.Slice(entrants, func(i, j int) bool {
 		entrantI, entrantJ := entrants[i], entrants[j]
-		entrantICuts := session.Results.GetCuts(entrantI.Car.Driver.GUID)
-		entrantJCuts := session.Results.GetCuts(entrantJ.Car.Driver.GUID)
+		entrantICuts := entrantI.SessionResults.GetCuts(entrantI.Car.Driver.GUID)
+		entrantJCuts := entrantJ.SessionResults.GetCuts(entrantJ.Car.Driver.GUID)
 
 		if entrantICuts == entrantJCuts {
 			if session.SessionType() == SessionTypeRace {
@@ -170,10 +175,10 @@ func FewestCutsRaceWeekendEntryListSort(session *RaceWeekendSession, entrants []
 func SafetyRaceWeekendEntryListSort(session *RaceWeekendSession, entrants []*RaceWeekendSessionEntrant) error {
 	sort.Slice(entrants, func(i, j int) bool {
 		entrantI, entrantJ := entrants[i], entrants[j]
-		entrantICrashes := session.Results.GetCrashes(entrantI.Car.Driver.GUID)
-		entrantJCrashes := session.Results.GetCrashes(entrantJ.Car.Driver.GUID)
-		entrantICuts := session.Results.GetCuts(entrantI.Car.Driver.GUID)
-		entrantJCuts := session.Results.GetCuts(entrantJ.Car.Driver.GUID)
+		entrantICrashes := entrantI.SessionResults.GetCrashes(entrantI.Car.Driver.GUID)
+		entrantJCrashes := entrantJ.SessionResults.GetCrashes(entrantJ.Car.Driver.GUID)
+		entrantICuts := entrantI.SessionResults.GetCuts(entrantI.Car.Driver.GUID)
+		entrantJCuts := entrantJ.SessionResults.GetCuts(entrantJ.Car.Driver.GUID)
 
 		if entrantICrashes == entrantJCrashes {
 			if entrantICuts == entrantJCuts {
@@ -198,6 +203,16 @@ func RandomRaceWeekendEntryListSort(_ *RaceWeekendSession, entrants []*RaceWeeke
 
 	r.Shuffle(len(entrants), func(i, j int) {
 		entrants[i], entrants[j] = entrants[j], entrants[i]
+	})
+
+	return nil
+}
+
+func AlphabeticalRaceWeekendEntryListSort(_ *RaceWeekendSession, entrants []*RaceWeekendSessionEntrant) error {
+	sort.Slice(entrants, func(i, j int) bool {
+		entrantI, entrantJ := entrants[i], entrants[j]
+
+		return entrantI.Car.Driver.Name < entrantJ.Car.Driver.Name
 	})
 
 	return nil

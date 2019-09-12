@@ -139,10 +139,13 @@ func Router(
 		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")))
 
 		// race weekends
+		// @TODO the names of some of these endpoints aren't right
 		r.Get("/race-weekends", raceWeekendHandler.list)
 		r.Get("/race-weekend/{raceWeekendID}", raceWeekendHandler.view)
 		r.Get("/race-weekend/{raceWeekendID}/filters", raceWeekendHandler.manageFilters)
+		r.Get("/race-weekend/{raceWeekendID}/entrylist", raceWeekendHandler.manageEntryList)
 		r.Post("/race-weekend/{raceWeekendID}/grid-preview", raceWeekendHandler.gridPreview)
+		r.Get("/race-weekend/{raceWeekendID}/entrylist-preview", raceWeekendHandler.entryListPreview)
 	})
 
 	// writers
@@ -227,7 +230,8 @@ func Router(
 		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/cancel", raceWeekendHandler.cancelSession)
 		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/import", raceWeekendHandler.importSessionResults)
 		r.Post("/race-weekend/{raceWeekendID}/session/{sessionID}/import", raceWeekendHandler.importSessionResults)
-		r.Post("/race-weekend/{raceWeekendID}/grid", raceWeekendHandler.updateGrid)
+		r.Post("/race-weekend/{raceWeekendID}/update-grid", raceWeekendHandler.updateGrid)
+		r.Get("/race-weekend/{raceWeekendID}/update-entrylist", raceWeekendHandler.updateEntryList)
 	})
 
 	// deleters

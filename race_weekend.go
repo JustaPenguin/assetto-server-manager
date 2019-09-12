@@ -35,7 +35,7 @@ func NewRaceWeekend() *RaceWeekend {
 	}
 }
 
-// AddFilter creates a link between parentID and childID with a filter that specifies how to take the Results of parent
+// AddFilter creates a link between parentID and childID with a filter that specifies how to take the EntrantResult of parent
 // and modify them to make an EntryList for child
 func (rw *RaceWeekend) AddFilter(parentID, childID string, filter *RaceWeekendSessionToSessionFilter) {
 	if rw.Filters == nil {
@@ -270,20 +270,23 @@ func (rw *RaceWeekend) FindSessionByID(id string) (*RaceWeekendSession, error) {
 type RaceWeekendSessionEntrant struct {
 	// SessionID is the last session the Entrant participated in
 	SessionID uuid.UUID
-	// Results are the results of the last session the Entrant participated in
-	Results *SessionResult
+	// EntrantResult is the result of the last session the Entrant participated in
+	EntrantResult *SessionResult
 	// Car is the car from the EntryList that matches the results of the last session the Entrant participated in
 	Car *SessionCar
 	// PitBox is used to determine the starting pitbox of the Entrant.
 	PitBox int
+	// SessionResults are the whole results for the session the entrant took part in
+	SessionResults *SessionResults `json:"-"`
 }
 
 // NewRaceWeekendSessionEntrant creates a RaceWeekendSessionEntrant
-func NewRaceWeekendSessionEntrant(previousSessionID uuid.UUID, car *SessionCar, results *SessionResult) *RaceWeekendSessionEntrant {
+func NewRaceWeekendSessionEntrant(previousSessionID uuid.UUID, car *SessionCar, entrantResult *SessionResult, sessionResults *SessionResults) *RaceWeekendSessionEntrant {
 	return &RaceWeekendSessionEntrant{
-		SessionID: previousSessionID,
-		Results:   results,
-		Car:       car,
+		SessionID:      previousSessionID,
+		EntrantResult:  entrantResult,
+		Car:            car,
+		SessionResults: sessionResults,
 	}
 }
 
@@ -291,21 +294,22 @@ func NewRaceWeekendSessionEntrant(previousSessionID uuid.UUID, car *SessionCar, 
 func (se *RaceWeekendSessionEntrant) GetEntrant() *Entrant {
 	e := NewEntrant()
 
-	e.AssignFromResult(se.Results, se.Car)
+	e.AssignFromResult(se.EntrantResult, se.Car)
 
 	return e
 }
 
 // A RaceWeekendSession is a single session within a RaceWeekend. It can have parent sessions. It must have a RaceConfig.
-// Once completed, a RaceWeekendSession will contain Results from that session.
+// Once completed, a RaceWeekendSession will contain EntrantResult from that session.
 type RaceWeekendSession struct {
 	ID      uuid.UUID
 	Created time.Time
 	Updated time.Time
 	Deleted time.Time
 
-	ParentIDs []uuid.UUID
-	SortType  string
+	ParentIDs            []uuid.UUID
+	SortType             string
+	NumEntrantsToReverse int
 
 	RaceConfig CurrentRaceConfig
 
@@ -368,7 +372,7 @@ func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) []*RaceWe
 				continue
 			}
 
-			out = append(out, NewRaceWeekendSessionEntrant(rws.ID, car, result))
+			out = append(out, NewRaceWeekendSessionEntrant(rws.ID, car, result, rws.Results))
 		}
 
 		// look for entrants not in our session results who started the session.
@@ -383,7 +387,7 @@ func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) []*RaceWe
 			}
 
 			if !foundEntrant && entrant.Car.GetGUID() != "" {
-				out = append(out, NewRaceWeekendSessionEntrant(rws.ID, entrant.Car, entrant.Results))
+				out = append(out, NewRaceWeekendSessionEntrant(rws.ID, entrant.Car, entrant.EntrantResult, rws.Results))
 			}
 		}
 	} else {
@@ -482,11 +486,20 @@ func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, override
 		}
 	}
 
-	// sort entryList here
-	sorter := GetRaceWeekendEntryListSort(rws.SortType)
+	if rw.SessionCanBeRun(rws) {
+		// sorting can only be run if a session is ready to be run.
+		sorter := GetRaceWeekendEntryListSort(rws.SortType)
 
-	if err := sorter(rws, entryList); err != nil {
-		return nil, err
+		if err := sorter(rws, entryList); err != nil {
+			return nil, err
+		}
+
+		reverseEntrants(rws.NumEntrantsToReverse, entryList)
+
+		// amend pitboxes post-sort
+		for i, entrant := range entryList {
+			entrant.PitBox = i
+		}
 	}
 
 	return entryList, nil
@@ -497,7 +510,7 @@ func EntryListToRaceWeekendEntryList(e EntryList, sessionID uuid.UUID) RaceWeeke
 	out := make(RaceWeekendEntryList, 0, len(e))
 
 	for _, entrant := range e {
-		rwe := NewRaceWeekendSessionEntrant(sessionID, entrant.AsSessionCar(), entrant.AsSessionResult())
+		rwe := NewRaceWeekendSessionEntrant(sessionID, entrant.AsSessionCar(), entrant.AsSessionResult(), nil)
 
 		out.AddInPitBox(rwe, entrant.PitBox)
 	}
