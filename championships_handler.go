@@ -171,6 +171,10 @@ func (ch *ChampionshipsHandler) exportResults(w http.ResponseWriter, r *http.Req
 		var sessionFiles []string
 
 		for _, session := range event.Sessions {
+			if session.Results == nil {
+				continue
+			}
+
 			sessionFiles = append(sessionFiles, session.Results.GetURL())
 		}
 

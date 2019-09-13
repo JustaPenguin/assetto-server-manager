@@ -143,7 +143,7 @@
                         {{ if WriteAccess }}
                             {{ if not (or $session.InProgress $session.Completed) }}
                                 {{ if $.RaceWeekend.SessionCanBeRun $session }}
-                                    <a class="btn btn-success" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/start">Start Session</a>
+                                    <a class="btn btn-success" onClick="return confirm('I have checked all Entry List configurations and the starting grid is correct');" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/start">Start Session</a>
                                 {{ end }}
 
 
