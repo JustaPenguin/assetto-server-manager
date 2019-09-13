@@ -109,8 +109,10 @@ var championshipEventFixtures = []string{
 
 var championshipManager *ChampionshipManager
 
+var dummyNotificationManager *NotificationManager
+
 func init() {
-	championshipManager = NewChampionshipManager(NewRaceManager(NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"), filepath.Join(os.TempDir(), "asm-race-store-shared")), dummyServerProcess{}, NewCarManager()))
+	championshipManager = NewChampionshipManager(NewRaceManager(NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"), filepath.Join(os.TempDir(), "asm-race-store-shared")), dummyServerProcess{}, NewCarManager(), dummyNotificationManager))
 }
 
 func doReplay(filename string, multiplier int, callbackFunc udp.CallbackFunc, waitTime time.Duration) error {
