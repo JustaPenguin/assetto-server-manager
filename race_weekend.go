@@ -84,7 +84,7 @@ func (rw *RaceWeekend) GetFilterOrUseDefault(parentID, childID string) (*RaceWee
 		if parentSession.Completed() && parentSession.Results != nil {
 			filter = &RaceWeekendSessionToSessionFilter{
 				ResultStart:          1,
-				ResultEnd:            len(parentSession.Results.Result),
+				ResultEnd:            len(parentSession.Results.Cars),
 				NumEntrantsToReverse: 0,
 				EntryListStart:       1,
 			}
