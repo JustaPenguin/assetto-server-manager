@@ -20,10 +20,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// contentManagerWrapperSeparator is a special character used by Content Manager to determine which port
-// the content manager wrapper is running on. The server name shows "<server name> <separator><port>",
-// which Content Manager uses to split the string and find the port.
-const contentManagerWrapperSeparator = 'ℹ'
+const (
+	// contentManagerWrapperSeparator is a special character used by Content Manager to determine which port
+	// the content manager wrapper is running on. The server name shows "<server name> <separator><port>",
+	// which Content Manager uses to split the string and find the port.
+	contentManagerWrapperSeparator = 'ℹ'
+
+	ContentManagerJoinLinkBase string = "https://acstuff.ru/s/q:race/online/join"
+)
 
 type ContentManagerWrapperData struct {
 	ACHTTPSessionInfo
@@ -458,15 +462,14 @@ func geoIP() (*GeoIP, error) {
 	return geoIPData, nil
 }
 
-func getCMJoinLink(config ServerConfig) (*url.URL, error) {
-	// get the join link for the current session
+func getContentManagerJoinLink(config ServerConfig) (*url.URL, error) {
 	geoIP, err := geoIP()
 
 	if err != nil {
 		return nil, err
 	}
 
-	cmUrl, err := url.Parse(CMJoinLinkBase)
+	cmUrl, err := url.Parse(ContentManagerJoinLinkBase)
 
 	if err != nil {
 		return nil, err
