@@ -11,13 +11,14 @@ type Resolver struct {
 	templateLoader  TemplateLoader
 	reloadTemplates bool
 
-	raceManager         *RaceManager
-	carManager          *CarManager
-	championshipManager *ChampionshipManager
-	accountManager      *AccountManager
-	raceWeekendManager  *RaceWeekendManager
-	discordManager      *DiscordManager
-	notificationManager *NotificationManager
+	raceManager           *RaceManager
+	carManager            *CarManager
+	championshipManager   *ChampionshipManager
+	accountManager        *AccountManager
+	discordManager        *DiscordManager
+	notificationManager   *NotificationManager
+	scheduledRacesManager *ScheduledRacesManager
+	raceWeekendManager    *RaceWeekendManager
 
 	viewRenderer          *Renderer
 	serverProcess         ServerProcess
@@ -267,12 +268,22 @@ func (r *Resolver) resolveResultsHandler() *ResultsHandler {
 	return r.resultsHandler
 }
 
+func (r *Resolver) resolveScheduledRacesManager() *ScheduledRacesManager {
+	if r.scheduledRacesManager != nil {
+		return r.scheduledRacesManager
+	}
+
+	r.scheduledRacesManager = NewScheduledRacesManager(r.ResolveStore())
+
+	return r.scheduledRacesManager
+}
+
 func (r *Resolver) resolveScheduledRacesHandler() *ScheduledRacesHandler {
 	if r.scheduledRacesHandler != nil {
 		return r.scheduledRacesHandler
 	}
 
-	r.scheduledRacesHandler = NewScheduledRacesHandler(r.resolveBaseHandler(), r.store, r.resolveRaceManager(), r.resolveChampionshipManager())
+	r.scheduledRacesHandler = NewScheduledRacesHandler(r.resolveBaseHandler(), r.resolveScheduledRacesManager())
 
 	return r.scheduledRacesHandler
 }
@@ -372,7 +383,7 @@ func (r *Resolver) resolveDiscordManager() *DiscordManager {
 	}
 
 	// if manager errors, it will log the error and return discordManager flagged as disabled, so no need to handle err
-	r.discordManager, _ = NewDiscordManager(r.store, r)
+	r.discordManager, _ = NewDiscordManager(r.store, r.resolveScheduledRacesManager())
 
 	return r.discordManager
 }

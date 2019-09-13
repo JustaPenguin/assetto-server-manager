@@ -86,17 +86,13 @@ func BuildICalEvent(event ScheduledEvent) *components.Event {
 type ScheduledRacesHandler struct {
 	*BaseHandler
 
-	store               Store
-	raceManager         *RaceManager
-	championshipManager *ChampionshipManager
+	scheduledRacesManager *ScheduledRacesManager
 }
 
-func NewScheduledRacesHandler(baseHandler *BaseHandler, store Store, raceManager *RaceManager, championshipManager *ChampionshipManager) *ScheduledRacesHandler {
+func NewScheduledRacesHandler(baseHandler *BaseHandler, scheduledRacesManager *ScheduledRacesManager) *ScheduledRacesHandler {
 	return &ScheduledRacesHandler{
-		BaseHandler:         baseHandler,
-		store:               store,
-		raceManager:         raceManager,
-		championshipManager: championshipManager,
+		BaseHandler:           baseHandler,
+		scheduledRacesManager: scheduledRacesManager,
 	}
 }
 
@@ -110,13 +106,58 @@ func (rs *ScheduledRacesHandler) calendarJSON(w http.ResponseWriter, r *http.Req
 	err := rs.generateJSON(w, r)
 
 	if err != nil {
-		logrus.Errorf("could not find scheduled events, err: %s", err)
+		logrus.WithError(err).Errorf("could not find scheduled events")
 		return
 	}
 }
 
-func (rs *ScheduledRacesHandler) getScheduledRaces() ([]ScheduledEvent, error) {
-	_, _, _, customRaces, err := rs.raceManager.ListCustomRaces()
+func (rs *ScheduledRacesHandler) allScheduledRacesICalHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "text/calendar; charset=utf-8")
+	w.Header().Add("Content-Disposition", "inline; filename=championship.ics")
+
+	err := rs.scheduledRacesManager.buildScheduledRaces(w)
+
+	if err != nil {
+		logrus.WithError(err).Error("could not build scheduled races feed")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter, r *http.Request) error {
+	start, err := time.Parse(time.RFC3339, r.URL.Query().Get("start"))
+
+	if err != nil {
+		return err
+	}
+
+	end, err := time.Parse(time.RFC3339, r.URL.Query().Get("end"))
+
+	if err != nil {
+		return err
+	}
+
+	calendarObjects, err := rs.scheduledRacesManager.buildCalendar(start, end)
+
+	if err != nil {
+		return err
+	}
+
+	return json.NewEncoder(w).Encode(calendarObjects)
+}
+
+type ScheduledRacesManager struct {
+	store Store
+}
+
+func NewScheduledRacesManager(store Store) *ScheduledRacesManager {
+	return &ScheduledRacesManager{
+		store: store,
+	}
+}
+
+func (srm *ScheduledRacesManager) getScheduledRaces() ([]ScheduledEvent, error) {
+	customRaces, err := srm.store.ListCustomRaces()
 
 	if err != nil {
 		return nil, err
@@ -125,10 +166,14 @@ func (rs *ScheduledRacesHandler) getScheduledRaces() ([]ScheduledEvent, error) {
 	var scheduled []ScheduledEvent
 
 	for _, race := range customRaces {
+		if race.Scheduled.IsZero() {
+			continue
+		}
+
 		scheduled = append(scheduled, race)
 	}
 
-	championships, err := rs.championshipManager.ListChampionships()
+	championships, err := srm.store.ListChampionships()
 
 	if err != nil {
 		return nil, err
@@ -148,8 +193,8 @@ func (rs *ScheduledRacesHandler) getScheduledRaces() ([]ScheduledEvent, error) {
 	return scheduled, nil
 }
 
-func (rs *ScheduledRacesHandler) buildScheduledRaces(w io.Writer) error {
-	scheduled, err := rs.getScheduledRaces()
+func (srm *ScheduledRacesManager) buildScheduledRaces(w io.Writer) error {
+	scheduled, err := srm.getScheduledRaces()
 
 	if err != nil {
 		return err
@@ -172,19 +217,6 @@ func (rs *ScheduledRacesHandler) buildScheduledRaces(w io.Writer) error {
 	_, err = fmt.Fprint(w, str)
 
 	return err
-}
-
-func (rs *ScheduledRacesHandler) allScheduledRacesICalHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "text/calendar; charset=utf-8")
-	w.Header().Add("Content-Disposition", "inline; filename=championship.ics")
-
-	err := rs.buildScheduledRaces(w)
-
-	if err != nil {
-		logrus.WithError(err).Error("could not build scheduled races feed")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
 }
 
 type calendarObject struct {
@@ -211,30 +243,8 @@ type calendarObject struct {
 	TextColor       string `json:"textColor"`
 }
 
-func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter, r *http.Request) error {
-	start, err := time.Parse(time.RFC3339, r.URL.Query().Get("start"))
-
-	if err != nil {
-		return err
-	}
-
-	end, err := time.Parse(time.RFC3339, r.URL.Query().Get("end"))
-
-	if err != nil {
-		return err
-	}
-
-	calendarObjects, err := rs.buildCalendar(start, end)
-
-	if err != nil {
-		return err
-	}
-
-	return json.NewEncoder(w).Encode(calendarObjects)
-}
-
-func (rs *ScheduledRacesHandler) buildCalendar(start time.Time, end time.Time) ([]calendarObject, error) {
-	scheduled, err := rs.getScheduledRaces()
+func (srm *ScheduledRacesManager) buildCalendar(start time.Time, end time.Time) ([]calendarObject, error) {
+	scheduled, err := srm.getScheduledRaces()
 
 	if err != nil {
 		return nil, err

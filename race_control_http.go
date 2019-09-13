@@ -14,8 +14,6 @@ import (
 const (
 	// Time allowed to write a message to the peer.
 	writeWait = 10 * time.Second
-
-	CMJoinLinkBase string = "https://acstuff.ru/s/q:race/online/join"
 )
 
 type Broadcaster interface {
@@ -166,7 +164,7 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 	linkString := ""
 
 	if rch.serverProcess.GetServerConfig().GlobalServerConfig.ShowContentManagerJoinLink == 1 {
-		link, err := getCMJoinLink(rch.serverProcess.GetServerConfig())
+		link, err := getContentManagerJoinLink(rch.serverProcess.GetServerConfig())
 
 		if err != nil {
 			logrus.Errorf("could not get CM join link, err: %s", err)

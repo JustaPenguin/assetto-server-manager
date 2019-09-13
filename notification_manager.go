@@ -2,10 +2,11 @@ package servermanager
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 // NotificationManager is the generic notification handler, which calls the individual notification
@@ -71,7 +72,7 @@ func (nm *NotificationManager) SendRaceStartMessage(config ServerConfig, event R
 	serverOpts, err := nm.store.LoadServerOptions()
 
 	if err != nil {
-		logrus.Errorf("couldn't load server options, skipping notification, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't load server options, skipping notification")
 		return err
 	}
 
@@ -99,11 +100,11 @@ func (nm *NotificationManager) SendRaceStartMessage(config ServerConfig, event R
 	}
 
 	if config.GlobalServerConfig.ShowContentManagerJoinLink == 1 {
-		link, err := getCMJoinLink(config)
+		link, err := getContentManagerJoinLink(config)
 		linkText := ""
 
 		if err != nil {
-			logrus.Errorf("could not get CM join link, err: %s", err)
+			logrus.WithError(err).Errorf("could not get CM join link")
 
 			return nm.SendMessage(msg)
 		} else {
@@ -123,9 +124,9 @@ func (nm *NotificationManager) SendRaceStartMessage(config ServerConfig, event R
 
 // SendRaceScheduledMessage sends a notification when a race is scheduled
 func (nm *NotificationManager) SendRaceScheduledMessage(event *CustomRace, date time.Time) error {
-	var dateStr = date.Format("Mon, 02 Jan 2006 15:04:05 MST")
+	dateStr := date.Format("Mon, 02 Jan 2006 15:04:05 MST")
 
-	var aCarNames = []string{}
+	var aCarNames []string
 
 	for _, carName := range strings.Split(event.RaceConfig.Cars, ";") {
 		car, err := nm.carManager.LoadCar(carName, nil)
@@ -166,7 +167,7 @@ func (nm *NotificationManager) SendRaceReminderMessage(event *CustomRace) error 
 	serverOpts, err := nm.store.LoadServerOptions()
 
 	if err != nil {
-		logrus.Errorf("couldn't load server options, skipping notification, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't load server options, skipping notification")
 		return err
 	}
 
@@ -190,7 +191,6 @@ func (nm *NotificationManager) SendRaceReminderMessage(event *CustomRace) error 
 
 // SendChampionshipReminderMessage sends a reminder a configurable number of minutes prior to a championship race starting
 func (nm *NotificationManager) SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent) error {
-	var err error
 	trackInfo, err := GetTrackInfo(event.RaceSetup.Track, event.RaceSetup.TrackLayout)
 
 	if err != nil {
@@ -201,7 +201,7 @@ func (nm *NotificationManager) SendChampionshipReminderMessage(championship *Cha
 	serverOpts, err := nm.store.LoadServerOptions()
 
 	if err != nil {
-		logrus.Errorf("couldn't load server options, skipping notification, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't load server options, skipping notification")
 		return err
 	}
 
