@@ -36,6 +36,7 @@ func InitWithResolver(resolver *Resolver) error {
 
 	process := resolver.resolveServerProcess()
 	championshipManager := resolver.resolveChampionshipManager()
+	notificationManager := resolver.resolveNotificationManager()
 
 	go func() {
 		for range c {
@@ -54,6 +55,10 @@ func InitWithResolver(resolver *Resolver) error {
 				if p, ok := process.(*AssettoServerProcess); ok {
 					p.stopChildProcesses()
 				}
+			}
+
+			if err := notificationManager.Stop(); err != nil {
+				logrus.WithError(err).Errorf("Could not stop notification manager")
 			}
 
 			os.Exit(0)

@@ -2,8 +2,6 @@ package servermanager
 
 import (
 	"net/http"
-	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -168,7 +166,7 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 	linkString := ""
 
 	if rch.serverProcess.GetServerConfig().GlobalServerConfig.ShowContentManagerJoinLink == 1 {
-		link, err := rch.getCMJoinLink()
+		link, err := getCMJoinLink(rch.serverProcess.GetServerConfig())
 
 		if err != nil {
 			logrus.Errorf("could not get CM join link, err: %s", err)
@@ -184,29 +182,6 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		"WideContainer":   true,
 		"CMJoinLink":      linkString,
 	})
-}
-
-func (rch *RaceControlHandler) getCMJoinLink() (*url.URL, error) {
-	// get the join link for the current session
-	geoIP, err := geoIP()
-
-	if err != nil {
-		return nil, err
-	}
-
-	cmUrl, err := url.Parse(CMJoinLinkBase)
-
-	if err != nil {
-		return nil, err
-	}
-
-	queryString := cmUrl.Query()
-	queryString.Set("ip", geoIP.IP)
-	queryString.Set("httpPort", strconv.Itoa(rch.serverProcess.GetServerConfig().GlobalServerConfig.HTTPPort))
-
-	cmUrl.RawQuery = queryString.Encode()
-
-	return cmUrl, nil
 }
 
 func deleteEmpty(s []string) []string {

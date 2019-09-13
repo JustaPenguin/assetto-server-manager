@@ -15,6 +15,8 @@ type Resolver struct {
 	carManager          *CarManager
 	championshipManager *ChampionshipManager
 	accountManager      *AccountManager
+	discordManager      *DiscordManager
+	notificationManager *NotificationManager
 
 	viewRenderer          *Renderer
 	serverProcess         ServerProcess
@@ -114,6 +116,7 @@ func (r *Resolver) resolveRaceManager() *RaceManager {
 		r.store,
 		r.resolveServerProcess(),
 		r.resolveCarManager(),
+		r.resolveNotificationManager(),
 	)
 
 	return r.raceManager
@@ -338,6 +341,27 @@ func (r *Resolver) resolveRaceControlHandler() *RaceControlHandler {
 	)
 
 	return r.raceControlHandler
+}
+
+func (r *Resolver) resolveDiscordManager() *DiscordManager {
+	if r.discordManager != nil {
+		return r.discordManager
+	}
+
+	// if manager errors, it will log the error and return discordManager flagged as disabled, so no need to handle err
+	r.discordManager, _ = NewDiscordManager(r.store, r)
+
+	return r.discordManager
+}
+
+func (r *Resolver) resolveNotificationManager() *NotificationManager {
+	if r.notificationManager != nil {
+		return r.notificationManager
+	}
+
+	r.notificationManager = NewNotificationManager(r.resolveDiscordManager(), r.resolveCarManager(), r.store)
+
+	return r.notificationManager
 }
 
 func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
