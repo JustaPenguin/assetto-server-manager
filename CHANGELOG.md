@@ -1,3 +1,10 @@
+v1.x.x
+------
+
+Added:
+
+* Discord integration! Thanks to @cheesegrits for this! Check out the Server Options page for more information.
+
 v1.4.2
 ------
 
