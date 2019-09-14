@@ -1,0 +1,53 @@
+{{ define "cars" }}
+    <div class="row mb-2">
+        <div class="col-8 col-md-10">
+            <input name="q" placeholder="Search for cars" class="form-control car-search" autocomplete="off">
+        </div>
+
+        <div class="col-4 col-md-2">
+            <button id="car-search" class="btn btn-primary w-100 car-search-btn">Search</button>
+        </div>
+    </div>
+
+    <select multiple required class="form-control Cars" name="Cars" size="15">
+        {{ range $index, $car := $.CarOpts }}
+            {{ $selected := false }}
+
+            {{/* custom race population */}}
+            {{ with $.Current }}
+                {{ with $.Current.Cars }}
+                    {{ range $j, $selectedCar := varSplit $.Current.Cars }}
+                        {{ if eq $selectedCar $car.Name }}
+                            {{ $selected = true }}
+                        {{ end }}
+                    {{ end }}
+                {{ end }}
+            {{ end }}
+
+            {{/* championship population */}}
+            {{ with $.ValidCarIDs }}
+                {{ range $j, $selectedCar := $.ValidCarIDs }}
+                    {{ if eq $selectedCar $car.Name }}
+                        {{ $selected = true }}
+                    {{ end }}
+                {{ end }}
+            {{ end }}
+
+            <option value="{{ $car.Name }}" {{ if $selected }} selected="selected" {{ end }}>{{ prettify $car.Name true }}</option>
+        {{ end }}
+    </select>
+
+    <div class="text-black-50 mb-2">
+        <div class="float-right">
+            <small><a href="#" data-toggle="collapse" data-target="#searchHelp" aria-expanded="false" aria-controls="searchHelp">Search Help</a></small>
+        </div>
+
+        <div class="clearfix"></div>
+    </div>
+
+    <div class="collapse" id="searchHelp">
+        <div class="card card-body">
+            {{ template "search-help" }}
+        </div>
+    </div>
+{{ end }}

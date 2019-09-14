@@ -155,12 +155,38 @@ type GlobalServerConfig struct {
 	NumberOfThreads           int    `ini:"NUM_THREADS" show:"open" min:"1" help:"Number of threads to run on"`
 	WelcomeMessage            string `ini:"WELCOME_MESSAGE" show:"-" help:"Path to the file that contains the server welcome message"`
 
+	SleepTime int `ini:"SLEEP_TIME" help:"The use of this setting is not fully known. Leave the value as 1 unless you really know what you're doing. (Values other than 1 cause excessive CPU usage)"`
+
 	FreeUDPPluginLocalPort int    `ini:"-" show:"-"`
 	FreeUDPPluginAddress   string `ini:"-" show:"-"`
 
-	ShowRaceNameInServerLobby int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager append the Custom Race or Championship name to the Server name in the lobby."`
-	CustomCSS                 string `ini:"-" input:"textarea" help:"Customise the style of Server Manager!"`
-	UseShortenedDriverNames   int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager hide driver's last names, for example 'John Smith' becomes 'John S.'"`
+	ShowRaceNameInServerLobby   int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager append the Custom Race or Championship name to the Server name in the lobby."`
+	CustomCSS                   string `ini:"-" input:"textarea" help:"Customise the style of Server Manager! You can <a href='https://github.com/cj123/assetto-server-manager/wiki/Custom-CSS-Examples'>view some examples</a> on the Server Manager Wiki!"`
+	UseShortenedDriverNames     int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager hide driver's last names, for example 'John Smith' becomes 'John S.'"`
+	FallBackResultsSorting      int    `ini:"-" input:"checkbox" help:"When on results will use a fallback method of sorting. Only enable this if you are experiencing results that are in the wrong order in the json file."`
+	EnableContentManagerWrapper int    `ini:"-" input:"checkbox" help:"When on, this option makes Server Manager provide extra information to Content Manager. This includes more detail about connected clients, event descriptions and download links. A side-effect of this is that your server name will contain a new piece of information (an 'i' character followed by a port - which Content Manager requires). Also - if enabled - this wrapper uses a GeoIP functionality provided by <a href='https://freegeoip.app''>freegeoip.app</a>."`
+	ContentManagerWrapperPort   int    `ini:"-" min:"0" max:"65535" help:"The port on which to serve Content Manager with the above information. Please make sure this port is open on your firewall."`
+	ShowContentManagerJoinLink  int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager display Content Manager join links on the Live Timing page and (if enabled) in Discord race start notifications."`
+
+	// Messages
+	ContentManagerWelcomeMessage string `ini:"-" show:"-"`
+	ServerJoinMessage            string `ini:"-" show:"-"`
+
+	// Discord Integration
+	DiscordAPIToken             string `ini:"-" help:"If set, will enable race start and scheduled reminder messages to the Discord channel ID specified below.  Use your bot's user token, not the OAuth token."`
+	DiscordChannelID            string `ini:"-" help:"If Discord is enabled, this is the channel ID it will send messages to"`
+	NotificationReminderTimer   int    `ini:"-" min:"0" max:"65535" help:"If Discord is enabled, a reminder will be sent this many minutes prior to race start.  If 0, only race start messages will be sent."`
+	ShowPasswordInNotifications int    `ini:"-" show:"open" input:"checkbox" help:"Show the server password in race start notifications"`
+}
+
+func (gsc GlobalServerConfig) GetName() string {
+	split := strings.Split(gsc.Name, fmt.Sprintf(" %c", contentManagerWrapperSeparator))
+
+	if len(split) > 0 {
+		return split[0]
+	}
+
+	return gsc.Name
 }
 
 type CurrentRaceConfig struct {
@@ -190,11 +216,11 @@ type CurrentRaceConfig struct {
 	MaxContactsPerKilometer   int    `ini:"MAX_CONTACTS_PER_KM" help:"Maximum number times you can make contact with another car in 1 kilometer."`
 	ResultScreenTime          int    `ini:"RESULT_SCREEN_TIME" help:"Seconds of result screen between racing sessions"`
 
-	PickupModeEnabled int `ini:"PICKUP_MODE_ENABLED" help:"if 0 the server start in booking mode (do not use it). Warning: in pickup mode you have to list only a circuit under TRACK and you need to list a least one car in the entry_list"`
+	PickupModeEnabled int `ini:"PICKUP_MODE_ENABLED" input:"checkbox" help:"if 0 the server start in booking mode (do not use it). Warning: in pickup mode you have to list only a circuit under TRACK and you need to list a least one car in the entry_list"`
+	LockedEntryList   int `ini:"LOCKED_ENTRY_LIST" input:"checkbox" help:"Only players already included in the entry list can join the server"`
 	LoopMode          int `ini:"LOOP_MODE" input:"checkbox" help:"the server restarts from the first track, to disable this set it to 0"`
 
 	MaxClients   int `ini:"MAX_CLIENTS" help:"max number of clients (must be <= track's number of pits)"`
-	SleepTime    int `ini:"SLEEP_TIME" help:"TODO"`
 	RaceOverTime int `ini:"RACE_OVER_TIME" help:"time remaining in seconds to finish the race from the moment the first one passes on the finish line"`
 	StartRule    int `ini:"START_RULE" min:"0" max:"2" help:"0 is car locked until start;   1 is teleport   ; 2 is drive-through (if race has 3 or less laps then the Teleport penalty is enabled)"`
 
@@ -205,13 +231,12 @@ type CurrentRaceConfig struct {
 	WindBaseDirection      int `ini:"WIND_BASE_DIRECTION" help:"base direction of the wind (wind is pointing at); 0 = North, 90 = East etc"`
 	WindVariationDirection int `ini:"WIND_VARIATION_DIRECTION" help:"variation (+ or -) of the base direction"`
 
+	DisableDRSZones bool `ini:"-"`
+
 	DynamicTrack DynamicTrackConfig `ini:"-"`
 
 	Sessions Sessions                  `ini:"-"`
 	Weather  map[string]*WeatherConfig `ini:"-"`
-
-	// Deprecated: Use PickupModeEnabled instead. (PickupModeEnabled == !LockedEntryList)
-	LockedEntryList int `ini:"LOCKED_ENTRY_LIST" input:"checkbox" help:"Only players already included in the entry list can join the server"`
 }
 
 type Sessions map[SessionType]SessionConfig

@@ -51,6 +51,54 @@ func (s *SessionResults) MaskDriverNames() {
 	}
 }
 
+func (s *SessionResults) RenameDriver(guid, newName string) {
+	for _, car := range s.Cars {
+		if car.Driver.GUID == guid {
+			car.Driver.Name = newName
+		}
+	}
+
+	for _, event := range s.Events {
+		if event.Driver.GUID == guid {
+			event.Driver.Name = newName
+		}
+
+		if event.OtherDriver.GUID == guid {
+			event.OtherDriver.Name = newName
+		}
+	}
+
+	for _, lap := range s.Laps {
+		if lap.DriverGUID == guid {
+			lap.DriverName = newName
+		}
+	}
+
+	for _, result := range s.Result {
+		if result.DriverGUID == guid {
+			result.DriverName = newName
+		}
+	}
+}
+
+func (s *SessionResults) DriversHaveTeams() bool {
+	teams := make(map[string]string)
+
+	for _, car := range s.Cars {
+		teams[car.Driver.GUID] = car.Driver.Team
+	}
+
+	for _, driver := range s.Result {
+		if driver.TotalTime > 0 {
+			if team, ok := teams[driver.DriverGUID]; ok && team != "" {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 func (s *SessionResults) GetURL() string {
 	return config.HTTP.BaseURL + "/results/download/" + s.SessionFile + ".json"
 }
@@ -176,6 +224,77 @@ func (s *SessionResults) IsDriversFastestSector(guid string, sector, time, cuts 
 	return fastest
 }
 
+func (s *SessionResults) FallBackSort() {
+	// sort the results by laps completed then race time
+	// this is a fall back for when assetto's sorting is terrible
+	// sort results.Result, if disqualified go to back, if time penalty sort by laps completed then lap time
+
+cars:
+	for i := range s.Cars {
+		for z := range s.Result {
+			if s.Cars[i].Driver.GUID == s.Result[z].DriverGUID {
+				continue cars
+			}
+		}
+
+		var bestLap int
+
+		for y := range s.Laps {
+			if s.IsDriversFastestLap(s.Cars[i].Driver.GUID, s.Laps[y].LapTime, s.Laps[y].Cuts) {
+				bestLap = s.Laps[y].LapTime
+				break
+			}
+		}
+
+		s.Result = append(s.Result, &SessionResult{
+			BallastKG:    s.Cars[i].BallastKG,
+			BestLap:      bestLap,
+			CarID:        s.Cars[i].CarID,
+			CarModel:     s.Cars[i].Model,
+			DriverGUID:   s.Cars[i].Driver.GUID,
+			DriverName:   s.Cars[i].Driver.Name,
+			Restrictor:   s.Cars[i].Restrictor,
+			TotalTime:    0,
+			HasPenalty:   false,
+			PenaltyTime:  time.Duration(0),
+			LapPenalty:   0,
+			Disqualified: false,
+		})
+	}
+
+	for i := range s.Result {
+		s.Result[i].TotalTime = 0
+
+		for _, lap := range s.Laps {
+			if lap.DriverGUID == s.Result[i].DriverGUID {
+				s.Result[i].TotalTime += lap.LapTime
+			}
+		}
+
+		if s.Result[i].HasPenalty {
+			s.Result[i].TotalTime += int(s.Result[i].PenaltyTime.Seconds())
+		}
+	}
+
+	sort.Slice(s.Result, func(i, j int) bool {
+		if (!s.Result[i].Disqualified && !s.Result[j].Disqualified) || (s.Result[i].Disqualified && s.Result[j].Disqualified) {
+
+			// if both drivers aren't/are disqualified
+			if s.GetLaps(s.Result[i].DriverGUID) == s.GetLaps(s.Result[j].DriverGUID) {
+				// if their number of laps are equal, compare last lap pos
+				return s.GetTime(s.Result[i].TotalTime, s.Result[i].DriverGUID, true) <
+					s.GetTime(s.Result[j].TotalTime, s.Result[j].DriverGUID, true)
+			}
+
+			return s.GetLaps(s.Result[i].DriverGUID) >= s.GetLaps(s.Result[j].DriverGUID)
+
+		} else {
+			// driver i is closer to the front than j if they are not disqualified and j is
+			return s.Result[j].Disqualified
+		}
+	})
+}
+
 func (s *SessionResults) GetDate() string {
 	return s.Date.Format(time.RFC822)
 }
@@ -193,18 +312,10 @@ func (s *SessionResults) GetNumSectors() []int {
 func (s *SessionResults) GetDrivers() string {
 	var drivers []string
 
-	numOpenSlots := 0
-
-	for _, car := range s.Cars {
-		if car.Driver.Name != "" {
-			drivers = append(drivers, driverName(car.Driver.Name))
-		} else {
-			numOpenSlots++
+	for _, car := range s.Result {
+		if car.DriverName != "" {
+			drivers = append(drivers, driverName(car.DriverName))
 		}
-	}
-
-	if numOpenSlots > 0 {
-		drivers = append(drivers, fmt.Sprintf("%d open slots", numOpenSlots))
 	}
 
 	return strings.Join(drivers, ", ")
@@ -236,7 +347,7 @@ func (s *SessionResults) GetTeamName(driverGUID string) string {
 		}
 	}
 
-	return "Unknown"
+	return ""
 }
 
 func (s *SessionResults) GetLaps(driverGUID string) int {
@@ -268,6 +379,18 @@ func (s *SessionResults) GetLastLapTime(driverGuid string) time.Duration {
 	return 1
 }
 
+func (s *SessionResults) GetLastLapPos(driverGuid string) int {
+	var driverLaps int
+
+	for i := range s.Laps {
+		if s.Laps[i].DriverGUID == driverGuid {
+			driverLaps++
+		}
+	}
+
+	return s.GetPosForLap(driverGuid, int64(driverLaps))
+}
+
 func (s *SessionResults) GetCuts(driverGuid string) int {
 	var i int
 
@@ -288,6 +411,30 @@ func (s *SessionResults) FastestLap() *SessionLap {
 	laps := make([]*SessionLap, len(s.Laps))
 
 	copy(laps, s.Laps)
+
+	sort.Slice(laps, func(i, j int) bool {
+		return laps[i].Cuts == 0 && laps[i].LapTime < laps[j].LapTime
+	})
+
+	return laps[0]
+}
+
+func (s *SessionResults) FastestLapInClass(classID uuid.UUID) *SessionLap {
+	if len(s.Laps) == 0 || s.Laps == nil {
+		return nil
+	}
+
+	var laps []*SessionLap
+
+	for _, lap := range s.Laps {
+		if lap.ClassID == classID {
+			laps = append(laps, lap)
+		}
+	}
+
+	if len(laps) == 0 {
+		return nil
+	}
 
 	sort.Slice(laps, func(i, j int) bool {
 		return laps[i].Cuts == 0 && laps[i].LapTime < laps[j].LapTime
@@ -528,6 +675,8 @@ func getResultDate(name string) (time.Time, error) {
 	return time.Date(year, time.Month(month), day, hour, minute, 0, 0, time.Local), nil
 }
 
+var UseFallBackSorting = false
+
 func LoadResult(fileName string) (*SessionResults, error) {
 	var result *SessionResults
 
@@ -565,10 +714,24 @@ func LoadResult(fileName string) (*SessionResults, error) {
 
 	result.Result = validResults
 
+	if UseFallBackSorting {
+		result.FallBackSort()
+	}
+
 	return result, nil
 }
 
-func resultsHandler(w http.ResponseWriter, r *http.Request) {
+type ResultsHandler struct {
+	*BaseHandler
+}
+
+func NewResultsHandler(baseHandler *BaseHandler) *ResultsHandler {
+	return &ResultsHandler{
+		BaseHandler: baseHandler,
+	}
+}
+
+func (rh *ResultsHandler) list(w http.ResponseWriter, r *http.Request) {
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 
 	if err != nil {
@@ -586,14 +749,14 @@ func resultsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "results/index.html", map[string]interface{}{
+	rh.viewRenderer.MustLoadTemplate(w, r, "results/index.html", map[string]interface{}{
 		"results":     results,
 		"pages":       pages,
 		"currentPage": page,
 	})
 }
 
-func resultHandler(w http.ResponseWriter, r *http.Request) {
+func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
 	var result *SessionResults
 	fileName := chi.URLParam(r, "fileName")
 
@@ -608,12 +771,14 @@ func resultHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "results/result.html", map[string]interface{}{
-		"result": result,
+	rh.viewRenderer.MustLoadTemplate(w, r, "results/result.html", map[string]interface{}{
+		"result":        result,
+		"account":       AccountFromRequest(r),
+		"WideContainer": true,
 	})
 }
 
-func resultFileHandler(w http.ResponseWriter, r *http.Request) {
+func (rh *ResultsHandler) file(w http.ResponseWriter, r *http.Request) {
 	fileName := chi.URLParam(r, "fileName")
 
 	result, err := LoadResult(fileName)
@@ -635,5 +800,63 @@ func resultFileHandler(w http.ResponseWriter, r *http.Request) {
 
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
-	enc.Encode(result)
+	_ = enc.Encode(result)
+}
+
+func (rh *ResultsHandler) edit(w http.ResponseWriter, r *http.Request) {
+	fileName := chi.URLParam(r, "fileName")
+
+	results, err := LoadResult(fileName + ".json")
+
+	if os.IsNotExist(err) {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	} else if err != nil {
+		logrus.WithError(err).Error("could not load results")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	for key, vals := range r.Form {
+		if strings.HasPrefix(key, "guid:") {
+			guid := strings.TrimPrefix(key, "guid:")
+			name := vals[0]
+
+			results.RenameDriver(guid, name)
+		}
+	}
+
+	err = saveResults(results.SessionFile+".json", results)
+
+	if err != nil {
+		logrus.WithError(err).Error("could not load results")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	AddFlash(w, r, "Drivers successfully edited")
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+// saveResults takes a full json filepath (including the json extension) and saves the results to that file.
+func saveResults(jsonFileName string, results *SessionResults) error {
+	path := filepath.Join(ServerInstallPath, "results", jsonFileName)
+
+	file, err := os.Create(path)
+
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "\t")
+
+	return encoder.Encode(results)
 }

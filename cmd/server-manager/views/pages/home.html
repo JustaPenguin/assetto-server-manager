@@ -5,7 +5,7 @@
 
     {{ with .RaceDetails }}
         <div class="card">
-            {{ if eq $.server_event_type "CHAMPIONSHIP" }}
+            {{ if $.server_event.IsChampionship }}
                 <h5 class="card-header">Championship Event in Progress</h5>
             {{ else }}
                 <h5 class="card-header">Event in Progress</h5>
@@ -17,7 +17,9 @@
                     {{ template "race-card" . }}
 
                     <div class="button-bar">
-                        <a href="/live-timing" class="btn btn-primary">Live Timings</a>
+                        {{ if not $.PerformanceMode }}
+                            <a href="/live-timing" class="btn btn-primary">Live Timings</a>
+                        {{ end }}
 
 
                         {{ if WriteAccess }}
@@ -26,7 +28,7 @@
                                     href="/process/restart"
                                     class="btn btn-warning"
 
-                                    {{ if eq $.server_event_type "CHAMPIONSHIP" }}
+                                    {{ if $.server_event.IsChampionship }}
                                         onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
                                     {{ end }}
                                 >
@@ -36,7 +38,7 @@
                                     href="/process/stop"
                                     class="btn btn-danger"
 
-                                    {{ if eq $.server_event_type "CHAMPIONSHIP" }}
+                                    {{ if $.server_event.IsChampionship }}
                                         onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
                                     {{ end }}
                                 >
@@ -82,6 +84,15 @@
                 <div class="card-body text-center">
                     <h1 class="text-center"><i class="fas fa-flag-checkered fa-2x"></i></h1>
                     <h2>Championships</h2>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-4 mt-4">
+            <a class="card" href="/calendar">
+                <div class="card-body text-center">
+                    <h1 class="text-center"><i class="fas fa-calendar-check fa-2x"></i></h1>
+                    <h2>Calendar</h2>
                 </div>
             </a>
         </div>
@@ -167,7 +178,27 @@
                 <a class="card" href="/motd">
                     <div class="card-body text-center">
                         <h1 class="text-center"><i class="fas fa-comment-alt fa-2x"></i></h1>
-                        <h2>Message of the Day</h2>
+                        <h2>Messages</h2>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-4 mt-4">
+                <a class="card" href="/audit-logs">
+                    <div class="card-body text-center">
+                        <h1 class="text-center"><i class="fas fa-clipboard-list fa-2x"></i></h1>
+                        <h2>Audit Logs</h2>
+                    </div>
+                </a>
+            </div>
+        {{ end }}
+
+        {{ if DeleteAccess }}
+            <div class="col-md-6 col-lg-4 mt-4">
+                <a class="card" href="/autofill-entrants">
+                    <div class="card-body text-center">
+                        <h1 class="text-center"><i class="fas fa-users-cog fa-2x"></i></h1>
+                        <h2>AutoFill Entrants</h2>
                     </div>
                 </a>
             </div>

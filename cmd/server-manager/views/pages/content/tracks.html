@@ -24,15 +24,14 @@
                         <div class="btn-file btn btn-secondary d-inline-block align-top">
                             Choose a Folder
                             <input id="input-folder-track" name="input-folder-track[]" type="file"
-                                    webkitdirectory multiple value="Choose Folder" onchange="handleTrackFiles(this.files)"/>
+                                    webkitdirectory multiple value="Choose Folder"/>
                         </div>
 
-                        <div id="drop-zone" ondrop="handleTrackDropFiles(event);" ondragover="dragOverHandler(event);" ondragleave="dragOutHandler(event);"
-                             class="ml-2 mr-2 drop-zone d-inline-block">Or Drag & Drop Folder(s) Here</div>
+                        <div id="drop-zone" class="track-drop ml-2 mr-2 drop-zone d-inline-block">Or Drag & Drop Folder(s) Here</div>
 
                         <div class="float-right">
                             <label for="only-ks" class="mr-2">Only Upload Official KS Content</label>
-                            <input type="checkbox" name="only-ks" id="only-ks" onchange="toggleKS()">
+                            <input type="checkbox" name="only-ks" id="only-ks">
                         </div>
 
                         <div id="upload-button"></div>

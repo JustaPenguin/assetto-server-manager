@@ -1,6 +1,9 @@
 language: go
 go:
-  - 1.12
+  - 1.13
+
+services:
+  - docker
 
 addons:
   apt:
@@ -8,8 +11,8 @@ addons:
       - dos2unix
 
 before_install:
-  - nvm install 11
-  - nvm use 11
+  - nvm install 12
+  - nvm use 12
 
 install:
   - node -v
@@ -20,10 +23,14 @@ script:
   - VERSION=${TRAVIS_TAG} make deploy
 
 deploy:
-  provider: releases
-  api_key: $OAUTH_TOKEN
-  file:
-    - cmd/server-manager/server-manager_$TRAVIS_TAG.zip
-  skip_cleanup: true
-  on:
-    tags: true
+  - provider: releases
+    api_key: $OAUTH_TOKEN
+    file:
+      - cmd/server-manager/server-manager_$TRAVIS_TAG.zip
+    skip_cleanup: true
+    on:
+      tags: true
+
+  - provider: script
+    script: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD && VERSION=${TRAVIS_TAG}; make docker
+    skip_cleanup: true

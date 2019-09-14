@@ -1,5 +1,5 @@
 # set the version if it's not already set
-VERSION?=$(shell date +'%y.%m.%d-%H-%M')
+VERSION?=dev-$(shell date +'%y.%m.%d-%H-%M')
 
 export GO111MODULE=on
 
@@ -12,19 +12,17 @@ clean:
 	rm -rf static/static_embed.go
 
 run:
-	node_modules/.bin/babel javascript/manager.js --watch --out-file static/manager.js  --source-maps &
-	go build -ldflags "-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${VERSION}"
+	go build -ldflags "-s -w -X github.com/cj123/assetto-server-manager.BuildVersion=${VERSION}"
 	FILESYSTEM_HTML=true DEBUG=true ./server-manager
 
 assets:
-	npm install
-	node_modules/.bin/babel javascript/manager.js -o static/manager.js
+	$(MAKE) -C typescript build
 
-deploy: clean assets
-	# asset embed
+asset-embed:
 	go get -u github.com/mjibson/esc
 	go generate ./...
 
+deploy: clean assets asset-embed
 	# directory structure
 	mkdir -p build/linux build/windows
 	cp config.example.yml build/linux/config.yml
@@ -36,8 +34,8 @@ deploy: clean assets
 	rsrc -ico ../../misc/windows/icon.ico -arch amd64 -o rsrc.syso
 
 	# build
-	GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${VERSION}" -o build/linux/server-manager
-	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildTime=${VERSION}" -o build/windows/server-manager.exe
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildVersion=${VERSION}" -o build/linux/server-manager
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X github.com/cj123/assetto-server-manager.BuildVersion=${VERSION}" -o build/windows/server-manager.exe
 
 	cp ../../README.md build/README.txt
 	cp ../../INSTALL.txt build/INSTALL.txt

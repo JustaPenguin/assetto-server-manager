@@ -1,52 +1,39 @@
-FROM golang:1.12
+FROM golang:1.13 AS build
 
-MAINTAINER Callum Jones <cj@icj.me>
-
-ENV SERVER_MANAGER_VERSION=v1.3.2
-ENV STEAMCMD_URL="http://media.steampowered.com/installer/steamcmd_linux.tar.gz"
-ENV STEAMROOT=/opt/steamcmd
+ARG SM_VERSION
 ENV DEBIAN_FRONTEND noninteractive
-ENV SERVER_USER assetto
 ENV BUILD_DIR ${GOPATH}/src/github.com/cj123/assetto-server-manager
-ENV SERVER_MANAGER_DIR /home/${SERVER_USER}/server-manager/
-ENV SERVER_INSTALL_DIR ${SERVER_MANAGER_DIR}/assetto
 ENV GO111MODULE on
 
-# steamcmd
-RUN curl -sL https://deb.nodesource.com/setup_11.x | bash -
-RUN apt-get update && apt-get install -y build-essential libssl-dev curl lib32gcc1 lib32stdc++6 nodejs zlib1g lib32z1
-RUN mkdir -p ${STEAMROOT}
-WORKDIR ${STEAMROOT}
-RUN curl -s ${STEAMCMD_URL} | tar -vxz
-ENV PATH "${STEAMROOT}:${PATH}"
+RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -
+RUN apt-get update && apt-get install -y build-essential libssl-dev curl nodejs tofrodos dos2unix zip
 
-# update steam
-RUN steamcmd.sh +login anonymous +quit; exit 0
-
-# build
 ADD . ${BUILD_DIR}
-WORKDIR ${BUILD_DIR}/cmd/server-manager
-RUN npm install
-RUN node_modules/.bin/babel javascript/manager.js -o static/manager.js
-RUN go get github.com/mjibson/esc
-RUN go generate ./...
-RUN go build -ldflags "-s -w -X github.com/cj123/assetto-server-manager.BuildTime=$SERVER_MANAGER_VERSION"
-RUN mv server-manager /usr/bin/
+WORKDIR ${BUILD_DIR}
+RUN rm -rf cmd/server-manager/typescript/node_modules
+RUN VERSION=${SM_VERSION} make deploy
+RUN mv cmd/server-manager/build/linux/server-manager /usr/bin/
+
+FROM debian:stable-slim AS run
+MAINTAINER Callum Jones <cj@icj.me>
+
+ENV DEBIAN_FRONTEND noninteractive
+
+ENV SERVER_USER assetto
+ENV SERVER_MANAGER_DIR /home/${SERVER_USER}/server-manager/
+ENV SERVER_INSTALL_DIR ${SERVER_MANAGER_DIR}/assetto
+
+# dependencies for plugins, e.g. stracker, kissmyrank
+RUN apt-get update && apt-get install -y lib32gcc1 lib32stdc++6 zlib1g zlib1g lib32z1 ca-certificates && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -ms /bin/bash ${SERVER_USER}
 
-# install
-RUN mkdir -p ${SERVER_MANAGER_DIR}
-RUN mkdir ${SERVER_INSTALL_DIR}
+RUN mkdir -p ${SERVER_MANAGER_DIR} && mkdir ${SERVER_INSTALL_DIR}
 
 RUN chown -R ${SERVER_USER}:${SERVER_USER} ${SERVER_MANAGER_DIR}
 RUN chown -R ${SERVER_USER}:${SERVER_USER} ${SERVER_INSTALL_DIR}
 
-# cleanup
-RUN rm -rf ${BUILD_DIR}
-
-# ac server wrapper
-RUN npm install -g ac-server-wrapper
+COPY --from=build /usr/bin/server-manager /usr/bin/
 
 USER ${SERVER_USER}
 WORKDIR ${SERVER_MANAGER_DIR}

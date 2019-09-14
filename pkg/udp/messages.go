@@ -71,7 +71,6 @@ type AssettoServerUDP struct {
 }
 
 func (asu *AssettoServerUDP) Close() error {
-
 	if asu.closed {
 		return nil
 	}
@@ -169,7 +168,7 @@ func (asu *AssettoServerUDP) serve() {
 			n, _, err := asu.listener.ReadFromUDP(buf)
 
 			if err != nil {
-				logrus.WithError(err).Error("could not read from UDP")
+				logrus.WithError(err).Warn("could not read from UDP")
 				continue
 			}
 
@@ -292,7 +291,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 		response = SessionCarInfo{
 			CarID:      carID,
 			DriverName: driverName,
-			DriverGUID: driverGUID,
+			DriverGUID: DriverGUID(driverGUID),
 			CarModel:   carMode,
 			CarSkin:    carSkin,
 			EventType:  eventType,
@@ -328,7 +327,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 			CarSkin:     readStringW(r),
 			DriverName:  readStringW(r),
 			DriverTeam:  readStringW(r),
-			DriverGUID:  readStringW(r),
+			DriverGUID:  DriverGUID(readStringW(r)),
 		}
 	case EventEndSession:
 		filename := readStringW(r)
@@ -462,7 +461,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 		response = ServerError{errors.New(message)}
 
 	case EventLapCompleted:
-		lapCompleted := LapCompletedInternal{}
+		lapCompleted := lapCompletedInternal{}
 
 		err := binary.Read(r, binary.LittleEndian, &lapCompleted)
 
@@ -470,7 +469,12 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 			return nil, err
 		}
 
-		lc := LapCompleted{LapCompletedInternal: lapCompleted}
+		lc := LapCompleted{
+			CarID:     lapCompleted.CarID,
+			LapTime:   lapCompleted.LapTime,
+			Cuts:      lapCompleted.Cuts,
+			CarsCount: lapCompleted.CarsCount,
+		}
 
 		for i := uint8(0); i < lapCompleted.CarsCount; i++ {
 			var car LapCompletedCar

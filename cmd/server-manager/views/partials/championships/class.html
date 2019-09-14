@@ -26,21 +26,7 @@
             </label>
 
             <div class="col-sm-9">
-                <select multiple required class="form-control Cars" name="Cars" id="Cars" size="15">
-
-                    {{ range $index, $car := .CarOpts }}
-
-                        {{ $selected := false }}
-
-                        {{ range $j, $selectedCar := $class.ValidCarIDs }}
-                            {{ if eq $selectedCar $car.Name }}
-                                {{ $selected = true }}
-                            {{ end }}
-                        {{ end }}
-
-                        <option value="{{ $car.Name }}" {{ if $selected }} selected="selected" {{ end }}>{{ prettify $car.Name true }}</option>
-                    {{ end }}
-                </select>
+                {{ template "cars" dict "CarOpts" $.CarOpts "Current" nil "ValidCarIDs" $class.ValidCarIDs }}
             </div>
         </div>
 
@@ -48,7 +34,7 @@
 
         <div class="entrants-block">
             <div id="entrantTemplate" class="entrant">
-                {{ template "entrant" }}
+                {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" true }}
             </div>
 
             {{ range $index, $entrant := $class.Entrants.AsSlice }}
@@ -58,7 +44,7 @@
             {{ else }}
                 {{ if not $.IsEditing }}
                     <div class="entrant">
-                        {{ template "entrant" }}
+                        {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" true }}
                     </div>
                 {{ end }}
             {{ end }}

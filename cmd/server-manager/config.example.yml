@@ -54,14 +54,26 @@ http:
   # change '0.0.0.0' to 'localhost' if you don't want server manager to be
   # available on the web.
   hostname: 0.0.0.0:8772
+
   # session key is used to encrypt the http session
   session_key: RANDOMLY_GENERATE_THIS
+
   # server manager base URL is the URL that the server manager is accessible on
   # only used for links in championship welcome message in game
   # you can leave this blank if not required
   # example: https://opengt3.assettocorsaservers.com <-- requires https:// or
   # http://, no closing / at the end
   server_manager_base_URL:
+
+  # session store type can be one of: 'cookie' or 'filesystem'
+  # if it is 'filesystem', you must set the session_store_path below.
+  # cookie is best for most users, but if you are running multiple Server
+  # Manager instances on the same IP address, you should use filesystem.
+  session_store_type: cookie
+
+  # session store path is where to save the session store
+  # (if using 'filesystem' above)
+  session_store_path: ""
 
 ################################################################################
 #
@@ -116,6 +128,12 @@ store:
   # where to save the server manager data
   path: server_manager.db
 
+  # shared data path: Set the same directory for multiple AC Server Manager
+  # instances to share championship, entrants and custom events across them.
+  # Leave blank to use the same path as the one set up here.
+  # works only with JSON database
+  shared_data_path: 
+
 ################################################################################
 #
 #  user management - this is now mostly done via the web interface.
@@ -156,6 +174,13 @@ live_map:
 #
 ################################################################################
 server:
+  # audit logging logs the actions of registered users locally on your server.
+  # Only Admins can access the logs, they are intended for tracking if users
+  # have deleted content, started/stopped events when they shouldn't have etc.
+  audit_logging: true
+  # performance mode disables live timing entirely, and prioritises low cpu
+  # usage.
+  performance_mode: false
   # list of commands to run on server start and kill on server stop. this should
   # contain the full command with arguments to run the given program.
   #

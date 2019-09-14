@@ -1,0 +1,41 @@
+
+.table-championship {
+  tr {
+    td {
+      &:first-child {
+        max-width: 300px;
+      }
+
+      &:last-child {
+        max-width: 270px;
+        text-align: center;
+      }
+    }
+  }
+}
+
+.championship-signup-question {
+  margin-bottom: 5px;
+}
+
+.popover-signup-answers {
+  font-size: 0.9rem;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.points-transfer {
+  margin-top: 10px;
+  font-size: 0.765625rem;
+  line-height: 1.5;
+
+  display: none;
+}
+
+.points-transfer label {
+  padding-top: 6px;
+}
+
+.points-transfer .bootstrap-switch {
+  float: right;
+}

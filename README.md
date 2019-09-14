@@ -39,7 +39,7 @@ A web interface to manage an Assetto Corsa Server.
 ### Docker
 
 A docker image is available under the name `seejy/assetto-server-manager`. We recommend using docker-compose
-to set up a docker environment for the server manager. This docker image has steamcmd pre-installed.
+to set up a docker environment for the server manager. Note that this docker image **does not** have steamcmd pre-installed.
 
 See [Manual](#Manual) to set up server manager without Docker.
 
@@ -94,6 +94,36 @@ Follow the steps below to update Server Manager:
 6. Find the Server Manager executable for your operating system. Replace your current Server Manager
    executable with it.
 7. Start the new Server Manager executable.
+
+## Build From Source Process
+_This is written with Linux in mind. Note that for other platforms this general flow should work, but specific commands may differ._
+
+1. Install Go 1.12; follow https://golang.org/doc/install#install
+2. Install Node js 11; this varies a lot based on os/distribution, Google is your friend.
+3. Enter the following commands in your terminal:
+
+    ```
+     # clone the repository (and dependencies) to your $GOPATH
+     go get -u github.com/cj123/assetto-server-manager/...
+     # move to the repository root
+     cd $GOPATH/src/github.com/cj123/assetto-server-manager
+    ```
+
+4. Set up the config.yml file in assetto-server-manager/cmd/server-manager (best to copy config.example.yml 
+to config.yml then edit). There are important settings in here that *need* to be configured before sever manager
+will run, such as the path to steamcmd, default account information and more. **Make sure you read it carefully!**
+5. Time to run the manager, enter the following in your terminal:
+
+    ``` 
+     export GO111MODULE=on
+     # run makefile commands to build and run server manager
+     make clean
+     make assets
+     make asset-embed
+     make run
+    ```
+6. Server Manager should now be running! You can find the UI in your browser at your 
+configured hostname (default 0.0.0.0:8772).
 
 ## Credits & Thanks
 

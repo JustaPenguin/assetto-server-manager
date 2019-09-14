@@ -16,6 +16,10 @@ type EntryList map[string]*Entrant
 
 // Write the EntryList to the server location
 func (e EntryList) Write() error {
+	for i, entrant := range e.AsSlice() {
+		entrant.PitBox = i
+	}
+
 	f := ini.NewFile([]ini.DataSource{nil}, ini.LoadOptions{
 		IgnoreInlineComment: true,
 	})
@@ -27,8 +31,8 @@ func (e EntryList) Write() error {
 		return err
 	}
 
-	for k, v := range e {
-		s, err := f.NewSection(k)
+	for _, v := range e {
+		s, err := f.NewSection(fmt.Sprintf("CAR_%d", v.PitBox))
 
 		if err != nil {
 			return err
@@ -67,11 +71,7 @@ func (e EntryList) AsSlice() []*Entrant {
 	}
 
 	sort.Slice(entrants, func(i, j int) bool {
-		if entrants[i].Team == entrants[j].Team {
-			return entrants[i].Name < entrants[j].Name
-		} else {
-			return entrants[i].Team < entrants[j].Team
-		}
+		return entrants[i].PitBox < entrants[j].PitBox
 	})
 
 	return entrants
@@ -92,11 +92,7 @@ func (e EntryList) PrettyList() []*Entrant {
 	}
 
 	sort.Slice(entrants, func(i, j int) bool {
-		if entrants[i].Team == entrants[j].Team {
-			return entrants[i].Name < entrants[j].Name
-		} else {
-			return entrants[i].Team < entrants[j].Team
-		}
+		return entrants[i].PitBox < entrants[j].PitBox
 	})
 
 	entrants = append(entrants, &Entrant{
@@ -145,6 +141,7 @@ func NewEntrant() *Entrant {
 
 type Entrant struct {
 	InternalUUID uuid.UUID `ini:"-"`
+	PitBox       int       `ini:"-"`
 
 	Name string `ini:"DRIVERNAME"`
 	Team string `ini:"TEAM"`
@@ -170,10 +167,25 @@ func (e Entrant) ID() string {
 	}
 }
 
-func (e Entrant) OverwriteProperties(other *Entrant) {
+func (e *Entrant) OverwriteProperties(other *Entrant) {
 	e.FixedSetup = other.FixedSetup
 	e.Restrictor = other.Restrictor
 	e.SpectatorMode = other.SpectatorMode
 	e.Ballast = other.Ballast
 	e.Skin = other.Skin
+	e.PitBox = other.PitBox
+}
+
+func (e *Entrant) SwapProperties(other *Entrant, entrantRemainedInClass bool) {
+	if entrantRemainedInClass {
+		e.Model, other.Model = other.Model, e.Model
+		e.Skin, other.Skin = other.Skin, e.Skin
+		e.FixedSetup, other.FixedSetup = other.FixedSetup, e.FixedSetup
+		e.Restrictor, other.Restrictor = other.Restrictor, e.Restrictor
+		e.Ballast, other.Ballast = other.Ballast, e.Ballast
+	}
+
+	e.Team, other.Team = other.Team, e.Team
+	e.InternalUUID, other.InternalUUID = other.InternalUUID, e.InternalUUID
+	e.PitBox, other.PitBox = other.PitBox, e.PitBox
 }

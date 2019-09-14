@@ -1,0 +1,358 @@
+{{ define "title" }}{{ $.Car.Details.Name }}{{ end }}
+
+{{ define "content" }}
+    <div class="car-details">
+        <h1 class="text-center">{{ $.Car.Details.Name }}</h1>
+        <div class="text-center mb-3">
+            <small>({{ $.Car.Name}})</small>
+        </div>
+
+        {{ if gt (len $.Car.Skins) 0 }}
+            {{ $skin := index $.Car.Skins 0 }}
+
+            <div class="row mb-3">
+                <div class="col-8 col-md-10">
+                    <img class="img img-fluid car-image" id="hero-skin" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}">
+                </div>
+
+                <div class="col-4 col-md-2 car-skins">
+                    {{ range $index, $skin := $.Car.Skins }}
+                        <div class="car-skin">
+                            <img class="img img-fluid car-image" src="{{ carSkinURL $.Car.Name $skin }}" alt="{{ $.Car.Details.Name }}, skin {{ $skin }}" title="{{ prettify $skin true }}" data-skin="{{ $skin }}" data-toggle="tooltip" data-placement="bottom">
+                        </div>
+                    {{ end }}
+                </div>
+            </div>
+        {{ end }}
+
+        <div class="row mb-3">
+            <div class="col-md-10">
+                <div class="row">
+                    <div class="{{ if WriteAccess }}col-md-9{{ else }}col-md-12{{ end }}" id="tags">
+                        {{ range $index, $tag := $.Car.Details.Tags }}
+                            <span class="badge badge-primary">
+                                <a class="text-white"
+                                   href="/cars?q=%2Btags:%22{{ urlquery $tag }}%22"
+                                >{{ $tag }}</a>
+
+                                {{ if WriteAccess }}
+                                    <a class="delete-tag text-white"
+                                       href="/car/{{ $.Car.Name }}/tags?delete={{ $tag }}"
+                                       data-tag="{{ $tag }}"
+                                       data-car="{{ $.Car.Name }}"
+                                       data-toggle="tooltip"
+                                       title="Delete this tag"
+                                    >
+                                        <i class="fas fa-times ml-2"></i>
+                                    </a>
+                                {{ end }}
+                            </span>
+                        {{ end }}
+                    </div>
+
+                    {{ if WriteAccess }}
+                        <div class="col-md-3 text-right">
+                            <form id="add-tag" method="post" action="/car/{{ $.Car.Name }}/tags">
+                                <div class="form-group row">
+                                    <div class="col-9">
+                                        <input type="text" class="form-control form-control-sm" id="new-tag" name="new-tag" required
+                                               placeholder="Add a new tag">
+                                    </div>
+
+                                    <div class="col-3">
+                                        <button type="submit" class="btn btn-sm btn-primary">Go</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="col-md-2 text-right">
+                        </div>
+                    {{ end }}
+                </div>
+
+                <div class="pt-2">
+                    {{ with $.Car.Details.Notes }}
+                        <h2>Notes</h2>
+
+                        <p>{{ trustHTML . }}</p>
+
+                        <h2>Description</h2>
+                    {{ end }}
+
+                    {{ with $.Car.Details.Notes }}
+                    {{ end }}
+
+                    {{ with $.Car.Details.Description }}
+                        <p>{{ trustHTML . }}</p>
+                    {{ else }}
+                        <p>There is no description for this car.</p>
+                    {{ end }}
+                </div>
+
+
+                <h2>Setups</h2>
+
+                {{ if gt (len $.Setups) 0 }}
+                    <table class="table table-bordered table-striped">
+                        <tr>
+                            <th>Track</th>
+                            <th>Setup File</th>
+                            {{ if DeleteAccess }}
+                                <th class="text-center">Delete</th>
+                            {{ end }}
+                        </tr>
+                        {{ range $trackName, $setups := $.Setups }}
+                            {{ range $index, $setup := $setups }}
+                                <tr>
+                                    {{ if eq $index 0 }}
+                                        <td rowspan="{{ len $setups }}">
+                                            {{ prettify $trackName false }}
+                                        </td>
+                                    {{ end }}
+
+                                    <td>
+                                        <a href="{{ printf "/setups/download/%s/%s/%s" $.Car.Name $trackName $setup }}">
+                                            {{ $setup }}
+                                        </a>
+                                    </td>
+
+                                    {{ if DeleteAccess }}
+                                        <td class="text-center">
+                                            <a href="{{ printf "/setups/delete/%s/%s/%s" $.Car.Name $trackName $setup }}"><i class="fas fa-trash text-danger"></i></a>
+                                        </td>
+                                    {{ end }}
+                                </tr>
+                            {{ end }}
+                        {{ end }}
+                    </table>
+
+                    {{ if WriteAccess }}
+                        <p>You can upload setups for this car using the form below.</p>
+                    {{ end }}
+                {{ else }}
+                    <p>There are no setups for this car. You can upload one below.</p>
+                {{ end }}
+
+
+                {{ if WriteAccess }}
+                    <form method="post" action="/setups/upload" enctype="multipart/form-data" class="mb-2">
+                        <div class="form-group row">
+                            <label for="Track" class="col-sm-3 col-form-label">
+                                Track
+                            </label>
+
+                            <div class="col-sm-9">
+                                <select class="form-control" name="Track" id="Track">
+                                    <option value="generic">Generic</option>
+
+                                    {{ range $index, $track := .TrackOpts }}
+                                        <option value="{{ $track.Name }}">
+                                            {{ prettify $track.Name false }}
+                                        </option>
+                                    {{ end }}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="SetupFile" class="col-sm-3 col-form-label">
+                                Setup File
+                            </label>
+
+                            <div class="col-sm-9">
+                                <div class="custom-file">
+                                    <input type="file" class="custom-file-input" id="SetupFile" name="SetupFile" accept=".ini">
+                                    <label class="custom-file-label" for="SetupFile">Choose Setup</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success float-right">Upload Setup</button>
+
+                        <div class="clearfix"></div>
+                    </form>
+                {{ end }}
+
+                <h2>Sessions</h2>
+
+                <p>This car has been used in {{ len $.Results }} sessions.</p>
+
+                <div class="list-group overflow-auto mt-3 mb-3" style="max-height: 300px;">
+                    {{ range $index, $session := $.Results }}
+                        <a class="list-group-item list-group-item-action" href="/results/{{ $session.SessionFile }}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-2 text-primary"><strong>{{ title (lower $session.Type) }}</strong></h5>
+                                <small>{{ fullTimeFormat $session.Date }}</small>
+                            </div>
+                            <p class="mb-1">{{ prettify $session.TrackName false }} {{ with $session.TrackConfig }}({{ prettify . true }}){{ end }}</p>
+                        </a>
+                    {{ end }}
+                </div>
+
+            </div>
+
+            <div class="col-md-2 border-left">
+                <div class="mb-4">
+                    {{ with $.Car.Details.DownloadURL }}
+                        <div class="pb-2 text-center">
+                            <a href="{{ . }}" class="btn btn-success d-block w-100" target="_blank">Download Car</a>
+                        </div>
+                    {{ end }}
+                </div>
+
+                <h4>Tyres</h4>
+
+                <ul class="list-unstyled">
+                    {{ range $tyre, $name := $.Car.Tyres }}
+                        <li>{{ $name }} ({{ $tyre }})</li>
+                    {{ end }}
+                </ul>
+
+                <h4>Specs</h4>
+
+                <ul class="list-unstyled">
+                    {{ with $.Car.Details.Specs.Acceleration }}<li><strong>Acceleration:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.Specs.BHP }}<li><strong>BHP:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.Specs.PWRatio }}<li><strong>Power Ratio:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.Specs.TopSpeed }}<li><strong>Top Speed:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.Specs.Torque }}<li><strong>Torque:</strong> {{ . }}</li>{{ end }}
+                    {{ with $.Car.Details.Specs.Weight }}<li><strong>Weight:</strong> {{ . }}</li>{{ end }}
+                </ul>
+
+                <h4>About</h4>
+
+                <ul class="list-unstyled">
+                    {{ with $.Car.Details.Author }}<li><strong>Author:</strong> <a href="/cars?q=%2Bauthor:{{ . }}">{{ . }}</a></li>{{ end }}
+                    {{ with $.Car.Details.Brand }}<li><strong>Brand:</strong> <a href="/cars?q=%2Bbrand:{{ . }}">{{ . }}</a></li>{{ end }}
+                    {{ with $.Car.Details.Class }}<li><strong>Class:</strong> <a href="/cars?q=%2Bclass:{{ . }}">{{ . }}</a></li>{{ end }}
+                    {{ with $.Car.Details.Country }}<li><strong>Country:</strong> <a href="/cars?q=%2Bcountry:{{ . }}">{{ . }}</a></li>{{ end }}
+                    {{ with $.Car.Details.Year }}<li><strong>Year:</strong> <a href="/cars?q=%2Byear:{{ . }}">{{ . }}</a></li>{{ end }}
+                    {{ with $.Car.Details.Version }}<li><strong>Version:</strong> {{ . }}</li>{{ end }}
+                </ul>
+
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-12">
+
+                {{ if WriteAccess }}
+                    <form method="post" action="/car/{{ $.Car.Name }}/metadata">
+                        <div class="card mt-3 border-info mt-5 mb-3">
+                            <div class="card-header text-white bg-primary">
+                                <strong>Car Metadata</strong>
+                            </div>
+                            <div class="card-body">
+
+                                <div class="form-group row">
+                                    <label for="DownloadURL" class="col-sm-3 col-form-label">Download URL</label>
+
+                                    <div class="col-sm-9">
+
+                                        <input
+                                                class="form-control"
+                                                type="url"
+                                                id="DownloadURL"
+                                                name="DownloadURL"
+                                                value="{{ $.Car.Details.DownloadURL }}"
+                                                placeholder="e.g. http://racedepartment.com/..."
+                                        >
+
+                                        <small>Download links for cars will be shown in Championship pages and in Content Manager's server information screen.</small>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    {{ with $.Car.Details.Notes }}<div class="d-none" id="CarNotes">{{ trustHTML . }}</div>{{ end }}
+
+                                    <label for="summernote" class="col-sm-3 col-form-label">Notes</label>
+
+                                    <div class="col-sm-9" id="championship-info">
+                                        <textarea id="summernote" name="Notes"></textarea>
+                                        <div class="clearfix"></div>
+
+                                        <small>Notes will be shown to all users when they visit this car page.</small>
+                                    </div>
+                                </div>
+
+                                <div class="float-right mt-5">
+                                    <button class="btn btn-primary" type="submit">Save Car Metadata</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="card mt-3 border-secondary mb-3">
+                        <div class="card-header bg-secondary">
+                            <strong>Skins</strong>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" action="/car/{{ $.Car.Name }}/skin" id="skin-upload" enctype="multipart/form-data">
+                                <div class="form-group row">
+                                    <label for="input-folder-skin" class="col-sm-3 col-form-label">Skin Upload</label>
+
+                                    <div class="col-sm-9">
+                                        <div class="btn-file btn btn-secondary d-inline-block align-top">
+                                            Choose a Skin
+                                            <input id="input-folder-skin" name="input-folder-skin[]" type="file"
+                                                   multiple webkitdirectory value="Choose Folder"/>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary" id="upload-skin" style="display: none;">
+                                            Upload
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            {{ if DeleteAccess }}
+                                <hr>
+
+                                <form action="/car/{{ $.Car.Name }}/skin/delete" method="post">
+                                    <div class="form-group row">
+                                        <label for="skin-delete" class="col-sm-3 col-form-label">Delete Skin</label>
+
+                                        <div class="col-sm-9 row">
+                                            <div class="col-8">
+                                                <select class="form-control" name="skin-delete">
+                                                    {{ range $index, $skin := $.Car.Skins }}
+                                                        <option value="{{ $skin }}">{{ prettify $skin true }}</option>
+                                                    {{ end }}
+                                                </select>
+                                            </div>
+
+                                            <div class="col-4">
+                                                <button type="submit" class="btn btn-danger">Delete Skin</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            {{ end }}
+                        </div>
+                    </div>
+                {{ end }}
+
+                {{ if DeleteAccess }}
+                    <div class="card border-danger mt-3 mb-3">
+                        <div class="card-header text-white bg-danger">
+                            Danger Zone!
+                        </div>
+
+                        <div class="card-body">
+                            <p class="float-left">Permanently delete this car and all associated skins.</p>
+
+                            <a onclick="return confirm('Are you sure you want to permanently delete this car and all associated skins?');"
+                               class="btn btn-danger float-right"
+                               href="/car/{{ $.Car.Name }}/delete">
+                                Delete Car
+                            </a>
+
+                            <div class="clearfix"></div>
+                        </div>
+                    </div>
+                {{ end }}
+            </div>
+        </div>
+    </div>
+{{ end }}

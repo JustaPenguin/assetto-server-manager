@@ -19,12 +19,17 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var debug = os.Getenv("DEBUG") == "true"
+var (
+	defaultAddress = "0.0.0.0:8772"
+)
 
-var defaultAddress = "0.0.0.0:8772"
+const (
+	udpRealtimePosRefreshIntervalMin = 100
+)
 
 func init() {
 	runtime.LockOSThread()
+	servermanager.InitLogging()
 }
 
 func main() {
@@ -46,16 +51,6 @@ func main() {
 		return
 	}
 
-	servermanager.InitWithStore(store)
-	servermanager.SetAssettoInstallPath(config.Steam.InstallPath)
-
-	err = servermanager.InstallAssettoCorsaServer(config.Steam.Username, config.Steam.Password, config.Steam.ForceUpdate)
-
-	if err != nil {
-		ServeHTTPWithError(defaultAddress, "Install assetto corsa server with steamcmd. Likely you do not have steamcmd installed correctly.", err)
-		return
-	}
-
 	var templateLoader servermanager.TemplateLoader
 	var filesystem http.FileSystem
 
@@ -67,35 +62,35 @@ func main() {
 		filesystem = static.FS(false)
 	}
 
+	resolver, err := servermanager.NewResolver(templateLoader, os.Getenv("FILESYSTEM_HTML") == "true", store)
+
+	if err != nil {
+		ServeHTTPWithError(config.HTTP.Hostname, "Initialise resolver (internal error)", err)
+		return
+	}
+	servermanager.SetAssettoInstallPath(config.Steam.InstallPath)
+
+	err = servermanager.InstallAssettoCorsaServer(config.Steam.Username, config.Steam.Password, config.Steam.ForceUpdate)
+
+	if err != nil {
+		ServeHTTPWithError(defaultAddress, "Install assetto corsa server with steamcmd. Likely you do not have steamcmd installed correctly.", err)
+		return
+	}
+
+	err = servermanager.InitWithResolver(resolver)
+
+	if err != nil {
+		ServeHTTPWithError(config.HTTP.Hostname, "Initialise server manager (internal error)", err)
+		return
+	}
+
 	if config.LiveMap.IsEnabled() {
-		if config.LiveMap.IntervalMs < 200 {
-			udp.RealtimePosIntervalMs = 200
+		if config.LiveMap.IntervalMs < udpRealtimePosRefreshIntervalMin {
+			udp.RealtimePosIntervalMs = udpRealtimePosRefreshIntervalMin
 		} else {
 			udp.RealtimePosIntervalMs = config.LiveMap.IntervalMs
 		}
 	}
-
-	servermanager.ViewRenderer, err = servermanager.NewRenderer(templateLoader, os.Getenv("FILESYSTEM_HTML") == "true")
-
-	if err != nil {
-		ServeHTTPWithError(config.HTTP.Hostname, "Initialise view renderer (internal error)", err)
-		return
-	}
-
-	go servermanager.LoopRaces()
-	err = servermanager.InitialiseScheduledCustomRaces()
-
-	if err != nil {
-		logrus.Errorf("couldn't initialise scheduled races, err: %s", err)
-	}
-
-	err = servermanager.InitialiseScheduledChampionshipEvents()
-
-	if err != nil {
-		logrus.Errorf("couldn't initialise scheduled championship events, err: %s", err)
-	}
-
-	//go startUDPReplay("./assetto/session-logs/brandshatch_sillyold.db")
 
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 
@@ -110,14 +105,14 @@ func main() {
 		_ = browser.OpenURL("http://" + strings.Replace(config.HTTP.Hostname, "0.0.0.0", "127.0.0.1", 1))
 	}
 
-	router := servermanager.Router(filesystem)
+	router := resolver.ResolveRouter(filesystem)
 
 	if err := http.Serve(listener, router); err != nil {
 		logrus.Fatal(err)
 	}
 }
 
-func startUDPReplay(file string) {
+func startUDPReplay(resolver *servermanager.Resolver, file string) {
 	time.Sleep(time.Second * 20)
 
 	db, err := bbolt.Open(file, 0644, nil)
@@ -126,11 +121,9 @@ func startUDPReplay(file string) {
 		logrus.WithError(err).Error("Could not open bolt")
 	}
 
-	err = replay.ReplayUDPMessages(db, 1, func(response udp.Message) {
-		servermanager.LiveTimingCallback(response)
-		servermanager.LiveMapCallback(response)
-		servermanager.LoopCallback(response)
-	}, time.Second*2)
+	err = replay.ReplayUDPMessages(db, 1, func(message udp.Message) {
+		resolver.UDPCallback(message)
+	}, time.Millisecond*500)
 
 	if err != nil {
 		logrus.WithError(err).Error("UDP Replay failed")

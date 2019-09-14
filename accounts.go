@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/cj123/sessions"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
@@ -27,8 +28,6 @@ const (
 	adminUserName               = "admin"
 	serverAccountOptionsMetaKey = "server-account-options"
 )
-
-var accountManager *AccountManager
 
 type ServerAccountOptions struct {
 	IsOpen bool
@@ -45,8 +44,9 @@ func init() {
 
 func NewAccount() *Account {
 	return &Account{
-		ID:      uuid.New(),
-		Created: time.Now(),
+		ID:              uuid.New(),
+		Created:         time.Now(),
+		LastSeenVersion: BuildVersion,
 	}
 }
 
@@ -60,10 +60,37 @@ type Account struct {
 	Name  string
 	Group Group
 
+	DriverName, GUID, Team string
+
 	PasswordHash string
 	PasswordSalt string
 
 	DefaultPassword string
+	LastSeenVersion string
+}
+
+func (a Account) HasSeenCurrentVersion() bool {
+	return a.HasSeenVersion(BuildVersion)
+}
+
+func (a Account) HasSeenVersion(version string) bool {
+	if a.Name == OpenAccount.Name {
+		return true // open accounts don't see version releases
+	}
+
+	newVersion, err := semver.NewVersion(version)
+
+	if err != nil {
+		return true
+	}
+
+	currentVersion, err := semver.NewVersion(a.LastSeenVersion)
+
+	if err != nil {
+		return true
+	}
+
+	return newVersion.Equal(currentVersion) || newVersion.LessThan(currentVersion)
 }
 
 func (a Account) NeedsPasswordReset() bool {
@@ -100,19 +127,20 @@ const (
 )
 
 var OpenAccount = &Account{
-	Name:  "Free Access",
-	Group: GroupRead,
+	Name:            "Free Access",
+	Group:           GroupRead,
+	LastSeenVersion: BuildVersion,
 }
 
 // MustLoginMiddleware determines whether an account needs to log in to access a given Group page
-func MustLoginMiddleware(requiredGroup Group, next http.Handler) http.Handler {
+func (ah *AccountHandler) MustLoginMiddleware(requiredGroup Group, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sess := getSession(r)
 
 		accountID, ok := sess.Values[sessionAccountID].(string)
 
 		if ok {
-			account, err := raceManager.raceStore.FindAccountByID(accountID)
+			account, err := ah.store.FindAccountByID(accountID)
 
 			if err == nil {
 				if account.HasGroupPrivilege(requiredGroup) {
@@ -149,20 +177,37 @@ func MustLoginMiddleware(requiredGroup Group, next http.Handler) http.Handler {
 	})
 }
 
-func ReadAccessMiddleware(next http.Handler) http.Handler {
-	return MustLoginMiddleware(GroupRead, next)
+func (ah *AccountHandler) ReadAccessMiddleware(next http.Handler) http.Handler {
+	return ah.MustLoginMiddleware(GroupRead, next)
 }
 
-func WriteAccessMiddleware(next http.Handler) http.Handler {
-	return MustLoginMiddleware(GroupWrite, next)
+func (ah *AccountHandler) WriteAccessMiddleware(next http.Handler) http.Handler {
+	return ah.MustLoginMiddleware(GroupWrite, next)
 }
 
-func DeleteAccessMiddleware(next http.Handler) http.Handler {
-	return MustLoginMiddleware(GroupDelete, next)
+func (ah *AccountHandler) DeleteAccessMiddleware(next http.Handler) http.Handler {
+	return ah.MustLoginMiddleware(GroupDelete, next)
 }
 
-func AdminAccessMiddleware(next http.Handler) http.Handler {
-	return MustLoginMiddleware(GroupAdmin, next)
+func (ah *AccountHandler) AdminAccessMiddleware(next http.Handler) http.Handler {
+	return ah.MustLoginMiddleware(GroupAdmin, next)
+}
+
+func (ah *AccountHandler) dismissChangelog(w http.ResponseWriter, r *http.Request) {
+	account := AccountFromRequest(r)
+
+	if account.Name == OpenAccount.Name {
+		// don't save the open account
+		return
+	}
+
+	err := ah.accountManager.SetCurrentVersion(account)
+
+	if err != nil {
+		logrus.WithError(err).Error("could not save current account version")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 }
 
 func AccountFromRequest(r *http.Request) *Account {
@@ -217,9 +262,24 @@ func AdminAccess(r *http.Request) func() bool {
 	}
 }
 
-func loginHandler(w http.ResponseWriter, r *http.Request) {
+type AccountHandler struct {
+	*BaseHandler
+
+	store          Store
+	accountManager *AccountManager
+}
+
+func NewAccountHandler(baseHandler *BaseHandler, store Store, accountManager *AccountManager) *AccountHandler {
+	return &AccountHandler{
+		BaseHandler:    baseHandler,
+		store:          store,
+		accountManager: accountManager,
+	}
+}
+
+func (ah *AccountHandler) login(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		err := accountManager.login(r, w)
+		err := ah.accountManager.login(r, w)
 
 		if err == ErrInvalidUsernameOrPassword {
 			AddErrorFlash(w, r, "Invalid username or password. Check your details and try again.")
@@ -238,13 +298,13 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "accounts/login.html", nil)
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/login.html", nil)
 }
 
-func toggleServerOpenStatusHandler(w http.ResponseWriter, r *http.Request) {
-	err := raceManager.raceStore.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
+func (ah *AccountHandler) toggleServerOpenStatus(w http.ResponseWriter, r *http.Request) {
+	err := ah.store.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
 
-	if err != nil && err != ErrMetaValueNotSet {
+	if err != nil && err != ErrValueNotSet {
 		logrus.WithError(err).Errorf("Could not determine server open status")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
@@ -252,7 +312,7 @@ func toggleServerOpenStatusHandler(w http.ResponseWriter, r *http.Request) {
 
 	accountOptions.IsOpen = !accountOptions.IsOpen
 
-	err = raceManager.raceStore.SetMeta(serverAccountOptionsMetaKey, accountOptions)
+	err = ah.store.SetMeta(serverAccountOptionsMetaKey, accountOptions)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Could not save server open status")
@@ -264,33 +324,95 @@ func toggleServerOpenStatusHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-func newPasswordHandler(w http.ResponseWriter, r *http.Request) {
+func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
+	account := AccountFromRequest(r)
+
 	if r.Method == http.MethodPost {
-		password, repeatPassword := r.FormValue("Password"), r.FormValue("RepeatPassword")
+		var set = true
 
-		if password == repeatPassword {
-			account := AccountFromRequest(r)
+		password, repeatPassword, currentPassword := r.FormValue("Password"), r.FormValue("RepeatPassword"), r.FormValue("CurrentPassword")
 
-			if err := accountManager.changePassword(account, password); err == nil {
-				AddFlash(w, r, "Your password was successfully changed!")
-				http.Redirect(w, r, "/", http.StatusFound)
-				return
-			} else {
+		if !account.NeedsPasswordReset() {
+			currentPasswordHash, err := hashPassword([]byte(currentPassword), []byte(account.PasswordSalt))
+
+			if err != nil {
 				AddErrorFlash(w, r, "Unable to change your password")
-				logrus.WithError(err).Errorf("Could not change password for account id: %s", account.ID.String())
+				set = false
 			}
-		} else {
-			AddErrorFlash(w, r, "Your passwords must match")
+
+			if !(subtle.ConstantTimeCompare([]byte(currentPasswordHash), []byte(account.PasswordHash)) == 1) {
+				AddErrorFlash(w, r, "Unable to change your password")
+				set = false
+			}
+		}
+
+		if set {
+			if password == repeatPassword {
+				updateDetails := account.NeedsPasswordReset()
+
+				if err := ah.accountManager.changePassword(account, password); err == nil {
+					AddFlash(w, r, "Your password was successfully changed!")
+					if updateDetails {
+						http.Redirect(w, r, "/accounts/update", http.StatusFound)
+					} else {
+						http.Redirect(w, r, "/", http.StatusFound)
+					}
+					return
+				} else {
+					AddErrorFlash(w, r, "Unable to change your password")
+					logrus.WithError(err).Errorf("Could not change password for account id: %s", account.ID.String())
+				}
+			} else {
+				AddErrorFlash(w, r, "Your passwords must match")
+			}
 		}
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "accounts/new-password.html", nil)
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new-password.html", map[string]interface{}{
+		"newAccount": account.NeedsPasswordReset(),
+	})
 }
 
-func deleteAccountHandler(w http.ResponseWriter, r *http.Request) {
+func (ah *AccountHandler) update(w http.ResponseWriter, r *http.Request) {
+	account := AccountFromRequest(r)
+
+	if r.Method == http.MethodPost {
+		driverName, guid, team := r.FormValue("DriverName"), r.FormValue("DriverGUID"), r.FormValue("DriverTeam")
+
+		if driverName != "" || guid != "" || team != "" {
+			err := ah.accountManager.updateDetails(account, driverName, guid, team)
+
+			if err != nil {
+				AddErrorFlash(w, r, "Unable to update account details")
+				logrus.WithError(err).Errorf("Could not update details for account id: %s", account.ID.String())
+			} else {
+				err := ah.store.UpsertEntrant(Entrant{
+					Name: account.DriverName,
+					GUID: account.GUID,
+					Team: account.Team,
+				})
+
+				if err != nil {
+					logrus.WithError(err).Errorf("Successfully updated details, but could not add to autofill "+
+						"entry list. Account id: %s", account.ID.String())
+				}
+
+				AddFlash(w, r, "Your details were successfully changed!")
+				http.Redirect(w, r, "/", http.StatusFound)
+				return
+			}
+		}
+	}
+
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/update.html", map[string]interface{}{
+		"account": account,
+	})
+}
+
+func (ah *AccountHandler) deleteAccount(w http.ResponseWriter, r *http.Request) {
 	accountID := chi.URLParam(r, "id")
 
-	if err := raceManager.raceStore.DeleteAccount(accountID); err != nil {
+	if err := ah.store.DeleteAccount(accountID); err != nil {
 		logrus.WithError(err).Errorf("Could not delete account")
 		AddErrorFlash(w, r, "Could not delete account")
 	} else {
@@ -300,10 +422,10 @@ func deleteAccountHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-func resetPasswordHandler(w http.ResponseWriter, r *http.Request) {
+func (ah *AccountHandler) resetPassword(w http.ResponseWriter, r *http.Request) {
 	accountID := chi.URLParam(r, "id")
 
-	account, err := accountManager.resetPassword(accountID)
+	account, err := ah.accountManager.resetPassword(accountID)
 
 	if err != nil {
 		AddErrorFlash(w, r, "Unable to reset account password")
@@ -335,7 +457,7 @@ func (am *AccountManager) login(r *http.Request, w http.ResponseWriter) error {
 
 	username, password := r.FormValue("Username"), r.FormValue("Password")
 
-	accounts, err := raceManager.raceStore.ListAccounts()
+	accounts, err := am.store.ListAccounts()
 
 	if err != nil {
 		return err
@@ -379,7 +501,7 @@ func (am *AccountManager) login(r *http.Request, w http.ResponseWriter) error {
 }
 
 func (am *AccountManager) resetPassword(accountID string) (*Account, error) {
-	account, err := raceManager.raceStore.FindAccountByID(accountID)
+	account, err := am.store.FindAccountByID(accountID)
 
 	if err != nil {
 		return nil, err
@@ -395,7 +517,13 @@ func (am *AccountManager) resetPassword(accountID string) (*Account, error) {
 	account.PasswordSalt = ""
 	account.PasswordHash = ""
 
-	return account, raceManager.raceStore.UpsertAccount(account)
+	return account, am.store.UpsertAccount(account)
+}
+
+func (am *AccountManager) SetCurrentVersion(account *Account) error {
+	account.LastSeenVersion = BuildVersion
+
+	return am.store.UpsertAccount(account)
 }
 
 func (am *AccountManager) changePassword(account *Account, password string) error {
@@ -415,10 +543,18 @@ func (am *AccountManager) changePassword(account *Account, password string) erro
 	account.PasswordSalt = salt
 	account.PasswordHash = pass
 
-	return raceManager.raceStore.UpsertAccount(account)
+	return am.store.UpsertAccount(account)
 }
 
-func logoutHandler(w http.ResponseWriter, r *http.Request) {
+func (am *AccountManager) updateDetails(account *Account, name, guid, team string) error {
+	account.DriverName = name
+	account.GUID = guid
+	account.Team = team
+
+	return am.store.UpsertAccount(account)
+}
+
+func (ah *AccountHandler) logout(w http.ResponseWriter, r *http.Request) {
 	sess := getSession(r)
 	delete(sess.Values, sessionAccountID)
 
@@ -427,13 +563,13 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
-func createOrEditAccountHandler(w http.ResponseWriter, r *http.Request) {
+func (ah *AccountHandler) createOrEditAccount(w http.ResponseWriter, r *http.Request) {
 	var account *Account
 	isEditing := false
 
 	if id := chi.URLParam(r, "id"); id != "" {
 		var err error
-		account, err = raceManager.raceStore.FindAccountByID(id)
+		account, err = ah.store.FindAccountByID(id)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Could not find account for id: %s", id)
@@ -469,7 +605,7 @@ func createOrEditAccountHandler(w http.ResponseWriter, r *http.Request) {
 		account.Name = username
 		account.Group = Group(group)
 
-		err := raceManager.raceStore.UpsertAccount(account)
+		err := ah.store.UpsertAccount(account)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Could save account with id: %s", account.ID)
@@ -487,14 +623,14 @@ func createOrEditAccountHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "accounts/new.html", map[string]interface{}{
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new.html", map[string]interface{}{
 		"Account":   account,
 		"IsEditing": isEditing,
 	})
 }
 
-func manageAccountsHandler(w http.ResponseWriter, r *http.Request) {
-	accounts, err := raceManager.raceStore.ListAccounts()
+func (ah *AccountHandler) manageAccounts(w http.ResponseWriter, r *http.Request) {
+	accounts, err := ah.store.ListAccounts()
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Could not list accounts")
@@ -502,7 +638,7 @@ func manageAccountsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "accounts/manage.html", map[string]interface{}{
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/manage.html", map[string]interface{}{
 		"Accounts":         accounts,
 		"ServerReadIsOpen": accountOptions.IsOpen,
 	})

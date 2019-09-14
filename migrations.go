@@ -2,6 +2,8 @@ package servermanager
 
 import (
 	"html/template"
+	"os"
+	"path/filepath"
 	"sort"
 
 	"github.com/google/uuid"
@@ -9,7 +11,7 @@ import (
 )
 
 const (
-	CurrentMigrationVersion = 7
+	CurrentMigrationVersion = 12
 	versionMetaKey          = "version"
 )
 
@@ -18,8 +20,16 @@ func Migrate(store Store) error {
 
 	err := store.GetMeta(versionMetaKey, &storeVersion)
 
-	if err != nil && err != ErrMetaValueNotSet {
+	if err != nil && err != ErrValueNotSet {
 		return err
+	}
+
+	if jsonStore, ok := store.(*JSONStore); ok {
+		err := separateJSONStores(jsonStore)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	for i := storeVersion; i < CurrentMigrationVersion; i++ {
@@ -43,6 +53,13 @@ var migrations = []migrationFunc{
 	addIDToChampionshipClasses,
 	enhanceOldChampionshipResultFiles,
 	addResultScreenTimeDefault,
+	// migration 8 (below) has been left intentionally blank, as it is now migration 9
+	// due to it needing re-running in some environments.
+	func(Store) error { return nil },
+	addPitBoxDefinitionToEntrants,
+	addLastSeenVersionToAccounts,
+	addSleepTime1ToServerOptions,
+	addPersistOpenEntrantsToChampionship,
 }
 
 func addEntrantIDToChampionships(rs Store) error {
@@ -85,7 +102,7 @@ func addAdminAccount(rs Store) error {
 }
 
 func championshipLinksToSummerNote(rs Store) error {
-	logrus.Infof("Converting old championship links to new markdown format")
+	logrus.Infof("Running migration: Converting old championship links to new markdown format")
 
 	championships, err := rs.ListChampionships()
 
@@ -238,6 +255,166 @@ func addResultScreenTimeDefault(rs Store) error {
 		}
 
 		err := rs.UpsertChampionship(champ)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func addPitBoxDefinitionToEntrants(rs Store) error {
+	logrus.Errorf("Running migration: Add Pit Box Definition To Entrants")
+
+	customRaces, err := rs.ListCustomRaces()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(customRaces, func(i, j int) bool {
+		return customRaces[i].Updated.After(customRaces[j].Updated)
+	})
+
+	for _, customRace := range customRaces {
+		for i, entrant := range customRace.EntryList.AsSlice() {
+			entrant.PitBox = i
+		}
+
+		err := rs.UpsertCustomRace(customRace)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	championships, err := rs.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(championships, func(i, j int) bool {
+		return championships[i].Updated.After(championships[j].Updated)
+	})
+
+	for _, championship := range championships {
+		for _, event := range championship.Events {
+			event.championship = championship
+
+			for i, entrant := range event.EntryList.AsSlice() {
+				entrant.PitBox = i
+			}
+		}
+
+		err := rs.UpsertChampionship(championship)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func moveStoreFiles(oldPath string, newPath string) error {
+	if _, err := os.Stat(oldPath); os.IsNotExist(err) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	logrus.WithField("from", oldPath).WithField("to", newPath).Infof("Migrating JSON private store to shared store")
+
+	return os.Rename(oldPath, newPath)
+}
+
+func separateJSONStores(rs *JSONStore) error {
+	if rs.base != rs.shared {
+		err := os.MkdirAll(rs.shared, 0755)
+
+		if err != nil {
+			return err
+		}
+
+		err = moveStoreFiles(filepath.Join(rs.base, championshipsDir), filepath.Join(rs.shared, championshipsDir))
+
+		if err != nil {
+			return err
+		}
+
+		err = moveStoreFiles(filepath.Join(rs.base, customRacesDir), filepath.Join(rs.shared, customRacesDir))
+
+		if err != nil {
+			return err
+		}
+
+		err = moveStoreFiles(filepath.Join(rs.base, entrantsFile), filepath.Join(rs.shared, entrantsFile))
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+const lastReleaseVersionPreChangelogShowUpdate = "v1.3.4"
+
+func addLastSeenVersionToAccounts(s Store) error {
+	logrus.Errorf("Running migration: Add Last Seen Version to Accounts")
+	accounts, err := s.ListAccounts()
+
+	if err != nil {
+		return err
+	}
+
+	for _, account := range accounts {
+		account.LastSeenVersion = lastReleaseVersionPreChangelogShowUpdate
+
+		err := s.UpsertAccount(account)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func addSleepTime1ToServerOptions(s Store) error {
+	logrus.Infof("Running migration: Set Server Options Sleep Time to 1")
+	opts, err := s.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	opts.SleepTime = 1
+
+	return s.UpsertServerOptions(opts)
+}
+
+func addPersistOpenEntrantsToChampionship(s Store) error {
+	logrus.Infof("Running migration: enable 'Persist Open Entrants' in Championships")
+
+	championships, err := s.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(championships, func(i, j int) bool {
+		return championships[i].Updated.Before(championships[j].Updated)
+	})
+
+	for _, champ := range championships {
+		if champ.OpenEntrants {
+			champ.PersistOpenEntrants = true
+		}
+
+		err := s.UpsertChampionship(champ)
 
 		if err != nil {
 			return err

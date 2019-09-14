@@ -10,3 +10,5 @@ stracker*
 build/
 *.zip
 *.log
+static/js/bundle.js
+static/css

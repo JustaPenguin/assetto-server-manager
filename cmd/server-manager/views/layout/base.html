@@ -8,12 +8,7 @@
         <title>{{ block "title" . }}{{ end }} / {{ $.server_name }}</title>
 
         {{ block "stylesheets" . }}
-            <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/style.css" }}">
-            <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/multi-select.dist.css" }}">
-            <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/bootstrap-switch.min.css" }}">
-            <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/jquery-ui.min.css" }}">
-            <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/bootstrap.min.css" }}">
-            <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/summernote-bs4.css" }}">
+            <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/server-manager.css" }}">
 
             <style type="text/css">
                 {{ .custom_css }}
@@ -23,6 +18,10 @@
         {{ block "extracss" . }}
 
         {{ end }}
+
+        <script type="text/javascript">
+            var ShowUpgradePopup = {{ not .User.HasSeenCurrentVersion }};
+        </script>
 
         {{ if $.MonitoringEnabled }}
             <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -43,7 +42,7 @@
     <body>
 
     <nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-primary">
-        <div class="container">
+        <div class="{{ with $.WideContainer }}container-fluid{{ else }}container{{ end }}">
             <a class="navbar-brand" href="/" data-toggle="tooltip" title="{{ $.server_name }}">{{ $.server_name }}</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -52,16 +51,17 @@
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav mr-auto">
                     {{ if WriteAccess }}
-                        <li class="nav-item">
-                            <a class="nav-link" href="/quick">Quick Race</a>
-                        </li>
+
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Custom Races
+                                Races
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <a class="dropdown-item" href="/custom">View Existing</a>
-                                <a class="dropdown-item" href="/custom/new">Create New</a>
+                                <a class="dropdown-item" href="/quick">Quick</a>
+                                <div class="dropdown-divider"></div>
+                                <h4 class="dropdown-header font-italic">Custom</h4>
+                                <a class="dropdown-item pl-4-5" href="/custom">View Existing</a>
+                                <a class="dropdown-item pl-4-5" href="/custom/new">Create New</a>
                             </div>
                         </li>
 
@@ -95,6 +95,10 @@
                         </div>
                     </li>
 
+                    <li class="nav-item">
+                        <a class="nav-link" href="/calendar">Calendar</a>
+                    </li>
+
 
                     {{ if WriteAccess }}
                         <li class="nav-item dropdown">
@@ -106,7 +110,8 @@
                                     <a class="dropdown-item" href="/server-options">Options</a>
                                     <a class="dropdown-item" href="/accounts">Accounts</a>
                                     <a class="dropdown-item" href="/blacklist">Blacklist</a>
-                                    <a class="dropdown-item" href="/motd">MOTD</a>
+                                    <a class="dropdown-item" href="/motd">Messages</a>
+                                    <a class="dropdown-item" href="/audit-logs">Audit Logs</a>
                                 {{ end }}
                                 {{ if DeleteAccess }}
                                     <a class="dropdown-item" href="/autofill-entrants">AutoFill Entrants</a>
@@ -122,7 +127,7 @@
                     {{ if .server_status  }}
                         <li class="nav-item dropdown mr-2 {{ if not WriteAccess }} mt-2 {{ end }}">
                             {{ if WriteAccess }}
-                                {{ if eq .server_event_type "CHAMPIONSHIP" }}
+                                {{ if .server_event.IsChampionship }}
                                     <a class="nav-link dropdown-toggle" href="#" id="navBarStatusDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                         <span class="badge badge-warning">Championship in Progress</span>
                                     </a>
@@ -137,7 +142,7 @@
                                         class="dropdown-item"
                                         href="/process/restart"
 
-                                        {{ if eq .server_event_type "CHAMPIONSHIP" }}
+                                        {{ if .server_event.IsChampionship }}
                                             onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
                                         {{ end }}
                                     >
@@ -147,7 +152,7 @@
                                         class="dropdown-item"
                                         href="/process/stop"
 
-                                        {{ if eq .server_event_type "CHAMPIONSHIP" }}
+                                        {{ if .server_event.IsChampionship }}
                                             onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
                                         {{ end }}
                                     >
@@ -155,7 +160,7 @@
                                     </a>
                                 </div>
                             {{ else }}
-                                {{ if eq .server_event_type "CHAMPIONSHIP" }}
+                                {{ if .server_event.IsChampionship }}
                                     <span class="badge badge-warning">Championship in Progress</span>
                                 {{ else }}
                                     <span class="badge badge-success">Assetto Server Running</span>
@@ -178,6 +183,8 @@
                                 <a class="dropdown-item" href="/login">Login</a>
                             {{ else }}
                                 <h6 class="dropdown-header">Logged in as {{ .User.Name }} ({{ .User.Group }})</h6>
+                                <a class="dropdown-item" href="/accounts/update">Update Details</a>
+                                <a class="dropdown-item" href="/accounts/new-password">Update Password</a>
                                 <a class="dropdown-item" href="/logout">Logout</a>
                             {{ end }}
                         </div>
@@ -190,7 +197,7 @@
         </div>
     </nav>
 
-    <div class="container">
+    <div class="{{ with $.WideContainer }}container-fluid{{ else }}container{{ end }}">
         {{ block "content" . }}{{ end }}
 
 
@@ -204,21 +211,21 @@
             {{ end }}
         {{ end }}
 
-        <footer class="pt-4 my-md-5 pt-md-5 border-top row">
-            <div class="col-sm-4">
-                <a href="https://github.com/cj123/assetto-server-manager" class="mr-3"><i class="fab fa-github"></i> GitHub</a>
-                <a href="https://github.com/cj123/assetto-server-manager/issues" class="mr-3"><i class="fas fa-bug"></i> Submit a Bug Report</a><br>
-                <a href="https://paypal.me/JustaPenguinUK" class="mr-3"><i class="fas fa-heart"></i> Donate</a>
-                <a href="/events.ics" data-toggle="tooltip" title="Subscribe to a calendar feed for all Scheduled Events!">
-                    <i class="fas fa-calendar"></i> Scheduled Events
-                </a>
+        <footer class="pt-4 my-md-5 pt-md-5 border-top">
+            <div class="row">
+                <div class="col-sm-7">
+                    <a href="https://github.com/cj123/assetto-server-manager" class="mr-3"><i class="fab fa-github"></i> GitHub</a>
+                    <a href="https://github.com/cj123/assetto-server-manager/issues" class="mr-3"><i class="fas fa-bug"></i> Submit a Bug Report</a>
+                    <a href="https://paypal.me/JustaPenguinUK" class="mr-3"><i class="fas fa-heart"></i> Donate</a>
+                    <a href="/changelog" class="mr-3"><i class="fas fa-pencil-alt"></i> Changelog</a>
+                    <a href="https://github.com/cj123/assetto-server-manager/wiki"><i class="fas fa-book"></i> Wiki</a>
+                </div>
+                <div class="col-sm-5 text-right">
+                    <img src="/static/img/racer.png" class="img img-footer float-right">
+                    Assetto Corsa Server Manager {{ Version }}<br> &copy; <a href="https://justapengu.in">Just a Penguin</a> 2010-{{ now.Format "2006" }}
+                </div>
             </div>
-            <div class="col-sm-4 text-center">
-                <img src="/static/img/racer.png" class="img img-footer">
-            </div>
-            <div class="col-sm-4 text-right">
-                Assetto Corsa Server Manager {{ Version }}<br> &copy; <a href="https://justapengu.in">Just a Penguin</a> 2010-{{ now.Format "2006" }}
-            </div>
+
         </footer>
     </div>
 
@@ -250,20 +257,36 @@
         </div>
     </div>
 
+    {{ if not $.User.HasSeenCurrentVersion }}
+        <div class="modal" tabindex="-1" role="dialog" id="changelog-modal">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Server Manager was upgraded to {{ Version }}!</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            Welcome to this new version of Server Manager! We update Server Manager regularly with cool
+                            new features and bug fixes! Please read below to find out the changes in the new release.
+                        </p>
+
+                        <div id="changelog-text">
+                            {{ ChangelogHTML }}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {{ end }}
+
     {{ block "javascript" . }}
-        <script defer src="{{ asset "/static/js/font-awesome.js" }}"></script>
-        <script src="{{ asset "/static/js/jquery-3.3.1.min.js" }}"></script>
-        <script src="{{ asset "/static/js/jquery-ui.min.js" }}"></script>
-        <script src="{{ asset "/static/js/moment.js" }}"></script>
-        <script src="{{ asset "/static/js/moment-timezone-with-data.min.js" }}"></script>
-        <script src="{{ asset "/static/js/jquery.quicksearch.js" }}"></script>
-        <script src="{{ asset "/static/js/jquery.multi-select.js" }}"></script>
-        <script src="{{ asset "/static/js/randomColor.min.js" }}"></script>
-        <script src="{{ asset "/static/js/bootstrap-switch.min.js" }}"></script>
-        <script src="{{ asset "/static/js/popper.min.js" }}"></script>
-        <script src="{{ asset "/static/js/bootstrap.bundle.min.js" }}"></script>
-        <script src="{{ asset "/static/js/summernote-bs4.min.js" }}"></script>
-        <script src="{{ asset "/static/manager.js" }}"></script>
+        <script src="{{ asset "/static/js/bundle.js" }}"></script>
     {{ end }}
 
     {{ block "thirdpartyjs" . }}

@@ -1,0 +1,94 @@
+
+body {
+  padding-top: 100px;
+  font-size: 1rem !important;
+  overflow-y: scroll;
+}
+
+.navbar-brand {
+  max-width: 250px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  display: block;
+  overflow: hidden;
+}
+
+footer {
+  margin-top: 20px;
+}
+
+.ms-container {
+  width: 100% !important;
+}
+
+.button-bar {
+  position: absolute;
+  bottom: 0;
+  width: 100%
+}
+
+.nav-tabs .nav-link {
+  color: #495057;
+}
+
+abbr[title] {
+  text-decoration: none !important;
+}
+
+.card-logs {
+  max-height: 600px;
+}
+
+
+.d-contents {
+  display: contents;
+}
+.img-footer {
+  width: 60px;
+  height: 60px;
+  position: relative;
+  margin-top: -10px;
+  margin-left: 10px;
+  float: right;
+}
+
+footer {
+  padding-bottom: 20px;
+}
+
+footer a {
+  display: inline-block;
+}
+
+@media screen and (max-width: 550px) {
+  .img-footer {
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+
+  footer .col-sm-4 {
+    text-align: center !important;
+  }
+}
+
+@media screen and (max-width: 1200px) and (min-width: 991px) {
+  .navbar .container {
+    width: 100%;
+    padding-right: 15px !important;
+    padding-left: 15px !important;
+    margin-right: auto !important;
+    margin-left: auto !important;
+    max-width: 100% !important;
+  }
+}
+
+.fa-stack-override {
+  display: inline-block;
+  height: 0.7em;
+  position: relative;
+  width: 1.4em;
+}
+
+.text-area {
+  min-height: 200px;
+}

@@ -133,7 +133,17 @@ func getWeatherType(weather string) (int, error) {
 	return weatherType, nil
 }
 
-func weatherHandler(w http.ResponseWriter, r *http.Request) {
+type WeatherHandler struct {
+	*BaseHandler
+}
+
+func NewWeatherHandler(baseHandler *BaseHandler) *WeatherHandler {
+	return &WeatherHandler{
+		BaseHandler: baseHandler,
+	}
+}
+
+func (wh *WeatherHandler) list(w http.ResponseWriter, r *http.Request) {
 	weather, err := ListWeather()
 
 	if err != nil {
@@ -142,16 +152,12 @@ func weatherHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ViewRenderer.MustLoadTemplate(w, r, "content/weather.html", map[string]interface{}{
+	wh.viewRenderer.MustLoadTemplate(w, r, "content/weather.html", map[string]interface{}{
 		"weathers": weather,
 	})
 }
 
-func apiWeatherUploadHandler(w http.ResponseWriter, r *http.Request) {
-	uploadHandler(w, r, "Weather")
-}
-
-func weatherDeleteHandler(w http.ResponseWriter, r *http.Request) {
+func (wh *WeatherHandler) delete(w http.ResponseWriter, r *http.Request) {
 	weatherKey := chi.URLParam(r, "key")
 	weatherPath := filepath.Join(ServerInstallPath, "content", "weather")
 

@@ -86,6 +86,13 @@
                                 <div class="col-sm-9 pit-boxes">
                                     <span id="track-pitboxes">{{ $trackInfo.Pitboxes }}</span>
                                 </div>
+
+                                <div class="col-sm-12">
+                                    <span id="track-pitboxes-warning" class="text-warning mt-2"
+                                        {{ if not (and ($.IsChampionship) (lt (int $.Championship.NumEntrants) (int $trackInfo.Pitboxes))) }} style="display: none;" {{ end }}
+                                        >This track has fewer pit boxes than the configured number of entrants in the
+                                        current {{if $.IsChampionship }}Championship{{ else }}Race{{end}}, and therefore is not eligible for it.</span>
+                                </div>
                             </div>
                         {{ end }}
                     </div>
@@ -99,37 +106,25 @@
                     </div>
                 </div>
 
-                {{ if not .IsChampionship }}
-
-                    <div class="form-group row">
+                <div class="form-group row">
+                    {{ if not .IsChampionship }}
                         <label for="Cars" class="col-sm-2 col-form-label">
                             Cars
                         </label>
+                    {{ end }}
+                    <div class="col-sm-10">
+                        {{ if not .IsChampionship }}
 
-                        <div class="col-sm-10">
-                            <select multiple required class="form-control Cars" id="Cars" name="Cars" size="15">
-                                {{ range $index, $car := .CarOpts }}
-
-                                    {{ $selected := false }}
-
-                                    {{ range $j, $selectedCar := varSplit $f.Cars }}
-                                        {{ if eq $selectedCar $car.Name }}
-                                            {{ $selected = true }}
-                                        {{ end }}
-                                    {{ end }}
-
-                                    <option value="{{ $car.Name }}" {{ if $selected }} selected="selected" {{ end }}>{{ prettify $car.Name true }}</option>
+                            {{ template "cars" dict "CarOpts" $.CarOpts "Current" $f }}
+                        {{ else }}
+                            <select multiple class="Cars" id="Cars" name="Cars" style="display: none;">
+                                {{ range $index, $car := $.Championship.ValidCarIDs }}
+                                    <option value="{{ $car }}" selected="selected">{{ prettify $car true }}</option>
                                 {{ end }}
                             </select>
-                        </div>
-                    </div>
-                {{ else }}
-                    <select multiple class="Cars" id="Cars" name="Cars" style="display: none;">
-                        {{ range $index, $car := $.Championship.ValidCarIDs }}
-                            <option value="{{ $car }}" selected="selected">{{ prettify $car true }}</option>
                         {{ end }}
-                    </select>
-                {{ end }}
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -232,12 +227,12 @@
                                     <div class="form-group row">
                                         <div class="col-sm-3">
                                             <select id="TimeOrLaps" class="form-control">
-                                                <option value="Time" {{ if ne $session.Time 0 }} selected="selected" {{ end }}>Time</option>
+                                                <option value="Time" {{ if or (ne $session.Time 0) (eq $session.Laps 0) }} selected="selected" {{ end }}>Time</option>
                                                 <option value="Laps" {{ if ne $session.Laps 0 }} selected="selected" {{ end }}>Laps</option>
                                             </select>
                                         </div>
 
-                                        <div class="col-sm-9" id="RaceTime" {{ if eq $session.Time 0 }}style="display: none;"{{ end }}>
+                                        <div class="col-sm-9" id="RaceTime" {{ if not (or (ne $session.Time 0) (eq $session.Laps 0)) }}style="display: none;"{{ end }}>
                                             <input
                                                     type="number"
                                                     id="Race.Time"
@@ -566,6 +561,32 @@
                     <div class="hidden-booking-enabled">
 
                         <div class="form-group row">
+                            <label for="PickupModeEnabled" class="col-sm-3 col-form-label">Pickup Mode</label>
+
+
+                            <div class="col-sm-9">
+                                <input type="checkbox"
+                                       id="PickupModeEnabled"
+                                       name="PickupModeEnabled"
+                                       value="{{ $f.PickupModeEnabled }}"
+
+                                        {{ if eq $f.PickupModeEnabled 1 }}
+                                            checked="checked"
+                                        {{ end }}
+                                >
+
+                                <br>
+
+                                <small>
+                                    If set to OFF the server starts in booking mode. Warning: in pickup mode you have to
+                                    list at least one car in the entry list. Note, when Pickup Mode is OFF, sessions
+                                    with Loop Mode ON or Reversed Grid Positions will require players to rejoin the server
+                                    when the server loops or progresses to a second race.
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
                             <label for="LockedEntryList" class="col-sm-3 col-form-label">Locked Entry List</label>
 
 
@@ -573,16 +594,16 @@
                                 <input type="checkbox"
                                        id="LockedEntryList"
                                        name="LockedEntryList"
-                                       value="{{ $f.PickupModeEnabled }}"
+                                       value="{{ $f.LockedEntryList }}"
 
-                                        {{ if eq $f.PickupModeEnabled 0 }}
+                                        {{ if eq $f.LockedEntryList 1 }}
                                             checked="checked"
                                         {{ end }}
                                 >
 
                                 <br>
 
-                                <small>Only players already included in the entry list can join the server. This setting uses the PickupModeEnabled option in the Assetto Corsa configuration file. Note, when Locked Entry List is ON, sessions with Loop Mode ON will require players to rejoin the server when the server loops.</small>
+                                <small>Only players already included in the entry list can join the server</small>
                             </div>
                         </div>
 
@@ -931,7 +952,7 @@
                                         <div class="sol-settings" {{ if not $f.IsSol }} style="display: none;" {{ end }}>
 
                                             <div class="form-group row">
-                                                <label class="col-sm-3 col-form-label col-form-label-sm">Session Start Date/Time (<span class='timezone'></span>)</label>
+                                                <label class="col-sm-3 col-form-label col-form-label-sm">Session Start Date/Time</label>
 
                                                 <div class="col-sm-9 p-0" id='date-time-picker'>
                                                     <input
@@ -939,12 +960,10 @@
                                                             id="DateUnix"
                                                             name="DateUnix"
                                                             class="form-control"
-                                                            value="{{ ($weather.UnixToTime $weather.CMWFXDateUnModified) | date "2006-01-02T15:04" }}"
+                                                            value="{{ dateInZone "2006-01-02T15:04" ($weather.UnixToTime $weather.CMWFXDateUnModified) "UTC" }}"
                                                     >
                                                 </div>
                                             </div>
-
-                                            <input type='hidden' name="sol-timezone" class="sol-timezone">
 
                                             <div class="form-group row">
                                                 <label class="col-sm-3 col-form-label col-form-label-sm">Time Progression Multiplier</label>
@@ -1083,7 +1102,7 @@
             <div class="card-body">
 
 
-                <div class="form-group row">
+                <div class="form-group row legal-tyres">
                     <label for="LegalTyres" class="col-sm-3 col-form-label">Legal Tyres</label>
 
                     {{ $allTyres := .Tyres }}
@@ -1098,8 +1117,6 @@
                                 <option value="{{ $tyre }}">{{ prettify ($allTyres.Name $tyre (varSplit $f.Cars)) false }} ({{ $tyre }})</option>
                             {{ end }}
                         </select>
-
-                        <small>List of tyres short names that are allowed</small>
                     </div>
                 </div>
 
@@ -1410,6 +1427,33 @@
                         <small>Seconds of result screen between racing sessions</small>
                     </div>
                 </div>
+
+                <div class="form-group row">
+                    <label for="DisableDRSZones" class="col-sm-3 col-form-label">Disable DRS Zones</label>
+
+                    <div class="col-sm-9">
+
+                        <input
+                                class="form-control"
+                                type="checkbox"
+                                id="DisableDRSZones"
+                                name="DisableDRSZones"
+                                {{ if $f.DisableDRSZones }}
+                                    checked="checked"
+                                {{ end }}
+                        ><br/>
+
+                        <small>
+                            When ON, the track's drs_zones.ini will temporarily be replaced with a file that disables DRS across the entire track.
+                            This is useful for tracks which do not have any clearly defined zones, or for if you want to race without DRS!
+
+                            <strong>
+                                Note: this changes actual track files, so if you're using a multi-server setup pointing to the same content folder,
+                                this may cause problems if you're running races at the same track simultaneously.
+                            </strong>
+                        </small>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1539,16 +1583,29 @@
 
                             <input type='hidden' name="CustomRaceScheduledTimezone" class="event-schedule-timezone">
                         </div>
+
+                        <div class="form-group row">
+                            <label for="event-schedule-recurrence" class="col-sm-3 col-form-label">Recurrence Rule</label>
+
+                            <div class="col-sm-5">
+                                <input type='text' class='form-control' name='event-schedule-recurrence' id='event-schedule-recurrence'>
+                                <small>
+                                    Visit
+                                    <a target="_blank" href="https://www.textmagic.com/free-tools/rrule-generator">RRule Generator</a>
+                                    to generate a recurrence rule. Leave blank if not required. Only valid alongside scheduled time.
+                                </small>
+                            </div>
+                        </div>
                     {{ end }}
 
 
-                    <div class="float-right">
+                    <div class="float-right mt-5">
                         {{ if not .IsEditing }}
-                            <button class="btn btn-primary mt-5" data-toggle="tooltip" id="save-race-button" name="action" value="justSave" type="submit" title="Save this setup without starting the race">Save Custom Race</button>
-                            <button class="btn btn-success mt-5" data-toggle="tooltip" id="start-race-button" name="action" value="startRace" type="submit" title="Save this setup and begin the race">Start Race</button>
+                            <button class="btn btn-primary" data-toggle="tooltip" id="save-race-button" name="action" value="justSave" type="submit" title="Save this setup without starting the race">Save Custom Race</button>
+                            <button class="btn btn-success" data-toggle="tooltip" id="start-race-button" name="action" value="startRace" type="submit" title="Save this setup and begin the race">Start Race</button>
                         {{ else }}
                             <input type="hidden" name="Editing" id="Editing" value="{{ .EditingID }}">
-                            <button class="btn btn-primary mt-5" data-toggle="tooltip" name="action" value="justSave" type="submit">Save Race</button>
+                            <button class="btn btn-primary" data-toggle="tooltip" name="action" value="justSave" type="submit">Save Race</button>
                         {{ end }}
                     </div>
                 </div>

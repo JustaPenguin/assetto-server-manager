@@ -1,11 +1,36 @@
-{{ define "title" }}Message of the Day{{ end }}
+{{ define "title" }}Messages{{ end }}
 
 {{ define "content" }}
-    <h1 class="text-center">Message of the Day</h1>
+    <h1 class="text-center">Messages</h1>
 
     <form method="post" action="/motd">
-        <label for="motd"></label>
-        <textarea id="motd" name="motd" class="form-control md-textarea text-area">{{ .text }}</textarea>
+        <div class="mb-3">
+            <h3>MOTD</h3>
+
+            <label for="motd">Message of the day. Shown by Assetto Corsa in a full screen popup window to everyone who joins the server.</label>
+            <textarea id="motd" name="motd" class="form-control md-textarea text-area">{{ .motdText }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <h3>Server Join Message</h3>
+
+            <label for="serverJoinMessage">Shown in chat to each user when they join the server.</label>
+            <textarea id="serverJoinMessage" name="serverJoinMessage" class="form-control md-textarea text-area">{{ $.Opts.ServerJoinMessage }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <h3>Content Manager Welcome Message</h3>
+
+            {{ if and $.Opts.EnableContentManagerWrapper (gt $.Opts.ContentManagerWrapperPort 0) }}
+                <div class="d-none" id="ContentManagerMessageContent">{{ trustHTML $.Opts.ContentManagerWelcomeMessage }}</div>
+
+                <label for="contentManagerWelcomeMessage">Shown to Content Manager users before they join the server.</label><br>
+                <textarea id="contentManagerWelcomeMessage" name="contentManagerWelcomeMessage"></textarea>
+            {{ else }}
+                Enable Content Manager Wrapper in <a href="/server-options">Server Options</a> to show this message.
+            {{ end }}
+        </div>
+
 
         <button class="btn btn-success float-right mt-2" type="submit">Save</button>
     </form>

@@ -23,8 +23,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// BuildTime is the time Server Manager was built at
-var BuildTime string
+// BuildVersion is the time Server Manager was built at
+var BuildVersion string
 
 type TemplateLoader interface {
 	Init() error
@@ -82,16 +82,6 @@ func (fs *filesystemTemplateLoader) Templates(funcs template.FuncMap) (map[strin
 	return templates, nil
 }
 
-// Renderer is the template engine.
-type Renderer struct {
-	templates map[string]*template.Template
-
-	loader TemplateLoader
-
-	reload bool
-	mutex  sync.Mutex
-}
-
 var UseShortenedDriverNames = true
 
 func driverName(name string) string {
@@ -122,16 +112,37 @@ func driverInitials(name string) string {
 			}
 		}
 
-		return strings.Join(nameParts, "")
+		return strings.ToUpper(strings.Join(nameParts, ""))
 	} else {
-		return name
+		nameParts := strings.Split(name, " ")
+
+		if len(nameParts) > 0 && len(nameParts[len(nameParts)-1]) >= 3 {
+			return strings.ToUpper(nameParts[len(nameParts)-1][:3])
+		}
+
+		return strings.ToUpper(name)
 	}
 }
 
-func NewRenderer(loader TemplateLoader, reload bool) (*Renderer, error) {
+// Renderer is the template engine.
+type Renderer struct {
+	store   Store
+	process ServerProcess
+	loader  TemplateLoader
+
+	templates map[string]*template.Template
+
+	reload bool
+	mutex  sync.Mutex
+}
+
+func NewRenderer(loader TemplateLoader, store Store, process ServerProcess, reload bool) (*Renderer, error) {
 	tr := &Renderer{
+		store:   store,
+		process: process,
+		loader:  loader,
+
 		templates: make(map[string]*template.Template),
-		loader:    loader,
 		reload:    reload,
 	}
 
@@ -169,6 +180,7 @@ func (tr *Renderer) init() error {
 	funcs["timeFormat"] = timeFormat
 	funcs["dateFormat"] = dateFormat
 	funcs["timeZone"] = timeZone
+	funcs["hourAndZone"] = hourAndZoneFormat
 	funcs["isBefore"] = isBefore
 	funcs["trackInfo"] = trackInfo
 	funcs["stripGeotagCrap"] = stripGeotagCrap
@@ -182,13 +194,19 @@ func (tr *Renderer) init() error {
 	}
 	funcs["carSkinURL"] = carSkinURL
 	funcs["dict"] = templateDict
-	funcs["asset"] = NewAssetHelper("/", "", "", map[string]string{"cb": BuildTime}).GetURL
+	funcs["asset"] = NewAssetHelper("/", "", "", map[string]string{"cb": BuildVersion}).GetURL
 	funcs["SessionType"] = func(s string) SessionType { return SessionType(s) }
 	funcs["Config"] = func() *Configuration { return config }
-	funcs["Version"] = func() string { return BuildTime }
+	funcs["Version"] = func() string { return BuildVersion }
 	funcs["fullTimeFormat"] = fullTimeFormat
 	funcs["localFormat"] = localFormatHelper
 	funcs["driverName"] = driverName
+	funcs["trustHTML"] = func(s string) template.HTML {
+		return template.HTML(s)
+	}
+	funcs["formatDuration"] = formatDuration
+	funcs["appendQuery"] = appendQuery
+	funcs["ChangelogHTML"] = changelogHTML
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
@@ -197,6 +215,39 @@ func (tr *Renderer) init() error {
 	}
 
 	return nil
+}
+
+func changelogHTML() template.HTML {
+	changelog, err := LoadChangelog()
+
+	if err != nil {
+		logrus.WithError(err).Error("could not load changelog")
+		return "An error occurred loading the changelog"
+	}
+
+	return changelog
+}
+
+func appendQuery(r *http.Request, query, value string) string {
+	q := r.URL.Query()
+	q.Set(query, value)
+	r.URL.RawQuery = q.Encode()
+
+	return r.URL.String()
+}
+
+func formatDuration(d time.Duration, trimLeadingZeroes bool) string {
+	hours := d.Hours()
+	minutes := d.Minutes() - float64(int(hours)*60)
+	seconds := d.Seconds() - float64(int(hours)*60*60) - float64(int(minutes)*60)
+
+	duration := fmt.Sprintf("%02d:%02d:%06.3f", int(hours), int(minutes), seconds)
+
+	if trimLeadingZeroes && strings.HasPrefix(duration, "00:") {
+		return duration[3:]
+	}
+
+	return duration
 }
 
 func templateDict(values ...interface{}) (map[string]interface{}, error) {
@@ -224,6 +275,12 @@ func timeFormat(t time.Time) string {
 
 func dateFormat(t time.Time) string {
 	return t.Format("02/01/2006")
+}
+
+func hourAndZoneFormat(t time.Time, plusMinutes int64) string {
+	t = t.Add(time.Minute * time.Duration(plusMinutes))
+
+	return t.Format("3:04 PM (MST)")
 }
 
 func timeZone(t time.Time) string {
@@ -389,14 +446,14 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 	_ = session.Save(r, w)
 	_ = errSession.Save(r, w)
 
-	opts, err := raceManager.LoadServerOptions()
+	opts, err := tr.store.LoadServerOptions()
 
 	if err != nil {
 		return err
 	}
 
-	data["server_status"] = AssettoProcess.IsRunning()
-	data["server_event_type"] = AssettoProcess.EventType()
+	data["server_status"] = tr.process.IsRunning()
+	data["server_event"] = tr.process.Event()
 	data["server_name"] = opts.Name
 	data["custom_css"] = template.CSS(opts.CustomCSS)
 	data["User"] = AccountFromRequest(r)
