@@ -163,3 +163,31 @@ func ReadConfig(location string) (conf *Configuration, err error) {
 
 	return conf, err
 }
+
+type Theme string
+
+const (
+	ThemeDefault = "default"
+	ThemeLight   = "light"
+	ThemeDark    = "dark"
+)
+
+type ThemeDetails struct {
+	Theme Theme
+	Name  string
+}
+
+var ThemeOptions = []ThemeDetails{
+	{
+		Theme: ThemeDefault,
+		Name:  "Use Default",
+	},
+	{
+		Theme: ThemeLight,
+		Name:  "Light",
+	},
+	{
+		Theme: ThemeDark,
+		Name:  "Dark",
+	},
+}

@@ -59,6 +59,18 @@
                         </div>
                     </div>
 
+                    <div class="form-group row">
+                        <label for="Theme" class="col-sm-3 col-form-label">Theme</label>
+
+                        <div class="col-sm-9">
+                            <select id="Theme" name="Theme" class="form-control">
+                                {{ range $index, $theme := .themeOptions }}
+                                    <option value="{{ $theme.Theme }}" {{ if eq $.account.Theme $theme.Theme }}selected="selected" {{ end }}>{{ $theme.Name }}</option>
+                                {{ end }}
+                            </select>
+                        </div>
+                    </div>
+
                     <button class="btn btn-primary float-right" type="submit">Submit</button>
                 </div>
             </div>

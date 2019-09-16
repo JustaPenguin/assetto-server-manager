@@ -61,7 +61,7 @@
     {{ with .Results }}
         {{- /*gotype: github.com/blevesearch/bleve.SearchResult */ -}}
 
-        <div class="text-black-50 mb-2">
+        <div id="search-info" class="text-black-50 mb-2">
             <div class="float-left">
                 {{ $pageStart := mul $.CurrentPage $.PageSize }}
                 <small>Showing results {{ $pageStart }}-{{ add $pageStart (len .Hits) }} of {{ .Total }}</small>
