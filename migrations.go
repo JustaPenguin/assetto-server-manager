@@ -11,8 +11,7 @@ import (
 )
 
 const (
-	CurrentMigrationVersion = 12
-	versionMetaKey          = "version"
+	versionMetaKey = "version"
 )
 
 func Migrate(store Store) error {
@@ -45,22 +44,27 @@ func Migrate(store Store) error {
 
 type migrationFunc func(Store) error
 
-var migrations = []migrationFunc{
-	addEntrantIDToChampionships,
-	addAdminAccount,
-	championshipLinksToSummerNote,
-	addEntrantsToChampionshipEvents,
-	addIDToChampionshipClasses,
-	enhanceOldChampionshipResultFiles,
-	addResultScreenTimeDefault,
-	// migration 8 (below) has been left intentionally blank, as it is now migration 9
-	// due to it needing re-running in some environments.
-	func(Store) error { return nil },
-	addPitBoxDefinitionToEntrants,
-	addLastSeenVersionToAccounts,
-	addSleepTime1ToServerOptions,
-	addPersistOpenEntrantsToChampionship,
-}
+var (
+	CurrentMigrationVersion = len(migrations)
+
+	migrations = []migrationFunc{
+		addEntrantIDToChampionships,
+		addAdminAccount,
+		championshipLinksToSummerNote,
+		addEntrantsToChampionshipEvents,
+		addIDToChampionshipClasses,
+		enhanceOldChampionshipResultFiles,
+		addResultScreenTimeDefault,
+		// migration 8 (below) has been left intentionally blank, as it is now migration 9
+		// due to it needing re-running in some environments.
+		func(Store) error { return nil },
+		addPitBoxDefinitionToEntrants,
+		addLastSeenVersionToAccounts,
+		addSleepTime1ToServerOptions,
+		addPersistOpenEntrantsToChampionship,
+		addThemeChoiceToAccounts,
+	}
+)
 
 func addEntrantIDToChampionships(rs Store) error {
 	logrus.Infof("Running migration: Add Internal UUID to Championship Entrants")
@@ -417,6 +421,26 @@ func addPersistOpenEntrantsToChampionship(s Store) error {
 		err := s.UpsertChampionship(champ)
 
 		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func addThemeChoiceToAccounts(s Store) error {
+	logrus.Infof("Running migration: Add Theme Choice to Accounts")
+
+	accounts, err := s.ListAccounts()
+
+	if err != nil {
+		return err
+	}
+
+	for _, account := range accounts {
+		account.Theme = ThemeDefault
+
+		if err := s.UpsertAccount(account); err != nil {
 			return err
 		}
 	}

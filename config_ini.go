@@ -177,6 +177,7 @@ type GlobalServerConfig struct {
 	DiscordChannelID            string `ini:"-" help:"If Discord is enabled, this is the channel ID it will send messages to"`
 	NotificationReminderTimer   int    `ini:"-" min:"0" max:"65535" help:"If Discord is enabled, a reminder will be sent this many minutes prior to race start.  If 0, only race start messages will be sent."`
 	ShowPasswordInNotifications int    `ini:"-" show:"open" input:"checkbox" help:"Show the server password in race start notifications"`
+	DarkTheme                   int    `ini:"-" input:"checkbox" help:"Enable Server Manager's Dark Theme by default"`
 }
 
 func (gsc GlobalServerConfig) GetName() string {

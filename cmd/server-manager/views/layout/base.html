@@ -8,7 +8,11 @@
         <title>{{ block "title" . }}{{ end }} / {{ $.server_name }}</title>
 
         {{ block "stylesheets" . }}
-            <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/server-manager.css" }}">
+            {{ if $.User.ShowDarkTheme $.IsDarkTheme }}
+                <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/server-manager-dark.css" }}">
+            {{ else }}
+                <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/server-manager.css" }}">
+            {{ end }}
 
             <style type="text/css">
                 {{ .custom_css }}

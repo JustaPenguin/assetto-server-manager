@@ -445,6 +445,7 @@ func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, data map[str
 	data["IsHosted"] = IsHosted
 	data["IsPremium"] = IsPremium
 	data["MaxClientsOverride"] = MaxClientsOverride
+	data["IsDarkTheme"] = opts.DarkTheme == 1
 	data["_request"] = r
 	data["Debug"] = Debug
 	data["MonitoringEnabled"] = config.Monitoring.Enabled
