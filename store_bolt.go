@@ -303,7 +303,7 @@ func (rs *BoltStore) UpsertServerOptions(so *GlobalServerConfig) error {
 
 func (rs *BoltStore) LoadServerOptions() (*GlobalServerConfig, error) {
 	// start with defaults
-	so := &ConfigIniDefault.GlobalServerConfig
+	so := ConfigIniDefault.GlobalServerConfig
 
 	err := rs.db.View(func(tx *bbolt.Tx) error {
 		bkt, err := rs.serverOptionsBucket(tx)
@@ -323,10 +323,10 @@ func (rs *BoltStore) LoadServerOptions() (*GlobalServerConfig, error) {
 
 	if err == bbolt.ErrBucketNotFound {
 		// no server options created yet, apply defaults
-		return so, rs.UpsertServerOptions(so)
+		return &so, rs.UpsertServerOptions(&so)
 	}
 
-	return so, err
+	return &so, err
 }
 
 func (rs *BoltStore) championshipsBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
