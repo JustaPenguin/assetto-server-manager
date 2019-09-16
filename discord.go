@@ -2,33 +2,36 @@ package servermanager
 
 import (
 	"errors"
+	"net/url"
+	"time"
+
 	"github.com/Clinet/discordgo-embed"
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
-	"net/url"
-	"time"
 )
 
 type DiscordManager struct {
-	store   Store
-	discord *discordgo.Session
-	r       *Resolver
-	enabled bool
+	store                 Store
+	discord               *discordgo.Session
+	scheduledRacesManager *ScheduledRacesManager
+	enabled               bool
 }
 
 // NewDiscordManager instantiates the DiscordManager type.  On error, it will log the error and return the type
 // flagged as disabled
-func NewDiscordManager(store Store, r *Resolver) (*DiscordManager, error) {
+func NewDiscordManager(store Store, scheduledRacesManager *ScheduledRacesManager) (*DiscordManager, error) {
+	discordManager := &DiscordManager{
+		store:                 store,
+		scheduledRacesManager: scheduledRacesManager,
+		discord:               nil,
+		enabled:               false,
+	}
+
 	opts, err := store.LoadServerOptions()
 
 	if err != nil {
 		logrus.Errorf("couldn't load server options, err: %s", err)
-		return &DiscordManager{
-			store:   store,
-			r:       r,
-			discord: nil,
-			enabled: false,
-		}, err
+		return discordManager, err
 	}
 
 	var session *discordgo.Session
@@ -42,43 +45,28 @@ func NewDiscordManager(store Store, r *Resolver) (*DiscordManager, error) {
 
 		if err != nil {
 			logrus.Errorf("couldn't open discord session, err: %s", err)
-			return &DiscordManager{
-				store:   store,
-				discord: nil,
-				r:       r,
-				enabled: false,
-			}, err
+			return discordManager, err
 		}
 	} else {
-		logrus.Infof("Discord notification bot not enabled")
-
-		return &DiscordManager{
-			store:   store,
-			discord: nil,
-			r:       r,
-			enabled: false,
-		}, nil
+		logrus.Debugf("Discord notification bot not enabled")
+		return discordManager, err
 	}
 
 	logrus.Infof("Discord notification bot connected")
 
-	dm := &DiscordManager{
-		store:   store,
-		discord: session,
-		r:       r,
-		enabled: true,
-	}
+	discordManager.enabled = true
+	discordManager.discord = session
 
-	session.AddHandler(dm.CommandHandler)
+	session.AddHandler(discordManager.CommandHandler)
 
-	return dm, nil
+	return discordManager, nil
 }
 
 func (dm *DiscordManager) SaveServerOptions(oldServerOpts *GlobalServerConfig, newServerOpts *GlobalServerConfig) error {
 	if newServerOpts.DiscordAPIToken != "" && (oldServerOpts.DiscordAPIToken != newServerOpts.DiscordAPIToken) {
 		// existing token changed, so stop
 		if oldServerOpts.DiscordAPIToken != "" && dm.enabled {
-			dm.Stop()
+			_ = dm.Stop()
 		}
 
 		// token added (or changed), so attempt to connect
@@ -111,12 +99,10 @@ func (dm *DiscordManager) CommandHandler(s *discordgo.Session, m *discordgo.Mess
 	}
 
 	if m.Content == "!schedule" {
-		rs := dm.r.resolveScheduledRacesHandler()
-
 		start := time.Now()
 		end := start.AddDate(0, 0, 7)
 
-		calendar, err := rs.buildCalendar(start, end)
+		calendar, err := dm.scheduledRacesManager.buildCalendar(start, end)
 
 		if err != nil {
 			return
@@ -178,30 +164,32 @@ func (dm *DiscordManager) SendMessage(msg string) error {
 
 // SendMessage sends a message to the configured channel and logs any errors
 func (dm *DiscordManager) SendEmbed(msg string, linkText string, link *url.URL) error {
-	if dm.enabled {
-		opts, err := dm.store.LoadServerOptions()
+	if !dm.enabled {
+		return nil
+	}
+
+	opts, err := dm.store.LoadServerOptions()
+
+	if err != nil {
+		logrus.Errorf("couldn't load server options, err: %s", err)
+		return err
+	}
+
+	// could check DiscordChannelID in new, but plan is to allow per-championship channels, so will need to pass
+	// it in as an arg and check it here anyway
+	if opts.DiscordChannelID != "" {
+		linkMsg := "[" + linkText + "](" + link.String() + ")"
+		_, err = dm.discord.ChannelMessageSendEmbed(opts.DiscordChannelID, embed.NewGenericEmbed(msg, linkMsg))
 
 		if err != nil {
-			logrus.Errorf("couldn't load server options, err: %s", err)
-			return err
-		}
-
-		// could check DiscordChannelID in new, but plan is to allow per-championship channels, so will need to pass
-		// it in as an arg and check it here anyway
-		if opts.DiscordChannelID != "" {
-			linkMsg := "[" + linkText + "](" + link.String() + ")"
-			_, err = dm.discord.ChannelMessageSendEmbed(opts.DiscordChannelID, embed.NewGenericEmbed(msg, linkMsg))
-
-			if err != nil {
-				logrus.Errorf("couldn't send discord message, err: %s", err)
-				return err
-			}
-		} else {
-			err = errors.New("no channel ID set in config")
 			logrus.Errorf("couldn't send discord message, err: %s", err)
 			return err
 		}
+	} else {
+		err = errors.New("no channel ID set in config")
+		logrus.Errorf("couldn't send discord message, err: %s", err)
+		return err
 	}
 
-	return nil
+	return err
 }
