@@ -6,7 +6,7 @@
 
     <div class="table-responsive">
         <table class="table table-bordered table-striped">
-            {{ if eq "RACE" $sessionResults.Type.String }}
+            {{ if eq "RACE" $sessionResults.Type.OriginalString }}
                 <tr>
                     <th>#</th>
                     <th>Name</th>
@@ -95,7 +95,7 @@
                         </tr>
                     {{ end }}
                 {{ end }}
-            {{ else if eq "QUALIFY" $sessionResults.Type.String }}
+            {{ else if eq "QUALIFY" $sessionResults.Type.OriginalString }}
                 <tr>
                     <th>#</th>
                     <th>Name</th>
@@ -152,7 +152,7 @@
                         </tr>
                     {{ end }}
                 {{ end }}
-            {{ else if eq "PRACTICE" $sessionResults.Type.String }}
+            {{ else if eq "PRACTICE" $sessionResults.Type.OriginalString }}
                 <tr>
                     <th>#</th>
                     <th>Name</th>
