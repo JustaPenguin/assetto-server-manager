@@ -508,8 +508,17 @@ func (cm *CarManager) SaveCarDetails(carName string, car *Car) error {
 	return cm.IndexCar(car)
 }
 
+type carDetailsTemplateVars struct {
+	BaseTemplateVars
+
+	Car       *Car
+	Results   []SessionResults
+	Setups    map[string][]string
+	TrackOpts []Track
+}
+
 // LoadCarDetailsForTemplate loads all necessary items to generate the car details template.
-func (cm *CarManager) LoadCarDetailsForTemplate(carName string) (map[string]interface{}, error) {
+func (cm *CarManager) LoadCarDetailsForTemplate(carName string) (*carDetailsTemplateVars, error) {
 	tyres, err := ListTyres()
 
 	if err != nil {
@@ -540,11 +549,11 @@ func (cm *CarManager) LoadCarDetailsForTemplate(carName string) (map[string]inte
 		return nil, err
 	}
 
-	return map[string]interface{}{
-		"Car":       car,
-		"Results":   results,
-		"Setups":    setups,
-		"TrackOpts": tracks,
+	return &carDetailsTemplateVars{
+		Car:       car,
+		Results:   results,
+		Setups:    setups,
+		TrackOpts: tracks,
 	}, nil
 }
 
@@ -620,6 +629,17 @@ func NewCarsHandler(baseHandler *BaseHandler, carManager *CarManager) *CarsHandl
 	}
 }
 
+type carListTemplateVars struct {
+	BaseTemplateVars
+
+	Results     *bleve.SearchResult
+	Cars        Cars
+	Query       string
+	CurrentPage int
+	NumPages    int
+	PageSize    int
+}
+
 func (ch *CarsHandler) list(w http.ResponseWriter, r *http.Request) {
 	searchTerm := r.URL.Query().Get("q")
 	page := formValueAsInt(r.URL.Query().Get("page"))
@@ -633,13 +653,13 @@ func (ch *CarsHandler) list(w http.ResponseWriter, r *http.Request) {
 
 	numPages := int(math.Ceil(float64(float64(results.Total)) / float64(searchPageSize)))
 
-	ch.viewRenderer.MustLoadTemplate(w, r, "content/cars.html", map[string]interface{}{
-		"Results":     results,
-		"Cars":        cars,
-		"Query":       searchTerm,
-		"CurrentPage": page,
-		"NumPages":    numPages,
-		"PageSize":    searchPageSize,
+	ch.viewRenderer.MustLoadTemplate(w, r, "content/cars.html", &carListTemplateVars{
+		Results:     results,
+		Cars:        cars,
+		Query:       searchTerm,
+		CurrentPage: page,
+		NumPages:    numPages,
+		PageSize:    searchPageSize,
 	})
 }
 

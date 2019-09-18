@@ -100,19 +100,28 @@ func (cm *ChampionshipManager) ListChampionships() ([]*Championship, error) {
 	return champs, nil
 }
 
-func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (championship *Championship, opts map[string]interface{}, err error) {
+type ChampionshipTemplateVars struct {
+	*RaceTemplateVars
+
+	DefaultPoints ChampionshipPoints
+}
+
+func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (championship *Championship, opts *ChampionshipTemplateVars, err error) {
 	raceOpts, err := cm.BuildRaceOpts(r)
 
 	if err != nil {
 		return nil, nil, err
 	}
 
-	raceOpts["DefaultPoints"] = DefaultChampionshipPoints
+	opts = &ChampionshipTemplateVars{
+		RaceTemplateVars: raceOpts,
+		DefaultPoints:    DefaultChampionshipPoints,
+	}
 
 	championshipID := chi.URLParam(r, "championshipID")
 
 	isEditingChampionship := championshipID != ""
-	raceOpts["IsEditing"] = isEditingChampionship
+	opts.IsEditing = isEditingChampionship
 
 	if isEditingChampionship {
 		championship, err = cm.LoadChampionship(championshipID)
@@ -124,9 +133,9 @@ func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (champions
 		championship = NewChampionship("")
 	}
 
-	raceOpts["Current"] = championship
+	opts.Championship = championship
 
-	return championship, raceOpts, nil
+	return championship, opts, nil
 }
 
 func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (championship *Championship, edited bool, err error) {
@@ -261,7 +270,7 @@ var (
 	ErrInvalidChampionshipClass = errors.New("servermanager: invalid championship class")
 )
 
-func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (map[string]interface{}, error) {
+func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (*RaceTemplateVars, error) {
 	opts, err := cm.BuildRaceOpts(r)
 
 	if err != nil {
@@ -275,8 +284,8 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (map[
 		return nil, err
 	}
 
-	opts["IsChampionship"] = true
-	opts["Championship"] = championship
+	opts.IsChampionship = true
+	opts.Championship = championship
 
 	if editEventID := chi.URLParam(r, "eventID"); editEventID != "" {
 		// editing a championship event
@@ -286,32 +295,32 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (map[
 			return nil, err
 		}
 
-		opts["Current"] = event.RaceSetup
-		opts["IsEditing"] = true
-		opts["EditingID"] = editEventID
-		opts["CurrentEntrants"] = event.CombineEntryLists(championship)
+		opts.Current = event.RaceSetup
+		opts.IsEditing = true
+		opts.EditingID = editEventID
+		opts.CurrentEntrants = event.CombineEntryLists(championship)
 	} else {
 		// creating a new championship event
-		opts["IsEditing"] = false
-		opts["CurrentEntrants"] = championship.AllEntrants()
+		opts.IsEditing = false
+		opts.CurrentEntrants = championship.AllEntrants()
 
 		// override Current race config if there is a previous championship race configured
 		if len(championship.Events) > 0 {
-			opts["Current"] = championship.Events[len(championship.Events)-1].RaceSetup
-			opts["ChampionshipHasAtLeastOnceRace"] = true
+			opts.Current = championship.Events[len(championship.Events)-1].RaceSetup
+			opts.ChampionshipHasAtLeastOnceRace = true
 		} else {
 			defaultConfig := ConfigIniDefault()
 
-			opts["Current"] = defaultConfig.CurrentRaceConfig
-			opts["ChampionshipHasAtLeastOnceRace"] = false
+			opts.Current = defaultConfig.CurrentRaceConfig
+			opts.ChampionshipHasAtLeastOnceRace = false
 		}
 	}
 
 	if !championship.OpenEntrants {
-		opts["AvailableSessions"] = AvailableSessionsNoBooking
+		opts.AvailableSessions = AvailableSessionsNoBooking
 	}
 
-	err = cm.applyCurrentRaceSetupToOptions(opts, opts["Current"].(CurrentRaceConfig))
+	err = cm.applyCurrentRaceSetupToOptions(opts, opts.Current)
 
 	if err != nil {
 		return nil, err

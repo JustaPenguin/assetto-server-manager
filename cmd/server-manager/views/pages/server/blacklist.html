@@ -1,3 +1,5 @@
+{{/* gotype: github.com/cj123/assetto-server-manager.serverBlacklistTemplateVars */}}
+
 {{ define "title" }}Blacklist{{ end }}
 
 {{ define "content" }}
@@ -5,7 +7,7 @@
 
     <form method="post" action="/blacklist">
         <label for="blacklist"></label>
-        <textarea id="blacklist" name="blacklist" class="form-control md-textarea text-area">{{ .text }}</textarea>
+        <textarea id="blacklist" name="blacklist" class="form-control md-textarea text-area">{{ .Text }}</textarea>
 
         <button class="btn btn-success float-right mt-2" type="submit">Save</button>
     </form>

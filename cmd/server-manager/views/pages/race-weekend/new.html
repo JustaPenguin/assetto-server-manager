@@ -1,3 +1,5 @@
+{{/* gotype: github.com/cj123/assetto-server-manager.RaceTemplateVars */}}
+
 {{ define "title" }}Create a Race Weekend{{ end }}
 
 {{ define "content" }}
@@ -5,11 +7,11 @@
         {{ if not $.IsEditing }}
             Create a new Race Weekend
         {{ else }}
-            Edit the {{ $.Current.Name }} Race Weekend
+            Edit the {{ $.RaceWeekend.Name }} Race Weekend
         {{ end }}
     </h1>
 
-    <h4 class="text-center">{{ if $.Current.HasLinkedChampionship }}in the {{ $.Championship.Name }} Championship{{ end }}</h4>
+    <h4 class="text-center">{{ if $.RaceWeekend.HasLinkedChampionship }}in the {{ $.Championship.Name }} Championship{{ end }}</h4>
 
     <form action="/race-weekends/new/submit" class="race-setup" method="post" id="raceweekend-form" data-safe-submit>
         <div class="card mt-3 border-secondary" id="entrants">
@@ -27,11 +29,11 @@
 
                     <div class="col-sm-9">
                         <input type="text" class="form-control" id="RaceWeekendName" name="RaceWeekendName" required
-                               placeholder="My awesome Race Weekend" value="{{ $.Current.Name }}">
+                               placeholder="My awesome Race Weekend" value="{{ $.RaceWeekend.Name }}">
                     </div>
                 </div>
 
-                {{ if not $.Current.HasLinkedChampionship }}
+                {{ if not $.RaceWeekend.HasLinkedChampionship }}
 
                     <div class="form-group row">
                         <label for="Cars" class="col-sm-3 col-form-label">
@@ -39,7 +41,7 @@
                         </label>
 
                         <div class="col-sm-9">
-                            {{ template "cars" dict "CarOpts" $.CarOpts "Current" nil "ValidCarIDs" $.Current.EntryList.CarIDs  }}
+                            {{ template "cars" dict "CarOpts" $.CarOpts "Current" nil "ValidCarIDs" $.RaceWeekend.EntryList.CarIDs  }}
                         </div>
                     </div>
 
@@ -49,7 +51,7 @@
                             {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" false }}
                         </div>
 
-                        {{ range $index, $entrant := $.Current.EntryList.AsSlice }}
+                        {{ range $index, $entrant := $.RaceWeekend.EntryList.AsSlice }}
                             <div class="entrant">
                                 {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" false "IsEditing" $.IsEditing "IsChampionship" false }}
                             </div>
@@ -83,7 +85,7 @@
 
         <div class="mt-5">
             {{ if .IsEditing }}
-                <input type="hidden" name="Editing" id="Editing" value="{{ $.Current.ID.String }}">
+                <input type="hidden" name="Editing" id="Editing" value="{{ $.RaceWeekend.ID.String }}">
                 <button type="submit" class="btn btn-success float-right">Save Race Weekend</button>
             {{ else }}
                 <div class="float-right">

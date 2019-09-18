@@ -755,6 +755,14 @@ func NewResultsHandler(baseHandler *BaseHandler) *ResultsHandler {
 	}
 }
 
+type resultsListTemplateVars struct {
+	BaseTemplateVars
+
+	Results     []SessionResults
+	Pages       []int
+	CurrentPage int
+}
+
 func (rh *ResultsHandler) list(w http.ResponseWriter, r *http.Request) {
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 
@@ -773,11 +781,18 @@ func (rh *ResultsHandler) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rh.viewRenderer.MustLoadTemplate(w, r, "results/index.html", map[string]interface{}{
-		"results":     results,
-		"pages":       pages,
-		"currentPage": page,
+	rh.viewRenderer.MustLoadTemplate(w, r, "results/index.html", &resultsListTemplateVars{
+		Results:     results,
+		Pages:       pages,
+		CurrentPage: page,
 	})
+}
+
+type resultsViewTemplateVars struct {
+	BaseTemplateVars
+
+	Result  *SessionResults
+	Account *Account
 }
 
 func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
@@ -795,10 +810,12 @@ func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rh.viewRenderer.MustLoadTemplate(w, r, "results/result.html", map[string]interface{}{
-		"result":        result,
-		"account":       AccountFromRequest(r),
-		"WideContainer": true,
+	rh.viewRenderer.MustLoadTemplate(w, r, "results/result.html", &resultsViewTemplateVars{
+		BaseTemplateVars: BaseTemplateVars{
+			WideContainer: true,
+		},
+		Result:  result,
+		Account: AccountFromRequest(r),
 	})
 }
 

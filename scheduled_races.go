@@ -97,9 +97,7 @@ func NewScheduledRacesHandler(baseHandler *BaseHandler, scheduledRacesManager *S
 }
 
 func (rs *ScheduledRacesHandler) calendar(w http.ResponseWriter, r *http.Request) {
-	rs.viewRenderer.MustLoadTemplate(w, r, "calendar.html", map[string]interface{}{
-		"WideContainer": true,
-	})
+	rs.viewRenderer.MustLoadTemplate(w, r, "calendar.html", &BaseTemplateVars{WideContainer: true})
 }
 
 func (rs *ScheduledRacesHandler) calendarJSON(w http.ResponseWriter, r *http.Request) {

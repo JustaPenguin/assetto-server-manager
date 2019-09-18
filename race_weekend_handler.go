@@ -23,6 +23,12 @@ func NewRaceWeekendHandler(baseHandler *BaseHandler, raceWeekendManager *RaceWee
 	}
 }
 
+type raceWeekendListTemplateVars struct {
+	BaseTemplateVars
+
+	RaceWeekends []*RaceWeekend
+}
+
 func (rwh *RaceWeekendHandler) list(w http.ResponseWriter, r *http.Request) {
 	raceWeekends, err := rwh.raceWeekendManager.ListRaceWeekends()
 
@@ -32,9 +38,16 @@ func (rwh *RaceWeekendHandler) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rwh.viewRenderer.MustLoadTemplate(w, r, "race-weekend/index.html", map[string]interface{}{
-		"RaceWeekends": raceWeekends,
+	rwh.viewRenderer.MustLoadTemplate(w, r, "race-weekend/index.html", &raceWeekendListTemplateVars{
+		RaceWeekends: raceWeekends,
 	})
+}
+
+type raceWeekendViewTemplateVars struct {
+	BaseTemplateVars
+
+	RaceWeekend *RaceWeekend
+	Account     *Account
 }
 
 func (rwh *RaceWeekendHandler) view(w http.ResponseWriter, r *http.Request) {
@@ -46,10 +59,12 @@ func (rwh *RaceWeekendHandler) view(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rwh.viewRenderer.MustLoadTemplate(w, r, "race-weekend/view.html", map[string]interface{}{
-		"RaceWeekend":   raceWeekend,
-		"WideContainer": true,
-		"Account":       AccountFromRequest(r),
+	rwh.viewRenderer.MustLoadTemplate(w, r, "race-weekend/view.html", &raceWeekendViewTemplateVars{
+		BaseTemplateVars: BaseTemplateVars{
+			WideContainer: true,
+		},
+		RaceWeekend: raceWeekend,
+		Account:     AccountFromRequest(r),
 	})
 }
 
@@ -202,6 +217,14 @@ func (rwh *RaceWeekendHandler) deleteSession(w http.ResponseWriter, r *http.Requ
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+type raceWeekendSessionImportTemplateVars struct {
+	BaseTemplateVars
+
+	Results       []SessionResults
+	RaceWeekendID string
+	Session       *RaceWeekendSession
+}
+
 func (rwh *RaceWeekendHandler) importSessionResults(w http.ResponseWriter, r *http.Request) {
 	raceWeekendID := chi.URLParam(r, "raceWeekendID")
 	sessionID := chi.URLParam(r, "sessionID")
@@ -227,11 +250,20 @@ func (rwh *RaceWeekendHandler) importSessionResults(w http.ResponseWriter, r *ht
 		return
 	}
 
-	rwh.viewRenderer.MustLoadTemplate(w, r, "race-weekend/import-session.html", map[string]interface{}{
-		"Results":       results,
-		"RaceWeekendID": raceWeekendID,
-		"Session":       session,
+	rwh.viewRenderer.MustLoadTemplate(w, r, "race-weekend/import-session.html", &raceWeekendSessionImportTemplateVars{
+		Results:       results,
+		RaceWeekendID: raceWeekendID,
+		Session:       session,
 	})
+}
+
+type raceWeekendFilterTemplateVars struct {
+	BaseTemplateVars
+
+	RaceWeekend                 *RaceWeekend
+	ParentSession, ChildSession *RaceWeekendSession
+	Filter                      *RaceWeekendSessionToSessionFilter
+	AvailableSorters            []RaceWeekendEntryListSorterDescription
 }
 
 func (rwh *RaceWeekendHandler) manageFilters(w http.ResponseWriter, r *http.Request) {
@@ -255,12 +287,12 @@ func (rwh *RaceWeekendHandler) manageFilters(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	rwh.viewRenderer.MustLoadPartial(w, r, "race-weekend/popups/manage-filters.html", map[string]interface{}{
-		"RaceWeekend":      raceWeekend,
-		"ParentSession":    parentSession,
-		"ChildSession":     childSession,
-		"Filter":           filter,
-		"AvailableSorters": RaceWeekendEntryListSorters,
+	rwh.viewRenderer.MustLoadPartial(w, r, "race-weekend/popups/manage-filters.html", &raceWeekendFilterTemplateVars{
+		RaceWeekend:      raceWeekend,
+		ParentSession:    parentSession,
+		ChildSession:     childSession,
+		Filter:           filter,
+		AvailableSorters: RaceWeekendEntryListSorters,
 	})
 }
 
@@ -310,6 +342,14 @@ func (rwh *RaceWeekendHandler) updateGrid(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusCreated)
 }
 
+type raceWeekendManageEntryListTemplateVars struct {
+	BaseTemplateVars
+
+	RaceWeekend      *RaceWeekend
+	Session          *RaceWeekendSession
+	AvailableSorters []RaceWeekendEntryListSorterDescription
+}
+
 func (rwh *RaceWeekendHandler) manageEntryList(w http.ResponseWriter, r *http.Request) {
 	raceWeekendID := chi.URLParam(r, "raceWeekendID")
 	sessionID := r.URL.Query().Get("sessionID")
@@ -320,10 +360,10 @@ func (rwh *RaceWeekendHandler) manageEntryList(w http.ResponseWriter, r *http.Re
 		panic(err) // @TODO
 	}
 
-	rwh.viewRenderer.MustLoadPartial(w, r, "race-weekend/popups/manage-entrylist.html", map[string]interface{}{
-		"RaceWeekend":      raceWeekend,
-		"Session":          session,
-		"AvailableSorters": RaceWeekendEntryListSorters,
+	rwh.viewRenderer.MustLoadPartial(w, r, "race-weekend/popups/manage-entrylist.html", &raceWeekendManageEntryListTemplateVars{
+		RaceWeekend:      raceWeekend,
+		Session:          session,
+		AvailableSorters: RaceWeekendEntryListSorters,
 	})
 }
 

@@ -1,3 +1,5 @@
+{{/* gotype: github.com/cj123/assetto-server-manager.homeTemplateVars */}}
+
 {{ define "title" }}Home{{ end }}
 
 {{ define "content" }}
@@ -5,7 +7,7 @@
 
     {{ with .RaceDetails }}
         <div class="card">
-            {{ if $.server_event.IsChampionship }}
+            {{ if $.ServerEvent.IsChampionship }}
                 <h5 class="card-header">Championship Event in Progress</h5>
             {{ else if $.server_event.IsRaceWeekend }}
                 <h5 class="card-header">Race Weekend in Progress</h5>
@@ -30,7 +32,7 @@
                                     href="/process/restart"
                                     class="btn btn-warning"
 
-                                    {{ if $.server_event.IsChampionship }}
+                                    {{ if $.ServerEvent.IsChampionship }}
                                         onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
                                     {{ end }}
                                 >
@@ -40,7 +42,7 @@
                                     href="/process/stop"
                                     class="btn btn-danger"
 
-                                    {{ if $.server_event.IsChampionship }}
+                                    {{ if $.ServerEvent.IsChampionship }}
                                         onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
                                     {{ end }}
                                 >

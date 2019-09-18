@@ -26,6 +26,12 @@ func NewChampionshipsHandler(baseHandler *BaseHandler, championshipManager *Cham
 	}
 }
 
+type championshipListTemplateVars struct {
+	BaseTemplateVars
+
+	Championships []*Championship
+}
+
 // lists all available Championships known to Server Manager
 func (ch *ChampionshipsHandler) list(w http.ResponseWriter, r *http.Request) {
 	championships, err := ch.championshipManager.ListChampionships()
@@ -36,8 +42,8 @@ func (ch *ChampionshipsHandler) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ch.viewRenderer.MustLoadTemplate(w, r, "championships/index.html", map[string]interface{}{
-		"championships": championships,
+	ch.viewRenderer.MustLoadTemplate(w, r, "championships/index.html", &championshipListTemplateVars{
+		Championships: championships,
 	})
 }
 
@@ -74,6 +80,15 @@ func (ch *ChampionshipsHandler) submit(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type championshipViewTemplateVars struct {
+	BaseTemplateVars
+
+	Championship    *Championship
+	EventInProgress bool
+	Account         *Account
+	RaceWeekends    map[uuid.UUID]*RaceWeekend
+}
+
 // view shows details of a given Championship
 func (ch *ChampionshipsHandler) view(w http.ResponseWriter, r *http.Request) {
 	championship, err := ch.championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
@@ -107,11 +122,11 @@ func (ch *ChampionshipsHandler) view(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ch.viewRenderer.MustLoadTemplate(w, r, "championships/view.html", map[string]interface{}{
-		"Championship":    championship,
-		"EventInProgress": eventInProgress,
-		"Account":         AccountFromRequest(r),
-		"RaceWeekends":    raceWeekends,
+	ch.viewRenderer.MustLoadTemplate(w, r, "championships/view.html", &championshipViewTemplateVars{
+		Championship:    championship,
+		EventInProgress: eventInProgress,
+		Account:         AccountFromRequest(r),
+		RaceWeekends:    raceWeekends,
 	})
 }
 
@@ -226,6 +241,14 @@ func (ch *ChampionshipsHandler) delete(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+type eventImportTemplateVars struct {
+	BaseTemplateVars
+
+	Results        []SessionResults
+	ChampionshipID string
+	Event          *ChampionshipEvent
+}
+
 func (ch *ChampionshipsHandler) eventImport(w http.ResponseWriter, r *http.Request) {
 	championshipID := chi.URLParam(r, "championshipID")
 	eventID := chi.URLParam(r, "eventID")
@@ -251,10 +274,10 @@ func (ch *ChampionshipsHandler) eventImport(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	ch.viewRenderer.MustLoadTemplate(w, r, "championships/import-event.html", map[string]interface{}{
-		"Results":        results,
-		"ChampionshipID": championshipID,
-		"Event":          event,
+	ch.viewRenderer.MustLoadTemplate(w, r, "championships/import-event.html", &eventImportTemplateVars{
+		Results:        results,
+		ChampionshipID: championshipID,
+		Event:          event,
 	})
 }
 
@@ -499,13 +522,25 @@ type entrantSlot struct {
 	Capacity int
 }
 
+type championshipSignUpFormTemplateVars struct {
+	*ChampionshipTemplateVars
+
+	FormData         *ChampionshipSignUpResponse
+	SignedUpEntrants map[string]*entrantSlot
+	ValidationError  string
+}
+
 func (ch *ChampionshipsHandler) signUpForm(w http.ResponseWriter, r *http.Request) {
-	championship, opts, err := ch.championshipManager.BuildChampionshipOpts(r)
+	championship, championshipOpts, err := ch.championshipManager.BuildChampionshipOpts(r)
 
 	if err != nil {
 		logrus.WithError(err).Error("couldn't load championship")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
+	}
+
+	opts := &championshipSignUpFormTemplateVars{
+		ChampionshipTemplateVars: championshipOpts,
 	}
 
 	if !championship.SignUpForm.Enabled {
@@ -530,16 +565,16 @@ func (ch *ChampionshipsHandler) signUpForm(w http.ResponseWriter, r *http.Reques
 	account := AccountFromRequest(r)
 
 	if account != OpenAccount {
-		opts["FormData"] = &ChampionshipSignUpResponse{
+		opts.FormData = &ChampionshipSignUpResponse{
 			Name: account.DriverName,
 			GUID: account.GUID,
 			Team: account.Team,
 		}
 	} else {
-		opts["FormData"] = &ChampionshipSignUpResponse{}
+		opts.FormData = &ChampionshipSignUpResponse{}
 	}
 
-	opts["SignedUpEntrants"] = signedUpEntrants
+	opts.SignedUpEntrants = signedUpEntrants
 
 	if r.Method == http.MethodPost {
 		signUpResponse, foundSlot, err := ch.championshipManager.HandleChampionshipSignUp(r)
@@ -547,8 +582,8 @@ func (ch *ChampionshipsHandler) signUpForm(w http.ResponseWriter, r *http.Reques
 		if err != nil {
 			switch err.(type) {
 			case ValidationError:
-				opts["FormData"] = signUpResponse
-				opts["ValidationError"] = err.Error()
+				opts.FormData = signUpResponse
+				opts.ValidationError = err.Error()
 			default:
 				logrus.WithError(err).Error("couldn't handle championship")
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -565,14 +600,20 @@ func (ch *ChampionshipsHandler) signUpForm(w http.ResponseWriter, r *http.Reques
 					http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
 					return
 				} else {
-					opts["FormData"] = signUpResponse
-					opts["ValidationError"] = fmt.Sprintf("There are no more available slots for the car: %s. Please pick a different car.", prettifyName(signUpResponse.GetCar(), true))
+					opts.FormData = signUpResponse
+					opts.ValidationError = fmt.Sprintf("There are no more available slots for the car: %s. Please pick a different car.", prettifyName(signUpResponse.GetCar(), true))
 				}
 			}
 		}
 	}
 
 	ch.viewRenderer.MustLoadTemplate(w, r, "championships/sign-up.html", opts)
+}
+
+type signedUpEntrantsTemplateVars struct {
+	BaseTemplateVars
+
+	Championship *Championship
 }
 
 func (ch *ChampionshipsHandler) signedUpEntrants(w http.ResponseWriter, r *http.Request) {
@@ -593,8 +634,8 @@ func (ch *ChampionshipsHandler) signedUpEntrants(w http.ResponseWriter, r *http.
 		return championship.SignUpForm.Responses[i].Created.After(championship.SignUpForm.Responses[j].Created)
 	})
 
-	ch.viewRenderer.MustLoadTemplate(w, r, "championships/signed-up-entrants.html", map[string]interface{}{
-		"Championship": championship,
+	ch.viewRenderer.MustLoadTemplate(w, r, "championships/signed-up-entrants.html", &signedUpEntrantsTemplateVars{
+		Championship: championship,
 	})
 }
 
