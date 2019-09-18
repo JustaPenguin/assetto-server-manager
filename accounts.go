@@ -336,6 +336,12 @@ func (ah *AccountHandler) toggleServerOpenStatus(w http.ResponseWriter, r *http.
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+type newPasswordTemplateVars struct {
+	BaseTemplateVars
+
+	NewAccount bool
+}
+
 func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 	account := AccountFromRequest(r)
 
@@ -380,9 +386,16 @@ func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new-password.html", map[string]interface{}{
-		"newAccount": account.NeedsPasswordReset(),
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new-password.html", &newPasswordTemplateVars{
+		NewAccount: account.NeedsPasswordReset(),
 	})
+}
+
+type updateAccountTemplateVars struct {
+	BaseTemplateVars
+
+	Account      *Account
+	ThemeOptions []ThemeDetails
 }
 
 func (ah *AccountHandler) update(w http.ResponseWriter, r *http.Request) {
@@ -417,9 +430,9 @@ func (ah *AccountHandler) update(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/update.html", map[string]interface{}{
-		"account":      account,
-		"themeOptions": ThemeOptions,
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/update.html", &updateAccountTemplateVars{
+		Account:      account,
+		ThemeOptions: ThemeOptions,
 	})
 }
 
@@ -578,6 +591,13 @@ func (ah *AccountHandler) logout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
+type createAccountTemplateVars struct {
+	BaseTemplateVars
+
+	Account   *Account
+	IsEditing bool
+}
+
 func (ah *AccountHandler) createOrEditAccount(w http.ResponseWriter, r *http.Request) {
 	var account *Account
 	isEditing := false
@@ -638,10 +658,17 @@ func (ah *AccountHandler) createOrEditAccount(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new.html", map[string]interface{}{
-		"Account":   account,
-		"IsEditing": isEditing,
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new.html", &createAccountTemplateVars{
+		Account:   account,
+		IsEditing: isEditing,
 	})
+}
+
+type manageAccountsTemplateVars struct {
+	BaseTemplateVars
+
+	Accounts         []*Account
+	ServerReadIsOpen bool
 }
 
 func (ah *AccountHandler) manageAccounts(w http.ResponseWriter, r *http.Request) {
@@ -653,9 +680,9 @@ func (ah *AccountHandler) manageAccounts(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/manage.html", map[string]interface{}{
-		"Accounts":         accounts,
-		"ServerReadIsOpen": accountOptions.IsOpen,
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/manage.html", &manageAccountsTemplateVars{
+		Accounts:         accounts,
+		ServerReadIsOpen: accountOptions.IsOpen,
 	})
 }
 

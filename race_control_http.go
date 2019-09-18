@@ -145,6 +145,15 @@ func NewRaceControlHandler(baseHandler *BaseHandler, store Store, raceManager *R
 	}
 }
 
+type liveTimingTemplateVars struct {
+	BaseTemplateVars
+
+	RaceDetails     *CustomRace
+	FrameLinks      []string
+	CSSDotSmoothing int
+	CMJoinLink      string
+}
+
 func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request) {
 	currentRace, entryList := rch.raceManager.CurrentRace()
 
@@ -173,12 +182,14 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	rch.viewRenderer.MustLoadTemplate(w, r, "live-timing.html", map[string]interface{}{
-		"RaceDetails":     customRace,
-		"FrameLinks":      frameLinks,
-		"CSSDotSmoothing": udp.RealtimePosIntervalMs,
-		"WideContainer":   true,
-		"CMJoinLink":      linkString,
+	rch.viewRenderer.MustLoadTemplate(w, r, "live-timing.html", &liveTimingTemplateVars{
+		BaseTemplateVars: BaseTemplateVars{
+			WideContainer: true,
+		},
+		RaceDetails:     customRace,
+		FrameLinks:      frameLinks,
+		CSSDotSmoothing: udp.RealtimePosIntervalMs,
+		CMJoinLink:      linkString,
 	})
 }
 

@@ -667,7 +667,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 
 // applyCurrentRaceSetupToOptions takes current values in race which require more detailed configuration
 // and applies them to the template opts.
-func (rm *RaceManager) applyCurrentRaceSetupToOptions(opts map[string]interface{}, race CurrentRaceConfig) error {
+func (rm *RaceManager) applyCurrentRaceSetupToOptions(opts *RaceTemplateVars, race CurrentRaceConfig) error {
 	tyres, err := ListTyres()
 
 	if err != nil {
@@ -699,8 +699,8 @@ func (rm *RaceManager) applyCurrentRaceSetupToOptions(opts map[string]interface{
 		}
 	}
 
-	opts["Tyres"] = tyres
-	opts["DeselectedTyres"] = deselectedTyres
+	opts.Tyres = tyres
+	opts.DeselectedTyres = deselectedTyres
 
 	return nil
 }
@@ -719,8 +719,34 @@ func (rm *RaceManager) ListAutoFillEntrants() ([]*Entrant, error) {
 	return entrants, nil
 }
 
+type RaceTemplateVars struct {
+	BaseTemplateVars
+
+	CarOpts             Cars
+	TrackOpts           []Track
+	AvailableSessions   []SessionType
+	Weather             Weather
+	SolIsInstalled      bool
+	Current             CurrentRaceConfig
+	CurrentEntrants     EntryList
+	PossibleEntrants    []*Entrant
+	FixedSetups         CarSetups
+	IsEditing           bool
+	EditingID           string
+	CustomRaceName      string
+	SurfacePresets      []TrackSurfacePreset
+	OverridePassword    bool
+	ReplacementPassword string
+	Tyres               Tyres
+	DeselectedTyres     map[string]bool
+
+	IsChampionship                 bool
+	Championship                   *Championship
+	ChampionshipHasAtLeastOnceRace bool
+}
+
 // BuildRaceOpts builds a quick race form
-func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, error) {
+func (rm *RaceManager) BuildRaceOpts(r *http.Request) (*RaceTemplateVars, error) {
 	_, cars, err := rm.carManager.Search(r.Context(), "", 0, 100000)
 
 	if err != nil {
@@ -805,23 +831,23 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		}
 	}
 
-	opts := map[string]interface{}{
-		"CarOpts":             cars,
-		"TrackOpts":           tracks,
-		"AvailableSessions":   AvailableSessions,
-		"Weather":             weather,
-		"SolIsInstalled":      solIsInstalled,
-		"Current":             race.CurrentRaceConfig,
-		"CurrentEntrants":     entrants,
-		"PossibleEntrants":    possibleEntrants,
-		"FixedSetups":         fixedSetups,
-		"IsChampionship":      false, // this flag is overridden by championship setup
-		"IsEditing":           isEditing,
-		"EditingID":           templateIDForEditing,
-		"CustomRaceName":      customRaceName,
-		"SurfacePresets":      DefaultTrackSurfacePresets,
-		"OverridePassword":    overridePassword,
-		"ReplacementPassword": replacementPassword,
+	opts := &RaceTemplateVars{
+		CarOpts:             cars,
+		TrackOpts:           tracks,
+		AvailableSessions:   AvailableSessions,
+		Weather:             weather,
+		SolIsInstalled:      solIsInstalled,
+		Current:             race.CurrentRaceConfig,
+		CurrentEntrants:     entrants,
+		PossibleEntrants:    possibleEntrants,
+		FixedSetups:         fixedSetups,
+		IsChampionship:      false, // this flag is overridden by championship setup
+		IsEditing:           isEditing,
+		EditingID:           templateIDForEditing,
+		CustomRaceName:      customRaceName,
+		SurfacePresets:      DefaultTrackSurfacePresets,
+		OverridePassword:    overridePassword,
+		ReplacementPassword: replacementPassword,
 	}
 
 	err = rm.applyCurrentRaceSetupToOptions(opts, race.CurrentRaceConfig)

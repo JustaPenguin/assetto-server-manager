@@ -128,6 +128,12 @@ func NewCustomRaceHandler(base *BaseHandler, raceManager *RaceManager) *CustomRa
 	}
 }
 
+type customRaceListTemplateVars struct {
+	BaseTemplateVars
+
+	Recent, Starred, Loop, Scheduled []*CustomRace
+}
+
 func (crh *CustomRaceHandler) list(w http.ResponseWriter, r *http.Request) {
 	recent, starred, looped, scheduled, err := crh.raceManager.ListCustomRaces()
 
@@ -137,11 +143,11 @@ func (crh *CustomRaceHandler) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	crh.viewRenderer.MustLoadTemplate(w, r, "custom-race/index.html", map[string]interface{}{
-		"Recent":    recent,
-		"Starred":   starred,
-		"Loop":      looped,
-		"Scheduled": scheduled,
+	crh.viewRenderer.MustLoadTemplate(w, r, "custom-race/index.html", &customRaceListTemplateVars{
+		Recent:    recent,
+		Starred:   starred,
+		Loop:      looped,
+		Scheduled: scheduled,
 	})
 }
 
