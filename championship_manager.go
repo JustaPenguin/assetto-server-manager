@@ -55,7 +55,27 @@ func (cm *ChampionshipManager) applyConfigAndStart(config CurrentRaceConfig, ent
 }
 
 func (cm *ChampionshipManager) LoadChampionship(id string) (*Championship, error) {
-	return cm.raceStore.LoadChampionship(id)
+	championship, err := cm.raceStore.LoadChampionship(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, event := range championship.Events {
+		if event.IsRaceWeekend() {
+			event.RaceWeekend, err = cm.raceStore.LoadRaceWeekend(event.RaceWeekendID.String())
+
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	for _, class := range championship.Classes {
+		class.Standings(championship.Events)
+	}
+
+	return championship, nil
 }
 
 func (cm *ChampionshipManager) UpsertChampionship(c *Championship) error {
@@ -361,6 +381,13 @@ func (cm *ChampionshipManager) DeleteEvent(championshipID string, eventID string
 	for i, event := range championship.Events {
 		if event.ID.String() == eventID {
 			toDelete = i
+
+			if event.IsRaceWeekend() {
+				if err := cm.raceStore.DeleteRaceWeekend(event.RaceWeekendID.String()); err != nil {
+					return err
+				}
+			}
+
 			break
 		}
 	}
@@ -1058,7 +1085,7 @@ func (cm *ChampionshipManager) AddEntrantFromSessionData(championship *Champions
 }
 
 func (cm *ChampionshipManager) BuildICalFeed(championshipID string, w io.Writer) error {
-	championship, err := cm.raceStore.LoadChampionship(championshipID)
+	championship, err := cm.LoadChampionship(championshipID)
 
 	if err != nil {
 		return err

@@ -1544,8 +1544,6 @@
                     <strong>Save Race Weekend Session</strong>
                 </div>
                 <div class="card-body">
-
-
                     <div class="form-group row">
                         <label for="ParentSessions" class="col-sm-3 col-form-label">Parent Session(s)</label>
 
@@ -1570,6 +1568,14 @@
                             </small>
                         </div>
                     </div>
+
+                    {{ if $.RaceWeekend.HasLinkedChampionship }}
+                        {{ range $class, $points := $.RaceWeekendSession.Points }}
+                            {{ $class }}
+
+                            {{ template "points" dict "Points" $points "DefaultPoints" $points "IsEditing" true "IsRaceWeekend" true }}
+                        {{ end }}
+                    {{ end }}
 
                     {{ if .IsEditing }}
                         <p>

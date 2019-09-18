@@ -47,19 +47,45 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendTemplateOpts(r *http.Request) (ma
 		return nil, err
 	}
 
+	var raceWeekend *RaceWeekend
+	var isEditing bool
+
 	if existingID := chi.URLParam(r, "raceWeekendID"); existingID != "" {
-		opts["IsEditing"] = true
+		isEditing = true
 		currentRaceWeekend, err := rwm.store.LoadRaceWeekend(existingID)
 
 		if err != nil {
 			return nil, err
 		}
 
-		opts["Current"] = currentRaceWeekend
+		raceWeekend = currentRaceWeekend
 	} else {
-		opts["IsEditing"] = false
-		opts["Current"] = NewRaceWeekend()
+		isEditing = false
+		raceWeekend = NewRaceWeekend()
 	}
+
+	var championshipID string
+
+	if !isEditing {
+		championshipID = r.URL.Query().Get("championshipID")
+	} else {
+		championshipID = raceWeekend.ChampionshipID.String()
+	}
+
+	if championshipID != "" {
+		championship, err := rwm.store.LoadChampionship(championshipID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		raceWeekend.ChampionshipID = championship.ID
+
+		opts["Championship"] = championship
+	}
+
+	opts["Current"] = raceWeekend
+	opts["IsEditing"] = isEditing
 
 	return opts, nil
 }
@@ -67,12 +93,6 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendTemplateOpts(r *http.Request) (ma
 func (rwm *RaceWeekendManager) SaveRaceWeekend(r *http.Request) (raceWeekend *RaceWeekend, edited bool, err error) {
 	if err := r.ParseForm(); err != nil {
 		return nil, false, err
-	}
-
-	entryList, err := rwm.raceManager.BuildEntryList(r, 0, len(r.Form["EntryList.Name"]))
-
-	if err != nil {
-		return nil, edited, err
 	}
 
 	if raceWeekendID := r.FormValue("Editing"); raceWeekendID != "" {
@@ -88,7 +108,36 @@ func (rwm *RaceWeekendManager) SaveRaceWeekend(r *http.Request) (raceWeekend *Ra
 	}
 
 	raceWeekend.Name = r.FormValue("RaceWeekendName")
-	raceWeekend.EntryList = entryList
+
+	if championshipID := r.FormValue("ChampionshipID"); championshipID != "" {
+		champ, err := rwm.store.LoadChampionship(championshipID)
+
+		if err != nil {
+			return nil, edited, err
+		}
+
+		raceWeekend.ChampionshipID = champ.ID
+
+		if !edited {
+			// add a championship event for this race weekend
+			event := NewChampionshipEvent()
+			event.RaceWeekendID = raceWeekend.ID
+
+			champ.Events = append(champ.Events, event)
+
+			if err := rwm.store.UpsertChampionship(champ); err != nil {
+				return nil, edited, err
+			}
+		}
+	} else {
+		entryList, err := rwm.raceManager.BuildEntryList(r, 0, len(r.Form["EntryList.Name"]))
+
+		if err != nil {
+			return nil, edited, err
+		}
+
+		raceWeekend.EntryList = entryList
+	}
 
 	return raceWeekend, edited, rwm.store.UpsertRaceWeekend(raceWeekend)
 }
@@ -107,34 +156,33 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (map
 		return nil, err
 	}
 
-	opts["IsRaceWeekend"] = true
-	opts["RaceWeekend"] = raceWeekend
+	var raceWeekendSession *RaceWeekendSession
 
 	if editSessionID := chi.URLParam(r, "sessionID"); editSessionID != "" {
 		// editing a race weekend session
-		session, err := raceWeekend.FindSessionByID(editSessionID)
+		raceWeekendSession, err = raceWeekend.FindSessionByID(editSessionID)
 
 		if err != nil {
 			return nil, err
 		}
 
-		opts["Current"] = session.RaceConfig
-		opts["RaceWeekendSession"] = session
+		opts["Current"] = raceWeekendSession.RaceConfig
 		opts["IsEditing"] = true
 		opts["EditingID"] = editSessionID
-		opts["CurrentEntrants"], err = session.GetRaceWeekendEntryList(raceWeekend, nil, "")
+		opts["CurrentEntrants"], err = raceWeekendSession.GetRaceWeekendEntryList(raceWeekend, nil, "")
 
 		if err == ErrRaceWeekendSessionDependencyIncomplete {
 			opts["CurrentEntrants"] = raceWeekend.EntryList
+
 		} else if err != nil {
 			return nil, err
 		}
 	} else {
-		// creating a new championship event
+		// creating a new race weekend session
 		opts["IsEditing"] = false
 		opts["CurrentEntrants"] = raceWeekend.EntryList
 
-		// override Current race config if there is a previous championship race configured
+		// override Current race config if there is a previous race weekend race configured
 		if len(raceWeekend.Sessions) > 0 {
 			opts["Current"] = raceWeekend.Sessions[len(raceWeekend.Sessions)-1].RaceConfig
 
@@ -146,10 +194,29 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (map
 			delete(current.Sessions, SessionTypeRace)
 
 			opts["Current"] = current
-			opts["RaceWeekendSession"] = NewRaceWeekendSession()
 			opts["RaceWeekendHasAtLeastOneSession"] = false
 		}
+
+		raceWeekendSession = NewRaceWeekendSession()
 	}
+
+	if raceWeekend.HasLinkedChampionship() {
+		championship, err := rwm.store.LoadChampionship(raceWeekend.ChampionshipID.String())
+
+		if err != nil {
+			return nil, err
+		}
+
+		raceWeekend.EntryList = championship.AllEntrants()
+
+		for _, class := range championship.Classes {
+			raceWeekendSession.Points[class.ID] = &class.Points
+		}
+	}
+
+	opts["RaceWeekendSession"] = raceWeekendSession
+	opts["IsRaceWeekend"] = true
+	opts["RaceWeekend"] = raceWeekend
 
 	opts["AvailableSessions"] = AvailableSessionsNoBooking
 

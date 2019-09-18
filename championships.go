@@ -57,6 +57,15 @@ type ChampionshipPoints struct {
 	SecondRaceMultiplier float64
 }
 
+// PointForPos uses the Championship's Points to determine what number should be awarded to a given position
+func (pts *ChampionshipPoints) ForPos(i int) float64 {
+	if i >= len(pts.Places) {
+		return 0
+	}
+
+	return float64(pts.Places[i])
+}
+
 // NewChampionship creates a Championship with a given name, creating a UUID for the championship as well.
 func NewChampionship(name string) *Championship {
 	return &Championship{
@@ -81,6 +90,7 @@ type Championship struct {
 
 	// Raw html can be attached to championships, used to share tracks/cars etc.
 	Info template.HTML
+
 	// Deprecated, replaced with Info above.
 	Links map[string]string
 
@@ -673,15 +683,6 @@ func (cs *ChampionshipStanding) TeamSummary() string {
 	return ""
 }
 
-// PointForPos uses the Championship's Points to determine what number should be awarded to a given position
-func (c *ChampionshipClass) PointForPos(i int) float64 {
-	if i >= len(c.Points.Places) {
-		return 0
-	}
-
-	return float64(c.Points.Places[i])
-}
-
 func (c *ChampionshipClass) DriverInClass(result *SessionResult) bool {
 	return result.ClassID == c.ID
 }
@@ -781,18 +782,42 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 		qualifying, qualifyingOK := event.Sessions[SessionTypeQualifying]
 
 		if qualifyingOK && qualifying.Results != nil {
+			points := c.Points
+
+			if qualifying.IsRaceWeekend() {
+				classPoints, ok := qualifying.RaceWeekendSession.Points[c.ID]
+
+				if !ok {
+					logrus.Warnf("Could not find points for Race Weekend Session class: %s", c.ID)
+				}
+
+				points = *classPoints
+			}
+
 			for pos, driver := range c.ResultsForClass(qualifying.Results.Result) {
 				if pos != 0 {
 					continue
 				}
 
-				givePoints(event, driver.DriverGUID, float64(c.Points.PolePosition))
+				givePoints(event, driver.DriverGUID, float64(points.PolePosition))
 			}
 		}
 
 		race, raceOK := event.Sessions[SessionTypeRace]
 
 		if raceOK && race.Results != nil {
+			points := c.Points
+
+			if race.IsRaceWeekend() {
+				classPoints, ok := race.RaceWeekendSession.Points[c.ID]
+
+				if !ok {
+					logrus.Warnf("Could not find points for Race Weekend Session class: %s", c.ID)
+				}
+
+				points = *classPoints
+			}
+
 			fastestLap := race.Results.FastestLapInClass(c.ID)
 
 			for pos, driver := range c.ResultsForClass(race.Results.Result) {
@@ -800,10 +825,10 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 					continue
 				}
 
-				givePoints(event, driver.DriverGUID, c.PointForPos(pos))
+				givePoints(event, driver.DriverGUID, points.ForPos(pos))
 
 				if fastestLap.DriverGUID == driver.DriverGUID {
-					givePoints(event, driver.DriverGUID, float64(c.Points.BestLap))
+					givePoints(event, driver.DriverGUID, float64(points.BestLap))
 				}
 			}
 		}
@@ -811,6 +836,18 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 		race2, race2OK := event.Sessions[SessionTypeSecondRace]
 
 		if race2OK && race2.Results != nil {
+			points := c.Points
+
+			if race2.IsRaceWeekend() {
+				classPoints, ok := race2.RaceWeekendSession.Points[c.ID]
+
+				if !ok {
+					logrus.Warnf("Could not find points for Race Weekend Session class: %s", c.ID)
+				}
+
+				points = *classPoints
+			}
+
 			fastestLap := race2.Results.FastestLapInClass(c.ID)
 
 			for pos, driver := range c.ResultsForClass(race2.Results.Result) {
@@ -818,10 +855,10 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 					continue
 				}
 
-				givePoints(event, driver.DriverGUID, c.PointForPos(pos)*c.Points.SecondRaceMultiplier)
+				givePoints(event, driver.DriverGUID, points.ForPos(pos)*points.SecondRaceMultiplier)
 
 				if fastestLap.DriverGUID == driver.DriverGUID {
-					givePoints(event, driver.DriverGUID, float64(c.Points.BestLap)*c.Points.SecondRaceMultiplier)
+					givePoints(event, driver.DriverGUID, float64(points.BestLap)*points.SecondRaceMultiplier)
 				}
 			}
 		}
@@ -837,8 +874,11 @@ var championshipStandingSessionOrder = []SessionType{
 }
 
 // Standings returns the current Driver Standings for the Championship.
-func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*ChampionshipStanding {
+func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent) []*ChampionshipStanding {
 	var out []*ChampionshipStanding
+
+	// make a copy of events so we do not persist race weekend sessions
+	events := c.extractRaceWeekendSessionsIntoIndividualEvents(inEvents)
 
 	for _, event := range events {
 		for _, session := range event.Sessions {
@@ -930,6 +970,31 @@ func (c *ChampionshipClass) StandingsForEvent(event *ChampionshipEvent) []*Champ
 	return c.Standings([]*ChampionshipEvent{event})
 }
 
+func (c *ChampionshipClass) extractRaceWeekendSessionsIntoIndividualEvents(inEvents []*ChampionshipEvent) []*ChampionshipEvent {
+	events := make([]*ChampionshipEvent, 0)
+
+	for _, event := range inEvents {
+		if !event.IsRaceWeekend() {
+			events = append(events, event)
+		} else if event.RaceWeekend != nil {
+			for _, session := range event.RaceWeekend.Sessions {
+				e := NewChampionshipEvent()
+
+				e.Sessions[session.SessionType()] = &ChampionshipSession{
+					StartedTime:        session.StartedTime,
+					CompletedTime:      session.CompletedTime,
+					Results:            session.Results,
+					RaceWeekendSession: session,
+				}
+
+				events = append(events, e)
+			}
+		}
+	}
+
+	return events
+}
+
 // TeamStanding is the current number of Points a Team has.
 type TeamStanding struct {
 	Team   string
@@ -937,8 +1002,11 @@ type TeamStanding struct {
 }
 
 // TeamStandings returns the current position of Teams in the Championship.
-func (c *ChampionshipClass) TeamStandings(events []*ChampionshipEvent) []*TeamStanding {
+func (c *ChampionshipClass) TeamStandings(inEvents []*ChampionshipEvent) []*TeamStanding {
 	teams := make(map[string]float64)
+
+	// make a copy of events so we do not persist race weekend sessions
+	events := c.extractRaceWeekendSessionsIntoIndividualEvents(inEvents)
 
 	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64) {
 		var team string
@@ -986,7 +1054,8 @@ func (c *ChampionshipClass) TeamStandings(events []*ChampionshipEvent) []*TeamSt
 // NewChampionshipEvent creates a ChampionshipEvent with an ID
 func NewChampionshipEvent() *ChampionshipEvent {
 	return &ChampionshipEvent{
-		ID: uuid.New(),
+		ID:       uuid.New(),
+		Sessions: make(map[SessionType]*ChampionshipSession),
 	}
 }
 
@@ -999,11 +1068,18 @@ type ChampionshipEvent struct {
 
 	Sessions map[SessionType]*ChampionshipSession
 
+	RaceWeekendID uuid.UUID
+	RaceWeekend   *RaceWeekend `json:"-"`
+
 	StartedTime   time.Time
 	CompletedTime time.Time
 	Scheduled     time.Time
 
 	championship *Championship
+}
+
+func (cr *ChampionshipEvent) IsRaceWeekend() bool {
+	return cr.RaceWeekendID != uuid.Nil
 }
 
 func (cr *ChampionshipEvent) GetSummary() string {
@@ -1129,6 +1205,12 @@ type ChampionshipSession struct {
 	CompletedTime time.Time
 
 	Results *SessionResults
+
+	RaceWeekendSession *RaceWeekendSession
+}
+
+func (ce *ChampionshipSession) IsRaceWeekend() bool {
+	return ce.RaceWeekendSession != nil
 }
 
 // InProgress indicates whether a ChampionshipSession has been started but not stopped

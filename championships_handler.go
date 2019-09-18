@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"net/http"
 	"sort"
 	"time"
@@ -78,7 +79,7 @@ func (ch *ChampionshipsHandler) view(w http.ResponseWriter, r *http.Request) {
 	championship, err := ch.championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
 
 	if err != nil {
-		logrus.Errorf("couldn't load championship, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't load championship")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -92,10 +93,25 @@ func (ch *ChampionshipsHandler) view(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	raceWeekends := make(map[uuid.UUID]*RaceWeekend)
+
+	for _, event := range championship.Events {
+		if event.IsRaceWeekend() {
+			raceWeekends[event.RaceWeekendID], err = ch.championshipManager.raceStore.LoadRaceWeekend(event.RaceWeekendID.String())
+
+			if err != nil {
+				logrus.WithError(err).Errorf("couldn't load championship")
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
 	ch.viewRenderer.MustLoadTemplate(w, r, "championships/view.html", map[string]interface{}{
 		"Championship":    championship,
 		"EventInProgress": eventInProgress,
 		"Account":         AccountFromRequest(r),
+		"RaceWeekends":    raceWeekends,
 	})
 }
 

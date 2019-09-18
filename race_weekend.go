@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -25,6 +26,8 @@ type RaceWeekend struct {
 
 	EntryList EntryList
 	Sessions  []*RaceWeekendSession
+
+	ChampionshipID uuid.UUID
 }
 
 // NewRaceWeekend creates a RaceWeekend
@@ -33,6 +36,30 @@ func NewRaceWeekend() *RaceWeekend {
 		ID:      uuid.New(),
 		Created: time.Now(),
 	}
+}
+
+func (rw *RaceWeekend) HasLinkedChampionship() bool {
+	return rw.ChampionshipID != uuid.Nil
+}
+
+func (rw *RaceWeekend) InProgress() bool {
+	for _, session := range rw.Sessions {
+		if session.InProgress() {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (rw *RaceWeekend) Completed() bool {
+	for _, session := range rw.Sessions {
+		if !session.Completed() {
+			return false
+		}
+	}
+
+	return true
 }
 
 // AddFilter creates a link between parentID and childID with a filter that specifies how to take the EntrantResult of parent
@@ -250,6 +277,40 @@ func (rw *RaceWeekend) HasParentRecursive(session *RaceWeekendSession, otherSess
 	return false
 }
 
+func (rw *RaceWeekend) TrackOverview() string {
+	trackInfoMap := make(map[string]bool)
+
+	for _, session := range rw.Sessions {
+		trackInfo := trackInfo(session.RaceConfig.Track, session.RaceConfig.TrackLayout)
+
+		var trackDescription string
+
+		if trackInfo != nil {
+			trackDescription = trackInfo.Name
+
+			if trackInfo.Country != "" {
+				trackDescription += " - " + trackInfo.Country
+			}
+		} else {
+			trackDescription = prettifyName(session.RaceConfig.Track, false)
+
+			if session.RaceConfig.TrackLayout != "" {
+				trackDescription = " (" + prettifyName(session.RaceConfig.TrackLayout, true) + ")"
+			}
+		}
+
+		trackInfoMap[trackDescription] = true
+	}
+
+	var trackInfo []string
+
+	for info := range trackInfoMap {
+		trackInfo = append(trackInfo, info)
+	}
+
+	return strings.Join(trackInfo, ", ")
+}
+
 var (
 	ErrRaceWeekendNotFound     = errors.New("servermanager: race weekend not found")
 	RaceWeekendSessionNotFound = errors.New("servermanager: race weekend session not found")
@@ -316,6 +377,8 @@ type RaceWeekendSession struct {
 	StartedTime   time.Time
 	CompletedTime time.Time
 	Results       *SessionResults
+
+	Points map[uuid.UUID]*ChampionshipPoints
 }
 
 // NewRaceWeekendSession creates an empty RaceWeekendSession
@@ -323,6 +386,7 @@ func NewRaceWeekendSession() *RaceWeekendSession {
 	return &RaceWeekendSession{
 		ID:      uuid.New(),
 		Created: time.Now(),
+		Points:  make(map[uuid.UUID]*ChampionshipPoints),
 	}
 }
 

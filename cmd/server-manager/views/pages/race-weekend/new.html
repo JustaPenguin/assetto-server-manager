@@ -2,11 +2,17 @@
 
 {{ define "content" }}
     <h1 class="text-center">
-        Create a new Race Weekend
+        {{ if not $.IsEditing }}
+            Create a new Race Weekend
+        {{ else }}
+            Edit the {{ $.Current.Name }} Race Weekend
+        {{ end }}
     </h1>
 
+    <h4 class="text-center">{{ if $.Current.HasLinkedChampionship }}in the {{ $.Championship.Name }} Championship{{ end }}</h4>
+
     <form action="/race-weekends/new/submit" class="race-setup" method="post" id="raceweekend-form" data-safe-submit>
-        <div class="card mt-3 border-secondary"  id="entrants">
+        <div class="card mt-3 border-secondary" id="entrants">
             <div class="card-header">
                 <strong>Race Weekend</strong>
 
@@ -21,48 +27,54 @@
 
                     <div class="col-sm-9">
                         <input type="text" class="form-control" id="RaceWeekendName" name="RaceWeekendName" required
-                               placeholder="My awesome race weekend" value="{{ $.Current.Name }}">
+                               placeholder="My awesome Race Weekend" value="{{ $.Current.Name }}">
                     </div>
                 </div>
 
-                <div class="form-group row">
-                    <label for="Cars" class="col-sm-3 col-form-label">
-                        Cars
-                    </label>
+                {{ if not $.Current.HasLinkedChampionship }}
 
-                    <div class="col-sm-9">
-                        {{ template "cars" dict "CarOpts" $.CarOpts "Current" nil "ValidCarIDs" $.Current.EntryList.CarIDs  }}
-                    </div>
-                </div>
+                    <div class="form-group row">
+                        <label for="Cars" class="col-sm-3 col-form-label">
+                            Cars
+                        </label>
 
-                <div class="entrants-block">
-                    <div id="entrantTemplate" class="entrant">
-                        {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" false }}
-                    </div>
-
-                    {{ range $index, $entrant := $.Current.EntryList.AsSlice }}
-                        <div class="entrant">
-                            {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" false "IsEditing" $.IsEditing "IsChampionship" false }}
+                        <div class="col-sm-9">
+                            {{ template "cars" dict "CarOpts" $.CarOpts "Current" nil "ValidCarIDs" $.Current.EntryList.CarIDs  }}
                         </div>
-                    {{ else }}
-                        {{ if not $.IsEditing }}
+                    </div>
+
+
+                    <div class="entrants-block">
+                        <div id="entrantTemplate" class="entrant">
+                            {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" false }}
+                        </div>
+
+                        {{ range $index, $entrant := $.Current.EntryList.AsSlice }}
                             <div class="entrant">
-                                {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" false }}
+                                {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" false "IsEditing" $.IsEditing "IsChampionship" false }}
                             </div>
+                        {{ else }}
+                            {{ if not $.IsEditing }}
+                                <div class="entrant">
+                                    {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" false }}
+                                </div>
+                            {{ end }}
                         {{ end }}
-                    {{ end }}
-                </div>
-
-                <div class="row">
-                    <div class="col-md-8 pt-2">
-                        <p>Car, Skin, Ballast, Restrictor and Fixed Setup from the last Entrant will be cloned into new Entrants.</p>
                     </div>
-                    <div class="col-md-4 text-right">
-                        <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
 
-                        <button class="btn btn-warning addEntrant">Add Entrant(s)</button>
+                    <div class="row">
+                        <div class="col-md-8 pt-2">
+                            <p>Car, Skin, Ballast, Restrictor and Fixed Setup from the last Entrant will be cloned into new Entrants.</p>
+                        </div>
+                        <div class="col-md-4 text-right">
+                            <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
+
+                            <button class="btn btn-warning addEntrant">Add Entrant(s)</button>
+                        </div>
                     </div>
-                </div>
+                {{ else }}
+                    <input type="hidden" name="ChampionshipID" id="ChampionshipID" value="{{ $.Championship.ID }}">
+                {{ end }}
 
                 <div class="clearfix"></div>
             </div>
