@@ -104,6 +104,7 @@ type ChampionshipTemplateVars struct {
 	*RaceTemplateVars
 
 	DefaultPoints ChampionshipPoints
+	DefaultClass  *ChampionshipClass
 }
 
 func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (championship *Championship, opts *ChampionshipTemplateVars, err error) {
@@ -116,6 +117,7 @@ func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (champions
 	opts = &ChampionshipTemplateVars{
 		RaceTemplateVars: raceOpts,
 		DefaultPoints:    DefaultChampionshipPoints,
+		DefaultClass:     NewChampionshipClass(""),
 	}
 
 	championshipID := chi.URLParam(r, "championshipID")

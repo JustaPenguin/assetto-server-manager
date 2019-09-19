@@ -17,7 +17,7 @@
 
                     <div class="col-sm-9">
                         <input type="number" class="form-control" name="Points.Place"
-                               placeholder="Points" value="{{ index $.Points.Places (sub $pointsCount 1) }}">
+                               placeholder="Points" value="{{ index $.Points.Places (sub $pointsCount 1) }}" data-default-value="{{ index $.Points.Places (sub $pointsCount 1) }}">
                     </div>
                 </div>
 
@@ -31,7 +31,7 @@
 
                 <div class="col-sm-9">
                     <input type="number" class="form-control" name="Points.Place"
-                           placeholder="Points" value="{{ index $defaultPoints.Places 0 }}">
+                           placeholder="Points" value="{{ index $defaultPoints.Places 0 }}" data-default-value="{{ index $defaultPoints.Places 0 }}">
                 </div>
             </div>
         {{ end }}
@@ -59,17 +59,18 @@
                    placeholder="Points" value="{{ with $.Points.BestLap }}{{ . }}{{ else }}0{{ end }}">
         </div>
     </div>
-    <div class="form-group row">
-        <label for="Points.PolePosition" class="col-sm-3 col-form-label">Pole Position</label>
-
-
-        <div class="col-sm-9">
-            <input type="number" class="form-control" name="Points.PolePosition"
-                   placeholder="Points" value="{{ with $.Points.PolePosition }}{{ . }}{{ else }}0{{ end }}">
-        </div>
-    </div>
 
     {{ if not $isRaceWeekend }}
+        <div class="form-group row">
+            <label for="Points.PolePosition" class="col-sm-3 col-form-label">Pole Position</label>
+
+
+            <div class="col-sm-9">
+                <input type="number" class="form-control" name="Points.PolePosition"
+                       placeholder="Points" value="{{ with $.Points.PolePosition }}{{ . }}{{ else }}0{{ end }}">
+            </div>
+        </div>
+
         <div class="form-group row">
             <label for="Points.SecondRaceMultiplier" class="col-sm-3 col-form-label">Second Race Multiplier</label>
 

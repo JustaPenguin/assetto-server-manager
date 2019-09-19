@@ -34,6 +34,8 @@
 
                                     {{ if $.ServerEvent.IsChampionship }}
                                         onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                    {{ else if $.ServerEvent.IsRaceWeekend }}
+                                        onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
                                     {{ end }}
                                 >
                                     Restart Event
@@ -44,6 +46,8 @@
 
                                     {{ if $.ServerEvent.IsChampionship }}
                                         onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                    {{ else if $.ServerEvent.IsRaceWeekend }}
+                                        onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
                                     {{ end }}
                                 >
                                     Stop Event

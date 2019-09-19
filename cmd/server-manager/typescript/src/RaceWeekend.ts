@@ -3,6 +3,7 @@ import {Connection, jsPlumb, jsPlumbInstance} from "jsplumb";
 import dagre, {graphlib} from "dagre";
 
 declare var RaceWeekendID: string;
+declare var IsEditing: boolean;
 
 export namespace RaceWeekend {
     export class Session {
@@ -21,6 +22,10 @@ export namespace RaceWeekend {
         private initSessionTypeSwitch(): void {
             const $sessionSwitcher = this.$raceWeekendSession.find("#SessionType");
 
+            if (!IsEditing) {
+                this.handleSessionPoints($sessionSwitcher.val() as string);
+            }
+
             $sessionSwitcher.on("change", (e: ChangeEvent) => {
                 const val = $(e.currentTarget).val();
                 this.$raceWeekendSession.find(".sessions .tab-pane").removeClass(["show", "active"]);
@@ -31,7 +36,21 @@ export namespace RaceWeekend {
 
                 this.$raceWeekendSession.find(".session-enabler").prop("checked", false);
                 this.$raceWeekendSession.find("#" + val + "\\.Enabled").prop("checked", true);
+
+                this.handleSessionPoints(val as string);
             });
+        }
+
+        private handleSessionPoints(sessionType: string) {
+            if (sessionType !== "Race") {
+                $("input[name='Points.Place']").val(0);
+            } else {
+                $("input[name='Points.Place']").each((index: number, elem: HTMLElement) => {
+                    let $elem = $(elem);
+
+                    $elem.val($elem.data("default-value"));
+                });
+            }
         }
     }
 

@@ -1574,11 +1574,53 @@
                     </div>
 
                     {{ if $.RaceWeekend.HasLinkedChampionship }}
-                        {{ range $class, $points := $.RaceWeekendSession.Points }}
-                            {{ $class }}
 
-                            {{ template "points" dict "Points" $points "DefaultPoints" $points "IsEditing" true "IsRaceWeekend" true }}
-                        {{ end }}
+                        <h3>Session Points</h3>
+
+                        <p>Each Race Weekend Session and Championship Class has its own points tally. Practice and Qualifying sessions by default have 0 points, but can have points if you want.</p>
+
+                        <ul class="nav nav-tabs mt-3" role="tablist">
+                            {{ $classCount := 1 }}
+
+                            {{ range $classID, $points := $.RaceWeekendSession.Points }}
+                                {{ $class := $.Championship.ClassByID $classID.String }}
+
+                                <li class="nav-item">
+                                    <a class="nav-link {{ if eq $classCount 1 }}active{{ end }}"
+                                       id="points-{{ $classID.String }}-tab"
+                                       data-toggle="tab"
+                                       href="#points-{{ $classID.String }}"
+                                       role="tab"
+                                       {{ if eq $classCount 1 }}aria-selected="true"{{ end }}
+                                    >
+                                        {{ $class.Name }}
+                                    </a>
+                                </li>
+
+                                {{ $classCount = add $classCount 1 }}
+                            {{ end }}
+                        </ul>
+
+                        {{ $classCount = 1 }}
+
+                        <div class="tab-content">
+                            {{ range $classID, $points := $.RaceWeekendSession.Points }}
+                                {{ $class := $.Championship.ClassByID $classID.String }}
+
+                                <div class="tab-pane fade {{ if eq $classCount 1 }} show active {{ end }}"
+                                     id="points-{{ $classID.String }}"
+                                     role="tabpanel"
+                                     aria-labelledby="points-{{ $classID.String}}-tab"
+                                >
+                                    <input type="hidden" name="ClassID" value="{{ $classID.String }}">
+                                    <input type="hidden" name="NumPointsForClass" value="{{ len $points.Places }}">
+
+                                    {{ template "points" dict "Points" $points "DefaultPoints" $points "IsEditing" true "IsRaceWeekend" true }}
+                                </div>
+
+                                {{ $classCount = add $classCount 1 }}
+                            {{ end }}
+                        </div>
                     {{ end }}
 
                     {{ if .IsEditing }}
@@ -1740,5 +1782,7 @@
         const availableCars = {{ jsonEncode .CarOpts.AsMap }};
         const surfacePresets = {{ jsonEncode .SurfacePresets }};
         const fixedSetups = {{ jsonEncode .FixedSetups }};
+
+        const IsEditing = {{ $.IsEditing }};
     </script>
 {{ end }}

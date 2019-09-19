@@ -779,86 +779,54 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 	})
 
 	for _, event := range eventsReverseCompletedOrder {
-		qualifying, qualifyingOK := event.Sessions[SessionTypeQualifying]
-
-		if qualifyingOK && qualifying.Results != nil {
+		for sessionType, session := range event.Sessions {
 			points := c.Points
+			pointsMultiplier := 1.0
 
-			if qualifying.IsRaceWeekend() {
-				classPoints, ok := qualifying.RaceWeekendSession.Points[c.ID]
+			if session.IsRaceWeekend() {
+				// race weekend sessions are valid points, as specified by the session itself.
+				classPoints, ok := session.RaceWeekendSession.Points[c.ID]
 
 				if !ok {
 					logrus.Warnf("Could not find points for Race Weekend Session class: %s", c.ID)
 				}
 
 				points = *classPoints
-			}
+			} else {
+				switch sessionType {
+				case SessionTypeQualifying:
+					// non race weekend qualifying results get pole position points
+					for pos, driver := range c.ResultsForClass(session.Results.Result) {
+						if pos != 0 {
+							continue
+						}
 
-			for pos, driver := range c.ResultsForClass(qualifying.Results.Result) {
-				if pos != 0 {
+						givePoints(event, driver.DriverGUID, float64(points.PolePosition)*pointsMultiplier)
+					}
+
 					continue
+
+				case SessionTypeSecondRace:
+					pointsMultiplier = points.SecondRaceMultiplier
+				case SessionTypeBooking, SessionTypePractice:
+					continue
+
+				default:
+					// race sessions fall through
 				}
-
-				givePoints(event, driver.DriverGUID, float64(points.PolePosition))
-			}
-		}
-
-		race, raceOK := event.Sessions[SessionTypeRace]
-
-		if raceOK && race.Results != nil {
-			points := c.Points
-
-			if race.IsRaceWeekend() {
-				classPoints, ok := race.RaceWeekendSession.Points[c.ID]
-
-				if !ok {
-					logrus.Warnf("Could not find points for Race Weekend Session class: %s", c.ID)
-				}
-
-				points = *classPoints
 			}
 
-			fastestLap := race.Results.FastestLapInClass(c.ID)
+			fastestLap := session.Results.FastestLapInClass(c.ID)
 
-			for pos, driver := range c.ResultsForClass(race.Results.Result) {
+			for pos, driver := range c.ResultsForClass(session.Results.Result) {
 				if driver.TotalTime <= 0 || driver.Disqualified {
 					continue
 				}
 
-				givePoints(event, driver.DriverGUID, points.ForPos(pos))
+				givePoints(event, driver.DriverGUID, points.ForPos(pos)*pointsMultiplier)
 
 				if fastestLap.DriverGUID == driver.DriverGUID {
-					givePoints(event, driver.DriverGUID, float64(points.BestLap))
-				}
-			}
-		}
-
-		race2, race2OK := event.Sessions[SessionTypeSecondRace]
-
-		if race2OK && race2.Results != nil {
-			points := c.Points
-
-			if race2.IsRaceWeekend() {
-				classPoints, ok := race2.RaceWeekendSession.Points[c.ID]
-
-				if !ok {
-					logrus.Warnf("Could not find points for Race Weekend Session class: %s", c.ID)
-				}
-
-				points = *classPoints
-			}
-
-			fastestLap := race2.Results.FastestLapInClass(c.ID)
-
-			for pos, driver := range c.ResultsForClass(race2.Results.Result) {
-				if driver.TotalTime <= 0 || driver.Disqualified {
-					continue
-				}
-
-				givePoints(event, driver.DriverGUID, points.ForPos(pos)*points.SecondRaceMultiplier)
-
-				if fastestLap.DriverGUID == driver.DriverGUID {
-					givePoints(event, driver.DriverGUID, float64(points.BestLap)*points.SecondRaceMultiplier)
+					givePoints(event, driver.DriverGUID, float64(points.BestLap)*pointsMultiplier)
 				}
 			}
 		}

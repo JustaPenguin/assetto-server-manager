@@ -203,16 +203,18 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (*Ra
 	}
 
 	if raceWeekend.HasLinkedChampionship() {
-		championship, err := rwm.store.LoadChampionship(raceWeekend.ChampionshipID.String())
+		opts.Championship, err = rwm.store.LoadChampionship(raceWeekend.ChampionshipID.String())
 
 		if err != nil {
 			return nil, err
 		}
 
-		raceWeekend.EntryList = championship.AllEntrants()
+		raceWeekend.EntryList = opts.Championship.AllEntrants()
 
-		for _, class := range championship.Classes {
-			raceWeekendSession.Points[class.ID] = &class.Points
+		if !opts.IsEditing {
+			for _, class := range opts.Championship.Classes {
+				raceWeekendSession.Points[class.ID] = &class.Points
+			}
 		}
 	}
 
@@ -233,19 +235,19 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (*Ra
 
 func (rwm *RaceWeekendManager) SaveRaceWeekendSession(r *http.Request) (raceWeekend *RaceWeekend, session *RaceWeekendSession, edited bool, err error) {
 	if err := r.ParseForm(); err != nil {
-		return nil, nil, false, err
+		return nil, nil, edited, err
 	}
 
 	raceWeekend, err = rwm.LoadRaceWeekend(chi.URLParam(r, "raceWeekendID"))
 
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, edited, err
 	}
 
 	raceConfig, err := rwm.raceManager.BuildCustomRaceFromForm(r)
 
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, edited, err
 	}
 
 	raceConfig.Cars = strings.Join(raceWeekend.EntryList.CarIDs(), ";")
@@ -265,7 +267,7 @@ func (rwm *RaceWeekendManager) SaveRaceWeekendSession(r *http.Request) (raceWeek
 		session, err = raceWeekend.FindSessionByID(sessionID)
 
 		if err != nil {
-			return nil, nil, true, err
+			return nil, nil, edited, err
 		}
 
 		// we're editing an existing session
@@ -290,10 +292,38 @@ func (rwm *RaceWeekendManager) SaveRaceWeekendSession(r *http.Request) (raceWeek
 		id, err := uuid.Parse(parentID)
 
 		if err != nil {
-			return nil, nil, false, err
+			return nil, nil, edited, err
 		}
 
 		session.ParentIDs = append(session.ParentIDs, id)
+	}
+
+	if raceWeekend.HasLinkedChampionship() {
+		// points
+		previousNumPoints := 0
+
+		for i := 0; i < len(r.Form["ClassID"]); i++ {
+			classID, err := uuid.Parse(r.Form["ClassID"][i])
+
+			if err != nil {
+				return nil, nil, edited, err
+			}
+
+			numPointsForClass := formValueAsInt(r.Form["NumPointsForClass"][i])
+
+			pts := &ChampionshipPoints{}
+
+			pts.Places = make([]int, 0)
+
+			for i := previousNumPoints; i < previousNumPoints+numPointsForClass; i++ {
+				pts.Places = append(pts.Places, formValueAsInt(r.Form["Points.Place"][i]))
+			}
+
+			pts.BestLap = formValueAsInt(r.Form["Points.BestLap"][i])
+
+			previousNumPoints += numPointsForClass
+			session.Points[classID] = pts
+		}
 	}
 
 	return raceWeekend, session, edited, rwm.store.UpsertRaceWeekend(raceWeekend)
