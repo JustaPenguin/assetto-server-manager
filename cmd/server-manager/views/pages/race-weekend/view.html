@@ -56,7 +56,9 @@
         {{ end }}
 
         <div class="float-right">
-            <a class="btn btn-primary" href="/championship/{{ $.Championship.ID.String }}">View Championship</a>
+            {{ if $.RaceWeekend.HasLinkedChampionship }}
+                <a class="btn btn-primary" href="/championship/{{ $.Championship.ID.String }}">View Championship</a>
+            {{ end }}
 
             {{ if WriteAccess }}
                 <a class="btn btn-success" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session">Add more Sessions</a>
