@@ -7,7 +7,15 @@
     <div class="container">
 
         <h1 class="text-center">{{ $.RaceWeekend.Name }}</h1>
-        <p class="text-center"><em>A Race Weekend in the following car{{ if gt (len $.RaceWeekend.EntryList.CarIDs) 1 }}s{{ end }}: {{ carList ($.RaceWeekend.EntryList.CarIDs) }}</em></p>
+        <p class="text-center">
+            <em>
+                {{ if $.RaceWeekend.HasLinkedChampionship }}
+                    A Race Weekend in the <a href="/championship/{{ $.Championship.ID.String }}">{{ $.Championship.Name }} Championship</a>
+                {{ else }}
+                    A Race Weekend in the following car{{ if gt (len $.RaceWeekend.EntryList.CarIDs) 1 }}s{{ end }}: {{ carList ($.RaceWeekend.EntryList.CarIDs) }}
+                {{ end }}
+            </em>
+        </p>
 
         {{ if gt $.RaceWeekend.Progress 0.0 }}
             <div class="progress mb-5 mt-5">
@@ -15,38 +23,41 @@
             </div>
         {{ end }}
 
-        <h2>Entrants</h2>
+        {{ if not $.RaceWeekend.HasLinkedChampionship }}
+            <h2>Entrants</h2>
 
-        <div class="table-responsive">
-            <table class="table table-bordered table-striped">
-                <tr>
-                    <th>#</th>
-                    <th>Driver</th>
-                    {{ if $.RaceWeekend.HasTeamNames }}
-                        <th>Team</th>
-                    {{ end }}
-                    <th>Car</th>
-                </tr>
-                {{ $num := 1 }}
-
-                {{ range $i, $entrant := $.RaceWeekend.EntryList }}
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
                     <tr>
-                        <td>{{ $num }}</td>
-                        <td>{{ driverName $entrant.Name }}</td>
-
+                        <th>#</th>
+                        <th>Driver</th>
                         {{ if $.RaceWeekend.HasTeamNames }}
-                            <td>{{ $entrant.Team }}</td>
+                            <th>Team</th>
                         {{ end }}
-                        <td>{{ prettify $entrant.Model true }} / {{ prettify $entrant.Skin false }}</td>
+                        <th>Car</th>
                     </tr>
+                    {{ $num := 1 }}
 
-                    {{ $num = add $num 1 }}
-                {{ end }}
-            </table>
-        </div>
+                    {{ range $i, $entrant := $.RaceWeekend.EntryList }}
+                        <tr>
+                            <td>{{ $num }}</td>
+                            <td>{{ driverName $entrant.Name }}</td>
 
+                            {{ if $.RaceWeekend.HasTeamNames }}
+                                <td>{{ $entrant.Team }}</td>
+                            {{ end }}
+                            <td>{{ prettify $entrant.Model true }} / {{ prettify $entrant.Skin false }}</td>
+                        </tr>
+
+                        {{ $num = add $num 1 }}
+                    {{ end }}
+                </table>
+            </div>
+        {{ end }}
 
         <div class="float-right">
+            <a class="btn btn-primary" href="/championship/{{ $.Championship.ID.String }}">View Championship</a>
+
             {{ if WriteAccess }}
                 <a class="btn btn-success" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session">Add more Sessions</a>
             {{ end }}
@@ -193,73 +204,145 @@
         {{ end }}
     </div>
 
-    <div class="container" id="race-weekend-results">
-        <h2>Results</h2>
+    {{ if gt (len $sortedSessions) 0 }}
+        <div class="container" id="race-weekend-results">
+            <h2>Results</h2>
 
-        <div class="accordion" id="sessionResults">
-            {{ range $sessionIndex, $session := $sortedSessions }}
-                <div class="card">
-                    <div class="card-header" id="results-link-{{ $session.ID.String }}" data-toggle="collapse" data-target="#results-{{ $session.ID.String }}" aria-expanded="true" aria-controls="results-{{ $session.ID.String }}">
-                        {{ $acSession := $session.SessionInfo }}
-                        {{ $trackInfo := trackInfo $session.RaceConfig.Track $session.RaceConfig.TrackLayout }}
+            <div class="accordion mb-5" id="sessionResults">
+                {{ range $sessionIndex, $session := $sortedSessions }}
+                    <div class="card">
+                        <div class="card-header" id="results-link-{{ $session.ID.String }}" data-toggle="collapse" data-target="#results-{{ $session.ID.String }}" aria-expanded="true" aria-controls="results-{{ $session.ID.String }}">
+                            {{ $acSession := $session.SessionInfo }}
+                            {{ $trackInfo := trackInfo $session.RaceConfig.Track $session.RaceConfig.TrackLayout }}
 
-                        <strong>
-                            {{ $acSession.Name }}
-                        </strong>
+                            <strong>
+                                {{ $acSession.Name }}
+                            </strong>
 
-                        at
+                            at
 
-                        {{ with $trackInfo }}
-                            {{ .Name }}
-                        {{ else }}
-                            {{ prettify $session.RaceConfig.Track false }} {{ with $session.RaceConfig.TrackLayout }}({{ prettify . true }}){{ end }}
-                        {{ end }}
-
-                        <div class="float-right">
-                            {{ if ne $acSession.Time 0 }}
-                                {{ $acSession.Time }} minutes
+                            {{ with $trackInfo }}
+                                {{ .Name }}
                             {{ else }}
-                                {{ with $acSession.Laps }}
-                                    {{ . }} laps
+                                {{ prettify $session.RaceConfig.Track false }} {{ with $session.RaceConfig.TrackLayout }}({{ prettify . true }}){{ end }}
+                            {{ end }}
+
+                            <div class="float-right">
+                                {{ if ne $acSession.Time 0 }}
+                                    {{ $acSession.Time }} minutes
+                                {{ else }}
+                                    {{ with $acSession.Laps }}
+                                        {{ . }} laps
+                                    {{ end }}
                                 {{ end }}
-                            {{ end }}
 
-                            -
+                                -
 
-                            {{ if not ($.RaceWeekend.SessionCanBeRun $session) }}
-                                <span class="text-danger" data-toggle="tooltip" title="This session cannot be run until all parent sessions have been run.">
-                                        Not available
-                                    </span>
-                            {{ else if $session.Completed }}
-                                <span class="text-success">Complete</span>
-                            {{ else if $session.InProgress }}
-                                <span class="text-info">In Progress</span>
-                            {{ else }}
-                                <span class="text-warning">Ready to Start</span>
-                            {{ end }}
+                                {{ if not ($.RaceWeekend.SessionCanBeRun $session) }}
+                                    <span class="text-danger" data-toggle="tooltip" title="This session cannot be run until all parent sessions have been run.">
+                                            Not available
+                                        </span>
+                                {{ else if $session.Completed }}
+                                    <span class="text-success">Complete</span>
+                                {{ else if $session.InProgress }}
+                                    <span class="text-info">In Progress</span>
+                                {{ else }}
+                                    <span class="text-warning">Ready to Start</span>
+                                {{ end }}
+                            </div>
+                        </div>
+
+                        <div id="results-{{ $session.ID.String }}" class="collapse {{ if eq $sessionIndex 0 }}show{{ end }}" aria-labelledby="results-link-{{ $session.ID.String }}" data-parent="#sessionResults">
+                            <div class="card-body pt-0 pb-0 pl-2 pr-2">
+                                {{ if $session.Completed }}
+
+                                    <p class="text-center mt-2 mb-2">
+                                        <a class="detailed-results" href="/results/{{ $session.Results.SessionFile }}">View detailed results breakdown for this Session</a>
+                                    </p>
+
+                                    {{ template "session-overall" dict "sessionResults" $session.Results "account" $.Account }}
+                                {{ else if $session.InProgress }}
+                                    <p class="text-center mt-4 pb-2"><strong>Session in Progress</strong>: Looks like there aren't any results yet. Check back later.</p>
+                                {{ else }}
+                                    <p class="text-center mt-4 pb-2"><strong>Awaiting Start</strong>: Looks like this session hasn't started yet. Check back later.</p>
+                                {{ end }}
+                            </div>
                         </div>
                     </div>
+                {{ end }}
+            </div>
 
-                    <div id="results-{{ $session.ID.String }}" class="collapse {{ if eq $sessionIndex 0 }}show{{ end }}" aria-labelledby="results-link-{{ $session.ID.String }}" data-parent="#sessionResults">
-                        <div class="card-body pt-0 pb-0 pl-2 pr-2">
-                            {{ if $session.Completed }}
+            {{ if $.RaceWeekend.HasLinkedChampionship }}
+                <h2>Points</h2>
 
-                                <p class="text-center mt-2 mb-2">
-                                    <a class="detailed-results" href="/results/{{ $session.Results.SessionFile }}">View detailed results breakdown for this Session</a>
-                                </p>
+                <p>This Race Weekend is linked to the <a href="/championship/{{ $.Championship.ID.String }}">{{ $.Championship.Name }} Championship</a>. You can review the points for each Session below.</p>
 
-                                {{ template "session-overall" dict "sessionResults" $session.Results "account" $.Account }}
-                            {{ else if $session.InProgress }}
-                                <p class="text-center mt-4 pb-2"><strong>Session in Progress</strong>: Looks like there aren't any results yet. Check back later.</p>
-                            {{ else }}
-                                <p class="text-center mt-4 pb-2"><strong>Awaiting Start</strong>: Looks like this session hasn't started yet. Check back later.</p>
-                            {{ end }}
+                <div class="accordion mb-3" id="sessionPoints">
+                    {{ range $sessionIndex, $session := $sortedSessions }}
+                        <div class="card">
+                            <div class="card-header" id="points-link-{{ $session.ID.String }}" data-toggle="collapse" data-target="#points-{{ $session.ID.String }}" aria-expanded="true" aria-controls="points-{{ $session.ID.String }}">
+                                {{ $acSession := $session.SessionInfo }}
+                                {{ $trackInfo := trackInfo $session.RaceConfig.Track $session.RaceConfig.TrackLayout }}
+
+                                <strong>
+                                    {{ $acSession.Name }}
+                                </strong>
+
+                                at
+
+                                {{ with $trackInfo }}
+                                    {{ .Name }}
+                                {{ else }}
+                                    {{ prettify $session.RaceConfig.Track false }} {{ with $session.RaceConfig.TrackLayout }}({{ prettify . true }}){{ end }}
+                                {{ end }}
+                            </div>
+
+                            <div id="points-{{ $session.ID.String }}" class="collapse" aria-labelledby="points-link-{{ $session.ID.String }}" data-parent="#sessionPoints">
+                                <div class="card-body pt-2 pb-2 pl-2 pr-2">
+                                    <table class="table table-bordered table-striped">
+                                        <tr>
+                                            {{ if $.Championship.IsMultiClass }}<th>Class</th>{{ end }}
+                                            <th>Place</th>
+                                            <th>Points</th>
+                                        </tr>
+
+
+                                        {{ $classIndex := 0 }}
+
+                                        {{ range $classID, $points := $session.Points }}
+                                            {{ $class := $.Championship.ClassByID $classID.String }}
+
+                                            {{ range $i, $pts := $points.Places }}
+                                                <tr {{ if $.Championship.IsMultiClass }} style="color: white; background: {{ classColor (int $classIndex) }}" {{ end }}>
+                                                    {{ if $.Championship.IsMultiClass }}
+                                                        {{ if eq $i 0 }}
+                                                            <td rowspan="{{ add (len $points.Places) 1 }}">{{ $class.Name }}</td>
+                                                        {{ end }}
+                                                    {{ end }}
+                                                    <td>{{ add $i 1 }}{{ ordinal (add $i 1) }}</td>
+                                                    <td>{{ $pts }}</td>
+                                                </tr>
+                                            {{ end }}
+
+                                            <tr {{ if $.Championship.IsMultiClass }} style="color: white; background: {{ classColor (int $classIndex) }}" {{ end }}>
+                                                <td><strong>Fastest Race Lap</strong></td>
+                                                <td>
+                                                    {{ $points.BestLap }}
+                                                </td>
+                                            </tr>
+
+                                            {{ $classIndex = add $classIndex 1 }}
+                                        {{ end }}
+                                    </table>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    {{ end }}
                 </div>
+
             {{ end }}
         </div>
-    </div>
+    {{ end }}
 
 
     <div class="modal" tabindex="-1" role="dialog" id="filters-modal">

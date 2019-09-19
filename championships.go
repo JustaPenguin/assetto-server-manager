@@ -780,6 +780,10 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 
 	for _, event := range eventsReverseCompletedOrder {
 		for sessionType, session := range event.Sessions {
+			if !session.Completed() || session.Results == nil {
+				continue
+			}
+
 			points := c.Points
 			pointsMultiplier := 1.0
 

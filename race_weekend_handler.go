@@ -48,6 +48,8 @@ type raceWeekendViewTemplateVars struct {
 
 	RaceWeekend *RaceWeekend
 	Account     *Account
+
+	Championship *Championship // non-nil if RaceWeekend.HasLinkedChampionship
 }
 
 func (rwh *RaceWeekendHandler) view(w http.ResponseWriter, r *http.Request) {
@@ -59,12 +61,25 @@ func (rwh *RaceWeekendHandler) view(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var championship *Championship
+
+	if raceWeekend.HasLinkedChampionship() {
+		championship, err = rwh.raceWeekendManager.LoadChampionshipForRaceWeekend(raceWeekend)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("couldn't load race weekend championship")
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+	}
+
 	rwh.viewRenderer.MustLoadTemplate(w, r, "race-weekend/view.html", &raceWeekendViewTemplateVars{
 		BaseTemplateVars: BaseTemplateVars{
 			WideContainer: true,
 		},
-		RaceWeekend: raceWeekend,
-		Account:     AccountFromRequest(r),
+		RaceWeekend:  raceWeekend,
+		Account:      AccountFromRequest(r),
+		Championship: championship,
 	})
 }
 
