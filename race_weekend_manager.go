@@ -38,7 +38,21 @@ func (rwm *RaceWeekendManager) ListRaceWeekends() ([]*RaceWeekend, error) {
 }
 
 func (rwm *RaceWeekendManager) LoadRaceWeekend(id string) (*RaceWeekend, error) {
-	return rwm.store.LoadRaceWeekend(id)
+	raceWeekend, err := rwm.store.LoadRaceWeekend(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if raceWeekend.HasLinkedChampionship() {
+		raceWeekend.Championship, err = rwm.store.LoadChampionship(raceWeekend.ChampionshipID.String())
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return raceWeekend, nil
 }
 
 var ErrRaceWeekendNotLinkedToChampionship = errors.New("servermanager: race weekend is not linked to championship")
@@ -189,7 +203,7 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (*Ra
 		entryList, err := raceWeekendSession.GetRaceWeekendEntryList(raceWeekend, nil, "")
 
 		if err == ErrRaceWeekendSessionDependencyIncomplete {
-			opts.CurrentEntrants = raceWeekend.EntryList
+			opts.CurrentEntrants = raceWeekend.GetEntryList()
 
 		} else if err != nil {
 			return nil, err
@@ -199,7 +213,7 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (*Ra
 	} else {
 		// creating a new race weekend session
 		opts.IsEditing = false
-		opts.CurrentEntrants = raceWeekend.EntryList
+		opts.CurrentEntrants = raceWeekend.GetEntryList()
 
 		// override Current race config if there is a previous race weekend race configured
 		if len(raceWeekend.Sessions) > 0 {
@@ -220,13 +234,7 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (*Ra
 	}
 
 	if raceWeekend.HasLinkedChampionship() {
-		opts.Championship, err = rwm.store.LoadChampionship(raceWeekend.ChampionshipID.String())
-
-		if err != nil {
-			return nil, err
-		}
-
-		raceWeekend.EntryList = opts.Championship.AllEntrants()
+		opts.Championship = raceWeekend.Championship
 
 		if !opts.IsEditing {
 			for _, class := range opts.Championship.Classes {
@@ -267,7 +275,7 @@ func (rwm *RaceWeekendManager) SaveRaceWeekendSession(r *http.Request) (raceWeek
 		return nil, nil, edited, err
 	}
 
-	raceConfig.Cars = strings.Join(raceWeekend.EntryList.CarIDs(), ";")
+	raceConfig.Cars = strings.Join(raceWeekend.GetEntryList().CarIDs(), ";")
 
 	// remove all but the active session from the setup.
 	activeSession := r.FormValue("SessionType")
@@ -509,12 +517,22 @@ func (rwm *RaceWeekendManager) DeleteRaceWeekend(id string) error {
 	return rwm.store.DeleteRaceWeekend(id)
 }
 
+var ErrNoActiveRaceWeekendSession = errors.New("servermanager: no active race weekend session")
+
 func (rwm *RaceWeekendManager) StopActiveSession() error {
 	if !rwm.process.Event().IsRaceWeekend() || rwm.activeRaceWeekend == nil {
-		return ErrNoActiveEvent
+		return ErrNoActiveRaceWeekendSession
 	}
 
 	return rwm.CancelSession(rwm.activeRaceWeekend.RaceWeekendID.String(), rwm.activeRaceWeekend.SessionID.String())
+}
+
+func (rwm *RaceWeekendManager) RestartActiveSession() error {
+	if !rwm.process.Event().IsRaceWeekend() || rwm.activeRaceWeekend == nil {
+		return ErrNoActiveRaceWeekendSession
+	}
+
+	return rwm.RestartSession(rwm.activeRaceWeekend.RaceWeekendID.String(), rwm.activeRaceWeekend.SessionID.String())
 }
 
 func (rwm *RaceWeekendManager) ImportSession(raceWeekendID string, raceWeekendSessionID string, r *http.Request) error {
@@ -634,7 +652,13 @@ func (rwm *RaceWeekendManager) PreviewGrid(raceWeekendID, parentSessionID, child
 
 	preview := NewRaceWeekendGridPreview()
 
-	for i, result := range parentSession.FinishingGrid(raceWeekend) {
+	finishingGrid, err := parentSession.FinishingGrid(raceWeekend)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for i, result := range finishingGrid {
 		preview.Results[i+1] = result.Car.GetName()
 	}
 

@@ -21,3 +21,12 @@
   margin-left: auto;
   margin-right: auto;
 }
+
+svg.race-weekend-connector path {
+  stroke: $gray-800;
+}
+
+svg path.race-weekend-arrow {
+  stroke: $gray-800;
+  fill: $gray-800;
+}

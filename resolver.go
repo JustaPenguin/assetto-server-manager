@@ -298,6 +298,7 @@ func (r *Resolver) resolveServerAdministrationHandler() *ServerAdministrationHan
 		r.ResolveStore(),
 		r.resolveRaceManager(),
 		r.resolveChampionshipManager(),
+		r.resolveRaceWeekendManager(),
 		r.resolveServerProcess(),
 	)
 

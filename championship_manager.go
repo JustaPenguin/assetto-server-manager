@@ -904,11 +904,11 @@ func (cm *ChampionshipManager) RestartEvent(championshipID string, eventID strin
 	return cm.StartEvent(championshipID, eventID, false)
 }
 
-var ErrNoActiveEvent = errors.New("servermanager: no active championship event")
+var ErrNoActiveChampionshipEvent = errors.New("servermanager: no active championship event")
 
 func (cm *ChampionshipManager) RestartActiveEvent() error {
 	if !cm.process.Event().IsChampionship() || cm.activeChampionship == nil {
-		return ErrNoActiveEvent
+		return ErrNoActiveChampionshipEvent
 	}
 
 	return cm.RestartEvent(cm.activeChampionship.ChampionshipID.String(), cm.activeChampionship.EventID.String())
@@ -916,7 +916,7 @@ func (cm *ChampionshipManager) RestartActiveEvent() error {
 
 func (cm *ChampionshipManager) StopActiveEvent() error {
 	if !cm.process.Event().IsChampionship() || cm.activeChampionship == nil {
-		return ErrNoActiveEvent
+		return ErrNoActiveChampionshipEvent
 	}
 
 	return cm.CancelEvent(cm.activeChampionship.ChampionshipID.String(), cm.activeChampionship.EventID.String())

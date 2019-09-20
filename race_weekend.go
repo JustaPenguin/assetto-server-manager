@@ -28,6 +28,7 @@ type RaceWeekend struct {
 	Sessions  []*RaceWeekendSession
 
 	ChampionshipID uuid.UUID
+	Championship   *Championship
 }
 
 // NewRaceWeekend creates a RaceWeekend
@@ -50,6 +51,28 @@ func (rw *RaceWeekend) InProgress() bool {
 	}
 
 	return false
+}
+
+func (rw *RaceWeekend) GetEntryList() EntryList {
+	if rw.HasLinkedChampionship() {
+		entryList := make(EntryList)
+
+		count := 0
+
+		// filter out drivers with no GUID (open championships etc...)
+		for _, entrant := range rw.Championship.AllEntrants().AlphaSlice() {
+			if entrant.GUID == "" {
+				continue
+			}
+
+			entryList.AddInPitBox(entrant, count)
+			count++
+		}
+
+		return entryList
+	} else {
+		return rw.EntryList
+	}
 }
 
 func (rw *RaceWeekend) Completed() bool {
@@ -118,7 +141,7 @@ func (rw *RaceWeekend) GetFilterOrUseDefault(parentID, childID string) (*RaceWee
 		} else {
 			filter = &RaceWeekendSessionToSessionFilter{
 				ResultStart:          1,
-				ResultEnd:            len(rw.EntryList),
+				ResultEnd:            len(rw.GetEntryList()),
 				NumEntrantsToReverse: 0,
 				EntryListStart:       1,
 			}
@@ -245,7 +268,7 @@ func (rw *RaceWeekend) FindTotalNumParents(session *RaceWeekendSession) int {
 
 // HasTeamNames indicates whether a RaceWeekend entrylist has team names in it
 func (rw *RaceWeekend) HasTeamNames() bool {
-	for _, entrant := range rw.EntryList {
+	for _, entrant := range rw.GetEntryList() {
 		if entrant.Team != "" {
 			return true
 		}
@@ -414,13 +437,13 @@ func (rws *RaceWeekendSession) SessionType() SessionType {
 }
 
 // FinishingGrid returns the finishing grid of the session, if complete. Otherwise, it returns the EntryList of that session
-func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) []*RaceWeekendSessionEntrant {
+func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) ([]*RaceWeekendSessionEntrant, error) {
 	var out []*RaceWeekendSessionEntrant
 
 	entryList, err := rws.GetRaceWeekendEntryList(raceWeekend, nil, "")
 
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	if rws.Completed() {
@@ -459,7 +482,7 @@ func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) []*RaceWe
 		out = entryList.Sorted()
 	}
 
-	return out
+	return out, nil
 }
 
 // RemoveParent removes a parent RaceWeekendSession from this session
@@ -516,7 +539,7 @@ var ErrRaceWeekendSessionDependencyIncomplete = errors.New("servermanager: race 
 func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, overrideFilter *RaceWeekendSessionToSessionFilter, overrideFilterSessionID string) (RaceWeekendEntryList, error) {
 	if rws.IsBase() {
 		// base race weekend sessions just return the race weekend EntryList
-		return EntryListToRaceWeekendEntryList(rw.EntryList, rws.ID), nil
+		return EntryListToRaceWeekendEntryList(rw.GetEntryList(), rws.ID), nil
 	}
 
 	entryList := make(RaceWeekendEntryList, 0)
@@ -528,9 +551,15 @@ func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, override
 			return nil, err
 		}
 
+		finishingGrid, err := parentSession.FinishingGrid(rw)
+
+		if err != nil {
+			return nil, err
+		}
+
 		if overrideFilter != nil && parentSessionID.String() == overrideFilterSessionID {
 			// override filters are provided when users are modifying filters for their race weekend setups
-			err = overrideFilter.Filter(parentSession, rws, parentSession.FinishingGrid(rw), &entryList)
+			err = overrideFilter.Filter(parentSession, rws, finishingGrid, &entryList)
 
 			if err != nil {
 				return nil, err
@@ -542,7 +571,7 @@ func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, override
 				return nil, err
 			}
 
-			err = sessionToSessionFilter.Filter(parentSession, rws, parentSession.FinishingGrid(rw), &entryList)
+			err = sessionToSessionFilter.Filter(parentSession, rws, finishingGrid, &entryList)
 
 			if err != nil {
 				return nil, err
@@ -573,7 +602,7 @@ func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, override
 func EntryListToRaceWeekendEntryList(e EntryList, sessionID uuid.UUID) RaceWeekendEntryList {
 	out := make(RaceWeekendEntryList, 0, len(e))
 
-	for _, entrant := range e {
+	for _, entrant := range e.AsSlice() {
 		rwe := NewRaceWeekendSessionEntrant(sessionID, entrant.AsSessionCar(), entrant.AsSessionResult(), nil)
 
 		out.AddInPitBox(rwe, entrant.PitBox)
@@ -648,7 +677,7 @@ type ActiveRaceWeekend struct {
 }
 
 func (a ActiveRaceWeekend) IsChampionship() bool {
-	return false // @TODO
+	return false
 }
 
 func (a ActiveRaceWeekend) IsRaceWeekend() bool {

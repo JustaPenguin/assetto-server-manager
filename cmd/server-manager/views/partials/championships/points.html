@@ -16,7 +16,7 @@
                     </label>
 
                     <div class="col-sm-9">
-                        <input type="number" class="form-control" name="Points.Place"
+                        <input type="number" class="form-control init-empty-non-race" name="Points.Place"
                                placeholder="Points" value="{{ index $.Points.Places (sub $pointsCount 1) }}" data-default-value="{{ index $.Points.Places (sub $pointsCount 1) }}">
                     </div>
                 </div>
@@ -30,7 +30,7 @@
                 </label>
 
                 <div class="col-sm-9">
-                    <input type="number" class="form-control" name="Points.Place"
+                    <input type="number" class="form-control init-empty-non-race" name="Points.Place"
                            placeholder="Points" value="{{ index $defaultPoints.Places 0 }}" data-default-value="{{ index $defaultPoints.Places 0 }}">
                 </div>
             </div>
@@ -55,8 +55,8 @@
         <label for="Points.BestLap" class="col-sm-3 col-form-label">Best Lap</label>
 
         <div class="col-sm-9">
-            <input type="number" class="form-control" name="Points.BestLap"
-                   placeholder="Points" value="{{ with $.Points.BestLap }}{{ . }}{{ else }}0{{ end }}">
+            <input type="number" class="form-control init-empty-non-race" name="Points.BestLap"
+                   placeholder="Points" value="{{ with $.Points.BestLap }}{{ . }}{{ else }}0{{ end }}" data-default-value="{{ with $.Points.BestLap }}{{ . }}{{ else }}0{{ end }}">
         </div>
     </div>
 

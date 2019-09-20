@@ -23,7 +23,7 @@ $(() => {
     new CarDetail();
     new CarList();
     new RaceWeekend.View();
-    new RaceWeekend.Session();
+    new RaceWeekend.EditSession();
     new ChangelogPopup();
     Messages.initSummerNote();
 

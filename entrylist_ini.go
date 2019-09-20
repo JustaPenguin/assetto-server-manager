@@ -83,6 +83,20 @@ func (e EntryList) AsSlice() []*Entrant {
 	return entrants
 }
 
+func (e EntryList) AlphaSlice() []*Entrant {
+	var entrants []*Entrant
+
+	for _, x := range e {
+		entrants = append(entrants, x)
+	}
+
+	sort.Slice(entrants, func(i, j int) bool {
+		return entrants[i].Name < entrants[j].Name
+	})
+
+	return entrants
+}
+
 func (e EntryList) PrettyList() []*Entrant {
 	var entrants []*Entrant
 

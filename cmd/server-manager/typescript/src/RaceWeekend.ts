@@ -6,7 +6,7 @@ declare var RaceWeekendID: string;
 declare var IsEditing: boolean;
 
 export namespace RaceWeekend {
-    export class Session {
+    export class EditSession {
         private readonly $raceWeekendSession: JQuery<HTMLElement>;
 
         public constructor() {
@@ -43,9 +43,9 @@ export namespace RaceWeekend {
 
         private handleSessionPoints(sessionType: string) {
             if (sessionType !== "Race") {
-                $("input[name='Points.Place']").val(0);
+                $(".init-empty-non-race").val(0);
             } else {
-                $("input[name='Points.Place']").each((index: number, elem: HTMLElement) => {
+                $(".init-empty-non-race").each((index: number, elem: HTMLElement) => {
                     let $elem = $(elem);
 
                     $elem.val($elem.data("default-value"));
@@ -88,13 +88,13 @@ export namespace RaceWeekend {
                         // @ts-ignore
                         endpoint: ["Blank", {width: 10, height: 10}],
 
-                        connector: ["Flowchart", {}],
-
+                        connector: ["Flowchart", {cornerRadius: 10}],
+                        cssClass: "race-weekend-connector",
                     });
 
                     if (conn) {
                         // @ts-ignore
-                        conn.addOverlay(["PlainArrow", {width: 20, height: 20, id: "arrow"}]);
+                        conn.addOverlay(["PlainArrow", {width: 20, height: 20, id: "arrow", cssClass: "race-weekend-arrow"}]);
                     }
                 }
             });
@@ -301,7 +301,7 @@ export namespace RaceWeekend {
                 type: "POST",
             }).then(() => {
                 $("#filters-modal").modal("hide");
-            }); // @TODO error handling
+            });
         }
     }
 
@@ -355,7 +355,7 @@ export namespace RaceWeekend {
                 type: "GET",
             }).then(() => {
                 $("#filters-modal").modal("hide");
-            }); // @TODO error handling
+            });
         }
     }
 }

@@ -12,7 +12,7 @@
                 {{ if $.RaceWeekend.HasLinkedChampionship }}
                     A Race Weekend in the <a href="/championship/{{ $.Championship.ID.String }}">{{ $.Championship.Name }} Championship</a>
                 {{ else }}
-                    A Race Weekend in the following car{{ if gt (len $.RaceWeekend.EntryList.CarIDs) 1 }}s{{ end }}: {{ carList ($.RaceWeekend.EntryList.CarIDs) }}
+                    A Race Weekend in the following car{{ if gt (len $.RaceWeekend.GetEntryList.CarIDs) 1 }}s{{ end }}: {{ carList ($.RaceWeekend.GetEntryList.CarIDs) }}
                 {{ end }}
             </em>
         </p>
@@ -38,7 +38,7 @@
                     </tr>
                     {{ $num := 1 }}
 
-                    {{ range $i, $entrant := $.RaceWeekend.EntryList }}
+                    {{ range $i, $entrant := $.RaceWeekend.GetEntryList }}
                         <tr>
                             <td>{{ $num }}</td>
                             <td>{{ driverName $entrant.Name }}</td>

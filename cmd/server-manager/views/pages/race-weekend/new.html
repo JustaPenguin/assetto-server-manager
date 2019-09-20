@@ -41,7 +41,7 @@
                         </label>
 
                         <div class="col-sm-9">
-                            {{ template "cars" dict "CarOpts" $.CarOpts "Current" nil "ValidCarIDs" $.RaceWeekend.EntryList.CarIDs  }}
+                            {{ template "cars" dict "CarOpts" $.CarOpts "Current" nil "ValidCarIDs" $.RaceWeekend.GetEntryList.CarIDs  }}
                         </div>
                     </div>
 
@@ -51,7 +51,7 @@
                             {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" false }}
                         </div>
 
-                        {{ range $index, $entrant := $.RaceWeekend.EntryList.AsSlice }}
+                        {{ range $index, $entrant := $.RaceWeekend.GetEntryList.AsSlice }}
                             <div class="entrant">
                                 {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" false "IsEditing" $.IsEditing "IsChampionship" false }}
                             </div>
