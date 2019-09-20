@@ -28,7 +28,7 @@ type RaceWeekend struct {
 	Sessions  []*RaceWeekendSession
 
 	ChampionshipID uuid.UUID
-	Championship   *Championship
+	Championship   *Championship `json:"-"`
 }
 
 // NewRaceWeekend creates a RaceWeekend

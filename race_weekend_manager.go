@@ -55,22 +55,6 @@ func (rwm *RaceWeekendManager) LoadRaceWeekend(id string) (*RaceWeekend, error) 
 	return raceWeekend, nil
 }
 
-var ErrRaceWeekendNotLinkedToChampionship = errors.New("servermanager: race weekend is not linked to championship")
-
-func (rwm *RaceWeekendManager) LoadChampionshipForRaceWeekend(raceWeekend *RaceWeekend) (*Championship, error) {
-	if !raceWeekend.HasLinkedChampionship() {
-		return nil, ErrRaceWeekendNotLinkedToChampionship
-	}
-
-	championship, err := rwm.store.LoadChampionship(raceWeekend.ChampionshipID.String())
-
-	if err != nil {
-		return nil, err
-	}
-
-	return championship, nil
-}
-
 func (rwm *RaceWeekendManager) BuildRaceWeekendTemplateOpts(r *http.Request) (*RaceTemplateVars, error) {
 	opts, err := rwm.raceManager.BuildRaceOpts(r)
 

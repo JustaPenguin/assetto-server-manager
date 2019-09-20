@@ -4,12 +4,12 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"net/http"
 	"sort"
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 

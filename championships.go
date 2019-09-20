@@ -1223,7 +1223,7 @@ func (a *ActiveChampionship) IsChampionship() bool {
 }
 
 func (a *ActiveChampionship) IsRaceWeekend() bool {
-	return false // @TODO maybe this needs to be true at some point?
+	return false
 }
 
 func (a *ActiveChampionship) OverrideServerPassword() bool {

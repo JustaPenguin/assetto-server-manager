@@ -10,7 +10,7 @@
         <p class="text-center">
             <em>
                 {{ if $.RaceWeekend.HasLinkedChampionship }}
-                    A Race Weekend in the <a href="/championship/{{ $.Championship.ID.String }}">{{ $.Championship.Name }} Championship</a>
+                    A Race Weekend in the <a href="/championship/{{ $.RaceWeekend.Championship.ID.String }}">{{ $.RaceWeekend.Championship.Name }} Championship</a>
                 {{ else }}
                     A Race Weekend in the following car{{ if gt (len $.RaceWeekend.GetEntryList.CarIDs) 1 }}s{{ end }}: {{ carList ($.RaceWeekend.GetEntryList.CarIDs) }}
                 {{ end }}
@@ -57,7 +57,7 @@
 
         <div class="float-right">
             {{ if $.RaceWeekend.HasLinkedChampionship }}
-                <a class="btn btn-primary" href="/championship/{{ $.Championship.ID.String }}">View Championship</a>
+                <a class="btn btn-primary" href="/championship/{{ $.RaceWeekend.Championship.ID.String }}">View Championship</a>
             {{ end }}
 
             {{ if WriteAccess }}
@@ -277,7 +277,7 @@
             {{ if $.RaceWeekend.HasLinkedChampionship }}
                 <h2>Points</h2>
 
-                <p>This Race Weekend is linked to the <a href="/championship/{{ $.Championship.ID.String }}">{{ $.Championship.Name }} Championship</a>. You can review the points for each Session below.</p>
+                <p>This Race Weekend is linked to the <a href="/championship/{{ $.RaceWeekend.Championship.ID.String }}">{{ $.RaceWeekend.Championship.Name }} Championship</a>. You can review the points for each Session below.</p>
 
                 <div class="accordion mb-3" id="sessionPoints">
                     {{ range $sessionIndex, $session := $sortedSessions }}
@@ -303,7 +303,7 @@
                                 <div class="card-body pt-2 pb-2 pl-2 pr-2">
                                     <table class="table table-bordered table-striped">
                                         <tr>
-                                            {{ if $.Championship.IsMultiClass }}<th>Class</th>{{ end }}
+                                            {{ if $.RaceWeekend.Championship.IsMultiClass }}<th>Class</th>{{ end }}
                                             <th>Place</th>
                                             <th>Points</th>
                                         </tr>
@@ -312,11 +312,11 @@
                                         {{ $classIndex := 0 }}
 
                                         {{ range $classID, $points := $session.Points }}
-                                            {{ $class := $.Championship.ClassByID $classID.String }}
+                                            {{ $class := $.RaceWeekend.Championship.ClassByID $classID.String }}
 
                                             {{ range $i, $pts := $points.Places }}
-                                                <tr {{ if $.Championship.IsMultiClass }} style="color: white; background: {{ classColor (int $classIndex) }}" {{ end }}>
-                                                    {{ if $.Championship.IsMultiClass }}
+                                                <tr {{ if $.RaceWeekend.Championship.IsMultiClass }} style="color: white; background: {{ classColor (int $classIndex) }}" {{ end }}>
+                                                    {{ if $.RaceWeekend.Championship.IsMultiClass }}
                                                         {{ if eq $i 0 }}
                                                             <td rowspan="{{ add (len $points.Places) 1 }}">{{ $class.Name }}</td>
                                                         {{ end }}
@@ -326,7 +326,7 @@
                                                 </tr>
                                             {{ end }}
 
-                                            <tr {{ if $.Championship.IsMultiClass }} style="color: white; background: {{ classColor (int $classIndex) }}" {{ end }}>
+                                            <tr {{ if $.RaceWeekend.Championship.IsMultiClass }} style="color: white; background: {{ classColor (int $classIndex) }}" {{ end }}>
                                                 <td><strong>Fastest Race Lap</strong></td>
                                                 <td>
                                                     {{ $points.BestLap }}
