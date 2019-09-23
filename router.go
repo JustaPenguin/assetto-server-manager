@@ -139,7 +139,6 @@ func Router(
 		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")))
 
 		// race weekends
-		// @TODO the names of some of these endpoints aren't right
 		r.Get("/race-weekends", raceWeekendHandler.list)
 		r.Get("/race-weekend/{raceWeekendID}", raceWeekendHandler.view)
 		r.Get("/race-weekend/{raceWeekendID}/filters", raceWeekendHandler.manageFilters)

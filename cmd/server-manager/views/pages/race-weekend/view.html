@@ -96,12 +96,24 @@
 
     <div id="race-weekend-graph-container" class="border-secondary">
 
+        <div class="race-weekend-session" id="{{ $.RaceWeekend.ID }}">
+            <div class="card border-secondary">
+                <div class="card-header race-weekend-entrylist">
+                    <strong>Entry List</strong>
+
+                    <div class="float-right text-primary">
+                        {{ len $.RaceWeekend.GetEntryList }} Entrants
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{ range $sessionIndex, $session := $sortedSessions }}
 
             {{ $raceConfig := $session.RaceConfig }}
             {{ $trackInfo := trackInfo $raceConfig.Track $raceConfig.TrackLayout }}
 
-            <div class="race-weekend-session" id="{{ $session.ID.String }}" {{ $session.ParentsDataAttr }}>
+            <div class="race-weekend-session" id="{{ $session.ID.String }}" {{ $session.ParentsDataAttr $.RaceWeekend }}>
                 <div class="card border-secondary">
                     <div class="card-header">
                         {{ $acSession := $session.SessionInfo }}
@@ -162,7 +174,9 @@
                                 {{ end }}
 
 
-                                <a class="btn btn-primary manage-entrylist" href="#">Manage Entry List</a>
+                                {{ if not ($session.HasParent $.RaceWeekend.ID.String) }}
+                                    <a class="btn btn-primary manage-entrylist" href="#">Manage Entry List</a>
+                                {{ end }}
                             {{ else if $session.InProgress }}
                                 <a onClick="return confirm('I understand that this will restart this entire session and any current results will be lost.') "
                                    class="btn btn-warning" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/restart">

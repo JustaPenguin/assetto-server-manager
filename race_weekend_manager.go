@@ -87,7 +87,7 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendTemplateOpts(r *http.Request) (*R
 		championshipID = raceWeekend.ChampionshipID.String()
 	}
 
-	if championshipID != "" {
+	if championshipID != uuid.Nil.String() {
 		championship, err := rwm.store.LoadChampionship(championshipID)
 
 		if err != nil {
@@ -310,6 +310,10 @@ func (rwm *RaceWeekendManager) SaveRaceWeekendSession(r *http.Request) (raceWeek
 		}
 
 		session.ParentIDs = append(session.ParentIDs, id)
+	}
+
+	if len(session.ParentIDs) == 0 {
+		session.ParentIDs = append(session.ParentIDs, raceWeekend.ID)
 	}
 
 	session.OverridePassword = r.FormValue("OverridePassword") == "1"

@@ -90,10 +90,6 @@ func PerClassSort(sorter RaceWeekendEntryListSorter) RaceWeekendEntryListSorter 
 		var classes []uuid.UUID
 
 		for class := range fastestLapForClass {
-			if class == uuid.Nil {
-				continue
-			}
-
 			classes = append(classes, class)
 		}
 

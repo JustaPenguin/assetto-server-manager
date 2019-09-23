@@ -81,23 +81,32 @@ export namespace RaceWeekend {
                 // @ts-ignore
                 this.jsp.draggable(element, {grid: [10, 10]});
 
-                const parentIDs = JSON.parse($session.data("parent-ids")) as string[];
+                const parentIDsJSON = $session.data("parent-ids");
 
-                for (let parentID of parentIDs) {
-                    let conn = this.jsp.connect({
-                        source: parentID,
-                        target: $session.attr("id"),
-                        anchor: "AutoDefault",
-                        // @ts-ignore
-                        endpoint: ["Blank", {width: 10, height: 10}],
+                if (parentIDsJSON) {
+                    const parentIDs = JSON.parse(parentIDsJSON) as string[];
 
-                        connector: ["Flowchart", {cornerRadius: 10}],
-                        cssClass: "race-weekend-connector",
-                    });
+                    for (let parentID of parentIDs) {
+                        let conn = this.jsp.connect({
+                            source: parentID,
+                            target: $session.attr("id"),
+                            anchor: "AutoDefault",
+                            // @ts-ignore
+                            endpoint: ["Blank", {width: 10, height: 10}],
 
-                    if (conn) {
-                        // @ts-ignore
-                        conn.addOverlay(["PlainArrow", {width: 20, height: 20, id: "arrow", cssClass: "race-weekend-arrow"}]);
+                            connector: ["Flowchart", {cornerRadius: 10}],
+                            cssClass: "race-weekend-connector",
+                        });
+
+                        if (conn) {
+                            // @ts-ignore
+                            conn.addOverlay(["PlainArrow", {
+                                width: 20,
+                                height: 20,
+                                id: "arrow",
+                                cssClass: "race-weekend-arrow"
+                            }]);
+                        }
                     }
                 }
             });

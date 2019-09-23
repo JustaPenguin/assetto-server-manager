@@ -10,8 +10,10 @@
                 </button>
             </div>
             <div class="modal-body">
-                {{ if and $.RaceWeekend.HasLinkedChampionship $.RaceWeekend.Championship.IsMultiClass }}
-                    <p class="text-primary">This Race Weekend is linked to a Multi-Class Championship. Sorting will apply in-class, with the classes ordered by the fastest lap for the class (So hopefully, LMP1 cars would be put on the grid ahead of GTE cars - for example)</p>
+                {{ if $.RaceWeekend.HasLinkedChampionship }}
+                    {{ if $.RaceWeekend.Championship.IsMultiClass }}
+                        <p class="text-primary">This Race Weekend is linked to a Multi-Class Championship. Sorting will apply in-class, with the classes ordered by the fastest lap for the class (So hopefully, LMP1 cars would be put on the grid ahead of GTE cars - for example)</p>
+                    {{ end }}
                 {{ end }}
 
                 <p>Sort the combined drivers in the <strong>{{ $.Session.Name }}</strong> Entry List by:</p>

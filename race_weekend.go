@@ -131,7 +131,7 @@ func (rw *RaceWeekend) GetFilterOrUseDefault(parentID, childID string) (*RaceWee
 		}
 
 		// filter not found, load defaults
-		if parentSession.Completed() && parentSession.Results != nil {
+		if parentSession.Completed() && parentSession.Results != nil && !parentSession.IsBase() {
 			filter = &RaceWeekendSessionToSessionFilter{
 				ResultStart:          1,
 				ResultEnd:            len(parentSession.Results.Cars),
@@ -347,6 +347,17 @@ func (rw *RaceWeekend) FindSessionByID(id string) (*RaceWeekendSession, error) {
 		}
 	}
 
+	if id == rw.ID.String() {
+		// this is likely a request to find the parent session of a 'base' session. return a dummy session
+		sess := NewRaceWeekendSession()
+		sess.ID = rw.ID
+		sess.isBase = true
+		sess.CompletedTime = time.Now()
+		sess.Results = &SessionResults{}
+
+		return sess, nil
+	}
+
 	return nil, RaceWeekendSessionNotFound
 }
 
@@ -418,6 +429,9 @@ type RaceWeekendSession struct {
 	Results       *SessionResults
 
 	Points map[uuid.UUID]*ChampionshipPoints
+
+	SkipSession bool
+	isBase      bool
 }
 
 // NewRaceWeekendSession creates an empty RaceWeekendSession
@@ -431,7 +445,11 @@ func NewRaceWeekendSession() *RaceWeekendSession {
 
 // Name of the RaceWeekendSession
 func (rws *RaceWeekendSession) Name() string {
-	return rws.SessionInfo().Name
+	if rws.isBase {
+		return "Entry List"
+	} else {
+		return rws.SessionInfo().Name
+	}
 }
 
 // SessionInfo returns the information about the Assetto Corsa Session (i.e. practice, qualifying, race)
@@ -530,8 +548,15 @@ func (rws *RaceWeekendSession) RemoveParent(parentID string) {
 }
 
 // ParentsDataAttr returns a html-safe data attribute for identifying parent sessions of a given RaceWeekendSession in the frontend
-func (rws *RaceWeekendSession) ParentsDataAttr() template.HTMLAttr {
-	return template.HTMLAttr(fmt.Sprintf("data-parent-ids='%s'", jsonEncode(rws.ParentIDs)))
+func (rws *RaceWeekendSession) ParentsDataAttr(raceWeekend *RaceWeekend) template.HTMLAttr {
+	parentIDs := rws.ParentIDs
+
+	if len(parentIDs) == 0 {
+		// sessions with no parent are shown as having the race weekend as their parent.
+		parentIDs = []uuid.UUID{raceWeekend.ID}
+	}
+
+	return template.HTMLAttr(fmt.Sprintf("data-parent-ids='%s'", jsonEncode(parentIDs)))
 }
 
 // InProgress indicates whether a RaceWeekendSession has been started but not stopped
@@ -546,7 +571,7 @@ func (rws *RaceWeekendSession) Completed() bool {
 
 // IsBase indicates that a RaceWeekendSession has no parent
 func (rws *RaceWeekendSession) IsBase() bool {
-	return rws.ParentIDs == nil || len(rws.ParentIDs) == 0
+	return rws.isBase
 }
 
 // HasParent determines if a RaceWeekendSession has a parent with id
