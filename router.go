@@ -232,6 +232,8 @@ func Router(
 		r.Post("/race-weekend/{raceWeekendID}/session/{sessionID}/import", raceWeekendHandler.importSessionResults)
 		r.Post("/race-weekend/{raceWeekendID}/update-grid", raceWeekendHandler.updateGrid)
 		r.Get("/race-weekend/{raceWeekendID}/update-entrylist", raceWeekendHandler.updateEntryList)
+		r.Get("/race-weekend/import", raceWeekendHandler.importRaceWeekend)
+		r.Post("/race-weekend/import", raceWeekendHandler.importRaceWeekend)
 	})
 
 	// deleters

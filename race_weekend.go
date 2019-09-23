@@ -15,14 +15,13 @@ import (
 // RaceWeekends are a collection of sessions, where one session influences the EntryList of the next.
 type RaceWeekend struct {
 	ID      uuid.UUID
+	Name    string
 	Created time.Time
 	Updated time.Time
 	Deleted time.Time
 
 	// Filters is a map of Parent ID -> Child ID -> Filter
 	Filters map[string]map[string]*RaceWeekendSessionToSessionFilter
-
-	Name string
 
 	EntryList EntryList
 	Sessions  []*RaceWeekendSession

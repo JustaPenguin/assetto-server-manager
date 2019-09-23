@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -775,4 +776,16 @@ func (rwm *RaceWeekendManager) UpdateSessionSorting(raceWeekendID, sessionID str
 	session.NumEntrantsToReverse = numEntrantsToReverse
 
 	return rwm.store.UpsertRaceWeekend(raceWeekend)
+}
+
+func (rwm *RaceWeekendManager) ImportRaceWeekend(data string) (string, error) {
+	var raceWeekend *RaceWeekend
+
+	err := json.Unmarshal([]byte(data), &raceWeekend)
+
+	if err != nil {
+		return "", err
+	}
+
+	return raceWeekend.ID.String(), rwm.store.UpsertRaceWeekend(raceWeekend)
 }

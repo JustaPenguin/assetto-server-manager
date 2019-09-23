@@ -407,7 +407,7 @@ func (rwh *RaceWeekendHandler) export(w http.ResponseWriter, r *http.Request) {
 	raceWeekend, err := rwh.raceWeekendManager.LoadRaceWeekend(chi.URLParam(r, "raceWeekendID"))
 
 	if err != nil {
-		logrus.Errorf("couldn't export race weeeknd, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't export race weeeknd")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -422,4 +422,20 @@ func (rwh *RaceWeekendHandler) export(w http.ResponseWriter, r *http.Request) {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	_ = enc.Encode(raceWeekend)
+}
+
+func (rwh *RaceWeekendHandler) importRaceWeekend(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		raceWeekendID, err := rwh.raceWeekendManager.ImportRaceWeekend(r.FormValue("import"))
+
+		if err != nil {
+			logrus.WithError(err).Error("could not import race weekend")
+			AddErrorFlash(w, r, "Sorry, we couldn't import that Race Weekend! Check your JSON formatting.")
+		} else {
+			AddFlash(w, r, "Race Weekend successfully imported!")
+			http.Redirect(w, r, "/race-weekend/"+raceWeekendID, http.StatusFound)
+		}
+	}
+
+	rwh.viewRenderer.MustLoadTemplate(w, r, "race-weekend/import-raceweekend.html", nil)
 }

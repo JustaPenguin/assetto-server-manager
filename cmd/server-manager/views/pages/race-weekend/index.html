@@ -8,7 +8,18 @@
         <div class="col-sm-4"><h1 class="text-center">Race Weekends</h1></div>
         <div class="col-sm-4">
             {{ if WriteAccess }}
-                <a href="/race-weekends/new" class="btn btn-success float-right">Create a new Race Weekend</a>
+                <div class="btn-group float-right" role="group" aria-label="New Race Weekend">
+                    <a href="/race-weekends/new" class="btn btn-success">Create a new Race Weekend</a>
+
+                    <div class="btn-group" role="group">
+                        <button id="btnGroupDrop1" type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="btnGroupDrop1">
+                            <a href="/race-weekend/import" class="dropdown-item">Import Race Weekend</a>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="clearfix mb-5"></div>
             {{ end }}
