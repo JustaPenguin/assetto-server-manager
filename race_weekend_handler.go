@@ -402,3 +402,24 @@ func (rwh *RaceWeekendHandler) updateEntryList(w http.ResponseWriter, r *http.Re
 
 	w.WriteHeader(http.StatusCreated)
 }
+
+func (rwh *RaceWeekendHandler) export(w http.ResponseWriter, r *http.Request) {
+	raceWeekend, err := rwh.raceWeekendManager.LoadRaceWeekend(chi.URLParam(r, "raceWeekendID"))
+
+	if err != nil {
+		logrus.Errorf("couldn't export race weeeknd, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if !AccountFromRequest(r).HasGroupPrivilege(GroupWrite) {
+		// if you don't have write access or above you can't see the replacement password
+		for _, session := range raceWeekend.Sessions {
+			session.ReplacementPassword = ""
+		}
+	}
+
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	_ = enc.Encode(raceWeekend)
+}

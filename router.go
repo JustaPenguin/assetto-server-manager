@@ -145,6 +145,7 @@ func Router(
 		r.Get("/race-weekend/{raceWeekendID}/entrylist", raceWeekendHandler.manageEntryList)
 		r.Post("/race-weekend/{raceWeekendID}/grid-preview", raceWeekendHandler.gridPreview)
 		r.Get("/race-weekend/{raceWeekendID}/entrylist-preview", raceWeekendHandler.entryListPreview)
+		r.Get("/race-weekend/{raceWeekendID}/export", raceWeekendHandler.export)
 	})
 
 	// writers
