@@ -88,7 +88,7 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendTemplateOpts(r *http.Request) (*R
 		championshipID = raceWeekend.ChampionshipID.String()
 	}
 
-	if championshipID != uuid.Nil.String() {
+	if championshipID != uuid.Nil.String() && championshipID != "" {
 		championship, err := rwm.store.LoadChampionship(championshipID)
 
 		if err != nil {
