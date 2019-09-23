@@ -1511,6 +1511,51 @@
             </div>
         </div>
 
+        {{ if $.ShowOverridePasswordCard }}
+            <div class="card mt-3 border-secondary">
+                <div class="card-header">
+                    <strong>Password Override</strong>
+                </div>
+                <div class="card-body">
+                    <div class="form-group row">
+                        <label for="OverridePassword" class="col-sm-3 col-form-label">Override Server Password</label>
+
+                        <div class="col-sm-9">
+
+                            <input
+                                    class="form-control"
+                                    type="checkbox"
+                                    id="OverridePassword"
+                                    name="OverridePassword"
+                                    {{ if .OverridePassword }}
+                                        checked="checked"
+                                    {{ end }}
+                            ><br/>
+
+                            <small>If enabled then the server password will be replaced for this event.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group row" id="ReplacementPasswordWrapper" {{ if not .OverridePassword }} style="display: none;" {{ end }}>
+                        <label for="ReplacementPassword" class="col-sm-3 col-form-label">Replacement Password</label>
+
+                        <div class="col-sm-9">
+
+                            <input
+                                    class="form-control"
+                                    type="password"
+                                    id="ReplacementPassword"
+                                    name="ReplacementPassword"
+                                    value="{{ .ReplacementPassword }}"
+                            >
+
+                            <small>If left empty then the server will have no password.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {{ end }}
+
         {{ if .IsChampionship }}
             <div class="card mt-3 border-info">
                 <div class="card-header text-white bg-info">
@@ -1567,8 +1612,9 @@
                             </select>
 
                             <small>
-                                The parent session specifies the Session which is used to build the EntryList for this session.
+                                The parent session specifies the session which is used to build the EntryList for this session.
                                 The results output of the parent session (plus any applied filters) forms the starting grid for this session.
+                                If "No parent" is chosen, then all other choices will be ignored.
                             </small>
                         </div>
                     </div>
@@ -1669,42 +1715,6 @@
                             >
 
                             <small>The name above will be used on the Custom Races page.</small>
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <label for="OverridePassword" class="col-sm-3 col-form-label">Override Server Password</label>
-
-                        <div class="col-sm-9">
-
-                            <input
-                                    class="form-control"
-                                    type="checkbox"
-                                    id="OverridePassword"
-                                    name="OverridePassword"
-                                    {{ if .OverridePassword }}
-                                        checked="checked"
-                                    {{ end }}
-                            ><br/>
-
-                            <small>If enabled then the server password will be replaced for this event.</small>
-                        </div>
-                    </div>
-
-                    <div class="form-group row" id="ReplacementPasswordWrapper" {{ if not .OverridePassword }} style="display: none;" {{ end }}>
-                        <label for="ReplacementPassword" class="col-sm-3 col-form-label">Replacement Password</label>
-
-                        <div class="col-sm-9">
-
-                            <input
-                                    class="form-control"
-                                    type="password"
-                                    id="ReplacementPassword"
-                                    name="ReplacementPassword"
-                                    value="{{ .ReplacementPassword }}"
-                            >
-
-                            <small>If left empty then the server will have no password.</small>
                         </div>
                     </div>
 

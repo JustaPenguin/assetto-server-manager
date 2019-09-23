@@ -1,6 +1,7 @@
 import ChangeEvent = JQuery.ChangeEvent;
 import {Connection, jsPlumb, jsPlumbInstance} from "jsplumb";
 import dagre, {graphlib} from "dagre";
+import {initMultiSelect} from "./javascript/manager";
 
 declare var RaceWeekendID: string;
 declare var IsEditing: boolean;
@@ -17,6 +18,8 @@ export namespace RaceWeekend {
             }
 
             this.initSessionTypeSwitch();
+
+            initMultiSelect($("#ParentSessions"));
         }
 
         private initSessionTypeSwitch(): void {

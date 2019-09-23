@@ -30,6 +30,7 @@ type SessionResults struct {
 	Date           time.Time        `json:"Date"`
 	SessionFile    string           `json:"SessionFile"`
 	ChampionshipID string           `json:"ChampionshipID"`
+	RaceWeekendID  string           `json:"RaceWeekendID"`
 }
 
 var ErrSessionCarNotFound = errors.New("servermanager: session car not found")

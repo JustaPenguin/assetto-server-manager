@@ -322,6 +322,8 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (*Rac
 		opts.AvailableSessions = AvailableSessionsNoBooking
 	}
 
+	opts.ShowOverridePasswordCard = false
+
 	err = cm.applyCurrentRaceSetupToOptions(opts, opts.Current)
 
 	if err != nil {

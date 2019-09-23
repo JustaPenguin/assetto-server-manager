@@ -350,6 +350,20 @@ func (rw *RaceWeekend) FindSessionByID(id string) (*RaceWeekendSession, error) {
 	return nil, RaceWeekendSessionNotFound
 }
 
+// EnhanceResults takes a set of SessionResults and attaches Championship information to them.
+func (rw *RaceWeekend) EnhanceResults(results *SessionResults) {
+	if results == nil {
+		return
+	}
+
+	results.RaceWeekendID = rw.ID.String()
+
+	if rw.HasLinkedChampionship() {
+		// linked championships determine class IDs etc for drivers.
+		rw.Championship.EnhanceResults(results)
+	}
+}
+
 // A RaceWeekendSessionEntrant is someone who has entered at least one RaceWeekend event.
 type RaceWeekendSessionEntrant struct {
 	// SessionID is the last session the Entrant participated in
@@ -395,7 +409,9 @@ type RaceWeekendSession struct {
 	SortType             string
 	NumEntrantsToReverse int
 
-	RaceConfig CurrentRaceConfig
+	RaceConfig          CurrentRaceConfig
+	OverridePassword    bool
+	ReplacementPassword string
 
 	StartedTime   time.Time
 	CompletedTime time.Time
@@ -474,6 +490,17 @@ func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) ([]*RaceW
 			}
 
 			if !foundEntrant && entrant.Car.GetGUID() != "" {
+				if raceWeekend.HasLinkedChampionship() {
+					// find the class ID for the car
+					class, err := raceWeekend.Championship.FindClassForCarModel(entrant.Car.GetCar())
+
+					if err != nil {
+						logrus.WithError(err).Warnf("Could not find class for car model: %s for entrant %s", entrant.Car.GetCar(), entrant.Car.GetGUID())
+					}
+
+					entrant.EntrantResult.ClassID = class.ID
+				}
+
 				out = append(out, NewRaceWeekendSessionEntrant(rws.ID, entrant.Car, entrant.EntrantResult, rws.Results))
 			}
 		}
@@ -586,8 +613,6 @@ func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, override
 		if err := sorter(rws, entryList); err != nil {
 			return nil, err
 		}
-
-		reverseEntrants(rws.NumEntrantsToReverse, entryList)
 
 		// amend pitboxes post-sort
 		for i, entrant := range entryList {

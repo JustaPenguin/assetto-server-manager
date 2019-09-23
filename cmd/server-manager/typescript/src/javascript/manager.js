@@ -171,7 +171,7 @@ function prettifyName(name, acronyms) {
 }
 
 
-function initMultiSelect($element) {
+export function initMultiSelect($element) {
     $element.each(function (i, elem) {
         let $elem = $(elem);
 

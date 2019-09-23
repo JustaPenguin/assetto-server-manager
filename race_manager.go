@@ -749,15 +749,16 @@ type RaceTemplateVars struct {
 	Tyres               Tyres
 	DeselectedTyres     map[string]bool
 
-	IsChampionship bool
-	Championship   *Championship
-	// @TODO this should be 'ChampionshipHasAtLeastOneRace'
+	IsChampionship                 bool
+	Championship                   *Championship
 	ChampionshipHasAtLeastOnceRace bool
 
 	IsRaceWeekend                   bool
 	RaceWeekend                     *RaceWeekend
 	RaceWeekendSession              *RaceWeekendSession
 	RaceWeekendHasAtLeastOneSession bool
+
+	ShowOverridePasswordCard bool
 }
 
 // BuildRaceOpts builds a quick race form
@@ -847,23 +848,24 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (*RaceTemplateVars, error)
 	}
 
 	opts := &RaceTemplateVars{
-		CarOpts:             cars,
-		TrackOpts:           tracks,
-		AvailableSessions:   AvailableSessions,
-		Weather:             weather,
-		SolIsInstalled:      solIsInstalled,
-		Current:             race.CurrentRaceConfig,
-		CurrentEntrants:     entrants,
-		PossibleEntrants:    possibleEntrants,
-		FixedSetups:         fixedSetups,
-		IsChampionship:      false, // this flag is overridden by championship setup
-		IsRaceWeekend:       false, // this flag is overridden by race weekend setup
-		IsEditing:           isEditing,
-		EditingID:           templateIDForEditing,
-		CustomRaceName:      customRaceName,
-		SurfacePresets:      DefaultTrackSurfacePresets,
-		OverridePassword:    overridePassword,
-		ReplacementPassword: replacementPassword,
+		CarOpts:                  cars,
+		TrackOpts:                tracks,
+		AvailableSessions:        AvailableSessions,
+		Weather:                  weather,
+		SolIsInstalled:           solIsInstalled,
+		Current:                  race.CurrentRaceConfig,
+		CurrentEntrants:          entrants,
+		PossibleEntrants:         possibleEntrants,
+		FixedSetups:              fixedSetups,
+		IsChampionship:           false, // this flag is overridden by championship setup
+		IsRaceWeekend:            false, // this flag is overridden by race weekend setup
+		IsEditing:                isEditing,
+		EditingID:                templateIDForEditing,
+		CustomRaceName:           customRaceName,
+		SurfacePresets:           DefaultTrackSurfacePresets,
+		OverridePassword:         overridePassword,
+		ReplacementPassword:      replacementPassword,
+		ShowOverridePasswordCard: true,
 	}
 
 	err = rm.applyCurrentRaceSetupToOptions(opts, race.CurrentRaceConfig)

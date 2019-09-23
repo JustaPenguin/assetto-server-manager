@@ -232,6 +232,9 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (*Ra
 	opts.RaceWeekend = raceWeekend
 
 	opts.AvailableSessions = AvailableSessionsNoBooking
+	opts.ShowOverridePasswordCard = !raceWeekend.HasLinkedChampionship()
+	opts.OverridePassword = raceWeekendSession.OverridePassword
+	opts.ReplacementPassword = raceWeekendSession.ReplacementPassword
 
 	err = rwm.raceManager.applyCurrentRaceSetupToOptions(opts, opts.Current)
 
@@ -295,6 +298,8 @@ func (rwm *RaceWeekendManager) SaveRaceWeekendSession(r *http.Request) (raceWeek
 	// assign parents
 	for _, parentID := range r.Form["ParentSessions"] {
 		if parentID == "no_parent" {
+			// empty out any existing ones
+			session.ParentIDs = []uuid.UUID{}
 			break
 		}
 
@@ -306,6 +311,9 @@ func (rwm *RaceWeekendManager) SaveRaceWeekendSession(r *http.Request) (raceWeek
 
 		session.ParentIDs = append(session.ParentIDs, id)
 	}
+
+	session.OverridePassword = r.FormValue("OverridePassword") == "1"
+	session.ReplacementPassword = r.FormValue("ReplacementPassword")
 
 	if raceWeekend.HasLinkedChampionship() {
 		// points
@@ -382,9 +390,7 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 	entryList := raceWeekendEntryList.AsEntryList()
 
 	session.RaceConfig.MaxClients = len(entryList)
-
 	session.RaceConfig.Cars = strings.Join(entryList.CarIDs(), ";")
-
 	session.RaceConfig.LockedEntryList = 1
 	session.RaceConfig.PickupModeEnabled = 0
 
@@ -393,13 +399,21 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		acSession.IsOpen = 1
 	}
 
+	overridePassword := session.OverridePassword
+	replacementPassword := session.ReplacementPassword
+
+	if raceWeekend.HasLinkedChampionship() {
+		overridePassword = raceWeekend.Championship.OverridePassword
+		replacementPassword = raceWeekend.Championship.ReplacementPassword
+	}
+
 	return rwm.applyConfigAndStart(session.RaceConfig, entryList, &ActiveRaceWeekend{
 		Name:                raceWeekend.Name,
 		RaceWeekendID:       raceWeekend.ID,
 		SessionID:           session.ID,
-		OverridePassword:    false, // @TODO
-		ReplacementPassword: "",    // @TODO
-		Description:         "",    // @TODO?
+		OverridePassword:    overridePassword,
+		ReplacementPassword: replacementPassword,
+		Description:         "", // @TODO?
 	})
 }
 
@@ -438,6 +452,16 @@ func (rwm *RaceWeekendManager) UDPCallback(message udp.Message) {
 		}
 
 		session.CompletedTime = time.Now()
+
+		raceWeekend.EnhanceResults(results)
+
+		err = saveResults(filename, results)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("Could not update session results %s", filename)
+			return
+		}
+
 		session.Results = results
 
 		if err := rwm.store.UpsertRaceWeekend(raceWeekend); err != nil {
@@ -536,7 +560,17 @@ func (rwm *RaceWeekendManager) ImportSession(raceWeekendID string, raceWeekendSe
 		return err
 	}
 
-	session.Results, err = LoadResult(r.FormValue("ResultFile") + ".json")
+	filename := r.FormValue("ResultFile") + ".json"
+
+	session.Results, err = LoadResult(filename)
+
+	if err != nil {
+		return err
+	}
+
+	raceWeekend.EnhanceResults(session.Results)
+
+	err = saveResults(filename, session.Results)
 
 	if err != nil {
 		return err

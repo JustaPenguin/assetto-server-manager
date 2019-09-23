@@ -20,6 +20,10 @@
                     {{ end }}
                 </p>
 
+                {{ if and $.RaceWeekend.HasLinkedChampionship $.RaceWeekend.Championship.IsMultiClass }}
+                    <p class="text-primary">This Race Weekend is linked to a Multi-Class Championship. Sorting will apply in-class, with the classes ordered by the fastest lap for the class (So hopefully, LMP1 cars would be put on the grid ahead of GTE cars - for example)</p>
+                {{ end }}
+
                 <div class="row">
                     <div class="col-md-6">
 

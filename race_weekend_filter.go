@@ -49,12 +49,12 @@ func (f RaceWeekendSessionToSessionFilter) Filter(parentSession, childSession *R
 	if parentSession.Completed() {
 		sorter := GetRaceWeekendEntryListSort(f.SortType)
 
+		parentSession.NumEntrantsToReverse = f.NumEntrantsToReverse
+
 		// race weekend session is completed and has a valid sorter, use it to sort results before filtering.
 		if err := sorter(parentSession, parentSessionResults); err != nil {
 			return err
 		}
-
-		reverseEntrants(f.NumEntrantsToReverse, parentSessionResults)
 	}
 
 	resultStart, resultEnd, entryListStart := f.ResultStart, f.ResultEnd, f.EntryListStart

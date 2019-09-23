@@ -4,6 +4,8 @@ import (
 	"math/rand"
 	"sort"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // RaceWeekendEntryListSorter is a function which takes a race weekend, session and entrylist and sorts the entrylist based on some criteria.
@@ -61,14 +63,86 @@ var RaceWeekendEntryListSorters = []RaceWeekendEntryListSorterDescription{
 func GetRaceWeekendEntryListSort(key string) RaceWeekendEntryListSorter {
 	for _, sorter := range RaceWeekendEntryListSorters {
 		if sorter.Key == key {
-			return sorter.SortFunc
+			return PerClassSort(sorter.SortFunc)
 		}
 	}
 
-	return UnchangedRaceWeekendEntryListSort
+	return PerClassSort(UnchangedRaceWeekendEntryListSort)
 }
 
-// @TODO when classes work, sorting should be _in class_
+func PerClassSort(sorter RaceWeekendEntryListSorter) RaceWeekendEntryListSorter {
+	return func(session *RaceWeekendSession, allEntrants []*RaceWeekendSessionEntrant) error {
+		fastestLapForClass := make(map[uuid.UUID]int)
+		entrantsForClass := make(map[uuid.UUID][]*RaceWeekendSessionEntrant)
+
+		for _, entrant := range allEntrants {
+			fastestLap, ok := fastestLapForClass[entrant.EntrantResult.ClassID]
+
+			if entrant.EntrantResult.BestLap > 0 {
+				if !ok || (ok && entrant.EntrantResult.BestLap < fastestLap) {
+					fastestLapForClass[entrant.EntrantResult.ClassID] = entrant.EntrantResult.BestLap
+				}
+			}
+
+			entrantsForClass[entrant.EntrantResult.ClassID] = append(entrantsForClass[entrant.EntrantResult.ClassID], entrant)
+		}
+
+		var classes []uuid.UUID
+
+		for class := range fastestLapForClass {
+			if class == uuid.Nil {
+				continue
+			}
+
+			classes = append(classes, class)
+		}
+
+		// sort each class by the fastest lap in that class
+		sort.Slice(classes, func(i, j int) bool {
+			return fastestLapForClass[classes[i]] < fastestLapForClass[classes[j]]
+		})
+
+		lastStartPos := 0
+
+		for _, class := range classes {
+			entrants := entrantsForClass[class]
+
+			err := sorter(session, entrants)
+
+			if err != nil {
+				return err
+			}
+
+			reverseEntrants(session.NumEntrantsToReverse, entrants)
+
+			sortDriversWithNoTimeToBack(entrants)
+
+			for index, entrant := range entrants {
+				allEntrants[lastStartPos+index] = entrant
+			}
+
+			lastStartPos += len(entrants)
+		}
+
+		return nil
+	}
+}
+
+func sortDriversWithNoTimeToBack(entrants []*RaceWeekendSessionEntrant) {
+	sort.SliceStable(entrants, func(i, j int) bool {
+		entrantI, entrantJ := entrants[i], entrants[j]
+
+		if entrantI.EntrantResult.TotalTime == 0 {
+			return false
+		}
+
+		if entrantJ.EntrantResult.TotalTime == 0 {
+			return true
+		}
+
+		return i < j
+	})
+}
 
 func UnchangedRaceWeekendEntryListSort(_ *RaceWeekendSession, _ []*RaceWeekendSessionEntrant) error {
 	return nil // do nothing
