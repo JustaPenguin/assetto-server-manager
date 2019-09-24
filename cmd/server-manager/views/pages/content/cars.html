@@ -1,3 +1,5 @@
+{{/* gotype: github.com/cj123/assetto-server-manager.carListTemplateVars */}}
+
 {{ define "title" }}Cars{{ end }}
 
 {{ define "content" }}
@@ -117,7 +119,7 @@
 
 
         {{ if gt (len .Hits) 0 }}
-            {{ template "pagination" dict "CurrentPage" $.CurrentPage "NumPages" $.NumPages "_request" $._request }}
+            {{ template "pagination" dict "CurrentPage" $.CurrentPage "NumPages" $.NumPages "Request" $.Request }}
         {{ end }}
     {{ end }}
 

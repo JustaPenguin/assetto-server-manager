@@ -1,3 +1,5 @@
+{{/* gotype: github.com/cj123/assetto-server-manager.resultsListTemplateVars */}}
+
 {{ define "title" }}Results{{ end }}
 
 {{ define "content" }}
@@ -10,7 +12,7 @@
             <th>Track Name</th>
             <th style="width: 50%">Entrants</th>
         </tr>
-        {{ range $i, $result := .results }}
+        {{ range $i, $result := .Results }}
             <tr class="row-link" data-href="/results/{{ $result.SessionFile }}">
                 <td>
                     {{ $result.GetDate }}
@@ -31,5 +33,5 @@
 
     <div class="clearfix"></div>
 
-    {{ template "pagination" dict "CurrentPage" .currentPage "NumPages" (len .pages) "_request" $._request }}
+    {{ template "pagination" dict "CurrentPage" .CurrentPage "NumPages" (len .Pages) "Request" $.Request }}
 {{ end }}

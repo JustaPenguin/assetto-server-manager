@@ -409,8 +409,36 @@ func jsonEncode(v interface{}) template.JS {
 	return template.JS(buf.String())
 }
 
+type TemplateVars interface {
+	Get() *BaseTemplateVars
+}
+
+type BaseTemplateVars struct {
+	Messages           []interface{}
+	Errors             []interface{}
+	ServerStatus       bool
+	ServerEvent        RaceEvent
+	ServerName         string
+	CustomCSS          template.CSS
+	User               *Account
+	IsHosted           bool
+	IsPremium          string
+	MaxClientsOverride int
+	IsDarkTheme        bool
+	Request            *http.Request
+	Debug              bool
+	MonitoringEnabled  bool
+	SentryDSN          template.JSStr
+	RecaptchaSiteKey   string
+	WideContainer      bool
+}
+
+func (b *BaseTemplateVars) Get() *BaseTemplateVars {
+	return b
+}
+
 // LoadTemplate reads a template from templates and renders it with data to the given io.Writer
-func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view string, data map[string]interface{}) error {
+func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view string, vars TemplateVars) error {
 	if tr.reload {
 		// reload templates on every request if enabled, so
 		// that we don't have to constantly restart the website
@@ -427,20 +455,22 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 		return fmt.Errorf("unable to find template: %s", filepath.ToSlash(view))
 	}
 
-	if data == nil {
-		data = make(map[string]interface{})
+	if vars == nil {
+		vars = &BaseTemplateVars{}
 	}
 
 	session := getSession(r)
 
+	data := vars.Get()
+
 	if flashes := session.Flashes(); len(flashes) > 0 {
-		data["messages"] = flashes
+		data.Messages = flashes
 	}
 
 	errSession := getErrSession(r)
 
 	if flashes := errSession.Flashes(); len(flashes) > 0 {
-		data["errors"] = flashes
+		data.Errors = flashes
 	}
 
 	_ = session.Save(r, w)
@@ -452,20 +482,20 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 		return err
 	}
 
-	data["server_status"] = tr.process.IsRunning()
-	data["server_event"] = tr.process.Event()
-	data["server_name"] = opts.Name
-	data["custom_css"] = template.CSS(opts.CustomCSS)
-	data["User"] = AccountFromRequest(r)
-	data["IsHosted"] = IsHosted
-	data["IsPremium"] = IsPremium
-	data["MaxClientsOverride"] = MaxClientsOverride
-	data["IsDarkTheme"] = opts.DarkTheme == 1
-	data["_request"] = r
-	data["Debug"] = Debug
-	data["MonitoringEnabled"] = config.Monitoring.Enabled
-	data["SentryDSN"] = template.JSStr(sentryJSDSN)
-	data["RecaptchaSiteKey"] = config.Championships.RecaptchaConfig.SiteKey
+	data.ServerStatus = tr.process.IsRunning()
+	data.ServerEvent = tr.process.Event()
+	data.ServerName = opts.Name
+	data.CustomCSS = template.CSS(opts.CustomCSS)
+	data.User = AccountFromRequest(r)
+	data.IsHosted = IsHosted
+	data.IsPremium = IsPremium
+	data.MaxClientsOverride = MaxClientsOverride
+	data.IsDarkTheme = opts.DarkTheme == 1
+	data.Request = r
+	data.Debug = Debug
+	data.MonitoringEnabled = config.Monitoring.Enabled
+	data.SentryDSN = sentryJSDSN
+	data.RecaptchaSiteKey = config.Championships.RecaptchaConfig.SiteKey
 
 	t.Funcs(map[string]interface{}{
 		"ReadAccess":   ReadAccess(r),
@@ -475,12 +505,12 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 		"LoggedIn":     LoggedIn(r),
 	})
 
-	return t.ExecuteTemplate(w, "base", data)
+	return t.ExecuteTemplate(w, "base", vars)
 }
 
 // MustLoadTemplate asserts that a LoadTemplate call must succeed or be dealt with via the http.ResponseWriter
-func (tr *Renderer) MustLoadTemplate(w http.ResponseWriter, r *http.Request, view string, data map[string]interface{}) {
-	err := tr.LoadTemplate(w, r, view, data)
+func (tr *Renderer) MustLoadTemplate(w http.ResponseWriter, r *http.Request, view string, vars TemplateVars) {
+	err := tr.LoadTemplate(w, r, view, vars)
 
 	if err != nil {
 		raven.CaptureError(err, nil)

@@ -70,6 +70,12 @@ func (alh *AuditLogHandler) Middleware(next http.Handler) http.Handler {
 	})
 }
 
+type auditLogTemplateVars struct {
+	BaseTemplateVars
+
+	AuditLogs []*AuditEntry
+}
+
 func (alh *AuditLogHandler) viewLogs(w http.ResponseWriter, r *http.Request) {
 	// load server audits
 	auditLogs, err := alh.store.GetAuditEntries()
@@ -85,7 +91,7 @@ func (alh *AuditLogHandler) viewLogs(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// render audit log page
-	alh.viewRenderer.MustLoadTemplate(w, r, "server/audit-logs.html", map[string]interface{}{
-		"auditLogs": auditLogs,
+	alh.viewRenderer.MustLoadTemplate(w, r, "server/audit-logs.html", &auditLogTemplateVars{
+		AuditLogs: auditLogs,
 	})
 }

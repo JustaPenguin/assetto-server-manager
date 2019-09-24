@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="shortcut icon" href="/static/favicon.ico">
         <meta charset="UTF-8">
-        <title>{{ block "title" . }}{{ end }} / {{ $.server_name }}</title>
+        <title>{{ block "title" . }}{{ end }} / {{ $.ServerName }}</title>
 
         {{ block "stylesheets" . }}
             {{ if $.User.ShowDarkTheme $.IsDarkTheme }}
@@ -15,7 +15,7 @@
             {{ end }}
 
             <style type="text/css">
-                {{ .custom_css }}
+                {{ .CustomCSS }}
             </style>
         {{ end }}
 
@@ -47,7 +47,7 @@
 
     <nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-primary">
         <div class="{{ with $.WideContainer }}container-fluid{{ else }}container{{ end }}">
-            <a class="navbar-brand" href="/" data-toggle="tooltip" title="{{ $.server_name }}">{{ $.server_name }}</a>
+            <a class="navbar-brand" href="/" data-toggle="tooltip" title="{{ $.ServerName }}">{{ $.ServerName }}</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -128,10 +128,10 @@
                 </ul>
 
                 <ul class="navbar-nav">
-                    {{ if .server_status  }}
+                    {{ if .ServerStatus  }}
                         <li class="nav-item dropdown mr-2 {{ if not WriteAccess }} mt-2 {{ end }}">
                             {{ if WriteAccess }}
-                                {{ if .server_event.IsChampionship }}
+                                {{ if .ServerEvent.IsChampionship }}
                                     <a class="nav-link dropdown-toggle" href="#" id="navBarStatusDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                         <span class="badge badge-warning">Championship in Progress</span>
                                     </a>
@@ -146,7 +146,7 @@
                                         class="dropdown-item"
                                         href="/process/restart"
 
-                                        {{ if .server_event.IsChampionship }}
+                                        {{ if .ServerEvent.IsChampionship }}
                                             onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
                                         {{ end }}
                                     >
@@ -156,7 +156,7 @@
                                         class="dropdown-item"
                                         href="/process/stop"
 
-                                        {{ if .server_event.IsChampionship }}
+                                        {{ if .ServerEvent.IsChampionship }}
                                             onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
                                         {{ end }}
                                     >
@@ -164,7 +164,7 @@
                                     </a>
                                 </div>
                             {{ else }}
-                                {{ if .server_event.IsChampionship }}
+                                {{ if .ServerEvent.IsChampionship }}
                                     <span class="badge badge-warning">Championship in Progress</span>
                                 {{ else }}
                                     <span class="badge badge-success">Assetto Server Running</span>
@@ -206,7 +206,7 @@
 
 
         {{ block "showpremium" . }}
-            {{ if ne $._request.URL.Path "/" }}
+            {{ if ne $.Request.URL.Path "/" }}
                 <div class="clearfix"></div>
 
                 <div class="mt-5">
@@ -236,7 +236,7 @@
     <div class="messages">
         <div class="container">
             <div class="col-md-10 mx-auto">
-                {{ range $i, $message := .messages }}
+                {{ range $i, $message := .Messages }}
 
                     <div class="alert alert-success alert-dismissible" role="alert">
                         {{ $message }}
@@ -247,7 +247,7 @@
 
                 {{ end }}
 
-                {{ range $i, $error := .errors }}
+                {{ range $i, $error := .Errors }}
 
                     <div class="alert alert-danger alert-dismissible mx-auto" role="alert">
                         {{ $error }}

@@ -142,6 +142,12 @@ func NewTracksHandler(baseHandler *BaseHandler) *TracksHandler {
 	}
 }
 
+type trackListTemplateVars struct {
+	BaseTemplateVars
+
+	Tracks []Track
+}
+
 func (th *TracksHandler) list(w http.ResponseWriter, r *http.Request) {
 	tracks, err := ListTracks()
 
@@ -149,8 +155,8 @@ func (th *TracksHandler) list(w http.ResponseWriter, r *http.Request) {
 		logrus.Errorf("could not get track list, err: %s", err)
 	}
 
-	th.viewRenderer.MustLoadTemplate(w, r, "content/tracks.html", map[string]interface{}{
-		"tracks": tracks,
+	th.viewRenderer.MustLoadTemplate(w, r, "content/tracks.html", &trackListTemplateVars{
+		Tracks: tracks,
 	})
 }
 
