@@ -171,4 +171,9 @@ svg.race-weekend-connector path {
 svg path.race-weekend-arrow {
   stroke: $white !important;
   fill: $white !important;
+
+  &:hover {
+    stroke: $primary !important;
+    fill: $primary !important;
+  }
 }

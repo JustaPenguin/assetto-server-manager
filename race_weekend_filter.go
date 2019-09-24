@@ -72,6 +72,10 @@ func (f RaceWeekendSessionToSessionFilter) Filter(parentSession, childSession *R
 
 	split := parentSessionResults[resultStart:resultEnd]
 
+	if !parentSession.Completed() {
+		reverseEntrants(f.NumEntrantsToReverse, split)
+	}
+
 	splitIndex := 0
 
 	for pitBox := entryListStart; pitBox < entryListStart+(resultEnd-resultStart); pitBox++ {

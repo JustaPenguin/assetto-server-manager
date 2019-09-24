@@ -29,6 +29,11 @@ svg.race-weekend-connector path {
 svg path.race-weekend-arrow {
   stroke: $gray-800;
   fill: $gray-800;
+
+  &:hover {
+    stroke: $primary;
+    fill: $primary;
+  }
 }
 
 .race-weekend-entrylist {

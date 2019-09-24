@@ -28,7 +28,6 @@
 
                 <div class="row">
                     <div class="col-md-6">
-
                         <form>
 
                             {{ if not $.ParentSession.IsBase }}
@@ -58,6 +57,12 @@
                                                     </label>
                                                 {{ end }}
                                             </div>
+
+                                            {{ if not $.ParentSession.Completed }}
+                                                <div class="pl-3 pr-3">
+                                                    <small class="text-danger">The Parent Session ({{ $.ParentSession.Name }}) has not been completed. Sorting will not change the live preview, but will apply to the grid when the {{ $.ParentSession.Name }} Session has completed.</small>
+                                                </div>
+                                            {{ end }}
                                         </div>
 
                                         <div class="form-group row">

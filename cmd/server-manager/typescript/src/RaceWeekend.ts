@@ -79,7 +79,7 @@ export namespace RaceWeekend {
                 const $session = $(element);
 
                 // @ts-ignore
-                this.jsp.draggable(element, {grid: [10, 10]});
+                this.jsp.draggable(element, {grid: [5, 5]});
 
                 const parentIDsJSON = $session.data("parent-ids");
 
@@ -290,7 +290,7 @@ export namespace RaceWeekend {
                 let $table = $("table#grid-preview");
                 $table.find("tr:not(:first-child)").remove();
 
-                for (let i = 0; i < results.length; i++) {
+                for (let i = 0; i < grid.length || i < results.length; i++) {
                     let $row = $("<tr>");
                     $row.append($("<td>").text(results[i]));
 
