@@ -47,6 +47,7 @@ func NewAccount() *Account {
 		ID:              uuid.New(),
 		Created:         time.Now(),
 		LastSeenVersion: BuildVersion,
+		Theme:           ThemeDefault,
 	}
 }
 
@@ -67,6 +68,16 @@ type Account struct {
 
 	DefaultPassword string
 	LastSeenVersion string
+
+	Theme Theme
+}
+
+func (a Account) ShowDarkTheme(serverManagerDarkThemeEnabled bool) bool {
+	if a.Theme == ThemeDefault && serverManagerDarkThemeEnabled {
+		return true
+	}
+
+	return a.Theme == ThemeDark
 }
 
 func (a Account) HasSeenCurrentVersion() bool {
@@ -130,6 +141,7 @@ var OpenAccount = &Account{
 	Name:            "Free Access",
 	Group:           GroupRead,
 	LastSeenVersion: BuildVersion,
+	Theme:           ThemeDefault,
 }
 
 // MustLoginMiddleware determines whether an account needs to log in to access a given Group page
@@ -324,6 +336,12 @@ func (ah *AccountHandler) toggleServerOpenStatus(w http.ResponseWriter, r *http.
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+type newPasswordTemplateVars struct {
+	BaseTemplateVars
+
+	NewAccount bool
+}
+
 func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 	account := AccountFromRequest(r)
 
@@ -368,9 +386,16 @@ func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new-password.html", map[string]interface{}{
-		"newAccount": account.NeedsPasswordReset(),
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new-password.html", &newPasswordTemplateVars{
+		NewAccount: account.NeedsPasswordReset(),
 	})
+}
+
+type updateAccountTemplateVars struct {
+	BaseTemplateVars
+
+	Account      *Account
+	ThemeOptions []ThemeDetails
 }
 
 func (ah *AccountHandler) update(w http.ResponseWriter, r *http.Request) {
@@ -378,9 +403,10 @@ func (ah *AccountHandler) update(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 		driverName, guid, team := r.FormValue("DriverName"), r.FormValue("DriverGUID"), r.FormValue("DriverTeam")
+		theme := r.FormValue("Theme")
 
 		if driverName != "" || guid != "" || team != "" {
-			err := ah.accountManager.updateDetails(account, driverName, guid, team)
+			err := ah.accountManager.updateDetails(account, driverName, guid, team, theme)
 
 			if err != nil {
 				AddErrorFlash(w, r, "Unable to update account details")
@@ -404,8 +430,9 @@ func (ah *AccountHandler) update(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/update.html", map[string]interface{}{
-		"account": account,
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/update.html", &updateAccountTemplateVars{
+		Account:      account,
+		ThemeOptions: ThemeOptions,
 	})
 }
 
@@ -546,10 +573,11 @@ func (am *AccountManager) changePassword(account *Account, password string) erro
 	return am.store.UpsertAccount(account)
 }
 
-func (am *AccountManager) updateDetails(account *Account, name, guid, team string) error {
+func (am *AccountManager) updateDetails(account *Account, name, guid, team, theme string) error {
 	account.DriverName = name
 	account.GUID = guid
 	account.Team = team
+	account.Theme = Theme(theme)
 
 	return am.store.UpsertAccount(account)
 }
@@ -561,6 +589,13 @@ func (ah *AccountHandler) logout(w http.ResponseWriter, r *http.Request) {
 	_ = sess.Save(r, w)
 
 	http.Redirect(w, r, "/", http.StatusFound)
+}
+
+type createAccountTemplateVars struct {
+	BaseTemplateVars
+
+	Account   *Account
+	IsEditing bool
 }
 
 func (ah *AccountHandler) createOrEditAccount(w http.ResponseWriter, r *http.Request) {
@@ -623,10 +658,17 @@ func (ah *AccountHandler) createOrEditAccount(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new.html", map[string]interface{}{
-		"Account":   account,
-		"IsEditing": isEditing,
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new.html", &createAccountTemplateVars{
+		Account:   account,
+		IsEditing: isEditing,
 	})
+}
+
+type manageAccountsTemplateVars struct {
+	BaseTemplateVars
+
+	Accounts         []*Account
+	ServerReadIsOpen bool
 }
 
 func (ah *AccountHandler) manageAccounts(w http.ResponseWriter, r *http.Request) {
@@ -638,9 +680,9 @@ func (ah *AccountHandler) manageAccounts(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/manage.html", map[string]interface{}{
-		"Accounts":         accounts,
-		"ServerReadIsOpen": accountOptions.IsOpen,
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/manage.html", &manageAccountsTemplateVars{
+		Accounts:         accounts,
+		ServerReadIsOpen: accountOptions.IsOpen,
 	})
 }
 

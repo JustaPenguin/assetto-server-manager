@@ -143,6 +143,12 @@ func NewWeatherHandler(baseHandler *BaseHandler) *WeatherHandler {
 	}
 }
 
+type weatherListTemplateVars struct {
+	BaseTemplateVars
+
+	Weathers Weather
+}
+
 func (wh *WeatherHandler) list(w http.ResponseWriter, r *http.Request) {
 	weather, err := ListWeather()
 
@@ -152,8 +158,8 @@ func (wh *WeatherHandler) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wh.viewRenderer.MustLoadTemplate(w, r, "content/weather.html", map[string]interface{}{
-		"weathers": weather,
+	wh.viewRenderer.MustLoadTemplate(w, r, "content/weather.html", &weatherListTemplateVars{
+		Weathers: weather,
 	})
 }
 

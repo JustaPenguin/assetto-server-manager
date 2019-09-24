@@ -25,9 +25,10 @@ var (
 )
 
 type RaceManager struct {
-	process    ServerProcess
-	raceStore  Store
-	carManager *CarManager
+	process             ServerProcess
+	raceStore           Store
+	carManager          *CarManager
+	notificationManager *NotificationManager
 
 	currentRace      *ServerConfig
 	currentEntryList EntryList
@@ -39,18 +40,21 @@ type RaceManager struct {
 	loopedRaceWaitForSecondRace bool
 
 	// scheduled races
-	customRaceStartTimers map[string]*time.Timer
+	customRaceStartTimers    map[string]*time.Timer
+	customRaceReminderTimers map[string]*time.Timer
 }
 
 func NewRaceManager(
 	raceStore Store,
 	process ServerProcess,
 	carManager *CarManager,
+	notificationManager *NotificationManager,
 ) *RaceManager {
 	return &RaceManager{
-		raceStore:  raceStore,
-		process:    process,
-		carManager: carManager,
+		raceStore:           raceStore,
+		process:             process,
+		carManager:          carManager,
+		notificationManager: notificationManager,
 	}
 }
 
@@ -192,6 +196,10 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 
 	if err != nil {
 		return err
+	}
+
+	if !loop {
+		_ = rm.notificationManager.SendRaceStartMessage(config, event)
 	}
 
 	return nil
@@ -659,7 +667,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 
 // applyCurrentRaceSetupToOptions takes current values in race which require more detailed configuration
 // and applies them to the template opts.
-func (rm *RaceManager) applyCurrentRaceSetupToOptions(opts map[string]interface{}, race CurrentRaceConfig) error {
+func (rm *RaceManager) applyCurrentRaceSetupToOptions(opts *RaceTemplateVars, race CurrentRaceConfig) error {
 	tyres, err := ListTyres()
 
 	if err != nil {
@@ -691,8 +699,8 @@ func (rm *RaceManager) applyCurrentRaceSetupToOptions(opts map[string]interface{
 		}
 	}
 
-	opts["Tyres"] = tyres
-	opts["DeselectedTyres"] = deselectedTyres
+	opts.Tyres = tyres
+	opts.DeselectedTyres = deselectedTyres
 
 	return nil
 }
@@ -711,8 +719,34 @@ func (rm *RaceManager) ListAutoFillEntrants() ([]*Entrant, error) {
 	return entrants, nil
 }
 
+type RaceTemplateVars struct {
+	BaseTemplateVars
+
+	CarOpts             Cars
+	TrackOpts           []Track
+	AvailableSessions   []SessionType
+	Weather             Weather
+	SolIsInstalled      bool
+	Current             CurrentRaceConfig
+	CurrentEntrants     EntryList
+	PossibleEntrants    []*Entrant
+	FixedSetups         CarSetups
+	IsEditing           bool
+	EditingID           string
+	CustomRaceName      string
+	SurfacePresets      []TrackSurfacePreset
+	OverridePassword    bool
+	ReplacementPassword string
+	Tyres               Tyres
+	DeselectedTyres     map[string]bool
+
+	IsChampionship                 bool
+	Championship                   *Championship
+	ChampionshipHasAtLeastOnceRace bool
+}
+
 // BuildRaceOpts builds a quick race form
-func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, error) {
+func (rm *RaceManager) BuildRaceOpts(r *http.Request) (*RaceTemplateVars, error) {
 	_, cars, err := rm.carManager.Search(r.Context(), "", 0, 100000)
 
 	if err != nil {
@@ -797,23 +831,23 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (map[string]interface{}, e
 		}
 	}
 
-	opts := map[string]interface{}{
-		"CarOpts":             cars,
-		"TrackOpts":           tracks,
-		"AvailableSessions":   AvailableSessions,
-		"Weather":             weather,
-		"SolIsInstalled":      solIsInstalled,
-		"Current":             race.CurrentRaceConfig,
-		"CurrentEntrants":     entrants,
-		"PossibleEntrants":    possibleEntrants,
-		"FixedSetups":         fixedSetups,
-		"IsChampionship":      false, // this flag is overridden by championship setup
-		"IsEditing":           isEditing,
-		"EditingID":           templateIDForEditing,
-		"CustomRaceName":      customRaceName,
-		"SurfacePresets":      DefaultTrackSurfacePresets,
-		"OverridePassword":    overridePassword,
-		"ReplacementPassword": replacementPassword,
+	opts := &RaceTemplateVars{
+		CarOpts:             cars,
+		TrackOpts:           tracks,
+		AvailableSessions:   AvailableSessions,
+		Weather:             weather,
+		SolIsInstalled:      solIsInstalled,
+		Current:             race.CurrentRaceConfig,
+		CurrentEntrants:     entrants,
+		PossibleEntrants:    possibleEntrants,
+		FixedSetups:         fixedSetups,
+		IsChampionship:      false, // this flag is overridden by championship setup
+		IsEditing:           isEditing,
+		EditingID:           templateIDForEditing,
+		CustomRaceName:      customRaceName,
+		SurfacePresets:      DefaultTrackSurfacePresets,
+		OverridePassword:    overridePassword,
+		ReplacementPassword: replacementPassword,
 	}
 
 	err = rm.applyCurrentRaceSetupToOptions(opts, race.CurrentRaceConfig)
@@ -956,10 +990,20 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 		return err
 	}
 
+	serverOpts, err := rm.raceStore.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
 	race.Scheduled = date
 
 	// if there is an existing schedule timer for this event stop it
 	if timer := rm.customRaceStartTimers[race.UUID.String()]; timer != nil {
+		timer.Stop()
+	}
+
+	if timer := rm.customRaceReminderTimers[race.UUID.String()]; timer != nil {
 		timer.Stop()
 	}
 
@@ -993,6 +1037,16 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 				logrus.WithError(err).Errorf("Couldn't start scheduled race: %s, %s.", race.Name, race.UUID.String())
 			}
 		})
+
+		if serverOpts.NotificationReminderTimer > 0 {
+			_ = rm.notificationManager.SendRaceScheduledMessage(race, date)
+
+			duration = time.Until(date.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
+
+			rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+				_ = rm.notificationManager.SendRaceReminderMessage(race)
+			})
+		}
 
 	} else {
 		race.ClearRecurrenceRule()
@@ -1076,8 +1130,32 @@ func (rm *RaceManager) ToggleLoopCustomRace(uuid string) error {
 	return rm.raceStore.UpsertCustomRace(race)
 }
 
-func (rm *RaceManager) SaveServerOptions(so *GlobalServerConfig) error {
-	return rm.raceStore.UpsertServerOptions(so)
+func (rm *RaceManager) SaveServerOptions(newServerOpts *GlobalServerConfig) error {
+	oldServerOpts, err := rm.raceStore.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	err = rm.raceStore.UpsertServerOptions(newServerOpts)
+
+	if err != nil {
+		return err
+	}
+
+	err = rm.notificationManager.SaveServerOptions(oldServerOpts, newServerOpts)
+
+	if err != nil {
+		return err
+	}
+
+	err = rm.RescheduleNotifications(oldServerOpts, newServerOpts)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (rm *RaceManager) LoadServerOptions() (*GlobalServerConfig, error) {
@@ -1227,8 +1305,15 @@ func (rm *RaceManager) clearLoopedRaceSessionTypes() {
 
 func (rm *RaceManager) InitScheduledRaces() error {
 	rm.customRaceStartTimers = make(map[string]*time.Timer)
+	rm.customRaceReminderTimers = make(map[string]*time.Timer)
 
 	races, err := rm.raceStore.ListCustomRaces()
+
+	if err != nil {
+		return err
+	}
+
+	serverOpts, err := rm.raceStore.LoadServerOptions()
 
 	if err != nil {
 		return err
@@ -1248,6 +1333,17 @@ func (rm *RaceManager) InitScheduledRaces() error {
 					logrus.WithError(err).Errorf("Couldn't start scheduled race: %s, %s", race.Name, race.UUID.String())
 				}
 			})
+
+			if serverOpts.NotificationReminderTimer > 0 {
+				if race.Scheduled.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute).After(time.Now()) {
+					// add reminder
+					duration = time.Until(race.Scheduled.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
+
+					rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+						_ = rm.notificationManager.SendRaceReminderMessage(race)
+					})
+				}
+			}
 		} else {
 			if race.HasRecurrenceRule() {
 				emptyTime := time.Time{}
@@ -1275,6 +1371,48 @@ func (rm *RaceManager) InitScheduledRaces() error {
 					if err != nil {
 						return err
 					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// reschedule notifications if notification timer changed
+func (rm *RaceManager) RescheduleNotifications(oldServerOpts *GlobalServerConfig, newServerOpts *GlobalServerConfig) error {
+	if newServerOpts.NotificationReminderTimer == oldServerOpts.NotificationReminderTimer {
+		return nil
+	}
+
+	// stop all existing timers
+	for _, timer := range rm.customRaceReminderTimers {
+		timer.Stop()
+	}
+
+	// rebuild the timers
+	rm.customRaceReminderTimers = make(map[string]*time.Timer)
+
+	if newServerOpts.NotificationReminderTimer > 0 {
+		races, err := rm.raceStore.ListCustomRaces()
+
+		if err != nil {
+			return err
+		}
+
+		for _, race := range races {
+			race := race
+
+			if race.Scheduled.After(time.Now()) {
+				duration := time.Until(race.Scheduled)
+
+				if race.Scheduled.Add(time.Duration(0-newServerOpts.NotificationReminderTimer) * time.Minute).After(time.Now()) {
+					// add reminder
+					duration = time.Until(race.Scheduled.Add(time.Duration(0-newServerOpts.NotificationReminderTimer) * time.Minute))
+
+					rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+						_ = rm.notificationManager.SendRaceReminderMessage(race)
+					})
 				}
 			}
 		}

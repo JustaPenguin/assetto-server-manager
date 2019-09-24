@@ -1,6 +1,8 @@
+{{/* gotype: github.com/cj123/assetto-server-manager.ChampionshipTemplateVars */}}
+
 {{ define "title" }}
     {{ if .IsEditing }}
-        Edit the {{ .Current.Name }} Championship
+        Edit the {{ .Championship.Name }} Championship
     {{ else }}
         Create a new Championship
     {{ end }}
@@ -8,11 +10,11 @@
 
 {{ define "content" }}
 
-    {{ $f := .Current }}
+    {{ $f := .Championship }}
 
     <h1 class="text-center">
         {{ if .IsEditing }}
-            Edit the {{ .Current.Name }} Championship
+            Edit the {{ .Championship.Name }} Championship
         {{ else }}
             Create a new Championship
         {{ end }}
@@ -129,7 +131,7 @@
                     </div>
                 </div>
 
-                {{ if .IsEditing }}{{ with .Current.Info }}<div class="d-none" id="ChampionshipInfoHolder">{{ . }}</div>{{ end }}{{ end }}
+                {{ if .IsEditing }}{{ with .Championship.Info }}<div class="d-none" id="ChampionshipInfoHolder">{{ . }}</div>{{ end }}{{ end }}
 
                 <div class="form-group row">
                     <label for="summernote" class="col-sm-3 col-form-label">Important Information</label>
@@ -269,13 +271,13 @@
         </div>
 
         <div id="class-template" style="display: none;">
-            {{ template "championship-class" . }}
+            {{ template "championship-class" dict "IsEditing" $.IsEditing "CarOpts" $.CarOpts "Championship" $.Championship "DefaultPoints" $.DefaultPoints "MaxClientsOverride" $.MaxClientsOverride }}
         </div>
 
         {{ range $classIndex, $class := $f.Classes }}
-            {{ template "championship-class" dict "IsEditing" $.IsEditing "CarOpts" $.CarOpts "Championship" $.Current "Class" $class "DefaultPoints" $.DefaultPoints "MaxClientsOverride" $.MaxClientsOverride }}
+            {{ template "championship-class" dict "IsEditing" $.IsEditing "CarOpts" $.CarOpts "Championship" $.Championship "Class" $class "DefaultPoints" $.DefaultPoints "MaxClientsOverride" $.MaxClientsOverride }}
         {{ else }}
-            {{ template "championship-class" . }}
+            {{ template "championship-class" dict "IsEditing" $.IsEditing "CarOpts" $.CarOpts "Championship" $.Championship "DefaultPoints" $.DefaultPoints "MaxClientsOverride" $.MaxClientsOverride }}
         {{ end }}
 
 

@@ -1,3 +1,5 @@
+{{/* gotype: github.com/cj123/assetto-server-manager.championshipListTemplateVars */}}
+
 {{ define "title" }}Championships{{ end }}
 
 {{ define "content" }}
@@ -9,7 +11,7 @@
         <div class="col-sm-4">
             {{ if $writeAccess }}
 
-                <div class="btn-group float-right" role="group" aria-label="New Championsip">
+                <div class="btn-group float-right" role="group" aria-label="New Championship">
                     <a href="/championships/new" class="btn btn-success">Create a new Championship</a>
 
                     <div class="btn-group" role="group">
@@ -40,7 +42,7 @@
                 <th>Actions</th>
             </tr>
 
-            {{ range $index, $championship := .championships }}
+            {{ range $index, $championship := .Championships }}
                 {{ if ne $championship.Progress 100.0 }}
                     <tr>
                         <td>
@@ -88,7 +90,7 @@
                 <th>Actions</th>
             </tr>
 
-            {{ range $index, $championship := .championships }}
+            {{ range $index, $championship := .Championships }}
                 {{ if eq $championship.Progress 100.0 }}
                     <tr>
                         <td>

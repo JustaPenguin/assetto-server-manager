@@ -1,3 +1,5 @@
+{{/* gotype: github.com/cj123/assetto-server-manager.carListTemplateVars */}}
+
 {{ define "title" }}Cars{{ end }}
 
 {{ define "content" }}
@@ -61,7 +63,7 @@
     {{ with .Results }}
         {{- /*gotype: github.com/blevesearch/bleve.SearchResult */ -}}
 
-        <div class="text-black-50 mb-2">
+        <div id="search-info" class="text-black-50 mb-2">
             <div class="float-left">
                 {{ $pageStart := mul $.CurrentPage $.PageSize }}
                 <small>Showing results {{ $pageStart }}-{{ add $pageStart (len .Hits) }} of {{ .Total }}</small>
@@ -117,7 +119,7 @@
 
 
         {{ if gt (len .Hits) 0 }}
-            {{ template "pagination" dict "CurrentPage" $.CurrentPage "NumPages" $.NumPages "_request" $._request }}
+            {{ template "pagination" dict "CurrentPage" $.CurrentPage "NumPages" $.NumPages "Request" $.Request }}
         {{ end }}
     {{ end }}
 

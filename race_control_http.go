@@ -2,8 +2,6 @@ package servermanager
 
 import (
 	"net/http"
-	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -16,8 +14,6 @@ import (
 const (
 	// Time allowed to write a message to the peer.
 	writeWait = 10 * time.Second
-
-	CMJoinLinkBase string = "https://acstuff.ru/s/q:race/online/join"
 )
 
 type Broadcaster interface {
@@ -149,6 +145,15 @@ func NewRaceControlHandler(baseHandler *BaseHandler, store Store, raceManager *R
 	}
 }
 
+type liveTimingTemplateVars struct {
+	BaseTemplateVars
+
+	RaceDetails     *CustomRace
+	FrameLinks      []string
+	CSSDotSmoothing int
+	CMJoinLink      string
+}
+
 func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request) {
 	currentRace, entryList := rch.raceManager.CurrentRace()
 
@@ -168,7 +173,7 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 	linkString := ""
 
 	if rch.serverProcess.GetServerConfig().GlobalServerConfig.ShowContentManagerJoinLink == 1 {
-		link, err := rch.getCMJoinLink()
+		link, err := getContentManagerJoinLink(rch.serverProcess.GetServerConfig())
 
 		if err != nil {
 			logrus.Errorf("could not get CM join link, err: %s", err)
@@ -177,36 +182,15 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	rch.viewRenderer.MustLoadTemplate(w, r, "live-timing.html", map[string]interface{}{
-		"RaceDetails":     customRace,
-		"FrameLinks":      frameLinks,
-		"CSSDotSmoothing": udp.RealtimePosIntervalMs,
-		"WideContainer":   true,
-		"CMJoinLink":      linkString,
+	rch.viewRenderer.MustLoadTemplate(w, r, "live-timing.html", &liveTimingTemplateVars{
+		BaseTemplateVars: BaseTemplateVars{
+			WideContainer: true,
+		},
+		RaceDetails:     customRace,
+		FrameLinks:      frameLinks,
+		CSSDotSmoothing: udp.RealtimePosIntervalMs,
+		CMJoinLink:      linkString,
 	})
-}
-
-func (rch *RaceControlHandler) getCMJoinLink() (*url.URL, error) {
-	// get the join link for the current session
-	geoIP, err := geoIP()
-
-	if err != nil {
-		return nil, err
-	}
-
-	cmUrl, err := url.Parse(CMJoinLinkBase)
-
-	if err != nil {
-		return nil, err
-	}
-
-	queryString := cmUrl.Query()
-	queryString.Set("ip", geoIP.IP)
-	queryString.Set("httpPort", strconv.Itoa(rch.serverProcess.GetServerConfig().GlobalServerConfig.HTTPPort))
-
-	cmUrl.RawQuery = queryString.Encode()
-
-	return cmUrl, nil
 }
 
 func deleteEmpty(s []string) []string {

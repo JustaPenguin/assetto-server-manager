@@ -3,6 +3,9 @@ server-install
 docker-compose.yml
 cmd/championship-import
 server-manager.log
+server_manager.db
+config.yml
+assetto/
 
 # Created by https://www.gitignore.io/api/go
 # Edit at https://www.gitignore.io/?templates=go
@@ -28,3 +31,4 @@ server-manager.log
 *.syso
 *.map
 changelog_embed.go
+
