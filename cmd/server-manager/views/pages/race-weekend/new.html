@@ -48,17 +48,17 @@
 
                     <div class="entrants-block">
                         <div id="entrantTemplate" class="entrant">
-                            {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" false }}
+                            {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" false "NameAndGUIDRequired" true }}
                         </div>
 
                         {{ range $index, $entrant := $.RaceWeekend.GetEntryList.AsSlice }}
                             <div class="entrant">
-                                {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" false "IsEditing" $.IsEditing "IsChampionship" false }}
+                                {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" false "IsEditing" $.IsEditing "IsChampionship" false "NameAndGUIDRequired" true }}
                             </div>
                         {{ else }}
                             {{ if not $.IsEditing }}
                                 <div class="entrant">
-                                    {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" false }}
+                                    {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" false "NameAndGUIDRequired" true }}
                                 </div>
                             {{ end }}
                         {{ end }}
