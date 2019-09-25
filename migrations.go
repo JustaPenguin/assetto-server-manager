@@ -1,10 +1,13 @@
 package servermanager
 
 import (
+	"encoding/json"
 	"html/template"
 	"os"
 	"path/filepath"
 	"sort"
+
+	"github.com/cj123/assetto-server-manager/fixtures/race-weekend-examples"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -63,6 +66,7 @@ var (
 		addSleepTime1ToServerOptions,
 		addPersistOpenEntrantsToChampionship,
 		addThemeChoiceToAccounts,
+		addRaceWeekendExamples,
 	}
 )
 
@@ -446,4 +450,18 @@ func addThemeChoiceToAccounts(s Store) error {
 	}
 
 	return nil
+}
+
+func addRaceWeekendExamples(s Store) error {
+	logrus.Infof("Running migration: Add Race Weekend examples")
+
+	var raceWeekend *RaceWeekend
+
+	err := json.Unmarshal(raceweekendexamples.F12004spa, &raceWeekend)
+
+	if err != nil {
+		return err
+	}
+
+	return s.UpsertRaceWeekend(raceWeekend)
 }

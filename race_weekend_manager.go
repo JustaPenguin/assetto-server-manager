@@ -731,7 +731,7 @@ func (rwm *RaceWeekendManager) PreviewGrid(raceWeekendID, parentSessionID, child
 		}
 
 		preview.Grid[entrant.PitBox+1] = SessionPreviewEntrant{
-			Name:       entrant.Car.GetName(),
+			Name:       fmt.Sprintf("%s (%s)", entrant.Car.GetName(), sess.Name()),
 			Session:    sess.Name(),
 			Class:      class.Name,
 			ClassColor: color,

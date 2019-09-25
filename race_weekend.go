@@ -176,11 +176,41 @@ func (rw *RaceWeekend) DelSession(sessionID string) {
 		return
 	}
 
+	sessionToDelete := rw.Sessions[toDelete]
+
+	// loop through all parents of the deleted session. if we can, put them as parents of the children of this session
+	for _, parentID := range sessionToDelete.ParentIDs {
+		parent, err := rw.FindSessionByID(parentID.String())
+
+		if err != nil {
+			logrus.WithError(err).Warnf("Could not find parentID: %s", parentID.String())
+			continue
+		}
+
+		for _, child := range rw.FindChildren(sessionToDelete.ID.String()) {
+			if !rw.HasParentRecursive(parent, child.ID.String()) {
+				child.ParentIDs = append(child.ParentIDs, parentID)
+			}
+		}
+	}
+
 	rw.Sessions = append(rw.Sessions[:toDelete], rw.Sessions[toDelete+1:]...)
 
 	for _, session := range rw.Sessions {
 		session.RemoveParent(sessionID)
 	}
+}
+
+func (rw *RaceWeekend) FindChildren(parentID string) []*RaceWeekendSession {
+	var children []*RaceWeekendSession
+
+	for _, session := range rw.Sessions {
+		if session.HasParent(parentID) {
+			children = append(children, session)
+		}
+	}
+
+	return children
 }
 
 // SessionCanBeRun determines whether a RaceWeekendSession has all of its parent dependencies met to be allowed to run
@@ -444,8 +474,7 @@ type RaceWeekendSession struct {
 
 	Points map[uuid.UUID]*ChampionshipPoints
 
-	SkipSession bool
-	isBase      bool
+	isBase bool
 }
 
 // NewRaceWeekendSession creates an empty RaceWeekendSession
