@@ -40,7 +40,7 @@
                             <a class="nav-link active" id="session-main-tab"
                                data-toggle="tab" href="#session-main"
                                role="tab"
-                               aria-controls="main" aria-selected="true"><strong>{{ prettify $sessionResults.Type false }}</strong></a>
+                               aria-controls="main" aria-selected="true"><strong>{{ prettify $sessionResults.Type.String false }}</strong></a>
                         </li>
 
                         <li class="nav-item">
@@ -160,7 +160,7 @@
                             <table class="table table-bordered table-striped">
                                 <tr>
                                     <th>Lap #</th>
-                                    {{ if eq "RACE" $sessionResults.Type }}
+                                    {{ if eq "RACE" $sessionResults.Type.OriginalString }}
                                         <th>Race Position</th>
                                     {{ end }}
                                     <th>Lap Time</th>
@@ -181,7 +181,7 @@
                                         {{ $lapCount = add $lapCount 1 }}
                                         <tr>
                                             <td>{{ $lapCount }}</td>
-                                            {{ if eq "RACE" $sessionResults.Type }}
+                                            {{ if eq "RACE" $sessionResults.Type.OriginalString }}
                                                 <td>{{ $sessionResults.GetPosForLap $sessionResult.DriverGUID $lapCount }}</td>
                                             {{ end }}
                                             <td>

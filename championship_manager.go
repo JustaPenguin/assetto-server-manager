@@ -59,7 +59,17 @@ func (cm *ChampionshipManager) LoadChampionship(id string) (*Championship, error
 }
 
 func (cm *ChampionshipManager) UpsertChampionship(c *Championship) error {
-	return cm.raceStore.UpsertChampionship(c)
+	err := cm.raceStore.UpsertChampionship(c)
+
+	if err != nil {
+		return err
+	}
+
+	if config != nil && config.ACSR.Enabled && c.ACSR {
+		ACSRSendResult(c)
+	}
+
+	return nil
 }
 
 func (cm *ChampionshipManager) DeleteChampionship(id string) error {
@@ -84,6 +94,7 @@ type ChampionshipTemplateVars struct {
 	*RaceTemplateVars
 
 	DefaultPoints ChampionshipPoints
+	ACSREnabled   bool
 }
 
 func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (championship *Championship, opts *ChampionshipTemplateVars, err error) {
@@ -114,6 +125,7 @@ func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (champions
 	}
 
 	opts.Championship = championship
+	opts.ACSREnabled = config.ACSR.Enabled
 
 	return championship, opts, nil
 }
@@ -161,8 +173,26 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	}
 
 	championship.Info = template.HTML(r.FormValue("ChampionshipInfo"))
-	championship.OverridePassword = r.FormValue("OverridePassword") == "1"
-	championship.ReplacementPassword = r.FormValue("ReplacementPassword")
+	championship.OverridePassword = r.FormValue("OverridePassword") == "on" || r.FormValue("OverridePassword") == "1"
+
+	newACSR := r.FormValue("ACSR") == "on" || r.FormValue("ACSR") == "1"
+
+	if championship.ACSR && !newACSR {
+		championship.ACSR = newACSR
+
+		ACSRSendResult(championship)
+	} else {
+		championship.ACSR = newACSR
+	}
+
+	if championship.ACSR {
+		championship.OverridePassword = true
+		championship.ReplacementPassword = ""
+		championship.OpenEntrants = false
+		championship.SignUpForm.Enabled = true
+	} else {
+		championship.ReplacementPassword = r.FormValue("ReplacementPassword")
+	}
 
 	previousNumEntrants := 0
 	previousNumPoints := 0
@@ -791,6 +821,10 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			if err != nil {
 				logrus.Errorf("Could not stop Assetto Process, err: %s", err)
 			}
+		}
+
+		if championship.ACSR && config != nil && config.ACSR.Enabled {
+			go ACSRSendResult(championship)
 		}
 	default:
 		saveChampionship = false

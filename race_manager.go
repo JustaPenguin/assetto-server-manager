@@ -1256,7 +1256,7 @@ func (rm *RaceManager) LoopCallback(message udp.Message) {
 
 		// If this is a race, and there is a second race configured
 		// then wait for the second race to happen.
-		if results.Type == string(SessionTypeRace) {
+		if results.Type == SessionTypeRace {
 			for _, session := range rm.loopedRaceSessionTypes {
 				if session == SessionTypeSecondRace {
 					if !rm.loopedRaceWaitForSecondRace {
@@ -1284,7 +1284,7 @@ func (rm *RaceManager) LoopCallback(message udp.Message) {
 
 		logrus.Infof("results type: %s, endSession: %s", results.Type, string(endSession))
 
-		if results.Type == string(endSession) {
+		if results.Type == endSession {
 			logrus.Infof("Event end detected, stopping looped session.")
 
 			rm.clearLoopedRaceSessionTypes()

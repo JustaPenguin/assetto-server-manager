@@ -22,6 +22,7 @@ type Configuration struct {
 	Accounts      AccountsConfig      `yaml:"accounts"`
 	Monitoring    MonitoringConfig    `yaml:"monitoring"`
 	Championships ChampionshipsConfig `yaml:"championships"`
+	ACSR          ACSRConfig          `yaml:"acsr"`
 }
 
 type ChampionshipsConfig struct {
@@ -84,6 +85,11 @@ func (h *HTTPConfig) createSessionStore() (sessions.Store, error) {
 	}
 }
 
+type ACSRConfig struct {
+	URL     string `yaml:"url"`
+	Enabled bool   `yaml:"enabled"`
+}
+
 type SteamConfig struct {
 	Username       string `yaml:"username"`
 	Password       string `yaml:"password"`
@@ -133,6 +139,8 @@ type ServerExtraConfig struct {
 	PerformanceMode bool     `yaml:"performance_mode"`
 }
 
+const acsrURL = "https://acsr.assettocorsaservers.com"
+
 func ReadConfig(location string) (conf *Configuration, err error) {
 	f, err := os.Open(location)
 
@@ -151,6 +159,10 @@ func ReadConfig(location string) (conf *Configuration, err error) {
 
 	if err != nil {
 		return nil, err
+	}
+
+	if config.ACSR.URL == "" {
+		config.ACSR.URL = acsrURL
 	}
 
 	if config.Accounts.AdminPasswordOverride != "" {

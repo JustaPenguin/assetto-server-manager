@@ -12,6 +12,12 @@ $(document).ready(function () {
 
     $document = $(document);
 
+    // init bootstrap-switch
+    $.fn.bootstrapSwitch.defaults.size = 'small';
+    $.fn.bootstrapSwitch.defaults.animate = false;
+    $.fn.bootstrapSwitch.defaults.onColor = "success";
+    $document.find("input[type='checkbox']").bootstrapSwitch();
+
     championships.init();
     $document.find(".race-setup").each(function (index, elem) {
         new RaceSetup($(elem));
@@ -35,12 +41,6 @@ $(document).ready(function () {
 
     serverLogs.init();
     initUploaders();
-
-    // init bootstrap-switch
-    $.fn.bootstrapSwitch.defaults.size = 'small';
-    $.fn.bootstrapSwitch.defaults.animate = false;
-    $.fn.bootstrapSwitch.defaults.onColor = "success";
-    $document.find("input[type='checkbox']").bootstrapSwitch();
 
     $document.find('[data-toggle="tooltip"]').tooltip();
 
@@ -1989,6 +1989,46 @@ let championships = {
         championships.initDisplayOrder();
         championships.initConfigureSignUpForm();
         championships.initSignUpForm();
+        championships.initACSRWatcher();
+    },
+
+    initACSRWatcher: function () {
+        let $acsrSwitch = $("#ACSR");
+
+        if ($acsrSwitch.length) {
+            let state = $acsrSwitch.bootstrapSwitch('state');
+
+            championships.setSwitchesForACSR(state);
+        }
+
+        $acsrSwitch.on('switchChange.bootstrapSwitch', function (event, state) {
+            championships.setSwitchesForACSR(state);
+        });
+    },
+
+    setSwitchesForACSR: function (state) {
+        let $openEntrantsSwitch = $("#ChampionshipOpenEntrants");
+        let $signUpFormSwitch = $("#ChampionshipSignUpFormEnabled");
+        let $overridePasswordSwitch = $("#OverridePassword");
+
+        if (state) {
+            $openEntrantsSwitch.bootstrapSwitch('state', false);
+            $openEntrantsSwitch.bootstrapSwitch('disabled', true);
+
+            $signUpFormSwitch.bootstrapSwitch('state', true);
+            $signUpFormSwitch.bootstrapSwitch('disabled', true);
+
+            $overridePasswordSwitch.bootstrapSwitch('state', true);
+            $overridePasswordSwitch.bootstrapSwitch('disabled', true);
+
+            $overridePasswordSwitch.closest(".card-body").find("#ReplacementPasswordWrapper").hide();
+        } else {
+            $overridePasswordSwitch.closest(".card-body").find("#ReplacementPasswordWrapper").show();
+
+            $openEntrantsSwitch.bootstrapSwitch('disabled', false);
+            $signUpFormSwitch.bootstrapSwitch('disabled', false);
+            $overridePasswordSwitch.bootstrapSwitch('disabled', false);
+        }
     },
 
     initConfigureSignUpForm: function () {

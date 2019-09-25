@@ -84,15 +84,19 @@ func (fs *filesystemTemplateLoader) Templates(funcs template.FuncMap) (map[strin
 
 var UseShortenedDriverNames = true
 
+func shortenDriverName(name string) string {
+	nameParts := strings.Split(name, " ")
+
+	if len(nameParts) > 1 && len(nameParts[len(nameParts)-1]) > 1 {
+		nameParts[len(nameParts)-1] = nameParts[len(nameParts)-1][:1] + "."
+	}
+
+	return strings.Join(nameParts, " ")
+}
+
 func driverName(name string) string {
 	if UseShortenedDriverNames {
-		nameParts := strings.Split(name, " ")
-
-		if len(nameParts) > 1 && len(nameParts[len(nameParts)-1]) > 1 {
-			nameParts[len(nameParts)-1] = nameParts[len(nameParts)-1][:1] + "."
-		}
-
-		return strings.Join(nameParts, " ")
+		return shortenDriverName(name)
 	} else {
 		return name
 	}
