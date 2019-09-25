@@ -29,6 +29,10 @@ const (
 	serverConfigIniPath = "server_cfg.ini"
 )
 
+func (s SessionType) OriginalString() string {
+	return string(s)
+}
+
 func (s SessionType) String() string {
 	switch s {
 	case SessionTypeBooking:

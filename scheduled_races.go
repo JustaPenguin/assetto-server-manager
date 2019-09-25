@@ -217,7 +217,7 @@ func (srm *ScheduledRacesManager) buildScheduledRaces(w io.Writer) error {
 	return err
 }
 
-type calendarObject struct {
+type CalendarObject struct {
 	ID               string    `json:"id"`
 	GroupID          string    `json:"groupId"`
 	AllDay           bool      `json:"allDay"`
@@ -241,17 +241,17 @@ type calendarObject struct {
 	TextColor       string `json:"textColor"`
 }
 
-func (srm *ScheduledRacesManager) buildCalendar(start time.Time, end time.Time) ([]calendarObject, error) {
+func (srm *ScheduledRacesManager) buildCalendar(start time.Time, end time.Time) ([]CalendarObject, error) {
 	scheduled, err := srm.getScheduledRaces()
 
 	if err != nil {
 		return nil, err
 	}
 
-	var calendarObjects []calendarObject
+	var calendarObjects []CalendarObject
 
 	if len(scheduled) == 0 {
-		calendarObjects = append(calendarObjects, calendarObject{
+		calendarObjects = append(calendarObjects, CalendarObject{
 			ID:               "no-events",
 			GroupID:          "no-events",
 			AllDay:           false,
@@ -305,6 +305,10 @@ func (srm *ScheduledRacesManager) buildCalendar(start time.Time, end time.Time) 
 
 	scheduled = append(scheduled, recurring...)
 
+	return BuildCalObject(scheduled, calendarObjects)
+}
+
+func BuildCalObject(scheduled []ScheduledEvent, calendarObjects []CalendarObject) ([]CalendarObject, error) {
 	for _, scheduledEvent := range scheduled {
 
 		var prevSessionTime time.Duration
@@ -392,13 +396,13 @@ func (srm *ScheduledRacesManager) buildCalendar(start time.Time, end time.Time) 
 
 			textColor = "#303030"
 
-			calendarObjects = append(calendarObjects, calendarObject{
+			calendarObjects = append(calendarObjects, CalendarObject{
 				ID:               scheduledEvent.GetID().String() + session.Name,
 				GroupID:          scheduledEvent.GetID().String(),
 				AllDay:           false,
 				Start:            start,
 				End:              end,
-				Title:            generateSummary(scheduledEvent.GetRaceSetup(), session.Name) + " " + scheduledEvent.GetSummary(),
+				Title:            GenerateSummary(scheduledEvent.GetRaceSetup(), session.Name) + " " + scheduledEvent.GetSummary(),
 				Description:      carList(scheduledEvent.GetRaceSetup().Cars) + ": " + scheduledEvent.ReadOnlyEntryList().Entrants(),
 				URL:              pageURL,
 				SignUpURL:        signUpURL,
@@ -420,7 +424,7 @@ func (srm *ScheduledRacesManager) buildCalendar(start time.Time, end time.Time) 
 	return calendarObjects, nil
 }
 
-func generateSummary(raceSetup CurrentRaceConfig, eventType string) string {
+func GenerateSummary(raceSetup CurrentRaceConfig, eventType string) string {
 	var summary string
 
 	trackInfo := trackInfo(raceSetup.Track, raceSetup.TrackLayout)

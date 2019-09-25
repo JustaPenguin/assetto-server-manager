@@ -1,6 +1,8 @@
 package servermanager
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -26,7 +28,7 @@ type SessionResults struct {
 	Result         []*SessionResult `json:"Result"`
 	TrackConfig    string           `json:"TrackConfig"`
 	TrackName      string           `json:"TrackName"`
-	Type           string           `json:"Type"`
+	Type           SessionType      `json:"Type"`
 	Date           time.Time        `json:"Date"`
 	SessionFile    string           `json:"SessionFile"`
 	ChampionshipID string           `json:"ChampionshipID"`
@@ -43,6 +45,51 @@ func (s *SessionResults) FindCarByGUIDAndModel(guid, model string) (*SessionCar,
 	}
 
 	return nil, ErrSessionCarNotFound
+}
+
+func (s *SessionResults) Anonymize() {
+	for _, car := range s.Cars {
+		car.Driver.GUID = GetMD5Hash(car.Driver.GUID)
+		car.Driver.Name = shortenDriverName(car.Driver.Name)
+
+		for _, guid := range car.Driver.GuidsList {
+			guid = GetMD5Hash(guid)
+		}
+	}
+
+	for _, event := range s.Events {
+		event.Driver.GUID = GetMD5Hash(event.Driver.GUID)
+		event.OtherDriver.GUID = GetMD5Hash(event.OtherDriver.GUID)
+
+		event.Driver.Name = shortenDriverName(event.Driver.Name)
+		event.OtherDriver.Name = shortenDriverName(event.OtherDriver.Name)
+
+		for i, guid := range event.Driver.GuidsList {
+			event.Driver.GuidsList[i] = GetMD5Hash(guid)
+		}
+
+		for i, guid := range event.OtherDriver.GuidsList {
+			event.Driver.GuidsList[i] = GetMD5Hash(guid)
+		}
+	}
+
+	for _, lap := range s.Laps {
+		lap.DriverGUID = GetMD5Hash(lap.DriverGUID)
+
+		lap.DriverName = shortenDriverName(lap.DriverName)
+	}
+
+	for _, result := range s.Result {
+		result.DriverGUID = GetMD5Hash(result.DriverGUID)
+
+		result.DriverName = shortenDriverName(result.DriverName)
+	}
+}
+
+func GetMD5Hash(guid string) string {
+	hasher := md5.New()
+	hasher.Write([]byte(guid))
+	return hex.EncodeToString(hasher.Sum(nil))
 }
 
 func (s *SessionResults) MaskDriverNames() {
@@ -147,6 +194,54 @@ func (s *SessionResults) GetAverageLapTime(guid string) time.Duration {
 	}
 
 	return s.GetTime(int(float64(totalTimeForAverage)/float64(lapsForAverage)), guid, false)
+}
+
+func (s *SessionResults) GetOverallAverageLapTime() time.Duration {
+	var totalTime, driverLapCount, lapsForAverage, totalTimeForAverage int
+
+	for _, lap := range s.Laps {
+		avgSoFar := (float64(totalTime) / float64(lapsForAverage)) * 1.07
+
+		// if lap doesnt cut and if lap is < 107% of average for that driver so far and if lap isn't lap 1
+		if lap.Cuts == 0 && driverLapCount != 0 && (float64(lap.LapTime) < avgSoFar || totalTime == 0) {
+			totalTimeForAverage += lap.LapTime
+			lapsForAverage++
+		}
+
+		driverLapCount++
+		totalTime += lap.LapTime
+	}
+
+	d, _ := time.ParseDuration(fmt.Sprintf("%dms", int(float64(totalTimeForAverage)/float64(lapsForAverage))))
+
+	return d
+}
+
+func (s *SessionResults) GetConsistency(guid string) float64 {
+	var bestLap int
+
+	for _, lap := range s.Laps {
+		if lap.DriverGUID == guid {
+			if s.IsDriversFastestLap(guid, lap.LapTime, lap.Cuts) {
+				bestLap = lap.LapTime
+			}
+		}
+	}
+
+	var percentage float64
+
+	average := s.GetAverageLapTime(guid)
+	best := s.GetTime(bestLap, guid, false)
+
+	if average != 0 && best != 0 {
+		consistency := average.Seconds() - best.Seconds()
+
+		percentage = 100 - ((consistency / best.Seconds()) * 100)
+	} else {
+		percentage = 0
+	}
+
+	return math.Round(percentage*100) / 100
 }
 
 // lapNum is the drivers current lap
@@ -416,6 +511,16 @@ func (s *SessionResults) GetLastLapPos(driverGuid string) int {
 	return s.GetPosForLap(driverGuid, int64(driverLaps))
 }
 
+func (s *SessionResults) GetDriverPosition(driverGuid string) int {
+	for i := range s.Result {
+		if s.Result[i].DriverGUID == driverGuid {
+			return i + 1
+		}
+	}
+
+	return 0
+}
+
 func (s *SessionResults) GetCuts(driverGuid string) int {
 	var i int
 
@@ -613,8 +718,8 @@ func listResults(page int) ([]SessionResults, []int, error) {
 	}
 
 	sort.Slice(resultFiles, func(i, j int) bool {
-		d1, _ := getResultDate(resultFiles[i].Name())
-		d2, _ := getResultDate(resultFiles[j].Name())
+		d1, _ := GetResultDate(resultFiles[i].Name())
+		d2, _ := GetResultDate(resultFiles[j].Name())
 
 		return d1.After(d2)
 	})
@@ -663,8 +768,8 @@ func ListAllResults() ([]SessionResults, error) {
 	}
 
 	sort.Slice(resultFiles, func(i, j int) bool {
-		d1, _ := getResultDate(resultFiles[i].Name())
-		d2, _ := getResultDate(resultFiles[j].Name())
+		d1, _ := GetResultDate(resultFiles[i].Name())
+		d2, _ := GetResultDate(resultFiles[j].Name())
 
 		return d1.After(d2)
 	})
@@ -684,7 +789,7 @@ func ListAllResults() ([]SessionResults, error) {
 	return results, nil
 }
 
-func getResultDate(name string) (time.Time, error) {
+func GetResultDate(name string) (time.Time, error) {
 	dateSplit := strings.Split(name, "_")
 	dateSplit = dateSplit[0 : len(dateSplit)-1]
 	date := strings.Join(dateSplit, "_")
@@ -719,7 +824,7 @@ func LoadResult(fileName string) (*SessionResults, error) {
 		return nil, err
 	}
 
-	date, err := getResultDate(fileName)
+	date, err := GetResultDate(fileName)
 
 	if err != nil {
 		return nil, err

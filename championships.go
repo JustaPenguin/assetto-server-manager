@@ -88,6 +88,9 @@ type Championship struct {
 	OverridePassword    bool
 	ReplacementPassword string
 
+	// acsr integration - sends the championship to acsr on save and event complete
+	ACSR bool
+
 	// Raw html can be attached to championships, used to share tracks/cars etc.
 	Info template.HTML
 
@@ -305,6 +308,14 @@ func (c *Championship) GetPlayerSummary(guid string) string {
 	}
 
 	return out
+}
+
+func (c *Championship) GetURL() string {
+	if config.HTTP.BaseURL != "" {
+		return config.HTTP.BaseURL + "/championship/" + c.ID.String()
+	} else {
+		return ""
+	}
 }
 
 // IsMultiClass is true if the Championship has more than one Class
