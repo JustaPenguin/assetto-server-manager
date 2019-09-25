@@ -99,7 +99,7 @@ func main() {
 		return
 	}
 
-	/*championships, err := store.ListChampionships()
+	/*championships, err := store.ListChampionships() remember to remove
 
 	if err != nil {
 		logrus.Fatal(err)

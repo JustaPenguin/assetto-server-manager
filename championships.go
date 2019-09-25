@@ -79,6 +79,9 @@ type Championship struct {
 	OverridePassword    bool
 	ReplacementPassword string
 
+	// acsr integration - sends the championship to acsr on save and event complete
+	ACSR bool
+
 	// Raw html can be attached to championships, used to share tracks/cars etc.
 	Info template.HTML
 	// Deprecated, replaced with Info above.

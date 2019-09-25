@@ -64,7 +64,9 @@ func (cm *ChampionshipManager) UpsertChampionship(c *Championship) error {
 		return err
 	}
 
-	ACSRSendResult(c)
+	if config != nil && config.ACSR.Enabled && c.ACSR {
+		ACSRSendResult(c)
+	}
 
 	return nil
 }
@@ -112,6 +114,7 @@ func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (champions
 	}
 
 	raceOpts["Current"] = championship
+	raceOpts["ACSREnabled"] = config.ACSR.Enabled
 
 	return championship, raceOpts, nil
 }
@@ -159,8 +162,26 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	}
 
 	championship.Info = template.HTML(r.FormValue("ChampionshipInfo"))
-	championship.OverridePassword = r.FormValue("OverridePassword") == "1"
-	championship.ReplacementPassword = r.FormValue("ReplacementPassword")
+	championship.OverridePassword = r.FormValue("OverridePassword") == "on" || r.FormValue("OverridePassword") == "1"
+
+	newACSR := r.FormValue("ACSR") == "on" || r.FormValue("ACSR") == "1"
+
+	if championship.ACSR == true && newACSR == false {
+		championship.ACSR = newACSR
+
+		ACSRSendResult(championship)
+	} else {
+		championship.ACSR = newACSR
+	}
+
+	if championship.ACSR {
+		championship.OverridePassword = true
+		championship.ReplacementPassword = ""
+		championship.OpenEntrants = false
+		championship.SignUpForm.Enabled = true
+	} else {
+		championship.ReplacementPassword = r.FormValue("ReplacementPassword")
+	}
 
 	previousNumEntrants := 0
 	previousNumPoints := 0
@@ -773,9 +794,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			}
 		}
 
-		// @TODO add acsr bool to championship, check here
-		// @TODO acsr bool should also force locked entry list + sign up forms
-		if config != nil && config.ACSR.Enabled {
+		if championship.ACSR && config != nil && config.ACSR.Enabled {
 			go ACSRSendResult(championship)
 		}
 	default:
