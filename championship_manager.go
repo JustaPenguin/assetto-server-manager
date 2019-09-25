@@ -963,9 +963,6 @@ func (cm *ChampionshipManager) ImportChampionship(jsonData string) (string, erro
 		return "", err
 	}
 
-	// generate a new ID to avoid clashes
-	championship.ID = uuid.New()
-
 	return championship.ID.String(), cm.UpsertChampionship(championship)
 }
 
