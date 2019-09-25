@@ -32,7 +32,14 @@ func ListAllSetups() (CarSetups, error) {
 
 	setups := make(CarSetups)
 
-	err := filepath.Walk(setupDirectory, func(path string, file os.FileInfo, _ error) error {
+	// multi server installs may use symbolic links for setups folder, which filepath.Walk will ignore
+	setupDirectory, err := filepath.EvalSymlinks(setupDirectory)
+
+	if err != nil {
+		setupDirectory = filepath.Join(ServerInstallPath, "setups")
+	}
+
+	err = filepath.Walk(setupDirectory, func(path string, file os.FileInfo, _ error) error {
 		if file.IsDir() || filepath.Ext(file.Name()) != ".ini" {
 			return nil
 		}
