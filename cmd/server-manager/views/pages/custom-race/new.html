@@ -1,3 +1,5 @@
+{{/* gotype: github.com/cj123/assetto-server-manager.RaceTemplateVars */}}
+
 {{ define "title" }}
     {{ if .IsChampionship }}
         Championship Event
@@ -87,12 +89,14 @@
                                     <span id="track-pitboxes">{{ $trackInfo.Pitboxes }}</span>
                                 </div>
 
-                                <div class="col-sm-12">
-                                    <span id="track-pitboxes-warning" class="text-warning mt-2"
-                                        {{ if not (and ($.IsChampionship) (lt (int $.Championship.NumEntrants) (int $trackInfo.Pitboxes))) }} style="display: none;" {{ end }}
-                                        >This track has fewer pit boxes than the configured number of entrants in the
-                                        current {{if $.IsChampionship }}Championship{{ else }}Race{{end}}, and therefore is not eligible for it.</span>
-                                </div>
+                                {{ with $.Championship }}
+                                    <div class="col-sm-12">
+                                        <span id="track-pitboxes-warning" class="text-warning mt-2"
+                                            {{ if not (and ($.IsChampionship) (lt (int $.Championship.NumEntrants) (int $trackInfo.Pitboxes))) }} style="display: none;" {{ end }}
+                                            >This track has fewer pit boxes than the configured number of entrants in the
+                                            current {{if $.IsChampionship }}Championship{{ else }}Race{{end}}, and therefore is not eligible for it.</span>
+                                    </div>
+                                {{ end }}
                             </div>
                         {{ end }}
                     </div>
@@ -1560,7 +1564,7 @@
                                         type="date"
                                         id="CustomRaceScheduled"
                                         name="CustomRaceScheduled"
-                                        value="{{ .CustomRaceScheduledDate }}"
+                                        value=""
                                         placeholder=""
                                 >
 
@@ -1575,7 +1579,7 @@
                                         type="time"
                                         id="CustomRaceScheduledTime"
                                         name="CustomRaceScheduledTime"
-                                        value="{{ .CustomRaceScheduledTime }}"
+                                        value=""
                                         placeholder=""
                                 >
 

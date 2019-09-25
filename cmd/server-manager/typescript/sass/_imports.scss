@@ -1,0 +1,25 @@
+
+@import "bootstrap/scss/bootstrap";
+@import "bootswatch/dist/lumen/bootswatch";
+
+// ui elements
+@import "bootstrap-switch/dist/css/bootstrap3/bootstrap-switch";
+@import "multiselect/css/multi-select";
+@import "summernote/dist/summernote-bs4";
+
+// app
+@import "layout";
+@import "home";
+@import "race-control";
+@import "results";
+@import "upload";
+@import "custom-race";
+@import "championships";
+@import "car-details";
+@import "calendar";
+@import "@fullcalendar/core/main";
+@import "@fullcalendar/timegrid/main";
+@import "@fullcalendar/daygrid/main";
+@import "@fullcalendar/list/main";
+@import "@fullcalendar/bootstrap/main";
+

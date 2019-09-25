@@ -1,9 +1,11 @@
+{{/* gotype: github.com/cj123/assetto-server-manager.resultsViewTemplateVars */}}
+
 {{ define "title" }}Results{{ end }}
 
 {{ define "content" }}
 <div class="results">
-    {{ $sessionResults := .result }}
-    {{ $account := .account }}
+    {{ $sessionResults := .Result }}
+    {{ $account := .Account }}
 
 
     <h1 class="text-center">{{ prettify $sessionResults.TrackName false }} {{ with $sessionResults.TrackConfig }} - {{ prettify . true }} {{ end }}</h1>
@@ -142,7 +144,7 @@
     </div>
     <div class="clearfix"></div>
 
-    {{ range $i, $sessionResult := .result.Result }}
+    {{ range $i, $sessionResult := .Result.Result }}
         <a name={{ $sessionResult.DriverGUID }}></a>
         <div class="card mt-3 border-secondary">
             <div class="card-header {{ if eq $account.GUID $sessionResult.DriverGUID }}bg-success text-white{{ end }}">

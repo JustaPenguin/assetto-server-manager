@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"encoding/json"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -37,6 +38,13 @@ func NewServerAdministrationHandler(
 	}
 }
 
+type homeTemplateVars struct {
+	BaseTemplateVars
+
+	RaceDetails     *CustomRace
+	PerformanceMode bool
+}
+
 // homeHandler serves content to /
 func (sah *ServerAdministrationHandler) home(w http.ResponseWriter, r *http.Request) {
 	currentRace, entryList := sah.raceManager.CurrentRace()
@@ -47,13 +55,20 @@ func (sah *ServerAdministrationHandler) home(w http.ResponseWriter, r *http.Requ
 		customRace = &CustomRace{EntryList: entryList, RaceConfig: currentRace.CurrentRaceConfig}
 	}
 
-	sah.viewRenderer.MustLoadTemplate(w, r, "home.html", map[string]interface{}{
-		"RaceDetails":     customRace,
-		"PerformanceMode": config.Server.PerformanceMode,
+	sah.viewRenderer.MustLoadTemplate(w, r, "home.html", &homeTemplateVars{
+		RaceDetails:     customRace,
+		PerformanceMode: config.Server.PerformanceMode,
 	})
 }
 
 const MOTDFilename = "motd.txt"
+
+type motdTemplateVars struct {
+	BaseTemplateVars
+
+	MOTDText string
+	Opts     *GlobalServerConfig
+}
 
 func (sah *ServerAdministrationHandler) motd(w http.ResponseWriter, r *http.Request) {
 	opts, err := sah.store.LoadServerOptions()
@@ -99,10 +114,16 @@ func (sah *ServerAdministrationHandler) motd(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	sah.viewRenderer.MustLoadTemplate(w, r, "server/motd.html", map[string]interface{}{
-		"motdText": string(b),
-		"Opts":     opts,
+	sah.viewRenderer.MustLoadTemplate(w, r, "server/motd.html", &motdTemplateVars{
+		MOTDText: string(b),
+		Opts:     opts,
 	})
+}
+
+type serverOptionsTemplateVars struct {
+	BaseTemplateVars
+
+	Form *Form
 }
 
 func (sah *ServerAdministrationHandler) options(w http.ResponseWriter, r *http.Request) {
@@ -135,9 +156,15 @@ func (sah *ServerAdministrationHandler) options(w http.ResponseWriter, r *http.R
 		}
 	}
 
-	sah.viewRenderer.MustLoadTemplate(w, r, "server/options.html", map[string]interface{}{
-		"form": form,
+	sah.viewRenderer.MustLoadTemplate(w, r, "server/options.html", &serverOptionsTemplateVars{
+		Form: form,
 	})
+}
+
+type serverBlacklistTemplateVars struct {
+	BaseTemplateVars
+
+	Text string
 }
 
 func (sah *ServerAdministrationHandler) blacklist(w http.ResponseWriter, r *http.Request) {
@@ -162,9 +189,15 @@ func (sah *ServerAdministrationHandler) blacklist(w http.ResponseWriter, r *http
 	}
 
 	// render blacklist edit page
-	sah.viewRenderer.MustLoadTemplate(w, r, "server/blacklist.html", map[string]interface{}{
-		"text": string(b),
+	sah.viewRenderer.MustLoadTemplate(w, r, "server/blacklist.html", &serverBlacklistTemplateVars{
+		Text: string(b),
 	})
+}
+
+type autoFillEntrantListTemplateVars struct {
+	BaseTemplateVars
+
+	Entrants []*Entrant
 }
 
 func (sah *ServerAdministrationHandler) autoFillEntrantList(w http.ResponseWriter, r *http.Request) {
@@ -176,8 +209,8 @@ func (sah *ServerAdministrationHandler) autoFillEntrantList(w http.ResponseWrite
 		return
 	}
 
-	sah.viewRenderer.MustLoadTemplate(w, r, "server/autofill-entrants.html", map[string]interface{}{
-		"Entrants": entrants,
+	sah.viewRenderer.MustLoadTemplate(w, r, "server/autofill-entrants.html", &autoFillEntrantListTemplateVars{
+		Entrants: entrants,
 	})
 }
 
@@ -252,6 +285,12 @@ func (sah *ServerAdministrationHandler) serverProcess(w http.ResponseWriter, r *
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+type changelogTemplateVars struct {
+	BaseTemplateVars
+
+	Changelog template.HTML
+}
+
 func (sah *ServerAdministrationHandler) changelog(w http.ResponseWriter, r *http.Request) {
 	changelog, err := LoadChangelog()
 
@@ -261,7 +300,7 @@ func (sah *ServerAdministrationHandler) changelog(w http.ResponseWriter, r *http
 		return
 	}
 
-	sah.viewRenderer.MustLoadTemplate(w, r, "changelog.html", map[string]interface{}{
-		"Changelog": changelog,
+	sah.viewRenderer.MustLoadTemplate(w, r, "changelog.html", &changelogTemplateVars{
+		Changelog: changelog,
 	})
 }

@@ -1,3 +1,5 @@
+{{/* gotype: github.com/cj123/assetto-server-manager.auditLogTemplateVars */}}
+
 {{ define "title" }}Audit Logs{{ end }}
 
 {{ define "content" }}
@@ -14,7 +16,7 @@
         </tr>
         </thead>
 
-        {{ range $i, $entry := .auditLogs }}
+        {{ range $i, $entry := .AuditLogs }}
             <tr>
                 <td>{{ fullTimeFormat $entry.Time }}</td>
                 <td>{{ $entry.User }}</td>

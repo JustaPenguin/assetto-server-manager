@@ -32,7 +32,8 @@ type ChampionshipManager struct {
 	activeChampionship *ActiveChampionship
 	mutex              sync.Mutex
 
-	championshipEventStartTimers map[string]*time.Timer
+	championshipEventStartTimers    map[string]*time.Timer
+	championshipEventReminderTimers map[string]*time.Timer
 }
 
 func NewChampionshipManager(raceManager *RaceManager) *ChampionshipManager {
@@ -89,19 +90,29 @@ func (cm *ChampionshipManager) ListChampionships() ([]*Championship, error) {
 	return champs, nil
 }
 
-func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (championship *Championship, opts map[string]interface{}, err error) {
+type ChampionshipTemplateVars struct {
+	*RaceTemplateVars
+
+	DefaultPoints ChampionshipPoints
+	ACSREnabled bool
+}
+
+func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (championship *Championship, opts *ChampionshipTemplateVars, err error) {
 	raceOpts, err := cm.BuildRaceOpts(r)
 
 	if err != nil {
 		return nil, nil, err
 	}
 
-	raceOpts["DefaultPoints"] = DefaultChampionshipPoints
+	opts = &ChampionshipTemplateVars{
+		RaceTemplateVars: raceOpts,
+		DefaultPoints:    DefaultChampionshipPoints,
+	}
 
 	championshipID := chi.URLParam(r, "championshipID")
 
 	isEditingChampionship := championshipID != ""
-	raceOpts["IsEditing"] = isEditingChampionship
+	opts.IsEditing = isEditingChampionship
 
 	if isEditingChampionship {
 		championship, err = cm.LoadChampionship(championshipID)
@@ -113,10 +124,10 @@ func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (champions
 		championship = NewChampionship("")
 	}
 
-	raceOpts["Current"] = championship
-	raceOpts["ACSREnabled"] = config.ACSR.Enabled
+	opts.Championship = championship
+	opts.ACSREnabled = config.ACSR.Enabled
 
-	return championship, raceOpts, nil
+	return championship, opts, nil
 }
 
 func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (championship *Championship, edited bool, err error) {
@@ -269,7 +280,7 @@ var (
 	ErrInvalidChampionshipClass = errors.New("servermanager: invalid championship class")
 )
 
-func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (map[string]interface{}, error) {
+func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (*RaceTemplateVars, error) {
 	opts, err := cm.BuildRaceOpts(r)
 
 	if err != nil {
@@ -283,8 +294,8 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (map[
 		return nil, err
 	}
 
-	opts["IsChampionship"] = true
-	opts["Championship"] = championship
+	opts.IsChampionship = true
+	opts.Championship = championship
 
 	if editEventID := chi.URLParam(r, "eventID"); editEventID != "" {
 		// editing a championship event
@@ -294,30 +305,30 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (map[
 			return nil, err
 		}
 
-		opts["Current"] = event.RaceSetup
-		opts["IsEditing"] = true
-		opts["EditingID"] = editEventID
-		opts["CurrentEntrants"] = event.CombineEntryLists(championship)
+		opts.Current = event.RaceSetup
+		opts.IsEditing = true
+		opts.EditingID = editEventID
+		opts.CurrentEntrants = event.CombineEntryLists(championship)
 	} else {
 		// creating a new championship event
-		opts["IsEditing"] = false
-		opts["CurrentEntrants"] = championship.AllEntrants()
+		opts.IsEditing = false
+		opts.CurrentEntrants = championship.AllEntrants()
 
 		// override Current race config if there is a previous championship race configured
 		if len(championship.Events) > 0 {
-			opts["Current"] = championship.Events[len(championship.Events)-1].RaceSetup
-			opts["ChampionshipHasAtLeastOnceRace"] = true
+			opts.Current = championship.Events[len(championship.Events)-1].RaceSetup
+			opts.ChampionshipHasAtLeastOnceRace = true
 		} else {
-			opts["Current"] = ConfigIniDefault.CurrentRaceConfig
-			opts["ChampionshipHasAtLeastOnceRace"] = false
+			opts.Current = ConfigIniDefault.CurrentRaceConfig
+			opts.ChampionshipHasAtLeastOnceRace = false
 		}
 	}
 
 	if !championship.OpenEntrants {
-		opts["AvailableSessions"] = AvailableSessionsClosedChampionship
+		opts.AvailableSessions = AvailableSessionsClosedChampionship
 	}
 
-	err = cm.applyCurrentRaceSetupToOptions(opts, opts["Current"].(CurrentRaceConfig))
+	err = cm.applyCurrentRaceSetupToOptions(opts, opts.Current)
 
 	if err != nil {
 		return nil, err
@@ -518,10 +529,20 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 		return err
 	}
 
+	serverOpts, err := cm.raceStore.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
 	event.Scheduled = date
 
 	// if there is an existing schedule timer for this event stop it
 	if timer := cm.championshipEventStartTimers[event.ID.String()]; timer != nil {
+		timer.Stop()
+	}
+
+	if timer := cm.championshipEventReminderTimers[event.ID.String()]; timer != nil {
 		timer.Stop()
 	}
 
@@ -536,6 +557,14 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 				logrus.Errorf("couldn't start scheduled race, err: %s", err)
 			}
 		})
+
+		if serverOpts.NotificationReminderTimer > 0 {
+			duration = time.Until(date.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
+
+			cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+				cm.notificationManager.SendChampionshipReminderMessage(championship, event)
+			})
+		}
 	}
 
 	return cm.UpsertChampionship(championship)
@@ -1259,7 +1288,14 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 
 func (cm *ChampionshipManager) InitScheduledChampionships() error {
 	cm.championshipEventStartTimers = make(map[string]*time.Timer)
+	cm.championshipEventReminderTimers = make(map[string]*time.Timer)
 	championships, err := cm.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	serverOpts, err := cm.raceStore.LoadServerOptions()
 
 	if err != nil {
 		return err
@@ -1282,6 +1318,17 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 						logrus.Errorf("couldn't start scheduled race, err: %s", err)
 					}
 				})
+
+				if serverOpts.NotificationReminderTimer > 0 {
+					if event.Scheduled.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute).After(time.Now()) {
+						// add reminder
+						duration = time.Until(event.Scheduled.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
+
+						cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+							cm.notificationManager.SendChampionshipReminderMessage(championship, event)
+						})
+					}
+				}
 
 				return cm.UpsertChampionship(championship)
 			} else {
