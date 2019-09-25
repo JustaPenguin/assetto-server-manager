@@ -45,5 +45,5 @@ func ACSRSendResult(championship *Championship) {
 		return
 	}
 
-	logrus.Debug("updated championship sent to ACSR")
+	logrus.Debugf("updated championship: %s sent to ACSR", championship.ID.String())
 }

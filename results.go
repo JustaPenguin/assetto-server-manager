@@ -228,7 +228,7 @@ func (s *SessionResults) GetConsistency(guid string) float64 {
 		percentage = 0
 	}
 
-	return math.Round(percentage*100)/100
+	return math.Round(percentage*100) / 100
 }
 
 // lapNum is the drivers current lap

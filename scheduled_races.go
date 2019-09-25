@@ -216,6 +216,7 @@ func (srm *ScheduledRacesManager) buildScheduledRaces(w io.Writer) error {
 
 	return err
 }
+
 type CalendarObject struct {
 	ID               string    `json:"id"`
 	GroupID          string    `json:"groupId"`

@@ -94,7 +94,7 @@ type ChampionshipTemplateVars struct {
 	*RaceTemplateVars
 
 	DefaultPoints ChampionshipPoints
-	ACSREnabled bool
+	ACSREnabled   bool
 }
 
 func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (championship *Championship, opts *ChampionshipTemplateVars, err error) {
@@ -177,7 +177,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 
 	newACSR := r.FormValue("ACSR") == "on" || r.FormValue("ACSR") == "1"
 
-	if championship.ACSR == true && newACSR == false {
+	if championship.ACSR && !newACSR {
 		championship.ACSR = newACSR
 
 		ACSRSendResult(championship)

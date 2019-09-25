@@ -139,6 +139,8 @@ type ServerExtraConfig struct {
 	PerformanceMode bool     `yaml:"performance_mode"`
 }
 
+const acsrURL = "https://acsr.assettocorsaservers.com"
+
 func ReadConfig(location string) (conf *Configuration, err error) {
 	f, err := os.Open(location)
 
@@ -157,6 +159,10 @@ func ReadConfig(location string) (conf *Configuration, err error) {
 
 	if err != nil {
 		return nil, err
+	}
+
+	if config.ACSR.URL == "" {
+		config.ACSR.URL = acsrURL
 	}
 
 	if config.Accounts.AdminPasswordOverride != "" {

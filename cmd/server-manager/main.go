@@ -99,16 +99,6 @@ func main() {
 		return
 	}
 
-	/*championships, err := store.ListChampionships() remember to remove
-
-	if err != nil {
-		logrus.Fatal(err)
-	}
-
-	for _, championship := range championships {
-		go servermanager.ACSRSendResult(championship)
-	}*/
-
 	logrus.Infof("starting assetto server manager on: %s", config.HTTP.Hostname)
 
 	if runtime.GOOS == "windows" {
