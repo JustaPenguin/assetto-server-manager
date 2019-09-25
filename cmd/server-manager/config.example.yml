@@ -229,18 +229,6 @@ server:
 
 ################################################################################
 #
-#  acsr config - assetto corsa server ratings
-#
-################################################################################
-acsr:
-  # acsr is another project by us that tracks your performance and safety on all
-  # Server Manager servers (that have acsr enabled). By default all data is
-  # anonymised BEFORE being sent to the acsr server, in order to see your
-  # performance data sign up for an account at acsr.me
-  enabled: true
-
-################################################################################
-#
 #  championships
 #
 ################################################################################
