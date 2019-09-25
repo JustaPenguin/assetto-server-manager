@@ -407,6 +407,21 @@ func (se *RaceWeekendSessionEntrant) GetEntrant() *Entrant {
 	return e
 }
 
+func (se *RaceWeekendSessionEntrant) ChampionshipClass(raceWeekend *RaceWeekend) *ChampionshipClass {
+	if !raceWeekend.HasLinkedChampionship() {
+		return &ChampionshipClass{}
+	}
+
+	class, err := raceWeekend.Championship.FindClassForCarModel(se.Car.Model)
+
+	if err != nil {
+		logrus.WithError(err).Warnf("Could not find class for car: %s", se.Car.Model)
+		return &ChampionshipClass{}
+	}
+
+	return class
+}
+
 // A RaceWeekendSession is a single session within a RaceWeekend. It can have parent sessions. It must have a RaceConfig.
 // Once completed, a RaceWeekendSession will contain EntrantResult from that session.
 type RaceWeekendSession struct {

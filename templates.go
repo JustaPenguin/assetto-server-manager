@@ -192,9 +192,7 @@ func (tr *Renderer) init() error {
 	funcs["DeleteAccess"] = dummyAccessFunc
 	funcs["AdminAccess"] = dummyAccessFunc
 	funcs["LoggedIn"] = dummyAccessFunc
-	funcs["classColor"] = func(i int) string {
-		return ChampionshipClassColors[i%len(ChampionshipClassColors)]
-	}
+	funcs["classColor"] = ChampionshipClassColor
 	funcs["carSkinURL"] = carSkinURL
 	funcs["dict"] = templateDict
 	funcs["asset"] = NewAssetHelper("/", "", "", map[string]string{"cb": BuildVersion}).GetURL

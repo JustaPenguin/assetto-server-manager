@@ -655,14 +655,23 @@ func (rwm *RaceWeekendManager) FindConnectedSessions(raceWeekendID, parentSessio
 }
 
 type RaceWeekendGridPreview struct {
-	Results map[int]string
-	Grid    map[int]string
+	Results map[int]SessionPreviewEntrant
+	Grid    map[int]SessionPreviewEntrant
+	Classes map[string]string
+}
+
+type SessionPreviewEntrant struct {
+	Name       string
+	Session    string
+	Class      string
+	ClassColor string
 }
 
 func NewRaceWeekendGridPreview() *RaceWeekendGridPreview {
 	return &RaceWeekendGridPreview{
-		Results: make(map[int]string),
-		Grid:    make(map[int]string),
+		Results: make(map[int]SessionPreviewEntrant),
+		Grid:    make(map[int]SessionPreviewEntrant),
+		Classes: make(map[string]string),
 	}
 }
 
@@ -682,7 +691,21 @@ func (rwm *RaceWeekendManager) PreviewGrid(raceWeekendID, parentSessionID, child
 	}
 
 	for i, result := range finishingGrid {
-		preview.Results[i+1] = result.Car.GetName()
+		class := result.ChampionshipClass(raceWeekend)
+
+		color, ok := preview.Classes[class.Name]
+
+		if !ok {
+			color = ChampionshipClassColor(len(preview.Classes))
+			preview.Classes[class.Name] = color
+		}
+
+		preview.Results[i+1] = SessionPreviewEntrant{
+			Name:       result.Car.GetName(),
+			Session:    parentSession.Name(),
+			Class:      class.Name,
+			ClassColor: color,
+		}
 	}
 
 	entryList, err := childSession.GetRaceWeekendEntryList(raceWeekend, filter, parentSessionID)
@@ -698,7 +721,21 @@ func (rwm *RaceWeekendManager) PreviewGrid(raceWeekendID, parentSessionID, child
 			continue
 		}
 
-		preview.Grid[entrant.PitBox+1] = fmt.Sprintf("%s (%s)", entrant.Car.GetName(), sess.Name())
+		class := entrant.ChampionshipClass(raceWeekend)
+
+		color, ok := preview.Classes[class.Name]
+
+		if !ok {
+			color = ChampionshipClassColor(len(preview.Classes))
+			preview.Classes[class.Name] = color
+		}
+
+		preview.Grid[entrant.PitBox+1] = SessionPreviewEntrant{
+			Name:       entrant.Car.GetName(),
+			Session:    sess.Name(),
+			Class:      class.Name,
+			ClassColor: color,
+		}
 	}
 
 	return preview, nil
@@ -741,25 +778,32 @@ func (rwm *RaceWeekendManager) PreviewSessionEntryList(raceWeekendID, sessionID,
 			continue
 		}
 
-		sessionText := entrantSession.Name()
+		entrantPositionText := "No Time"
 
 		if entrantSession.Completed() {
-			foundEntrant := false
-
 			for i, result := range entrantSession.Results.Result {
 				if result.DriverGUID == entrant.Car.Driver.GUID {
-					sessionText += fmt.Sprintf(" - %d%s", i+1, ordinal(int64(i+1)))
-					foundEntrant = true
+					entrantPositionText = fmt.Sprintf("%d%s", i+1, ordinal(int64(i+1)))
 					break
 				}
 			}
-
-			if !foundEntrant {
-				sessionText += " - No Time"
-			}
 		}
 
-		preview.Grid[i+1] = fmt.Sprintf("%s (%s)", entrant.Car.GetName(), sessionText)
+		class := entrant.ChampionshipClass(raceWeekend)
+
+		color, ok := preview.Classes[class.Name]
+
+		if !ok {
+			color = ChampionshipClassColor(len(preview.Classes))
+			preview.Classes[class.Name] = color
+		}
+
+		preview.Grid[i+1] = SessionPreviewEntrant{
+			Name:       fmt.Sprintf("%s (%s - %s)", entrant.Car.GetName(), entrantSession.Name(), entrantPositionText),
+			Session:    session.Name(),
+			Class:      class.Name,
+			ClassColor: color,
+		}
 	}
 
 	return preview, nil

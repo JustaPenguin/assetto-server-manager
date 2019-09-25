@@ -208,6 +208,7 @@ export namespace RaceWeekend {
         }
     }
 
+
     abstract class PreviewModal {
         protected readonly $elem: JQuery<HTMLElement>;
 
@@ -230,7 +231,40 @@ export namespace RaceWeekend {
         }
 
         protected abstract updateValues(): void;
+
         protected abstract saveValues(): void;
+
+        protected buildTableDataForEntrant(entrant: SessionPreviewEntrant, pos?: number): JQuery<HTMLTableDataCellElement> {
+            let $td = $("<td>") as JQuery<HTMLTableDataCellElement>;
+
+            if (entrant.Class) {
+                $td.css({"background-color": entrant.ClassColor, "color": "white"});
+            }
+
+            if (pos !== undefined) {
+                $td.text(`${pos+1}. ${entrant.Name}`);
+            } else {
+                $td.text(entrant.Name);
+            }
+
+            return $td;
+        }
+
+        protected buildClassKey(classes: Map<string, string>) {
+            let $tableKey = $("#table-key");
+            $tableKey.empty();
+
+            if (Object.entries(classes).length > 1) {
+                for (const [className, classColor] of Object.entries(classes)) {
+                    let $colorBlock = $("<div>").attr({
+                        "class": "class-key__background",
+                    }).css("background-color", classColor);
+                    let $colorText = $("<div>").attr({"class": "class-key__name"}).text(className);
+
+                    $tableKey.append($("<div>").attr({"class": "class-key"}).append($colorBlock, $colorText));
+                }
+            }
+        }
     }
 
     class SessionTransition extends PreviewModal {
@@ -276,26 +310,27 @@ export namespace RaceWeekend {
                 contentType: "application/json",
                 type: "POST",
             }).then((response: GridPreview) => {
-                let results: string[] = [];
-                let grid: string[] = [];
+                let results: SessionPreviewEntrant[] = [];
+                let grid: SessionPreviewEntrant[] = [];
 
                 for (const [key, value] of Object.entries(response.Results)) {
-                    results.push(`${key}. ${value}`);
+                    results.push(value);
                 }
 
                 for (const [key, value] of Object.entries(response.Grid)) {
-                    grid.push(`${key}. ${value}`);
+                    grid.push(value);
                 }
 
                 let $table = $("table#grid-preview");
                 $table.find("tr:not(:first-child)").remove();
+                this.buildClassKey(response.Classes);
 
                 for (let i = 0; i < grid.length || i < results.length; i++) {
                     let $row = $("<tr>");
-                    $row.append($("<td>").text(results[i]));
+                    $row.append(this.buildTableDataForEntrant(results[i], i));
 
                     if (i < grid.length) {
-                        $row.append($("<td>").text(grid[i]));
+                        $row.append(this.buildTableDataForEntrant(grid[i], i));
                     } else {
                         $row.append($("<td>"));
                     }
@@ -317,9 +352,17 @@ export namespace RaceWeekend {
         }
     }
 
+    interface SessionPreviewEntrant {
+        Name: string;
+        Session: string;
+        Class: string;
+        ClassColor: string;
+    }
+
     interface GridPreview {
-        Grid: Map<number, string>;
-        Results: Map<number, string>;
+        Grid: Map<number, SessionPreviewEntrant>;
+        Results: Map<number, SessionPreviewEntrant>;
+        Classes: Map<string, string>;
     }
 
     class EntryListPreview extends PreviewModal {
@@ -343,7 +386,7 @@ export namespace RaceWeekend {
             $.ajax(`/race-weekend/${RaceWeekendID}/entrylist-preview?sessionID=${this.sessionID}&sortType=${this.sortType}&reverseGrid=${this.reverseGrid}`, {
                 type: "GET",
             }).then((response: GridPreview) => {
-                let grid: string[] = [];
+                let grid: SessionPreviewEntrant[] = [];
 
                 for (const [key, value] of Object.entries(response.Grid)) {
                     grid.push(value);
@@ -351,11 +394,18 @@ export namespace RaceWeekend {
 
                 let $table = $("table#entrylist-preview");
                 $table.find("tr:not(:first-child)").remove();
+                this.buildClassKey(response.Classes);
 
                 for (let i = 0; i < grid.length; i++) {
                     let $row = $("<tr>");
-                    $row.append($("<td>").text(i+1));
-                    $row.append($("<td>").text(grid[i]));
+                    let $pos = $("<td>").text(i + 1);
+
+                    if (grid[i].Class) {
+                        $pos.css({"background-color": grid[i].ClassColor, "color": "white"});
+                    }
+
+                    $row.append($pos);
+                    $row.append(this.buildTableDataForEntrant(grid[i]));
 
                     $table.append($row);
                 }

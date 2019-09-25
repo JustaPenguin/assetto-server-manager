@@ -43,3 +43,20 @@ svg path.race-weekend-arrow {
 .modal-lg {
   max-width: 1000px;
 }
+
+.class-key {
+  display: inline-block;
+  margin-right: 20px;
+  margin-bottom: 20px;
+
+  &__background {
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+    margin-right: 5px;
+  }
+
+  &__name {
+    display: inline-block;
+  }
+}

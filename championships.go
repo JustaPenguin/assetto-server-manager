@@ -1245,3 +1245,7 @@ func (a *ActiveChampionship) EventName() string {
 func (a *ActiveChampionship) EventDescription() string {
 	return a.Description
 }
+
+func ChampionshipClassColor(i int) string {
+	return ChampionshipClassColors[i%len(ChampionshipClassColors)]
+}
