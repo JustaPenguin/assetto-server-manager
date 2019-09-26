@@ -15,7 +15,7 @@ import (
 
 // Sends a championship to ACSR, called OnEndSession and when a championship is created
 func ACSRSendResult(championship *Championship) {
-	if config == nil && (config.ACSR.APIKey == "" || config.ACSR.AccountID == "") {
+	if config == nil || (config.ACSR.APIKey == "" || config.ACSR.AccountID == "") {
 		return
 	}
 
@@ -33,7 +33,7 @@ func ACSRSendResult(championship *Championship) {
 		return
 	}
 
-	gcm, nonce, err := encryptChampionship()
+	encryptedChampionship, err := encryptChampionship(output)
 
 	if err != nil {
 		logrus.Error("ACSR output encryption failed")
@@ -42,7 +42,7 @@ func ACSRSendResult(championship *Championship) {
 
 	client := http.Client{}
 
-	req, err := http.NewRequest("POST", config.ACSR.URL+"/submit-result", bytes.NewBuffer(gcm.Seal(nonce, nonce, output, nil)))
+	req, err := http.NewRequest("POST", config.ACSR.URL+"/submit-result", bytes.NewBuffer(encryptedChampionship))
 
 	if err != nil {
 		logrus.Error(err)
@@ -65,19 +65,19 @@ func ACSRSendResult(championship *Championship) {
 	logrus.Debugf("updated championship: %s sent to ACSR", championship.ID.String())
 }
 
-func encryptChampionship() (cipher.AEAD, []byte, error) {
+func encryptChampionship(championshipMarshalled []byte) ([]byte, error) {
 	// encryption
 	key, err := hex.DecodeString(config.ACSR.APIKey)
 
 	if err != nil {
 		logrus.WithError(err).Error("api key in config is incorrect")
-		return nil, nil, err
+		return nil, err
 	}
 
 	// generate a new aes cipher using our 32 byte long key
 	c, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// gcm or Galois/Counter Mode, is a mode of operation
@@ -87,7 +87,7 @@ func encryptChampionship() (cipher.AEAD, []byte, error) {
 	// if any error generating new GCM
 	// handle them
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// creates a new byte array the size of the nonce
@@ -96,8 +96,8 @@ func encryptChampionship() (cipher.AEAD, []byte, error) {
 	// populates our nonce with a cryptographically secure
 	// random sequence
 	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return gcm, nonce, nil
+	return gcm.Seal(nonce, nonce, championshipMarshalled, nil), nil
 }
