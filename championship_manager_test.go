@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"encoding/json"
+	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
@@ -109,10 +110,38 @@ var championshipEventFixtures = []string{
 
 var championshipManager *ChampionshipManager
 
-var dummyNotificationManager *NotificationManager
+type dummyNotificationManager struct {}
+
+func (d dummyNotificationManager) SendMessage(msg string) error {
+	return nil
+}
+
+func (d dummyNotificationManager) SendMessageWithLink(msg string, linkText string, link *url.URL) error {
+	return nil
+}
+
+func (d dummyNotificationManager) SendRaceStartMessage(config ServerConfig, event RaceEvent) error {
+	return nil
+}
+
+func (d dummyNotificationManager) SendRaceScheduledMessage(event *CustomRace, date time.Time) error {
+	return nil
+}
+
+func (d dummyNotificationManager) SendRaceReminderMessage(event *CustomRace) error {
+	return nil
+}
+
+func (d dummyNotificationManager) SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent) error {
+	return nil
+}
+
+func (d dummyNotificationManager) SaveServerOptions(oldServerOpts *GlobalServerConfig, newServerOpts *GlobalServerConfig) error {
+	return nil
+}
 
 func init() {
-	championshipManager = NewChampionshipManager(NewRaceManager(NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"), filepath.Join(os.TempDir(), "asm-race-store-shared")), dummyServerProcess{}, NewCarManager(), dummyNotificationManager))
+	championshipManager = NewChampionshipManager(NewRaceManager(NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"), filepath.Join(os.TempDir(), "asm-race-store-shared")), dummyServerProcess{}, NewCarManager(), &dummyNotificationManager{}))
 }
 
 func doReplay(filename string, multiplier int, callbackFunc udp.CallbackFunc, waitTime time.Duration) error {

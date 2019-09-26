@@ -9,8 +9,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type NotificationDispatcher interface {
+	SendMessage(msg string) error
+	SendMessageWithLink(msg string, linkText string, link *url.URL) error
+	SendRaceStartMessage(config ServerConfig, event RaceEvent) error
+	SendRaceScheduledMessage(event *CustomRace, date time.Time) error
+	SendRaceReminderMessage(event *CustomRace) error
+	SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent) error
+	SaveServerOptions(oldServerOpts *GlobalServerConfig, newServerOpts *GlobalServerConfig) error
+}
+
 // NotificationManager is the generic notification handler, which calls the individual notification
-// managers.  Initially, only a Discord manager is implemented.
+// managers. Initially, only a Discord manager is implemented.
 type NotificationManager struct {
 	discordManager *DiscordManager
 	carManager     *CarManager

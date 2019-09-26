@@ -28,7 +28,7 @@ type RaceManager struct {
 	process             ServerProcess
 	raceStore           Store
 	carManager          *CarManager
-	notificationManager *NotificationManager
+	notificationManager NotificationDispatcher
 
 	currentRace      *ServerConfig
 	currentEntryList EntryList
@@ -48,7 +48,7 @@ func NewRaceManager(
 	raceStore Store,
 	process ServerProcess,
 	carManager *CarManager,
-	notificationManager *NotificationManager,
+	notificationManager NotificationDispatcher,
 ) *RaceManager {
 	return &RaceManager{
 		raceStore:           raceStore,
