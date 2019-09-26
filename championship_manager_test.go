@@ -110,7 +110,7 @@ var championshipEventFixtures = []string{
 
 var championshipManager *ChampionshipManager
 
-type dummyNotificationManager struct {}
+type dummyNotificationManager struct{}
 
 func (d dummyNotificationManager) SendMessage(msg string) error {
 	return nil

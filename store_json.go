@@ -417,7 +417,7 @@ func (rs *JSONStore) AddAuditEntry(entry *AuditEntry) error {
 }
 
 func (rs *JSONStore) ListRaceWeekends() ([]*RaceWeekend, error) {
-	files, err := rs.listFiles(raceWeekendsDir)
+	files, err := rs.listFiles(filepath.Join(rs.shared, raceWeekendsDir))
 
 	if err != nil {
 		return nil, err
