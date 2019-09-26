@@ -111,7 +111,7 @@ func PerClassSort(sorter RaceWeekendEntryListSorter) RaceWeekendEntryListSorter 
 
 			reverseEntrants(session.NumEntrantsToReverse, entrants)
 
-			sortDriversWithNoTimeToBack(entrants)
+			sortDriversWithNoTimeToBackOfGrid(entrants)
 
 			for index, entrant := range entrants {
 				allEntrants[lastStartPos+index] = entrant
@@ -124,7 +124,7 @@ func PerClassSort(sorter RaceWeekendEntryListSorter) RaceWeekendEntryListSorter 
 	}
 }
 
-func sortDriversWithNoTimeToBack(entrants []*RaceWeekendSessionEntrant) {
+func sortDriversWithNoTimeToBackOfGrid(entrants []*RaceWeekendSessionEntrant) {
 	sort.SliceStable(entrants, func(i, j int) bool {
 		entrantI, entrantJ := entrants[i], entrants[j]
 

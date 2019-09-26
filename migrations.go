@@ -2,7 +2,6 @@ package servermanager
 
 import (
 	"encoding/json"
-	"html/template"
 	"os"
 	"path/filepath"
 	"sort"
@@ -53,7 +52,8 @@ var (
 	migrations = []migrationFunc{
 		addEntrantIDToChampionships,
 		addAdminAccount,
-		championshipLinksToSummerNote,
+		// migration 2 (below) is left intentionally blank. it replaces a migration which worked with deprecated data.
+		func(Store) error { return nil },
 		addEntrantsToChampionshipEvents,
 		addIDToChampionshipClasses,
 		enhanceOldChampionshipResultFiles,
@@ -107,41 +107,6 @@ func addAdminAccount(rs Store) error {
 	account.Group = GroupAdmin
 
 	return rs.UpsertAccount(account)
-}
-
-func championshipLinksToSummerNote(rs Store) error {
-	logrus.Infof("Running migration: Converting old championship links to new markdown format")
-
-	championships, err := rs.ListChampionships()
-
-	if err != nil {
-		return err
-	}
-
-	var i int
-
-	for _, c := range championships {
-		i = 0
-		for link, name := range c.Links {
-			c.Info += template.HTML("<a href='" + link + "'>" + name + "</a>")
-
-			if i != len(c.Links)-1 {
-				c.Info += ", "
-			}
-
-			i++
-		}
-
-		c.Links = nil
-
-		err = rs.UpsertChampionship(c)
-
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func addEntrantsToChampionshipEvents(rs Store) error {

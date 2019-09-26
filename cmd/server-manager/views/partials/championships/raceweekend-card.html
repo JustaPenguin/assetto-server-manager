@@ -26,44 +26,32 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-8 mb-3">
-                    <div class="row">
-                        <div class="col-sm-8">
-                            <ul class="list-unstyled">
-                                <!-- @TODO loop thru each session with details -->
-                                {{ range $sessionIndex, $session := $raceWeekend.Sessions }}
-                                    <li>
-                                        <strong>{{ $session.Name }}</strong> at
+                    <ul class="list-unstyled">
+                        {{ range $sessionIndex, $session := $raceWeekend.Sessions }}
+                            <li>
+                                <strong>{{ $session.Name }}</strong> at
 
-                                        {{ $trackInfo := trackInfo $session.RaceConfig.Track $session.RaceConfig.TrackLayout }}
+                                {{ $trackInfo := trackInfo $session.RaceConfig.Track $session.RaceConfig.TrackLayout }}
 
-                                        {{ with $trackInfo }}
-                                            {{ .Name }}
-                                        {{ else }}
-                                            {{ prettify $eventSetup.Track false }} {{ with $eventSetup.TrackLayout }}({{ prettify . true }}){{ end }}
-                                        {{ end }}
-
-
-                                        {{ if ne $session.Name $session.SessionType.String }}({{ $session.SessionType }}){{ end }}
-
-                                        -
-
-                                        {{ if gt $session.SessionInfo.Laps 0 }}
-                                            {{ $session.SessionInfo.Laps }} Laps
-                                        {{ else }}
-                                            {{ $session.SessionInfo.Time }} minutes
-                                        {{ end }}
-                                    </li>
+                                {{ with $trackInfo }}
+                                    {{ .Name }}
+                                {{ else }}
+                                    {{ prettify $eventSetup.Track false }} {{ with $eventSetup.TrackLayout }}({{ prettify . true }}){{ end }}
                                 {{ end }}
-                            </ul>
 
-                        </div>
 
-                        <div class="col-sm-4">
-                            <!-- @TODO previously this was fastest lap, etc rewards -->
+                                {{ if ne $session.Name $session.SessionType.String }}({{ $session.SessionType }}){{ end }}
 
-                        </div>
+                                -
 
-                    </div>
+                                {{ if gt $session.SessionInfo.Laps 0 }}
+                                    {{ $session.SessionInfo.Laps }} Laps
+                                {{ else }}
+                                    {{ $session.SessionInfo.Time }} minutes
+                                {{ end }}
+                            </li>
+                        {{ end }}
+                    </ul>
 
 
                     {{/* race controls buttons */}}

@@ -94,9 +94,6 @@ type Championship struct {
 	// Raw html can be attached to championships, used to share tracks/cars etc.
 	Info template.HTML
 
-	// Deprecated, replaced with Info above.
-	Links map[string]string
-
 	// OpenEntrants indicates that entrant names do not need to be specified in the EntryList.
 	// As Entrants join a championship, the available Entrant slots will be filled by the information
 	// provided by a join message. The EntryList for each class will still need creating, but
@@ -953,6 +950,8 @@ func (c *ChampionshipClass) StandingsForEvent(event *ChampionshipEvent) []*Champ
 	return c.Standings([]*ChampionshipEvent{event})
 }
 
+// extractRaceWeekendSessionsIntoIndividualEvents looks for race weekend events, and makes each indiivdual session of that
+// race weekend a Championship Event, to aide with points tallying
 func (c *ChampionshipClass) extractRaceWeekendSessionsIntoIndividualEvents(inEvents []*ChampionshipEvent) []*ChampionshipEvent {
 	events := make([]*ChampionshipEvent, 0)
 
@@ -1051,8 +1050,10 @@ type ChampionshipEvent struct {
 
 	Sessions map[SessionType]*ChampionshipSession
 
+	// RaceWeekendID is the ID of the linked RaceWeekend for this ChampionshipEvent
 	RaceWeekendID uuid.UUID
-	RaceWeekend   *RaceWeekend `json:"-"`
+	// If RaceWeekendID is non-nil, RaceWeekend will be populated on loading the Championship.
+	RaceWeekend *RaceWeekend `json:"-"`
 
 	StartedTime   time.Time
 	CompletedTime time.Time

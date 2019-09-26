@@ -26,8 +26,11 @@ type RaceWeekend struct {
 	EntryList EntryList
 	Sessions  []*RaceWeekendSession
 
+	// ChampionshipID links a RaceWeekend to a Championship. It can be uuid.Nil
 	ChampionshipID uuid.UUID
-	Championship   *Championship `json:"-"`
+	// Championship is the Championship that is linked to the RaceWeekend.
+	// If ChampionshipID is uuid.Nil, Championship will also be nil
+	Championship *Championship `json:"-"`
 }
 
 // NewRaceWeekend creates a RaceWeekend

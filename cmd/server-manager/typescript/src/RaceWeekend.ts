@@ -7,6 +7,9 @@ declare var RaceWeekendID: string;
 declare var IsEditing: boolean;
 
 export namespace RaceWeekend {
+    /**
+     * EditSession manages page functions when editing the race configuration for a Race Weekend Session.
+     */
     export class EditSession {
         private readonly $raceWeekendSession: JQuery<HTMLElement>;
 
@@ -57,6 +60,9 @@ export namespace RaceWeekend {
         }
     }
 
+    /**
+     * View handles layout of the Race Weekend main page, as well as initialising Entry List popups.
+     */
     export class View {
         private readonly jsp: jsPlumbInstance = jsPlumb.getInstance();
 
@@ -208,7 +214,9 @@ export namespace RaceWeekend {
         }
     }
 
-
+    /**
+     * PreviewModal is an abstract base for building Race Weekend Entry List preview modals
+     */
     abstract class PreviewModal {
         protected readonly $elem: JQuery<HTMLElement>;
 
@@ -267,6 +275,9 @@ export namespace RaceWeekend {
         }
     }
 
+    /**
+     * SessionTransition is the modal shown when a user clicks on an arrow between two Race Weekend Sessions.
+     */
     class SessionTransition extends PreviewModal {
         private readonly parentSessionID: string;
         private readonly childSessionID: string;
@@ -365,6 +376,9 @@ export namespace RaceWeekend {
         Classes: Map<string, string>;
     }
 
+    /**
+     * EntryListPreview handles the modal which is used to preview and edit the Race Weekend Session final entry list
+     */
     class EntryListPreview extends PreviewModal {
         private readonly sessionID: string;
         private sortType: string = "";

@@ -212,9 +212,6 @@ func (tr *Renderer) init() error {
 	funcs["formatDuration"] = formatDuration
 	funcs["appendQuery"] = appendQuery
 	funcs["ChangelogHTML"] = changelogHTML
-	funcs["columnWidth"] = func(num int) float64 {
-		return 100 / float64(num)
-	}
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
