@@ -85,9 +85,12 @@ func (dm *DiscordManager) SaveServerOptions(oldServerOpts *GlobalServerConfig, n
 		dm.enabled = true
 
 		session.AddHandler(dm.CommandHandler)
+
+		logrus.Infof("Discord notification bot reconnected")
 	} else if newServerOpts.DiscordAPIToken == "" && oldServerOpts.DiscordAPIToken != "" {
 		// token removed, so close session (also sets enabled to false)
 		_ = dm.Stop()
+		logrus.Infof("Discord notification bot stopped")
 	}
 
 	return nil
@@ -179,7 +182,7 @@ func (dm *DiscordManager) SendEmbed(msg string, linkText string, link *url.URL) 
 	// it in as an arg and check it here anyway
 	if opts.DiscordChannelID != "" {
 		linkMsg := "[" + linkText + "](" + link.String() + ")"
-		_, err = dm.discord.ChannelMessageSendEmbed(opts.DiscordChannelID, embed.NewGenericEmbed(msg, linkMsg))
+		_, err = dm.discord.ChannelMessageSendEmbed(opts.DiscordChannelID, embed.NewGenericEmbed(msg, "%s", linkMsg))
 
 		if err != nil {
 			logrus.Errorf("couldn't send discord message, err: %s", err)
