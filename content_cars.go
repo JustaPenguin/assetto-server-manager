@@ -272,7 +272,15 @@ func (cm *CarManager) LoadCar(name string, tyres Tyres) (*Car, error) {
 			skins = append(skins, skinFile.Name())
 		}
 	} else {
-		logrus.WithError(err).Warnf("Could not load skins for car: %s", name)
+		if os.IsNotExist(err) {
+			if err := os.Mkdir(filepath.Join(carDirectory, "skins"), 0755); err != nil {
+				logrus.WithError(err).Warnf("Could not create skins directory for car: %s", name)
+			} else {
+				logrus.Infof("Created empty skins directory for car: %s", name)
+			}
+		} else {
+			logrus.WithError(err).Warnf("Could not load skins for car: %s", name)
+		}
 	}
 
 	carDetails := CarDetails{}
