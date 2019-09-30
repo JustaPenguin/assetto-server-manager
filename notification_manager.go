@@ -3,6 +3,7 @@ package servermanager
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -33,7 +34,7 @@ func NewNotificationManager(discord *DiscordManager, cars *CarManager, store Sto
 		discordManager: discord,
 		carManager:     cars,
 		store:          store,
-		testing:        false,
+		testing:        os.Getenv("NOTIFICATION_TEST_MODE") == "true",
 	}
 }
 
