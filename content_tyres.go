@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -310,4 +311,53 @@ var DefaultTrackSurfacePresets = []TrackSurfacePreset{
 		LapGain:         1,
 		Description:     "Perfect track for hotlapping.",
 	},
+}
+
+var ErrCouldNotFindTyreForCar = errors.New("servermanager: could not find tyres for car")
+
+func findTyreIndex(carModel, tyreName string) (int, error) {
+	for _, file := range tyreFiles {
+		tyreIndex, err := findTyreIndexInFile(file, carModel, tyreName)
+
+		if err == ErrCouldNotFindTyreForCar {
+			continue
+		}
+
+		if tyreIndex >= 0 {
+			return tyreIndex, nil
+		}
+	}
+
+	return -1, ErrCouldNotFindTyreForCar
+}
+
+func findTyreIndexInFile(fileName string, carModel string, tyreName string) (int, error) {
+	f, err := os.Open(filepath.Join(ServerInstallPath, "manager", fileName))
+
+	if err != nil {
+		return -1, err
+	}
+
+	defer f.Close()
+
+	i, err := ini.Load(f)
+
+	if err != nil {
+		return -1, err
+	}
+
+	carTyres, err := i.GetSection(carModel)
+
+	if err != nil {
+		return -1, err
+	}
+
+	for index, carTyre := range carTyres.Keys() {
+		fmt.Println(index, carTyre.Name(), tyreName)
+		if carTyre.Name() == tyreName {
+			return index, nil
+		}
+	}
+
+	return -1, ErrCouldNotFindTyreForCar
 }

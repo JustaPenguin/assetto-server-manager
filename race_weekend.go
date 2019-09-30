@@ -424,6 +424,9 @@ type RaceWeekendSessionEntrant struct {
 	SessionResults *SessionResults `json:"-"`
 
 	IsPlaceholder bool `json:"-"`
+
+	// OverrideSetupFile is a path to an overriden setup for a Race Weekend
+	OverrideSetupFile string
 }
 
 // NewRaceWeekendSessionEntrant creates a RaceWeekendSessionEntrant
@@ -442,6 +445,7 @@ func (se *RaceWeekendSessionEntrant) GetEntrant() *Entrant {
 
 	e.AssignFromResult(se.EntrantResult, se.Car)
 	e.IsPlaceHolder = se.IsPlaceholder
+	e.FixedSetup = se.OverrideSetupFile
 
 	return e
 }
