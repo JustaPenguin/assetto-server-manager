@@ -419,6 +419,9 @@ type RaceWeekendSessionEntrant struct {
 	PitBox int
 	// SessionResults are the whole results for the session the entrant took part in
 	SessionResults *SessionResults `json:"-"`
+
+	// OverrideSetupFile is a path to an overriden setup for a Race Weekend
+	OverrideSetupFile string
 }
 
 // NewRaceWeekendSessionEntrant creates a RaceWeekendSessionEntrant
@@ -436,6 +439,7 @@ func (se *RaceWeekendSessionEntrant) GetEntrant() *Entrant {
 	e := NewEntrant()
 
 	e.AssignFromResult(se.EntrantResult, se.Car)
+	e.FixedSetup = se.OverrideSetupFile
 
 	return e
 }

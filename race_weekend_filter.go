@@ -1,5 +1,14 @@
 package servermanager
 
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/cj123/ini"
+	"github.com/sirupsen/logrus"
+)
+
 type FilterError string
 
 func (f FilterError) Error() string {
@@ -7,6 +16,8 @@ func (f FilterError) Error() string {
 }
 
 type RaceWeekendSessionToSessionFilter struct {
+	IsPreview bool
+
 	ResultStart int
 	ResultEnd   int
 
@@ -15,6 +26,8 @@ type RaceWeekendSessionToSessionFilter struct {
 	EntryListStart int
 
 	SortType string
+
+	ForceUseTyreFromFastestLap bool
 }
 
 func reverseEntrants(numToReverse int, entrants []*RaceWeekendSessionEntrant) {
@@ -82,10 +95,78 @@ func (f RaceWeekendSessionToSessionFilter) Filter(parentSession, childSession *R
 		entrant := split[splitIndex]
 		entrant.SessionID = parentSession.ID
 
+		if !f.IsPreview && parentSession.Completed() && f.ForceUseTyreFromFastestLap {
+			// find the tyre from the entrants fastest lap
+			fastestLap := entrant.SessionResults.GetDriversFastestLap(entrant.Car.GetGUID(), entrant.Car.GetCar())
+
+			if fastestLap == nil {
+				logrus.Warnf("could not find fastest lap for entrant %s (%s). will not lock their tyre choice.", entrant.Car.GetName(), entrant.Car.GetGUID())
+			} else {
+				err := buildLockedTyreSetup(entrant, fastestLap)
+
+				if err != nil {
+					logrus.WithError(err).Errorf("could not build locked tyre setup for entrant %s (%s)", entrant.Car.GetName(), entrant.Car.GetGUID())
+				}
+			}
+		}
+
 		childSessionEntryList.AddInPitBox(entrant, pitBox)
 
 		splitIndex++
 	}
+
+	return nil
+}
+
+func buildLockedTyreSetup(entrant *RaceWeekendSessionEntrant, fastestLap *SessionLap) error {
+	tyreIndex, err := findTyreIndex(entrant.Car.Model, fastestLap.Tyre)
+
+	if err != nil {
+		return err
+	}
+
+	// write out a temp ini setup file for this car + player.
+	f := ini.NewFile([]ini.DataSource{nil}, ini.LoadOptions{
+		IgnoreInlineComment: true,
+	})
+
+	car, err := f.NewSection("CAR")
+
+	if err != nil {
+		return err
+	}
+
+	_, err = car.NewKey("MODEL", entrant.Car.Model)
+
+	if err != nil {
+		return err
+	}
+
+	tyres, err := f.NewSection("TYRES")
+
+	if err != nil {
+		return err
+	}
+
+	_, err = tyres.NewKey("VALUE", fmt.Sprintf("%d", tyreIndex))
+
+	if err != nil {
+		return err
+	}
+
+	setupFilePath := filepath.Join(entrant.Car.Model, "locked_tyres", fmt.Sprintf("race_weekend_session_%s_%s.ini", entrant.Car.GetGUID(), entrant.SessionID.String()))
+
+	fullSaveFilepath := filepath.Join(ServerInstallPath, "setups", setupFilePath)
+
+	if err := os.MkdirAll(filepath.Dir(fullSaveFilepath), 0755); err != nil {
+		return err
+	}
+
+	if err := f.SaveTo(fullSaveFilepath); err != nil {
+		return err
+	}
+
+	entrant.OverrideSetupFile = setupFilePath
 
 	return nil
 }

@@ -250,7 +250,7 @@ export namespace RaceWeekend {
             }
 
             if (pos !== undefined) {
-                $td.text(`${pos+1}. ${entrant.Name}`);
+                $td.text(`${pos + 1}. ${entrant.Name}`);
             } else {
                 $td.text(entrant.Name);
             }
@@ -287,6 +287,7 @@ export namespace RaceWeekend {
         private reverseGrid: number = 0;
         private gridStart!: number;
         private sortType!: string;
+        private startOnFastestLapTyre: boolean = false;
 
         public constructor($elem: JQuery<HTMLElement>, parentSessionID: string, childSessionID: string) {
             super($elem);
@@ -305,6 +306,7 @@ export namespace RaceWeekend {
                 NumEntrantsToReverse: this.reverseGrid,
                 EntryListStart: this.gridStart,
                 SortType: this.sortType,
+                ForceUseTyreFromFastestLap: this.startOnFastestLapTyre,
             })
         }
 
@@ -314,6 +316,7 @@ export namespace RaceWeekend {
             this.reverseGrid = parseInt(this.$elem.find("#ReverseGrid").val() as string);
             this.gridStart = parseInt(this.$elem.find("#GridStart").val() as string);
             this.sortType = this.$elem.find("#ResultsSort").val() as string;
+            this.startOnFastestLapTyre = this.$elem.find("#ForceUseTyreFromFastestLap").is(":checked");
 
             $.ajax(`/race-weekend/${RaceWeekendID}/grid-preview?parentSessionID=${this.parentSessionID}&childSessionID=${this.childSessionID}`, {
                 data: this.packageValues(),
