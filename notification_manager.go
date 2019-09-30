@@ -86,7 +86,7 @@ func (nm *NotificationManager) SendRaceStartMessage(config ServerConfig, event R
 		msg = fmt.Sprintf("Race at %s is starting now", trackInfo.Name)
 	}
 
-	msg += fmt.Sprintf("Server: %s\n", serverOpts.Name)
+	msg += fmt.Sprintf("\nServer: %s", serverOpts.Name)
 
 	if serverOpts.ShowPasswordInNotifications == 1 {
 		passwordString := "\nNo password"

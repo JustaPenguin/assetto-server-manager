@@ -97,6 +97,7 @@ func (dm *DiscordManager) SaveServerOptions(oldServerOpts *GlobalServerConfig, n
 	return nil
 }
 
+// CommandSessions outputs a full list of all scheduled sessions (P, Q & R), using buildCalendar as a base
 func (dm *DiscordManager) CommandSessions() (string, error) {
 	serverOpts, err := dm.store.LoadServerOptions()
 
@@ -120,6 +121,7 @@ func (dm *DiscordManager) CommandSessions() (string, error) {
 	return msg, nil
 }
 
+// CommandSchedule outputs an abbreviated list of all scheduled events
 func (dm *DiscordManager) CommandSchedule() (string, error) {
 	serverOpts, err := dm.store.LoadServerOptions()
 	start := time.Now()
@@ -162,15 +164,15 @@ func (dm *DiscordManager) CommandSchedule() (string, error) {
 
 	scheduled = append(scheduled, recurring...)
 
-	var msg = fmt.Sprintf("Upcoming events on server %s\n\n", serverOpts.Name)
+	var msg = fmt.Sprintf("\nUpcoming events on server %s\n\n", serverOpts.Name)
 
 	for _, scheduledEvent := range scheduled {
 		raceSetup := scheduledEvent.GetRaceSetup()
 		trackInfo := trackInfo(raceSetup.Track, raceSetup.TrackLayout)
 		cars := carList(scheduledEvent.GetRaceSetup().Cars)
-		msg += fmt.Sprintf("When: %s\n", scheduledEvent.GetScheduledTime().Format("Mon, 02 Jan 2006 15:04:05 MST"))
-		msg += fmt.Sprintf("Where: %s\n", trackInfo.Name)
-		msg += fmt.Sprintf("What: %s\n", cars)
+		msg += fmt.Sprintf("Date: %s\n", scheduledEvent.GetScheduledTime().Format("Mon, 02 Jan 2006 15:04:05 MST"))
+		msg += fmt.Sprintf("Track: %s\n", trackInfo.Name)
+		msg += fmt.Sprintf("Cars: %s\n", cars)
 		msg += "\n\n"
 	}
 
