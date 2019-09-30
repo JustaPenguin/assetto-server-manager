@@ -86,6 +86,8 @@ func (nm *NotificationManager) SendRaceStartMessage(config ServerConfig, event R
 		msg = fmt.Sprintf("Race at %s is starting now", trackInfo.Name)
 	}
 
+	msg += fmt.Sprintf("Server: %s\n", serverOpts.Name)
+
 	if serverOpts.ShowPasswordInNotifications == 1 {
 		passwordString := "\nNo password"
 
@@ -125,6 +127,8 @@ func (nm *NotificationManager) SendRaceStartMessage(config ServerConfig, event R
 
 // SendRaceScheduledMessage sends a notification when a race is scheduled
 func (nm *NotificationManager) SendRaceScheduledMessage(event *CustomRace, date time.Time) error {
+	serverOpts, err := nm.store.LoadServerOptions()
+
 	dateStr := date.Format("Mon, 02 Jan 2006 15:04:05 MST")
 
 	var aCarNames []string
@@ -150,6 +154,7 @@ func (nm *NotificationManager) SendRaceScheduledMessage(event *CustomRace, date 
 	}
 
 	var msg = "A new event has been scheduled\n"
+	msg += fmt.Sprintf("Server: %s\n", serverOpts.Name)
 	eventName := event.EventName()
 
 	if eventName != "" {

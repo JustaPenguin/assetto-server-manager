@@ -2,12 +2,13 @@ package servermanager
 
 import (
 	"errors"
-	"net/url"
-	"time"
-
+	"fmt"
 	"github.com/Clinet/discordgo-embed"
 	"github.com/bwmarrin/discordgo"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"net/url"
+	"time"
 )
 
 type DiscordManager struct {
@@ -96,34 +97,107 @@ func (dm *DiscordManager) SaveServerOptions(oldServerOpts *GlobalServerConfig, n
 	return nil
 }
 
+func (dm *DiscordManager) CommandSessions() (string, error) {
+	serverOpts, err := dm.store.LoadServerOptions()
+
+	start := time.Now()
+	end := start.AddDate(0, 0, 7)
+
+	calendar, err := dm.scheduledRacesManager.buildCalendar(start, end)
+
+	if err != nil {
+		return "", err
+	}
+
+	var msg = fmt.Sprintf("Upcoming sessions on server %s\n", serverOpts.Name)
+
+	for _, event := range calendar {
+		msg += event.Start.Format("Mon, 02 Jan 2006 15:04:05 MST") + "\n"
+		msg += event.Title + "\n"
+		msg += event.Description + "\n\n"
+	}
+
+	return msg, nil
+}
+
+func (dm *DiscordManager) CommandSchedule() (string, error) {
+	serverOpts, err := dm.store.LoadServerOptions()
+	start := time.Now()
+	end := start.AddDate(0, 0, 7)
+	scheduled, err := dm.scheduledRacesManager.getScheduledRaces()
+
+	if err != nil {
+		return "", err
+	}
+
+	var recurring []ScheduledEvent
+
+	for _, scheduledEvent := range scheduled {
+		if scheduledEvent.HasRecurrenceRule() {
+			customRace, ok := scheduledEvent.(*CustomRace)
+
+			if !ok {
+				continue
+			}
+
+			rule, err := customRace.GetRecurrenceRule()
+
+			if err != nil {
+				continue
+			}
+
+			for _, startTime := range rule.Between(start, end, true) {
+				newEvent := *customRace
+				newEvent.Scheduled = startTime
+				newEvent.UUID = uuid.New()
+
+				if customRace.GetScheduledTime() == newEvent.GetScheduledTime() {
+					continue
+				}
+
+				recurring = append(recurring, &newEvent)
+			}
+		}
+	}
+
+	scheduled = append(scheduled, recurring...)
+
+	var msg = fmt.Sprintf("Upcoming events on server %s\n\n", serverOpts.Name)
+
+	for _, scheduledEvent := range scheduled {
+		raceSetup := scheduledEvent.GetRaceSetup()
+		trackInfo := trackInfo(raceSetup.Track, raceSetup.TrackLayout)
+		cars := carList(scheduledEvent.GetRaceSetup().Cars)
+		msg += fmt.Sprintf("When: %s\n", scheduledEvent.GetScheduledTime().Format("Mon, 02 Jan 2006 15:04:05 MST"))
+		msg += fmt.Sprintf("Where: %s\n", trackInfo.Name)
+		msg += fmt.Sprintf("What: %s\n", cars)
+		msg += "\n\n"
+	}
+
+	return msg, nil
+}
+
 func (dm *DiscordManager) CommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
 
-	if m.Content == "!schedule" {
-		start := time.Now()
-		end := start.AddDate(0, 0, 7)
+	var msg = ""
+	var err error
 
-		calendar, err := dm.scheduledRacesManager.buildCalendar(start, end)
+	switch m.Content {
+	case "!schedule":
+		msg, err = dm.CommandSchedule()
+	case "!sessions":
+		msg, err = dm.CommandSessions()
+	default:
+		return
+	}
 
-		if err != nil {
-			return
-		}
+	_, err = s.ChannelMessageSend(m.ChannelID, msg)
 
-		var msg = ""
-
-		for _, event := range calendar {
-			msg += event.Start.Format("Mon, 02 Jan 2006 15:04:05 MST") + "\n"
-			msg += event.Title + "\n"
-			msg += event.Description + "\n\n"
-		}
-
-		_, err = s.ChannelMessageSend(m.ChannelID, msg)
-
-		if err != nil {
-			logrus.Errorf("couldn't open discord session, err: %s", err)
-		}
+	if err != nil {
+		logrus.Errorf("couldn't open discord session, err: %s", err)
 	}
 }
 
