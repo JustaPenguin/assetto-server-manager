@@ -56,6 +56,9 @@ export namespace RaceWeekend {
 
                     $elem.val($elem.data("default-value"));
                 });
+
+                // set wait time for races to be a large number
+                $("#Race\\.WaitTime").val(300);
             }
         }
     }

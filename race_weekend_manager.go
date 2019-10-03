@@ -153,6 +153,11 @@ func (rwm *RaceWeekendManager) SaveRaceWeekend(r *http.Request) (raceWeekend *Ra
 		}
 
 		raceWeekend.EntryList = entryList
+
+		// persist race weekend entrants in the autofill entry list
+		if err := rwm.raceManager.SaveEntrantsForAutoFill(entryList); err != nil {
+			return raceWeekend, edited, err
+		}
 	}
 
 	return raceWeekend, edited, rwm.store.UpsertRaceWeekend(raceWeekend)
