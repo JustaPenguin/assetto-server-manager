@@ -6,6 +6,10 @@ Added:
 * Discord integration! Thanks to @cheesegrits for this! Check out the Server Options page for more information.
 * Dark Theme! You can now set Server Manager to use a Dark Theme in the Server Options. You can also edit this for your account in the "Update Details" page.
 
+Fixes:
+
+* Championship Sign Up Forms are only shown if the Championship has free slots left and the Championship is not fully complete.
+
 v1.4.2
 ------
 

@@ -313,6 +313,23 @@ func (c *Championship) IsMultiClass() bool {
 	return len(c.Classes) > 1
 }
 
+func (c *Championship) SignUpAvailable() bool {
+	numTotalEntrants := 0
+	numFilledSlots := 0
+
+	for _, class := range c.Classes {
+		for _, entrant := range class.Entrants {
+			if entrant.GUID != "" {
+				numFilledSlots++
+			}
+
+			numTotalEntrants++
+		}
+	}
+
+	return c.SignUpForm.Enabled && c.Progress() < 100.0 && numFilledSlots < numTotalEntrants
+}
+
 func (c *Championship) HasTeamNames() bool {
 	for _, class := range c.Classes {
 		for _, entrant := range class.Entrants {
