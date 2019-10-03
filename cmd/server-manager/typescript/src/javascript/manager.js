@@ -447,7 +447,7 @@ class RaceSetup {
      */
     populateTyreDropdown() {
         // quick race doesn't have tyre set up.
-        if (typeof availableTyres === "undefined" || !this.$carsDropdown.length) {
+        if (typeof availableTyres === "undefined") {
             return
         }
 

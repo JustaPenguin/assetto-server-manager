@@ -308,8 +308,6 @@ func (rwh *RaceWeekendHandler) gridPreview(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	filter.IsPreview = true
-
 	previewResponse, err := rwh.raceWeekendManager.PreviewGrid(raceWeekendID, parentSessionID, childSessionID, filter)
 
 	if err != nil {
