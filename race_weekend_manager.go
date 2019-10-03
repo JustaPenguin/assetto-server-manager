@@ -412,13 +412,27 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		replacementPassword = raceWeekend.Championship.ReplacementPassword
 	}
 
+	for _, entrant := range entryList {
+		// look through the user configured entry list and apply any of the options that they set to this entrant.
+		for _, raceWeekendEntrant := range raceWeekend.GetEntryList() {
+			if raceWeekendEntrant.GUID == entrant.GUID {
+				entrant.Model = raceWeekendEntrant.Model
+				entrant.Ballast = raceWeekendEntrant.Ballast
+				entrant.Restrictor = raceWeekendEntrant.Restrictor
+				entrant.FixedSetup = raceWeekendEntrant.FixedSetup
+				entrant.Skin = raceWeekendEntrant.Skin
+				break
+			}
+		}
+	}
+
 	return rwm.applyConfigAndStart(session.RaceConfig, entryList, &ActiveRaceWeekend{
 		Name:                raceWeekend.Name,
 		RaceWeekendID:       raceWeekend.ID,
 		SessionID:           session.ID,
 		OverridePassword:    overridePassword,
 		ReplacementPassword: replacementPassword,
-		Description:         "", // @TODO?
+		Description:         fmt.Sprintf("This is a session in the '%s' Race Weekend.", raceWeekend.Name),
 	})
 }
 

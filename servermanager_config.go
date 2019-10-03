@@ -86,10 +86,10 @@ func (h *HTTPConfig) createSessionStore() (sessions.Store, error) {
 }
 
 type ACSRConfig struct {
-	URL     string `yaml:"url"`
-	Enabled bool   `yaml:"enabled"`
-	APIKey     string `yaml:"api_key"`
-	AccountID string   `yaml:"account_id"`
+	URL       string `yaml:"url"`
+	Enabled   bool   `yaml:"enabled"`
+	APIKey    string `yaml:"api_key"`
+	AccountID string `yaml:"account_id"`
 }
 
 type SteamConfig struct {
