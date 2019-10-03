@@ -9,6 +9,7 @@ Added:
 Fixes:
 
 * Championship Sign Up Forms are only shown if the Championship has free slots left and the Championship is not fully complete.
+* Improved cache validation so that user-uploaded files can change without needing to empty the browser cache.
 
 v1.4.2
 ------
