@@ -32,6 +32,58 @@
         starting grid for you, and lets you organise Entrants into splits based on their results and other factors!
     </p>
 
+
+    <h2>Active</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-championship">
+            <tr>
+                <th>Name</th>
+                <th>Progress</th>
+                <th>Number of Sessions</th>
+                <th>Number of Entrants</th>
+                <th>Actions</th>
+            </tr>
+
+            {{ range $.RaceWeekends }}
+                {{ if and (not .HasLinkedChampionship) (ne .Progress 100.0) }}
+                    <tr>
+                        <td>
+                            <a href="/race-weekend/{{ .ID.String }}">{{ .Name }}</a>
+                        </td>
+
+                        <td>
+                            {{ int .Progress }}%
+                        </td>
+
+                        <td>
+                            {{ len .Sessions }}
+                        </td>
+
+                        <td>
+                            {{ len .GetEntryList }}
+                        </td>
+
+                        <td class="align-middle custom-race-actions">
+                            <a class="btn btn-sm btn-success" href="/race-weekend/{{ .ID }}">View</a>
+                            <a class="btn btn-sm btn-primary" href="/race-weekend/{{ .ID }}/export">Export</a>
+
+                            {{ if WriteAccess }}
+                                <a class="btn btn-sm btn-warning" href="/race-weekend/{{ .ID }}/edit">Edit</a>
+                                <a onClick="return confirm('I understand that this will delete the entire Race Weekend permanently.') "
+                                   class="btn btn-sm btn-danger {{ if not DeleteAccess }}disabled{{ end }}" href="/race-weekend/{{ .ID }}/delete">Delete</a>
+                            {{ end }}
+                        </td>
+                    </tr>
+                {{ end }}
+            {{ end }}
+        </table>
+    </div>
+
+    <hr>
+
+    <h2>Completed</h2>
+
     <div class="table-responsive">
         <table class="table table-bordered table-striped table-championship">
             <tr>
@@ -42,8 +94,7 @@
             </tr>
 
             {{ range $.RaceWeekends }}
-                {{ if not .HasLinkedChampionship }}
-
+                {{ if and (not .HasLinkedChampionship) (eq .Progress 100.0) }}
                     <tr>
                         <td>
                             <a href="/race-weekend/{{ .ID.String }}">{{ .Name }}</a>
@@ -72,5 +123,4 @@
             {{ end }}
         </table>
     </div>
-
 {{ end }}

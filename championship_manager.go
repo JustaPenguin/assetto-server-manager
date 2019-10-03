@@ -71,10 +71,6 @@ func (cm *ChampionshipManager) LoadChampionship(id string) (*Championship, error
 		}
 	}
 
-	for _, class := range championship.Classes {
-		class.Standings(championship.Events)
-	}
-
 	return championship, nil
 }
 
