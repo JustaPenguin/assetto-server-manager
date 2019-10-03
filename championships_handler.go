@@ -522,7 +522,7 @@ func (ch *ChampionshipsHandler) signUpForm(w http.ResponseWriter, r *http.Reques
 		ChampionshipTemplateVars: championshipOpts,
 	}
 
-	if !championship.SignUpForm.Enabled {
+	if !championship.SignUpAvailable() {
 		http.NotFound(w, r)
 		return
 	}
