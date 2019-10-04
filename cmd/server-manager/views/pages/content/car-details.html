@@ -184,7 +184,7 @@
                     {{ range $index, $session := $.Results }}
                         <a class="list-group-item list-group-item-action" href="/results/{{ $session.SessionFile }}">
                             <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-2 text-primary"><strong>{{ title (lower $session.Type) }}</strong></h5>
+                                <h5 class="mb-2 text-primary"><strong>{{ title (lower $session.Type.String) }}</strong></h5>
                                 <small>{{ fullTimeFormat $session.Date }}</small>
                             </div>
                             <p class="mb-1">{{ prettify $session.TrackName false }} {{ with $session.TrackConfig }}({{ prettify . true }}){{ end }}</p>

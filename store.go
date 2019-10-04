@@ -40,4 +40,10 @@ type Store interface {
 	// Audit Log
 	GetAuditEntries() ([]*AuditEntry, error)
 	AddAuditEntry(entry *AuditEntry) error
+
+	// Race Weekend
+	ListRaceWeekends() ([]*RaceWeekend, error)
+	UpsertRaceWeekend(rw *RaceWeekend) error
+	LoadRaceWeekend(id string) (*RaceWeekend, error)
+	DeleteRaceWeekend(id string) error
 }

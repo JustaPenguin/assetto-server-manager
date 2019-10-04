@@ -49,6 +49,10 @@ func (cr *CustomRace) IsChampionship() bool {
 	return false
 }
 
+func (cr *CustomRace) IsRaceWeekend() bool {
+	return false
+}
+
 func (cr *CustomRace) HasSignUpForm() bool {
 	return false
 }

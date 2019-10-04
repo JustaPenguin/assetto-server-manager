@@ -7,6 +7,7 @@ let buffer = require('vinyl-buffer');
 let uglify = require('gulp-uglify-es').default;
 let sass = require("gulp-sass");
 let autoPrefixer = require("gulp-autoprefixer");
+let fsCache = require( 'gulp-fs-cache' );
 
 gulp.task('build-js', buildJS);
 gulp.task("build-sass", buildSass);
@@ -26,6 +27,8 @@ gulp.task('build', gulp.series('build-js', 'build-sass', 'copy'));
 gulp.task('default', gulp.series('build', 'watch'));
 
 function buildJS() {
+    let jsCache = fsCache( '.gulp-cache/js' );
+
     try {
         return browserify({
             basedir: '.',
@@ -44,7 +47,9 @@ function buildJS() {
             .pipe(source('bundle.js'))
             .pipe(buffer())
             .pipe(sourcemaps.init({loadMaps: true}))
+            .pipe(jsCache)
             .pipe(uglify())
+            .pipe(jsCache.restore)
             .pipe(sourcemaps.write('.'))
             .pipe(gulp.dest('../static/js'));
 

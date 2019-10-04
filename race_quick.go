@@ -63,6 +63,10 @@ func (q QuickRace) IsChampionship() bool {
 	return false
 }
 
+func (q QuickRace) IsRaceWeekend() bool {
+	return false
+}
+
 func (q QuickRace) EventName() string {
 	return trackSummary(q.RaceConfig.Track, q.RaceConfig.TrackLayout)
 }

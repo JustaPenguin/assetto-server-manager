@@ -1,8 +1,6 @@
 package servermanager
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +11,7 @@ import (
 	"github.com/cj123/sessions"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-http-utils/etag"
 	"github.com/sirupsen/logrus"
 )
 
@@ -60,6 +59,7 @@ func Router(
 	serverAdministrationHandler *ServerAdministrationHandler,
 	raceControlHandler *RaceControlHandler,
 	scheduledRacesHandler *ScheduledRacesHandler,
+	raceWeekendHandler *RaceWeekendHandler,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -134,8 +134,17 @@ func Router(
 		r.HandleFunc("/accounts/update", accountHandler.update)
 		r.HandleFunc("/accounts/dismiss-changelog", accountHandler.dismissChangelog)
 
-		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")))
-		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")))
+		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")), true)
+		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")), true)
+
+		// race weekends
+		r.Get("/race-weekends", raceWeekendHandler.list)
+		r.Get("/race-weekend/{raceWeekendID}", raceWeekendHandler.view)
+		r.Get("/race-weekend/{raceWeekendID}/filters", raceWeekendHandler.manageFilters)
+		r.Get("/race-weekend/{raceWeekendID}/entrylist", raceWeekendHandler.manageEntryList)
+		r.Post("/race-weekend/{raceWeekendID}/grid-preview", raceWeekendHandler.gridPreview)
+		r.Get("/race-weekend/{raceWeekendID}/entrylist-preview", raceWeekendHandler.entryListPreview)
+		r.Get("/race-weekend/{raceWeekendID}/export", raceWeekendHandler.export)
 	})
 
 	// writers
@@ -206,6 +215,24 @@ func Router(
 		r.Post("/api/track/upload", contentUploadHandler.upload(ContentTypeTrack))
 		r.Post("/api/car/upload", contentUploadHandler.upload(ContentTypeCar))
 		r.Post("/api/weather/upload", contentUploadHandler.upload(ContentTypeWeather))
+
+		// race weekend
+		r.Get("/race-weekends/new", raceWeekendHandler.createOrEdit)
+		r.Post("/race-weekends/new/submit", raceWeekendHandler.submit)
+		r.Get("/race-weekend/{raceWeekendID}/delete", raceWeekendHandler.delete)
+		r.Get("/race-weekend/{raceWeekendID}/edit", raceWeekendHandler.createOrEdit)
+		r.Get("/race-weekend/{raceWeekendID}/session", raceWeekendHandler.sessionConfiguration)
+		r.Post("/race-weekend/{raceWeekendID}/session/submit", raceWeekendHandler.submitSessionConfiguration)
+		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/edit", raceWeekendHandler.sessionConfiguration)
+		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/start", raceWeekendHandler.startSession)
+		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/restart", raceWeekendHandler.restartSession)
+		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/cancel", raceWeekendHandler.cancelSession)
+		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/import", raceWeekendHandler.importSessionResults)
+		r.Post("/race-weekend/{raceWeekendID}/session/{sessionID}/import", raceWeekendHandler.importSessionResults)
+		r.Post("/race-weekend/{raceWeekendID}/update-grid", raceWeekendHandler.updateGrid)
+		r.Get("/race-weekend/{raceWeekendID}/update-entrylist", raceWeekendHandler.updateEntryList)
+		r.Get("/race-weekend/import", raceWeekendHandler.importRaceWeekend)
+		r.Post("/race-weekend/import", raceWeekendHandler.importRaceWeekend)
 	})
 
 	// deleters
@@ -227,6 +254,9 @@ func Router(
 
 		r.Get("/autofill-entrants", serverAdministrationHandler.autoFillEntrantList)
 		r.Get("/autofill-entrants/delete/{entrantID}", serverAdministrationHandler.autoFillEntrantDelete)
+
+		// race weekend
+		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/delete", raceWeekendHandler.deleteSession)
 	})
 
 	// admins
@@ -249,12 +279,12 @@ func Router(
 		r.HandleFunc("/search-index", carsHandler.rebuildSearchIndex)
 	})
 
-	FileServer(r, "/static", fs)
+	FileServer(r, "/static", fs, false)
 
 	return prometheusMonitoringWrapper(r)
 }
 
-func FileServer(r chi.Router, path string, root http.FileSystem) {
+func FileServer(r chi.Router, path string, root http.FileSystem, useRevalidation bool) {
 	if strings.ContainsAny(path, "{}*") {
 		panic("FileServer does not permit URL parameters.")
 	}
@@ -267,24 +297,21 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 	}
 	path += "*"
 
-	r.Get(path, AssetCacheHeaders(fs.ServeHTTP))
+	r.Get(path, AssetCacheHeaders(fs.ServeHTTP, useRevalidation))
 }
 
 const maxAge30Days = 2592000
 
-func etag(url string) string {
-	h := md5.New()
-	h.Write([]byte(BuildVersion + url))
-
-	return hex.EncodeToString(h.Sum(nil))
-}
-
-func AssetCacheHeaders(next http.HandlerFunc) http.HandlerFunc {
+func AssetCacheHeaders(next http.HandlerFunc, useRevalidation bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Cache-Control", fmt.Sprintf("public, max-age=%d", maxAge30Days))
-		w.Header().Add("ETag", fmt.Sprintf(`W/"%s"`, etag(r.URL.String())))
+		if useRevalidation {
+			w.Header().Add("Cache-Control", fmt.Sprintf("public, must-revalidate"))
+			etag.Handler(next, false).ServeHTTP(w, r)
+		} else {
+			w.Header().Add("Cache-Control", fmt.Sprintf("public, max-age=%d", maxAge30Days))
 
-		next(w, r)
+			next(w, r)
+		}
 	}
 }
 

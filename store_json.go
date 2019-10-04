@@ -22,6 +22,7 @@ const (
 
 	// shared data
 	championshipsDir = "championships"
+	raceWeekendsDir  = "race_weekends"
 	customRacesDir   = "custom_races"
 	entrantsFile     = "entrants.json"
 )
@@ -227,7 +228,9 @@ func (rs *JSONStore) LoadServerOptions() (*GlobalServerConfig, error) {
 	err := rs.decodeFile(rs.base, serverOptionsFile, &out)
 
 	if os.IsNotExist(err) {
-		return &ConfigIniDefault.GlobalServerConfig, rs.UpsertServerOptions(&ConfigIniDefault.GlobalServerConfig)
+		defaultConfig := ConfigIniDefault()
+
+		return &defaultConfig.GlobalServerConfig, rs.UpsertServerOptions(&defaultConfig.GlobalServerConfig)
 	} else if err != nil {
 		return nil, err
 	}
@@ -411,4 +414,54 @@ func (rs *JSONStore) AddAuditEntry(entry *AuditEntry) error {
 	}
 
 	return rs.encodeFile(rs.base, auditFile, entries)
+}
+
+func (rs *JSONStore) ListRaceWeekends() ([]*RaceWeekend, error) {
+	files, err := rs.listFiles(filepath.Join(rs.shared, raceWeekendsDir))
+
+	if err != nil {
+		return nil, err
+	}
+
+	var raceWeekends []*RaceWeekend
+
+	for _, file := range files {
+		rw, err := rs.LoadRaceWeekend(file)
+
+		if err != nil || !rw.Deleted.IsZero() {
+			continue
+		}
+
+		raceWeekends = append(raceWeekends, rw)
+	}
+
+	return raceWeekends, nil
+}
+
+func (rs *JSONStore) UpsertRaceWeekend(rw *RaceWeekend) error {
+	return rs.encodeFile(rs.shared, filepath.Join(raceWeekendsDir, rw.ID.String()+".json"), rw)
+}
+
+func (rs *JSONStore) LoadRaceWeekend(id string) (*RaceWeekend, error) {
+	var raceWeekend *RaceWeekend
+
+	err := rs.decodeFile(rs.shared, filepath.Join(raceWeekendsDir, id+".json"), &raceWeekend)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return raceWeekend, nil
+}
+
+func (rs *JSONStore) DeleteRaceWeekend(id string) error {
+	rw, err := rs.LoadRaceWeekend(id)
+
+	if err != nil {
+		return err
+	}
+
+	rw.Deleted = time.Now()
+
+	return rs.UpsertRaceWeekend(rw)
 }

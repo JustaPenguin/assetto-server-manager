@@ -163,3 +163,25 @@ $pre-color:                         inherit;
 .card-logs {
   background-color: $gray-800 !important;
 }
+
+svg.race-weekend-connector path {
+  stroke: $white !important;
+}
+
+svg path.race-weekend-arrow {
+  stroke: $white !important;
+  fill: $white !important;
+
+  &:hover {
+    stroke: $primary !important;
+    fill: $primary !important;
+  }
+}
+
+#track-location {
+  color: $white !important;
+}
+
+.table-secondary {
+  color: $black !important;
+}

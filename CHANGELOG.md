@@ -1,7 +1,22 @@
-v1.x.x
+v1.5.0
 ------
 
 Added:
+
+* Race Weekends - A Race Weekend is a group of sequential sessions that can be run at any time. For example, you could set up a Qualifying session to run on a Saturday, then the Race to follow it on a Sunday. Server Manager handles the starting grid for you, and lets you organise Entrants into splits based on their results and other factors!
+  
+  - You can create individual Race Weekends or create Race Weekends as part of a Championship
+  - Race Weekends need a fully configured Entry List to work properly. If you're using a Championship Race Weekend, the Championship Entry List is used.
+  - You can add as many sessions to a Race Weekend as you like! You could run 4 Practice sessions, followed by 3 Races, and then a Qualifying, then a Practice, another Race, etc! You have full control!
+  - You can start individual Race Weekend sessions at any time. So you can run one session one day, then another one three weeks ahead if you like. We think this will be useful for things such as Endurance events, where you maybe want your drivers to qualify on a different day so they don't tire themselves out before doing a 2 hour race.
+  - By default, the results of a session will form the Grid positions for the next session.
+  - You can sort the results of a session by a number of different factors (fastest lap, total race time, collisions, cuts, safety, random and alphabetical)
+  - All session results can be reversed in the same way you can configure a Reverse Grid Race normally.
+  - To manage the flow between sessions, click on the arrow between two sessions.
+  - A session grid can be formed from the results of multiple parent sessions. This means you can split and merge the Race Weekend as much as you like. For example, you could set up an F1-style qualifying using Race Weekends! (Check out the example Race Weekend).
+  - Race Weekend sessions are shown in a flow-chart, so you can see the connections between the sessions.
+  - In Multiclass Championship Race Weekends, the sorting of the Entry Lists is per class. The classes are then ordered by the fastest lap of each class (so LMP1 cars will be ahead of GTE cars on the grid, for example)
+  - Each Championship Race Weekend session allows you to set points for the individual session. Championship points are calculated using these points values.
 
 * Discord integration! Thanks to @cheesegrits for this! Check out the Server Options page for more information.
 * Dark Theme! You can now set Server Manager to use a Dark Theme in the Server Options. You can also edit this for your account in the "Update Details" page.
@@ -12,6 +27,8 @@ Added:
 Fixes:
 
 * Championship Sign Up Forms are only shown if the Championship has free slots left and the Championship is not fully complete.
+* Championships now always show the 'Entrants' tab, so you can check to see if you're in the list!
+* Improved cache validation so that user-uploaded files can change without needing to empty the browser cache.
 
 v1.4.2
 ------
