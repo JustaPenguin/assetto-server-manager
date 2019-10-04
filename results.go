@@ -32,6 +32,19 @@ type SessionResults struct {
 	Date           time.Time        `json:"Date"`
 	SessionFile    string           `json:"SessionFile"`
 	ChampionshipID string           `json:"ChampionshipID"`
+	RaceWeekendID  string           `json:"RaceWeekendID"`
+}
+
+var ErrSessionCarNotFound = errors.New("servermanager: session car not found")
+
+func (s *SessionResults) FindCarByGUIDAndModel(guid, model string) (*SessionCar, error) {
+	for _, car := range s.Cars {
+		if car.GetGUID() == guid && car.GetCar() == model {
+			return car, nil
+		}
+	}
+
+	return nil, ErrSessionCarNotFound
 }
 
 func (s *SessionResults) Anonymize() {
@@ -285,6 +298,18 @@ func (s *SessionResults) IsDriversFastestLap(guid string, time, cuts int) bool {
 	return fastest
 }
 
+func (s *SessionResults) GetDriversFastestLap(guid, model string) *SessionLap {
+	var fastest *SessionLap
+
+	for _, lap := range s.Laps {
+		if lap.DriverGUID == guid && lap.CarModel == model && (fastest == nil || lap.LapTime < fastest.LapTime) && lap.Cuts == 0 {
+			fastest = lap
+		}
+	}
+
+	return fastest
+}
+
 func (s *SessionResults) IsFastestSector(sector, time, cuts int) bool {
 	if cuts != 0 {
 		return false
@@ -375,13 +400,13 @@ cars:
 		if (!s.Result[i].Disqualified && !s.Result[j].Disqualified) || (s.Result[i].Disqualified && s.Result[j].Disqualified) {
 
 			// if both drivers aren't/are disqualified
-			if s.GetLaps(s.Result[i].DriverGUID) == s.GetLaps(s.Result[j].DriverGUID) {
+			if s.GetNumLaps(s.Result[i].DriverGUID) == s.GetNumLaps(s.Result[j].DriverGUID) {
 				// if their number of laps are equal, compare last lap pos
 				return s.GetTime(s.Result[i].TotalTime, s.Result[i].DriverGUID, true) <
 					s.GetTime(s.Result[j].TotalTime, s.Result[j].DriverGUID, true)
 			}
 
-			return s.GetLaps(s.Result[i].DriverGUID) >= s.GetLaps(s.Result[j].DriverGUID)
+			return s.GetNumLaps(s.Result[i].DriverGUID) >= s.GetNumLaps(s.Result[j].DriverGUID)
 
 		} else {
 			// driver i is closer to the front than j if they are not disqualified and j is
@@ -417,7 +442,7 @@ func (s *SessionResults) GetDrivers() string {
 }
 
 func (s *SessionResults) GetTime(timeINT int, driverGUID string, total bool) time.Duration {
-	if i := s.GetLaps(driverGUID); i == 0 {
+	if i := s.GetNumLaps(driverGUID); i == 0 {
 		return time.Duration(0)
 	}
 
@@ -445,7 +470,7 @@ func (s *SessionResults) GetTeamName(driverGUID string) string {
 	return ""
 }
 
-func (s *SessionResults) GetLaps(driverGUID string) int {
+func (s *SessionResults) GetNumLaps(driverGUID string) int {
 	var i int
 
 	for _, lap := range s.Laps {

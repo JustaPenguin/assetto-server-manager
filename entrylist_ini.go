@@ -50,7 +50,13 @@ func (e EntryList) Write() error {
 
 // Add an Entrant to the EntryList
 func (e EntryList) Add(entrant *Entrant) {
-	e[fmt.Sprintf("CAR_%d", len(e))] = entrant
+	e.AddInPitBox(entrant, len(e))
+}
+
+// AddInPitBox adds an Entrant in a specific pitbox - overwriting any entrant that was in that pitbox previously.
+func (e EntryList) AddInPitBox(entrant *Entrant, pitBox int) {
+	entrant.PitBox = pitBox
+	e[fmt.Sprintf("CAR_%d", pitBox)] = entrant
 }
 
 // Remove an Entrant from the EntryList
@@ -72,6 +78,20 @@ func (e EntryList) AsSlice() []*Entrant {
 
 	sort.Slice(entrants, func(i, j int) bool {
 		return entrants[i].PitBox < entrants[j].PitBox
+	})
+
+	return entrants
+}
+
+func (e EntryList) AlphaSlice() []*Entrant {
+	var entrants []*Entrant
+
+	for _, x := range e {
+		entrants = append(entrants, x)
+	}
+
+	sort.Slice(entrants, func(i, j int) bool {
+		return entrants[i].Name < entrants[j].Name
 	})
 
 	return entrants
@@ -133,6 +153,23 @@ func (e EntryList) FindEntrantByInternalUUID(internalUUID uuid.UUID) *Entrant {
 	return &Entrant{}
 }
 
+// CarIDs returns a unique list of car IDs used in the EntryList
+func (e EntryList) CarIDs() []string {
+	cars := make(map[string]bool)
+
+	for _, entrant := range e {
+		cars[entrant.Model] = true
+	}
+
+	var out []string
+
+	for car := range cars {
+		out = append(out, car)
+	}
+
+	return out
+}
+
 func NewEntrant() *Entrant {
 	return &Entrant{
 		InternalUUID: uuid.New(),
@@ -188,4 +225,41 @@ func (e *Entrant) SwapProperties(other *Entrant, entrantRemainedInClass bool) {
 	e.Team, other.Team = other.Team, e.Team
 	e.InternalUUID, other.InternalUUID = other.InternalUUID, e.InternalUUID
 	e.PitBox, other.PitBox = other.PitBox, e.PitBox
+}
+
+func (e *Entrant) AssignFromResult(result *SessionResult, car *SessionCar) {
+	e.Name = result.DriverName
+	e.Team = car.Driver.Team
+	e.GUID = result.DriverGUID
+	e.Model = result.CarModel
+	e.Skin = car.Skin
+	e.Restrictor = car.Restrictor
+	e.Ballast = car.BallastKG
+}
+
+func (e *Entrant) AsSessionCar() *SessionCar {
+	return &SessionCar{
+		BallastKG: e.Ballast,
+		CarID:     e.PitBox,
+		Driver: SessionDriver{
+			GUID:      e.GUID,
+			GuidsList: []string{e.GUID},
+			Name:      e.Name,
+			Team:      e.Team,
+		},
+		Model:      e.Model,
+		Restrictor: e.Restrictor,
+		Skin:       e.Skin,
+	}
+}
+
+func (e *Entrant) AsSessionResult() *SessionResult {
+	return &SessionResult{
+		BallastKG:  e.Ballast,
+		CarID:      e.PitBox,
+		CarModel:   e.Model,
+		DriverGUID: e.GUID,
+		DriverName: e.Name,
+		Restrictor: e.Restrictor,
+	}
 }

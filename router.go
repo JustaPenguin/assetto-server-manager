@@ -60,6 +60,7 @@ func Router(
 	serverAdministrationHandler *ServerAdministrationHandler,
 	raceControlHandler *RaceControlHandler,
 	scheduledRacesHandler *ScheduledRacesHandler,
+	raceWeekendHandler *RaceWeekendHandler,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -136,6 +137,15 @@ func Router(
 
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")))
 		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")))
+
+		// race weekends
+		r.Get("/race-weekends", raceWeekendHandler.list)
+		r.Get("/race-weekend/{raceWeekendID}", raceWeekendHandler.view)
+		r.Get("/race-weekend/{raceWeekendID}/filters", raceWeekendHandler.manageFilters)
+		r.Get("/race-weekend/{raceWeekendID}/entrylist", raceWeekendHandler.manageEntryList)
+		r.Post("/race-weekend/{raceWeekendID}/grid-preview", raceWeekendHandler.gridPreview)
+		r.Get("/race-weekend/{raceWeekendID}/entrylist-preview", raceWeekendHandler.entryListPreview)
+		r.Get("/race-weekend/{raceWeekendID}/export", raceWeekendHandler.export)
 	})
 
 	// writers
@@ -206,6 +216,24 @@ func Router(
 		r.Post("/api/track/upload", contentUploadHandler.upload(ContentTypeTrack))
 		r.Post("/api/car/upload", contentUploadHandler.upload(ContentTypeCar))
 		r.Post("/api/weather/upload", contentUploadHandler.upload(ContentTypeWeather))
+
+		// race weekend
+		r.Get("/race-weekends/new", raceWeekendHandler.createOrEdit)
+		r.Post("/race-weekends/new/submit", raceWeekendHandler.submit)
+		r.Get("/race-weekend/{raceWeekendID}/delete", raceWeekendHandler.delete)
+		r.Get("/race-weekend/{raceWeekendID}/edit", raceWeekendHandler.createOrEdit)
+		r.Get("/race-weekend/{raceWeekendID}/session", raceWeekendHandler.sessionConfiguration)
+		r.Post("/race-weekend/{raceWeekendID}/session/submit", raceWeekendHandler.submitSessionConfiguration)
+		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/edit", raceWeekendHandler.sessionConfiguration)
+		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/start", raceWeekendHandler.startSession)
+		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/restart", raceWeekendHandler.restartSession)
+		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/cancel", raceWeekendHandler.cancelSession)
+		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/import", raceWeekendHandler.importSessionResults)
+		r.Post("/race-weekend/{raceWeekendID}/session/{sessionID}/import", raceWeekendHandler.importSessionResults)
+		r.Post("/race-weekend/{raceWeekendID}/update-grid", raceWeekendHandler.updateGrid)
+		r.Get("/race-weekend/{raceWeekendID}/update-entrylist", raceWeekendHandler.updateEntryList)
+		r.Get("/race-weekend/import", raceWeekendHandler.importRaceWeekend)
+		r.Post("/race-weekend/import", raceWeekendHandler.importRaceWeekend)
 	})
 
 	// deleters
@@ -227,6 +255,9 @@ func Router(
 
 		r.Get("/autofill-entrants", serverAdministrationHandler.autoFillEntrantList)
 		r.Get("/autofill-entrants/delete/{entrantID}", serverAdministrationHandler.autoFillEntrantDelete)
+
+		// race weekend
+		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/delete", raceWeekendHandler.deleteSession)
 	})
 
 	// admins

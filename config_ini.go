@@ -57,7 +57,7 @@ var AvailableSessions = []SessionType{
 	SessionTypeBooking,
 }
 
-var AvailableSessionsClosedChampionship = []SessionType{
+var AvailableSessionsNoBooking = []SessionType{
 	SessionTypeRace,
 	SessionTypeQualifying,
 	SessionTypePractice,
@@ -244,10 +244,10 @@ type CurrentRaceConfig struct {
 	Weather  map[string]*WeatherConfig `ini:"-"`
 }
 
-type Sessions map[SessionType]SessionConfig
+type Sessions map[SessionType]*SessionConfig
 
-func (s Sessions) AsSlice() []SessionConfig {
-	var out []SessionConfig
+func (s Sessions) AsSlice() []*SessionConfig {
+	var out []*SessionConfig
 
 	if x, ok := s[SessionTypeBooking]; ok {
 		out = append(out, x)
@@ -278,9 +278,19 @@ func (c CurrentRaceConfig) HasSession(sess SessionType) bool {
 	return ok
 }
 
-func (c *CurrentRaceConfig) AddSession(sessionType SessionType, config SessionConfig) {
+func (c CurrentRaceConfig) GetSession(sessionType SessionType) *SessionConfig {
+	sess, ok := c.Sessions[sessionType]
+
+	if !ok {
+		return &SessionConfig{}
+	}
+
+	return sess
+}
+
+func (c *CurrentRaceConfig) AddSession(sessionType SessionType, config *SessionConfig) {
 	if c.Sessions == nil {
-		c.Sessions = make(map[SessionType]SessionConfig)
+		c.Sessions = make(map[SessionType]*SessionConfig)
 	}
 
 	c.Sessions[sessionType] = config

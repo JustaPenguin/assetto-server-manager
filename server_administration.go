@@ -19,6 +19,7 @@ type ServerAdministrationHandler struct {
 	store               Store
 	raceManager         *RaceManager
 	championshipManager *ChampionshipManager
+	raceWeekendManager  *RaceWeekendManager
 	process             ServerProcess
 }
 
@@ -27,6 +28,7 @@ func NewServerAdministrationHandler(
 	store Store,
 	raceManager *RaceManager,
 	championshipManager *ChampionshipManager,
+	raceWeekendManager *RaceWeekendManager,
 	process ServerProcess,
 ) *ServerAdministrationHandler {
 	return &ServerAdministrationHandler{
@@ -34,6 +36,7 @@ func NewServerAdministrationHandler(
 		store:               store,
 		raceManager:         raceManager,
 		championshipManager: championshipManager,
+		raceWeekendManager:  raceWeekendManager,
 		process:             process,
 	}
 }
@@ -256,6 +259,8 @@ func (sah *ServerAdministrationHandler) serverProcess(w http.ResponseWriter, r *
 	case "stop":
 		if event.IsChampionship() {
 			err = sah.championshipManager.StopActiveEvent()
+		} else if event.IsRaceWeekend() {
+			err = sah.raceWeekendManager.StopActiveSession()
 		} else {
 			err = sah.process.Stop()
 		}
@@ -263,6 +268,8 @@ func (sah *ServerAdministrationHandler) serverProcess(w http.ResponseWriter, r *
 	case "restart":
 		if event.IsChampionship() {
 			err = sah.championshipManager.RestartActiveEvent()
+		} else if event.IsRaceWeekend() {
+			err = sah.raceWeekendManager.RestartActiveSession()
 		} else {
 			err = sah.process.Restart()
 		}

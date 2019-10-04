@@ -80,7 +80,7 @@ func TestChampionshipEvent_LastSession(t *testing.T) {
 		e := NewChampionshipEvent()
 
 		for _, session := range x.sessions {
-			e.RaceSetup.AddSession(session, SessionConfig{})
+			e.RaceSetup.AddSession(session, &SessionConfig{})
 		}
 
 		if e.LastSession() != x.expected {
