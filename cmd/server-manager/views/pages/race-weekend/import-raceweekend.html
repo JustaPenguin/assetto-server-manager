@@ -1,0 +1,20 @@
+{{ define "title" }}Import Race Weekend{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">Import Race Weekend</h1>
+
+    <form method="post" action="/race-weekend/import">
+        <label for="import"></label>
+        <textarea id="import" name="import" placeholder="Paste your Race Weekend JSON here!" class="form-control md-textarea text-area"></textarea>
+
+        <button class="btn btn-success float-right mt-2" type="submit">Save</button>
+    </form>
+
+    <p>
+        <small>
+            Here you can import Race Weekends in a JSON format (this format matches the format given when you export a
+            Race Weekend). We do not recommend attempting to manually create this data, as the format is quite complex.
+            However if you want to move Race Weekends across servers but don't have file access then you can use this feature!
+        </small>
+    </p>
+{{ end }}

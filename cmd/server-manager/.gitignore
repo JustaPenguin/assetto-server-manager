@@ -12,3 +12,4 @@ build/
 *.log
 static/js/bundle.js
 static/css
+typescript/.gulp-cache

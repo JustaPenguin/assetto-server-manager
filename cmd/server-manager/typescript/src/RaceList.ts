@@ -1,6 +1,6 @@
-import { RRule, RRuleSet, rrulestr } from "rrule"
+import {RRule} from "rrule"
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     let rRules = document.getElementsByClassName('rrule-text');
 
     for (let i = 0; i < rRules.length; i++) {

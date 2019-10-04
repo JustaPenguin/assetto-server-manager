@@ -9,6 +9,8 @@
         <div class="card mb-4">
             {{ if $.ServerEvent.IsChampionship }}
                 <h5 class="card-header">Championship Event in Progress</h5>
+            {{ else if $.ServerEvent.IsRaceWeekend }}
+                <h5 class="card-header">Race Weekend in Progress</h5>
             {{ else }}
                 <h5 class="card-header">Event in Progress</h5>
             {{ end }}
@@ -32,6 +34,8 @@
 
                                     {{ if $.ServerEvent.IsChampionship }}
                                         onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                    {{ else if $.ServerEvent.IsRaceWeekend }}
+                                        onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
                                     {{ end }}
                                 >
                                     Restart Event
@@ -42,6 +46,8 @@
 
                                     {{ if $.ServerEvent.IsChampionship }}
                                         onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                    {{ else if $.ServerEvent.IsRaceWeekend }}
+                                        onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
                                     {{ end }}
                                 >
                                     Stop Event
@@ -112,6 +118,22 @@
                         </div>
                     </div>
 
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-4 mt-4">
+            <a class="card" href="/race-weekends">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-5">
+                            <h1 class="text-center"><i class="fas fa-car-crash fa-2x"></i></h1>
+                        </div>
+
+                        <div class="col-7">
+                            <h3>Race Weekends</h3>
+                        </div>
+                    </div>
                 </div>
             </a>
         </div>

@@ -1,0 +1,519 @@
+{{ define "event-card" }}
+    {{ $championship := $.Championship }}
+    {{ $event := $.Event }}
+    {{ $eventIndex := $.EventIndex }}
+    {{ $eventInProgress := $.EventInProgress }}
+    {{ $account := $.Account }}
+
+    {{ $eventSetup := $event.RaceSetup }}
+
+    <div class="card mt-3 border-secondary championship-event {{ if $event.Completed }}event-complete{{ end }}">
+        <div class="card-header">
+            {{ $trackInfo := trackInfo $eventSetup.Track $eventSetup.TrackLayout }}
+
+            {{ with $trackInfo }}
+                <strong>{{ .Name }}{{ with .Country }}, {{ . }}{{ end }}</strong>
+            {{ else }}
+                <strong>{{ prettify $eventSetup.Track false }} {{ with $eventSetup.TrackLayout }}({{ prettify . true }}){{ end }}</strong>
+            {{ end }}
+
+            in {{ carList ($event.Cars $championship) }}
+
+            <div class="float-right">
+                {{ if $event.Completed }}
+                    <span class="text-success">Complete</span>
+                {{ else if $event.InProgress }}
+                    <span class="text-info">In Progress</span>
+                {{ else if isBefore $event.Scheduled }}
+                    <span class="text-warning">Scheduled for {{ localFormat $event.Scheduled }}</span>
+                {{ else }}
+                    <span class="text-danger">Not started</span>
+                {{ end }}
+            </div>
+        </div>
+
+        {{ $scheduled := $event.Scheduled }}
+
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8 mb-3">
+                    <div class="row">
+                        {{ with $trackInfo }}
+                            {{ if lt (int $trackInfo.Pitboxes.Int64) (int $championship.NumEntrants) }}
+                                <div class="col-sm-12 text-warning">
+                                    This track has fewer pit boxes than the configured number of entrants in the
+                                    current championship, and therefore is not eligible for this championship.
+                                </div>
+                            {{ end }}
+                        {{ end }}
+                    </div>
+
+                    <div class="row">
+                        <div class="{{ if isBefore $scheduled }}col-sm-8{{ else }}col-sm-4{{ end }}">
+                            <ul class="list-unstyled">
+                                {{ $previousTime := 0 }}
+
+                                {{ range $sessionName, $session := $eventSetup.Sessions }}
+                                    <li>
+                                        <strong>
+                                            {{ if and $eventSetup.HasMultipleRaces (eq $sessionName "RACE") }}
+                                                1st
+                                            {{ end }}
+
+                                            {{ $sessionName.String }}
+                                        </strong>:
+
+                                        {{ if ne $session.Time 0 }}
+                                            {{ $session.Time }} minutes {{ if and $eventSetup.RaceExtraLap (eq $sessionName "RACE") }} + 1 lap {{ end }}
+                                            {{ if isBefore $scheduled }} / Starts at {{ hourAndZone $scheduled (int64 $previousTime) }} {{ end }}
+
+                                            {{ $previousTime = add $previousTime $session.Time }}
+                                        {{ else }}
+                                            {{ with $session.Laps }}
+                                                {{ . }} laps {{ if isBefore $scheduled }} / Starts at {{ hourAndZone $scheduled (int64 $previousTime) }} {{ end }}
+
+                                                {{ $previousTime = 0 }}
+                                            {{ end }}
+                                        {{ end }}
+                                    </li>
+                                {{ end }}
+
+                                {{ if $eventSetup.HasMultipleRaces }}
+                                    {{ $session := index $eventSetup.Sessions (SessionType "RACE") }}
+                                    <li>
+                                        <strong>2nd Race</strong>:
+
+                                        {{ if ne $session.Time 0 }}
+                                            {{ $session.Time }} minutes
+                                        {{ else }}
+                                            {{ with $session.Laps }}
+                                                {{ . }} laps
+                                            {{ end }}
+                                        {{ end }}
+                                        <br>
+
+                                        <small>
+                                            {{ if eq $eventSetup.ReversedGridRacePositions -1 }}
+                                                All grid positions will be reversed in 2nd Race.
+                                            {{ else if eq $eventSetup.ReversedGridRacePositions 1 }}
+                                                A 2nd Race will take place with the grid formed from the 1st Race's results.
+                                            {{ else }}
+                                                {{ $eventSetup.ReversedGridRacePositions }} grid positions will be reversed in 2nd Race.
+                                            {{ end }}
+                                        </small>
+                                    </li>
+                                {{ end }}
+                            </ul>
+
+                        </div>
+
+                        {{ if $event.Completed }}
+                            <div class="col-sm-4">
+
+                                {{ if $eventSetup.HasMultipleRaces }}
+                                    <h5>1st Race</h5>
+                                {{ end }}
+
+                                <ul class="list-unstyled">
+                                    {{ if $championship.IsMultiClass }}
+                                        {{ range $classIndex, $class := $championship.Classes }}
+
+                                            {{ range $sessionName, $sessionDetails := $event.Sessions }}
+                                                {{ if eq $sessionName "RACE" }}
+                                                    {{ range $pos, $result := (slice ($class.ResultsForClass $sessionDetails.Results.Result) 0 1) }}
+                                                        {{ with $result }}
+                                                            <li>
+                                                                <strong>{{ $class.Name }} Winner</strong><br>
+                                                                {{ driverName $result.DriverName }}
+                                                            </li>
+                                                        {{ end }}
+                                                    {{ end }}
+                                                {{ end }}
+                                            {{ end }}
+                                        {{ end }}
+                                    {{ else }}
+                                        {{ range $sessionName, $sessionDetails := $event.Sessions }}
+                                            {{ with $sessionDetails.Results }}
+                                                {{ if eq $sessionName "RACE" }}
+                                                    {{ range $pos, $result := (slice $sessionDetails.Results.Result 0 3) }}
+                                                        {{ with $result }}
+                                                            {{ if gt $result.TotalTime 0 }}
+                                                                {{ $posInt := int64 (add $pos 1) }}
+
+                                                                <li>
+                                                                    <strong>{{ $posInt }}{{ ordinal $posInt }}</strong>:
+                                                                    {{ driverName $result.DriverName }}
+                                                                </li>
+                                                            {{ end }}
+                                                        {{ end }}
+                                                    {{ end }}
+                                                {{ end }}
+                                            {{ end }}
+                                        {{ end }}
+                                    {{ end }}
+                                </ul>
+
+                                {{ if $eventSetup.HasMultipleRaces }}
+                                    <h5>2nd Race</h5>
+
+                                    <ul class="list-unstyled">
+                                        {{ if $championship.IsMultiClass }}
+                                            {{ range $classIndex, $class := $championship.Classes }}
+
+                                                {{ range $sessionName, $sessionDetails := $event.Sessions }}
+                                                    {{ if eq $sessionName "RACEx2" }}
+                                                        {{ range $pos, $result := (slice ($class.ResultsForClass $sessionDetails.Results.Result) 0 1) }}
+                                                            <li>
+                                                                <strong>{{ $class.Name }} Winner</strong><br>
+                                                                {{ driverName $result.DriverName }}
+                                                            </li>
+                                                        {{ end }}
+                                                    {{ end }}
+                                                {{ end }}
+                                            {{ end }}
+                                        {{ else }}
+                                            {{ range $sessionName, $sessionDetails := $event.Sessions }}
+                                                {{ if eq $sessionName "RACEx2" }}
+                                                    {{ range $pos, $result := (slice $sessionDetails.Results.Result 0 3) }}
+                                                        {{ with $result }}
+                                                            {{ if gt $result.TotalTime 0 }}
+                                                                {{ $posInt := int64 (add $pos 1) }}
+
+                                                                <li>
+                                                                    <strong>{{ $posInt }}{{ ordinal $posInt }}</strong>:
+                                                                    {{ driverName $result.DriverName }}
+                                                                </li>
+                                                            {{ end }}
+                                                        {{ end }}
+                                                    {{ end }}
+                                                {{ end }}
+                                            {{ end }}
+                                        {{ end }}
+                                    </ul>
+                                {{ end }}
+                            </div>
+                        {{ end }}
+
+
+                        <div class="col-sm-4">
+
+
+                            {{/* fastest lap + qualifying awards */}}
+                            {{ range $sessionName, $session := $event.Sessions }}
+                                {{ with $session.Results }}
+                                    {{ if eq $sessionName "RACE" }}
+                                        <span class="badge badge-best {{ if $championship.IsMultiClass }}text-left{{ end }}">
+                                                        Fastest Lap{{ if $eventSetup.HasMultipleRaces }} (1st Race){{ end }}{{ if not $championship.IsMultiClass }}:{{ end }}
+
+                                            {{ if $championship.IsMultiClass }}
+                                                <span class="font-weight-normal">
+                                                                {{ range $classIndex, $class := $championship.Classes }}
+                                                                    {{ with ($session.Results.FastestLapInClass $class.ID) }}
+                                                                        <br>
+                                                                        {{ $class.Name }}: {{ driverName .DriverName }}
+                                                                    {{ end }}
+                                                                {{ end }}
+                                                            </span>
+                                            {{ else }}
+                                                {{ driverName $session.Results.FastestLap.DriverName }}
+                                            {{ end }}
+                                                    </span><br>
+                                    {{ else if eq $sessionName "RACEx2" }}
+                                        <span class="badge badge-best {{ if $championship.IsMultiClass }}text-left{{ end }}">
+                                                        Fastest Lap (2nd Race){{ if not $championship.IsMultiClass }}:{{ end }}
+
+                                            {{ if $championship.IsMultiClass }}
+                                                <span class="font-weight-normal">
+                                                                {{ range $classIndex, $class := $championship.Classes }}
+                                                                    {{ with ($session.Results.FastestLapInClass $class.ID) }}
+                                                                        <br>
+                                                                        {{ $class.Name }}: {{ driverName .DriverName }}
+                                                                    {{ end }}
+                                                                {{ end }}
+                                                            </span>
+                                            {{ else }}
+                                                {{ driverName $session.Results.FastestLap.DriverName }}
+                                            {{ end }}
+                                                    </span><br>
+                                    {{ else if eq $sessionName "QUALIFY" }}
+                                        <span class="badge badge-success {{ if $championship.IsMultiClass }}text-left{{ end }}">
+                                                        Best Qualifying{{ if not $championship.IsMultiClass }}:{{ end }}
+
+                                            {{ if $championship.IsMultiClass }}
+                                                <span class="font-weight-normal">
+                                                                {{ range $classIndex, $class := $championship.Classes }}
+                                                                    {{ with ($session.Results.FastestLapInClass $class.ID) }}
+                                                                        <br>
+                                                                        {{ $class.Name }}: {{ driverName .DriverName }}
+                                                                    {{ end }}
+                                                                {{ end }}
+                                                            </span>
+                                            {{ else }}
+                                                {{ driverName $session.Results.FastestLap.DriverName }}
+                                            {{ end }}
+                                                    </span><br>
+                                    {{ end }}
+                                {{ end }}
+                            {{ end }}
+
+
+                        </div>
+
+                    </div>
+
+
+                    {{/* race controls buttons */}}
+
+                    <div class="pt-5">
+
+                        {{ if WriteAccess }}
+                            {{ if not (or $event.InProgress $event.Completed) }}
+
+                                {{ if $eventInProgress }}
+                                    <p>An event in this championship is in progress. You must wait for it to finish or cancel it before you can start this one.</p>
+                                {{ end }}
+
+                                <a class="btn btn-success {{ if $eventInProgress }}disabled{{ end }}"
+                                   href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/start"
+                                        {{ if $eventInProgress }}
+                                            aria-disabled="true"
+                                        {{ end }}
+                                >
+                                    Start Event
+                                </a>
+
+                                <button type="button" class="btn btn-success{{ if $eventInProgress }} disabled{{ end }} dropdown-toggle popover-external-html" data-placement="bottom"
+                                        data-toggle="popover" title="Schedule Event" data-html="true" {{ if $eventInProgress }}aria-disabled="true"{{ end }}
+                                        id="schedule-{{ $event.ID.String }}"
+                                >Schedule Event
+                                </button>
+
+                                <div id="popover-content-schedule-{{ $event.ID.String }}" style="display: none;">
+                                    <form action='/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/schedule' method='POST'>
+                                        <div class='form-group'>
+                                            <input type='date' class='form-control' name='event-schedule-date' id='event-schedule-date' required min=''>
+                                            <input type='time' class='form-control' name='event-schedule-time' id='event-schedule-time' required min=''>
+                                            <input type='hidden' name="event-schedule-timezone" class="event-schedule-timezone">
+                                            <small class='form-text text-muted'>Please enter the correct date and time to add a scheduled race. This date/time is in your timezone (<span class='timezone'></span>).</small>
+
+                                        </div>
+
+                                        <button type='submit' name='action' value='add' class='btn btn-sm btn-primary'>Schedule</button>
+                                        <a href='/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/schedule/remove' class='btn btn-sm btn-danger'>Remove Scheduled Event</a>
+                                    </form>
+                                </div>
+
+                                <a class="btn btn-primary {{ if $eventInProgress }}disabled{{ end }}"
+                                   href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/practice"
+                                        {{ if $eventInProgress }}
+                                            aria-disabled="true"
+                                        {{ end }}
+                                   data-toggle="tooltip"
+                                   title="Loads the configured event onto the server as a 2 hour looping practice, but doesn't track its progress as a championship event.">
+                                    Start Practice Event
+                                </a>
+
+
+                                <div class="dropdown show" style="display: inline-block">
+                                    <a class="btn btn-warning dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        Manage Event
+                                    </a>
+
+                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                                        <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/edit">
+                                            Edit
+                                        </a>
+
+                                        <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/import">
+                                            Import Results
+                                        </a>
+
+                                        {{ if DeleteAccess }}
+                                            <a onClick="return confirm('I understand that this will delete this entire event permanently.') "
+                                               class="dropdown-item text-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/delete">
+                                                Delete
+                                            </a>
+                                        {{ end }}
+                                    </div>
+                                </div>
+
+                            {{ else if $event.InProgress }}
+                                <a onClick="return confirm('I understand that this will restart this entire event and any current results will be lost.') "
+                                   class="btn btn-warning" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/restart">
+                                    Restart Event
+                                </a>
+
+                                <a onClick="return confirm('I understand that this will cancel this entire event and any current results will be lost.') "
+                                   class="btn btn-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/cancel">
+                                    Cancel Event
+                                </a>
+                            {{ end }}
+                        {{ end }}
+
+                        {{ if $event.Completed }}
+                            <a class="btn btn-primary"
+                               data-toggle="collapse"
+                               href="#event-{{ $eventIndex }}"
+                               role="button"
+                               aria-expanded="false"
+                               aria-controls="event-{{ $eventIndex }}">
+                                View Results
+                            </a>
+
+                            {{ if AdminAccess }}
+                                <div class="dropdown show" style="display: inline-block">
+                                    <a class="btn btn-warning dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        Manage Event
+                                    </a>
+
+                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                                        <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/import">
+                                            Import Results
+                                        </a>
+
+                                        {{ if DeleteAccess }}
+                                            <a onClick="return confirm('I understand that this will delete this entire event permanently.') "
+                                               class="dropdown-item text-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/delete">
+                                                Delete
+                                            </a>
+                                        {{ end }}
+                                    </div>
+                                </div>
+                            {{ end }}
+                        {{ end }}
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <img class="img img-fluid ml-2 float-right image-track mb-2"
+                         src="/content/tracks/{{ $eventSetup.Track }}/ui{{ with $eventSetup.TrackLayout }}/{{.}}{{ end }}/preview.png"
+                         alt="{{ $eventSetup.Track }} {{ $eventSetup.TrackLayout }}"
+                    >
+                </div>
+            </div>
+
+
+            <div class="row">
+                <div class="col-md-12">
+                    {{ if (or $event.InProgress $event.Completed) }}
+                        <div {{ if $event.Completed }} class="collapse" id="event-{{ $eventIndex }}" {{ end }}>
+
+                            <ul class="nav nav-tabs mt-3" role="tablist">
+                                {{ $sessionCount := 1 }}
+                                {{ $sessionsLen := len $event.Sessions }}
+
+                                {{ range $sessionName, $sessionDetails := $event.Sessions }}
+                                    <li class="nav-item">
+                                        <a class="nav-link  {{ if and (not $event.Completed) (eq $sessionCount $sessionsLen) }} active {{ end }}"
+                                           id="results-{{ $sessionCount }}-{{ $eventIndex}}-tab" data-toggle="tab"
+                                           href="#results-{{ $sessionCount }}-{{ $eventIndex}}"
+                                           role="tab"
+                                           {{ if eq $sessionName "RACE" }}aria-selected="true" {{ end }}>
+
+                                            {{ if and $eventSetup.HasMultipleRaces (eq $sessionName "RACE") }}
+                                                1st Race
+                                            {{ else }}
+                                                {{ $sessionName.String }}
+                                            {{ end }}
+                                        </a>
+                                    </li>
+
+                                    {{ $sessionCount = add $sessionCount 1 }}
+                                {{ end }}
+
+                                {{ if $event.Completed }}
+                                    <li class="nav-item">
+                                        <a class="nav-link active"
+                                           id="results-points-{{ $eventIndex}}-tab" data-toggle="tab"
+                                           href="#results-points-{{ $eventIndex}}"
+                                           role="tab"
+                                        >
+                                            Points
+                                        </a>
+                                    </li>
+                                {{ end }}
+                            </ul>
+                            <div class="tab-content">
+                                {{ $sessionCount = 1 }}
+
+                                {{ range $sessionName, $sessionDetails := $event.Sessions }}
+                                    <div class="tab-pane fade {{ if and (not $event.Completed) (eq $sessionCount $sessionsLen) }} show active {{ end }}"
+                                         id="results-{{ $sessionCount }}-{{ $eventIndex}}" role="tabpanel"
+                                         aria-labelledby="results-{{ $sessionCount }}-{{ $eventIndex}}-tab">
+
+                                        {{ if $sessionDetails.Completed }}
+
+                                            <p class="text-center mt-2 mb-2">
+                                                <a class="detailed-results" href="/results/{{ $sessionDetails.Results.SessionFile }}">View detailed results breakdown for this Session</a>
+                                            </p>
+
+                                            {{ template "session-overall" dict "sessionResults" $sessionDetails.Results "account" $account }}
+                                        {{ else if $sessionDetails.InProgress }}
+                                            <p class="text-center mt-5 pb-2"><strong>Session in Progress</strong>: Looks like there aren't any results yet. Check back later.</p>
+                                        {{ else }}
+                                            <p class="text-center mt-5 pb-2"><strong>Awaiting Start</strong>: Looks like this session hasn't started yet. Check back later.</p>
+                                        {{ end }}
+                                    </div>
+
+                                    {{ $sessionCount = add $sessionCount 1 }}
+                                {{ end }}
+
+
+                                {{ if $event.Completed }}
+                                    <div class="tab-pane fade show active"
+                                         id="results-points-{{ $eventIndex}}" role="tabpanel"
+                                         aria-labelledby="results-points-{{ $eventIndex}}-tab">
+
+
+                                        {{ $championshipHasTeamNames := $championship.HasTeamNames }}
+
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-striped">
+                                                <tr>
+                                                    {{ if $championship.IsMultiClass }}
+                                                        <th>Class</th>
+                                                    {{ end }}
+                                                    <th>#</th>
+                                                    <th>Name</th>
+                                                    {{ if $championshipHasTeamNames }}
+                                                        <th>Team</th>
+                                                    {{ end }}
+                                                    <th>Car</th>
+                                                    <th>Points</th>
+                                                </tr>
+
+                                                {{ range $classIndex, $class := $championship.Classes }}
+                                                    {{ $eventStandings := $class.StandingsForEvent $event }}
+                                                    {{ range $pos, $standing := $eventStandings }}
+                                                        <tr style="
+                                                        {{ if eq $account.GUID $standing.Car.Driver.GUID }}font-weight: bold;{{ end }}
+                                                        {{ if $championship.IsMultiClass }}
+                                                            color: white; background: {{ classColor $classIndex }}
+                                                        {{ end }}">
+                                                            {{ if $championship.IsMultiClass }}
+                                                                {{ if eq $pos 0 }}
+                                                                    <td rowspan="{{ len $eventStandings }}">{{ $class.Name }}</td>
+                                                                {{ end }}
+                                                            {{ end }}
+                                                            <td>{{ add $pos 1 }}</td>
+                                                            <td>{{ driverName $standing.Car.Driver.Name }}</td>
+                                                            {{ if $championshipHasTeamNames }}
+                                                                <td>{{ $standing.Car.Driver.Team }}</td>
+                                                            {{ end }}
+                                                            <td>{{ prettify $standing.Car.Model true }}</td>
+                                                            <td>{{ $standing.Points }}</td>
+                                                        </tr>
+                                                    {{ end }}
+                                                {{ end }}
+                                            </table>
+                                        </div>
+                                    </div>
+                                {{ end }}
+                            </div>
+                        </div>
+                    {{ end }}
+                </div>
+            </div>
+        </div>
+    </div>
+{{ end }}
