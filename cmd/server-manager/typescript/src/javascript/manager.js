@@ -171,7 +171,7 @@ function prettifyName(name, acronyms) {
 }
 
 
-function initMultiSelect($element) {
+export function initMultiSelect($element) {
     $element.each(function (i, elem) {
         let $elem = $(elem);
 
@@ -337,33 +337,36 @@ class RaceSetup {
             $visibleWhenBookingEnabled.hide();
         }
 
-        $(".session-enabler").each(function (index, elem) {
-            $(elem).on('switchChange.bootstrapSwitch', function (event, state) {
-                let $this = $(this);
-                let $elem = $this.closest(".tab-pane").find(".session-details");
-                let $panelLabel = that.$parent.find("#" + $this.closest(".tab-pane").attr("aria-labelledby"));
+        if (!$("#race-weekend-session").length) {
+            // session enabling is very different in race weekends, don't interfere with that here.
+            $(".session-enabler").each(function (index, elem) {
+                $(elem).on('switchChange.bootstrapSwitch', function (event, state) {
+                    let $this = $(this);
+                    let $elem = $this.closest(".tab-pane").find(".session-details");
+                    let $panelLabel = that.$parent.find("#" + $this.closest(".tab-pane").attr("aria-labelledby"));
 
-                let isBooking = $(elem).attr("name") === "Booking.Enabled";
+                    let isBooking = $(elem).attr("name") === "Booking.Enabled";
 
-                if (state) {
-                    $elem.show();
-                    $panelLabel.addClass("text-success");
+                    if (state) {
+                        $elem.show();
+                        $panelLabel.addClass("text-success");
 
-                    if (isBooking) {
-                        $hiddenWhenBookingEnabled.hide();
-                        $visibleWhenBookingEnabled.show();
+                        if (isBooking) {
+                            $hiddenWhenBookingEnabled.hide();
+                            $visibleWhenBookingEnabled.show();
+                        }
+                    } else {
+                        $elem.hide();
+                        $panelLabel.removeClass("text-success");
+
+                        if (isBooking) {
+                            $hiddenWhenBookingEnabled.show();
+                            $visibleWhenBookingEnabled.hide();
+                        }
                     }
-                } else {
-                    $elem.hide();
-                    $panelLabel.removeClass("text-success");
-
-                    if (isBooking) {
-                        $hiddenWhenBookingEnabled.show();
-                        $visibleWhenBookingEnabled.hide();
-                    }
-                }
+                });
             });
-        });
+        }
     }
 
     /**
@@ -444,7 +447,7 @@ class RaceSetup {
      */
     populateTyreDropdown() {
         // quick race doesn't have tyre set up.
-        if (typeof availableTyres === "undefined") {
+        if (typeof availableTyres === "undefined" || !this.$carsDropdown.length) {
             return
         }
 

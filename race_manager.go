@@ -28,7 +28,7 @@ type RaceManager struct {
 	process             ServerProcess
 	raceStore           Store
 	carManager          *CarManager
-	notificationManager *NotificationManager
+	notificationManager NotificationDispatcher
 
 	currentRace      *ServerConfig
 	currentEntryList EntryList
@@ -48,7 +48,7 @@ func NewRaceManager(
 	raceStore Store,
 	process ServerProcess,
 	carManager *CarManager,
-	notificationManager *NotificationManager,
+	notificationManager NotificationDispatcher,
 ) *RaceManager {
 	return &RaceManager{
 		raceStore:           raceStore,
@@ -73,6 +73,7 @@ var ErrEntryListTooBig = errors.New("servermanager: EntryList exceeds MaxClients
 
 type RaceEvent interface {
 	IsChampionship() bool
+	IsRaceWeekend() bool
 	OverrideServerPassword() bool
 	ReplacementServerPassword() string
 	EventName() string
@@ -83,6 +84,10 @@ type RaceEvent interface {
 type normalEvent struct {
 	OverridePassword    bool
 	ReplacementPassword string
+}
+
+func (normalEvent) IsRaceWeekend() bool {
+	return false
 }
 
 func (normalEvent) IsChampionship() bool {
@@ -109,7 +114,7 @@ func (n normalEvent) GetURL() string {
 	return ""
 }
 
-func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool, event RaceEvent) error {
+func (rm *RaceManager) applyConfigAndStart(raceConfig CurrentRaceConfig, entryList EntryList, loop bool, event RaceEvent) error {
 	rm.mutex.Lock()
 	defer rm.mutex.Unlock()
 
@@ -125,7 +130,11 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 		return err
 	}
 
-	config.GlobalServerConfig = *serverOpts
+	config := ServerConfig{
+		CurrentRaceConfig:  raceConfig,
+		GlobalServerConfig: *serverOpts,
+	}
+
 	forwardingAddress := config.GlobalServerConfig.UDPPluginAddress
 	forwardListenPort := config.GlobalServerConfig.UDPPluginLocalPort
 
@@ -213,16 +222,16 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 	}
 
 	// load default config values
-	quickRace := ConfigIniDefault
+	quickRace := ConfigIniDefault().CurrentRaceConfig
 
 	cars := r.Form["Cars"]
 
-	quickRace.CurrentRaceConfig.Cars = strings.Join(cars, ";")
-	quickRace.CurrentRaceConfig.Track = r.Form.Get("Track")
-	quickRace.CurrentRaceConfig.TrackLayout = r.Form.Get("TrackLayout")
+	quickRace.Cars = strings.Join(cars, ";")
+	quickRace.Track = r.Form.Get("Track")
+	quickRace.TrackLayout = r.Form.Get("TrackLayout")
 
-	if quickRace.CurrentRaceConfig.TrackLayout == defaultLayoutName {
-		quickRace.CurrentRaceConfig.TrackLayout = ""
+	if quickRace.TrackLayout == defaultLayoutName {
+		quickRace.TrackLayout = ""
 	}
 
 	tyres, err := ListTyres()
@@ -247,9 +256,9 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		quickRaceTyres = append(quickRaceTyres, tyre)
 	}
 
-	quickRace.CurrentRaceConfig.LegalTyres = strings.Join(quickRaceTyres, ";")
+	quickRace.LegalTyres = strings.Join(quickRaceTyres, ";")
 
-	quickRace.CurrentRaceConfig.Sessions = make(map[SessionType]SessionConfig)
+	quickRace.Sessions = make(map[SessionType]*SessionConfig)
 
 	qualifyingTime, err := strconv.ParseInt(r.Form.Get("Qualifying.Time"), 10, 0)
 
@@ -257,7 +266,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		return err
 	}
 
-	quickRace.CurrentRaceConfig.AddSession(SessionTypeQualifying, SessionConfig{
+	quickRace.AddSession(SessionTypeQualifying, &SessionConfig{
 		Name:   "Qualify",
 		Time:   int(qualifyingTime),
 		IsOpen: 1,
@@ -275,7 +284,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		return err
 	}
 
-	quickRace.CurrentRaceConfig.AddSession(SessionTypeRace, SessionConfig{
+	quickRace.AddSession(SessionTypeRace, &SessionConfig{
 		Name:     "Race",
 		Time:     int(raceTime),
 		Laps:     int(raceLaps),
@@ -291,19 +300,19 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 
 	var numPitboxes int
 
-	trackInfo, err := GetTrackInfo(quickRace.CurrentRaceConfig.Track, quickRace.CurrentRaceConfig.TrackLayout)
+	trackInfo, err := GetTrackInfo(quickRace.Track, quickRace.TrackLayout)
 
 	if err == nil {
 		boxes, err := trackInfo.Pitboxes.Int64()
 
 		if err != nil {
-			numPitboxes = quickRace.CurrentRaceConfig.MaxClients
+			numPitboxes = quickRace.MaxClients
 		} else {
 			numPitboxes = int(boxes)
 		}
 
 	} else {
-		numPitboxes = quickRace.CurrentRaceConfig.MaxClients
+		numPitboxes = quickRace.MaxClients
 	}
 
 	if numPitboxes > MaxClientsOverride && MaxClientsOverride > 0 {
@@ -335,7 +344,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		entryList.Add(e)
 	}
 
-	quickRace.CurrentRaceConfig.MaxClients = numPitboxes
+	quickRace.MaxClients = numPitboxes
 
 	return rm.applyConfigAndStart(quickRace, entryList, false, normalEvent{})
 }
@@ -515,7 +524,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 			continue
 		}
 
-		raceConfig.AddSession(session, SessionConfig{
+		raceConfig.AddSession(session, &SessionConfig{
 			Name:     r.FormValue(sessName + ".Name"),
 			Time:     formValueAsInt(r.FormValue(sessName + ".Time")),
 			Laps:     formValueAsInt(r.FormValue(sessName + ".Laps")),
@@ -596,7 +605,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		}
 	}
 
-	completeConfig := ConfigIniDefault
+	completeConfig := ConfigIniDefault()
 	completeConfig.CurrentRaceConfig = *raceConfig
 
 	overridePassword := r.FormValue("OverridePassword") == "1"
@@ -661,7 +670,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 			return nil
 		}
 
-		return rm.applyConfigAndStart(completeConfig, entryList, false, race)
+		return rm.applyConfigAndStart(completeConfig.CurrentRaceConfig, entryList, false, race)
 	}
 }
 
@@ -743,6 +752,13 @@ type RaceTemplateVars struct {
 	IsChampionship                 bool
 	Championship                   *Championship
 	ChampionshipHasAtLeastOnceRace bool
+
+	IsRaceWeekend                   bool
+	RaceWeekend                     *RaceWeekend
+	RaceWeekendSession              *RaceWeekendSession
+	RaceWeekendHasAtLeastOneSession bool
+
+	ShowOverridePasswordCard bool
 }
 
 // BuildRaceOpts builds a quick race form
@@ -765,7 +781,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (*RaceTemplateVars, error)
 		return nil, err
 	}
 
-	race := ConfigIniDefault
+	race := ConfigIniDefault()
 
 	templateID := r.URL.Query().Get("from")
 
@@ -832,22 +848,24 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (*RaceTemplateVars, error)
 	}
 
 	opts := &RaceTemplateVars{
-		CarOpts:             cars,
-		TrackOpts:           tracks,
-		AvailableSessions:   AvailableSessions,
-		Weather:             weather,
-		SolIsInstalled:      solIsInstalled,
-		Current:             race.CurrentRaceConfig,
-		CurrentEntrants:     entrants,
-		PossibleEntrants:    possibleEntrants,
-		FixedSetups:         fixedSetups,
-		IsChampionship:      false, // this flag is overridden by championship setup
-		IsEditing:           isEditing,
-		EditingID:           templateIDForEditing,
-		CustomRaceName:      customRaceName,
-		SurfacePresets:      DefaultTrackSurfacePresets,
-		OverridePassword:    overridePassword,
-		ReplacementPassword: replacementPassword,
+		CarOpts:                  cars,
+		TrackOpts:                tracks,
+		AvailableSessions:        AvailableSessions,
+		Weather:                  weather,
+		SolIsInstalled:           solIsInstalled,
+		Current:                  race.CurrentRaceConfig,
+		CurrentEntrants:          entrants,
+		PossibleEntrants:         possibleEntrants,
+		FixedSetups:              fixedSetups,
+		IsChampionship:           false, // this flag is overridden by championship setup
+		IsRaceWeekend:            false, // this flag is overridden by race weekend setup
+		IsEditing:                isEditing,
+		EditingID:                templateIDForEditing,
+		CustomRaceName:           customRaceName,
+		SurfacePresets:           DefaultTrackSurfacePresets,
+		OverridePassword:         overridePassword,
+		ReplacementPassword:      replacementPassword,
+		ShowOverridePasswordCard: true,
 	}
 
 	err = rm.applyCurrentRaceSetupToOptions(opts, race.CurrentRaceConfig)
@@ -917,8 +935,14 @@ func (rm *RaceManager) SaveEntrantsForAutoFill(entryList EntryList) error {
 	return nil
 }
 
-func (rm *RaceManager) SaveCustomRace(name string, overridePassword bool, replacementPassword string,
-	config CurrentRaceConfig, entryList EntryList, starred bool) (*CustomRace, error) {
+func (rm *RaceManager) SaveCustomRace(
+	name string,
+	overridePassword bool,
+	replacementPassword string,
+	config CurrentRaceConfig,
+	entryList EntryList,
+	starred bool,
+) (*CustomRace, error) {
 
 	hasCustomRaceName := true
 
@@ -972,15 +996,12 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 		return err
 	}
 
-	cfg := ConfigIniDefault
-	cfg.CurrentRaceConfig = race.RaceConfig
-
 	// Required for our nice auto loop stuff
 	if forceRestart {
-		cfg.CurrentRaceConfig.LoopMode = 1
+		race.RaceConfig.LoopMode = 1
 	}
 
-	return rm.applyConfigAndStart(cfg, race.EntryList, forceRestart, race)
+	return rm.applyConfigAndStart(race.RaceConfig, race.EntryList, forceRestart, race)
 }
 
 func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, recurrence string) error {

@@ -18,6 +18,7 @@ type Resolver struct {
 	discordManager        *DiscordManager
 	notificationManager   *NotificationManager
 	scheduledRacesManager *ScheduledRacesManager
+	raceWeekendManager    *RaceWeekendManager
 
 	viewRenderer          *Renderer
 	serverProcess         ServerProcess
@@ -41,6 +42,7 @@ type Resolver struct {
 	contentUploadHandler        *ContentUploadHandler
 	raceControlHandler          *RaceControlHandler
 	serverAdministrationHandler *ServerAdministrationHandler
+	raceWeekendHandler          *RaceWeekendHandler
 }
 
 func NewResolver(templateLoader TemplateLoader, reloadTemplates bool, store Store) (*Resolver, error) {
@@ -64,6 +66,7 @@ func (r *Resolver) UDPCallback(message udp.Message) {
 		r.resolveRaceControl().UDPCallback(message)
 	}
 	r.resolveChampionshipManager().ChampionshipEventCallback(message)
+	r.resolveRaceWeekendManager().UDPCallback(message)
 	r.resolveRaceManager().LoopCallback(message)
 	r.resolveContentManagerWrapper().UDPCallback(message)
 }
@@ -295,6 +298,7 @@ func (r *Resolver) resolveServerAdministrationHandler() *ServerAdministrationHan
 		r.ResolveStore(),
 		r.resolveRaceManager(),
 		r.resolveChampionshipManager(),
+		r.resolveRaceWeekendManager(),
 		r.resolveServerProcess(),
 	)
 
@@ -354,6 +358,26 @@ func (r *Resolver) resolveRaceControlHandler() *RaceControlHandler {
 	return r.raceControlHandler
 }
 
+func (r *Resolver) resolveRaceWeekendManager() *RaceWeekendManager {
+	if r.raceWeekendManager != nil {
+		return r.raceWeekendManager
+	}
+
+	r.raceWeekendManager = NewRaceWeekendManager(r.resolveRaceManager(), r.ResolveStore(), r.resolveServerProcess())
+
+	return r.raceWeekendManager
+}
+
+func (r *Resolver) resolveRaceWeekendHandler() *RaceWeekendHandler {
+	if r.raceWeekendHandler != nil {
+		return r.raceWeekendHandler
+	}
+
+	r.raceWeekendHandler = NewRaceWeekendHandler(r.resolveBaseHandler(), r.resolveRaceWeekendManager())
+
+	return r.raceWeekendHandler
+}
+
 func (r *Resolver) resolveDiscordManager() *DiscordManager {
 	if r.discordManager != nil {
 		return r.discordManager
@@ -392,6 +416,7 @@ func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
 		r.resolveServerAdministrationHandler(),
 		r.resolveRaceControlHandler(),
 		r.resolveScheduledRacesHandler(),
+		r.resolveRaceWeekendHandler(),
 	)
 }
 

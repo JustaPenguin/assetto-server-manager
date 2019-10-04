@@ -295,13 +295,13 @@
         </div>
 
         <div id="class-template" style="display: none;">
-            {{ template "championship-class" dict "IsEditing" $.IsEditing "CarOpts" $.CarOpts "Championship" $.Championship "DefaultPoints" $.DefaultPoints "MaxClientsOverride" $.MaxClientsOverride }}
+            {{ template "championship-class" dict "IsEditing" $.IsEditing "CarOpts" $.CarOpts "Championship" $.Championship "Class" $.DefaultClass "DefaultPoints" $.DefaultPoints "MaxClientsOverride" $.MaxClientsOverride }}
         </div>
 
         {{ range $classIndex, $class := $f.Classes }}
             {{ template "championship-class" dict "IsEditing" $.IsEditing "CarOpts" $.CarOpts "Championship" $.Championship "Class" $class "DefaultPoints" $.DefaultPoints "MaxClientsOverride" $.MaxClientsOverride }}
         {{ else }}
-            {{ template "championship-class" dict "IsEditing" $.IsEditing "CarOpts" $.CarOpts "Championship" $.Championship "DefaultPoints" $.DefaultPoints "MaxClientsOverride" $.MaxClientsOverride }}
+            {{ template "championship-class" dict "IsEditing" $.IsEditing "CarOpts" $.CarOpts "Championship" $.Championship "Class" $.DefaultClass "DefaultPoints" $.DefaultPoints "MaxClientsOverride" $.MaxClientsOverride }}
         {{ end }}
 
 

@@ -9,6 +9,8 @@
         <div class="card">
             {{ if $.ServerEvent.IsChampionship }}
                 <h5 class="card-header">Championship Event in Progress</h5>
+            {{ else if $.ServerEvent.IsRaceWeekend }}
+                <h5 class="card-header">Race Weekend in Progress</h5>
             {{ else }}
                 <h5 class="card-header">Event in Progress</h5>
             {{ end }}
@@ -32,6 +34,8 @@
 
                                     {{ if $.ServerEvent.IsChampionship }}
                                         onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                    {{ else if $.ServerEvent.IsRaceWeekend }}
+                                        onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
                                     {{ end }}
                                 >
                                     Restart Event
@@ -42,6 +46,8 @@
 
                                     {{ if $.ServerEvent.IsChampionship }}
                                         onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                    {{ else if $.ServerEvent.IsRaceWeekend }}
+                                        onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
                                     {{ end }}
                                 >
                                     Stop Event
@@ -86,6 +92,15 @@
                 <div class="card-body text-center">
                     <h1 class="text-center"><i class="fas fa-flag-checkered fa-2x"></i></h1>
                     <h2>Championships</h2>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-4 mt-4">
+            <a class="card" href="/race-weekends">
+                <div class="card-body text-center">
+                    <h1 class="text-center"><i class="fas fa-car-crash fa-2x"></i></h1>
+                    <h2>Race Weekends</h2>
                 </div>
             </a>
         </div>
