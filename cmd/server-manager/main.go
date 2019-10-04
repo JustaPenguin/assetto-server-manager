@@ -105,6 +105,8 @@ func main() {
 		_ = browser.OpenURL("http://" + strings.Replace(config.HTTP.Hostname, "0.0.0.0", "127.0.0.1", 1))
 	}
 
+	go startUDPReplay(resolver, "./assetto/session-logs/practiceloop_all.db")
+
 	router := resolver.ResolveRouter(filesystem)
 
 	if err := http.Serve(listener, router); err != nil {
