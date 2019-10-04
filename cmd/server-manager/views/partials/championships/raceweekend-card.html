@@ -72,7 +72,9 @@
                             </a>
                         {{ end }}
 
-                        <a class="btn btn-success" href="/race-weekend/{{ $raceWeekend.ID.String }}">View Race Weekend</a>
+                        <a class="btn btn-success" href="/race-weekend/{{ $raceWeekend.ID.String }}">
+                            View{{ if WriteAccess }}/Edit{{ end }} Race Weekend
+                        </a>
 
                         {{ if DeleteAccess }}
                             <a onClick="return confirm('I understand that this will delete this entire event and Race Weekend permanently.') "

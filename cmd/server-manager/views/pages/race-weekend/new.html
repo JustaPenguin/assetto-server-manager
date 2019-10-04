@@ -11,7 +11,9 @@
         {{ end }}
     </h1>
 
-    <h4 class="text-center">{{ if $.RaceWeekend.HasLinkedChampionship }}in the {{ $.Championship.Name }} Championship{{ end }}</h4>
+    {{ if $.RaceWeekend.HasLinkedChampionship }}
+        <h4 class="text-center">in the {{ $.Championship.Name }} Championship</h4>
+    {{ end }}
 
     <form action="/race-weekends/new/submit" class="race-setup" method="post" id="raceweekend-form" data-safe-submit>
         <div class="card mt-3 border-secondary" id="entrants">
