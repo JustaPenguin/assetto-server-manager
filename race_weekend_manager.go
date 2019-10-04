@@ -417,7 +417,13 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		replacementPassword = raceWeekend.Championship.ReplacementPassword
 	}
 
-	for _, entrant := range entryList {
+	for k, entrant := range entryList {
+		if entrant.IsPlaceHolder {
+			// placeholder entrants should not be added to our final entry list
+			delete(entryList, k)
+			continue
+		}
+
 		// look through the user configured entry list and apply any of the options that they set to this entrant.
 		for _, raceWeekendEntrant := range raceWeekend.GetEntryList() {
 			if raceWeekendEntrant.GUID == entrant.GUID {

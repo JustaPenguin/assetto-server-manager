@@ -334,7 +334,23 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (*Rac
 
 		// override Current race config if there is a previous championship race configured
 		if len(championship.Events) > 0 {
-			opts.Current = championship.Events[len(championship.Events)-1].RaceSetup
+			foundEvent := false
+
+			// championship events should only inherit from non-race weekend events
+			for i := len(championship.Events) - 1; i >= 0; i-- {
+				event := championship.Events[i]
+
+				if !event.IsRaceWeekend() {
+					opts.Current = event.RaceSetup
+					foundEvent = true
+				}
+			}
+
+			if !foundEvent {
+				defaultConfig := ConfigIniDefault()
+				opts.Current = defaultConfig.CurrentRaceConfig
+			}
+
 			opts.ChampionshipHasAtLeastOnceRace = true
 		} else {
 			defaultConfig := ConfigIniDefault()
@@ -991,6 +1007,16 @@ func (cm *ChampionshipManager) ImportChampionship(jsonData string) (string, erro
 
 	if err != nil {
 		return "", err
+	}
+
+	for _, event := range championship.Events {
+		if event.IsRaceWeekend() {
+			err := cm.raceStore.UpsertRaceWeekend(event.RaceWeekend)
+
+			if err != nil {
+				return "", err
+			}
+		}
 	}
 
 	return championship.ID.String(), cm.UpsertChampionship(championship)
