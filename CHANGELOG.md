@@ -24,6 +24,7 @@ Added:
 Fixes:
 
 * Championship Sign Up Forms are only shown if the Championship has free slots left and the Championship is not fully complete.
+* Championships now always show the 'Entrants' tab, so you can check to see if you're in the list!
 
 v1.4.2
 ------

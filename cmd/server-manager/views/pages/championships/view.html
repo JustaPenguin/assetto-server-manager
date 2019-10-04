@@ -62,12 +62,11 @@
                            aria-selected="false">Team Standings</a>
                     </li>
                 {{ end }}
-            {{ else }}
-                <li class="nav-item">
-                    <a class="nav-link active" id="entrants-tab" data-toggle="tab" href="#entrants" role="tab" aria-controls="teams"
-                       aria-selected="false">Entrants</a>
-                </li>
             {{ end }}
+            <li class="nav-item">
+                <a class="nav-link {{ if eq $championship.Progress 0.0 }}active{{ end }}" id="entrants-tab" data-toggle="tab" href="#entrants" role="tab" aria-controls="teams"
+                   aria-selected="false">Entrants</a>
+            </li>
             <li class="nav-item">
                 <a class="nav-link" id="points-tab" data-toggle="tab" href="#points" role="tab" aria-controls="points"
                    aria-selected="false">Points Reference</a>
@@ -236,62 +235,62 @@
                         </table>
                     </div>
                 </div>
-            {{ else }}
-                <div class="tab-pane fade show active" id="entrants" role="tabpanel" aria-labelledby="entrants-tab">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-striped">
-                            <tr>
-                                {{ if $championship.IsMultiClass }}<th>Class</th>{{ end }}
-                                <th>#</th>
-                                <th>Driver</th>
-                                {{ if $championship.HasTeamNames }}
-                                    <th>Team</th>
-                                {{ end }}
-                                <th>Car</th>
-                            </tr>
+            {{ end }}
+
+            <div class="tab-pane fade {{ if eq $championship.Progress 0.0 }}show active{{ end }}" id="entrants" role="tabpanel" aria-labelledby="entrants-tab">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <tr>
+                            {{ if $championship.IsMultiClass }}<th>Class</th>{{ end }}
+                            <th>#</th>
+                            <th>Driver</th>
+                            {{ if $championship.HasTeamNames }}
+                                <th>Team</th>
+                            {{ end }}
+                            <th>Car</th>
+                        </tr>
 
 
-                            {{ range $classIndex, $class := $championship.Classes }}
-                                {{ $entrants := $class.Entrants.PrettyList }}
+                        {{ range $classIndex, $class := $championship.Classes }}
+                            {{ $entrants := $class.Entrants.PrettyList }}
 
-                                {{ range $i, $entrant := $entrants }}
-                                    {{ if ne $entrant.GUID "OPEN_SLOTS" }}
-                                        <tr style="
-                                            {{ if eq $account.GUID $entrant.GUID }}font-weight: bold;{{ end }}
-                                            {{ if $championship.IsMultiClass }}
-                                                color: white; background: {{ classColor $classIndex }}
-                                            {{ end }}">
-                                            {{ if $championship.IsMultiClass }}
-                                                {{ if eq $i 0 }}
-                                                    <td rowspan="{{ sub (len $entrants) 1 }}">{{ $class.Name }}</td>
-                                                {{ end }}
+                            {{ range $i, $entrant := $entrants }}
+                                {{ if ne $entrant.GUID "OPEN_SLOTS" }}
+                                    <tr style="
+                                        {{ if eq $account.GUID $entrant.GUID }}font-weight: bold;{{ end }}
+                                        {{ if $championship.IsMultiClass }}
+                                            color: white; background: {{ classColor $classIndex }}
+                                        {{ end }}">
+                                        {{ if $championship.IsMultiClass }}
+                                            {{ if eq $i 0 }}
+                                                <td rowspan="{{ sub (len $entrants) 1 }}">{{ $class.Name }}</td>
                                             {{ end }}
-                                            <td><span data-toggle="tooltip" title="Pit Box: {{ $entrant.PitBox }}">{{ add $i 1 }}</span></td>
-                                            <td>{{ driverName $entrant.Name }}</td>
-
-                                            {{ if $championship.HasTeamNames }}
-                                                <td>{{ $entrant.Team }}</td>
-                                            {{ end }}
-                                            <td>{{ prettify $entrant.Model true }} / {{ prettify $entrant.Skin false }}</td>
-                                        </tr>
-                                    {{ else }}
-                                        {{ if $championship.OpenEntrants }}
-                                            <tr {{ if $championship.IsMultiClass }}style="color: white; background: {{ classColor $classIndex }}"{{ end }}>
-                                                {{ if $championship.IsMultiClass }}
-                                                    <td>{{ $class.Name }}</td>
-                                                {{ end }}
-                                                <td colspan="4">
-                                                    <em>{{ $entrant.Name }}</em>
-                                                </td>
-                                            </tr>
                                         {{ end }}
+                                        <td><span data-toggle="tooltip" title="Pit Box: {{ $entrant.PitBox }}">{{ add $i 1 }}</span></td>
+                                        <td>{{ driverName $entrant.Name }}</td>
+
+                                        {{ if $championship.HasTeamNames }}
+                                            <td>{{ $entrant.Team }}</td>
+                                        {{ end }}
+                                        <td>{{ prettify $entrant.Model true }} / {{ prettify $entrant.Skin false }}</td>
+                                    </tr>
+                                {{ else }}
+                                    {{ if $championship.OpenEntrants }}
+                                        <tr {{ if $championship.IsMultiClass }}style="color: white; background: {{ classColor $classIndex }}"{{ end }}>
+                                            {{ if $championship.IsMultiClass }}
+                                                <td>{{ $class.Name }}</td>
+                                            {{ end }}
+                                            <td colspan="4">
+                                                <em>{{ $entrant.Name }}</em>
+                                            </td>
+                                        </tr>
                                     {{ end }}
                                 {{ end }}
                             {{ end }}
-                        </table>
-                    </div>
+                        {{ end }}
+                    </table>
                 </div>
-            {{ end }}
+            </div>
 
             <div class="tab-pane fade" id="points" role="tabpanel" aria-labelledby="points-tab">
                 <div class="table-responsive">
