@@ -854,13 +854,13 @@ func LoadResult(fileName string) (*SessionResults, error) {
 type ResultsHandler struct {
 	*BaseHandler
 
-	store          Store
+	store Store
 }
 
 func NewResultsHandler(baseHandler *BaseHandler, store Store) *ResultsHandler {
 	return &ResultsHandler{
 		BaseHandler: baseHandler,
-		store: store,
+		store:       store,
 	}
 }
 
@@ -932,7 +932,7 @@ func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
 		},
 		Result:  result,
 		Account: AccountFromRequest(r),
-		UseMPH: serverOpts.UseMPH == 1,
+		UseMPH:  serverOpts.UseMPH == 1,
 	})
 }
 
