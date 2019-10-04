@@ -25,6 +25,7 @@ Fixes:
 
 * Championship Sign Up Forms are only shown if the Championship has free slots left and the Championship is not fully complete.
 * Championships now always show the 'Entrants' tab, so you can check to see if you're in the list!
+* Improved cache validation so that user-uploaded files can change without needing to empty the browser cache.
 
 v1.4.2
 ------

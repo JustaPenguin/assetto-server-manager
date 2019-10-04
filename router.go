@@ -1,8 +1,6 @@
 package servermanager
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +11,7 @@ import (
 	"github.com/cj123/sessions"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-http-utils/etag"
 	"github.com/sirupsen/logrus"
 )
 
@@ -135,8 +134,8 @@ func Router(
 		r.HandleFunc("/accounts/update", accountHandler.update)
 		r.HandleFunc("/accounts/dismiss-changelog", accountHandler.dismissChangelog)
 
-		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")))
-		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")))
+		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")), true)
+		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")), true)
 
 		// race weekends
 		r.Get("/race-weekends", raceWeekendHandler.list)
@@ -280,12 +279,12 @@ func Router(
 		r.HandleFunc("/search-index", carsHandler.rebuildSearchIndex)
 	})
 
-	FileServer(r, "/static", fs)
+	FileServer(r, "/static", fs, false)
 
 	return prometheusMonitoringWrapper(r)
 }
 
-func FileServer(r chi.Router, path string, root http.FileSystem) {
+func FileServer(r chi.Router, path string, root http.FileSystem, useRevalidation bool) {
 	if strings.ContainsAny(path, "{}*") {
 		panic("FileServer does not permit URL parameters.")
 	}
@@ -298,24 +297,21 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 	}
 	path += "*"
 
-	r.Get(path, AssetCacheHeaders(fs.ServeHTTP))
+	r.Get(path, AssetCacheHeaders(fs.ServeHTTP, useRevalidation))
 }
 
 const maxAge30Days = 2592000
 
-func etag(url string) string {
-	h := md5.New()
-	h.Write([]byte(BuildVersion + url))
-
-	return hex.EncodeToString(h.Sum(nil))
-}
-
-func AssetCacheHeaders(next http.HandlerFunc) http.HandlerFunc {
+func AssetCacheHeaders(next http.HandlerFunc, useRevalidation bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Cache-Control", fmt.Sprintf("public, max-age=%d", maxAge30Days))
-		w.Header().Add("ETag", fmt.Sprintf(`W/"%s"`, etag(r.URL.String())))
+		if useRevalidation {
+			w.Header().Add("Cache-Control", fmt.Sprintf("public, must-revalidate"))
+			etag.Handler(next, false).ServeHTTP(w, r)
+		} else {
+			w.Header().Add("Cache-Control", fmt.Sprintf("public, max-age=%d", maxAge30Days))
 
-		next(w, r)
+			next(w, r)
+		}
 	}
 }
 
