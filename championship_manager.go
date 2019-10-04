@@ -89,6 +89,18 @@ func (cm *ChampionshipManager) UpsertChampionship(c *Championship) error {
 }
 
 func (cm *ChampionshipManager) DeleteChampionship(id string) error {
+	championship, err := cm.raceStore.LoadChampionship(id)
+
+	if err != nil {
+		return err
+	}
+
+	if championship.ACSR {
+		championship.ACSR = false
+
+		ACSRSendResult(championship)
+	}
+
 	return cm.raceStore.DeleteChampionship(id)
 }
 
