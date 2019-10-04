@@ -52,3 +52,33 @@ func (qrh *QuickRaceHandler) submit(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/live-timing", http.StatusFound)
 	}
 }
+
+type QuickRace struct {
+	OverridePassword    bool
+	ReplacementPassword string
+	RaceConfig          CurrentRaceConfig
+}
+
+func (q QuickRace) IsChampionship() bool {
+	return false
+}
+
+func (q QuickRace) EventName() string {
+	return trackSummary(q.RaceConfig.Track, q.RaceConfig.TrackLayout)
+}
+
+func (q QuickRace) OverrideServerPassword() bool {
+	return q.OverridePassword
+}
+
+func (q QuickRace) ReplacementServerPassword() string {
+	return q.ReplacementPassword
+}
+
+func (q QuickRace) EventDescription() string {
+	return ""
+}
+
+func (q QuickRace) GetURL() string {
+	return ""
+}

@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -336,5 +337,21 @@ func ToggleDRSForTrack(track, layout string, drsEnabled bool) error {
 
 		// now write the disabled-drs file
 		return ioutil.WriteFile(drsFile, []byte(disableDRSFile), 0644)
+	}
+}
+
+func trackSummary(track, layout string) string {
+	info := trackInfo(track, layout)
+
+	if info != nil {
+		return info.Name
+	} else {
+		track := prettifyName(track, false)
+
+		if layout != "" {
+			track += fmt.Sprintf(" (%s)", prettifyName(layout, true))
+		}
+
+		return track
 	}
 }

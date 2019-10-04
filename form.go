@@ -344,6 +344,20 @@ func (f FormOption) renderNumberInput() template.HTML {
 	return tmpl
 }
 
+type FormHeading string
+
+func (f FormOption) renderHeading() template.HTML {
+	const headingTemplate = `<hr class="mt-5"><h3 class="mt-4 mb-4">{{ .Name }}</h3>`
+
+	tmpl, err := f.render(headingTemplate)
+
+	if err != nil {
+		return template.HTML(fmt.Sprintf("err: %s", err))
+	}
+
+	return tmpl
+}
+
 func (f FormOption) HTML() template.HTML {
 	switch f.Type {
 	case "dropdown", "multiSelect":
@@ -360,6 +374,8 @@ func (f FormOption) HTML() template.HTML {
 		return f.renderTextarea()
 	case "string", "password":
 		return f.renderTextInput()
+	case "heading":
+		return f.renderHeading()
 	default:
 		logrus.Errorf("Unknown type: %s", f.Type)
 		return ""

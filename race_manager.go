@@ -80,35 +80,6 @@ type RaceEvent interface {
 	GetURL() string
 }
 
-type normalEvent struct {
-	OverridePassword    bool
-	ReplacementPassword string
-}
-
-func (normalEvent) IsChampionship() bool {
-	return false
-}
-
-func (normalEvent) EventName() string {
-	return ""
-}
-
-func (n normalEvent) OverrideServerPassword() bool {
-	return n.OverridePassword
-}
-
-func (n normalEvent) ReplacementServerPassword() string {
-	return n.ReplacementPassword
-}
-
-func (n normalEvent) EventDescription() string {
-	return ""
-}
-
-func (n normalEvent) GetURL() string {
-	return ""
-}
-
 func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryList, loop bool, event RaceEvent) error {
 	rm.mutex.Lock()
 	defer rm.mutex.Unlock()
@@ -161,7 +132,7 @@ func (rm *RaceManager) applyConfigAndStart(config ServerConfig, entryList EntryL
 	if config.GlobalServerConfig.ShowRaceNameInServerLobby == 1 {
 		// append the race name to the server name
 		if name := event.EventName(); name != "" {
-			config.GlobalServerConfig.Name += fmt.Sprintf(": %s", name)
+			config.GlobalServerConfig.Name = buildFinalServerName(config.GlobalServerConfig.ServerNameTemplate, event, config)
 		}
 	}
 
@@ -337,7 +308,9 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 
 	quickRace.CurrentRaceConfig.MaxClients = numPitboxes
 
-	return rm.applyConfigAndStart(quickRace, entryList, false, normalEvent{})
+	return rm.applyConfigAndStart(quickRace, entryList, false, &QuickRace{
+		RaceConfig: quickRace.CurrentRaceConfig,
+	})
 }
 
 func formValueAsInt(val string) int {
