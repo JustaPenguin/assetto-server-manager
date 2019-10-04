@@ -215,7 +215,19 @@ func (filesystemTrackData) TrackMap(name, layout string) (*TrackMapData, error) 
 }
 
 func (filesystemTrackData) TrackInfo(name, layout string) (*TrackInfo, error) {
-	return GetTrackInfo(name, layout)
+	trackInfo, err := GetTrackInfo(name, layout)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Could not load track info")
+
+		return &TrackInfo{
+			Name:    trackSummary(name, layout),
+			City:    "Unknown",
+			Country: "Unknown",
+		}, nil
+	}
+
+	return trackInfo, err
 }
 
 type TrackMapData struct {

@@ -269,10 +269,10 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 	trackMapData, err := rc.trackDataGateway.TrackMap(sessionInfo.Track, sessionInfo.TrackConfig)
 
 	if err != nil {
-		return err
+		logrus.WithError(err).Errorf("Could not load track map data")
+	} else {
+		rc.TrackMapData = *trackMapData
 	}
-
-	rc.TrackMapData = *trackMapData
 
 	logrus.Debugf("New session detected: %s at %s (%s) [deleteCars: %t, emptyCarInfo: %t]", sessionInfo.Type.String(), sessionInfo.Track, sessionInfo.TrackConfig, deleteCars, emptyCarInfo)
 
