@@ -33,7 +33,7 @@ func (cr *CustomRace) EventName() string {
 	if cr.HasCustomName {
 		return cr.Name
 	} else {
-		return ""
+		return trackSummary(cr.RaceConfig.Track, cr.RaceConfig.TrackLayout)
 	}
 }
 

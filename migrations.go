@@ -67,6 +67,7 @@ var (
 		addPersistOpenEntrantsToChampionship,
 		addThemeChoiceToAccounts,
 		addRaceWeekendExamples,
+		addServerNameTemplate,
 	}
 )
 
@@ -429,4 +430,18 @@ func addRaceWeekendExamples(s Store) error {
 	}
 
 	return s.UpsertRaceWeekend(raceWeekend)
+}
+
+func addServerNameTemplate(s Store) error {
+	logrus.Infof("Running migration: Add Server Name Template")
+
+	opts, err := s.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	opts.ServerNameTemplate = defaultServerNameTemplate
+
+	return s.UpsertServerOptions(opts)
 }

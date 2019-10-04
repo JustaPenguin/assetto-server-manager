@@ -23,6 +23,7 @@ func ConfigIniDefault() ServerConfig {
 			AuthPluginAddress:          "",
 			NumberOfThreads:            2,
 			ShowRaceNameInServerLobby:  1,
+			ServerNameTemplate:         defaultServerNameTemplate,
 			ShowContentManagerJoinLink: 1,
 			SleepTime:                  1,
 		},
@@ -102,3 +103,5 @@ func ConfigIniDefault() ServerConfig {
 		},
 	}
 }
+
+const defaultServerNameTemplate = "{{ .ServerName }} - {{ .EventName }}"

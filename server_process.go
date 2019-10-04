@@ -306,7 +306,7 @@ func (as *AssettoServerProcess) IsRunning() bool {
 
 func (as *AssettoServerProcess) Event() RaceEvent {
 	if as.event == nil {
-		return normalEvent{}
+		return QuickRace{}
 	}
 
 	return as.event
