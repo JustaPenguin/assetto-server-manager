@@ -176,6 +176,9 @@ func (tr *Renderer) init() error {
 	}
 
 	funcs := sprig.FuncMap()
+	funcs["htmlAttr"] = func(s string) template.HTMLAttr {
+		return template.HTMLAttr(s)
+	}
 	funcs["ordinal"] = ordinal
 	funcs["prettify"] = prettifyName
 	funcs["carList"] = carList
@@ -193,9 +196,7 @@ func (tr *Renderer) init() error {
 	funcs["DeleteAccess"] = dummyAccessFunc
 	funcs["AdminAccess"] = dummyAccessFunc
 	funcs["LoggedIn"] = dummyAccessFunc
-	funcs["classColor"] = func(i int) string {
-		return ChampionshipClassColors[i%len(ChampionshipClassColors)]
-	}
+	funcs["classColor"] = ChampionshipClassColor
 	funcs["carSkinURL"] = carSkinURL
 	funcs["dict"] = templateDict
 	funcs["asset"] = NewAssetHelper("/", "", "", map[string]string{"cb": BuildVersion}).GetURL
@@ -441,28 +442,7 @@ func (b *BaseTemplateVars) Get() *BaseTemplateVars {
 	return b
 }
 
-// LoadTemplate reads a template from templates and renders it with data to the given io.Writer
-func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view string, vars TemplateVars) error {
-	if tr.reload {
-		// reload templates on every request if enabled, so
-		// that we don't have to constantly restart the website
-		err := tr.init()
-
-		if err != nil {
-			return err
-		}
-	}
-
-	t, ok := tr.templates[filepath.ToSlash(view)]
-
-	if !ok {
-		return fmt.Errorf("unable to find template: %s", filepath.ToSlash(view))
-	}
-
-	if vars == nil {
-		vars = &BaseTemplateVars{}
-	}
-
+func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, vars TemplateVars) error {
 	session := getSession(r)
 
 	data := vars.Get()
@@ -501,6 +481,35 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 	data.SentryDSN = sentryJSDSN
 	data.RecaptchaSiteKey = config.Championships.RecaptchaConfig.SiteKey
 
+	return nil
+}
+
+// LoadTemplate reads a template from templates and renders it with data to the given io.Writer
+func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view string, vars TemplateVars) error {
+	if tr.reload {
+		// reload templates on every request if enabled, so
+		// that we don't have to constantly restart the website
+		err := tr.init()
+
+		if err != nil {
+			return err
+		}
+	}
+
+	t, ok := tr.templates[filepath.ToSlash(view)]
+
+	if !ok {
+		return fmt.Errorf("unable to find template: %s", filepath.ToSlash(view))
+	}
+
+	if vars == nil {
+		vars = &BaseTemplateVars{}
+	}
+
+	if err := tr.addData(w, r, vars); err != nil {
+		return err
+	}
+
 	t.Funcs(map[string]interface{}{
 		"ReadAccess":   ReadAccess(r),
 		"WriteAccess":  WriteAccess(r),
@@ -520,6 +529,52 @@ func (tr *Renderer) MustLoadTemplate(w http.ResponseWriter, r *http.Request, vie
 		raven.CaptureError(err, nil)
 		logrus.Errorf("Unable to load template: %s, err: %s", view, err)
 		http.Error(w, "unable to load template", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (tr *Renderer) LoadPartial(w http.ResponseWriter, r *http.Request, partial string, vars TemplateVars) error {
+	if tr.reload {
+		// reload templates on every request if enabled, so
+		// that we don't have to constantly restart the website
+		err := tr.init()
+
+		if err != nil {
+			return err
+		}
+	}
+
+	t, ok := tr.templates[filepath.ToSlash(partial)]
+
+	if !ok {
+		return errors.New("partial not found")
+	}
+
+	if vars == nil {
+		vars = &BaseTemplateVars{}
+	}
+
+	if err := tr.addData(w, r, vars); err != nil {
+		return err
+	}
+
+	t.Funcs(map[string]interface{}{
+		"ReadAccess":   ReadAccess(r),
+		"WriteAccess":  WriteAccess(r),
+		"DeleteAccess": DeleteAccess(r),
+		"AdminAccess":  AdminAccess(r),
+		"LoggedIn":     LoggedIn(r),
+	})
+
+	return t.ExecuteTemplate(w, "partial", vars)
+}
+
+func (tr *Renderer) MustLoadPartial(w http.ResponseWriter, r *http.Request, partial string, vars TemplateVars) {
+	err := tr.LoadPartial(w, r, partial, vars)
+
+	if err != nil {
+		logrus.Errorf("Unable to load partial: %s, err: %s", partial, err)
+		http.Error(w, "unable to load partial", http.StatusInternalServerError)
 		return
 	}
 }

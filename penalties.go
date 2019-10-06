@@ -124,25 +124,25 @@ func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
 		if !results.Result[i].Disqualified && !results.Result[j].Disqualified {
 
 			// if both drivers aren't disqualified
-			if results.GetLaps(results.Result[i].DriverGUID) == results.GetLaps(results.Result[j].DriverGUID) {
+			if results.GetNumLaps(results.Result[i].DriverGUID) == results.GetNumLaps(results.Result[j].DriverGUID) {
 				// if their number of laps are equal, compare lap times
 
 				return results.GetTime(results.Result[i].TotalTime, results.Result[i].DriverGUID, true) <
 					results.GetTime(results.Result[j].TotalTime, results.Result[j].DriverGUID, true)
 			}
 
-			return results.GetLaps(results.Result[i].DriverGUID) >= results.GetLaps(results.Result[j].DriverGUID)
+			return results.GetNumLaps(results.Result[i].DriverGUID) >= results.GetNumLaps(results.Result[j].DriverGUID)
 
 		} else if results.Result[i].Disqualified && results.Result[j].Disqualified {
 
 			// if both drivers ARE disqualified, compare their lap times / num laps
-			if results.GetLaps(results.Result[i].DriverGUID) == results.GetLaps(results.Result[j].DriverGUID) {
+			if results.GetNumLaps(results.Result[i].DriverGUID) == results.GetNumLaps(results.Result[j].DriverGUID) {
 				// if their number of laps are equal, compare lap times
 				return results.GetTime(results.Result[i].TotalTime, results.Result[i].DriverGUID, true) <
 					results.GetTime(results.Result[j].TotalTime, results.Result[j].DriverGUID, true)
 			}
 
-			return results.GetLaps(results.Result[i].DriverGUID) >= results.GetLaps(results.Result[j].DriverGUID)
+			return results.GetNumLaps(results.Result[i].DriverGUID) >= results.GetNumLaps(results.Result[j].DriverGUID)
 
 		} else {
 			// driver i is closer to the front than j if they are not disqualified and j is

@@ -73,7 +73,7 @@ type Account struct {
 }
 
 func (a Account) ShowDarkTheme(serverManagerDarkThemeEnabled bool) bool {
-	if a.Theme == ThemeDefault && serverManagerDarkThemeEnabled {
+	if (a.Theme == "" || a.Theme == ThemeDefault) && serverManagerDarkThemeEnabled {
 		return true
 	}
 
@@ -405,7 +405,7 @@ func (ah *AccountHandler) update(w http.ResponseWriter, r *http.Request) {
 		driverName, guid, team := r.FormValue("DriverName"), r.FormValue("DriverGUID"), r.FormValue("DriverTeam")
 		theme := r.FormValue("Theme")
 
-		if driverName != "" || guid != "" || team != "" {
+		if driverName != "" || guid != "" || team != "" || theme != "" {
 			err := ah.accountManager.updateDetails(account, driverName, guid, team, theme)
 
 			if err != nil {

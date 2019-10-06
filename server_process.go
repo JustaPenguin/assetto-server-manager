@@ -21,13 +21,6 @@ import (
 
 const MaxLogSizeBytes = 1e6
 
-type ServerEventType string
-
-const (
-	EventTypeRace         ServerEventType = "RACE"
-	EventTypeChampionship ServerEventType = "CHAMPIONSHIP"
-)
-
 type ServerProcess interface {
 	Logs() string
 	Start(cfg ServerConfig, entryList EntryList, forwardingAddress string, forwardListenPort int, event RaceEvent) error
@@ -313,7 +306,7 @@ func (as *AssettoServerProcess) IsRunning() bool {
 
 func (as *AssettoServerProcess) Event() RaceEvent {
 	if as.event == nil {
-		return normalEvent{}
+		return QuickRace{}
 	}
 
 	return as.event

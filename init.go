@@ -36,6 +36,7 @@ func InitWithResolver(resolver *Resolver) error {
 
 	process := resolver.resolveServerProcess()
 	championshipManager := resolver.resolveChampionshipManager()
+	raceWeekendManager := resolver.resolveRaceWeekendManager()
 	notificationManager := resolver.resolveNotificationManager()
 
 	go func() {
@@ -44,7 +45,11 @@ func InitWithResolver(resolver *Resolver) error {
 			if process.IsRunning() {
 				if process.Event().IsChampionship() {
 					if err := championshipManager.StopActiveEvent(); err != nil {
-						logrus.WithError(err).Errorf("Error stopping event")
+						logrus.WithError(err).Errorf("Error stopping Championship event")
+					}
+				} else if process.Event().IsRaceWeekend() {
+					if err := raceWeekendManager.StopActiveSession(); err != nil {
+						logrus.WithError(err).Errorf("Error stopping Race Weekend session")
 					}
 				} else {
 					if err := process.Stop(); err != nil {

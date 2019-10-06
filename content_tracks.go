@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -214,7 +215,19 @@ func (filesystemTrackData) TrackMap(name, layout string) (*TrackMapData, error) 
 }
 
 func (filesystemTrackData) TrackInfo(name, layout string) (*TrackInfo, error) {
-	return GetTrackInfo(name, layout)
+	trackInfo, err := GetTrackInfo(name, layout)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Could not load track info")
+
+		return &TrackInfo{
+			Name:    trackSummary(name, layout),
+			City:    "Unknown",
+			Country: "Unknown",
+		}, nil
+	}
+
+	return trackInfo, err
 }
 
 type TrackMapData struct {
@@ -336,5 +349,21 @@ func ToggleDRSForTrack(track, layout string, drsEnabled bool) error {
 
 		// now write the disabled-drs file
 		return ioutil.WriteFile(drsFile, []byte(disableDRSFile), 0644)
+	}
+}
+
+func trackSummary(track, layout string) string {
+	info := trackInfo(track, layout)
+
+	if info != nil {
+		return info.Name
+	} else {
+		track := prettifyName(track, false)
+
+		if layout != "" {
+			track += fmt.Sprintf(" (%s)", prettifyName(layout, true))
+		}
+
+		return track
 	}
 }
