@@ -17,6 +17,7 @@ import (
 )
 
 type ScheduledEvent interface {
+	EventName() string
 	GetID() uuid.UUID
 	GetRaceSetup() CurrentRaceConfig
 	GetScheduledTime() time.Time

@@ -123,12 +123,14 @@ type CustomRaceHandler struct {
 	*BaseHandler
 
 	raceManager *RaceManager
+	scheduler   *Scheduler
 }
 
-func NewCustomRaceHandler(base *BaseHandler, raceManager *RaceManager) *CustomRaceHandler {
+func NewCustomRaceHandler(base *BaseHandler, raceManager *RaceManager, scheduler *Scheduler) *CustomRaceHandler {
 	return &CustomRaceHandler{
 		BaseHandler: base,
 		raceManager: raceManager,
+		scheduler:   scheduler,
 	}
 }
 
@@ -222,12 +224,16 @@ func (crh *CustomRaceHandler) schedule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = crh.raceManager.ScheduleRace(raceID, date, r.FormValue("action"), r.FormValue("event-schedule-recurrence"))
+	race, err := crh.raceManager.ConfigureScheduledRace(raceID, date, r.FormValue("event-schedule-recurrence"))
 
 	if err != nil {
 		logrus.Errorf("couldn't schedule race, err: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
+	}
+
+	if err := crh.scheduler.Schedule(race, race.Scheduled); err != nil {
+		panic(err) // @TODO
 	}
 
 	AddFlash(w, r, fmt.Sprintf("We have scheduled the race to begin at %s", date.Format(time.RFC1123)))

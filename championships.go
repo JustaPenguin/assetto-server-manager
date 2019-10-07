@@ -1079,6 +1079,10 @@ type ChampionshipEvent struct {
 	championship *Championship
 }
 
+func (cr *ChampionshipEvent) EventName() string {
+	return fmt.Sprintf("Championship Event at %s", trackSummary(cr.RaceSetup.Track, cr.RaceSetup.TrackLayout))
+}
+
 func (cr *ChampionshipEvent) IsRaceWeekend() bool {
 	return cr.RaceWeekendID != uuid.Nil
 }

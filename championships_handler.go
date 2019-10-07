@@ -17,12 +17,14 @@ type ChampionshipsHandler struct {
 	*BaseHandler
 
 	championshipManager *ChampionshipManager
+	scheduler *Scheduler
 }
 
-func NewChampionshipsHandler(baseHandler *BaseHandler, championshipManager *ChampionshipManager) *ChampionshipsHandler {
+func NewChampionshipsHandler(baseHandler *BaseHandler, championshipManager *ChampionshipManager, scheduler *Scheduler) *ChampionshipsHandler {
 	return &ChampionshipsHandler{
 		BaseHandler:         baseHandler,
 		championshipManager: championshipManager,
+		scheduler: scheduler,
 	}
 }
 
@@ -383,7 +385,13 @@ func (ch *ChampionshipsHandler) scheduleEvent(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	err = ch.championshipManager.ScheduleEvent(championshipID, championshipEventID, date, r.FormValue("action"))
+	_, event, err := ch.championshipManager.GetChampionshipAndEvent(championshipID, championshipEventID)
+
+	if err != nil {
+		panic(err) // @TODO
+	}
+
+	err = ch.scheduler.Schedule(event, date)
 
 	if err != nil {
 		logrus.Errorf("couldn't schedule championship event, err: %s", err)
@@ -396,8 +404,13 @@ func (ch *ChampionshipsHandler) scheduleEvent(w http.ResponseWriter, r *http.Req
 }
 
 func (ch *ChampionshipsHandler) scheduleEventRemove(w http.ResponseWriter, r *http.Request) {
-	err := ch.championshipManager.ScheduleEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"),
-		time.Time{}, "remove")
+	_, event, err := ch.championshipManager.GetChampionshipAndEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
+
+	if err != nil {
+		panic(err) // @TODO
+	}
+
+	err = ch.scheduler.DeSchedule(event)
 
 	if err != nil {
 		logrus.Errorf("couldn't schedule championship event, err: %s", err)

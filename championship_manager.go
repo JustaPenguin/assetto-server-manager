@@ -118,6 +118,23 @@ func (cm *ChampionshipManager) ListChampionships() ([]*Championship, error) {
 	return champs, nil
 }
 
+func (cm *ChampionshipManager) FindChampionshipForEvent(eventID string) (*Championship, *ChampionshipEvent, error) {
+	championships, err := cm.ListChampionships()
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, championship := range championships {
+		if event, err := championship.EventByID(eventID); err == nil {
+			// this is the championship for this event
+			return championship, event, nil
+		}
+	}
+
+	return nil, nil, ErrChampionshipNotFound
+}
+
 type ChampionshipTemplateVars struct {
 	*RaceTemplateVars
 
@@ -576,7 +593,7 @@ func (cm *ChampionshipManager) GetChampionshipAndEvent(championshipID string, ev
 
 	return championship, event, nil
 }
-
+/*
 func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID string, date time.Time, action string) error {
 	championship, event, err := cm.GetChampionshipAndEvent(championshipID, eventID)
 
@@ -617,13 +634,14 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 			duration = time.Until(date.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
 
 			cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
-				cm.notificationManager.SendChampionshipReminderMessage(championship, event)
+				//cm.notificationManager.SendChampionshipReminderMessage(championship, event)
 			})
 		}
 	}
 
 	return cm.UpsertChampionship(championship)
 }
+*/
 
 func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
 	cm.mutex.Lock()
@@ -1387,7 +1405,7 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 						duration = time.Until(event.Scheduled.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
 
 						cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
-							cm.notificationManager.SendChampionshipReminderMessage(championship, event)
+							//cm.notificationManager.SendChampionshipReminderMessage(championship, event)
 						})
 					}
 				}

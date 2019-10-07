@@ -3,6 +3,7 @@ package servermanager
 import (
 	"errors"
 	"fmt"
+	"github.com/cj123/assetto-server-manager/pkg/udp"
 	"math/rand"
 	"net/http"
 	"path/filepath"
@@ -11,8 +12,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/cj123/assetto-server-manager/pkg/udp"
 
 	"github.com/etcd-io/bbolt"
 	"github.com/go-chi/chi"
@@ -973,76 +972,31 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 	return rm.applyConfigAndStart(race.RaceConfig, race.EntryList, forceRestart, race)
 }
 
-func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, recurrence string) error {
+func (rm *RaceManager) ConfigureScheduledRace(uuid string, date time.Time, recurrence string) (*CustomRace, error) {
 	race, err := rm.store.FindCustomRaceByID(uuid)
 
 	if err != nil {
-		return err
-	}
-
-	serverOpts, err := rm.store.LoadServerOptions()
-
-	if err != nil {
-		return err
+		return nil, err
 	}
 
 	race.Scheduled = date
 
-	// if there is an existing schedule timer for this event stop it
-	if timer := rm.customRaceStartTimers[race.UUID.String()]; timer != nil {
-		timer.Stop()
-	}
+	if recurrence != "" {
+		// set the recurrence rule on the race
+		err := race.SetRecurrenceRule(recurrence)
 
-	if timer := rm.customRaceReminderTimers[race.UUID.String()]; timer != nil {
-		timer.Stop()
-	}
-
-	if action == "add" {
-		if date.IsZero() {
-			return errors.New("can't schedule race for zero time")
+		if err != nil {
+			return race, err
 		}
 
-		// add a scheduled event on date
-		duration := time.Until(date)
-
-		if recurrence != "already-set" {
-			if recurrence != "" {
-				err := race.SetRecurrenceRule(recurrence)
-
-				if err != nil {
-					return err
-				}
-
-				// only set once when the event is first scheduled
-				race.ScheduledInitial = date
-			} else {
-				race.ClearRecurrenceRule()
-			}
-		}
-
-		rm.customRaceStartTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
-			err := rm.StartScheduledRace(race)
-
-			if err != nil {
-				logrus.WithError(err).Errorf("Couldn't start scheduled race: %s, %s.", race.Name, race.UUID.String())
-			}
-		})
-
-		if serverOpts.NotificationReminderTimer > 0 {
-			_ = rm.notificationManager.SendRaceScheduledMessage(race, date)
-
-			duration = time.Until(date.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
-
-			rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
-				_ = rm.notificationManager.SendRaceReminderMessage(race)
-			})
-		}
-
+		// only set once when the event is first scheduled
+		race.ScheduledInitial = date
 	} else {
+		// recurrence = "" so there is no recurrence rule anymore, delete it
 		race.ClearRecurrenceRule()
 	}
 
-	return rm.store.UpsertCustomRace(race)
+	return race, rm.store.UpsertCustomRace(race)
 }
 
 func (rm *RaceManager) StartScheduledRace(race *CustomRace) error {
@@ -1292,7 +1246,7 @@ func (rm *RaceManager) LoopCallback(message udp.Message) {
 func (rm *RaceManager) clearLoopedRaceSessionTypes() {
 	rm.loopedRaceSessionTypes = nil
 }
-
+/*
 func (rm *RaceManager) InitScheduledRaces() error {
 	rm.customRaceStartTimers = make(map[string]*time.Timer)
 	rm.customRaceReminderTimers = make(map[string]*time.Timer)
@@ -1368,7 +1322,7 @@ func (rm *RaceManager) InitScheduledRaces() error {
 
 	return nil
 }
-
+*/
 // reschedule notifications if notification timer changed
 func (rm *RaceManager) RescheduleNotifications(oldServerOpts *GlobalServerConfig, newServerOpts *GlobalServerConfig) error {
 	if newServerOpts.NotificationReminderTimer == oldServerOpts.NotificationReminderTimer {

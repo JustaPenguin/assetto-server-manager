@@ -18,6 +18,7 @@ type Resolver struct {
 	discordManager        *DiscordManager
 	notificationManager   *NotificationManager
 	scheduledRacesManager *ScheduledRacesManager
+	scheduler *Scheduler // @TODO combine with above
 	raceWeekendManager    *RaceWeekendManager
 
 	viewRenderer          *Renderer
@@ -223,7 +224,7 @@ func (r *Resolver) resolveChampionshipsHandler() *ChampionshipsHandler {
 		return r.championshipsHandler
 	}
 
-	r.championshipsHandler = NewChampionshipsHandler(r.resolveBaseHandler(), r.resolveChampionshipManager())
+	r.championshipsHandler = NewChampionshipsHandler(r.resolveBaseHandler(), r.resolveChampionshipManager(), r.resolveScheduler())
 
 	return r.championshipsHandler
 }
@@ -376,6 +377,16 @@ func (r *Resolver) resolveRaceWeekendHandler() *RaceWeekendHandler {
 	r.raceWeekendHandler = NewRaceWeekendHandler(r.resolveBaseHandler(), r.resolveRaceWeekendManager())
 
 	return r.raceWeekendHandler
+}
+
+func (r *Resolver) resolveScheduler() *Scheduler {
+	if r.scheduler != nil {
+		return r.scheduler
+	}
+
+	r.scheduler = NewScheduler(r.ResolveStore(), r.resolveRaceManager(), r.resolveChampionshipManager(), r.resolveRaceWeekendManager(), r.resolveNotificationManager())
+
+	return r.scheduler
 }
 
 func (r *Resolver) resolveDiscordManager() *DiscordManager {
