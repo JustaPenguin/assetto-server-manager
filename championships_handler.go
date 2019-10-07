@@ -112,7 +112,7 @@ func (ch *ChampionshipsHandler) view(w http.ResponseWriter, r *http.Request) {
 
 	for _, event := range championship.Events {
 		if event.IsRaceWeekend() {
-			raceWeekends[event.RaceWeekendID], err = ch.championshipManager.raceStore.LoadRaceWeekend(event.RaceWeekendID.String())
+			raceWeekends[event.RaceWeekendID], err = ch.championshipManager.store.LoadRaceWeekend(event.RaceWeekendID.String())
 
 			if err != nil {
 				logrus.WithError(err).Errorf("couldn't load championship")
