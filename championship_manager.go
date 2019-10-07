@@ -1023,7 +1023,7 @@ func (cm *ChampionshipManager) ImportChampionship(jsonData string) (string, erro
 
 	for _, event := range championship.Events {
 		if event.IsRaceWeekend() {
-			err := cm.raceStore.UpsertRaceWeekend(event.RaceWeekend)
+			err := cm.store.UpsertRaceWeekend(event.RaceWeekend)
 
 			if err != nil {
 				return "", err

@@ -25,6 +25,7 @@ Added:
 * We've tidied up the Server Options page a bit. It was getting quite large! The new headings should make things a bit more readable.
 * If 'Show Race Name In Server Lobby' is enabled, Quick Races and Custom Races with no specified name now show the track name in the Server Lobby.
 * A global option to switch speed units from Km/h to MPH for people who want to use the correct measurement system.
+* "Force Virtual Mirror" now defaults to on in all race setup forms.
 
 Fixes:
 
