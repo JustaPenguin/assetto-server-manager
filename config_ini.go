@@ -187,11 +187,13 @@ type GlobalServerConfig struct {
 	FallBackResultsSorting  int         `ini:"-" input:"checkbox" help:"When on results will use a fallback method of sorting. Only enable this if you are experiencing results that are in the wrong order in the json file."`
 
 	// Discord Integration
-	DiscordIntegration          FormHeading `ini:"-" input:"heading"`
-	DiscordAPIToken             string      `ini:"-" help:"If set, will enable race start and scheduled reminder messages to the Discord channel ID specified below.  Use your bot's user token, not the OAuth token."`
-	DiscordChannelID            string      `ini:"-" help:"If Discord is enabled, this is the channel ID it will send messages to"`
-	NotificationReminderTimer   int         `ini:"-" min:"0" max:"65535" help:"If Discord is enabled, a reminder will be sent this many minutes prior to race start.  If 0, only race start messages will be sent."`
-	ShowPasswordInNotifications int         `ini:"-" show:"open" input:"checkbox" help:"Show the server password in race start notifications"`
+	DiscordIntegration FormHeading `ini:"-" input:"heading"`
+	DiscordAPIToken    string      `ini:"-" help:"If set, will enable race start and scheduled reminder messages to the Discord channel ID specified below.  Use your bot's user token, not the OAuth token."`
+	DiscordChannelID   string      `ini:"-" help:"If Discord is enabled, this is the channel ID it will send messages to"`
+	DiscordRoleID      string      `ini:"-" help:"If set, this role will be mentioned in all Discord notifications, and (if your bot has sufficient privileges) the !notify command will attempt to add this role to the user"`
+
+	NotificationReminderTimer   int `ini:"-" min:"0" max:"65535" help:"If Discord is enabled, a reminder will be sent this many minutes prior to race start.  If 0, only race start messages will be sent."`
+	ShowPasswordInNotifications int `ini:"-" show:"open" input:"checkbox" help:"Show the server password in race start notifications"`
 
 	// Messages
 	ContentManagerWelcomeMessage string `ini:"-" show:"-"`

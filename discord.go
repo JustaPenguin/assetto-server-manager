@@ -101,6 +101,10 @@ func (dm *DiscordManager) SaveServerOptions(oldServerOpts *GlobalServerConfig, n
 func (dm *DiscordManager) CommandSessions() (string, error) {
 	serverOpts, err := dm.store.LoadServerOptions()
 
+	if err != nil {
+		return "", err
+	}
+
 	start := time.Now()
 	end := start.AddDate(0, 0, 7)
 
@@ -124,6 +128,11 @@ func (dm *DiscordManager) CommandSessions() (string, error) {
 // CommandSchedule outputs an abbreviated list of all scheduled events
 func (dm *DiscordManager) CommandSchedule() (string, error) {
 	serverOpts, err := dm.store.LoadServerOptions()
+
+	if err != nil {
+		return "", err
+	}
+
 	start := time.Now()
 	end := start.AddDate(0, 0, 7)
 	scheduled, err := dm.scheduledRacesManager.getScheduledRaces()
@@ -179,6 +188,45 @@ func (dm *DiscordManager) CommandSchedule() (string, error) {
 	return msg, nil
 }
 
+// CommandSchedule outputs an abbreviated list of all scheduled events
+func (dm *DiscordManager) CommandNotify(s *discordgo.Session, m *discordgo.MessageCreate) (string, error) {
+	serverOpts, err := dm.store.LoadServerOptions()
+
+	if err != nil {
+		return "", err
+	}
+
+	if serverOpts.DiscordRoleID == "" {
+		return "", nil
+	}
+
+	member, err := s.State.Member(m.GuildID, m.Author.ID)
+
+	if err != nil {
+		if err == discordgo.ErrStateNotFound {
+			member, err = s.GuildMember(m.GuildID, m.Author.ID)
+		}
+
+		if err != nil {
+			return "", err
+		}
+	}
+
+	for _, roleID := range member.Roles {
+		if roleID == serverOpts.DiscordRoleID {
+			return "You already have this role", nil
+		}
+	}
+
+	err = s.GuildMemberRoleAdd(m.GuildID, m.Author.ID, serverOpts.DiscordRoleID)
+
+	if err != nil {
+		return fmt.Sprintf("I'm sorry Dave, I can't do that (%s)", err.Error()), err
+	}
+
+	return "Your role has been assigned", nil
+}
+
 func (dm *DiscordManager) CommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
@@ -192,6 +240,8 @@ func (dm *DiscordManager) CommandHandler(s *discordgo.Session, m *discordgo.Mess
 		msg, err = dm.CommandSchedule()
 	case "!sessions":
 		msg, err = dm.CommandSessions()
+	case "!spamificate":
+		msg, err = dm.CommandNotify(s, m)
 	default:
 		return
 	}
@@ -225,7 +275,17 @@ func (dm *DiscordManager) SendMessage(msg string) error {
 		// could check DiscordChannelID in new, but plan is to allow per-championship channels, so will need to pass
 		// it in as an arg and check it here anyway
 		if opts.DiscordChannelID != "" {
-			_, err = dm.discord.ChannelMessageSend(opts.DiscordChannelID, msg)
+			if opts.DiscordRoleID != "" {
+				mention := fmt.Sprintf("Attention <@&%s>\n", opts.DiscordRoleID)
+				messageSend := &discordgo.MessageSend{
+					Content: mention,
+					Embed:   embed.NewGenericEmbed(msg, ""),
+				}
+				_, err = dm.discord.ChannelMessageSendComplex(opts.DiscordChannelID, messageSend)
+			} else {
+
+				_, err = dm.discord.ChannelMessageSendEmbed(opts.DiscordChannelID, embed.NewGenericEmbed(msg, ""))
+			}
 
 			if err != nil {
 				logrus.Errorf("couldn't send discord message, err: %s", err)
@@ -242,7 +302,7 @@ func (dm *DiscordManager) SendMessage(msg string) error {
 }
 
 // SendMessage sends a message to the configured channel and logs any errors
-func (dm *DiscordManager) SendEmbed(msg string, linkText string, link *url.URL) error {
+func (dm *DiscordManager) SendMessageWithLink(msg string, linkText string, link *url.URL) error {
 	if !dm.enabled {
 		return nil
 	}
@@ -254,11 +314,22 @@ func (dm *DiscordManager) SendEmbed(msg string, linkText string, link *url.URL) 
 		return err
 	}
 
+	linkMsg := "[" + linkText + "](" + link.String() + ")"
+
 	// could check DiscordChannelID in new, but plan is to allow per-championship channels, so will need to pass
 	// it in as an arg and check it here anyway
 	if opts.DiscordChannelID != "" {
-		linkMsg := "[" + linkText + "](" + link.String() + ")"
-		_, err = dm.discord.ChannelMessageSendEmbed(opts.DiscordChannelID, embed.NewGenericEmbed(msg, "%s", linkMsg))
+		if opts.DiscordRoleID != "" {
+			mention := fmt.Sprintf("Attention <@&%s>\n", opts.DiscordRoleID)
+			messageSend := &discordgo.MessageSend{
+				Content: mention,
+				Embed:   embed.NewGenericEmbed(msg, "%s", linkMsg),
+			}
+			_, err = dm.discord.ChannelMessageSendComplex(opts.DiscordChannelID, messageSend)
+		} else {
+
+			_, err = dm.discord.ChannelMessageSendEmbed(opts.DiscordChannelID, embed.NewGenericEmbed(msg, "%s", linkMsg))
+		}
 
 		if err != nil {
 			logrus.Errorf("couldn't send discord message, err: %s", err)

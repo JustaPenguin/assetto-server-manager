@@ -65,7 +65,7 @@ func (nm *NotificationManager) SendMessageWithLink(msg string, linkText string, 
 
 	// Call all message senders here ... atm just discord.  The manager will know if it's enabled or not, so just call it
 	if !nm.testing {
-		err = nm.discordManager.SendEmbed(msg, linkText, link)
+		err = nm.discordManager.SendMessageWithLink(msg, linkText, link)
 	}
 
 	return err
