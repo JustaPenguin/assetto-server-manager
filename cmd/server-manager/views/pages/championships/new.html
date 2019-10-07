@@ -311,12 +311,15 @@
         <div class="clearfix"></div>
 
 
+        <hr>
+
         <div class="mt-5">
             {{ if .IsEditing }}
                 <input type="hidden" name="Editing" id="Editing" value="{{ $f.ID.String }}">
                 <button type="submit" class="btn btn-success float-right">Save Championship</button>
             {{ else }}
                 <div class="float-right">
+                    <button type="submit" name="action" value="addRaceWeekend" class="btn btn-info">Add a Race Weekend</button>
                     <button type="submit" name="action" value="addEvent" class="btn btn-success">Add an Event</button>
                 </div>
             {{ end }}

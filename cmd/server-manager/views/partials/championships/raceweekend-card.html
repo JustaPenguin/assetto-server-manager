@@ -16,7 +16,7 @@
                 {{ if $raceWeekend.Completed }}
                     <span class="text-success">Complete</span>
                 {{ else if (gt $raceWeekend.Progress 0.0) }}
-                    <span class="text-info">{{ printf "%2.f" $raceWeekend.Progress }}% Complete</span>
+                    <span class="text-primary">{{ printf "%2.f" $raceWeekend.Progress }}% Complete</span>
                 {{ else }}
                     <span class="text-danger">Not started</span>
                 {{ end }}
