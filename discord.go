@@ -188,7 +188,8 @@ func (dm *DiscordManager) CommandSchedule() (string, error) {
 	return msg, nil
 }
 
-// CommandSchedule outputs an abbreviated list of all scheduled events
+// CommandNotify attempts to add a role ID (if configured) to the user issuing the !notify command
+// The role will be added as a mention on all Discord notifications
 func (dm *DiscordManager) CommandNotify(s *discordgo.Session, m *discordgo.MessageCreate) (string, error) {
 	serverOpts, err := dm.store.LoadServerOptions()
 
@@ -208,7 +209,7 @@ func (dm *DiscordManager) CommandNotify(s *discordgo.Session, m *discordgo.Messa
 		}
 
 		if err != nil {
-			return "", err
+			return "You don't seem to exist, so I can't assign you that role", err
 		}
 	}
 
