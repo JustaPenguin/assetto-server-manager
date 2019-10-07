@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -201,37 +202,62 @@ func (dm *DiscordManager) CommandNotify(s *discordgo.Session, m *discordgo.Messa
 		return "", nil
 	}
 
+	// get the member
 	member, err := s.State.Member(m.GuildID, m.Author.ID)
 
 	if err != nil {
+		// if it's not in the state, punt to asking the server
 		if err == discordgo.ErrStateNotFound {
 			member, err = s.GuildMember(m.GuildID, m.Author.ID)
 		}
 
 		if err != nil {
-			return "You don't seem to exist, so I can't assign you that role", err
+			return "You don't seem to exist, so I can't assign you that role.  Try again later.", err
+		}
+	}
+
+	// get the role name from ID, for use in user feedback
+	roleName := "notification"
+	roles, err := s.GuildRoles(m.GuildID)
+
+	if err != nil {
+		// meh, just log it and carry on
+		logrus.WithError(err).Infof("failed to get Discord roles (make sure you have set the bot permissions to see roles)")
+	} else {
+		for _, role := range roles {
+			if strings.TrimSpace(role.ID) == strings.TrimSpace(serverOpts.DiscordRoleID) {
+				roleName = role.Name
+				break
+			}
 		}
 	}
 
 	for _, roleID := range member.Roles {
 		if roleID == serverOpts.DiscordRoleID {
+			// they have the role, so remove it
 			err = s.GuildMemberRoleRemove(m.GuildID, m.Author.ID, serverOpts.DiscordRoleID)
 
 			if err != nil {
-				return "You already have this role, and an error occurred trying to remove it", err
+				// meh, log the error here, and just return some feedback to the user
+				logrus.WithError(err).Infof("failed to remove Discord role (make sure you have set the bot permissions to manage roles)")
+				return fmt.Sprintf("You already have the %s role, and an error occurred trying to remove it.  Try again later.", roleName), nil
 			}
 
-			return "You already had this role, it has now been removed.  Type the command again to add it back.", nil
+			return fmt.Sprintf("You already had the %s role, it has now been removed.  Type the command again to add it back.", roleName), nil
 		}
 	}
 
+	// they didn't have the role, so add it
 	err = s.GuildMemberRoleAdd(m.GuildID, m.Author.ID, serverOpts.DiscordRoleID)
 
 	if err != nil {
-		return fmt.Sprintf("A server error occurred, try again later"), err
+		// meh, log the error here and return feedback to the user
+		logrus.WithError(err).Infof("failed to set Discord role (make sure you have set the bot permissions to manage roles)")
+		return fmt.Sprintf("A server error occurred trying to assign you the %s role, try again later", roleName), nil
 	}
 
-	return "Your notification role has been assigned, you will now get pinged for notifications.  Type the command again if you want to remove it.", nil
+	// w00t!
+	return fmt.Sprintf("The %s role has been assigned, you will now get pinged with notifications.  Type the command again to remove it."), nil
 }
 
 func (dm *DiscordManager) CommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
