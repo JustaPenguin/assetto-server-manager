@@ -63,8 +63,10 @@ func (rw *RaceWeekend) GetEntryList() EntryList {
 
 		// filter out drivers with no GUID (open championships etc...)
 		for _, entrant := range rw.Championship.AllEntrants().AlphaSlice() {
-			if entrant.GUID == "" {
-				continue
+			if entrant.GUID == "" || entrant.IsPlaceHolder {
+				entrant.GUID = uuid.New().String()
+				entrant.Name = fmt.Sprintf("Placeholder Entrant %d", count)
+				entrant.IsPlaceHolder = true
 			}
 
 			entryList.AddInPitBox(entrant, count)
@@ -419,6 +421,8 @@ type RaceWeekendSessionEntrant struct {
 	PitBox int
 	// SessionResults are the whole results for the session the entrant took part in
 	SessionResults *SessionResults `json:"-"`
+
+	IsPlaceholder bool `json:"-"`
 }
 
 // NewRaceWeekendSessionEntrant creates a RaceWeekendSessionEntrant
@@ -436,6 +440,7 @@ func (se *RaceWeekendSessionEntrant) GetEntrant() *Entrant {
 	e := NewEntrant()
 
 	e.AssignFromResult(se.EntrantResult, se.Car)
+	e.IsPlaceHolder = se.IsPlaceholder
 
 	return e
 }
@@ -565,7 +570,10 @@ func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) ([]*RaceW
 					entrant.EntrantResult.ClassID = class.ID
 				}
 
-				out = append(out, NewRaceWeekendSessionEntrant(rws.ID, entrant.Car, entrant.EntrantResult, rws.Results))
+				e := NewRaceWeekendSessionEntrant(rws.ID, entrant.Car, entrant.EntrantResult, rws.Results)
+				e.IsPlaceholder = entrant.IsPlaceholder
+
+				out = append(out, e)
 			}
 		}
 	} else {
@@ -700,6 +708,7 @@ func EntryListToRaceWeekendEntryList(e EntryList, sessionID uuid.UUID) RaceWeeke
 
 	for _, entrant := range e.AsSlice() {
 		rwe := NewRaceWeekendSessionEntrant(sessionID, entrant.AsSessionCar(), entrant.AsSessionResult(), nil)
+		rwe.IsPlaceholder = entrant.IsPlaceHolder
 
 		out.AddInPitBox(rwe, entrant.PitBox)
 	}

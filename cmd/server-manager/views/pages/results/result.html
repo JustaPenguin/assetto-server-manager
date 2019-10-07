@@ -6,6 +6,7 @@
 <div class="results">
     {{ $sessionResults := .Result }}
     {{ $account := .Account }}
+    {{ $useMPH := .UseMPH }}
 
 
     <h1 class="text-center">{{ prettify $sessionResults.TrackName false }} {{ with $sessionResults.TrackConfig }} - {{ prettify . true }} {{ end }}</h1>
@@ -97,7 +98,12 @@
                                                     Collision with car
                                                 {{ end }}
                                             </td>
-                                            <td>{{ printf "%.1f" $event.ImpactSpeed }}</td>
+
+                                            {{ if $useMPH }}
+                                                <td>{{ printf "%.1f" (multiplyFloats $event.ImpactSpeed 0.621371) }} MPH</td>
+                                            {{ else }}
+                                                <td>{{ printf "%.1f" $event.ImpactSpeed }} Km/h</td>
+                                            {{ end }}
                                             <td>{{ $event.GetRelPosition }}</td>
                                             <td>{{ $event.GetWorldPosition }}</td>
                                         </tr>

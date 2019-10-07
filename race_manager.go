@@ -26,7 +26,7 @@ var (
 
 type RaceManager struct {
 	process             ServerProcess
-	raceStore           Store
+	store               Store
 	carManager          *CarManager
 	notificationManager NotificationDispatcher
 
@@ -45,13 +45,13 @@ type RaceManager struct {
 }
 
 func NewRaceManager(
-	raceStore Store,
+	store Store,
 	process ServerProcess,
 	carManager *CarManager,
 	notificationManager NotificationDispatcher,
 ) *RaceManager {
 	return &RaceManager{
-		raceStore:           raceStore,
+		store:               store,
 		process:             process,
 		carManager:          carManager,
 		notificationManager: notificationManager,
@@ -582,7 +582,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 
 	if customRaceID := r.FormValue("Editing"); customRaceID != "" {
 		// we are editing the race. load the previous one and overwrite it with this one
-		customRace, err := rm.raceStore.FindCustomRaceByID(customRaceID)
+		customRace, err := rm.store.FindCustomRaceByID(customRaceID)
 
 		if err != nil {
 			return err
@@ -595,7 +595,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		customRace.EntryList = entryList
 		customRace.RaceConfig = *raceConfig
 
-		return rm.raceStore.UpsertCustomRace(customRace)
+		return rm.store.UpsertCustomRace(customRace)
 	} else {
 		saveAsPresetWithoutStartingRace := r.FormValue("action") == "justSave"
 		schedule := r.FormValue("action") == "schedule"
@@ -684,7 +684,7 @@ func (rm *RaceManager) applyCurrentRaceSetupToOptions(opts *RaceTemplateVars, ra
 }
 
 func (rm *RaceManager) ListAutoFillEntrants() ([]*Entrant, error) {
-	entrants, err := rm.raceStore.ListEntrants()
+	entrants, err := rm.store.ListEntrants()
 
 	if err != nil {
 		return nil, err
@@ -758,7 +758,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (*RaceTemplateVars, error)
 
 	if templateID != "" {
 		// load a from a custom race template
-		customRace, err := rm.raceStore.FindCustomRaceByID(templateID)
+		customRace, err := rm.store.FindCustomRaceByID(templateID)
 
 		if err != nil {
 			return nil, err
@@ -774,7 +774,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (*RaceTemplateVars, error)
 	var overridePassword bool
 
 	if isEditing {
-		customRace, err := rm.raceStore.FindCustomRaceByID(templateIDForEditing)
+		customRace, err := rm.store.FindCustomRaceByID(templateIDForEditing)
 
 		if err != nil {
 			return nil, err
@@ -849,7 +849,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (*RaceTemplateVars, error)
 const maxRecentRaces = 30
 
 func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*CustomRace, err error) {
-	recent, err = rm.raceStore.ListCustomRaces()
+	recent, err = rm.store.ListCustomRaces()
 
 	if err == bbolt.ErrBucketNotFound {
 		return nil, nil, nil, nil, nil
@@ -894,7 +894,7 @@ func (rm *RaceManager) SaveEntrantsForAutoFill(entryList EntryList) error {
 			continue // only save entrants that have a name
 		}
 
-		err := rm.raceStore.UpsertEntrant(*entrant)
+		err := rm.store.UpsertEntrant(*entrant)
 
 		if err != nil {
 			return err
@@ -949,7 +949,7 @@ func (rm *RaceManager) SaveCustomRace(
 		EntryList:  entryList,
 	}
 
-	err := rm.raceStore.UpsertCustomRace(race)
+	err := rm.store.UpsertCustomRace(race)
 
 	if err != nil {
 		return nil, err
@@ -959,7 +959,7 @@ func (rm *RaceManager) SaveCustomRace(
 }
 
 func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
-	race, err := rm.raceStore.FindCustomRaceByID(uuid)
+	race, err := rm.store.FindCustomRaceByID(uuid)
 
 	if err != nil {
 		return err
@@ -974,13 +974,13 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 }
 
 func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, recurrence string) error {
-	race, err := rm.raceStore.FindCustomRaceByID(uuid)
+	race, err := rm.store.FindCustomRaceByID(uuid)
 
 	if err != nil {
 		return err
 	}
 
-	serverOpts, err := rm.raceStore.LoadServerOptions()
+	serverOpts, err := rm.store.LoadServerOptions()
 
 	if err != nil {
 		return err
@@ -1042,7 +1042,7 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 		race.ClearRecurrenceRule()
 	}
 
-	return rm.raceStore.UpsertCustomRace(race)
+	return rm.store.UpsertCustomRace(race)
 }
 
 func (rm *RaceManager) StartScheduledRace(race *CustomRace) error {
@@ -1058,7 +1058,7 @@ func (rm *RaceManager) StartScheduledRace(race *CustomRace) error {
 	} else {
 		race.Scheduled = time.Time{}
 
-		return rm.raceStore.UpsertCustomRace(race)
+		return rm.store.UpsertCustomRace(race)
 	}
 }
 
@@ -1087,17 +1087,17 @@ func (rm *RaceManager) FindNextRecurrence(race *CustomRace, start time.Time) tim
 }
 
 func (rm *RaceManager) DeleteCustomRace(uuid string) error {
-	race, err := rm.raceStore.FindCustomRaceByID(uuid)
+	race, err := rm.store.FindCustomRaceByID(uuid)
 
 	if err != nil {
 		return err
 	}
 
-	return rm.raceStore.DeleteCustomRace(race)
+	return rm.store.DeleteCustomRace(race)
 }
 
 func (rm *RaceManager) ToggleStarCustomRace(uuid string) error {
-	race, err := rm.raceStore.FindCustomRaceByID(uuid)
+	race, err := rm.store.FindCustomRaceByID(uuid)
 
 	if err != nil {
 		return err
@@ -1105,11 +1105,11 @@ func (rm *RaceManager) ToggleStarCustomRace(uuid string) error {
 
 	race.Starred = !race.Starred
 
-	return rm.raceStore.UpsertCustomRace(race)
+	return rm.store.UpsertCustomRace(race)
 }
 
 func (rm *RaceManager) ToggleLoopCustomRace(uuid string) error {
-	race, err := rm.raceStore.FindCustomRaceByID(uuid)
+	race, err := rm.store.FindCustomRaceByID(uuid)
 
 	if err != nil {
 		return err
@@ -1117,17 +1117,17 @@ func (rm *RaceManager) ToggleLoopCustomRace(uuid string) error {
 
 	race.Loop = !race.Loop
 
-	return rm.raceStore.UpsertCustomRace(race)
+	return rm.store.UpsertCustomRace(race)
 }
 
 func (rm *RaceManager) SaveServerOptions(newServerOpts *GlobalServerConfig) error {
-	oldServerOpts, err := rm.raceStore.LoadServerOptions()
+	oldServerOpts, err := rm.store.LoadServerOptions()
 
 	if err != nil {
 		return err
 	}
 
-	err = rm.raceStore.UpsertServerOptions(newServerOpts)
+	err = rm.store.UpsertServerOptions(newServerOpts)
 
 	if err != nil {
 		return err
@@ -1149,7 +1149,7 @@ func (rm *RaceManager) SaveServerOptions(newServerOpts *GlobalServerConfig) erro
 }
 
 func (rm *RaceManager) LoadServerOptions() (*GlobalServerConfig, error) {
-	serverOpts, err := rm.raceStore.LoadServerOptions()
+	serverOpts, err := rm.store.LoadServerOptions()
 
 	if err != nil {
 		return nil, err
@@ -1297,13 +1297,13 @@ func (rm *RaceManager) InitScheduledRaces() error {
 	rm.customRaceStartTimers = make(map[string]*time.Timer)
 	rm.customRaceReminderTimers = make(map[string]*time.Timer)
 
-	races, err := rm.raceStore.ListCustomRaces()
+	races, err := rm.store.ListCustomRaces()
 
 	if err != nil {
 		return err
 	}
 
-	serverOpts, err := rm.raceStore.LoadServerOptions()
+	serverOpts, err := rm.store.LoadServerOptions()
 
 	if err != nil {
 		return err
@@ -1356,7 +1356,7 @@ func (rm *RaceManager) InitScheduledRaces() error {
 
 					race.Scheduled = emptyTime
 
-					err := rm.raceStore.UpsertCustomRace(race)
+					err := rm.store.UpsertCustomRace(race)
 
 					if err != nil {
 						return err
@@ -1384,7 +1384,7 @@ func (rm *RaceManager) RescheduleNotifications(oldServerOpts *GlobalServerConfig
 	rm.customRaceReminderTimers = make(map[string]*time.Timer)
 
 	if newServerOpts.NotificationReminderTimer > 0 {
-		races, err := rm.raceStore.ListCustomRaces()
+		races, err := rm.store.ListCustomRaces()
 
 		if err != nil {
 			return err

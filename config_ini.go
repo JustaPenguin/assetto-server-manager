@@ -185,6 +185,7 @@ type GlobalServerConfig struct {
 	Miscellaneous           FormHeading `ini:"-" input:"heading"`
 	UseShortenedDriverNames int         `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager hide driver's last names, for example 'John Smith' becomes 'John S.'"`
 	FallBackResultsSorting  int         `ini:"-" input:"checkbox" help:"When on results will use a fallback method of sorting. Only enable this if you are experiencing results that are in the wrong order in the json file."`
+	UseMPH                  int         `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager use MPH instead of Km/h for all speed values."`
 
 	// Discord Integration
 	DiscordIntegration FormHeading `ini:"-" input:"heading"`

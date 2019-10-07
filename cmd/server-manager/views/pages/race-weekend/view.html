@@ -57,7 +57,7 @@
 
         <div class="float-right">
             {{ if $.RaceWeekend.HasLinkedChampionship }}
-                <a class="btn btn-primary" href="/championship/{{ $.RaceWeekend.Championship.ID.String }}">View Championship</a>
+                <a class="btn btn-info" href="/championship/{{ $.RaceWeekend.Championship.ID.String }}">View Championship</a>
             {{ end }}
 
             {{ if WriteAccess }}
@@ -138,7 +138,7 @@
                             {{ else if $session.Completed }}
                                 <span class="text-success">Complete</span>
                             {{ else if $session.InProgress }}
-                                <span class="text-info">In Progress</span>
+                                <span class="text-primary">In Progress</span>
                             {{ else }}
                                 <span class="text-warning">Ready to Start</span>
                             {{ end }}
@@ -261,7 +261,7 @@
                                 {{ else if $session.Completed }}
                                     <span class="text-success">Complete</span>
                                 {{ else if $session.InProgress }}
-                                    <span class="text-info">In Progress</span>
+                                    <span class="text-primary">In Progress</span>
                                 {{ else }}
                                     <span class="text-warning">Ready to Start</span>
                                 {{ end }}

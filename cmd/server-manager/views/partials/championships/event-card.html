@@ -23,7 +23,7 @@
                 {{ if $event.Completed }}
                     <span class="text-success">Complete</span>
                 {{ else if $event.InProgress }}
-                    <span class="text-info">In Progress</span>
+                    <span class="text-primary">In Progress</span>
                 {{ else if isBefore $event.Scheduled }}
                     <span class="text-warning">Scheduled for {{ localFormat $event.Scheduled }}</span>
                 {{ else }}

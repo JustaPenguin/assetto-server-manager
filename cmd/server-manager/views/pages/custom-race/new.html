@@ -157,8 +157,8 @@
         </div>
 
         {{ if and .IsChampionship .ChampionshipHasAtLeastOnceRace }}
-            <div class="card mt-3 border-info">
-                <div class="card-header text-white bg-info">
+            <div class="card mt-3 border-primary">
+                <div class="card-header text-white bg-primary">
                     <strong>Save Championship Race</strong>
                 </div>
                 <div class="card-body">
@@ -984,7 +984,7 @@
                     {{ range $index, $weather := $f.Weather }}
 
                         <div class="col-sm-12 weather">
-                            <div class="card mb-5 border-info">
+                            <div class="card mb-5 border-primary">
                                 <div class="card-header">
                                     <strong class="weather-num">{{ $weatherIndex }}</strong>
 
@@ -1557,8 +1557,8 @@
         {{ end }}
 
         {{ if .IsChampionship }}
-            <div class="card mt-3 border-info">
-                <div class="card-header text-white bg-info">
+            <div class="card mt-3 border-primary">
+                <div class="card-header text-white bg-primary">
                     <strong>Save Championship Event</strong>
                 </div>
                 <div class="card-body">
@@ -1588,8 +1588,8 @@
                 </div>
             </div>
         {{ else if $.IsRaceWeekend }}
-            <div class="card mt-3 border-info">
-                <div class="card-header text-white bg-info">
+            <div class="card mt-3 border-primary">
+                <div class="card-header text-white bg-primary">
                     <strong>Save Race Weekend Session</strong>
                 </div>
                 <div class="card-body">
@@ -1694,8 +1694,8 @@
                 </div>
             </div>
         {{ else }}
-            <div class="card mt-3 border-info">
-                <div class="card-header text-white bg-info">
+            <div class="card mt-3 border-primary">
+                <div class="card-header text-white bg-primary">
                     <strong>Save Custom Race</strong>
                 </div>
                 <div class="card-body">

@@ -75,8 +75,14 @@ func (ch *ChampionshipsHandler) submit(w http.ResponseWriter, r *http.Request) {
 		AddFlash(w, r, "Championship successfully edited!")
 		http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
 	} else {
+
 		AddFlash(w, r, "We've created the Championship. Now you need to add some Events!")
-		http.Redirect(w, r, "/championship/"+championship.ID.String()+"/event", http.StatusFound)
+
+		if r.FormValue("action") == "addRaceWeekend" {
+			http.Redirect(w, r, "/race-weekends/new?championshipID="+championship.ID.String(), http.StatusFound)
+		} else {
+			http.Redirect(w, r, "/championship/"+championship.ID.String()+"/event", http.StatusFound)
+		}
 	}
 }
 
@@ -112,7 +118,7 @@ func (ch *ChampionshipsHandler) view(w http.ResponseWriter, r *http.Request) {
 
 	for _, event := range championship.Events {
 		if event.IsRaceWeekend() {
-			raceWeekends[event.RaceWeekendID], err = ch.championshipManager.raceStore.LoadRaceWeekend(event.RaceWeekendID.String())
+			raceWeekends[event.RaceWeekendID], err = ch.championshipManager.store.LoadRaceWeekend(event.RaceWeekendID.String())
 
 			if err != nil {
 				logrus.WithError(err).Errorf("couldn't load championship")
