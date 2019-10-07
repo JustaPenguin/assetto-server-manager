@@ -55,7 +55,7 @@ func (cm *ChampionshipManager) applyConfigAndStart(config CurrentRaceConfig, ent
 }
 
 func (cm *ChampionshipManager) LoadChampionship(id string) (*Championship, error) {
-	championship, err := cm.raceStore.LoadChampionship(id)
+	championship, err := cm.store.LoadChampionship(id)
 
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func (cm *ChampionshipManager) LoadChampionship(id string) (*Championship, error
 
 	for _, event := range championship.Events {
 		if event.IsRaceWeekend() {
-			event.RaceWeekend, err = cm.raceStore.LoadRaceWeekend(event.RaceWeekendID.String())
+			event.RaceWeekend, err = cm.store.LoadRaceWeekend(event.RaceWeekendID.String())
 
 			if err != nil {
 				return nil, err
@@ -75,7 +75,7 @@ func (cm *ChampionshipManager) LoadChampionship(id string) (*Championship, error
 }
 
 func (cm *ChampionshipManager) UpsertChampionship(c *Championship) error {
-	err := cm.raceStore.UpsertChampionship(c)
+	err := cm.store.UpsertChampionship(c)
 
 	if err != nil {
 		return err
@@ -89,11 +89,23 @@ func (cm *ChampionshipManager) UpsertChampionship(c *Championship) error {
 }
 
 func (cm *ChampionshipManager) DeleteChampionship(id string) error {
-	return cm.raceStore.DeleteChampionship(id)
+	championship, err := cm.store.LoadChampionship(id)
+
+	if err != nil {
+		return err
+	}
+
+	if championship.ACSR {
+		championship.ACSR = false
+
+		ACSRSendResult(championship)
+	}
+
+	return cm.store.DeleteChampionship(id)
 }
 
 func (cm *ChampionshipManager) ListChampionships() ([]*Championship, error) {
-	champs, err := cm.raceStore.ListChampionships()
+	champs, err := cm.store.ListChampionships()
 
 	if err != nil {
 		return nil, err
@@ -438,7 +450,7 @@ func (cm *ChampionshipManager) DeleteEvent(championshipID string, eventID string
 			toDelete = i
 
 			if event.IsRaceWeekend() {
-				if err := cm.raceStore.DeleteRaceWeekend(event.RaceWeekendID.String()); err != nil {
+				if err := cm.store.DeleteRaceWeekend(event.RaceWeekendID.String()); err != nil {
 					return err
 				}
 			}
@@ -572,7 +584,7 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 		return err
 	}
 
-	serverOpts, err := cm.raceStore.LoadServerOptions()
+	serverOpts, err := cm.store.LoadServerOptions()
 
 	if err != nil {
 		return err
@@ -1345,7 +1357,7 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 		return err
 	}
 
-	serverOpts, err := cm.raceStore.LoadServerOptions()
+	serverOpts, err := cm.store.LoadServerOptions()
 
 	if err != nil {
 		return err

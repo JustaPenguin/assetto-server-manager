@@ -218,7 +218,7 @@ func (sah *ServerAdministrationHandler) autoFillEntrantList(w http.ResponseWrite
 }
 
 func (sah *ServerAdministrationHandler) autoFillEntrantDelete(w http.ResponseWriter, r *http.Request) {
-	err := sah.raceManager.raceStore.DeleteEntrant(chi.URLParam(r, "entrantID"))
+	err := sah.raceManager.store.DeleteEntrant(chi.URLParam(r, "entrantID"))
 
 	if err != nil {
 		logrus.WithError(err).Error("could not delete entrant")

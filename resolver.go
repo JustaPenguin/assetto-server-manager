@@ -263,7 +263,7 @@ func (r *Resolver) resolveResultsHandler() *ResultsHandler {
 		return r.resultsHandler
 	}
 
-	r.resultsHandler = NewResultsHandler(r.resolveBaseHandler())
+	r.resultsHandler = NewResultsHandler(r.resolveBaseHandler(), r.ResolveStore())
 
 	return r.resultsHandler
 }

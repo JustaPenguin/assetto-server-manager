@@ -35,6 +35,8 @@
 
 {{ define "content" }}
     {{ $CMJoinLink := .CMJoinLink }}
+    {{ $UseMPH := .UseMPH }}
+
     {{ with .RaceDetails }}
         <div class="race-control-event-info">
             {{ range $sessionName, $session := .RaceConfig.Sessions }}
@@ -159,5 +161,9 @@
                 </div>
             {{ end }}
         </form>
+
+        <script type="text/javascript">
+            const useMPH = {{ $UseMPH }};
+        </script>
     {{ end }}
 {{ end }}
