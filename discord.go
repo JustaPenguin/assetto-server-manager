@@ -31,7 +31,7 @@ func NewDiscordManager(store Store, scheduledRacesManager *ScheduledRacesManager
 	opts, err := store.LoadServerOptions()
 
 	if err != nil {
-		logrus.Errorf("couldn't load server options, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't load server options")
 		return discordManager, err
 	}
 
@@ -45,7 +45,7 @@ func NewDiscordManager(store Store, scheduledRacesManager *ScheduledRacesManager
 		}
 
 		if err != nil {
-			logrus.Errorf("couldn't open discord session, err: %s", err)
+			logrus.WithError(err).Errorf("couldn't open discord session")
 			return discordManager, err
 		}
 	} else {
@@ -78,7 +78,7 @@ func (dm *DiscordManager) SaveServerOptions(oldServerOpts *GlobalServerConfig, n
 		}
 
 		if err != nil {
-			logrus.Errorf("couldn't open discord session, err: %s", err)
+			logrus.WithError(err).Errorf("couldn't open discord session")
 			return err
 		}
 
@@ -194,10 +194,10 @@ func (dm *DiscordManager) CommandNotify(s *discordgo.Session, m *discordgo.Messa
 	serverOpts, err := dm.store.LoadServerOptions()
 
 	if err != nil {
-		return "", err
+		return "A server error occurred, try again later", err
 	}
 
-	if serverOpts.DiscordRoleID == "" {
+	if serverOpts.DiscordRoleID == "" || serverOpts.DiscordRoleCommand == "" {
 		return "", nil
 	}
 
@@ -215,42 +215,58 @@ func (dm *DiscordManager) CommandNotify(s *discordgo.Session, m *discordgo.Messa
 
 	for _, roleID := range member.Roles {
 		if roleID == serverOpts.DiscordRoleID {
-			return "You already have this role", nil
+			err = s.GuildMemberRoleRemove(m.GuildID, m.Author.ID, serverOpts.DiscordRoleID)
+
+			if err != nil {
+				return "You already have this role, and an error occurred trying to remove it", err
+			}
+
+			return "You already had this role, it has now been removed.  Type the command again to add it back.", nil
 		}
 	}
 
 	err = s.GuildMemberRoleAdd(m.GuildID, m.Author.ID, serverOpts.DiscordRoleID)
 
 	if err != nil {
-		return fmt.Sprintf("I'm sorry Dave, I can't do that (%s)", err.Error()), err
+		return fmt.Sprintf("A server error occurred, try again later"), err
 	}
 
-	return "Your role has been assigned", nil
+	return "Your notification role has been assigned, you will now get pinged for notifications.  Type the command again if you want to remove it.", nil
 }
 
 func (dm *DiscordManager) CommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+	serverOpts, err := dm.store.LoadServerOptions()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't load server opts")
+		return
+	}
+
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
 
 	var msg = ""
-	var err error
 
 	switch m.Content {
 	case "!schedule":
 		msg, err = dm.CommandSchedule()
 	case "!sessions":
 		msg, err = dm.CommandSessions()
-	case "!spamificate":
+	case "!" + serverOpts.DiscordRoleCommand:
 		msg, err = dm.CommandNotify(s, m)
 	default:
 		return
 	}
 
+	if err != nil {
+		logrus.WithError(err).Errorf("Error during handling of Discord command")
+	}
+
 	_, err = s.ChannelMessageSend(m.ChannelID, msg)
 
 	if err != nil {
-		logrus.Errorf("couldn't open discord session, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't send Discord msg")
 	}
 }
 
@@ -269,7 +285,7 @@ func (dm *DiscordManager) SendMessage(msg string) error {
 		opts, err := dm.store.LoadServerOptions()
 
 		if err != nil {
-			logrus.Errorf("couldn't load server options, err: %s", err)
+			logrus.WithError(err).Errorf("couldn't load server options")
 			return err
 		}
 
@@ -289,12 +305,12 @@ func (dm *DiscordManager) SendMessage(msg string) error {
 			}
 
 			if err != nil {
-				logrus.Errorf("couldn't send discord message, err: %s", err)
+				logrus.WithError(err).Errorf("couldn't send discord message")
 				return err
 			}
 		} else {
 			err = errors.New("no channel ID set in config")
-			logrus.Errorf("couldn't send discord message, err: %s", err)
+			logrus.WithError(err).Errorf("couldn't send discord message")
 			return err
 		}
 	}
@@ -311,7 +327,7 @@ func (dm *DiscordManager) SendMessageWithLink(msg string, linkText string, link 
 	opts, err := dm.store.LoadServerOptions()
 
 	if err != nil {
-		logrus.Errorf("couldn't load server options, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't load server options")
 		return err
 	}
 
@@ -333,12 +349,12 @@ func (dm *DiscordManager) SendMessageWithLink(msg string, linkText string, link 
 		}
 
 		if err != nil {
-			logrus.Errorf("couldn't send discord message, err: %s", err)
+			logrus.WithError(err).Errorf("couldn't send discord message")
 			return err
 		}
 	} else {
 		err = errors.New("no channel ID set in config")
-		logrus.Errorf("couldn't send discord message, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't send discord message")
 		return err
 	}
 

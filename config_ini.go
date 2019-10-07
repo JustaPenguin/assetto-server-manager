@@ -190,7 +190,8 @@ type GlobalServerConfig struct {
 	DiscordIntegration FormHeading `ini:"-" input:"heading"`
 	DiscordAPIToken    string      `ini:"-" help:"If set, will enable race start and scheduled reminder messages to the Discord channel ID specified below.  Use your bot's user token, not the OAuth token."`
 	DiscordChannelID   string      `ini:"-" help:"If Discord is enabled, this is the channel ID it will send messages to"`
-	DiscordRoleID      string      `ini:"-" help:"If set, this role will be mentioned in all Discord notifications, and (if your bot has sufficient privileges) the !notify command will attempt to add this role to the user"`
+	DiscordRoleID      string      `ini:"-" help:"If set, this role will be mentioned in all Discord notifications.  Any users with this role and access to the channel will be pinged."`
+	DiscordRoleCommand string      `ini:"-" help:"If the Discord Role ID is set, you can optionally specify a command string here, like \"notify\", which if run as a ! command by a user in Discord will cause this server to attempt to add the configured role to the user.  If you run multiple servers with Discord enabled, only set this on one of them.  In order for this to work your bot must have the \"Manage Roles\" permission."`
 
 	NotificationReminderTimer   int `ini:"-" min:"0" max:"65535" help:"If Discord is enabled, a reminder will be sent this many minutes prior to race start.  If 0, only race start messages will be sent."`
 	ShowPasswordInNotifications int `ini:"-" show:"open" input:"checkbox" help:"Show the server password in race start notifications"`
