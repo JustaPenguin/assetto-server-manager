@@ -190,6 +190,7 @@ func (tr *Renderer) init() error {
 	funcs["hourAndZone"] = hourAndZoneFormat
 	funcs["isBefore"] = isBefore
 	funcs["trackInfo"] = trackInfo
+	funcs["multiplyFloats"] = multiplyFloats
 	funcs["stripGeotagCrap"] = stripGeotagCrap
 	funcs["ReadAccess"] = dummyAccessFunc
 	funcs["WriteAccess"] = dummyAccessFunc
@@ -356,6 +357,10 @@ func trackInfo(track, layout string) *TrackInfo {
 	trackInfoCache[track+layout] = t
 
 	return t
+}
+
+func multiplyFloats(a, b float64) float64 {
+	return a * b
 }
 
 func stripGeotagCrap(tag string, north bool) string {

@@ -152,6 +152,7 @@ type liveTimingTemplateVars struct {
 	FrameLinks      []string
 	CSSDotSmoothing int
 	CMJoinLink      string
+	UseMPH          bool
 }
 
 func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request) {
@@ -182,6 +183,12 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		}
 	}
 
+	serverOpts, err := rch.store.LoadServerOptions()
+
+	if err != nil {
+		logrus.Errorf("couldn't load server options, err: %s", err)
+	}
+
 	rch.viewRenderer.MustLoadTemplate(w, r, "live-timing.html", &liveTimingTemplateVars{
 		BaseTemplateVars: BaseTemplateVars{
 			WideContainer: true,
@@ -190,6 +197,7 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		FrameLinks:      frameLinks,
 		CSSDotSmoothing: udp.RealtimePosIntervalMs,
 		CMJoinLink:      linkString,
+		UseMPH:          serverOpts.UseMPH == 1,
 	})
 }
 

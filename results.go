@@ -853,11 +853,14 @@ func LoadResult(fileName string) (*SessionResults, error) {
 
 type ResultsHandler struct {
 	*BaseHandler
+
+	store Store
 }
 
-func NewResultsHandler(baseHandler *BaseHandler) *ResultsHandler {
+func NewResultsHandler(baseHandler *BaseHandler, store Store) *ResultsHandler {
 	return &ResultsHandler{
 		BaseHandler: baseHandler,
+		store:       store,
 	}
 }
 
@@ -899,6 +902,7 @@ type resultsViewTemplateVars struct {
 
 	Result  *SessionResults
 	Account *Account
+	UseMPH  bool
 }
 
 func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
@@ -916,12 +920,19 @@ func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	serverOpts, err := rh.store.LoadServerOptions()
+
+	if err != nil {
+		logrus.Errorf("couldn't load server options, err: %s", err)
+	}
+
 	rh.viewRenderer.MustLoadTemplate(w, r, "results/result.html", &resultsViewTemplateVars{
 		BaseTemplateVars: BaseTemplateVars{
 			WideContainer: true,
 		},
 		Result:  result,
 		Account: AccountFromRequest(r),
+		UseMPH:  serverOpts.UseMPH == 1,
 	})
 }
 
