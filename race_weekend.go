@@ -478,6 +478,7 @@ type RaceWeekendSession struct {
 
 	StartedTime   time.Time
 	CompletedTime time.Time
+	ScheduledTime time.Time
 	Results       *SessionResults
 
 	Points map[uuid.UUID]*ChampionshipPoints

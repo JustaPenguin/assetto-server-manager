@@ -17,6 +17,7 @@ Added:
   - Race Weekend sessions are shown in a flow-chart, so you can see the connections between the sessions.
   - In Multiclass Championship Race Weekends, the sorting of the Entry Lists is per class. The classes are then ordered by the fastest lap of each class (so LMP1 cars will be ahead of GTE cars on the grid, for example)
   - Each Championship Race Weekend session allows you to set points for the individual session. Championship points are calculated using these points values.
+  - You can schedule individual Race Weekend Sessions too!
 
 * Discord integration! Thanks to @cheesegrits for this! Check out the Server Options page for more information.
 * Dark Theme! You can now set Server Manager to use a Dark Theme in the Server Options. You can also edit this for your account in the "Update Details" page.
