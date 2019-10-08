@@ -189,7 +189,7 @@ func enhanceOldChampionshipResultFiles(rs Store) error {
 }
 
 func addResultScreenTimeDefault(rs Store) error {
-	logrus.Errorf("Running migration: Add Result Screen Time")
+	logrus.Infof("Running migration: Add Result Screen Time")
 
 	const defaultResultScreenTime = 90
 
@@ -239,7 +239,7 @@ func addResultScreenTimeDefault(rs Store) error {
 }
 
 func addPitBoxDefinitionToEntrants(rs Store) error {
-	logrus.Errorf("Running migration: Add Pit Box Definition To Entrants")
+	logrus.Infof("Running migration: Add Pit Box Definition To Entrants")
 
 	customRaces, err := rs.ListCustomRaces()
 
@@ -337,7 +337,7 @@ func separateJSONStores(rs *JSONStore) error {
 const lastReleaseVersionPreChangelogShowUpdate = "v1.3.4"
 
 func addLastSeenVersionToAccounts(s Store) error {
-	logrus.Errorf("Running migration: Add Last Seen Version to Accounts")
+	logrus.Infof("Running migration: Add Last Seen Version to Accounts")
 	accounts, err := s.ListAccounts()
 
 	if err != nil {
