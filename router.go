@@ -277,6 +277,12 @@ func Router(
 		r.HandleFunc("/accounts/toggle-open", accountHandler.toggleServerOpenStatus)
 		r.HandleFunc("/accounts", accountHandler.manageAccounts)
 		r.HandleFunc("/search-index", carsHandler.rebuildSearchIndex)
+
+		r.HandleFunc("/restart-session", raceControlHandler.restartSession)
+		r.HandleFunc("/next-session", raceControlHandler.nextSession)
+		r.HandleFunc("/broadcast-chat", raceControlHandler.broadcastChat)
+		r.HandleFunc("/admin-command", raceControlHandler.adminCommand)
+		r.HandleFunc("/kick-user", raceControlHandler.kickUser)
 	})
 
 	FileServer(r, "/static", fs, false)
