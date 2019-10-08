@@ -363,7 +363,7 @@ func (r *Resolver) resolveRaceWeekendManager() *RaceWeekendManager {
 		return r.raceWeekendManager
 	}
 
-	r.raceWeekendManager = NewRaceWeekendManager(r.resolveRaceManager(), r.ResolveStore(), r.resolveServerProcess())
+	r.raceWeekendManager = NewRaceWeekendManager(r.resolveRaceManager(), r.ResolveStore(), r.resolveServerProcess(), r.resolveNotificationManager())
 
 	return r.raceWeekendManager
 }
