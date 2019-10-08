@@ -153,6 +153,12 @@
                                 {{ else }}
                                     {{ prettify $raceConfig.Track false }} {{ with $raceConfig.TrackLayout }}({{ prettify . true }}){{ end }}
                                 {{ end }}
+
+                                <br>
+
+                                {{ if isBefore $session.ScheduledTime }}
+                                    <span class="text-warning">Scheduled for {{ localFormat $session.ScheduledTime }}</span><br>
+                                {{ end }}
                             </div>
 
                             <div class="col-4">
@@ -162,6 +168,8 @@
                                 >
                             </div>
                         </div>
+
+
 
                         {{ if $session.Completed }}
                             <a class="btn btn-primary view-results" href="#">View Results</a>
@@ -173,6 +181,31 @@
                                     <a class="btn btn-success" onClick="return confirm('I have checked all Entry List configurations and the starting grid is correct');" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/start">Start Session</a>
                                 {{ end }}
 
+                                <button type="button" class="btn btn-info dropdown-toggle popover-external-html" data-placement="bottom"
+                                        data-toggle="popover" title="Schedule Event" data-html="true"
+                                        id="schedule-{{ $session.ID.String }}"
+                                >
+                                    Schedule Event
+                                </button>
+
+                                <div id="popover-content-schedule-{{ $session.ID.String }}" style="display: none;">
+                                    <form action="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/schedule" method="POST">
+                                        <div class="form-group">
+                                            <input type="date" class="form-control" name="session-schedule-date" id="session-schedule-date" required>
+                                            <input type="time" class="form-control" name="session-schedule-time" id="session-schedule-time" required>
+                                            <input type="hidden" name="session-schedule-timezone" class="session-schedule-timezone">
+                                            <small class="form-text text-muted">
+                                                This date/time is in your timezone (<span class="timezone"></span>).
+
+                                                <span class="text-danger">Please note that sessions will only start if their parent sessions are complete.</span>
+                                            </small>
+
+                                        </div>
+
+                                        <button type="submit" class="btn btn-sm btn-primary">Schedule</button>
+                                        <a href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/schedule/remove" class="btn btn-sm btn-danger">Remove Scheduled Time</a>
+                                    </form>
+                                </div>
 
                                 {{ if not ($session.HasParent $.RaceWeekend.ID.String) }}
                                     <a class="btn btn-primary manage-entrylist" href="#">Manage Entry List</a>

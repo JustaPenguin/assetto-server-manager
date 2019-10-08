@@ -188,6 +188,23 @@ func (srm *ScheduledRacesManager) getScheduledRaces() ([]ScheduledEvent, error) 
 		}
 	}
 
+	raceWeekends, err := srm.store.ListRaceWeekends()
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, raceWeekend := range raceWeekends {
+		for _, session := range raceWeekend.Sessions {
+			if session.ScheduledTime.IsZero() {
+				continue
+			}
+
+			session.raceWeekend = raceWeekend
+			scheduled = append(scheduled, session)
+		}
+	}
+
 	return scheduled, nil
 }
 
