@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/teambition/rrule-go"
 )
 
 // RaceWeekends are a collection of sessions, where one session influences the EntryList of the next.
@@ -484,6 +485,60 @@ type RaceWeekendSession struct {
 	Points map[uuid.UUID]*ChampionshipPoints
 
 	isBase bool
+
+	// raceWeekend is here for use when satisfying the ScheduledEvent interface.
+	raceWeekend *RaceWeekend
+}
+
+func (rws *RaceWeekendSession) GetID() uuid.UUID {
+	return rws.ID
+}
+
+func (rws *RaceWeekendSession) GetRaceSetup() CurrentRaceConfig {
+	return rws.RaceConfig
+}
+
+func (rws *RaceWeekendSession) GetScheduledTime() time.Time {
+	return rws.ScheduledTime
+}
+
+func (rws *RaceWeekendSession) GetSummary() string {
+	return "(Race Weekend)"
+}
+
+func (rws *RaceWeekendSession) GetURL() string {
+	return "/race-weekend/" + rws.raceWeekend.ID.String()
+}
+
+func (rws *RaceWeekendSession) HasSignUpForm() bool {
+	return false
+}
+
+func (rws *RaceWeekendSession) ReadOnlyEntryList() EntryList {
+	rwe, err := rws.GetRaceWeekendEntryList(rws.raceWeekend, nil, "")
+
+	if err != nil {
+		logrus.WithError(err).Error("Could not get race weekend entry list")
+		return make(EntryList)
+	}
+
+	return rwe.AsEntryList()
+}
+
+func (rws *RaceWeekendSession) HasRecurrenceRule() bool {
+	return false
+}
+
+func (rws *RaceWeekendSession) GetRecurrenceRule() (*rrule.RRule, error) {
+	return nil, nil
+}
+
+func (rws *RaceWeekendSession) SetRecurrenceRule(input string) error {
+	return nil // no-op
+}
+
+func (rws *RaceWeekendSession) ClearRecurrenceRule() {
+	// no-op
 }
 
 // NewRaceWeekendSession creates an empty RaceWeekendSession
