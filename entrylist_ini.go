@@ -194,6 +194,7 @@ type Entrant struct {
 
 	TransferTeamPoints bool `ini:"-" json:"-"`
 	OverwriteAllEvents bool `ini:"-" json:"-"`
+	IsPlaceHolder      bool `ini:"-"`
 }
 
 func (e Entrant) ID() string {

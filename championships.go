@@ -1070,7 +1070,7 @@ type ChampionshipEvent struct {
 	// RaceWeekendID is the ID of the linked RaceWeekend for this ChampionshipEvent
 	RaceWeekendID uuid.UUID
 	// If RaceWeekendID is non-nil, RaceWeekend will be populated on loading the Championship.
-	RaceWeekend *RaceWeekend `json:"-"`
+	RaceWeekend *RaceWeekend
 
 	StartedTime   time.Time
 	CompletedTime time.Time

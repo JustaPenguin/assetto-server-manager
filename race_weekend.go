@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/teambition/rrule-go"
 )
 
 // RaceWeekends are a collection of sessions, where one session influences the EntryList of the next.
@@ -63,8 +64,10 @@ func (rw *RaceWeekend) GetEntryList() EntryList {
 
 		// filter out drivers with no GUID (open championships etc...)
 		for _, entrant := range rw.Championship.AllEntrants().AlphaSlice() {
-			if entrant.GUID == "" {
-				continue
+			if entrant.GUID == "" || entrant.IsPlaceHolder {
+				entrant.GUID = uuid.New().String()
+				entrant.Name = fmt.Sprintf("Placeholder Entrant %d", count)
+				entrant.IsPlaceHolder = true
 			}
 
 			entryList.AddInPitBox(entrant, count)
@@ -419,6 +422,8 @@ type RaceWeekendSessionEntrant struct {
 	PitBox int
 	// SessionResults are the whole results for the session the entrant took part in
 	SessionResults *SessionResults `json:"-"`
+
+	IsPlaceholder bool `json:"-"`
 }
 
 // NewRaceWeekendSessionEntrant creates a RaceWeekendSessionEntrant
@@ -436,6 +441,7 @@ func (se *RaceWeekendSessionEntrant) GetEntrant() *Entrant {
 	e := NewEntrant()
 
 	e.AssignFromResult(se.EntrantResult, se.Car)
+	e.IsPlaceHolder = se.IsPlaceholder
 
 	return e
 }
@@ -473,11 +479,66 @@ type RaceWeekendSession struct {
 
 	StartedTime   time.Time
 	CompletedTime time.Time
+	ScheduledTime time.Time
 	Results       *SessionResults
 
 	Points map[uuid.UUID]*ChampionshipPoints
 
 	isBase bool
+
+	// raceWeekend is here for use when satisfying the ScheduledEvent interface.
+	raceWeekend *RaceWeekend
+}
+
+func (rws *RaceWeekendSession) GetID() uuid.UUID {
+	return rws.ID
+}
+
+func (rws *RaceWeekendSession) GetRaceSetup() CurrentRaceConfig {
+	return rws.RaceConfig
+}
+
+func (rws *RaceWeekendSession) GetScheduledTime() time.Time {
+	return rws.ScheduledTime
+}
+
+func (rws *RaceWeekendSession) GetSummary() string {
+	return "(Race Weekend)"
+}
+
+func (rws *RaceWeekendSession) GetURL() string {
+	return "/race-weekend/" + rws.raceWeekend.ID.String()
+}
+
+func (rws *RaceWeekendSession) HasSignUpForm() bool {
+	return false
+}
+
+func (rws *RaceWeekendSession) ReadOnlyEntryList() EntryList {
+	rwe, err := rws.GetRaceWeekendEntryList(rws.raceWeekend, nil, "")
+
+	if err != nil {
+		logrus.WithError(err).Error("Could not get race weekend entry list")
+		return make(EntryList)
+	}
+
+	return rwe.AsEntryList()
+}
+
+func (rws *RaceWeekendSession) HasRecurrenceRule() bool {
+	return false
+}
+
+func (rws *RaceWeekendSession) GetRecurrenceRule() (*rrule.RRule, error) {
+	return nil, nil
+}
+
+func (rws *RaceWeekendSession) SetRecurrenceRule(input string) error {
+	return nil // no-op
+}
+
+func (rws *RaceWeekendSession) ClearRecurrenceRule() {
+	// no-op
 }
 
 // NewRaceWeekendSession creates an empty RaceWeekendSession
@@ -565,7 +626,10 @@ func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) ([]*RaceW
 					entrant.EntrantResult.ClassID = class.ID
 				}
 
-				out = append(out, NewRaceWeekendSessionEntrant(rws.ID, entrant.Car, entrant.EntrantResult, rws.Results))
+				e := NewRaceWeekendSessionEntrant(rws.ID, entrant.Car, entrant.EntrantResult, rws.Results)
+				e.IsPlaceholder = entrant.IsPlaceholder
+
+				out = append(out, e)
 			}
 		}
 	} else {
@@ -700,6 +764,7 @@ func EntryListToRaceWeekendEntryList(e EntryList, sessionID uuid.UUID) RaceWeeke
 
 	for _, entrant := range e.AsSlice() {
 		rwe := NewRaceWeekendSessionEntrant(sessionID, entrant.AsSessionCar(), entrant.AsSessionResult(), nil)
+		rwe.IsPlaceholder = entrant.IsPlaceHolder
 
 		out.AddInPitBox(rwe, entrant.PitBox)
 	}

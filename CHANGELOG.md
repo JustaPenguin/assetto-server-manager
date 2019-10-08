@@ -17,6 +17,7 @@ Added:
   - Race Weekend sessions are shown in a flow-chart, so you can see the connections between the sessions.
   - In Multiclass Championship Race Weekends, the sorting of the Entry Lists is per class. The classes are then ordered by the fastest lap of each class (so LMP1 cars will be ahead of GTE cars on the grid, for example)
   - Each Championship Race Weekend session allows you to set points for the individual session. Championship points are calculated using these points values.
+  - You can schedule individual Race Weekend Sessions too!
 
 * Discord integration! Thanks to @cheesegrits for this! Check out the Server Options page for more information.
 * Dark Theme! You can now set Server Manager to use a Dark Theme in the Server Options. You can also edit this for your account in the "Update Details" page.
@@ -24,6 +25,8 @@ Added:
 * Server Name Templates - you can now specify (in Server Options) how Server Manager displays your server and event name.
 * We've tidied up the Server Options page a bit. It was getting quite large! The new headings should make things a bit more readable.
 * If 'Show Race Name In Server Lobby' is enabled, Quick Races and Custom Races with no specified name now show the track name in the Server Lobby.
+* A global option to switch speed units from Km/h to MPH for people who want to use the correct measurement system.
+* "Force Virtual Mirror" now defaults to on in all race setup forms.
 
 Fixes:
 

@@ -439,3 +439,56 @@ func (rwh *RaceWeekendHandler) importRaceWeekend(w http.ResponseWriter, r *http.
 
 	rwh.viewRenderer.MustLoadTemplate(w, r, "race-weekend/import-raceweekend.html", nil)
 }
+
+func (rwh *RaceWeekendHandler) scheduleSession(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		logrus.WithError(err).Errorf("couldn't parse schedule race form")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	championshipID := chi.URLParam(r, "raceWeekendID")
+	championshipEventID := chi.URLParam(r, "sessionID")
+	dateString := r.FormValue("session-schedule-date")
+	timeString := r.FormValue("session-schedule-time")
+	timezone := r.FormValue("session-schedule-timezone")
+
+	location, err := time.LoadLocation(timezone)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("could not find location: %s", location)
+		location = time.Local
+	}
+
+	// Parse time in correct time zone
+	date, err := time.ParseInLocation("2006-01-02-15:04", dateString+"-"+timeString, location)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't parse schedule race weekend session date")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	err = rwh.raceWeekendManager.ScheduleSession(championshipID, championshipEventID, date)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't schedule race weekend session")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	AddFlash(w, r, fmt.Sprintf("We have scheduled the Race Weekend Session to begin at %s", date.Format(time.RFC1123)))
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (rwh *RaceWeekendHandler) removeSessionSchedule(w http.ResponseWriter, r *http.Request) {
+	err := rwh.raceWeekendManager.DeScheduleSession(chi.URLParam(r, "raceWeekendID"), chi.URLParam(r, "sessionID"))
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't de-schedule race weekend session")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}

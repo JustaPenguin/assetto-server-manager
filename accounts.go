@@ -368,7 +368,7 @@ func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 			if password == repeatPassword {
 				updateDetails := account.NeedsPasswordReset()
 
-				if err := ah.accountManager.changePassword(account, password); err == nil {
+				if err := ah.accountManager.ChangePassword(account, password); err == nil {
 					AddFlash(w, r, "Your password was successfully changed!")
 					if updateDetails {
 						http.Redirect(w, r, "/accounts/update", http.StatusFound)
@@ -553,7 +553,7 @@ func (am *AccountManager) SetCurrentVersion(account *Account) error {
 	return am.store.UpsertAccount(account)
 }
 
-func (am *AccountManager) changePassword(account *Account, password string) error {
+func (am *AccountManager) ChangePassword(account *Account, password string) error {
 	salt, err := generateSalt()
 
 	if err != nil {

@@ -273,6 +273,8 @@ export class RaceControl {
     }
 }
 
+declare var useMPH: boolean;
+
 class LiveMap implements WebsocketHandler {
     private mapImageHasLoaded: boolean = false;
 
@@ -365,7 +367,14 @@ class LiveMap implements WebsocketHandler {
                     "top": dotPos.Z,
                 });
 
+                // working here
                 let speed = Math.floor(Math.sqrt((Math.pow(update.Velocity.X, 2) + Math.pow(update.Velocity.Z, 2))) * 3.6);
+                let speedUnits = "Km/h ";
+
+                if (useMPH) {
+                    speed = Math.floor(speed * 0.621371);
+                    speedUnits = "MPH ";
+                }
 
                 let maxRPM = this.maxRPMs.get(driverGUID);
 
@@ -387,7 +396,7 @@ class LiveMap implements WebsocketHandler {
                 });
 
                 $rpmGaugeOuter.append($rpmGaugeInner);
-                $myDot!.find(".info").text(speed + "Km/h " + (update.Gear - 1));
+                $myDot!.find(".info").text(speed + speedUnits + (update.Gear - 1));
                 $myDot!.find(".info").append($rpmGaugeOuter);
                 break;
 
@@ -797,7 +806,18 @@ class LiveTimings implements WebsocketHandler {
         // lap number
         $tr.find(".num-laps").text(carInfo.NumLaps ? carInfo.NumLaps : "0");
 
-        $tr.find(".top-speed").text(carInfo.TopSpeedBestLap ? carInfo.TopSpeedBestLap.toFixed(2) + "Km/h" : "");
+        let topSpeed;
+        let speedUnits;
+
+        if (useMPH) {
+            topSpeed = carInfo.TopSpeedBestLap * 0.621371;
+            speedUnits = "MPH";
+        } else {
+            topSpeed = carInfo.TopSpeedBestLap;
+            speedUnits = "Km/h";
+        }
+
+        $tr.find(".top-speed").text(topSpeed ? topSpeed.toFixed(2) + speedUnits : "");
 
         if (addingDriverToConnectedTable) {
             // events
@@ -826,13 +846,21 @@ class LiveTimings implements WebsocketHandler {
                         $tag.attr("id", collisionID);
                         $tag.attr({'class': 'badge badge-danger live-badge'});
 
+                        let crashSpeed;
+
+                        if (useMPH) {
+                            crashSpeed = collision.Speed * 0.621371;
+                        } else {
+                            crashSpeed = collision.Speed;
+                        }
+
                         if (collision.Type === Collision.WithCar) {
                             $tag.text(
-                                "Crash with " + collision.OtherDriverName + " at " + collision.Speed.toFixed(2) + "Km/h"
+                                "Crash with " + collision.OtherDriverName + " at " + crashSpeed.toFixed(2) + speedUnits
                             );
                         } else {
                             $tag.text(
-                                "Crash " + collision.Type + " at " + collision.Speed.toFixed(2) + "Km/h"
+                                "Crash " + collision.Type + " at " + crashSpeed.toFixed(2) + speedUnits
                             );
                         }
 

@@ -15,7 +15,7 @@ import (
 
 // Sends a championship to ACSR, called OnEndSession and when a championship is created
 func ACSRSendResult(championship *Championship) {
-	if config == nil || (config.ACSR.APIKey == "" || config.ACSR.AccountID == "") {
+	if config == nil || (config.ACSR.APIKey == "" || config.ACSR.AccountID == "") || len(championship.Events) == 0 {
 		return
 	}
 
