@@ -18,9 +18,9 @@ type NotificationDispatcher interface {
 	SendMessageWithLink(msg string, linkText string, link *url.URL) error
 	SendRaceStartMessage(config ServerConfig, event RaceEvent) error
 	SendRaceScheduledMessage(event *CustomRace, date time.Time) error
-	SendRaceReminderMessage(event *CustomRace) error
-	SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent) error
-	SendRaceWeekendReminderMessage(raceWeekend *RaceWeekend, session *RaceWeekendSession) error
+	SendRaceReminderMessage(event *CustomRace, timer int) error
+	SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent, timer int) error
+	SendRaceWeekendReminderMessage(raceWeekend *RaceWeekend, session *RaceWeekendSession, timer int) error
 	SaveServerOptions(oldServerOpts *GlobalServerConfig, newServerOpts *GlobalServerConfig) error
 }
 
@@ -51,12 +51,15 @@ func (nm *NotificationManager) Stop() error {
 	return nm.discordManager.Stop()
 }
 
+// HasNotificationReminders just tells us if we need to do any reminder scheduling
 func (nm *NotificationManager) HasNotificationReminders() bool {
 	reminders := nm.GetNotificationReminders()
 
 	return len(reminders) > 0
 }
 
+// GetNotificationReminders returns an array of int timers
+// Doesn't return errors, just omits anything it doesn't like and logs errors
 func (nm *NotificationManager) GetNotificationReminders() []int {
 	var reminders []int
 
@@ -127,11 +130,12 @@ func (nm *NotificationManager) SendRaceStartMessage(config ServerConfig, event R
 
 	msg := ""
 	eventName := event.EventName()
+	trackInfo := trackSummary(config.CurrentRaceConfig.Track, config.CurrentRaceConfig.TrackLayout)
 
 	if eventName != "" {
-		msg = fmt.Sprintf("%s race at %s is starting now", eventName, trackSummary(config.CurrentRaceConfig.Track, config.CurrentRaceConfig.TrackLayout))
+		msg = fmt.Sprintf("%s race at %s is starting now", eventName, trackInfo)
 	} else {
-		msg = fmt.Sprintf("Race at %s is starting now", trackSummary(config.CurrentRaceConfig.Track, config.CurrentRaceConfig.TrackLayout))
+		msg = fmt.Sprintf("Race at %s is starting now", trackInfo)
 	}
 
 	msg += fmt.Sprintf("\nServer: %s", serverOpts.Name)
@@ -199,16 +203,17 @@ func (nm *NotificationManager) SendRaceScheduledMessage(event *CustomRace, date 
 
 	carNames := strings.Join(aCarNames, ", ")
 
-	var msg = "A new event has been scheduled\n"
+	msg := "A new event has been scheduled\n"
 	msg += fmt.Sprintf("Server: %s\n", serverOpts.Name)
 	eventName := event.EventName()
+	trackInfo := trackSummary(event.RaceConfig.Track, event.RaceConfig.TrackLayout)
 
 	if eventName != "" {
 		msg += fmt.Sprintf("Event name: %s\n", eventName)
 	}
 
 	msg += fmt.Sprintf("Date: %s\n", dateStr)
-	msg += fmt.Sprintf("Track: %s\n", trackSummary(event.RaceConfig.Track, event.RaceConfig.TrackLayout))
+	msg += fmt.Sprintf("Track: %s\n", trackInfo)
 	msg += fmt.Sprintf("Car(s): %s\n", carNames)
 
 	return nm.SendMessage(msg)
@@ -217,12 +222,13 @@ func (nm *NotificationManager) SendRaceScheduledMessage(event *CustomRace, date 
 // SendRaceReminderMessage sends a reminder a configurable number of minutes prior to a race starting
 func (nm *NotificationManager) SendRaceReminderMessage(event *CustomRace, timer int) error {
 	msg := ""
+	trackInfo := trackSummary(event.RaceConfig.Track, event.RaceConfig.TrackLayout)
 	eventName := event.EventName()
 
 	if eventName != "" {
-		msg = fmt.Sprintf("%s race at %s starts in %d minutes", eventName, trackSummary(event.RaceConfig.Track, event.RaceConfig.TrackLayout), timer)
+		msg = fmt.Sprintf("%s race at %s starts in %d minutes", eventName, trackInfo, timer)
 	} else {
-		msg = fmt.Sprintf("Race at %s starts in %d minutes", trackSummary(event.RaceConfig.Track, event.RaceConfig.TrackLayout), timer)
+		msg = fmt.Sprintf("Race at %s starts in %d minutes", trackInfo, timer)
 	}
 
 	return nm.SendMessage(msg)
@@ -234,15 +240,7 @@ func (nm *NotificationManager) SendChampionshipReminderMessage(championship *Cha
 }
 
 // SendRaceWeekendReminderMessage sends a reminder a configurable number of minutes prior to a RaceWeekendSession starting
-func (nm *NotificationManager) SendRaceWeekendReminderMessage(raceWeekend *RaceWeekend, session *RaceWeekendSession) error {
+func (nm *NotificationManager) SendRaceWeekendReminderMessage(raceWeekend *RaceWeekend, session *RaceWeekendSession, timer int) error {
 	trackInfo := trackSummary(session.RaceConfig.Track, session.RaceConfig.TrackLayout)
-
-	serverOpts, err := nm.store.LoadServerOptions()
-
-	if err != nil {
-		logrus.WithError(err).Errorf("couldn't load server options, skipping notification")
-		return err
-	}
-
-	return nm.SendMessage(fmt.Sprintf("%s at %s (%s Race Weekend) starts in %d minutes", session.Name(), raceWeekend.Name, trackInfo, serverOpts.NotificationReminderTimer))
+	return nm.SendMessage(fmt.Sprintf("%s at %s (%s Race Weekend) starts in %d minutes", session.Name(), raceWeekend.Name, trackInfo, timer))
 }

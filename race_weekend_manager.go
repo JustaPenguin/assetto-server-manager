@@ -933,26 +933,22 @@ func (rwm *RaceWeekendManager) setupScheduledSessionTimer(raceWeekend *RaceWeeke
 		}
 	})
 
-	serverOpts, err := rwm.store.LoadServerOptions()
+	if rwm.notificationManager.HasNotificationReminders() {
+		for _, timer := range rwm.notificationManager.GetNotificationReminders() {
+			reminderTime := session.ScheduledTime.Add(time.Duration(-timer) * time.Minute)
 
-	if err != nil {
-		return err
-	}
+			if reminderTime.After(time.Now()) {
+				// add reminder
+				duration := time.Until(reminderTime)
 
-	if serverOpts.NotificationReminderTimer > 0 {
-		reminderTime := session.ScheduledTime.Add(time.Duration(-serverOpts.NotificationReminderTimer) * time.Minute)
+				rwm.scheduledSessionReminderTimers[session.ID.String()] = time.AfterFunc(duration, func() {
+					err := rwm.notificationManager.SendRaceWeekendReminderMessage(raceWeekend, session, timer)
 
-		if reminderTime.After(time.Now()) {
-			// add reminder
-			duration := time.Until(reminderTime)
-
-			rwm.scheduledSessionReminderTimers[session.ID.String()] = time.AfterFunc(duration, func() {
-				err := rwm.notificationManager.SendRaceWeekendReminderMessage(raceWeekend, session)
-
-				if err != nil {
-					logrus.WithError(err).Errorf("Could not send race weekend reminder message")
-				}
-			})
+					if err != nil {
+						logrus.WithError(err).Errorf("Could not send race weekend reminder message")
+					}
+				})
+			}
 		}
 	}
 
