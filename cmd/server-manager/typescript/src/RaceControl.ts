@@ -970,7 +970,7 @@ class LiveTimings implements WebsocketHandler {
     private addDriverToAdminKickSelect(carInfo: SessionCarInfo) {
         $(".kick-user option[value='default-driver-spacer']").remove();
 
-        if ($(".kick-user option[value=" + carInfo.CarID + "]").length != 0) {
+        if ($(".kick-user option[value=" + carInfo.DriverGUID + "]").length != 0) {
             // driver already exists
             return;
         }
@@ -983,7 +983,7 @@ class LiveTimings implements WebsocketHandler {
     }
 
     private removeDriverFromAdminKickSelect(carInfo: SessionCarInfo) {
-        $(".kick-user option[value=" + carInfo.CarID + "]").remove();
+        $(".kick-user option[value=" + carInfo.DriverGUID + "]").remove();
     }
 }
 
