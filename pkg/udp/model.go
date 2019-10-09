@@ -319,7 +319,10 @@ func (KickUser) Event() Event {
 }
 
 func NewKickUser(carID uint8) *KickUser {
-	return &KickUser{CarID:carID}
+	return &KickUser{
+		CarID: carID,
+		EventType: uint8(EventKickUser),
+	}
 }
 
 type NextSession struct {

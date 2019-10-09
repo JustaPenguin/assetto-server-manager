@@ -3,7 +3,6 @@ package servermanager
 import (
 	"github.com/mitchellh/go-wordwrap"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -297,23 +296,23 @@ func (rch *RaceControlHandler) kickUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	carID, err := strconv.Atoi(r.FormValue("kick-user"))
+	var carID uint8
+
+	for id, guid :=  range rch.raceControl.CarIDToGUID {
+		if string(guid) == r.FormValue("kick-user") {
+			carID = uint8(id)
+			break
+		}
+	}
+
+	kickUser := udp.NewKickUser(carID)
+
+	err := rch.serverProcess.SendUDPMessage(kickUser)
 
 	if err != nil {
-		logrus.WithError(err).Error("couldn't convert form data to integer")
+		logrus.Errorf("Unable to send kick command, err: %s", err)
 	}
 
-	kickUser := udp.NewKickUser(uint8(carID))
-
-	if err == nil {
-		err := rch.serverProcess.SendUDPMessage(kickUser)
-
-		if err != nil {
-			logrus.Errorf("Unable to broadcast chat message, err: %s", err)
-		}
-	} else {
-		logrus.Errorf("Unable to build chat message, err: %s", err)
-	}
 }
 
 func (rch *RaceControlHandler) restartSession(w http.ResponseWriter, r *http.Request) {

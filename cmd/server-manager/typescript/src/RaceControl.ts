@@ -972,13 +972,12 @@ class LiveTimings implements WebsocketHandler {
 
         if ($(".kick-user option[value=" + carInfo.CarID + "]").length != 0) {
             // driver already exists
-            console.log("driver already exists");
             return;
         }
 
         // add driver to admin kick list
         $('.kick-user').append($('<option>', {
-            value: carInfo.CarID,
+            value: carInfo.DriverGUID,
             text: carInfo.DriverName,
         }));
     }
