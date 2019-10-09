@@ -15,6 +15,8 @@
         <h4 class="text-center">in the {{ $.Championship.Name }} Championship</h4>
     {{ end }}
 
+    {{ template "raceweekend-premium" dict "IsPremium" $.IsPremium }}
+
     <form action="/race-weekends/new/submit" class="race-setup" method="post" id="raceweekend-form" data-safe-submit>
         <div class="card mt-3 border-secondary" id="entrants">
             <div class="card-header">

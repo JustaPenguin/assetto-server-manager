@@ -377,6 +377,10 @@ func (rwm *RaceWeekendManager) applyConfigAndStart(config CurrentRaceConfig, ent
 }
 
 func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSessionID string) error {
+	if IsPremium != "true" {
+		return errors.New("servermanager: premium required")
+	}
+
 	raceWeekend, err := rwm.LoadRaceWeekend(raceWeekendID)
 
 	if err != nil {
@@ -582,6 +586,10 @@ func (rwm *RaceWeekendManager) RestartActiveSession() error {
 }
 
 func (rwm *RaceWeekendManager) ImportSession(raceWeekendID string, raceWeekendSessionID string, r *http.Request) error {
+	if IsPremium != "true" {
+		return errors.New("servermanager: premium required")
+	}
+
 	if err := r.ParseForm(); err != nil {
 		return err
 	}
