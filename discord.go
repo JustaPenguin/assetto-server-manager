@@ -175,7 +175,7 @@ func (dm *DiscordManager) CommandSchedule() (string, error) {
 
 	scheduled = append(scheduled, recurring...)
 
-	var msg = fmt.Sprintf("\nUpcoming events on server %s\n\n", serverOpts.Name)
+	msg := fmt.Sprintf("\nUpcoming events on server %s\n\n", serverOpts.Name)
 
 	for _, scheduledEvent := range scheduled {
 		raceSetup := scheduledEvent.GetRaceSetup()
