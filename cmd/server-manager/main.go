@@ -92,8 +92,6 @@ func main() {
 		}
 	}
 
-	go startUDPReplay(resolver, "./assetto/session-logs/2019-04-05_13.27.db")
-
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 
 	if err != nil {
