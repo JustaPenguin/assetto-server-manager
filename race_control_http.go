@@ -296,10 +296,16 @@ func (rch *RaceControlHandler) kickUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	guid := r.FormValue("kick-user")
+
+	if (guid == "") || (guid == "default-driver-spacer") {
+		return
+	}
+
 	var carID uint8
 
-	for id, guid := range rch.raceControl.CarIDToGUID {
-		if string(guid) == r.FormValue("kick-user") {
+	for id, rangeGuid :=  range rch.raceControl.CarIDToGUID {
+		if string(rangeGuid) == guid {
 			carID = uint8(id)
 			break
 		}
