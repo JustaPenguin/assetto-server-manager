@@ -48,7 +48,7 @@ function buildJS() {
             .pipe(buffer())
             .pipe(sourcemaps.init({loadMaps: true}))
             .pipe(jsCache)
-            //.pipe(uglify())
+            .pipe(uglify())
             .pipe(jsCache.restore)
             .pipe(sourcemaps.write('.'))
             .pipe(gulp.dest('../static/js'));
