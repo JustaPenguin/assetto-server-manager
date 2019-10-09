@@ -23,6 +23,8 @@
             </div>
         {{ end }}
 
+        {{ template "raceweekend-premium" dict "IsPremium" $.IsPremium }}
+
         {{ if not $.RaceWeekend.HasLinkedChampionship }}
             <h2>Entrants</h2>
 
@@ -177,16 +179,19 @@
 
                         {{ if WriteAccess }}
                             {{ if not (or $session.InProgress $session.Completed) }}
+
                                 {{ if $.RaceWeekend.SessionCanBeRun $session }}
-                                    <a class="btn btn-success" onClick="return confirm('I have checked all Entry List configurations and the starting grid is correct');" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/start">Start Session</a>
+                                    <a class="btn btn-success" {{ if ne $.IsPremium "true" }}data-toggle="tooltip" title="Upgrade to Server Manager Premium to start Race Weekend Sessions!" href="#" onClick="return false;" {{ else }} onClick="return confirm('I have checked all Entry List configurations and the starting grid is correct');" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/start" {{ end }}>Start Session</a>
                                 {{ end }}
 
-                                <button type="button" class="btn btn-info dropdown-toggle popover-external-html" data-placement="bottom"
-                                        data-toggle="popover" title="Schedule Event" data-html="true"
-                                        id="schedule-{{ $session.ID.String }}"
-                                >
-                                    Schedule Event
-                                </button>
+                                {{ if eq $.IsPremium "true" }}
+                                    <button type="button" class="btn btn-info dropdown-toggle popover-external-html" data-placement="bottom"
+                                            data-toggle="popover" title="Schedule Event" data-html="true"
+                                            id="schedule-{{ $session.ID.String }}"
+                                    >
+                                        Schedule Event
+                                    </button>
+                                {{ end }}
 
                                 <div id="popover-content-schedule-{{ $session.ID.String }}" style="display: none;">
                                     <form action="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/schedule" method="POST">
@@ -232,9 +237,11 @@
                                         Edit
                                     </a>
 
-                                    <a class="dropdown-item" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/import">
-                                        Import Results
-                                    </a>
+                                    {{ if eq $.IsPremium "true" }}
+                                        <a class="dropdown-item" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/import">
+                                            Import Results
+                                        </a>
+                                    {{ end }}
 
                                     {{ if DeleteAccess }}
                                         <a onClick="return confirm('I understand that this will delete this entire session permanently.') "
