@@ -112,6 +112,10 @@ var championshipManager *ChampionshipManager
 
 type dummyNotificationManager struct{}
 
+func (d dummyNotificationManager) SendRaceWeekendReminderMessage(raceWeekend *RaceWeekend, session *RaceWeekendSession) error {
+	return nil
+}
+
 func (d dummyNotificationManager) SendMessage(msg string) error {
 	return nil
 }

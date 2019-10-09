@@ -563,14 +563,61 @@ class LiveTimings implements WebsocketHandler {
         setInterval(this.populateConnectedDrivers.bind(this), 1000);
 
         $(document).on("click", ".driver-link", this.toggleDriverSpeed.bind(this));
+
+        $(document).on("submit", "#broadcast-chat-form", this.processChatForm.bind(this));
+        $(document).on("submit", "#admin-command-form", this.processAdminCommandForm.bind(this));
+        $(document).on("submit", "#kick-user-form", this.processKickUserForm.bind(this));
+    }
+
+    private processChatForm(e: JQuery.SubmitEvent): boolean {
+        this.postForm(e);
+
+        $(".broadcast-chat").val('');
+
+        return false
+    }
+
+    private processAdminCommandForm(e: JQuery.SubmitEvent): boolean {
+        this.postForm(e);
+
+        $(".admin-command").val('');
+
+        return false
+    }
+
+    private processKickUserForm(e: JQuery.SubmitEvent): boolean {
+        this.postForm(e);
+
+        return false
+    }
+
+    private postForm(e: JQuery.SubmitEvent) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        this.post($(e.currentTarget));
+    }
+
+    private post(form: JQuery<HTMLFormElement>) {
+        $.ajax({
+            url: form.attr("action"),
+            type: 'post',
+            data: form.serialize(),
+            success:function(){
+
+            }
+        });
     }
 
     public handleWebsocketMessage(message: WSMessage): void {
         if (message.EventType === EventRaceControl) {
             this.populateConnectedDrivers();
+            this.initialiseAdminKickSelect();
             this.populateDisconnectedDrivers();
         } else if (message.EventType === EventConnectionClosed) {
             const closedConnection = message.Message as SessionCarInfo;
+
+            this.removeDriverFromAdminKickSelect(closedConnection);
 
             if (this.raceControl.status.ConnectedDrivers) {
                 const driver = this.raceControl.status.ConnectedDrivers.Drivers[closedConnection.DriverGUID];
@@ -578,8 +625,13 @@ class LiveTimings implements WebsocketHandler {
                 if (driver && driver.LoadedTime.toString() === "0001-01-01T00:00:00Z") {
                     // a driver joined but never loaded. remove them from the connected drivers table.
                     this.$connectedDriversTable.find("tr[data-guid='" + closedConnection.DriverGUID + "']").remove();
+                    this.removeDriverFromAdminKickSelect(driver.CarInfo)
                 }
             }
+        } else if (message.EventType === EventNewConnection) {
+            const connectedDriver = new SessionCarInfo(message.Message);
+
+            this.addDriverToAdminKickSelect(connectedDriver);
         }
     }
 
@@ -889,6 +941,49 @@ class LiveTimings implements WebsocketHandler {
 
         $driverDot.find(".info").toggle();
         $target.find(".dot").toggleClass("dot-inactive");
+    }
+
+    private initialisedAdminKick = false;
+
+    private initialiseAdminKickSelect() {
+        if (this.initialisedAdminKick) {
+            return
+        }
+
+        if (!this.raceControl.status || !this.raceControl.status.ConnectedDrivers) {
+            return;
+        }
+
+        for (const driverGUID of this.raceControl.status.ConnectedDrivers.GUIDsInPositionalOrder) {
+            const driver = this.raceControl.status.ConnectedDrivers.Drivers[driverGUID];
+
+            if (!driver) {
+                continue;
+            }
+
+            this.addDriverToAdminKickSelect(driver.CarInfo);
+        }
+
+        this.initialisedAdminKick = true
+    }
+
+    private addDriverToAdminKickSelect(carInfo: SessionCarInfo) {
+        $(".kick-user option[value='default-driver-spacer']").remove();
+
+        if ($(".kick-user option[value=" + carInfo.DriverGUID + "]").length != 0) {
+            // driver already exists
+            return;
+        }
+
+        // add driver to admin kick list
+        $('.kick-user').append($('<option>', {
+            value: carInfo.DriverGUID,
+            text: carInfo.DriverName,
+        }));
+    }
+
+    private removeDriverFromAdminKickSelect(carInfo: SessionCarInfo) {
+        $(".kick-user option[value=" + carInfo.DriverGUID + "]").remove();
     }
 }
 

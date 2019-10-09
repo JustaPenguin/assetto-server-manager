@@ -18,8 +18,9 @@ type NotificationDispatcher interface {
 	SendMessageWithLink(msg string, linkText string, link *url.URL) error
 	SendRaceStartMessage(config ServerConfig, event RaceEvent) error
 	SendRaceScheduledMessage(event *CustomRace, date time.Time) error
-	SendRaceReminderMessage(event *CustomRace, timer int) error
-	SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent, timer int) error
+	SendRaceReminderMessage(event *CustomRace) error
+	SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent) error
+	SendRaceWeekendReminderMessage(raceWeekend *RaceWeekend, session *RaceWeekendSession) error
 	SaveServerOptions(oldServerOpts *GlobalServerConfig, newServerOpts *GlobalServerConfig) error
 }
 
@@ -230,4 +231,18 @@ func (nm *NotificationManager) SendRaceReminderMessage(event *CustomRace, timer 
 // SendChampionshipReminderMessage sends a reminder a configurable number of minutes prior to a championship race starting
 func (nm *NotificationManager) SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent, timer int) error {
 	return nm.SendMessage(fmt.Sprintf("%s race at %s starts in %d minutes", championship.Name, trackSummary(event.RaceSetup.Track, event.RaceSetup.TrackLayout), timer))
+}
+
+// SendRaceWeekendReminderMessage sends a reminder a configurable number of minutes prior to a RaceWeekendSession starting
+func (nm *NotificationManager) SendRaceWeekendReminderMessage(raceWeekend *RaceWeekend, session *RaceWeekendSession) error {
+	trackInfo := trackSummary(session.RaceConfig.Track, session.RaceConfig.TrackLayout)
+
+	serverOpts, err := nm.store.LoadServerOptions()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't load server options, skipping notification")
+		return err
+	}
+
+	return nm.SendMessage(fmt.Sprintf("%s at %s (%s Race Weekend) starts in %d minutes", session.Name(), raceWeekend.Name, trackInfo, serverOpts.NotificationReminderTimer))
 }

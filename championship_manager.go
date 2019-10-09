@@ -1255,6 +1255,30 @@ func (cm *ChampionshipManager) ModifyTeamPenalty(championshipID, classID, team s
 	return cm.UpsertChampionship(championship)
 }
 
+func (cm *ChampionshipManager) ReorderChampionshipEvents(championshipID string, championshipEventIDsInOrder []string) error {
+	championship, err := cm.LoadChampionship(championshipID)
+
+	if err != nil {
+		return err
+	}
+
+	var orderedEvents []*ChampionshipEvent
+
+	for _, championshipEventID := range championshipEventIDsInOrder {
+		event, err := championship.EventByID(championshipEventID)
+
+		if err != nil {
+			return err
+		}
+
+		orderedEvents = append(orderedEvents, event)
+	}
+
+	championship.Events = orderedEvents
+
+	return cm.UpsertChampionship(championship)
+}
+
 type ValidationError string
 
 func (e ValidationError) Error() string {

@@ -7,7 +7,7 @@
 
     {{ $eventSetup := $event.RaceSetup }}
 
-    <div class="card mt-3 border-secondary championship-event {{ if $event.Completed }}event-complete{{ end }}">
+    <div class="card mt-3 border-secondary championship-event {{ if $event.Completed }}event-complete{{ end }}" id="{{ $event.ID.String }}">
         <div class="card-header">
             {{ $trackInfo := trackInfo $eventSetup.Track $eventSetup.TrackLayout }}
 

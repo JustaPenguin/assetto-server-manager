@@ -196,6 +196,7 @@ func Router(
 		r.Get("/championship/{championshipID}/entrants", championshipsHandler.signedUpEntrants)
 		r.Get("/championship/{championshipID}/entrants.csv", championshipsHandler.signedUpEntrantsCSV)
 		r.Get("/championship/{championshipID}/entrant/{entrantGUID}", championshipsHandler.modifyEntrantStatus)
+		r.Post("/championship/{championshipID}/reorder-events", championshipsHandler.reorderEvents)
 
 		r.Get("/championship/import", championshipsHandler.importChampionship)
 		r.Post("/championship/import", championshipsHandler.importChampionship)
@@ -233,6 +234,8 @@ func Router(
 		r.Get("/race-weekend/{raceWeekendID}/update-entrylist", raceWeekendHandler.updateEntryList)
 		r.Get("/race-weekend/import", raceWeekendHandler.importRaceWeekend)
 		r.Post("/race-weekend/import", raceWeekendHandler.importRaceWeekend)
+		r.Post("/race-weekend/{raceWeekendID}/session/{sessionID}/schedule", raceWeekendHandler.scheduleSession)
+		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/schedule/remove", raceWeekendHandler.removeSessionSchedule)
 	})
 
 	// deleters
@@ -277,6 +280,12 @@ func Router(
 		r.HandleFunc("/accounts/toggle-open", accountHandler.toggleServerOpenStatus)
 		r.HandleFunc("/accounts", accountHandler.manageAccounts)
 		r.HandleFunc("/search-index", carsHandler.rebuildSearchIndex)
+
+		r.HandleFunc("/restart-session", raceControlHandler.restartSession)
+		r.HandleFunc("/next-session", raceControlHandler.nextSession)
+		r.HandleFunc("/broadcast-chat", raceControlHandler.broadcastChat)
+		r.HandleFunc("/admin-command", raceControlHandler.adminCommand)
+		r.HandleFunc("/kick-user", raceControlHandler.kickUser)
 	})
 
 	FileServer(r, "/static", fs, false)
