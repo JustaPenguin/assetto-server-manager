@@ -1,12 +1,12 @@
 package servermanager
 
 import (
-	"github.com/mitchellh/go-wordwrap"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/mitchellh/go-wordwrap"
 
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
@@ -284,10 +284,10 @@ func (rch *RaceControlHandler) adminCommand(w http.ResponseWriter, r *http.Reque
 		err := rch.serverProcess.SendUDPMessage(adminCommand)
 
 		if err != nil {
-			logrus.Errorf("Unable to broadcast chat message, err: %s", err)
+			logrus.Errorf("Unable to send admin command, err: %s", err)
 		}
 	} else {
-		logrus.Errorf("Unable to build chat message, err: %s", err)
+		logrus.Errorf("Unable to build admin command, err: %s", err)
 	}
 }
 
