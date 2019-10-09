@@ -310,8 +310,8 @@ func NewBroadcastChat(data string) (*BroadcastChat, error) {
 }
 
 type KickUser struct {
-	EventType    uint8
-	CarID uint8
+	EventType uint8
+	CarID     uint8
 }
 
 func (KickUser) Event() Event {
@@ -320,7 +320,7 @@ func (KickUser) Event() Event {
 
 func NewKickUser(carID uint8) *KickUser {
 	return &KickUser{
-		CarID: carID,
+		CarID:     carID,
 		EventType: uint8(EventKickUser),
 	}
 }

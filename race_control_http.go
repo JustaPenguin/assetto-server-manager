@@ -298,7 +298,7 @@ func (rch *RaceControlHandler) kickUser(w http.ResponseWriter, r *http.Request) 
 
 	var carID uint8
 
-	for id, guid :=  range rch.raceControl.CarIDToGUID {
+	for id, guid := range rch.raceControl.CarIDToGUID {
 		if string(guid) == r.FormValue("kick-user") {
 			carID = uint8(id)
 			break
