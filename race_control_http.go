@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/mitchellh/go-wordwrap"
 
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
@@ -245,4 +246,101 @@ func (rch *RaceControlHandler) websocket(w http.ResponseWriter, r *http.Request)
 
 	// new client, send them an initial race control message.
 	client.receive <- newRaceControlMessage(rch.raceControl)
+}
+
+func (rch *RaceControlHandler) broadcastChat(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		return
+	}
+
+	wrapped := strings.Split(wordwrap.WrapString(
+		r.FormValue("broadcast-chat"),
+		60,
+	), "\n")
+
+	for _, msg := range wrapped {
+		broadcastMessage, err := udp.NewBroadcastChat(msg)
+
+		if err == nil {
+			err := rch.serverProcess.SendUDPMessage(broadcastMessage)
+
+			if err != nil {
+				logrus.Errorf("Unable to broadcast chat message, err: %s", err)
+			}
+		} else {
+			logrus.Errorf("Unable to build chat message, err: %s", err)
+		}
+	}
+}
+
+func (rch *RaceControlHandler) adminCommand(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		return
+	}
+
+	adminCommand, err := udp.NewAdminCommand(r.FormValue("admin-command"))
+
+	if err == nil {
+		err := rch.serverProcess.SendUDPMessage(adminCommand)
+
+		if err != nil {
+			logrus.Errorf("Unable to send admin command, err: %s", err)
+		}
+	} else {
+		logrus.Errorf("Unable to build admin command, err: %s", err)
+	}
+}
+
+func (rch *RaceControlHandler) kickUser(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		return
+	}
+
+	guid := r.FormValue("kick-user")
+
+	if (guid == "") || (guid == "default-driver-spacer") {
+		return
+	}
+
+	var carID uint8
+
+	for id, rangeGuid :=  range rch.raceControl.CarIDToGUID {
+		if string(rangeGuid) == guid {
+			carID = uint8(id)
+			break
+		}
+	}
+
+	kickUser := udp.NewKickUser(carID)
+
+	err := rch.serverProcess.SendUDPMessage(kickUser)
+
+	if err != nil {
+		logrus.Errorf("Unable to send kick command, err: %s", err)
+	}
+
+}
+
+func (rch *RaceControlHandler) restartSession(w http.ResponseWriter, r *http.Request) {
+	err := rch.serverProcess.SendUDPMessage(&udp.RestartSession{})
+
+	if err != nil {
+		logrus.Errorf("Unable to restart session, err: %s", err)
+
+		AddErrorFlash(w, r, "The server was unable to restart the session!")
+	}
+
+	http.Redirect(w, r, "/live-timing", http.StatusFound)
+}
+
+func (rch *RaceControlHandler) nextSession(w http.ResponseWriter, r *http.Request) {
+	err := rch.serverProcess.SendUDPMessage(&udp.NextSession{})
+
+	if err != nil {
+		logrus.Errorf("Unable to move to next session, err: %s", err)
+
+		AddErrorFlash(w, r, "The server was unable to move to the next session!")
+	}
+
+	http.Redirect(w, r, "/live-timing", http.StatusFound)
 }
