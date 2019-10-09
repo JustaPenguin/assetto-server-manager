@@ -144,7 +144,7 @@ func (f Form) buildOpts(val reflect.Value, t reflect.Type, parentName string) []
 				HelpText: template.HTML(typeField.Tag.Get("help")),
 				Type:     formType,
 				Opts:     make(map[string]bool),
-				Hidden:   formShow == "open" && IsHosted && !f.forceShowAllOptions,
+				Hidden:   formShow == "hidden" || (formShow == "open" && IsHosted && !f.forceShowAllOptions),
 			}
 
 			if formType == "dropdown" || formType == "multiSelect" {

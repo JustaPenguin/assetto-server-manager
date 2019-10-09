@@ -128,11 +128,11 @@ func (d dummyNotificationManager) SendRaceScheduledMessage(event *CustomRace, da
 	return nil
 }
 
-func (d dummyNotificationManager) SendRaceReminderMessage(event *CustomRace) error {
+func (d dummyNotificationManager) SendRaceReminderMessage(event *CustomRace, timer int) error {
 	return nil
 }
 
-func (d dummyNotificationManager) SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent) error {
+func (d dummyNotificationManager) SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent, timer int) error {
 	return nil
 }
 

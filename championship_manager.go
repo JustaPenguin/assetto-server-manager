@@ -584,12 +584,6 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 		return err
 	}
 
-	serverOpts, err := cm.store.LoadServerOptions()
-
-	if err != nil {
-		return err
-	}
-
 	event.Scheduled = date
 
 	// if there is an existing schedule timer for this event stop it
@@ -613,12 +607,14 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 			}
 		})
 
-		if serverOpts.NotificationReminderTimer > 0 {
-			duration = time.Until(date.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
+		if cm.notificationManager.HasNotificationReminders() {
+			for _, timer := range cm.notificationManager.GetNotificationReminders() {
+				duration = time.Until(date.Add(time.Duration(0-timer) * time.Minute))
 
-			cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
-				cm.notificationManager.SendChampionshipReminderMessage(championship, event)
-			})
+				cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+					cm.notificationManager.SendChampionshipReminderMessage(championship, event, timer)
+				})
+			}
 		}
 	}
 
@@ -1357,12 +1353,6 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 		return err
 	}
 
-	serverOpts, err := cm.store.LoadServerOptions()
-
-	if err != nil {
-		return err
-	}
-
 	for _, championship := range championships {
 		championship := championship
 
@@ -1381,14 +1371,16 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 					}
 				})
 
-				if serverOpts.NotificationReminderTimer > 0 {
-					if event.Scheduled.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute).After(time.Now()) {
-						// add reminder
-						duration = time.Until(event.Scheduled.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
+				if cm.notificationManager.HasNotificationReminders() {
+					for _, timer := range cm.notificationManager.GetNotificationReminders() {
+						if event.Scheduled.Add(time.Duration(0-timer) * time.Minute).After(time.Now()) {
+							// add reminder
+							duration = time.Until(event.Scheduled.Add(time.Duration(0-timer) * time.Minute))
 
-						cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
-							cm.notificationManager.SendChampionshipReminderMessage(championship, event)
-						})
+							cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+								cm.notificationManager.SendChampionshipReminderMessage(championship, event, timer)
+							})
+						}
 					}
 				}
 

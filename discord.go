@@ -3,13 +3,14 @@ package servermanager
 import (
 	"errors"
 	"fmt"
+	"net/url"
+	"strings"
+	"time"
+
 	"github.com/Clinet/discordgo-embed"
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"net/url"
-	"strings"
-	"time"
 )
 
 type DiscordManager struct {
@@ -115,7 +116,7 @@ func (dm *DiscordManager) CommandSessions() (string, error) {
 		return "", err
 	}
 
-	var msg = fmt.Sprintf("Upcoming sessions on server %s\n", serverOpts.Name)
+	msg := fmt.Sprintf("Upcoming sessions on server %s\n", serverOpts.Name)
 
 	for _, event := range calendar {
 		msg += event.Start.Format("Mon, 02 Jan 2006 15:04:05 MST") + "\n"
@@ -178,10 +179,9 @@ func (dm *DiscordManager) CommandSchedule() (string, error) {
 
 	for _, scheduledEvent := range scheduled {
 		raceSetup := scheduledEvent.GetRaceSetup()
-		trackInfo := trackInfo(raceSetup.Track, raceSetup.TrackLayout)
 		cars := carList(scheduledEvent.GetRaceSetup().Cars)
 		msg += fmt.Sprintf("Date: %s\n", scheduledEvent.GetScheduledTime().Format("Mon, 02 Jan 2006 15:04:05 MST"))
-		msg += fmt.Sprintf("Track: %s\n", trackInfo.Name)
+		msg += fmt.Sprintf("Track: %s\n", trackSummary(raceSetup.Track, raceSetup.TrackLayout))
 		msg += fmt.Sprintf("Cars: %s\n", cars)
 		msg += "\n\n"
 	}
@@ -195,6 +195,7 @@ func (dm *DiscordManager) CommandNotify(s *discordgo.Session, m *discordgo.Messa
 	serverOpts, err := dm.store.LoadServerOptions()
 
 	if err != nil {
+		logrus.WithError(err).Infof("couldn't get server options")
 		return "A server error occurred, try again later", err
 	}
 
@@ -257,7 +258,7 @@ func (dm *DiscordManager) CommandNotify(s *discordgo.Session, m *discordgo.Messa
 	}
 
 	// w00t!
-	return fmt.Sprintf("The %s role has been assigned, you will now get pinged with notifications.  Type the command again to remove it."), nil
+	return fmt.Sprintf("The %s role has been assigned, you will now get pinged with notifications.  Type the command again to remove it.", roleName), nil
 }
 
 func (dm *DiscordManager) CommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -289,10 +290,12 @@ func (dm *DiscordManager) CommandHandler(s *discordgo.Session, m *discordgo.Mess
 		logrus.WithError(err).Errorf("Error during handling of Discord command")
 	}
 
-	_, err = s.ChannelMessageSend(m.ChannelID, msg)
+	if msg != "" {
+		_, err = s.ChannelMessageSend(m.ChannelID, msg)
 
-	if err != nil {
-		logrus.WithError(err).Errorf("couldn't send Discord msg")
+		if err != nil {
+			logrus.WithError(err).Errorf("couldn't send Discord msg")
+		}
 	}
 }
 

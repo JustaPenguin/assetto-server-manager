@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -11,12 +12,14 @@ import (
 )
 
 type NotificationDispatcher interface {
+	HasNotificationReminders() bool
+	GetNotificationReminders() []int
 	SendMessage(msg string) error
 	SendMessageWithLink(msg string, linkText string, link *url.URL) error
 	SendRaceStartMessage(config ServerConfig, event RaceEvent) error
 	SendRaceScheduledMessage(event *CustomRace, date time.Time) error
-	SendRaceReminderMessage(event *CustomRace) error
-	SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent) error
+	SendRaceReminderMessage(event *CustomRace, timer int) error
+	SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent, timer int) error
 	SaveServerOptions(oldServerOpts *GlobalServerConfig, newServerOpts *GlobalServerConfig) error
 }
 
@@ -47,6 +50,47 @@ func (nm *NotificationManager) Stop() error {
 	return nm.discordManager.Stop()
 }
 
+func (nm *NotificationManager) HasNotificationReminders() bool {
+	reminders := nm.GetNotificationReminders()
+
+	return len(reminders) > 0
+}
+
+func (nm *NotificationManager) GetNotificationReminders() []int {
+	var reminders []int
+
+	serverOpts, err := nm.store.LoadServerOptions()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't load server options")
+		return reminders
+	}
+
+	timers := strings.Split(serverOpts.NotificationReminderTimers, ",")
+
+	for _, a := range timers {
+		if strings.TrimSpace(a) == "" {
+			logrus.WithError(err).Infof("couldn't convert notification time to int")
+			continue
+		}
+
+		i, err := strconv.Atoi(strings.TrimSpace(a))
+
+		if err != nil {
+			logrus.WithError(err).Errorf("couldn't convert notification time to int")
+			continue
+		}
+
+		if i == 0 {
+			continue
+		}
+
+		reminders = append(reminders, i)
+	}
+
+	return reminders
+}
+
 // SendMessage sends a message (surprise surprise)
 func (nm *NotificationManager) SendMessage(msg string) error {
 	var err error
@@ -73,13 +117,6 @@ func (nm *NotificationManager) SendMessageWithLink(msg string, linkText string, 
 
 // SendRaceStartMessage sends a message as a race session is started
 func (nm *NotificationManager) SendRaceStartMessage(config ServerConfig, event RaceEvent) error {
-	trackInfo, err := GetTrackInfo(config.CurrentRaceConfig.Track, config.CurrentRaceConfig.TrackLayout)
-
-	if err != nil {
-		logrus.WithError(err).Warnf("Could not load track details, skipping notification: %s, %s", config.CurrentRaceConfig.Track, config.CurrentRaceConfig.TrackLayout)
-		return err
-	}
-
 	serverOpts, err := nm.store.LoadServerOptions()
 
 	if err != nil {
@@ -91,9 +128,9 @@ func (nm *NotificationManager) SendRaceStartMessage(config ServerConfig, event R
 	eventName := event.EventName()
 
 	if eventName != "" {
-		msg = fmt.Sprintf("%s race at %s is starting now", eventName, trackInfo.Name)
+		msg = fmt.Sprintf("%s race at %s is starting now", eventName, trackSummary(config.CurrentRaceConfig.Track, config.CurrentRaceConfig.TrackLayout))
 	} else {
-		msg = fmt.Sprintf("Race at %s is starting now", trackInfo.Name)
+		msg = fmt.Sprintf("Race at %s is starting now", trackSummary(config.CurrentRaceConfig.Track, config.CurrentRaceConfig.TrackLayout))
 	}
 
 	msg += fmt.Sprintf("\nServer: %s", serverOpts.Name)
@@ -139,6 +176,11 @@ func (nm *NotificationManager) SendRaceStartMessage(config ServerConfig, event R
 func (nm *NotificationManager) SendRaceScheduledMessage(event *CustomRace, date time.Time) error {
 	serverOpts, err := nm.store.LoadServerOptions()
 
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't load server options, skipping notification")
+		return err
+	}
+
 	dateStr := date.Format("Mon, 02 Jan 2006 15:04:05 MST")
 
 	var aCarNames []string
@@ -156,13 +198,6 @@ func (nm *NotificationManager) SendRaceScheduledMessage(event *CustomRace, date 
 
 	carNames := strings.Join(aCarNames, ", ")
 
-	trackInfo, err := GetTrackInfo(event.RaceConfig.Track, event.RaceConfig.TrackLayout)
-
-	if err != nil {
-		logrus.WithError(err).Warnf("Could not load track details, skipping notification: %s, %s", event.RaceConfig.Track, event.RaceConfig.TrackLayout)
-		return err
-	}
-
 	var msg = "A new event has been scheduled\n"
 	msg += fmt.Sprintf("Server: %s\n", serverOpts.Name)
 	eventName := event.EventName()
@@ -172,54 +207,27 @@ func (nm *NotificationManager) SendRaceScheduledMessage(event *CustomRace, date 
 	}
 
 	msg += fmt.Sprintf("Date: %s\n", dateStr)
-	msg += fmt.Sprintf("Track: %s\n", trackInfo.Name)
+	msg += fmt.Sprintf("Track: %s\n", trackSummary(event.RaceConfig.Track, event.RaceConfig.TrackLayout))
 	msg += fmt.Sprintf("Car(s): %s\n", carNames)
 
 	return nm.SendMessage(msg)
 }
 
 // SendRaceReminderMessage sends a reminder a configurable number of minutes prior to a race starting
-func (nm *NotificationManager) SendRaceReminderMessage(event *CustomRace) error {
-	serverOpts, err := nm.store.LoadServerOptions()
-
-	if err != nil {
-		logrus.WithError(err).Errorf("couldn't load server options, skipping notification")
-		return err
-	}
-
+func (nm *NotificationManager) SendRaceReminderMessage(event *CustomRace, timer int) error {
 	msg := ""
 	eventName := event.EventName()
-	trackInfo, err := GetTrackInfo(event.RaceConfig.Track, event.RaceConfig.TrackLayout)
-
-	if err != nil {
-		logrus.WithError(err).Warnf("Could not load track details, skipping notification: %s, %s", event.RaceConfig.Track, event.RaceConfig.TrackLayout)
-		return err
-	}
 
 	if eventName != "" {
-		msg = fmt.Sprintf("%s race at %s starts in %d minutes", eventName, trackInfo.Name, serverOpts.NotificationReminderTimer)
+		msg = fmt.Sprintf("%s race at %s starts in %d minutes", eventName, trackSummary(event.RaceConfig.Track, event.RaceConfig.TrackLayout), timer)
 	} else {
-		msg = fmt.Sprintf("Race at %s starts in %d minutes", trackInfo.Name, serverOpts.NotificationReminderTimer)
+		msg = fmt.Sprintf("Race at %s starts in %d minutes", trackSummary(event.RaceConfig.Track, event.RaceConfig.TrackLayout), timer)
 	}
 
 	return nm.SendMessage(msg)
 }
 
 // SendChampionshipReminderMessage sends a reminder a configurable number of minutes prior to a championship race starting
-func (nm *NotificationManager) SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent) error {
-	trackInfo, err := GetTrackInfo(event.RaceSetup.Track, event.RaceSetup.TrackLayout)
-
-	if err != nil {
-		logrus.WithError(err).Warnf("Could not load track details, skipping notification: %s, %s", event.RaceSetup.Track, event.RaceSetup.TrackLayout)
-		return err
-	}
-
-	serverOpts, err := nm.store.LoadServerOptions()
-
-	if err != nil {
-		logrus.WithError(err).Errorf("couldn't load server options, skipping notification")
-		return err
-	}
-
-	return nm.SendMessage(fmt.Sprintf("%s race at %s starts in %d minutes", championship.Name, trackInfo.Name, serverOpts.NotificationReminderTimer))
+func (nm *NotificationManager) SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent, timer int) error {
+	return nm.SendMessage(fmt.Sprintf("%s race at %s starts in %d minutes", championship.Name, trackSummary(event.RaceSetup.Track, event.RaceSetup.TrackLayout), timer))
 }
