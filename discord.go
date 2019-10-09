@@ -104,7 +104,7 @@ func (dm *DiscordManager) CommandSessions() (string, error) {
 	serverOpts, err := dm.store.LoadServerOptions()
 
 	if err != nil {
-		return "", err
+		return "A server error occurred, please try again later", err
 	}
 
 	start := time.Now()
@@ -113,7 +113,7 @@ func (dm *DiscordManager) CommandSessions() (string, error) {
 	calendar, err := dm.scheduledRacesManager.buildCalendar(start, end)
 
 	if err != nil {
-		return "", err
+		return "A server error occurred, please try again later", err
 	}
 
 	msg := fmt.Sprintf("Upcoming sessions on server %s\n", serverOpts.Name)
@@ -132,7 +132,7 @@ func (dm *DiscordManager) CommandSchedule() (string, error) {
 	serverOpts, err := dm.store.LoadServerOptions()
 
 	if err != nil {
-		return "", err
+		return "A server error occurred, please try again later", err
 	}
 
 	start := time.Now()
@@ -140,7 +140,7 @@ func (dm *DiscordManager) CommandSchedule() (string, error) {
 	scheduled, err := dm.scheduledRacesManager.getScheduledRaces()
 
 	if err != nil {
-		return "", err
+		return "A server error occurred, please try again later", err
 	}
 
 	var recurring []ScheduledEvent
@@ -286,6 +286,7 @@ func (dm *DiscordManager) CommandHandler(s *discordgo.Session, m *discordgo.Mess
 		return
 	}
 
+	// if error, log it, but continue with message sending, handler may have put user feedback in msg
 	if err != nil {
 		logrus.WithError(err).Errorf("Error during handling of Discord command")
 	}
