@@ -768,3 +768,19 @@ func (ch *ChampionshipsHandler) modifyEntrantStatus(w http.ResponseWriter, r *ht
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
+
+func (ch *ChampionshipsHandler) reorderEvents(w http.ResponseWriter, r *http.Request) {
+	var eventIDsInOrder []string
+
+	if err := json.NewDecoder(r.Body).Decode(&eventIDsInOrder); err != nil {
+		logrus.WithError(err).Error("couldn't parse event reorder request")
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	if err := ch.championshipManager.ReorderChampionshipEvents(chi.URLParam(r, "championshipID"), eventIDsInOrder); err != nil {
+		logrus.WithError(err).Error("couldn't reorder championship events")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+}

@@ -196,6 +196,7 @@ func Router(
 		r.Get("/championship/{championshipID}/entrants", championshipsHandler.signedUpEntrants)
 		r.Get("/championship/{championshipID}/entrants.csv", championshipsHandler.signedUpEntrantsCSV)
 		r.Get("/championship/{championshipID}/entrant/{entrantGUID}", championshipsHandler.modifyEntrantStatus)
+		r.Post("/championship/{championshipID}/reorder-events", championshipsHandler.reorderEvents)
 
 		r.Get("/championship/import", championshipsHandler.importChampionship)
 		r.Post("/championship/import", championshipsHandler.importChampionship)
