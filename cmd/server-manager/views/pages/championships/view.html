@@ -460,12 +460,19 @@
 
         <div class="clearfix"></div>
 
-        {{ range $eventIndex, $event := $championship.Events }}
-            {{ if not $event.IsRaceWeekend }}
-                {{ template "event-card" dict "Championship" $championship "Event" $event "EventIndex" $eventIndex "EventInProgress" $eventInProgress "Account" $account }}
-            {{ else }}
-                {{ template "raceweekend-card" dict "Championship" $championship "Event" $event "EventIndex" $eventIndex "EventInProgress" $eventInProgress "Account" $account "RaceWeekend" (index $.RaceWeekends $event.RaceWeekendID) }}
+        <div class="championship-events">
+            {{ range $eventIndex, $event := $championship.Events }}
+                {{ if not $event.IsRaceWeekend }}
+                    {{ template "event-card" dict "Championship" $championship "Event" $event "EventIndex" $eventIndex "EventInProgress" $eventInProgress "Account" $account }}
+                {{ else }}
+                    {{ template "raceweekend-card" dict "Championship" $championship "Event" $event "EventIndex" $eventIndex "EventInProgress" $eventInProgress "Account" $account "RaceWeekend" (index $.RaceWeekends $event.RaceWeekendID) }}
+                {{ end }}
             {{ end }}
-        {{ end }}
+        </div>
     </div>
+
+    <script type="text/javascript">
+        var ChampionshipID = "{{ .Championship.ID.String }}";
+        var CanMoveChampionshipEvents = {{ WriteAccess }};
+    </script>
 {{ end }}
