@@ -835,6 +835,7 @@ type ActiveRaceWeekend struct {
 	OverridePassword         bool
 	ReplacementPassword      string
 	Description              string
+	IsPracticeSession        bool
 }
 
 func (a ActiveRaceWeekend) IsChampionship() bool {
@@ -842,7 +843,7 @@ func (a ActiveRaceWeekend) IsChampionship() bool {
 }
 
 func (a ActiveRaceWeekend) IsRaceWeekend() bool {
-	return true
+	return !a.IsPracticeSession
 }
 
 func (a ActiveRaceWeekend) OverrideServerPassword() bool {
@@ -854,7 +855,13 @@ func (a ActiveRaceWeekend) ReplacementServerPassword() string {
 }
 
 func (a ActiveRaceWeekend) EventName() string {
-	return "Race Weekend: " + a.Name
+	name := "Race Weekend: " + a.Name
+
+	if a.IsPracticeSession {
+		name += " - Practice Session"
+	}
+
+	return name
 }
 
 func (a ActiveRaceWeekend) EventDescription() string {
