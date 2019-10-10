@@ -163,7 +163,7 @@ func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
 		championship, err := ph.championshipManager.LoadChampionship(results.ChampionshipID)
 
 		if err != nil {
-			logrus.WithError(err).Errorf("Couldn't load championship with ID: %s")
+			logrus.WithError(err).Errorf("Couldn't load championship with ID: %s", results.ChampionshipID)
 			return false, err
 		}
 
