@@ -610,9 +610,10 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 		if cm.notificationManager.HasNotificationReminders() {
 			for _, timer := range cm.notificationManager.GetNotificationReminders() {
 				duration = time.Until(date.Add(time.Duration(0-timer) * time.Minute))
+				thisTimer := timer
 
 				cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
-					cm.notificationManager.SendChampionshipReminderMessage(championship, event, timer)
+					cm.notificationManager.SendChampionshipReminderMessage(championship, event, thisTimer)
 				})
 			}
 		}
@@ -1400,9 +1401,10 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 						if event.Scheduled.Add(time.Duration(0-timer) * time.Minute).After(time.Now()) {
 							// add reminder
 							duration = time.Until(event.Scheduled.Add(time.Duration(0-timer) * time.Minute))
+							thisTimer := timer
 
 							cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
-								cm.notificationManager.SendChampionshipReminderMessage(championship, event, timer)
+								cm.notificationManager.SendChampionshipReminderMessage(championship, event, thisTimer)
 							})
 						}
 					}

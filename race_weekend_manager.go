@@ -940,9 +940,10 @@ func (rwm *RaceWeekendManager) setupScheduledSessionTimer(raceWeekend *RaceWeeke
 			if reminderTime.After(time.Now()) {
 				// add reminder
 				duration := time.Until(reminderTime)
+				thisTimer := timer
 
 				rwm.scheduledSessionReminderTimers[session.ID.String()] = time.AfterFunc(duration, func() {
-					err := rwm.notificationManager.SendRaceWeekendReminderMessage(raceWeekend, session, timer)
+					err := rwm.notificationManager.SendRaceWeekendReminderMessage(raceWeekend, session, thisTimer)
 
 					if err != nil {
 						logrus.WithError(err).Errorf("Could not send race weekend reminder message")
