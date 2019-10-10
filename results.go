@@ -885,7 +885,7 @@ func (rh *ResultsHandler) list(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	} else if err != nil {
-		logrus.Errorf("could not get result list, err: %s", err)
+		logrus.WithError(err).Errorf("could not get result list")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -915,7 +915,7 @@ func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	} else if err != nil {
-		logrus.Errorf("could not get result, err: %s", err)
+		logrus.WithError(err).Errorf("could not get result")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -923,7 +923,7 @@ func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
 	serverOpts, err := rh.store.LoadServerOptions()
 
 	if err != nil {
-		logrus.Errorf("couldn't load server options, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't load server options")
 	}
 
 	rh.viewRenderer.MustLoadTemplate(w, r, "results/result.html", &resultsViewTemplateVars{
@@ -945,7 +945,7 @@ func (rh *ResultsHandler) file(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	} else if err != nil {
-		logrus.Errorf("could not get result, err: %s", err)
+		logrus.WithError(err).Errorf("could not get result")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

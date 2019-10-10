@@ -502,10 +502,10 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 			err := rc.process.SendUDPMessage(welcomeMessage)
 
 			if err != nil {
-				logrus.Errorf("Unable to send welcome message to: %s, err: %s", driver.CarInfo.DriverName, err)
+				logrus.WithError(err).Errorf("Unable to send welcome message to: %s", driver.CarInfo.DriverName)
 			}
 		} else {
-			logrus.Errorf("Unable to build welcome message to: %s, err: %s", driver.CarInfo.DriverName, err)
+			logrus.WithError(err).Errorf("Unable to build welcome message to: %s", driver.CarInfo.DriverName)
 		}
 	}
 

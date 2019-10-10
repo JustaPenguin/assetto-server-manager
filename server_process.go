@@ -186,7 +186,7 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 		err = cmd.Start()
 
 		if err != nil {
-			logrus.Errorf("Could not run extra command: %s, err: %s", command, err)
+			logrus.WithError(err).Errorf("Could not run extra command: %s", command)
 			continue
 		}
 
@@ -273,7 +273,7 @@ func (as *AssettoServerProcess) stopChildProcesses() {
 		err := kill(command.Process)
 
 		if err != nil {
-			logrus.Errorf("Can't kill process: %d, err: %s", command.Process.Pid, err)
+			logrus.WithError(err).Errorf("Can't kill process: %d", command.Process.Pid)
 			continue
 		}
 
