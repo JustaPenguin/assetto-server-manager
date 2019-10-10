@@ -376,7 +376,11 @@ func (rwm *RaceWeekendManager) applyConfigAndStart(config CurrentRaceConfig, ent
 	return nil
 }
 
-func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSessionID string) error {
+func (rwm *RaceWeekendManager) StartPracticeSession(raceWeekendID string, raceWeekendSessionID string) error {
+	return rwm.StartSession(raceWeekendID, raceWeekendSessionID, true)
+}
+
+func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSessionID string, isPracticeSession bool) error {
 	if IsPremium != "true" {
 		return errors.New("servermanager: premium required")
 	}
@@ -393,14 +397,16 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		return err
 	}
 
-	if !raceWeekend.SessionCanBeRun(session) {
-		return ErrRaceWeekendSessionDependencyIncomplete
-	}
+	if !isPracticeSession {
+		if !raceWeekend.SessionCanBeRun(session) {
+			return ErrRaceWeekendSessionDependencyIncomplete
+		}
 
-	session.StartedTime = time.Now()
+		session.StartedTime = time.Now()
 
-	if err := rwm.store.UpsertRaceWeekend(raceWeekend); err != nil {
-		return err
+		if err := rwm.store.UpsertRaceWeekend(raceWeekend); err != nil {
+			return err
+		}
 	}
 
 	raceWeekendEntryList, err := session.GetRaceWeekendEntryList(raceWeekend, nil, "")
@@ -449,14 +455,39 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		}
 	}
 
-	return rwm.applyConfigAndStart(session.RaceConfig, entryList, &ActiveRaceWeekend{
+	raceWeekendRaceEvent := &ActiveRaceWeekend{
 		Name:                raceWeekend.Name,
 		RaceWeekendID:       raceWeekend.ID,
 		SessionID:           session.ID,
 		OverridePassword:    overridePassword,
 		ReplacementPassword: replacementPassword,
 		Description:         fmt.Sprintf("This is a session in the '%s' Race Weekend.", raceWeekend.Name),
-	})
+	}
+
+	if isPracticeSession {
+		delete(session.RaceConfig.Sessions, SessionTypePractice)
+		delete(session.RaceConfig.Sessions, SessionTypeQualifying)
+		delete(session.RaceConfig.Sessions, SessionTypeRace)
+
+		session.RaceConfig.Sessions[SessionTypePractice] = &SessionConfig{
+			Name:   "Practice",
+			Time:   120,
+			IsOpen: 1,
+		}
+
+		session.RaceConfig.LoopMode = 1
+
+		raceWeekendRaceEvent.IsPracticeSession = true
+
+		if !raceWeekend.SessionCanBeRun(session) {
+			// practice sessions run with the whole race weekend entry list if they are not yet available
+			entryList = raceWeekend.GetEntryList()
+		}
+
+		return rwm.raceManager.applyConfigAndStart(session.RaceConfig, entryList, false, raceWeekendRaceEvent)
+	} else {
+		return rwm.applyConfigAndStart(session.RaceConfig, entryList, raceWeekendRaceEvent)
+	}
 }
 
 func (rwm *RaceWeekendManager) UDPCallback(message udp.Message) {
@@ -524,7 +555,7 @@ func (rwm *RaceWeekendManager) RestartSession(raceWeekendID string, raceWeekendS
 		return err
 	}
 
-	return rwm.StartSession(raceWeekendID, raceWeekendSessionID)
+	return rwm.StartSession(raceWeekendID, raceWeekendSessionID, false)
 }
 
 func (rwm *RaceWeekendManager) CancelSession(raceWeekendID string, raceWeekendSessionID string) error {
@@ -913,7 +944,7 @@ func (rwm *RaceWeekendManager) setupScheduledSessionTimer(raceWeekend *RaceWeeke
 	rwm.clearScheduledSessionTimer(session)
 
 	rwm.scheduledSessionTimers[session.ID.String()] = time.AfterFunc(time.Until(session.ScheduledTime), func() {
-		err := rwm.StartSession(raceWeekend.ID.String(), session.ID.String())
+		err := rwm.StartSession(raceWeekend.ID.String(), session.ID.String(), false)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Could not start scheduled race weekend session")

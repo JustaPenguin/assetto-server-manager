@@ -27,6 +27,10 @@
                 {{ with $sessionResults.ChampionshipID }}
                     <a class="btn btn-success btn-sm mr-1" href="/championship/{{ . }}">View Championship</a>
                 {{ end }}
+
+                {{ with $sessionResults.RaceWeekendID }}
+                    <a class="btn btn-info btn-sm mr-1" href="/race-weekend/{{ . }}">View Race Weekend</a>
+                {{ end }}
                 <a class="btn btn-warning btn-sm mr-1" href="#" target="_blank" id="open-in-simres">Open in Simresults</a>
                 <a class="btn btn-primary btn-sm" href="/results/download/{{ $sessionResults.SessionFile }}.json">Download as JSON</a>
             </div>
