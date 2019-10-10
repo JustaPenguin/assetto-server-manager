@@ -475,6 +475,8 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 			IsOpen: 1,
 		}
 
+		session.RaceConfig.LoopMode = 1
+
 		raceWeekendRaceEvent.IsPracticeSession = true
 
 		if !raceWeekend.SessionCanBeRun(session) {
