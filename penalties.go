@@ -54,14 +54,14 @@ func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
 	results, err := LoadResult(jsonFileName + ".json")
 
 	if err != nil {
-		logrus.Errorf("could not load session result file, err: %s", err)
+		logrus.WithError(err).Errorf("could not load session result file")
 		return false, err
 	}
 
 	err = r.ParseForm()
 
 	if err != nil {
-		logrus.Errorf("could not load parse form, err: %s", err)
+		logrus.WithError(err).Errorf("could not load parse form")
 		return false, err
 	}
 
@@ -74,7 +74,7 @@ func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
 			pen, err := strconv.ParseFloat(penaltyString, 64)
 
 			if err != nil {
-				logrus.Errorf("could not parse penalty time, err: %s", err)
+				logrus.WithError(err).Errorf("could not parse penalty time")
 				return false, err
 			}
 
@@ -104,7 +104,7 @@ func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
 					timeParsed, err := time.ParseDuration(fmt.Sprintf("%.1fs", penaltyTime))
 
 					if err != nil {
-						logrus.Errorf("could not parse penalty time, err: %s", err)
+						logrus.WithError(err).Errorf("could not parse penalty time")
 						return false, err
 					}
 
@@ -155,7 +155,7 @@ func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
 	err = saveResults(jsonFileName+".json", results)
 
 	if err != nil {
-		logrus.Errorf("could not encode to session result file, err: %s", err)
+		logrus.WithError(err).Errorf("could not encode to session result file")
 		return false, err
 	}
 
@@ -163,7 +163,7 @@ func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
 		championship, err := ph.championshipManager.LoadChampionship(results.ChampionshipID)
 
 		if err != nil {
-			logrus.Errorf("Couldn't load championship with ID: %s, err: %s", results.ChampionshipID, err)
+			logrus.WithError(err).Errorf("Couldn't load championship with ID: %s")
 			return false, err
 		}
 
@@ -181,7 +181,7 @@ func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
 		err = ph.championshipManager.UpsertChampionship(championship)
 
 		if err != nil {
-			logrus.Errorf("Couldn't save championship with ID: %s, err: %s", results.ChampionshipID, err)
+			logrus.WithError(err).Errorf("Couldn't save championship with ID: %s", results.ChampionshipID)
 			return false, err
 		}
 	}

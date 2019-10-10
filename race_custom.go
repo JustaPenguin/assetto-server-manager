@@ -142,7 +142,7 @@ func (crh *CustomRaceHandler) list(w http.ResponseWriter, r *http.Request) {
 	recent, starred, looped, scheduled, err := crh.raceManager.ListCustomRaces()
 
 	if err != nil {
-		logrus.Errorf("couldn't list custom races, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't list custom races")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -159,7 +159,7 @@ func (crh *CustomRaceHandler) createOrEdit(w http.ResponseWriter, r *http.Reques
 	customRaceData, err := crh.raceManager.BuildRaceOpts(r)
 
 	if err != nil {
-		logrus.Errorf("couldn't build custom race, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't build custom race")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -171,7 +171,7 @@ func (crh *CustomRaceHandler) submit(w http.ResponseWriter, r *http.Request) {
 	err := crh.raceManager.SetupCustomRace(r)
 
 	if err != nil {
-		logrus.Errorf("couldn't apply quick race, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't apply quick race")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -196,7 +196,7 @@ func (crh *CustomRaceHandler) submit(w http.ResponseWriter, r *http.Request) {
 
 func (crh *CustomRaceHandler) schedule(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		logrus.Errorf("couldn't parse schedule race form, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't parse schedule race form")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -217,7 +217,7 @@ func (crh *CustomRaceHandler) schedule(w http.ResponseWriter, r *http.Request) {
 	date, err := time.ParseInLocation("2006-01-02-15:04", dateString+"-"+timeString, location)
 
 	if err != nil {
-		logrus.Errorf("couldn't parse schedule race date, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't parse schedule race date")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -225,7 +225,7 @@ func (crh *CustomRaceHandler) schedule(w http.ResponseWriter, r *http.Request) {
 	err = crh.raceManager.ScheduleRace(raceID, date, r.FormValue("action"), r.FormValue("event-schedule-recurrence"))
 
 	if err != nil {
-		logrus.Errorf("couldn't schedule race, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't schedule race")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -238,7 +238,7 @@ func (crh *CustomRaceHandler) removeSchedule(w http.ResponseWriter, r *http.Requ
 	err := crh.raceManager.ScheduleRace(chi.URLParam(r, "uuid"), time.Time{}, "remove", "")
 
 	if err != nil {
-		logrus.Errorf("couldn't remove scheduled race, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't remove scheduled race")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -250,7 +250,7 @@ func (crh *CustomRaceHandler) start(w http.ResponseWriter, r *http.Request) {
 	err := crh.raceManager.StartCustomRace(chi.URLParam(r, "uuid"), false)
 
 	if err != nil {
-		logrus.Errorf("couldn't apply custom race, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't apply custom race")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -268,7 +268,7 @@ func (crh *CustomRaceHandler) delete(w http.ResponseWriter, r *http.Request) {
 	err := crh.raceManager.DeleteCustomRace(chi.URLParam(r, "uuid"))
 
 	if err != nil {
-		logrus.Errorf("couldn't delete custom race, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't delete custom race")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -281,7 +281,7 @@ func (crh *CustomRaceHandler) star(w http.ResponseWriter, r *http.Request) {
 	err := crh.raceManager.ToggleStarCustomRace(chi.URLParam(r, "uuid"))
 
 	if err != nil {
-		logrus.Errorf("couldn't star custom race, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't star custom race")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -293,7 +293,7 @@ func (crh *CustomRaceHandler) loop(w http.ResponseWriter, r *http.Request) {
 	err := crh.raceManager.ToggleLoopCustomRace(chi.URLParam(r, "uuid"))
 
 	if err != nil {
-		logrus.Errorf("couldn't add custom race to loop, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't add custom race to loop")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

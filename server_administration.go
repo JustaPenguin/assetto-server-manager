@@ -133,7 +133,7 @@ func (sah *ServerAdministrationHandler) options(w http.ResponseWriter, r *http.R
 	serverOpts, err := sah.raceManager.LoadServerOptions()
 
 	if err != nil {
-		logrus.Errorf("couldn't load server options, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't load server options")
 	}
 
 	form := NewForm(serverOpts, nil, "", AccountFromRequest(r).Name == "admin")
@@ -142,7 +142,7 @@ func (sah *ServerAdministrationHandler) options(w http.ResponseWriter, r *http.R
 		err := form.Submit(r)
 
 		if err != nil {
-			logrus.Errorf("couldn't submit form, err: %s", err)
+			logrus.WithError(err).Errorf("couldn't submit form")
 		}
 
 		UseShortenedDriverNames = serverOpts.UseShortenedDriverNames == 1
@@ -152,7 +152,7 @@ func (sah *ServerAdministrationHandler) options(w http.ResponseWriter, r *http.R
 		err = sah.raceManager.SaveServerOptions(serverOpts)
 
 		if err != nil {
-			logrus.Errorf("couldn't save config, err: %s", err)
+			logrus.WithError(err).Errorf("couldn't save config")
 			AddErrorFlash(w, r, "Failed to save server options")
 		} else {
 			AddFlash(w, r, "Server options successfully saved!")
@@ -283,7 +283,7 @@ func (sah *ServerAdministrationHandler) serverProcess(w http.ResponseWriter, r *
 	}
 
 	if err != nil {
-		logrus.Errorf("could not change "+noun+" status, err: %s", err)
+		logrus.WithError(err).Errorf("could not change " + noun + " status")
 		AddErrorFlash(w, r, "Unable to change "+noun+" status")
 	} else {
 		AddFlash(w, r, noun+" successfully "+txt)

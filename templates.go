@@ -350,7 +350,7 @@ func trackInfo(track, layout string) *TrackInfo {
 	t, err := GetTrackInfo(track, layout)
 
 	if err != nil {
-		logrus.Errorf("Could not get track info for %s (%s), err: %s", track, layout, err)
+		logrus.WithError(err).Errorf("Could not get track info for %s (%s)", track, layout)
 		return nil
 	}
 
@@ -532,7 +532,7 @@ func (tr *Renderer) MustLoadTemplate(w http.ResponseWriter, r *http.Request, vie
 
 	if err != nil {
 		raven.CaptureError(err, nil)
-		logrus.Errorf("Unable to load template: %s, err: %s", view, err)
+		logrus.WithError(err).Errorf("Unable to load template: %s", view)
 		http.Error(w, "unable to load template", http.StatusInternalServerError)
 		return
 	}
@@ -578,7 +578,7 @@ func (tr *Renderer) MustLoadPartial(w http.ResponseWriter, r *http.Request, part
 	err := tr.LoadPartial(w, r, partial, vars)
 
 	if err != nil {
-		logrus.Errorf("Unable to load partial: %s, err: %s", partial, err)
+		logrus.WithError(err).Errorf("Unable to load partial: %s", partial)
 		http.Error(w, "unable to load partial", http.StatusInternalServerError)
 		return
 	}

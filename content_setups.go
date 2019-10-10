@@ -48,7 +48,7 @@ func ListAllSetups() (CarSetups, error) {
 		name, err := getCarNameFromSetup(path)
 
 		if err != nil {
-			logrus.Errorf("Could not get car name from setup file %s, err: %s", file.Name(), err)
+			logrus.WithError(err).Errorf("Could not get car name from setup file %s", file.Name())
 			return nil
 		}
 
@@ -172,7 +172,8 @@ func uploadCarSetup(r *http.Request) (string, error) {
 
 func carSetupsUploadHandler(w http.ResponseWriter, r *http.Request) {
 	if carName, err := uploadCarSetup(r); err != nil {
-		logrus.Errorf("Could not upload setup file, err: %s", err)
+		logrus.WithError(err).Errorf("Could not upload setup file")
+
 		if carName != "" {
 			AddErrorFlash(w, r, fmt.Sprintf("Unable to upload setup file for %s", carName))
 		} else {
@@ -193,7 +194,7 @@ func carSetupDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	err := os.RemoveAll(filepath.Join(ServerInstallPath, "setups", carName, trackName, setupName))
 
 	if err != nil {
-		logrus.Errorf("Could not remove setup %s/%s/%s, err: %s", carName, trackName, setupName, err)
+		logrus.WithError(err).Errorf("Could not remove setup %s/%s/%s", carName, trackName, setupName)
 		AddErrorFlash(w, r, "Couldn't delete setup for "+carName)
 	} else {
 		AddFlash(w, r, "Setup successfully deleted!")
