@@ -52,8 +52,8 @@ func (s *SessionResults) Anonymize() {
 		car.Driver.GUID = GetMD5Hash(car.Driver.GUID)
 		car.Driver.Name = shortenDriverName(car.Driver.Name)
 
-		for _, guid := range car.Driver.GuidsList {
-			guid = GetMD5Hash(guid)
+		for index := range car.Driver.GuidsList {
+			car.Driver.GuidsList[index] = GetMD5Hash(car.Driver.GuidsList[index])
 		}
 	}
 
@@ -250,8 +250,7 @@ func (s *SessionResults) GetPosForLap(guid string, lapNum int64) int {
 
 	driverLap := make(map[string]int)
 
-	for overallLapNum, lap := range s.Laps {
-		overallLapNum++
+	for _, lap := range s.Laps {
 		driverLap[lap.DriverGUID]++
 
 		if driverLap[lap.DriverGUID] == int(lapNum) && lap.DriverGUID == guid {

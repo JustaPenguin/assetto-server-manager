@@ -1394,11 +1394,9 @@ func (rm *RaceManager) RescheduleNotifications(oldServerOpts *GlobalServerConfig
 			race := race
 
 			if race.Scheduled.After(time.Now()) {
-				duration := time.Until(race.Scheduled)
-
 				if race.Scheduled.Add(time.Duration(0-newServerOpts.NotificationReminderTimer) * time.Minute).After(time.Now()) {
 					// add reminder
-					duration = time.Until(race.Scheduled.Add(time.Duration(0-newServerOpts.NotificationReminderTimer) * time.Minute))
+					duration := time.Until(race.Scheduled.Add(time.Duration(0-newServerOpts.NotificationReminderTimer) * time.Minute))
 
 					rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
 						_ = rm.notificationManager.SendRaceReminderMessage(race)
