@@ -980,6 +980,7 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 		return err
 	}
 
+	originalDate := race.Scheduled
 	race.Scheduled = date
 
 	// if there is an existing schedule timer for this event stop it
@@ -1035,6 +1036,7 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 		}
 
 	} else {
+		_ = rm.notificationManager.SendRaceCancelledMessage(race, originalDate)
 		race.ClearRecurrenceRule()
 	}
 

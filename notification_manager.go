@@ -18,6 +18,7 @@ type NotificationDispatcher interface {
 	SendMessageWithLink(msg string, linkText string, link *url.URL) error
 	SendRaceStartMessage(config ServerConfig, event RaceEvent) error
 	SendRaceScheduledMessage(event *CustomRace, date time.Time) error
+	SendRaceCancelledMessage(event *CustomRace, date time.Time) error
 	SendRaceReminderMessage(event *CustomRace, timer int) error
 	SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent, timer int) error
 	SendRaceWeekendReminderMessage(raceWeekend *RaceWeekend, session *RaceWeekendSession, timer int) error
@@ -186,6 +187,10 @@ func (nm *NotificationManager) SendRaceScheduledMessage(event *CustomRace, date 
 		return err
 	}
 
+	if serverOpts.NotifyWhenScheduled != 1 {
+		return nil
+	}
+
 	dateStr := date.Format("Mon, 02 Jan 2006 15:04:05 MST")
 
 	var aCarNames []string
@@ -215,6 +220,36 @@ func (nm *NotificationManager) SendRaceScheduledMessage(event *CustomRace, date 
 	msg += fmt.Sprintf("Date: %s\n", dateStr)
 	msg += fmt.Sprintf("Track: %s\n", trackInfo)
 	msg += fmt.Sprintf("Car(s): %s\n", carNames)
+
+	return nm.SendMessage(msg)
+}
+
+// SendRaceScheduledMessage sends a notification when a race is scheduled
+func (nm *NotificationManager) SendRaceCancelledMessage(event *CustomRace, date time.Time) error {
+	serverOpts, err := nm.store.LoadServerOptions()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't load server options, skipping notification")
+		return err
+	}
+
+	if serverOpts.NotifyWhenScheduled != 1 {
+		return nil
+	}
+
+	dateStr := date.Format("Mon, 02 Jan 2006 15:04:05 MST")
+
+	msg := "The following scheduled race has been cancelled\n"
+	msg += fmt.Sprintf("Server: %s\n", serverOpts.Name)
+	eventName := event.EventName()
+	trackInfo := trackSummary(event.RaceConfig.Track, event.RaceConfig.TrackLayout)
+
+	if eventName != "" {
+		msg += fmt.Sprintf("Event name: %s\n", eventName)
+	}
+
+	msg += fmt.Sprintf("Date: %s\n", dateStr)
+	msg += fmt.Sprintf("Track: %s\n", trackInfo)
 
 	return nm.SendMessage(msg)
 }
