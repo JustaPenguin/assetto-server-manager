@@ -224,7 +224,7 @@ func (nm *NotificationManager) SendRaceScheduledMessage(event *CustomRace, date 
 	return nm.SendMessage(msg)
 }
 
-// SendRaceScheduledMessage sends a notification when a race is scheduled
+// SendRaceCancelledMessage sends a notification when a race is cancelled
 func (nm *NotificationManager) SendRaceCancelledMessage(event *CustomRace, date time.Time) error {
 	serverOpts, err := nm.store.LoadServerOptions()
 

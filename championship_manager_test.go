@@ -142,6 +142,10 @@ func (d dummyNotificationManager) SendRaceScheduledMessage(event *CustomRace, da
 	return nil
 }
 
+func (d dummyNotificationManager) SendRaceCancelledMessage(event *CustomRace, date time.Time) error {
+	return nil
+}
+
 func (d dummyNotificationManager) SendRaceReminderMessage(event *CustomRace, timer int) error {
 	return nil
 }
