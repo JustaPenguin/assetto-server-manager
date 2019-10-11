@@ -520,21 +520,36 @@ func (c *Championship) AddClass(class *ChampionshipClass) {
 
 // Progress of the Championship as a percentage
 func (c *Championship) Progress() float64 {
-	numRaces := float64(len(c.Events))
+	numEvents := float64(len(c.Events))
 
-	if numRaces == 0 {
-		return 0
-	}
-
-	numCompletedRaces := float64(0)
-
-	for _, race := range c.Events {
-		if race.Completed() {
-			numCompletedRaces++
+	for _, event := range c.Events {
+		if event.IsRaceWeekend() && event.RaceWeekend != nil {
+			numEvents += float64(len(event.RaceWeekend.Sessions)) - 1
 		}
 	}
 
-	return (numCompletedRaces / numRaces) * 100
+	if numEvents == 0 {
+		return 0
+	}
+
+	numCompletedEvents := float64(0)
+
+	for _, event := range c.Events {
+
+		if event.Completed() {
+			numCompletedEvents++
+		}
+
+		if event.IsRaceWeekend() && event.RaceWeekend != nil {
+			for _, session := range event.RaceWeekend.Sessions {
+				if session.Completed() {
+					numCompletedEvents++
+				}
+			}
+		}
+	}
+
+	return (numCompletedEvents / numEvents) * 100
 }
 
 func (c *Championship) NumPendingSignUps() int {
@@ -981,6 +996,8 @@ func ExtractRaceWeekendSessionsIntoIndividualEvents(inEvents []*ChampionshipEven
 
 				e.ID = session.ID
 				e.RaceSetup = session.RaceConfig
+				e.CompletedTime = session.CompletedTime
+				e.StartedTime = session.StartedTime
 
 				e.Sessions[session.SessionType()] = &ChampionshipSession{
 					StartedTime:        session.StartedTime,
