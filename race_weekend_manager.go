@@ -428,8 +428,9 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 
 		session.StartedTime = time.Now()
 
-	if err := rwm.UpsertRaceWeekend(raceWeekend); err != nil {
-		return err
+		if err := rwm.UpsertRaceWeekend(raceWeekend); err != nil {
+			return err
+		}
 	}
 
 	raceWeekendEntryList, err := session.GetRaceWeekendEntryList(raceWeekend, nil, "")
