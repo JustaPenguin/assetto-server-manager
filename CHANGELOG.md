@@ -3,7 +3,7 @@ v1.5.0
 
 Added:
 
-* Race Weekends - A Race Weekend is a group of sequential sessions that can be run at any time. For example, you could set up a Qualifying session to run on a Saturday, then the Race to follow it on a Sunday. Server Manager handles the starting grid for you, and lets you organise Entrants into splits based on their results and other factors!
+* Race Weekends (premium feature) - A Race Weekend is a group of sequential sessions that can be run at any time. For example, you could set up a Qualifying session to run on a Saturday, then the Race to follow it on a Sunday. Server Manager handles the starting grid for you, and lets you organise Entrants into splits based on their results and other factors!
   
   - You can create individual Race Weekends or create Race Weekends as part of a Championship
   - Race Weekends need a fully configured Entry List to work properly. If you're using a Championship Race Weekend, the Championship Entry List is used.
@@ -17,6 +17,7 @@ Added:
   - Race Weekend sessions are shown in a flow-chart, so you can see the connections between the sessions.
   - In Multiclass Championship Race Weekends, the sorting of the Entry Lists is per class. The classes are then ordered by the fastest lap of each class (so LMP1 cars will be ahead of GTE cars on the grid, for example)
   - Each Championship Race Weekend session allows you to set points for the individual session. Championship points are calculated using these points values.
+  - You can schedule individual Race Weekend Sessions too!
 
 * Discord integration! Thanks to @cheesegrits for this! Check out the Server Options page for more information.
 * Dark Theme! You can now set Server Manager to use a Dark Theme in the Server Options. You can also edit this for your account in the "Update Details" page.
@@ -24,12 +25,18 @@ Added:
 * Server Name Templates - you can now specify (in Server Options) how Server Manager displays your server and event name.
 * We've tidied up the Server Options page a bit. It was getting quite large! The new headings should make things a bit more readable.
 * If 'Show Race Name In Server Lobby' is enabled, Quick Races and Custom Races with no specified name now show the track name in the Server Lobby.
+* A global option to switch speed units from Km/h to MPH for people who want to use the correct measurement system.
+* "Force Virtual Mirror" now defaults to on in all race setup forms.
+* Admin Control Panel on the Live Timing page. Allows admins to send server wide messages, advance to the next/restart session, kick users and other admin commands!
+* You can now re-order Championship Events! Drag them around on the page using the top bar of the Championship Event.
 
 Fixes:
 
 * Championship Sign Up Forms are only shown if the Championship has free slots left and the Championship is not fully complete.
 * Championships now always show the 'Entrants' tab, so you can check to see if you're in the list!
 * Improved cache validation so that user-uploaded files can change without needing to empty the browser cache.
+
+---
 
 v1.4.2
 ------

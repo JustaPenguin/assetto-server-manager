@@ -55,7 +55,7 @@ func (cm *ChampionshipManager) applyConfigAndStart(config CurrentRaceConfig, ent
 }
 
 func (cm *ChampionshipManager) LoadChampionship(id string) (*Championship, error) {
-	championship, err := cm.raceStore.LoadChampionship(id)
+	championship, err := cm.store.LoadChampionship(id)
 
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func (cm *ChampionshipManager) LoadChampionship(id string) (*Championship, error
 
 	for _, event := range championship.Events {
 		if event.IsRaceWeekend() {
-			event.RaceWeekend, err = cm.raceStore.LoadRaceWeekend(event.RaceWeekendID.String())
+			event.RaceWeekend, err = cm.store.LoadRaceWeekend(event.RaceWeekendID.String())
 
 			if err != nil {
 				return nil, err
@@ -75,7 +75,7 @@ func (cm *ChampionshipManager) LoadChampionship(id string) (*Championship, error
 }
 
 func (cm *ChampionshipManager) UpsertChampionship(c *Championship) error {
-	err := cm.raceStore.UpsertChampionship(c)
+	err := cm.store.UpsertChampionship(c)
 
 	if err != nil {
 		return err
@@ -89,11 +89,23 @@ func (cm *ChampionshipManager) UpsertChampionship(c *Championship) error {
 }
 
 func (cm *ChampionshipManager) DeleteChampionship(id string) error {
-	return cm.raceStore.DeleteChampionship(id)
+	championship, err := cm.store.LoadChampionship(id)
+
+	if err != nil {
+		return err
+	}
+
+	if championship.ACSR {
+		championship.ACSR = false
+
+		ACSRSendResult(championship)
+	}
+
+	return cm.store.DeleteChampionship(id)
 }
 
 func (cm *ChampionshipManager) ListChampionships() ([]*Championship, error) {
-	champs, err := cm.raceStore.ListChampionships()
+	champs, err := cm.store.ListChampionships()
 
 	if err != nil {
 		return nil, err
@@ -334,7 +346,23 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (*Rac
 
 		// override Current race config if there is a previous championship race configured
 		if len(championship.Events) > 0 {
-			opts.Current = championship.Events[len(championship.Events)-1].RaceSetup
+			foundEvent := false
+
+			// championship events should only inherit from non-race weekend events
+			for i := len(championship.Events) - 1; i >= 0; i-- {
+				event := championship.Events[i]
+
+				if !event.IsRaceWeekend() {
+					opts.Current = event.RaceSetup
+					foundEvent = true
+				}
+			}
+
+			if !foundEvent {
+				defaultConfig := ConfigIniDefault()
+				opts.Current = defaultConfig.CurrentRaceConfig
+			}
+
 			opts.ChampionshipHasAtLeastOnceRace = true
 		} else {
 			defaultConfig := ConfigIniDefault()
@@ -422,7 +450,7 @@ func (cm *ChampionshipManager) DeleteEvent(championshipID string, eventID string
 			toDelete = i
 
 			if event.IsRaceWeekend() {
-				if err := cm.raceStore.DeleteRaceWeekend(event.RaceWeekendID.String()); err != nil {
+				if err := cm.store.DeleteRaceWeekend(event.RaceWeekendID.String()); err != nil {
 					return err
 				}
 			}
@@ -556,7 +584,7 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 		return err
 	}
 
-	serverOpts, err := cm.raceStore.LoadServerOptions()
+	serverOpts, err := cm.store.LoadServerOptions()
 
 	if err != nil {
 		return err
@@ -581,7 +609,7 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 			err := cm.StartEvent(championship.ID.String(), event.ID.String(), false)
 
 			if err != nil {
-				logrus.Errorf("couldn't start scheduled race, err: %s", err)
+				logrus.WithError(err).Errorf("couldn't start scheduled race")
 			}
 		})
 
@@ -608,7 +636,7 @@ func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
 	championship, err := cm.LoadChampionship(cm.activeChampionship.ChampionshipID.String())
 
 	if err != nil {
-		logrus.Errorf("Couldn't load championship with ID: %s, err: %s", cm.activeChampionship.ChampionshipID.String(), err)
+		logrus.WithError(err).Errorf("Couldn't load championship with ID: %s", cm.activeChampionship.ChampionshipID.String())
 		return
 	}
 
@@ -667,7 +695,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 		err := cm.UpsertChampionship(championship)
 
 		if err != nil {
-			logrus.Errorf("Could not save session results to championship %s, err: %s", cm.activeChampionship.ChampionshipID.String(), err)
+			logrus.WithError(err).Errorf("Could not save session results to championship %s", cm.activeChampionship.ChampionshipID.String())
 			return
 		}
 	}()
@@ -744,10 +772,10 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 				err := cm.process.SendUDPMessage(welcomeMessage)
 
 				if err != nil {
-					logrus.Errorf("Unable to send welcome message to: %s, err: %s", entrant.DriverName, err)
+					logrus.WithError(err).Errorf("Unable to send welcome message to: %s", entrant.DriverName)
 				}
 			} else {
-				logrus.Errorf("Unable to build welcome message to: %s, err: %s", entrant.DriverName, err)
+				logrus.WithError(err).Errorf("Unable to build welcome message to: %s", entrant.DriverName)
 			}
 		}
 	case udp.SessionInfo:
@@ -810,7 +838,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 		results, err := LoadResult(filename)
 
 		if err != nil {
-			logrus.Errorf("Could not read session results for %s, err: %s", cm.activeChampionship.SessionType.String(), err)
+			logrus.WithError(err).Errorf("Could not read session results for %s", cm.activeChampionship.SessionType.String())
 			return
 		}
 
@@ -819,7 +847,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 		err = saveResults(filename, results)
 
 		if err != nil {
-			logrus.Errorf("Could not update session results for %s, err: %s", cm.activeChampionship.SessionType.String(), err)
+			logrus.WithError(err).Errorf("Could not update session results for %s", cm.activeChampionship.SessionType.String())
 			return
 		}
 
@@ -846,7 +874,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			err := cm.process.Stop()
 
 			if err != nil {
-				logrus.Errorf("Could not stop Assetto Process, err: %s", err)
+				logrus.WithError(err).Errorf("Could not stop Assetto Process")
 			}
 		}
 
@@ -991,6 +1019,16 @@ func (cm *ChampionshipManager) ImportChampionship(jsonData string) (string, erro
 
 	if err != nil {
 		return "", err
+	}
+
+	for _, event := range championship.Events {
+		if event.IsRaceWeekend() {
+			err := cm.store.UpsertRaceWeekend(event.RaceWeekend)
+
+			if err != nil {
+				return "", err
+			}
+		}
 	}
 
 	return championship.ID.String(), cm.UpsertChampionship(championship)
@@ -1221,6 +1259,30 @@ func (cm *ChampionshipManager) ModifyTeamPenalty(championshipID, classID, team s
 	return cm.UpsertChampionship(championship)
 }
 
+func (cm *ChampionshipManager) ReorderChampionshipEvents(championshipID string, championshipEventIDsInOrder []string) error {
+	championship, err := cm.LoadChampionship(championshipID)
+
+	if err != nil {
+		return err
+	}
+
+	var orderedEvents []*ChampionshipEvent
+
+	for _, championshipEventID := range championshipEventIDsInOrder {
+		event, err := championship.EventByID(championshipEventID)
+
+		if err != nil {
+			return err
+		}
+
+		orderedEvents = append(orderedEvents, event)
+	}
+
+	championship.Events = orderedEvents
+
+	return cm.UpsertChampionship(championship)
+}
+
 type ValidationError string
 
 func (e ValidationError) Error() string {
@@ -1319,7 +1381,7 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 		return err
 	}
 
-	serverOpts, err := cm.raceStore.LoadServerOptions()
+	serverOpts, err := cm.store.LoadServerOptions()
 
 	if err != nil {
 		return err
@@ -1339,7 +1401,7 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 					err := cm.StartEvent(championship.ID.String(), event.ID.String(), false)
 
 					if err != nil {
-						logrus.Errorf("couldn't start scheduled race, err: %s", err)
+						logrus.WithError(err).Errorf("couldn't start scheduled race")
 					}
 				})
 

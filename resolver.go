@@ -253,7 +253,7 @@ func (r *Resolver) resolvePenaltiesHandler() *PenaltiesHandler {
 		return r.penaltiesHandler
 	}
 
-	r.penaltiesHandler = NewPenaltiesHandler(r.resolveBaseHandler(), r.resolveChampionshipManager())
+	r.penaltiesHandler = NewPenaltiesHandler(r.resolveBaseHandler(), r.resolveChampionshipManager(), r.resolveRaceWeekendManager())
 
 	return r.penaltiesHandler
 }
@@ -263,7 +263,7 @@ func (r *Resolver) resolveResultsHandler() *ResultsHandler {
 		return r.resultsHandler
 	}
 
-	r.resultsHandler = NewResultsHandler(r.resolveBaseHandler())
+	r.resultsHandler = NewResultsHandler(r.resolveBaseHandler(), r.ResolveStore())
 
 	return r.resultsHandler
 }
@@ -363,7 +363,7 @@ func (r *Resolver) resolveRaceWeekendManager() *RaceWeekendManager {
 		return r.raceWeekendManager
 	}
 
-	r.raceWeekendManager = NewRaceWeekendManager(r.resolveRaceManager(), r.ResolveStore(), r.resolveServerProcess())
+	r.raceWeekendManager = NewRaceWeekendManager(r.resolveRaceManager(), r.ResolveStore(), r.resolveServerProcess(), r.resolveNotificationManager())
 
 	return r.raceWeekendManager
 }

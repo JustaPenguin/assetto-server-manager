@@ -38,7 +38,9 @@ type File struct {
 func (f *File) Bytes() ([]byte, error) {
 	out := make([]byte, f.length)
 
-	_, err := f.reader.Seek(f.start, io.SeekStart)
+	if _, err := f.reader.Seek(f.start, io.SeekStart); err != nil {
+		return nil, err
+	}
 
 	if err := binary.Read(f.reader, binary.LittleEndian, &out); err != nil {
 		return nil, err

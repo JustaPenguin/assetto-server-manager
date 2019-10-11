@@ -30,7 +30,7 @@ func NewDiscordManager(store Store, scheduledRacesManager *ScheduledRacesManager
 	opts, err := store.LoadServerOptions()
 
 	if err != nil {
-		logrus.Errorf("couldn't load server options, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't load server options")
 		return discordManager, err
 	}
 
@@ -44,7 +44,7 @@ func NewDiscordManager(store Store, scheduledRacesManager *ScheduledRacesManager
 		}
 
 		if err != nil {
-			logrus.Errorf("couldn't open discord session, err: %s", err)
+			logrus.WithError(err).Errorf("couldn't open discord session")
 			return discordManager, err
 		}
 	} else {
@@ -77,7 +77,7 @@ func (dm *DiscordManager) SaveServerOptions(oldServerOpts *GlobalServerConfig, n
 		}
 
 		if err != nil {
-			logrus.Errorf("couldn't open discord session, err: %s", err)
+			logrus.WithError(err).Errorf("couldn't open discord session")
 			return err
 		}
 
@@ -122,7 +122,7 @@ func (dm *DiscordManager) CommandHandler(s *discordgo.Session, m *discordgo.Mess
 		_, err = s.ChannelMessageSend(m.ChannelID, msg)
 
 		if err != nil {
-			logrus.Errorf("couldn't open discord session, err: %s", err)
+			logrus.WithError(err).Errorf("couldn't open discord session")
 		}
 	}
 }
@@ -142,7 +142,7 @@ func (dm *DiscordManager) SendMessage(msg string) error {
 		opts, err := dm.store.LoadServerOptions()
 
 		if err != nil {
-			logrus.Errorf("couldn't load server options, err: %s", err)
+			logrus.WithError(err).Errorf("couldn't load server options")
 			return err
 		}
 
@@ -152,12 +152,12 @@ func (dm *DiscordManager) SendMessage(msg string) error {
 			_, err = dm.discord.ChannelMessageSend(opts.DiscordChannelID, msg)
 
 			if err != nil {
-				logrus.Errorf("couldn't send discord message, err: %s", err)
+				logrus.WithError(err).Errorf("couldn't send discord message")
 				return err
 			}
 		} else {
 			err = errors.New("no channel ID set in config")
-			logrus.Errorf("couldn't send discord message, err: %s", err)
+			logrus.WithError(err).Errorf("couldn't send discord message")
 			return err
 		}
 	}
@@ -174,7 +174,7 @@ func (dm *DiscordManager) SendEmbed(msg string, linkText string, link *url.URL) 
 	opts, err := dm.store.LoadServerOptions()
 
 	if err != nil {
-		logrus.Errorf("couldn't load server options, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't load server options")
 		return err
 	}
 
@@ -185,12 +185,12 @@ func (dm *DiscordManager) SendEmbed(msg string, linkText string, link *url.URL) 
 		_, err = dm.discord.ChannelMessageSendEmbed(opts.DiscordChannelID, embed.NewGenericEmbed(msg, "%s", linkMsg))
 
 		if err != nil {
-			logrus.Errorf("couldn't send discord message, err: %s", err)
+			logrus.WithError(err).Errorf("couldn't send discord message")
 			return err
 		}
 	} else {
 		err = errors.New("no channel ID set in config")
-		logrus.Errorf("couldn't send discord message, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't send discord message")
 		return err
 	}
 

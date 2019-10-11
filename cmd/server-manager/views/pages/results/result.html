@@ -6,6 +6,7 @@
 <div class="results">
     {{ $sessionResults := .Result }}
     {{ $account := .Account }}
+    {{ $useMPH := .UseMPH }}
 
 
     <h1 class="text-center">{{ prettify $sessionResults.TrackName false }} {{ with $sessionResults.TrackConfig }} - {{ prettify . true }} {{ end }}</h1>
@@ -25,6 +26,10 @@
             <div class="float-right">
                 {{ with $sessionResults.ChampionshipID }}
                     <a class="btn btn-success btn-sm mr-1" href="/championship/{{ . }}">View Championship</a>
+                {{ end }}
+
+                {{ with $sessionResults.RaceWeekendID }}
+                    <a class="btn btn-info btn-sm mr-1" href="/race-weekend/{{ . }}">View Race Weekend</a>
                 {{ end }}
                 <a class="btn btn-warning btn-sm mr-1" href="#" target="_blank" id="open-in-simres">Open in Simresults</a>
                 <a class="btn btn-primary btn-sm" href="/results/download/{{ $sessionResults.SessionFile }}.json">Download as JSON</a>
@@ -97,7 +102,12 @@
                                                     Collision with car
                                                 {{ end }}
                                             </td>
-                                            <td>{{ printf "%.1f" $event.ImpactSpeed }}</td>
+
+                                            {{ if $useMPH }}
+                                                <td>{{ printf "%.1f" (multiplyFloats $event.ImpactSpeed 0.621371) }} MPH</td>
+                                            {{ else }}
+                                                <td>{{ printf "%.1f" $event.ImpactSpeed }} Km/h</td>
+                                            {{ end }}
                                             <td>{{ $event.GetRelPosition }}</td>
                                             <td>{{ $event.GetWorldPosition }}</td>
                                         </tr>

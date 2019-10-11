@@ -35,6 +35,8 @@
 
 {{ define "content" }}
     {{ $CMJoinLink := .CMJoinLink }}
+    {{ $UseMPH := .UseMPH }}
+
     {{ with .RaceDetails }}
         <div class="race-control-event-info">
             {{ range $sessionName, $session := .RaceConfig.Sessions }}
@@ -48,6 +50,9 @@
             <br>
 
             {{ with $CMJoinLink }} <a id="cm-join-link" href="{{ . }}" class="btn btn-success btn-sm mt-1">Join</a> {{ end }}
+            {{ if AdminAccess }}
+                <button id="admin-panel" data-toggle="popover" class="btn btn-sm btn-info mt-1" data-placement="bottom">Admin Panel</button>
+            {{ end }}
         </div>
 
         <div class="race-control-weather-info">
@@ -85,6 +90,57 @@
                 <li><strong>Width:</strong> <span id="track-width"></span></li>
                 <li><strong>Run:</strong> <span id="track-run"></span></li>
             </ul>
+        </div>
+
+        <div id="popover-content-admin-panel" class="d-none">
+            <form class="form-inline p-1" id="broadcast-chat-form" name="broadcast-chat-form" action="/broadcast-chat">
+
+                <div class="form-row">
+                    <label for="broadcast-chat">Broadcast Chat: </label>
+                </div>
+
+                <div class="form-row">
+                    <input type="text" name="broadcast-chat" id="broadcast-chat" class="broadcast-chat form-control form-control-sm" placeholder="Have a great race everybody!">
+
+                    <button class="btn btn-success btn-sm ml-1" type="submit">Send</button>
+                </div>
+
+            </form>
+
+            <form class="form-inline p-1" id="admin-command-form" name="admin-command-form" action="/admin-command">
+
+                <div class="form-row">
+                    <label for="admin-command">Admin Command: </label>
+                </div>
+
+                <div class="form-row">
+                    <input type="text" name="admin-command" id="admin-command" class="admin-command form-control form-control-sm" placeholder="/ballast 2 100">
+
+                    <button class="btn btn-success btn-sm ml-1" type="submit">Send</button>
+                </div>
+
+            </form>
+
+            <form class="form p-1" id="kick-user-form" name="kick-user-form" action="/kick-user">
+                <div class="form-row" style="margin-bottom: -7px">
+                    <label for="kick-user">Kick User: </label>
+                </div>
+
+                <div class="form-row">
+                    <select class="form-control-sm kick-user" name="kick-user" id="kick-user">
+                        <option value="default-driver-spacer">No drivers found!</option>
+                        <!-- driver kick opts appended by javascript -->
+                    </select>
+
+                    <button class="btn btn-danger btn-sm ml-1" type="submit">Kick</button>
+                </div>
+            </form>
+
+            <a id="next-session" href="/next-session" class="btn btn-success btn-sm mt-3">Next Session</a>
+            <a id="restart-session" href="/restart-session" class="btn btn-warning btn-sm mt-3">Restart Session</a>
+
+
+
         </div>
 
         <div class="clearfix"></div>
@@ -159,5 +215,9 @@
                 </div>
             {{ end }}
         </form>
+
+        <script type="text/javascript">
+            const useMPH = {{ $UseMPH }};
+        </script>
     {{ end }}
 {{ end }}

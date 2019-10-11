@@ -221,7 +221,7 @@ func (asu *AssettoServerUDP) SendMessage(message Message) error {
 
 		return err
 
-	case GetSessionInfo:
+	case GetSessionInfo, *RestartSession, *NextSession:
 		err := binary.Write(asu.listener, binary.LittleEndian, a.Event())
 
 		if err != nil {
@@ -254,6 +254,66 @@ func (asu *AssettoServerUDP) SendMessage(message Message) error {
 		}
 
 		return nil
+
+	case *BroadcastChat:
+		buf := new(bytes.Buffer)
+
+		if err := binary.Write(buf, binary.LittleEndian, a.EventType); err != nil {
+			return err
+		}
+
+		if err := binary.Write(buf, binary.LittleEndian, a.Len); err != nil {
+			return err
+		}
+
+		if _, err := buf.Write(a.UTF32Encoded); err != nil {
+			return err
+		}
+
+		if _, err := io.Copy(asu.listener, buf); err != nil {
+			return err
+		}
+
+		return nil
+
+	case *AdminCommand:
+		buf := new(bytes.Buffer)
+
+		if err := binary.Write(buf, binary.LittleEndian, a.EventType); err != nil {
+			return err
+		}
+
+		if err := binary.Write(buf, binary.LittleEndian, a.Len); err != nil {
+			return err
+		}
+
+		if _, err := buf.Write(a.UTF32Encoded); err != nil {
+			return err
+		}
+
+		if _, err := io.Copy(asu.listener, buf); err != nil {
+			return err
+		}
+
+		return nil
+
+	case *KickUser:
+		buf := new(bytes.Buffer)
+
+		if err := binary.Write(buf, binary.LittleEndian, a.EventType); err != nil {
+			return err
+		}
+
+		if err := binary.Write(buf, binary.LittleEndian, a.CarID); err != nil {
+			return err
+		}
+
+		if _, err := io.Copy(asu.listener, buf); err != nil {
+			return err
+		}
+
+		return nil
+
 	}
 
 	return errors.New("udp: invalid message type")
@@ -319,6 +379,10 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 		var isConnected uint8
 
 		err = binary.Read(r, binary.LittleEndian, &isConnected)
+
+		if err != nil {
+			return nil, err
+		}
 
 		response = CarInfo{
 			CarID:       carID,

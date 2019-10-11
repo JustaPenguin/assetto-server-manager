@@ -17,6 +17,7 @@ type NotificationDispatcher interface {
 	SendRaceScheduledMessage(event *CustomRace, date time.Time) error
 	SendRaceReminderMessage(event *CustomRace) error
 	SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent) error
+	SendRaceWeekendReminderMessage(raceWeekend *RaceWeekend, session *RaceWeekendSession) error
 	SaveServerOptions(oldServerOpts *GlobalServerConfig, newServerOpts *GlobalServerConfig) error
 }
 
@@ -217,4 +218,18 @@ func (nm *NotificationManager) SendChampionshipReminderMessage(championship *Cha
 	}
 
 	return nm.SendMessage(fmt.Sprintf("%s race at %s starts in %d minutes", championship.Name, trackInfo.Name, serverOpts.NotificationReminderTimer))
+}
+
+// SendRaceWeekendReminderMessage sends a reminder a configurable number of minutes prior to a RaceWeekendSession starting
+func (nm *NotificationManager) SendRaceWeekendReminderMessage(raceWeekend *RaceWeekend, session *RaceWeekendSession) error {
+	trackInfo := trackSummary(session.RaceConfig.Track, session.RaceConfig.TrackLayout)
+
+	serverOpts, err := nm.store.LoadServerOptions()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't load server options, skipping notification")
+		return err
+	}
+
+	return nm.SendMessage(fmt.Sprintf("%s at %s (%s Race Weekend) starts in %d minutes", session.Name(), raceWeekend.Name, trackInfo, serverOpts.NotificationReminderTimer))
 }

@@ -45,7 +45,7 @@ func ConfigIniDefault() ServerConfig {
 			StabilityControlAllowed:   0,
 			AutoClutchAllowed:         0,
 			TyreBlanketsAllowed:       1,
-			ForceVirtualMirror:        0,
+			ForceVirtualMirror:        1,
 			LegalTyres:                "H;M;S",
 			LockedEntryList:           0,
 			RacePitWindowStart:        0,

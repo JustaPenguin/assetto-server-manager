@@ -85,6 +85,12 @@ func InitWithResolver(resolver *Resolver) error {
 		return err
 	}
 
+	err = raceWeekendManager.WatchForScheduledSessions()
+
+	if err != nil {
+		return err
+	}
+
 	carManager := resolver.resolveCarManager()
 
 	go func() {

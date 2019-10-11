@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/mitchellh/go-wordwrap"
 
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
@@ -152,6 +153,7 @@ type liveTimingTemplateVars struct {
 	FrameLinks      []string
 	CSSDotSmoothing int
 	CMJoinLink      string
+	UseMPH          bool
 }
 
 func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request) {
@@ -166,7 +168,7 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 	frameLinks, err := rch.store.ListPrevFrames()
 
 	if err != nil {
-		logrus.Errorf("could not get frame links, err: %s", err)
+		logrus.WithError(err).Errorf("could not get frame links")
 		return
 	}
 
@@ -176,10 +178,16 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		link, err := getContentManagerJoinLink(rch.serverProcess.GetServerConfig())
 
 		if err != nil {
-			logrus.Errorf("could not get CM join link, err: %s", err)
+			logrus.WithError(err).Errorf("could not get content manager join link")
 		} else {
 			linkString = link.String()
 		}
+	}
+
+	serverOpts, err := rch.store.LoadServerOptions()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't load server options")
 	}
 
 	rch.viewRenderer.MustLoadTemplate(w, r, "live-timing.html", &liveTimingTemplateVars{
@@ -190,6 +198,7 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		FrameLinks:      frameLinks,
 		CSSDotSmoothing: udp.RealtimePosIntervalMs,
 		CMJoinLink:      linkString,
+		UseMPH:          serverOpts.UseMPH == 1,
 	})
 }
 
@@ -208,14 +217,14 @@ func (rch *RaceControlHandler) saveIFrames(w http.ResponseWriter, r *http.Reques
 	err := r.ParseForm()
 
 	if err != nil {
-		logrus.Errorf("could not load parse form, err: %s", err)
+		logrus.WithError(err).Errorf("could not load parse form")
 		return
 	}
 
 	err = rch.store.UpsertLiveFrames(deleteEmpty(r.Form["frame-link"]))
 
 	if err != nil {
-		logrus.Errorf("could not save frame links, err: %s", err)
+		logrus.WithError(err).Errorf("could not save frame links")
 		return
 	}
 
@@ -237,4 +246,101 @@ func (rch *RaceControlHandler) websocket(w http.ResponseWriter, r *http.Request)
 
 	// new client, send them an initial race control message.
 	client.receive <- newRaceControlMessage(rch.raceControl)
+}
+
+func (rch *RaceControlHandler) broadcastChat(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		return
+	}
+
+	wrapped := strings.Split(wordwrap.WrapString(
+		r.FormValue("broadcast-chat"),
+		60,
+	), "\n")
+
+	for _, msg := range wrapped {
+		broadcastMessage, err := udp.NewBroadcastChat(msg)
+
+		if err == nil {
+			err := rch.serverProcess.SendUDPMessage(broadcastMessage)
+
+			if err != nil {
+				logrus.WithError(err).Errorf("Unable to broadcast chat message")
+			}
+		} else {
+			logrus.WithError(err).Errorf("Unable to build chat message")
+		}
+	}
+}
+
+func (rch *RaceControlHandler) adminCommand(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		return
+	}
+
+	adminCommand, err := udp.NewAdminCommand(r.FormValue("admin-command"))
+
+	if err == nil {
+		err := rch.serverProcess.SendUDPMessage(adminCommand)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("Unable to send admin command")
+		}
+	} else {
+		logrus.WithError(err).Errorf("Unable to build admin command")
+	}
+}
+
+func (rch *RaceControlHandler) kickUser(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		return
+	}
+
+	guid := r.FormValue("kick-user")
+
+	if (guid == "") || (guid == "default-driver-spacer") {
+		return
+	}
+
+	var carID uint8
+
+	for id, rangeGuid := range rch.raceControl.CarIDToGUID {
+		if string(rangeGuid) == guid {
+			carID = uint8(id)
+			break
+		}
+	}
+
+	kickUser := udp.NewKickUser(carID)
+
+	err := rch.serverProcess.SendUDPMessage(kickUser)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Unable to send kick command")
+	}
+
+}
+
+func (rch *RaceControlHandler) restartSession(w http.ResponseWriter, r *http.Request) {
+	err := rch.serverProcess.SendUDPMessage(&udp.RestartSession{})
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Unable to restart session")
+
+		AddErrorFlash(w, r, "The server was unable to restart the session!")
+	}
+
+	http.Redirect(w, r, "/live-timing", http.StatusFound)
+}
+
+func (rch *RaceControlHandler) nextSession(w http.ResponseWriter, r *http.Request) {
+	err := rch.serverProcess.SendUDPMessage(&udp.NextSession{})
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Unable to move to next session")
+
+		AddErrorFlash(w, r, "The server was unable to move to the next session!")
+	}
+
+	http.Redirect(w, r, "/live-timing", http.StatusFound)
 }

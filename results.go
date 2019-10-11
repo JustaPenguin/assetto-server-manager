@@ -52,8 +52,8 @@ func (s *SessionResults) Anonymize() {
 		car.Driver.GUID = GetMD5Hash(car.Driver.GUID)
 		car.Driver.Name = shortenDriverName(car.Driver.Name)
 
-		for _, guid := range car.Driver.GuidsList {
-			guid = GetMD5Hash(guid)
+		for index := range car.Driver.GuidsList {
+			car.Driver.GuidsList[index] = GetMD5Hash(car.Driver.GuidsList[index])
 		}
 	}
 
@@ -250,8 +250,7 @@ func (s *SessionResults) GetPosForLap(guid string, lapNum int64) int {
 
 	driverLap := make(map[string]int)
 
-	for overallLapNum, lap := range s.Laps {
-		overallLapNum++
+	for _, lap := range s.Laps {
 		driverLap[lap.DriverGUID]++
 
 		if driverLap[lap.DriverGUID] == int(lapNum) && lap.DriverGUID == guid {
@@ -857,11 +856,14 @@ func LoadResult(fileName string) (*SessionResults, error) {
 
 type ResultsHandler struct {
 	*BaseHandler
+
+	store Store
 }
 
-func NewResultsHandler(baseHandler *BaseHandler) *ResultsHandler {
+func NewResultsHandler(baseHandler *BaseHandler, store Store) *ResultsHandler {
 	return &ResultsHandler{
 		BaseHandler: baseHandler,
+		store:       store,
 	}
 }
 
@@ -886,7 +888,7 @@ func (rh *ResultsHandler) list(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	} else if err != nil {
-		logrus.Errorf("could not get result list, err: %s", err)
+		logrus.WithError(err).Errorf("could not get result list")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -903,6 +905,7 @@ type resultsViewTemplateVars struct {
 
 	Result  *SessionResults
 	Account *Account
+	UseMPH  bool
 }
 
 func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
@@ -915,9 +918,15 @@ func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	} else if err != nil {
-		logrus.Errorf("could not get result, err: %s", err)
+		logrus.WithError(err).Errorf("could not get result")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
+	}
+
+	serverOpts, err := rh.store.LoadServerOptions()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't load server options")
 	}
 
 	rh.viewRenderer.MustLoadTemplate(w, r, "results/result.html", &resultsViewTemplateVars{
@@ -926,6 +935,7 @@ func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
 		},
 		Result:  result,
 		Account: AccountFromRequest(r),
+		UseMPH:  serverOpts.UseMPH == 1,
 	})
 }
 
@@ -938,7 +948,7 @@ func (rh *ResultsHandler) file(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	} else if err != nil {
-		logrus.Errorf("could not get result, err: %s", err)
+		logrus.WithError(err).Errorf("could not get result")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

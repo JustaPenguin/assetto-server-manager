@@ -18,19 +18,27 @@ import (
 )
 
 type RaceWeekendManager struct {
-	raceManager *RaceManager
-	store       Store
-	process     ServerProcess
+	raceManager         *RaceManager
+	notificationManager NotificationDispatcher
+	store               Store
+	process             ServerProcess
 
 	activeRaceWeekend *ActiveRaceWeekend
 	mutex             sync.Mutex
+
+	scheduledSessionTimers         map[string]*time.Timer
+	scheduledSessionReminderTimers map[string]*time.Timer
 }
 
-func NewRaceWeekendManager(raceManager *RaceManager, store Store, process ServerProcess) *RaceWeekendManager {
+func NewRaceWeekendManager(raceManager *RaceManager, store Store, process ServerProcess, notificationManager NotificationDispatcher) *RaceWeekendManager {
 	return &RaceWeekendManager{
-		raceManager: raceManager,
-		store:       store,
-		process:     process,
+		raceManager:         raceManager,
+		notificationManager: notificationManager,
+		store:               store,
+		process:             process,
+
+		scheduledSessionTimers:         make(map[string]*time.Timer),
+		scheduledSessionReminderTimers: make(map[string]*time.Timer),
 	}
 }
 
@@ -368,7 +376,15 @@ func (rwm *RaceWeekendManager) applyConfigAndStart(config CurrentRaceConfig, ent
 	return nil
 }
 
-func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSessionID string) error {
+func (rwm *RaceWeekendManager) StartPracticeSession(raceWeekendID string, raceWeekendSessionID string) error {
+	return rwm.StartSession(raceWeekendID, raceWeekendSessionID, true)
+}
+
+func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSessionID string, isPracticeSession bool) error {
+	if IsPremium != "true" {
+		return errors.New("servermanager: premium required")
+	}
+
 	raceWeekend, err := rwm.LoadRaceWeekend(raceWeekendID)
 
 	if err != nil {
@@ -381,14 +397,16 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		return err
 	}
 
-	if !raceWeekend.SessionCanBeRun(session) {
-		return ErrRaceWeekendSessionDependencyIncomplete
-	}
+	if !isPracticeSession {
+		if !raceWeekend.SessionCanBeRun(session) {
+			return ErrRaceWeekendSessionDependencyIncomplete
+		}
 
-	session.StartedTime = time.Now()
+		session.StartedTime = time.Now()
 
-	if err := rwm.store.UpsertRaceWeekend(raceWeekend); err != nil {
-		return err
+		if err := rwm.store.UpsertRaceWeekend(raceWeekend); err != nil {
+			return err
+		}
 	}
 
 	raceWeekendEntryList, err := session.GetRaceWeekendEntryList(raceWeekend, nil, "")
@@ -417,7 +435,13 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		replacementPassword = raceWeekend.Championship.ReplacementPassword
 	}
 
-	for _, entrant := range entryList {
+	for k, entrant := range entryList {
+		if entrant.IsPlaceHolder {
+			// placeholder entrants should not be added to our final entry list
+			delete(entryList, k)
+			continue
+		}
+
 		// look through the user configured entry list and apply any of the options that they set to this entrant.
 		for _, raceWeekendEntrant := range raceWeekend.GetEntryList() {
 			if raceWeekendEntrant.GUID == entrant.GUID {
@@ -431,14 +455,39 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		}
 	}
 
-	return rwm.applyConfigAndStart(session.RaceConfig, entryList, &ActiveRaceWeekend{
+	raceWeekendRaceEvent := &ActiveRaceWeekend{
 		Name:                raceWeekend.Name,
 		RaceWeekendID:       raceWeekend.ID,
 		SessionID:           session.ID,
 		OverridePassword:    overridePassword,
 		ReplacementPassword: replacementPassword,
 		Description:         fmt.Sprintf("This is a session in the '%s' Race Weekend.", raceWeekend.Name),
-	})
+	}
+
+	if isPracticeSession {
+		delete(session.RaceConfig.Sessions, SessionTypePractice)
+		delete(session.RaceConfig.Sessions, SessionTypeQualifying)
+		delete(session.RaceConfig.Sessions, SessionTypeRace)
+
+		session.RaceConfig.Sessions[SessionTypePractice] = &SessionConfig{
+			Name:   "Practice",
+			Time:   120,
+			IsOpen: 1,
+		}
+
+		session.RaceConfig.LoopMode = 1
+
+		raceWeekendRaceEvent.IsPracticeSession = true
+
+		if !raceWeekend.SessionCanBeRun(session) {
+			// practice sessions run with the whole race weekend entry list if they are not yet available
+			entryList = raceWeekend.GetEntryList()
+		}
+
+		return rwm.raceManager.applyConfigAndStart(session.RaceConfig, entryList, false, raceWeekendRaceEvent)
+	} else {
+		return rwm.applyConfigAndStart(session.RaceConfig, entryList, raceWeekendRaceEvent)
+	}
 }
 
 func (rwm *RaceWeekendManager) UDPCallback(message udp.Message) {
@@ -506,7 +555,7 @@ func (rwm *RaceWeekendManager) RestartSession(raceWeekendID string, raceWeekendS
 		return err
 	}
 
-	return rwm.StartSession(raceWeekendID, raceWeekendSessionID)
+	return rwm.StartSession(raceWeekendID, raceWeekendSessionID, false)
 }
 
 func (rwm *RaceWeekendManager) CancelSession(raceWeekendID string, raceWeekendSessionID string) error {
@@ -568,6 +617,10 @@ func (rwm *RaceWeekendManager) RestartActiveSession() error {
 }
 
 func (rwm *RaceWeekendManager) ImportSession(raceWeekendID string, raceWeekendSessionID string, r *http.Request) error {
+	if IsPremium != "true" {
+		return errors.New("servermanager: premium required")
+	}
+
 	if err := r.ParseForm(); err != nil {
 		return err
 	}
@@ -851,4 +904,120 @@ func (rwm *RaceWeekendManager) ImportRaceWeekend(data string) (string, error) {
 	}
 
 	return raceWeekend.ID.String(), rwm.store.UpsertRaceWeekend(raceWeekend)
+}
+
+func (rwm *RaceWeekendManager) WatchForScheduledSessions() error {
+	raceWeekends, err := rwm.ListRaceWeekends()
+
+	if err != nil {
+		return err
+	}
+
+	for _, raceWeekend := range raceWeekends {
+		raceWeekend := raceWeekend
+
+		for _, session := range raceWeekend.Sessions {
+			session := session
+
+			if session.ScheduledTime.After(time.Now()) {
+				err := rwm.setupScheduledSessionTimer(raceWeekend, session)
+
+				if err != nil {
+					return err
+				}
+			} else if !session.ScheduledTime.IsZero() {
+				logrus.Infof("The %s Session in the %s Race Weekend was scheduled to run, but the server was offline. Please start the session manually.", session.Name(), raceWeekend.Name)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (rwm *RaceWeekendManager) clearScheduledSessionTimer(session *RaceWeekendSession) {
+	if timer := rwm.scheduledSessionTimers[session.ID.String()]; timer != nil {
+		timer.Stop()
+	}
+}
+
+func (rwm *RaceWeekendManager) setupScheduledSessionTimer(raceWeekend *RaceWeekend, session *RaceWeekendSession) error {
+	rwm.clearScheduledSessionTimer(session)
+
+	rwm.scheduledSessionTimers[session.ID.String()] = time.AfterFunc(time.Until(session.ScheduledTime), func() {
+		err := rwm.StartSession(raceWeekend.ID.String(), session.ID.String(), false)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("Could not start scheduled race weekend session")
+		}
+
+		raceWeekend, session, err := rwm.FindSession(raceWeekend.ID.String(), session.ID.String())
+
+		if err != nil {
+			logrus.WithError(err).Error("Could not clear scheduled time on started Race Weekend Session")
+			return
+		}
+
+		session.ScheduledTime = time.Time{}
+
+		if err := rwm.store.UpsertRaceWeekend(raceWeekend); err != nil {
+			logrus.WithError(err).Error("Could not update race weekend with cleared scheduled time")
+		}
+	})
+
+	serverOpts, err := rwm.store.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	if serverOpts.NotificationReminderTimer > 0 {
+		reminderTime := session.ScheduledTime.Add(time.Duration(-serverOpts.NotificationReminderTimer) * time.Minute)
+
+		if reminderTime.After(time.Now()) {
+			// add reminder
+			duration := time.Until(reminderTime)
+
+			rwm.scheduledSessionReminderTimers[session.ID.String()] = time.AfterFunc(duration, func() {
+				err := rwm.notificationManager.SendRaceWeekendReminderMessage(raceWeekend, session)
+
+				if err != nil {
+					logrus.WithError(err).Errorf("Could not send race weekend reminder message")
+				}
+			})
+		}
+	}
+
+	return nil
+}
+
+func (rwm *RaceWeekendManager) ScheduleSession(raceWeekendID, sessionID string, date time.Time) error {
+	raceWeekend, session, err := rwm.FindSession(raceWeekendID, sessionID)
+
+	if err != nil {
+		return err
+	}
+
+	session.ScheduledTime = date
+
+	err = rwm.setupScheduledSessionTimer(raceWeekend, session)
+
+	if err != nil {
+		return err
+	}
+
+	return rwm.store.UpsertRaceWeekend(raceWeekend)
+}
+
+func (rwm *RaceWeekendManager) DeScheduleSession(raceWeekendID, sessionID string) error {
+	raceWeekend, session, err := rwm.FindSession(raceWeekendID, sessionID)
+
+	if err != nil {
+		return err
+	}
+
+	session.ScheduledTime = time.Time{}
+
+	rwm.clearScheduledSessionTimer(session)
+
+	return rwm.store.UpsertRaceWeekend(raceWeekend)
 }

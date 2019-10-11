@@ -8,7 +8,7 @@
 
     {{ $eventSetup := $event.RaceSetup }}
 
-    <div class="card mt-3 border-secondary championship-event {{ if $event.Completed }}event-complete{{ end }}">
+    <div class="card mt-3 border-secondary championship-event {{ if $event.Completed }}event-complete{{ end }}" id="{{ $event.ID.String }}">
         <div class="card-header">
             <strong>{{ $raceWeekend.Name }} Race Weekend</strong> at {{ $raceWeekend.TrackOverview }}
 
@@ -16,7 +16,7 @@
                 {{ if $raceWeekend.Completed }}
                     <span class="text-success">Complete</span>
                 {{ else if (gt $raceWeekend.Progress 0.0) }}
-                    <span class="text-info">{{ printf "%2.f" $raceWeekend.Progress }}% Complete</span>
+                    <span class="text-primary">{{ printf "%2.f" $raceWeekend.Progress }}% Complete</span>
                 {{ else }}
                     <span class="text-danger">Not started</span>
                 {{ end }}
