@@ -679,8 +679,6 @@ func (rwm *RaceWeekendManager) ImportSession(raceWeekendID string, raceWeekendSe
 
 	session.CompletedTime = session.Results.Date
 
-	fmt.Println("import session")
-
 	return rwm.UpsertRaceWeekend(raceWeekend)
 }
 
