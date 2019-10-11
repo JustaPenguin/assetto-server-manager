@@ -19,6 +19,7 @@ import (
 
 type RaceWeekendManager struct {
 	raceManager         *RaceManager
+	championshipManager *ChampionshipManager
 	notificationManager NotificationDispatcher
 	store               Store
 	process             ServerProcess
@@ -30,9 +31,10 @@ type RaceWeekendManager struct {
 	scheduledSessionReminderTimers map[string]*time.Timer
 }
 
-func NewRaceWeekendManager(raceManager *RaceManager, store Store, process ServerProcess, notificationManager NotificationDispatcher) *RaceWeekendManager {
+func NewRaceWeekendManager(raceManager *RaceManager, championshipManager *ChampionshipManager, store Store, process ServerProcess, notificationManager NotificationDispatcher) *RaceWeekendManager {
 	return &RaceWeekendManager{
 		raceManager:         raceManager,
+		championshipManager: championshipManager,
 		notificationManager: notificationManager,
 		store:               store,
 		process:             process,
@@ -168,7 +170,29 @@ func (rwm *RaceWeekendManager) SaveRaceWeekend(r *http.Request) (raceWeekend *Ra
 		}
 	}
 
-	return raceWeekend, edited, rwm.store.UpsertRaceWeekend(raceWeekend)
+	return raceWeekend, edited, rwm.UpsertRaceWeekend(raceWeekend)
+}
+
+func (rwm *RaceWeekendManager) UpsertRaceWeekend(raceWeekend *RaceWeekend) error {
+	err := rwm.store.UpsertRaceWeekend(raceWeekend)
+
+	if err != nil {
+		return err
+	}
+
+	if raceWeekend.HasLinkedChampionship() {
+		championship, err := rwm.championshipManager.LoadChampionship(raceWeekend.ChampionshipID.String())
+
+		if err != nil {
+			return err
+		}
+
+		if championship.ACSR {
+			ACSRSendResult(*championship)
+		}
+	}
+
+	return nil
 }
 
 func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (*RaceTemplateVars, error) {
@@ -361,7 +385,7 @@ func (rwm *RaceWeekendManager) SaveRaceWeekendSession(r *http.Request) (raceWeek
 		}
 	}
 
-	return raceWeekend, session, edited, rwm.store.UpsertRaceWeekend(raceWeekend)
+	return raceWeekend, session, edited, rwm.UpsertRaceWeekend(raceWeekend)
 }
 
 func (rwm *RaceWeekendManager) applyConfigAndStart(config CurrentRaceConfig, entryList EntryList, raceWeekend *ActiveRaceWeekend) error {
@@ -395,7 +419,7 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 
 	session.StartedTime = time.Now()
 
-	if err := rwm.store.UpsertRaceWeekend(raceWeekend); err != nil {
+	if err := rwm.UpsertRaceWeekend(raceWeekend); err != nil {
 		return err
 	}
 
@@ -502,7 +526,7 @@ func (rwm *RaceWeekendManager) UDPCallback(message udp.Message) {
 
 		session.Results = results
 
-		if err := rwm.store.UpsertRaceWeekend(raceWeekend); err != nil {
+		if err := rwm.UpsertRaceWeekend(raceWeekend); err != nil {
 			logrus.WithError(err).Errorf("Could not persist race weekend: %s", raceWeekend.ID.String())
 			return
 		}
@@ -544,7 +568,7 @@ func (rwm *RaceWeekendManager) CancelSession(raceWeekendID string, raceWeekendSe
 		return err
 	}
 
-	return rwm.store.UpsertRaceWeekend(raceWeekend)
+	return rwm.UpsertRaceWeekend(raceWeekend)
 }
 
 func (rwm *RaceWeekendManager) DeleteSession(raceWeekendID string, raceWeekendSessionID string) error {
@@ -556,7 +580,7 @@ func (rwm *RaceWeekendManager) DeleteSession(raceWeekendID string, raceWeekendSe
 
 	raceWeekend.DelSession(raceWeekendSessionID)
 
-	return rwm.store.UpsertRaceWeekend(raceWeekend)
+	return rwm.UpsertRaceWeekend(raceWeekend)
 }
 
 func (rwm *RaceWeekendManager) DeleteRaceWeekend(id string) error {
@@ -616,7 +640,9 @@ func (rwm *RaceWeekendManager) ImportSession(raceWeekendID string, raceWeekendSe
 
 	session.CompletedTime = session.Results.Date
 
-	return rwm.store.UpsertRaceWeekend(raceWeekend)
+	fmt.Println("import session")
+
+	return rwm.UpsertRaceWeekend(raceWeekend)
 }
 
 func (rwm *RaceWeekendManager) ListAvailableResultsFilesForSession(raceWeekendID string, raceWeekendSessionID string) (*RaceWeekendSession, []SessionResults, error) {
@@ -783,7 +809,7 @@ func (rwm *RaceWeekendManager) UpdateGrid(raceWeekendID, parentSessionID, childS
 
 	raceWeekend.AddFilter(parentSessionID, childSessionID, filter)
 
-	return rwm.store.UpsertRaceWeekend(raceWeekend)
+	return rwm.UpsertRaceWeekend(raceWeekend)
 }
 
 func (rwm *RaceWeekendManager) PreviewSessionEntryList(raceWeekendID, sessionID, sortType string, reverseGrid int) (*RaceWeekendGridPreview, error) {
@@ -852,7 +878,7 @@ func (rwm *RaceWeekendManager) UpdateSessionSorting(raceWeekendID, sessionID str
 	session.SortType = sortType
 	session.NumEntrantsToReverse = numEntrantsToReverse
 
-	return rwm.store.UpsertRaceWeekend(raceWeekend)
+	return rwm.UpsertRaceWeekend(raceWeekend)
 }
 
 func (rwm *RaceWeekendManager) ImportRaceWeekend(data string) (string, error) {
@@ -864,7 +890,7 @@ func (rwm *RaceWeekendManager) ImportRaceWeekend(data string) (string, error) {
 		return "", err
 	}
 
-	return raceWeekend.ID.String(), rwm.store.UpsertRaceWeekend(raceWeekend)
+	return raceWeekend.ID.String(), rwm.UpsertRaceWeekend(raceWeekend)
 }
 
 func (rwm *RaceWeekendManager) WatchForScheduledSessions() error {
@@ -920,7 +946,7 @@ func (rwm *RaceWeekendManager) setupScheduledSessionTimer(raceWeekend *RaceWeeke
 
 		session.ScheduledTime = time.Time{}
 
-		if err := rwm.store.UpsertRaceWeekend(raceWeekend); err != nil {
+		if err := rwm.UpsertRaceWeekend(raceWeekend); err != nil {
 			logrus.WithError(err).Error("Could not update race weekend with cleared scheduled time")
 		}
 	})
@@ -966,7 +992,7 @@ func (rwm *RaceWeekendManager) ScheduleSession(raceWeekendID, sessionID string, 
 		return err
 	}
 
-	return rwm.store.UpsertRaceWeekend(raceWeekend)
+	return rwm.UpsertRaceWeekend(raceWeekend)
 }
 
 func (rwm *RaceWeekendManager) DeScheduleSession(raceWeekendID, sessionID string) error {
@@ -980,5 +1006,5 @@ func (rwm *RaceWeekendManager) DeScheduleSession(raceWeekendID, sessionID string
 
 	rwm.clearScheduledSessionTimer(session)
 
-	return rwm.store.UpsertRaceWeekend(raceWeekend)
+	return rwm.UpsertRaceWeekend(raceWeekend)
 }

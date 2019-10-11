@@ -486,7 +486,7 @@ func (c *Championship) NumEntrants() int {
 		// closed sign up form championships report only the taken slots as their num entrants
 		for _, class := range c.Classes {
 			for _, entrant := range class.Entrants {
-				if entrant.GUID != "" {
+				if entrant.GUID != "" && !entrant.IsPlaceHolder {
 					entrants++
 				}
 			}
@@ -875,7 +875,7 @@ func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent) []*Champion
 	var out []*ChampionshipStanding
 
 	// make a copy of events so we do not persist race weekend sessions
-	events := c.extractRaceWeekendSessionsIntoIndividualEvents(inEvents)
+	events := ExtractRaceWeekendSessionsIntoIndividualEvents(inEvents)
 
 	for _, event := range events {
 		for _, session := range event.Sessions {
@@ -969,7 +969,7 @@ func (c *ChampionshipClass) StandingsForEvent(event *ChampionshipEvent) []*Champ
 
 // extractRaceWeekendSessionsIntoIndividualEvents looks for race weekend events, and makes each indiivdual session of that
 // race weekend a Championship Event, to aide with points tallying
-func (c *ChampionshipClass) extractRaceWeekendSessionsIntoIndividualEvents(inEvents []*ChampionshipEvent) []*ChampionshipEvent {
+func ExtractRaceWeekendSessionsIntoIndividualEvents(inEvents []*ChampionshipEvent) []*ChampionshipEvent {
 	events := make([]*ChampionshipEvent, 0)
 
 	for _, event := range inEvents {
@@ -978,6 +978,9 @@ func (c *ChampionshipClass) extractRaceWeekendSessionsIntoIndividualEvents(inEve
 		} else if event.RaceWeekend != nil {
 			for _, session := range event.RaceWeekend.Sessions {
 				e := NewChampionshipEvent()
+
+				e.ID = session.ID
+				e.RaceSetup = session.RaceConfig
 
 				e.Sessions[session.SessionType()] = &ChampionshipSession{
 					StartedTime:        session.StartedTime,
@@ -1005,7 +1008,7 @@ func (c *ChampionshipClass) TeamStandings(inEvents []*ChampionshipEvent) []*Team
 	teams := make(map[string]float64)
 
 	// make a copy of events so we do not persist race weekend sessions
-	events := c.extractRaceWeekendSessionsIntoIndividualEvents(inEvents)
+	events := ExtractRaceWeekendSessionsIntoIndividualEvents(inEvents)
 
 	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64) {
 		var team string
