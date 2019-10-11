@@ -23,6 +23,8 @@
             </div>
         {{ end }}
 
+        {{ template "raceweekend-premium" dict "IsPremium" $.IsPremium }}
+
         {{ if not $.RaceWeekend.HasLinkedChampionship }}
             <h2>Entrants</h2>
 
@@ -172,21 +174,50 @@
 
 
                         {{ if $session.Completed }}
-                            <a class="btn btn-primary view-results" href="#">View Results</a>
+                            <a class="btn btn-primary btn-sm view-results" href="#">View Results</a>
                         {{ end }}
 
                         {{ if WriteAccess }}
                             {{ if not (or $session.InProgress $session.Completed) }}
-                                {{ if $.RaceWeekend.SessionCanBeRun $session }}
-                                    <a class="btn btn-success" onClick="return confirm('I have checked all Entry List configurations and the starting grid is correct');" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/start">Start Session</a>
-                                {{ end }}
+                                {{ if eq $.IsPremium "true" }}
+                                    {{ if $.RaceWeekend.SessionCanBeRun $session }}
+                                        <div class="btn-group btn-group-sm">
+                                            <a class="btn btn-success btn-sm"
+                                               onClick="return confirm('I have checked all Entry List configurations and the starting grid is correct');"
+                                               href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/start"
+                                            >
+                                                Start Session
+                                            </a>
 
-                                <button type="button" class="btn btn-info dropdown-toggle popover-external-html" data-placement="bottom"
-                                        data-toggle="popover" title="Schedule Event" data-html="true"
-                                        id="schedule-{{ $session.ID.String }}"
-                                >
-                                    Schedule Event
-                                </button>
+                                            <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <span class="sr-only">Toggle Dropdown</span>
+                                            </button>
+                                            <div class="dropdown-menu">
+                                                <a class="dropdown-item" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/practice">Start Practice Session</a>
+                                            </div>
+                                        </div>
+                                    {{ else }}
+                                        <a class="btn btn-success btn-sm" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/practice">Start Practice Session</a>
+                                    {{ end }}
+
+                                    <button type="button" class="btn btn-info btn-sm dropdown-toggle popover-external-html" data-placement="bottom"
+                                            data-toggle="popover" title="Schedule Event" data-html="true"
+                                            id="schedule-{{ $session.ID.String }}"
+                                    >
+                                        Schedule Event
+                                    </button>
+                                {{ else }}
+                                    {{ if $.RaceWeekend.SessionCanBeRun $session }}
+                                        <a class="btn btn-success btn-sm"
+                                           data-toggle="tooltip"
+                                           title="Upgrade to Server Manager Premium to start Race Weekend Sessions!"
+                                           href="#"
+                                           onClick="return false;"
+                                        >
+                                            Start Session
+                                        </a>
+                                    {{ end }}
+                                {{ end }}
 
                                 <div id="popover-content-schedule-{{ $session.ID.String }}" style="display: none;">
                                     <form action="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/schedule" method="POST">
@@ -208,22 +239,22 @@
                                 </div>
 
                                 {{ if not ($session.HasParent $.RaceWeekend.ID.String) }}
-                                    <a class="btn btn-primary manage-entrylist" href="#">Manage Entry List</a>
+                                    <a class="btn btn-primary btn-sm manage-entrylist" href="#">Manage Entry List</a>
                                 {{ end }}
                             {{ else if $session.InProgress }}
                                 <a onClick="return confirm('I understand that this will restart this entire session and any current results will be lost.') "
-                                   class="btn btn-warning" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/restart">
+                                   class="btn btn-warning btn-sm" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/restart">
                                     Restart Session
                                 </a>
 
                                 <a onClick="return confirm('I understand that this will cancel this entire session and any current results will be lost.') "
-                                   class="btn btn-danger" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/cancel">
+                                   class="btn btn-danger btn-sm" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/cancel">
                                     Cancel Session
                                 </a>
                             {{ end }}
 
                             <div class="dropdown show d-inline-block">
-                                <a class="btn btn-warning dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <a class="btn btn-warning dropdown-toggle btn-sm" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     Manage Session
                                 </a>
 
@@ -232,9 +263,11 @@
                                         Edit
                                     </a>
 
-                                    <a class="dropdown-item" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/import">
-                                        Import Results
-                                    </a>
+                                    {{ if eq $.IsPremium "true" }}
+                                        <a class="dropdown-item" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/import">
+                                            Import Results
+                                        </a>
+                                    {{ end }}
 
                                     {{ if DeleteAccess }}
                                         <a onClick="return confirm('I understand that this will delete this entire session permanently.') "
@@ -245,7 +278,7 @@
                                 </div>
                             </div>
                         {{ else }}
-                            <a class="btn btn-secondary manage-entrylist" href="#">View Entry List</a>
+                            <a class="btn btn-secondary manage-entrylist btn-sm" href="#">View Entry List</a>
                         {{ end }}
                     </div>
                 </div>

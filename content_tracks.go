@@ -44,7 +44,7 @@ func ListTracks() ([]Track, error) {
 		files, err := ioutil.ReadDir(filepath.Join(tracksPath, trackFile.Name()))
 
 		if err != nil {
-			logrus.Errorf("Can't read folder: %s, err: %s", trackFile.Name(), err)
+			logrus.WithError(err).Errorf("Can't read folder: %s", trackFile.Name())
 			continue
 		}
 
@@ -153,7 +153,7 @@ func (th *TracksHandler) list(w http.ResponseWriter, r *http.Request) {
 	tracks, err := ListTracks()
 
 	if err != nil {
-		logrus.Errorf("could not get track list, err: %s", err)
+		logrus.WithError(err).Errorf("could not get track list")
 	}
 
 	th.viewRenderer.MustLoadTemplate(w, r, "content/tracks.html", &trackListTemplateVars{
@@ -168,7 +168,7 @@ func (th *TracksHandler) delete(w http.ResponseWriter, r *http.Request) {
 	existingTracks, err := ListTracks()
 
 	if err != nil {
-		logrus.Errorf("could not get track list, err: %s", err)
+		logrus.WithError(err).Errorf("could not get track list")
 		AddErrorFlash(w, r, "couldn't get track list")
 		http.Redirect(w, r, r.Referer(), http.StatusFound)
 		return
@@ -185,7 +185,7 @@ func (th *TracksHandler) delete(w http.ResponseWriter, r *http.Request) {
 
 			if err != nil {
 				found = false
-				logrus.Errorf("could not remove track files, err: %s", err)
+				logrus.WithError(err).Errorf("could not remove track files")
 			}
 
 			break

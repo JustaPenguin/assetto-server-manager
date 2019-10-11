@@ -1191,7 +1191,7 @@ func (rm *RaceManager) LoopRaces() {
 		_, _, looped, _, err := rm.ListCustomRaces()
 
 		if err != nil {
-			logrus.Errorf("couldn't list custom races, err: %s", err)
+			logrus.WithError(err).Errorf("couldn't list custom races")
 			return
 		}
 
@@ -1214,7 +1214,7 @@ func (rm *RaceManager) LoopRaces() {
 			err := rm.StartCustomRace(looped[i].UUID.String(), true)
 
 			if err != nil {
-				logrus.Errorf("couldn't start auto loop custom race, err: %s", err)
+				logrus.WithError(err).Errorf("couldn't start auto loop custom race")
 				return
 			}
 
@@ -1238,7 +1238,7 @@ func (rm *RaceManager) LoopCallback(message udp.Message) {
 		results, err := LoadResult(filename)
 
 		if err != nil {
-			logrus.Errorf("Could not read session results for %s, err: %s", filename, err)
+			logrus.WithError(err).Errorf("Could not read session results for %s", filename)
 			return
 		}
 
@@ -1282,7 +1282,7 @@ func (rm *RaceManager) LoopCallback(message udp.Message) {
 			err := rm.process.Stop()
 
 			if err != nil {
-				logrus.Errorf("Could not stop server, err: %s", err)
+				logrus.WithError(err).Errorf("Could not stop server")
 				return
 			}
 		}
@@ -1394,11 +1394,9 @@ func (rm *RaceManager) RescheduleNotifications(oldServerOpts *GlobalServerConfig
 			race := race
 
 			if race.Scheduled.After(time.Now()) {
-				duration := time.Until(race.Scheduled)
-
 				if race.Scheduled.Add(time.Duration(0-newServerOpts.NotificationReminderTimer) * time.Minute).After(time.Now()) {
 					// add reminder
-					duration = time.Until(race.Scheduled.Add(time.Duration(0-newServerOpts.NotificationReminderTimer) * time.Minute))
+					duration := time.Until(race.Scheduled.Add(time.Duration(0-newServerOpts.NotificationReminderTimer) * time.Minute))
 
 					rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
 						_ = rm.notificationManager.SendRaceReminderMessage(race)

@@ -253,7 +253,7 @@ func (r *Resolver) resolvePenaltiesHandler() *PenaltiesHandler {
 		return r.penaltiesHandler
 	}
 
-	r.penaltiesHandler = NewPenaltiesHandler(r.resolveBaseHandler(), r.resolveChampionshipManager())
+	r.penaltiesHandler = NewPenaltiesHandler(r.resolveBaseHandler(), r.resolveChampionshipManager(), r.resolveRaceWeekendManager())
 
 	return r.penaltiesHandler
 }

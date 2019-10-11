@@ -3,7 +3,7 @@ v1.5.0
 
 Added:
 
-* Race Weekends - A Race Weekend is a group of sequential sessions that can be run at any time. For example, you could set up a Qualifying session to run on a Saturday, then the Race to follow it on a Sunday. Server Manager handles the starting grid for you, and lets you organise Entrants into splits based on their results and other factors!
+* Race Weekends (premium feature) - A Race Weekend is a group of sequential sessions that can be run at any time. For example, you could set up a Qualifying session to run on a Saturday, then the Race to follow it on a Sunday. Server Manager handles the starting grid for you, and lets you organise Entrants into splits based on their results and other factors!
   
   - You can create individual Race Weekends or create Race Weekends as part of a Championship
   - Race Weekends need a fully configured Entry List to work properly. If you're using a Championship Race Weekend, the Championship Entry List is used.
@@ -35,6 +35,8 @@ Fixes:
 * Championship Sign Up Forms are only shown if the Championship has free slots left and the Championship is not fully complete.
 * Championships now always show the 'Entrants' tab, so you can check to see if you're in the list!
 * Improved cache validation so that user-uploaded files can change without needing to empty the browser cache.
+
+---
 
 v1.4.2
 ------

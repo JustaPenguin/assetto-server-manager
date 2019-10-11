@@ -380,6 +380,10 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 
 		err = binary.Read(r, binary.LittleEndian, &isConnected)
 
+		if err != nil {
+			return nil, err
+		}
+
 		response = CarInfo{
 			CarID:       carID,
 			IsConnected: isConnected != 0,

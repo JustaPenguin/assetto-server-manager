@@ -52,8 +52,8 @@ func (s *SessionResults) Anonymize() {
 		car.Driver.GUID = GetMD5Hash(car.Driver.GUID)
 		car.Driver.Name = shortenDriverName(car.Driver.Name)
 
-		for _, guid := range car.Driver.GuidsList {
-			guid = GetMD5Hash(guid)
+		for index := range car.Driver.GuidsList {
+			car.Driver.GuidsList[index] = GetMD5Hash(car.Driver.GuidsList[index])
 		}
 	}
 
@@ -250,8 +250,7 @@ func (s *SessionResults) GetPosForLap(guid string, lapNum int64) int {
 
 	driverLap := make(map[string]int)
 
-	for overallLapNum, lap := range s.Laps {
-		overallLapNum++
+	for _, lap := range s.Laps {
 		driverLap[lap.DriverGUID]++
 
 		if driverLap[lap.DriverGUID] == int(lapNum) && lap.DriverGUID == guid {
@@ -399,11 +398,15 @@ cars:
 	sort.Slice(s.Result, func(i, j int) bool {
 		if (!s.Result[i].Disqualified && !s.Result[j].Disqualified) || (s.Result[i].Disqualified && s.Result[j].Disqualified) {
 
+			if s.Type == SessionTypeQualifying || s.Type == SessionTypePractice {
+				return s.Result[i].BestLap < s.Result[j].BestLap
+			}
+
 			// if both drivers aren't/are disqualified
 			if s.GetNumLaps(s.Result[i].DriverGUID) == s.GetNumLaps(s.Result[j].DriverGUID) {
 				// if their number of laps are equal, compare last lap pos
-				return s.GetTime(s.Result[i].TotalTime, s.Result[i].DriverGUID, true) <
-					s.GetTime(s.Result[j].TotalTime, s.Result[j].DriverGUID, true)
+				return s.GetLastLapPos(s.Result[i].DriverGUID) <
+					s.GetLastLapPos(s.Result[j].DriverGUID)
 			}
 
 			return s.GetNumLaps(s.Result[i].DriverGUID) >= s.GetNumLaps(s.Result[j].DriverGUID)
@@ -885,7 +888,7 @@ func (rh *ResultsHandler) list(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	} else if err != nil {
-		logrus.Errorf("could not get result list, err: %s", err)
+		logrus.WithError(err).Errorf("could not get result list")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -915,7 +918,7 @@ func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	} else if err != nil {
-		logrus.Errorf("could not get result, err: %s", err)
+		logrus.WithError(err).Errorf("could not get result")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -923,7 +926,7 @@ func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
 	serverOpts, err := rh.store.LoadServerOptions()
 
 	if err != nil {
-		logrus.Errorf("couldn't load server options, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't load server options")
 	}
 
 	rh.viewRenderer.MustLoadTemplate(w, r, "results/result.html", &resultsViewTemplateVars{
@@ -945,7 +948,7 @@ func (rh *ResultsHandler) file(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	} else if err != nil {
-		logrus.Errorf("could not get result, err: %s", err)
+		logrus.WithError(err).Errorf("could not get result")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

@@ -300,7 +300,7 @@ func (ah *AccountHandler) login(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/accounts/new-password", http.StatusFound)
 			return
 		} else if err != nil {
-			logrus.Errorf("Couldn't log in account, err: %s", err)
+			logrus.WithError(err).Errorf("Couldn't log in account")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		} else { // err == nil, successful auth

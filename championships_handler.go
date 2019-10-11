@@ -37,7 +37,7 @@ func (ch *ChampionshipsHandler) list(w http.ResponseWriter, r *http.Request) {
 	championships, err := ch.championshipManager.ListChampionships()
 
 	if err != nil {
-		logrus.Errorf("couldn't list championships, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't list championships")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -52,7 +52,7 @@ func (ch *ChampionshipsHandler) createOrEdit(w http.ResponseWriter, r *http.Requ
 	_, opts, err := ch.championshipManager.BuildChampionshipOpts(r)
 
 	if err != nil {
-		logrus.Errorf("couldn't build championship form, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't build championship form")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -66,7 +66,7 @@ func (ch *ChampionshipsHandler) submit(w http.ResponseWriter, r *http.Request) {
 	championship, edited, err := ch.championshipManager.HandleCreateChampionship(r)
 
 	if err != nil {
-		logrus.Errorf("couldn't create championship, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't create championship")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -141,7 +141,7 @@ func (ch *ChampionshipsHandler) export(w http.ResponseWriter, r *http.Request) {
 	championship, err := ch.championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
 
 	if err != nil {
-		logrus.Errorf("couldn't export championship, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't export championship")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -166,7 +166,7 @@ func (ch *ChampionshipsHandler) importChampionship(w http.ResponseWriter, r *htt
 		championshipID, err := ch.championshipManager.ImportChampionship(r.FormValue("import"))
 
 		if err != nil {
-			logrus.Errorf("couldn't import championship, err: %s", err)
+			logrus.WithError(err).Errorf("couldn't import championship")
 			AddErrorFlash(w, r, "Sorry, we couldn't import that championship! Check your JSON formatting.")
 		} else {
 			AddFlash(w, r, "Championship successfully imported!")
@@ -192,7 +192,7 @@ func (ch *ChampionshipsHandler) exportResults(w http.ResponseWriter, r *http.Req
 	championship, err := ch.championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
 
 	if err != nil {
-		logrus.Errorf("couldn't export championship, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't export championship")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -238,7 +238,7 @@ func (ch *ChampionshipsHandler) delete(w http.ResponseWriter, r *http.Request) {
 	err := ch.championshipManager.DeleteChampionship(chi.URLParam(r, "championshipID"))
 
 	if err != nil {
-		logrus.Errorf("couldn't delete championship, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't delete championship")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -275,7 +275,7 @@ func (ch *ChampionshipsHandler) eventImport(w http.ResponseWriter, r *http.Reque
 	event, results, err := ch.championshipManager.ListAvailableResultsFilesForEvent(championshipID, eventID)
 
 	if err != nil {
-		logrus.Errorf("Couldn't load session files, err: %s", err)
+		logrus.WithError(err).Errorf("Couldn't load session files")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -293,7 +293,7 @@ func (ch *ChampionshipsHandler) eventConfiguration(w http.ResponseWriter, r *htt
 	championshipRaceOpts, err := ch.championshipManager.BuildChampionshipEventOpts(r)
 
 	if err != nil {
-		logrus.Errorf("couldn't build championship race, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't build championship race")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -307,7 +307,7 @@ func (ch *ChampionshipsHandler) submitEventConfiguration(w http.ResponseWriter, 
 	championship, event, edited, err := ch.championshipManager.SaveChampionshipEvent(r)
 
 	if err != nil {
-		logrus.Errorf("couldn't build championship race, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't build championship race")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -343,7 +343,7 @@ func (ch *ChampionshipsHandler) startEvent(w http.ResponseWriter, r *http.Reques
 	err := ch.championshipManager.StartEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"), false)
 
 	if err != nil {
-		logrus.Errorf("Could not start championship event, err: %s", err)
+		logrus.WithError(err).Errorf("Could not start championship event")
 
 		AddErrorFlash(w, r, "Couldn't start the Event")
 	} else {
@@ -356,7 +356,7 @@ func (ch *ChampionshipsHandler) startEvent(w http.ResponseWriter, r *http.Reques
 
 func (ch *ChampionshipsHandler) scheduleEvent(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		logrus.Errorf("couldn't parse schedule race form, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't parse schedule race form")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -378,7 +378,7 @@ func (ch *ChampionshipsHandler) scheduleEvent(w http.ResponseWriter, r *http.Req
 	date, err := time.ParseInLocation("2006-01-02-15:04", dateString+"-"+timeString, location)
 
 	if err != nil {
-		logrus.Errorf("couldn't parse schedule championship event date, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't parse schedule championship event date")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -386,7 +386,7 @@ func (ch *ChampionshipsHandler) scheduleEvent(w http.ResponseWriter, r *http.Req
 	err = ch.championshipManager.ScheduleEvent(championshipID, championshipEventID, date, r.FormValue("action"))
 
 	if err != nil {
-		logrus.Errorf("couldn't schedule championship event, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't schedule championship event")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -400,7 +400,7 @@ func (ch *ChampionshipsHandler) scheduleEventRemove(w http.ResponseWriter, r *ht
 		time.Time{}, "remove")
 
 	if err != nil {
-		logrus.Errorf("couldn't schedule championship event, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't schedule championship event")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -413,7 +413,7 @@ func (ch *ChampionshipsHandler) deleteEvent(w http.ResponseWriter, r *http.Reque
 	err := ch.championshipManager.DeleteEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
 
 	if err != nil {
-		logrus.Errorf("Could not delete championship event, err: %s", err)
+		logrus.WithError(err).Errorf("Could not delete championship event")
 
 		AddErrorFlash(w, r, "Couldn't delete the Event")
 	} else {
@@ -428,7 +428,7 @@ func (ch *ChampionshipsHandler) startPracticeEvent(w http.ResponseWriter, r *htt
 	err := ch.championshipManager.StartPracticeEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
 
 	if err != nil {
-		logrus.Errorf("Could not start practice championship event, err: %s", err)
+		logrus.WithError(err).Errorf("Could not start practice championship event")
 
 		AddErrorFlash(w, r, "Couldn't start the Practice Event")
 	} else {
@@ -444,7 +444,7 @@ func (ch *ChampionshipsHandler) cancelEvent(w http.ResponseWriter, r *http.Reque
 	err := ch.championshipManager.CancelEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
 
 	if err != nil {
-		logrus.Errorf("Could not cancel championship event, err: %s", err)
+		logrus.WithError(err).Errorf("Could not cancel championship event")
 
 		AddErrorFlash(w, r, "Couldn't cancel the Championship Event")
 	} else {
@@ -460,7 +460,7 @@ func (ch *ChampionshipsHandler) restartEvent(w http.ResponseWriter, r *http.Requ
 	err := ch.championshipManager.RestartEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
 
 	if err != nil {
-		logrus.Errorf("Could not restart championship event, err: %s", err)
+		logrus.WithError(err).Errorf("Could not restart championship event")
 
 		AddErrorFlash(w, r, "Couldn't restart the Championship Event")
 	} else {
@@ -493,7 +493,7 @@ func (ch *ChampionshipsHandler) driverPenalty(w http.ResponseWriter, r *http.Req
 	)
 
 	if err != nil {
-		logrus.Errorf("Could not modify championship driver penalty, err: %s", err)
+		logrus.WithError(err).Errorf("Could not modify championship driver penalty")
 
 		AddErrorFlash(w, r, "Couldn't modify driver penalty")
 	} else {
@@ -513,7 +513,7 @@ func (ch *ChampionshipsHandler) teamPenalty(w http.ResponseWriter, r *http.Reque
 	)
 
 	if err != nil {
-		logrus.Errorf("Could not modify championship penalty, err: %s", err)
+		logrus.WithError(err).Errorf("Could not modify championship penalty")
 
 		AddErrorFlash(w, r, "Couldn't modify team penalty")
 	} else {

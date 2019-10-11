@@ -23,7 +23,7 @@ func (qrh *QuickRaceHandler) create(w http.ResponseWriter, r *http.Request) {
 	quickRaceData, err := qrh.raceManager.BuildRaceOpts(r)
 
 	if err != nil {
-		logrus.Errorf("couldn't build quick race, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't build quick race")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -39,7 +39,7 @@ func (qrh *QuickRaceHandler) submit(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, r.Referer(), http.StatusFound)
 		return
 	} else if err != nil {
-		logrus.Errorf("couldn't apply quick race, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't apply quick race")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

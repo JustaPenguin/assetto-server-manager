@@ -168,7 +168,7 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 	frameLinks, err := rch.store.ListPrevFrames()
 
 	if err != nil {
-		logrus.Errorf("could not get frame links, err: %s", err)
+		logrus.WithError(err).Errorf("could not get frame links")
 		return
 	}
 
@@ -178,7 +178,7 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		link, err := getContentManagerJoinLink(rch.serverProcess.GetServerConfig())
 
 		if err != nil {
-			logrus.Errorf("could not get CM join link, err: %s", err)
+			logrus.WithError(err).Errorf("could not get content manager join link")
 		} else {
 			linkString = link.String()
 		}
@@ -187,7 +187,7 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 	serverOpts, err := rch.store.LoadServerOptions()
 
 	if err != nil {
-		logrus.Errorf("couldn't load server options, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't load server options")
 	}
 
 	rch.viewRenderer.MustLoadTemplate(w, r, "live-timing.html", &liveTimingTemplateVars{
@@ -217,14 +217,14 @@ func (rch *RaceControlHandler) saveIFrames(w http.ResponseWriter, r *http.Reques
 	err := r.ParseForm()
 
 	if err != nil {
-		logrus.Errorf("could not load parse form, err: %s", err)
+		logrus.WithError(err).Errorf("could not load parse form")
 		return
 	}
 
 	err = rch.store.UpsertLiveFrames(deleteEmpty(r.Form["frame-link"]))
 
 	if err != nil {
-		logrus.Errorf("could not save frame links, err: %s", err)
+		logrus.WithError(err).Errorf("could not save frame links")
 		return
 	}
 
@@ -265,10 +265,10 @@ func (rch *RaceControlHandler) broadcastChat(w http.ResponseWriter, r *http.Requ
 			err := rch.serverProcess.SendUDPMessage(broadcastMessage)
 
 			if err != nil {
-				logrus.Errorf("Unable to broadcast chat message, err: %s", err)
+				logrus.WithError(err).Errorf("Unable to broadcast chat message")
 			}
 		} else {
-			logrus.Errorf("Unable to build chat message, err: %s", err)
+			logrus.WithError(err).Errorf("Unable to build chat message")
 		}
 	}
 }
@@ -284,10 +284,10 @@ func (rch *RaceControlHandler) adminCommand(w http.ResponseWriter, r *http.Reque
 		err := rch.serverProcess.SendUDPMessage(adminCommand)
 
 		if err != nil {
-			logrus.Errorf("Unable to send admin command, err: %s", err)
+			logrus.WithError(err).Errorf("Unable to send admin command")
 		}
 	} else {
-		logrus.Errorf("Unable to build admin command, err: %s", err)
+		logrus.WithError(err).Errorf("Unable to build admin command")
 	}
 }
 
@@ -304,7 +304,7 @@ func (rch *RaceControlHandler) kickUser(w http.ResponseWriter, r *http.Request) 
 
 	var carID uint8
 
-	for id, rangeGuid :=  range rch.raceControl.CarIDToGUID {
+	for id, rangeGuid := range rch.raceControl.CarIDToGUID {
 		if string(rangeGuid) == guid {
 			carID = uint8(id)
 			break
@@ -316,7 +316,7 @@ func (rch *RaceControlHandler) kickUser(w http.ResponseWriter, r *http.Request) 
 	err := rch.serverProcess.SendUDPMessage(kickUser)
 
 	if err != nil {
-		logrus.Errorf("Unable to send kick command, err: %s", err)
+		logrus.WithError(err).Errorf("Unable to send kick command")
 	}
 
 }
@@ -325,7 +325,7 @@ func (rch *RaceControlHandler) restartSession(w http.ResponseWriter, r *http.Req
 	err := rch.serverProcess.SendUDPMessage(&udp.RestartSession{})
 
 	if err != nil {
-		logrus.Errorf("Unable to restart session, err: %s", err)
+		logrus.WithError(err).Errorf("Unable to restart session")
 
 		AddErrorFlash(w, r, "The server was unable to restart the session!")
 	}
@@ -337,7 +337,7 @@ func (rch *RaceControlHandler) nextSession(w http.ResponseWriter, r *http.Reques
 	err := rch.serverProcess.SendUDPMessage(&udp.NextSession{})
 
 	if err != nil {
-		logrus.Errorf("Unable to move to next session, err: %s", err)
+		logrus.WithError(err).Errorf("Unable to move to next session")
 
 		AddErrorFlash(w, r, "The server was unable to move to the next session!")
 	}
