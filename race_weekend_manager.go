@@ -472,7 +472,9 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 				entrant.Model = raceWeekendEntrant.Model
 				entrant.Ballast = raceWeekendEntrant.Ballast
 				entrant.Restrictor = raceWeekendEntrant.Restrictor
-				entrant.FixedSetup = raceWeekendEntrant.FixedSetup
+				if entrant.FixedSetup == "" {
+					entrant.FixedSetup = raceWeekendEntrant.FixedSetup
+				}
 				entrant.Skin = raceWeekendEntrant.Skin
 				break
 			}

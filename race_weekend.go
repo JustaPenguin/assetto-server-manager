@@ -725,7 +725,7 @@ func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, override
 
 		if overrideFilter != nil && parentSessionID.String() == overrideFilterSessionID {
 			// override filters are provided when users are modifying filters for their race weekend setups
-			err = overrideFilter.Filter(parentSession, rws, finishingGrid, &entryList)
+			err = overrideFilter.Filter(rw, parentSession, rws, finishingGrid, &entryList)
 
 			if err != nil {
 				return nil, err
@@ -737,7 +737,7 @@ func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, override
 				return nil, err
 			}
 
-			err = sessionToSessionFilter.Filter(parentSession, rws, finishingGrid, &entryList)
+			err = sessionToSessionFilter.Filter(rw, parentSession, rws, finishingGrid, &entryList)
 
 			if err != nil {
 				return nil, err
@@ -826,6 +826,12 @@ func (e RaceWeekendEntryList) AsEntryList() EntryList {
 	entryList := make(EntryList)
 
 	for _, entrant := range e {
+		x := entrant.GetEntrant()
+
+		if entrant.OverrideSetupFile != "" {
+			x.FixedSetup = entrant.OverrideSetupFile
+		}
+
 		entryList.AddInPitBox(entrant.GetEntrant(), entrant.PitBox)
 	}
 

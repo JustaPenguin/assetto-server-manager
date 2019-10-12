@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -316,48 +317,84 @@ var DefaultTrackSurfacePresets = []TrackSurfacePreset{
 var ErrCouldNotFindTyreForCar = errors.New("servermanager: could not find tyres for car")
 
 func findTyreIndex(carModel, tyreName string) (int, error) {
-	for _, file := range tyreFiles {
-		tyreIndex, err := findTyreIndexInFile(file, carModel, tyreName)
+	tyres, err := CarDataFile(carModel, "tyres.ini")
 
-		if err == ErrCouldNotFindTyreForCar {
-			continue
-		}
+	if err != nil {
+		return -1, err
+	}
 
-		if tyreIndex >= 0 {
-			return tyreIndex, nil
+	f, err := ini.Load(tyres)
+
+	if err != nil {
+		return -1, err
+	}
+
+	tyreIndexCount := 0
+
+	for _, section := range f.Sections() {
+		if strings.HasPrefix(section.Name(), "FRONT") {
+			key, err := section.GetKey("SHORT_NAME")
+
+			if err != nil {
+				return -1, err
+			}
+
+			if key.Value() == tyreName {
+				return tyreIndexCount, nil
+			}
+
+			tyreIndexCount++
 		}
 	}
 
 	return -1, ErrCouldNotFindTyreForCar
 }
 
-func findTyreIndexInFile(fileName string, carModel string, tyreName string) (int, error) {
-	f, err := os.Open(filepath.Join(ServerInstallPath, "manager", fileName))
+func CarDataFile(carModel, dataFile string) (io.ReadCloser, error) {
+	carDataFile := filepath.Join(ServerInstallPath, "content", "cars", carModel, "data.acd")
 
-	if err != nil {
-		return -1, err
+	f, err := os.Open(carDataFile)
+
+	if os.IsNotExist(err) {
+		// this is likely an older car with a data folder
+		f, err := os.Open(filepath.Join(ServerInstallPath, "content", "cars", carModel, "data", dataFile))
+
+		if err != nil {
+			return nil, err
+		}
+
+		return f, nil
+	} else if err != nil {
+		return nil, err
 	}
 
 	defer f.Close()
 
-	i, err := ini.Load(f)
+	r, err := acd.NewReader(f, carModel)
 
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
 
-	carTyres, err := i.GetSection(carModel)
+	for _, file := range r.Files {
+		if file.Name() == dataFile {
+			b, err := file.Bytes()
 
-	if err != nil {
-		return -1, err
-	}
+			if err != nil {
+				return nil, err
+			}
 
-	for index, carTyre := range carTyres.Keys() {
-		fmt.Println(index, carTyre.Name(), tyreName)
-		if carTyre.Name() == tyreName {
-			return index, nil
+			return ByteReaderCloser{bytes.NewReader(b)}, nil
 		}
 	}
 
-	return -1, ErrCouldNotFindTyreForCar
+	return nil, os.ErrNotExist
+}
+
+type ByteReaderCloser struct {
+	*bytes.Reader
+}
+
+func (ByteReaderCloser) Close() error {
+	return nil
 }

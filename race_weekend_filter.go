@@ -58,7 +58,7 @@ func reverseEntrants(numToReverse int, entrants []*RaceWeekendSessionEntrant) {
 }
 
 // Filter takes a set of RaceWeekendSessionEntrants formed by the results of the parent session and filters them into a child session entry list.
-func (f RaceWeekendSessionToSessionFilter) Filter(parentSession, childSession *RaceWeekendSession, parentSessionResults []*RaceWeekendSessionEntrant, childSessionEntryList *RaceWeekendEntryList) error {
+func (f RaceWeekendSessionToSessionFilter) Filter(raceWeekend *RaceWeekend, parentSession, childSession *RaceWeekendSession, parentSessionResults []*RaceWeekendSessionEntrant, childSessionEntryList *RaceWeekendEntryList) error {
 	if parentSession.Completed() {
 		sorter := GetRaceWeekendEntryListSort(f.SortType)
 
@@ -102,7 +102,7 @@ func (f RaceWeekendSessionToSessionFilter) Filter(parentSession, childSession *R
 			if fastestLap == nil {
 				logrus.Warnf("could not find fastest lap for entrant %s (%s). will not lock their tyre choice.", entrant.Car.GetName(), entrant.Car.GetGUID())
 			} else {
-				err := buildLockedTyreSetup(entrant, fastestLap)
+				err := raceWeekend.buildLockedTyreSetup(entrant, fastestLap)
 
 				if err != nil {
 					logrus.WithError(err).Errorf("could not build locked tyre setup for entrant %s (%s)", entrant.Car.GetName(), entrant.Car.GetGUID())
@@ -118,31 +118,56 @@ func (f RaceWeekendSessionToSessionFilter) Filter(parentSession, childSession *R
 	return nil
 }
 
-func buildLockedTyreSetup(entrant *RaceWeekendSessionEntrant, fastestLap *SessionLap) error {
+func (rw *RaceWeekend) buildLockedTyreSetup(entrant *RaceWeekendSessionEntrant, fastestLap *SessionLap) error {
 	tyreIndex, err := findTyreIndex(entrant.Car.Model, fastestLap.Tyre)
 
 	if err != nil {
 		return err
 	}
 
-	// write out a temp ini setup file for this car + player.
-	f := ini.NewFile([]ini.DataSource{nil}, ini.LoadOptions{
-		IgnoreInlineComment: true,
-	})
+	entryList := rw.GetEntryList()
 
-	car, err := f.NewSection("CAR")
+	var setup *ini.File
 
-	if err != nil {
-		return err
+	for _, raceWeekendEntrant := range entryList {
+		if raceWeekendEntrant.GUID == entrant.Car.GetGUID() && raceWeekendEntrant.FixedSetup != "" {
+			setup, err = ini.Load(filepath.Join(ServerInstallPath, "setups", raceWeekendEntrant.FixedSetup))
+
+			if err != nil {
+				return err
+			}
+
+			break
+		}
 	}
 
-	_, err = car.NewKey("MODEL", entrant.Car.Model)
+	if setup == nil {
+		// no fixed setup was specified
+		// write out a temp ini setup file for this car + player.
+		setup = ini.NewFile([]ini.DataSource{nil}, ini.LoadOptions{
+			IgnoreInlineComment: true,
+		})
 
-	if err != nil {
-		return err
+		_, err = setup.NewSection("DEFAULT")
+
+		if err != nil {
+			return err
+		}
+
+		car, err := setup.NewSection("CAR")
+
+		if err != nil {
+			return err
+		}
+
+		_, err = car.NewKey("MODEL", entrant.Car.Model)
+
+		if err != nil {
+			return err
+		}
 	}
 
-	tyres, err := f.NewSection("TYRES")
+	tyres, err := setup.NewSection("TYRES")
 
 	if err != nil {
 		return err
@@ -162,7 +187,7 @@ func buildLockedTyreSetup(entrant *RaceWeekendSessionEntrant, fastestLap *Sessio
 		return err
 	}
 
-	if err := f.SaveTo(fullSaveFilepath); err != nil {
+	if err := setup.SaveTo(fullSaveFilepath); err != nil {
 		return err
 	}
 
