@@ -86,7 +86,6 @@ func (dummyServerProcess) Event() RaceEvent {
 }
 
 func (dummyServerProcess) UDPCallback(message udp.Message) {
-
 }
 
 func (dummyServerProcess) SendUDPMessage(message udp.Message) error {
@@ -478,5 +477,4 @@ func TestChampionshipManager_ChampionshipEventCallbackOpenChampionshipExample(t 
 		checkChampionshipEventCompletion(t, champ.ID.String(), eventID)
 		eventNum++
 	}
-
 }

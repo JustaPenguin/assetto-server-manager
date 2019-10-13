@@ -20,9 +20,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	ErrCustomRaceNotFound = errors.New("servermanager: custom race not found")
-)
+var ErrCustomRaceNotFound = errors.New("servermanager: custom race not found")
 
 type RaceManager struct {
 	process             ServerProcess
@@ -912,7 +910,6 @@ func (rm *RaceManager) SaveCustomRace(
 	entryList EntryList,
 	starred bool,
 ) (*CustomRace, error) {
-
 	hasCustomRaceName := true
 
 	if name == "" {

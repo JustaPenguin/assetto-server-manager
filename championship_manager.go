@@ -82,7 +82,7 @@ func (cm *ChampionshipManager) UpsertChampionship(c *Championship) error {
 	}
 
 	if config != nil && config.ACSR.Enabled && c.ACSR {
-		ACSRSendResult(c)
+		ACSRSendResult(*c)
 	}
 
 	return nil
@@ -98,7 +98,7 @@ func (cm *ChampionshipManager) DeleteChampionship(id string) error {
 	if championship.ACSR {
 		championship.ACSR = false
 
-		ACSRSendResult(championship)
+		ACSRSendResult(*championship)
 	}
 
 	return cm.store.DeleteChampionship(id)
@@ -210,7 +210,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	if championship.ACSR && !newACSR {
 		championship.ACSR = newACSR
 
-		ACSRSendResult(championship)
+		ACSRSendResult(*championship)
 	} else {
 		championship.ACSR = newACSR
 	}
@@ -876,13 +876,12 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 		}
 
 		if championship.ACSR && config != nil && config.ACSR.Enabled {
-			go ACSRSendResult(championship)
+			go ACSRSendResult(*championship)
 		}
 	default:
 		saveChampionship = false
 		return
 	}
-
 }
 
 var (

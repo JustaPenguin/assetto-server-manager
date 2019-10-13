@@ -337,7 +337,6 @@ func (r *Resolver) resolveRaceControl() *RaceControl {
 }
 
 func (r *Resolver) resolveRaceControlHandler() *RaceControlHandler {
-
 	if config.Server.PerformanceMode {
 		return nil
 	}
@@ -363,7 +362,7 @@ func (r *Resolver) resolveRaceWeekendManager() *RaceWeekendManager {
 		return r.raceWeekendManager
 	}
 
-	r.raceWeekendManager = NewRaceWeekendManager(r.resolveRaceManager(), r.ResolveStore(), r.resolveServerProcess(), r.resolveNotificationManager())
+	r.raceWeekendManager = NewRaceWeekendManager(r.resolveRaceManager(), r.resolveChampionshipManager(), r.ResolveStore(), r.resolveServerProcess(), r.resolveNotificationManager())
 
 	return r.raceWeekendManager
 }

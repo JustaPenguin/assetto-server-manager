@@ -268,7 +268,7 @@ func (s *SessionResults) IsFastestLap(time, cuts int) bool {
 		return false
 	}
 
-	var fastest = true
+	fastest := true
 
 	for _, lap := range s.Laps {
 		if lap.LapTime < time && lap.Cuts == 0 {
@@ -285,7 +285,7 @@ func (s *SessionResults) IsDriversFastestLap(guid string, time, cuts int) bool {
 		return false
 	}
 
-	var fastest = true
+	fastest := true
 
 	for _, lap := range s.Laps {
 		if lap.LapTime < time && lap.DriverGUID == guid && lap.Cuts == 0 {
@@ -314,7 +314,7 @@ func (s *SessionResults) IsFastestSector(sector, time, cuts int) bool {
 		return false
 	}
 
-	var fastest = true
+	fastest := true
 
 	for _, lap := range s.Laps {
 		if lap.Sectors[sector] < time && lap.Cuts == 0 {
@@ -331,7 +331,7 @@ func (s *SessionResults) IsDriversFastestSector(guid string, sector, time, cuts 
 		return false
 	}
 
-	var fastest = true
+	fastest := true
 
 	for _, lap := range s.Laps {
 		if lap.Sectors[sector] < time && lap.DriverGUID == guid && lap.Cuts == 0 {
@@ -398,11 +398,15 @@ cars:
 	sort.Slice(s.Result, func(i, j int) bool {
 		if (!s.Result[i].Disqualified && !s.Result[j].Disqualified) || (s.Result[i].Disqualified && s.Result[j].Disqualified) {
 
+			if s.Type == SessionTypeQualifying || s.Type == SessionTypePractice {
+				return s.Result[i].BestLap < s.Result[j].BestLap
+			}
+
 			// if both drivers aren't/are disqualified
 			if s.GetNumLaps(s.Result[i].DriverGUID) == s.GetNumLaps(s.Result[j].DriverGUID) {
 				// if their number of laps are equal, compare last lap pos
-				return s.GetTime(s.Result[i].TotalTime, s.Result[i].DriverGUID, true) <
-					s.GetTime(s.Result[j].TotalTime, s.Result[j].DriverGUID, true)
+				return s.GetLastLapPos(s.Result[i].DriverGUID) <
+					s.GetLastLapPos(s.Result[j].DriverGUID)
 			}
 
 			return s.GetNumLaps(s.Result[i].DriverGUID) >= s.GetNumLaps(s.Result[j].DriverGUID)

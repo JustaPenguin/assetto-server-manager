@@ -201,8 +201,7 @@ func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
 			}
 		}
 
-		// @TODO change this to use rwm.UpsertRaceWeekend
-		err = ph.raceWeekendManager.store.UpsertRaceWeekend(raceWeekend)
+		err = ph.raceWeekendManager.UpsertRaceWeekend(raceWeekend)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Could not update race weekend: %s", raceWeekend.ID.String())
