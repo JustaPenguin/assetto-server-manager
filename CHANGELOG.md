@@ -1,3 +1,12 @@
+v1.5.1
+------
+
+Fixes:
+
+* Fixes an issue where you could not create a Championship with a single entrant.
+
+---
+
 v1.5.0
 ------
 

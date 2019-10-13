@@ -1954,6 +1954,13 @@ let championships = {
     init: function () {
         let $pointsTemplate = $document.find(".points-place").last().clone();
 
+        $(".race-setup").each(function(index, elem) {
+            // init totalNumPoints val to be equal to the number of .points-place's visible in the class.
+            let $raceSetup = $(elem);
+            let $savedNumPoints = $raceSetup.find(".totalNumPoints");
+            $savedNumPoints.val($raceSetup.find(".points-place:visible").length);
+        });
+
         $document.on("click", ".addEntrant", function (e) {
             e.preventDefault();
 
