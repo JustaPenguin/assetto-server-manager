@@ -102,7 +102,7 @@ func (f RaceWeekendSessionToSessionFilter) Filter(raceWeekend *RaceWeekend, pare
 			if fastestLap == nil {
 				logrus.Warnf("could not find fastest lap for entrant %s (%s). will not lock their tyre choice.", entrant.Car.GetName(), entrant.Car.GetGUID())
 			} else {
-				err := raceWeekend.buildLockedTyreSetup(entrant, fastestLap)
+				err := raceWeekend.buildLockedTyreSetup(childSession, entrant, fastestLap)
 
 				if err != nil {
 					logrus.WithError(err).Errorf("could not build locked tyre setup for entrant %s (%s)", entrant.Car.GetName(), entrant.Car.GetGUID())
@@ -118,8 +118,10 @@ func (f RaceWeekendSessionToSessionFilter) Filter(raceWeekend *RaceWeekend, pare
 	return nil
 }
 
-func (rw *RaceWeekend) buildLockedTyreSetup(entrant *RaceWeekendSessionEntrant, fastestLap *SessionLap) error {
-	tyreIndex, err := findTyreIndex(entrant.Car.Model, fastestLap.Tyre)
+const lockedTyreSetupFolder = "server_manager_locked_tyres"
+
+func (rw *RaceWeekend) buildLockedTyreSetup(session *RaceWeekendSession, entrant *RaceWeekendSessionEntrant, fastestLap *SessionLap) error {
+	tyreIndex, err := findTyreIndex(entrant.Car.Model, fastestLap.Tyre, session.RaceConfig)
 
 	if err != nil {
 		return err
@@ -179,7 +181,25 @@ func (rw *RaceWeekend) buildLockedTyreSetup(entrant *RaceWeekendSessionEntrant, 
 		return err
 	}
 
-	setupFilePath := filepath.Join(entrant.Car.Model, "locked_tyres", fmt.Sprintf("race_weekend_session_%s_%s.ini", entrant.Car.GetGUID(), entrant.SessionID.String()))
+	raceWeekendSection, err := setup.NewSection("RACE_WEEKEND")
+
+	if err != nil {
+		return err
+	}
+
+	_, err = raceWeekendSection.NewKey("ID", rw.ID.String())
+
+	if err != nil {
+		return err
+	}
+
+	_, err = raceWeekendSection.NewKey("SESSION_ID", entrant.SessionID.String())
+
+	if err != nil {
+		return err
+	}
+
+	setupFilePath := filepath.Join(entrant.Car.Model, lockedTyreSetupFolder, fmt.Sprintf("race_weekend_session_%s_%s.ini", entrant.Car.GetGUID(), entrant.SessionID.String()))
 
 	fullSaveFilepath := filepath.Join(ServerInstallPath, "setups", setupFilePath)
 

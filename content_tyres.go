@@ -316,12 +316,14 @@ var DefaultTrackSurfacePresets = []TrackSurfacePreset{
 
 var ErrCouldNotFindTyreForCar = errors.New("servermanager: could not find tyres for car")
 
-func findTyreIndex(carModel, tyreName string) (int, error) {
+func findTyreIndex(carModel, tyreName string, raceSetup CurrentRaceConfig) (int, error) {
 	tyres, err := CarDataFile(carModel, "tyres.ini")
 
 	if err != nil {
 		return -1, err
 	}
+
+	defer tyres.Close()
 
 	f, err := ini.Load(tyres)
 
@@ -331,19 +333,26 @@ func findTyreIndex(carModel, tyreName string) (int, error) {
 
 	tyreIndexCount := 0
 
+	legalTyres := raceSetup.Tyres()
+
 	for _, section := range f.Sections() {
 		if strings.HasPrefix(section.Name(), "FRONT") {
+			// this is a tyre section for the front tyres
 			key, err := section.GetKey("SHORT_NAME")
 
 			if err != nil {
 				return -1, err
 			}
 
+			// we found our tyre, return the tyreIndexCount
 			if key.Value() == tyreName {
 				return tyreIndexCount, nil
 			}
 
-			tyreIndexCount++
+			if _, available := legalTyres[key.Value()]; available {
+				// if the tyre we just found is in the availableTyres, then increment the tyreIndexCount
+				tyreIndexCount++
+			}
 		}
 	}
 
