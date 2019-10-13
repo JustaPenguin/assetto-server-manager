@@ -268,7 +268,7 @@ func (s *SessionResults) IsFastestLap(time, cuts int) bool {
 		return false
 	}
 
-	var fastest = true
+	fastest := true
 
 	for _, lap := range s.Laps {
 		if lap.LapTime < time && lap.Cuts == 0 {
@@ -285,7 +285,7 @@ func (s *SessionResults) IsDriversFastestLap(guid string, time, cuts int) bool {
 		return false
 	}
 
-	var fastest = true
+	fastest := true
 
 	for _, lap := range s.Laps {
 		if lap.LapTime < time && lap.DriverGUID == guid && lap.Cuts == 0 {
@@ -314,7 +314,7 @@ func (s *SessionResults) IsFastestSector(sector, time, cuts int) bool {
 		return false
 	}
 
-	var fastest = true
+	fastest := true
 
 	for _, lap := range s.Laps {
 		if lap.Sectors[sector] < time && lap.Cuts == 0 {
@@ -331,7 +331,7 @@ func (s *SessionResults) IsDriversFastestSector(guid string, sector, time, cuts 
 		return false
 	}
 
-	var fastest = true
+	fastest := true
 
 	for _, lap := range s.Laps {
 		if lap.Sectors[sector] < time && lap.DriverGUID == guid && lap.Cuts == 0 {

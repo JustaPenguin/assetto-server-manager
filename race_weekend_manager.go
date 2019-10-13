@@ -226,7 +226,6 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (*Ra
 
 		if err == ErrRaceWeekendSessionDependencyIncomplete {
 			opts.CurrentEntrants = raceWeekend.GetEntryList()
-
 		} else if err != nil {
 			return nil, err
 		} else {

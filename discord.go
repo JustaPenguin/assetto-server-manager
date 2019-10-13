@@ -111,7 +111,7 @@ func (dm *DiscordManager) CommandHandler(s *discordgo.Session, m *discordgo.Mess
 			return
 		}
 
-		var msg = ""
+		msg := ""
 
 		for _, event := range calendar {
 			msg += event.Start.Format("Mon, 02 Jan 2006 15:04:05 MST") + "\n"

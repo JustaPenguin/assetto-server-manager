@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/google/uuid"
 	"path/filepath"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/cj123/assetto-server-manager"
 	"github.com/etcd-io/bbolt"

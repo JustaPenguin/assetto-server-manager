@@ -160,7 +160,7 @@ func (nm *NotificationManager) SendRaceScheduledMessage(event *CustomRace, date 
 		return err
 	}
 
-	var msg = "A new event has been scheduled\n"
+	msg := "A new event has been scheduled\n"
 	eventName := event.EventName()
 
 	if eventName != "" {

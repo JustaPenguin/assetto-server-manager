@@ -318,7 +318,6 @@ func (rch *RaceControlHandler) kickUser(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		logrus.WithError(err).Errorf("Unable to send kick command")
 	}
-
 }
 
 func (rch *RaceControlHandler) restartSession(w http.ResponseWriter, r *http.Request) {
