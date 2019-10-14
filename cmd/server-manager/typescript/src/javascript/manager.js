@@ -56,12 +56,6 @@ $(document).ready(function () {
         });
     });
 
-    /*
-    @TODO if i want it to be a switch use this
-    $("[data-toggle=popover]").on("shown.bs.popover", function () {
-        $("#" + $(this).attr("aria-describedby")).find("input[type='checkbox']").bootstrapSwitch();
-    });
-*/
     $(".time-local").each(function (i, elem) {
         let $elem = $(elem);
 
