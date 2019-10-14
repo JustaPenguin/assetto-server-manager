@@ -252,6 +252,9 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		class.Points.PolePosition = formValueAsInt(r.Form["Points.PolePosition"][i])
 		class.Points.BestLap = formValueAsInt(r.Form["Points.BestLap"][i])
 		class.Points.SecondRaceMultiplier = formValueAsFloat(r.Form["Points.SecondRaceMultiplier"][i])
+		class.Points.CollisionWithDriver = formValueAsInt(r.Form["Points.CollisionWithDriver"][i])
+		class.Points.CollisionWithEnv = formValueAsInt(r.Form["Points.CollisionWithEnv"][i])
+		class.Points.CutTrack = formValueAsInt(r.Form["Points.CutTrack"][i])
 
 		previousNumEntrants += numEntrantsForClass
 		previousNumPoints += numPointsForClass

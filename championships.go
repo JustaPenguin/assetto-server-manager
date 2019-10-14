@@ -46,6 +46,10 @@ var DefaultChampionshipPoints = ChampionshipPoints{
 	BestLap:              0,
 	PolePosition:         0,
 	SecondRaceMultiplier: 1,
+
+	CollisionWithDriver: 0,
+	CollisionWithEnv:    0,
+	CutTrack:            0,
 }
 
 // ChampionshipPoints represent the potential points for positions as well as other awards in a Championship.
@@ -53,6 +57,10 @@ type ChampionshipPoints struct {
 	Places       []int
 	BestLap      int
 	PolePosition int
+
+	CollisionWithDriver int
+	CollisionWithEnv    int
+	CutTrack            int
 
 	SecondRaceMultiplier float64
 }
@@ -513,6 +521,38 @@ func (c *Championship) AllEntrants() EntryList {
 	return e
 }
 
+func (c *Championship) EntrantAttendance(guid string) int {
+	i := 0
+
+	for _, event := range c.Events {
+		if event.Completed() {
+			for _, class := range c.Classes {
+				standings := class.StandingsForEvent(event)
+
+				for _, standing := range standings {
+					if standing.Car.GetGUID() == guid {
+						i++
+					}
+				}
+			}
+		}
+	}
+
+	return i
+}
+
+func (c *Championship) NumCompletedEvents() int {
+	i := 0
+
+	for _, event := range c.Events {
+		if event.Completed() {
+			i++
+		}
+	}
+
+	return i
+}
+
 // AddClass to the championship
 func (c *Championship) AddClass(class *ChampionshipClass) {
 	c.Classes = append(c.Classes, class)
@@ -871,6 +911,12 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 
 				if fastestLap.DriverGUID == driver.DriverGUID {
 					givePoints(event, driver.DriverGUID, float64(points.BestLap)*pointsMultiplier)
+				}
+
+				if sessionType == SessionTypeRace || sessionType == SessionTypeSecondRace {
+					givePoints(event, driver.DriverGUID, float64(points.CollisionWithDriver*session.Results.GetCrashesOfType(driver.DriverGUID, "COLLISION_WITH_CAR"))*pointsMultiplier*-1)
+					givePoints(event, driver.DriverGUID, float64(points.CollisionWithEnv*session.Results.GetCrashesOfType(driver.DriverGUID, "COLLISION_WITH_ENV"))*pointsMultiplier*-1)
+					givePoints(event, driver.DriverGUID, float64(points.CutTrack*session.Results.GetCuts(driver.DriverGUID))*pointsMultiplier*-1)
 				}
 			}
 		}

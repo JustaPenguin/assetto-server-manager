@@ -381,6 +381,9 @@ func (rwm *RaceWeekendManager) SaveRaceWeekendSession(r *http.Request) (raceWeek
 			}
 
 			pts.BestLap = formValueAsInt(r.Form["Points.BestLap"][i])
+			pts.CollisionWithDriver = formValueAsInt(r.Form["Points.CollisionWithDriver"][i])
+			pts.CollisionWithEnv = formValueAsInt(r.Form["Points.CollisionWithEnv"][i])
+			pts.CutTrack = formValueAsInt(r.Form["Points.CutTrack"][i])
 
 			previousNumPoints += numPointsForClass
 			session.Points[classID] = pts
@@ -405,8 +408,6 @@ func (rwm *RaceWeekendManager) applyConfigAndStart(config CurrentRaceConfig, ent
 func (rwm *RaceWeekendManager) StartPracticeSession(raceWeekendID string, raceWeekendSessionID string) error {
 	return rwm.StartSession(raceWeekendID, raceWeekendSessionID, true)
 }
-
-var foo = 0
 
 func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSessionID string, isPracticeSession bool) error {
 	if IsPremium != "true" {
