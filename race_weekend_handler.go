@@ -471,7 +471,12 @@ func (rwh *RaceWeekendHandler) scheduleSession(w http.ResponseWriter, r *http.Re
 	timezone := r.FormValue("session-schedule-timezone")
 	startWhenParentFinished := formValueAsInt(r.FormValue("session-start-after-parent")) == 1
 
+	var message string
+	var date time.Time
+
 	if !startWhenParentFinished {
+		var location *time.Location
+
 		location, err := time.LoadLocation(timezone)
 
 		if err != nil {
@@ -480,7 +485,7 @@ func (rwh *RaceWeekendHandler) scheduleSession(w http.ResponseWriter, r *http.Re
 		}
 
 		// Parse time in correct time zone
-		date, err := time.ParseInLocation("2006-01-02-15:04", dateString+"-"+timeString, location)
+		date, err = time.ParseInLocation("2006-01-02-15:04", dateString+"-"+timeString, location)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("couldn't parse schedule race weekend session date")
@@ -488,27 +493,21 @@ func (rwh *RaceWeekendHandler) scheduleSession(w http.ResponseWriter, r *http.Re
 			return
 		}
 
-		err = rwh.raceWeekendManager.ScheduleSession(championshipID, championshipEventID, date, startWhenParentFinished)
+		message = fmt.Sprintf("We have scheduled the Race Weekend Session to begin at %s", date.Format(time.RFC1123))
 
-		if err != nil {
-			logrus.WithError(err).Errorf("couldn't schedule race weekend session")
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-
-		AddFlash(w, r, fmt.Sprintf("We have scheduled the Race Weekend Session to begin at %s", date.Format(time.RFC1123)))
 	} else {
-		err := rwh.raceWeekendManager.ScheduleSession(championshipID, championshipEventID, time.Time{}, startWhenParentFinished)
-
-		if err != nil {
-			logrus.WithError(err).Errorf("couldn't schedule race weekend session")
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-
-		AddFlash(w, r, fmt.Sprintf("We have scheduled the Race Weekend Session to begin after the parent session(s) complete."))
+		message = fmt.Sprintf("We have scheduled the Race Weekend Session to begin after the parent session(s) complete.")
 	}
 
+	err := rwh.raceWeekendManager.ScheduleSession(championshipID, championshipEventID, date, startWhenParentFinished)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't schedule race weekend session")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	AddFlash(w, r, message)
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
