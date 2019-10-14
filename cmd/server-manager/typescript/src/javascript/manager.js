@@ -16,7 +16,7 @@ $(document).ready(function () {
     $.fn.bootstrapSwitch.defaults.size = 'small';
     $.fn.bootstrapSwitch.defaults.animate = false;
     $.fn.bootstrapSwitch.defaults.onColor = "success";
-    $document.find("input[type='checkbox']").bootstrapSwitch();
+    $document.find("input[type='checkbox']:visible").bootstrapSwitch();
 
     championships.init();
     $document.find(".race-setup").each(function (index, elem) {
@@ -52,10 +52,16 @@ $(document).ready(function () {
                 let id = $(this).attr('id');
 
                 return $('#popover-content-' + id).html();
-            }
+            },
         });
     });
 
+    /*
+    @TODO if i want it to be a switch use this
+    $("[data-toggle=popover]").on("shown.bs.popover", function () {
+        $("#" + $(this).attr("aria-describedby")).find("input[type='checkbox']").bootstrapSwitch();
+    });
+*/
     $(".time-local").each(function (i, elem) {
         let $elem = $(elem);
 
@@ -892,7 +898,7 @@ class RaceSetup {
                     let $opt = $("<option />");
                     $opt.attr({'value': val});
                     // use the text from the cars dropdown to populate the name, fallback to prettify if necessary
-                    let realCarName = that.$carsDropdown.find("option[value='"+val+"']").text();
+                    let realCarName = that.$carsDropdown.find("option[value='" + val + "']").text();
 
                     if (!realCarName) {
                         realCarName = prettifyName(val, true);
@@ -1192,11 +1198,11 @@ let serverLogs = {
 
 
 function initUploaders() {
-    $("#input-folder-car").on("change", function() {
+    $("#input-folder-car").on("change", function () {
         handleCarFiles(this.files);
     });
 
-    $("#drop-zone.car-drop").on("drop", function(e) {
+    $("#drop-zone.car-drop").on("drop", function (e) {
         handleCarDropFiles(e);
     });
 
@@ -1204,19 +1210,19 @@ function initUploaders() {
     $("#drop-zone").on("dragleave", dragOutHandler);
     $("#only-ks").on("switchChange.bootstrapSwitch", toggleKS);
 
-    $("#input-folder-track").on("change", function() {
+    $("#input-folder-track").on("change", function () {
         handleTrackFiles(this.files);
     });
 
-    $("#drop-zone.track-drop").on("drop", function(e) {
+    $("#drop-zone.track-drop").on("drop", function (e) {
         handleTrackDropFiles(e);
     });
 
-    $("#input-folder-weather").on("change", function() {
+    $("#input-folder-weather").on("change", function () {
         handleWeatherFiles(this.files);
     });
 
-    $("#drop-zone.weather-drop").on("drop", function(e) {
+    $("#drop-zone.weather-drop").on("drop", function (e) {
         handleWeatherDropFiles(e);
     });
 }
@@ -1954,7 +1960,7 @@ let championships = {
     init: function () {
         let $pointsTemplate = $document.find(".points-place").last().clone();
 
-        $(".race-setup").each(function(index, elem) {
+        $(".race-setup").each(function (index, elem) {
             // init totalNumPoints val to be equal to the number of .points-place's visible in the class.
             let $raceSetup = $(elem);
             let $savedNumPoints = $raceSetup.find(".totalNumPoints");

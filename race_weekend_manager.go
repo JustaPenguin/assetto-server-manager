@@ -406,6 +406,8 @@ func (rwm *RaceWeekendManager) StartPracticeSession(raceWeekendID string, raceWe
 	return rwm.StartSession(raceWeekendID, raceWeekendSessionID, true)
 }
 
+var foo = 0
+
 func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSessionID string, isPracticeSession bool) error {
 	if IsPremium != "true" {
 		return errors.New("servermanager: premium required")
@@ -576,6 +578,38 @@ func (rwm *RaceWeekendManager) UDPCallback(message udp.Message) {
 
 		if err := rwm.ClearLockedTyreSetups(raceWeekend, session); err != nil {
 			logrus.WithError(err).Error("Could not clear previous locked tyres")
+		}
+
+		// first, look at siblings of this session and see if they were due to be started
+		for _, parent := range session.ParentIDs {
+			siblings := raceWeekend.FindChildren(parent.String())
+
+			for _, sibling := range siblings {
+				if !sibling.Completed() && sibling.StartWhenParentHasFinished {
+					err := rwm.StartSession(raceWeekend.ID.String(), sibling.ID.String(), false)
+
+					if err != nil {
+						logrus.WithError(err).Error("Could not start child session")
+					}
+
+					return
+				}
+			}
+		}
+
+		// now we can look and see if any child sessions of this session should be started when it finishes
+		children := raceWeekend.FindChildren(session.ID.String())
+
+		for _, child := range children {
+			if !child.Completed() && child.StartWhenParentHasFinished {
+				err := rwm.StartSession(raceWeekend.ID.String(), child.ID.String(), false)
+
+				if err != nil {
+					logrus.WithError(err).Error("Could not start child session")
+				}
+
+				return
+			}
 		}
 	}
 }
@@ -1063,7 +1097,7 @@ func (rwm *RaceWeekendManager) setupScheduledSessionTimer(raceWeekend *RaceWeeke
 	return nil
 }
 
-func (rwm *RaceWeekendManager) ScheduleSession(raceWeekendID, sessionID string, date time.Time) error {
+func (rwm *RaceWeekendManager) ScheduleSession(raceWeekendID, sessionID string, date time.Time, startWhenParentFinishes bool) error {
 	raceWeekend, session, err := rwm.FindSession(raceWeekendID, sessionID)
 
 	if err != nil {
@@ -1071,11 +1105,14 @@ func (rwm *RaceWeekendManager) ScheduleSession(raceWeekendID, sessionID string, 
 	}
 
 	session.ScheduledTime = date
+	session.StartWhenParentHasFinished = startWhenParentFinishes
 
-	err = rwm.setupScheduledSessionTimer(raceWeekend, session)
+	if !session.ScheduledTime.IsZero() {
+		err = rwm.setupScheduledSessionTimer(raceWeekend, session)
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return rwm.UpsertRaceWeekend(raceWeekend)
@@ -1089,6 +1126,7 @@ func (rwm *RaceWeekendManager) DeScheduleSession(raceWeekendID, sessionID string
 	}
 
 	session.ScheduledTime = time.Time{}
+	session.StartWhenParentHasFinished = false
 
 	rwm.clearScheduledSessionTimer(session)
 
