@@ -882,8 +882,6 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 				}
 
 				if sessionType == SessionTypeRace || sessionType == SessionTypeSecondRace {
-					//fmt.Println(fmt.Sprintf("Driver: %s had %d crashes with other drivers, lost %f points", driver.DriverGUID, session.Results.GetCrashesOfType(driver.DriverGUID, string(CollisionWithCar)), float64(points.CollisionWithDriver*session.Results.GetCrashesOfType(driver.DriverGUID, string(CollisionWithCar)))*pointsMultiplier*-1))
-
 					givePoints(event, driver.DriverGUID, float64(points.CollisionWithDriver*session.Results.GetCrashesOfType(driver.DriverGUID, "COLLISION_WITH_CAR"))*pointsMultiplier*-1)
 					givePoints(event, driver.DriverGUID, float64(points.CollisionWithEnv*session.Results.GetCrashesOfType(driver.DriverGUID, "COLLISION_WITH_ENV"))*pointsMultiplier*-1)
 					givePoints(event, driver.DriverGUID, float64(points.CutTrack*session.Results.GetCuts(driver.DriverGUID))*pointsMultiplier*-1)
