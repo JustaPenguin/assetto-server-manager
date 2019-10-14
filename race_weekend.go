@@ -481,10 +481,11 @@ type RaceWeekendSession struct {
 	OverridePassword    bool
 	ReplacementPassword string
 
-	StartedTime   time.Time
-	CompletedTime time.Time
-	ScheduledTime time.Time
-	Results       *SessionResults
+	StartedTime                time.Time
+	CompletedTime              time.Time
+	ScheduledTime              time.Time
+	Results                    *SessionResults
+	StartWhenParentHasFinished bool
 
 	Points map[uuid.UUID]*ChampionshipPoints
 
