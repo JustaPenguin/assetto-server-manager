@@ -1,3 +1,10 @@
+v1.5.1
+------
+
+Fixes:
+
+* Skins with a # in their name no longer break the car details page.
+
 v1.5.0
 ------
 
