@@ -19,9 +19,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	defaultAddress = "0.0.0.0:8772"
-)
+var defaultAddress = "0.0.0.0:8772"
 
 const (
 	udpRealtimePosRefreshIntervalMin = 100

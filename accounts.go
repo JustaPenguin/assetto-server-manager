@@ -346,7 +346,7 @@ func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 	account := AccountFromRequest(r)
 
 	if r.Method == http.MethodPost {
-		var set = true
+		set := true
 
 		password, repeatPassword, currentPassword := r.FormValue("Password"), r.FormValue("RepeatPassword"), r.FormValue("CurrentPassword")
 

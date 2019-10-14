@@ -388,7 +388,6 @@ func stripGeotagCrap(tag string, north bool) string {
 	} else {
 		return "-3.0774"
 	}
-
 }
 
 var nameRegex = regexp.MustCompile(`^[A-Za-z]{0,5}[0-9]+`)

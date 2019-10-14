@@ -1,9 +1,16 @@
 v1.5.1
 ------
 
+Added:
+
+* Added a "Start on Tyre from Fastest Lap" option to Race Weekend Filtering. You can use this to force an entrant for a session to start on the tyre they used to complete their fastest lap in the previous session. This might be useful when simulating F1-style qualifications.
+
+
 Fixes:
 
+* Fixes an issue where you could not create a Championship with a single entrant.
 * Skins with a # in their name no longer break the car details page.
+
 
 v1.5.0
 ------

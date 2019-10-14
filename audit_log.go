@@ -1,10 +1,11 @@
 package servermanager
 
 import (
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"sort"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 type AuditEntry struct {

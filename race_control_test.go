@@ -8,50 +8,48 @@ import (
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 )
 
-var (
-	drivers = []udp.SessionCarInfo{
-		{
-			CarID:      1,
-			DriverName: "Test 1",
-			DriverGUID: "7827162738272615",
-			CarModel:   "ford_gt",
-			CarSkin:    "red_01",
-			EventType:  udp.EventNewConnection,
-		},
-		{
-			CarID:      2,
-			DriverName: "Test 2",
-			DriverGUID: "7827162738272616",
-			CarModel:   "ferrari_fxxk",
-			CarSkin:    "purple_02",
-			EventType:  udp.EventNewConnection,
-		},
-		{
-			CarID:      3,
-			DriverName: "Test 3",
-			DriverGUID: "7827162738272617",
-			CarModel:   "ferrari_fxxk",
-			CarSkin:    "orange_33",
-			EventType:  udp.EventNewConnection,
-		},
-		{
-			CarID:      4,
-			DriverName: "Test 3",
-			DriverGUID: "7827162738272619",
-			CarModel:   "car_model3",
-			CarSkin:    "green",
-			EventType:  udp.EventNewConnection,
-		},
-		{
-			CarID:      9,
-			DriverName: "Test 3",
-			DriverGUID: "7827162738278889",
-			CarModel:   "car_model3",
-			CarSkin:    "green",
-			EventType:  udp.EventNewConnection,
-		},
-	}
-)
+var drivers = []udp.SessionCarInfo{
+	{
+		CarID:      1,
+		DriverName: "Test 1",
+		DriverGUID: "7827162738272615",
+		CarModel:   "ford_gt",
+		CarSkin:    "red_01",
+		EventType:  udp.EventNewConnection,
+	},
+	{
+		CarID:      2,
+		DriverName: "Test 2",
+		DriverGUID: "7827162738272616",
+		CarModel:   "ferrari_fxxk",
+		CarSkin:    "purple_02",
+		EventType:  udp.EventNewConnection,
+	},
+	{
+		CarID:      3,
+		DriverName: "Test 3",
+		DriverGUID: "7827162738272617",
+		CarModel:   "ferrari_fxxk",
+		CarSkin:    "orange_33",
+		EventType:  udp.EventNewConnection,
+	},
+	{
+		CarID:      4,
+		DriverName: "Test 3",
+		DriverGUID: "7827162738272619",
+		CarModel:   "car_model3",
+		CarSkin:    "green",
+		EventType:  udp.EventNewConnection,
+	},
+	{
+		CarID:      9,
+		DriverName: "Test 3",
+		DriverGUID: "7827162738278889",
+		CarModel:   "car_model3",
+		CarSkin:    "green",
+		EventType:  udp.EventNewConnection,
+	},
+}
 
 // OnVersion should move all current drivers into the disconnected driver map, and empty out the connected driver map.
 func TestRaceControl_OnVersion(t *testing.T) {
@@ -163,7 +161,6 @@ func TestRaceControl_OnClientConnect(t *testing.T) {
 				t.Error("Driver should have been connected, was not. (present in DisconnectedDrivers)")
 				return
 			}
-
 		})
 
 		t.Run("Client disconnects and reconnects having done some laps", func(t *testing.T) {
@@ -226,7 +223,6 @@ func TestRaceControl_OnClientConnect(t *testing.T) {
 				return
 			}
 		})
-
 	})
 
 	t.Run("Client disconnects having never connected", func(t *testing.T) {
@@ -1258,7 +1254,6 @@ func TestRaceControl_SortDrivers(t *testing.T) {
 
 func TestRaceControl_OnSessionUpdate(t *testing.T) {
 	t.Run("Session update", func(t *testing.T) {
-
 		raceControl := NewRaceControl(NilBroadcaster{}, nilTrackData{}, dummyServerProcess{})
 
 		if err := raceControl.OnVersion(udp.Version(4)); err != nil {

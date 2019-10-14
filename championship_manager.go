@@ -885,7 +885,6 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 		saveChampionship = false
 		return
 	}
-
 }
 
 var (

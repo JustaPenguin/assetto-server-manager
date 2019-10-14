@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -12,8 +13,10 @@ import (
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 
+	"github.com/cj123/ini"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
+	"github.com/mattn/go-zglob"
 	"github.com/sirupsen/logrus"
 )
 
@@ -226,7 +229,6 @@ func (rwm *RaceWeekendManager) BuildRaceWeekendSessionOpts(r *http.Request) (*Ra
 
 		if err == ErrRaceWeekendSessionDependencyIncomplete {
 			opts.CurrentEntrants = raceWeekend.GetEntryList()
-
 		} else if err != nil {
 			return nil, err
 		} else {
@@ -472,7 +474,9 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 				entrant.Model = raceWeekendEntrant.Model
 				entrant.Ballast = raceWeekendEntrant.Ballast
 				entrant.Restrictor = raceWeekendEntrant.Restrictor
-				entrant.FixedSetup = raceWeekendEntrant.FixedSetup
+				if entrant.FixedSetup == "" {
+					entrant.FixedSetup = raceWeekendEntrant.FixedSetup
+				}
 				entrant.Skin = raceWeekendEntrant.Skin
 				break
 			}
@@ -569,7 +573,52 @@ func (rwm *RaceWeekendManager) UDPCallback(message udp.Message) {
 		if err := rwm.process.Stop(); err != nil {
 			logrus.WithError(err).Error("Could not stop assetto server process")
 		}
+
+		if err := rwm.ClearLockedTyreSetups(raceWeekend, session); err != nil {
+			logrus.WithError(err).Error("Could not clear previous locked tyres")
+		}
 	}
+}
+
+func (rwm *RaceWeekendManager) ClearLockedTyreSetups(raceWeekend *RaceWeekend, session *RaceWeekendSession) error {
+	matches, err := zglob.Glob(filepath.Join(ServerInstallPath, "setups", "**", lockedTyreSetupFolder, "race_weekend_session_*.ini"))
+
+	if err != nil {
+		return err
+	}
+
+	for _, match := range matches {
+		i, err := ini.Load(match)
+
+		if err != nil {
+			return err
+		}
+
+		section, err := i.GetSection("RACE_WEEKEND")
+
+		if err != nil {
+			return err
+		}
+
+		if raceWeekendID, err := section.GetKey("ID"); err == nil && raceWeekendID.String() == raceWeekend.ID.String() {
+			if sessionID, err := section.GetKey("SESSION_ID"); err == nil && sessionID.String() == session.ID.String() {
+				// this file was from the session that just finished. delete it
+				err := os.Remove(match)
+
+				if err != nil {
+					return err
+				}
+			} else if err != nil {
+				logrus.WithError(err).Warn("Could not read SessionID from setup file")
+				continue
+			}
+		} else if err != nil {
+			logrus.WithError(err).Warn("Could not read RaceWeekendID from setup file")
+			continue
+		}
+	}
+
+	return nil
 }
 
 func (rwm *RaceWeekendManager) RestartSession(raceWeekendID string, raceWeekendSessionID string) error {
