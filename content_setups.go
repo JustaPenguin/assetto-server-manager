@@ -60,6 +60,11 @@ func ListAllSetups() (CarSetups, error) {
 
 		if len(trackParts) > 0 {
 			trackName := trackParts[len(trackParts)-1]
+
+			if trackName == lockedTyreSetupFolder {
+				return nil // don't list locked tyre setup folder
+			}
+
 			setups[name][trackName] = append(setups[name][trackName], file.Name())
 		}
 
@@ -93,6 +98,11 @@ func ListSetupsForCar(model string) (map[string][]string, error) {
 
 		if len(trackParts) > 0 {
 			trackName := trackParts[len(trackParts)-1]
+
+			if trackName == lockedTyreSetupFolder {
+				return nil // don't list locked tyre setup folder
+			}
+
 			setups[trackName] = append(setups[trackName], file.Name())
 		}
 
