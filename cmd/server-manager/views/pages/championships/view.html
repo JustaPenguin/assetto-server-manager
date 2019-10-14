@@ -331,6 +331,24 @@
                                 </td>
                             </tr>
                             <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
+                                <td><strong>Collision with Other Car</strong></td>
+                                <td>
+                                    -{{ $class.Points.CollisionWithDriver }}
+                                </td>
+                            </tr>
+                            <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
+                                <td><strong>Collision with Environment</strong></td>
+                                <td>
+                                    -{{ $class.Points.CollisionWithEnv }}
+                                </td>
+                            </tr>
+                            <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
+                                <td><strong>Cut Track</strong></td>
+                                <td>
+                                    -{{ $class.Points.CutTrack }}
+                                </td>
+                            </tr>
+                            <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
                                 <td><strong>Second Race Points Multiplier</strong></td>
                                 <td>
                                     {{ $class.Points.SecondRaceMultiplier }}

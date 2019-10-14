@@ -175,6 +175,18 @@ func (s *SessionResults) GetCrashes(guid string) int {
 	return num
 }
 
+func (s *SessionResults) GetCrashesOfType(guid, collisionType string) int {
+	var num int
+
+	for _, event := range s.Events {
+		if event.Driver.GUID == guid && event.Type == collisionType {
+			num++
+		}
+	}
+
+	return num
+}
+
 func (s *SessionResults) GetAverageLapTime(guid string) time.Duration {
 	var totalTime, driverLapCount, lapsForAverage, totalTimeForAverage int
 
