@@ -513,6 +513,38 @@ func (c *Championship) AllEntrants() EntryList {
 	return e
 }
 
+func (c *Championship) EntrantAttendance(guid string) int {
+	i := 0
+
+	for _, event := range c.Events {
+		if event.Completed() {
+			for _, class := range c.Classes {
+				standings := class.StandingsForEvent(event)
+
+				for _, standing := range standings {
+					if standing.Car.GetGUID() == guid {
+						i++
+					}
+				}
+			}
+		}
+	}
+
+	return i
+}
+
+func (c *Championship) NumCompletedEvents() int {
+	i := 0
+
+	for _, event := range c.Events {
+		if event.Completed() {
+			i++
+		}
+	}
+
+	return i
+}
+
 // AddClass to the championship
 func (c *Championship) AddClass(class *ChampionshipClass) {
 	c.Classes = append(c.Classes, class)

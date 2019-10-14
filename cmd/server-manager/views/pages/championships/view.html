@@ -248,6 +248,7 @@
                                 <th>Team</th>
                             {{ end }}
                             <th>Car</th>
+                            <th>Attendance</th>
                         </tr>
 
 
@@ -273,6 +274,7 @@
                                             <td>{{ $entrant.Team }}</td>
                                         {{ end }}
                                         <td>{{ prettify $entrant.Model true }} / {{ prettify $entrant.Skin false }}</td>
+                                        <td>{{ $championship.EntrantAttendance $entrant.GUID }} / {{ $championship.NumCompletedEvents }}</td>
                                     </tr>
                                 {{ else }}
                                     {{ if $championship.OpenEntrants }}
