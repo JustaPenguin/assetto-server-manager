@@ -381,6 +381,9 @@ func (rwm *RaceWeekendManager) SaveRaceWeekendSession(r *http.Request) (raceWeek
 			}
 
 			pts.BestLap = formValueAsInt(r.Form["Points.BestLap"][i])
+			pts.CollisionWithDriver = formValueAsInt(r.Form["Points.CollisionWithDriver"][i])
+			pts.CollisionWithEnv = formValueAsInt(r.Form["Points.CollisionWithEnv"][i])
+			pts.CutTrack = formValueAsInt(r.Form["Points.CutTrack"][i])
 
 			previousNumPoints += numPointsForClass
 			session.Points[classID] = pts

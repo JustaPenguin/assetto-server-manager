@@ -46,6 +46,10 @@ var DefaultChampionshipPoints = ChampionshipPoints{
 	BestLap:              0,
 	PolePosition:         0,
 	SecondRaceMultiplier: 1,
+
+	CollisionWithDriver: 0,
+	CollisionWithEnv:    0,
+	CutTrack:            0,
 }
 
 // ChampionshipPoints represent the potential points for positions as well as other awards in a Championship.
@@ -53,6 +57,10 @@ type ChampionshipPoints struct {
 	Places       []int
 	BestLap      int
 	PolePosition int
+
+	CollisionWithDriver int
+	CollisionWithEnv    int
+	CutTrack            int
 
 	SecondRaceMultiplier float64
 }
@@ -871,6 +879,14 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 
 				if fastestLap.DriverGUID == driver.DriverGUID {
 					givePoints(event, driver.DriverGUID, float64(points.BestLap)*pointsMultiplier)
+				}
+
+				if sessionType == SessionTypeRace || sessionType == SessionTypeSecondRace {
+					//fmt.Println(fmt.Sprintf("Driver: %s had %d crashes with other drivers, lost %f points", driver.DriverGUID, session.Results.GetCrashesOfType(driver.DriverGUID, string(CollisionWithCar)), float64(points.CollisionWithDriver*session.Results.GetCrashesOfType(driver.DriverGUID, string(CollisionWithCar)))*pointsMultiplier*-1))
+
+					givePoints(event, driver.DriverGUID, float64(points.CollisionWithDriver*session.Results.GetCrashesOfType(driver.DriverGUID, "COLLISION_WITH_CAR"))*pointsMultiplier*-1)
+					givePoints(event, driver.DriverGUID, float64(points.CollisionWithEnv*session.Results.GetCrashesOfType(driver.DriverGUID, "COLLISION_WITH_ENV"))*pointsMultiplier*-1)
+					givePoints(event, driver.DriverGUID, float64(points.CutTrack*session.Results.GetCuts(driver.DriverGUID))*pointsMultiplier*-1)
 				}
 			}
 		}

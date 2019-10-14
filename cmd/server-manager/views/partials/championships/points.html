@@ -51,6 +51,9 @@
     </div>
     <hr>
 
+    <h5 class="mb-0">Positive Modifiers</h5>
+    <p><small class="font-italic">These modifiers add points to drivers for certain actions!</small></p>
+
     <div class="form-group row">
         <label for="Points.BestLap" class="col-sm-3 col-form-label">Best Lap</label>
 
@@ -87,4 +90,37 @@
             </div>
         </div>
     {{ end }}
+
+    <hr>
+
+    <h5 class="mb-0">Negative Modifiers</h5>
+    <p><small class="font-italic">These modifiers remove points from drivers for certain actions (all only in race sessions)!</small></p>
+
+    <div class="form-group row">
+        <label for="Points.CollsionWithDriver" class="col-sm-3 col-form-label">Collision with Other Driver</label>
+
+        <div class="col-sm-9">
+            <input type="number" class="form-control init-empty-non-race" name="Points.CollisionWithDriver"
+                   placeholder="Points" value="{{ with $.Points.CollisionWithDriver }}{{ . }}{{ else }}0{{ end }}" data-default-value="{{ with $.Points.CollisionWithDriver }}{{ . }}{{ else }}0{{ end }}">
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label for="Points.CollisionWithEnv" class="col-sm-3 col-form-label">Collision with Environment</label>
+
+        <div class="col-sm-9">
+            <input type="number" class="form-control init-empty-non-race" name="Points.CollisionWithEnv"
+                   placeholder="Points" value="{{ with $.Points.CollisionWithEnv }}{{ . }}{{ else }}0{{ end }}" data-default-value="{{ with $.Points.CollisionWithEnv }}{{ . }}{{ else }}0{{ end }}">
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label for="Points.CutTrack" class="col-sm-3 col-form-label">Cut Track</label>
+
+        <div class="col-sm-9">
+            <input type="number" class="form-control init-empty-non-race" name="Points.CutTrack"
+                   placeholder="Points" value="{{ with $.Points.CutTrack }}{{ . }}{{ else }}0{{ end }}" data-default-value="{{ with $.Points.CutTrack }}{{ . }}{{ else }}0{{ end }}">
+        </div>
+    </div>
+
 {{ end }}
