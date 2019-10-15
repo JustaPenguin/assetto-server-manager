@@ -37,12 +37,20 @@
                                     name="DriverGUID"
                                     class="form-control"
                                     placeholder=""
-                                    value="{{ .Account.GUID }}"
+                                    {{ with .SteamGUIDOverride }}
+                                        value="{{ . }}"
+                                        readonly
+                                    {{ else }}
+                                        value="{{ .Account.GUID }}"
+                                    {{ end }}
                             >
-                            <small>You can find your Steam ID at
-                                <a href="https://steamid.io/" target="_blank">steamid.io</a>
-                                or in your Steam Profile URL. Note that we require the
-                                <strong>SteamID64</strong>.</small>
+
+                            {{ if eq .SteamGUIDOverride "" }}
+                                <small>
+                                    If you don't know your Steam GUID, you can <a href="/accounts/update/steam">Sign in with Steam</a>
+                                    to autofill it.
+                                </small>
+                            {{ end }}
                         </div>
                     </div>
 

@@ -106,6 +106,9 @@ func Router(
 		r.Get("/championship/{championshipID}/ics", championshipsHandler.icalFeed)
 		r.Get("/championship/{championshipID}/sign-up", championshipsHandler.signUpForm)
 		r.Post("/championship/{championshipID}/sign-up", championshipsHandler.signUpForm)
+		r.Get("/championship/{championshipID}/sign-up/steam", championshipsHandler.redirectToSteamLogin(func(r *http.Request) string {
+			return fmt.Sprintf("/championship/%s/sign-up", chi.URLParam(r, "championshipID"))
+		}))
 
 		// race control
 		r.Group(func(r chi.Router) {
@@ -132,6 +135,9 @@ func Router(
 		// account management
 		r.HandleFunc("/accounts/new-password", accountHandler.newPassword)
 		r.HandleFunc("/accounts/update", accountHandler.update)
+		r.Get("/accounts/update/steam", championshipsHandler.redirectToSteamLogin(func(r *http.Request) string {
+			return "/accounts/update"
+		}))
 		r.HandleFunc("/accounts/dismiss-changelog", accountHandler.dismissChangelog)
 
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")), true)
