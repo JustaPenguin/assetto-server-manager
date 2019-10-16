@@ -421,27 +421,16 @@ type ChampionshipClass struct {
 	ID   uuid.UUID
 	Name string
 
-	Entrants EntryList
-	Points   ChampionshipPoints
+	Entrants      EntryList
+	Points        ChampionshipPoints
+	AvailableCars []string
 
 	DriverPenalties, TeamPenalties map[string]int
 }
 
 // ValidCarIDs returns a set of all cars chosen within the given class
 func (c *ChampionshipClass) ValidCarIDs() []string {
-	cars := make(map[string]bool)
-
-	for _, e := range c.Entrants {
-		cars[e.Model] = true
-	}
-
-	var out []string
-
-	for car := range cars {
-		out = append(out, car)
-	}
-
-	return out
+	return c.AvailableCars
 }
 
 // EventByID finds a ChampionshipEvent by its ID string.
@@ -472,8 +461,8 @@ func (c *Championship) ValidCarIDs() []string {
 	cars := make(map[string]bool)
 
 	for _, class := range c.Classes {
-		for _, e := range class.Entrants {
-			cars[e.Model] = true
+		for _, model := range class.ValidCarIDs() {
+			cars[model] = true
 		}
 	}
 
@@ -677,7 +666,7 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 
 	// now look for empty Entrants in the Entrylist
 	for carNum, entrant := range classForCar.Entrants {
-		if entrant.Name == "" && entrant.GUID == "" && entrant.Model == potentialEntrant.GetCar() {
+		if entrant.Name == "" && entrant.GUID == "" && (entrant.Model == potentialEntrant.GetCar() || entrant.Model == AnyCarModel) {
 			if oldEntrant != nil {
 				// swap the old entrant properties
 				oldEntrant.SwapProperties(entrant, oldEntrantClass == classForCar)

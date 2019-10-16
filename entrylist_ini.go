@@ -10,7 +10,10 @@ import (
 	"github.com/google/uuid"
 )
 
-const entryListFilename = "entry_list.ini"
+const (
+	AnyCarModel       = "any_car_model"
+	entryListFilename = "entry_list.ini"
+)
 
 type EntryList map[string]*Entrant
 

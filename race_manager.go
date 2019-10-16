@@ -149,6 +149,15 @@ func (rm *RaceManager) applyConfigAndStart(raceConfig CurrentRaceConfig, entryLi
 		return err
 	}
 
+	for _, entrant := range entryList {
+		if entrant.Model == AnyCarModel {
+			// cars with 'any car model' become random in the entry list.
+			cars := strings.Split(config.CurrentRaceConfig.Cars, ";")
+
+			entrant.Model = cars[rand.Intn(len(cars))]
+		}
+	}
+
 	err = entryList.Write()
 
 	if err != nil {

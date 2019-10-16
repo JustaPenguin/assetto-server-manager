@@ -68,6 +68,7 @@ var (
 		addThemeChoiceToAccounts,
 		addRaceWeekendExamples,
 		addServerNameTemplate,
+		addAvailableCarsToChampionshipClass,
 	}
 )
 
@@ -444,4 +445,40 @@ func addServerNameTemplate(s Store) error {
 	opts.ServerNameTemplate = defaultServerNameTemplate
 
 	return s.UpsertServerOptions(opts)
+}
+
+func addAvailableCarsToChampionshipClass(s Store) error {
+	logrus.Infof("Running migration: Add Available Cars to Championship Class")
+
+	championships, err := s.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(championships, func(i, j int) bool {
+		return championships[i].Updated.Before(championships[j].Updated)
+	})
+
+	for _, champ := range championships {
+		for _, class := range champ.Classes {
+			cars := make(map[string]bool)
+
+			for _, e := range class.Entrants {
+				cars[e.Model] = true
+			}
+
+			for car := range cars {
+				class.AvailableCars = append(class.AvailableCars, car)
+			}
+		}
+
+		err := s.UpsertChampionship(champ)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

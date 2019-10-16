@@ -113,10 +113,7 @@
                                     {{ range $index, $class := $championship.Classes }}
                                         <optgroup label="{{ $class.Name }}">
                                             {{ range $index, $car := $class.ValidCarIDs }}
-                                                {{ $carSlotInfo := index $.SignedUpEntrants $car }}
-                                                {{ $freeSlots := sub $carSlotInfo.Capacity $carSlotInfo.Size }}
-
-                                                <option value="{{ $car }}" {{ if eq $.FormData.Car $car }}selected="selected"{{ end }}>{{ prettify $car true }} ({{ $freeSlots }} free slot{{ if ne $freeSlots 1 }}s{{ end }})</option>
+                                                <option value="{{ $car }}" {{ if eq $.FormData.Car $car }}selected="selected"{{ end }}>{{ prettify $car true }}</option>
                                             {{ end }}
                                         </optgroup>
                                     {{ end }}
