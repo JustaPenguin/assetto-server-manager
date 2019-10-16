@@ -15,6 +15,7 @@ import (
 
 type ChampionshipsHandler struct {
 	*BaseHandler
+	SteamLoginHandler
 
 	championshipManager *ChampionshipManager
 }
@@ -534,6 +535,7 @@ type championshipSignUpFormTemplateVars struct {
 	FormData         *ChampionshipSignUpResponse
 	SignedUpEntrants map[string]*entrantSlot
 	ValidationError  string
+	LockSteamGUID    bool
 }
 
 func (ch *ChampionshipsHandler) signUpForm(w http.ResponseWriter, r *http.Request) {
@@ -611,6 +613,11 @@ func (ch *ChampionshipsHandler) signUpForm(w http.ResponseWriter, r *http.Reques
 				}
 			}
 		}
+	}
+
+	if steamGUID := r.URL.Query().Get("steamGUID"); steamGUID != "" {
+		opts.FormData.GUID = steamGUID
+		opts.LockSteamGUID = true
 	}
 
 	ch.viewRenderer.MustLoadTemplate(w, r, "championships/sign-up.html", opts)

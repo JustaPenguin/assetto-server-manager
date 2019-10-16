@@ -24,7 +24,13 @@
                         Pending admin approval, you will be added to the grid!
                     {{ end }}
 
-                    <a class="btn btn-primary float-right" href="/championship/{{ $championship.ID.String }}/sign-up">Register Now</a>
+                    <div class="float-right">
+                        <a class="btn btn-info" href="/championship/{{ $championship.ID.String }}/sign-up/steam">Register with Steam</a>
+
+                        <small class="pl-2 pr-2">or</small>
+
+                        <a class="btn btn-primary" href="/championship/{{ $championship.ID.String }}/sign-up">Register Now</a>
+                    </div>
                 </div>
             </div>
 
