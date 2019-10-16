@@ -1124,6 +1124,24 @@ func NewChampionshipEvent() *ChampionshipEvent {
 	}
 }
 
+// copied an existing ChampionshipEvent but assigns a new ID
+func DuplicateChampionshipEvent(event *ChampionshipEvent) *ChampionshipEvent {
+	return &ChampionshipEvent{
+		ID: uuid.New(),
+		RaceSetup: event.RaceSetup,
+		EntryList: event.EntryList,
+		Sessions: event.Sessions,
+		RaceWeekendID: event.RaceWeekendID,
+		RaceWeekend: event.RaceWeekend,
+		StartedTime: event.StartedTime,
+		CompletedTime: time.Time{},
+		Scheduled: event.Scheduled,
+		ScheduledInitial: event.ScheduledInitial,
+		Recurrence: event.Recurrence,
+		championship: event.championship,
+	}
+}
+
 // A ChampionshipEvent is a given RaceSetup with Sessions.
 type ChampionshipEvent struct {
 	ID uuid.UUID
@@ -1141,6 +1159,8 @@ type ChampionshipEvent struct {
 	StartedTime   time.Time
 	CompletedTime time.Time
 	Scheduled     time.Time
+	ScheduledInitial time.Time
+	Recurrence       string
 
 	championship *Championship
 }
@@ -1166,19 +1186,37 @@ func (cr *ChampionshipEvent) ReadOnlyEntryList() EntryList {
 }
 
 func (cr *ChampionshipEvent) SetRecurrenceRule(input string) error {
+	rule, err := rrule.StrToRRule(input)
+	if err != nil {
+		return err
+	}
+
+	rule.DTStart(cr.ScheduledInitial)
+
+	cr.Recurrence = rule.String()
+
 	return nil
 }
 
 func (cr *ChampionshipEvent) GetRecurrenceRule() (*rrule.RRule, error) {
-	return nil, nil
+	rule, err := rrule.StrToRRule(cr.Recurrence)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// dtstart is not saved in the string and must be reinitiated
+	rule.DTStart(cr.ScheduledInitial)
+
+	return rule, nil
 }
 
 func (cr *ChampionshipEvent) HasRecurrenceRule() bool {
-	return false
+	return cr.Recurrence != ""
 }
 
 func (cr *ChampionshipEvent) ClearRecurrenceRule() {
-	return
+	cr.Recurrence = ""
 }
 
 func (cr *ChampionshipEvent) GetID() uuid.UUID {
