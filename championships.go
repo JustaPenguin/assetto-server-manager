@@ -430,7 +430,23 @@ type ChampionshipClass struct {
 
 // ValidCarIDs returns a set of all cars chosen within the given class
 func (c *ChampionshipClass) ValidCarIDs() []string {
-	return c.AvailableCars
+	if len(c.AvailableCars) == 0 {
+		cars := make(map[string]bool)
+
+		for _, e := range c.Entrants {
+			cars[e.Model] = true
+		}
+
+		var availableCars []string
+
+		for car := range cars {
+			availableCars = append(availableCars, car)
+		}
+
+		return availableCars
+	} else {
+		return c.AvailableCars
+	}
 }
 
 // EventByID finds a ChampionshipEvent by its ID string.
@@ -664,27 +680,38 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 		}
 	}
 
-	// now look for empty Entrants in the Entrylist
-	for carNum, entrant := range classForCar.Entrants {
-		if entrant.Name == "" && entrant.GUID == "" && (entrant.Model == potentialEntrant.GetCar() || entrant.Model == AnyCarModel) {
-			if oldEntrant != nil {
-				// swap the old entrant properties
-				oldEntrant.SwapProperties(entrant, oldEntrantClass == classForCar)
+	conditionsFuncs := []func(entrant *Entrant, potentialEntrant PotentialChampionshipEntrant) bool{
+		func(e *Entrant, potentialEntrant PotentialChampionshipEntrant) bool {
+			return e.Model == potentialEntrant.GetCar()
+		},
+		func(e *Entrant, potentialEntrant PotentialChampionshipEntrant) bool {
+			return e.Model == AnyCarModel
+		},
+	}
+
+	for _, conditionFunc := range conditionsFuncs {
+		// now look for empty Entrants in the Entrylist
+		for carNum, entrant := range classForCar.Entrants {
+			if entrant.Name == "" && entrant.GUID == "" && conditionFunc(entrant, potentialEntrant) {
+				if oldEntrant != nil {
+					// swap the old entrant properties
+					oldEntrant.SwapProperties(entrant, oldEntrantClass == classForCar)
+				}
+
+				entrant.Name = potentialEntrant.GetName()
+				entrant.GUID = potentialEntrant.GetGUID()
+				entrant.Model = potentialEntrant.GetCar()
+				entrant.Skin = potentialEntrant.GetSkin()
+
+				// #386: don't replace a team with no team.
+				if potentialEntrant.GetTeam() != "" {
+					entrant.Team = potentialEntrant.GetTeam()
+				}
+
+				logrus.Infof("Championship entrant: %s (%s) has been assigned to %s in %s", entrant.Name, entrant.GUID, carNum, classForCar.Name)
+
+				return true, entrant, classForCar, nil
 			}
-
-			entrant.Name = potentialEntrant.GetName()
-			entrant.GUID = potentialEntrant.GetGUID()
-			entrant.Model = potentialEntrant.GetCar()
-			entrant.Skin = potentialEntrant.GetSkin()
-
-			// #386: don't replace a team with no team.
-			if potentialEntrant.GetTeam() != "" {
-				entrant.Team = potentialEntrant.GetTeam()
-			}
-
-			logrus.Infof("Championship entrant: %s (%s) has been assigned to %s in %s", entrant.Name, entrant.GUID, carNum, classForCar.Name)
-
-			return true, entrant, classForCar, nil
 		}
 	}
 
