@@ -43,13 +43,12 @@ func NewChampionshipManager(raceManager *RaceManager) *ChampionshipManager {
 }
 
 func (cm *ChampionshipManager) applyConfigAndStart(config CurrentRaceConfig, entryList EntryList, championship *ActiveChampionship) error {
+	cm.activeChampionship = championship
 	err := cm.RaceManager.applyConfigAndStart(config, entryList, false, championship)
 
 	if err != nil {
 		return err
 	}
-
-	cm.activeChampionship = championship
 
 	return nil
 }
@@ -586,6 +585,8 @@ func (cm *ChampionshipManager) GetChampionshipAndEvent(championshipID string, ev
 	return championship, event, nil
 }
 
+var ErrScheduledTimeIsZero = errors.New("servermanager: can't schedule race for zero time")
+
 func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID string, date time.Time, action string, recurrence string) error {
 	championship, event, err := cm.GetChampionshipAndEvent(championshipID, eventID)
 
@@ -612,7 +613,7 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 
 	if action == "add" {
 		if date.IsZero() {
-			return errors.New("can't schedule race for zero time")
+			return ErrScheduledTimeIsZero
 		}
 
 		// add a scheduled event on date
@@ -690,8 +691,6 @@ func (cm *ChampionshipManager) ScheduleNextEventFromRecurrence(championship *Cha
 		return err
 	}
 
-	fmt.Println("this is the important schedule set")
-
 	return cm.ScheduleEvent(championship.ID.String(), eventCopy.ID.String(), cm.FindNextEventRecurrence(event, event.Scheduled), "add", "already-set")
 }
 
@@ -708,10 +707,8 @@ func (cm *ChampionshipManager) FindNextEventRecurrence(event *ChampionshipEvent,
 	if next.After(time.Now()) {
 		return next
 	} else {
-		cm.FindNextEventRecurrence(event, next)
+		return cm.FindNextEventRecurrence(event, next)
 	}
-
-	return time.Time{}
 }
 
 func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
@@ -719,6 +716,7 @@ func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
 	defer cm.mutex.Unlock()
 
 	if !cm.process.Event().IsChampionship() || cm.activeChampionship == nil {
+		logrus.Debug("Couldn't handle event callback. Either event is not championship event or active championship is nil")
 		return
 	}
 
@@ -1486,10 +1484,10 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 				duration := time.Until(event.Scheduled)
 
 				cm.championshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
-					err := cm.StartEvent(championship.ID.String(), event.ID.String(), false)
+					err := cm.StartScheduledEvent(championship, event)
 
 					if err != nil {
-						logrus.WithError(err).Errorf("couldn't start scheduled race")
+						logrus.WithError(err).Errorf("couldn't start scheduled championship event")
 					}
 				})
 

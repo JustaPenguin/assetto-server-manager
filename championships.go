@@ -12,7 +12,6 @@ import (
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"github.com/teambition/rrule-go"
 )
 
 // ChampionshipClassColors are sequentially selected to indicate different classes within a Championship
@@ -1126,24 +1125,18 @@ func NewChampionshipEvent() *ChampionshipEvent {
 
 // copied an existing ChampionshipEvent but assigns a new ID
 func DuplicateChampionshipEvent(event *ChampionshipEvent) *ChampionshipEvent {
-	return &ChampionshipEvent{
-		ID:               uuid.New(),
-		RaceSetup:        event.RaceSetup,
-		EntryList:        event.EntryList,
-		Sessions:         event.Sessions,
-		RaceWeekendID:    event.RaceWeekendID,
-		RaceWeekend:      event.RaceWeekend,
-		StartedTime:      event.StartedTime,
-		CompletedTime:    time.Time{},
-		Scheduled:        event.Scheduled,
-		ScheduledInitial: event.ScheduledInitial,
-		Recurrence:       event.Recurrence,
-		championship:     event.championship,
-	}
+	newEvent := *event
+
+	newEvent.ID = uuid.New()
+	newEvent.CompletedTime = time.Time{}
+
+	return &newEvent
 }
 
 // A ChampionshipEvent is a given RaceSetup with Sessions.
 type ChampionshipEvent struct {
+	ScheduledEventBase
+
 	ID uuid.UUID
 
 	RaceSetup CurrentRaceConfig
@@ -1158,9 +1151,6 @@ type ChampionshipEvent struct {
 
 	StartedTime      time.Time
 	CompletedTime    time.Time
-	Scheduled        time.Time
-	ScheduledInitial time.Time
-	Recurrence       string
 
 	championship *Championship
 }
@@ -1185,50 +1175,12 @@ func (cr *ChampionshipEvent) ReadOnlyEntryList() EntryList {
 	return cr.CombineEntryLists(cr.championship)
 }
 
-func (cr *ChampionshipEvent) SetRecurrenceRule(input string) error {
-	rule, err := rrule.StrToRRule(input)
-	if err != nil {
-		return err
-	}
-
-	rule.DTStart(cr.ScheduledInitial)
-
-	cr.Recurrence = rule.String()
-
-	return nil
-}
-
-func (cr *ChampionshipEvent) GetRecurrenceRule() (*rrule.RRule, error) {
-	rule, err := rrule.StrToRRule(cr.Recurrence)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// dtstart is not saved in the string and must be reinitiated
-	rule.DTStart(cr.ScheduledInitial)
-
-	return rule, nil
-}
-
-func (cr *ChampionshipEvent) HasRecurrenceRule() bool {
-	return cr.Recurrence != ""
-}
-
-func (cr *ChampionshipEvent) ClearRecurrenceRule() {
-	cr.Recurrence = ""
-}
-
 func (cr *ChampionshipEvent) GetID() uuid.UUID {
 	return cr.ID
 }
 
 func (cr *ChampionshipEvent) GetRaceSetup() CurrentRaceConfig {
 	return cr.RaceSetup
-}
-
-func (cr *ChampionshipEvent) GetScheduledTime() time.Time {
-	return cr.Scheduled
 }
 
 func (cr *ChampionshipEvent) Cars(c *Championship) []string {

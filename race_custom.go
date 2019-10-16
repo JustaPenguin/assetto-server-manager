@@ -8,10 +8,11 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"github.com/teambition/rrule-go"
 )
 
 type CustomRace struct {
+	ScheduledEventBase
+
 	Name                            string
 	HasCustomName, OverridePassword bool
 	ReplacementPassword             string
@@ -19,9 +20,6 @@ type CustomRace struct {
 	Created          time.Time
 	Updated          time.Time
 	Deleted          time.Time
-	Scheduled        time.Time
-	ScheduledInitial time.Time
-	Recurrence       string
 	UUID             uuid.UUID
 	Starred, Loop    bool
 
@@ -65,10 +63,6 @@ func (cr *CustomRace) GetRaceSetup() CurrentRaceConfig {
 	return cr.RaceConfig
 }
 
-func (cr *CustomRace) GetScheduledTime() time.Time {
-	return cr.Scheduled
-}
-
 func (cr *CustomRace) GetSummary() string {
 	return ""
 }
@@ -83,40 +77,6 @@ func (cr *CustomRace) EventDescription() string {
 
 func (cr *CustomRace) ReadOnlyEntryList() EntryList {
 	return cr.EntryList
-}
-
-func (cr *CustomRace) SetRecurrenceRule(input string) error {
-	rule, err := rrule.StrToRRule(input)
-	if err != nil {
-		return err
-	}
-
-	rule.DTStart(cr.ScheduledInitial)
-
-	cr.Recurrence = rule.String()
-
-	return nil
-}
-
-func (cr *CustomRace) GetRecurrenceRule() (*rrule.RRule, error) {
-	rule, err := rrule.StrToRRule(cr.Recurrence)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// dtstart is not saved in the string and must be reinitiated
-	rule.DTStart(cr.ScheduledInitial)
-
-	return rule, nil
-}
-
-func (cr *CustomRace) HasRecurrenceRule() bool {
-	return cr.Recurrence != ""
-}
-
-func (cr *CustomRace) ClearRecurrenceRule() {
-	cr.Recurrence = ""
 }
 
 type CustomRaceHandler struct {
