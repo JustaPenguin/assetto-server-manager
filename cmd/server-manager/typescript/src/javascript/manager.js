@@ -886,7 +886,7 @@ class RaceSetup {
             that.$parent.find(".entryListCar").each(function (index, val) {
                 let $val = $(val);
                 let selected = $val.find("option:selected").val();
-                let $anyCar = $("<option value='any_car_model'>Any Car in Class</option>");
+                let $anyCar = $("<option value='any_car_model'>Any Available Car</option>");
 
                 if (!selected || !cars.has(selected)) {
                     selected = $anyCar.val()[0];
