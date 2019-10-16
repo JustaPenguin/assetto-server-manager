@@ -1127,18 +1127,18 @@ func NewChampionshipEvent() *ChampionshipEvent {
 // copied an existing ChampionshipEvent but assigns a new ID
 func DuplicateChampionshipEvent(event *ChampionshipEvent) *ChampionshipEvent {
 	return &ChampionshipEvent{
-		ID: uuid.New(),
-		RaceSetup: event.RaceSetup,
-		EntryList: event.EntryList,
-		Sessions: event.Sessions,
-		RaceWeekendID: event.RaceWeekendID,
-		RaceWeekend: event.RaceWeekend,
-		StartedTime: event.StartedTime,
-		CompletedTime: time.Time{},
-		Scheduled: event.Scheduled,
+		ID:               uuid.New(),
+		RaceSetup:        event.RaceSetup,
+		EntryList:        event.EntryList,
+		Sessions:         event.Sessions,
+		RaceWeekendID:    event.RaceWeekendID,
+		RaceWeekend:      event.RaceWeekend,
+		StartedTime:      event.StartedTime,
+		CompletedTime:    time.Time{},
+		Scheduled:        event.Scheduled,
 		ScheduledInitial: event.ScheduledInitial,
-		Recurrence: event.Recurrence,
-		championship: event.championship,
+		Recurrence:       event.Recurrence,
+		championship:     event.championship,
 	}
 }
 
@@ -1156,9 +1156,9 @@ type ChampionshipEvent struct {
 	// If RaceWeekendID is non-nil, RaceWeekend will be populated on loading the Championship.
 	RaceWeekend *RaceWeekend
 
-	StartedTime   time.Time
-	CompletedTime time.Time
-	Scheduled     time.Time
+	StartedTime      time.Time
+	CompletedTime    time.Time
+	Scheduled        time.Time
 	ScheduledInitial time.Time
 	Recurrence       string
 

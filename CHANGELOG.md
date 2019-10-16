@@ -7,6 +7,7 @@ Added:
 * Added a "Start after Parent Session has completed" option to the Race Weekend Schedule popup
 * Added configurable negative points modifiers for championships for crashes and cuts.
 * Added an Entrant Attendance field to Championship table to help admins keep track of who is showing up for races.
+* Enabled recurring events within championships. A recurring event inside a championship will create a copy of itself in the championship list, scheduled for the next time as defined by the recurrence rule.
 
 Fixes:
 
