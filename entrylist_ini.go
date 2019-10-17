@@ -111,6 +111,10 @@ func (e EntryList) PrettyList() []*Entrant {
 			continue
 		}
 
+		if x.Model == AnyCarModel {
+			continue
+		}
+
 		entrants = append(entrants, x)
 	}
 

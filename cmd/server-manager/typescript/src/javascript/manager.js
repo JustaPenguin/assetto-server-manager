@@ -889,7 +889,12 @@ class RaceSetup {
                 let $anyCar = $("<option value='any_car_model'>Any Available Car</option>");
 
                 if (!selected || !cars.has(selected)) {
-                    selected = $anyCar.val()[0];
+                    if (selected === 'any_car_model' || cars.size < 1) {
+                        selected = $anyCar.val();
+                    } else {
+                        selected = cars.values().next().value;
+                    }
+
                     showEntrantSkin(selected, "random_skin", $val);
                 }
 
