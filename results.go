@@ -925,7 +925,18 @@ type resultsViewTemplateVars struct {
 }
 
 func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
-	result := loadResult(w, r)
+	fileName := chi.URLParam(r, "fileName")
+
+	result, err := LoadResult(fileName + ".json")
+
+	if os.IsNotExist(err) {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	} else if err != nil {
+		logrus.WithError(err).Errorf("could not get result")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 
 	serverOpts, err := rh.store.LoadServerOptions()
 
@@ -1020,7 +1031,18 @@ type vec struct {
 func (rh *ResultsHandler) renderCollisions(w http.ResponseWriter, r *http.Request) {
 	var collisionsToLoad []int
 
-	result := loadResult(w, r)
+	fileName := chi.URLParam(r, "fileName")
+
+	result, err := LoadResult(fileName + ".json")
+
+	if os.IsNotExist(err) {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	} else if err != nil {
+		logrus.WithError(err).Errorf("could not get result")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 
 	collisions := r.URL.Query().Get("collisions")
 
@@ -1048,6 +1070,7 @@ func (rh *ResultsHandler) renderCollisions(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		logrus.WithError(err).Error("could not load track map data")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	trackMapImage, err := LoadTrackMapImage(result.TrackName, result.TrackConfig)
@@ -1055,6 +1078,7 @@ func (rh *ResultsHandler) renderCollisions(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		logrus.WithError(err).Error("could not load track map image")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	var collisionVectors []vec
@@ -1083,14 +1107,15 @@ func (rh *ResultsHandler) renderCollisions(w http.ResponseWriter, r *http.Reques
 	}
 
 	img := image.NewRGBA(image.Rectangle{Min: image.Pt(0, 0), Max: image.Pt(trackMapImage.Bounds().Max.X, trackMapImage.Bounds().Max.Y)})
+	radius := 4
 
 	for _, collisionVector := range collisionVectors {
 		if collisionVector.relX > 0 || collisionVector.relZ > 0 {
 			// show the relative collision position
-			draw.Draw(img, img.Bounds(), &circle{image.Pt(int(collisionVector.x+collisionVector.relX), int(collisionVector.z+collisionVector.relZ)), 3, color.RGBA{R: 0, G: 0, B: 255, A: 0xff}}, image.Pt(0, 0), draw.Over)
+			draw.Draw(img, img.Bounds(), &circle{image.Pt(int(collisionVector.x+collisionVector.relX), int(collisionVector.z+collisionVector.relZ)), radius, color.RGBA{R: 0, G: 0, B: 255, A: 0xff}}, image.Pt(0, 0), draw.Over)
 		}
 
-		draw.Draw(img, img.Bounds(), &circle{image.Pt(int(collisionVector.x), int(collisionVector.z)), 3, collisionVector.color}, image.Pt(0, 0), draw.Over)
+		draw.Draw(img, img.Bounds(), &circle{image.Pt(int(collisionVector.x), int(collisionVector.z)), radius, collisionVector.color}, image.Pt(0, 0), draw.Over)
 	}
 
 	err = png.Encode(w, img)
@@ -1098,6 +1123,7 @@ func (rh *ResultsHandler) renderCollisions(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		logrus.WithError(err).Error("could not encode image")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -1120,7 +1146,7 @@ func (c *circle) At(x, y int) color.Color {
 	if xx*xx+yy*yy < rr*rr {
 		return c.color
 	}
-	return c.color
+	return color.RGBA{0, 0, 0, 0}
 }
 
 // saveResults takes a full json filepath (including the json extension) and saves the results to that file.
@@ -1139,22 +1165,4 @@ func saveResults(jsonFileName string, results *SessionResults) error {
 	encoder.SetIndent("", "\t")
 
 	return encoder.Encode(results)
-}
-
-func loadResult(w http.ResponseWriter, r *http.Request) *SessionResults {
-	var result *SessionResults
-	fileName := chi.URLParam(r, "fileName")
-
-	result, err := LoadResult(fileName + ".json")
-
-	if os.IsNotExist(err) {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		return nil
-	} else if err != nil {
-		logrus.WithError(err).Errorf("could not get result")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return nil
-	}
-
-	return result
 }
