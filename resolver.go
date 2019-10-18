@@ -2,8 +2,6 @@ package servermanager
 
 import (
 	"net/http"
-
-	"github.com/cj123/assetto-server-manager/pkg/udp"
 )
 
 type Resolver struct {
@@ -11,26 +9,17 @@ type Resolver struct {
 	templateLoader  TemplateLoader
 	reloadTemplates bool
 
-	raceManager           *RaceManager
+	multiServerManager    *MultiServerManager
 	carManager            *CarManager
-	championshipManager   *ChampionshipManager
 	accountManager        *AccountManager
 	discordManager        *DiscordManager
 	notificationManager   *NotificationManager
 	scheduledRacesManager *ScheduledRacesManager
-	raceWeekendManager    *RaceWeekendManager
 
 	viewRenderer          *Renderer
-	serverProcess         ServerProcess
-	raceControl           *RaceControl
-	raceControlHub        *RaceControlHub
-	contentManagerWrapper *ContentManagerWrapper
 
 	// handlers
 	baseHandler                 *BaseHandler
-	quickRaceHandler            *QuickRaceHandler
-	customRaceHandler           *CustomRaceHandler
-	championshipsHandler        *ChampionshipsHandler
 	accountHandler              *AccountHandler
 	auditLogHandler             *AuditLogHandler
 	carsHandler                 *CarsHandler
@@ -40,9 +29,6 @@ type Resolver struct {
 	resultsHandler              *ResultsHandler
 	scheduledRacesHandler       *ScheduledRacesHandler
 	contentUploadHandler        *ContentUploadHandler
-	raceControlHandler          *RaceControlHandler
-	serverAdministrationHandler *ServerAdministrationHandler
-	raceWeekendHandler          *RaceWeekendHandler
 }
 
 func NewResolver(templateLoader TemplateLoader, reloadTemplates bool, store Store) (*Resolver, error) {
@@ -59,16 +45,6 @@ func NewResolver(templateLoader TemplateLoader, reloadTemplates bool, store Stor
 	}
 
 	return r, nil
-}
-
-func (r *Resolver) UDPCallback(message udp.Message) {
-	if !config.Server.PerformanceMode {
-		r.resolveRaceControl().UDPCallback(message)
-	}
-	r.resolveChampionshipManager().ChampionshipEventCallback(message)
-	r.resolveRaceWeekendManager().UDPCallback(message)
-	r.resolveRaceManager().LoopCallback(message)
-	r.resolveContentManagerWrapper().UDPCallback(message)
 }
 
 func (r *Resolver) initViewRenderer() error {
@@ -91,39 +67,20 @@ func (r *Resolver) ResolveStore() Store {
 	return r.store
 }
 
-func (r *Resolver) resolveServerProcess() ServerProcess {
-	if r.serverProcess != nil {
-		return r.serverProcess
+func (r *Resolver) resolveMultiServerManager() *MultiServerManager {
+	if r.multiServerManager != nil {
+		return r.multiServerManager
 	}
 
-	r.serverProcess = NewAssettoServerProcess(r.UDPCallback, r.resolveContentManagerWrapper())
-
-	return r.serverProcess
-}
-
-func (r *Resolver) resolveContentManagerWrapper() *ContentManagerWrapper {
-	if r.contentManagerWrapper != nil {
-		return r.contentManagerWrapper
-	}
-
-	r.contentManagerWrapper = NewContentManagerWrapper(r.ResolveStore(), r.resolveCarManager())
-
-	return r.contentManagerWrapper
-}
-
-func (r *Resolver) resolveRaceManager() *RaceManager {
-	if r.raceManager != nil {
-		return r.raceManager
-	}
-
-	r.raceManager = NewRaceManager(
-		r.store,
-		r.resolveServerProcess(),
+	r.multiServerManager = NewMultiServerManager(
+		r.ResolveStore(),
 		r.resolveCarManager(),
 		r.resolveNotificationManager(),
+		r.resolveBaseHandler(),
+		r.resolveAccountHandler(),
 	)
 
-	return r.raceManager
+	return r.multiServerManager
 }
 
 func (r *Resolver) resolveBaseHandler() *BaseHandler {
@@ -134,16 +91,6 @@ func (r *Resolver) resolveBaseHandler() *BaseHandler {
 	r.baseHandler = NewBaseHandler(r.viewRenderer)
 
 	return r.baseHandler
-}
-
-func (r *Resolver) resolveCustomRaceHandler() *CustomRaceHandler {
-	if r.customRaceHandler != nil {
-		return r.customRaceHandler
-	}
-
-	r.customRaceHandler = NewCustomRaceHandler(r.resolveBaseHandler(), r.resolveRaceManager())
-
-	return r.customRaceHandler
 }
 
 func (r *Resolver) resolveAccountManager() *AccountManager {
@@ -164,16 +111,6 @@ func (r *Resolver) resolveAccountHandler() *AccountHandler {
 	r.accountHandler = NewAccountHandler(r.resolveBaseHandler(), r.store, r.resolveAccountManager())
 
 	return r.accountHandler
-}
-
-func (r *Resolver) resolveQuickRaceHandler() *QuickRaceHandler {
-	if r.quickRaceHandler != nil {
-		return r.quickRaceHandler
-	}
-
-	r.quickRaceHandler = NewQuickRaceHandler(r.resolveBaseHandler(), r.resolveRaceManager())
-
-	return r.quickRaceHandler
 }
 
 func (r *Resolver) resolveAuditLogHandler() *AuditLogHandler {
@@ -206,28 +143,6 @@ func (r *Resolver) resolveCarsHandler() *CarsHandler {
 	return r.carsHandler
 }
 
-func (r *Resolver) resolveChampionshipManager() *ChampionshipManager {
-	if r.championshipManager != nil {
-		return r.championshipManager
-	}
-
-	r.championshipManager = NewChampionshipManager(
-		r.resolveRaceManager(),
-	)
-
-	return r.championshipManager
-}
-
-func (r *Resolver) resolveChampionshipsHandler() *ChampionshipsHandler {
-	if r.championshipsHandler != nil {
-		return r.championshipsHandler
-	}
-
-	r.championshipsHandler = NewChampionshipsHandler(r.resolveBaseHandler(), r.resolveChampionshipManager())
-
-	return r.championshipsHandler
-}
-
 func (r *Resolver) resolveTracksHandler() *TracksHandler {
 	if r.tracksHandler != nil {
 		return r.tracksHandler
@@ -246,16 +161,6 @@ func (r *Resolver) resolveWeatherHandler() *WeatherHandler {
 	r.weatherHandler = NewWeatherHandler(r.resolveBaseHandler())
 
 	return r.weatherHandler
-}
-
-func (r *Resolver) resolvePenaltiesHandler() *PenaltiesHandler {
-	if r.penaltiesHandler != nil {
-		return r.penaltiesHandler
-	}
-
-	r.penaltiesHandler = NewPenaltiesHandler(r.resolveBaseHandler(), r.resolveChampionshipManager(), r.resolveRaceWeekendManager())
-
-	return r.penaltiesHandler
 }
 
 func (r *Resolver) resolveResultsHandler() *ResultsHandler {
@@ -288,23 +193,6 @@ func (r *Resolver) resolveScheduledRacesHandler() *ScheduledRacesHandler {
 	return r.scheduledRacesHandler
 }
 
-func (r *Resolver) resolveServerAdministrationHandler() *ServerAdministrationHandler {
-	if r.serverAdministrationHandler != nil {
-		return r.serverAdministrationHandler
-	}
-
-	r.serverAdministrationHandler = NewServerAdministrationHandler(
-		r.resolveBaseHandler(),
-		r.ResolveStore(),
-		r.resolveRaceManager(),
-		r.resolveChampionshipManager(),
-		r.resolveRaceWeekendManager(),
-		r.resolveServerProcess(),
-	)
-
-	return r.serverAdministrationHandler
-}
-
 func (r *Resolver) resolveContentUploadHandler() *ContentUploadHandler {
 	if r.contentUploadHandler != nil {
 		return r.contentUploadHandler
@@ -313,68 +201,6 @@ func (r *Resolver) resolveContentUploadHandler() *ContentUploadHandler {
 	r.contentUploadHandler = NewContentUploadHandler(r.resolveBaseHandler(), r.resolveCarManager())
 
 	return r.contentUploadHandler
-}
-
-func (r *Resolver) resolveRaceControlHub() *RaceControlHub {
-	if r.raceControlHub != nil {
-		return r.raceControlHub
-	}
-
-	r.raceControlHub = newRaceControlHub()
-	go r.raceControlHub.run()
-
-	return r.raceControlHub
-}
-
-func (r *Resolver) resolveRaceControl() *RaceControl {
-	if r.raceControl != nil {
-		return r.raceControl
-	}
-
-	r.raceControl = NewRaceControl(r.resolveRaceControlHub(), filesystemTrackData{}, r.resolveServerProcess())
-
-	return r.raceControl
-}
-
-func (r *Resolver) resolveRaceControlHandler() *RaceControlHandler {
-	if config.Server.PerformanceMode {
-		return nil
-	}
-
-	if r.raceControlHandler != nil {
-		return r.raceControlHandler
-	}
-
-	r.raceControlHandler = NewRaceControlHandler(
-		r.resolveBaseHandler(),
-		r.ResolveStore(),
-		r.resolveRaceManager(),
-		r.resolveRaceControl(),
-		r.resolveRaceControlHub(),
-		r.resolveServerProcess(),
-	)
-
-	return r.raceControlHandler
-}
-
-func (r *Resolver) resolveRaceWeekendManager() *RaceWeekendManager {
-	if r.raceWeekendManager != nil {
-		return r.raceWeekendManager
-	}
-
-	r.raceWeekendManager = NewRaceWeekendManager(r.resolveRaceManager(), r.resolveChampionshipManager(), r.ResolveStore(), r.resolveServerProcess(), r.resolveNotificationManager())
-
-	return r.raceWeekendManager
-}
-
-func (r *Resolver) resolveRaceWeekendHandler() *RaceWeekendHandler {
-	if r.raceWeekendHandler != nil {
-		return r.raceWeekendHandler
-	}
-
-	r.raceWeekendHandler = NewRaceWeekendHandler(r.resolveBaseHandler(), r.resolveRaceWeekendManager())
-
-	return r.raceWeekendHandler
 }
 
 func (r *Resolver) resolveDiscordManager() *DiscordManager {
@@ -401,21 +227,14 @@ func (r *Resolver) resolveNotificationManager() *NotificationManager {
 func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
 	return Router(
 		fs,
-		r.resolveQuickRaceHandler(),
-		r.resolveCustomRaceHandler(),
-		r.resolveChampionshipsHandler(),
 		r.resolveAccountHandler(),
 		r.resolveAuditLogHandler(),
 		r.resolveCarsHandler(),
 		r.resolveTracksHandler(),
 		r.resolveWeatherHandler(),
-		r.resolvePenaltiesHandler(),
 		r.resolveResultsHandler(),
 		r.resolveContentUploadHandler(),
-		r.resolveServerAdministrationHandler(),
-		r.resolveRaceControlHandler(),
 		r.resolveScheduledRacesHandler(),
-		r.resolveRaceWeekendHandler(),
 	)
 }
 

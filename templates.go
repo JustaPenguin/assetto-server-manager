@@ -130,9 +130,9 @@ func driverInitials(name string) string {
 
 // Renderer is the template engine.
 type Renderer struct {
-	store   Store
-	process ServerProcess
-	loader  TemplateLoader
+	store              Store
+	loader             TemplateLoader
+	multiServerManager *MultiServerManager
 
 	templates map[string]*template.Template
 
@@ -140,11 +140,11 @@ type Renderer struct {
 	mutex  sync.Mutex
 }
 
-func NewRenderer(loader TemplateLoader, store Store, process ServerProcess, reload bool) (*Renderer, error) {
+func NewRenderer(loader TemplateLoader, store Store, multiServerManager *MultiServerManager, reload bool) (*Renderer, error) {
 	tr := &Renderer{
-		store:   store,
-		process: process,
-		loader:  loader,
+		store:              store,
+		multiServerManager: multiServerManager,
+		loader:             loader,
 
 		templates: make(map[string]*template.Template),
 		reload:    reload,
@@ -470,8 +470,12 @@ func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, vars Templat
 		return err
 	}
 
-	data.ServerStatus = tr.process.IsRunning()
-	data.ServerEvent = tr.process.Event()
+	// @TODO
+	// data.ServerStatus = tr.process.IsRunning()
+	// data.ServerEvent = tr.process.Event()
+	data.ServerStatus = false
+	data.ServerEvent = &QuickRace{}
+
 	data.ServerName = opts.Name
 	data.CustomCSS = template.CSS(opts.CustomCSS)
 	data.User = AccountFromRequest(r)
