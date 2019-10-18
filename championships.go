@@ -12,7 +12,6 @@ import (
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"github.com/teambition/rrule-go"
 )
 
 // ChampionshipClassColors are sequentially selected to indicate different classes within a Championship
@@ -1140,8 +1139,20 @@ func NewChampionshipEvent() *ChampionshipEvent {
 	}
 }
 
+// copied an existing ChampionshipEvent but assigns a new ID
+func DuplicateChampionshipEvent(event *ChampionshipEvent) *ChampionshipEvent {
+	newEvent := *event
+
+	newEvent.ID = uuid.New()
+	newEvent.CompletedTime = time.Time{}
+
+	return &newEvent
+}
+
 // A ChampionshipEvent is a given RaceSetup with Sessions.
 type ChampionshipEvent struct {
+	ScheduledEventBase
+
 	ID uuid.UUID
 
 	RaceSetup CurrentRaceConfig
@@ -1154,9 +1165,8 @@ type ChampionshipEvent struct {
 	// If RaceWeekendID is non-nil, RaceWeekend will be populated on loading the Championship.
 	RaceWeekend *RaceWeekend
 
-	StartedTime   time.Time
-	CompletedTime time.Time
-	Scheduled     time.Time
+	StartedTime      time.Time
+	CompletedTime    time.Time
 
 	championship *Championship
 }
@@ -1181,32 +1191,12 @@ func (cr *ChampionshipEvent) ReadOnlyEntryList() EntryList {
 	return cr.CombineEntryLists(cr.championship)
 }
 
-func (cr *ChampionshipEvent) SetRecurrenceRule(input string) error {
-	return nil
-}
-
-func (cr *ChampionshipEvent) GetRecurrenceRule() (*rrule.RRule, error) {
-	return nil, nil
-}
-
-func (cr *ChampionshipEvent) HasRecurrenceRule() bool {
-	return false
-}
-
-func (cr *ChampionshipEvent) ClearRecurrenceRule() {
-	return
-}
-
 func (cr *ChampionshipEvent) GetID() uuid.UUID {
 	return cr.ID
 }
 
 func (cr *ChampionshipEvent) GetRaceSetup() CurrentRaceConfig {
 	return cr.RaceSetup
-}
-
-func (cr *ChampionshipEvent) GetScheduledTime() time.Time {
-	return cr.Scheduled
 }
 
 func (cr *ChampionshipEvent) Cars(c *Championship) []string {

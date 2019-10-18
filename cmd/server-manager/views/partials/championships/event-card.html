@@ -296,6 +296,13 @@
                                             <input type='hidden' name="event-schedule-timezone" class="event-schedule-timezone">
                                             <small class='form-text text-muted'>Please enter the correct date and time to add a scheduled race. This date/time is in your timezone (<span class='timezone'></span>).</small>
 
+                                            <label for="event-schedule-recurrence" class="col-form-label">Recurrence Rule</label>
+                                            <input type='text' class='form-control' name='event-schedule-recurrence' id='event-schedule-recurrence' value="{{ $event.Recurrence }}">
+                                            <small class='form-text text-muted'>
+                                                Visit
+                                                <a target="_blank" href="https://www.textmagic.com/free-tools/rrule-generator">RRule Generator</a>
+                                                to generate a recurrence rule. Leave blank if not required. Only valid alongside scheduled time.
+                                            </small>
                                         </div>
 
                                         <button type='submit' name='action' value='add' class='btn btn-sm btn-primary'>Schedule</button>
