@@ -9,6 +9,7 @@ Added:
 * Added an Entrant Attendance field to Championship table to help admins keep track of who is showing up for races.
 * Added "Register with Steam" to Championships with a Sign Up Form.
 * Added "Sign in with Steam" to the Update Account Details page.
+* Added collision maps to result pages so you look back on your numerous incidents with clarity. On the event tab you can control which collisions are shown on the map.
 
 Fixes:
 

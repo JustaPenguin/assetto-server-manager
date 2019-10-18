@@ -96,6 +96,7 @@ func Router(
 		// results
 		r.Get("/results", resultsHandler.list)
 		r.Get("/results/{fileName}", resultsHandler.view)
+		r.HandleFunc("/results/{fileName}/collisions", resultsHandler.renderCollisions)
 		r.HandleFunc("/results/download/{fileName}", resultsHandler.file)
 
 		// championships
