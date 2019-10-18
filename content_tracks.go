@@ -3,6 +3,8 @@ package servermanager
 import (
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/png"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -276,6 +278,26 @@ func LoadTrackMapData(track, trackLayout string) (*TrackMapData, error) {
 	}
 
 	return &mapData, nil
+}
+
+func LoadTrackMapImage(track, trackLayout string) (image.Image, error) {
+	p := filepath.Join(ServerInstallPath, "content", "tracks", track)
+
+	if trackLayout != "" {
+		p = filepath.Join(p, trackLayout)
+	}
+
+	p = filepath.Join(p, "map.png")
+
+	f, err := os.Open(p)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+
+	return png.Decode(f)
 }
 
 // disableDRSFile is a file with a tiny DRS zone that is too small to activate DRS in.
