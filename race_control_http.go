@@ -1,7 +1,6 @@
 package servermanager
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -59,14 +58,16 @@ func (h *RaceControlHub) Send(message udp.Message) error {
 	return nil
 }
 
-var rch = newRaceControlHub()
-
 func newRaceControlHub() *RaceControlHub {
-	return &RaceControlHub{
+	rch := &RaceControlHub{
 		broadcast: make(chan raceControlMessage),
 		register:  make(chan *raceControlClient),
 		clients:   make(map[*raceControlClient]bool),
 	}
+
+	go rch.run()
+
+	return rch
 }
 
 func (h *RaceControlHub) run() {
@@ -244,7 +245,6 @@ func (rch *RaceControlHandler) websocket(w http.ResponseWriter, r *http.Request)
 	}
 
 	client := &raceControlClient{hub: rch.raceControlHub, conn: c, receive: make(chan raceControlMessage, 256)}
-	fmt.Println("HI")
 	client.hub.register <- client
 
 	go client.writePump()
