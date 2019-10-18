@@ -17,11 +17,11 @@ type CustomRace struct {
 	HasCustomName, OverridePassword bool
 	ReplacementPassword             string
 
-	Created          time.Time
-	Updated          time.Time
-	Deleted          time.Time
-	UUID             uuid.UUID
-	Starred, Loop    bool
+	Created       time.Time
+	Updated       time.Time
+	Deleted       time.Time
+	UUID          uuid.UUID
+	Starred, Loop bool
 
 	RaceConfig CurrentRaceConfig
 	EntryList  EntryList

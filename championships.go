@@ -679,38 +679,33 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 		}
 	}
 
-	conditionsFuncs := []func(entrant *Entrant, potentialEntrant PotentialChampionshipEntrant) bool{
-		func(e *Entrant, potentialEntrant PotentialChampionshipEntrant) bool {
-			return e.Model == potentialEntrant.GetCar()
-		},
-		func(e *Entrant, potentialEntrant PotentialChampionshipEntrant) bool {
-			return e.Model == AnyCarModel
-		},
+	// now look for empty Entrants in the Entrylist with a matching car
+	for carNum, entrant := range classForCar.Entrants {
+		if entrant.Name == "" && entrant.GUID == "" && entrant.Model == potentialEntrant.GetCar() {
+			if oldEntrant != nil {
+				// swap the old entrant properties
+				oldEntrant.SwapProperties(entrant, oldEntrantClass == classForCar)
+			}
+
+			classForCar.AssignToFreeEntrantSlot(entrant, potentialEntrant)
+			logrus.Infof("Championship entrant: %s (%s) has been assigned to %s in %s (matching car)", entrant.Name, entrant.GUID, carNum, c.Name)
+
+			return true, entrant, classForCar, nil
+		}
 	}
 
-	for _, conditionFunc := range conditionsFuncs {
-		// now look for empty Entrants in the Entrylist
-		for carNum, entrant := range classForCar.Entrants {
-			if entrant.Name == "" && entrant.GUID == "" && conditionFunc(entrant, potentialEntrant) {
-				if oldEntrant != nil {
-					// swap the old entrant properties
-					oldEntrant.SwapProperties(entrant, oldEntrantClass == classForCar)
-				}
-
-				entrant.Name = potentialEntrant.GetName()
-				entrant.GUID = potentialEntrant.GetGUID()
-				entrant.Model = potentialEntrant.GetCar()
-				entrant.Skin = potentialEntrant.GetSkin()
-
-				// #386: don't replace a team with no team.
-				if potentialEntrant.GetTeam() != "" {
-					entrant.Team = potentialEntrant.GetTeam()
-				}
-
-				logrus.Infof("Championship entrant: %s (%s) has been assigned to %s in %s", entrant.Name, entrant.GUID, carNum, classForCar.Name)
-
-				return true, entrant, classForCar, nil
+	// now look for empty Entrants in the Entrylist with an 'any free car' slot
+	for carNum, entrant := range classForCar.Entrants {
+		if entrant.Name == "" && entrant.GUID == "" && entrant.Model == AnyCarModel {
+			if oldEntrant != nil {
+				// swap the old entrant properties
+				oldEntrant.SwapProperties(entrant, oldEntrantClass == classForCar)
 			}
+
+			classForCar.AssignToFreeEntrantSlot(entrant, potentialEntrant)
+			logrus.Infof("Championship entrant: %s (%s) has been assigned an to %s in %s (any car slot)", entrant.Name, entrant.GUID, carNum, c.Name)
+
+			return true, entrant, classForCar, nil
 		}
 	}
 
@@ -780,6 +775,18 @@ func (cs *ChampionshipStanding) TeamSummary() string {
 
 func (c *ChampionshipClass) DriverInClass(result *SessionResult) bool {
 	return result.ClassID == c.ID
+}
+
+func (c *ChampionshipClass) AssignToFreeEntrantSlot(entrant *Entrant, potentialEntrant PotentialChampionshipEntrant) {
+	entrant.Name = potentialEntrant.GetName()
+	entrant.GUID = potentialEntrant.GetGUID()
+	entrant.Model = potentialEntrant.GetCar()
+	entrant.Skin = potentialEntrant.GetSkin()
+
+	// #386: don't replace a team with no team.
+	if potentialEntrant.GetTeam() != "" {
+		entrant.Team = potentialEntrant.GetTeam()
+	}
 }
 
 func (c *ChampionshipClass) AttachEntrantToResult(entrant *Entrant, results *SessionResults) {
@@ -1165,8 +1172,8 @@ type ChampionshipEvent struct {
 	// If RaceWeekendID is non-nil, RaceWeekend will be populated on loading the Championship.
 	RaceWeekend *RaceWeekend
 
-	StartedTime      time.Time
-	CompletedTime    time.Time
+	StartedTime   time.Time
+	CompletedTime time.Time
 
 	championship *Championship
 }
