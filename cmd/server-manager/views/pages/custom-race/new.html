@@ -661,13 +661,97 @@
                             </div>
                         </div>
 
-                        <p>If you add an Entrant once, the next time you add an Entrant, the 'name' input will give you suggestions and auto-populate the Entrant's Name, Team and GUID.</p>
-
                         <div id="entrantTemplate" class="entrant">
                             {{ template "entrant" }}
                         </div>
 
                     </div>
+                {{ end }}
+
+                <div class="form-group row">
+                    <label for="DriverSwapEnabled" class="col-sm-3 col-form-label">Driver Swaps</label>
+
+
+                    <div class="col-sm-9">
+                        <input type="checkbox"
+                               id="DriverSwapEnabled"
+                               name="DriverSwapEnabled"
+                               value="{{ $f.DriverSwapEnabled }}"
+
+                                {{ if eq $f.DriverSwapEnabled 1 }}
+                                    checked="checked"
+                                {{ end }}
+                        >
+
+                        <br>
+                        <!-- @TODO add a link to a more in depth description -->
+                        <small>
+                            Server Manager Driver Swaps will allow multiple drivers in one entrant who can perform driver swaps. Add multiple GUIDs separated by ;'s to an entrant to allow this.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="DriverSwapMinTime" class="col-sm-3 col-form-label">Minimum Driver Swap Time (seconds)</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="DriverSwapMinTime"
+                                name="DriverSwapMinTime"
+                                class="form-control"
+                                value="{{ $f.DriverSwapMinTime }}"
+                                step="1"
+                        >
+
+                        <small>
+                            Minimum time for a driver swap, used to avoid giving users with faster computers an advantage. If the second driver sets off before this time they will be disqualified/given a penalty based on configuration
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="DriverSwapDisqualifyTime" class="col-sm-3 col-form-label">Driver Swap Disqualification Window (seconds)</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="DriverSwapDisqualifyTime"
+                                name="DriverSwapDisqualifyTime"
+                                class="form-control"
+                                value="{{ $f.DriverSwapDisqualifyTime }}"
+                                step="1"
+                        >
+
+                        <small>
+                            Driver should be disqualified if they set off this many seconds or more before the minimum time during a Driver Swap
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="DriverSwapPenaltyTime" class="col-sm-3 col-form-label">Driver Swap Penalty Window (seconds)</label>
+
+                    <div class="col-sm-9">
+                        <input
+                                type="number"
+                                id="DriverSwapPenaltyTime"
+                                name="DriverSwapPenaltyTime"
+                                class="form-control"
+                                value="{{ $f.DriverSwapPenaltyTime }}"
+                                step="1"
+                        >
+
+                        <small>
+                            Driver should be given a penalty of this many seconds if they set off this many seconds or more before the minimum time during a Driver Swap
+                        </small>
+                    </div>
+                </div>
+
+                {{ if not .IsChampionship }}
+
+                <p>If you add an Entrant once, the next time you add an Entrant, the 'name' input will give you suggestions and auto-populate the Entrant's Name, Team and GUID.</p>
+
                 {{ end }}
 
                 <div class="hidden-booking-enabled">

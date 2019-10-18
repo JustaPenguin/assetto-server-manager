@@ -477,6 +477,12 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		MaxContactsPerKilometer:   formValueAsInt(r.FormValue("MaxContactsPerKilometer")),
 		ResultScreenTime:          formValueAsInt(r.FormValue("ResultScreenTime")),
 		DisableDRSZones:           formValueAsInt(r.FormValue("DisableDRSZones")) == 1,
+		
+		// driver swap
+		DriverSwapEnabled:         		  formValueAsInt(r.FormValue("DriverSwapEnabled")),
+		DriverSwapMinTime:         		  formValueAsInt(r.FormValue("DriverSwapMinTime")),
+		DriverSwapDisqualifyTime:         formValueAsInt(r.FormValue("DriverSwapDisqualifyTime")),
+		DriverSwapPenaltyTime:            formValueAsInt(r.FormValue("DriverSwapPenaltyTime")),
 	}
 
 	if isSol {

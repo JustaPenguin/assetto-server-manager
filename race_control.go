@@ -36,6 +36,8 @@ type RaceControl struct {
 	trackDataGateway             TrackDataGateway
 	driverGUIDUpdateCounter      map[udp.DriverGUID]int
 	driverGUIDUpdateCounterMutex sync.RWMutex
+
+	driverSwapTimers    map[int]*time.Timer
 }
 
 // RaceControl piggyback's on the udp.Message interface so that the entire data can be sent to newly connected clients.
@@ -64,6 +66,7 @@ func NewRaceControl(broadcaster Broadcaster, trackDataGateway TrackDataGateway, 
 		broadcaster:      broadcaster,
 		trackDataGateway: trackDataGateway,
 		process:          process,
+		driverSwapTimers: make(map[int]*time.Timer),
 	}
 
 	rc.clearAllDrivers()
@@ -439,7 +442,138 @@ func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
 		rc.DisconnectedDrivers.Add(driver.CarInfo.DriverGUID, driver)
 	}
 
+	config := rc.process.GetServerConfig()
+
+	if config.CurrentRaceConfig.DriverSwapEnabled == 1 {
+		ticker := time.NewTicker(time.Second)
+		done := make(chan bool)
+
+		go func() {
+			rc.handleDriverSwap(ticker, done, config, client)
+		}()
+	}
+
 	return rc.broadcaster.Send(client)
+}
+
+func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, config ServerConfig, client udp.SessionCarInfo) {
+	var totalTime time.Duration
+	var position udp.Vec
+	var currentDriver *RaceControlDriver
+	var newDriverConnected bool
+	var firstPositionUpdate bool
+
+	completeTime := time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapMinTime)
+	initialGUID := client.DriverGUID
+
+	logrus.Infof("Driver: %d has initiated a driver swap", client.CarID)
+
+	for {
+		select {
+		case <-done:
+			return
+		case <-ticker.C:
+			totalTime += time.Second
+
+			countdown := completeTime - totalTime
+
+			if !newDriverConnected {
+				var ok bool
+
+				currentDriver, ok = rc.DisconnectedDrivers.Get(initialGUID)
+
+				if !ok {
+					// either driver didn't disconnect, or same driver reconnected
+					logrus.Infof("Driver: %s has reconnected, driver swap aborted", initialGUID)
+					break
+				}
+
+				for _, driver := range rc.ConnectedDrivers.Drivers {
+					if driver.CarInfo.CarID == currentDriver.CarInfo.CarID {
+						// new driver has connected in the same car
+						currentDriver = driver
+
+						newDriverConnected = true
+
+						logrus.Infof("Driver: %d (%s) has connected", currentDriver.CarInfo.CarID, currentDriver.CarInfo.DriverGUID)
+					}
+				}
+			} else {
+				if totalTime >= completeTime {
+					sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
+						fmt.Sprintf("You are clear to leave the pits, go go go!"))
+
+					if err == nil {
+						err := rc.process.SendUDPMessage(sendChat)
+
+						if err != nil {
+							logrus.WithError(err).Errorf("Unable to send driver swap clear to leave message to: %s", currentDriver.CarInfo.DriverName)
+						}
+					} else {
+						logrus.WithError(err).Errorf("Unable to build driver swap clear to leave message to: %s", currentDriver.CarInfo.DriverName)
+					}
+
+					logrus.Infof("Driver: %d has successfully completed their driver swap and is free to leave the pits", currentDriver.CarInfo.CarID)
+
+					ticker.Stop()
+					done <- true
+
+					return
+				} else {
+
+					if !firstPositionUpdate {
+						position = currentDriver.LastPos
+
+						firstPositionUpdate = true
+					}
+
+					// if driver has moved
+					if position != currentDriver.LastPos {
+						// if the time is within the disqualify window
+						if countdown >= (time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapDisqualifyTime)) {
+							udp.NewKickUser(uint8(currentDriver.CarInfo.CarID))
+
+							logrus.Infof("Driver: %d has been kicked for leaving the pits %d seconds early during a driver swap", currentDriver.CarInfo.CarID, countdown)
+
+							ticker.Stop()
+							done <- true
+
+							return
+						}
+
+						// if the time is within the penalty window
+						if countdown >= (time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapPenaltyTime)) {
+							udp.NewKickUser(uint8(currentDriver.CarInfo.CarID))
+
+							logrus.Infof("Driver: %d has been given a %d second penalty for leaving the pits %d seconds early during a driver swap", currentDriver.CarInfo.CarID, countdown, countdown)
+
+							ticker.Stop()
+							done <- true
+
+							return
+						}
+
+					}
+
+					// send countdown messages
+					if countdown <= (time.Second * 10) {
+						sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
+							fmt.Sprintf("Free to leave pits in %d seconds", countdown))
+
+						if err == nil {
+							err := rc.process.SendUDPMessage(sendChat)
+
+							if err != nil {
+								logrus.WithError(err).Errorf("Unable to send driver swap countdown message to: %s", currentDriver.CarInfo.DriverName)
+							}
+						} else {
+							logrus.WithError(err).Errorf("Unable to build driver swap countdown message to: %s", currentDriver.CarInfo.DriverName)
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 // findConnectedDriverByCarID looks for a driver in ConnectedDrivers by their CarID. This is the only place CarID

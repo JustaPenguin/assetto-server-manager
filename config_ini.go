@@ -240,6 +240,11 @@ type CurrentRaceConfig struct {
 	LockedEntryList   int `ini:"LOCKED_ENTRY_LIST" input:"checkbox" help:"Only players already included in the entry list can join the server"`
 	LoopMode          int `ini:"LOOP_MODE" input:"checkbox" help:"the server restarts from the first track, to disable this set it to 0"`
 
+	DriverSwapEnabled       	int `ini:"-" help:"Enable Driver Swaps, in order to carry out a Driver Swap give an entrant two or more GUIDs separated by ;'s'"`
+	DriverSwapMinTime       	int `ini:"-" help:"Minimum time for a driver swap, used to avoid giving users with faster computers an advantage. If the second driver sets off before this time they will be disqualified/given a penalty based on configuration"`
+	DriverSwapDisqualifyTime    int `ini:"-" help:"Driver should be disqualified if they set off this many seconds or more before the minimum time during a Driver Swap"`
+	DriverSwapPenaltyTime       int `ini:"-" help:"Driver should be given a penalty of this many seconds if they set off this many seconds or more before the minimum time during a Driver Swap"`
+
 	MaxClients   int `ini:"MAX_CLIENTS" help:"max number of clients (must be <= track's number of pits)"`
 	RaceOverTime int `ini:"RACE_OVER_TIME" help:"time remaining in seconds to finish the race from the moment the first one passes on the finish line"`
 	StartRule    int `ini:"START_RULE" min:"0" max:"2" help:"0 is car locked until start;   1 is teleport   ; 2 is drive-through (if race has 3 or less laps then the Teleport penalty is enabled)"`
