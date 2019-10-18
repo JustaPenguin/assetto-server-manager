@@ -120,7 +120,8 @@ func startUDPReplay(resolver *servermanager.Resolver, file string) {
 	}
 
 	err = replay.ReplayUDPMessages(db, 1, func(message udp.Message) {
-		resolver.UDPCallback(message)
+		// @TODO UDP callback
+		// resolver.UDPCallback(message)
 	}, time.Millisecond*500)
 
 	if err != nil {

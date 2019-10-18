@@ -16,19 +16,19 @@ type Resolver struct {
 	notificationManager   *NotificationManager
 	scheduledRacesManager *ScheduledRacesManager
 
-	viewRenderer          *Renderer
+	viewRenderer *Renderer
 
 	// handlers
-	baseHandler                 *BaseHandler
-	accountHandler              *AccountHandler
-	auditLogHandler             *AuditLogHandler
-	carsHandler                 *CarsHandler
-	tracksHandler               *TracksHandler
-	weatherHandler              *WeatherHandler
-	penaltiesHandler            *PenaltiesHandler
-	resultsHandler              *ResultsHandler
-	scheduledRacesHandler       *ScheduledRacesHandler
-	contentUploadHandler        *ContentUploadHandler
+	baseHandler           *BaseHandler
+	accountHandler        *AccountHandler
+	auditLogHandler       *AuditLogHandler
+	carsHandler           *CarsHandler
+	tracksHandler         *TracksHandler
+	weatherHandler        *WeatherHandler
+	penaltiesHandler      *PenaltiesHandler
+	resultsHandler        *ResultsHandler
+	scheduledRacesHandler *ScheduledRacesHandler
+	contentUploadHandler  *ContentUploadHandler
 }
 
 func NewResolver(templateLoader TemplateLoader, reloadTemplates bool, store Store) (*Resolver, error) {
@@ -52,7 +52,7 @@ func (r *Resolver) initViewRenderer() error {
 		return nil
 	}
 
-	viewRenderer, err := NewRenderer(r.templateLoader, r.store, r.resolveServerProcess(), r.reloadTemplates)
+	viewRenderer, err := NewRenderer(r.templateLoader, r.store, nil, r.reloadTemplates)
 
 	if err != nil {
 		return err
@@ -225,8 +225,13 @@ func (r *Resolver) resolveNotificationManager() *NotificationManager {
 }
 
 func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
+	defaultConfig := ConfigIniDefault()
+
+	_ = r.resolveMultiServerManager().NewServer(defaultConfig.GlobalServerConfig)
+
 	return Router(
 		fs,
+		r.resolveMultiServerManager(),
 		r.resolveAccountHandler(),
 		r.resolveAuditLogHandler(),
 		r.resolveCarsHandler(),

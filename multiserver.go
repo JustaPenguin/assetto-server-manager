@@ -1,7 +1,9 @@
 package servermanager
 
 import (
+	"fmt"
 	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/davecgh/go-spew/spew"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -54,45 +56,37 @@ type Server struct {
 }
 
 func (msm *MultiServerManager) NewServer(serverConfig GlobalServerConfig) *Server {
-	contentManagerWrapper := NewContentManagerWrapper(msm.store, msm.carManager)
-	process := NewAssettoServerProcess(nil, contentManagerWrapper)
-	raceManager := NewRaceManager(msm.store, process, msm.carManager, msm.notificationManager)
-	championshipManager := NewChampionshipManager(raceManager)
-	raceWeekendManager := NewRaceWeekendManager(raceManager, championshipManager, msm.store, process, msm.notificationManager)
-	raceControlHub := newRaceControlHub()
-	raceControl := NewRaceControl(raceControlHub, filesystemTrackData{}, process)
+	server := &Server{}
+	server.ID = uuid.New()
+	server.ServerConfig = serverConfig
 
-	quickRaceHandler := NewQuickRaceHandler(msm.baseHandler, raceManager)
-	customRaceHandler := NewCustomRaceHandler(msm.baseHandler, raceManager)
-	championshipHandler := NewChampionshipsHandler(msm.baseHandler, championshipManager)
-	raceWeekendHandler := NewRaceWeekendHandler(msm.baseHandler, raceWeekendManager)
-	raceControlHandler := NewRaceControlHandler(msm.baseHandler, msm.store, raceManager, raceControl, raceControlHub, process)
-	serverAdministrationHandler := NewServerAdministrationHandler(msm.baseHandler, msm.store, raceManager, championshipManager, raceWeekendManager, process)
-	penaltiesHandler := NewPenaltiesHandler(msm.baseHandler, championshipManager, raceWeekendManager)
+	server.ContentManagerWrapper = NewContentManagerWrapper(msm.store, msm.carManager)
+	server.Process = NewAssettoServerProcess(server.UDPCallback, server.ContentManagerWrapper)
+	server.RaceManager = NewRaceManager(msm.store, server.Process, msm.carManager, msm.notificationManager)
+	server.ChampionshipManager = NewChampionshipManager(server.RaceManager)
+	server.RaceWeekendManager = NewRaceWeekendManager(server.RaceManager, server.ChampionshipManager, msm.store, server.Process, msm.notificationManager)
 
-	return &Server{
-		ID:                          uuid.New(),
-		ServerConfig:                serverConfig,
-		Process:                     process,
-		RaceManager:                 raceManager,
-		ChampionshipManager:         championshipManager,
-		RaceWeekendManager:          raceWeekendManager,
-		RaceControl:                 raceControl,
-		ContentManagerWrapper:       contentManagerWrapper,
-		QuickRaceHandler:            quickRaceHandler,
-		CustomRaceHandler:           customRaceHandler,
-		ChampionshipsHandler:        championshipHandler,
-		RaceWeekendHandler:          raceWeekendHandler,
-		RaceControlHandler:          raceControlHandler,
-		AccountHandler:              msm.accountHandler,
-		ServerAdministrationHandler: serverAdministrationHandler,
-		PenaltiesHandler:            penaltiesHandler,
-	}
+	server.RaceControl = NewRaceControl(rch, filesystemTrackData{}, server.Process)
+
+	server.AccountHandler = msm.accountHandler
+	server.QuickRaceHandler = NewQuickRaceHandler(msm.baseHandler, server.RaceManager)
+	server.CustomRaceHandler = NewCustomRaceHandler(msm.baseHandler, server.RaceManager)
+	server.ChampionshipsHandler = NewChampionshipsHandler(msm.baseHandler, server.ChampionshipManager)
+	server.RaceWeekendHandler = NewRaceWeekendHandler(msm.baseHandler, server.RaceWeekendManager)
+	server.RaceControlHandler = NewRaceControlHandler(msm.baseHandler, msm.store, server.RaceManager, server.RaceControl, rch, server.Process)
+	server.ServerAdministrationHandler = NewServerAdministrationHandler(msm.baseHandler, msm.store, server.RaceManager, server.ChampionshipManager, server.RaceWeekendManager, server.Process)
+	server.PenaltiesHandler = NewPenaltiesHandler(msm.baseHandler, server.ChampionshipManager, server.RaceWeekendManager)
+
+	msm.Servers = append(msm.Servers, server)
+
+	return server
 }
 
 func (s *Server) UDPCallback(message udp.Message) {
+	spew.Dump(message)
+
 	if !config.Server.PerformanceMode {
-		s.RaceControl.UDPCallback(message)
+		//s.RaceControl.UDPCallback(message)
 	}
 	s.ChampionshipManager.ChampionshipEventCallback(message)
 	s.RaceWeekendManager.UDPCallback(message)
@@ -107,6 +101,22 @@ func (s *Server) Router() chi.Router {
 	// readers
 	r.Group(func(r chi.Router) {
 		r.Use(s.AccountHandler.ReadAccessMiddleware)
+
+		// pages
+		r.Get("/", s.ServerAdministrationHandler.home)
+		r.Get("/changelog", s.ServerAdministrationHandler.changelog)
+
+		// championships
+		r.Get("/championships", s.ChampionshipsHandler.list)
+		r.Get("/championship/{championshipID}", s.ChampionshipsHandler.view)
+		r.Get("/championship/{championshipID}/export", s.ChampionshipsHandler.export)
+		r.HandleFunc("/championship/{championshipID}/export-results", s.ChampionshipsHandler.exportResults)
+		r.Get("/championship/{championshipID}/ics", s.ChampionshipsHandler.icalFeed)
+		r.Get("/championship/{championshipID}/sign-up", s.ChampionshipsHandler.signUpForm)
+		r.Post("/championship/{championshipID}/sign-up", s.ChampionshipsHandler.signUpForm)
+		r.Get("/championship/{championshipID}/sign-up/steam", s.ChampionshipsHandler.redirectToSteamLogin(func(r *http.Request) string {
+			return fmt.Sprintf("/championship/%s/sign-up", chi.URLParam(r, "championshipID"))
+		}))
 
 		// race control
 		r.Group(func(r chi.Router) {
@@ -125,6 +135,15 @@ func (s *Server) Router() chi.Router {
 			r.Get("/live-timing", s.RaceControlHandler.liveTiming)
 			r.Get("/api/race-control", s.RaceControlHandler.websocket)
 		})
+
+		// race weekends
+		r.Get("/race-weekends", s.RaceWeekendHandler.list)
+		r.Get("/race-weekend/{raceWeekendID}", s.RaceWeekendHandler.view)
+		r.Get("/race-weekend/{raceWeekendID}/filters", s.RaceWeekendHandler.manageFilters)
+		r.Get("/race-weekend/{raceWeekendID}/entrylist", s.RaceWeekendHandler.manageEntryList)
+		r.Post("/race-weekend/{raceWeekendID}/grid-preview", s.RaceWeekendHandler.gridPreview)
+		r.Get("/race-weekend/{raceWeekendID}/entrylist-preview", s.RaceWeekendHandler.entryListPreview)
+		r.Get("/race-weekend/{raceWeekendID}/export", s.RaceWeekendHandler.export)
 	})
 
 	// writers
@@ -134,6 +153,10 @@ func (s *Server) Router() chi.Router {
 		// races
 		r.Get("/quick", s.QuickRaceHandler.create)
 		r.Post("/quick/submit", s.QuickRaceHandler.submit)
+		r.Get("/custom", s.CustomRaceHandler.list)
+		r.Get("/custom/new", s.CustomRaceHandler.createOrEdit)
+		r.Get("/custom/star/{uuid}", s.CustomRaceHandler.star)
+		r.Get("/custom/loop/{uuid}", s.CustomRaceHandler.loop)
 		r.Get("/custom/load/{uuid}", s.CustomRaceHandler.start)
 		r.Post("/custom/schedule/{uuid}", s.CustomRaceHandler.schedule)
 		r.Get("/custom/schedule/{uuid}/remove", s.CustomRaceHandler.removeSchedule)
@@ -141,6 +164,24 @@ func (s *Server) Router() chi.Router {
 		r.Post("/custom/new/submit", s.CustomRaceHandler.submit)
 
 		// championships
+		r.Get("/championships/new", s.ChampionshipsHandler.createOrEdit)
+		r.Post("/championships/new/submit", s.ChampionshipsHandler.submit)
+		r.Get("/championship/{championshipID}/edit", s.ChampionshipsHandler.createOrEdit)
+		r.Get("/championship/{championshipID}/event", s.ChampionshipsHandler.eventConfiguration)
+		r.Post("/championship/{championshipID}/event/submit", s.ChampionshipsHandler.submitEventConfiguration)
+
+		r.Get("/championship/{championshipID}/event/{eventID}/edit", s.ChampionshipsHandler.eventConfiguration)
+		r.Post("/championship/{championshipID}/driver-penalty/{classID}/{driverGUID}", s.ChampionshipsHandler.driverPenalty)
+		r.Post("/championship/{championshipID}/team-penalty/{classID}/{team}", s.ChampionshipsHandler.teamPenalty)
+		r.Get("/championship/{championshipID}/entrants", s.ChampionshipsHandler.signedUpEntrants)
+		r.Get("/championship/{championshipID}/entrants.csv", s.ChampionshipsHandler.signedUpEntrantsCSV)
+		r.Get("/championship/{championshipID}/entrant/{entrantGUID}", s.ChampionshipsHandler.modifyEntrantStatus)
+		r.Post("/championship/{championshipID}/reorder-events", s.ChampionshipsHandler.reorderEvents)
+
+		r.Get("/championship/import", s.ChampionshipsHandler.importChampionship)
+		r.Post("/championship/import", s.ChampionshipsHandler.importChampionship)
+		r.Get("/championship/{championshipID}/event/{eventID}/import", s.ChampionshipsHandler.eventImport)
+		r.Post("/championship/{championshipID}/event/{eventID}/import", s.ChampionshipsHandler.eventImport)
 		r.Get("/championship/{championshipID}/event/{eventID}/start", s.ChampionshipsHandler.startEvent)
 		r.Post("/championship/{championshipID}/event/{eventID}/schedule", s.ChampionshipsHandler.scheduleEvent)
 		r.Get("/championship/{championshipID}/event/{eventID}/schedule/remove", s.ChampionshipsHandler.scheduleEventRemove)
@@ -152,6 +193,9 @@ func (s *Server) Router() chi.Router {
 		r.Get("/process/{action}", s.ServerAdministrationHandler.serverProcess)
 		r.Get("/logs", s.ServerAdministrationHandler.logs)
 		r.Get("/api/logs", s.ServerAdministrationHandler.logsAPI)
+
+		// penalties
+		r.Post("/penalties/{sessionFile}/{driverGUID}", s.PenaltiesHandler.managePenalty)
 
 		// race weekends
 		r.Get("/race-weekends/new", s.RaceWeekendHandler.createOrEdit)
@@ -173,12 +217,24 @@ func (s *Server) Router() chi.Router {
 		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/cancel", s.RaceWeekendHandler.cancelSession)
 		r.Post("/race-weekend/{raceWeekendID}/session/{sessionID}/schedule", s.RaceWeekendHandler.scheduleSession)
 		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/schedule/remove", s.RaceWeekendHandler.removeSessionSchedule)
+
+		// live timings
+		r.Post("/live-timing/save-frames", s.RaceControlHandler.saveIFrames)
 	})
 
 	// deleters
 	r.Group(func(r chi.Router) {
 		r.Use(s.AccountHandler.DeleteAccessMiddleware)
 
+		r.Get("/championship/{championshipID}/event/{eventID}/delete", s.ChampionshipsHandler.deleteEvent)
+		r.Get("/championship/{championshipID}/delete", s.ChampionshipsHandler.delete)
+		r.Get("/custom/delete/{uuid}", s.CustomRaceHandler.delete)
+
+		r.Get("/autofill-entrants", s.ServerAdministrationHandler.autoFillEntrantList)
+		r.Get("/autofill-entrants/delete/{entrantID}", s.ServerAdministrationHandler.autoFillEntrantDelete)
+
+		// race weekend
+		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/delete", s.RaceWeekendHandler.deleteSession)
 	})
 
 	// admins
@@ -190,6 +246,10 @@ func (s *Server) Router() chi.Router {
 		r.HandleFunc("/broadcast-chat", s.RaceControlHandler.broadcastChat)
 		r.HandleFunc("/admin-command", s.RaceControlHandler.adminCommand)
 		r.HandleFunc("/kick-user", s.RaceControlHandler.kickUser)
+
+		r.HandleFunc("/server-options", s.ServerAdministrationHandler.options)
+		r.HandleFunc("/blacklist", s.ServerAdministrationHandler.blacklist)
+		r.HandleFunc("/motd", s.ServerAdministrationHandler.motd)
 	})
 
 	return r
@@ -197,28 +257,24 @@ func (s *Server) Router() chi.Router {
 
 const sessionServerIDKey = "ServerID"
 
-func (msm *MultiServerManager) ServerChoiceMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		sess := getSession(r)
+func (msm *MultiServerManager) ServerHandler(w http.ResponseWriter, r *http.Request) {
+	sess := getSession(r)
 
-		serverID, ok := sess.Values[sessionServerIDKey]
+	serverID, ok := sess.Values[sessionServerIDKey]
 
-		if ok {
-			for _, server := range msm.Servers {
-				if server.ID.String() == serverID.(string) {
-					server.Router().ServeHTTP(w, r)
-					return
-				}
+	if ok {
+		for _, server := range msm.Servers {
+			if server.ID.String() == serverID.(string) {
+				server.Router().ServeHTTP(w, r)
+				return
 			}
 		}
+	}
 
-		for _, server := range msm.Servers {
-			server.Router().ServeHTTP(w, r)
-			return
-		}
-
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	})
+	for _, server := range msm.Servers {
+		server.Router().ServeHTTP(w, r)
+		return
+	}
 }
 
 func (msm *MultiServerManager) ChooseServerHandler(w http.ResponseWriter, r *http.Request) {

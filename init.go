@@ -34,31 +34,33 @@ func InitWithResolver(resolver *Resolver) error {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
-	process := resolver.resolveServerProcess()
-	championshipManager := resolver.resolveChampionshipManager()
-	raceWeekendManager := resolver.resolveRaceWeekendManager()
 	notificationManager := resolver.resolveNotificationManager()
+	multiServerManager := resolver.resolveMultiServerManager()
 
 	go func() {
 		for range c {
 			// ^C, handle it
-			if process.IsRunning() {
-				if process.Event().IsChampionship() {
-					if err := championshipManager.StopActiveEvent(); err != nil {
-						logrus.WithError(err).Errorf("Error stopping Championship event")
-					}
-				} else if process.Event().IsRaceWeekend() {
-					if err := raceWeekendManager.StopActiveSession(); err != nil {
-						logrus.WithError(err).Errorf("Error stopping Race Weekend session")
-					}
-				} else {
-					if err := process.Stop(); err != nil {
-						logrus.WithError(err).Errorf("Could not stop server")
-					}
-				}
+			for _, server := range multiServerManager.Servers {
+				process := server.Process
 
-				if p, ok := process.(*AssettoServerProcess); ok {
-					p.stopChildProcesses()
+				if process.IsRunning() {
+					if process.Event().IsChampionship() {
+						if err := server.ChampionshipManager.StopActiveEvent(); err != nil {
+							logrus.WithError(err).Errorf("Error stopping Championship event")
+						}
+					} else if process.Event().IsRaceWeekend() {
+						if err := server.RaceWeekendManager.StopActiveSession(); err != nil {
+							logrus.WithError(err).Errorf("Error stopping Race Weekend session")
+						}
+					} else {
+						if err := process.Stop(); err != nil {
+							logrus.WithError(err).Errorf("Could not stop server")
+						}
+					}
+
+					if p, ok := process.(*AssettoServerProcess); ok {
+						p.stopChildProcesses()
+					}
 				}
 			}
 
@@ -70,26 +72,30 @@ func InitWithResolver(resolver *Resolver) error {
 		}
 	}()
 
-	raceManager := resolver.resolveRaceManager()
-	go raceManager.LoopRaces()
+	/*
+		@TODO scheduled races, looped races, etc
 
-	err = raceManager.InitScheduledRaces()
+		raceManager := resolver.resolveRaceManager()
+		go raceManager.LoopRaces()
 
-	if err != nil {
-		return err
-	}
+		err = raceManager.InitScheduledRaces()
 
-	err = championshipManager.InitScheduledChampionships()
+		if err != nil {
+			return err
+		}
 
-	if err != nil {
-		return err
-	}
+		err = championshipManager.InitScheduledChampionships()
 
-	err = raceWeekendManager.WatchForScheduledSessions()
+		if err != nil {
+			return err
+		}
 
-	if err != nil {
-		return err
-	}
+		err = raceWeekendManager.WatchForScheduledSessions()
+
+		if err != nil {
+			return err
+		}
+	*/
 
 	carManager := resolver.resolveCarManager()
 
