@@ -15,6 +15,7 @@ import (
 
 type ChampionshipsHandler struct {
 	*BaseHandler
+	SteamLoginHandler
 
 	championshipManager *ChampionshipManager
 }
@@ -383,7 +384,7 @@ func (ch *ChampionshipsHandler) scheduleEvent(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	err = ch.championshipManager.ScheduleEvent(championshipID, championshipEventID, date, r.FormValue("action"))
+	err = ch.championshipManager.ScheduleEvent(championshipID, championshipEventID, date, r.FormValue("action"), r.FormValue("event-schedule-recurrence"))
 
 	if err != nil {
 		logrus.WithError(err).Errorf("couldn't schedule championship event")
@@ -397,7 +398,7 @@ func (ch *ChampionshipsHandler) scheduleEvent(w http.ResponseWriter, r *http.Req
 
 func (ch *ChampionshipsHandler) scheduleEventRemove(w http.ResponseWriter, r *http.Request) {
 	err := ch.championshipManager.ScheduleEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"),
-		time.Time{}, "remove")
+		time.Time{}, "remove", "")
 
 	if err != nil {
 		logrus.WithError(err).Errorf("couldn't schedule championship event")
@@ -534,6 +535,7 @@ type championshipSignUpFormTemplateVars struct {
 	FormData         *ChampionshipSignUpResponse
 	SignedUpEntrants map[string]*entrantSlot
 	ValidationError  string
+	LockSteamGUID    bool
 }
 
 func (ch *ChampionshipsHandler) signUpForm(w http.ResponseWriter, r *http.Request) {
@@ -611,6 +613,11 @@ func (ch *ChampionshipsHandler) signUpForm(w http.ResponseWriter, r *http.Reques
 				}
 			}
 		}
+	}
+
+	if steamGUID := r.URL.Query().Get("steamGUID"); steamGUID != "" {
+		opts.FormData.GUID = steamGUID
+		opts.LockSteamGUID = true
 	}
 
 	ch.viewRenderer.MustLoadTemplate(w, r, "championships/sign-up.html", opts)

@@ -222,8 +222,9 @@
                                 <div id="popover-content-schedule-{{ $session.ID.String }}" style="display: none;">
                                     <form action="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/schedule" method="POST">
                                         <div class="form-group">
-                                            <input type="date" class="form-control" name="session-schedule-date" id="session-schedule-date" required>
-                                            <input type="time" class="form-control" name="session-schedule-time" id="session-schedule-time" required>
+
+                                            <input type="date" class="form-control" name="session-schedule-date" id="session-schedule-date">
+                                            <input type="time" class="form-control" name="session-schedule-time" id="session-schedule-time">
                                             <input type="hidden" name="session-schedule-timezone" class="session-schedule-timezone">
                                             <small class="form-text text-muted">
                                                 This date/time is in your timezone (<span class="timezone"></span>).
@@ -231,10 +232,20 @@
                                                 <span class="text-danger">Please note that sessions will only start if their parent sessions are complete.</span>
                                             </small>
 
+                                            {{ if not ($.RaceWeekend.SessionCanBeRun $session) }}
+                                                <hr>
+
+                                                <label>
+                                                    Start after Parent Session has completed
+
+                                                    <input class="ml-2" type="checkbox" name="session-start-after-parent" {{ if $session.StartWhenParentHasFinished }}checked="checked"{{ end }}>
+                                                </label>
+                                            {{ end }}
+
                                         </div>
 
                                         <button type="submit" class="btn btn-sm btn-primary">Schedule</button>
-                                        <a href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/schedule/remove" class="btn btn-sm btn-danger">Remove Scheduled Time</a>
+                                        <a href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/schedule/remove" class="btn btn-sm btn-danger">Remove Schedule</a>
                                     </form>
                                 </div>
 

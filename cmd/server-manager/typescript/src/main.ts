@@ -18,6 +18,7 @@ import {RaceWeekend} from "./RaceWeekend";
 import {ChangelogPopup} from "./ChangelogPopup";
 import {Messages} from "./Messages";
 import {Championship} from "./Championship";
+import {Results} from "./Results";
 
 $(() => {
     new RaceControl();
@@ -28,6 +29,7 @@ $(() => {
     new ChangelogPopup();
     Messages.initSummerNote();
     new Championship.View();
+    new Results();
 
     $(".race-setup").each(function (index, elem) {
         new CarSearch($(elem));

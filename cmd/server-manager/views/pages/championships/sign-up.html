@@ -64,9 +64,13 @@
 
                     <div class="col-sm-8">
                         <input type="text" class="form-control" id="GUID" name="GUID"
-                               placeholder="" value="{{ .FormData.GUID }}">
-
-                        <small>You can find your Steam ID at <a href="https://steamid.io/" target="_blank">steamid.io</a> or in your Steam Profile URL. Note that we require the <strong>SteamID64</strong>.</small>
+                               placeholder="" value="{{ .FormData.GUID }}" {{ if .LockSteamGUID }} readonly{{ end }}>
+                        {{ if not .LockSteamGUID }}
+                            <small>
+                                If you don't know your Steam GUID, you can <a href="/championship/{{.ChampionshipTemplateVars.RaceTemplateVars.Championship.ID.String }}/sign-up/steam">Sign in with Steam</a>
+                                to autofill it.
+                            </small>
+                        {{ end }}
                     </div>
                 </div>
 
