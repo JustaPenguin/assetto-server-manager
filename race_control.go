@@ -449,7 +449,7 @@ func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
 		done := make(chan bool)
 
 		go func() {
-			rc.handleDriverSwap(ticker, done, config, client)
+			rc.handleDriverSwap(ticker, done, config, client, driver)
 		}()
 	}
 
