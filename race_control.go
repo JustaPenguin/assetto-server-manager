@@ -456,15 +456,15 @@ func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
 	return rc.broadcaster.Send(client)
 }
 
-func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, config ServerConfig, client udp.SessionCarInfo) {
+func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, config ServerConfig, client udp.SessionCarInfo, driver *RaceControlDriver) {
 	var totalTime time.Duration
 	var position udp.Vec
-	var currentDriver *RaceControlDriver
 	var newDriverConnected bool
 	var firstPositionUpdate bool
 
 	completeTime := time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapMinTime)
 	initialGUID := client.DriverGUID
+	currentDriver := driver
 
 	logrus.Infof("Driver: %d has initiated a driver swap", client.CarID)
 
@@ -478,24 +478,25 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 			countdown := completeTime - totalTime
 
 			if !newDriverConnected {
-				var ok bool
-
-				currentDriver, ok = rc.DisconnectedDrivers.Get(initialGUID)
-
-				if !ok {
-					// either driver didn't disconnect, or same driver reconnected
-					logrus.Infof("Driver: %s has reconnected, driver swap aborted", initialGUID)
-					break
-				}
-
 				for _, driver := range rc.ConnectedDrivers.Drivers {
 					if driver.CarInfo.CarID == currentDriver.CarInfo.CarID {
-						// new driver has connected in the same car
-						currentDriver = driver
+						if driver.CarInfo.DriverGUID != currentDriver.CarInfo.DriverGUID {
+							// new driver has connected in the same car
+							currentDriver = driver
 
-						newDriverConnected = true
+							newDriverConnected = true
 
-						logrus.Infof("Driver: %d (%s) has connected", currentDriver.CarInfo.CarID, currentDriver.CarInfo.DriverGUID)
+							logrus.Infof("Driver: %d (%s) has connected", currentDriver.CarInfo.CarID, currentDriver.CarInfo.DriverGUID)
+						} else {
+							// same driver reconnected
+							logrus.Infof("Driver: %s has reconnected, driver swap aborted", initialGUID)
+
+							ticker.Stop()
+							done <- true
+
+							return
+						}
+
 					}
 				}
 			} else {
@@ -522,6 +523,19 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 				} else {
 
 					if !firstPositionUpdate {
+						sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
+							fmt.Sprintf("Hi! You are mid way through a driver swap, please wait %d seconds", countdown))
+
+						if err == nil {
+							err := rc.process.SendUDPMessage(sendChat)
+
+							if err != nil {
+								logrus.WithError(err).Errorf("Unable to send driver swap welcome message to: %s", currentDriver.CarInfo.DriverName)
+							}
+						} else {
+							logrus.WithError(err).Errorf("Unable to build driver swap welcome message to: %s", currentDriver.CarInfo.DriverName)
+						}
+
 						position = currentDriver.LastPos
 
 						firstPositionUpdate = true
