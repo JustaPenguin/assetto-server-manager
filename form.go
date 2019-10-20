@@ -235,6 +235,14 @@ func (f FormOption) renderDropdown() template.HTML {
 }
 
 func (f FormOption) renderCheckbox() template.HTML {
+	if b, ok := f.Value.(bool); ok {
+		if b {
+			f.Value = 1
+		} else {
+			f.Value = 0
+		}
+	}
+
 	const checkboxTemplate = `
 		{{ if not .Hidden }}
 			<div class="form-group row">
@@ -362,7 +370,7 @@ func (f FormOption) HTML() template.HTML {
 	switch f.Type {
 	case "dropdown", "multiSelect":
 		return f.renderDropdown()
-	case "checkbox":
+	case "checkbox", "bool":
 		return f.renderCheckbox()
 	case "int":
 		if f.Value == nil {
