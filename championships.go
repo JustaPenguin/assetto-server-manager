@@ -1149,8 +1149,8 @@ type ChampionshipEvent struct {
 	// If RaceWeekendID is non-nil, RaceWeekend will be populated on loading the Championship.
 	RaceWeekend *RaceWeekend
 
-	StartedTime      time.Time
-	CompletedTime    time.Time
+	StartedTime   time.Time
+	CompletedTime time.Time
 
 	championship *Championship
 }
