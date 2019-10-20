@@ -14,11 +14,12 @@ const (
 	maxAuditEntries = 1000
 
 	// private data
-	accountsDir       = "accounts"
-	serverOptionsFile = "server_options.json"
-	frameLinksFile    = "frame_links.json"
-	serverMetaDir     = "meta"
-	auditFile         = "audit.json"
+	accountsDir         = "accounts"
+	serverOptionsFile   = "server_options.json"
+	frameLinksFile      = "frame_links.json"
+	serverMetaDir       = "meta"
+	auditFile           = "audit.json"
+	strackerOptionsFile = "stracker_options.json"
 
 	// shared data
 	championshipsDir = "championships"
@@ -464,4 +465,30 @@ func (rs *JSONStore) DeleteRaceWeekend(id string) error {
 	rw.Deleted = time.Now()
 
 	return rs.UpsertRaceWeekend(rw)
+}
+
+func (rs *JSONStore) UpsertStrackerOptions(sto *StrackerConfiguration) error {
+	return rs.encodeFile(rs.base, strackerOptionsFile, sto)
+}
+
+func (rs *JSONStore) LoadStrackerOptions() (*StrackerConfiguration, error) {
+	var out *StrackerConfiguration
+
+	err := rs.decodeFile(rs.base, strackerOptionsFile, &out)
+
+	if os.IsNotExist(err) {
+		serverConfig, err := rs.LoadServerOptions()
+
+		if err != nil {
+			return nil, err
+		}
+
+		strackerConfig := DefaultStrackerIni(serverConfig)
+
+		return strackerConfig, rs.UpsertStrackerOptions(strackerConfig)
+	} else if err != nil {
+		return nil, err
+	}
+
+	return out, err
 }

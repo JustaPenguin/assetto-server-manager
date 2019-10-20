@@ -52,25 +52,40 @@ func (f Form) Submit(r *http.Request) error {
 	val := reflect.ValueOf(f.data).Elem()
 
 	for name, vals := range r.Form {
-		f := val.FieldByName(name)
-
-		if f.IsValid() && f.CanSet() {
-			switch f.Kind() {
-			case reflect.String:
-				f.SetString(strings.Join(vals, ";"))
-			case reflect.Int:
-				if vals[0] == "on" {
-					f.SetInt(1)
-				} else {
-					f.SetInt(int64(formValueAsInt(vals[0])))
-				}
-			default:
-				panic("form submit - unknown type")
-			}
-		}
+		f.assignFieldValues(val, name, vals)
 	}
 
 	return nil
+}
+
+func (f Form) assignFieldValues(val reflect.Value, name string, vals []string) {
+	parts := strings.Split(name, ".")
+	field := val.FieldByName(parts[0])
+
+	if field.IsValid() && field.CanSet() {
+		switch field.Kind() {
+		case reflect.Struct:
+			if len(parts) > 1 {
+				f.assignFieldValues(field, strings.Join(parts[1:], "."), vals)
+			}
+		case reflect.String:
+			field.SetString(strings.Join(vals, ";"))
+		case reflect.Int:
+			if vals[0] == "on" {
+				field.SetInt(1)
+			} else {
+				field.SetInt(int64(formValueAsInt(vals[0])))
+			}
+		case reflect.Bool:
+			if vals[0] == "on" {
+				field.SetBool(true)
+			} else {
+				field.SetBool(formValueAsInt(vals[0]) == 1)
+			}
+		default:
+			panic("form submit - unknown type")
+		}
+	}
 }
 
 func (f Form) Fields() []FormElement {
@@ -139,7 +154,7 @@ func (f Form) buildOpts(val reflect.Value, t reflect.Type, parentName string) []
 
 			formOpt := FormOption{
 				Name:     strings.Join(camelcase.Split(typeField.Name), " "),
-				Key:      typeField.Name,
+				Key:      parentName + typeField.Name,
 				Value:    valField.Interface(),
 				HelpText: template.HTML(typeField.Tag.Get("help")),
 				Type:     formType,

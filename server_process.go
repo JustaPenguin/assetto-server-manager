@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"os/exec"
@@ -50,6 +51,7 @@ type AssettoServerProcess struct {
 	cfn context.CancelFunc
 
 	doneCh chan struct{}
+	store  Store
 
 	extraProcesses []*exec.Cmd
 
@@ -63,7 +65,7 @@ type AssettoServerProcess struct {
 	event             RaceEvent
 }
 
-func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, contentManagerWrapper *ContentManagerWrapper) *AssettoServerProcess {
+func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, store Store, contentManagerWrapper *ContentManagerWrapper) *AssettoServerProcess {
 	ctx, cfn := context.WithCancel(context.Background())
 
 	return &AssettoServerProcess{
@@ -72,6 +74,7 @@ func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, contentManagerWrappe
 		doneCh:                make(chan struct{}),
 		callbackFunc:          callbackFunc,
 		contentManagerWrapper: contentManagerWrapper,
+		store:                 store,
 	}
 }
 
@@ -101,6 +104,7 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 
 	as.serverConfig = cfg
 	as.entryList = entryList
+	// @TODO what should stracker do when these are empty?
 	as.forwardingAddress = forwardingAddress
 	as.forwardListenPort = forwardListenPort
 	as.event = event
@@ -150,47 +154,31 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 		}()
 	}
 
-	for _, command := range config.Server.RunOnStart {
-		parts := strings.Split(command, " ")
+	if strackerOptions, err := as.store.LoadStrackerOptions(); err == nil && strackerOptions.EnableStracker {
+		strackerOptions.ACPlugin.SendPort = as.forwardListenPort
+		strackerOptions.ACPlugin.ReceivePort = formValueAsInt(strings.Split(as.forwardingAddress, ":")[1]) // @TODO there's a better way of doing this
+		strackerOptions.ACPlugin.ProxyPluginLocalPort = -1
+		strackerOptions.ACPlugin.ProxyPluginPort = -1
 
-		if len(parts) == 0 {
-			continue
-		}
-
-		commandFullPath, err := filepath.Abs(parts[0])
+		err = strackerOptions.Write()
 
 		if err != nil {
-			as.cmd = nil
 			return err
 		}
 
-		var cmd *exec.Cmd
-
-		if len(parts) > 1 {
-			cmd = buildCommand(as.ctx, commandFullPath, parts[1:]...)
-		} else {
-			cmd = buildCommand(as.ctx, commandFullPath)
-		}
-
-		pluginDir, err := filepath.Abs(filepath.Dir(command))
+		err = as.startChildProcess(wd, fmt.Sprintf("%s --stracker_ini %s", StrackerExecutablePath(), filepath.Join(StrackerFolderPath(), strackerConfigIniFilename)))
 
 		if err != nil {
-			logrus.WithError(err).Warnf("Could not determine plugin directory. Setting working dir to: %s", wd)
-			pluginDir = wd
+			return err
 		}
+	}
 
-		cmd.Stdout = pluginsOutput
-		cmd.Stderr = pluginsOutput
-		cmd.Dir = pluginDir
-
-		err = cmd.Start()
+	for _, command := range config.Server.RunOnStart {
+		err = as.startChildProcess(wd, command)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Could not run extra command: %s", command)
-			continue
 		}
-
-		as.extraProcesses = append(as.extraProcesses, cmd)
 	}
 
 	go func() {
@@ -198,6 +186,51 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 		as.stopChildProcesses()
 		as.closeUDPConnection()
 	}()
+
+	return nil
+}
+
+func (as *AssettoServerProcess) startChildProcess(wd string, command string) error {
+	parts := strings.Split(command, " ")
+
+	if len(parts) == 0 {
+		return nil
+	}
+
+	commandFullPath, err := filepath.Abs(parts[0])
+
+	if err != nil {
+		as.cmd = nil
+		return err
+	}
+
+	var cmd *exec.Cmd
+
+	if len(parts) > 1 {
+		cmd = buildCommand(as.ctx, commandFullPath, parts[1:]...)
+	} else {
+		cmd = buildCommand(as.ctx, commandFullPath)
+	}
+
+	pluginDir, err := filepath.Abs(filepath.Dir(commandFullPath))
+
+	if err != nil {
+		logrus.WithError(err).Warnf("Could not determine plugin directory. Setting working dir to: %s", wd)
+		pluginDir = wd
+	}
+
+	cmd.Stdout = pluginsOutput
+	cmd.Stderr = pluginsOutput
+
+	cmd.Dir = pluginDir
+
+	err = cmd.Start()
+
+	if err != nil {
+		return err
+	}
+
+	as.extraProcesses = append(as.extraProcesses, cmd)
 
 	return nil
 }

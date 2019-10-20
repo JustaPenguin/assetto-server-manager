@@ -25,7 +25,8 @@ var (
 	frameLinksBucketName    = []byte("frameLinks")
 	raceWeekendsBucketName  = []byte("raceWeekends")
 
-	serverOptionsKey = []byte("serverOptions")
+	serverOptionsKey   = []byte("serverOptions")
+	strackerOptionsKey = []byte("strackerOptions")
 )
 
 func (rs *BoltStore) customRaceBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
@@ -803,4 +804,51 @@ func (rs *BoltStore) DeleteRaceWeekend(id string) error {
 	raceWeekend.Deleted = time.Now()
 
 	return rs.UpsertRaceWeekend(raceWeekend)
+}
+
+func (rs *BoltStore) UpsertStrackerOptions(sto *StrackerConfiguration) error {
+	return rs.db.Update(func(tx *bbolt.Tx) error {
+		bkt, err := rs.serverOptionsBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		encoded, err := rs.encode(sto)
+
+		if err != nil {
+			return err
+		}
+
+		return bkt.Put(strackerOptionsKey, encoded)
+	})
+}
+
+func (rs *BoltStore) LoadStrackerOptions() (*StrackerConfiguration, error) {
+	// start with defaults
+	serverConfig, err := rs.LoadServerOptions()
+
+	if err != nil {
+		return nil, err
+	}
+
+	sto := DefaultStrackerIni(serverConfig)
+
+	err = rs.db.View(func(tx *bbolt.Tx) error {
+		bkt, err := rs.serverOptionsBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		data := bkt.Get(strackerOptionsKey)
+
+		if data == nil {
+			return nil
+		}
+
+		return rs.decode(data, &sto)
+	})
+
+	return sto, err
 }

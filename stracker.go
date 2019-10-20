@@ -1,19 +1,60 @@
 package servermanager
 
 import (
-	"github.com/sirupsen/logrus"
+	"fmt"
+	"github.com/cj123/ini"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"os"
+	"path/filepath"
+	"runtime"
+
+	"github.com/sirupsen/logrus"
 )
 
 // stracker handles configuration of the stracker plugin
 // https://www.racedepartment.com/downloads/stracker.3510/
 
+const (
+	strackerBaseFolderName    = "stracker"
+	strackerConfigIniFilename = "stracker.ini"
+)
+
+func StrackerExecutablePath() string {
+	if runtime.GOOS == "windows" {
+		return filepath.Join(StrackerFolderPath(), "stracker.exe")
+	} else {
+		return filepath.Join(StrackerFolderPath(), "stracker")
+	}
+}
+
+func StrackerFolderPath() string {
+	if runtime.GOOS == "windows" {
+		return filepath.Join(ServerInstallPath, strackerBaseFolderName)
+	} else {
+		return filepath.Join(ServerInstallPath, strackerBaseFolderName, "stracker_linux_x86")
+	}
+}
+
+// IsStrackerInstalled looks in the ServerInstallPath for an "stracker" directory with the correct stracker executable for the given platform
+func IsStrackerInstalled() bool {
+	if _, err := os.Stat(StrackerExecutablePath()); os.IsNotExist(err) {
+		return false
+	} else if err != nil {
+		logrus.WithError(err).Error("Could not determine if stracker is enabled")
+		return false
+	} else {
+		return true
+	}
+}
+
 func DefaultStrackerIni(serverOptions *GlobalServerConfig) *StrackerConfiguration {
 	return &StrackerConfiguration{
 		InstanceConfiguration: StrackerInstanceConfiguration{
 			ACServerAddress:              "127.0.0.1",
-			ACServerConfigIni:            "",
-			ACServerWorkingDir:           "",
+			ACServerConfigIni:            filepath.Join(ServerInstallPath, "cfg", "server_cfg.ini"),
+			ACServerWorkingDir:           ServerInstallPath,
 			AppendLogFile:                false,
 			IDBasedOnDriverNames:         false,
 			KeepAlivePtrackerConnections: true,
@@ -87,10 +128,10 @@ func DefaultStrackerIni(serverOptions *GlobalServerConfig) *StrackerConfiguratio
 			Line6: "data by typing the chat message \"/st anonymize on\". You might not be able to join the server again afterwards.",
 		},
 		ACPlugin: StrackerACPlugin{
-			ReceivePort:          0, // @TODO set this up
-			SendPort:             0, // @TODO set this up
-			ProxyPluginLocalPort: 0,
-			ProxyPluginPort:      0,
+			ReceivePort:          -1,
+			SendPort:             -1,
+			ProxyPluginLocalPort: -1,
+			ProxyPluginPort:      -1,
 		},
 		LapValidChecks: StrackerLapValidChecks{
 			InvalidateOnCarCollisions:         true,
@@ -101,6 +142,8 @@ func DefaultStrackerIni(serverOptions *GlobalServerConfig) *StrackerConfiguratio
 }
 
 type StrackerConfiguration struct {
+	EnableStracker bool `ini:"-" help:"Turn Stracker on or off"`
+
 	InstanceConfiguration StrackerInstanceConfiguration `ini:"STRACKER_CONFIG" input:"heading"`
 	SwearFilter           StrackerSwearFilter           `ini:"SWEAR_FILTER"`
 	SessionManagement     StrackerSessionManagement     `ini:"SESSION_MANAGEMENT"`
@@ -111,6 +154,26 @@ type StrackerConfiguration struct {
 	WelcomeMessage        StrackerWelcomeMessage        `ini:"WELCOME_MSG"`
 	ACPlugin              StrackerACPlugin              `ini:"ACPLUGIN"`
 	LapValidChecks        StrackerLapValidChecks        `ini:"LAP_VALID_CHECKS"`
+}
+
+func (stc *StrackerConfiguration) Write() error {
+	f := ini.NewFile([]ini.DataSource{nil}, ini.LoadOptions{
+		IgnoreInlineComment: true,
+	})
+
+	_, err := f.NewSection("DEFAULT")
+
+	if err != nil {
+		return err
+	}
+
+	err = f.ReflectFrom(&stc)
+
+	if err != nil {
+		return err
+	}
+
+	return f.SaveTo(filepath.Join(StrackerFolderPath(), strackerConfigIniFilename))
 }
 
 type StrackerInstanceConfiguration struct {
@@ -254,43 +317,43 @@ func NewStrackerHandler(baseHandler *BaseHandler, store Store) *StrackerHandler 
 type strackerConfigurationTemplateVars struct {
 	BaseTemplateVars
 
-	Form *Form
+	Form                *Form
+	IsStrackerInstalled bool
 }
 
 func (sth *StrackerHandler) options(w http.ResponseWriter, r *http.Request) {
-	serverOpts, err := sth.store.LoadServerOptions()
+	strackerOptions, err := sth.store.LoadStrackerOptions()
 
 	if err != nil {
-		logrus.WithError(err).Errorf("couldn't load server options")
+		logrus.WithError(err).Errorf("couldn't load stracker options")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	stracker := DefaultStrackerIni(serverOpts)
+	form := NewForm(strackerOptions, nil, "", AccountFromRequest(r).Name == "admin")
 
-	form := NewForm(stracker, nil, "", AccountFromRequest(r).Name == "admin")
-	/*
-		if r.Method == http.MethodPost {
-			err := form.Submit(r)
+	if r.Method == http.MethodPost {
+		err := form.Submit(r)
 
-			if err != nil {
-				logrus.WithError(err).Errorf("couldn't submit form")
-			}
-
-			UseShortenedDriverNames = serverOpts.UseShortenedDriverNames == 1
-			UseFallBackSorting = serverOpts.FallBackResultsSorting == 1
-
-			// save the config
-			err = sah.store.SaveServerOptions(serverOpts)
-
-			if err != nil {
-				logrus.WithError(err).Errorf("couldn't save config")
-				AddErrorFlash(w, r, "Failed to save server options")
-			} else {
-				AddFlash(w, r, "Server options successfully saved!")
-			}
+		if err != nil {
+			logrus.WithError(err).Errorf("couldn't submit form")
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
 		}
-	*/
+
+		// save the config
+		err = sth.store.UpsertStrackerOptions(strackerOptions)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("couldn't save stracker options")
+			AddErrorFlash(w, r, "Failed to save stracker options")
+		} else {
+			AddFlash(w, r, "Stracker options successfully saved!")
+		}
+	}
+
 	sth.viewRenderer.MustLoadTemplate(w, r, "server/stracker-options.html", &strackerConfigurationTemplateVars{
-		Form: form,
+		Form:                form,
+		IsStrackerInstalled: IsStrackerInstalled(),
 	})
 }
