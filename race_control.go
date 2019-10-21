@@ -475,7 +475,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 		case <-ticker.C:
 			totalTime += time.Second
 
-			countdown := completeTime - totalTime
+			countdown := completeTime.Seconds() - totalTime.Seconds()
 
 			if !newDriverConnected {
 				for _, driver := range rc.ConnectedDrivers.Drivers {
@@ -500,7 +500,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 					}
 				}
 			} else {
-				if totalTime >= completeTime {
+				if totalTime.Seconds() >= completeTime.Seconds() {
 					sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
 						fmt.Sprintf("You are clear to leave the pits, go go go!"))
 
@@ -524,7 +524,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 
 					if !firstPositionUpdate {
 						sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
-							fmt.Sprintf("Hi! You are mid way through a driver swap, please wait %d seconds", countdown))
+							fmt.Sprintf("Hi! You are mid way through a driver swap, please wait %f seconds", countdown))
 
 						if err == nil {
 							err := rc.process.SendUDPMessage(sendChat)
@@ -542,9 +542,9 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 					}
 
 					// if driver has moved
-					if position != currentDriver.LastPos {
+					if rc.positionHasChanged(position, currentDriver.LastPos) {
 						// if the time is within the disqualify window
-						if countdown >= (time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapDisqualifyTime)) {
+						if countdown >= (time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapDisqualifyTime)).Seconds() {
 							udp.NewKickUser(uint8(currentDriver.CarInfo.CarID))
 
 							logrus.Infof("Driver: %d has been kicked for leaving the pits %d seconds early during a driver swap", currentDriver.CarInfo.CarID, countdown)
@@ -556,7 +556,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 						}
 
 						// if the time is within the penalty window
-						if countdown >= (time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapPenaltyTime)) {
+						if countdown >= (time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapPenaltyTime)).Seconds() {
 							udp.NewKickUser(uint8(currentDriver.CarInfo.CarID))
 
 							logrus.Infof("Driver: %d has been given a %d second penalty for leaving the pits %d seconds early during a driver swap", currentDriver.CarInfo.CarID, countdown, countdown)
@@ -570,9 +570,9 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 					}
 
 					// send countdown messages
-					if countdown <= (time.Second * 10) {
+					if countdown <= (time.Second * 10).Seconds() {
 						sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
-							fmt.Sprintf("Free to leave pits in %d seconds", countdown))
+							fmt.Sprintf("Free to leave pits in %f seconds", countdown))
 
 						if err == nil {
 							err := rc.process.SendUDPMessage(sendChat)
@@ -588,6 +588,12 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 			}
 		}
 	}
+}
+
+func (rc *RaceControl) positionHasChanged(initialPosition, currentPosition udp.Vec) bool {
+	 return math.Abs(float64(initialPosition.X - currentPosition.X)) >= 5.0 ||
+		math.Abs(float64(initialPosition.Y - currentPosition.Y)) >= 5.0 ||
+		math.Abs(float64(initialPosition.Z - currentPosition.Z)) >= 5.0
 }
 
 // findConnectedDriverByCarID looks for a driver in ConnectedDrivers by their CarID. This is the only place CarID
