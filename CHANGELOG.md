@@ -18,6 +18,8 @@ Fixes:
 * Skins with a # in their name no longer break the car details page.
 * Fixes an issue where the data file for some newer Assetto Corsa cars could not be read.
 * You can now assign negative points penalties in Championships (so you can add points to people in the Standings if you want!)
+* Championship entrant/standings tables can now overflow and scroll if they get really long.
+* Improved fastest lap sorting in Championships.
 
 ---
 
