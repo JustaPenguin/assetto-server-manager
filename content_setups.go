@@ -44,6 +44,11 @@ func ListAllSetups() (CarSetups, error) {
 			return nil
 		}
 
+		// corner case of stray ini files winding up in the top level of the folder
+		if filepath.ToSlash(filepath.Dir(path)) == filepath.ToSlash(setupDirectory) {
+			return nil
+		}
+
 		// read the setup file to get the car name
 		name, err := getCarNameFromSetup(path)
 
