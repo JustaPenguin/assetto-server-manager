@@ -12,8 +12,10 @@
     </p>
 
     {{ if .IsStrackerInstalled }}
-        <p>These configuration options are applied globally - they are applied to each race setup started by Server
-            Manager.</p>
+        <p>
+            These configuration options are applied globally - they are applied to the stracker configuration file
+            whenever a race setup is started by Server Manager.
+        </p>
 
         <form method="post" action="/stracker/options">
             {{ range $k, $v := .Form.Fields }}
@@ -31,6 +33,7 @@
             <li><a href="https://www.racedepartment.com/downloads/stracker.3510/">Download stracker</a></li>
             <li>Extract the stracker zip into a folder called "stracker" (case sensitive) in your Assetto Corsa Server folder</li>
             <li>If you are on Linux, extract the <code>stracker_linux_x86.tgz</code> folder. (e.g. <code>tar xfvz stracker_linux_x86.tgz</code>)</li>
+            <li>Make sure that you have set UDP Plugin Address and UDP Plugin Local Port in <a href="/server-options">Server Options</a></li>
             <li>Refresh this page!</li>
         </ol>
     {{ end }}
