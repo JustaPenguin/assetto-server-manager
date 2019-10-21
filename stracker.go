@@ -453,7 +453,6 @@ func (sth *StrackerHandler) options(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// save the config
 		err = sth.store.UpsertStrackerOptions(strackerOptions)
 
 		if err != nil {

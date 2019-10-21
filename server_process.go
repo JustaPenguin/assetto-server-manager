@@ -104,7 +104,6 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 
 	as.serverConfig = cfg
 	as.entryList = entryList
-	// @TODO what should stracker do when these are empty?
 	as.forwardingAddress = forwardingAddress
 	as.forwardListenPort = forwardListenPort
 	as.event = event
