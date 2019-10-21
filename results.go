@@ -562,7 +562,15 @@ func (s *SessionResults) FastestLap() *SessionLap {
 	copy(laps, s.Laps)
 
 	sort.Slice(laps, func(i, j int) bool {
-		return laps[i].Cuts == 0 && laps[i].LapTime < laps[j].LapTime
+		if laps[i].Cuts != 0 {
+			return false
+		}
+
+		if laps[j].Cuts != 0 {
+			return true
+		}
+
+		return laps[i].LapTime < laps[j].LapTime
 	})
 
 	return laps[0]
@@ -586,7 +594,15 @@ func (s *SessionResults) FastestLapInClass(classID uuid.UUID) *SessionLap {
 	}
 
 	sort.Slice(laps, func(i, j int) bool {
-		return laps[i].Cuts == 0 && laps[i].LapTime < laps[j].LapTime
+		if laps[i].Cuts != 0 {
+			return false
+		}
+
+		if laps[j].Cuts != 0 {
+			return true
+		}
+
+		return laps[i].LapTime < laps[j].LapTime
 	})
 
 	return laps[0]
