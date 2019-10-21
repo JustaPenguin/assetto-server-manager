@@ -1,3 +1,14 @@
+v1.5.1
+------
+
+Added:
+
+* STracker integration! Check out the STracker Options page to get started.
+
+Fixes:
+
+* Fixed a couple of issues with plugins running with the Assetto Process.
+
 v1.5.0
 ------
 

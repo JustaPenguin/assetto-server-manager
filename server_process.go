@@ -153,7 +153,7 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 		}()
 	}
 
-	if strackerOptions, err := as.store.LoadStrackerOptions(); err == nil && strackerOptions.EnableStracker {
+	if strackerOptions, err := as.store.LoadStrackerOptions(); err == nil && strackerOptions.EnableStracker && IsStrackerInstalled() {
 		if as.forwardListenPort >= 0 && as.forwardingAddress != "" || strings.Contains(as.forwardingAddress, ":") {
 			strackerOptions.ACPlugin.SendPort = as.forwardListenPort
 			strackerOptions.ACPlugin.ReceivePort = formValueAsInt(strings.Split(as.forwardingAddress, ":")[1])

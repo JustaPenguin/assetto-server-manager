@@ -211,7 +211,7 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		CSSDotSmoothing:   udp.RealtimePosIntervalMs,
 		CMJoinLink:        linkString,
 		UseMPH:            serverOpts.UseMPH == 1,
-		IsStrackerEnabled: strackerOptions.EnableStracker,
+		IsStrackerEnabled: IsStrackerInstalled() && strackerOptions.EnableStracker,
 	})
 }
 
