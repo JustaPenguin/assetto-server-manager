@@ -120,6 +120,13 @@ func (f Form) buildOpts(val reflect.Value, t reflect.Type, parentName string) []
 		typeField := t.Field(i)
 		valField := val.Field(i)
 
+		formShow := typeField.Tag.Get(formShowTagName)
+
+		// check to see if we should be showing this tag
+		if formShow == "-" || (formShow != "open" && f.visibility != "" && formShow != f.visibility) {
+			continue
+		}
+
 		switch valField.Kind() {
 		case reflect.Struct:
 			opts = append(opts, f.buildOpts(valField, typeField.Type, fmt.Sprintf("%s%s.", parentName, typeField.Name))...)
@@ -138,12 +145,6 @@ func (f Form) buildOpts(val reflect.Value, t reflect.Type, parentName string) []
 			}
 
 		default:
-			formShow := typeField.Tag.Get(formShowTagName)
-
-			// check to see if we should be showing this tag
-			if formShow == "-" || (formShow != "open" && f.visibility != "" && formShow != f.visibility) {
-				continue
-			}
 
 			// formType can be e.g. dropdown
 			formType := typeField.Tag.Get(formTypeTagName)
@@ -271,7 +272,7 @@ func (f FormOption) renderCheckbox() template.HTML {
 				</div>
 			</div>
 		{{ else }}
-			<input type="hidden" id="{{ .Key }}" name="{{ .Key }}" {{ if eq .Value 1 }}value="1"{{ else }}value="0"{{ end }}><br>
+			<input type="hidden" id="{{ .Key }}" name="{{ .Key }}" {{ if eq .Value 1 }}value="1"{{ else }}value="0"{{ end }}>
 		{{ end }}
 	`
 
@@ -370,6 +371,10 @@ func (f FormOption) renderNumberInput() template.HTML {
 type FormHeading string
 
 func (f FormOption) renderHeading() template.HTML {
+	if f.Hidden {
+		return ""
+	}
+
 	const headingTemplate = `<hr class="mt-5"><h3 class="mt-4 mb-4">{{ .Name }}</h3>`
 
 	tmpl, err := f.render(headingTemplate)

@@ -155,21 +155,27 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 	}
 
 	if strackerOptions, err := as.store.LoadStrackerOptions(); err == nil && strackerOptions.EnableStracker {
-		strackerOptions.ACPlugin.SendPort = as.forwardListenPort
-		strackerOptions.ACPlugin.ReceivePort = formValueAsInt(strings.Split(as.forwardingAddress, ":")[1]) // @TODO there's a better way of doing this
-		strackerOptions.ACPlugin.ProxyPluginLocalPort = -1
-		strackerOptions.ACPlugin.ProxyPluginPort = -1
+		if as.forwardListenPort >= 0 && as.forwardingAddress != "" || strings.Contains(as.forwardingAddress, ":") {
+			strackerOptions.ACPlugin.SendPort = as.forwardListenPort
+			strackerOptions.ACPlugin.ReceivePort = formValueAsInt(strings.Split(as.forwardingAddress, ":")[1])
+			strackerOptions.ACPlugin.ProxyPluginLocalPort = -1
+			strackerOptions.ACPlugin.ProxyPluginPort = -1
 
-		err = strackerOptions.Write()
+			err = strackerOptions.Write()
 
-		if err != nil {
-			return err
-		}
+			if err != nil {
+				return err
+			}
 
-		err = as.startChildProcess(wd, fmt.Sprintf("%s --stracker_ini %s", StrackerExecutablePath(), filepath.Join(StrackerFolderPath(), strackerConfigIniFilename)))
+			err = as.startChildProcess(wd, fmt.Sprintf("%s --stracker_ini %s", StrackerExecutablePath(), filepath.Join(StrackerFolderPath(), strackerConfigIniFilename)))
 
-		if err != nil {
-			return err
+			if err != nil {
+				return err
+			}
+
+			logrus.Infof("Started stracker. Listening for ptracker connections on port %d", strackerOptions.InstanceConfiguration.ListeningPort)
+		} else {
+			logrus.WithError(ErrStrackerConfigurationRequiresUDPPluginConfiguration).Error("Please check your server configuration")
 		}
 	}
 

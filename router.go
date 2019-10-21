@@ -85,6 +85,8 @@ func Router(
 		r.Get("/", serverAdministrationHandler.home)
 		r.Get("/changelog", serverAdministrationHandler.changelog)
 
+		r.Mount("/stracker/", http.HandlerFunc(strackerHandler.proxy))
+
 		// content
 		r.Get("/cars", carsHandler.list)
 		r.Get("/cars/search.json", carsHandler.searchJSON)
