@@ -28,7 +28,6 @@
             {{ with $.ValidCarIDs }}
                 {{ range $j, $selectedCar := $.ValidCarIDs }}
                     {{ if eq $selectedCar $car.Name }}
-                        {{ $car.Name }}
                         {{ $selected = true }}
                     {{ end }}
                 {{ end }}
