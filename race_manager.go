@@ -54,7 +54,7 @@ func NewRaceManager(
 		store:               store,
 		process:             process,
 		carManager:          carManager,
-		trackManager:         trackManager,
+		trackManager:        trackManager,
 		notificationManager: notificationManager,
 	}
 }

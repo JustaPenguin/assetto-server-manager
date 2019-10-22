@@ -213,7 +213,7 @@ type CarManager struct {
 	carIndex bleve.Index
 
 	searchIndexRebuildMutex sync.Mutex
-	trackManager *TrackManager
+	trackManager            *TrackManager
 }
 
 func NewCarManager(trackManager *TrackManager) *CarManager {

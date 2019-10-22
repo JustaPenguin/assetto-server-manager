@@ -90,8 +90,8 @@ type CMCar struct {
 }
 
 type ContentManagerWrapper struct {
-	store      Store
-	carManager *CarManager
+	store        Store
+	carManager   *CarManager
 	trackManager *TrackManager
 
 	sessionInfo udp.SessionInfo
@@ -108,8 +108,8 @@ type ContentManagerWrapper struct {
 
 func NewContentManagerWrapper(store Store, carManager *CarManager, trackManager *TrackManager) *ContentManagerWrapper {
 	return &ContentManagerWrapper{
-		store:      store,
-		carManager: carManager,
+		store:        store,
+		carManager:   carManager,
 		trackManager: trackManager,
 	}
 }

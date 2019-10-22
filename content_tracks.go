@@ -170,7 +170,7 @@ type TracksHandler struct {
 
 func NewTracksHandler(baseHandler *BaseHandler, trackManager *TrackManager) *TracksHandler {
 	return &TracksHandler{
-		BaseHandler: baseHandler,
+		BaseHandler:  baseHandler,
 		trackManager: trackManager,
 	}
 }
@@ -265,7 +265,6 @@ func (th *TracksHandler) saveMetadata(w http.ResponseWriter, r *http.Request) {
 }
 
 type TrackManager struct {
-
 }
 
 func NewTrackManager() *TrackManager {
@@ -342,7 +341,7 @@ func (tm *TrackManager) ResultsForLayout(trackName, layout string) ([]SessionRes
 	return out, nil
 }
 
-func(tm *TrackManager) ListTracks() ([]Track, error) {
+func (tm *TrackManager) ListTracks() ([]Track, error) {
 	tracksPath := filepath.Join(ServerInstallPath, "content", "tracks")
 
 	trackFiles, err := ioutil.ReadDir(tracksPath)
@@ -370,7 +369,7 @@ func(tm *TrackManager) ListTracks() ([]Track, error) {
 	return tracks, nil
 }
 
-func(tm *TrackManager) GetTrackFromName(name string) (*Track, error) {
+func (tm *TrackManager) GetTrackFromName(name string) (*Track, error) {
 	tracksPath := filepath.Join(ServerInstallPath, "content", "tracks")
 	var layouts []string
 
@@ -406,7 +405,7 @@ func(tm *TrackManager) GetTrackFromName(name string) (*Track, error) {
 		}
 	}
 
-	return &Track{Name:name, Layouts:layouts}, nil
+	return &Track{Name: name, Layouts: layouts}, nil
 }
 
 func (tm *TrackManager) UpdateTrackMetadata(name string, r *http.Request) error {
