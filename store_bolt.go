@@ -826,15 +826,9 @@ func (rs *BoltStore) UpsertStrackerOptions(sto *StrackerConfiguration) error {
 
 func (rs *BoltStore) LoadStrackerOptions() (*StrackerConfiguration, error) {
 	// start with defaults
-	serverConfig, err := rs.LoadServerOptions()
+	sto := DefaultStrackerIni()
 
-	if err != nil {
-		return nil, err
-	}
-
-	sto := DefaultStrackerIni(serverConfig)
-
-	err = rs.db.View(func(tx *bbolt.Tx) error {
+	err := rs.db.View(func(tx *bbolt.Tx) error {
 		bkt, err := rs.serverOptionsBucket(tx)
 
 		if err != nil {

@@ -58,7 +58,7 @@ func IsStrackerInstalled() bool {
 	}
 }
 
-func DefaultStrackerIni(serverOptions *GlobalServerConfig) *StrackerConfiguration {
+func DefaultStrackerIni() *StrackerConfiguration {
 	return &StrackerConfiguration{
 		InstanceConfiguration: StrackerInstanceConfiguration{
 			ACServerAddress:              "127.0.0.1",
@@ -74,7 +74,7 @@ func DefaultStrackerIni(serverOptions *GlobalServerConfig) *StrackerConfiguratio
 			LowerPriority:                true,
 			PerformChecksumComparisons:   false,
 			PtrackerConnectionMode:       "any",
-			ServerName:                   serverOptions.Name,
+			ServerName:                   "acserver",
 			TeeToStdout:                  true,
 		},
 		SwearFilter: StrackerSwearFilter{

@@ -477,13 +477,7 @@ func (rs *JSONStore) LoadStrackerOptions() (*StrackerConfiguration, error) {
 	err := rs.decodeFile(rs.base, strackerOptionsFile, &out)
 
 	if os.IsNotExist(err) {
-		serverConfig, err := rs.LoadServerOptions()
-
-		if err != nil {
-			return nil, err
-		}
-
-		strackerConfig := DefaultStrackerIni(serverConfig)
+		strackerConfig := DefaultStrackerIni()
 
 		return strackerConfig, rs.UpsertStrackerOptions(strackerConfig)
 	} else if err != nil {
