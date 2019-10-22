@@ -114,7 +114,7 @@ func DefaultStrackerIni() *StrackerConfiguration {
 			AdminUsername:            "admin",
 			AdminPassword:            "",
 			TemperatureUnit:          "degc",
-			VelocityUnit:             "kmh", // @TODO server options
+			VelocityUnit:             "kmh",
 			AuthBanAnonymisedPlayers: false,
 			AuthLogFile:              "",
 			Banner:                   "",
