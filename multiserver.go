@@ -66,14 +66,16 @@ func (msm *MultiServerManager) NewServer(serverConfig GlobalServerConfig) *Serve
 	server.ChampionshipManager = NewChampionshipManager(server.RaceManager)
 	server.RaceWeekendManager = NewRaceWeekendManager(server.RaceManager, server.ChampionshipManager, msm.store, server.Process, msm.notificationManager)
 
-	server.RaceControl = NewRaceControl(rch, filesystemTrackData{}, server.Process)
+	raceControlHub := newRaceControlHub()
+
+	server.RaceControl = NewRaceControl(raceControlHub, filesystemTrackData{}, server.Process)
 
 	server.AccountHandler = msm.accountHandler
 	server.QuickRaceHandler = NewQuickRaceHandler(msm.baseHandler, server.RaceManager)
 	server.CustomRaceHandler = NewCustomRaceHandler(msm.baseHandler, server.RaceManager)
 	server.ChampionshipsHandler = NewChampionshipsHandler(msm.baseHandler, server.ChampionshipManager)
 	server.RaceWeekendHandler = NewRaceWeekendHandler(msm.baseHandler, server.RaceWeekendManager)
-	server.RaceControlHandler = NewRaceControlHandler(msm.baseHandler, msm.store, server.RaceManager, server.RaceControl, rch, server.Process)
+	server.RaceControlHandler = NewRaceControlHandler(msm.baseHandler, msm.store, server.RaceManager, server.RaceControl, raceControlHub, server.Process)
 	server.ServerAdministrationHandler = NewServerAdministrationHandler(msm.baseHandler, msm.store, server.RaceManager, server.ChampionshipManager, server.RaceWeekendManager, server.Process)
 	server.PenaltiesHandler = NewPenaltiesHandler(msm.baseHandler, server.ChampionshipManager, server.RaceWeekendManager)
 
@@ -86,7 +88,7 @@ func (s *Server) UDPCallback(message udp.Message) {
 	spew.Dump(message)
 
 	if !config.Server.PerformanceMode {
-		//s.RaceControl.UDPCallback(message)
+		s.RaceControl.UDPCallback(message)
 	}
 	s.ChampionshipManager.ChampionshipEventCallback(message)
 	s.RaceWeekendManager.UDPCallback(message)
