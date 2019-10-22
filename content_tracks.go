@@ -21,6 +21,8 @@ import (
 type Track struct {
 	Name    string
 	Layouts []string
+
+	MetaData TrackMetaData
 }
 
 func (t Track) GetImagePath() string {
@@ -31,6 +33,32 @@ func (t Track) GetImagePath() string {
 	}
 
 	return filepath.Join("content", "tracks", t.Name, "ui", t.Layouts[0], "preview.png")
+}
+
+func (t *Track) LoadMetaData() error {
+	metaDataFile := filepath.Join(ServerInstallPath, "content", "tracks", t.Name, "ui")
+
+	metaDataFile = filepath.Join(metaDataFile, trackMetaDataName)
+
+	f, err := os.Open(metaDataFile)
+
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	var trackMetaData TrackMetaData
+
+	err = json.NewDecoder(utfbom.SkipOnly(f)).Decode(&trackMetaData)
+
+	if err != nil {
+		return err
+	}
+
+	t.MetaData = trackMetaData
+
+	return nil
 }
 
 func (t Track) PrettyName() string {
@@ -67,6 +95,7 @@ func trackLayoutURL(track, layout string) string {
 }
 
 const trackInfoJSONName = "ui_track.json"
+const trackMetaDataName = "meta_data.json"
 
 type TrackInfo struct {
 	Name        string      `json:"name"`
@@ -79,6 +108,34 @@ type TrackInfo struct {
 	Run         string      `json:"run"`
 	Tags        []string    `json:"tags"`
 	Width       string      `json:"width"`
+}
+
+type TrackMetaData struct {
+	DownloadURL string `json:"downloadURL"`
+	Notes       string `json:"notes"`
+}
+
+func (tmd *TrackMetaData) Save(name string) error {
+	uiDirectory := filepath.Join(ServerInstallPath, "content", "tracks", name, "ui")
+
+	err := os.MkdirAll(uiDirectory, 0755)
+
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create(filepath.Join(uiDirectory, trackMetaDataName))
+
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "   ")
+
+	return enc.Encode(tmd)
 }
 
 func GetTrackInfo(name, layout string) (*TrackInfo, error) {
@@ -175,7 +232,7 @@ func (th *TracksHandler) delete(w http.ResponseWriter, r *http.Request) {
 		AddErrorFlash(w, r, "Sorry, track could not be deleted.")
 	}
 
-	http.Redirect(w, r, r.Referer(), http.StatusFound)
+	http.Redirect(w, r, "/tracks", http.StatusFound)
 }
 
 func (th *TracksHandler) view(w http.ResponseWriter, r *http.Request) {
@@ -194,6 +251,19 @@ func (th *TracksHandler) view(w http.ResponseWriter, r *http.Request) {
 	th.viewRenderer.MustLoadTemplate(w, r, "content/track-details.html", templateParams)
 }
 
+func (th *TracksHandler) saveMetadata(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+
+	if err := th.trackManager.UpdateTrackMetadata(name, r); err != nil {
+		logrus.WithError(err).Errorf("Could not update car metadata for %s", name)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	AddFlash(w, r, "Track metadata updated successfully!")
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
 type TrackManager struct {
 
 }
@@ -207,11 +277,12 @@ type trackDetailsTemplateVars struct {
 
 	Track     *Track
 	TrackInfo map[string]*TrackInfo
-	Results   []SessionResults
+	Results   map[string][]SessionResults
 }
 
 func (tm *TrackManager) LoadTrackDetailsForTemplate(trackName string) (*trackDetailsTemplateVars, error) {
 	trackInfoMap := make(map[string]*TrackInfo)
+	resultsMap := make(map[string][]SessionResults)
 
 	track, err := tm.GetTrackFromName(trackName)
 
@@ -219,32 +290,41 @@ func (tm *TrackManager) LoadTrackDetailsForTemplate(trackName string) (*trackDet
 		return nil, err
 	}
 
+	err = track.LoadMetaData()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't load meta data for track: %s", trackName)
+	}
+
 	for _, layout := range track.Layouts {
 		trackInfo, err := GetTrackInfo(track.Name, layout)
 
 		if err != nil {
-			logrus.WithError(err).Errorf("Couldn't load layout: %s for track: %s", layout, track.Name)
+			logrus.WithError(err).Errorf("Couldn't load track info for layout: %s, track: %s", layout, track.Name)
 			continue
 		}
 
 		trackInfoMap[layout] = trackInfo
-	}
 
-	results, err := tm.ResultsForTrack(track.Name)
+		results, err := tm.ResultsForLayout(track.Name, layout)
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			logrus.WithError(err).Errorf("Couldn't load results for layout: %s, track: %s", layout, track.Name)
+			continue
+		}
+
+		resultsMap[layout] = results
 	}
 
 	return &trackDetailsTemplateVars{
 		BaseTemplateVars: BaseTemplateVars{},
 		Track:            track,
 		TrackInfo:        trackInfoMap,
-		Results:          results,
+		Results:          resultsMap,
 	}, nil
 }
 
-func (tm *TrackManager) ResultsForTrack(trackName string) ([]SessionResults, error) {
+func (tm *TrackManager) ResultsForLayout(trackName, layout string) ([]SessionResults, error) {
 	results, err := ListAllResults()
 
 	if err != nil {
@@ -254,7 +334,7 @@ func (tm *TrackManager) ResultsForTrack(trackName string) ([]SessionResults, err
 	var out []SessionResults
 
 	for _, result := range results {
-		if result.TrackName == trackName {
+		if result.TrackName == trackName && result.TrackConfig == layout {
 			out = append(out, result)
 		}
 	}
@@ -327,6 +407,19 @@ func(tm *TrackManager) GetTrackFromName(name string) (*Track, error) {
 	}
 
 	return &Track{Name:name, Layouts:layouts}, nil
+}
+
+func (tm *TrackManager) UpdateTrackMetadata(name string, r *http.Request) error {
+	track, err := tm.GetTrackFromName(name)
+
+	if err != nil {
+		return err
+	}
+
+	track.MetaData.Notes = r.FormValue("Notes")
+	track.MetaData.DownloadURL = r.FormValue("DownloadURL")
+
+	return track.MetaData.Save(name)
 }
 
 type TrackDataGateway interface {

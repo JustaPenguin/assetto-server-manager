@@ -9,6 +9,7 @@ export class TrackDetail {
         $(".track-image").on("click", TrackDetail.onTrackLayoutClick);
 
         TrackDetail.fixLayoutImageHeights();
+        TrackDetail.initSummerNote();
         $(window).on("resize", TrackDetail.fixLayoutImageHeights);
     }
 
@@ -25,5 +26,20 @@ export class TrackDetail {
 
     private static fixLayoutImageHeights() {
         $(".track-layouts").height($("#hero-skin").height()!);
+    }
+
+    private static initSummerNote() {
+        let $summerNote = $("#summernote");
+        let $trackNotes = $("#TrackNotes");
+
+        if ($trackNotes.length > 0) {
+            $summerNote.summernote('code', $trackNotes.html());
+        }
+
+        $summerNote.summernote({
+            placeholder: 'You can use this text input to attach notes to each track!',
+            tabsize: 2,
+            height: 200,
+        });
     }
 }

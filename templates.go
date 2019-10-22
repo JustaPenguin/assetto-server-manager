@@ -313,6 +313,16 @@ func carList(cars interface{}) string {
 		split = strings.Split(cars, ";")
 	case []string:
 		split = cars
+	case []*SessionCar:
+		carMap := make(map[string]bool)
+
+		for _, entrant := range cars {
+			carMap[entrant.Model] = true
+		}
+
+		for car := range carMap {
+			split = append(split, car)
+		}
 	case EntryList:
 		carMap := make(map[string]bool)
 

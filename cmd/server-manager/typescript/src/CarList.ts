@@ -5,7 +5,7 @@ export class CarList {
         $(".delete-car").on("click", function(e: ClickEvent) {
             e.stopPropagation();
 
-            return confirm("Are you sure that you want to permanently delete this car?");
+            return confirm("Are you sure that you want to permanently delete this content?");
         });
 
         $(".card-car").on("click", function() {
