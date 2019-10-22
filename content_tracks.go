@@ -84,7 +84,7 @@ func trackLayoutURL(track, layout string) string {
 		layoutPath = filepath.Join("content", "tracks", track, "ui", layout, "preview.png")
 	}
 
-	// look to see if the car preview image exists
+	// look to see if the track preview image exists
 	_, err := os.Stat(filepath.Join(ServerInstallPath, layoutPath))
 
 	if err != nil {
@@ -255,7 +255,7 @@ func (th *TracksHandler) saveMetadata(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 
 	if err := th.trackManager.UpdateTrackMetadata(name, r); err != nil {
-		logrus.WithError(err).Errorf("Could not update car metadata for %s", name)
+		logrus.WithError(err).Errorf("Could not update track metadata for %s", name)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
