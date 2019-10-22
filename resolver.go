@@ -107,7 +107,7 @@ func (r *Resolver) resolveContentManagerWrapper() *ContentManagerWrapper {
 		return r.contentManagerWrapper
 	}
 
-	r.contentManagerWrapper = NewContentManagerWrapper(r.ResolveStore(), r.resolveCarManager())
+	r.contentManagerWrapper = NewContentManagerWrapper(r.ResolveStore(), r.resolveCarManager(), r.resolveTrackManager())
 
 	return r.contentManagerWrapper
 }

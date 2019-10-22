@@ -11,6 +11,7 @@ Added:
 * Added "Register with Steam" to Championships with a Sign Up Form.
 * Added "Sign in with Steam" to the Update Account Details page.
 * Added collision maps to result pages so you look back on your numerous incidents with clarity. On the event tab you can control which collisions are shown on the map.
+* Added track info pages that work much the same as car info pages.
 
 Fixes:
 
