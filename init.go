@@ -35,31 +35,34 @@ func InitWithResolver(resolver *Resolver) error {
 	signal.Notify(c, os.Interrupt)
 
 	notificationManager := resolver.resolveNotificationManager()
-	multiServerManager := resolver.resolveMultiServerManager()
 
 	go func() {
 		for range c {
 			// ^C, handle it
-			for _, server := range multiServerManager.Servers {
-				process := server.Process
+			servers, err := store.ListServers()
 
-				if process.IsRunning() {
-					if process.Event().IsChampionship() {
-						if err := server.ChampionshipManager.StopActiveEvent(); err != nil {
-							logrus.WithError(err).Errorf("Error stopping Championship event")
-						}
-					} else if process.Event().IsRaceWeekend() {
-						if err := server.RaceWeekendManager.StopActiveSession(); err != nil {
-							logrus.WithError(err).Errorf("Error stopping Race Weekend session")
-						}
-					} else {
-						if err := process.Stop(); err != nil {
-							logrus.WithError(err).Errorf("Could not stop server")
-						}
-					}
+			if err == nil {
+				for _, server := range servers {
+					process := server.Process
 
-					if p, ok := process.(*AssettoServerProcess); ok {
-						p.stopChildProcesses()
+					if process.IsRunning() {
+						if process.Event().IsChampionship() {
+							if err := server.ChampionshipManager.StopActiveEvent(); err != nil {
+								logrus.WithError(err).Errorf("Error stopping Championship event")
+							}
+						} else if process.Event().IsRaceWeekend() {
+							if err := server.RaceWeekendManager.StopActiveSession(); err != nil {
+								logrus.WithError(err).Errorf("Error stopping Race Weekend session")
+							}
+						} else {
+							if err := process.Stop(); err != nil {
+								logrus.WithError(err).Errorf("Could not stop server")
+							}
+						}
+
+						if p, ok := process.(*AssettoServerProcess); ok {
+							p.stopChildProcesses()
+						}
 					}
 				}
 			}

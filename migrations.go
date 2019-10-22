@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"time"
 
 	"github.com/cj123/assetto-server-manager/fixtures/race-weekend-examples"
 
@@ -68,6 +69,7 @@ var (
 		addThemeChoiceToAccounts,
 		addRaceWeekendExamples,
 		addServerNameTemplate,
+		createFirstServer,
 	}
 )
 
@@ -444,4 +446,21 @@ func addServerNameTemplate(s Store) error {
 	opts.ServerNameTemplate = defaultServerNameTemplate
 
 	return s.UpsertServerOptions(opts)
+}
+
+func createFirstServer(s Store) error {
+	logrus.Infof("Running migration: Create First Server (Multi-server)")
+	opts, err := s.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	server := &Server{
+		ID: uuid.New(),
+		Created: time.Now(),
+		ServerConfig: *opts,
+	}
+
+	return s.UpsertServer(server)
 }

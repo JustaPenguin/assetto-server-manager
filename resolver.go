@@ -225,10 +225,6 @@ func (r *Resolver) resolveNotificationManager() *NotificationManager {
 }
 
 func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
-	defaultConfig := ConfigIniDefault()
-
-	_ = r.resolveMultiServerManager().NewServer(defaultConfig.GlobalServerConfig)
-
 	return Router(
 		fs,
 		r.resolveMultiServerManager(),

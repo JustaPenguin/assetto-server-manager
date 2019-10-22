@@ -24,6 +24,7 @@ const (
 	championshipsDir = "championships"
 	raceWeekendsDir  = "race_weekends"
 	customRacesDir   = "custom_races"
+	serversDir       = "servers"
 	entrantsFile     = "entrants.json"
 )
 
@@ -464,4 +465,54 @@ func (rs *JSONStore) DeleteRaceWeekend(id string) error {
 	rw.Deleted = time.Now()
 
 	return rs.UpsertRaceWeekend(rw)
+}
+
+func (rs *JSONStore) ListServers() ([]*Server, error) {
+	files, err := rs.listFiles(filepath.Join(rs.shared, serversDir))
+
+	if err != nil {
+		return nil, err
+	}
+
+	var servers []*Server
+
+	for _, file := range files {
+		server, err := rs.FindServerByID(file)
+
+		if err != nil || !server.Deleted.IsZero() {
+			continue
+		}
+
+		servers = append(servers, server)
+	}
+
+	return servers, nil
+}
+
+func (rs *JSONStore) FindServerByID(uuid string) (*Server, error) {
+	var server *Server
+
+	err := rs.decodeFile(rs.shared, filepath.Join(serversDir, uuid+".json"), &server)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return server, nil
+}
+
+func (rs *JSONStore) DeleteServer(uuid string) error {
+	server, err := rs.FindServerByID(uuid)
+
+	if err != nil {
+		return err
+	}
+
+	server.Deleted = time.Now()
+
+	return rs.UpsertServer(server)
+}
+
+func (rs *JSONStore) UpsertServer(server *Server) error {
+	return rs.encodeFile(rs.shared, filepath.Join(serversDir, server.ID.String()+".json"), server)
 }

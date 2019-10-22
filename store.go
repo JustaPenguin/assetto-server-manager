@@ -12,9 +12,11 @@ type Store interface {
 	ListEntrants() ([]*Entrant, error)
 	DeleteEntrant(id string) error
 
-	// Server Options
-	UpsertServerOptions(so *GlobalServerConfig) error
-	LoadServerOptions() (*GlobalServerConfig, error)
+	// Servers
+	ListServers() ([]*Server, error)
+	FindServerByID(uuid string) (*Server, error)
+	DeleteServer(uuid string) error
+	UpsertServer(server *Server) error
 
 	// Championships
 	UpsertChampionship(c *Championship) error
@@ -46,4 +48,10 @@ type Store interface {
 	UpsertRaceWeekend(rw *RaceWeekend) error
 	LoadRaceWeekend(id string) (*RaceWeekend, error)
 	DeleteRaceWeekend(id string) error
+
+	// Deprecated: Use the XXXServer methods below.
+	//UpsertServerOptions(so *GlobalServerConfig) error
+
+	// Deprecated: Use the XXXServer methods below.
+	//LoadServerOptions() (*GlobalServerConfig, error)
 }

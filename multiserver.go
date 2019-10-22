@@ -2,10 +2,11 @@ package servermanager
 
 import (
 	"fmt"
-	"github.com/cj123/assetto-server-manager/pkg/udp"
-	"github.com/davecgh/go-spew/spew"
+	"github.com/sirupsen/logrus"
 	"net/http"
+	"time"
 
+	"github.com/cj123/assetto-server-manager/pkg/udp"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 )
@@ -16,8 +17,6 @@ type MultiServerManager struct {
 	notificationManager *NotificationManager
 	baseHandler         *BaseHandler
 	accountHandler      *AccountHandler
-
-	Servers []*Server
 }
 
 func NewMultiServerManager(store Store, carManager *CarManager, notificationManager *NotificationManager, baseHandler *BaseHandler, accountHandler *AccountHandler) *MultiServerManager {
@@ -31,33 +30,36 @@ func NewMultiServerManager(store Store, carManager *CarManager, notificationMana
 }
 
 type Server struct {
-	ID uuid.UUID
-
+	ID           uuid.UUID
+	Created      time.Time
+	Updated      time.Time
+	Deleted      time.Time
 	ServerConfig GlobalServerConfig
 
-	Process ServerProcess
+	Process ServerProcess `json:"-"`
 
 	// Managers
-	RaceManager           *RaceManager
-	ChampionshipManager   *ChampionshipManager
-	RaceWeekendManager    *RaceWeekendManager
-	RaceControl           *RaceControl
-	ContentManagerWrapper *ContentManagerWrapper
+	RaceManager           *RaceManager           `json:"-"`
+	ChampionshipManager   *ChampionshipManager   `json:"-"`
+	RaceWeekendManager    *RaceWeekendManager    `json:"-"`
+	RaceControl           *RaceControl           `json:"-"`
+	ContentManagerWrapper *ContentManagerWrapper `json:"-"`
 
 	// Handlers
-	QuickRaceHandler            *QuickRaceHandler
-	CustomRaceHandler           *CustomRaceHandler
-	ChampionshipsHandler        *ChampionshipsHandler
-	RaceWeekendHandler          *RaceWeekendHandler
-	RaceControlHandler          *RaceControlHandler
-	AccountHandler              *AccountHandler
-	ServerAdministrationHandler *ServerAdministrationHandler
-	PenaltiesHandler            *PenaltiesHandler
+	QuickRaceHandler            *QuickRaceHandler            `json:"-"`
+	CustomRaceHandler           *CustomRaceHandler           `json:"-"`
+	ChampionshipsHandler        *ChampionshipsHandler        `json:"-"`
+	RaceWeekendHandler          *RaceWeekendHandler          `json:"-"`
+	RaceControlHandler          *RaceControlHandler          `json:"-"`
+	AccountHandler              *AccountHandler              `json:"-"`
+	ServerAdministrationHandler *ServerAdministrationHandler `json:"-"`
+	PenaltiesHandler            *PenaltiesHandler            `json:"-"`
 }
 
-func (msm *MultiServerManager) NewServer(serverConfig GlobalServerConfig) *Server {
+func (msm *MultiServerManager) NewServer(serverConfig GlobalServerConfig) (*Server, error) {
 	server := &Server{}
 	server.ID = uuid.New()
+	server.Created = time.Now()
 	server.ServerConfig = serverConfig
 
 	server.ContentManagerWrapper = NewContentManagerWrapper(msm.store, msm.carManager)
@@ -79,14 +81,14 @@ func (msm *MultiServerManager) NewServer(serverConfig GlobalServerConfig) *Serve
 	server.ServerAdministrationHandler = NewServerAdministrationHandler(msm.baseHandler, msm.store, server.RaceManager, server.ChampionshipManager, server.RaceWeekendManager, server.Process)
 	server.PenaltiesHandler = NewPenaltiesHandler(msm.baseHandler, server.ChampionshipManager, server.RaceWeekendManager)
 
-	msm.Servers = append(msm.Servers, server)
+	if err := msm.store.UpsertServer(server); err != nil {
+		return nil, err
+	}
 
-	return server
+	return server, nil
 }
 
 func (s *Server) UDPCallback(message udp.Message) {
-	spew.Dump(message)
-
 	if !config.Server.PerformanceMode {
 		s.RaceControl.UDPCallback(message)
 	}
@@ -260,12 +262,20 @@ func (s *Server) Router() chi.Router {
 const sessionServerIDKey = "ServerID"
 
 func (msm *MultiServerManager) ServerHandler(w http.ResponseWriter, r *http.Request) {
+	servers, err := msm.store.ListServers()
+
+	if err != nil {
+		logrus.WithError(err).Error("Could not list servers")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
 	sess := getSession(r)
 
 	serverID, ok := sess.Values[sessionServerIDKey]
 
 	if ok {
-		for _, server := range msm.Servers {
+		for _, server := range servers {
 			if server.ID.String() == serverID.(string) {
 				server.Router().ServeHTTP(w, r)
 				return
@@ -273,7 +283,7 @@ func (msm *MultiServerManager) ServerHandler(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	for _, server := range msm.Servers {
+	for _, server := range servers {
 		server.Router().ServeHTTP(w, r)
 		return
 	}

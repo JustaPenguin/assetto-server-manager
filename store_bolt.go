@@ -24,6 +24,7 @@ var (
 	accountsBucketName      = []byte("accounts")
 	frameLinksBucketName    = []byte("frameLinks")
 	raceWeekendsBucketName  = []byte("raceWeekends")
+	serversBucketName  = []byte("servers")
 
 	serverOptionsKey = []byte("serverOptions")
 )
@@ -780,7 +781,7 @@ func (rs *BoltStore) LoadRaceWeekend(id string) (*RaceWeekend, error) {
 		data := b.Get([]byte(id))
 
 		if data == nil {
-			return ErrChampionshipNotFound
+			return ErrRaceWeekendNotFound
 		}
 
 		return rs.decode(data, &raceWeekend)
@@ -803,4 +804,113 @@ func (rs *BoltStore) DeleteRaceWeekend(id string) error {
 	raceWeekend.Deleted = time.Now()
 
 	return rs.UpsertRaceWeekend(raceWeekend)
+}
+
+
+func (rs *BoltStore) serversBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+	if !tx.Writable() {
+		bkt := tx.Bucket(serversBucketName)
+
+		if bkt == nil {
+			return nil, bbolt.ErrBucketNotFound
+		}
+
+		return bkt, nil
+	}
+
+	return tx.CreateBucketIfNotExists(serversBucketName)
+}
+
+func (rs *BoltStore) ListServers() ([]*Server, error) {
+	var servers []*Server
+
+	err := rs.db.View(func(tx *bbolt.Tx) error {
+		b, err := rs.serversBucket(tx)
+
+		if err == bbolt.ErrBucketNotFound {
+			return nil
+		} else if err != nil {
+			return err
+		}
+
+		return b.ForEach(func(k, v []byte) error {
+			var server *Server
+
+			err := rs.decode(v, &server)
+
+			if err != nil {
+				return err
+			}
+
+			if !server.Deleted.IsZero() {
+				return nil
+			}
+
+			servers = append(servers, server)
+
+			return nil
+		})
+	})
+
+	return servers, err
+}
+
+var ErrServerNotFound = errors.New("servermanager: server not found")
+
+func (rs *BoltStore) FindServerByID(uuid string) (*Server, error) {
+	var server *Server
+
+	err := rs.db.View(func(tx *bbolt.Tx) error {
+		b, err := rs.serversBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		data := b.Get([]byte(uuid))
+
+		if data == nil {
+			return ErrServerNotFound
+		}
+
+		return rs.decode(data, &server)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return server, err
+}
+
+func (rs *BoltStore) DeleteServer(uuid string) error {
+	server, err := rs.FindServerByID(uuid)
+
+	if err != nil {
+		return err
+	}
+
+	server.Deleted = time.Now()
+
+	return rs.UpsertServer(server)
+}
+
+func (rs *BoltStore) UpsertServer(server *Server) error {
+	server.Updated = time.Now()
+
+	return rs.db.Update(func(tx *bbolt.Tx) error {
+		b, err := rs.serversBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		data, err := rs.encode(server)
+
+		if err != nil {
+			return err
+		}
+
+		return b.Put([]byte(server.ID.String()), data)
+	})
 }
