@@ -199,6 +199,8 @@ func (tr *Renderer) init() error {
 	funcs["LoggedIn"] = dummyAccessFunc
 	funcs["classColor"] = ChampionshipClassColor
 	funcs["carSkinURL"] = carSkinURL
+	funcs["trackLayoutURL"] = trackLayoutURL
+	funcs["stringArrayToCSV"] = stringArrayToCSV
 	funcs["dict"] = templateDict
 	funcs["asset"] = NewAssetHelper("/", "", "", map[string]string{"cb": BuildVersion}).GetURL
 	funcs["SessionType"] = func(s string) SessionType { return SessionType(s) }
@@ -408,6 +410,10 @@ func prettifyName(s string, acronyms bool) string {
 	}
 
 	return strings.Join(parts, " ")
+}
+
+func stringArrayToCSV(array []string) string {
+	return strings.Join(array, ", ")
 }
 
 func jsonEncode(v interface{}) template.JS {

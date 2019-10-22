@@ -26,6 +26,7 @@ type RaceManager struct {
 	process             ServerProcess
 	store               Store
 	carManager          *CarManager
+	trackManager        *TrackManager
 	notificationManager NotificationDispatcher
 
 	currentRace      *ServerConfig
@@ -46,12 +47,14 @@ func NewRaceManager(
 	store Store,
 	process ServerProcess,
 	carManager *CarManager,
+	trackManager *TrackManager,
 	notificationManager NotificationDispatcher,
 ) *RaceManager {
 	return &RaceManager{
 		store:               store,
 		process:             process,
 		carManager:          carManager,
+		trackManager:         trackManager,
 		notificationManager: notificationManager,
 	}
 }
@@ -736,7 +739,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (*RaceTemplateVars, error)
 		return nil, err
 	}
 
-	tracks, err := ListTracks()
+	tracks, err := rm.trackManager.ListTracks()
 
 	if err != nil {
 		return nil, err

@@ -20,8 +20,8 @@
   }
 }
 
-.car-details {
-  .car-skins {
+.car-details, .track-details {
+  .car-skins, .track-layouts {
     max-height: 518px;
     overflow-y: auto;
 
@@ -29,7 +29,7 @@
       cursor: pointer;
     }
 
-    .car-skin {
+    .car-skin, .track-layout {
       margin-top: 0.5em;
       margin-bottom: 0.5em;
 

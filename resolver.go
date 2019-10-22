@@ -13,6 +13,7 @@ type Resolver struct {
 
 	raceManager           *RaceManager
 	carManager            *CarManager
+	trackManager          *TrackManager
 	championshipManager   *ChampionshipManager
 	accountManager        *AccountManager
 	discordManager        *DiscordManager
@@ -120,6 +121,7 @@ func (r *Resolver) resolveRaceManager() *RaceManager {
 		r.store,
 		r.resolveServerProcess(),
 		r.resolveCarManager(),
+		r.resolveTrackManager(),
 		r.resolveNotificationManager(),
 	)
 
@@ -191,7 +193,7 @@ func (r *Resolver) resolveCarManager() *CarManager {
 		return r.carManager
 	}
 
-	r.carManager = NewCarManager()
+	r.carManager = NewCarManager(r.resolveTrackManager())
 
 	return r.carManager
 }
@@ -228,12 +230,22 @@ func (r *Resolver) resolveChampionshipsHandler() *ChampionshipsHandler {
 	return r.championshipsHandler
 }
 
+func (r *Resolver) resolveTrackManager() *TrackManager {
+	if r.trackManager != nil {
+		return r.trackManager
+	}
+
+	r.trackManager = NewTrackManager()
+
+	return r.trackManager
+}
+
 func (r *Resolver) resolveTracksHandler() *TracksHandler {
 	if r.tracksHandler != nil {
 		return r.tracksHandler
 	}
 
-	r.tracksHandler = NewTracksHandler(r.resolveBaseHandler())
+	r.tracksHandler = NewTracksHandler(r.resolveBaseHandler(), r.resolveTrackManager())
 
 	return r.tracksHandler
 }

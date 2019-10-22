@@ -1,0 +1,50 @@
+{{/* gotype: github.com/cj123/assetto-server-manager.trackDetailsTemplateVars */}}
+
+{{ define "title" }}{{ $.Track.Name }}{{ end }}
+
+{{ define "content" }}
+    <div class ="track-details">
+        <h1 class="text-center">{{ $.Track.Name }}</h1>
+
+        {{ range $index, $layout := $.Track.Layouts }}
+            <div class="card mt-2">
+                <div class="card-body">
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card-img track-layout">
+                                <img class="img img-fluid car-image" src="{{ trackLayoutURL $.Track.Name $layout }}" alt="{{ $.Track.PrettyName }}, layout {{ $layout }}" title="{{ prettify $layout true }}" data-layout="{{ $layout }}" data-toggle="tooltip" data-placement="bottom">
+                            </div>
+                        </div>
+
+                        <div class="col-md-8">
+                            <h3 class="card-title mb-0">{{ prettify $layout true }} Layout</h3>
+
+                            {{ $info := index $.TrackInfo $layout }}
+                            <div class="mb-1"><i>{{ $info.City }}
+                            {{ $info.Country }}</i></div>
+
+                            <span><strong>Length: </strong>{{ $info.Length }}</span>
+                            <span><strong>Run: </strong>{{ $info.Run }}</span>
+                            <span><strong>Width: </strong>{{ $info.Width }}</span>
+                            <span><strong>Pitboxes: </strong>{{ $info.Pitboxes }}</span>
+
+                            <div><strong>Geotags: </strong>{{ stringArrayToCSV $info.Geotags }}</div>
+
+                            <div><strong>Tags: </strong>{{ stringArrayToCSV $info.Tags }}</div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-2">
+                        <div class="col-md-12">
+                            <p>{{ $info.Description }}</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        {{ end }}
+    </div>
+
+{{ end }}

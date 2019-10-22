@@ -213,10 +213,11 @@ type CarManager struct {
 	carIndex bleve.Index
 
 	searchIndexRebuildMutex sync.Mutex
+	trackManager *TrackManager
 }
 
-func NewCarManager() *CarManager {
-	return &CarManager{}
+func NewCarManager(trackManager *TrackManager) *CarManager {
+	return &CarManager{trackManager: trackManager}
 }
 
 func (cm *CarManager) ListCars() (Cars, error) {
@@ -552,7 +553,7 @@ func (cm *CarManager) LoadCarDetailsForTemplate(carName string) (*carDetailsTemp
 		return nil, err
 	}
 
-	tracks, err := ListTracks()
+	tracks, err := cm.trackManager.ListTracks()
 
 	if err != nil {
 		return nil, err
@@ -727,7 +728,7 @@ func carSkinURL(car, skin string) string {
 	skinPath := filepath.Join("content", "cars", car, "skins", url.PathEscape(skin), "preview.jpg")
 
 	// look to see if the car preview image exists
-	_, err := os.Stat(filepath.Join(ServerInstallPath, filepath.Join("content", "cars", car, "skins", skin, "preview.jpg")))
+	_, err := os.Stat(filepath.Join(ServerInstallPath, skinPath))
 
 	if err != nil {
 		return defaultSkinURL
