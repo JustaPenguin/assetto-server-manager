@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -16,6 +17,17 @@ type EntryList map[string]*Entrant
 
 // Write the EntryList to the server location
 func (e EntryList) Write() error {
+	setupDirectory := filepath.Join(ServerInstallPath, "setups")
+
+	// belt and braces check to make sure setup file exists
+	for _, entrant := range e.AsSlice() {
+		if entrant.FixedSetup != "" {
+			if _, err := os.Stat(filepath.Join(setupDirectory, entrant.FixedSetup)); os.IsNotExist(err) {
+				return err
+			}
+		}
+	}
+
 	for i, entrant := range e.AsSlice() {
 		entrant.PitBox = i
 	}

@@ -24,7 +24,13 @@
                         Pending admin approval, you will be added to the grid!
                     {{ end }}
 
-                    <a class="btn btn-primary float-right" href="/championship/{{ $championship.ID.String }}/sign-up">Register Now</a>
+                    <div class="float-right">
+                        <a class="btn btn-info" href="/championship/{{ $championship.ID.String }}/sign-up/steam">Register with Steam</a>
+
+                        <small class="pl-2 pr-2">or</small>
+
+                        <a class="btn btn-primary" href="/championship/{{ $championship.ID.String }}/sign-up">Register Now</a>
+                    </div>
                 </div>
             </div>
 
@@ -138,7 +144,7 @@
                                                         <div class="form-group">
                                                             <label>
                                                                 Points Penalty
-                                                                <input type="number" class="form-control" name="PointsPenalty" placeholder="0" value="{{ $driverPenalty }}" step="1" min="0">
+                                                                <input type="number" class="form-control" name="PointsPenalty" placeholder="0" value="{{ $driverPenalty }}" step="1">
                                                             </label>
                                                         </div>
 
@@ -214,7 +220,7 @@
                                                         <div class="form-group">
                                                             <label>
                                                                 Points Penalty
-                                                                <input type="number" class="form-control" name="PointsPenalty" placeholder="0" value="{{ $teamPenalty }}" step="1" min="0">
+                                                                <input type="number" class="form-control" name="PointsPenalty" placeholder="0" value="{{ $teamPenalty }}" step="1">
                                                             </label>
                                                         </div>
 
@@ -248,6 +254,7 @@
                                 <th>Team</th>
                             {{ end }}
                             <th>Car</th>
+                            <th>Attendance</th>
                         </tr>
 
 
@@ -273,6 +280,7 @@
                                             <td>{{ $entrant.Team }}</td>
                                         {{ end }}
                                         <td>{{ prettify $entrant.Model true }} / {{ prettify $entrant.Skin false }}</td>
+                                        <td>{{ $championship.EntrantAttendance $entrant.GUID }} / {{ $championship.NumCompletedEvents }}</td>
                                     </tr>
                                 {{ else }}
                                     {{ if $championship.OpenEntrants }}
@@ -326,6 +334,24 @@
                                 <td><strong>Best Qualifying Lap</strong></td>
                                 <td>
                                     {{ $class.Points.PolePosition }}
+                                </td>
+                            </tr>
+                            <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
+                                <td><strong>Collision with Other Car</strong></td>
+                                <td>
+                                    -{{ $class.Points.CollisionWithDriver }}
+                                </td>
+                            </tr>
+                            <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
+                                <td><strong>Collision with Environment</strong></td>
+                                <td>
+                                    -{{ $class.Points.CollisionWithEnv }}
+                                </td>
+                            </tr>
+                            <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
+                                <td><strong>Cut Track</strong></td>
+                                <td>
+                                    -{{ $class.Points.CutTrack }}
                                 </td>
                             </tr>
                             <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>

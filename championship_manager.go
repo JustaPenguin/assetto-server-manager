@@ -43,13 +43,12 @@ func NewChampionshipManager(raceManager *RaceManager) *ChampionshipManager {
 }
 
 func (cm *ChampionshipManager) applyConfigAndStart(config CurrentRaceConfig, entryList EntryList, championship *ActiveChampionship) error {
+	cm.activeChampionship = championship
 	err := cm.RaceManager.applyConfigAndStart(config, entryList, false, championship)
 
 	if err != nil {
 		return err
 	}
-
-	cm.activeChampionship = championship
 
 	return nil
 }
@@ -252,6 +251,9 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		class.Points.PolePosition = formValueAsInt(r.Form["Points.PolePosition"][i])
 		class.Points.BestLap = formValueAsInt(r.Form["Points.BestLap"][i])
 		class.Points.SecondRaceMultiplier = formValueAsFloat(r.Form["Points.SecondRaceMultiplier"][i])
+		class.Points.CollisionWithDriver = formValueAsInt(r.Form["Points.CollisionWithDriver"][i])
+		class.Points.CollisionWithEnv = formValueAsInt(r.Form["Points.CollisionWithEnv"][i])
+		class.Points.CutTrack = formValueAsInt(r.Form["Points.CutTrack"][i])
 
 		previousNumEntrants += numEntrantsForClass
 		previousNumPoints += numPointsForClass
@@ -455,6 +457,12 @@ func (cm *ChampionshipManager) DeleteEvent(championshipID string, eventID string
 				}
 			}
 
+			if !event.Scheduled.IsZero() {
+				if err := cm.ScheduleEvent(championshipID, eventID, time.Time{}, "", ""); err != nil {
+					return err
+				}
+			}
+
 			break
 		}
 	}
@@ -577,7 +585,9 @@ func (cm *ChampionshipManager) GetChampionshipAndEvent(championshipID string, ev
 	return championship, event, nil
 }
 
-func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID string, date time.Time, action string) error {
+var ErrScheduledTimeIsZero = errors.New("servermanager: can't schedule race for zero time")
+
+func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID string, date time.Time, action string, recurrence string) error {
 	championship, event, err := cm.GetChampionshipAndEvent(championshipID, eventID)
 
 	if err != nil {
@@ -602,14 +612,33 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 	}
 
 	if action == "add" {
+		if date.IsZero() {
+			return ErrScheduledTimeIsZero
+		}
+
 		// add a scheduled event on date
 		duration := time.Until(date)
 
+		if recurrence != "already-set" {
+			if recurrence != "" {
+				err := event.SetRecurrenceRule(recurrence)
+
+				if err != nil {
+					return err
+				}
+
+				// only set once when the event is first scheduled
+				event.ScheduledInitial = date
+			} else {
+				event.ClearRecurrenceRule()
+			}
+		}
+
 		cm.championshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
-			err := cm.StartEvent(championship.ID.String(), event.ID.String(), false)
+			err := cm.StartScheduledEvent(championship, event)
 
 			if err != nil {
-				logrus.WithError(err).Errorf("couldn't start scheduled race")
+				logrus.WithError(err).Errorf("couldn't start scheduled championship event")
 			}
 		})
 
@@ -620,9 +649,66 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 				cm.notificationManager.SendChampionshipReminderMessage(championship, event)
 			})
 		}
+	} else {
+		event.ClearRecurrenceRule()
 	}
 
 	return cm.UpsertChampionship(championship)
+}
+
+func (cm *ChampionshipManager) StartScheduledEvent(championship *Championship, event *ChampionshipEvent) error {
+	if event.HasRecurrenceRule() {
+		// makes a copy of this event and schedules it based on the recurrence rule
+		err := cm.ScheduleNextEventFromRecurrence(championship, event)
+
+		if err != nil {
+			return err
+		}
+	} else {
+		event.Scheduled = time.Time{}
+
+		err := cm.store.UpsertChampionship(championship)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return cm.StartEvent(championship.ID.String(), event.ID.String(), false)
+}
+
+func (cm *ChampionshipManager) ScheduleNextEventFromRecurrence(championship *Championship, event *ChampionshipEvent) error {
+	// make sure the championship is on the event
+	event.championship = championship
+
+	// duplicate the event with new ID and no schedule/completed time
+	eventCopy := DuplicateChampionshipEvent(event)
+	championship.Events = append(championship.Events, eventCopy)
+
+	err := cm.store.UpsertChampionship(championship)
+
+	if err != nil {
+		return err
+	}
+
+	return cm.ScheduleEvent(championship.ID.String(), eventCopy.ID.String(), cm.FindNextEventRecurrence(event, event.Scheduled), "add", "already-set")
+}
+
+func (cm *ChampionshipManager) FindNextEventRecurrence(event *ChampionshipEvent, start time.Time) time.Time {
+	rule, err := event.GetRecurrenceRule()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Couldn't get recurrence rule for race: %s, %s", event.ID.String(), event.Recurrence)
+		return time.Time{}
+	}
+
+	next := rule.After(start, false)
+
+	if next.After(time.Now()) {
+		return next
+	} else {
+		return cm.FindNextEventRecurrence(event, next)
+	}
 }
 
 func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
@@ -630,6 +716,7 @@ func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
 	defer cm.mutex.Unlock()
 
 	if !cm.process.Event().IsChampionship() || cm.activeChampionship == nil {
+		logrus.Debug("Couldn't handle event callback. Either event is not championship event or active championship is nil")
 		return
 	}
 
@@ -885,7 +972,6 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 		saveChampionship = false
 		return
 	}
-
 }
 
 var (
@@ -1398,10 +1484,10 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 				duration := time.Until(event.Scheduled)
 
 				cm.championshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
-					err := cm.StartEvent(championship.ID.String(), event.ID.String(), false)
+					err := cm.StartScheduledEvent(championship, event)
 
 					if err != nil {
-						logrus.WithError(err).Errorf("couldn't start scheduled race")
+						logrus.WithError(err).Errorf("couldn't start scheduled championship event")
 					}
 				})
 

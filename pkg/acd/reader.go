@@ -110,7 +110,20 @@ func (r *Reader) nextFileInfo() (*File, error) {
 
 	// -1111 appears to be a magic number of sorts.
 	if strlen == -1111 {
-		return r.nextFileInfo()
+		// it signifies that the next int32 should be thrown away, _then_ we get the strlen
+		var throwaway int32
+
+		err := binary.Read(r.r, binary.LittleEndian, &throwaway)
+
+		if err != nil {
+			return nil, err
+		}
+
+		err = binary.Read(r.r, binary.LittleEndian, &strlen)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	name := make([]byte, strlen)

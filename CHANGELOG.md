@@ -3,11 +3,25 @@ v1.5.1
 
 Added:
 
-* STracker integration! Check out the STracker Options page to get started.
+* Added a "Start on Tyre from Fastest Lap" option to Race Weekend Filtering. You can use this to force an entrant for a session to start on the tyre they used to complete their fastest lap in the previous session. This might be useful when simulating F1-style qualifications.
+* Added a "Start after Parent Session has completed" option to the Race Weekend Schedule popup
+* Added configurable negative points modifiers for championships for crashes and cuts.
+* Added an Entrant Attendance field to Championship table to help admins keep track of who is showing up for races.
+* Enabled recurring events within championships. A recurring event inside a championship will create a copy of itself in the championship list, scheduled for the next time as defined by the recurrence rule.
+* Added "Register with Steam" to Championships with a Sign Up Form.
+* Added "Sign in with Steam" to the Update Account Details page.
+* Added collision maps to result pages so you look back on your numerous incidents with clarity. On the event tab you can control which collisions are shown on the map.
+* STracker integration! This is still somewhat experimental, please report any bugs you find with this! Check out the STracker Options page to get started.
 
 Fixes:
 
+* Fixes an issue where you could not create a Championship with a single entrant.
+* Skins with a # in their name no longer break the car details page.
+* Fixes an issue where the data file for some newer Assetto Corsa cars could not be read.
+* You can now assign negative points penalties in Championships (so you can add points to people in the Standings if you want!)
 * Fixed a couple of issues with plugins running with the Assetto Process.
+
+---
 
 v1.5.0
 ------

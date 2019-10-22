@@ -20,9 +20,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	ErrCustomRaceNotFound = errors.New("servermanager: custom race not found")
-)
+var ErrCustomRaceNotFound = errors.New("servermanager: custom race not found")
 
 type RaceManager struct {
 	process             ServerProcess
@@ -912,7 +910,6 @@ func (rm *RaceManager) SaveCustomRace(
 	entryList EntryList,
 	starred bool,
 ) (*CustomRace, error) {
-
 	hasCustomRaceName := true
 
 	if name == "" {
@@ -999,7 +996,7 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 
 	if action == "add" {
 		if date.IsZero() {
-			return errors.New("can't schedule race for zero time")
+			return ErrScheduledTimeIsZero
 		}
 
 		// add a scheduled event on date
@@ -1080,10 +1077,8 @@ func (rm *RaceManager) FindNextRecurrence(race *CustomRace, start time.Time) tim
 	if next.After(time.Now()) {
 		return next
 	} else {
-		rm.FindNextRecurrence(race, next)
+		return rm.FindNextRecurrence(race, next)
 	}
-
-	return time.Time{}
 }
 
 func (rm *RaceManager) DeleteCustomRace(uuid string) error {

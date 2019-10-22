@@ -79,40 +79,58 @@
                              aria-labelledby="session-event-tab">
 
                             <div class="table-responsive">
-                                <table class="table table-bordered table-striped">
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Driver</th>
-                                        <th>Other Driver</th>
-                                        <th>Type</th>
-                                        <th>Impact Speed</th>
-                                        <th>Relative Position</th>
-                                        <th>World Position</th>
-                                    </tr>
-
-                                    {{ range $pos, $event := $sessionResults.Events}}
-                                        <tr {{ if eq $account.GUID $event.Driver.GUID }}style="font-weight: bold"{{ end }}>
-                                            <td>{{ add $pos 1 }}</td>
-                                            <td class="driver-link" data-href="#{{ $event.Driver.GUID }}">{{ driverName $event.Driver.Name }}</td>
-                                            <td class="driver-link" data-href="#{{ $event.OtherDriver.GUID }}">{{ driverName $event.OtherDriver.Name }}</td>
-                                            <td>
-                                                {{ if eq $event.Type "COLLISION_WITH_ENV"}}
-                                                    Collision with environment
-                                                {{ else }}
-                                                    Collision with car
-                                                {{ end }}
-                                            </td>
-
-                                            {{ if $useMPH }}
-                                                <td>{{ printf "%.1f" (multiplyFloats $event.ImpactSpeed 0.621371) }} MPH</td>
-                                            {{ else }}
-                                                <td>{{ printf "%.1f" $event.ImpactSpeed }} Km/h</td>
-                                            {{ end }}
-                                            <td>{{ $event.GetRelPosition }}</td>
-                                            <td>{{ $event.GetWorldPosition }}</td>
+                                <form id="collision-form" action="/results/{{ $sessionResults.SessionFile }}/collisions">
+                                    <table class="table table-bordered table-striped">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Driver</th>
+                                            <th>Other Driver</th>
+                                            <th>Type</th>
+                                            <th>Impact Speed</th>
+                                            <th>Relative Position</th>
+                                            <th>World Position</th>
+                                            <th>Show on Map</th>
                                         </tr>
-                                    {{ end }}
-                                </table>
+
+                                        {{ range $pos, $event := $sessionResults.Events}}
+                                            <tr {{ if eq $account.GUID $event.Driver.GUID }}style="font-weight: bold"{{ end }}>
+                                                <td>{{ add $pos 1 }}</td>
+                                                <td class="driver-link" data-href="#{{ $event.Driver.GUID }}">{{ driverName $event.Driver.Name }}</td>
+                                                <td class="driver-link" data-href="#{{ $event.OtherDriver.GUID }}">{{ driverName $event.OtherDriver.Name }}</td>
+                                                <td>
+                                                    {{ if eq $event.Type "COLLISION_WITH_ENV"}}
+                                                        Collision with environment
+                                                    {{ else }}
+                                                        Collision with car
+                                                    {{ end }}
+                                                </td>
+
+                                                {{ if $useMPH }}
+                                                    <td>{{ printf "%.1f" (multiplyFloats $event.ImpactSpeed 0.621371) }} MPH</td>
+                                                {{ else }}
+                                                    <td>{{ printf "%.1f" $event.ImpactSpeed }} Km/h</td>
+                                                {{ end }}
+                                                <td>{{ $event.GetRelPosition }}</td>
+                                                <td>{{ $event.GetWorldPosition }}</td>
+                                                <td><input class="event-checkbox" type="checkbox" name="event-{{ $pos }}" id="event-{{ $pos }}" checked="checked"></td>
+                                            </tr>
+                                        {{ end }}
+                                    </table>
+
+                                    <button class="btn btn-success" type="submit">Update Map Collisions</button>
+                                    <button class="btn btn-info" id="show-all-collisions">Show All Collisions</button>
+                                    <button class="btn btn-warning" id="hide-all-collisions">Hide All Collisions</button>
+
+                                </form>
+
+                                <span data-toggle="tooltip" title="Collision With Other Car" class="badge badge-danger">Car</span>
+                                <span data-toggle="tooltip" title="Collision With Environment" class="badge badge-warning">Env</span>
+                                <span data-toggle="tooltip" title="Collision Relative" class="badge badge-primary">Rel</span>
+                            </div>
+
+                            <div class="image-overlay">
+                                <img class="img img-fluid image-overlay-top" alt="{{ $sessionResults.TrackName }}" src="/content/tracks/{{ $sessionResults.TrackName }}/{{ with $sessionResults.TrackConfig }}{{ $sessionResults.TrackConfig }}/{{ end }}map.png">
+                                <img class="img img-fluid image-overlay-bottom" alt="{{ $sessionResults.TrackName }} collisions" data-session-file="{{ $sessionResults.SessionFile }}" id="trackImageOverlay" src="/results/{{ $sessionResults.SessionFile }}/collisions?collisions=all">
                             </div>
 
                         </div>

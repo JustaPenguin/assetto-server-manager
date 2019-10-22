@@ -276,6 +276,7 @@ func AdminAccess(r *http.Request) func() bool {
 
 type AccountHandler struct {
 	*BaseHandler
+	SteamLoginHandler
 
 	store          Store
 	accountManager *AccountManager
@@ -346,7 +347,7 @@ func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 	account := AccountFromRequest(r)
 
 	if r.Method == http.MethodPost {
-		var set = true
+		set := true
 
 		password, repeatPassword, currentPassword := r.FormValue("Password"), r.FormValue("RepeatPassword"), r.FormValue("CurrentPassword")
 
@@ -394,8 +395,9 @@ func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 type updateAccountTemplateVars struct {
 	BaseTemplateVars
 
-	Account      *Account
-	ThemeOptions []ThemeDetails
+	Account           *Account
+	ThemeOptions      []ThemeDetails
+	SteamGUIDOverride string
 }
 
 func (ah *AccountHandler) update(w http.ResponseWriter, r *http.Request) {
@@ -431,8 +433,9 @@ func (ah *AccountHandler) update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/update.html", &updateAccountTemplateVars{
-		Account:      account,
-		ThemeOptions: ThemeOptions,
+		Account:           account,
+		ThemeOptions:      ThemeOptions,
+		SteamGUIDOverride: r.URL.Query().Get("steamGUID"),
 	})
 }
 

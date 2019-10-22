@@ -259,6 +259,16 @@ type CurrentRaceConfig struct {
 	Weather  map[string]*WeatherConfig `ini:"-"`
 }
 
+func (c CurrentRaceConfig) Tyres() map[string]bool {
+	tyres := make(map[string]bool)
+
+	for _, tyre := range strings.Split(c.LegalTyres, ";") {
+		tyres[tyre] = true
+	}
+
+	return tyres
+}
+
 type Sessions map[SessionType]*SessionConfig
 
 func (s Sessions) AsSlice() []*SessionConfig {

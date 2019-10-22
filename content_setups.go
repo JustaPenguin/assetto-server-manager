@@ -44,6 +44,11 @@ func ListAllSetups() (CarSetups, error) {
 			return nil
 		}
 
+		// corner case of stray ini files winding up in the top level of the folder
+		if filepath.ToSlash(filepath.Dir(path)) == filepath.ToSlash(setupDirectory) {
+			return nil
+		}
+
 		// read the setup file to get the car name
 		name, err := getCarNameFromSetup(path)
 
@@ -60,6 +65,11 @@ func ListAllSetups() (CarSetups, error) {
 
 		if len(trackParts) > 0 {
 			trackName := trackParts[len(trackParts)-1]
+
+			if trackName == lockedTyreSetupFolder {
+				return nil // don't list locked tyre setup folder
+			}
+
 			setups[name][trackName] = append(setups[name][trackName], file.Name())
 		}
 
@@ -93,6 +103,11 @@ func ListSetupsForCar(model string) (map[string][]string, error) {
 
 		if len(trackParts) > 0 {
 			trackName := trackParts[len(trackParts)-1]
+
+			if trackName == lockedTyreSetupFolder {
+				return nil // don't list locked tyre setup folder
+			}
+
 			setups[trackName] = append(setups[trackName], file.Name())
 		}
 
