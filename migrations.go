@@ -69,6 +69,7 @@ var (
 		addRaceWeekendExamples,
 		addServerNameTemplate,
 		addAvailableCarsToChampionshipClass,
+		addTyresForP13c,
 	}
 )
 
@@ -481,4 +482,20 @@ func addAvailableCarsToChampionshipClass(s Store) error {
 	}
 
 	return nil
+}
+
+const IERP13c = "ier_p13c"
+
+var IERP13cTyres = []string{"S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"}
+
+func addTyresForP13c(s Store) error {
+	logrus.Debugf("Running migration: add tyres for IER P13c")
+
+	tyres := make(map[string]string)
+
+	for _, tyre := range IERP13cTyres {
+		tyres[tyre] = tyre
+	}
+
+	return addTyresToModTyres(IERP13c, tyres)
 }
