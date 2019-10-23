@@ -11,6 +11,7 @@ Added:
 * Added "Register with Steam" to Championships with a Sign Up Form.
 * Added "Sign in with Steam" to the Update Account Details page.
 * Added collision maps to result pages so you look back on your numerous incidents with clarity. On the event tab you can control which collisions are shown on the map.
+* STracker integration! This is still somewhat experimental, please report any bugs you find with this! Check out the STracker Options page to get started.
 * Added an "Any Available Car" option to Entrylists. In Sign Up Championships, this allows you to select a range of cars and let registrants choose which car they want. If not filled, these car slots become random car assignments in Custom Races.
 
 Fixes:
@@ -19,6 +20,7 @@ Fixes:
 * Skins with a # in their name no longer break the car details page.
 * Fixes an issue where the data file for some newer Assetto Corsa cars could not be read.
 * You can now assign negative points penalties in Championships (so you can add points to people in the Standings if you want!)
+* Fixed a couple of issues with plugins running with the Assetto Process.
 * Championship entrant/standings tables can now overflow and scroll if they get really long.
 * Improved fastest lap sorting in Championships.
 

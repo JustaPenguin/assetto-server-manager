@@ -49,9 +49,16 @@
 
             <br>
 
-            {{ with $CMJoinLink }} <a id="cm-join-link" href="{{ . }}" class="btn btn-success btn-sm mt-1">Join</a> {{ end }}
+            {{ with $CMJoinLink }}
+                <a id="cm-join-link" href="{{ . }}" class="btn btn-success btn-sm mt-1">Join</a>
+            {{ end }}
+
             {{ if AdminAccess }}
                 <button id="admin-panel" data-toggle="popover" class="btn btn-sm btn-info mt-1" data-placement="bottom">Admin Panel</button>
+            {{ end }}
+
+            {{ if $.IsStrackerEnabled }}
+                <a href="/stracker/mainpage" class="btn btn-primary btn-sm mt-1">STracker</a>
             {{ end }}
         </div>
 

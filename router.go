@@ -60,6 +60,7 @@ func Router(
 	raceControlHandler *RaceControlHandler,
 	scheduledRacesHandler *ScheduledRacesHandler,
 	raceWeekendHandler *RaceWeekendHandler,
+	strackerHandler *StrackerHandler,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -83,6 +84,8 @@ func Router(
 		// pages
 		r.Get("/", serverAdministrationHandler.home)
 		r.Get("/changelog", serverAdministrationHandler.changelog)
+
+		r.Mount("/stracker/", http.HandlerFunc(strackerHandler.proxy))
 
 		// content
 		r.Get("/cars", carsHandler.list)
@@ -294,6 +297,8 @@ func Router(
 		r.HandleFunc("/broadcast-chat", raceControlHandler.broadcastChat)
 		r.HandleFunc("/admin-command", raceControlHandler.adminCommand)
 		r.HandleFunc("/kick-user", raceControlHandler.kickUser)
+
+		r.HandleFunc("/stracker/options", strackerHandler.options)
 	})
 
 	FileServer(r, "/static", fs, false)
