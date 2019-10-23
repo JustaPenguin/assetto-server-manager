@@ -225,6 +225,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 
 	previousNumEntrants := 0
 	previousNumPoints := 0
+	previousNumCars := 0
 
 	for i := 0; i < len(r.Form["ClassName"]); i++ {
 		class := NewChampionshipClass(r.Form["ClassName"][i])
@@ -235,6 +236,9 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 
 		numEntrantsForClass := formValueAsInt(r.Form["EntryList.NumEntrants"][i])
 		numPointsForClass := formValueAsInt(r.Form["NumPoints"][i])
+		numCarsForClass := formValueAsInt(r.Form["NumCars"][i])
+
+		class.AvailableCars = r.Form["Cars"][previousNumCars : previousNumCars+numCarsForClass]
 
 		class.Entrants, err = cm.BuildEntryList(r, previousNumEntrants, numEntrantsForClass)
 
@@ -255,9 +259,11 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		class.Points.CollisionWithEnv = formValueAsInt(r.Form["Points.CollisionWithEnv"][i])
 		class.Points.CutTrack = formValueAsInt(r.Form["Points.CutTrack"][i])
 
+		championship.AddClass(class)
+
 		previousNumEntrants += numEntrantsForClass
 		previousNumPoints += numPointsForClass
-		championship.AddClass(class)
+		previousNumCars += numCarsForClass
 	}
 
 	// persist any entrants so that they can be autofilled

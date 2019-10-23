@@ -28,6 +28,8 @@
             <div class="col-sm-9">
                 {{ template "cars" dict "CarOpts" $.CarOpts "Current" nil "ValidCarIDs" $class.ValidCarIDs }}
             </div>
+
+            <input type="hidden" name="NumCars" value="{{ len $class.ValidCarIDs }}">
         </div>
 
         <hr>

@@ -11,6 +11,7 @@ Added:
 * Added "Register with Steam" to Championships with a Sign Up Form.
 * Added "Sign in with Steam" to the Update Account Details page.
 * Added collision maps to result pages so you look back on your numerous incidents with clarity. On the event tab you can control which collisions are shown on the map.
+* Added an "Any Available Car" option to Entrylists. In Sign Up Championships, this allows you to select a range of cars and let registrants choose which car they want. If not filled, these car slots become random car assignments in Custom Races.
 
 Fixes:
 
