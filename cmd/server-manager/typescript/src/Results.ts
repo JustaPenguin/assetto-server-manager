@@ -13,7 +13,13 @@ export class Results {
 
         let formArray = $(e.currentTarget).serializeArray();
 
-        let collisions = formArray.join(",");
+        let collisions = "";
+
+        for (let i = 0 ; i < formArray.length ; i++) {
+            if (formArray[i].value === "1") {
+                collisions += i.toString() + ",";
+            }
+        }
 
         let overlayImg = $("#trackImageOverlay");
 
