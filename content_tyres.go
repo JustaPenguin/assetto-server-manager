@@ -173,7 +173,19 @@ func addTyresFromTyresIni(filename string, iniFile []byte) error {
 }
 
 func addTyresToModTyres(model string, newTyres map[string]string) error {
-	modTyresFilename := filepath.Join(ServerInstallPath, "manager", "mod_tyres.ini")
+	managerPath := filepath.Join(ServerInstallPath, "manager")
+
+	if _, err := os.Stat(managerPath); os.IsNotExist(err) {
+		err := os.MkdirAll(managerPath, 0755)
+
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+
+	modTyresFilename := filepath.Join(managerPath, "mod_tyres.ini")
 
 	if _, err := os.Stat(modTyresFilename); os.IsNotExist(err) {
 		f, err := os.Create(modTyresFilename)
