@@ -728,7 +728,7 @@ func carSkinURL(car, skin string) string {
 	skinPath := filepath.Join("content", "cars", car, "skins", url.PathEscape(skin), "preview.jpg")
 
 	// look to see if the car preview image exists
-	_, err := os.Stat(filepath.Join(ServerInstallPath, skinPath))
+	_, err := os.Stat(filepath.Join(ServerInstallPath, filepath.Join("content", "cars", car, "skins", skin, "preview.jpg")))
 
 	if err != nil {
 		return defaultSkinURL
