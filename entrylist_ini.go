@@ -11,7 +11,10 @@ import (
 	"github.com/google/uuid"
 )
 
-const entryListFilename = "entry_list.ini"
+const (
+	AnyCarModel       = "any_car_model"
+	entryListFilename = "entry_list.ini"
+)
 
 type EntryList map[string]*Entrant
 
@@ -117,6 +120,10 @@ func (e EntryList) PrettyList() []*Entrant {
 	for _, x := range e {
 		if x.GUID == "" {
 			numOpenSlots++
+			continue
+		}
+
+		if x.Model == AnyCarModel {
 			continue
 		}
 
