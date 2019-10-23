@@ -92,6 +92,7 @@ func Router(
 		r.Get("/cars/search.json", carsHandler.searchJSON)
 		r.Get("/car/{car_id}", carsHandler.view)
 		r.Get("/tracks", tracksHandler.list)
+		r.Get("/track/{track_id}", tracksHandler.view)
 		r.Get("/weather", weatherHandler.list)
 
 		r.Get("/events.ics", scheduledRacesHandler.allScheduledRacesICalHandler)
@@ -169,6 +170,7 @@ func Router(
 		r.HandleFunc("/car/{name}/tags", carsHandler.tags)
 		r.Post("/car/{name}/metadata", carsHandler.saveMetadata)
 		r.Post("/car/{name}/skin", carsHandler.uploadSkin)
+		r.Post("/track/{name}/metadata", tracksHandler.saveMetadata)
 
 		// races
 		r.Get("/quick", quickRaceHandler.create)
@@ -260,7 +262,7 @@ func Router(
 		r.Get("/championship/{championshipID}/delete", championshipsHandler.delete)
 		r.Get("/custom/delete/{uuid}", customRaceHandler.delete)
 
-		r.Get("/track/delete/{name}", tracksHandler.delete)
+		r.Get("/track/{name}/delete", tracksHandler.delete)
 		r.Get("/car/{name}/delete", carsHandler.delete)
 		r.Post("/car/{name}/skin/delete", carsHandler.deleteSkin)
 		r.Get("/weather/delete/{key}", weatherHandler.delete)

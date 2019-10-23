@@ -52,35 +52,30 @@
 
     {{ $writeAccess := WriteAccess }}
 
-    <table class="table table-bordered table-striped">
-        <tr>
-            <th>#</th>
-            <th>Track Name</th>
-            <th>Layouts</th>
-            {{ if DeleteAccess }}
-                <th class="text-center">Delete</th>
-            {{ end }}
-        </tr>
-        {{ range $i, $track := .Tracks }}
-            <tr>
-                <td>
-                    {{ $i }}
-                </td>
-                <td>
-                    <abbr title="{{ $track.Name }}">{{ prettify $track.Name false }}</abbr>
-                </td>
-                <td>
-                    {{ $track.LayoutsCSV }}
-                </td>
+    {{ range $i, $track := $.Tracks }}
+        <div class="card mt-2 mb-2 pt-0 pb-0 card-car" data-href="/track/{{ $track.Name }}">
+            <div class="card-body row">
+                <div class="col-12 col-sm-4 col-md-2">
+                    <img class="img img-fluid car-image" src="{{ $track.GetImagePath }}" alt="{{ $track.Name }}">
+                </div>
 
-                {{ if DeleteAccess }}
-                    <td class="text-center">
-                        <a href="{{ print "/track/delete/" $track.Name }}"><i class="fas fa-trash text-danger"></i></a>
-                    </td>
-                {{ end }}
-            </tr>
-        {{ end }}
-    </table>
+                <div class="d-block d-sm-none pt-2">&nbsp;</div>
+
+                <div class="col-12 col-sm-8 col-md-10">
+                    <h3>{{ $track.PrettyName }}</h3>
+                    {{ with $track.Layouts }}
+                        <small>{{ $track.LayoutsCSV }}</small>
+                    {{ end }}
+
+                    {{ if DeleteAccess }}
+                        <a class="delete-car" href="/track/{{ $track.Name }}/delete"><i class="fa fa-trash"></i></a>
+                    {{ end }}
+
+                    <br>
+                </div>
+            </div>
+        </div>
+    {{ end }}
 
     <div class="clearfix"></div>
 {{ end }}

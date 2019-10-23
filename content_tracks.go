@@ -21,6 +21,44 @@ import (
 type Track struct {
 	Name    string
 	Layouts []string
+
+	MetaData TrackMetaData
+}
+
+func (t Track) GetImagePath() string {
+	for _, layout := range t.Layouts {
+		if layout == defaultLayoutName || layout == "" {
+			return filepath.Join("content", "tracks", t.Name, "ui", "preview.png")
+		}
+	}
+
+	return filepath.Join("content", "tracks", t.Name, "ui", t.Layouts[0], "preview.png")
+}
+
+func (t *Track) LoadMetaData() error {
+	metaDataFile := filepath.Join(ServerInstallPath, "content", "tracks", t.Name, "ui")
+
+	metaDataFile = filepath.Join(metaDataFile, trackMetaDataName)
+
+	f, err := os.Open(metaDataFile)
+
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	var trackMetaData TrackMetaData
+
+	err = json.NewDecoder(utfbom.SkipOnly(f)).Decode(&trackMetaData)
+
+	if err != nil {
+		return err
+	}
+
+	t.MetaData = trackMetaData
+
+	return nil
 }
 
 func (t Track) PrettyName() string {
@@ -28,65 +66,6 @@ func (t Track) PrettyName() string {
 }
 
 const defaultLayoutName = "<default>"
-
-func ListTracks() ([]Track, error) {
-	tracksPath := filepath.Join(ServerInstallPath, "content", "tracks")
-
-	trackFiles, err := ioutil.ReadDir(tracksPath)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var tracks []Track
-
-	for _, trackFile := range trackFiles {
-		var layouts []string
-
-		files, err := ioutil.ReadDir(filepath.Join(tracksPath, trackFile.Name()))
-
-		if err != nil {
-			logrus.WithError(err).Errorf("Can't read folder: %s", trackFile.Name())
-			continue
-		}
-
-		// Check for multiple layouts, if tracks have data folders in the main directory then they only have one
-		if len(files) > 1 {
-			for _, layout := range files {
-				if layout.IsDir() {
-					if layout.Name() == "data" {
-						layouts = append(layouts, defaultLayoutName)
-					} else if layout.Name() == "ui" {
-						// ui folder, not a layout
-						continue
-					} else {
-						// valid layouts must contain a surfaces.ini
-						_, err := os.Stat(filepath.Join(tracksPath, trackFile.Name(), layout.Name(), "data", "surfaces.ini"))
-
-						if os.IsNotExist(err) {
-							continue
-						} else if err != nil {
-							return nil, err
-						}
-
-						layouts = append(layouts, layout.Name())
-					}
-				}
-			}
-		}
-
-		tracks = append(tracks, Track{
-			Name:    trackFile.Name(),
-			Layouts: layouts,
-		})
-	}
-
-	sort.Slice(tracks, func(i, j int) bool {
-		return tracks[i].PrettyName() < tracks[j].PrettyName()
-	})
-
-	return tracks, nil
-}
 
 func (t *Track) LayoutsCSV() string {
 	if t.Layouts == nil {
@@ -96,7 +75,27 @@ func (t *Track) LayoutsCSV() string {
 	return strings.Join(t.Layouts, ", ")
 }
 
+func trackLayoutURL(track, layout string) string {
+	var layoutPath string
+
+	if layout == "" || layout == defaultLayoutName {
+		layoutPath = filepath.Join("content", "tracks", track, "ui", "preview.png")
+	} else {
+		layoutPath = filepath.Join("content", "tracks", track, "ui", layout, "preview.png")
+	}
+
+	// look to see if the track preview image exists
+	_, err := os.Stat(filepath.Join(ServerInstallPath, layoutPath))
+
+	if err != nil {
+		return defaultSkinURL
+	}
+
+	return "/" + filepath.ToSlash(layoutPath)
+}
+
 const trackInfoJSONName = "ui_track.json"
+const trackMetaDataName = "meta_data.json"
 
 type TrackInfo struct {
 	Name        string      `json:"name"`
@@ -109,6 +108,34 @@ type TrackInfo struct {
 	Run         string      `json:"run"`
 	Tags        []string    `json:"tags"`
 	Width       string      `json:"width"`
+}
+
+type TrackMetaData struct {
+	DownloadURL string `json:"downloadURL"`
+	Notes       string `json:"notes"`
+}
+
+func (tmd *TrackMetaData) Save(name string) error {
+	uiDirectory := filepath.Join(ServerInstallPath, "content", "tracks", name, "ui")
+
+	err := os.MkdirAll(uiDirectory, 0755)
+
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create(filepath.Join(uiDirectory, trackMetaDataName))
+
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "   ")
+
+	return enc.Encode(tmd)
 }
 
 func GetTrackInfo(name, layout string) (*TrackInfo, error) {
@@ -137,11 +164,14 @@ func GetTrackInfo(name, layout string) (*TrackInfo, error) {
 
 type TracksHandler struct {
 	*BaseHandler
+
+	trackManager *TrackManager
 }
 
-func NewTracksHandler(baseHandler *BaseHandler) *TracksHandler {
+func NewTracksHandler(baseHandler *BaseHandler, trackManager *TrackManager) *TracksHandler {
 	return &TracksHandler{
-		BaseHandler: baseHandler,
+		BaseHandler:  baseHandler,
+		trackManager: trackManager,
 	}
 }
 
@@ -152,7 +182,7 @@ type trackListTemplateVars struct {
 }
 
 func (th *TracksHandler) list(w http.ResponseWriter, r *http.Request) {
-	tracks, err := ListTracks()
+	tracks, err := th.trackManager.ListTracks()
 
 	if err != nil {
 		logrus.WithError(err).Errorf("could not get track list")
@@ -167,7 +197,7 @@ func (th *TracksHandler) delete(w http.ResponseWriter, r *http.Request) {
 	trackName := chi.URLParam(r, "name")
 	tracksPath := filepath.Join(ServerInstallPath, "content", "tracks")
 
-	existingTracks, err := ListTracks()
+	existingTracks, err := th.trackManager.ListTracks()
 
 	if err != nil {
 		logrus.WithError(err).Errorf("could not get track list")
@@ -202,7 +232,193 @@ func (th *TracksHandler) delete(w http.ResponseWriter, r *http.Request) {
 		AddErrorFlash(w, r, "Sorry, track could not be deleted.")
 	}
 
+	http.Redirect(w, r, "/tracks", http.StatusFound)
+}
+
+func (th *TracksHandler) view(w http.ResponseWriter, r *http.Request) {
+	trackName := chi.URLParam(r, "track_id")
+	templateParams, err := th.trackManager.LoadTrackDetailsForTemplate(trackName)
+
+	if os.IsNotExist(err) {
+		http.NotFound(w, r)
+		return
+	} else if err != nil {
+		logrus.WithError(err).Errorf("Could not load track details for: %s", trackName)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	th.viewRenderer.MustLoadTemplate(w, r, "content/track-details.html", templateParams)
+}
+
+func (th *TracksHandler) saveMetadata(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+
+	if err := th.trackManager.UpdateTrackMetadata(name, r); err != nil {
+		logrus.WithError(err).Errorf("Could not update track metadata for %s", name)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	AddFlash(w, r, "Track metadata updated successfully!")
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+type TrackManager struct {
+}
+
+func NewTrackManager() *TrackManager {
+	return &TrackManager{}
+}
+
+type trackDetailsTemplateVars struct {
+	BaseTemplateVars
+
+	Track     *Track
+	TrackInfo map[string]*TrackInfo
+	Results   map[string][]SessionResults
+}
+
+func (tm *TrackManager) LoadTrackDetailsForTemplate(trackName string) (*trackDetailsTemplateVars, error) {
+	trackInfoMap := make(map[string]*TrackInfo)
+	resultsMap := make(map[string][]SessionResults)
+
+	track, err := tm.GetTrackFromName(trackName)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = track.LoadMetaData()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't load meta data for track: %s", trackName)
+	}
+
+	for _, layout := range track.Layouts {
+		trackInfo, err := GetTrackInfo(track.Name, layout)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("Couldn't load track info for layout: %s, track: %s", layout, track.Name)
+			continue
+		}
+
+		trackInfoMap[layout] = trackInfo
+
+		results, err := tm.ResultsForLayout(track.Name, layout)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("Couldn't load results for layout: %s, track: %s", layout, track.Name)
+			continue
+		}
+
+		resultsMap[layout] = results
+	}
+
+	return &trackDetailsTemplateVars{
+		BaseTemplateVars: BaseTemplateVars{},
+		Track:            track,
+		TrackInfo:        trackInfoMap,
+		Results:          resultsMap,
+	}, nil
+}
+
+func (tm *TrackManager) ResultsForLayout(trackName, layout string) ([]SessionResults, error) {
+	results, err := ListAllResults()
+
+	if err != nil {
+		return nil, err
+	}
+
+	var out []SessionResults
+
+	for _, result := range results {
+		if result.TrackName == trackName && result.TrackConfig == layout {
+			out = append(out, result)
+		}
+	}
+
+	return out, nil
+}
+
+func (tm *TrackManager) ListTracks() ([]Track, error) {
+	tracksPath := filepath.Join(ServerInstallPath, "content", "tracks")
+
+	trackFiles, err := ioutil.ReadDir(tracksPath)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var tracks []Track
+
+	for _, trackFile := range trackFiles {
+		track, err := tm.GetTrackFromName(trackFile.Name())
+
+		if err != nil {
+			continue
+		}
+
+		tracks = append(tracks, *track)
+	}
+
+	sort.Slice(tracks, func(i, j int) bool {
+		return tracks[i].PrettyName() < tracks[j].PrettyName()
+	})
+
+	return tracks, nil
+}
+
+func (tm *TrackManager) GetTrackFromName(name string) (*Track, error) {
+	tracksPath := filepath.Join(ServerInstallPath, "content", "tracks")
+	var layouts []string
+
+	files, err := ioutil.ReadDir(filepath.Join(tracksPath, name))
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Can't read folder: %s", name)
+		return nil, err
+	}
+
+	// Check for multiple layouts, if tracks have data folders in the main directory then they only have one
+	if len(files) > 1 {
+		for _, layout := range files {
+			if layout.IsDir() {
+				if layout.Name() == "data" {
+					layouts = append(layouts, defaultLayoutName)
+				} else if layout.Name() == "ui" {
+					// ui folder, not a layout
+					continue
+				} else {
+					// valid layouts must contain a surfaces.ini
+					_, err := os.Stat(filepath.Join(tracksPath, name, layout.Name(), "data", "surfaces.ini"))
+
+					if os.IsNotExist(err) {
+						continue
+					} else if err != nil {
+						return nil, err
+					}
+
+					layouts = append(layouts, layout.Name())
+				}
+			}
+		}
+	}
+
+	return &Track{Name: name, Layouts: layouts}, nil
+}
+
+func (tm *TrackManager) UpdateTrackMetadata(name string, r *http.Request) error {
+	track, err := tm.GetTrackFromName(name)
+
+	if err != nil {
+		return err
+	}
+
+	track.MetaData.Notes = r.FormValue("Notes")
+	track.MetaData.DownloadURL = r.FormValue("DownloadURL")
+
+	return track.MetaData.Save(name)
 }
 
 type TrackDataGateway interface {

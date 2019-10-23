@@ -12,6 +12,7 @@ import "./RaceList";
 
 import {RaceControl} from "./RaceControl";
 import {CarDetail} from "./CarDetail";
+import {TrackDetail} from "./TrackDetail";
 import {CarSearch} from "./CarSearch";
 import {CarList} from "./CarList";
 import {RaceWeekend} from "./RaceWeekend";
@@ -23,6 +24,7 @@ import {Results} from "./Results";
 $(() => {
     new RaceControl();
     new CarDetail();
+    new TrackDetail();
     new CarList();
     new RaceWeekend.View();
     new RaceWeekend.EditSession();
