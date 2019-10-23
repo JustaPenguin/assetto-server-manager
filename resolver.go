@@ -44,6 +44,7 @@ type Resolver struct {
 	raceControlHandler          *RaceControlHandler
 	serverAdministrationHandler *ServerAdministrationHandler
 	raceWeekendHandler          *RaceWeekendHandler
+	strackerHandler             *StrackerHandler
 }
 
 func NewResolver(templateLoader TemplateLoader, reloadTemplates bool, store Store) (*Resolver, error) {
@@ -97,7 +98,7 @@ func (r *Resolver) resolveServerProcess() ServerProcess {
 		return r.serverProcess
 	}
 
-	r.serverProcess = NewAssettoServerProcess(r.UDPCallback, r.resolveContentManagerWrapper())
+	r.serverProcess = NewAssettoServerProcess(r.UDPCallback, r.ResolveStore(), r.resolveContentManagerWrapper())
 
 	return r.serverProcess
 }
@@ -410,6 +411,16 @@ func (r *Resolver) resolveNotificationManager() *NotificationManager {
 	return r.notificationManager
 }
 
+func (r *Resolver) resolveStrackerHandler() *StrackerHandler {
+	if r.strackerHandler != nil {
+		return r.strackerHandler
+	}
+
+	r.strackerHandler = NewStrackerHandler(r.resolveBaseHandler(), r.ResolveStore())
+
+	return r.strackerHandler
+}
+
 func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
 	return Router(
 		fs,
@@ -428,6 +439,7 @@ func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
 		r.resolveRaceControlHandler(),
 		r.resolveScheduledRacesHandler(),
 		r.resolveRaceWeekendHandler(),
+		r.resolveStrackerHandler(),
 	)
 }
 

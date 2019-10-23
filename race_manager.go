@@ -152,6 +152,25 @@ func (rm *RaceManager) applyConfigAndStart(raceConfig CurrentRaceConfig, entryLi
 		return err
 	}
 
+	for _, entrant := range entryList {
+		if entrant.Model == AnyCarModel {
+			// cars with 'any car model' become random in the entry list.
+			cars := strings.Split(config.CurrentRaceConfig.Cars, ";")
+
+			entrant.Model = cars[rand.Intn(len(cars))]
+
+			// generate a random skin too
+			car, err := rm.carManager.LoadCar(entrant.Model, nil)
+
+			if err != nil {
+				logrus.WithError(err).Errorf("Could not load car %s. No skin will be specified", entrant.Model)
+				entrant.Skin = ""
+			} else {
+				entrant.Skin = car.Skins[rand.Intn(len(car.Skins))]
+			}
+		}
+	}
+
 	err = entryList.Write()
 
 	if err != nil {
