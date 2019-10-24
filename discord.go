@@ -273,7 +273,7 @@ func (dm *DiscordManager) CommandHandler(s *discordgo.Session, m *discordgo.Mess
 		return
 	}
 
-	var msg = ""
+	msg := ""
 
 	switch m.Content {
 	case "!schedule":
