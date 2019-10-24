@@ -226,3 +226,10 @@ td .dot-inactive {
 .live-events {
   width: 220px;
 }
+
+@media screen and (min-width: 550px) {
+  .race-control-buttons {
+    position: relative;
+    top: -50px;
+  }
+}
