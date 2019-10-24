@@ -523,6 +523,8 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 				} else {
 
 					if !firstPositionUpdate {
+						logrus.Infof("Driver: %d initial connect position set", currentDriver.CarInfo.CarID)
+
 						sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
 							fmt.Sprintf("Hi! You are mid way through a driver swap, please wait %f seconds", countdown))
 
@@ -537,6 +539,8 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 						}
 
 						position = currentDriver.LastPos
+
+						fmt.Println(position)
 
 						firstPositionUpdate = true
 					}
@@ -591,6 +595,9 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 }
 
 func (rc *RaceControl) positionHasChanged(initialPosition, currentPosition udp.Vec) bool {
+	fmt.Println(fmt.Sprintf("initial position: %f, %f, %f", initialPosition.X, initialPosition.Y, initialPosition.Z))
+	fmt.Println(fmt.Sprintf("current position: %f, %f, %f", currentPosition.X, currentPosition.Y, currentPosition.Z))
+
 	 return math.Abs(float64(initialPosition.X - currentPosition.X)) >= 5.0 ||
 		math.Abs(float64(initialPosition.Y - currentPosition.Y)) >= 5.0 ||
 		math.Abs(float64(initialPosition.Z - currentPosition.Z)) >= 5.0
