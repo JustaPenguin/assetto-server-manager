@@ -420,7 +420,7 @@ cars:
 
 			// if both drivers aren't/are disqualified
 			if s.GetNumLaps(s.Result[i].DriverGUID) == s.GetNumLaps(s.Result[j].DriverGUID) {
-				if s.Result[i].HasPenalty {
+				if s.Result[i].HasPenalty || s.Result[j].HasPenalty {
 					return s.GetTime(s.Result[i].TotalTime, s.Result[i].DriverGUID, true) <
 						s.GetTime(s.Result[j].TotalTime, s.Result[j].DriverGUID, true)
 				}
