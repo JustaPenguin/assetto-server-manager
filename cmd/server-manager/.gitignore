@@ -7,6 +7,7 @@ static_embed.go
 static/manager.js
 node_modules
 stracker*
+!stracker-options.html
 build/
 *.zip
 *.log

@@ -70,6 +70,8 @@ var (
 		addRaceWeekendExamples,
 		addServerNameTemplate,
 		changeNotificationTimer,
+		addAvailableCarsToChampionshipClass,
+		addTyresForP13c,
 	}
 )
 
@@ -464,4 +466,56 @@ func changeNotificationTimer(s Store) error {
 	}
 
 	return s.UpsertServerOptions(opts)
+}
+
+func addAvailableCarsToChampionshipClass(s Store) error {
+	logrus.Infof("Running migration: Add Available Cars to Championship Class")
+
+	championships, err := s.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(championships, func(i, j int) bool {
+		return championships[i].Updated.Before(championships[j].Updated)
+	})
+
+	for _, champ := range championships {
+		for _, class := range champ.Classes {
+			cars := make(map[string]bool)
+
+			for _, e := range class.Entrants {
+				cars[e.Model] = true
+			}
+
+			for car := range cars {
+				class.AvailableCars = append(class.AvailableCars, car)
+			}
+		}
+
+		err := s.UpsertChampionship(champ)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+const IERP13c = "ier_p13c"
+
+var IERP13cTyres = []string{"S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"}
+
+func addTyresForP13c(s Store) error {
+	logrus.Debugf("Running migration: add tyres for IER P13c")
+
+	tyres := make(map[string]string)
+
+	for _, tyre := range IERP13cTyres {
+		tyres[tyre] = tyre
+	}
+
+	return addTyresToModTyres(IERP13c, tyres)
 }

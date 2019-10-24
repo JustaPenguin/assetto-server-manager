@@ -31,7 +31,8 @@ func (ph *PenaltiesHandler) managePenalty(w http.ResponseWriter, r *http.Request
 
 	if err != nil {
 		AddErrorFlash(w, r, "Could not add/remove penalty")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+		return
 	}
 
 	if remove {

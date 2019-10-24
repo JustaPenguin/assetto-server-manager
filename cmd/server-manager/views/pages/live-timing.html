@@ -47,12 +47,6 @@
 
             <small class="mr-1" data-toggle="tooltip" title="{{ .EntryList.Entrants }}" >{{ len .EntryList }} <i class="fa fa-user"></i></small>
 
-            <br>
-
-            {{ with $CMJoinLink }} <a id="cm-join-link" href="{{ . }}" class="btn btn-success btn-sm mt-1">Join</a> {{ end }}
-            {{ if AdminAccess }}
-                <button id="admin-panel" data-toggle="popover" class="btn btn-sm btn-info mt-1" data-placement="bottom">Admin Panel</button>
-            {{ end }}
         </div>
 
         <div class="race-control-weather-info">
@@ -74,7 +68,23 @@
             <a href="#" id="event-title" data-toggle="popover" data-placement="bottom"></a>
             <div id="track-location"></div>
 
-            <span id="race-time" class="mt-2 badge badge-primary" style="font-size: 1em;"></span>
+            <span id="race-time" class="mt-2 badge badge-primary" style="font-size: 1em;">--:--:--</span>
+        </div>
+
+        <br>
+
+        <div class="race-control-buttons">
+            {{ with $CMJoinLink }}
+                <a id="cm-join-link" href="{{ . }}" class="btn btn-success btn-sm mt-1">Join</a>
+            {{ end }}
+
+            {{ if AdminAccess }}
+                <button id="admin-panel" data-toggle="popover" class="btn btn-sm btn-info mt-1" data-placement="bottom">Admin Panel</button>
+            {{ end }}
+
+            {{ if $.IsStrackerEnabled }}
+                <a href="/stracker/mainpage" class="btn btn-primary btn-sm mt-1">STracker</a>
+            {{ end }}
         </div>
 
         <div id="popover-content-event-title" class="d-none">
