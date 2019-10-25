@@ -188,11 +188,16 @@ type GlobalServerConfig struct {
 	UseMPH                  int         `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager use MPH instead of Km/h for all speed values."`
 
 	// Discord Integration
-	DiscordIntegration          FormHeading `ini:"-" input:"heading"`
-	DiscordAPIToken             string      `ini:"-" help:"If set, will enable race start and scheduled reminder messages to the Discord channel ID specified below.  Use your bot's user token, not the OAuth token."`
-	DiscordChannelID            string      `ini:"-" help:"If Discord is enabled, this is the channel ID it will send messages to"`
-	NotificationReminderTimer   int         `ini:"-" min:"0" max:"65535" help:"If Discord is enabled, a reminder will be sent this many minutes prior to race start.  If 0, only race start messages will be sent."`
-	ShowPasswordInNotifications int         `ini:"-" show:"open" input:"checkbox" help:"Show the server password in race start notifications"`
+	DiscordIntegration FormHeading `ini:"-" input:"heading"`
+	DiscordAPIToken    string      `ini:"-" help:"If set, will enable race start and scheduled reminder messages to the Discord channel ID specified below.  Use your bot's user token, not the OAuth token."`
+	DiscordChannelID   string      `ini:"-" help:"If Discord is enabled, this is the channel ID it will send messages to.  To find the channel ID, enable Developer mode in Discord (user settings, Appearance), then Server Settings, Roles, and right click on the channel and Copy ID."`
+	DiscordRoleID      string      `ini:"-" help:"If set, this role will be mentioned in all Discord notifications.  Any users with this role and access to the channel will be pinged.  To find the role ID, enable Developer mode (see above)), then Server Settings, Roles, right click on the role and Copy ID."`
+	DiscordRoleCommand string      `ini:"-" help:"If the Discord Role ID is set, you can optionally specify a command string here, like \"notify\" (no ! prefix), which if run as a ! command by a user (on a line by itself) in Discord will cause this server to attempt to add the configured role to the user.  If you run multiple servers with Discord enabled, only set this on one of them.  In order for this to work your bot must have the \"Manage Roles\" permission."`
+
+	NotificationReminderTimer   int    `ini:"-"  show:"-" min:"0" max:"65535" help:"This setting has been deprecated and will be removed in the next release.  Use Notification Reminder Timers instead."`
+	NotificationReminderTimers  string `ini:"-" help:"If Discord is enabled, a reminder will be sent this many minutes prior to race start.  If 0 or empty, only race start messages will be sent.  You may schedule multiple reminders by using a comma separated list like 120,15."`
+	ShowPasswordInNotifications int    `ini:"-" input:"checkbox" help:"Show the server password in race start notifications."`
+	NotifyWhenScheduled         int    `ini:"-" input:"checkbox" help:"Send a notification when a race is scheduled (or cancelled)."`
 
 	// Messages
 	ContentManagerWelcomeMessage string `ini:"-" show:"-"`

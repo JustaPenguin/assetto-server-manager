@@ -16,7 +16,7 @@ $(document).ready(function () {
     $.fn.bootstrapSwitch.defaults.size = 'small';
     $.fn.bootstrapSwitch.defaults.animate = false;
     $.fn.bootstrapSwitch.defaults.onColor = "success";
-    $document.find("input[type='checkbox']:not(input[name='EntryList.OverwriteAllEvents']:hidden)").bootstrapSwitch();
+    $document.find("input[type='checkbox']:not(input[name='EntryList.OverwriteAllEvents']:hidden):not(input[name='session-start-after-parent']:hidden)").bootstrapSwitch();
 
     championships.init();
     $document.find(".race-setup").each(function (index, elem) {

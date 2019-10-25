@@ -4,6 +4,27 @@ v1.5.2
 Added:
 
 * Added information about whether a car/track is part of a DLC or a Mod when creating an event.
+* Discord Enhancements (Thanks @cheesegrits!):
+  - Splits the '!schedule' command into '!sessions' (full "wall of text" individual session calendar, restricted to one week ahead) and '!schedule' (abbreviated, one per race calendar). This still needs work, as can easily exceed Discord's max msg length.
+
+  - Added role mentioning. If the optional DiscordRoleID is set, that role will be mentioned in all Discord notifications (meaning anyone with that role will get pinged). Additionally, if the optional 'DiscordRoleCommand' is also set, we will attempt to add/remove that role for users, when they issue the "!whatever" command verb - this requires that the bot has "Manage Roles" permission.
+
+  - Changed NotificationReminderTimer to NotificationReminderTimers (plural), to support comma separated multiple timers (like "90,15" for two reminders at 90 and 15 minutes).
+
+  - Added option to disable notifications when a race is scheduled.
+
+  - Added notification for scheduled races being cancelled.
+
+  - Improved formatting of Discord messages, everything is now an embed (except the role mention, which has to be part of the basic message).
+
+Fixes:
+
+* Fixes track pages for users running Server Manager on Windows
+* Fixes an issue where Championships with 'Any Car Model' specified would fail to find a class for a car.
+* Fixes an issue where cars with no skins might prevent a race from starting.
+* Fixes an issue where Scheduled Championship Race Weekend sessions caused the calendar to error on load.
+* Fixes the Race Weekend "Start after previous session" checkbox not displaying correctly.
+* Fixes an issue where all drivers were incorrectly disconnected from the Live Timings page when an event with multiple sessions looped
 
 ---
 

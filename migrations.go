@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 
 	"github.com/cj123/assetto-server-manager/fixtures/race-weekend-examples"
 
@@ -70,6 +71,7 @@ var (
 		addServerNameTemplate,
 		addAvailableCarsToChampionshipClass,
 		addTyresForP13c,
+		changeNotificationTimer,
 	}
 )
 
@@ -444,6 +446,24 @@ func addServerNameTemplate(s Store) error {
 	}
 
 	opts.ServerNameTemplate = defaultServerNameTemplate
+
+	return s.UpsertServerOptions(opts)
+}
+
+func changeNotificationTimer(s Store) error {
+	logrus.Infof("Running migration: Change Notification Timer")
+
+	opts, err := s.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	opts.NotificationReminderTimers = strconv.Itoa(opts.NotificationReminderTimer)
+
+	if opts.NotificationReminderTimers == "0" {
+		opts.NotificationReminderTimers = ""
+	}
 
 	return s.UpsertServerOptions(opts)
 }
