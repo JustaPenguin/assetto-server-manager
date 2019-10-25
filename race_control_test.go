@@ -655,7 +655,8 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 	})
 
 	t.Run("Two separate event progressions", func(t *testing.T) {
-		raceControl := NewRaceControl(NilBroadcaster{}, nilTrackData{}, dummyServerProcess{})
+		process := dummyServerProcess{doneCh: make(chan struct{})}
+		raceControl := NewRaceControl(NilBroadcaster{}, nilTrackData{}, process)
 
 		if err := raceControl.OnVersion(udp.Version(4)); err != nil {
 			t.Error(err)
@@ -745,6 +746,8 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 			return
 		}
 
+		process.Stop()
+
 		// now go to the next session, lap times should be removed from all drivers, but all should still be connected.
 		err = raceControl.OnNewSession(udp.SessionInfo{
 			Version:             4,
@@ -773,7 +776,7 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 		}
 
 		if raceControl.ConnectedDrivers.Len() != 0 || raceControl.DisconnectedDrivers.Len() != 0 {
-			t.Error("Invalid driver list lengths. Expected 0 drivers to still be in driver lists.")
+			t.Errorf("Invalid driver list lengths. Expected 0 drivers to still be in driver lists. (%d conn, %d disconn)", raceControl.ConnectedDrivers.Len(), raceControl.DisconnectedDrivers.Len())
 			return
 		}
 	})
