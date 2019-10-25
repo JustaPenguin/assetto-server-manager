@@ -69,9 +69,9 @@ var (
 		addThemeChoiceToAccounts,
 		addRaceWeekendExamples,
 		addServerNameTemplate,
-		changeNotificationTimer,
 		addAvailableCarsToChampionshipClass,
 		addTyresForP13c,
+		changeNotificationTimer,
 	}
 )
 
