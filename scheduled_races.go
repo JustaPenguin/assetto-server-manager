@@ -195,6 +195,15 @@ func (srm *ScheduledRacesManager) getScheduledRaces() ([]ScheduledEvent, error) 
 	}
 
 	for _, raceWeekend := range raceWeekends {
+		if raceWeekend.HasLinkedChampionship() {
+			raceWeekend.Championship, err = srm.store.LoadChampionship(raceWeekend.ChampionshipID.String())
+
+			if err != nil {
+				logrus.WithError(err).Warnf("Could not load linked Championship for Race Weekend")
+				continue
+			}
+		}
+
 		for _, session := range raceWeekend.Sessions {
 			if session.ScheduledTime.IsZero() {
 				continue
