@@ -71,6 +71,7 @@
                                     {{ range $index, $track := .TrackOpts }}
                                         <option value="{{ $track.Name }}" {{ if eq $track.Name $f.Track }}selected="selected" {{ end }}>
                                             {{ prettify $track.Name false }}
+                                            {{ if $track.IsPaidDLC }} (DLC){{ end }}{{ if $track.IsMod }} (Mod){{ end }}
                                         </option>
                                     {{ end }}
                                 </select>

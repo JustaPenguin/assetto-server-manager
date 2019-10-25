@@ -17,7 +17,8 @@
                     <div class="col-sm-9">
                         <select class="form-control" name="Track" id="Track">
                             {{ range $index, $track := .TrackOpts }}
-                                <option value="{{ $track.Name }}">{{ prettify $track.Name false }}</option>
+                                <option value="{{ $track.Name }}">{{ prettify $track.Name false }}
+                                 {{ if $track.IsPaidDLC }} (DLC){{ end }}{{ if $track.IsMod }} (Mod){{ end }}</option>
                             {{ end }}
                         </select>
                     </div>

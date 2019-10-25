@@ -4,6 +4,7 @@ import KeyPressEvent = JQuery.KeyPressEvent;
 interface SearchResult {
     CarName: string;
     CarID: string;
+    OriginInfo: string[];
     // Tags: string[];
 }
 
@@ -50,9 +51,15 @@ export class CarSearch {
             }
 
             for (const car of data) {
+                let name = car.CarName;
+
+                for (const info of car.OriginInfo) {
+                    name += info
+                }
+
                 $carsSelect.multiSelect("addOption", {
                     value: car.CarID,
-                    text: car.CarName,
+                    text: name,
                 });
             }
 

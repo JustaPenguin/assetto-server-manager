@@ -71,6 +71,20 @@ func (t Track) PrettyName() string {
 	return prettifyName(t.Name, false)
 }
 
+func (t Track) IsPaidDLC() bool {
+	if _, ok := isTrackPaidDLC[t.Name]; ok {
+		return isTrackPaidDLC[t.Name]
+	} else {
+		return false
+	}
+}
+
+func (t Track) IsMod() bool {
+	_, ok := isTrackPaidDLC[t.Name]
+
+	return !ok
+}
+
 const defaultLayoutName = "<default>"
 
 func (t *Track) LayoutsCSV() string {
@@ -610,4 +624,29 @@ func trackSummary(track, layout string) string {
 
 		return track
 	}
+}
+
+var isTrackPaidDLC = map[string]bool{
+	"ks_barcelona": true,
+	"ks_black_cat_country": false,
+	"ks_brands_hatch": true,
+	"ks_drag": false,
+	"ks_highlands": false,
+	"ks_laguna_seca": false,
+	"ks_monza66": false,
+	"ks_nordschleife": true,
+	"ks_nurburgring": false,
+	"ks_red_bull_ring": true,
+	"ks_silverstone": false,
+	"ks_silverstone1967": false,
+	"ks_vallelunga": false,
+	"ks_zandvoort": false,
+	"monza": false,
+	"mugello": false,
+	"magione": false,
+	"drift": false,
+	"imola": false,
+	"spa": false,
+	"trento-bondone": false,
+
 }

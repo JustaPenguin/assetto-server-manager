@@ -37,6 +37,20 @@ func (c Car) PrettyName() string {
 	return prettifyName(c.Name, true)
 }
 
+func (c Car) IsPaidDLC() bool {
+	if _, ok := isCarPaidDLC[c.Name]; ok {
+		return isCarPaidDLC[c.Name]
+	} else {
+		return false
+	}
+}
+
+func (c Car) IsMod() bool {
+	_, ok := isCarPaidDLC[c.Name]
+
+	return !ok
+}
+
 type Cars []*Car
 
 func (cs Cars) AsMap() map[string][]string {
@@ -676,6 +690,7 @@ func (ch *CarsHandler) list(w http.ResponseWriter, r *http.Request) {
 type carSearchResult struct {
 	CarName string `json:"CarName"`
 	CarID   string `json:"CarID"`
+	OriginInfo []string `json:"OriginInfo"`
 	// Tags    []string `json:"Tags"`
 }
 
@@ -693,9 +708,20 @@ func (ch *CarsHandler) searchJSON(w http.ResponseWriter, r *http.Request) {
 	var searchResults []carSearchResult
 
 	for _, car := range cars {
+		var originInfo []string
+
+		if car.IsPaidDLC() {
+			originInfo = append(originInfo, " (DLC)")
+		}
+
+		if car.IsMod() {
+			originInfo = append(originInfo, " (Mod)")
+		}
+
 		searchResults = append(searchResults, carSearchResult{
 			CarName: car.Details.Name,
 			CarID:   car.Name,
+			OriginInfo:  originInfo,
 			// Tags:    car.Details.Tags,
 		})
 	}
@@ -844,4 +870,185 @@ func (ch *CarsHandler) rebuildSearchIndex(w http.ResponseWriter, r *http.Request
 
 	AddFlash(w, r, "Started re-indexing cars!")
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+var isCarPaidDLC = map[string]bool{
+	"abarth500": false,
+	"abarth500_s1": false,
+	"alfa_romeo_giulietta_qv": false,
+	"alfa_romeo_giulietta_qv_le": false,
+	"bmw_1m": false,
+	"bmw_1m_s3": false,
+	"bmw_m3_e30": false,
+	"bmw_m3_e30_drift": false,
+	"bmw_m3_e30_dtm": false,
+	"bmw_m3_e30_gra": false,
+	"bmw_m3_e30_s1": false,
+	"bmw_m3_e92": false,
+	"bmw_m3_e92_drift": false,
+	"bmw_m3_e92_s1": false,
+	"bmw_m3_gt2": false,
+	"bmw_z4": false,
+	"bmw_z4_drift": false,
+	"bmw_z4_gt3": false,
+	"bmw_z4_s1": false,
+	"ferrari_312t": false,
+	"ferrari_458": false,
+	"ferrari_458_gt2": false,
+	"ferrari_458_s3": false,
+	"ferrari_599xxevo": false,
+	"ferrari_f40": false,
+	"ferrari_f40_s3": false,
+	"ferrari_laferrari": false,
+	"ks_abarth500_assetto_corse": false,
+	"ks_abarth_595ss": false,
+	"ks_abarth_595ss_s1": false,
+	"ks_abarth_595ss_s2": false,
+	"ks_alfa_33_stradale": false,
+	"ks_alfa_giulia_qv": false,
+	"ks_alfa_mito_qv": false,
+	"ks_alfa_romeo_155_v6": false,
+	"ks_alfa_romeo_4c": false,
+	"ks_alfa_romeo_gta": false,
+	"ks_audi_a1s1": true,
+	"ks_audi_r18_etron_quattro": true,
+	"ks_audi_r8_lms": false,
+	"ks_audi_r8_lms_2016": true,
+	"ks_audi_r8_plus": true,
+	"ks_audi_sport_quattro": false,
+	"ks_audi_sport_quattro_rally": false,
+	"ks_audi_sport_quattro_s1": false,
+	"ks_audi_tt_cup": true,
+	"ks_audi_tt_vln": true,
+	"ks_bmw_m235i_racing": false,
+	"ks_bmw_m4": true,
+	"ks_bmw_m4_akrapovic": false,
+	"ks_corvette_c7_stingray": true,
+	"ks_corvette_c7r": false,
+	"ks_ferrari_250_gto": true,
+	"ks_ferrari_288_gto": true,
+	"ks_ferrari_312_67": true,
+	"ks_ferrari_330_p4": true,
+	"ks_ferrari_488_gt3": true,
+	"ks_ferrari_488_gtb": true,
+	"ks_ferrari_812_superfast": true,
+	"ks_ferrari_f138": true,
+	"ks_ferrari_f2004": true,
+	"ks_ferrari_fxx_k": false,
+	"ks_ferrari_sf15t": true,
+	"ks_ferrari_sf70h": true,
+	"ks_ford_escort_mk1": false,
+	"ks_ford_gt40": false,
+	"ks_ford_mustang_2015": true,
+	"ks_glickenhaus_scg003": false,
+	"ks_lamborghini_aventador_sv": true,
+	"ks_lamborghini_countach": false,
+	"ks_lamborghini_countach_s1": false,
+	"ks_lamborghini_gallardo_sl": true,
+	"ks_lamborghini_gallardo_sl_s3": false,
+	"ks_lamborghini_huracan_gt3": false,
+	"ks_lamborghini_huracan_performante": false,
+	"ks_lamborghini_huracan_st": false,
+	"ks_lamborghini_miura_sv": false,
+	"ks_lamborghini_sesto_elemento": false,
+	"ks_lotus_25": false,
+	"ks_lotus_3_eleven": true,
+	"ks_lotus_72d": false,
+	"ks_maserati_250f_12cyl": true,
+	"ks_maserati_250f_6cyl": true,
+	"ks_maserati_alfieri": false,
+	"ks_maserati_gt_mc_gt4": true,
+	"ks_maserati_levante": false,
+	"ks_maserati_mc12_gt1": true,
+	"ks_maserati_quattroporte": false,
+	"ks_mazda_787b": false,
+	"ks_mazda_miata": false,
+	"ks_mazda_mx5_cup": true,
+	"ks_mazda_mx5_nd": true,
+	"ks_mazda_rx7_spirit_r": true,
+	"ks_mazda_rx7_tuned": true,
+	"ks_mclaren_570s": true,
+	"ks_mclaren_650_gt3": false,
+	"ks_mclaren_f1_gtr": false,
+	"ks_mclaren_p1": false,
+	"ks_mclaren_p1_gtr": true,
+	"ks_mercedes_190_evo2": false,
+	"ks_mercedes_amg_gt3": false,
+	"ks_mercedes_c9": false,
+	"ks_nissan_370z": true,
+	"ks_nissan_gtr": true,
+	"ks_nissan_gtr_gt3": false,
+	"ks_nissan_skyline_r34": true,
+	"ks_pagani_huayra_bc": false,
+	"ks_porsche_718_boxster_s": true,
+	"ks_porsche_718_boxster_s_pdk": true,
+	"ks_porsche_718_cayman_s": true,
+	"ks_porsche_718_spyder_rs": true,
+	"ks_porsche_908_lh": true,
+	"ks_porsche_911_carrera_rsr": true,
+	"ks_porsche_911_gt1": true,
+	"ks_porsche_911_gt3_cup_2017": true,
+	"ks_porsche_911_gt3_r_2016": true,
+	"ks_porsche_911_gt3_rs": true,
+	"ks_porsche_911_r": true,
+	"ks_porsche_911_rsr_2017": true,
+	"ks_porsche_917_30": true,
+	"ks_porsche_917_k": true,
+	"ks_porsche_918_spyder": true,
+	"ks_porsche_919_hybrid_2015": true,
+	"ks_porsche_919_hybrid_2016": true,
+	"ks_porsche_935_78_moby_dick": true,
+	"ks_porsche_962c_longtail": true,
+	"ks_porsche_962c_shorttail": true,
+	"ks_porsche_991_carrera_s": true,
+	"ks_porsche_991_turbo_s": true,
+	"ks_porsche_cayenne": false,
+	"ks_porsche_cayman_gt4_clubsport": true,
+	"ks_porsche_cayman_gt4_std": true,
+	"ks_porsche_macan": false,
+	"ks_porsche_panamera": false,
+	"ks_praga_r1": false,
+	"ks_ruf_rt12r": false,
+	"ks_ruf_rt12r_awd": false,
+	"ks_toyota_ae86": true,
+	"ks_toyota_ae86_drift": true,
+	"ks_toyota_ae86_tuned": true,
+	"ks_toyota_celica_st185": true,
+	"ks_toyota_gt86": true,
+	"ks_toyota_supra_mkiv": true,
+	"ks_toyota_supra_mkiv_drift": true,
+	"ks_toyota_supra_mkiv_tuned": true,
+	"ks_toyota_ts040": true,
+	"ktm_xbow_r": false,
+	"lotus_2_eleven": false,
+	"lotus_2_eleven_gt4": false,
+	"lotus_49": false,
+	"lotus_98t": false,
+	"lotus_elise_sc": false,
+	"lotus_elise_sc_s1": false,
+	"lotus_elise_sc_s2": false,
+	"lotus_evora_gtc": false,
+	"lotus_evora_gte": false,
+	"lotus_evora_gte_carbon": false,
+	"lotus_evora_gx": false,
+	"lotus_evora_s": false,
+	"lotus_evora_s_s2": false,
+	"lotus_exige_240": false,
+	"lotus_exige_240_s3": false,
+	"lotus_exige_s": false,
+	"lotus_exige_s_roadster": false,
+	"lotus_exige_scura": false,
+	"lotus_exige_v6_cup": false,
+	"lotus_exos_125": false,
+	"lotus_exos_125_s1": false,
+	"mclaren_mp412c": false,
+	"mclaren_mp412c_gt3": false,
+	"mercedes_sls": false,
+	"mercedes_sls_gt3": false,
+	"p4-5_2011": false,
+	"pagani_huayra": false,
+	"pagani_zonda_r": false,
+	"ruf_yellowbird": false,
+	"shelby_cobra_427sc": false,
+	"tatuusfa1": false,
 }
