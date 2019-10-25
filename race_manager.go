@@ -117,6 +117,19 @@ func (rm *RaceManager) applyConfigAndStart(raceConfig CurrentRaceConfig, entryLi
 		}
 	}
 
+	// filter out "AnyCarModel"
+	finalCars := make([]string, 0)
+
+	for _, car := range strings.Split(config.CurrentRaceConfig.Cars, ";") {
+		if car == AnyCarModel {
+			continue
+		}
+
+		finalCars = append(finalCars, car)
+	}
+
+	config.CurrentRaceConfig.Cars = strings.Join(finalCars, ";")
+
 	// if password override turn the password off
 	if event.OverrideServerPassword() {
 		config.GlobalServerConfig.Password = event.ReplacementServerPassword()
