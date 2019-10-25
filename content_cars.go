@@ -688,9 +688,9 @@ func (ch *CarsHandler) list(w http.ResponseWriter, r *http.Request) {
 }
 
 type carSearchResult struct {
-	CarName    string   `json:"CarName"`
-	CarID      string   `json:"CarID"`
-	Class      string   `json:"Class"`
+	CarName string `json:"CarName"`
+	CarID   string `json:"CarID"`
+	Class   string `json:"Class"`
 	// Tags    []string `json:"Tags"`
 }
 
@@ -719,9 +719,9 @@ func (ch *CarsHandler) searchJSON(w http.ResponseWriter, r *http.Request) {
 		}
 
 		searchResults = append(searchResults, carSearchResult{
-			CarName:    car.Details.Name,
-			CarID:      car.Name,
-			Class:      class,
+			CarName: car.Details.Name,
+			CarID:   car.Name,
+			Class:   class,
 			// Tags:    car.Details.Tags,
 		})
 	}
