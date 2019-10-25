@@ -1,3 +1,12 @@
+v1.5.2
+------
+
+Added:
+
+* Added information about whether a car/track is part of a DLC or a Mod when creating an event.
+
+---
+
 v1.5.1
 ------
 
