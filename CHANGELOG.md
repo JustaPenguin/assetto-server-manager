@@ -1,3 +1,12 @@
+v1.5.2
+------
+
+Fixes:
+
+* Fixes track pages for users running Server Manager on Windows
+
+---
+
 v1.5.1
 ------
 
