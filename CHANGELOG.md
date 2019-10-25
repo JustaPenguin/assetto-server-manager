@@ -4,6 +4,9 @@ v1.5.2
 Fixes:
 
 * Fixes track pages for users running Server Manager on Windows
+* Fixes an issue where Championships with 'Any Car Model' specified would fail to find a class for a car.
+* Fixes an issue where cars with no skins might prevent a race from starting.
+* Fixes an issue where Scheduled Championship Race Weekend sessions caused the calendar to error on load.
 
 ---
 
