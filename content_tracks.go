@@ -25,14 +25,20 @@ type Track struct {
 	MetaData TrackMetaData
 }
 
+const defaultTrackURL = "/static/img/no-preview-general.png"
+
 func (t Track) GetImagePath() string {
+	if len(t.Layouts) == 0 {
+		return defaultTrackURL
+	}
+
 	for _, layout := range t.Layouts {
 		if layout == defaultLayoutName || layout == "" {
-			return filepath.Join("content", "tracks", t.Name, "ui", "preview.png")
+			return filepath.ToSlash(filepath.Join("content", "tracks", t.Name, "ui", "preview.png"))
 		}
 	}
 
-	return filepath.Join("content", "tracks", t.Name, "ui", t.Layouts[0], "preview.png")
+	return filepath.ToSlash(filepath.Join("content", "tracks", t.Name, "ui", t.Layouts[0], "preview.png"))
 }
 
 func (t *Track) LoadMetaData() error {
@@ -88,7 +94,7 @@ func trackLayoutURL(track, layout string) string {
 	_, err := os.Stat(filepath.Join(ServerInstallPath, layoutPath))
 
 	if err != nil {
-		return defaultSkinURL
+		return defaultTrackURL
 	}
 
 	return "/" + filepath.ToSlash(layoutPath)
