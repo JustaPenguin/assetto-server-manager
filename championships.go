@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"math/rand"
 	"sort"
 	"strings"
 	"sync"
@@ -398,6 +399,25 @@ func (c *Championship) FindClassForCarModel(model string) (*ChampionshipClass, e
 		for _, car := range class.ValidCarIDs() {
 			if car == model {
 				return class, nil
+			}
+		}
+	}
+
+	if model == AnyCarModel {
+		// randomly assign a class based from whatever classes we have with AnyCarModel in their entrylist.
+		classes := make([]*ChampionshipClass, len(c.Classes))
+
+		copy(classes, c.Classes)
+
+		rand.Shuffle(len(classes), func(i, j int) {
+			classes[i], classes[j] = classes[j], classes[i]
+		})
+
+		for _, class := range classes {
+			for _, entrant := range class.Entrants {
+				if entrant.Model == AnyCarModel {
+					return class, nil
+				}
 			}
 		}
 	}
