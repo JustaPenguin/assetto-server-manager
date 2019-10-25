@@ -59,7 +59,9 @@ var TestEntryList = EntryList{
 	},
 }
 
-type dummyServerProcess struct{}
+type dummyServerProcess struct {
+	doneCh chan struct{}
+}
 
 func (dummyServerProcess) Logs() string {
 	return ""
@@ -69,7 +71,10 @@ func (dummyServerProcess) Start(cfg ServerConfig, entryList EntryList, forwardin
 	return nil
 }
 
-func (dummyServerProcess) Stop() error {
+func (d dummyServerProcess) Stop() error {
+	if d.doneCh != nil {
+		d.doneCh <- struct{}{}
+	}
 	return nil
 }
 
@@ -92,8 +97,8 @@ func (dummyServerProcess) SendUDPMessage(message udp.Message) error {
 	return nil
 }
 
-func (dummyServerProcess) Done() <-chan struct{} {
-	return nil
+func (d dummyServerProcess) Done() <-chan struct{} {
+	return d.doneCh
 }
 
 func (dummyServerProcess) GetServerConfig() ServerConfig {
