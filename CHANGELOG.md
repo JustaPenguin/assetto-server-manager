@@ -7,6 +7,7 @@ Fixes:
 * Fixes an issue where cars with no skins might prevent a race from starting.
 * Fixes an issue where Scheduled Championship Race Weekend sessions caused the calendar to error on load.
 * Fixes the Race Weekend "Start after previous session" checkbox not displaying correctly.
+* Fixes an issue where all drivers were incorrectly disconnected from the Live Timings page when an event with multiple sessions looped
 
 v1.5.1
 ------
