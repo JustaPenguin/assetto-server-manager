@@ -690,7 +690,7 @@ func (ch *CarsHandler) list(w http.ResponseWriter, r *http.Request) {
 type carSearchResult struct {
 	CarName    string   `json:"CarName"`
 	CarID      string   `json:"CarID"`
-	OriginInfo []string `json:"OriginInfo"`
+	Class      string   `json:"Class"`
 	// Tags    []string `json:"Tags"`
 }
 
@@ -708,20 +708,20 @@ func (ch *CarsHandler) searchJSON(w http.ResponseWriter, r *http.Request) {
 	var searchResults []carSearchResult
 
 	for _, car := range cars {
-		var originInfo []string
+		var class string
 
 		if car.IsPaidDLC() {
-			originInfo = append(originInfo, " (DLC)")
+			class = "bg-dlc"
 		}
 
 		if car.IsMod() {
-			originInfo = append(originInfo, " (Mod)")
+			class = "bg-mod"
 		}
 
 		searchResults = append(searchResults, carSearchResult{
 			CarName:    car.Details.Name,
 			CarID:      car.Name,
-			OriginInfo: originInfo,
+			Class:      class,
 			// Tags:    car.Details.Tags,
 		})
 	}

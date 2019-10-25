@@ -33,12 +33,16 @@
                 {{ end }}
             {{ end }}
 
-            <option value="{{ $car.Name }}" {{ if $selected }} selected="selected" {{ end }}>{{ prettify $car.Name true }}
-            {{ if $car.IsPaidDLC }} (DLC){{ end }}{{ if $car.IsMod }} (Mod){{ end }}</option>
+            <option class="{{ if $car.IsPaidDLC }}bg-dlc{{ end }}{{ if $car.IsMod }}bg-mod{{ end }}" value="{{ $car.Name }}" {{ if $selected }} selected="selected" {{ end }}>{{ prettify $car.Name true }}</option>
         {{ end }}
     </select>
 
-    <div class="text-black-50 mb-2">
+    <small class="d-inline">
+        <span class="badge bg-dlc">DLC</span>
+        <span class="badge bg-mod">Mod</span>
+    </small>
+
+    <div class="text-black-50 mb-2 d-inline">
         <div class="float-right">
             <small><a href="#" data-toggle="collapse" data-target="#searchHelp" aria-expanded="false" aria-controls="searchHelp">Search Help</a></small>
         </div>
