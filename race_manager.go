@@ -162,7 +162,7 @@ func (rm *RaceManager) applyConfigAndStart(raceConfig CurrentRaceConfig, entryLi
 			// generate a random skin too
 			car, err := rm.carManager.LoadCar(entrant.Model, nil)
 
-			if err != nil {
+			if err != nil || len(car.Skins) == 0 {
 				logrus.WithError(err).Errorf("Could not load car %s. No skin will be specified", entrant.Model)
 				entrant.Skin = ""
 			} else {

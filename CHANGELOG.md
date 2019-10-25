@@ -4,6 +4,8 @@ v1.5.2
 Fixes:
 
 * Fixes an issue where Championships with 'Any Car Model' specified would fail to find a class for a car.
+* Fixes an issue where cars with no skins might prevent a race from starting.
+
 
 v1.5.1
 ------
