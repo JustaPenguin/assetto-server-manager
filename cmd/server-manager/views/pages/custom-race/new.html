@@ -69,11 +69,17 @@
                             <div class="col-sm-9">
                                 <select class="form-control" name="Track" id="Track">
                                     {{ range $index, $track := .TrackOpts }}
-                                        <option value="{{ $track.Name }}" {{ if eq $track.Name $f.Track }}selected="selected" {{ end }}>
+                                        <option value="{{ $track.Name }}" {{ if eq $track.Name $f.Track }}selected="selected" {{ end }}
+                                                class="{{ if $track.IsPaidDLC }}bg-dlc{{ end }}{{ if $track.IsMod }}bg-mod{{ end }}">
                                             {{ prettify $track.Name false }}
                                         </option>
                                     {{ end }}
                                 </select>
+
+                                <small style="cursor: default;">
+                                    <span class="badge bg-dlc">DLC</span>
+                                    <span class="badge bg-mod">Mod</span>
+                                </small>
                             </div>
                         </div>
 
