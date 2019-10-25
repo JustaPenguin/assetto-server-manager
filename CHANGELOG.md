@@ -1,3 +1,10 @@
+v1.5.2
+------
+
+Fixes:
+
+* Fixes an issue where Championships with 'Any Car Model' specified would fail to find a class for a car.
+
 v1.5.1
 ------
 

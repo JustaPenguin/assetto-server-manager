@@ -626,9 +626,9 @@ func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) ([]*RaceW
 
 					if err != nil {
 						logrus.WithError(err).Warnf("Could not find class for car model: %s for entrant %s", entrant.Car.GetCar(), entrant.Car.GetGUID())
+					} else {
+						entrant.EntrantResult.ClassID = class.ID
 					}
-
-					entrant.EntrantResult.ClassID = class.ID
 				}
 
 				e := NewRaceWeekendSessionEntrant(rws.ID, entrant.Car, entrant.EntrantResult, rws.Results)
