@@ -1012,12 +1012,7 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 		return err
 	}
 
-	serverOpts, err := rm.store.LoadServerOptions()
-
-	if err != nil {
-		return err
-	}
-
+	originalDate := race.Scheduled
 	race.Scheduled = date
 
 	// if there is an existing schedule timer for this event stop it
@@ -1060,17 +1055,21 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 			}
 		})
 
-		if serverOpts.NotificationReminderTimer > 0 {
+		if rm.notificationManager.HasNotificationReminders() {
 			_ = rm.notificationManager.SendRaceScheduledMessage(race, date)
 
-			duration = time.Until(date.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
+			for _, timer := range rm.notificationManager.GetNotificationReminders() {
+				duration = time.Until(date.Add(time.Duration(0-timer) * time.Minute))
+				thisTimer := timer
 
-			rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
-				_ = rm.notificationManager.SendRaceReminderMessage(race)
-			})
+				rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+					_ = rm.notificationManager.SendRaceReminderMessage(race, thisTimer)
+				})
+			}
 		}
 
 	} else {
+		_ = rm.notificationManager.SendRaceCancelledMessage(race, originalDate)
 		race.ClearRecurrenceRule()
 	}
 
@@ -1333,12 +1332,6 @@ func (rm *RaceManager) InitScheduledRaces() error {
 		return err
 	}
 
-	serverOpts, err := rm.store.LoadServerOptions()
-
-	if err != nil {
-		return err
-	}
-
 	for _, race := range races {
 		race := race
 
@@ -1354,14 +1347,17 @@ func (rm *RaceManager) InitScheduledRaces() error {
 				}
 			})
 
-			if serverOpts.NotificationReminderTimer > 0 {
-				if race.Scheduled.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute).After(time.Now()) {
-					// add reminder
-					duration = time.Until(race.Scheduled.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
+			if rm.notificationManager.HasNotificationReminders() {
+				for _, timer := range rm.notificationManager.GetNotificationReminders() {
+					if race.Scheduled.Add(time.Duration(0-timer) * time.Minute).After(time.Now()) {
+						// add reminder
+						duration = time.Until(race.Scheduled.Add(time.Duration(0-timer) * time.Minute))
+						thisTimer := timer
 
-					rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
-						_ = rm.notificationManager.SendRaceReminderMessage(race)
-					})
+						rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+							_ = rm.notificationManager.SendRaceReminderMessage(race, thisTimer)
+						})
+					}
 				}
 			}
 		} else {
@@ -1401,7 +1397,7 @@ func (rm *RaceManager) InitScheduledRaces() error {
 
 // reschedule notifications if notification timer changed
 func (rm *RaceManager) RescheduleNotifications(oldServerOpts *GlobalServerConfig, newServerOpts *GlobalServerConfig) error {
-	if newServerOpts.NotificationReminderTimer == oldServerOpts.NotificationReminderTimer {
+	if newServerOpts.NotificationReminderTimers == oldServerOpts.NotificationReminderTimers {
 		return nil
 	}
 
@@ -1413,24 +1409,29 @@ func (rm *RaceManager) RescheduleNotifications(oldServerOpts *GlobalServerConfig
 	// rebuild the timers
 	rm.customRaceReminderTimers = make(map[string]*time.Timer)
 
-	if newServerOpts.NotificationReminderTimer > 0 {
+	if rm.notificationManager.HasNotificationReminders() {
 		races, err := rm.store.ListCustomRaces()
 
 		if err != nil {
 			return err
 		}
 
-		for _, race := range races {
-			race := race
+		for _, timer := range rm.notificationManager.GetNotificationReminders() {
+			for _, race := range races {
+				race := race
 
-			if race.Scheduled.After(time.Now()) {
-				if race.Scheduled.Add(time.Duration(0-newServerOpts.NotificationReminderTimer) * time.Minute).After(time.Now()) {
-					// add reminder
-					duration := time.Until(race.Scheduled.Add(time.Duration(0-newServerOpts.NotificationReminderTimer) * time.Minute))
+				if race.Scheduled.After(time.Now()) {
+					duration := time.Until(race.Scheduled)
 
-					rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
-						_ = rm.notificationManager.SendRaceReminderMessage(race)
-					})
+					if race.Scheduled.Add(time.Duration(0-timer) * time.Minute).After(time.Now()) {
+						// add reminder
+						duration = time.Until(race.Scheduled.Add(time.Duration(0-timer) * time.Minute))
+						thisTimer := timer
+
+						rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+							_ = rm.notificationManager.SendRaceReminderMessage(race, thisTimer)
+						})
+					}
 				}
 			}
 		}

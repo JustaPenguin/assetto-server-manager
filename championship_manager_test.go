@@ -111,7 +111,17 @@ var championshipManager *ChampionshipManager
 
 type dummyNotificationManager struct{}
 
-func (d dummyNotificationManager) SendRaceWeekendReminderMessage(raceWeekend *RaceWeekend, session *RaceWeekendSession) error {
+func (d *dummyNotificationManager) HasNotificationReminders() bool {
+	return false
+}
+
+func (d *dummyNotificationManager) GetNotificationReminders() []int {
+	var reminders []int
+
+	return reminders
+}
+
+func (d dummyNotificationManager) SendRaceWeekendReminderMessage(raceWeekend *RaceWeekend, session *RaceWeekendSession, timer int) error {
 	return nil
 }
 
@@ -131,11 +141,15 @@ func (d dummyNotificationManager) SendRaceScheduledMessage(event *CustomRace, da
 	return nil
 }
 
-func (d dummyNotificationManager) SendRaceReminderMessage(event *CustomRace) error {
+func (d dummyNotificationManager) SendRaceCancelledMessage(event *CustomRace, date time.Time) error {
 	return nil
 }
 
-func (d dummyNotificationManager) SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent) error {
+func (d dummyNotificationManager) SendRaceReminderMessage(event *CustomRace, timer int) error {
+	return nil
+}
+
+func (d dummyNotificationManager) SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent, timer int) error {
 	return nil
 }
 
