@@ -10,6 +10,7 @@ clean:
 	rm -rf rsrc.syso
 	rm -rf views/static_embed.go
 	rm -rf static/static_embed.go
+	rm -rf typescript/.gulp-cache
 
 run:
 	go build -ldflags "-s -w -X github.com/cj123/assetto-server-manager.BuildVersion=${VERSION}"

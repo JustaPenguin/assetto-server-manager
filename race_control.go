@@ -216,25 +216,13 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 	rc.driverGUIDUpdateCounter = make(map[udp.DriverGUID]int)
 	rc.driverGUIDUpdateCounterMutex.Unlock()
 
-	deleteCars := true
-	emptyCarInfo := false
-
-	if sessionInfo.CurrentSessionIndex != 0 && oldSessionInfo.Track == sessionInfo.Track && oldSessionInfo.TrackConfig == sessionInfo.TrackConfig {
-		// only remove cars on the first session (avoid deleting between practice/qualify/race)
-		deleteCars = false
-		emptyCarInfo = true
-	}
+	emptyCarInfo := true
 
 	if (rc.ConnectedDrivers.Len() > 0 || rc.DisconnectedDrivers.Len() > 0) && sessionInfo.Type == udp.SessionTypePractice {
 		if oldSessionInfo.Type == sessionInfo.Type && oldSessionInfo.Track == sessionInfo.Track && oldSessionInfo.TrackConfig == sessionInfo.TrackConfig && oldSessionInfo.Name == sessionInfo.Name {
-			// this is a looped practice event, keep the cars
-			deleteCars = false
+			// this is a looped event, keep the cars
 			emptyCarInfo = false
 		}
-	}
-
-	if deleteCars {
-		rc.clearAllDrivers()
 	}
 
 	if emptyCarInfo {
@@ -274,7 +262,7 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 		rc.TrackMapData = *trackMapData
 	}
 
-	logrus.Debugf("New session detected: %s at %s (%s) [deleteCars: %t, emptyCarInfo: %t]", sessionInfo.Type.String(), sessionInfo.Track, sessionInfo.TrackConfig, deleteCars, emptyCarInfo)
+	logrus.Debugf("New session detected: %s at %s (%s) [emptyCarInfo: %t]", sessionInfo.Type.String(), sessionInfo.Track, sessionInfo.TrackConfig, emptyCarInfo)
 
 	go rc.requestSessionInfo()
 

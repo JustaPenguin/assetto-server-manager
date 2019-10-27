@@ -117,6 +117,19 @@ func (rm *RaceManager) applyConfigAndStart(raceConfig CurrentRaceConfig, entryLi
 		}
 	}
 
+	// filter out "AnyCarModel"
+	finalCars := make([]string, 0)
+
+	for _, car := range strings.Split(config.CurrentRaceConfig.Cars, ";") {
+		if car == AnyCarModel {
+			continue
+		}
+
+		finalCars = append(finalCars, car)
+	}
+
+	config.CurrentRaceConfig.Cars = strings.Join(finalCars, ";")
+
 	// if password override turn the password off
 	if event.OverrideServerPassword() {
 		config.GlobalServerConfig.Password = event.ReplacementServerPassword()
@@ -162,7 +175,7 @@ func (rm *RaceManager) applyConfigAndStart(raceConfig CurrentRaceConfig, entryLi
 			// generate a random skin too
 			car, err := rm.carManager.LoadCar(entrant.Model, nil)
 
-			if err != nil {
+			if err != nil || len(car.Skins) == 0 {
 				logrus.WithError(err).Errorf("Could not load car %s. No skin will be specified", entrant.Model)
 				entrant.Skin = ""
 			} else {
