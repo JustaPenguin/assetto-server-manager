@@ -226,15 +226,10 @@ func (tr *Renderer) init() error {
 	return nil
 }
 
+var Changelog template.HTML
+
 func changelogHTML() template.HTML {
-	changelog, err := LoadChangelog()
-
-	if err != nil {
-		logrus.WithError(err).Error("could not load changelog")
-		return "An error occurred loading the changelog"
-	}
-
-	return changelog
+	return Changelog
 }
 
 func appendQuery(r *http.Request, query, value string) string {

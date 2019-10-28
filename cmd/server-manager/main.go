@@ -11,6 +11,7 @@ import (
 	"github.com/cj123/assetto-server-manager"
 	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
 	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
+	"github.com/cj123/assetto-server-manager/internal/changelog"
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
 
@@ -48,6 +49,15 @@ func main() {
 		ServeHTTPWithError(config.HTTP.Hostname, "Open server manager storage (bolt or json)", err)
 		return
 	}
+
+	changes, err := changelog.LoadChangelog()
+
+	if err != nil {
+		ServeHTTPWithError(config.HTTP.Hostname, "Load changelog (internal error)", err)
+		return
+	}
+
+	servermanager.Changelog = changes
 
 	var templateLoader servermanager.TemplateLoader
 	var filesystem http.FileSystem

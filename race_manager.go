@@ -1095,7 +1095,15 @@ func (rm *RaceManager) StartScheduledRace(race *CustomRace) error {
 
 func (rm *RaceManager) ScheduleNextFromRecurrence(race *CustomRace) error {
 	// set the scheduled time to the next iteration of the recurrence rule
-	return rm.ScheduleRace(race.UUID.String(), rm.FindNextRecurrence(race, race.Scheduled), "add", "already-set")
+	nextRecurrence := rm.FindNextRecurrence(race, race.Scheduled)
+
+	if nextRecurrence.IsZero() {
+		// no recurrence was found (likely the recurrence had an UNTIL date)
+		race.ClearRecurrenceRule()
+		return rm.store.UpsertCustomRace(race)
+	}
+
+	return rm.ScheduleRace(race.UUID.String(), nextRecurrence, "add", "already-set")
 }
 
 func (rm *RaceManager) FindNextRecurrence(race *CustomRace, start time.Time) time.Time {
@@ -1109,6 +1117,8 @@ func (rm *RaceManager) FindNextRecurrence(race *CustomRace, start time.Time) tim
 	next := rule.After(start, false)
 
 	if next.After(time.Now()) {
+		return next
+	} else if next.IsZero() {
 		return next
 	} else {
 		return rm.FindNextRecurrence(race, next)
