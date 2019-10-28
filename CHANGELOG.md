@@ -1,3 +1,10 @@
+v1.5.3
+------
+
+Fixes:
+
+* Fixes an issue where Server Manager would not start when a recurring race with an end date had a scheduled recurrence while Server Manager was offline.
+
 v1.5.2
 ------
 
