@@ -628,7 +628,7 @@ func trackSummary(track, layout string) string {
 
 var isTrackPaidDLC = map[string]bool{
 	"ks_barcelona":         true,
-	"ks_black_cat_country": false,
+	"ks_black_cat_county": false,
 	"ks_brands_hatch":      true,
 	"ks_drag":              false,
 	"ks_highlands":         false,

@@ -20,6 +20,9 @@ install:
   - go version
 
 script:
+  # run a go build before doing deployment to ensure that the package is importable
+  - go build
+
   - VERSION=${TRAVIS_TAG} make deploy
 
 deploy:

@@ -4,6 +4,15 @@ v1.5.3
 Added:
 
 * Live Timings "Stored Times" will now persist between reboot of Server Manager, if the next event started is the same as the last event running before the Server Manager reboot.
+* Added an option to prevent web crawlers from accessing any pages on the manager using a robots.txt.
+
+Fixes:
+
+* Fixes track details page names to be a bit nicer
+* Added Black Cat County to the list of default content
+* Fixes an issue where Server Manager would not start when a recurring race with an end date had a scheduled recurrence while Server Manager was offline.
+
+---
 
 v1.5.2
 ------
