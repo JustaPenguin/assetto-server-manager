@@ -20,6 +20,7 @@ const (
 	serverMetaDir       = "meta"
 	auditFile           = "audit.json"
 	strackerOptionsFile = "stracker_options.json"
+	liveTimingsDataFile = "live_timings.json"
 
 	// shared data
 	championshipsDir = "championships"
@@ -485,4 +486,20 @@ func (rs *JSONStore) LoadStrackerOptions() (*StrackerConfiguration, error) {
 	}
 
 	return out, err
+}
+
+func (rs *JSONStore) UpsertLiveTimingsData(lt *LiveTimingsPersistedData) error {
+	return rs.encodeFile(rs.base, liveTimingsDataFile, lt)
+}
+
+func (rs *JSONStore) LoadLiveTimingsData() (*LiveTimingsPersistedData, error) {
+	var lt *LiveTimingsPersistedData
+
+	err := rs.decodeFile(rs.base, liveTimingsDataFile, &lt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return lt, err
 }

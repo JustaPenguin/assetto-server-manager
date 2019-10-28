@@ -1,3 +1,10 @@
+v1.5.3
+------
+
+Added:
+
+* Live Timings "Stored Times" will now persist between reboot of Server Manager, if the next event started is the same as the last event running before the Server Manager reboot.
+
 v1.5.2
 ------
 

@@ -23,6 +23,9 @@ type Store interface {
 	DeleteChampionship(id string) error
 
 	// Live Timings
+	UpsertLiveTimingsData(*LiveTimingsPersistedData) error
+	LoadLiveTimingsData() (*LiveTimingsPersistedData, error)
+
 	UpsertLiveFrames([]string) error
 	ListPrevFrames() ([]string, error)
 
