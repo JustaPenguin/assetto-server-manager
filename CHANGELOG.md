@@ -3,12 +3,12 @@ v1.5.3
 
 Added:
 
+* Added an option to prevent web crawlers from accessing any pages on the manager using a robots.txt.
 * Added information about whether a car/track is default/mod/DLC to list and detail pages.
 
 Fixes:
 
 * Fixes track/car display in dark mode
-* Added an option to prevent web crawlers from accessing any pages on the manager using a robots.txt.
 * Fixes track details page names to be a bit nicer
 * Added Black Cat County to the list of default content
 * Fixes an issue where Server Manager would not start when a recurring race with an end date had a scheduled recurrence while Server Manager was offline.
