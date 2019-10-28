@@ -10,7 +10,7 @@
 
             {{ if $.Car.IsPaidDLC }}<span class="badge bg-dlc">DLC</span>{{ end }}
             {{ if $.Car.IsMod }}<span class="badge bg-mod">Mod</span>{{ end }}
-            {{ if not (or $.Car.IsPaidDLC $.Car.IsMod) }}<span class="badge bg-default">Default</span>{{ end }}
+            {{ if not (or $.Car.IsPaidDLC $.Car.IsMod) }}<span class="badge bg-default-content">Default</span>{{ end }}
 
         </div>
 
