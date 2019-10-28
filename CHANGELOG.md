@@ -1,3 +1,16 @@
+v1.5.3
+------
+
+Added:
+
+* Added information about whether a car/track is default/mod/DLC to list and detail pages.
+
+Fixes:
+
+* Fixes track/car display in dark mode
+
+---
+
 v1.5.2
 ------
 
