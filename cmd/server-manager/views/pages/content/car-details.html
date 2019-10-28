@@ -7,6 +7,11 @@
         <h1 class="text-center">{{ $.Car.Details.Name }}</h1>
         <div class="text-center mb-3">
             <small>({{ $.Car.Name}})</small>
+
+            {{ if $.Car.IsPaidDLC }}<span class="badge bg-dlc">DLC</span>{{ end }}
+            {{ if $.Car.IsMod }}<span class="badge bg-mod">Mod</span>{{ end }}
+            {{ if not (or $.Car.IsPaidDLC $.Car.IsMod) }}<span class="badge bg-default">Default</span>{{ end }}
+
         </div>
 
         {{ if gt (len $.Car.Skins) 0 }}

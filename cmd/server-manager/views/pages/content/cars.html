@@ -95,13 +95,17 @@
                     <div class="d-block d-sm-none pt-2">&nbsp;</div>
 
                     <div class="col-12 col-sm-8 col-md-10">
-                        <h3>{{ $car.Details.Name }}</h3>
+                        <h3 class="mb-0">{{ $car.Details.Name }}</h3>
+
+                        <div class="mb-2">
+                            {{ if $car.IsPaidDLC }}<span class="badge bg-dlc">DLC</span>{{ end }}
+                            {{ if $car.IsMod }}<span class="badge bg-mod">Mod</span>{{ end }}
+                            {{ if not (or $car.IsPaidDLC $car.IsMod) }}<span class="badge bg-default">Default</span>{{ end }}
+                        </div>
 
                         {{ if DeleteAccess }}
                             <a class="delete-car" href="/car/{{ $car.Name }}/delete"><i class="fa fa-trash"></i></a>
                         {{ end }}
-
-                        <br>
 
                         {{ range $index, $tag := $car.Details.Tags }}
                             <span class="badge badge-secondary">

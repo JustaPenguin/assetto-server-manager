@@ -62,7 +62,14 @@
                 <div class="d-block d-sm-none pt-2">&nbsp;</div>
 
                 <div class="col-12 col-sm-8 col-md-10">
-                    <h3>{{ $track.PrettyName }}</h3>
+                    <h3 class="mb-0">{{ $track.PrettyName }}</h3>
+
+                    <div class="mb-2">
+                        {{ if $track.IsPaidDLC }}<span class="badge bg-dlc">DLC</span>{{ end }}
+                        {{ if $track.IsMod }}<span class="badge bg-mod">Mod</span>{{ end }}
+                        {{ if not (or $track.IsPaidDLC $track.IsMod) }}<span class="badge bg-default">Default</span>{{ end }}
+                    </div>
+
                     {{ with $track.Layouts }}
                         <small>{{ $track.LayoutsCSV }}</small>
                     {{ end }}
