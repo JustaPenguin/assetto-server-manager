@@ -1,3 +1,17 @@
+v1.5.3
+------
+
+Added:
+
+
+
+Fixes:
+
+* Fixes track details page names to be a bit nicer
+* Added Black Cat County to the list of default content
+
+---
+
 v1.5.2
 ------
 
