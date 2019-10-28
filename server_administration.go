@@ -311,3 +311,32 @@ func (sah *ServerAdministrationHandler) changelog(w http.ResponseWriter, r *http
 		Changelog: changelog,
 	})
 }
+
+func (sah *ServerAdministrationHandler) robots(w http.ResponseWriter, r *http.Request) {
+	// do we want to let robots on the internet know things about us?!?
+	serverOpts, err := sah.store.LoadServerOptions()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't load server options")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	var response string
+
+	w.Header().Set("Content-Type", "text/plain")
+
+	if serverOpts.PreventWebCrawlers == 1 {
+		response = "User-agent: *\nDisallow: /"
+	} else {
+		response = "User-agent: *\nDisallow:"
+	}
+
+	_, err = w.Write([]byte(response))
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't write response text")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+}
