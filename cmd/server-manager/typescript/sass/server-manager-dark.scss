@@ -139,12 +139,26 @@ $pre-color:                         inherit;
 
 @import "imports";
 
+.bg-dlc {
+    background-color: #3c4c59 !important;
+    color: $white !important;
+}
+
+.bg-mod {
+    background-color: #574350 !important;
+    color: $white !important;
+}
+
+.bg-default-content {
+    background-color: #3a543a !important;
+    color: $white !important;
+}
 
 #search-info.text-black-50 {
   color: $white !important;
 }
 
-.form-control, .ms-selectable, .ms-selection, .ms-container *:not(.ms-hover):not(span) {
+.form-control, .ms-selectable, .ms-selection, .ms-container *:not(.ms-hover):not(span):not(.bg-mod):not(.bg-dlc) {
   background: $gray-700 !important;
   color: $white !important;
 }
