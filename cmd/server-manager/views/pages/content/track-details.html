@@ -1,10 +1,10 @@
 {{/* gotype: github.com/cj123/assetto-server-manager.trackDetailsTemplateVars */}}
 
-{{ define "title" }}{{ $.Track.Name }}{{ end }}
+{{ define "title" }}{{ $.Track.PrettyName }}{{ end }}
 
 {{ define "content" }}
     <div class="track-details">
-        <h1 class="text-center">{{ $.Track.Name }}</h1>
+        <h1 class="text-center">{{ $.Track.PrettyName }}</h1>
 
         {{ with $.Track.MetaData.Notes }}
             <h2>Notes</h2>
