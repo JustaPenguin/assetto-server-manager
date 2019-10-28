@@ -299,15 +299,7 @@ type changelogTemplateVars struct {
 }
 
 func (sah *ServerAdministrationHandler) changelog(w http.ResponseWriter, r *http.Request) {
-	changelog, err := LoadChangelog()
-
-	if err != nil {
-		logrus.WithError(err).Error("could not load changelog")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
 	sah.viewRenderer.MustLoadTemplate(w, r, "changelog.html", &changelogTemplateVars{
-		Changelog: changelog,
+		Changelog: Changelog,
 	})
 }
