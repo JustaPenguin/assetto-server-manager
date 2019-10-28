@@ -3,6 +3,19 @@ v1.5.2
 
 Added:
 
+* Added an option to prevent web crawlers from accessing any pages on the manager using a robots.txt.
+
+Fixes:
+
+
+
+---
+
+v1.5.2
+------
+
+Added:
+
 * Added information about whether a car/track is part of a DLC or a Mod when creating an event.
 * Discord Enhancements (Thanks @cheesegrits!):
   - Splits the '!schedule' command into '!sessions' (full "wall of text" individual session calendar, restricted to one week ahead) and '!schedule' (abbreviated, one per race calendar). This still needs work, as can easily exceed Discord's max msg length.
