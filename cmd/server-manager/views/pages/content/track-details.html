@@ -4,7 +4,13 @@
 
 {{ define "content" }}
     <div class="track-details">
-        <h1 class="text-center">{{ $.Track.PrettyName }}</h1>
+        <h1 class="text-center mb-0">{{ $.Track.PrettyName }}</h1>
+
+        <div class="mb-2 text-center">
+            {{ if $.Track.IsPaidDLC }}<span class="badge bg-dlc">DLC</span>{{ end }}
+            {{ if $.Track.IsMod }}<span class="badge bg-mod">Mod</span>{{ end }}
+            {{ if not (or $.Track.IsPaidDLC $.Track.IsMod) }}<span class="badge bg-default-content">Default</span>{{ end }}
+        </div>
 
         {{ with $.Track.MetaData.Notes }}
             <h2>Notes</h2>
