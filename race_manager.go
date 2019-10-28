@@ -1132,6 +1132,14 @@ func (rm *RaceManager) DeleteCustomRace(uuid string) error {
 		return err
 	}
 
+	if !race.Scheduled.IsZero() {
+		err := rm.ScheduleRace(uuid, time.Time{}, "remove", "")
+
+		if err != nil {
+			return err
+		}
+	}
+
 	return rm.store.DeleteCustomRace(race)
 }
 
