@@ -1,7 +1,6 @@
 package servermanager
 
 import (
-	"fmt"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -133,7 +132,6 @@ func InitWithResolver(resolver *Resolver) error {
 					err = raceManager.applyConfigAndStart(a)
 				}
 			default:
-				fmt.Println("default")
 				err = raceManager.applyConfigAndStart(a)
 			}
 
