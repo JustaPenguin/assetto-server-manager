@@ -5,6 +5,7 @@ Added:
 
 * Added an option to prevent web crawlers from accessing any pages on the manager using a robots.txt.
 * Added information about whether a car/track is default/mod/DLC to list and detail pages.
+* Added penalty options to Qualifying and Practice sessions, penalties can be applied independently in each session. In Race Weekends these penalties will affect the entry list of the next session.
 
 Fixes:
 

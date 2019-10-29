@@ -375,7 +375,7 @@ cars:
 		var bestLap int
 
 		for y := range s.Laps {
-			if s.IsDriversFastestLap(s.Cars[i].Driver.GUID, s.Laps[y].LapTime, s.Laps[y].Cuts) {
+			if (s.Cars[i].Driver.GUID == s.Laps[y].DriverGUID) && s.IsDriversFastestLap(s.Cars[i].Driver.GUID, s.Laps[y].LapTime, s.Laps[y].Cuts) {
 				bestLap = s.Laps[y].LapTime
 				break
 			}
@@ -415,7 +415,17 @@ cars:
 		if (!s.Result[i].Disqualified && !s.Result[j].Disqualified) || (s.Result[i].Disqualified && s.Result[j].Disqualified) {
 
 			if s.Type == SessionTypeQualifying || s.Type == SessionTypePractice {
-				return s.Result[i].BestLap < s.Result[j].BestLap
+
+				if s.Result[i].BestLap == 0 {
+					return false
+				}
+
+				if s.Result[j].BestLap == 0 {
+					return true
+				}
+
+				return s.GetTime(s.Result[i].BestLap, s.Result[i].DriverGUID, true) <
+					s.GetTime(s.Result[j].BestLap, s.Result[j].DriverGUID, true)
 			}
 
 			// if both drivers aren't/are disqualified
@@ -465,18 +475,22 @@ func (s *SessionResults) GetDrivers() string {
 	return strings.Join(drivers, ", ")
 }
 
-func (s *SessionResults) GetTime(timeINT int, driverGUID string, total bool) time.Duration {
+func (s *SessionResults) GetTime(timeINT int, driverGUID string, penalty bool) time.Duration {
 	if i := s.GetNumLaps(driverGUID); i == 0 {
 		return time.Duration(0)
 	}
 
 	d, _ := time.ParseDuration(fmt.Sprintf("%dms", timeINT))
 
-	if total {
+	if penalty {
 		for _, driver := range s.Result {
 			if driver.DriverGUID == driverGUID && driver.HasPenalty {
 				d += driver.PenaltyTime
-				d -= time.Duration(driver.LapPenalty) * s.GetLastLapTime(driverGUID)
+
+				switch s.Type {
+				case SessionTypeRace:
+					d -= time.Duration(driver.LapPenalty) * s.GetLastLapTime(driverGUID)
+				}
 			}
 		}
 	}

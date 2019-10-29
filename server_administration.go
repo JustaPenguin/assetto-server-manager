@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/mitchellh/go-wordwrap"
@@ -174,6 +175,10 @@ func (sah *ServerAdministrationHandler) blacklist(w http.ResponseWriter, r *http
 	if r.Method == http.MethodPost {
 		// save to blacklist.txt
 		text := r.FormValue("blacklist")
+
+		if !strings.HasSuffix(text, "\n") {
+			text += "\n"
+		}
 
 		err := ioutil.WriteFile(filepath.Join(ServerInstallPath, "blacklist.txt"), []byte(text), 0644)
 
