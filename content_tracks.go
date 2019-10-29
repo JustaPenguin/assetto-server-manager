@@ -41,28 +41,42 @@ func (t Track) GetImagePath() string {
 	return filepath.ToSlash(filepath.Join("content", "tracks", t.Name, "ui", t.Layouts[0], "preview.png"))
 }
 
-func (t *Track) LoadMetaData() error {
-	metaDataFile := filepath.Join(ServerInstallPath, "content", "tracks", t.Name, "ui")
+func LoadTrackMetaDataFromName(name string) (*TrackMetaData, error) {
+	metaDataFile := filepath.Join(ServerInstallPath, "content", "tracks", name, "ui")
 
 	metaDataFile = filepath.Join(metaDataFile, trackMetaDataName)
 
 	f, err := os.Open(metaDataFile)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer f.Close()
 
-	var trackMetaData TrackMetaData
+	var trackMetaData *TrackMetaData
 
 	err = json.NewDecoder(utfbom.SkipOnly(f)).Decode(&trackMetaData)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return trackMetaData, nil
+}
+
+func (t *Track) LoadMetaData() error {
+	metaDataFile := filepath.Join(ServerInstallPath, "content", "tracks", t.Name, "ui")
+
+	metaDataFile = filepath.Join(metaDataFile, trackMetaDataName)
+
+	trackMetaData, err := LoadTrackMetaDataFromName(metaDataFile)
 
 	if err != nil {
 		return err
 	}
 
-	t.MetaData = trackMetaData
+	t.MetaData = *trackMetaData
 
 	return nil
 }
@@ -624,6 +638,16 @@ func trackSummary(track, layout string) string {
 
 		return track
 	}
+}
+
+func trackDownloadLink(track string) string {
+	metaData, err := LoadTrackMetaDataFromName(track)
+
+	if err != nil {
+		return ""
+	}
+
+	return metaData.DownloadURL
 }
 
 var isTrackPaidDLC = map[string]bool{
