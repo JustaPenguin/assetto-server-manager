@@ -199,7 +199,7 @@ func (nm *NotificationManager) GetCarList(cars string) string {
 	return strings.Join(aCarNames, ", ")
 }
 
-// GetCarList takes a ; sep string of cars from a race config, returns , sep of UI names with download links added
+// GetTrackInfo returns the track summary with any download link appended
 func (nm *NotificationManager) GetTrackInfo(track string, layout string) string {
 	trackInfo := trackSummary(track, layout)
 	trackLink := trackDownloadLink(track)
