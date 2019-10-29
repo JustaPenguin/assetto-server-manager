@@ -43,11 +43,24 @@ func InitWithResolver(resolver *Resolver) error {
 		for range c {
 			// ^C, handle it
 			if process.IsRunning() {
-				if process.Event().IsChampionship() {
+				event := process.Event()
+
+				opts, err := store.LoadServerOptions()
+
+				if err == nil && opts.RestartEventOnServerManagerLaunch == 1 {
+					// save the event so it can be started again next time server-manager starts
+					err := store.UpsertLastRaceEvent(event)
+
+					if err != nil {
+						logrus.WithError(err).Error("Could not save last server event")
+					}
+				}
+
+				if event.IsChampionship() && !event.IsPractice() {
 					if err := championshipManager.StopActiveEvent(); err != nil {
 						logrus.WithError(err).Errorf("Error stopping Championship event")
 					}
-				} else if process.Event().IsRaceWeekend() {
+				} else if event.IsRaceWeekend() && !event.IsPractice() {
 					if err := raceWeekendManager.StopActiveSession(); err != nil {
 						logrus.WithError(err).Errorf("Error stopping Race Weekend session")
 					}
@@ -100,6 +113,33 @@ func InitWithResolver(resolver *Resolver) error {
 			logrus.WithError(err).Error("Could not open search index")
 		}
 	}()
+
+	if opts.RestartEventOnServerManagerLaunch == 1 {
+		if lastEvent, err := store.LoadLastRaceEvent(); err == nil && lastEvent != nil {
+			var err error
+
+			switch a := lastEvent.(type) {
+			case *ActiveChampionship:
+				if !a.IsPractice() {
+					err = championshipManager.applyConfigAndStart(a)
+				} else {
+					err = raceManager.applyConfigAndStart(a)
+				}
+			case *ActiveRaceWeekend:
+				if !a.IsPractice() {
+					err = raceWeekendManager.applyConfigAndStart(a)
+				} else {
+					err = raceManager.applyConfigAndStart(a)
+				}
+			default:
+				err = raceManager.applyConfigAndStart(a)
+			}
+
+			if err != nil {
+				logrus.WithError(err).Errorf("Could not start last running event")
+			}
+		}
+	}
 
 	return nil
 }

@@ -27,6 +27,18 @@ type CustomRace struct {
 	EntryList  EntryList
 }
 
+func (cr *CustomRace) GetRaceConfig() CurrentRaceConfig {
+	return cr.RaceConfig
+}
+
+func (cr *CustomRace) GetEntryList() EntryList {
+	return cr.EntryList
+}
+
+func (cr *CustomRace) IsLooping() bool {
+	return cr.Loop
+}
+
 func (cr *CustomRace) EventName() string {
 	if cr.HasCustomName {
 		return cr.Name
@@ -44,6 +56,10 @@ func (cr *CustomRace) ReplacementServerPassword() string {
 }
 
 func (cr *CustomRace) IsChampionship() bool {
+	return false
+}
+
+func (cr *CustomRace) IsPractice() bool {
 	return false
 }
 
