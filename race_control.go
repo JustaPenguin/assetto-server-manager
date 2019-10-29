@@ -272,7 +272,7 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 
 	go rc.requestSessionInfo()
 
-	// practice session, look for live timings stored previously
+	// look for live timings stored previously
 	persistedInfo, err := rc.store.LoadLiveTimingsData()
 
 	if err == nil {
