@@ -19,6 +19,7 @@ func ConfigIniDefault() ServerConfig {
 			BlacklistMode:              1,
 			RegisterToLobby:            1,
 			UDPPluginLocalPort:         0,
+			PreventWebCrawlers:         0,
 			UDPPluginAddress:           "",
 			AuthPluginAddress:          "",
 			NumberOfThreads:            2,

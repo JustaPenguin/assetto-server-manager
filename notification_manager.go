@@ -75,7 +75,6 @@ func (nm *NotificationManager) GetNotificationReminders() []int {
 
 	for _, a := range timers {
 		if strings.TrimSpace(a) == "" {
-			logrus.WithError(err).Infof("couldn't convert notification time to int")
 			continue
 		}
 
