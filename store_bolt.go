@@ -29,6 +29,7 @@ var (
 	serverOptionsKey   = []byte("serverOptions")
 	strackerOptionsKey = []byte("strackerOptions")
 	liveTimingsKey     = []byte("liveTimings")
+	lastRaceEventKey   = []byte("lastRaceEvent")
 )
 
 func (rs *BoltStore) customRaceBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
@@ -901,4 +902,58 @@ func (rs *BoltStore) LoadLiveTimingsData() (*LiveTimingsPersistedData, error) {
 	})
 
 	return lt, err
+}
+
+func (rs *BoltStore) UpsertLastRaceEvent(r RaceEvent) error {
+	return rs.db.Update(func(tx *bbolt.Tx) error {
+		bkt, err := rs.liveTimingsDataBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		encoded, err := marshalRaceEvent(r)
+
+		if err != nil {
+			return err
+		}
+
+		return bkt.Put(lastRaceEventKey, encoded)
+	})
+}
+
+func (rs *BoltStore) LoadLastRaceEvent() (RaceEvent, error) {
+	var re RaceEvent
+
+	err := rs.db.View(func(tx *bbolt.Tx) error {
+		bkt, err := rs.liveTimingsDataBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		data := bkt.Get(lastRaceEventKey)
+
+		if data == nil {
+			return nil
+		}
+
+		re, err = unmarshalRaceEvent(data)
+
+		return err
+	})
+
+	return re, err
+}
+
+func (rs *BoltStore) ClearLastRaceEvent() error {
+	return rs.db.Update(func(tx *bbolt.Tx) error {
+		bkt, err := rs.liveTimingsDataBucket(tx)
+
+		if err != nil {
+			return err
+		}
+
+		return bkt.Delete(lastRaceEventKey)
+	})
 }

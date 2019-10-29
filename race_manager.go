@@ -72,21 +72,6 @@ func (rm *RaceManager) CurrentRace() (*ServerConfig, EntryList) {
 
 var ErrEntryListTooBig = errors.New("servermanager: EntryList exceeds MaxClients setting")
 
-type RaceEvent interface {
-	GetRaceConfig() CurrentRaceConfig
-	GetEntryList() EntryList
-	IsLooping() bool
-
-	IsChampionship() bool
-	IsRaceWeekend() bool
-	IsPractice() bool
-	OverrideServerPassword() bool
-	ReplacementServerPassword() string
-	EventName() string
-	EventDescription() string
-	GetURL() string
-}
-
 func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 	rm.mutex.Lock()
 	defer rm.mutex.Unlock()
@@ -96,15 +81,21 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 		rm.clearLoopedRaceSessionTypes()
 	}
 
-	raceConfig := event.GetRaceConfig()
-	entryList := event.GetEntryList()
-
 	// load server opts
 	serverOpts, err := rm.LoadServerOptions()
 
 	if err != nil {
 		return err
 	}
+
+	if serverOpts.RestartEventOnServerManagerLaunch == 1 {
+		if err := rm.store.ClearLastRaceEvent(); err != nil {
+			logrus.WithError(err).Errorf("Could not clear last race event")
+		}
+	}
+
+	raceConfig := event.GetRaceConfig()
+	entryList := event.GetEntryList()
 
 	config := ServerConfig{
 		CurrentRaceConfig:  raceConfig,

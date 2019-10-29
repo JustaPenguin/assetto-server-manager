@@ -4,8 +4,10 @@ v1.5.3
 Added:
 
 * Live Timings "Stored Times" will now persist between reboot of Server Manager, if the next event started is the same as the last event running before the Server Manager reboot.
+* You can now configure Server Manager to restart any Event that was running before Server Manager was stopped. Check out "Restart Event On Server Manager Launch" in Server Options.
 * Added an option to prevent web crawlers from accessing any pages on the manager using a robots.txt.
 * Added information about whether a car/track is default/mod/DLC to list and detail pages.
+* Championship and Race Weekend Looping Practice Sessions are now labelled in the navigation bar, e.g. "Championship Practice in Progress"
 
 Fixes:
 

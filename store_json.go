@@ -21,6 +21,7 @@ const (
 	auditFile           = "audit.json"
 	strackerOptionsFile = "stracker_options.json"
 	liveTimingsDataFile = "live_timings.json"
+	lastRaceEventFile   = "last_race_event.json"
 
 	// shared data
 	championshipsDir = "championships"
@@ -63,7 +64,61 @@ func (rs *JSONStore) listFiles(dir string) ([]string, error) {
 	return list, nil
 }
 
-func (rs *JSONStore) encodeFile(path string, filename string, data interface{}) error {
+func (rs *JSONStore) writeFile(path, filename string, data []byte) error {
+	rs.mutex.Lock()
+	defer rs.mutex.Unlock()
+
+	filename = filepath.Join(path, filename)
+
+	dir := filepath.Dir(filename)
+
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err := os.MkdirAll(dir, 0755)
+
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+
+	f, err := os.Create(filename)
+
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	_, err = f.Write(data)
+	return err
+}
+
+func (rs *JSONStore) deleteFile(path, filename string) error {
+	rs.mutex.Lock()
+	defer rs.mutex.Unlock()
+
+	return os.Remove(filepath.Join(path, filename))
+}
+
+func (rs *JSONStore) readFile(path, filename string) ([]byte, error) {
+	rs.mutex.RLock()
+	defer rs.mutex.RUnlock()
+
+	filename = filepath.Join(path, filename)
+
+	f, err := os.Open(filename)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+
+	return ioutil.ReadAll(f)
+}
+
+func (rs *JSONStore) encodeFile(path, filename string, data interface{}) error {
 	rs.mutex.Lock()
 	defer rs.mutex.Unlock()
 
@@ -95,7 +150,7 @@ func (rs *JSONStore) encodeFile(path string, filename string, data interface{}) 
 	return enc.Encode(data)
 }
 
-func (rs *JSONStore) decodeFile(path string, filename string, out interface{}) error {
+func (rs *JSONStore) decodeFile(path, filename string, out interface{}) error {
 	rs.mutex.RLock()
 	defer rs.mutex.RUnlock()
 
@@ -502,4 +557,34 @@ func (rs *JSONStore) LoadLiveTimingsData() (*LiveTimingsPersistedData, error) {
 	}
 
 	return lt, err
+}
+
+func (rs *JSONStore) UpsertLastRaceEvent(r RaceEvent) error {
+	raceEvent, err := marshalRaceEvent(r)
+
+	if err != nil {
+		return err
+	}
+
+	return rs.writeFile(rs.base, lastRaceEventFile, raceEvent)
+}
+
+func (rs *JSONStore) LoadLastRaceEvent() (RaceEvent, error) {
+	data, err := rs.readFile(rs.base, lastRaceEventFile)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return unmarshalRaceEvent(data)
+}
+
+func (rs *JSONStore) ClearLastRaceEvent() error {
+	err := rs.deleteFile(rs.base, lastRaceEventFile)
+
+	if err != nil && os.IsNotExist(err) {
+		return nil
+	}
+
+	return err
 }
