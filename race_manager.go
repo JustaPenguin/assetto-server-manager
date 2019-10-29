@@ -73,8 +73,13 @@ func (rm *RaceManager) CurrentRace() (*ServerConfig, EntryList) {
 var ErrEntryListTooBig = errors.New("servermanager: EntryList exceeds MaxClients setting")
 
 type RaceEvent interface {
+	GetRaceConfig() CurrentRaceConfig
+	GetEntryList() EntryList
+	IsLooping() bool
+
 	IsChampionship() bool
 	IsRaceWeekend() bool
+	IsPractice() bool
 	OverrideServerPassword() bool
 	ReplacementServerPassword() string
 	EventName() string
@@ -82,14 +87,17 @@ type RaceEvent interface {
 	GetURL() string
 }
 
-func (rm *RaceManager) applyConfigAndStart(raceConfig CurrentRaceConfig, entryList EntryList, loop bool, event RaceEvent) error {
+func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 	rm.mutex.Lock()
 	defer rm.mutex.Unlock()
 
 	// Reset the stored session types if this isn't a looped race
-	if !loop {
+	if !event.IsLooping() {
 		rm.clearLoopedRaceSessionTypes()
 	}
+
+	raceConfig := event.GetRaceConfig()
+	entryList := event.GetEntryList()
 
 	// load server opts
 	serverOpts, err := rm.LoadServerOptions()
@@ -207,7 +215,7 @@ func (rm *RaceManager) applyConfigAndStart(raceConfig CurrentRaceConfig, entryLi
 		return err
 	}
 
-	if !loop {
+	if !event.IsLooping() {
 		_ = rm.notificationManager.SendRaceStartMessage(config, event)
 	}
 
@@ -346,8 +354,9 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 
 	quickRace.MaxClients = numPitboxes
 
-	return rm.applyConfigAndStart(quickRace, entryList, false, &QuickRace{
+	return rm.applyConfigAndStart(&QuickRace{
 		RaceConfig: quickRace,
+		EntryList:  entryList,
 	})
 }
 
@@ -672,7 +681,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 			return nil
 		}
 
-		return rm.applyConfigAndStart(completeConfig.CurrentRaceConfig, entryList, false, race)
+		return rm.applyConfigAndStart(race)
 	}
 }
 
@@ -1002,7 +1011,9 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 		race.RaceConfig.LoopMode = 1
 	}
 
-	return rm.applyConfigAndStart(race.RaceConfig, race.EntryList, forceRestart, race)
+	race.Loop = forceRestart
+
+	return rm.applyConfigAndStart(race)
 }
 
 func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, recurrence string) error {

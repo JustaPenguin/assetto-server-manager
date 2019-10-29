@@ -42,9 +42,9 @@ func NewChampionshipManager(raceManager *RaceManager) *ChampionshipManager {
 	}
 }
 
-func (cm *ChampionshipManager) applyConfigAndStart(config CurrentRaceConfig, entryList EntryList, championship *ActiveChampionship) error {
+func (cm *ChampionshipManager) applyConfigAndStart(championship *ActiveChampionship) error {
 	cm.activeChampionship = championship
-	err := cm.RaceManager.applyConfigAndStart(config, entryList, false, championship)
+	err := cm.RaceManager.applyConfigAndStart(championship)
 
 	if err != nil {
 		return err
@@ -538,13 +538,15 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 		logrus.Infof("Starting Championship Event: %s at %s (%s) with %d entrants", event.RaceSetup.Cars, event.RaceSetup.Track, event.RaceSetup.TrackLayout, event.RaceSetup.MaxClients)
 
 		// track that this is the current event
-		return cm.applyConfigAndStart(event.RaceSetup, entryList, &ActiveChampionship{
+		return cm.applyConfigAndStart(&ActiveChampionship{
 			ChampionshipID:      championship.ID,
 			EventID:             event.ID,
 			Name:                championship.Name,
 			OverridePassword:    championship.OverridePassword,
 			ReplacementPassword: championship.ReplacementPassword,
 			Description:         string(championship.Info),
+			RaceConfig:          event.RaceSetup,
+			EntryList:           entryList,
 		})
 	} else {
 		// delete all sessions other than booking (if there is a booking session)
@@ -563,7 +565,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 			event.RaceSetup.PickupModeEnabled = 1
 		}
 
-		return cm.RaceManager.applyConfigAndStart(event.RaceSetup, entryList, false, &ActiveChampionship{
+		return cm.RaceManager.applyConfigAndStart(&ActiveChampionship{
 			ChampionshipID:      championship.ID,
 			EventID:             event.ID,
 			Name:                championship.Name,
@@ -571,6 +573,8 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 			ReplacementPassword: championship.ReplacementPassword,
 			Description:         string(championship.Info),
 			IsPracticeSession:   true,
+			RaceConfig:          event.RaceSetup,
+			EntryList:           entryList,
 		})
 	}
 }
@@ -718,7 +722,7 @@ func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
 	cm.mutex.Lock()
 	defer cm.mutex.Unlock()
 
-	if !cm.process.Event().IsChampionship() || cm.activeChampionship == nil {
+	if !cm.ChampionshipEventIsRunning() {
 		return
 	}
 
@@ -899,7 +903,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			previousSessionNumLaps := cm.activeChampionship.NumLapsCompleted
 
 			defer func() {
-				if !cm.process.Event().IsChampionship() || cm.activeChampionship == nil {
+				if !cm.ChampionshipEventIsRunning() {
 					return
 				}
 
@@ -1054,8 +1058,12 @@ func (cm *ChampionshipManager) RestartEvent(championshipID string, eventID strin
 
 var ErrNoActiveChampionshipEvent = errors.New("servermanager: no active championship event")
 
+func (cm *ChampionshipManager) ChampionshipEventIsRunning() bool {
+	return cm.process.Event().IsChampionship() && !cm.process.Event().IsPractice() && cm.activeChampionship != nil
+}
+
 func (cm *ChampionshipManager) RestartActiveEvent() error {
-	if !cm.process.Event().IsChampionship() || cm.activeChampionship == nil {
+	if !cm.ChampionshipEventIsRunning() {
 		return ErrNoActiveChampionshipEvent
 	}
 
@@ -1063,7 +1071,7 @@ func (cm *ChampionshipManager) RestartActiveEvent() error {
 }
 
 func (cm *ChampionshipManager) StopActiveEvent() error {
-	if !cm.process.Event().IsChampionship() || cm.activeChampionship == nil {
+	if !cm.ChampionshipEventIsRunning() {
 		return ErrNoActiveChampionshipEvent
 	}
 

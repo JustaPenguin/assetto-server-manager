@@ -43,11 +43,13 @@ func InitWithResolver(resolver *Resolver) error {
 		for range c {
 			// ^C, handle it
 			if process.IsRunning() {
-				if process.Event().IsChampionship() {
+				event := process.Event()
+
+				if event.IsChampionship() && !event.IsPractice() {
 					if err := championshipManager.StopActiveEvent(); err != nil {
 						logrus.WithError(err).Errorf("Error stopping Championship event")
 					}
-				} else if process.Event().IsRaceWeekend() {
+				} else if event.IsRaceWeekend() && !event.IsPractice() {
 					if err := raceWeekendManager.StopActiveSession(); err != nil {
 						logrus.WithError(err).Errorf("Error stopping Race Weekend session")
 					}

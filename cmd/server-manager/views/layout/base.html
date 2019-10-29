@@ -142,9 +142,9 @@
                             {{ if WriteAccess }}
                                 <a class="nav-link dropdown-toggle" href="#" id="navBarStatusDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     {{ if .ServerEvent.IsChampionship }}
-                                        <span class="badge badge-warning">Championship in Progress</span>
+                                        <span class="badge badge-warning">Championship {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
                                     {{ else if .ServerEvent.IsRaceWeekend }}
-                                        <span class="badge badge-info">Race Weekend in Progress</span>
+                                        <span class="badge badge-info">Race Weekend {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
                                     {{ else }}
                                         <span class="badge badge-success">Assetto Server Running</span>
                                     {{ end }}
@@ -154,8 +154,12 @@
                                         class="dropdown-item"
                                         href="/process/restart"
 
-                                        {{ if .ServerEvent.IsChampionship }}
-                                            onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                        {{ if not $.ServerEvent.IsPractice }}
+                                            {{ if $.ServerEvent.IsChampionship }}
+                                                onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                            {{ else if $.ServerEvent.IsRaceWeekend }}
+                                                onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
+                                            {{ end }}
                                         {{ end }}
                                     >
                                         Restart
@@ -164,8 +168,12 @@
                                         class="dropdown-item"
                                         href="/process/stop"
 
-                                        {{ if .ServerEvent.IsChampionship }}
-                                            onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                        {{ if not $.ServerEvent.IsPractice }}
+                                            {{ if $.ServerEvent.IsChampionship }}
+                                                onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                            {{ else if $.ServerEvent.IsRaceWeekend }}
+                                                onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
+                                            {{ end }}
                                         {{ end }}
                                     >
                                         Stop
@@ -173,9 +181,9 @@
                                 </div>
                             {{ else }}
                                 {{ if .ServerEvent.IsChampionship }}
-                                    <span class="badge badge-warning">Championship in Progress</span>
+                                    <span class="badge badge-warning">Championship {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
                                 {{ else if .ServerEvent.IsRaceWeekend }}
-                                    <span class="badge badge-info">Race Weekend in Progress</span>
+                                    <span class="badge badge-info">Race Weekend {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
                                 {{ else }}
                                     <span class="badge badge-success">Assetto Server Running</span>
                                 {{ end }}

@@ -393,14 +393,14 @@ func (rwm *RaceWeekendManager) SaveRaceWeekendSession(r *http.Request) (raceWeek
 	return raceWeekend, session, edited, rwm.UpsertRaceWeekend(raceWeekend)
 }
 
-func (rwm *RaceWeekendManager) applyConfigAndStart(config CurrentRaceConfig, entryList EntryList, raceWeekend *ActiveRaceWeekend) error {
-	err := rwm.raceManager.applyConfigAndStart(config, entryList, false, raceWeekend)
+func (rwm *RaceWeekendManager) applyConfigAndStart(raceWeekend *ActiveRaceWeekend) error {
+	rwm.activeRaceWeekend = raceWeekend
+
+	err := rwm.raceManager.applyConfigAndStart(raceWeekend)
 
 	if err != nil {
 		return err
 	}
-
-	rwm.activeRaceWeekend = raceWeekend
 
 	return nil
 }
@@ -493,6 +493,8 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		OverridePassword:    overridePassword,
 		ReplacementPassword: replacementPassword,
 		Description:         fmt.Sprintf("This is a session in the '%s' Race Weekend.", raceWeekend.Name),
+		RaceConfig:          session.RaceConfig,
+		EntryList:           entryList,
 	}
 
 	if isPracticeSession {
@@ -515,9 +517,12 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 			entryList = raceWeekend.GetEntryList()
 		}
 
-		return rwm.raceManager.applyConfigAndStart(session.RaceConfig, entryList, false, raceWeekendRaceEvent)
+		raceWeekendRaceEvent.RaceConfig = session.RaceConfig
+		raceWeekendRaceEvent.EntryList = entryList
+
+		return rwm.raceManager.applyConfigAndStart(raceWeekendRaceEvent)
 	} else {
-		return rwm.applyConfigAndStart(session.RaceConfig, entryList, raceWeekendRaceEvent)
+		return rwm.applyConfigAndStart(raceWeekendRaceEvent)
 	}
 }
 
@@ -525,7 +530,7 @@ func (rwm *RaceWeekendManager) UDPCallback(message udp.Message) {
 	rwm.mutex.Lock()
 	defer rwm.mutex.Unlock()
 
-	if !rwm.process.Event().IsRaceWeekend() || rwm.activeRaceWeekend == nil {
+	if !rwm.RaceWeekendSessionIsRunning() {
 		return
 	}
 
@@ -708,8 +713,12 @@ func (rwm *RaceWeekendManager) DeleteRaceWeekend(id string) error {
 
 var ErrNoActiveRaceWeekendSession = errors.New("servermanager: no active race weekend session")
 
+func (rwm *RaceWeekendManager) RaceWeekendSessionIsRunning() bool {
+	return rwm.process.Event().IsRaceWeekend() && !rwm.process.Event().IsPractice() && rwm.activeRaceWeekend != nil
+}
+
 func (rwm *RaceWeekendManager) StopActiveSession() error {
-	if !rwm.process.Event().IsRaceWeekend() || rwm.activeRaceWeekend == nil {
+	if !rwm.RaceWeekendSessionIsRunning() {
 		return ErrNoActiveRaceWeekendSession
 	}
 
@@ -717,7 +726,7 @@ func (rwm *RaceWeekendManager) StopActiveSession() error {
 }
 
 func (rwm *RaceWeekendManager) RestartActiveSession() error {
-	if !rwm.process.Event().IsRaceWeekend() || rwm.activeRaceWeekend == nil {
+	if !rwm.RaceWeekendSessionIsRunning() {
 		return ErrNoActiveRaceWeekendSession
 	}
 

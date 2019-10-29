@@ -3,6 +3,7 @@ package servermanager
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -193,6 +194,18 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 	}()
 
 	return nil
+}
+
+const currentRaceEventMetaKey = "current_race_event"
+
+func (as *AssettoServerProcess) saveCurrentEvent(event RaceEvent) error {
+	eventMarshalled, err := json.Marshal(event)
+
+	if err != nil {
+		return err
+	}
+
+	return as.store.SetMeta(currentRaceEventMetaKey, eventMarshalled)
 }
 
 func (as *AssettoServerProcess) startChildProcess(wd string, command string) error {

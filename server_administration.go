@@ -257,18 +257,18 @@ func (sah *ServerAdministrationHandler) serverProcess(w http.ResponseWriter, r *
 
 	switch chi.URLParam(r, "action") {
 	case "stop":
-		if event.IsChampionship() {
+		if event.IsChampionship() && !event.IsPractice() {
 			err = sah.championshipManager.StopActiveEvent()
-		} else if event.IsRaceWeekend() {
+		} else if event.IsRaceWeekend() && !event.IsPractice() {
 			err = sah.raceWeekendManager.StopActiveSession()
 		} else {
 			err = sah.process.Stop()
 		}
 		txt = "stopped"
 	case "restart":
-		if event.IsChampionship() {
+		if event.IsChampionship() && !event.IsPractice() {
 			err = sah.championshipManager.RestartActiveEvent()
-		} else if event.IsRaceWeekend() {
+		} else if event.IsRaceWeekend() && !event.IsPractice() {
 			err = sah.raceWeekendManager.RestartActiveSession()
 		} else {
 			err = sah.process.Restart()
@@ -280,6 +280,12 @@ func (sah *ServerAdministrationHandler) serverProcess(w http.ResponseWriter, r *
 
 	if event.IsChampionship() {
 		noun = "Championship"
+	} else if event.IsRaceWeekend() {
+		noun = "Race Weekend"
+	}
+
+	if event.IsPractice() {
+		noun += " Practice"
 	}
 
 	if err != nil {
