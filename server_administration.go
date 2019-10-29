@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/mitchellh/go-wordwrap"
@@ -173,7 +174,23 @@ type serverBlacklistTemplateVars struct {
 func (sah *ServerAdministrationHandler) blacklist(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		// save to blacklist.txt
-		text := r.FormValue("blacklist")
+		var text string
+
+		if r.FormValue("type") == "single" {
+			// we're adding a single GUID, load the existing blacklist list then append
+			b, err := ioutil.ReadFile(filepath.Join(ServerInstallPath, "blacklist.txt"))
+			if err != nil {
+				logrus.WithError(err).Error("couldn't find blacklist.txt")
+			}
+
+			text = string(b) + r.FormValue("blacklist")
+		} else {
+			text = r.FormValue("blacklist")
+		}
+
+		if !strings.HasSuffix(text, "\n") {
+			text += "\n"
+		}
 
 		err := ioutil.WriteFile(filepath.Join(ServerInstallPath, "blacklist.txt"), []byte(text), 0644)
 
