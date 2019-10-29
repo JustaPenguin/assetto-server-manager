@@ -86,9 +86,17 @@
                                                 <small class='form-text text-muted'>If set to 0 driver will be disqualified.</small>
                                             </div>
 
-                                            <button type='submit' name='action' value='add' class='btn btn-danger'>Add Penalty</button>
+                                            <button type='submit' name='action' value='add' class='btn btn-warning'>Add Penalty</button>
                                             <button type='submit' name='action' value='remove' class='btn btn-primary'>Remove Penalty</button>
                                         </form>
+
+                                        {{ if AdminAccess }}
+                                            <form action="/blacklist" method="POST">
+                                                <input type="text" class="d-none" name="blacklist" id="blacklist" value="{{ $result.DriverGUID }}">
+
+                                                <button type='submit' name='type' value="single" class='btn btn-danger w-100 mt-1'>Blacklist Driver</button>
+                                            </form>
+                                        {{ end }}
                                     </div>
                                 </td>
                             {{ end }}
@@ -170,9 +178,17 @@
                                                 <small class='form-text text-muted'>If set to 0 driver will be disqualified.</small>
                                             </div>
 
-                                            <button type='submit' name='action' value='add' class='btn btn-danger'>Add Penalty</button>
+                                            <button type='submit' name='action' value='add' class='btn btn-warning'>Add Penalty</button>
                                             <button type='submit' name='action' value='remove' class='btn btn-primary'>Remove Penalty</button>
                                         </form>
+
+                                        {{ if AdminAccess }}
+                                            <form action="/blacklist" method="POST">
+                                                <input type="text" class="d-none" name="blacklist" id="blacklist" value="{{ $result.DriverGUID }}">
+
+                                                <button type='submit' name='type' value="single" class='btn btn-danger w-100 mt-1'>Blacklist Driver</button>
+                                            </form>
+                                        {{ end }}
                                     </div>
                                 </td>
                             {{ end }}
@@ -254,9 +270,17 @@
                                                 <small class='form-text text-muted'>If set to 0 driver will be disqualified.</small>
                                             </div>
 
-                                            <button type='submit' name='action' value='add' class='btn btn-danger'>Add Penalty</button>
+                                            <button type='submit' name='action' value='add' class='btn btn-warning'>Add Penalty</button>
                                             <button type='submit' name='action' value='remove' class='btn btn-primary'>Remove Penalty</button>
                                         </form>
+
+                                        {{ if AdminAccess }}
+                                            <form action="/blacklist" method="POST">
+                                                <input type="text" class="d-none" name="blacklist" id="blacklist" value="{{ $result.DriverGUID }}">
+
+                                                <button type='submit' name='type' value="single" class='btn btn-danger w-100 mt-1'>Blacklist Driver</button>
+                                            </form>
+                                        {{ end }}
                                     </div>
                                 </td>
                             {{ end }}
