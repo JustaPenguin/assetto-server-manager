@@ -71,6 +71,7 @@ func Router(
 
 	r.HandleFunc("/login", accountHandler.login)
 	r.HandleFunc("/logout", accountHandler.logout)
+	r.HandleFunc("/robots.txt", serverAdministrationHandler.robots)
 	r.Handle("/metrics", prometheusMonitoringHandler())
 
 	if Debug {

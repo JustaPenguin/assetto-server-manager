@@ -344,7 +344,12 @@ func (r *Resolver) resolveRaceControl() *RaceControl {
 		return r.raceControl
 	}
 
-	r.raceControl = NewRaceControl(r.resolveRaceControlHub(), filesystemTrackData{}, r.resolveServerProcess())
+	r.raceControl = NewRaceControl(
+		r.resolveRaceControlHub(),
+		filesystemTrackData{},
+		r.resolveServerProcess(),
+		r.ResolveStore(),
+	)
 
 	return r.raceControl
 }

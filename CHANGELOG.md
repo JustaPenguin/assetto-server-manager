@@ -1,3 +1,28 @@
+v1.5.3
+------
+
+Added:
+
+* Live Timings "Stored Times" will now persist between reboots of Server Manager, if the next event started is the same as the last event running before the Server Manager reboot.
+* You can now configure Server Manager to restart any Event that was running before Server Manager was stopped. Check out "Restart Event On Server Manager Launch" in Server Options.
+* Added an option to prevent web crawlers from accessing any pages on the manager using a robots.txt.
+* Added information about whether a car/track is default/mod/DLC to list and detail pages.
+* Championship and Race Weekend Looping Practice Sessions are now labelled in the navigation bar, e.g. "Championship Practice in Progress"
+* Added penalty options to Qualifying and Practice sessions, penalties can be applied independently in each session. In Race Weekends these penalties will affect the entry list of the next session.
+* Added a button to blacklist a driver directly from results pages, the button is inside the penalties popup and can only be accessed by admins.
+
+Fixes:
+
+* Fixes track/car display in dark mode
+* Fixes track details page names to be a bit nicer
+* Added Black Cat County to the list of default content
+* Fixes an issue where Server Manager would not start when a recurring race with an end date had a scheduled recurrence while Server Manager was offline.
+* Custom Races are now unscheduled when they are deleted.
+* Stopped users from being able to delete their own accounts.
+
+
+---
+
 v1.5.2
 ------
 

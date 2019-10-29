@@ -1331,11 +1331,29 @@ type ActiveChampionship struct {
 	ReplacementPassword     string
 	Description             string
 	IsPracticeSession       bool
+	RaceConfig              CurrentRaceConfig
+	EntryList               EntryList
 
 	loadedEntrants map[udp.CarID]udp.SessionCarInfo
 
-	NumLapsCompleted   int
-	NumRaceStartEvents int
+	NumLapsCompleted   int `json:"-"`
+	NumRaceStartEvents int `json:"-"`
+}
+
+func (a *ActiveChampionship) GetRaceConfig() CurrentRaceConfig {
+	return a.RaceConfig
+}
+
+func (a *ActiveChampionship) GetEntryList() EntryList {
+	return a.EntryList
+}
+
+func (a *ActiveChampionship) IsLooping() bool {
+	return false
+}
+
+func (a *ActiveChampionship) IsPractice() bool {
+	return a.IsPracticeSession
 }
 
 func (a *ActiveChampionship) GetURL() string {
@@ -1347,7 +1365,7 @@ func (a *ActiveChampionship) GetURL() string {
 }
 
 func (a *ActiveChampionship) IsChampionship() bool {
-	return !a.IsPracticeSession
+	return true
 }
 
 func (a *ActiveChampionship) IsRaceWeekend() bool {

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/mitchellh/go-wordwrap"
@@ -173,7 +174,23 @@ type serverBlacklistTemplateVars struct {
 func (sah *ServerAdministrationHandler) blacklist(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		// save to blacklist.txt
-		text := r.FormValue("blacklist")
+		var text string
+
+		if r.FormValue("type") == "single" {
+			// we're adding a single GUID, load the existing blacklist list then append
+			b, err := ioutil.ReadFile(filepath.Join(ServerInstallPath, "blacklist.txt"))
+			if err != nil {
+				logrus.WithError(err).Error("couldn't find blacklist.txt")
+			}
+
+			text = string(b) + r.FormValue("blacklist")
+		} else {
+			text = r.FormValue("blacklist")
+		}
+
+		if !strings.HasSuffix(text, "\n") {
+			text += "\n"
+		}
 
 		err := ioutil.WriteFile(filepath.Join(ServerInstallPath, "blacklist.txt"), []byte(text), 0644)
 
@@ -257,18 +274,18 @@ func (sah *ServerAdministrationHandler) serverProcess(w http.ResponseWriter, r *
 
 	switch chi.URLParam(r, "action") {
 	case "stop":
-		if event.IsChampionship() {
+		if event.IsChampionship() && !event.IsPractice() {
 			err = sah.championshipManager.StopActiveEvent()
-		} else if event.IsRaceWeekend() {
+		} else if event.IsRaceWeekend() && !event.IsPractice() {
 			err = sah.raceWeekendManager.StopActiveSession()
 		} else {
 			err = sah.process.Stop()
 		}
 		txt = "stopped"
 	case "restart":
-		if event.IsChampionship() {
+		if event.IsChampionship() && !event.IsPractice() {
 			err = sah.championshipManager.RestartActiveEvent()
-		} else if event.IsRaceWeekend() {
+		} else if event.IsRaceWeekend() && !event.IsPractice() {
 			err = sah.raceWeekendManager.RestartActiveSession()
 		} else {
 			err = sah.process.Restart()
@@ -280,6 +297,12 @@ func (sah *ServerAdministrationHandler) serverProcess(w http.ResponseWriter, r *
 
 	if event.IsChampionship() {
 		noun = "Championship"
+	} else if event.IsRaceWeekend() {
+		noun = "Race Weekend"
+	}
+
+	if event.IsPractice() {
+		noun += " Practice"
 	}
 
 	if err != nil {
@@ -299,15 +322,36 @@ type changelogTemplateVars struct {
 }
 
 func (sah *ServerAdministrationHandler) changelog(w http.ResponseWriter, r *http.Request) {
-	changelog, err := LoadChangelog()
+	sah.viewRenderer.MustLoadTemplate(w, r, "changelog.html", &changelogTemplateVars{
+		Changelog: Changelog,
+	})
+}
+
+func (sah *ServerAdministrationHandler) robots(w http.ResponseWriter, r *http.Request) {
+	// do we want to let robots on the internet know things about us?!?
+	serverOpts, err := sah.store.LoadServerOptions()
 
 	if err != nil {
-		logrus.WithError(err).Error("could not load changelog")
+		logrus.WithError(err).Errorf("couldn't load server options")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	sah.viewRenderer.MustLoadTemplate(w, r, "changelog.html", &changelogTemplateVars{
-		Changelog: changelog,
-	})
+	var response string
+
+	w.Header().Set("Content-Type", "text/plain")
+
+	if serverOpts.PreventWebCrawlers == 1 {
+		response = "User-agent: *\nDisallow: /"
+	} else {
+		response = "User-agent: *\nDisallow:"
+	}
+
+	_, err = w.Write([]byte(response))
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't write response text")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 }

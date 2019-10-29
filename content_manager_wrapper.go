@@ -169,7 +169,7 @@ func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 		err := track.LoadMetaData()
 
 		if err != nil {
-			logrus.WithError(err).Warnf("Could not load meta data for: %s, skipping attaching download URL to Content Manager Wrapper", cmw.serverConfig.CurrentRaceConfig.Track)
+			logrus.WithError(err).Debugf("Could not load meta data for: %s, skipping attaching download URL to Content Manager Wrapper", cmw.serverConfig.CurrentRaceConfig.Track)
 		} else if track.MetaData.DownloadURL != "" {
 			text += fmt.Sprintf("\n* %s Download: %s", track.Name, track.MetaData.DownloadURL)
 		}

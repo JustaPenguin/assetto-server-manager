@@ -440,7 +440,15 @@ func (ah *AccountHandler) update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah *AccountHandler) deleteAccount(w http.ResponseWriter, r *http.Request) {
+	requestAccount := AccountFromRequest(r)
+
 	accountID := chi.URLParam(r, "id")
+
+	if requestAccount.ID.String() == accountID {
+		AddErrorFlash(w, r, "You can't delete your own account!")
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+		return
+	}
 
 	if err := ah.store.DeleteAccount(accountID); err != nil {
 		logrus.WithError(err).Errorf("Could not delete account")
