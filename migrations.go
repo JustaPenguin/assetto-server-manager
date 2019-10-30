@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/cj123/assetto-server-manager/fixtures/race-weekend-examples"
+	"github.com/cj123/assetto-server-manager/fixtures/default-content"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -72,6 +72,7 @@ var (
 		addAvailableCarsToChampionshipClass,
 		addTyresForP13c,
 		changeNotificationTimer,
+		addContentExamples,
 	}
 )
 
@@ -427,7 +428,7 @@ func addRaceWeekendExamples(s Store) error {
 
 	var raceWeekend *RaceWeekend
 
-	err := json.Unmarshal(raceweekendexamples.F12004spa, &raceWeekend)
+	err := json.Unmarshal(defaultcontent.RaceWeekendF12004spa, &raceWeekend)
 
 	if err != nil {
 		return err
@@ -518,4 +519,66 @@ func addTyresForP13c(s Store) error {
 	}
 
 	return addTyresToModTyres(IERP13c, tyres)
+}
+
+func addContentExamples(s Store) error {
+	logrus.Infof("Running migration: Add Content examples")
+
+	championships, err := s.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	if len(championships) == 0 {
+		var mx5Championship *Championship
+
+		if err := json.Unmarshal(defaultcontent.ChampionshipMX5CrashCourse, &mx5Championship); err != nil {
+			return err
+		}
+
+		if err := s.UpsertChampionship(mx5Championship); err != nil {
+			return err
+		}
+
+		var multiclassChampionship *Championship
+
+		if err := json.Unmarshal(defaultcontent.ChampionshipMulticlassEndurance, &multiclassChampionship); err != nil {
+			return err
+		}
+
+		if err := s.UpsertChampionship(multiclassChampionship); err != nil {
+			return err
+		}
+	}
+
+	customRaces, err := s.ListCustomRaces()
+
+	if err != nil {
+		return err
+	}
+
+	if len(customRaces) == 0 {
+		var f2004RaceSpa *CustomRace
+
+		if err := json.Unmarshal(defaultcontent.CustomRaceF2004Spa, &f2004RaceSpa); err != nil {
+			return err
+		}
+
+		if err := s.UpsertCustomRace(f2004RaceSpa); err != nil {
+			return err
+		}
+
+		var bmw235iRace *CustomRace
+
+		if err := json.Unmarshal(defaultcontent.CustomRaceBMWZandvoort, &bmw235iRace); err != nil {
+			return err
+		}
+
+		if err := s.UpsertCustomRace(bmw235iRace); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
