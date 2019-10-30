@@ -50,7 +50,7 @@ type ContentManagerWrapperData struct {
 	PasswordChecksum [2]string `json:"passwordChecksum"`
 	WrappedPort      int       `json:"wrappedPort"`
 
-	Content   CMContent `json:"content"`
+	Content   *CMContent `json:"content"`
 	Frequency int       `json:"frequency"`
 	Until     int64     `json:"until"`
 }
@@ -448,7 +448,7 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 		PasswordChecksum: passwordChecksum,
 		WrappedPort:      global.ContentManagerWrapperPort,
 
-		Content:   *cmContent,
+		Content:   cmContent,
 		Frequency: global.ClientSendIntervalInHertz,
 		Until:     time.Now().Add(time.Second * time.Duration(sessionInfo.Timeleft)).Unix(),
 	}, nil
