@@ -316,7 +316,7 @@
                                 <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
                                     {{ if $championship.IsMultiClass }}
                                         {{ if eq $i 0 }}
-                                            <td rowspan="{{ add (len $class.Points.Places) 3 }}">{{ $class.Name }}</td>
+                                            <td rowspan="{{ add (len $class.Points.Places) 6 }}">{{ $class.Name }}</td>
                                         {{ end }}
                                     {{ end }}
                                     <td>{{ add $i 1 }}{{ ordinal (add $i 1) }}</td>
