@@ -10,6 +10,8 @@ Added:
 * Championship and Race Weekend Looping Practice Sessions are now labelled in the navigation bar, e.g. "Championship Practice in Progress"
 * Added penalty options to Qualifying and Practice sessions, penalties can be applied independently in each session. In Race Weekends these penalties will affect the entry list of the next session.
 * Added a button to blacklist a driver directly from results pages, the button is inside the penalties popup and can only be accessed by admins.
+* Added content download links to discord messages (thanks @cheesegrits!)
+* You can now filter stock, DLC and mod cars in or out of the car search. Check out the car search help for more details!
 * Server Manager will now set up some example Championships and Custom Races if you have not yet created any
 
 Fixes:
