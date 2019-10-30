@@ -275,7 +275,7 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 	// look for live timings stored previously
 	persistedInfo, err := rc.store.LoadLiveTimingsData()
 
-	if err == nil {
+	if err == nil && persistedInfo != nil {
 		if persistedInfo.SessionType == rc.SessionInfo.Type &&
 			persistedInfo.Track == rc.SessionInfo.Track &&
 			persistedInfo.TrackLayout == rc.SessionInfo.TrackConfig &&
