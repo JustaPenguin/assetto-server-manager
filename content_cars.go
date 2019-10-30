@@ -78,6 +78,9 @@ type CarDetails struct {
 	URL          string          `json:"url"`
 	Version      string          `json:"version"`
 	Year         ShouldBeAnInt   `json:"year"`
+	IsStock      bool            `json:"stock"`
+	IsDLC        bool            `json:"dlc"`
+	IsMod        bool            `json:"mod"`
 
 	DownloadURL string `json:"downloadURL"`
 	Notes       string `json:"notes"`
@@ -182,6 +185,11 @@ func (cd *CarDetails) Load(carName string) error {
 	}
 
 	cd.SpecsNumeric = cd.Specs.Numeric()
+
+	isDLC, isStock := isCarPaidDLC[carName]
+	cd.IsStock = isStock
+	cd.IsDLC = isDLC
+	cd.IsMod = !isStock && !isDLC
 
 	return nil
 }
@@ -467,9 +475,25 @@ func (cm *CarManager) IndexAllCars() error {
 	return nil
 }
 
+var (
+	positiveCarTypeRegex = regexp.MustCompile(`\+(mod|dlc|stock)`)
+	negativeCarTypeRegex = regexp.MustCompile(`-(mod|dlc|stock)`)
+)
+
+func (cm *CarManager) rebuildTerm(term string) string {
+	// bleve only allows searching for true/false via the ugly terms
+	// e.g. dlc:T* - make these a bit more user friendly (e.g. +dlc)
+	term = positiveCarTypeRegex.ReplaceAllString(term, "$1:T*")
+	term = negativeCarTypeRegex.ReplaceAllString(term, "$1:F*")
+
+	return term
+}
+
 // Search looks for cars in the search index.
 func (cm *CarManager) Search(ctx context.Context, term string, from, size int) (*bleve.SearchResult, Cars, error) {
 	var q query.Query
+
+	term = cm.rebuildTerm(term)
 
 	if term == "" {
 		q = bleve.NewMatchAllQuery()
