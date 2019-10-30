@@ -52,13 +52,20 @@
                 <code>spec.weight</code>
             </small>
         </li>
+
+        <li>
+            <strong>Searching for Stock, DLC and Mod content</strong> - you can search specifically for only stock,
+            only DLC or only mod content by using one (or multiple) of the following: <code>+stock</code>, <code>+dlc</code>, <code>+mod</code>.
+
+            You can remove stock, DLC or mod content from the results by using one (or multiple) of the following: <code>-stock</code>, <code>-dlc</code>, <code>-mod</code>.
+        </li>
     </ul>
 
     <p>Of course, you can combine all of the above things into one query! That might look like the following:</p>
 
     <div class="text-center">
-        <code>+ferrari -vintage +tags:"semiautomatic" +spec.bhp:>600</code><br>
-        <em>"must be a ferrari", "must not be vintage", "must have the tag 'semiautomatic'", "must have a BHP greater than 600".</em>
+        <code>+ferrari -vintage +tags:"semiautomatic" +spec.bhp:>600 -dlc</code><br>
+        <em>"must be a ferrari", "must not be vintage", "must have the tag 'semiautomatic'", "must have a BHP greater than 600", "must not be DLC".</em>
     </div>
     <br>
 
