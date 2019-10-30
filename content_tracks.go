@@ -66,11 +66,7 @@ func LoadTrackMetaDataFromName(name string) (*TrackMetaData, error) {
 }
 
 func (t *Track) LoadMetaData() error {
-	metaDataFile := filepath.Join(ServerInstallPath, "content", "tracks", t.Name, "ui")
-
-	metaDataFile = filepath.Join(metaDataFile, trackMetaDataName)
-
-	trackMetaData, err := LoadTrackMetaDataFromName(metaDataFile)
+	trackMetaData, err := LoadTrackMetaDataFromName(t.Name)
 
 	if err != nil {
 		return err
