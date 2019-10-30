@@ -11,7 +11,7 @@ Added:
 * Added penalty options to Qualifying and Practice sessions, penalties can be applied independently in each session. In Race Weekends these penalties will affect the entry list of the next session.
 * Added a button to blacklist a driver directly from results pages, the button is inside the penalties popup and can only be accessed by admins.
 * Added content download links to discord messages (thanks @cheesegrits!)
-* You can now filter stock, DLC and mod cars in or out of the car search. Check out the car search help for more details!
+* You can now filter stock, DLC and mod cars in or out of the car search. Check out the car search help for more details! Please note that you will need to rebuild your search index for this to work. Go to Server Options, scroll down to "Maintenance" and click "Rebuild Search Index"!
 * Server Manager will now set up some example Championships and Custom Races if you have not yet created any
 
 Fixes:
