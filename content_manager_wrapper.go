@@ -69,8 +69,12 @@ type CMAssists struct {
 }
 
 type CMContent struct {
-	Cars     struct{} `json:"cars"`
-	Password bool     `json:"password"`
+	Cars     map[string]ContentURL `json:"cars"`
+	Track    ContentURL `json:"track"`
+}
+
+type ContentURL struct {
+	URL string `json:"url"`
 }
 
 type ACHTTPPlayers struct {
@@ -112,6 +116,35 @@ func NewContentManagerWrapper(store Store, carManager *CarManager, trackManager 
 		carManager:   carManager,
 		trackManager: trackManager,
 	}
+}
+
+func(cmw *ContentManagerWrapper) NewCMContent(cars []string, trackName string) (*CMContent, error) {
+	carsMap := make(map[string]ContentURL)
+
+	for _, carName := range cars {
+		car, err := cmw.carManager.LoadCar(carName, nil)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("Couldn't load car for CM Wrapper: %s", carName)
+			return nil, err
+		}
+
+		carsMap[car.Name] = ContentURL{URL:car.Details.DownloadURL}
+	}
+
+	trackMeta, err := LoadTrackMetaDataFromName(trackName)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Couldn't load track for CM Wrapper: %s", trackName)
+		return nil, err
+	}
+
+	return &CMContent{
+		Cars:  carsMap,
+		Track: ContentURL{
+			URL: trackMeta.DownloadURL,
+		},
+	}, nil
 }
 
 func (cmw *ContentManagerWrapper) UDPCallback(message udp.Message) {
@@ -374,6 +407,13 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 
 	description += cmw.description
 
+	cmContent, err := cmw.NewCMContent(sessionInfo.Cars, race.Track)
+
+	if err != nil {
+		logrus.Errorf("Couldn't attach content download URL(s) through CM Wrapper!")
+		cmContent = &CMContent{}
+	}
+
 	return &ContentManagerWrapperData{
 		ACHTTPSessionInfo: *sessionInfo,
 		Players:           *players,
@@ -408,7 +448,7 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 		PasswordChecksum: passwordChecksum,
 		WrappedPort:      global.ContentManagerWrapperPort,
 
-		Content:   CMContent{}, // not supported
+		Content:   *cmContent,
 		Frequency: global.ClientSendIntervalInHertz,
 		Until:     time.Now().Add(time.Second * time.Duration(sessionInfo.Timeleft)).Unix(),
 	}, nil
