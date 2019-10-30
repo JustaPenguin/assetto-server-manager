@@ -1,6 +1,6 @@
-package raceweekendexamples
+package defaultcontent
 
-var F12004spa = []byte(`
+var RaceWeekendF12004spa = []byte(`
 {
 "ID": "3d31b433-3e5d-4703-97f9-4ec5250c1a80",
 "Name": "F1 Race Weekend at Spa",
