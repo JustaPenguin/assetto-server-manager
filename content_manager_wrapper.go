@@ -69,8 +69,8 @@ type CMAssists struct {
 }
 
 type CMContent struct {
-	Cars     map[string]ContentURL `json:"cars"`
-	Track    ContentURL `json:"track"`
+	Cars  map[string]ContentURL `json:"cars"`
+	Track ContentURL            `json:"track"`
 }
 
 type ContentURL struct {
@@ -118,7 +118,7 @@ func NewContentManagerWrapper(store Store, carManager *CarManager, trackManager 
 	}
 }
 
-func(cmw *ContentManagerWrapper) NewCMContent(cars []string, trackName string) (*CMContent, error) {
+func (cmw *ContentManagerWrapper) NewCMContent(cars []string, trackName string) (*CMContent, error) {
 	carsMap := make(map[string]ContentURL)
 
 	for _, carName := range cars {
@@ -129,7 +129,7 @@ func(cmw *ContentManagerWrapper) NewCMContent(cars []string, trackName string) (
 			return nil, err
 		}
 
-		carsMap[car.Name] = ContentURL{URL:car.Details.DownloadURL}
+		carsMap[car.Name] = ContentURL{URL: car.Details.DownloadURL}
 	}
 
 	trackMeta, err := LoadTrackMetaDataFromName(trackName)
@@ -140,7 +140,7 @@ func(cmw *ContentManagerWrapper) NewCMContent(cars []string, trackName string) (
 	}
 
 	return &CMContent{
-		Cars:  carsMap,
+		Cars: carsMap,
 		Track: ContentURL{
 			URL: trackMeta.DownloadURL,
 		},

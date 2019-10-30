@@ -12,7 +12,8 @@ Added:
 * Added a button to blacklist a driver directly from results pages, the button is inside the penalties popup and can only be accessed by admins.
 * Added content download links to discord messages (thanks @cheesegrits!)
 * You can now filter stock, DLC and mod cars in or out of the car search. Check out the car search help for more details!
-* Server Manager will now set up some example Championships and Custom Races if you have not yet created any
+* Enabled Content Manager Wrapper "Install Missing Content" button, just add links to tracks/cars on their detail pages and the button will work for events using that content!
+* Server Manager will now set up some example Championships and Custom Races if you have not yet created any.
 
 Fixes:
 
