@@ -817,7 +817,6 @@ class RaceSetup {
 
                 if (car in availableCars && availableCars[car] != null) {
                     for (let skin of availableCars[car]) {
-                        console.log(skin);
                         let $opt = $("<option/>");
                         $opt.attr({'value': skin});
                         $opt.text(prettifyName(skin, true));
