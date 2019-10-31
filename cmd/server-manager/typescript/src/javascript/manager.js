@@ -147,27 +147,31 @@ $(document).ready(function () {
 const nameRegex = /^[A-Za-z]{0,5}[0-9]+/;
 
 function prettifyName(name, acronyms) {
-    if (!name || name.length === 0) {
-        return "";
-    }
-
-    let parts = name.split("_");
-
-    if (parts[0] === "ks") {
-        parts.shift();
-    }
-
-    for (let i = 0; i < parts.length; i++) {
-        if ((acronyms && parts[i].length <= 3) || (acronyms && parts[i].match(nameRegex))) {
-            parts[i] = parts[i].toUpperCase();
-        } else {
-            parts[i] = parts[i].split(' ')
-                .map(w => w[0].toUpperCase() + w.substr(1).toLowerCase())
-                .join(' ');
+    try {
+        if (!name || name.length === 0) {
+            return "";
         }
-    }
 
-    return parts.join(" ")
+        let parts = name.split("_");
+
+        if (parts[0] === "ks") {
+            parts.shift();
+        }
+
+        for (let i = 0; i < parts.length; i++) {
+            if ((acronyms && parts[i].length <= 3) || (acronyms && parts[i].match(nameRegex))) {
+                parts[i] = parts[i].toUpperCase();
+            } else {
+                let split = parts[i].split(' ');
+
+                parts[i] = split.map(w => w.length > 0 ? w[0].toUpperCase() + w.substr(1).toLowerCase() : "").join(' ');
+            }
+        }
+
+        return parts.join(" ")
+    } catch(error) {
+         return name
+    }
 }
 
 
@@ -813,6 +817,7 @@ class RaceSetup {
 
                 if (car in availableCars && availableCars[car] != null) {
                     for (let skin of availableCars[car]) {
+                        console.log(skin);
                         let $opt = $("<option/>");
                         $opt.attr({'value': skin});
                         $opt.text(prettifyName(skin, true));
