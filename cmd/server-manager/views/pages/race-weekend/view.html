@@ -249,9 +249,7 @@
                                     </form>
                                 </div>
 
-                                {{ if not ($session.HasParent $.RaceWeekend.ID.String) }}
-                                    <a class="btn btn-primary btn-sm manage-entrylist" href="#">Manage Entry List</a>
-                                {{ end }}
+                                <a class="btn btn-primary btn-sm manage-entrylist" href="#">Manage Entry List</a>
                             {{ else if $session.InProgress }}
                                 <a onClick="return confirm('I understand that this will restart this entire session and any current results will be lost.') "
                                    class="btn btn-warning btn-sm" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/restart">

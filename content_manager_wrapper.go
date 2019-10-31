@@ -51,8 +51,8 @@ type ContentManagerWrapperData struct {
 	WrappedPort      int       `json:"wrappedPort"`
 
 	Content   *CMContent `json:"content"`
-	Frequency int       `json:"frequency"`
-	Until     int64     `json:"until"`
+	Frequency int        `json:"frequency"`
+	Until     int64      `json:"until"`
 }
 
 type CMAssists struct {

@@ -59,13 +59,13 @@ func reverseEntrants(numToReverse int, entrants []*RaceWeekendSessionEntrant) {
 
 // Filter takes a set of RaceWeekendSessionEntrants formed by the results of the parent session and filters them into a child session entry list.
 func (f RaceWeekendSessionToSessionFilter) Filter(raceWeekend *RaceWeekend, parentSession, childSession *RaceWeekendSession, parentSessionResults []*RaceWeekendSessionEntrant, childSessionEntryList *RaceWeekendEntryList) error {
-	if parentSession.Completed() {
+	if parentSession.Completed() || childSession.IsBase() {
 		sorter := GetRaceWeekendEntryListSort(f.SortType)
 
 		parentSession.NumEntrantsToReverse = f.NumEntrantsToReverse
 
 		// race weekend session is completed and has a valid sorter, use it to sort results before filtering.
-		if err := sorter(parentSession, parentSessionResults); err != nil {
+		if err := sorter.Sort(raceWeekend, parentSession, parentSessionResults); err != nil {
 			return err
 		}
 	}
