@@ -51,8 +51,8 @@ type ContentManagerWrapperData struct {
 	WrappedPort      int       `json:"wrappedPort"`
 
 	Content   *CMContent `json:"content"`
-	Frequency int       `json:"frequency"`
-	Until     int64     `json:"until"`
+	Frequency int        `json:"frequency"`
+	Until     int64      `json:"until"`
 }
 
 type CMAssists struct {
@@ -120,13 +120,14 @@ func NewContentManagerWrapper(store Store, carManager *CarManager, trackManager 
 
 func (cmw *ContentManagerWrapper) NewCMContent(cars []string, trackName string) (*CMContent, error) {
 	carsMap := make(map[string]ContentURL)
+	var trackDownload string
 
 	for _, carName := range cars {
 		car, err := cmw.carManager.LoadCar(carName, nil)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Couldn't load car for CM Wrapper: %s", carName)
-			return nil, err
+			continue
 		}
 
 		carsMap[car.Name] = ContentURL{URL: car.Details.DownloadURL}
@@ -136,13 +137,14 @@ func (cmw *ContentManagerWrapper) NewCMContent(cars []string, trackName string) 
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Couldn't load track for CM Wrapper: %s", trackName)
-		return nil, err
+	} else {
+		trackDownload = trackMeta.DownloadURL
 	}
 
 	return &CMContent{
 		Cars: carsMap,
 		Track: ContentURL{
-			URL: trackMeta.DownloadURL,
+			URL: trackDownload,
 		},
 	}, nil
 }
