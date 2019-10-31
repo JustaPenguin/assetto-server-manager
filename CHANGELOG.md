@@ -24,7 +24,7 @@ Fixes:
 * Fixes an issue where Server Manager would not start when a recurring race with an end date had a scheduled recurrence while Server Manager was offline.
 * Custom Races are now unscheduled when they are deleted.
 * Stopped users from being able to delete their own accounts.
-
+* Fixes an issue where drivers who switched teams mid-Championship had an incorrect number of races shown for their teams.
 
 ---
 

@@ -707,7 +707,6 @@ func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, override
 	var entryList RaceWeekendEntryList
 
 	if rws.IsBase() {
-		// base race weekend sessions just return the race weekend EntryList
 		entryList = EntryListToRaceWeekendEntryList(rw.GetEntryList(), rws.ID)
 
 		if overrideFilter == nil {
