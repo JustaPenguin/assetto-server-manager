@@ -25,6 +25,7 @@ Fixes:
 * Custom Races are now unscheduled when they are deleted.
 * Stopped users from being able to delete their own accounts.
 * Fixes an issue where drivers who switched teams mid-Championship had an incorrect number of races shown for their teams.
+* Championship event inheritence now correctly uses the previous event setup, not the first event setup
 
 ---
 
