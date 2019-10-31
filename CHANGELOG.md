@@ -14,6 +14,7 @@ Added:
 * Enabled Content Manager Wrapper "Install Missing Content" button, just add links to tracks/cars on their detail pages and the button will work for events using that content!
 * You can now filter stock, DLC and mod cars in or out of the car search. Check out the car search help for more details! Please note that you will need to rebuild your search index for this to work. Go to Server Options, scroll down to "Maintenance" and click "Rebuild Search Index"!
 * Server Manager will now set up some example Championships and Custom Races if you have not yet created any
+* You can now sort the EntryList for a Championship Race Weekend Session by the number of Championship points a driver has. This could be useful for running reverse grid qualifying races!
 
 Fixes:
 
@@ -23,7 +24,8 @@ Fixes:
 * Fixes an issue where Server Manager would not start when a recurring race with an end date had a scheduled recurrence while Server Manager was offline.
 * Custom Races are now unscheduled when they are deleted.
 * Stopped users from being able to delete their own accounts.
-
+* Fixes an issue where drivers who switched teams mid-Championship had an incorrect number of races shown for their teams.
+* Championship event inheritence now correctly uses the previous event setup, not the first event setup
 
 ---
 

@@ -704,44 +704,61 @@ var ErrRaceWeekendSessionDependencyIncomplete = errors.New("servermanager: race 
 
 // GetRaceWeekendEntryList returns the RaceWeekendEntryList for the given session, built from the parent session(s) results and applied filters.
 func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, overrideFilter *RaceWeekendSessionToSessionFilter, overrideFilterSessionID string) (RaceWeekendEntryList, error) {
+	var entryList RaceWeekendEntryList
+
 	if rws.IsBase() {
-		// base race weekend sessions just return the race weekend EntryList
-		return EntryListToRaceWeekendEntryList(rw.GetEntryList(), rws.ID), nil
-	}
+		entryList = EntryListToRaceWeekendEntryList(rw.GetEntryList(), rws.ID)
 
-	entryList := make(RaceWeekendEntryList, 0)
+		if overrideFilter == nil {
+			var err error
 
-	for _, parentSessionID := range rws.ParentIDs {
-		parentSession, err := rw.FindSessionByID(parentSessionID.String())
-
-		if err != nil {
-			return nil, err
-		}
-
-		finishingGrid, err := parentSession.FinishingGrid(rw)
-
-		if err != nil {
-			return nil, err
-		}
-
-		if overrideFilter != nil && parentSessionID.String() == overrideFilterSessionID {
-			// override filters are provided when users are modifying filters for their race weekend setups
-			err = overrideFilter.Filter(rw, parentSession, rws, finishingGrid, &entryList)
+			overrideFilter, err = rw.GetFilterOrUseDefault(rw.ID.String(), rws.ID.String())
 
 			if err != nil {
 				return nil, err
 			}
-		} else {
-			sessionToSessionFilter, err := rw.GetFilterOrUseDefault(parentSessionID.String(), rws.ID.String())
+		}
+
+		err := overrideFilter.Filter(rw, rws, rws, entryList, &entryList)
+
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		entryList = make(RaceWeekendEntryList, 0)
+
+		for _, parentSessionID := range rws.ParentIDs {
+			parentSession, err := rw.FindSessionByID(parentSessionID.String())
 
 			if err != nil {
 				return nil, err
 			}
 
-			err = sessionToSessionFilter.Filter(rw, parentSession, rws, finishingGrid, &entryList)
+			finishingGrid, err := parentSession.FinishingGrid(rw)
 
 			if err != nil {
 				return nil, err
+			}
+
+			if overrideFilter != nil && parentSessionID.String() == overrideFilterSessionID {
+				// override filters are provided when users are modifying filters for their race weekend setups
+				err = overrideFilter.Filter(rw, parentSession, rws, finishingGrid, &entryList)
+
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				sessionToSessionFilter, err := rw.GetFilterOrUseDefault(parentSessionID.String(), rws.ID.String())
+
+				if err != nil {
+					return nil, err
+				}
+
+				err = sessionToSessionFilter.Filter(rw, parentSession, rws, finishingGrid, &entryList)
+
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
@@ -750,7 +767,7 @@ func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, override
 		// sorting can only be run if a session is ready to be run.
 		sorter := GetRaceWeekendEntryListSort(rws.SortType)
 
-		if err := sorter(rws, entryList); err != nil {
+		if err := sorter.Sort(rw, rws, entryList); err != nil {
 			return nil, err
 		}
 

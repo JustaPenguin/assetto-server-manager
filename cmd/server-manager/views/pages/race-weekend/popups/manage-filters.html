@@ -30,7 +30,6 @@
                     <div class="col-md-6">
                         <form>
 
-                            {{ if not $.ParentSession.IsBase }}
                                 <div class="card border-warning">
                                     <div class="card-body">
                                         <p>Sort the drivers from the <strong>{{ $.ParentSession.Name }}</strong> Results by:</p>
@@ -42,18 +41,18 @@
                                                 {{ if WriteAccess }}
                                                     <select id="ResultsSort" name="ResultsSort" class="form-control">
                                                         {{ range $index, $sorter := $.AvailableSorters }}
-                                                            <option value="{{ $sorter.Key }}" {{ if eq $sorter.Key $.Filter.SortType }}selected="selected"{{ end }}>{{ $sorter.Name }}</option>
+                                                            {{ if or (not $.ParentSession.IsBase) (not $sorter.NeedsParentSession) }}
+                                                                <option value="{{ $sorter.Key }}" {{ if eq $sorter.Key $.Filter.SortType }}selected="selected"{{ end }}>{{ $sorter.Name }}</option>
+                                                            {{ end }}
                                                         {{ end }}
                                                     </select>
                                                 {{ else }}
                                                     <label class="col-form-label">
-
-                                                    {{ range $index, $sorter := $.AvailableSorters }}
-                                                        {{ if eq $sorter.Key $.Filter.SortType }}
-                                                            {{ $sorter.Name }}
+                                                        {{ range $index, $sorter := $.AvailableSorters }}
+                                                            {{ if eq $sorter.Key $.Filter.SortType }}
+                                                                {{ $sorter.Name }}
+                                                            {{ end }}
                                                         {{ end }}
-                                                    {{ end }}
-
                                                     </label>
                                                 {{ end }}
                                             </div>
@@ -109,7 +108,6 @@
                                     <i class="fa fa-arrow-down"></i>
                                 </div>
 
-                            {{ end }}
 
                             <div class="card border-primary">
                                 <div class="card-body">

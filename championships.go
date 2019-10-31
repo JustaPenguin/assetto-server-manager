@@ -891,7 +891,18 @@ func (c *ChampionshipClass) PenaltyForTeam(name string) int {
 	}
 }
 
-func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints func(event *ChampionshipEvent, driverGUID string, points float64)) {
+type PointsReason int
+
+const (
+	PointsEventFinish PointsReason = iota
+	PointsPolePosition
+	PointsFastestLap
+	PointsCollisionWithCar
+	PointsCollisionWithEnvironment
+	PointsCutTrack
+)
+
+func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints func(event *ChampionshipEvent, driverGUID string, points float64, reason PointsReason)) {
 	eventsReverseCompletedOrder := make([]*ChampionshipEvent, len(events))
 
 	copy(eventsReverseCompletedOrder, events)
@@ -927,7 +938,7 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 							continue
 						}
 
-						givePoints(event, driver.DriverGUID, float64(points.PolePosition)*pointsMultiplier)
+						givePoints(event, driver.DriverGUID, float64(points.PolePosition)*pointsMultiplier, PointsPolePosition)
 					}
 
 					continue
@@ -949,16 +960,16 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 					continue
 				}
 
-				givePoints(event, driver.DriverGUID, points.ForPos(pos)*pointsMultiplier)
+				givePoints(event, driver.DriverGUID, points.ForPos(pos)*pointsMultiplier, PointsEventFinish)
 
 				if fastestLap.DriverGUID == driver.DriverGUID {
-					givePoints(event, driver.DriverGUID, float64(points.BestLap)*pointsMultiplier)
+					givePoints(event, driver.DriverGUID, float64(points.BestLap)*pointsMultiplier, PointsFastestLap)
 				}
 
 				if sessionType == SessionTypeRace || sessionType == SessionTypeSecondRace {
-					givePoints(event, driver.DriverGUID, float64(points.CollisionWithDriver*session.Results.GetCrashesOfType(driver.DriverGUID, "COLLISION_WITH_CAR"))*pointsMultiplier*-1)
-					givePoints(event, driver.DriverGUID, float64(points.CollisionWithEnv*session.Results.GetCrashesOfType(driver.DriverGUID, "COLLISION_WITH_ENV"))*pointsMultiplier*-1)
-					givePoints(event, driver.DriverGUID, float64(points.CutTrack*session.Results.GetCuts(driver.DriverGUID))*pointsMultiplier*-1)
+					givePoints(event, driver.DriverGUID, float64(points.CollisionWithDriver*session.Results.GetCrashesOfType(driver.DriverGUID, "COLLISION_WITH_CAR"))*pointsMultiplier*-1, PointsCollisionWithCar)
+					givePoints(event, driver.DriverGUID, float64(points.CollisionWithEnv*session.Results.GetCrashesOfType(driver.DriverGUID, "COLLISION_WITH_ENV"))*pointsMultiplier*-1, PointsCollisionWithEnvironment)
+					givePoints(event, driver.DriverGUID, float64(points.CutTrack*session.Results.GetCuts(driver.DriverGUID))*pointsMultiplier*-1, PointsCutTrack)
 				}
 			}
 		}
@@ -1015,7 +1026,7 @@ func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent) []*Champion
 
 	standings := make(map[string]*ChampionshipStanding)
 
-	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64) {
+	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64, reason PointsReason) {
 		var car *SessionCar
 
 		for _, sessionType := range championshipStandingSessionOrder {
@@ -1042,7 +1053,11 @@ func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent) []*Champion
 		}
 
 		standings[driverGUID].Points += points
-		standings[driverGUID].AddEventForTeam(car.Driver.Team)
+
+		if reason == PointsEventFinish {
+			// only increment team finishes for a 'finish' reason
+			standings[driverGUID].AddEventForTeam(car.Driver.Team)
+		}
 	})
 
 	for _, standing := range standings {
@@ -1115,7 +1130,7 @@ func (c *ChampionshipClass) TeamStandings(inEvents []*ChampionshipEvent) []*Team
 	// make a copy of events so we do not persist race weekend sessions
 	events := ExtractRaceWeekendSessionsIntoIndividualEvents(inEvents)
 
-	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64) {
+	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64, reason PointsReason) {
 		var team string
 
 		// find the team the driver was in for this race.

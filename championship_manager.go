@@ -363,6 +363,7 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (*Rac
 				if !event.IsRaceWeekend() {
 					opts.Current = event.RaceSetup
 					foundEvent = true
+					break
 				}
 			}
 
