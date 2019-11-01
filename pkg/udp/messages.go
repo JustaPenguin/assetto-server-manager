@@ -24,7 +24,7 @@ func NewServerClient(addr string, receivePort, sendPort int, forward bool, forwa
 		return nil, err
 	}
 
-	if err := listener.SetReadBuffer(2e7); err != nil {
+	if err := listener.SetReadBuffer(4e7); err != nil {
 		logrus.WithError(err).Error("unable to set read buffer")
 	}
 
