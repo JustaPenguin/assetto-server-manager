@@ -100,6 +100,8 @@ func main() {
 		}
 	}
 
+	servermanager.ExampleLocaliser()
+
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 
 	if err != nil {
