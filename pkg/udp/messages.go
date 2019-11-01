@@ -128,7 +128,7 @@ func (asu *AssettoServerUDP) forwardServe() {
 }
 
 func (asu *AssettoServerUDP) serve() {
-	messageChan := make(chan []byte)
+	messageChan := make(chan []byte, 1000)
 	defer close(messageChan)
 
 	go func() {
