@@ -401,6 +401,10 @@ func stripGeotagCrap(tag string, north bool) string {
 var nameRegex = regexp.MustCompile(`^[A-Za-z]{0,5}[0-9]+`)
 
 func prettifyName(s string, acronyms bool) string {
+	if s == AnyCarModel {
+		return "Any Car Model"
+	}
+
 	parts := strings.Split(s, "_")
 
 	if parts[0] == "ks" {
