@@ -150,8 +150,14 @@
                             </select>
                         {{ else if $.IsRaceWeekend }}
                             <select multiple class="Cars" id="Cars" name="Cars" style="display: none;">
-                                {{ range $index, $car := $.RaceWeekend.GetEntryList.CarIDs }}
-                                    <option value="{{ $car }}" selected="selected">{{ prettify $car true }}</option>
+                                {{ with $.RaceWeekend.Championship }}
+                                    {{ range $index, $car := $.RaceWeekend.Championship.ValidCarIDs }}
+                                        <option value="{{ $car }}" selected="selected">{{ prettify $car true }}</option>
+                                    {{ end }}
+                                {{ else }}
+                                    {{ range $index, $car := $.RaceWeekend.GetEntryList.CarIDs }}
+                                        <option value="{{ $car }}" selected="selected">{{ prettify $car true }}</option>
+                                    {{ end }}
                                 {{ end }}
                             </select>
                         {{ else }}
