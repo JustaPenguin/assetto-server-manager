@@ -24,6 +24,10 @@ func NewServerClient(addr string, receivePort, sendPort int, forward bool, forwa
 		return nil, err
 	}
 
+	if err := listener.SetReadBuffer(2e7); err != nil {
+		logrus.WithError(err).Error("unable to set read buffer")
+	}
+
 	ctx, cfn := context.WithCancel(context.Background())
 
 	u := &AssettoServerUDP{
