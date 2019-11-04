@@ -58,9 +58,17 @@ func ACSRSendResult(championship Championship) {
 		return
 	}
 
+	geoIP, err := geoIP()
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't get server geoIP for acsr request")
+		return
+	}
+
 	q := req.URL.Query()
 	q.Add("baseurl", config.HTTP.BaseURL)
 	q.Add("guid", config.ACSR.AccountID)
+	q.Add("geoip", geoIP.CountryName)
 	req.URL.RawQuery = q.Encode()
 	req.Header.Set("Content-Type", "application/json")
 
