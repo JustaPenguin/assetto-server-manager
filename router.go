@@ -61,6 +61,7 @@ func Router(
 	scheduledRacesHandler *ScheduledRacesHandler,
 	raceWeekendHandler *RaceWeekendHandler,
 	strackerHandler *StrackerHandler,
+	healthCheck *HealthCheck,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -85,6 +86,8 @@ func Router(
 		// pages
 		r.Get("/", serverAdministrationHandler.home)
 		r.Get("/changelog", serverAdministrationHandler.changelog)
+
+		r.Get("/healthcheck.json", healthCheck.ServeHTTP)
 
 		r.Mount("/stracker/", http.HandlerFunc(strackerHandler.proxy))
 

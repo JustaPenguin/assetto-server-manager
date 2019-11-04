@@ -15,6 +15,7 @@ Added:
 * You can now filter stock, DLC and mod cars in or out of the car search. Check out the car search help for more details! Please note that you will need to rebuild your search index for this to work. Go to Server Options, scroll down to "Maintenance" and click "Rebuild Search Index"!
 * Server Manager will now set up some example Championships and Custom Races if you have not yet created any
 * You can now sort the EntryList for a Championship Race Weekend Session by the number of Championship points a driver has. This could be useful for running reverse grid qualifying races!
+* Added a health-check endpoint. Hopefully this will help us with debugging issues!
 
 Fixes:
 
