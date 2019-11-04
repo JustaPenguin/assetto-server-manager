@@ -73,8 +73,21 @@
                         <label for="ACSR" class="col-sm-3 col-form-label">Export to <a href="https://acsr.assettocorsaservers.com">Assetto Corsa Skill Ratings</a></label>
 
                         <div class="col-sm-9">
-                            <input type="checkbox" id="ACSR" name="ACSR"
+                            <input type="checkbox" id="ACSR" name="ACSR" {{ if ne $.RaceTemplateVars.BaseTemplateVars.IsPremium "true" }} disabled="disabled" {{ end }}
                                     {{ if $f.ACSR }} checked="checked" {{ end }}><br><br>
+
+
+                            {{ if ne $.RaceTemplateVars.BaseTemplateVars.IsPremium "true" }}
+                                <small class="text-warning">
+                                    Exporting to <a href="https://acsr.assettocorsaservers.com">ACSR</a> is a premium feature! You can access premium features by
+                                    <a href="https://paypal.me/JustaPenguinUK">renting a server</a> or
+                                    <a href="https://paypal.me/JustaPenguinUK">going premium</a> with a minimum $10 donation,
+                                    thanks very much!
+                                </small>
+
+                                <br>
+                                <br>
+                            {{ end }}
 
                             <small>
                                 If enabled then entrants in this championship will be (anonymously) tracked by our skill and safety
