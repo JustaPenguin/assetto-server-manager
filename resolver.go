@@ -45,6 +45,7 @@ type Resolver struct {
 	serverAdministrationHandler *ServerAdministrationHandler
 	raceWeekendHandler          *RaceWeekendHandler
 	strackerHandler             *StrackerHandler
+	healthCheck                 *HealthCheck
 }
 
 func NewResolver(templateLoader TemplateLoader, reloadTemplates bool, store Store) (*Resolver, error) {
@@ -426,6 +427,16 @@ func (r *Resolver) resolveStrackerHandler() *StrackerHandler {
 	return r.strackerHandler
 }
 
+func (r *Resolver) resolveHealthCheck() *HealthCheck {
+	if r.healthCheck != nil {
+		return r.healthCheck
+	}
+
+	r.healthCheck = NewHealthCheck(r.resolveRaceControl())
+
+	return r.healthCheck
+}
+
 func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
 	return Router(
 		fs,
@@ -445,6 +456,7 @@ func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
 		r.resolveScheduledRacesHandler(),
 		r.resolveRaceWeekendHandler(),
 		r.resolveStrackerHandler(),
+		r.resolveHealthCheck(),
 	)
 }
 
