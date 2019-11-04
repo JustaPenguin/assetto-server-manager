@@ -24,7 +24,7 @@ func NewServerClient(addr string, receivePort, sendPort int, forward bool, forwa
 		return nil, err
 	}
 
-	if err := listener.SetReadBuffer(4e7); err != nil {
+	if err := listener.SetReadBuffer(1e8); err != nil {
 		logrus.WithError(err).Error("unable to set read buffer")
 	}
 
@@ -132,7 +132,7 @@ func (asu *AssettoServerUDP) forwardServe() {
 }
 
 func (asu *AssettoServerUDP) serve() {
-	messageChan := make(chan []byte, 1000)
+	messageChan := make(chan []byte)
 	defer close(messageChan)
 
 	go func() {
