@@ -27,6 +27,7 @@ Fixes:
 * Fixes an issue where drivers who switched teams mid-Championship had an incorrect number of races shown for their teams.
 * Championship event inheritance now correctly uses the previous event setup, not the first event setup
 * Fixes an issue where tyres did not show correctly in Session configuration for Championship Race Weekend events.
+* Fixes an issue where placeholder entrants were incorrectly added to the entrylist of a Race Weekend practice session.
 
 ---
 

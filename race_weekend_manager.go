@@ -446,22 +446,9 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 
 	entryList := raceWeekendEntryList.AsEntryList()
 
-	session.RaceConfig.MaxClients = len(entryList)
-	session.RaceConfig.Cars = strings.Join(entryList.CarIDs(), ";")
-	session.RaceConfig.LockedEntryList = 1
-	session.RaceConfig.PickupModeEnabled = 0
-
-	// all race weekend sessions must be open so players can join
-	for _, acSession := range session.RaceConfig.Sessions {
-		acSession.IsOpen = 1
-	}
-
-	overridePassword := session.OverridePassword
-	replacementPassword := session.ReplacementPassword
-
-	if raceWeekend.HasLinkedChampionship() {
-		overridePassword = raceWeekend.Championship.OverridePassword
-		replacementPassword = raceWeekend.Championship.ReplacementPassword
+	if isPracticeSession && !raceWeekend.SessionCanBeRun(session) {
+		// practice sessions run with the whole race weekend entry list if they are not yet available
+		entryList = raceWeekend.GetEntryList()
 	}
 
 	for k, entrant := range entryList {
@@ -484,6 +471,24 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 				break
 			}
 		}
+	}
+
+	session.RaceConfig.MaxClients = len(entryList)
+	session.RaceConfig.Cars = strings.Join(entryList.CarIDs(), ";")
+	session.RaceConfig.LockedEntryList = 1
+	session.RaceConfig.PickupModeEnabled = 0
+
+	// all race weekend sessions must be open so players can join
+	for _, acSession := range session.RaceConfig.Sessions {
+		acSession.IsOpen = 1
+	}
+
+	overridePassword := session.OverridePassword
+	replacementPassword := session.ReplacementPassword
+
+	if raceWeekend.HasLinkedChampionship() {
+		overridePassword = raceWeekend.Championship.OverridePassword
+		replacementPassword = raceWeekend.Championship.ReplacementPassword
 	}
 
 	raceWeekendRaceEvent := &ActiveRaceWeekend{
@@ -511,12 +516,6 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		session.RaceConfig.LoopMode = 1
 
 		raceWeekendRaceEvent.IsPracticeSession = true
-
-		if !raceWeekend.SessionCanBeRun(session) {
-			// practice sessions run with the whole race weekend entry list if they are not yet available
-			entryList = raceWeekend.GetEntryList()
-		}
-
 		raceWeekendRaceEvent.RaceConfig = session.RaceConfig
 		raceWeekendRaceEvent.EntryList = entryList
 
