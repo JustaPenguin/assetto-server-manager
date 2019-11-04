@@ -193,11 +193,23 @@
                                                 <span class="sr-only">Toggle Dropdown</span>
                                             </button>
                                             <div class="dropdown-menu">
-                                                <a class="dropdown-item" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/practice">Start Practice Session</a>
+                                                <a class="dropdown-item"
+                                                   href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/practice"
+                                                   data-toggle="tooltip"
+                                                   title="Loads the configured session onto the server as a 2 hour looping practice, but doesn't track its progress as a Race Weekend session."
+                                                >
+                                                    Start Practice Session
+                                                </a>
                                             </div>
                                         </div>
                                     {{ else }}
-                                        <a class="btn btn-success btn-sm" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/practice">Start Practice Session</a>
+                                        <a class="btn btn-success btn-sm"
+                                           href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/practice"
+                                           data-toggle="tooltip"
+                                           title="Loads the configured session onto the server as a 2 hour looping practice, but doesn't track its progress as a Race Weekend session."
+                                        >
+                                            Start Practice Session
+                                        </a>
                                     {{ end }}
 
                                     <button type="button" class="btn btn-info btn-sm dropdown-toggle popover-external-html" data-placement="bottom"
