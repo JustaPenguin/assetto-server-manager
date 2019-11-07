@@ -1,3 +1,16 @@
+v1.5.4
+------
+
+Added:
+
+
+
+Fixes:
+
+* Setting the ballast on an entrant to a larger value than the Max Ballast option no longer stops the server from starting.
+
+---
+
 v1.5.3
 ------
 
