@@ -97,6 +97,13 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 	raceConfig := event.GetRaceConfig()
 	entryList := event.GetEntryList()
 
+	// the server won't start if an entrant has a larger ballast than is set as the max, correct if necessary
+	greatestBallast := entryList.FindGreatestBallast()
+
+	if greatestBallast > raceConfig.MaxBallastKilograms {
+		raceConfig.MaxBallastKilograms = greatestBallast
+	}
+
 	config := ServerConfig{
 		CurrentRaceConfig:  raceConfig,
 		GlobalServerConfig: *serverOpts,
