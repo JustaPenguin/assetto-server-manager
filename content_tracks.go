@@ -48,7 +48,9 @@ func LoadTrackMetaDataFromName(name string) (*TrackMetaData, error) {
 
 	f, err := os.Open(metaDataFile)
 
-	if err != nil {
+	if err != nil && os.IsNotExist(err) {
+		return &TrackMetaData{}, nil
+	} else if err != nil {
 		return nil, err
 	}
 

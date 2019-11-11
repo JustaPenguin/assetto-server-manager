@@ -189,6 +189,19 @@ func (e EntryList) CarIDs() []string {
 	return out
 }
 
+// returns the greatest ballast set on any entrant
+func (e EntryList) FindGreatestBallast() int {
+	var greatest int
+
+	for _, entrant := range e {
+		if entrant.Ballast > greatest {
+			greatest = entrant.Ballast
+		}
+	}
+
+	return greatest
+}
+
 func NewEntrant() *Entrant {
 	return &Entrant{
 		InternalUUID: uuid.New(),
