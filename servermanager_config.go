@@ -172,7 +172,7 @@ func ReadConfig(location string) (conf *Configuration, err error) {
 	}
 
 	if config.Steam.ExecutablePath == "" {
-		config.Steam.ExecutablePath = serverExecutablePath
+		config.Steam.ExecutablePath = ServerExecutablePath
 	}
 
 	return conf, err
