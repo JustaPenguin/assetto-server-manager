@@ -1200,7 +1200,7 @@ type ChampionshipEvent struct {
 	RaceSetup CurrentRaceConfig
 	EntryList EntryList
 
-	Sessions map[SessionType]*ChampionshipSession
+	Sessions map[SessionType]*ChampionshipSession `json:",omitempty"`
 
 	// RaceWeekendID is the ID of the linked RaceWeekend for this ChampionshipEvent
 	RaceWeekendID uuid.UUID

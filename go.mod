@@ -67,6 +67,7 @@ require (
 	github.com/taviti/check v0.0.0-00010101000000-000000000000 // indirect
 	github.com/teambition/rrule-go v1.4.2
 	github.com/tecbot/gorocksdb v0.0.0-20190519120508-025c3cf4ffb4 // indirect
+	github.com/yuin/gopher-lua v0.0.0-20190514113301-1cd887cd7036
 	go.etcd.io/bbolt v1.3.2 // indirect
 	golang.org/x/crypto v0.0.0-20190829043050-9756ffdc2472
 	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297

@@ -24,6 +24,7 @@ import (
 	"github.com/heindl/caldav-go/icalendar/components"
 	"github.com/mitchellh/go-wordwrap"
 	"github.com/sirupsen/logrus"
+	"github.com/yuin/gopher-lua"
 )
 
 type ChampionshipManager struct {
@@ -497,6 +498,12 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 
 	event.RaceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
 
+	err, event = championshipEventStartPlugin(event, championship)
+
+	if err != nil {
+		logrus.WithError(err).Error("championship event start plugin script failed")
+	}
+
 	entryList := event.CombineEntryLists(championship)
 
 	if championship.SignUpForm.Enabled && !championship.OpenEntrants && !isPreChampionshipPracticeEvent {
@@ -578,6 +585,71 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 			EntryList:           entryList,
 		})
 	}
+}
+
+func championshipEventStartPlugin(event *ChampionshipEvent, championship *Championship) (error, *ChampionshipEvent) {
+	l := lua.NewState()
+	defer l.Close()
+
+	// @TODO why can't I set the lua path properly using either of these methods?
+	// @TODO export LUA_PATH=$PWD/cmd/server-manager/plugins/?.lua in terminal makes it work
+	/*err := os.Setenv("LUA_PATH", "./plugins/?.lua")
+
+	if err != nil {
+		return err, event
+	}*/
+
+	//lua.LuaPathDefault += ";./plugins/?.lua"
+
+	err := l.DoFile("./plugins/championship.lua")
+
+	if err != nil {
+		return err, event
+	}
+
+	eventJson, err := json.Marshal(event)
+
+	if err != nil {
+		return err, event
+	}
+
+	championshipJson, err := json.Marshal(championship)
+
+	if err != nil {
+		return err, event
+	}
+
+	var standings [][]*ChampionshipStanding
+
+	for _, class := range championship.Classes {
+		standings = append(standings, class.Standings(championship.Events))
+	}
+
+	standingsJson, err := json.Marshal(standings)
+
+	if err != nil {
+		return err, event
+	}
+
+	if err := l.CallByParam(lua.P{
+		Fn:      l.GetGlobal("championshipEventStart"),                  // name of Lua function
+		NRet:    1,                     // number of returned values
+		Protect: true,                  // return err or panic
+	}, lua.LString(string(eventJson)), lua.LString(string(championshipJson)), lua.LString(string(standingsJson))); err != nil {
+		return err, event
+	}
+
+	encodedEvent := l.Get(-1)
+
+	var newEvent *ChampionshipEvent
+
+	err = json.Unmarshal([]byte(encodedEvent.String()), &newEvent)
+
+	if err != nil {
+		return err, event
+	}
+
+	return nil, newEvent
 }
 
 func (cm *ChampionshipManager) GetChampionshipAndEvent(championshipID string, eventID string) (*Championship, *ChampionshipEvent, error) {
