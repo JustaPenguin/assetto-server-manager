@@ -469,9 +469,10 @@ func GenerateSummary(raceSetup CurrentRaceConfig, eventType string) string {
 }
 
 type ScheduledEventBase struct {
-	Scheduled        time.Time
-	ScheduledInitial time.Time
-	Recurrence       string
+	Scheduled         time.Time
+	ScheduledInitial  time.Time
+	Recurrence        string
+	ScheduledServerID string
 }
 
 func (seb *ScheduledEventBase) SetRecurrenceRule(input string) error {

@@ -125,18 +125,17 @@ footer a {
         text-overflow: ellipsis;
         display: -webkit-box;
         -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
+        -webkit-line-clamp: 1;
         line-height: 18px;
-        height: 36px;
+        height: 18px;
       }
 
-      .players {
+      .players, .status {
         display: block;
         font-size: $font-size-sm;
         color: $gray-600;
 
         position: relative;
-        margin-top: 10px;
       }
     }
 
