@@ -9,6 +9,7 @@ Fixes:
 
 * Setting the ballast on an entrant to a larger value than the Max Ballast option no longer stops the server from starting.
 * Results pages now correctly display statistics per car - so if you're switching cars in a session you can see accurate reports for that car.
+* Penalties are now applied per driver and car, rather than just per driver.
 
 ---
 

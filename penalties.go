@@ -51,6 +51,7 @@ func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
 
 	jsonFileName := chi.URLParam(r, "sessionFile")
 	guid := chi.URLParam(r, "driverGUID")
+	carModel := r.URL.Query().Get("model")
 
 	results, err := LoadResult(jsonFileName + ".json")
 
@@ -87,7 +88,7 @@ func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
 	}
 
 	for _, result := range results.Result {
-		if result.DriverGUID == guid {
+		if result.DriverGUID == guid && result.CarModel == carModel {
 			if remove {
 				result.HasPenalty = false
 				result.Disqualified = false
