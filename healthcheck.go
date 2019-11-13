@@ -53,6 +53,7 @@ type HealthCheckResponse struct {
 	EventIsCritical     bool
 	EventIsChampionship bool
 	EventIsRaceWeekend  bool
+	EventIsPractice     bool
 	NumConnectedDrivers int
 	MaxClientsOverride  int
 }
@@ -84,6 +85,7 @@ func (h *HealthCheck) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		EventIsCritical:     !event.IsPractice() && (event.IsChampionship() || event.IsRaceWeekend() || h.raceControl.SessionInfo.Type == udp.SessionTypeRace || h.raceControl.SessionInfo.Type == udp.SessionTypeQualifying),
 		EventIsChampionship: event.IsChampionship(),
 		EventIsRaceWeekend:  event.IsRaceWeekend(),
+		EventIsPractice:     event.IsPractice(),
 		NumConnectedDrivers: h.raceControl.ConnectedDrivers.Len(),
 		AssettoIsInstalled:  IsAssettoInstalled(),
 		StrackerIsInstalled: IsStrackerInstalled(),

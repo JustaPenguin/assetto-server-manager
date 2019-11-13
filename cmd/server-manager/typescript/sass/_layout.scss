@@ -96,7 +96,9 @@ footer a {
 
 .multiserver-dropdown {
   padding: 5px;
-  width: 252px;
+  width: 270px;
+  max-height: 500px;
+  overflow-y: auto;
 
   .multiserver {
 
@@ -145,5 +147,13 @@ footer a {
       text-align: center;
       margin-top: 3px;
     }
+  }
+}
+
+.navbar {
+  @media (max-width: breakpoint-max(md)) {
+    overflow: auto;
+    max-height: 85vh;
+    align-items: start;
   }
 }
