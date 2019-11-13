@@ -197,14 +197,14 @@ func TotalRaceTimeRaceWeekendEntryListSort(rw *RaceWeekend, session *RaceWeekend
 }
 
 func lessTotalEntrantTime(_ *RaceWeekend, _ *RaceWeekendSession, entrantI, entrantJ *RaceWeekendSessionEntrant) bool {
-	if entrantI.SessionResults.GetNumLaps(entrantI.Car.Driver.GUID) == entrantJ.SessionResults.GetNumLaps(entrantJ.Car.Driver.GUID) {
+	if entrantI.SessionResults.GetNumLaps(entrantI.Car.Driver.GUID, entrantI.Car.Model) == entrantJ.SessionResults.GetNumLaps(entrantJ.Car.Driver.GUID, entrantJ.Car.Model) {
 		// drivers have completed the same number of laps, so compare their total time
-		entrantITime := entrantI.SessionResults.GetTime(entrantI.EntrantResult.TotalTime, entrantI.Car.Driver.GUID, true)
-		entrantJTime := entrantJ.SessionResults.GetTime(entrantJ.EntrantResult.TotalTime, entrantJ.Car.Driver.GUID, true)
+		entrantITime := entrantI.SessionResults.GetTime(entrantI.EntrantResult.TotalTime, entrantI.Car.Driver.GUID, entrantI.Car.Model, true)
+		entrantJTime := entrantJ.SessionResults.GetTime(entrantJ.EntrantResult.TotalTime, entrantJ.Car.Driver.GUID, entrantJ.Car.Model, true)
 
 		return entrantITime < entrantJTime
 	} else {
-		return entrantI.SessionResults.GetNumLaps(entrantI.Car.Driver.GUID) > entrantJ.SessionResults.GetNumLaps(entrantJ.Car.Driver.GUID)
+		return entrantI.SessionResults.GetNumLaps(entrantI.Car.Driver.GUID, entrantI.Car.Model) > entrantJ.SessionResults.GetNumLaps(entrantJ.Car.Driver.GUID, entrantJ.Car.Model)
 	}
 }
 
@@ -225,7 +225,7 @@ func lessBestLapTime(_ *RaceWeekend, _ *RaceWeekendSession, entrantI, entrantJ *
 		entrantJCrashes := entrantJ.SessionResults.GetCrashes(entrantJ.Car.Driver.GUID)
 
 		if entrantICrashes == entrantJCrashes {
-			return entrantI.SessionResults.GetCuts(entrantI.Car.Driver.GUID) < entrantJ.SessionResults.GetCuts(entrantJ.Car.Driver.GUID)
+			return entrantI.SessionResults.GetCuts(entrantI.Car.Driver.GUID, entrantI.Car.Model) < entrantJ.SessionResults.GetCuts(entrantJ.Car.Driver.GUID, entrantJ.Car.Model)
 		}
 
 		return entrantICrashes < entrantJCrashes
@@ -257,8 +257,8 @@ func FewestCollisionsRaceWeekendEntryListSort(rw *RaceWeekend, session *RaceWeek
 func FewestCutsRaceWeekendEntryListSort(rw *RaceWeekend, session *RaceWeekendSession, entrants []*RaceWeekendSessionEntrant) error {
 	sort.Slice(entrants, func(i, j int) bool {
 		entrantI, entrantJ := entrants[i], entrants[j]
-		entrantICuts := entrantI.SessionResults.GetCuts(entrantI.Car.Driver.GUID)
-		entrantJCuts := entrantJ.SessionResults.GetCuts(entrantJ.Car.Driver.GUID)
+		entrantICuts := entrantI.SessionResults.GetCuts(entrantI.Car.Driver.GUID, entrantI.Car.Model)
+		entrantJCuts := entrantJ.SessionResults.GetCuts(entrantJ.Car.Driver.GUID, entrantJ.Car.Model)
 
 		if entrantICuts == entrantJCuts {
 			if session.SessionType() == SessionTypeRace {
@@ -279,8 +279,8 @@ func SafetyRaceWeekendEntryListSort(rw *RaceWeekend, session *RaceWeekendSession
 		entrantI, entrantJ := entrants[i], entrants[j]
 		entrantICrashes := entrantI.SessionResults.GetCrashes(entrantI.Car.Driver.GUID)
 		entrantJCrashes := entrantJ.SessionResults.GetCrashes(entrantJ.Car.Driver.GUID)
-		entrantICuts := entrantI.SessionResults.GetCuts(entrantI.Car.Driver.GUID)
-		entrantJCuts := entrantJ.SessionResults.GetCuts(entrantJ.Car.Driver.GUID)
+		entrantICuts := entrantI.SessionResults.GetCuts(entrantI.Car.Driver.GUID, entrantI.Car.Model)
+		entrantJCuts := entrantJ.SessionResults.GetCuts(entrantJ.Car.Driver.GUID, entrantJ.Car.Model)
 
 		if entrantICrashes == entrantJCrashes {
 			if entrantICuts == entrantJCuts {
