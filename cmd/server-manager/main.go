@@ -1,9 +1,11 @@
 package main
 
 import (
+	lua "github.com/yuin/gopher-lua"
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -83,6 +85,33 @@ func main() {
 	if err != nil {
 		ServeHTTPWithError(defaultAddress, "Install assetto corsa server with steamcmd. Likely you do not have steamcmd installed correctly.", err)
 		return
+	}
+
+	if config.Lua.Enabled {
+		luaPath := os.Getenv("LUA_PATH")
+
+		newPath, err := filepath.Abs("./plugins/?.lua")
+
+		if err != nil {
+			logrus.WithError(err).Error("Couldn't get absolute path for /plugins folder")
+		} else {
+			if luaPath != "" {
+				luaPath = luaPath + ";" + newPath
+			} else {
+				luaPath = newPath
+			}
+
+			err = os.Setenv("LUA_PATH", luaPath)
+
+			if err != nil {
+				logrus.WithError(err).Error("Couldn't automatically set Lua path, lua will not run! Try setting the environment variable LUA_PATH manually.")
+			}
+		}
+
+		servermanager.Lua = lua.NewState()
+		defer servermanager.Lua.Close()
+
+		servermanager.InitLua()
 	}
 
 	err = servermanager.InitWithResolver(resolver)

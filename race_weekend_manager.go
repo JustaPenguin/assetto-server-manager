@@ -1113,6 +1113,14 @@ func (rwm *RaceWeekendManager) ScheduleSession(raceWeekendID, sessionID string, 
 	session.ScheduledTime = date
 	session.StartWhenParentHasFinished = startWhenParentFinishes
 
+	if config.Lua.Enabled {
+		err = raceWeekendEventSchedulePlugin(raceWeekend, session)
+
+		if err != nil {
+			logrus.WithError(err).Error("race weekend session schedule plugin script failed")
+		}
+	}
+
 	if !session.ScheduledTime.IsZero() {
 		err = rwm.setupScheduledSessionTimer(raceWeekend, session)
 
@@ -1122,6 +1130,23 @@ func (rwm *RaceWeekendManager) ScheduleSession(raceWeekendID, sessionID string, 
 	}
 
 	return rwm.UpsertRaceWeekend(raceWeekend)
+}
+
+func raceWeekendEventSchedulePlugin(raceWeekend *RaceWeekend, raceWeekendSession *RaceWeekendSession) error {
+	p := &LuaPlugin{}
+
+	newRaceWeekendSession, newRaceWeekend := NewRaceWeekendSession(), NewRaceWeekend()
+
+	p.Inputs(raceWeekendSession, raceWeekend).Outputs(newRaceWeekendSession, newRaceWeekend)
+	err := p.Call("./plugins/events.lua", "onRaceWeekendEventSchedule")
+
+	if err != nil {
+		return err
+	}
+
+	*raceWeekendSession, *raceWeekend = *newRaceWeekendSession, *newRaceWeekend
+
+	return nil
 }
 
 func (rwm *RaceWeekendManager) DeScheduleSession(raceWeekendID, sessionID string) error {

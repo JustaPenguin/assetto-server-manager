@@ -97,6 +97,14 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 	raceConfig := event.GetRaceConfig()
 	entryList := event.GetEntryList()
 
+	if config.Lua.Enabled {
+		err = eventStartPlugin(&raceConfig, serverOpts, &entryList)
+
+		if err != nil {
+			logrus.WithError(err).Error("event start plugin script failed")
+		}
+	}
+
 	// the server won't start if an entrant has a larger ballast than is set as the max, correct if necessary
 	greatestBallast := entryList.FindGreatestBallast()
 
@@ -216,6 +224,23 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 	if !event.IsLooping() {
 		_ = rm.notificationManager.SendRaceStartMessage(config, event)
 	}
+
+	return nil
+}
+
+func eventStartPlugin(raceConfig *CurrentRaceConfig, serverOpts *GlobalServerConfig, entryList *EntryList) error {
+	p := &LuaPlugin{}
+
+	newRaceConfig, newServerOpts, newEntryList := &CurrentRaceConfig{}, &GlobalServerConfig{}, &EntryList{}
+
+	p.Inputs(raceConfig, serverOpts, entryList).Outputs(newRaceConfig, newServerOpts, newEntryList)
+	err := p.Call("./plugins/events.lua", "onEventStart")
+
+	if err != nil {
+		return err
+	}
+
+	*raceConfig, *serverOpts, *entryList = *newRaceConfig, *newServerOpts, *newEntryList
 
 	return nil
 }
@@ -1034,12 +1059,12 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 	}
 
 	if action == "add" {
-		if date.IsZero() {
+		if race.Scheduled.IsZero() {
 			return ErrScheduledTimeIsZero
 		}
 
 		// add a scheduled event on date
-		duration := time.Until(date)
+		duration := time.Until(race.Scheduled)
 
 		if recurrence != "already-set" {
 			if recurrence != "" {
@@ -1050,9 +1075,17 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 				}
 
 				// only set once when the event is first scheduled
-				race.ScheduledInitial = date
+				race.ScheduledInitial = race.Scheduled
 			} else {
 				race.ClearRecurrenceRule()
+			}
+		}
+
+		if config.Lua.Enabled {
+			err = eventSchedulePlugin(race)
+
+			if err != nil {
+				logrus.WithError(err).Error("event schedule plugin script failed")
 			}
 		}
 
@@ -1065,10 +1098,10 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 		})
 
 		if rm.notificationManager.HasNotificationReminders() {
-			_ = rm.notificationManager.SendRaceScheduledMessage(race, date)
+			_ = rm.notificationManager.SendRaceScheduledMessage(race, race.Scheduled)
 
 			for _, timer := range rm.notificationManager.GetNotificationReminders() {
-				duration = time.Until(date.Add(time.Duration(0-timer) * time.Minute))
+				duration = time.Until(race.Scheduled.Add(time.Duration(0-timer) * time.Minute))
 				thisTimer := timer
 
 				rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
@@ -1083,6 +1116,23 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 	}
 
 	return rm.store.UpsertCustomRace(race)
+}
+
+func eventSchedulePlugin(race *CustomRace) error {
+	p := &LuaPlugin{}
+
+	newRace := &CustomRace{}
+
+	p.Inputs(race).Outputs(newRace)
+	err := p.Call("./plugins/events.lua", "onEventSchedule")
+
+	if err != nil {
+		return err
+	}
+
+	*race = *newRace
+
+	return nil
 }
 
 func (rm *RaceManager) StartScheduledRace(race *CustomRace) error {

@@ -3,7 +3,7 @@ v1.5.4
 
 Added:
 
-
+* Lua Plugin hooks! You can now run custom scripts with a bunch of hooks for Lua (event start, results load and more!), have a look in server-manager/plugins for some examples. (there's a nice readme guide in there too!)
 
 Fixes:
 

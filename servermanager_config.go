@@ -23,6 +23,7 @@ type Configuration struct {
 	Monitoring    MonitoringConfig    `yaml:"monitoring"`
 	Championships ChampionshipsConfig `yaml:"championships"`
 	ACSR          ACSRConfig          `yaml:"acsr"`
+	Lua           LuaConfig           `yaml:"lua"`
 }
 
 type ChampionshipsConfig struct {
@@ -54,6 +55,10 @@ type HTTPConfig struct {
 	SessionStoreType string `yaml:"session_store_type"`
 	SessionStorePath string `yaml:"session_store_path"`
 	BaseURL          string `yaml:"server_manager_base_URL"`
+}
+
+type LuaConfig struct {
+	Enabled bool `yaml:"enabled"`
 }
 
 const (
