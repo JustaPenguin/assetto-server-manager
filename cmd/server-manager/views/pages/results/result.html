@@ -183,6 +183,13 @@
                 <strong>{{ add $i 1 }}{{ ordinal (add $i 1) }} {{ driverName $sessionResult.DriverName }}
                 {{ if eq $sessionResult.DriverGUID "76561198256908075" }} (Ey up you Southern twit){{ end }}</strong> in <strong>
                 {{ prettify $sessionResult.CarModel true }}</strong>
+
+                <div class="float-right">
+                    Best: {{ $bestLap := $sessionResults.GetTime $sessionResult.BestLap $sessionResult.DriverGUID $sessionResult.CarModel false }}
+                    {{ formatDuration $bestLap true }},
+
+                    Potential: {{formatDuration ( $sessionResults.GetPotentialLap $sessionResult.DriverGUID $sessionResult.CarModel ) true }}
+                </div>
             </div>
             <div class="card-body">
 
