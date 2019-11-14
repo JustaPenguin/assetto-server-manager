@@ -7,10 +7,14 @@ Added:
 * Weather API with Lua plugins! As a nice example of what you can achieve with Lua plugins we used one to implement a weather API!
 * Auto ballast based on championship position with Lua plugins! Another Lua example, this one applies a ballast to each driver in a championship when an event is started based on their championship position.
 * Auto collision disqualifier! This is our last Lua example, it disqualifies drivers if they exceed a certain number of collisions or have a collision over a certain speed.
+* Results pages now show your 'Potential' lap time - the sum of your best sectors.
 
 Fixes:
 
 * Setting the ballast on an entrant to a larger value than the Max Ballast option no longer stops the server from starting.
+* Results pages now correctly display statistics per car - so if you're switching cars in a session you can see accurate reports for that car.
+* Penalties are now applied per driver and car, rather than just per driver.
+* Fixes an issue where events scheduled in a multi-server scenario would start on the wrong server.
 
 ---
 

@@ -141,9 +141,10 @@ func (s *StoreConfig) BuildStore() (Store, error) {
 }
 
 type ServerExtraConfig struct {
-	RunOnStart      []string `yaml:"run_on_start"`
-	AuditLogging    bool     `yaml:"audit_logging"`
-	PerformanceMode bool     `yaml:"performance_mode"`
+	RunOnStart                []string `yaml:"run_on_start"`
+	AuditLogging              bool     `yaml:"audit_logging"`
+	PerformanceMode           bool     `yaml:"performance_mode"`
+	DisableWindowsBrowserOpen bool     `yaml:"dont_open_browser"`
 }
 
 const acsrURL = "https://acsr.assettocorsaservers.com"
@@ -177,7 +178,7 @@ func ReadConfig(location string) (conf *Configuration, err error) {
 	}
 
 	if config.Steam.ExecutablePath == "" {
-		config.Steam.ExecutablePath = serverExecutablePath
+		config.Steam.ExecutablePath = ServerExecutablePath
 	}
 
 	return conf, err

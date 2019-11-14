@@ -164,7 +164,7 @@ func (srm *ScheduledRacesManager) getScheduledRaces() ([]ScheduledEvent, error) 
 	var scheduled []ScheduledEvent
 
 	for _, race := range customRaces {
-		if race.Scheduled.IsZero() {
+		if race.Scheduled.IsZero() || race.ScheduledServerID != serverID {
 			continue
 		}
 
@@ -179,7 +179,7 @@ func (srm *ScheduledRacesManager) getScheduledRaces() ([]ScheduledEvent, error) 
 
 	for _, championship := range championships {
 		for _, event := range championship.Events {
-			if event.Scheduled.IsZero() {
+			if event.Scheduled.IsZero() || event.ScheduledServerID != serverID {
 				continue
 			}
 
@@ -205,7 +205,7 @@ func (srm *ScheduledRacesManager) getScheduledRaces() ([]ScheduledEvent, error) 
 		}
 
 		for _, session := range raceWeekend.Sessions {
-			if session.ScheduledTime.IsZero() {
+			if session.ScheduledTime.IsZero() || session.ScheduledServerID != serverID {
 				continue
 			}
 
@@ -469,9 +469,10 @@ func GenerateSummary(raceSetup CurrentRaceConfig, eventType string) string {
 }
 
 type ScheduledEventBase struct {
-	Scheduled        time.Time
-	ScheduledInitial time.Time
-	Recurrence       string
+	Scheduled         time.Time
+	ScheduledInitial  time.Time
+	Recurrence        string
+	ScheduledServerID string
 }
 
 func (seb *ScheduledEventBase) SetRecurrenceRule(input string) error {

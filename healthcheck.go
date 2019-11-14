@@ -16,10 +16,14 @@ var LaunchTime = time.Now()
 
 type HealthCheck struct {
 	raceControl *RaceControl
+	store       Store
 }
 
-func NewHealthCheck(raceControl *RaceControl) *HealthCheck {
-	return &HealthCheck{raceControl: raceControl}
+func NewHealthCheck(raceControl *RaceControl, store Store) *HealthCheck {
+	return &HealthCheck{
+		store:       store,
+		raceControl: raceControl,
+	}
 }
 
 type HealthCheckResponse struct {
@@ -44,14 +48,25 @@ type HealthCheckResponse struct {
 	ConfigDirectoryIsWritable  bool
 	ResultsDirectoryIsWritable bool
 
+	ServerName          string
 	EventInProgress     bool
 	EventIsCritical     bool
+	EventIsChampionship bool
+	EventIsRaceWeekend  bool
+	EventIsPractice     bool
 	NumConnectedDrivers int
 	MaxClientsOverride  int
 }
 
 func (h *HealthCheck) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	event := h.raceControl.process.Event()
+	opts, err := h.store.LoadServerOptions()
+
+	var serverName string
+
+	if err == nil {
+		serverName = opts.Name
+	}
 
 	_ = json.NewEncoder(w).Encode(HealthCheckResponse{
 		OK:                 true,
@@ -65,8 +80,12 @@ func (h *HealthCheck) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Uptime:             time.Since(LaunchTime).String(),
 		GoVersion:          runtime.Version(),
 
+		ServerName:          serverName,
 		EventInProgress:     h.raceControl.process.IsRunning(),
 		EventIsCritical:     !event.IsPractice() && (event.IsChampionship() || event.IsRaceWeekend() || h.raceControl.SessionInfo.Type == udp.SessionTypeRace || h.raceControl.SessionInfo.Type == udp.SessionTypeQualifying),
+		EventIsChampionship: event.IsChampionship(),
+		EventIsRaceWeekend:  event.IsRaceWeekend(),
+		EventIsPractice:     event.IsPractice(),
 		NumConnectedDrivers: h.raceControl.ConnectedDrivers.Len(),
 		AssettoIsInstalled:  IsAssettoInstalled(),
 		StrackerIsInstalled: IsStrackerInstalled(),

@@ -637,6 +637,7 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 	}
 
 	event.Scheduled = date
+	event.ScheduledServerID = serverID
 
 	// if there is an existing schedule timer for this event stop it
 	if timer := cm.championshipEventStartTimers[event.ID.String()]; timer != nil {
@@ -1545,6 +1546,10 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 
 		for _, event := range championship.Events {
 			event := event
+
+			if event.ScheduledServerID != serverID {
+				continue
+			}
 
 			if event.Scheduled.After(time.Now()) {
 				// add a scheduled event on date

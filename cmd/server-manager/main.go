@@ -138,7 +138,7 @@ func main() {
 
 	logrus.Infof("starting assetto server manager on: %s", config.HTTP.Hostname)
 
-	if runtime.GOOS == "windows" {
+	if !config.Server.DisableWindowsBrowserOpen && runtime.GOOS == "windows" {
 		_ = browser.OpenURL("http://" + strings.Replace(config.HTTP.Hostname, "0.0.0.0", "127.0.0.1", 1))
 	}
 
