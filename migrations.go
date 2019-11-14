@@ -73,6 +73,7 @@ var (
 		addTyresForP13c,
 		changeNotificationTimer,
 		addContentExamples,
+		addServerIDToScheduledEvents,
 	}
 )
 
@@ -576,6 +577,92 @@ func addContentExamples(s Store) error {
 		}
 
 		if err := s.UpsertCustomRace(bmw235iRace); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func addServerIDToScheduledEvents(s Store) error {
+	logrus.Infof("Running migration: Add Server ID to Scheduled Events")
+
+	if err := initServerID(s); err != nil {
+		return err
+	}
+
+	customRaces, err := s.ListCustomRaces()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(customRaces, func(i, j int) bool {
+		return customRaces[i].Updated.Before(customRaces[j].Updated)
+	})
+
+	for _, customRace := range customRaces {
+		if customRace.Scheduled.IsZero() {
+			continue
+		}
+
+		customRace.ScheduledServerID = serverID
+
+		err := s.UpsertCustomRace(customRace)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	championships, err := s.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(championships, func(i, j int) bool {
+		return championships[i].Updated.Before(championships[j].Updated)
+	})
+
+	for _, championship := range championships {
+		for _, event := range championship.Events {
+			if event.Scheduled.IsZero() {
+				continue
+			}
+
+			event.ScheduledServerID = serverID
+		}
+
+		err := s.UpsertChampionship(championship)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	raceWeekends, err := s.ListRaceWeekends()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(raceWeekends, func(i, j int) bool {
+		return raceWeekends[i].Updated.Before(raceWeekends[j].Updated)
+	})
+
+	for _, raceWeekend := range raceWeekends {
+		for _, session := range raceWeekend.Sessions {
+			if session.ScheduledTime.IsZero() {
+				continue
+			}
+
+			session.ScheduledServerID = serverID
+		}
+
+		err := s.UpsertRaceWeekend(raceWeekend)
+
+		if err != nil {
 			return err
 		}
 	}

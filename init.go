@@ -6,11 +6,34 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+}
+
+var (
+	serverID        string
+	serverIDMetaKey = "server_id"
+)
+
+func initServerID(store Store) error {
+	err := store.GetMeta(serverIDMetaKey, &serverID)
+
+	if err == ErrValueNotSet {
+		serverID = uuid.New().String()
+		err = store.SetMeta(serverIDMetaKey, serverID)
+
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func InitWithResolver(resolver *Resolver) error {
@@ -21,6 +44,12 @@ func InitWithResolver(resolver *Resolver) error {
 	if err != nil && err != ErrValueNotSet {
 		return err
 	}
+
+	if err := initServerID(store); err != nil {
+		return err
+	}
+
+	logrus.Infof("Server manager instance identifies as: %s", serverID)
 
 	opts, err := store.LoadServerOptions()
 
