@@ -1,5 +1,5 @@
 json = require "json"
-champ = require "championship"
+utils = require "utils"
 
 -- these are lua hooks related to the manager itself, for help please view lua_readme.md!
 -- there are some example functions here to give you an idea of what is possible, feel free to write your own!
@@ -13,9 +13,9 @@ function onEventStart(encodedRaceConfig, encodedServerOpts, encodedEntryList)
     local entryList = json.decode(encodedEntryList)
 
     -- Uncomment these lines and run the function (start any event) to print out the structure of each object.
-    --print("Race Config:", dump(raceConfig))
-    --print("Server Options:", dump(serverOpts))
-    --print("Entry List:", dump(entryList))
+    --print("Race Config:", utils.dump(raceConfig))
+    --print("Server Options:", utils.dump(serverOpts))
+    --print("Entry List:", utils.dump(entryList))
 
     -- Function block NOTE: this hook BLOCKS, make sure your functions don't loop forever!
     -- in order to use the weatherAPI you need to get a free API key from https://openweathermap.org/

@@ -1,4 +1,5 @@
 json = require "json"
+utils = require "utils"
 
 -- these are lua hooks related to results, for help please view lua_readme.md!
 -- there are some example functions here to give you an idea of what is possible, feel free to write your own!
@@ -10,7 +11,7 @@ function onResultsLoad(encodedResults)
     local results = json.decode(encodedResults)
 
     -- Uncomment these lines and run the function (load a results file) to print out the structure of each object.
-    --print("Results:", dump(results))
+    --print("Results:", utils.dump(results))
 
     -- Function block NOTE: this hook BLOCKS, make sure your functions don't loop forever!
     -- uncomment functions to enable them!

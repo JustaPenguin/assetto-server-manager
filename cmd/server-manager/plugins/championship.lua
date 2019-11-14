@@ -1,4 +1,5 @@
 json = require "json"
+utils = require "utils"
 
 -- these are lua hooks related to championships, for help please view lua_readme.md!
 -- there are some example functions here to give you an idea of what is possible, feel free to write your own!
@@ -13,9 +14,9 @@ function onChampionshipEventStart(encodedEvent, encodedChampionship, encodedClas
 
     -- Uncomment these lines and run the function (start any championship event, including practice events) to print out
     -- the structure of each object.
-    --print("Event:", dump(event))
-    --print("Championship:", dump(championship)) --championships can get pretty huge, this might exceed terminal limit
-    --print("Standings:", dump(standings))
+    --print("Event:", utils.dump(event))
+    --print("Championship:", utils.dump(championship)) --championships can get pretty huge, this might exceed terminal limit
+    --print("Standings:", utils.dump(standings))
 
     -- Function block NOTE: this hook BLOCKS, make sure your functions don't loop forever!
     -- uncomment functions to enable them!
@@ -69,18 +70,4 @@ function forceVirtualMirror(event)
     event["RaceSetup"]["ForceVirtualMirror"] = 1
 
     return event
-end
-
--- @TODO you can't access this in the other files
-dump = function(o)
-    if type(o) == 'table' then
-        local s = '{ '
-        for k,v in pairs(o) do
-            if type(k) ~= 'number' then k = '"'..k..'"' end
-            s = s .. '['..k..'] = ' .. dump(v) .. ',' .. "\n"
-        end
-        return s .. '} '
-    else
-        return tostring(o)
-    end
 end
