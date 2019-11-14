@@ -3,7 +3,7 @@ v1.5.4
 
 Added:
 
-
+* Results pages now show your 'Potential' lap time - the sum of your best sectors.
 
 Fixes:
 

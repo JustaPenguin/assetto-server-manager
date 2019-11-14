@@ -3,10 +3,12 @@
     {{ $sessionResults := .sessionResults }}
     {{ $account := .account }}
     {{ $driversHaveTeams := $sessionResults.DriversHaveTeams }}
+    {{ $sessionHasHandicaps := $sessionResults.HasHandicaps }}
 
     <div class="table-responsive">
         <table class="table table-bordered table-striped">
             {{ if eq "RACE" $sessionResults.Type.OriginalString }}
+
                 <tr>
                     <th>#</th>
                     <th>Name</th>
@@ -18,7 +20,9 @@
                     <th>Num Laps</th>
                     <th>Best Lap</th>
                     <th><span data-toggle="tooltip" title="Laps contribute to this average if they don't have cuts, aren't lap 1, and the lap time is within 107% of the average lap time so far">Average Clean Lap</span></th>
-                    <th>Handicaps</th>
+                    {{ if $sessionHasHandicaps }}
+                        <th>Handicaps</th>
+                    {{ end }}
                     <th>Crashes</th>
                     {{ if WriteAccess }}
                         <th>Penalties</th>
@@ -48,27 +52,31 @@
                                 {{ end }}
                             </td>
                             <td>{{ formatDuration ($sessionResults.GetAverageLapTime $result.DriverGUID $result.CarModel) true }}</td>
-                            <td>
-                                {{ $hasHandicap := false }}
 
-                                <div class="small">
-                                    {{ if gt $result.BallastKG 0 }}
-                                        {{ $hasHandicap = true }}
-                                        Ballast:
-                                        {{ $result.BallastKG }} kg<br>
+                            {{ if $sessionHasHandicaps }}
+                                <td>
+                                    {{ $hasHandicap := false }}
+
+                                    <div class="small">
+                                        {{ if gt $result.BallastKG 0 }}
+                                            {{ $hasHandicap = true }}
+                                            Ballast:
+                                            {{ $result.BallastKG }} kg<br>
+                                        {{ end }}
+
+                                        {{ if gt $result.Restrictor 0 }}
+                                            {{ $hasHandicap = true }}
+                                            Restrictor:
+                                            {{ $result.Restrictor }}%<br>
+                                        {{ end }}
+                                    </div>
+
+                                    {{ if not $hasHandicap }}
+                                        n/a
                                     {{ end }}
+                                </td>
+                            {{ end }}
 
-                                    {{ if gt $result.Restrictor 0 }}
-                                        {{ $hasHandicap = true }}
-                                        Restrictor:
-                                        {{ $result.Restrictor }}%<br>
-                                    {{ end }}
-                                </div>
-
-                                {{ if not $hasHandicap }}
-                                    n/a
-                                {{ end }}
-                            </td>
                             <td>{{ $sessionResults.GetCrashes $result.DriverGUID }}</td>
 
                             {{ if WriteAccess }}
@@ -114,7 +122,9 @@
                     <th>Qualifying Time</th>
                     <th>Average Lap</th>
                     <th>Laps</th>
-                    <th>Handicaps</th>
+                    {{ if $sessionHasHandicaps }}
+                        <th>Handicaps</th>
+                    {{ end }}
                     {{ if WriteAccess }}
                         <th>Penalties</th>
                     {{ end }}
@@ -141,28 +151,29 @@
                             <td>{{ formatDuration ($sessionResults.GetAverageLapTime $result.DriverGUID $result.CarModel) true }}</td>
                             <td>{{ $sessionResults.GetNumLaps $result.DriverGUID $result.CarModel }} laps /
                                 {{ $sessionResults.GetCuts $result.DriverGUID $result.CarModel }} cuts</td>
-                            <td>
-                                {{ $hasHandicap := false }}
+                            {{ if $sessionHasHandicaps }}
+                                <td>
+                                    {{ $hasHandicap := false }}
 
-                                <div class="small">
-                                    {{ if gt $result.BallastKG 0 }}
-                                        {{ $hasHandicap = true }}
-                                        Ballast:
-                                        {{ $result.BallastKG }} kg<br>
+                                    <div class="small">
+                                        {{ if gt $result.BallastKG 0 }}
+                                            {{ $hasHandicap = true }}
+                                            Ballast:
+                                            {{ $result.BallastKG }} kg<br>
+                                        {{ end }}
+
+                                        {{ if gt $result.Restrictor 0 }}
+                                            {{ $hasHandicap = true }}
+                                            Restrictor:
+                                            {{ $result.Restrictor }}%<br>
+                                        {{ end }}
+                                    </div>
+
+                                    {{ if not $hasHandicap }}
+                                        n/a
                                     {{ end }}
-
-                                    {{ if gt $result.Restrictor 0 }}
-                                        {{ $hasHandicap = true }}
-                                        Restrictor:
-                                        {{ $result.Restrictor }}%<br>
-                                    {{ end }}
-                                </div>
-
-                                {{ if not $hasHandicap }}
-                                    n/a
-                                {{ end }}
-                            </td>
-
+                                </td>
+                            {{ end }}
                             {{ if WriteAccess }}
                                 <td>
                                     <button type="button" class="btn btn-warning btn-sm" data-placement="left"
@@ -206,7 +217,9 @@
                     <th>Best Practice Lap</th>
                     <th>Average Lap</th>
                     <th>Laps</th>
-                    <th>Handicaps</th>
+                    {{ if $sessionHasHandicaps }}
+                        <th>Handicaps</th>
+                    {{ end }}
                     {{ if WriteAccess }}
                         <th>Penalties</th>
                     {{ end }}
@@ -233,27 +246,30 @@
                             <td>{{ formatDuration ($sessionResults.GetAverageLapTime $result.DriverGUID $result.CarModel) true }}</td>
                             <td>{{ $sessionResults.GetNumLaps $result.DriverGUID $result.CarModel }} laps /
                                 {{ $sessionResults.GetCuts $result.DriverGUID $result.CarModel }} cuts</td>
-                            <td>
-                                {{ $hasHandicap := false }}
 
-                                <div class="small">
-                                    {{ if gt $result.BallastKG 0 }}
-                                        {{ $hasHandicap = true }}
-                                        Ballast:
-                                        {{ $result.BallastKG }} kg<br>
+                            {{ if $sessionHasHandicaps }}
+                                <td>
+                                    {{ $hasHandicap := false }}
+
+                                    <div class="small">
+                                        {{ if gt $result.BallastKG 0 }}
+                                            {{ $hasHandicap = true }}
+                                            Ballast:
+                                            {{ $result.BallastKG }} kg<br>
+                                        {{ end }}
+
+                                        {{ if gt $result.Restrictor 0 }}
+                                            {{ $hasHandicap = true }}
+                                            Restrictor:
+                                            {{ $result.Restrictor }}%<br>
+                                        {{ end }}
+                                    </div>
+
+                                    {{ if not $hasHandicap }}
+                                        n/a
                                     {{ end }}
-
-                                    {{ if gt $result.Restrictor 0 }}
-                                        {{ $hasHandicap = true }}
-                                        Restrictor:
-                                        {{ $result.Restrictor }}%<br>
-                                    {{ end }}
-                                </div>
-
-                                {{ if not $hasHandicap }}
-                                    n/a
-                                {{ end }}
-                            </td>
+                                </td>
+                            {{ end }}
 
                             {{ if WriteAccess }}
                                 <td>

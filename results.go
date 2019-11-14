@@ -536,6 +536,40 @@ func (s *SessionResults) GetLastLapTime(driverGuid, model string) time.Duration 
 	return 1
 }
 
+func (s *SessionResults) HasHandicaps() bool {
+	for _, car := range s.Result {
+		if car.BallastKG > 0 || car.Restrictor > 0 {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (s *SessionResults) GetPotentialLap(driverGUID, model string) time.Duration {
+	sectors := make([]int, len(s.GetNumSectors()))
+
+	for _, lap := range s.Laps {
+		if lap.DriverGUID != driverGUID || lap.CarModel != model || lap.Cuts > 0 {
+			continue
+		}
+
+		for i, sector := range lap.Sectors {
+			if sectors[i] == 0 || sector < sectors[i] {
+				sectors[i] = sector
+			}
+		}
+	}
+
+	var totalSectorTime time.Duration
+
+	for _, sector := range sectors {
+		totalSectorTime += time.Duration(sector) * time.Millisecond
+	}
+
+	return totalSectorTime
+}
+
 func (s *SessionResults) GetLastLapPos(driverGuid, model string) int {
 	var driverLaps int
 
