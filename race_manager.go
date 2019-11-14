@@ -1023,6 +1023,7 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 
 	originalDate := race.Scheduled
 	race.Scheduled = date
+	race.ScheduledServerID = serverID
 
 	// if there is an existing schedule timer for this event stop it
 	if timer := rm.customRaceStartTimers[race.UUID.String()]; timer != nil {
@@ -1361,6 +1362,10 @@ func (rm *RaceManager) InitScheduledRaces() error {
 
 	for _, race := range races {
 		race := race
+
+		if race.ScheduledServerID != serverID {
+			continue
+		}
 
 		if race.Scheduled.After(time.Now()) {
 			// add a scheduled event on date

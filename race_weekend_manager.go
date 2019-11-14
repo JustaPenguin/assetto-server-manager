@@ -1035,6 +1035,10 @@ func (rwm *RaceWeekendManager) WatchForScheduledSessions() error {
 		for _, session := range raceWeekend.Sessions {
 			session := session
 
+			if session.ScheduledServerID != serverID {
+				continue
+			}
+
 			if session.ScheduledTime.After(time.Now()) {
 				err := rwm.setupScheduledSessionTimer(raceWeekend, session)
 
@@ -1112,6 +1116,7 @@ func (rwm *RaceWeekendManager) ScheduleSession(raceWeekendID, sessionID string, 
 
 	session.ScheduledTime = date
 	session.StartWhenParentHasFinished = startWhenParentFinishes
+	session.ScheduledServerID = serverID
 
 	if !session.ScheduledTime.IsZero() {
 		err = rwm.setupScheduledSessionTimer(raceWeekend, session)

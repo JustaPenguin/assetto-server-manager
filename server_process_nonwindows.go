@@ -9,7 +9,7 @@ import (
 	"syscall"
 )
 
-const serverExecutablePath = "acServer"
+const ServerExecutablePath = "acServer"
 
 func kill(process *os.Process) error {
 	pgid, err := syscall.Getpgid(process.Pid)

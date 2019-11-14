@@ -109,7 +109,7 @@ func (ch *ChampionshipsHandler) view(w http.ResponseWriter, r *http.Request) {
 	eventInProgress := false
 
 	for _, event := range championship.Events {
-		if event.InProgress() {
+		if event.InProgress() && ch.championshipManager.activeChampionship != nil {
 			eventInProgress = true
 			break
 		}
