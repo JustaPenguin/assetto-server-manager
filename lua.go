@@ -25,7 +25,7 @@ func InitLua() {
 }
 
 type LuaPlugin struct {
-	inputs []interface{}
+	inputs  []interface{}
 	outputs []interface{}
 }
 
@@ -65,9 +65,9 @@ func (l *LuaPlugin) Call(fileName, functionName string) error {
 	}
 
 	if err := Lua.CallByParam(lua.P{
-		Fn:      Lua.GetGlobal(functionName),                  // name of Lua function
-		NRet:    len(l.outputs),                     // number of returned values
-		Protect: true,                  // return err or panic
+		Fn:      Lua.GetGlobal(functionName), // name of Lua function
+		NRet:    len(l.outputs),              // number of returned values
+		Protect: true,                        // return err or panic
 	}, jsonInputs...); err != nil {
 		return err
 	}
