@@ -42,7 +42,7 @@ function onEventSchedule(encodedRace)
 end
 
 -- called when any RACE WEEKEND event is scheduled
-function onEventSchedule(encodedRaceWeekendSession, encodedRaceWeekend)
+function onRaceWeekendEventSchedule(encodedRaceWeekendSession, encodedRaceWeekend)
     -- Decode block, you probably shouldn't touch these!
     local session = json.decode(encodedRaceWeekendSession)
     local raceWeekend  = json.decode(encodedRaceWeekend)
