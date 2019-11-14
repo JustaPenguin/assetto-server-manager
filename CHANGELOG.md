@@ -8,6 +8,7 @@ Added:
 Fixes:
 
 * Setting the ballast on an entrant to a larger value than the Max Ballast option no longer stops the server from starting.
+* Fixes an issue where events scheduled in a multi-server scenario would start on the wrong server.
 
 ---
 

@@ -74,6 +74,7 @@ func Router(
 	r.HandleFunc("/logout", accountHandler.logout)
 	r.HandleFunc("/robots.txt", serverAdministrationHandler.robots)
 	r.Handle("/metrics", prometheusMonitoringHandler())
+	r.Get("/healthcheck.json", healthCheck.ServeHTTP)
 
 	if Debug {
 		r.Mount("/debug/", middleware.Profiler())
@@ -86,8 +87,6 @@ func Router(
 		// pages
 		r.Get("/", serverAdministrationHandler.home)
 		r.Get("/changelog", serverAdministrationHandler.changelog)
-
-		r.Get("/healthcheck.json", healthCheck.ServeHTTP)
 
 		r.Mount("/stracker/", http.HandlerFunc(strackerHandler.proxy))
 
