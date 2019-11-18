@@ -592,6 +592,10 @@ func (cm *CarManager) Search(ctx context.Context, term string, from, size int) (
 	var cars Cars
 
 	for _, hit := range results.Hits {
+		if hit.ID == "cars" {
+			continue
+		}
+
 		car, err := cm.LoadCar(hit.ID, nil)
 
 		if err != nil {
