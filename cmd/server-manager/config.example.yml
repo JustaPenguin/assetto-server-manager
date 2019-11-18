@@ -181,6 +181,13 @@ server:
   # performance mode disables live timing entirely, and prioritises low cpu
   # usage.
   performance_mode: false
+  # set this to 'true' if you don't want server manager to open a browser window
+  # on launch on windows
+  dont_open_browser: false
+  # set this to 'true' if you want server manager to scan content folders for
+  # changes every 15 seconds and update the search index with changes
+  scan_content_folder_for_changes: false
+
   # list of commands to run on server start and kill on server stop. this should
   # contain the full command with arguments to run the given program.
   #

@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -24,6 +25,7 @@ import (
 	"github.com/dimchansky/utfbom"
 	"github.com/go-chi/chi"
 	"github.com/pkg/errors"
+	"github.com/radovskyb/watcher"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
@@ -240,8 +242,85 @@ type CarManager struct {
 	trackManager            *TrackManager
 }
 
-func NewCarManager(trackManager *TrackManager) *CarManager {
-	return &CarManager{trackManager: trackManager}
+func NewCarManager(trackManager *TrackManager, watchForCarChanges bool) *CarManager {
+	cm := &CarManager{trackManager: trackManager}
+
+	if watchForCarChanges {
+		go func() {
+			err := cm.watchForCarChanges()
+
+			if err != nil {
+				logrus.WithError(err).Error("Could not watch for changes in the content/cars directory")
+			}
+		}()
+	}
+
+	return cm
+}
+
+// watchForChanges looks for created/removed files in the cars folder and (de-)indexes them as necessary
+func (cm *CarManager) watchForCarChanges() error {
+	w := watcher.New()
+
+	err := w.Add(filepath.Join(ServerInstallPath, "content", "cars"))
+
+	if err != nil {
+		return err
+	}
+
+	w.SetMaxEvents(1)
+	w.FilterOps(watcher.Create, watcher.Remove)
+	w.AddFilterHook(func(info os.FileInfo, fullPath string) error {
+		if info.IsDir() && info.Name() != "cars" {
+			split := strings.Split(fullPath, fmt.Sprintf("%c", os.PathSeparator))
+
+			if len(split) > 0 && split[len(split)-2] == "cars" {
+				return nil // only fire the event for the car folder itself
+			}
+		}
+
+		return watcher.ErrSkip
+	})
+
+	go func() {
+		for {
+			select {
+			case event := <-w.Event:
+				var err error
+				var carName string
+
+				switch event.Op {
+				case watcher.Create, watcher.Write:
+					carName = filepath.Base(event.Path)
+					logrus.Infof("Indexing car: %s", carName)
+					car, err := cm.LoadCar(carName, nil)
+
+					if err != nil {
+						logrus.WithError(err).Errorf("Could not find car to index: %s", carName)
+						continue
+					}
+
+					err = cm.IndexCar(car)
+				case watcher.Remove:
+					carName = filepath.Base(event.OldPath)
+					logrus.Infof("De-indexing car: %s", carName)
+					err = cm.DeIndexCar(carName)
+				}
+
+				if err != nil {
+					logrus.WithError(err).Errorf("Could not update index for car: %s", carName)
+					continue
+				}
+			case err := <-w.Error:
+				logrus.WithError(err).Error("Car content watcher error")
+				continue
+			case <-w.Closed:
+				return
+			}
+		}
+	}()
+
+	return w.Start(time.Second * 15)
 }
 
 func (cm *CarManager) ListCars() (Cars, error) {
