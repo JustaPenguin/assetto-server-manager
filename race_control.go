@@ -540,30 +540,35 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 				} else {
 
 					if !firstPositionUpdate {
-						logrus.Infof("Driver: %d initial connect position set", currentDriver.CarInfo.CarID)
+						var nilVec udp.Vec
 
-						sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
-							fmt.Sprintf("Hi! You are mid way through a driver swap, please wait %f seconds", countdown))
+						nilVec = udp.Vec{X:0, Y:0, Z:0}
 
-						if err == nil {
-							err := rc.process.SendUDPMessage(sendChat)
+						if currentDriver.LastPos != nilVec {
+							logrus.Infof("Driver: %d initial connect position set to: %d, %d, %d",
+								currentDriver.CarInfo.CarID, currentDriver.LastPos.X, currentDriver.LastPos.Y, currentDriver.LastPos.Z)
 
-							if err != nil {
-								logrus.WithError(err).Errorf("Unable to send driver swap welcome message to: %s", currentDriver.CarInfo.DriverName)
+							sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
+								fmt.Sprintf("Hi! You are mid way through a driver swap, please wait %f seconds", countdown))
+
+							if err == nil {
+								err := rc.process.SendUDPMessage(sendChat)
+
+								if err != nil {
+									logrus.WithError(err).Errorf("Unable to send driver swap welcome message to: %s", currentDriver.CarInfo.DriverName)
+								}
+							} else {
+								logrus.WithError(err).Errorf("Unable to build driver swap welcome message to: %s", currentDriver.CarInfo.DriverName)
 							}
-						} else {
-							logrus.WithError(err).Errorf("Unable to build driver swap welcome message to: %s", currentDriver.CarInfo.DriverName)
+
+							position = currentDriver.LastPos
+
+							firstPositionUpdate = true
 						}
-
-						position = currentDriver.LastPos
-
-						fmt.Println(position)
-
-						firstPositionUpdate = true
 					}
 
 					// if driver has moved
-					if rc.positionHasChanged(position, currentDriver.LastPos) {
+					if rc.positionHasChanged(position, currentDriver.LastPos) && firstPositionUpdate {
 						// if the time is within the disqualify window
 						if countdown >= (time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapDisqualifyTime)).Seconds() {
 							udp.NewKickUser(uint8(currentDriver.CarInfo.CarID))
