@@ -582,6 +582,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 
 						// if the time is within the penalty window
 						if countdown >= (time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapPenaltyTime)) {
+							// @TODO this should actually give a penalty instead of kicking
 							udp.NewKickUser(uint8(currentDriver.CarInfo.CarID))
 
 							logrus.Infof("Driver: %d has been given a %d second penalty for leaving the pits %d seconds early during a driver swap", currentDriver.CarInfo.CarID, countdown, countdown)
