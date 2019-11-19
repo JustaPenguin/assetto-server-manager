@@ -163,8 +163,16 @@ func (d dummyNotificationManager) SaveServerOptions(oldServerOpts *GlobalServerC
 }
 
 func init() {
-	championshipManager = NewChampionshipManager(NewRaceManager(NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"), filepath.Join(os.TempDir(), "asm-race-store-shared")), dummyServerProcess{}, NewCarManager(NewTrackManager()), NewTrackManager(), &dummyNotificationManager{}))
 	config = &Configuration{}
+	championshipManager = NewChampionshipManager(
+		NewRaceManager(
+			NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"), filepath.Join(os.TempDir(), "asm-race-store-shared")),
+			dummyServerProcess{},
+			NewCarManager(NewTrackManager(), false),
+			NewTrackManager(),
+			&dummyNotificationManager{},
+		),
+	)
 }
 
 func doReplay(filename string, multiplier int, callbackFunc udp.CallbackFunc, waitTime time.Duration) error {

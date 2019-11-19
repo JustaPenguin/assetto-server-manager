@@ -141,10 +141,11 @@ func (s *StoreConfig) BuildStore() (Store, error) {
 }
 
 type ServerExtraConfig struct {
-	RunOnStart                []string `yaml:"run_on_start"`
-	AuditLogging              bool     `yaml:"audit_logging"`
-	PerformanceMode           bool     `yaml:"performance_mode"`
-	DisableWindowsBrowserOpen bool     `yaml:"dont_open_browser"`
+	RunOnStart                  []string `yaml:"run_on_start"`
+	AuditLogging                bool     `yaml:"audit_logging"`
+	PerformanceMode             bool     `yaml:"performance_mode"`
+	DisableWindowsBrowserOpen   bool     `yaml:"dont_open_browser"`
+	ScanContentFolderForChanges bool     `yaml:"scan_content_folder_for_changes"`
 }
 
 const acsrURL = "https://acsr.assettocorsaservers.com"

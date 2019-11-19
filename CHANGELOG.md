@@ -8,6 +8,9 @@ Added:
 * Auto ballast based on championship position with Lua plugins! Another Lua example, this one applies a ballast to each driver in a championship when an event is started based on their championship position.
 * Auto collision disqualifier! This is our last Lua example, it disqualifies drivers if they exceed a certain number of collisions or have a collision over a certain speed.
 * Results pages now show your 'Potential' lap time - the sum of your best sectors.
+* Added an option in Race Weekends to filter from the best lap across multiple results files.
+* Added an option to the config.yml to watch the content folder for changes and keep the car search index updated.
+* Added an option to the config.yml to prevent server manager from opening a browser on Windows on start.
 
 Fixes:
 

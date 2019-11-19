@@ -774,6 +774,39 @@ func (rwm *RaceWeekendManager) ImportSession(raceWeekendID string, raceWeekendSe
 	return rwm.UpsertRaceWeekend(raceWeekend)
 }
 
+func (rwm *RaceWeekendManager) ListAvailableResultsFilesForSorting(raceWeekend *RaceWeekend, session *RaceWeekendSession) ([]SessionResults, error) {
+	results, err := ListAllResults()
+
+	if err != nil {
+		return nil, err
+	}
+
+	var filteredResults []SessionResults
+
+	for _, result := range results {
+
+		found := false
+
+		carCheck:
+		for _, car := range result.Cars {
+			for _, entryListCar := range raceWeekend.EntryList.CarIDs() {
+				if car.Model == entryListCar {
+					// result car found in entry list
+					found = true
+					break carCheck
+				}
+			}
+		}
+
+
+		if result.TrackName == session.RaceConfig.Track && result.TrackConfig == session.RaceConfig.TrackLayout && found {
+			filteredResults = append(filteredResults, result)
+		}
+	}
+
+	return filteredResults, nil
+}
+
 func (rwm *RaceWeekendManager) ListAvailableResultsFilesForSession(raceWeekendID string, raceWeekendSessionID string) (*RaceWeekendSession, []SessionResults, error) {
 	raceWeekend, err := rwm.LoadRaceWeekend(raceWeekendID)
 

@@ -28,6 +28,8 @@ type RaceWeekendSessionToSessionFilter struct {
 	SortType string
 
 	ForceUseTyreFromFastestLap bool
+
+	AvailableResultsForSorting []string
 }
 
 func reverseEntrants(numToReverse int, entrants []*RaceWeekendSessionEntrant) {
@@ -65,7 +67,7 @@ func (f RaceWeekendSessionToSessionFilter) Filter(raceWeekend *RaceWeekend, pare
 		parentSession.NumEntrantsToReverse = f.NumEntrantsToReverse
 
 		// race weekend session is completed and has a valid sorter, use it to sort results before filtering.
-		if err := sorter.Sort(raceWeekend, parentSession, parentSessionResults); err != nil {
+		if err := sorter.Sort(raceWeekend, parentSession, parentSessionResults, &f); err != nil {
 			return err
 		}
 	}
