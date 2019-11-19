@@ -787,7 +787,7 @@ func (rwm *RaceWeekendManager) ListAvailableResultsFilesForSorting(raceWeekend *
 
 		found := false
 
-		carCheck:
+	carCheck:
 		for _, car := range result.Cars {
 			for _, entryListCar := range raceWeekend.EntryList.CarIDs() {
 				if car.Model == entryListCar {
@@ -797,7 +797,6 @@ func (rwm *RaceWeekendManager) ListAvailableResultsFilesForSorting(raceWeekend *
 				}
 			}
 		}
-
 
 		if result.TrackName == session.RaceConfig.Track && result.TrackConfig == session.RaceConfig.TrackLayout && found {
 			filteredResults = append(filteredResults, result)
