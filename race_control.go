@@ -492,7 +492,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 		case <-ticker.C:
 			totalTime += time.Second
 
-			countdown := completeTime.Seconds() - totalTime.Seconds()
+			countdown := completeTime - totalTime
 
 			if !newDriverConnected {
 				for _, driver := range rc.ConnectedDrivers.Drivers {
@@ -513,7 +513,6 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 
 							return
 						}
-
 					}
 				}
 			} else {
@@ -570,7 +569,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 					// if driver has moved
 					if rc.positionHasChanged(position, currentDriver.LastPos) && firstPositionUpdate {
 						// if the time is within the disqualify window
-						if countdown >= (time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapDisqualifyTime)).Seconds() {
+						if countdown >= (time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapDisqualifyTime)) {
 							udp.NewKickUser(uint8(currentDriver.CarInfo.CarID))
 
 							logrus.Infof("Driver: %d has been kicked for leaving the pits %d seconds early during a driver swap", currentDriver.CarInfo.CarID, countdown)
@@ -582,7 +581,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 						}
 
 						// if the time is within the penalty window
-						if countdown >= (time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapPenaltyTime)).Seconds() {
+						if countdown >= (time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapPenaltyTime)) {
 							udp.NewKickUser(uint8(currentDriver.CarInfo.CarID))
 
 							logrus.Infof("Driver: %d has been given a %d second penalty for leaving the pits %d seconds early during a driver swap", currentDriver.CarInfo.CarID, countdown, countdown)
@@ -596,7 +595,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 					}
 
 					// send countdown messages
-					if countdown <= (time.Second * 10).Seconds() {
+					if countdown <= (time.Second * 10) {
 						sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
 							fmt.Sprintf("Free to leave pits in %f seconds", countdown))
 
