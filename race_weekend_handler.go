@@ -277,7 +277,7 @@ type raceWeekendFilterTemplateVars struct {
 
 	RaceWeekend                 *RaceWeekend
 	ParentSession, ChildSession *RaceWeekendSession
-	ResultsAvailableForSorting  []string
+	ResultsAvailableForSorting  []SessionResults
 	Filter                      *RaceWeekendSessionToSessionFilter
 	AvailableSorters            []RaceWeekendEntryListSorterDescription
 }
