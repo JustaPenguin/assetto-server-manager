@@ -186,6 +186,8 @@ server:
   dont_open_browser: false
   # set this to 'true' if you want server manager to scan content folders for
   # changes every 15 seconds and update the search index with changes
+  # this is useful for multi-server setups with a shared content folder so that
+  # each server manager instance can see added/removed cars as they change
   scan_content_folder_for_changes: false
 
   # list of commands to run on server start and kill on server stop. this should
