@@ -24,7 +24,8 @@ $(document).ready(function () {
     });
 
     $document.find("#open-in-simres").each(function (index, elem) {
-        let link = window.location.href.split("#")[0].replace("results", "results/download") + ".json";
+        let query = window.location.search;
+        let link = window.location.href.replace(query, "").split("#")[0].replace("results", "results/download") + ".json" + query;
 
         $(elem).attr('href', "http://simresults.net/remote?result=" + link);
 
@@ -32,7 +33,8 @@ $(document).ready(function () {
     });
 
     $document.find("#simres-group").each(function (index, elem) {
-        let link = window.location.href + "/export-results";
+        let query = window.location.search;
+        let link = window.location.href.replace(query, "") + "/export-results" + query;
 
         $(elem).attr('href', "http://simresults.net/remote?results=" + link);
 

@@ -195,7 +195,7 @@ func (r *Resolver) resolveCarManager() *CarManager {
 		return r.carManager
 	}
 
-	r.carManager = NewCarManager(r.resolveTrackManager())
+	r.carManager = NewCarManager(r.resolveTrackManager(), config.Server.ScanContentFolderForChanges)
 
 	return r.carManager
 }
