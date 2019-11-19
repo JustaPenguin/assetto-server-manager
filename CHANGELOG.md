@@ -4,6 +4,7 @@ v1.5.4
 Added:
 
 * Results pages now show your 'Potential' lap time - the sum of your best sectors.
+* Added an option in Race Weekends to filter from the best lap across multiple results files.
 * Added an option to the config.yml to watch the content folder for changes and keep the car search index updated.
 * Added an option to the config.yml to prevent server manager from opening a browser on Windows on start.
 

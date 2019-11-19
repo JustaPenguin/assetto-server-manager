@@ -290,6 +290,7 @@ export namespace RaceWeekend {
         private reverseGrid: number = 0;
         private gridStart!: number;
         private sortType!: string;
+        private availableResultsForSorting!: string[];
         private startOnFastestLapTyre: boolean = false;
 
         public constructor($elem: JQuery<HTMLElement>, parentSessionID: string, childSessionID: string) {
@@ -310,6 +311,7 @@ export namespace RaceWeekend {
                 EntryListStart: this.gridStart,
                 SortType: this.sortType,
                 ForceUseTyreFromFastestLap: this.startOnFastestLapTyre,
+                AvailableResultsForSorting: this.availableResultsForSorting
             })
         }
 
@@ -319,7 +321,14 @@ export namespace RaceWeekend {
             this.reverseGrid = parseInt(this.$elem.find("#ReverseGrid").val() as string);
             this.gridStart = parseInt(this.$elem.find("#GridStart").val() as string);
             this.sortType = this.$elem.find("#ResultsSort").val() as string;
+            this.availableResultsForSorting = this.$elem.find("#AvailableResults").val() as string[];
             this.startOnFastestLapTyre = this.$elem.find("#ForceUseTyreFromFastestLap").is(":checked");
+
+            if (this.sortType == "fastest_multi_results_lap") {
+                this.$elem.find("#AvailableResultsWrapper").show()
+            } else {
+                this.$elem.find("#AvailableResultsWrapper").hide()
+            }
 
             $.ajax(`/race-weekend/${RaceWeekendID}/grid-preview?parentSessionID=${this.parentSessionID}&childSessionID=${this.childSessionID}`, {
                 data: this.packageValues(),
