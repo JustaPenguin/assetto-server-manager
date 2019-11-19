@@ -277,6 +277,7 @@ type raceWeekendFilterTemplateVars struct {
 
 	RaceWeekend                 *RaceWeekend
 	ParentSession, ChildSession *RaceWeekendSession
+	ResultsAvailableForSorting  []string
 	Filter                      *RaceWeekendSessionToSessionFilter
 	AvailableSorters            []RaceWeekendEntryListSorterDescription
 }
@@ -302,12 +303,19 @@ func (rwh *RaceWeekendHandler) manageFilters(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	sessionResults, err := rwh.raceWeekendManager.ListAvailableResultsFilesForSorting(raceWeekend, childSession)
+
+	if err != nil {
+		logrus.WithError(err).Error("Couldn't list results files for sorting")
+	}
+
 	rwh.viewRenderer.MustLoadPartial(w, r, "race-weekend/popups/manage-filters.html", &raceWeekendFilterTemplateVars{
-		RaceWeekend:      raceWeekend,
-		ParentSession:    parentSession,
-		ChildSession:     childSession,
-		Filter:           filter,
-		AvailableSorters: RaceWeekendEntryListSorters,
+		RaceWeekend:                raceWeekend,
+		ParentSession:              parentSession,
+		ChildSession:               childSession,
+		ResultsAvailableForSorting: sessionResults,
+		Filter:                     filter,
+		AvailableSorters:           RaceWeekendEntryListSorters,
 	})
 }
 

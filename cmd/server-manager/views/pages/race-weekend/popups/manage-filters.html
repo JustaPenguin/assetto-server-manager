@@ -64,6 +64,27 @@
                                             {{ end }}
                                         </div>
 
+                                        <div class="form-group row" id="AvailableResultsWrapper">
+                                            <label for="AvailableResults" class="col-sm-4 col-form-label">Results Files</label>
+
+                                            <div class="col-sm-8">
+
+                                                <select multiple required class="form-control Cars" name="AvailableResults" id="AvailableResults" size="15">
+                                                    {{ range $index, $resultsFile := $.ResultsAvailableForSorting }}
+                                                        {{ $selected := false }}
+
+                                                        {{ range $index, $availableResult := $.Filter.AvailableResultsForSorting }}
+                                                            {{ if eq $resultsFile $availableResult }}
+                                                                {{ $selected = true }}
+                                                            {{ end }}
+                                                        {{ end}}
+
+                                                        <option value="{{ $resultsFile }}" {{ if $selected }} selected="selected" {{ end }}>{{ $resultsFile }}</option>
+                                                    {{ end }}
+                                                </select>
+                                            </div>
+                                        </div>
+
                                         <div class="form-group row">
                                             <label for="ReverseGrid" class="col-sm-4 col-form-label">Reverse?</label>
 

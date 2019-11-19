@@ -4,6 +4,7 @@ v1.5.4
 Added:
 
 * Results pages now show your 'Potential' lap time - the sum of your best sectors.
+* Added an option in Race Weekends to filter from the best lap across multiple results files.
 
 Fixes:
 
