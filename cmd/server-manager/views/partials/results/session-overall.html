@@ -3,10 +3,12 @@
     {{ $sessionResults := .sessionResults }}
     {{ $account := .account }}
     {{ $driversHaveTeams := $sessionResults.DriversHaveTeams }}
+    {{ $sessionHasHandicaps := $sessionResults.HasHandicaps }}
 
     <div class="table-responsive">
         <table class="table table-bordered table-striped">
             {{ if eq "RACE" $sessionResults.Type.OriginalString }}
+
                 <tr>
                     <th>#</th>
                     <th>Name</th>
@@ -18,7 +20,9 @@
                     <th>Num Laps</th>
                     <th>Best Lap</th>
                     <th><span data-toggle="tooltip" title="Laps contribute to this average if they don't have cuts, aren't lap 1, and the lap time is within 107% of the average lap time so far">Average Clean Lap</span></th>
-                    <th>Handicaps</th>
+                    {{ if $sessionHasHandicaps }}
+                        <th>Handicaps</th>
+                    {{ end }}
                     <th>Crashes</th>
                     {{ if WriteAccess }}
                         <th>Penalties</th>
@@ -29,7 +33,7 @@
                     {{ with $result.DriverGUID }}
                         <tr {{ if eq $account.GUID $result.DriverGUID }}style="font-weight: bold"{{ end }}>
                             <td>{{ add $pos 1 }}</td>
-                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ driverName $result.DriverName }}
+                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}-{{ $result.CarID }}">{{ driverName $result.DriverName }}
                                 {{ if $result.HasPenalty }} <span class="badge badge-danger">Time Penalty: {{ $result.PenaltyTime }}</span> {{ end }}
                                 {{ if $result.Disqualified }} <span class="badge badge-danger">Disqualified</span> {{ end }}</td>
 
@@ -37,58 +41,70 @@
                                 <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
                             {{ end }}
                             <td>{{ prettify $result.CarModel true }}</td>
-                            <td>{{ formatDuration ($sessionResults.GetTime $result.TotalTime $result.DriverGUID true) false }}</td>
-                            <td>{{ $sessionResults.GetNumLaps $result.DriverGUID }} laps /
-                                {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
+                            <td>{{ formatDuration ($sessionResults.GetTime $result.TotalTime $result.DriverGUID $result.CarModel true) false }}</td>
+                            <td>{{ $sessionResults.GetNumLaps $result.DriverGUID $result.CarModel }} laps /
+                                {{ $sessionResults.GetCuts $result.DriverGUID $result.CarModel }} cuts</td>
                             <td>
-                                {{ $bestLap := $sessionResults.GetTime $result.BestLap $result.DriverGUID false }}
+                                {{ $bestLap := $sessionResults.GetTime $result.BestLap $result.DriverGUID $result.CarModel false }}
                                 {{  formatDuration $bestLap true }}<br>
                                 {{ if gt $bestLap 0 }}
                                     <small class="text-muted">Tyre: {{ $result.BestLapTyre $sessionResults }}</small>
                                 {{ end }}
                             </td>
-                            <td>{{ formatDuration ($sessionResults.GetAverageLapTime $result.DriverGUID) true }}</td>
-                            <td>
-                                {{ $hasHandicap := false }}
+                            <td>{{ formatDuration ($sessionResults.GetAverageLapTime $result.DriverGUID $result.CarModel) true }}</td>
 
-                                <div class="small">
-                                    {{ if gt $result.BallastKG 0 }}
-                                        {{ $hasHandicap = true }}
-                                        Ballast:
-                                        {{ $result.BallastKG }} kg<br>
+                            {{ if $sessionHasHandicaps }}
+                                <td>
+                                    {{ $hasHandicap := false }}
+
+                                    <div class="small">
+                                        {{ if gt $result.BallastKG 0 }}
+                                            {{ $hasHandicap = true }}
+                                            Ballast:
+                                            {{ $result.BallastKG }} kg<br>
+                                        {{ end }}
+
+                                        {{ if gt $result.Restrictor 0 }}
+                                            {{ $hasHandicap = true }}
+                                            Restrictor:
+                                            {{ $result.Restrictor }}%<br>
+                                        {{ end }}
+                                    </div>
+
+                                    {{ if not $hasHandicap }}
+                                        n/a
                                     {{ end }}
+                                </td>
+                            {{ end }}
 
-                                    {{ if gt $result.Restrictor 0 }}
-                                        {{ $hasHandicap = true }}
-                                        Restrictor:
-                                        {{ $result.Restrictor }}%<br>
-                                    {{ end }}
-                                </div>
-
-                                {{ if not $hasHandicap }}
-                                    n/a
-                                {{ end }}
-                            </td>
                             <td>{{ $sessionResults.GetCrashes $result.DriverGUID }}</td>
 
                             {{ if WriteAccess }}
                                 <td>
                                     <button type="button" class="btn btn-warning btn-sm" data-placement="left"
                                        data-toggle="popover" title="Penalty Details" data-html="true"
-                                        id="result-{{ $result.DriverGUID }}-{{ $sessionResults.SessionFile }}"
+                                        id="result-{{ $result.DriverGUID }}-{{ $result.CarModel }}-{{ $sessionResults.SessionFile }}"
                                         >Penalties</button>
 
-                                    <div id="popover-content-result-{{ $result.DriverGUID }}-{{ $sessionResults.SessionFile }}" style="display: none;">
-                                        <form action='/penalties/{{ $sessionResults.SessionFile }}/{{ $result.DriverGUID }}' method='POST'>
+                                    <div id="popover-content-result-{{ $result.DriverGUID }}-{{ $result.CarModel }}-{{ $sessionResults.SessionFile }}" style="display: none;">
+                                        <form action='/penalties/{{ $sessionResults.SessionFile }}/{{ $result.DriverGUID }}?model={{ $result.CarModel }}' method='POST'>
                                             <div class='form-group'>
                                                 <label for='time-penalty'>Time Penalty (seconds)</label>
                                                 <input type='number' class='form-control' name='time-penalty' id='time-penalty' placeholder='0' step='0.1'>
                                                 <small class='form-text text-muted'>If set to 0 driver will be disqualified.</small>
                                             </div>
 
-                                            <button type='submit' name='action' value='add' class='btn btn-danger'>Add Penalty</button>
+                                            <button type='submit' name='action' value='add' class='btn btn-warning'>Add Penalty</button>
                                             <button type='submit' name='action' value='remove' class='btn btn-primary'>Remove Penalty</button>
                                         </form>
+
+                                        {{ if AdminAccess }}
+                                            <form action="/blacklist" method="POST">
+                                                <input type="text" class="d-none" name="blacklist" id="blacklist" value="{{ $result.DriverGUID }}">
+
+                                                <button type='submit' name='type' value="single" class='btn btn-danger w-100 mt-1'>Blacklist Driver</button>
+                                            </form>
+                                        {{ end }}
                                     </div>
                                 </td>
                             {{ end }}
@@ -106,49 +122,87 @@
                     <th>Qualifying Time</th>
                     <th>Average Lap</th>
                     <th>Laps</th>
-                    <th>Handicaps</th>
+                    {{ if $sessionHasHandicaps }}
+                        <th>Handicaps</th>
+                    {{ end }}
+                    {{ if WriteAccess }}
+                        <th>Penalties</th>
+                    {{ end }}
                 </tr>
 
                 {{ range $pos, $result := $sessionResults.Result }}
                     {{ with $result.DriverGUID }}
                         <tr {{ if eq $account.GUID $result.DriverGUID }}style="font-weight: bold"{{ end }}>
                             <td>{{ add $pos 1 }}</td>
-                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ driverName $result.DriverName }}</td>
+                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}-{{ $result.CarID }}">{{ driverName $result.DriverName }}
+                                {{ if $result.HasPenalty }} <span class="badge badge-danger">Time Penalty: {{ $result.PenaltyTime }}</span> {{ end }}
+                                {{ if $result.Disqualified }} <span class="badge badge-danger">Disqualified</span> {{ end }}</td>
                             {{ if $driversHaveTeams }}
                                 <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
                             {{ end }}
                             <td>{{ prettify $result.CarModel true }}</td>
                             <td>
-                                {{ $bestLap := $sessionResults.GetTime $result.BestLap $result.DriverGUID false }}
+                                {{ $bestLap := $sessionResults.GetTime $result.BestLap $result.DriverGUID $result.CarModel true }}
                                 {{ formatDuration $bestLap true }}<br>
                                 {{ if gt $bestLap 0 }}
                                     <small class="text-muted">Tyre: {{ $result.BestLapTyre $sessionResults }}</small>
                                 {{ end }}
                             </td>
-                            <td>{{ formatDuration ($sessionResults.GetAverageLapTime $result.DriverGUID) true }}</td>
-                            <td>{{ $sessionResults.GetNumLaps $result.DriverGUID }} laps /
-                                {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
-                            <td>
-                                {{ $hasHandicap := false }}
+                            <td>{{ formatDuration ($sessionResults.GetAverageLapTime $result.DriverGUID $result.CarModel) true }}</td>
+                            <td>{{ $sessionResults.GetNumLaps $result.DriverGUID $result.CarModel }} laps /
+                                {{ $sessionResults.GetCuts $result.DriverGUID $result.CarModel }} cuts</td>
+                            {{ if $sessionHasHandicaps }}
+                                <td>
+                                    {{ $hasHandicap := false }}
 
-                                <div class="small">
-                                    {{ if gt $result.BallastKG 0 }}
-                                        {{ $hasHandicap = true }}
-                                        Ballast:
-                                        {{ $result.BallastKG }} kg<br>
+                                    <div class="small">
+                                        {{ if gt $result.BallastKG 0 }}
+                                            {{ $hasHandicap = true }}
+                                            Ballast:
+                                            {{ $result.BallastKG }} kg<br>
+                                        {{ end }}
+
+                                        {{ if gt $result.Restrictor 0 }}
+                                            {{ $hasHandicap = true }}
+                                            Restrictor:
+                                            {{ $result.Restrictor }}%<br>
+                                        {{ end }}
+                                    </div>
+
+                                    {{ if not $hasHandicap }}
+                                        n/a
                                     {{ end }}
+                                </td>
+                            {{ end }}
+                            {{ if WriteAccess }}
+                                <td>
+                                    <button type="button" class="btn btn-warning btn-sm" data-placement="left"
+                                            data-toggle="popover" title="Penalty Details" data-html="true"
+                                            id="result-{{ $result.DriverGUID }}-{{ $result.CarModel }}-{{ $sessionResults.SessionFile }}"
+                                    >Penalties</button>
 
-                                    {{ if gt $result.Restrictor 0 }}
-                                        {{ $hasHandicap = true }}
-                                        Restrictor:
-                                        {{ $result.Restrictor }}%<br>
-                                    {{ end }}
-                                </div>
+                                    <div id="popover-content-result-{{ $result.DriverGUID }}-{{ $result.CarModel }}-{{ $sessionResults.SessionFile }}" style="display: none;">
+                                        <form action='/penalties/{{ $sessionResults.SessionFile }}/{{ $result.DriverGUID }}?model={{ $result.CarModel }}' method='POST'>
+                                            <div class='form-group'>
+                                                <label for='time-penalty'>Time Penalty (seconds)</label>
+                                                <input type='number' class='form-control' name='time-penalty' id='time-penalty' placeholder='0' step='0.1'>
+                                                <small class='form-text text-muted'>If set to 0 driver will be disqualified.</small>
+                                            </div>
 
-                                {{ if not $hasHandicap }}
-                                    n/a
-                                {{ end }}
-                            </td>
+                                            <button type='submit' name='action' value='add' class='btn btn-warning'>Add Penalty</button>
+                                            <button type='submit' name='action' value='remove' class='btn btn-primary'>Remove Penalty</button>
+                                        </form>
+
+                                        {{ if AdminAccess }}
+                                            <form action="/blacklist" method="POST">
+                                                <input type="text" class="d-none" name="blacklist" id="blacklist" value="{{ $result.DriverGUID }}">
+
+                                                <button type='submit' name='type' value="single" class='btn btn-danger w-100 mt-1'>Blacklist Driver</button>
+                                            </form>
+                                        {{ end }}
+                                    </div>
+                                </td>
+                            {{ end }}
                         </tr>
                     {{ end }}
                 {{ end }}
@@ -163,49 +217,89 @@
                     <th>Best Practice Lap</th>
                     <th>Average Lap</th>
                     <th>Laps</th>
-                    <th>Handicaps</th>
+                    {{ if $sessionHasHandicaps }}
+                        <th>Handicaps</th>
+                    {{ end }}
+                    {{ if WriteAccess }}
+                        <th>Penalties</th>
+                    {{ end }}
                 </tr>
 
                 {{ range $pos, $result := $sessionResults.Result }}
                     {{ with $result.DriverGUID }}
                         <tr {{ if eq $account.GUID $result.DriverGUID }}style="font-weight: bold"{{ end }}>
                             <td>{{ add $pos 1 }}</td>
-                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}">{{ driverName $result.DriverName }}</td>
+                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}-{{ $result.CarID }}">{{ driverName $result.DriverName }}
+                                {{ if $result.HasPenalty }} <span class="badge badge-danger">Time Penalty: {{ $result.PenaltyTime }}</span> {{ end }}
+                                {{ if $result.Disqualified }} <span class="badge badge-danger">Disqualified</span> {{ end }}</td>
                             {{ if $driversHaveTeams }}
                                 <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
                             {{ end }}
                             <td>{{ prettify $result.CarModel true }}</td>
                             <td>
-                                {{ $bestLap := $sessionResults.GetTime $result.BestLap $result.DriverGUID false }}
+                                {{ $bestLap := $sessionResults.GetTime $result.BestLap $result.DriverGUID $result.CarModel true }}
                                 {{ formatDuration $bestLap true }}<br>
                                 {{ if gt $bestLap 0 }}
                                     <small class="text-muted">Tyre: {{ $result.BestLapTyre $sessionResults }}</small>
                                 {{ end }}
                             </td>
-                            <td>{{ formatDuration ($sessionResults.GetAverageLapTime $result.DriverGUID) true }}</td>
-                            <td>{{ $sessionResults.GetNumLaps $result.DriverGUID }} laps /
-                                {{ $sessionResults.GetCuts $result.DriverGUID }} cuts</td>
-                            <td>
-                                {{ $hasHandicap := false }}
+                            <td>{{ formatDuration ($sessionResults.GetAverageLapTime $result.DriverGUID $result.CarModel) true }}</td>
+                            <td>{{ $sessionResults.GetNumLaps $result.DriverGUID $result.CarModel }} laps /
+                                {{ $sessionResults.GetCuts $result.DriverGUID $result.CarModel }} cuts</td>
 
-                                <div class="small">
-                                    {{ if gt $result.BallastKG 0 }}
-                                        {{ $hasHandicap = true }}
-                                        Ballast:
-                                        {{ $result.BallastKG }} kg<br>
+                            {{ if $sessionHasHandicaps }}
+                                <td>
+                                    {{ $hasHandicap := false }}
+
+                                    <div class="small">
+                                        {{ if gt $result.BallastKG 0 }}
+                                            {{ $hasHandicap = true }}
+                                            Ballast:
+                                            {{ $result.BallastKG }} kg<br>
+                                        {{ end }}
+
+                                        {{ if gt $result.Restrictor 0 }}
+                                            {{ $hasHandicap = true }}
+                                            Restrictor:
+                                            {{ $result.Restrictor }}%<br>
+                                        {{ end }}
+                                    </div>
+
+                                    {{ if not $hasHandicap }}
+                                        n/a
                                     {{ end }}
+                                </td>
+                            {{ end }}
 
-                                    {{ if gt $result.Restrictor 0 }}
-                                        {{ $hasHandicap = true }}
-                                        Restrictor:
-                                        {{ $result.Restrictor }}%<br>
-                                    {{ end }}
-                                </div>
+                            {{ if WriteAccess }}
+                                <td>
+                                    <button type="button" class="btn btn-warning btn-sm" data-placement="left"
+                                            data-toggle="popover" title="Penalty Details" data-html="true"
+                                            id="result-{{ $result.DriverGUID }}-{{ $result.CarModel }}-{{ $sessionResults.SessionFile }}"
+                                    >Penalties</button>
 
-                                {{ if not $hasHandicap }}
-                                    n/a
-                                {{ end }}
-                            </td>
+                                    <div id="popover-content-result-{{ $result.DriverGUID }}-{{ $result.CarModel }}-{{ $sessionResults.SessionFile }}" style="display: none;">
+                                        <form action='/penalties/{{ $sessionResults.SessionFile }}/{{ $result.DriverGUID }}?model={{ $result.CarModel }}' method='POST'>
+                                            <div class='form-group'>
+                                                <label for='time-penalty'>Time Penalty (seconds)</label>
+                                                <input type='number' class='form-control' name='time-penalty' id='time-penalty' placeholder='0' step='0.1'>
+                                                <small class='form-text text-muted'>If set to 0 driver will be disqualified.</small>
+                                            </div>
+
+                                            <button type='submit' name='action' value='add' class='btn btn-warning'>Add Penalty</button>
+                                            <button type='submit' name='action' value='remove' class='btn btn-primary'>Remove Penalty</button>
+                                        </form>
+
+                                        {{ if AdminAccess }}
+                                            <form action="/blacklist" method="POST">
+                                                <input type="text" class="d-none" name="blacklist" id="blacklist" value="{{ $result.DriverGUID }}">
+
+                                                <button type='submit' name='type' value="single" class='btn btn-danger w-100 mt-1'>Blacklist Driver</button>
+                                            </form>
+                                        {{ end }}
+                                    </div>
+                                </td>
+                            {{ end }}
                         </tr>
                     {{ end }}
                 {{ end }}

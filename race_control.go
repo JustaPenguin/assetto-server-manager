@@ -16,6 +16,7 @@ import (
 
 type RaceControl struct {
 	process ServerProcess
+	store   Store
 
 	SessionInfo      udp.SessionInfo `json:"SessionInfo"`
 	TrackMapData     TrackMapData    `json:"TrackMapData"`
@@ -38,6 +39,7 @@ type RaceControl struct {
 	driverGUIDUpdateCounterMutex sync.RWMutex
 
 	driverSwapTimers    map[int]*time.Timer
+	persistStoreDataMutex sync.Mutex
 }
 
 // RaceControl piggyback's on the udp.Message interface so that the entire data can be sent to newly connected clients.
@@ -61,12 +63,13 @@ type Collision struct {
 	Speed           float64        `json:"Speed"`
 }
 
-func NewRaceControl(broadcaster Broadcaster, trackDataGateway TrackDataGateway, process ServerProcess) *RaceControl {
+func NewRaceControl(broadcaster Broadcaster, trackDataGateway TrackDataGateway, process ServerProcess, store Store) *RaceControl {
 	rc := &RaceControl{
 		broadcaster:      broadcaster,
 		trackDataGateway: trackDataGateway,
 		process:          process,
 		driverSwapTimers: make(map[int]*time.Timer),
+		store:            store,
 	}
 
 	rc.clearAllDrivers()
@@ -135,6 +138,8 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 			logrus.WithError(err).Error("Unable to broadcast race control message")
 			return
 		}
+
+		go rc.persistTimingData()
 	}
 }
 
@@ -219,25 +224,13 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 	rc.driverGUIDUpdateCounter = make(map[udp.DriverGUID]int)
 	rc.driverGUIDUpdateCounterMutex.Unlock()
 
-	deleteCars := true
-	emptyCarInfo := false
-
-	if sessionInfo.CurrentSessionIndex != 0 && oldSessionInfo.Track == sessionInfo.Track && oldSessionInfo.TrackConfig == sessionInfo.TrackConfig {
-		// only remove cars on the first session (avoid deleting between practice/qualify/race)
-		deleteCars = false
-		emptyCarInfo = true
-	}
+	emptyCarInfo := true
 
 	if (rc.ConnectedDrivers.Len() > 0 || rc.DisconnectedDrivers.Len() > 0) && sessionInfo.Type == udp.SessionTypePractice {
 		if oldSessionInfo.Type == sessionInfo.Type && oldSessionInfo.Track == sessionInfo.Track && oldSessionInfo.TrackConfig == sessionInfo.TrackConfig && oldSessionInfo.Name == sessionInfo.Name {
-			// this is a looped practice event, keep the cars
-			deleteCars = false
+			// this is a looped event, keep the cars
 			emptyCarInfo = false
 		}
-	}
-
-	if deleteCars {
-		rc.clearAllDrivers()
 	}
 
 	if emptyCarInfo {
@@ -277,9 +270,33 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 		rc.TrackMapData = *trackMapData
 	}
 
-	logrus.Debugf("New session detected: %s at %s (%s) [deleteCars: %t, emptyCarInfo: %t]", sessionInfo.Type.String(), sessionInfo.Track, sessionInfo.TrackConfig, deleteCars, emptyCarInfo)
+	logrus.Debugf("New session detected: %s at %s (%s) [emptyCarInfo: %t]", sessionInfo.Type.String(), sessionInfo.Track, sessionInfo.TrackConfig, emptyCarInfo)
 
 	go rc.requestSessionInfo()
+
+	// look for live timings stored previously
+	persistedInfo, err := rc.store.LoadLiveTimingsData()
+
+	if err == nil && persistedInfo != nil {
+		if persistedInfo.SessionType == rc.SessionInfo.Type &&
+			persistedInfo.Track == rc.SessionInfo.Track &&
+			persistedInfo.TrackLayout == rc.SessionInfo.TrackConfig &&
+			persistedInfo.SessionName == rc.SessionInfo.Name {
+
+			for guid, driver := range persistedInfo.Drivers {
+				_, driverPresentInDisconnectedList := rc.DisconnectedDrivers.Get(guid)
+				_, driverPresentInConnectedList := rc.ConnectedDrivers.Get(guid)
+
+				if !driverPresentInConnectedList && !driverPresentInDisconnectedList {
+					rc.DisconnectedDrivers.Add(guid, driver)
+				}
+			}
+
+			logrus.Infof("Loaded previous Live Timings data for %s (%s), num drivers: %d", persistedInfo.Track, persistedInfo.TrackLayout, len(persistedInfo.Drivers))
+		}
+	} else {
+		logrus.WithError(err).Debugf("Could not load persisted live timings practice data")
+	}
 
 	return rc.broadcaster.Send(sessionInfo)
 }
@@ -296,7 +313,7 @@ func (rc *RaceControl) clearAllDrivers() {
 	rc.driverGUIDUpdateCounterMutex.Unlock()
 }
 
-var sessionInfoRequestInterval = time.Second
+var sessionInfoRequestInterval = time.Second * 30
 
 // requestSessionInfo sends a request every sessionInfoRequestInterval to get information about temps, etc in the session.
 func (rc *RaceControl) requestSessionInfo() {
@@ -840,6 +857,53 @@ func (rc *RaceControl) OnCollisionWithEnvironment(collision udp.CollisionWithEnv
 	})
 
 	return rc.broadcaster.Send(collision)
+}
+
+type LiveTimingsPersistedData struct {
+	SessionType udp.SessionType
+	Track       string
+	TrackLayout string
+	SessionName string
+
+	Drivers map[udp.DriverGUID]*RaceControlDriver
+}
+
+func (rc *RaceControl) persistTimingData() {
+	rc.persistStoreDataMutex.Lock()
+	defer rc.persistStoreDataMutex.Unlock()
+
+	data := &LiveTimingsPersistedData{
+		SessionType: rc.SessionInfo.Type,
+		Track:       rc.SessionInfo.Track,
+		TrackLayout: rc.SessionInfo.TrackConfig,
+		SessionName: rc.SessionInfo.Name,
+
+		Drivers: rc.AllLapTimes(),
+	}
+
+	err := rc.store.UpsertLiveTimingsData(data)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Could not save live timings data")
+	}
+}
+
+func (rc *RaceControl) AllLapTimes() map[udp.DriverGUID]*RaceControlDriver {
+	out := make(map[udp.DriverGUID]*RaceControlDriver)
+
+	_ = rc.DisconnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
+		out[driverGUID] = driver
+
+		return nil
+	})
+
+	_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
+		out[driverGUID] = driver
+
+		return nil
+	})
+
+	return out
 }
 
 func lapToDuration(i int) time.Duration {

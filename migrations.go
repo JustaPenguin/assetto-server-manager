@@ -5,8 +5,9 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 
-	"github.com/cj123/assetto-server-manager/fixtures/race-weekend-examples"
+	"github.com/cj123/assetto-server-manager/fixtures/default-content"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -68,6 +69,11 @@ var (
 		addThemeChoiceToAccounts,
 		addRaceWeekendExamples,
 		addServerNameTemplate,
+		addAvailableCarsToChampionshipClass,
+		addTyresForP13c,
+		changeNotificationTimer,
+		addContentExamples,
+		addServerIDToScheduledEvents,
 	}
 )
 
@@ -423,7 +429,7 @@ func addRaceWeekendExamples(s Store) error {
 
 	var raceWeekend *RaceWeekend
 
-	err := json.Unmarshal(raceweekendexamples.F12004spa, &raceWeekend)
+	err := json.Unmarshal(defaultcontent.RaceWeekendF12004spa, &raceWeekend)
 
 	if err != nil {
 		return err
@@ -444,4 +450,222 @@ func addServerNameTemplate(s Store) error {
 	opts.ServerNameTemplate = defaultServerNameTemplate
 
 	return s.UpsertServerOptions(opts)
+}
+
+func changeNotificationTimer(s Store) error {
+	logrus.Infof("Running migration: Change Notification Timer")
+
+	opts, err := s.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	opts.NotificationReminderTimers = strconv.Itoa(opts.NotificationReminderTimer)
+
+	if opts.NotificationReminderTimers == "0" {
+		opts.NotificationReminderTimers = ""
+	}
+
+	return s.UpsertServerOptions(opts)
+}
+
+func addAvailableCarsToChampionshipClass(s Store) error {
+	logrus.Infof("Running migration: Add Available Cars to Championship Class")
+
+	championships, err := s.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(championships, func(i, j int) bool {
+		return championships[i].Updated.Before(championships[j].Updated)
+	})
+
+	for _, champ := range championships {
+		for _, class := range champ.Classes {
+			cars := make(map[string]bool)
+
+			for _, e := range class.Entrants {
+				cars[e.Model] = true
+			}
+
+			for car := range cars {
+				class.AvailableCars = append(class.AvailableCars, car)
+			}
+		}
+
+		err := s.UpsertChampionship(champ)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+const IERP13c = "ier_p13c"
+
+var IERP13cTyres = []string{"S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"}
+
+func addTyresForP13c(s Store) error {
+	logrus.Debugf("Running migration: add tyres for IER P13c")
+
+	tyres := make(map[string]string)
+
+	for _, tyre := range IERP13cTyres {
+		tyres[tyre] = tyre
+	}
+
+	return addTyresToModTyres(IERP13c, tyres)
+}
+
+func addContentExamples(s Store) error {
+	logrus.Infof("Running migration: Add Content examples")
+
+	championships, err := s.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	if len(championships) == 0 {
+		var mx5Championship *Championship
+
+		if err := json.Unmarshal(defaultcontent.ChampionshipMX5CrashCourse, &mx5Championship); err != nil {
+			return err
+		}
+
+		if err := s.UpsertChampionship(mx5Championship); err != nil {
+			return err
+		}
+
+		var multiclassChampionship *Championship
+
+		if err := json.Unmarshal(defaultcontent.ChampionshipMulticlassEndurance, &multiclassChampionship); err != nil {
+			return err
+		}
+
+		if err := s.UpsertChampionship(multiclassChampionship); err != nil {
+			return err
+		}
+	}
+
+	customRaces, err := s.ListCustomRaces()
+
+	if err != nil {
+		return err
+	}
+
+	if len(customRaces) == 0 {
+		var f2004RaceSpa *CustomRace
+
+		if err := json.Unmarshal(defaultcontent.CustomRaceF2004Spa, &f2004RaceSpa); err != nil {
+			return err
+		}
+
+		if err := s.UpsertCustomRace(f2004RaceSpa); err != nil {
+			return err
+		}
+
+		var bmw235iRace *CustomRace
+
+		if err := json.Unmarshal(defaultcontent.CustomRaceBMWZandvoort, &bmw235iRace); err != nil {
+			return err
+		}
+
+		if err := s.UpsertCustomRace(bmw235iRace); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func addServerIDToScheduledEvents(s Store) error {
+	logrus.Infof("Running migration: Add Server ID to Scheduled Events")
+
+	if err := initServerID(s); err != nil {
+		return err
+	}
+
+	customRaces, err := s.ListCustomRaces()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(customRaces, func(i, j int) bool {
+		return customRaces[i].Updated.Before(customRaces[j].Updated)
+	})
+
+	for _, customRace := range customRaces {
+		if customRace.Scheduled.IsZero() {
+			continue
+		}
+
+		customRace.ScheduledServerID = serverID
+
+		err := s.UpsertCustomRace(customRace)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	championships, err := s.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(championships, func(i, j int) bool {
+		return championships[i].Updated.Before(championships[j].Updated)
+	})
+
+	for _, championship := range championships {
+		for _, event := range championship.Events {
+			if event.Scheduled.IsZero() {
+				continue
+			}
+
+			event.ScheduledServerID = serverID
+		}
+
+		err := s.UpsertChampionship(championship)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	raceWeekends, err := s.ListRaceWeekends()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(raceWeekends, func(i, j int) bool {
+		return raceWeekends[i].Updated.Before(raceWeekends[j].Updated)
+	})
+
+	for _, raceWeekend := range raceWeekends {
+		for _, session := range raceWeekend.Sessions {
+			if session.ScheduledTime.IsZero() {
+				continue
+			}
+
+			session.ScheduledServerID = serverID
+		}
+
+		err := s.UpsertRaceWeekend(raceWeekend)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

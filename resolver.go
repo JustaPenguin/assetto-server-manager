@@ -13,6 +13,7 @@ type Resolver struct {
 
 	raceManager           *RaceManager
 	carManager            *CarManager
+	trackManager          *TrackManager
 	championshipManager   *ChampionshipManager
 	accountManager        *AccountManager
 	discordManager        *DiscordManager
@@ -43,6 +44,8 @@ type Resolver struct {
 	raceControlHandler          *RaceControlHandler
 	serverAdministrationHandler *ServerAdministrationHandler
 	raceWeekendHandler          *RaceWeekendHandler
+	strackerHandler             *StrackerHandler
+	healthCheck                 *HealthCheck
 }
 
 func NewResolver(templateLoader TemplateLoader, reloadTemplates bool, store Store) (*Resolver, error) {
@@ -96,7 +99,7 @@ func (r *Resolver) resolveServerProcess() ServerProcess {
 		return r.serverProcess
 	}
 
-	r.serverProcess = NewAssettoServerProcess(r.UDPCallback, r.resolveContentManagerWrapper())
+	r.serverProcess = NewAssettoServerProcess(r.UDPCallback, r.ResolveStore(), r.resolveContentManagerWrapper())
 
 	return r.serverProcess
 }
@@ -106,7 +109,7 @@ func (r *Resolver) resolveContentManagerWrapper() *ContentManagerWrapper {
 		return r.contentManagerWrapper
 	}
 
-	r.contentManagerWrapper = NewContentManagerWrapper(r.ResolveStore(), r.resolveCarManager())
+	r.contentManagerWrapper = NewContentManagerWrapper(r.ResolveStore(), r.resolveCarManager(), r.resolveTrackManager())
 
 	return r.contentManagerWrapper
 }
@@ -120,6 +123,7 @@ func (r *Resolver) resolveRaceManager() *RaceManager {
 		r.store,
 		r.resolveServerProcess(),
 		r.resolveCarManager(),
+		r.resolveTrackManager(),
 		r.resolveNotificationManager(),
 	)
 
@@ -191,7 +195,7 @@ func (r *Resolver) resolveCarManager() *CarManager {
 		return r.carManager
 	}
 
-	r.carManager = NewCarManager()
+	r.carManager = NewCarManager(r.resolveTrackManager(), config.Server.ScanContentFolderForChanges)
 
 	return r.carManager
 }
@@ -228,12 +232,22 @@ func (r *Resolver) resolveChampionshipsHandler() *ChampionshipsHandler {
 	return r.championshipsHandler
 }
 
+func (r *Resolver) resolveTrackManager() *TrackManager {
+	if r.trackManager != nil {
+		return r.trackManager
+	}
+
+	r.trackManager = NewTrackManager()
+
+	return r.trackManager
+}
+
 func (r *Resolver) resolveTracksHandler() *TracksHandler {
 	if r.tracksHandler != nil {
 		return r.tracksHandler
 	}
 
-	r.tracksHandler = NewTracksHandler(r.resolveBaseHandler())
+	r.tracksHandler = NewTracksHandler(r.resolveBaseHandler(), r.resolveTrackManager())
 
 	return r.tracksHandler
 }
@@ -331,7 +345,12 @@ func (r *Resolver) resolveRaceControl() *RaceControl {
 		return r.raceControl
 	}
 
-	r.raceControl = NewRaceControl(r.resolveRaceControlHub(), filesystemTrackData{}, r.resolveServerProcess())
+	r.raceControl = NewRaceControl(
+		r.resolveRaceControlHub(),
+		filesystemTrackData{},
+		r.resolveServerProcess(),
+		r.ResolveStore(),
+	)
 
 	return r.raceControl
 }
@@ -398,6 +417,26 @@ func (r *Resolver) resolveNotificationManager() *NotificationManager {
 	return r.notificationManager
 }
 
+func (r *Resolver) resolveStrackerHandler() *StrackerHandler {
+	if r.strackerHandler != nil {
+		return r.strackerHandler
+	}
+
+	r.strackerHandler = NewStrackerHandler(r.resolveBaseHandler(), r.ResolveStore())
+
+	return r.strackerHandler
+}
+
+func (r *Resolver) resolveHealthCheck() *HealthCheck {
+	if r.healthCheck != nil {
+		return r.healthCheck
+	}
+
+	r.healthCheck = NewHealthCheck(r.resolveRaceControl(), r.ResolveStore())
+
+	return r.healthCheck
+}
+
 func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
 	return Router(
 		fs,
@@ -416,6 +455,8 @@ func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
 		r.resolveRaceControlHandler(),
 		r.resolveScheduledRacesHandler(),
 		r.resolveRaceWeekendHandler(),
+		r.resolveStrackerHandler(),
+		r.resolveHealthCheck(),
 	)
 }
 

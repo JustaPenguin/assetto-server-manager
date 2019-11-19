@@ -124,6 +124,7 @@
                                     <a class="dropdown-item" href="/blacklist">Blacklist</a>
                                     <a class="dropdown-item" href="/motd">Messages</a>
                                     <a class="dropdown-item" href="/audit-logs">Audit Logs</a>
+                                    <a class="dropdown-item" href="/stracker/options">STracker</a>
                                 {{ end }}
                                 {{ if DeleteAccess }}
                                     <a class="dropdown-item" href="/autofill-entrants">AutoFill Entrants</a>
@@ -141,9 +142,9 @@
                             {{ if WriteAccess }}
                                 <a class="nav-link dropdown-toggle" href="#" id="navBarStatusDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     {{ if .ServerEvent.IsChampionship }}
-                                        <span class="badge badge-warning">Championship in Progress</span>
+                                        <span class="badge badge-warning">Championship {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
                                     {{ else if .ServerEvent.IsRaceWeekend }}
-                                        <span class="badge badge-info">Race Weekend in Progress</span>
+                                        <span class="badge badge-info">Race Weekend {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
                                     {{ else }}
                                         <span class="badge badge-success">Assetto Server Running</span>
                                     {{ end }}
@@ -153,8 +154,12 @@
                                         class="dropdown-item"
                                         href="/process/restart"
 
-                                        {{ if .ServerEvent.IsChampionship }}
-                                            onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                        {{ if not $.ServerEvent.IsPractice }}
+                                            {{ if $.ServerEvent.IsChampionship }}
+                                                onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                            {{ else if $.ServerEvent.IsRaceWeekend }}
+                                                onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
+                                            {{ end }}
                                         {{ end }}
                                     >
                                         Restart
@@ -163,8 +168,12 @@
                                         class="dropdown-item"
                                         href="/process/stop"
 
-                                        {{ if .ServerEvent.IsChampionship }}
-                                            onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                        {{ if not $.ServerEvent.IsPractice }}
+                                            {{ if $.ServerEvent.IsChampionship }}
+                                                onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                            {{ else if $.ServerEvent.IsRaceWeekend }}
+                                                onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
+                                            {{ end }}
                                         {{ end }}
                                     >
                                         Stop
@@ -172,9 +181,9 @@
                                 </div>
                             {{ else }}
                                 {{ if .ServerEvent.IsChampionship }}
-                                    <span class="badge badge-warning">Championship in Progress</span>
+                                    <span class="badge badge-warning">Championship {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
                                 {{ else if .ServerEvent.IsRaceWeekend }}
-                                    <span class="badge badge-info">Race Weekend in Progress</span>
+                                    <span class="badge badge-info">Race Weekend {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
                                 {{ else }}
                                     <span class="badge badge-success">Assetto Server Running</span>
                                 {{ end }}
@@ -186,7 +195,7 @@
                         </li>
                     {{ end }}
 
-                    <li class="nav-item dropdown">
+                    <li class="nav-item dropdown" id="user-account-dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navBarAccountDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-user"></i>
                         </a>
@@ -202,7 +211,6 @@
                             {{ end }}
                         </div>
                     </li>
-
                 </ul>
             </div>
 

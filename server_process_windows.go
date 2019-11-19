@@ -9,7 +9,7 @@ import (
 	"os/exec"
 )
 
-const serverExecutablePath = "acServer.exe"
+const ServerExecutablePath = "acServer.exe"
 
 func kill(process *os.Process) error {
 	return exec.Command("TASKKILL", "/T", "/F", "/PID", fmt.Sprintf("%d", process.Pid)).Run()

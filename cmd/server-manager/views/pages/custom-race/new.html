@@ -69,11 +69,17 @@
                             <div class="col-sm-9">
                                 <select class="form-control" name="Track" id="Track">
                                     {{ range $index, $track := .TrackOpts }}
-                                        <option value="{{ $track.Name }}" {{ if eq $track.Name $f.Track }}selected="selected" {{ end }}>
+                                        <option value="{{ $track.Name }}" {{ if eq $track.Name $f.Track }}selected="selected" {{ end }}
+                                                class="{{ if $track.IsPaidDLC }}bg-dlc{{ end }}{{ if $track.IsMod }}bg-mod{{ end }}">
                                             {{ prettify $track.Name false }}
                                         </option>
                                     {{ end }}
                                 </select>
+
+                                <small style="cursor: default;">
+                                    <span class="badge bg-dlc">DLC</span>
+                                    <span class="badge bg-mod">Mod</span>
+                                </small>
                             </div>
                         </div>
 
@@ -144,8 +150,14 @@
                             </select>
                         {{ else if $.IsRaceWeekend }}
                             <select multiple class="Cars" id="Cars" name="Cars" style="display: none;">
-                                {{ range $index, $car := $.RaceWeekend.GetEntryList.CarIDs }}
-                                    <option value="{{ $car }}" selected="selected">{{ prettify $car true }}</option>
+                                {{ with $.RaceWeekend.Championship }}
+                                    {{ range $index, $car := $.RaceWeekend.Championship.ValidCarIDs }}
+                                        <option value="{{ $car }}" selected="selected">{{ prettify $car true }}</option>
+                                    {{ end }}
+                                {{ else }}
+                                    {{ range $index, $car := $.RaceWeekend.GetEntryList.CarIDs }}
+                                        <option value="{{ $car }}" selected="selected">{{ prettify $car true }}</option>
+                                    {{ end }}
                                 {{ end }}
                             </select>
                         {{ else }}
@@ -1466,7 +1478,7 @@
                                 step="1"
                         >
 
-                        <small>The max total of ballast that can be added through the admin command</small>
+                        <small>The max total of ballast that can be added to an entrant in the entry list or through the admin command</small>
                     </div>
                 </div>
 

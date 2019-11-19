@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"math/rand"
 	"sort"
 	"strings"
 	"sync"
@@ -402,6 +403,25 @@ func (c *Championship) FindClassForCarModel(model string) (*ChampionshipClass, e
 		}
 	}
 
+	if model == AnyCarModel {
+		// randomly assign a class based from whatever classes we have with AnyCarModel in their entrylist.
+		classes := make([]*ChampionshipClass, len(c.Classes))
+
+		copy(classes, c.Classes)
+
+		rand.Shuffle(len(classes), func(i, j int) {
+			classes[i], classes[j] = classes[j], classes[i]
+		})
+
+		for _, class := range classes {
+			for _, entrant := range class.Entrants {
+				if entrant.Model == AnyCarModel {
+					return class, nil
+				}
+			}
+		}
+	}
+
 	return nil, ErrClassNotFound
 }
 
@@ -420,27 +440,32 @@ type ChampionshipClass struct {
 	ID   uuid.UUID
 	Name string
 
-	Entrants EntryList
-	Points   ChampionshipPoints
+	Entrants      EntryList
+	Points        ChampionshipPoints
+	AvailableCars []string
 
 	DriverPenalties, TeamPenalties map[string]int
 }
 
 // ValidCarIDs returns a set of all cars chosen within the given class
 func (c *ChampionshipClass) ValidCarIDs() []string {
-	cars := make(map[string]bool)
+	if len(c.AvailableCars) == 0 {
+		cars := make(map[string]bool)
 
-	for _, e := range c.Entrants {
-		cars[e.Model] = true
+		for _, e := range c.Entrants {
+			cars[e.Model] = true
+		}
+
+		var availableCars []string
+
+		for car := range cars {
+			availableCars = append(availableCars, car)
+		}
+
+		return availableCars
+	} else {
+		return c.AvailableCars
 	}
-
-	var out []string
-
-	for car := range cars {
-		out = append(out, car)
-	}
-
-	return out
 }
 
 // EventByID finds a ChampionshipEvent by its ID string.
@@ -471,8 +496,8 @@ func (c *Championship) ValidCarIDs() []string {
 	cars := make(map[string]bool)
 
 	for _, class := range c.Classes {
-		for _, e := range class.Entrants {
-			cars[e.Model] = true
+		for _, model := range class.ValidCarIDs() {
+			cars[model] = true
 		}
 	}
 
@@ -674,7 +699,7 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 		}
 	}
 
-	// now look for empty Entrants in the Entrylist
+	// now look for empty Entrants in the Entrylist with a matching car
 	for carNum, entrant := range classForCar.Entrants {
 		if entrant.Name == "" && entrant.GUID == "" && entrant.Model == potentialEntrant.GetCar() {
 			if oldEntrant != nil {
@@ -682,17 +707,23 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 				oldEntrant.SwapProperties(entrant, oldEntrantClass == classForCar)
 			}
 
-			entrant.Name = potentialEntrant.GetName()
-			entrant.GUID = potentialEntrant.GetGUID()
-			entrant.Model = potentialEntrant.GetCar()
-			entrant.Skin = potentialEntrant.GetSkin()
+			classForCar.AssignToFreeEntrantSlot(entrant, potentialEntrant)
+			logrus.Infof("Championship entrant: %s (%s) has been assigned to %s in %s (matching car)", entrant.Name, entrant.GUID, carNum, c.Name)
 
-			// #386: don't replace a team with no team.
-			if potentialEntrant.GetTeam() != "" {
-				entrant.Team = potentialEntrant.GetTeam()
+			return true, entrant, classForCar, nil
+		}
+	}
+
+	// now look for empty Entrants in the Entrylist with an 'any free car' slot
+	for carNum, entrant := range classForCar.Entrants {
+		if entrant.Name == "" && entrant.GUID == "" && entrant.Model == AnyCarModel {
+			if oldEntrant != nil {
+				// swap the old entrant properties
+				oldEntrant.SwapProperties(entrant, oldEntrantClass == classForCar)
 			}
 
-			logrus.Infof("Championship entrant: %s (%s) has been assigned to %s in %s", entrant.Name, entrant.GUID, carNum, classForCar.Name)
+			classForCar.AssignToFreeEntrantSlot(entrant, potentialEntrant)
+			logrus.Infof("Championship entrant: %s (%s) has been assigned an to %s in %s (any car slot)", entrant.Name, entrant.GUID, carNum, c.Name)
 
 			return true, entrant, classForCar, nil
 		}
@@ -764,6 +795,18 @@ func (cs *ChampionshipStanding) TeamSummary() string {
 
 func (c *ChampionshipClass) DriverInClass(result *SessionResult) bool {
 	return result.ClassID == c.ID
+}
+
+func (c *ChampionshipClass) AssignToFreeEntrantSlot(entrant *Entrant, potentialEntrant PotentialChampionshipEntrant) {
+	entrant.Name = potentialEntrant.GetName()
+	entrant.GUID = potentialEntrant.GetGUID()
+	entrant.Model = potentialEntrant.GetCar()
+	entrant.Skin = potentialEntrant.GetSkin()
+
+	// #386: don't replace a team with no team.
+	if potentialEntrant.GetTeam() != "" {
+		entrant.Team = potentialEntrant.GetTeam()
+	}
 }
 
 func (c *ChampionshipClass) AttachEntrantToResult(entrant *Entrant, results *SessionResults) {
@@ -848,7 +891,18 @@ func (c *ChampionshipClass) PenaltyForTeam(name string) int {
 	}
 }
 
-func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints func(event *ChampionshipEvent, driverGUID string, points float64)) {
+type PointsReason int
+
+const (
+	PointsEventFinish PointsReason = iota
+	PointsPolePosition
+	PointsFastestLap
+	PointsCollisionWithCar
+	PointsCollisionWithEnvironment
+	PointsCutTrack
+)
+
+func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints func(event *ChampionshipEvent, driverGUID string, points float64, reason PointsReason)) {
 	eventsReverseCompletedOrder := make([]*ChampionshipEvent, len(events))
 
 	copy(eventsReverseCompletedOrder, events)
@@ -884,7 +938,7 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 							continue
 						}
 
-						givePoints(event, driver.DriverGUID, float64(points.PolePosition)*pointsMultiplier)
+						givePoints(event, driver.DriverGUID, float64(points.PolePosition)*pointsMultiplier, PointsPolePosition)
 					}
 
 					continue
@@ -906,16 +960,16 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 					continue
 				}
 
-				givePoints(event, driver.DriverGUID, points.ForPos(pos)*pointsMultiplier)
+				givePoints(event, driver.DriverGUID, points.ForPos(pos)*pointsMultiplier, PointsEventFinish)
 
 				if fastestLap.DriverGUID == driver.DriverGUID {
-					givePoints(event, driver.DriverGUID, float64(points.BestLap)*pointsMultiplier)
+					givePoints(event, driver.DriverGUID, float64(points.BestLap)*pointsMultiplier, PointsFastestLap)
 				}
 
 				if sessionType == SessionTypeRace || sessionType == SessionTypeSecondRace {
-					givePoints(event, driver.DriverGUID, float64(points.CollisionWithDriver*session.Results.GetCrashesOfType(driver.DriverGUID, "COLLISION_WITH_CAR"))*pointsMultiplier*-1)
-					givePoints(event, driver.DriverGUID, float64(points.CollisionWithEnv*session.Results.GetCrashesOfType(driver.DriverGUID, "COLLISION_WITH_ENV"))*pointsMultiplier*-1)
-					givePoints(event, driver.DriverGUID, float64(points.CutTrack*session.Results.GetCuts(driver.DriverGUID))*pointsMultiplier*-1)
+					givePoints(event, driver.DriverGUID, float64(points.CollisionWithDriver*session.Results.GetCrashesOfType(driver.DriverGUID, "COLLISION_WITH_CAR"))*pointsMultiplier*-1, PointsCollisionWithCar)
+					givePoints(event, driver.DriverGUID, float64(points.CollisionWithEnv*session.Results.GetCrashesOfType(driver.DriverGUID, "COLLISION_WITH_ENV"))*pointsMultiplier*-1, PointsCollisionWithEnvironment)
+					givePoints(event, driver.DriverGUID, float64(points.CutTrack*session.Results.GetCuts(driver.DriverGUID, driver.CarModel))*pointsMultiplier*-1, PointsCutTrack)
 				}
 			}
 		}
@@ -972,7 +1026,7 @@ func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent) []*Champion
 
 	standings := make(map[string]*ChampionshipStanding)
 
-	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64) {
+	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64, reason PointsReason) {
 		var car *SessionCar
 
 		for _, sessionType := range championshipStandingSessionOrder {
@@ -999,7 +1053,11 @@ func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent) []*Champion
 		}
 
 		standings[driverGUID].Points += points
-		standings[driverGUID].AddEventForTeam(car.Driver.Team)
+
+		if reason == PointsEventFinish {
+			// only increment team finishes for a 'finish' reason
+			standings[driverGUID].AddEventForTeam(car.Driver.Team)
+		}
 	})
 
 	for _, standing := range standings {
@@ -1072,7 +1130,7 @@ func (c *ChampionshipClass) TeamStandings(inEvents []*ChampionshipEvent) []*Team
 	// make a copy of events so we do not persist race weekend sessions
 	events := ExtractRaceWeekendSessionsIntoIndividualEvents(inEvents)
 
-	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64) {
+	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64, reason PointsReason) {
 		var team string
 
 		// find the team the driver was in for this race.
@@ -1149,8 +1207,8 @@ type ChampionshipEvent struct {
 	// If RaceWeekendID is non-nil, RaceWeekend will be populated on loading the Championship.
 	RaceWeekend *RaceWeekend
 
-	StartedTime      time.Time
-	CompletedTime    time.Time
+	StartedTime   time.Time
+	CompletedTime time.Time
 
 	championship *Championship
 }
@@ -1288,11 +1346,29 @@ type ActiveChampionship struct {
 	ReplacementPassword     string
 	Description             string
 	IsPracticeSession       bool
+	RaceConfig              CurrentRaceConfig
+	EntryList               EntryList
 
 	loadedEntrants map[udp.CarID]udp.SessionCarInfo
 
-	NumLapsCompleted   int
-	NumRaceStartEvents int
+	NumLapsCompleted   int `json:"-"`
+	NumRaceStartEvents int `json:"-"`
+}
+
+func (a *ActiveChampionship) GetRaceConfig() CurrentRaceConfig {
+	return a.RaceConfig
+}
+
+func (a *ActiveChampionship) GetEntryList() EntryList {
+	return a.EntryList
+}
+
+func (a *ActiveChampionship) IsLooping() bool {
+	return false
+}
+
+func (a *ActiveChampionship) IsPractice() bool {
+	return a.IsPracticeSession
 }
 
 func (a *ActiveChampionship) GetURL() string {
@@ -1304,7 +1380,7 @@ func (a *ActiveChampionship) GetURL() string {
 }
 
 func (a *ActiveChampionship) IsChampionship() bool {
-	return !a.IsPracticeSession
+	return true
 }
 
 func (a *ActiveChampionship) IsRaceWeekend() bool {

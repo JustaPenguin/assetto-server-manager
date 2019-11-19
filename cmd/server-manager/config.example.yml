@@ -170,7 +170,7 @@ live_map:
 
 ################################################################################
 #
-#  server config - configure plugins, e.g. stracker here.
+#  server config - configure plugins, e.g. kissmyrank here.
 #
 ################################################################################
 server:
@@ -181,19 +181,26 @@ server:
   # performance mode disables live timing entirely, and prioritises low cpu
   # usage.
   performance_mode: false
+  # set this to 'true' if you don't want server manager to open a browser window
+  # on launch on windows
+  dont_open_browser: false
+  # set this to 'true' if you want server manager to scan content folders for
+  # changes every 15 seconds and update the search index with changes
+  # this is useful for multi-server setups with a shared content folder so that
+  # each server manager instance can see added/removed cars as they change
+  scan_content_folder_for_changes: false
+
   # list of commands to run on server start and kill on server stop. this should
   # contain the full command with arguments to run the given program.
+  #
+  # note: if you are looking for stracker support, Server Manager supports it via
+  # the UI! Go to the "STracker" page in Server Manager for more instructions.
   #
   # you can use additional plugins with AC Server Manager, but while configuring
   # them you have to ignore the ports that AC Server Manager writes in the 
   # server_cfg.ini, as the Server Manager provides an interface to the plugins
   # instead. The plugin ports in the Server Options page are the ones that must
-  # be used for the plugin configuration. Here are examples for configuring
-  # sTracker and KMR plugins:
-  #
-  # sTracker:
-  # - rcvPort must equal the port from the UDP Plugin Address
-  # - sendPort must equal the value of the UDP Plugin Local Port
+  # be used for the plugin configuration. Here is an example for configuring KMR:
   #
   # KMR: 
   # - ac_server_http_port must equal the value of HTTP Port
@@ -208,24 +215,18 @@ server:
   # feature interfaces so additional plugins can be chained between themselves.
   #
   # you can of course add your own commands (whatever you like!) here.
-  # 
-  # this assumes that you have installed stracker into a folder called "stracker"
-  # next to the server-manager executable.
   #
   # each executable specified is run from the directory it is inside, for example,
   # the command:
   #
-  # ./stracker/stracker_linux_x86/stracker --stracker_ini stracker-default.ini
+  # ./my/cool/plugin/path/run.sh --some-opt config.json
   # now actually performs the following two commands:
   #
-  # 1. cd ./stracker/stracker_linux_x86
-  # 2. ./stracker --stracker_ini stracker-default.ini
+  # 1. cd ./my/cool/plugin/path
+  # 2. ./run.sh --some-opt config.json
   run_on_start:
-    # uncomment the line below for stracker on Linux
-    # - ./stracker/stracker_linux_x86/stracker --stracker_ini stracker.ini
-
-    # uncomment the line below for stracker on Windows
-    # - ./stracker/stracker.exe --stracker_ini stracker.ini
+    # e.g. uncomment the line below to run a 'start.sh' for kissmyrank
+    # - ./assetto/kissmyrank/start.sh
 
 ################################################################################
 #

@@ -7,6 +7,11 @@
         <h1 class="text-center">{{ $.Car.Details.Name }}</h1>
         <div class="text-center mb-3">
             <small>({{ $.Car.Name}})</small>
+
+            {{ if $.Car.IsPaidDLC }}<span class="badge bg-dlc">DLC</span>{{ end }}
+            {{ if $.Car.IsMod }}<span class="badge bg-mod">Mod</span>{{ end }}
+            {{ if not (or $.Car.IsPaidDLC $.Car.IsMod) }}<span class="badge bg-default-content">Default</span>{{ end }}
+
         </div>
 
         {{ if gt (len $.Car.Skins) 0 }}
@@ -261,7 +266,7 @@
                                                 placeholder="e.g. http://racedepartment.com/..."
                                         >
 
-                                        <small>Download links for cars will be shown in Championship pages and in Content Manager's server information screen.</small>
+                                        <small>Download links for cars will be shown in Content Manager's server information screen.</small>
                                     </div>
                                 </div>
 

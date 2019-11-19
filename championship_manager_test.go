@@ -59,7 +59,9 @@ var TestEntryList = EntryList{
 	},
 }
 
-type dummyServerProcess struct{}
+type dummyServerProcess struct {
+	doneCh chan struct{}
+}
 
 func (dummyServerProcess) Logs() string {
 	return ""
@@ -69,7 +71,10 @@ func (dummyServerProcess) Start(cfg ServerConfig, entryList EntryList, forwardin
 	return nil
 }
 
-func (dummyServerProcess) Stop() error {
+func (d dummyServerProcess) Stop() error {
+	if d.doneCh != nil {
+		d.doneCh <- struct{}{}
+	}
 	return nil
 }
 
@@ -92,8 +97,8 @@ func (dummyServerProcess) SendUDPMessage(message udp.Message) error {
 	return nil
 }
 
-func (dummyServerProcess) Done() <-chan struct{} {
-	return nil
+func (d dummyServerProcess) Done() <-chan struct{} {
+	return d.doneCh
 }
 
 func (dummyServerProcess) GetServerConfig() ServerConfig {
@@ -111,7 +116,17 @@ var championshipManager *ChampionshipManager
 
 type dummyNotificationManager struct{}
 
-func (d dummyNotificationManager) SendRaceWeekendReminderMessage(raceWeekend *RaceWeekend, session *RaceWeekendSession) error {
+func (d *dummyNotificationManager) HasNotificationReminders() bool {
+	return false
+}
+
+func (d *dummyNotificationManager) GetNotificationReminders() []int {
+	var reminders []int
+
+	return reminders
+}
+
+func (d dummyNotificationManager) SendRaceWeekendReminderMessage(raceWeekend *RaceWeekend, session *RaceWeekendSession, timer int) error {
 	return nil
 }
 
@@ -131,11 +146,15 @@ func (d dummyNotificationManager) SendRaceScheduledMessage(event *CustomRace, da
 	return nil
 }
 
-func (d dummyNotificationManager) SendRaceReminderMessage(event *CustomRace) error {
+func (d dummyNotificationManager) SendRaceCancelledMessage(event *CustomRace, date time.Time) error {
 	return nil
 }
 
-func (d dummyNotificationManager) SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent) error {
+func (d dummyNotificationManager) SendRaceReminderMessage(event *CustomRace, timer int) error {
+	return nil
+}
+
+func (d dummyNotificationManager) SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent, timer int) error {
 	return nil
 }
 
@@ -144,7 +163,15 @@ func (d dummyNotificationManager) SaveServerOptions(oldServerOpts *GlobalServerC
 }
 
 func init() {
-	championshipManager = NewChampionshipManager(NewRaceManager(NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"), filepath.Join(os.TempDir(), "asm-race-store-shared")), dummyServerProcess{}, NewCarManager(), &dummyNotificationManager{}))
+	championshipManager = NewChampionshipManager(
+		NewRaceManager(
+			NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"), filepath.Join(os.TempDir(), "asm-race-store-shared")),
+			dummyServerProcess{},
+			NewCarManager(NewTrackManager(), false),
+			NewTrackManager(),
+			&dummyNotificationManager{},
+		),
+	)
 }
 
 func doReplay(filename string, multiplier int, callbackFunc udp.CallbackFunc, waitTime time.Duration) error {

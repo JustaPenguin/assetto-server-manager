@@ -83,7 +83,7 @@
 
             {{ if gt $championship.Progress 0.0 }}
                 <div class="tab-pane fade show active" id="drivers" role="tabpanel" aria-labelledby="drivers-tab">
-                    <div class="table-responsive">
+                    <div class="table-responsive entrant-table-max-height">
                         <table class="table table-bordered table-striped">
                             <tr>
                                 {{ if $championship.IsMultiClass }}<th>Class</th>{{ end }}
@@ -169,7 +169,7 @@
                 </div>
 
                 <div class="tab-pane fade" id="teams" role="tabpanel" aria-labelledby="teams-tab">
-                    <div class="table-responsive">
+                    <div class="table-responsive entrant-table-max-height">
                         <table class="table table-bordered table-striped">
                             <tr>
                                 {{ if $championship.IsMultiClass }}<th>Class</th>{{ end }}
@@ -244,7 +244,7 @@
             {{ end }}
 
             <div class="tab-pane fade {{ if eq $championship.Progress 0.0 }}show active{{ end }}" id="entrants" role="tabpanel" aria-labelledby="entrants-tab">
-                <div class="table-responsive">
+                <div class="table-responsive entrant-table-max-height">
                     <table class="table table-bordered table-striped">
                         <tr>
                             {{ if $championship.IsMultiClass }}<th>Class</th>{{ end }}
@@ -316,7 +316,7 @@
                                 <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
                                     {{ if $championship.IsMultiClass }}
                                         {{ if eq $i 0 }}
-                                            <td rowspan="{{ add (len $class.Points.Places) 3 }}">{{ $class.Name }}</td>
+                                            <td rowspan="{{ add (len $class.Points.Places) 6 }}">{{ $class.Name }}</td>
                                         {{ end }}
                                     {{ end }}
                                     <td>{{ add $i 1 }}{{ ordinal (add $i 1) }}</td>

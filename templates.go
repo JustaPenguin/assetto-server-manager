@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"net"
 	"net/http"
 	"net/url"
 	"path"
@@ -199,6 +200,8 @@ func (tr *Renderer) init() error {
 	funcs["LoggedIn"] = dummyAccessFunc
 	funcs["classColor"] = ChampionshipClassColor
 	funcs["carSkinURL"] = carSkinURL
+	funcs["trackLayoutURL"] = trackLayoutURL
+	funcs["stringArrayToCSV"] = stringArrayToCSV
 	funcs["dict"] = templateDict
 	funcs["asset"] = NewAssetHelper("/", "", "", map[string]string{"cb": BuildVersion}).GetURL
 	funcs["SessionType"] = func(s string) SessionType { return SessionType(s) }
@@ -223,15 +226,10 @@ func (tr *Renderer) init() error {
 	return nil
 }
 
+var Changelog template.HTML
+
 func changelogHTML() template.HTML {
-	changelog, err := LoadChangelog()
-
-	if err != nil {
-		logrus.WithError(err).Error("could not load changelog")
-		return "An error occurred loading the changelog"
-	}
-
-	return changelog
+	return Changelog
 }
 
 func appendQuery(r *http.Request, query, value string) string {
@@ -311,6 +309,16 @@ func carList(cars interface{}) string {
 		split = strings.Split(cars, ";")
 	case []string:
 		split = cars
+	case []*SessionCar:
+		carMap := make(map[string]bool)
+
+		for _, entrant := range cars {
+			carMap[entrant.Model] = true
+		}
+
+		for car := range carMap {
+			split = append(split, car)
+		}
 	case EntryList:
 		carMap := make(map[string]bool)
 
@@ -393,6 +401,10 @@ func stripGeotagCrap(tag string, north bool) string {
 var nameRegex = regexp.MustCompile(`^[A-Za-z]{0,5}[0-9]+`)
 
 func prettifyName(s string, acronyms bool) string {
+	if s == AnyCarModel {
+		return "Any Car Model"
+	}
+
 	parts := strings.Split(s, "_")
 
 	if parts[0] == "ks" {
@@ -408,6 +420,10 @@ func prettifyName(s string, acronyms bool) string {
 	}
 
 	return strings.Join(parts, " ")
+}
+
+func stringArrayToCSV(array []string) string {
+	return strings.Join(array, ", ")
 }
 
 func jsonEncode(v interface{}) template.JS {
@@ -530,7 +546,10 @@ func (tr *Renderer) MustLoadTemplate(w http.ResponseWriter, r *http.Request, vie
 	err := tr.LoadTemplate(w, r, view, vars)
 
 	if err != nil {
-		raven.CaptureError(err, nil)
+		if _, ok := err.(*net.OpError); !ok {
+			// don't capture OpErrors, they flood sentry with non-errors
+			raven.CaptureError(err, nil)
+		}
 		logrus.WithError(err).Errorf("Unable to load template: %s", view)
 		http.Error(w, "unable to load template", http.StatusInternalServerError)
 		return

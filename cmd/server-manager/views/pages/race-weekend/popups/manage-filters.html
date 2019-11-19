@@ -30,7 +30,6 @@
                     <div class="col-md-6">
                         <form>
 
-                            {{ if not $.ParentSession.IsBase }}
                                 <div class="card border-warning">
                                     <div class="card-body">
                                         <p>Sort the drivers from the <strong>{{ $.ParentSession.Name }}</strong> Results by:</p>
@@ -42,18 +41,18 @@
                                                 {{ if WriteAccess }}
                                                     <select id="ResultsSort" name="ResultsSort" class="form-control">
                                                         {{ range $index, $sorter := $.AvailableSorters }}
-                                                            <option value="{{ $sorter.Key }}" {{ if eq $sorter.Key $.Filter.SortType }}selected="selected"{{ end }}>{{ $sorter.Name }}</option>
+                                                            {{ if or (not $.ParentSession.IsBase) (not $sorter.NeedsParentSession) }}
+                                                                <option value="{{ $sorter.Key }}" {{ if eq $sorter.Key $.Filter.SortType }}selected="selected"{{ end }}>{{ $sorter.Name }}</option>
+                                                            {{ end }}
                                                         {{ end }}
                                                     </select>
                                                 {{ else }}
                                                     <label class="col-form-label">
-
-                                                    {{ range $index, $sorter := $.AvailableSorters }}
-                                                        {{ if eq $sorter.Key $.Filter.SortType }}
-                                                            {{ $sorter.Name }}
+                                                        {{ range $index, $sorter := $.AvailableSorters }}
+                                                            {{ if eq $sorter.Key $.Filter.SortType }}
+                                                                {{ $sorter.Name }}
+                                                            {{ end }}
                                                         {{ end }}
-                                                    {{ end }}
-
                                                     </label>
                                                 {{ end }}
                                             </div>
@@ -63,6 +62,27 @@
                                                     <small class="text-danger">The Parent Session ({{ $.ParentSession.Name }}) has not been completed. Sorting will not change the live preview, but will apply to the grid when the {{ $.ParentSession.Name }} Session has completed.</small>
                                                 </div>
                                             {{ end }}
+                                        </div>
+
+                                        <div class="form-group row" id="AvailableResultsWrapper">
+                                            <label for="AvailableResults" class="col-sm-4 col-form-label">Results Files</label>
+
+                                            <div class="col-sm-8">
+
+                                                <select multiple required class="form-control Cars" name="AvailableResults" id="AvailableResults" size="15">
+                                                    {{ range $index, $result := $.ResultsAvailableForSorting }}
+                                                        {{ $selected := false }}
+
+                                                        {{ range $index, $availableResult := $.Filter.AvailableResultsForSorting }}
+                                                            {{ if eq $result.SessionFile $availableResult }}
+                                                                {{ $selected = true }}
+                                                            {{ end }}
+                                                        {{ end}}
+
+                                                        <option value="{{ $result.SessionFile }}" {{ if $selected }} selected="selected" {{ end }}>{{ $result.Type.String }} on {{ dateFormat $result.Date }} at {{ timeFormat $result.Date }}</option>
+                                                    {{ end }}
+                                                </select>
+                                            </div>
                                         </div>
 
                                         <div class="form-group row">
@@ -109,7 +129,6 @@
                                     <i class="fa fa-arrow-down"></i>
                                 </div>
 
-                            {{ end }}
 
                             <div class="card border-primary">
                                 <div class="card-body">

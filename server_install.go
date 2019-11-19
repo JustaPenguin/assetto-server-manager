@@ -36,6 +36,16 @@ func SetAssettoInstallPath(installPath string) {
 	}
 }
 
+func IsAssettoInstalled() bool {
+	_, err := os.Stat(filepath.Join(ServerInstallPath, "system"))
+
+	if err != nil {
+		return false
+	}
+
+	return true
+}
+
 // InstallAssettoCorsaServer takes a steam login and password and runs steamcmd to install the assetto server.
 // If the "ServerInstallPath" exists, this function will exit without installing - unless force == true.
 func InstallAssettoCorsaServer(login, password string, force bool) error {

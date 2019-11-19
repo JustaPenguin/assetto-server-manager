@@ -109,7 +109,7 @@ func (ch *ChampionshipsHandler) view(w http.ResponseWriter, r *http.Request) {
 	eventInProgress := false
 
 	for _, event := range championship.Events {
-		if event.InProgress() {
+		if event.InProgress() && ch.championshipManager.activeChampionship != nil {
 			eventInProgress = true
 			break
 		}
@@ -524,18 +524,12 @@ func (ch *ChampionshipsHandler) teamPenalty(w http.ResponseWriter, r *http.Reque
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-type entrantSlot struct {
-	Size     int
-	Capacity int
-}
-
 type championshipSignUpFormTemplateVars struct {
 	*ChampionshipTemplateVars
 
-	FormData         *ChampionshipSignUpResponse
-	SignedUpEntrants map[string]*entrantSlot
-	ValidationError  string
-	LockSteamGUID    bool
+	FormData        *ChampionshipSignUpResponse
+	ValidationError string
+	LockSteamGUID   bool
 }
 
 func (ch *ChampionshipsHandler) signUpForm(w http.ResponseWriter, r *http.Request) {
@@ -556,20 +550,6 @@ func (ch *ChampionshipsHandler) signUpForm(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	signedUpEntrants := make(map[string]*entrantSlot)
-
-	for _, entrant := range championship.AllEntrants() {
-		if _, ok := signedUpEntrants[entrant.Model]; !ok {
-			signedUpEntrants[entrant.Model] = &entrantSlot{}
-		}
-
-		signedUpEntrants[entrant.Model].Capacity++
-
-		if entrant.GUID != "" {
-			signedUpEntrants[entrant.Model].Size++
-		}
-	}
-
 	account := AccountFromRequest(r)
 
 	if account != OpenAccount {
@@ -581,8 +561,6 @@ func (ch *ChampionshipsHandler) signUpForm(w http.ResponseWriter, r *http.Reques
 	} else {
 		opts.FormData = &ChampionshipSignUpResponse{}
 	}
-
-	opts.SignedUpEntrants = signedUpEntrants
 
 	if r.Method == http.MethodPost {
 		signUpResponse, foundSlot, err := ch.championshipManager.HandleChampionshipSignUp(r)

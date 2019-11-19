@@ -169,6 +169,7 @@ func TestChampionship_FindClassForCarModel(t *testing.T) {
 
 		for className, models := range fixture.classesToModels {
 			class := NewChampionshipClass(className)
+			class.AvailableCars = models
 
 			for _, model := range models {
 				for i := 0; i < rand.Intn(20)+1; i++ {

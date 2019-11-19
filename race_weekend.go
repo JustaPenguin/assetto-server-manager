@@ -484,6 +484,7 @@ type RaceWeekendSession struct {
 	StartedTime                time.Time
 	CompletedTime              time.Time
 	ScheduledTime              time.Time
+	ScheduledServerID          string
 	Results                    *SessionResults
 	StartWhenParentHasFinished bool
 
@@ -626,9 +627,9 @@ func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) ([]*RaceW
 
 					if err != nil {
 						logrus.WithError(err).Warnf("Could not find class for car model: %s for entrant %s", entrant.Car.GetCar(), entrant.Car.GetGUID())
+					} else {
+						entrant.EntrantResult.ClassID = class.ID
 					}
-
-					entrant.EntrantResult.ClassID = class.ID
 				}
 
 				e := NewRaceWeekendSessionEntrant(rws.ID, entrant.Car, entrant.EntrantResult, rws.Results)
@@ -704,44 +705,61 @@ var ErrRaceWeekendSessionDependencyIncomplete = errors.New("servermanager: race 
 
 // GetRaceWeekendEntryList returns the RaceWeekendEntryList for the given session, built from the parent session(s) results and applied filters.
 func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, overrideFilter *RaceWeekendSessionToSessionFilter, overrideFilterSessionID string) (RaceWeekendEntryList, error) {
+	var entryList RaceWeekendEntryList
+
 	if rws.IsBase() {
-		// base race weekend sessions just return the race weekend EntryList
-		return EntryListToRaceWeekendEntryList(rw.GetEntryList(), rws.ID), nil
-	}
+		entryList = EntryListToRaceWeekendEntryList(rw.GetEntryList(), rws.ID)
 
-	entryList := make(RaceWeekendEntryList, 0)
+		if overrideFilter == nil {
+			var err error
 
-	for _, parentSessionID := range rws.ParentIDs {
-		parentSession, err := rw.FindSessionByID(parentSessionID.String())
-
-		if err != nil {
-			return nil, err
-		}
-
-		finishingGrid, err := parentSession.FinishingGrid(rw)
-
-		if err != nil {
-			return nil, err
-		}
-
-		if overrideFilter != nil && parentSessionID.String() == overrideFilterSessionID {
-			// override filters are provided when users are modifying filters for their race weekend setups
-			err = overrideFilter.Filter(rw, parentSession, rws, finishingGrid, &entryList)
+			overrideFilter, err = rw.GetFilterOrUseDefault(rw.ID.String(), rws.ID.String())
 
 			if err != nil {
 				return nil, err
 			}
-		} else {
-			sessionToSessionFilter, err := rw.GetFilterOrUseDefault(parentSessionID.String(), rws.ID.String())
+		}
+
+		err := overrideFilter.Filter(rw, rws, rws, entryList, &entryList)
+
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		entryList = make(RaceWeekendEntryList, 0)
+
+		for _, parentSessionID := range rws.ParentIDs {
+			parentSession, err := rw.FindSessionByID(parentSessionID.String())
 
 			if err != nil {
 				return nil, err
 			}
 
-			err = sessionToSessionFilter.Filter(rw, parentSession, rws, finishingGrid, &entryList)
+			finishingGrid, err := parentSession.FinishingGrid(rw)
 
 			if err != nil {
 				return nil, err
+			}
+
+			if overrideFilter != nil && parentSessionID.String() == overrideFilterSessionID {
+				// override filters are provided when users are modifying filters for their race weekend setups
+				err = overrideFilter.Filter(rw, parentSession, rws, finishingGrid, &entryList)
+
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				sessionToSessionFilter, err := rw.GetFilterOrUseDefault(parentSessionID.String(), rws.ID.String())
+
+				if err != nil {
+					return nil, err
+				}
+
+				err = sessionToSessionFilter.Filter(rw, parentSession, rws, finishingGrid, &entryList)
+
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
@@ -750,7 +768,7 @@ func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, override
 		// sorting can only be run if a session is ready to be run.
 		sorter := GetRaceWeekendEntryListSort(rws.SortType)
 
-		if err := sorter(rws, entryList); err != nil {
+		if err := sorter.Sort(rw, rws, entryList, nil); err != nil {
 			return nil, err
 		}
 
@@ -847,6 +865,20 @@ type ActiveRaceWeekend struct {
 	ReplacementPassword      string
 	Description              string
 	IsPracticeSession        bool
+	RaceConfig               CurrentRaceConfig
+	EntryList                EntryList
+}
+
+func (a ActiveRaceWeekend) GetRaceConfig() CurrentRaceConfig {
+	return a.RaceConfig
+}
+
+func (a ActiveRaceWeekend) GetEntryList() EntryList {
+	return a.EntryList
+}
+
+func (a ActiveRaceWeekend) IsLooping() bool {
+	return false
 }
 
 func (a ActiveRaceWeekend) IsChampionship() bool {
@@ -854,7 +886,11 @@ func (a ActiveRaceWeekend) IsChampionship() bool {
 }
 
 func (a ActiveRaceWeekend) IsRaceWeekend() bool {
-	return !a.IsPracticeSession
+	return true
+}
+
+func (a ActiveRaceWeekend) IsPractice() bool {
+	return a.IsPracticeSession
 }
 
 func (a ActiveRaceWeekend) OverrideServerPassword() bool {

@@ -23,6 +23,12 @@ type Store interface {
 	DeleteChampionship(id string) error
 
 	// Live Timings
+	UpsertLiveTimingsData(*LiveTimingsPersistedData) error
+	LoadLiveTimingsData() (*LiveTimingsPersistedData, error)
+	UpsertLastRaceEvent(r RaceEvent) error
+	LoadLastRaceEvent() (RaceEvent, error)
+	ClearLastRaceEvent() error
+
 	UpsertLiveFrames([]string) error
 	ListPrevFrames() ([]string, error)
 
@@ -46,4 +52,8 @@ type Store interface {
 	UpsertRaceWeekend(rw *RaceWeekend) error
 	LoadRaceWeekend(id string) (*RaceWeekend, error)
 	DeleteRaceWeekend(id string) error
+
+	// Stracker Options
+	UpsertStrackerOptions(sto *StrackerConfiguration) error
+	LoadStrackerOptions() (*StrackerConfiguration, error)
 }

@@ -8,9 +8,9 @@
     {{ with .RaceDetails }}
         <div class="card mb-4">
             {{ if $.ServerEvent.IsChampionship }}
-                <h5 class="card-header">Championship Event in Progress</h5>
+                <h5 class="card-header">Championship {{ if $.ServerEvent.IsPractice }}Practice{{ else }}Event{{ end }} in Progress</h5>
             {{ else if $.ServerEvent.IsRaceWeekend }}
-                <h5 class="card-header">Race Weekend in Progress</h5>
+                <h5 class="card-header">Race Weekend {{ if $.ServerEvent.IsPractice }}Practice{{ end }} in Progress</h5>
             {{ else }}
                 <h5 class="card-header">Event in Progress</h5>
             {{ end }}
@@ -32,10 +32,12 @@
                                     href="/process/restart"
                                     class="btn btn-warning"
 
-                                    {{ if $.ServerEvent.IsChampionship }}
-                                        onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
-                                    {{ else if $.ServerEvent.IsRaceWeekend }}
-                                        onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
+                                    {{ if not $.ServerEvent.IsPractice }}
+                                        {{ if $.ServerEvent.IsChampionship }}
+                                            onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                        {{ else if $.ServerEvent.IsRaceWeekend }}
+                                            onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
+                                        {{ end }}
                                     {{ end }}
                                 >
                                     Restart Event
@@ -44,10 +46,12 @@
                                     href="/process/stop"
                                     class="btn btn-danger"
 
-                                    {{ if $.ServerEvent.IsChampionship }}
-                                        onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
-                                    {{ else if $.ServerEvent.IsRaceWeekend }}
-                                        onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
+                                    {{ if not $.ServerEvent.IsPractice }}
+                                        {{ if $.ServerEvent.IsChampionship }}
+                                            onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                        {{ else if $.ServerEvent.IsRaceWeekend }}
+                                            onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
+                                        {{ end }}
                                     {{ end }}
                                 >
                                     Stop Event
@@ -330,6 +334,22 @@
 
                                 <div class="col-7">
                                     <h3>Audit Logs</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-md-6 col-lg-4 mt-4">
+                    <a class="card" href="/stracker/options">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-5">
+                                    <h1 class="text-center"><i class="fas fa-stopwatch fa-2x"></i></h1>
+                                </div>
+
+                                <div class="col-7">
+                                    <h3>STracker</h3>
                                 </div>
                             </div>
                         </div>

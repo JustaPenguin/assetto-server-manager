@@ -25,15 +25,19 @@
                         {{ if WriteAccess }}
                             <select id="SortType" name="SortType" class="form-control">
                                 {{ range $index, $sorter := $.AvailableSorters }}
-                                    <option value="{{ $sorter.Key }}" {{ if eq $sorter.Key $.Session.SortType }}selected="selected"{{ end }}>{{ $sorter.Name }}</option>
+                                    {{ if $sorter.ShowInManageEntryList }}
+                                        <option value="{{ $sorter.Key }}" {{ if eq $sorter.Key $.Session.SortType }}selected="selected"{{ end }}>{{ $sorter.Name }}</option>
+                                    {{ end }}
                                 {{ end }}
                             </select>
                         {{ else }}
                             <label class="col-form-label">
                                 {{ range $index, $sorter := $.AvailableSorters }}
-                                    {{ if eq $sorter.Key $.Session.SortType }}
-                                        {{ $sorter.Name }}
-                                    {{ end }}
+                                    {{ if $sorter.ShowInManageEntryList }}
+                                        {{ if eq $sorter.Key $.Session.SortType }}
+                                            {{ $sorter.Name }}
+                                        {{ end }}
+                                    {{ end}}
                                 {{ end }}
                             </label>
                         {{ end }}

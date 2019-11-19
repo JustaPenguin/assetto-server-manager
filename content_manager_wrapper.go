@@ -50,9 +50,9 @@ type ContentManagerWrapperData struct {
 	PasswordChecksum [2]string `json:"passwordChecksum"`
 	WrappedPort      int       `json:"wrappedPort"`
 
-	Content   CMContent `json:"content"`
-	Frequency int       `json:"frequency"`
-	Until     int64     `json:"until"`
+	Content   *CMContent `json:"content"`
+	Frequency int        `json:"frequency"`
+	Until     int64      `json:"until"`
 }
 
 type CMAssists struct {
@@ -69,8 +69,12 @@ type CMAssists struct {
 }
 
 type CMContent struct {
-	Cars     struct{} `json:"cars"`
-	Password bool     `json:"password"`
+	Cars  map[string]ContentURL `json:"cars"`
+	Track ContentURL            `json:"track"`
+}
+
+type ContentURL struct {
+	URL string `json:"url"`
 }
 
 type ACHTTPPlayers struct {
@@ -90,8 +94,9 @@ type CMCar struct {
 }
 
 type ContentManagerWrapper struct {
-	store      Store
-	carManager *CarManager
+	store        Store
+	carManager   *CarManager
+	trackManager *TrackManager
 
 	sessionInfo udp.SessionInfo
 
@@ -105,11 +110,43 @@ type ContentManagerWrapper struct {
 	mutex       sync.Mutex
 }
 
-func NewContentManagerWrapper(store Store, carManager *CarManager) *ContentManagerWrapper {
+func NewContentManagerWrapper(store Store, carManager *CarManager, trackManager *TrackManager) *ContentManagerWrapper {
 	return &ContentManagerWrapper{
-		store:      store,
-		carManager: carManager,
+		store:        store,
+		carManager:   carManager,
+		trackManager: trackManager,
 	}
+}
+
+func (cmw *ContentManagerWrapper) NewCMContent(cars []string, trackName string) (*CMContent, error) {
+	carsMap := make(map[string]ContentURL)
+	var trackDownload string
+
+	for _, carName := range cars {
+		car, err := cmw.carManager.LoadCar(carName, nil)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("Couldn't load car for CM Wrapper: %s", carName)
+			continue
+		}
+
+		carsMap[car.Name] = ContentURL{URL: car.Details.DownloadURL}
+	}
+
+	trackMeta, err := LoadTrackMetaDataFromName(trackName)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Couldn't load track for CM Wrapper: %s", trackName)
+	} else {
+		trackDownload = trackMeta.DownloadURL
+	}
+
+	return &CMContent{
+		Cars: carsMap,
+		Track: ContentURL{
+			URL: trackDownload,
+		},
+	}, nil
 }
 
 func (cmw *ContentManagerWrapper) UDPCallback(message udp.Message) {
@@ -157,6 +194,20 @@ func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 		}
 
 		text += fmt.Sprintf("\n* %s Download: %s", car.Details.Name, car.Details.DownloadURL)
+	}
+
+	track, err := cmw.trackManager.GetTrackFromName(cmw.serverConfig.CurrentRaceConfig.Track)
+
+	if err != nil {
+		logrus.WithError(err).Warnf("Could not load track: %s, skipping attaching download URL to Content Manager Wrapper", cmw.serverConfig.CurrentRaceConfig.Track)
+	} else {
+		err := track.LoadMetaData()
+
+		if err != nil {
+			logrus.WithError(err).Debugf("Could not load meta data for: %s, skipping attaching download URL to Content Manager Wrapper", cmw.serverConfig.CurrentRaceConfig.Track)
+		} else if track.MetaData.DownloadURL != "" {
+			text += fmt.Sprintf("\n* %s Download: %s", track.Name, track.MetaData.DownloadURL)
+		}
 	}
 
 	cmw.description = text
@@ -358,6 +409,13 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 
 	description += cmw.description
 
+	cmContent, err := cmw.NewCMContent(sessionInfo.Cars, race.Track)
+
+	if err != nil {
+		logrus.Errorf("Couldn't attach content download URL(s) through CM Wrapper!")
+		cmContent = &CMContent{}
+	}
+
 	return &ContentManagerWrapperData{
 		ACHTTPSessionInfo: *sessionInfo,
 		Players:           *players,
@@ -392,7 +450,7 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 		PasswordChecksum: passwordChecksum,
 		WrappedPort:      global.ContentManagerWrapperPort,
 
-		Content:   CMContent{}, // not supported
+		Content:   cmContent,
 		Frequency: global.ClientSendIntervalInHertz,
 		Until:     time.Now().Add(time.Second * time.Duration(sessionInfo.Timeleft)).Unix(),
 	}, nil

@@ -15,7 +15,8 @@ import (
 
 // Sends a championship to ACSR, called OnEndSession and when a championship is created
 func ACSRSendResult(championship Championship) {
-	if config == nil || (config.ACSR.APIKey == "" || config.ACSR.AccountID == "" || !config.ACSR.Enabled) || len(championship.Events) == 0 {
+	if config == nil || (config.ACSR.APIKey == "" || config.ACSR.AccountID == "" || !config.ACSR.Enabled) ||
+		len(championship.Events) == 0 || IsPremium != "true" {
 		return
 	}
 
@@ -58,9 +59,17 @@ func ACSRSendResult(championship Championship) {
 		return
 	}
 
+	geoIP, err := geoIP()
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't get server geoIP for acsr request")
+		return
+	}
+
 	q := req.URL.Query()
 	q.Add("baseurl", config.HTTP.BaseURL)
 	q.Add("guid", config.ACSR.AccountID)
+	q.Add("geoip", geoIP.CountryName)
 	req.URL.RawQuery = q.Encode()
 	req.Header.Set("Content-Type", "application/json")
 

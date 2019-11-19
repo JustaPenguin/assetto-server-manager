@@ -57,6 +57,23 @@ type QuickRace struct {
 	OverridePassword    bool
 	ReplacementPassword string
 	RaceConfig          CurrentRaceConfig
+	EntryList           EntryList
+}
+
+func (q QuickRace) GetRaceConfig() CurrentRaceConfig {
+	return q.RaceConfig
+}
+
+func (q QuickRace) GetEntryList() EntryList {
+	return q.EntryList
+}
+
+func (q QuickRace) IsLooping() bool {
+	return false
+}
+
+func (q QuickRace) IsPractice() bool {
+	return false
 }
 
 func (q QuickRace) IsChampionship() bool {

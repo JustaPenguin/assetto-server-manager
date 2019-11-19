@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -10,12 +11,26 @@ import (
 	"github.com/google/uuid"
 )
 
-const entryListFilename = "entry_list.ini"
+const (
+	AnyCarModel       = "any_car_model"
+	entryListFilename = "entry_list.ini"
+)
 
 type EntryList map[string]*Entrant
 
 // Write the EntryList to the server location
 func (e EntryList) Write() error {
+	setupDirectory := filepath.Join(ServerInstallPath, "setups")
+
+	// belt and braces check to make sure setup file exists
+	for _, entrant := range e.AsSlice() {
+		if entrant.FixedSetup != "" {
+			if _, err := os.Stat(filepath.Join(setupDirectory, entrant.FixedSetup)); os.IsNotExist(err) {
+				return err
+			}
+		}
+	}
+
 	for i, entrant := range e.AsSlice() {
 		entrant.PitBox = i
 	}
@@ -108,6 +123,10 @@ func (e EntryList) PrettyList() []*Entrant {
 			continue
 		}
 
+		if x.Model == AnyCarModel {
+			continue
+		}
+
 		entrants = append(entrants, x)
 	}
 
@@ -168,6 +187,19 @@ func (e EntryList) CarIDs() []string {
 	}
 
 	return out
+}
+
+// returns the greatest ballast set on any entrant
+func (e EntryList) FindGreatestBallast() int {
+	var greatest int
+
+	for _, entrant := range e {
+		if entrant.Ballast > greatest {
+			greatest = entrant.Ballast
+		}
+	}
+
+	return greatest
 }
 
 func NewEntrant() *Entrant {

@@ -16,7 +16,7 @@ $(document).ready(function () {
     $.fn.bootstrapSwitch.defaults.size = 'small';
     $.fn.bootstrapSwitch.defaults.animate = false;
     $.fn.bootstrapSwitch.defaults.onColor = "success";
-    $document.find("input[type='checkbox']:visible").bootstrapSwitch();
+    $document.find("input[type='checkbox']:not(input[name='EntryList.OverwriteAllEvents']:hidden):not(input[name='session-start-after-parent']:hidden)").bootstrapSwitch();
 
     championships.init();
     $document.find(".race-setup").each(function (index, elem) {
@@ -24,7 +24,8 @@ $(document).ready(function () {
     });
 
     $document.find("#open-in-simres").each(function (index, elem) {
-        let link = window.location.href.split("#")[0].replace("results", "results/download") + ".json";
+        let query = window.location.search;
+        let link = window.location.href.replace(query, "").split("#")[0].replace("results", "results/download") + ".json" + query;
 
         $(elem).attr('href', "http://simresults.net/remote?result=" + link);
 
@@ -32,7 +33,8 @@ $(document).ready(function () {
     });
 
     $document.find("#simres-group").each(function (index, elem) {
-        let link = window.location.href + "/export-results";
+        let query = window.location.search;
+        let link = window.location.href.replace(query, "") + "/export-results" + query;
 
         $(elem).attr('href', "http://simresults.net/remote?results=" + link);
 
@@ -140,7 +142,6 @@ $(document).ready(function () {
         } else {
             $document.find("#start-race-button").show();
             $document.find("#save-race-button").val("justSave");
-
         }
     });
 });
@@ -148,27 +149,31 @@ $(document).ready(function () {
 const nameRegex = /^[A-Za-z]{0,5}[0-9]+/;
 
 function prettifyName(name, acronyms) {
-    if (!name || name.length === 0) {
-        return "";
-    }
-
-    let parts = name.split("_");
-
-    if (parts[0] === "ks") {
-        parts.shift();
-    }
-
-    for (let i = 0; i < parts.length; i++) {
-        if ((acronyms && parts[i].length <= 3) || (acronyms && parts[i].match(nameRegex))) {
-            parts[i] = parts[i].toUpperCase();
-        } else {
-            parts[i] = parts[i].split(' ')
-                .map(w => w[0].toUpperCase() + w.substr(1).toLowerCase())
-                .join(' ');
+    try {
+        if (!name || name.length === 0) {
+            return "";
         }
-    }
 
-    return parts.join(" ")
+        let parts = name.split("_");
+
+        if (parts[0] === "ks") {
+            parts.shift();
+        }
+
+        for (let i = 0; i < parts.length; i++) {
+            if ((acronyms && parts[i].length <= 3) || (acronyms && parts[i].match(nameRegex))) {
+                parts[i] = parts[i].toUpperCase();
+            } else {
+                let split = parts[i].split(' ');
+
+                parts[i] = split.map(w => w.length > 0 ? w[0].toUpperCase() + w.substr(1).toLowerCase() : "").join(' ');
+            }
+        }
+
+        return parts.join(" ")
+    } catch(error) {
+         return name
+    }
 }
 
 
@@ -741,13 +746,20 @@ class RaceSetup {
         }
 
         function showEntrantSkin(currentCar, skin, $this) {
+            let fallBackImage = "/static/img/no-preview-car.png";
+            let $preview = $this.closest(".entrant").find(".entryListCarPreview");
+
+            if (currentCar === "any_car_model") {
+                $preview.attr({"src": fallBackImage, "alt": "Preview Image"});
+                return;
+            }
+
             if (currentCar in availableCars && availableCars[currentCar] != null && availableCars[currentCar].length > 0) {
                 if (skin === "random_skin") {
                     skin = availableCars[currentCar][0]
                 }
 
                 let path = "/content/cars/" + currentCar + "/skins/" + skin + "/preview.jpg";
-                let $preview = $this.closest(".entrant").find(".entryListCarPreview");
 
                 $.get(path)
                     .done(function () {
@@ -755,7 +767,7 @@ class RaceSetup {
                         $preview.attr({"src": path, "alt": prettifyName(skin, false)})
                     }).fail(function () {
                     // preview doesn't exist, load default fall back image
-                    path = "/static/img/no-preview-car.png";
+                    path = fallBackImage;
                     $preview.attr({"src": path, "alt": "Preview Image"})
                 });
             }
@@ -880,13 +892,21 @@ class RaceSetup {
             that.$parent.find(".entryListCar").each(function (index, val) {
                 let $val = $(val);
                 let selected = $val.find("option:selected").val();
+                let $anyCar = $("<option value='any_car_model'>Any Available Car</option>");
 
                 if (!selected || !cars.has(selected)) {
-                    selected = that.$carsDropdown.val()[0];
+                    if (selected === 'any_car_model' || cars.size < 1) {
+                        selected = $anyCar.val();
+                    } else {
+                        selected = cars.values().next().value;
+                    }
+
                     showEntrantSkin(selected, "random_skin", $val);
                 }
 
+
                 $val.empty();
+                $anyCar.appendTo($val);
 
                 for (let val of cars.values()) {
                     let $opt = $("<option />");
@@ -2161,6 +2181,12 @@ let championships = {
 
         $document.on("input", ".entrant-team", function () {
             $(this).closest(".entrant").find(".points-transfer").show();
+        });
+
+        $document.on("change", ".Cars", function(e) {
+            let $target = $(e.currentTarget);
+
+            $target.closest(".race-setup").find("input[name='NumCars']").val($target.val().length);
         });
     },
 

@@ -60,6 +60,8 @@ func Router(
 	raceControlHandler *RaceControlHandler,
 	scheduledRacesHandler *ScheduledRacesHandler,
 	raceWeekendHandler *RaceWeekendHandler,
+	strackerHandler *StrackerHandler,
+	healthCheck *HealthCheck,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -70,7 +72,9 @@ func Router(
 
 	r.HandleFunc("/login", accountHandler.login)
 	r.HandleFunc("/logout", accountHandler.logout)
+	r.HandleFunc("/robots.txt", serverAdministrationHandler.robots)
 	r.Handle("/metrics", prometheusMonitoringHandler())
+	r.Get("/healthcheck.json", healthCheck.ServeHTTP)
 
 	if Debug {
 		r.Mount("/debug/", middleware.Profiler())
@@ -84,11 +88,14 @@ func Router(
 		r.Get("/", serverAdministrationHandler.home)
 		r.Get("/changelog", serverAdministrationHandler.changelog)
 
+		r.Mount("/stracker/", http.HandlerFunc(strackerHandler.proxy))
+
 		// content
 		r.Get("/cars", carsHandler.list)
 		r.Get("/cars/search.json", carsHandler.searchJSON)
 		r.Get("/car/{car_id}", carsHandler.view)
 		r.Get("/tracks", tracksHandler.list)
+		r.Get("/track/{track_id}", tracksHandler.view)
 		r.Get("/weather", weatherHandler.list)
 
 		r.Get("/events.ics", scheduledRacesHandler.allScheduledRacesICalHandler)
@@ -166,6 +173,7 @@ func Router(
 		r.HandleFunc("/car/{name}/tags", carsHandler.tags)
 		r.Post("/car/{name}/metadata", carsHandler.saveMetadata)
 		r.Post("/car/{name}/skin", carsHandler.uploadSkin)
+		r.Post("/track/{name}/metadata", tracksHandler.saveMetadata)
 
 		// races
 		r.Get("/quick", quickRaceHandler.create)
@@ -257,7 +265,7 @@ func Router(
 		r.Get("/championship/{championshipID}/delete", championshipsHandler.delete)
 		r.Get("/custom/delete/{uuid}", customRaceHandler.delete)
 
-		r.Get("/track/delete/{name}", tracksHandler.delete)
+		r.Get("/track/{name}/delete", tracksHandler.delete)
 		r.Get("/car/{name}/delete", carsHandler.delete)
 		r.Post("/car/{name}/skin/delete", carsHandler.deleteSkin)
 		r.Get("/weather/delete/{key}", weatherHandler.delete)
@@ -294,6 +302,8 @@ func Router(
 		r.HandleFunc("/broadcast-chat", raceControlHandler.broadcastChat)
 		r.HandleFunc("/admin-command", raceControlHandler.adminCommand)
 		r.HandleFunc("/kick-user", raceControlHandler.kickUser)
+
+		r.HandleFunc("/stracker/options", strackerHandler.options)
 	})
 
 	FileServer(r, "/static", fs, false)

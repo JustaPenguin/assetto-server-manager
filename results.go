@@ -191,11 +191,11 @@ func (s *SessionResults) GetCrashesOfType(guid, collisionType string) int {
 	return num
 }
 
-func (s *SessionResults) GetAverageLapTime(guid string) time.Duration {
+func (s *SessionResults) GetAverageLapTime(guid, model string) time.Duration {
 	var totalTime, driverLapCount, lapsForAverage, totalTimeForAverage int
 
 	for _, lap := range s.Laps {
-		if lap.DriverGUID == guid {
+		if lap.DriverGUID == guid && lap.CarModel == model {
 			avgSoFar := (float64(totalTime) / float64(lapsForAverage)) * 1.07
 
 			// if lap doesnt cut and if lap is < 107% of average for that driver so far and if lap isn't lap 1
@@ -209,7 +209,7 @@ func (s *SessionResults) GetAverageLapTime(guid string) time.Duration {
 		}
 	}
 
-	return s.GetTime(int(float64(totalTimeForAverage)/float64(lapsForAverage)), guid, false)
+	return s.GetTime(int(float64(totalTimeForAverage)/float64(lapsForAverage)), guid, model, false)
 }
 
 func (s *SessionResults) GetOverallAverageLapTime() time.Duration {
@@ -233,12 +233,12 @@ func (s *SessionResults) GetOverallAverageLapTime() time.Duration {
 	return d
 }
 
-func (s *SessionResults) GetConsistency(guid string) float64 {
+func (s *SessionResults) GetConsistency(guid, model string) float64 {
 	var bestLap int
 
 	for _, lap := range s.Laps {
-		if lap.DriverGUID == guid {
-			if s.IsDriversFastestLap(guid, lap.LapTime, lap.Cuts) {
+		if lap.DriverGUID == guid && lap.CarModel == model {
+			if s.IsDriversFastestLap(guid, model, lap.LapTime, lap.Cuts) {
 				bestLap = lap.LapTime
 			}
 		}
@@ -246,8 +246,8 @@ func (s *SessionResults) GetConsistency(guid string) float64 {
 
 	var percentage float64
 
-	average := s.GetAverageLapTime(guid)
-	best := s.GetTime(bestLap, guid, false)
+	average := s.GetAverageLapTime(guid, model)
+	best := s.GetTime(bestLap, guid, model, false)
 
 	if average != 0 && best != 0 {
 		consistency := average.Seconds() - best.Seconds()
@@ -261,17 +261,17 @@ func (s *SessionResults) GetConsistency(guid string) float64 {
 }
 
 // lapNum is the drivers current lap
-func (s *SessionResults) GetPosForLap(guid string, lapNum int64) int {
+func (s *SessionResults) GetPosForLap(guid, model string, lapNum int64) int {
 	var pos int
 
 	driverLap := make(map[string]int)
 
 	for _, lap := range s.Laps {
-		driverLap[lap.DriverGUID]++
+		driverLap[lap.DriverGUID+lap.CarModel]++
 
-		if driverLap[lap.DriverGUID] == int(lapNum) && lap.DriverGUID == guid {
+		if driverLap[lap.DriverGUID+lap.CarModel] == int(lapNum) && lap.DriverGUID == guid && lap.CarModel == model {
 			return pos + 1
-		} else if driverLap[lap.DriverGUID] == int(lapNum) {
+		} else if driverLap[lap.DriverGUID+lap.CarModel] == int(lapNum) {
 			pos++
 		}
 	}
@@ -296,7 +296,7 @@ func (s *SessionResults) IsFastestLap(time, cuts int) bool {
 	return fastest
 }
 
-func (s *SessionResults) IsDriversFastestLap(guid string, time, cuts int) bool {
+func (s *SessionResults) IsDriversFastestLap(guid, model string, time, cuts int) bool {
 	if cuts != 0 {
 		return false
 	}
@@ -304,7 +304,7 @@ func (s *SessionResults) IsDriversFastestLap(guid string, time, cuts int) bool {
 	fastest := true
 
 	for _, lap := range s.Laps {
-		if lap.LapTime < time && lap.DriverGUID == guid && lap.Cuts == 0 {
+		if lap.LapTime < time && lap.DriverGUID == guid && lap.CarModel == model && lap.Cuts == 0 {
 			fastest = false
 			break
 		}
@@ -342,7 +342,7 @@ func (s *SessionResults) IsFastestSector(sector, time, cuts int) bool {
 	return fastest
 }
 
-func (s *SessionResults) IsDriversFastestSector(guid string, sector, time, cuts int) bool {
+func (s *SessionResults) IsDriversFastestSector(guid, model string, sector, time, cuts int) bool {
 	if cuts != 0 {
 		return false
 	}
@@ -350,7 +350,7 @@ func (s *SessionResults) IsDriversFastestSector(guid string, sector, time, cuts 
 	fastest := true
 
 	for _, lap := range s.Laps {
-		if lap.Sectors[sector] < time && lap.DriverGUID == guid && lap.Cuts == 0 {
+		if lap.Sectors[sector] < time && lap.DriverGUID == guid && lap.CarModel == model && lap.Cuts == 0 {
 			fastest = false
 			break
 		}
@@ -375,7 +375,7 @@ cars:
 		var bestLap int
 
 		for y := range s.Laps {
-			if s.IsDriversFastestLap(s.Cars[i].Driver.GUID, s.Laps[y].LapTime, s.Laps[y].Cuts) {
+			if (s.Cars[i].Driver.GUID == s.Laps[y].DriverGUID) && s.IsDriversFastestLap(s.Cars[i].Driver.GUID, s.Cars[i].Model, s.Laps[y].LapTime, s.Laps[y].Cuts) {
 				bestLap = s.Laps[y].LapTime
 				break
 			}
@@ -415,17 +415,31 @@ cars:
 		if (!s.Result[i].Disqualified && !s.Result[j].Disqualified) || (s.Result[i].Disqualified && s.Result[j].Disqualified) {
 
 			if s.Type == SessionTypeQualifying || s.Type == SessionTypePractice {
-				return s.Result[i].BestLap < s.Result[j].BestLap
+
+				if s.Result[i].BestLap == 0 {
+					return false
+				}
+
+				if s.Result[j].BestLap == 0 {
+					return true
+				}
+
+				return s.GetTime(s.Result[i].BestLap, s.Result[i].DriverGUID, s.Result[i].CarModel, true) <
+					s.GetTime(s.Result[j].BestLap, s.Result[j].DriverGUID, s.Result[j].CarModel, true)
 			}
 
 			// if both drivers aren't/are disqualified
-			if s.GetNumLaps(s.Result[i].DriverGUID) == s.GetNumLaps(s.Result[j].DriverGUID) {
+			if s.GetNumLaps(s.Result[i].DriverGUID, s.Result[i].CarModel) == s.GetNumLaps(s.Result[j].DriverGUID, s.Result[j].CarModel) {
+				if s.Result[i].HasPenalty || s.Result[j].HasPenalty {
+					return s.GetTime(s.Result[i].TotalTime, s.Result[i].DriverGUID, s.Result[i].CarModel, true) <
+						s.GetTime(s.Result[j].TotalTime, s.Result[j].DriverGUID, s.Result[j].CarModel, true)
+				}
+
 				// if their number of laps are equal, compare last lap pos
-				return s.GetLastLapPos(s.Result[i].DriverGUID) <
-					s.GetLastLapPos(s.Result[j].DriverGUID)
+				return s.GetLastLapPos(s.Result[i].DriverGUID, s.Result[i].CarModel) < s.GetLastLapPos(s.Result[j].DriverGUID, s.Result[j].CarModel)
 			}
 
-			return s.GetNumLaps(s.Result[i].DriverGUID) >= s.GetNumLaps(s.Result[j].DriverGUID)
+			return s.GetNumLaps(s.Result[i].DriverGUID, s.Result[i].CarModel) >= s.GetNumLaps(s.Result[j].DriverGUID, s.Result[j].CarModel)
 
 		} else {
 			// driver i is closer to the front than j if they are not disqualified and j is
@@ -460,18 +474,22 @@ func (s *SessionResults) GetDrivers() string {
 	return strings.Join(drivers, ", ")
 }
 
-func (s *SessionResults) GetTime(timeINT int, driverGUID string, total bool) time.Duration {
-	if i := s.GetNumLaps(driverGUID); i == 0 {
+func (s *SessionResults) GetTime(timeINT int, driverGUID, model string, penalty bool) time.Duration {
+	if i := s.GetNumLaps(driverGUID, model); i == 0 {
 		return time.Duration(0)
 	}
 
 	d, _ := time.ParseDuration(fmt.Sprintf("%dms", timeINT))
 
-	if total {
+	if penalty {
 		for _, driver := range s.Result {
-			if driver.DriverGUID == driverGUID && driver.HasPenalty {
+			if driver.DriverGUID == driverGUID && driver.CarModel == model && driver.HasPenalty {
 				d += driver.PenaltyTime
-				d -= time.Duration(driver.LapPenalty) * s.GetLastLapTime(driverGUID)
+
+				switch s.Type {
+				case SessionTypeRace:
+					d -= time.Duration(driver.LapPenalty) * s.GetLastLapTime(driverGUID, model)
+				}
 			}
 		}
 	}
@@ -489,18 +507,18 @@ func (s *SessionResults) GetTeamName(driverGUID string) string {
 	return ""
 }
 
-func (s *SessionResults) GetNumLaps(driverGUID string) int {
+func (s *SessionResults) GetNumLaps(driverGUID, model string) int {
 	var i int
 
 	for _, lap := range s.Laps {
-		if lap.DriverGUID == driverGUID {
+		if lap.DriverGUID == driverGUID && lap.CarModel == model {
 			i++
 		}
 	}
 
 	// Apply lap penalty
 	for _, driver := range s.Result {
-		if driver.DriverGUID == driverGUID && driver.HasPenalty {
+		if driver.DriverGUID == driverGUID && driver.CarModel == model && driver.HasPenalty {
 			i -= driver.LapPenalty
 		}
 	}
@@ -508,9 +526,9 @@ func (s *SessionResults) GetNumLaps(driverGUID string) int {
 	return i
 }
 
-func (s *SessionResults) GetLastLapTime(driverGuid string) time.Duration {
+func (s *SessionResults) GetLastLapTime(driverGuid, model string) time.Duration {
 	for i := len(s.Laps) - 1; i >= 0; i-- {
-		if s.Laps[i].DriverGUID == driverGuid {
+		if s.Laps[i].DriverGUID == driverGuid && s.Laps[i].CarModel == model {
 			return s.Laps[i].GetLapTime()
 		}
 	}
@@ -518,21 +536,55 @@ func (s *SessionResults) GetLastLapTime(driverGuid string) time.Duration {
 	return 1
 }
 
-func (s *SessionResults) GetLastLapPos(driverGuid string) int {
+func (s *SessionResults) HasHandicaps() bool {
+	for _, car := range s.Result {
+		if car.BallastKG > 0 || car.Restrictor > 0 {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (s *SessionResults) GetPotentialLap(driverGUID, model string) time.Duration {
+	sectors := make([]int, len(s.GetNumSectors()))
+
+	for _, lap := range s.Laps {
+		if lap.DriverGUID != driverGUID || lap.CarModel != model || lap.Cuts > 0 {
+			continue
+		}
+
+		for i, sector := range lap.Sectors {
+			if sectors[i] == 0 || sector < sectors[i] {
+				sectors[i] = sector
+			}
+		}
+	}
+
+	var totalSectorTime time.Duration
+
+	for _, sector := range sectors {
+		totalSectorTime += time.Duration(sector) * time.Millisecond
+	}
+
+	return totalSectorTime
+}
+
+func (s *SessionResults) GetLastLapPos(driverGuid, model string) int {
 	var driverLaps int
 
 	for i := range s.Laps {
-		if s.Laps[i].DriverGUID == driverGuid {
+		if s.Laps[i].DriverGUID == driverGuid && s.Laps[i].CarModel == model {
 			driverLaps++
 		}
 	}
 
-	return s.GetPosForLap(driverGuid, int64(driverLaps))
+	return s.GetPosForLap(driverGuid, model, int64(driverLaps))
 }
 
-func (s *SessionResults) GetDriverPosition(driverGuid string) int {
+func (s *SessionResults) GetDriverPosition(driverGuid, model string) int {
 	for i := range s.Result {
-		if s.Result[i].DriverGUID == driverGuid {
+		if s.Result[i].DriverGUID == driverGuid && s.Result[i].CarModel == model {
 			return i + 1
 		}
 	}
@@ -540,11 +592,11 @@ func (s *SessionResults) GetDriverPosition(driverGuid string) int {
 	return 0
 }
 
-func (s *SessionResults) GetCuts(driverGuid string) int {
+func (s *SessionResults) GetCuts(driverGuid, model string) int {
 	var i int
 
 	for _, lap := range s.Laps {
-		if lap.DriverGUID == driverGuid {
+		if lap.DriverGUID == driverGuid && lap.CarModel == model {
 			i += lap.Cuts
 		}
 	}
@@ -562,7 +614,15 @@ func (s *SessionResults) FastestLap() *SessionLap {
 	copy(laps, s.Laps)
 
 	sort.Slice(laps, func(i, j int) bool {
-		return laps[i].Cuts == 0 && laps[i].LapTime < laps[j].LapTime
+		if laps[i].Cuts != 0 {
+			return false
+		}
+
+		if laps[j].Cuts != 0 {
+			return true
+		}
+
+		return laps[i].LapTime < laps[j].LapTime
 	})
 
 	return laps[0]
@@ -586,7 +646,15 @@ func (s *SessionResults) FastestLapInClass(classID uuid.UUID) *SessionLap {
 	}
 
 	sort.Slice(laps, func(i, j int) bool {
-		return laps[i].Cuts == 0 && laps[i].LapTime < laps[j].LapTime
+		if laps[i].Cuts != 0 {
+			return false
+		}
+
+		if laps[j].Cuts != 0 {
+			return true
+		}
+
+		return laps[i].LapTime < laps[j].LapTime
 	})
 
 	return laps[0]

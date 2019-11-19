@@ -42,9 +42,9 @@ func NewChampionshipManager(raceManager *RaceManager) *ChampionshipManager {
 	}
 }
 
-func (cm *ChampionshipManager) applyConfigAndStart(config CurrentRaceConfig, entryList EntryList, championship *ActiveChampionship) error {
+func (cm *ChampionshipManager) applyConfigAndStart(championship *ActiveChampionship) error {
 	cm.activeChampionship = championship
-	err := cm.RaceManager.applyConfigAndStart(config, entryList, false, championship)
+	err := cm.RaceManager.applyConfigAndStart(championship)
 
 	if err != nil {
 		return err
@@ -225,6 +225,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 
 	previousNumEntrants := 0
 	previousNumPoints := 0
+	previousNumCars := 0
 
 	for i := 0; i < len(r.Form["ClassName"]); i++ {
 		class := NewChampionshipClass(r.Form["ClassName"][i])
@@ -235,6 +236,9 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 
 		numEntrantsForClass := formValueAsInt(r.Form["EntryList.NumEntrants"][i])
 		numPointsForClass := formValueAsInt(r.Form["NumPoints"][i])
+		numCarsForClass := formValueAsInt(r.Form["NumCars"][i])
+
+		class.AvailableCars = r.Form["Cars"][previousNumCars : previousNumCars+numCarsForClass]
 
 		class.Entrants, err = cm.BuildEntryList(r, previousNumEntrants, numEntrantsForClass)
 
@@ -255,9 +259,11 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		class.Points.CollisionWithEnv = formValueAsInt(r.Form["Points.CollisionWithEnv"][i])
 		class.Points.CutTrack = formValueAsInt(r.Form["Points.CutTrack"][i])
 
+		championship.AddClass(class)
+
 		previousNumEntrants += numEntrantsForClass
 		previousNumPoints += numPointsForClass
-		championship.AddClass(class)
+		previousNumCars += numCarsForClass
 	}
 
 	// persist any entrants so that they can be autofilled
@@ -357,6 +363,7 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (*Rac
 				if !event.IsRaceWeekend() {
 					opts.Current = event.RaceSetup
 					foundEvent = true
+					break
 				}
 			}
 
@@ -532,13 +539,15 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 		logrus.Infof("Starting Championship Event: %s at %s (%s) with %d entrants", event.RaceSetup.Cars, event.RaceSetup.Track, event.RaceSetup.TrackLayout, event.RaceSetup.MaxClients)
 
 		// track that this is the current event
-		return cm.applyConfigAndStart(event.RaceSetup, entryList, &ActiveChampionship{
+		return cm.applyConfigAndStart(&ActiveChampionship{
 			ChampionshipID:      championship.ID,
 			EventID:             event.ID,
 			Name:                championship.Name,
 			OverridePassword:    championship.OverridePassword,
 			ReplacementPassword: championship.ReplacementPassword,
 			Description:         string(championship.Info),
+			RaceConfig:          event.RaceSetup,
+			EntryList:           entryList,
 		})
 	} else {
 		// delete all sessions other than booking (if there is a booking session)
@@ -557,7 +566,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 			event.RaceSetup.PickupModeEnabled = 1
 		}
 
-		return cm.RaceManager.applyConfigAndStart(event.RaceSetup, entryList, false, &ActiveChampionship{
+		return cm.RaceManager.applyConfigAndStart(&ActiveChampionship{
 			ChampionshipID:      championship.ID,
 			EventID:             event.ID,
 			Name:                championship.Name,
@@ -565,6 +574,8 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 			ReplacementPassword: championship.ReplacementPassword,
 			Description:         string(championship.Info),
 			IsPracticeSession:   true,
+			RaceConfig:          event.RaceSetup,
+			EntryList:           entryList,
 		})
 	}
 }
@@ -594,13 +605,8 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 		return err
 	}
 
-	serverOpts, err := cm.store.LoadServerOptions()
-
-	if err != nil {
-		return err
-	}
-
 	event.Scheduled = date
+	event.ScheduledServerID = serverID
 
 	// if there is an existing schedule timer for this event stop it
 	if timer := cm.championshipEventStartTimers[event.ID.String()]; timer != nil {
@@ -642,12 +648,15 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 			}
 		})
 
-		if serverOpts.NotificationReminderTimer > 0 {
-			duration = time.Until(date.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
+		if cm.notificationManager.HasNotificationReminders() {
+			for _, timer := range cm.notificationManager.GetNotificationReminders() {
+				duration = time.Until(date.Add(time.Duration(0-timer) * time.Minute))
+				thisTimer := timer
 
-			cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
-				cm.notificationManager.SendChampionshipReminderMessage(championship, event)
-			})
+				cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+					cm.notificationManager.SendChampionshipReminderMessage(championship, event, thisTimer)
+				})
+			}
 		}
 	} else {
 		event.ClearRecurrenceRule()
@@ -715,7 +724,7 @@ func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
 	cm.mutex.Lock()
 	defer cm.mutex.Unlock()
 
-	if !cm.process.Event().IsChampionship() || cm.activeChampionship == nil {
+	if !cm.ChampionshipEventIsRunning() {
 		return
 	}
 
@@ -896,7 +905,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			previousSessionNumLaps := cm.activeChampionship.NumLapsCompleted
 
 			defer func() {
-				if !cm.process.Event().IsChampionship() || cm.activeChampionship == nil {
+				if !cm.ChampionshipEventIsRunning() {
 					return
 				}
 
@@ -1051,8 +1060,12 @@ func (cm *ChampionshipManager) RestartEvent(championshipID string, eventID strin
 
 var ErrNoActiveChampionshipEvent = errors.New("servermanager: no active championship event")
 
+func (cm *ChampionshipManager) ChampionshipEventIsRunning() bool {
+	return cm.process.Event().IsChampionship() && !cm.process.Event().IsPractice() && cm.activeChampionship != nil
+}
+
 func (cm *ChampionshipManager) RestartActiveEvent() error {
-	if !cm.process.Event().IsChampionship() || cm.activeChampionship == nil {
+	if !cm.ChampionshipEventIsRunning() {
 		return ErrNoActiveChampionshipEvent
 	}
 
@@ -1060,7 +1073,7 @@ func (cm *ChampionshipManager) RestartActiveEvent() error {
 }
 
 func (cm *ChampionshipManager) StopActiveEvent() error {
-	if !cm.process.Event().IsChampionship() || cm.activeChampionship == nil {
+	if !cm.ChampionshipEventIsRunning() {
 		return ErrNoActiveChampionshipEvent
 	}
 
@@ -1466,17 +1479,15 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 		return err
 	}
 
-	serverOpts, err := cm.store.LoadServerOptions()
-
-	if err != nil {
-		return err
-	}
-
 	for _, championship := range championships {
 		championship := championship
 
 		for _, event := range championship.Events {
 			event := event
+
+			if event.ScheduledServerID != serverID {
+				continue
+			}
 
 			if event.Scheduled.After(time.Now()) {
 				// add a scheduled event on date
@@ -1490,14 +1501,17 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 					}
 				})
 
-				if serverOpts.NotificationReminderTimer > 0 {
-					if event.Scheduled.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute).After(time.Now()) {
-						// add reminder
-						duration = time.Until(event.Scheduled.Add(time.Duration(0-serverOpts.NotificationReminderTimer) * time.Minute))
+				if cm.notificationManager.HasNotificationReminders() {
+					for _, timer := range cm.notificationManager.GetNotificationReminders() {
+						if event.Scheduled.Add(time.Duration(0-timer) * time.Minute).After(time.Now()) {
+							// add reminder
+							duration = time.Until(event.Scheduled.Add(time.Duration(0-timer) * time.Minute))
+							thisTimer := timer
 
-						cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
-							cm.notificationManager.SendChampionshipReminderMessage(championship, event)
-						})
+							cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+								cm.notificationManager.SendChampionshipReminderMessage(championship, event, thisTimer)
+							})
+						}
 					}
 				}
 

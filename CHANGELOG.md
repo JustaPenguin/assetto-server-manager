@@ -1,3 +1,86 @@
+v1.5.4
+------
+
+Added:
+
+* Results pages now show your 'Potential' lap time - the sum of your best sectors.
+* Added an option in Race Weekends to filter from the best lap across multiple results files.
+* Added an option to the config.yml to watch the content folder for changes and keep the car search index updated.
+* Added an option to the config.yml to prevent server manager from opening a browser on Windows on start.
+
+Fixes:
+
+* Setting the ballast on an entrant to a larger value than the Max Ballast option no longer stops the server from starting.
+* Results pages now correctly display statistics per car - so if you're switching cars in a session you can see accurate reports for that car.
+* Penalties are now applied per driver and car, rather than just per driver.
+* Fixes an issue where events scheduled in a multi-server scenario would start on the wrong server.
+
+---
+
+v1.5.3
+------
+
+Added:
+
+* Live Timings "Stored Times" will now persist between reboots of Server Manager, if the next event started is the same as the last event running before the Server Manager reboot.
+* You can now configure Server Manager to restart any Event that was running before Server Manager was stopped. Check out "Restart Event On Server Manager Launch" in Server Options.
+* Added an option to prevent web crawlers from accessing any pages on the manager using a robots.txt.
+* Added information about whether a car/track is default/mod/DLC to list and detail pages.
+* Championship and Race Weekend Looping Practice Sessions are now labelled in the navigation bar, e.g. "Championship Practice in Progress"
+* Added penalty options to Qualifying and Practice sessions, penalties can be applied independently in each session. In Race Weekends these penalties will affect the entry list of the next session.
+* Added a button to blacklist a driver directly from results pages, the button is inside the penalties popup and can only be accessed by admins.
+* Added content download links to discord messages (thanks @cheesegrits!)
+* Enabled Content Manager Wrapper "Install Missing Content" button, just add links to tracks/cars on their detail pages and the button will work for events using that content!
+* You can now filter stock, DLC and mod cars in or out of the car search. Check out the car search help for more details! Please note that you will need to rebuild your search index for this to work. Go to Server Options, scroll down to "Maintenance" and click "Rebuild Search Index"!
+* Server Manager will now set up some example Championships and Custom Races if you have not yet created any
+* You can now sort the EntryList for a Championship Race Weekend Session by the number of Championship points a driver has. This could be useful for running reverse grid qualifying races!
+* Added a health-check endpoint. Hopefully this will help us with debugging issues!
+
+Fixes:
+
+* Fixes track/car display in dark mode
+* Fixes track details page names to be a bit nicer
+* Added Black Cat County to the list of default content
+* Fixes an issue where Server Manager would not start when a recurring race with an end date had a scheduled recurrence while Server Manager was offline.
+* Custom Races are now unscheduled when they are deleted.
+* Stopped users from being able to delete their own accounts.
+* Fixes an issue where drivers who switched teams mid-Championship had an incorrect number of races shown for their teams.
+* Championship event inheritance now correctly uses the previous event setup, not the first event setup
+* Fixes an issue where tyres did not show correctly in Session configuration for Championship Race Weekend events.
+* Fixes an issue where placeholder entrants were incorrectly added to the entrylist of a Race Weekend practice session.
+
+---
+
+v1.5.2
+------
+
+Added:
+
+* Added information about whether a car/track is part of a DLC or a Mod when creating an event.
+* Discord Enhancements (Thanks @cheesegrits!):
+  - Splits the '!schedule' command into '!sessions' (full "wall of text" individual session calendar, restricted to one week ahead) and '!schedule' (abbreviated, one per race calendar). This still needs work, as can easily exceed Discord's max msg length.
+
+  - Added role mentioning. If the optional DiscordRoleID is set, that role will be mentioned in all Discord notifications (meaning anyone with that role will get pinged). Additionally, if the optional 'DiscordRoleCommand' is also set, we will attempt to add/remove that role for users, when they issue the "!whatever" command verb - this requires that the bot has "Manage Roles" permission.
+
+  - Changed NotificationReminderTimer to NotificationReminderTimers (plural), to support comma separated multiple timers (like "90,15" for two reminders at 90 and 15 minutes).
+
+  - Added option to disable notifications when a race is scheduled.
+
+  - Added notification for scheduled races being cancelled.
+
+  - Improved formatting of Discord messages, everything is now an embed (except the role mention, which has to be part of the basic message).
+
+Fixes:
+
+* Fixes track pages for users running Server Manager on Windows
+* Fixes an issue where Championships with 'Any Car Model' specified would fail to find a class for a car.
+* Fixes an issue where cars with no skins might prevent a race from starting.
+* Fixes an issue where Scheduled Championship Race Weekend sessions caused the calendar to error on load.
+* Fixes the Race Weekend "Start after previous session" checkbox not displaying correctly.
+* Fixes an issue where all drivers were incorrectly disconnected from the Live Timings page when an event with multiple sessions looped
+
+---
+
 v1.5.1
 ------
 
@@ -11,6 +94,9 @@ Added:
 * Added "Register with Steam" to Championships with a Sign Up Form.
 * Added "Sign in with Steam" to the Update Account Details page.
 * Added collision maps to result pages so you look back on your numerous incidents with clarity. On the event tab you can control which collisions are shown on the map.
+* Added track info pages that work much the same as car info pages.
+* STracker integration! This is still somewhat experimental, please report any bugs you find with this! Check out the STracker Options page to get started.
+* Added an "Any Available Car" option to Entrylists. In Sign Up Championships, this allows you to select a range of cars and let registrants choose which car they want. If not filled, these car slots become random car assignments in Custom Races.
 
 Fixes:
 
@@ -18,6 +104,9 @@ Fixes:
 * Skins with a # in their name no longer break the car details page.
 * Fixes an issue where the data file for some newer Assetto Corsa cars could not be read.
 * You can now assign negative points penalties in Championships (so you can add points to people in the Standings if you want!)
+* Fixed a couple of issues with plugins running with the Assetto Process.
+* Championship entrant/standings tables can now overflow and scroll if they get really long.
+* Improved fastest lap sorting in Championships.
 
 ---
 
