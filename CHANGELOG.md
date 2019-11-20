@@ -15,6 +15,7 @@ Fixes:
 * Penalties are now applied per driver and car, rather than just per driver.
 * Fixes an issue where events scheduled in a multi-server scenario would start on the wrong server.
 * Stracker proxy plugin local/plugin ports should now be properly set by the SM UI.
+* Tyres with spaces in their short_names cause the server to fail to connect to lobby, stopped those tyres from being uploaded to the server.
 
 ---
 

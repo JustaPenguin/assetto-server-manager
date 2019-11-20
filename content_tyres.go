@@ -173,6 +173,14 @@ func addTyresFromTyresIni(filename string, iniFile []byte) error {
 }
 
 func addTyresToModTyres(model string, newTyres map[string]string) error {
+	for key, tyreName := range newTyres {
+		if strings.Contains(key, " ") {
+			logrus.Errorf("Couldn't import tyre: %s. Tyre is incompatible with AC Server due to space in its short name (%s).", tyreName, key)
+
+			delete(newTyres, key)
+		}
+	}
+
 	managerPath := filepath.Join(ServerInstallPath, "manager")
 
 	if _, err := os.Stat(managerPath); os.IsNotExist(err) {
