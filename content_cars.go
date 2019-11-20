@@ -19,8 +19,6 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve"
-	"github.com/blevesearch/bleve/index/scorch"
-	"github.com/blevesearch/bleve/index/store/boltdb"
 	"github.com/blevesearch/bleve/search/query"
 	"github.com/dimchansky/utfbom"
 	"github.com/go-chi/chi"
@@ -475,7 +473,7 @@ func (cm *CarManager) CreateOrOpenSearchIndex() error {
 	if err == bleve.ErrorIndexPathDoesNotExist {
 		logrus.Infof("Creating car search index")
 		indexMapping := bleve.NewIndexMapping()
-		cm.carIndex, err = bleve.NewUsing(indexPath, indexMapping, scorch.Name, boltdb.Name, nil)
+		cm.carIndex, err = bleve.New(indexPath, indexMapping)
 
 		if err != nil {
 			return err
