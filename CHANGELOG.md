@@ -15,6 +15,7 @@ Fixes:
 * Penalties are now applied per driver and car, rather than just per driver.
 * Fixes an issue where events scheduled in a multi-server scenario would start on the wrong server.
 * Stracker proxy plugin local/plugin ports should now be properly set by the SM UI.
+* Prevent users from being able to set up a race that will cause the server to crash by setting pickup mode off, locked entry list on and reverse grid race to anything other than 0.
 
 ---
 
