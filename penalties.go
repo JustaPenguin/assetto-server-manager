@@ -14,13 +14,13 @@ import (
 type PenaltiesHandler struct {
 	*BaseHandler
 
-	penaltiesManager    *PenaltiesManager
+	penaltiesManager *PenaltiesManager
 }
 
 func NewPenaltiesHandler(baseHandler *BaseHandler, penaltiesManager *PenaltiesManager) *PenaltiesHandler {
 	return &PenaltiesHandler{
-		BaseHandler:         baseHandler,
-		penaltiesManager:    penaltiesManager,
+		BaseHandler:      baseHandler,
+		penaltiesManager: penaltiesManager,
 	}
 }
 
@@ -82,7 +82,7 @@ type PenaltiesManager struct {
 	raceWeekendManager  *RaceWeekendManager
 }
 
-func NewPenaltiesManager(championshipManager *ChampionshipManager, raceWeekendManager *RaceWeekendManager) *PenaltiesManager{
+func NewPenaltiesManager(championshipManager *ChampionshipManager, raceWeekendManager *RaceWeekendManager) *PenaltiesManager {
 	return &PenaltiesManager{
 		championshipManager: championshipManager,
 		raceWeekendManager:  raceWeekendManager,
