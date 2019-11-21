@@ -511,7 +511,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 
 	position = currentDriver.LastPos
 
-	logrus.Infof("Driver: %d has initiated a driver swap, disconnected in position: %d, %d, %d. Next driver is expected to connect in the same position for a driver swap!",
+	logrus.Infof("Driver: %d has initiated a driver swap, disconnected in position: %.2f, %.2f, %.2f. Next driver is expected to connect in the same position for a driver swap!",
 		currentDriver.CarInfo.CarID, currentDriver.LastPos.X, currentDriver.LastPos.Y, currentDriver.LastPos.Z)
 
 	for {
@@ -526,7 +526,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 			if !newDriverConnected {
 				for _, driver := range rc.ConnectedDrivers.Drivers {
 					if driver.CarInfo.CarID == currentDriver.CarInfo.CarID {
-						if driver.CarInfo.DriverGUID != currentDriver.CarInfo.DriverGUID {
+						if driver.CarInfo.DriverGUID != currentDriver.CarInfo.DriverGUID && !driver.LoadedTime.IsZero() {
 							// new driver has connected in the same car
 							currentDriver = driver
 
@@ -574,7 +574,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 
 						if currentDriver.LastPos != nilVec {
 							sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
-								fmt.Sprintf("Hi! You are mid way through a driver swap, please wait %s seconds", countdown.String()))
+								fmt.Sprintf("Hi! You are mid way through a driver swap, please wait %s seconds before leaving the pits", countdown.String()))
 
 							if err == nil {
 								err := rc.process.SendUDPMessage(sendChat)
@@ -604,10 +604,8 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 								logrus.Infof("Driver: %d has been kicked for leaving the pits %s seconds early during a driver swap", currentDriver.CarInfo.CarID, countdown.String())
 							}
 
-							ticker.Stop()
-							done <- true
-
-							return
+							newDriverConnected = false
+							firstPositionUpdate = false
 						}
 
 						// if the time is within the penalty window
@@ -622,6 +620,19 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 								}
 							}
 
+							sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
+								fmt.Sprintf("You have been given a %s second penalty for leaving the pits %s seconds early during a driver swap", (countdown + (time.Second * 5)).String(), countdown.String()))
+
+							if err == nil {
+								err := rc.process.SendUDPMessage(sendChat)
+
+								if err != nil {
+									logrus.WithError(err).Errorf("Unable to send driver swap penalty message to: %s", currentDriver.CarInfo.DriverName)
+								}
+							} else {
+								logrus.WithError(err).Errorf("Unable to build driver swap penalty message to: %s", currentDriver.CarInfo.DriverName)
+							}
+
 							logrus.Infof("Driver: %d has been given a %s second penalty for leaving the pits %s seconds early during a driver swap", currentDriver.CarInfo.CarID, (countdown + (time.Second * 5)).String(), countdown.String())
 
 							ticker.Stop()
@@ -633,9 +644,9 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 					}
 
 					// send countdown messages
-					if countdown <= (time.Second * 10) {
+					if firstPositionUpdate {
 						sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
-							fmt.Sprintf("Free to leave pits in %s seconds", countdown.String()))
+							fmt.Sprintf("Free to leave pits in %s", countdown.String()))
 
 						if err == nil {
 							err := rc.process.SendUDPMessage(sendChat)
@@ -654,12 +665,12 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, done chan bool, con
 }
 
 func (rc *RaceControl) positionHasChanged(initialPosition, currentPosition udp.Vec) bool {
-	fmt.Println(fmt.Sprintf("initial position: %f, %f, %f", initialPosition.X, initialPosition.Y, initialPosition.Z))
-	fmt.Println(fmt.Sprintf("current position: %f, %f, %f", currentPosition.X, currentPosition.Y, currentPosition.Z))
+	fmt.Println(fmt.Sprintf("initial position: %.2f, %.2f, %.2f", initialPosition.X, initialPosition.Y, initialPosition.Z))
+	fmt.Println(fmt.Sprintf("current position: %.2f, %.2f, %.2f", currentPosition.X, currentPosition.Y, currentPosition.Z))
 
-	 return math.Abs(float64(initialPosition.X - currentPosition.X)) >= 5.0 ||
-		math.Abs(float64(initialPosition.Y - currentPosition.Y)) >= 5.0 ||
-		math.Abs(float64(initialPosition.Z - currentPosition.Z)) >= 5.0
+	 return math.Abs(float64(initialPosition.X - currentPosition.X)) >= 10.0 ||
+		math.Abs(float64(initialPosition.Y - currentPosition.Y)) >= 10.0 ||
+		math.Abs(float64(initialPosition.Z - currentPosition.Z)) >= 10.0
 }
 
 // findConnectedDriverByCarID looks for a driver in ConnectedDrivers by their CarID. This is the only place CarID
