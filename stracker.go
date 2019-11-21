@@ -295,7 +295,6 @@ type StrackerACPlugin struct {
 	ReceivePort int `ini:"rcvPort" show:"open" help:"UDP port the plugins receives from. -1 means to use the AC servers setting UDP_PLUGIN_ADDRESS"`
 	SendPort    int `ini:"sendPort" show:"open" help:"UDP port the plugins sends to. -1 means to use the AC servers setting UDP_PLUGIN_LOCAL_PORT"`
 
-	// probably not needed
 	ProxyPluginLocalPort int `ini:"proxyPluginLocalPort" show:"open" help:"Proxy the AC server protocol on these ports, so multiple plugins may be chained (this is equivalent to UDP_PLUGIN_LOCAL_PORT in server_cfg.ini)"`
 	ProxyPluginPort      int `ini:"proxyPluginPort" show:"open" help:"Proxy the AC server protocol on these ports, so multiple plugins may be chained (this is equivalent to UDP_PLUGIN_ADDRESS in server_cfg.ini)"`
 }

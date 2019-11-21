@@ -299,6 +299,49 @@ class RaceSetup {
         this.initEntrantsList();
         this.initSunAngle();
         this.initSurfacePresets();
+
+        this.initPickupModeWatcher();
+    }
+
+    initPickupModeWatcher() {
+        let that = this;
+
+        let $pickupModeSwitch = $("#PickupModeEnabled");
+        let $lockedEntryListSwitch = $("#LockedEntryList");
+        let $reversedGridRacePositions = $("#ReversedGridRacePositions");
+
+        this.setPickupSwitches();
+
+        $pickupModeSwitch.on('switchChange.bootstrapSwitch', function (event, state) {
+            that.setPickupSwitches();
+        });
+
+        $lockedEntryListSwitch.on('switchChange.bootstrapSwitch', function (event, state) {
+            that.setPickupSwitches();
+        });
+
+        $reversedGridRacePositions.on('change', function () {
+            that.setPickupSwitches();
+        });
+    }
+
+    setPickupSwitches() {
+        let $lockedEntryListSwitch = $("#LockedEntryList");
+        let $lockedReverseWarning = $("#locked-reverse-warning");
+
+        let pickup = $("#PickupModeEnabled").bootstrapSwitch('state');
+        let reversed = $("#ReversedGridRacePositions").val();
+
+        if (pickup === false && reversed != 0) {
+            $lockedEntryListSwitch.bootstrapSwitch('state', false);
+            $lockedEntryListSwitch.bootstrapSwitch('disabled', true);
+
+            $lockedReverseWarning.show();
+        } else {
+            $lockedEntryListSwitch.bootstrapSwitch('disabled', false);
+
+            $lockedReverseWarning.hide();
+        }
     }
 
     updateWeatherGraphics() {
