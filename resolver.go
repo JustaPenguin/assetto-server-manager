@@ -38,6 +38,7 @@ type Resolver struct {
 	tracksHandler               *TracksHandler
 	weatherHandler              *WeatherHandler
 	penaltiesHandler            *PenaltiesHandler
+	penaltiesManager            *PenaltiesManager
 	resultsHandler              *ResultsHandler
 	scheduledRacesHandler       *ScheduledRacesHandler
 	contentUploadHandler        *ContentUploadHandler
@@ -267,9 +268,19 @@ func (r *Resolver) resolvePenaltiesHandler() *PenaltiesHandler {
 		return r.penaltiesHandler
 	}
 
-	r.penaltiesHandler = NewPenaltiesHandler(r.resolveBaseHandler(), r.resolveChampionshipManager(), r.resolveRaceWeekendManager())
+	r.penaltiesHandler = NewPenaltiesHandler(r.resolveBaseHandler(), r.resolvePenaltiesManager())
 
 	return r.penaltiesHandler
+}
+
+func (r *Resolver) resolvePenaltiesManager() *PenaltiesManager {
+	if r.penaltiesHandler != nil {
+		return r.penaltiesManager
+	}
+
+	r.penaltiesManager = NewPenaltiesManager(r.resolveChampionshipManager(), r.resolveRaceWeekendManager())
+
+	return r.penaltiesManager
 }
 
 func (r *Resolver) resolveResultsHandler() *ResultsHandler {
@@ -350,6 +361,7 @@ func (r *Resolver) resolveRaceControl() *RaceControl {
 		filesystemTrackData{},
 		r.resolveServerProcess(),
 		r.ResolveStore(),
+		r.resolvePenaltiesManager(),
 	)
 
 	return r.raceControl
