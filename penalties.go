@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -92,7 +93,17 @@ func NewPenaltiesManager(championshipManager *ChampionshipManager, raceWeekendMa
 func (pm *PenaltiesManager) applyPenalty(jsonFileName, guid, carModel string, penalty float64, add bool) error {
 	var results *SessionResults
 
-	results, err := LoadResult(jsonFileName + ".json")
+	var fullFileName string
+
+	if !strings.HasSuffix(jsonFileName, ".json") {
+		fullFileName = jsonFileName + ".json"
+	} else {
+		fullFileName = jsonFileName
+
+		jsonFileName = strings.TrimSuffix(jsonFileName, ".json")
+	}
+
+	results, err := LoadResult(fullFileName)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("could not load session result file")
@@ -198,7 +209,7 @@ func (pm *PenaltiesManager) applyPenalty(jsonFileName, guid, carModel string, pe
 		})
 	}
 
-	err = saveResults(jsonFileName+".json", results)
+	err = saveResults(fullFileName, results)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("could not encode to session result file")

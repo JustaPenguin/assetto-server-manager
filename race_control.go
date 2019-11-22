@@ -229,7 +229,9 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 
 	emptyCarInfo := true
 
+	driverSwapPenaltiesMutex.Lock()
 	driverSwapPenalties = make(map[string]*driverPenalty)
+	driverSwapPenaltiesMutex.Unlock()
 
 	if (rc.ConnectedDrivers.Len() > 0 || rc.DisconnectedDrivers.Len() > 0) && sessionInfo.Type == udp.SessionTypePractice {
 		if oldSessionInfo.Type == sessionInfo.Type && oldSessionInfo.Track == sessionInfo.Track && oldSessionInfo.TrackConfig == sessionInfo.TrackConfig && oldSessionInfo.Name == sessionInfo.Name {
@@ -409,6 +411,14 @@ func (rc *RaceControl) OnEndSession(sessionFile udp.EndSession) error {
 
 	for _, driver := range rc.ConnectedDrivers.Drivers {
 		if driver.driverSwapCfn != nil {
+			logrus.Infof("Cancelling active driver swap for driver: %s. Reason: Session ended", driver.CarInfo.DriverGUID)
+			driver.driverSwapCfn()
+		}
+	}
+
+	for _, driver := range rc.DisconnectedDrivers.Drivers {
+		if driver.driverSwapCfn != nil {
+			logrus.Infof("Cancelling active driver swap for driver: %s. Reason: Session ended", driver.CarInfo.DriverGUID)
 			driver.driverSwapCfn()
 		}
 	}
@@ -417,6 +427,9 @@ func (rc *RaceControl) OnEndSession(sessionFile udp.EndSession) error {
 	logrus.Infof("End Session, file outputted at: %s", filename)
 
 	// loop over driverSwapPenalties and apply penalty
+	driverSwapPenaltiesMutex.RLock()
+	defer driverSwapPenaltiesMutex.RUnlock()
+
 	for guid, penalty := range driverSwapPenalties {
 		err := rc.penaltiesManager.applyPenalty(filename, guid, penalty.carModel, penalty.penalty.Seconds(), true)
 
@@ -505,12 +518,14 @@ type driverPenalty struct {
 }
 
 var driverSwapPenalties map[string]*driverPenalty // map of GUID to penalty time
+var driverSwapPenaltiesMutex sync.RWMutex
 
 func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config ServerConfig, client udp.SessionCarInfo, driver *RaceControlDriver) {
 	var totalTime time.Duration
 	var position udp.Vec
 	var newDriverConnected bool
 	var firstPositionUpdate bool
+	var resumeSwap bool
 
 	completeTime := time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapMinTime)
 	initialGUID := client.DriverGUID
@@ -541,15 +556,23 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config ServerConfig
 							if !driver.LoadedTime.IsZero() {
 								// new driver has connected in the same car
 								currentDriver = driver
-
 								newDriverConnected = true
 
 								logrus.Infof("Driver: %d (%s) has connected", currentDriver.CarInfo.CarID, currentDriver.CarInfo.DriverGUID)
 							}
 						} else {
 							// same driver reconnected
-							logrus.Infof("Driver: %s has reconnected, driver swap aborted", initialGUID)
-							reconnect = true
+							if resumeSwap {
+								logrus.Infof("Driver: %s has reconnected, driver swap still in progress", driver.CarInfo.DriverGUID)
+
+								currentDriver = driver
+								newDriverConnected = true
+								resumeSwap = false
+							} else {
+								logrus.Infof("Driver: %s has reconnected, driver swap aborted", initialGUID)
+								reconnect = true
+							}
+
 						}
 					}
 
@@ -634,16 +657,24 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config ServerConfig
 							}
 
 							// don't stop the ticker, when the driver reconnects they should still have to wait
+							firstPositionUpdate = false
+							newDriverConnected = false
+							resumeSwap = true
+							currentDriver.LastPos = udp.Vec{X: 0, Y: 0, Z: 0}
 						} else if countdown >= (time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapPenaltyTime)) {
 
-							if _, ok := driverSwapPenalties[string(currentDriver.CarInfo.DriverGUID)]; ok {
-								driverSwapPenalties[string(currentDriver.CarInfo.DriverGUID)].penalty += countdown + (time.Second * 5)
-							} else {
-								driverSwapPenalties[string(currentDriver.CarInfo.DriverGUID)] = &driverPenalty{
-									penalty:  countdown + (time.Second * 5),
-									carModel: currentDriver.CarInfo.CarModel,
+							driverSwapPenaltiesMutex.Lock()
+							{
+								if _, ok := driverSwapPenalties[string(currentDriver.CarInfo.DriverGUID)]; ok {
+									driverSwapPenalties[string(currentDriver.CarInfo.DriverGUID)].penalty += countdown + (time.Second * 5)
+								} else {
+									driverSwapPenalties[string(currentDriver.CarInfo.DriverGUID)] = &driverPenalty{
+										penalty:  countdown + (time.Second * 5),
+										carModel: currentDriver.CarInfo.CarModel,
+									}
 								}
 							}
+							driverSwapPenaltiesMutex.Unlock()
 
 							sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
 								fmt.Sprintf("You have been given a %s second penalty for leaving the pits %s early during a driver swap", (countdown+(time.Second*5)).String(), countdown.String()))
