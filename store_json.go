@@ -364,7 +364,7 @@ func (rs *JSONStore) ListPrevFrames() ([]string, error) {
 }
 
 func (rs *JSONStore) ListAccounts() ([]*Account, error) {
-	files, err := rs.listFiles(filepath.Join(rs.base, accountsDir))
+	files, err := rs.listFiles(filepath.Join(rs.shared, accountsDir))
 
 	if err != nil {
 		return nil, err
@@ -388,13 +388,13 @@ func (rs *JSONStore) ListAccounts() ([]*Account, error) {
 func (rs *JSONStore) UpsertAccount(a *Account) error {
 	a.Updated = time.Now()
 
-	return rs.encodeFile(rs.base, filepath.Join(accountsDir, a.Name+".json"), a)
+	return rs.encodeFile(rs.shared, filepath.Join(accountsDir, a.Name+".json"), a)
 }
 
 func (rs *JSONStore) FindAccountByName(name string) (*Account, error) {
 	var account *Account
 
-	err := rs.decodeFile(rs.base, filepath.Join(accountsDir, name+".json"), &account)
+	err := rs.decodeFile(rs.shared, filepath.Join(accountsDir, name+".json"), &account)
 
 	if err != nil {
 		return nil, err
