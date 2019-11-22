@@ -2226,6 +2226,12 @@ let championships = {
             $(this).closest(".entrant").find(".points-transfer").show();
         });
 
+        $(".Cars").each(function(index, element) {
+            let $target = $(element);
+
+            $target.closest(".race-setup").find("input[name='NumCars']").val($target.val().length);
+        });
+
         $document.on("change", ".Cars", function(e) {
             let $target = $(e.currentTarget);
 
