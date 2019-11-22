@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,7 +16,10 @@ import (
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
 
+	"github.com/dustin/go-humanize"
 	"github.com/etcd-io/bbolt"
+	"github.com/fatih/color"
+	"github.com/lorenzosaino/go-sysctl"
 	"github.com/pkg/browser"
 	"github.com/sirupsen/logrus"
 )
@@ -98,6 +102,16 @@ func main() {
 		} else {
 			udp.RealtimePosIntervalMs = config.LiveMap.IntervalMs
 		}
+
+		if runtime.GOOS == "linux" {
+			// check known kernel net memory restrictions. if they're lower than the recommended
+			// values, then print out explaining how to increase them
+			memValues := []string{"net.core.rmem_max", "net.core.rmem_default", "net.core.wmem_max", "net.core.wmem_default"}
+
+			for _, val := range memValues {
+				checkMemValue(val)
+			}
+		}
 	}
 
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
@@ -118,6 +132,52 @@ func main() {
 	if err := http.Serve(listener, router); err != nil {
 		logrus.Fatal(err)
 	}
+}
+
+const udpBufferRecommendedSize = uint64(2e7) // 20MB
+
+func checkMemValue(key string) {
+	val, err := sysctlAsUint64(key)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Could not check sysctl val: %s", key)
+		return
+	}
+
+	if val < udpBufferRecommendedSize {
+		d := color.New(color.FgRed)
+		red := d.PrintfFunc()
+		redln := d.PrintlnFunc()
+
+		redln()
+		redln("-------------------------------------------------------------------")
+		redln("                          W A R N I N G")
+		redln("-------------------------------------------------------------------")
+
+		red("System %s value is too small! UDP messages are \n", key)
+		redln("more likely to be lost and the stability of various Server Manager")
+		redln("systems will be greatly affected.")
+		redln()
+
+		red("Your current value is %s. We recommend a value of %s for a \n", humanize.Bytes(val), humanize.Bytes(udpBufferRecommendedSize))
+		redln("more consistent operation.")
+		redln()
+
+		red("You can do this with the command:\n\t sysctl -w %s=%d\n", key, udpBufferRecommendedSize)
+		redln()
+
+		redln("More information can be found on sysctl variables here:\n\t https://www.cyberciti.biz/faq/howto-set-sysctl-variables/")
+	}
+}
+
+func sysctlAsUint64(val string) (uint64, error) {
+	val, err := sysctl.Get(val)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return strconv.ParseUint(val, 10, 0)
 }
 
 func startUDPReplay(resolver *servermanager.Resolver, file string) {
