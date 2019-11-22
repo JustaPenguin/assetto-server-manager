@@ -19,7 +19,9 @@
         {{ end }}
 
         {{ with $.Track.MetaData.DownloadURL }}
-            <div class="mb-2"><a href="{{ . }}">Download</a></div>
+            <div class="mb-2 float-right"><a class="btn btn-primary" href="{{ . }}">Download</a></div>
+
+            <div class="clearfix"></div>
         {{ end }}
 
         <h2>Layouts</h2>
@@ -42,26 +44,29 @@
                             <h3 class="card-title mb-0">{{ prettify $layout true }} Layout</h3>
 
                             {{ $info := index $.TrackInfo $layout }}
-                            <div class="mb-1"><i>{{ $info.City }}
-                                    {{ $info.Country }}</i></div>
 
-                            <span><strong>Length: </strong>{{ $info.Length }}</span>
-                            <span><strong>Run: </strong>{{ $info.Run }}</span>
-                            <span><strong>Width: </strong>{{ $info.Width }}</span>
-                            <span><strong>Pitboxes: </strong>{{ $info.Pitboxes }}</span>
+                            {{ with $info }}
+                                <div class="mb-1"><i>{{ $info.City }} {{ $info.Country }}</i></div>
 
-                            <div><strong>Geotags: </strong>{{ stringArrayToCSV $info.Geotags }}</div>
+                                <span><strong>Length: </strong>{{ $info.Length }}</span>
+                                <span><strong>Run: </strong>{{ $info.Run }}</span>
+                                <span><strong>Width: </strong>{{ $info.Width }}</span>
+                                <span><strong>Pitboxes: </strong>{{ $info.Pitboxes }}</span>
 
-                            <div><strong>Tags: </strong>{{ stringArrayToCSV $info.Tags }}</div>
+                                <div><strong>Geotags: </strong>{{ stringArrayToCSV $info.Geotags }}</div>
+
+                                <div><strong>Tags: </strong>{{ stringArrayToCSV $info.Tags }}</div>
+                            {{ end }}
                         </div>
                     </div>
 
-                    <div class="row mt-2">
-                        <div class="col-md-12">
-                            <p>{{ $info.Description }}</p>
+                    {{ with $info }}
+                        <div class="row mt-2">
+                            <div class="col-md-12">
+                                <p>{{ $info.Description }}</p>
+                            </div>
                         </div>
-                    </div>
-
+                    {{ end }}
                 </div>
 
                 <hr>
