@@ -172,7 +172,7 @@ func (asu *AssettoServerUDP) serve() {
 			n, _, err := asu.listener.ReadFromUDP(buf)
 
 			if err != nil {
-				logrus.WithError(err).Warn("could not read from UDP")
+				logrus.WithError(err).Debug("could not read from UDP")
 				continue
 			}
 
