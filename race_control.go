@@ -586,7 +586,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config ServerConfig
 
 						if currentDriver.LastPos != nilVec {
 							sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
-								fmt.Sprintf("Hi! You are mid way through a driver swap, please wait %s seconds before leaving the pits", countdown.String()))
+								fmt.Sprintf("Hi! You are mid way through a driver swap, please wait %s before leaving the pits", countdown.String()))
 
 							if err == nil {
 								err := rc.process.SendUDPMessage(sendChat)
@@ -606,22 +606,33 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config ServerConfig
 					if rc.positionHasChanged(position, currentDriver.LastPos) && firstPositionUpdate {
 						// if the time is within the disqualify window
 						if countdown >= (time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapDisqualifyTime)) {
+							sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
+								fmt.Sprintf("You have been kicked from the session for leaving the pits %s early during a driver swap", countdown.String()))
+
+							if err == nil {
+								err := rc.process.SendUDPMessage(sendChat)
+
+								if err != nil {
+									logrus.WithError(err).Errorf("Unable to send driver swap kicked message to: %s", currentDriver.CarInfo.DriverName)
+								}
+							} else {
+								logrus.WithError(err).Errorf("Unable to build driver swap kicked message to: %s", currentDriver.CarInfo.DriverName)
+							}
+
+							time.Sleep(5 * time.Second)
+
 							kickUser := udp.NewKickUser(uint8(currentDriver.CarInfo.CarID))
 
-							err := rc.process.SendUDPMessage(kickUser)
+							err = rc.process.SendUDPMessage(kickUser)
 
 							if err != nil {
 								logrus.WithError(err).Errorf("Unable to send kick command (driver swaps)")
 							} else {
-								logrus.Infof("Driver: %d has been kicked for leaving the pits %s seconds early during a driver swap", currentDriver.CarInfo.CarID, countdown.String())
+								logrus.Infof("Driver: %d has been kicked for leaving the pits %s early during a driver swap", currentDriver.CarInfo.CarID, countdown.String())
 							}
 
-							newDriverConnected = false
-							firstPositionUpdate = false
-						}
-
-						// if the time is within the penalty window
-						if countdown >= (time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapPenaltyTime)) {
+							// don't stop the ticker, when the driver reconnects they should still have to wait
+						} else if countdown >= (time.Second * time.Duration(config.CurrentRaceConfig.DriverSwapPenaltyTime)) {
 
 							if _, ok := driverSwapPenalties[string(currentDriver.CarInfo.DriverGUID)]; ok {
 								driverSwapPenalties[string(currentDriver.CarInfo.DriverGUID)].penalty += countdown + (time.Second * 5)
@@ -633,7 +644,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config ServerConfig
 							}
 
 							sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
-								fmt.Sprintf("You have been given a %s second penalty for leaving the pits %s seconds early during a driver swap", (countdown+(time.Second*5)).String(), countdown.String()))
+								fmt.Sprintf("You have been given a %s second penalty for leaving the pits %s early during a driver swap", (countdown+(time.Second*5)).String(), countdown.String()))
 
 							if err == nil {
 								err := rc.process.SendUDPMessage(sendChat)
@@ -645,7 +656,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config ServerConfig
 								logrus.WithError(err).Errorf("Unable to build driver swap penalty message to: %s", currentDriver.CarInfo.DriverName)
 							}
 
-							logrus.Infof("Driver: %d has been given a %s second penalty for leaving the pits %s seconds early during a driver swap", currentDriver.CarInfo.CarID, (countdown + (time.Second * 5)).String(), countdown.String())
+							logrus.Infof("Driver: %d has been given a %s second penalty for leaving the pits %s early during a driver swap", currentDriver.CarInfo.CarID, (countdown + (time.Second * 5)).String(), countdown.String())
 
 							ticker.Stop()
 							return

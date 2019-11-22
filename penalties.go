@@ -91,7 +91,6 @@ func NewPenaltiesManager(championshipManager *ChampionshipManager, raceWeekendMa
 
 func (pm *PenaltiesManager) applyPenalty(jsonFileName, guid, carModel string, penalty float64, add bool) error {
 	var results *SessionResults
-	var penaltyTime float64
 
 	results, err := LoadResult(jsonFileName + ".json")
 
@@ -107,16 +106,20 @@ func (pm *PenaltiesManager) applyPenalty(jsonFileName, guid, carModel string, pe
 				result.Disqualified = false
 				result.PenaltyTime = 0
 				result.LapPenalty = 0
+
+				logrus.Infof("All penalties cleared from Driver: %s", guid)
 			} else {
-				if penaltyTime == 0 {
+				if penalty == 0 {
 					result.Disqualified = true
 					result.HasPenalty = false
 					result.LapPenalty = 0
+
+					logrus.Infof("Driver: %s disqualified", guid)
 				} else {
 					result.HasPenalty = true
 					result.Disqualified = false
 
-					timeParsed, err := time.ParseDuration(fmt.Sprintf("%.1fs", penaltyTime))
+					timeParsed, err := time.ParseDuration(fmt.Sprintf("%.1fs", penalty))
 
 					if err != nil {
 						logrus.WithError(err).Errorf("could not parse penalty time")
@@ -131,6 +134,8 @@ func (pm *PenaltiesManager) applyPenalty(jsonFileName, guid, carModel string, pe
 					if result.PenaltyTime > lastLapTime {
 						result.LapPenalty = int(result.PenaltyTime / lastLapTime)
 					}
+
+					logrus.Infof("%s penalty applied to driver: %s", timeParsed.String(), guid)
 				}
 			}
 
