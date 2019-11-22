@@ -477,6 +477,8 @@ func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
 
 	logrus.Debugf("Driver %s (%s) disconnected", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
 
+	driver.LoadedTime = time.Time{}
+
 	rc.ConnectedDrivers.Del(driver.CarInfo.DriverGUID)
 
 	if driver.TotalNumLaps > 0 {
