@@ -64,6 +64,12 @@ $(document).ready(function () {
         $elem.text(moment.parseZone($elem.attr("data-time")).tz(moment.tz.guess()).format('LLLL (z)'));
     });
 
+    $(".time-local-kitchen").each(function (i, elem) {
+        let $elem = $(elem);
+
+        $elem.text(moment.parseZone($elem.attr("data-time")).tz(moment.tz.guess()).calendar());
+    });
+
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     $(".timezone").text(timezone);

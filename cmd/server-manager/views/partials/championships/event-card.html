@@ -65,12 +65,12 @@
 
                                         {{ if ne $session.Time 0 }}
                                             {{ $session.Time }} minutes {{ if and $eventSetup.RaceExtraLap (eq $sessionName "RACE") }} + 1 lap {{ end }}
-                                            {{ if isBefore $scheduled }} / Starts at {{ hourAndZone $scheduled (int64 $previousTime) }} {{ end }}
+                                            {{ if isBefore $scheduled }} / Starts {{ localFormatHourAndZone (addTime $scheduled (int64 $previousTime)) }} {{ end }}
 
                                             {{ $previousTime = add $previousTime $session.Time }}
                                         {{ else }}
                                             {{ with $session.Laps }}
-                                                {{ . }} laps {{ if isBefore $scheduled }} / Starts at {{ hourAndZone $scheduled (int64 $previousTime) }} {{ end }}
+                                                {{ . }} laps {{ if isBefore $scheduled }} / Starts {{ localFormatHourAndZone (addTime $scheduled (int64 $previousTime)) }} {{ end }}
 
                                                 {{ $previousTime = 0 }}
                                             {{ end }}
