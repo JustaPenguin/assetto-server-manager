@@ -324,7 +324,7 @@ export namespace RaceWeekend {
             this.availableResultsForSorting = this.$elem.find("#AvailableResults").val() as string[];
             this.startOnFastestLapTyre = this.$elem.find("#ForceUseTyreFromFastestLap").is(":checked");
 
-            if (this.sortType == "fastest_multi_results_lap") {
+            if (this.sortType == "fastest_multi_results_lap" || this.sortType == "number_multi_results_lap") {
                 this.$elem.find("#AvailableResultsWrapper").show()
             } else {
                 this.$elem.find("#AvailableResultsWrapper").hide()
