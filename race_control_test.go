@@ -736,7 +736,7 @@ func TestRaceControl_OnCarUpdate(t *testing.T) {
 	}
 
 	t.Run("Unknown driver", func(t *testing.T) {
-		err := raceControl.OnCarUpdate(udp.CarUpdate{
+		err := raceControl.handleCarUpdate(udp.CarUpdate{
 			CarID:               100, // unknown car
 			Pos:                 udp.Vec{X: 100, Y: 20, Z: 3},
 			Velocity:            udp.Vec{X: 10, Y: 20, Z: 20},
@@ -754,7 +754,7 @@ func TestRaceControl_OnCarUpdate(t *testing.T) {
 	t.Run("Driver disconnect", func(t *testing.T) {
 		for i := 0; i < 100; i++ {
 			for _, entrant := range drivers {
-				err := raceControl.OnCarUpdate(udp.CarUpdate{
+				err := raceControl.handleCarUpdate(udp.CarUpdate{
 					CarID:               entrant.CarID,
 					Pos:                 udp.Vec{X: rand.Float32() * 100, Y: rand.Float32() * 100, Z: rand.Float32() * 100},
 					Velocity:            udp.Vec{X: rand.Float32() * 100, Y: rand.Float32() * 100, Z: rand.Float32() * 100},
@@ -789,7 +789,7 @@ func TestRaceControl_OnCarUpdate(t *testing.T) {
 		// run 6 updates but not for driver 0
 		for i := 0; i < 6; i++ {
 			for _, entrant := range drivers[1:] {
-				err := raceControl.OnCarUpdate(udp.CarUpdate{
+				err := raceControl.handleCarUpdate(udp.CarUpdate{
 					CarID:               entrant.CarID,
 					Pos:                 udp.Vec{X: rand.Float32() * 100, Y: rand.Float32() * 100, Z: rand.Float32() * 100},
 					Velocity:            udp.Vec{X: rand.Float32() * 100, Y: rand.Float32() * 100, Z: rand.Float32() * 100},
