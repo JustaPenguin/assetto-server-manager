@@ -468,6 +468,79 @@ func (c *ChampionshipClass) ValidCarIDs() []string {
 	}
 }
 
+func (c *Championship) ImportEvent(eventToImport interface{}) error {
+	switch event := eventToImport.(type) {
+	case *CustomRace:
+		c.Events = append(c.Events, &ChampionshipEvent{
+			ID:                 uuid.New(),
+			RaceSetup:          event.RaceConfig,
+			EntryList:          c.AllEntrants(),
+		})
+	case *RaceWeekend:
+		// the filter between Entry List and any events uses the race weekend ID in the map
+		// as we are updating this ID we need to update it in the map too or filters between
+		// the Entry List and any event will fail!
+		oldID := event.ID.String()
+		event.ID = uuid.New()
+
+		oldFilter := event.Filters[oldID]
+
+		delete(event.Filters, oldID)
+
+		event.Filters[event.ID.String()] = oldFilter
+
+		c.Events = append(c.Events, &ChampionshipEvent{
+			ID:                 uuid.New(),
+			EntryList:          c.AllEntrants(),
+			RaceWeekendID:      event.ID,
+			RaceWeekend:        event,
+		})
+
+		event.Championship = c
+		event.ChampionshipID = c.ID
+
+		// reset session progress
+		for _, session := range event.Sessions {
+			session.CompletedTime = time.Time{}
+			session.StartedTime = time.Time{}
+			session.Results = nil
+			session.ScheduledTime = time.Time{}
+
+			// if a session has the Entry List as a parent we need to replace the old
+			// Race Weekend ID with the new one
+			for i, parentID := range session.ParentIDs {
+				if parentID.String() == oldID {
+					session.ParentIDs[i] = event.ID
+				}
+			}
+
+			for _, class := range c.Classes {
+				if session.SessionType() == SessionTypeRace {
+					session.Points[class.ID] = &class.Points
+				} else {
+					var points []int
+
+					for range class.Points.Places {
+						points = append(points, 0)
+					}
+
+					session.Points[class.ID] = &ChampionshipPoints{
+						Places:               points,
+						BestLap:              0,
+						PolePosition:         0,
+						CollisionWithDriver:  0,
+						CollisionWithEnv:     0,
+						CutTrack:             0,
+						SecondRaceMultiplier: 0,
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 // EventByID finds a ChampionshipEvent by its ID string.
 func (c *Championship) EventByID(id string) (*ChampionshipEvent, error) {
 	for _, e := range c.Events {
