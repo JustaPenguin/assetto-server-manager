@@ -1000,6 +1000,8 @@ func (rh *ResultsHandler) uploadHandler(w http.ResponseWriter, r *http.Request) 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+const uploadFileSizeLimit = 5e6
+
 func (rh *ResultsHandler) upload(r *http.Request) (bool, error) {
 	err := r.ParseMultipartForm(10 << 20)
 
@@ -1012,6 +1014,10 @@ func (rh *ResultsHandler) upload(r *http.Request) (bool, error) {
 		return true, err
 	}
 	defer file.Close()
+
+	if header.Size > (uploadFileSizeLimit) {
+		return true, fmt.Errorf("servermanager: file size too large, limit is: %d, this file is: %d", int64(uploadFileSizeLimit), header.Size)
+	}
 
 	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {
