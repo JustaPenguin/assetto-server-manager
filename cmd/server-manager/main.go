@@ -103,7 +103,7 @@ func main() {
 			udp.RealtimePosIntervalMs = config.LiveMap.IntervalMs
 		}
 
-		if runtime.GOOS == "linux" && checkUDPBufferSizes {
+		if runtime.GOOS == "linux" {
 			// check known kernel net memory restrictions. if they're lower than the recommended
 			// values, then print out explaining how to increase them
 			memValues := []string{"net.core.rmem_max", "net.core.rmem_default", "net.core.wmem_max", "net.core.wmem_default"}
@@ -134,7 +134,6 @@ func main() {
 	}
 }
 
-const checkUDPBufferSizes = false
 const udpBufferRecommendedSize = uint64(2e7) // 20MB
 
 func checkMemValue(key string) {
