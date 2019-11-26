@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/text/encoding/unicode/utf32"
@@ -132,13 +133,19 @@ func (asu *AssettoServerUDP) forwardServe() {
 }
 
 func (asu *AssettoServerUDP) serve() {
-	messageChan := make(chan []byte)
+	messageChan := make(chan []byte, 1000)
 	defer close(messageChan)
 
+	messagesSent := 0
+	messagesHandled := 0
+
 	go func() {
+		ticker := time.NewTicker(time.Second)
+
 		for {
 			select {
 			case buf := <-messageChan:
+				messagesHandled++
 				msg, err := asu.handleMessage(bytes.NewReader(buf))
 
 				if err != nil {
@@ -154,7 +161,15 @@ func (asu *AssettoServerUDP) serve() {
 						_, _ = asu.forwarder.Write(buf)
 					}()
 				}
+			case <-ticker.C:
+				if messagesSent > messagesHandled {
+					logrus.Errorf("Can't keep up! %d vs %d (%d queued)", messagesSent, messagesHandled, len(messageChan))
+				}
+
+				messagesHandled = 0
+				messagesSent = 0
 			case <-asu.ctx.Done():
+				ticker.Stop()
 				return
 			}
 		}
@@ -176,6 +191,7 @@ func (asu *AssettoServerUDP) serve() {
 				continue
 			}
 
+			messagesSent++
 			messageChan <- buf[:n]
 		}
 	}
