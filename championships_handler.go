@@ -529,7 +529,7 @@ func (ch *ChampionshipsHandler) listRaceWeekendsForImport(w http.ResponseWriter,
 	raceWeekends, err := ch.championshipManager.store.ListRaceWeekends()
 
 	if err != nil {
-		logrus.WithError(err).Errorf("couldn't list custom races")
+		logrus.WithError(err).Errorf("couldn't list race weekends for championship import")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -554,7 +554,7 @@ func (ch *ChampionshipsHandler) raceWeekendImport(w http.ResponseWriter, r *http
 	err := ch.championshipManager.ImportRaceWeekendSetup(championshipID, chi.URLParam(r, "weekendID"))
 
 	if err != nil {
-		logrus.WithError(err).Error("could not import event setup to championship")
+		logrus.WithError(err).Error("could not import race weekend setup to championship")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

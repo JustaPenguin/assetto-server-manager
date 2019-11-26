@@ -472,16 +472,9 @@ func (c *Championship) ImportEvent(eventToImport interface{}) error {
 	switch event := eventToImport.(type) {
 	case *CustomRace:
 		c.Events = append(c.Events, &ChampionshipEvent{
-			ScheduledEventBase: ScheduledEventBase{},
 			ID:                 uuid.New(),
 			RaceSetup:          event.RaceConfig,
 			EntryList:          c.AllEntrants(),
-			Sessions:           nil,
-			RaceWeekendID:      uuid.UUID{},
-			RaceWeekend:        nil,
-			StartedTime:        time.Time{},
-			CompletedTime:      time.Time{},
-			championship:       c,
 		})
 	case *RaceWeekend:
 		// the filter between Entry List and any events uses the race weekend ID in the map
@@ -497,16 +490,10 @@ func (c *Championship) ImportEvent(eventToImport interface{}) error {
 		event.Filters[event.ID.String()] = oldFilter
 
 		c.Events = append(c.Events, &ChampionshipEvent{
-			ScheduledEventBase: ScheduledEventBase{},
 			ID:                 uuid.New(),
-			RaceSetup:          CurrentRaceConfig{},
 			EntryList:          c.AllEntrants(),
-			Sessions:           nil,
 			RaceWeekendID:      event.ID,
 			RaceWeekend:        event,
-			StartedTime:        time.Time{},
-			CompletedTime:      time.Time{},
-			championship:       c,
 		})
 
 		event.Championship = c
@@ -516,7 +503,7 @@ func (c *Championship) ImportEvent(eventToImport interface{}) error {
 		for _, session := range event.Sessions {
 			session.CompletedTime = time.Time{}
 			session.StartedTime = time.Time{}
-			session.Results = &SessionResults{}
+			session.Results = nil
 			session.ScheduledTime = time.Time{}
 
 			// if a session has the Entry List as a parent we need to replace the old
