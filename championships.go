@@ -472,9 +472,9 @@ func (c *Championship) ImportEvent(eventToImport interface{}) error {
 	switch event := eventToImport.(type) {
 	case *CustomRace:
 		c.Events = append(c.Events, &ChampionshipEvent{
-			ID:                 uuid.New(),
-			RaceSetup:          event.RaceConfig,
-			EntryList:          c.AllEntrants(),
+			ID:        uuid.New(),
+			RaceSetup: event.RaceConfig,
+			EntryList: c.AllEntrants(),
 		})
 	case *RaceWeekend:
 		// the filter between Entry List and any events uses the race weekend ID in the map
@@ -490,10 +490,10 @@ func (c *Championship) ImportEvent(eventToImport interface{}) error {
 		event.Filters[event.ID.String()] = oldFilter
 
 		c.Events = append(c.Events, &ChampionshipEvent{
-			ID:                 uuid.New(),
-			EntryList:          c.AllEntrants(),
-			RaceWeekendID:      event.ID,
-			RaceWeekend:        event,
+			ID:            uuid.New(),
+			EntryList:     c.AllEntrants(),
+			RaceWeekendID: event.ID,
+			RaceWeekend:   event,
 		})
 
 		event.Championship = c
