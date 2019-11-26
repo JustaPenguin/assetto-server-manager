@@ -419,8 +419,29 @@
 
         <div class="float-right">
             {{ if $writeAccess }}
-                <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event">Add more Events</a>
-                <a class="btn btn-info" href="/race-weekends/new?championshipID={{ $championship.ID.String }}">Add a Race Weekend</a>
+                <div class="btn-group">
+
+                    <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event">Add Events</a>
+
+                    <a href="#" style="min-width: 38px !important;" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="importCustomDropdown" class="btn btn-success btn-sm custom-race-actions-btn-small dropdown-toggle dropdown-toggle-split"
+                    ></a>
+
+                    <div class="dropdown-menu" aria-labelledby="importCustomDropdown">
+                        <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/custom/list">Import Custom Race</a>
+                    </div>
+                </div>
+
+                <div class="btn-group" style="min-width: 180px">
+
+                    <a class="btn btn-info" href="/race-weekends/new?championshipID={{ $championship.ID.String }}">Add a Race Weekend</a>
+
+                    <a href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="importWeekendDropdown" class="btn btn-info btn-sm custom-race-actions-btn-small dropdown-toggle dropdown-toggle-split"
+                    ></a>
+
+                    <div class="dropdown-menu" aria-labelledby="importWeekendDropdown">
+                        <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/weekend/list">Import Race Weekend</a>
+                    </div>
+                </div>
             {{ end }}
 
             <div class="dropdown show" style="display: inline-block">

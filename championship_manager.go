@@ -1132,6 +1132,56 @@ func (cm *ChampionshipManager) ImportChampionship(jsonData string) (string, erro
 	return championship.ID.String(), cm.UpsertChampionship(championship)
 }
 
+func (cm *ChampionshipManager) ImportEventSetup(championshipID string, eventID string) error {
+	race, err := cm.store.FindCustomRaceByID(eventID)
+
+	if err != nil {
+		return err
+	}
+
+	championship, err := cm.LoadChampionship(championshipID)
+
+	if err != nil {
+		return err
+	}
+
+	err = championship.ImportEvent(race)
+
+	if err != nil {
+		return err
+	}
+
+	return cm.UpsertChampionship(championship)
+}
+
+func (cm *ChampionshipManager) ImportRaceWeekendSetup(championshipID string, eventID string) error {
+	weekend, err := cm.store.LoadRaceWeekend(eventID)
+
+	if err != nil {
+		return err
+	}
+
+	championship, err := cm.LoadChampionship(championshipID)
+
+	if err != nil {
+		return err
+	}
+
+	err = championship.ImportEvent(weekend)
+
+	if err != nil {
+		return err
+	}
+
+	err = cm.store.UpsertRaceWeekend(weekend)
+
+	if err != nil {
+		return err
+	}
+
+	return cm.UpsertChampionship(championship)
+}
+
 func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string, r *http.Request) error {
 	if err := r.ParseForm(); err != nil {
 		return err

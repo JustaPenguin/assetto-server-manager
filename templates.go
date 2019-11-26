@@ -189,6 +189,8 @@ func (tr *Renderer) init() error {
 	funcs["dateFormat"] = dateFormat
 	funcs["timeZone"] = timeZone
 	funcs["hourAndZone"] = hourAndZoneFormat
+	funcs["localFormatHourAndZone"] = localFormatHelperHourAndZone
+	funcs["addTime"] = addTime
 	funcs["isBefore"] = isBefore
 	funcs["trackInfo"] = trackInfo
 	funcs["multiplyFloats"] = multiplyFloats
@@ -273,6 +275,10 @@ func localFormatHelper(t time.Time) template.HTML {
 	return template.HTML(fmt.Sprintf(`<span class="time-local" data-toggle="tooltip" data-time="%s" title="Translated to your timezone from %s">%s</span>`, t.Format(time.RFC3339), fullTimeFormat(t), fullTimeFormat(t)))
 }
 
+func localFormatHelperHourAndZone(t time.Time) template.HTML {
+	return template.HTML(fmt.Sprintf(`<span class="time-local-kitchen" data-toggle="tooltip" data-time="%s" title="Translated to your timezone from %s">%s</span>`, t.Format(time.RFC3339), fullTimeFormat(t), fullTimeFormat(t)))
+}
+
 func timeFormat(t time.Time) string {
 	return t.Format(time.Kitchen)
 }
@@ -285,6 +291,10 @@ func hourAndZoneFormat(t time.Time, plusMinutes int64) string {
 	t = t.Add(time.Minute * time.Duration(plusMinutes))
 
 	return t.Format("3:04 PM (MST)")
+}
+
+func addTime(t time.Time, plusMinutes int64) time.Time {
+	return t.Add(time.Minute * time.Duration(plusMinutes))
 }
 
 func timeZone(t time.Time) string {

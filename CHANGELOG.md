@@ -4,10 +4,11 @@ v1.5.4
 Added:
 
 * Results pages now show your 'Potential' lap time - the sum of your best sectors.
-* Added an option in Race Weekends to filter from the best lap across multiple results files.
+* Added an option in Race Weekends to filter from the best lap or number of laps completed across multiple results files.
 * Added an option to the config.yml to watch the content folder for changes and keep the car search index updated.
 * Added an option to the config.yml to prevent server manager from opening a browser on Windows on start.
 * Accounts are now part of the shared JSON store. This means if you were running split JSON stores using the 'shared_data_path' config.yml variable, you will need to re-set up server manager accounts (i.e. by copying them into the shared JSON store)
+* You can now import existing Custom Races and Race Weekends to Championships.
 
 Fixes:
 
@@ -20,6 +21,7 @@ Fixes:
 * Prevent users from being able to set up a race that will cause the server to crash by setting pickup mode off, locked entry list on and reverse grid race to anything other than 0.
 * Fixes an issue where a missing ui_track.json file would cause a track page to load incorrectly.
 * Fixed an issue where Championships sometimes could not be edited.
+* Fixed date/time formatting for championship event session start times.
 
 ---
 
