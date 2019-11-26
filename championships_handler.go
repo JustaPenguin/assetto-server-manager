@@ -471,6 +471,97 @@ func (ch *ChampionshipsHandler) restartEvent(w http.ResponseWriter, r *http.Requ
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+type championshipCustomRaceImportTemplateVars struct {
+	BaseTemplateVars
+
+	Recent, Starred, Loop, Scheduled []*CustomRace
+	Championship                     *Championship
+}
+
+type championshipRaceWeekendImportTemplateVars struct {
+	BaseTemplateVars
+
+	RaceWeekends []*RaceWeekend
+	Championship *Championship
+}
+
+func (ch *ChampionshipsHandler) listCustomRacesForImport(w http.ResponseWriter, r *http.Request) {
+	recent, starred, looped, scheduled, err := ch.championshipManager.RaceManager.ListCustomRaces()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't list custom races")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	championship, err := ch.championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't load championship for custom race import page list")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	ch.viewRenderer.MustLoadTemplate(w, r, "championships/import-custom.html", &championshipCustomRaceImportTemplateVars{
+		Recent:       recent,
+		Starred:      starred,
+		Loop:         looped,
+		Scheduled:    scheduled,
+		Championship: championship,
+	})
+}
+
+func (ch *ChampionshipsHandler) customRaceImport(w http.ResponseWriter, r *http.Request) {
+	championshipID := chi.URLParam(r, "championshipID")
+
+	err := ch.championshipManager.ImportEventSetup(championshipID, chi.URLParam(r, "eventID"))
+
+	if err != nil {
+		logrus.WithError(err).Error("could not import event setup to championship")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/championship/"+championshipID, http.StatusFound)
+}
+
+func (ch *ChampionshipsHandler) listRaceWeekendsForImport(w http.ResponseWriter, r *http.Request) {
+	raceWeekends, err := ch.championshipManager.store.ListRaceWeekends()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't list custom races")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	championship, err := ch.championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't load championship for custom race import page list")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	ch.viewRenderer.MustLoadTemplate(w, r, "championships/import-weekend.html", &championshipRaceWeekendImportTemplateVars{
+		RaceWeekends: raceWeekends,
+		Championship: championship,
+	})
+}
+
+func (ch *ChampionshipsHandler) raceWeekendImport(w http.ResponseWriter, r *http.Request) {
+	championshipID := chi.URLParam(r, "championshipID")
+
+	err := ch.championshipManager.ImportRaceWeekendSetup(championshipID, chi.URLParam(r, "weekendID"))
+
+	if err != nil {
+		logrus.WithError(err).Error("could not import event setup to championship")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/championship/"+championshipID, http.StatusFound)
+}
+
 func (ch *ChampionshipsHandler) icalFeed(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/calendar; charset=utf-8")
 	w.Header().Add("Content-Disposition", "inline; filename=championship.ics")
