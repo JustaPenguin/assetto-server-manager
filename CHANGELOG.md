@@ -21,7 +21,7 @@ Fixes:
 * Prevent users from being able to set up a race that will cause the server to crash by setting pickup mode off, locked entry list on and reverse grid race to anything other than 0.
 * Fixes an issue where a missing ui_track.json file would cause a track page to load incorrectly.
 * Fixed an issue where Championships sometimes could not be edited.
-* Fixed date/time formatting for championship event session start times.
+* Fixed date/time formatting for Championship event session start times.
 
 ---
 
