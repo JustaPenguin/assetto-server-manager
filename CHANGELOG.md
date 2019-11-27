@@ -1,12 +1,31 @@
-v1.5.4
+v1.6.0
 ------
 
 Added:
+
+In this update we've added the following premium features:
+
+* Multiserver support! This is a much-requested feature, and we've finally found a way to deliver it! Premium builds of Server Manager now come with an extra tool: the multiserver manager.
+
+  - The multiserver tool handles installation and setup of however many servers you want!
+  - It works on Windows and Linux
+  - Custom Races, Championships, Race Weekends and all your uploaded Content are shared between each server!
+  - Accounts and login are shared between each server!
+  - You can switch servers using the new Server Switcher in the top right hand corner of your Server Manager page.
+  - The Server Switcher also shows you what kind of events are running on each server, and how many people are connected!
+  - The multiserver tool handles updating server-manager for you!
+  
+  When you buy Server Manager Premium, the multiserver tool will be included alongside server manager. Please check out the README for more details and a setup guide!
 
 * Lua Plugin hooks! You can now run custom scripts with a bunch of hooks for Lua (event start, results load and more!), have a look in server-manager/plugins for some examples. (there's a nice readme guide in there too!). If you want to enable one of the three Lua examples before just uncomment them in the lua files!
 * Weather API with Lua plugins! As a nice example of what you can achieve with Lua plugins we used one to implement a weather API!
 * Auto ballast based on championship position with Lua plugins! Another Lua example, this one applies a ballast to each driver in a championship when an event is started based on their championship position.
 * Auto collision disqualifier! This is our last Lua example, it disqualifies drivers if they exceed a certain number of collisions or have a collision over a certain speed.
+
+If you don't have premium yet, you can get it by following the instructions on Server Manager!
+
+As well as our premium features, we have the following additions...
+
 * Results pages now show your 'Potential' lap time - the sum of your best sectors.
 * Added an option in Race Weekends to filter from the best lap or number of laps completed across multiple results files.
 * Added an option to the config.yml to watch the content folder for changes and keep the car search index updated.
