@@ -3,7 +3,25 @@
 {{ define "title" }}Results{{ end }}
 
 {{ define "content" }}
-    <h1 class="text-center">Results</h1>
+    <div class="row">
+        <div class="col-md-4">
+
+        </div>
+
+        <div class="col-md-4">
+            <h1 class="text-center">Results</h1>
+        </div>
+
+        <div class="col-md-4">
+            <form class="form-inline" method="post" action="/results/upload" enctype="multipart/form-data">
+                <div class="custom-file">
+                    <input onchange="this.form.submit();" type="file" class="custom-file-input" accept=".json, application/json" id="resultsFile" name="resultsFile" required>
+                    <label class="custom-file-label justify-content-start" for="resultsFile">Upload Results File</label>
+                </div>
+            </form>
+        </div>
+
+    </div>
 
     <table class="table table-bordered table-striped">
         <tr>

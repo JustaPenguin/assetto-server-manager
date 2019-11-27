@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -982,6 +983,75 @@ func (rh *ResultsHandler) list(w http.ResponseWriter, r *http.Request) {
 		Pages:       pages,
 		CurrentPage: page,
 	})
+}
+
+func (rh *ResultsHandler) uploadHandler(w http.ResponseWriter, r *http.Request) {
+	matched, err := rh.upload(r)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("could not parse results form")
+		AddErrorFlash(w, r, "Sorry, we couldn't parse that results file! Please make sure the format is correct.")
+	}
+
+	if !matched {
+		AddErrorFlash(w, r, "Your results file content was correct, but the file name is incorrect! Please make sure the file name matches the AC standard then try again.")
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+const uploadFileSizeLimit = 5e6
+
+func (rh *ResultsHandler) upload(r *http.Request) (bool, error) {
+	err := r.ParseMultipartForm(10 << 20)
+
+	if err != nil {
+		return true, err
+	}
+
+	file, header, err := r.FormFile("resultsFile")
+	if err != nil {
+		return true, err
+	}
+	defer file.Close()
+
+	if header.Size > (uploadFileSizeLimit) {
+		return true, fmt.Errorf("servermanager: file size too large, limit is: %d, this file is: %d", int64(uploadFileSizeLimit), header.Size)
+	}
+
+	fileBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		return true, err
+	}
+
+	// make sure what we've been given is actually a results file
+	var resultTest *SessionResults
+
+	err = json.Unmarshal(fileBytes, &resultTest)
+
+	if err != nil {
+		return true, err
+	}
+
+	matched, err := regexp.MatchString(`\d{4}_\d{1,2}_\d{1,2}_\d{1,2}_\d{1,2}_(RACE|QUALIFY|PRACTICE|BOOK)\.json`, header.Filename)
+
+	if err != nil {
+		return matched, err
+	}
+
+	if !matched {
+		return matched, nil
+	}
+
+	path := filepath.Join(ServerInstallPath, "results", header.Filename)
+
+	err = ioutil.WriteFile(path, fileBytes, 0644)
+
+	if err != nil {
+		return matched, err
+	}
+
+	return matched, nil
 }
 
 type resultsViewTemplateVars struct {
