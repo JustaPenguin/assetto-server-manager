@@ -136,8 +136,8 @@ func (asu *AssettoServerUDP) serve() {
 	messageChan := make(chan []byte, 1000)
 	defer close(messageChan)
 
-	messagesSent := 0
-	messagesHandled := 0
+	lastRealtimePosInterval := uint16(RealtimePosIntervalMs)
+	lastQueueSize := 0
 
 	go func() {
 		ticker := time.NewTicker(time.Second)
@@ -145,7 +145,6 @@ func (asu *AssettoServerUDP) serve() {
 		for {
 			select {
 			case buf := <-messageChan:
-				messagesHandled++
 				msg, err := asu.handleMessage(bytes.NewReader(buf))
 
 				if err != nil {
@@ -162,12 +161,35 @@ func (asu *AssettoServerUDP) serve() {
 					}()
 				}
 			case <-ticker.C:
-				if messagesSent > messagesHandled {
-					logrus.Errorf("Can't keep up! %d vs %d (%d queued)", messagesSent, messagesHandled, len(messageChan))
+				currentQueueSize := len(messageChan)
+
+				if currentQueueSize > lastQueueSize {
+					logrus.Warnf("Can't keep up! queue size: %d vs %d: changed by %d", currentQueueSize, lastQueueSize, currentQueueSize - lastQueueSize)
+
+					lastRealtimePosInterval += 50
+
+					logrus.Debugf("Adjusting real time pos interval: %d", lastRealtimePosInterval)
+					err := asu.SendMessage(NewEnableRealtimePosInterval(lastRealtimePosInterval))
+
+					if err != nil {
+						logrus.WithError(err).Error("Could not send realtime pos interval adjustment")
+					}
+				} else if currentQueueSize < lastQueueSize {
+					logrus.Infof("Catching up, queue size: %d vs %d: changed by %d", currentQueueSize, lastQueueSize, currentQueueSize - lastQueueSize)
+
+					if lastRealtimePosInterval - 10 >= uint16(RealtimePosIntervalMs) {
+						lastRealtimePosInterval -= 10
+
+						logrus.Debugf("Adjusting real time pos interval, is now: %d", lastRealtimePosInterval)
+						err := asu.SendMessage(NewEnableRealtimePosInterval(lastRealtimePosInterval))
+
+						if err != nil {
+							logrus.WithError(err).Error("Could not send realtime pos interval adjustment")
+						}
+					}
 				}
 
-				messagesHandled = 0
-				messagesSent = 0
+				lastQueueSize = currentQueueSize
 			case <-asu.ctx.Done():
 				ticker.Stop()
 				return
@@ -191,7 +213,6 @@ func (asu *AssettoServerUDP) serve() {
 				continue
 			}
 
-			messagesSent++
 			messageChan <- buf[:n]
 		}
 	}

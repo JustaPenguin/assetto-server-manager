@@ -91,6 +91,24 @@ func main() {
 		return
 	}
 
+	if config.LiveMap.IsEnabled() {
+		if config.LiveMap.IntervalMs < udpRealtimePosRefreshIntervalMin {
+			udp.RealtimePosIntervalMs = udpRealtimePosRefreshIntervalMin
+		} else {
+			udp.RealtimePosIntervalMs = config.LiveMap.IntervalMs
+		}
+
+		if runtime.GOOS == "linux" {
+			// check known kernel net memory restrictions. if they're lower than the recommended
+			// values, then print out explaining how to increase them
+			memValues := []string{"net.core.rmem_max", "net.core.rmem_default", "net.core.wmem_max", "net.core.wmem_default"}
+
+			for _, val := range memValues {
+				checkMemValue(val)
+			}
+		}
+	}
+
 	if config.Lua.Enabled && servermanager.IsPremium == "true" {
 		luaPath := os.Getenv("LUA_PATH")
 
@@ -123,24 +141,6 @@ func main() {
 	if err != nil {
 		ServeHTTPWithError(config.HTTP.Hostname, "Initialise server manager (internal error)", err)
 		return
-	}
-
-	if config.LiveMap.IsEnabled() {
-		if config.LiveMap.IntervalMs < udpRealtimePosRefreshIntervalMin {
-			udp.RealtimePosIntervalMs = udpRealtimePosRefreshIntervalMin
-		} else {
-			udp.RealtimePosIntervalMs = config.LiveMap.IntervalMs
-		}
-
-		if runtime.GOOS == "linux" {
-			// check known kernel net memory restrictions. if they're lower than the recommended
-			// values, then print out explaining how to increase them
-			memValues := []string{"net.core.rmem_max", "net.core.rmem_default", "net.core.wmem_max", "net.core.wmem_default"}
-
-			for _, val := range memValues {
-				checkMemValue(val)
-			}
-		}
 	}
 
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
