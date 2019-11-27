@@ -768,7 +768,7 @@ func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, override
 		// sorting can only be run if a session is ready to be run.
 		sorter := GetRaceWeekendEntryListSort(rws.SortType)
 
-		if err := sorter.Sort(rw, rws, entryList); err != nil {
+		if err := sorter.Sort(rw, rws, entryList, nil); err != nil {
 			return nil, err
 		}
 
