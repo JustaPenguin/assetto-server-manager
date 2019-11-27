@@ -163,6 +163,7 @@ func (d dummyNotificationManager) SaveServerOptions(oldServerOpts *GlobalServerC
 }
 
 func init() {
+	config = &Configuration{}
 	championshipManager = NewChampionshipManager(
 		NewRaceManager(
 			NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"), filepath.Join(os.TempDir(), "asm-race-store-shared")),

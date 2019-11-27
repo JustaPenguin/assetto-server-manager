@@ -174,6 +174,7 @@ func Router(
 		r.Post("/car/{name}/metadata", carsHandler.saveMetadata)
 		r.Post("/car/{name}/skin", carsHandler.uploadSkin)
 		r.Post("/track/{name}/metadata", tracksHandler.saveMetadata)
+		r.Post("/results/upload", resultsHandler.uploadHandler)
 
 		// races
 		r.Get("/quick", quickRaceHandler.create)

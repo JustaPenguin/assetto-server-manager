@@ -497,6 +497,14 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 
 	event.RaceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
 
+	if config.Lua.Enabled && IsPremium == "true" {
+		err = championshipEventStartPlugin(event, championship)
+
+		if err != nil {
+			logrus.WithError(err).Error("championship event start plugin script failed")
+		}
+	}
+
 	entryList := event.CombineEntryLists(championship)
 
 	if championship.SignUpForm.Enabled && !championship.OpenEntrants && !isPreChampionshipPracticeEvent {
@@ -580,6 +588,29 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 	}
 }
 
+func championshipEventStartPlugin(event *ChampionshipEvent, championship *Championship) error {
+	var standings [][]*ChampionshipStanding
+
+	for _, class := range championship.Classes {
+		standings = append(standings, class.Standings(championship.Events))
+	}
+
+	p := &LuaPlugin{}
+
+	newEvent, newChampionship := NewChampionshipEvent(), NewChampionship(championship.Name)
+
+	p.Inputs(event, championship, standings).Outputs(newEvent, newChampionship)
+	err := p.Call("./plugins/championship.lua", "onChampionshipEventStart")
+
+	if err != nil {
+		return err
+	}
+
+	*event, *championship = *newEvent, *newChampionship
+
+	return nil
+}
+
 func (cm *ChampionshipManager) GetChampionshipAndEvent(championshipID string, eventID string) (*Championship, *ChampionshipEvent, error) {
 	championship, err := cm.LoadChampionship(championshipID)
 
@@ -640,6 +671,14 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 			}
 		}
 
+		if config.Lua.Enabled && IsPremium == "true" {
+			err = championshipEventSchedulePlugin(championship, event)
+
+			if err != nil {
+				logrus.WithError(err).Error("event schedule plugin script failed")
+			}
+		}
+
 		cm.championshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
 			err := cm.StartScheduledEvent(championship, event)
 
@@ -663,6 +702,29 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 	}
 
 	return cm.UpsertChampionship(championship)
+}
+
+func championshipEventSchedulePlugin(championship *Championship, event *ChampionshipEvent) error {
+	p := &LuaPlugin{}
+
+	var standings [][]*ChampionshipStanding
+
+	for _, class := range championship.Classes {
+		standings = append(standings, class.Standings(championship.Events))
+	}
+
+	newEvent, newChampionship := NewChampionshipEvent(), NewChampionship(championship.Name)
+
+	p.Inputs(event, championship, standings).Outputs(newEvent, newChampionship)
+	err := p.Call("./plugins/championship.lua", "onChampionshipEventSchedule")
+
+	if err != nil {
+		return err
+	}
+
+	*event, *championship = *newEvent, *newChampionship
+
+	return nil
 }
 
 func (cm *ChampionshipManager) StartScheduledEvent(championship *Championship, event *ChampionshipEvent) error {
