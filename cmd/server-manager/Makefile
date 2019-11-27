@@ -42,6 +42,8 @@ deploy: clean assets asset-embed
 	cp ../../INSTALL.txt build/INSTALL.txt
 	cp ../../LICENSE build/LICENSE.txt
 	cp ../../CHANGELOG.md build/CHANGELOG.txt
+	cp -R plugins build/
+	mv build/plugins/lua_readme.md build/plugins/lua_readme.txt
 	unix2dos build/README.txt build/LICENSE.txt build/CHANGELOG.txt build/windows/config.yml build/INSTALL.txt
 
 	# archive

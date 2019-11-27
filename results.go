@@ -936,7 +936,32 @@ func LoadResult(fileName string) (*SessionResults, error) {
 		result.FallBackSort()
 	}
 
+	if config.Lua.Enabled && IsPremium == "true" {
+		err = resultsLoadPlugin(result)
+
+		if err != nil {
+			logrus.WithError(err).Error("results load plugin script failed")
+		}
+	}
+
 	return result, nil
+}
+
+func resultsLoadPlugin(results *SessionResults) error {
+	p := &LuaPlugin{}
+
+	newSessionResults := &SessionResults{}
+
+	p.Inputs(results).Outputs(newSessionResults)
+	err := p.Call("./plugins/results.lua", "onResultsLoad")
+
+	if err != nil {
+		return err
+	}
+
+	*results = *newSessionResults
+
+	return nil
 }
 
 type ResultsHandler struct {
