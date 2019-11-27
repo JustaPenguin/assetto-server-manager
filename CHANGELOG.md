@@ -21,13 +21,13 @@ In this update we've added the following premium features:
 * Weather API with Lua plugins! As a nice example of what you can achieve with Lua plugins we used one to implement a weather API!
 * Auto ballast based on championship position with Lua plugins! Another Lua example, this one applies a ballast to each driver in a championship when an event is started based on their championship position.
 * Auto collision disqualifier! This is our last Lua example, it disqualifies drivers if they exceed a certain number of collisions or have a collision over a certain speed.
+* Added an option in Race Weekends to filter from the best lap or number of laps completed across multiple results files.
 
 If you don't have premium yet, you can get it by following the instructions on Server Manager!
 
 As well as our premium features, we have the following additions...
 
 * Results pages now show your 'Potential' lap time - the sum of your best sectors.
-* Added an option in Race Weekends to filter from the best lap or number of laps completed across multiple results files.
 * Added an option to the config.yml to watch the content folder for changes and keep the car search index updated.
 * Added an option to the config.yml to prevent server manager from opening a browser on Windows on start.
 * Accounts are now part of the shared JSON store. This means if you were running split JSON stores using the 'shared_data_path' config.yml variable, you will need to re-set up server manager accounts (i.e. by copying them into the shared JSON store)
