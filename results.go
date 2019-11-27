@@ -935,7 +935,7 @@ func LoadResult(fileName string) (*SessionResults, error) {
 		result.FallBackSort()
 	}
 
-	if config.Lua.Enabled {
+	if config.Lua.Enabled && IsPremium == "true" {
 		err = resultsLoadPlugin(result)
 
 		if err != nil {

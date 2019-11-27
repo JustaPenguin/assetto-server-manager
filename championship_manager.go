@@ -497,7 +497,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 
 	event.RaceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
 
-	if config.Lua.Enabled {
+	if config.Lua.Enabled && IsPremium == "true" {
 		err = championshipEventStartPlugin(event, championship)
 
 		if err != nil {
@@ -671,7 +671,7 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 			}
 		}
 
-		if config.Lua.Enabled {
+		if config.Lua.Enabled && IsPremium == "true" {
 			err = championshipEventSchedulePlugin(championship, event)
 
 			if err != nil {

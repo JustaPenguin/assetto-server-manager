@@ -254,4 +254,5 @@ lua:
   # lua plugins allow you to run custom lua scripts through hooks with server
   # manager! If you're interested have a look at the server-manager/plugins
   # folder to see some examples!
-  enabled: true
+  # Lua plugins are a premium feature, they won't run without the premium build!
+  enabled: false

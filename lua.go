@@ -116,6 +116,8 @@ func LuaHTTPRequest(L *lua.LState) int {
 		return 0
 	}
 
+	defer res.Body.Close()
+
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		logrus.WithError(err).Error("read response body")

@@ -1150,7 +1150,7 @@ func (rwm *RaceWeekendManager) ScheduleSession(raceWeekendID, sessionID string, 
 	session.StartWhenParentHasFinished = startWhenParentFinishes
 	session.ScheduledServerID = serverID
 
-	if config.Lua.Enabled {
+	if config.Lua.Enabled && IsPremium == "true" {
 		err = raceWeekendEventSchedulePlugin(raceWeekend, session)
 
 		if err != nil {

@@ -97,7 +97,7 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 	raceConfig := event.GetRaceConfig()
 	entryList := event.GetEntryList()
 
-	if config.Lua.Enabled {
+	if config.Lua.Enabled && IsPremium == "true" {
 		err = eventStartPlugin(&raceConfig, serverOpts, &entryList)
 
 		if err != nil {
@@ -1082,7 +1082,7 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 			}
 		}
 
-		if config.Lua.Enabled {
+		if config.Lua.Enabled && IsPremium == "true" {
 			err = eventSchedulePlugin(race)
 
 			if err != nil {
