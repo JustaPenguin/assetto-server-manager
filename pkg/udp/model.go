@@ -242,10 +242,10 @@ func (EnableRealtimePosInterval) Event() Event {
 	return EventRealtimeposInterval
 }
 
-func NewEnableRealtimePosInterval(interval uint16) EnableRealtimePosInterval {
+func NewEnableRealtimePosInterval(interval int) EnableRealtimePosInterval {
 	return EnableRealtimePosInterval{
 		Type:     uint8(EventRealtimeposInterval),
-		Interval: interval,
+		Interval: uint16(interval),
 	}
 }
 
