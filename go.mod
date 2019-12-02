@@ -1,7 +1,5 @@
 module github.com/cj123/assetto-server-manager
 
-replace github.com/taviti/check => gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127
-
 require (
 	github.com/Clinet/discordgo-embed v0.0.0-20190411043415-d754bc1a576c
 	github.com/Masterminds/goutils v1.1.0 // indirect
@@ -17,9 +15,11 @@ require (
 	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/bwmarrin/discordgo v0.19.0
 	github.com/certifi/gocertifi v0.0.0-20190506164543-d2eda7129713 // indirect
+	github.com/cj123/caldav-go v0.0.0-20191202141705-5d30c27975e9
 	github.com/cj123/ini v1.42.0
 	github.com/cj123/sessions v1.1.5
 	github.com/couchbase/vellum v0.0.0-20190328134517-462e86d8716b // indirect
+	github.com/creack/pty v1.1.9 // indirect
 	github.com/cznic/b v0.0.0-20181122101859-a26611c4d92d // indirect
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/cznic/strutil v0.0.0-20181122101858-275e90344537 // indirect
@@ -42,13 +42,13 @@ require (
 	github.com/gopherjs/gopherjs v0.0.0-20190309154008-847fc94819f9 // indirect
 	github.com/gorilla/websocket v1.4.0
 	github.com/haisum/recaptcha v0.0.0-20170327142240-7d3b8053900e
-	github.com/heindl/caldav-go v0.0.0-20160315204950-22453f8a38b5
+	github.com/heindl/caldav-go v0.0.0-20160315204950-22453f8a38b5 // indirect
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/jaytaylor/html2text v0.0.0-20190408195923-01ec452cbe43
 	github.com/jmhodges/levigo v1.0.0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/kr/pretty v0.1.0 // indirect
+	github.com/kr/pty v1.1.8 // indirect
 	github.com/lorenzosaino/go-sysctl v0.1.0
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-isatty v0.0.10 // indirect
@@ -72,7 +72,6 @@ require (
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/steveyen/gtreap v0.0.0-20150807155958-0abe01ef9be2 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
-	github.com/taviti/check v0.0.0-00010101000000-000000000000 // indirect
 	github.com/teambition/rrule-go v1.4.2
 	github.com/tecbot/gorocksdb v0.0.0-20190519120508-025c3cf4ffb4 // indirect
 	github.com/yuin/gopher-lua v0.0.0-20190514113301-1cd887cd7036

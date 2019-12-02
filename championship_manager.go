@@ -17,11 +17,11 @@ import (
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 
+	"github.com/cj123/caldav-go/icalendar"
+	"github.com/cj123/caldav-go/icalendar/components"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 	"github.com/haisum/recaptcha"
-	"github.com/heindl/caldav-go/icalendar"
-	"github.com/heindl/caldav-go/icalendar/components"
 	"github.com/mitchellh/go-wordwrap"
 	"github.com/sirupsen/logrus"
 )

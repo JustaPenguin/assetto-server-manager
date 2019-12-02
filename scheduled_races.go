@@ -8,10 +8,10 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/cj123/caldav-go/icalendar"
+	"github.com/cj123/caldav-go/icalendar/components"
+	"github.com/cj123/caldav-go/icalendar/values"
 	"github.com/google/uuid"
-	"github.com/heindl/caldav-go/icalendar"
-	"github.com/heindl/caldav-go/icalendar/components"
-	"github.com/heindl/caldav-go/icalendar/values"
 	"github.com/sirupsen/logrus"
 	"github.com/teambition/rrule-go"
 )
