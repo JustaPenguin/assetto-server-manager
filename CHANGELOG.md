@@ -36,6 +36,7 @@ As well as our premium features, we have the following additions...
 
 Fixes:
 
+* Fixed an issue with scheduled Championship events that could clear all of the other scheduled events on the Championship when they started.
 * Setting the ballast on an entrant to a larger value than the Max Ballast option no longer stops the server from starting.
 * Results pages now correctly display statistics per car - so if you're switching cars in a session you can see accurate reports for that car.
 * Penalties are now applied per driver and car, rather than just per driver.
