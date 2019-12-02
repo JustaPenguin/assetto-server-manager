@@ -736,9 +736,24 @@ func (cm *ChampionshipManager) StartScheduledEvent(championship *Championship, e
 			return err
 		}
 	} else {
+		// our copy of the championship is outdated, get the latest version
+		var err error
+
+		championship, err = cm.store.LoadChampionship(championship.ID.String())
+
+		if err != nil {
+			return err
+		}
+
+		event, err = championship.EventByID(event.ID.String())
+
+		if err != nil {
+			return err
+		}
+
 		event.Scheduled = time.Time{}
 
-		err := cm.store.UpsertChampionship(championship)
+		err = cm.store.UpsertChampionship(championship)
 
 		if err != nil {
 			return err
