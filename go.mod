@@ -7,7 +7,6 @@ require (
 	github.com/Masterminds/sprig v2.20.0+incompatible
 	github.com/RoaringBitmap/roaring v0.4.17 // indirect
 	github.com/Smerity/govarint v0.0.0-20150407073650-7265e41f48f1 // indirect
-	github.com/akavel/rsrc v0.8.0 // indirect
 	github.com/blevesearch/bleve v0.7.0
 	github.com/blevesearch/blevex v0.0.0-20180227211930-4b158bb555a3 // indirect
 	github.com/blevesearch/go-porterstemmer v1.0.2 // indirect
@@ -19,7 +18,6 @@ require (
 	github.com/cj123/ini v1.42.0
 	github.com/cj123/sessions v1.1.5
 	github.com/couchbase/vellum v0.0.0-20190328134517-462e86d8716b // indirect
-	github.com/creack/pty v1.1.9 // indirect
 	github.com/cznic/b v0.0.0-20181122101859-a26611c4d92d // indirect
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/cznic/strutil v0.0.0-20181122101858-275e90344537 // indirect
@@ -42,13 +40,11 @@ require (
 	github.com/gopherjs/gopherjs v0.0.0-20190309154008-847fc94819f9 // indirect
 	github.com/gorilla/websocket v1.4.0
 	github.com/haisum/recaptcha v0.0.0-20170327142240-7d3b8053900e
-	github.com/heindl/caldav-go v0.0.0-20160315204950-22453f8a38b5 // indirect
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/jaytaylor/html2text v0.0.0-20190408195923-01ec452cbe43
 	github.com/jmhodges/levigo v1.0.0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/kr/pty v1.1.8 // indirect
 	github.com/lorenzosaino/go-sysctl v0.1.0
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-isatty v0.0.10 // indirect
@@ -56,7 +52,6 @@ require (
 	github.com/mattn/go-zglob v0.0.1
 	github.com/mitchellh/go-ps v0.0.0-20170309133038-4fdf99ab2936
 	github.com/mitchellh/go-wordwrap v1.0.0
-	github.com/mjibson/esc v0.2.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.1 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pkg/errors v0.8.1
@@ -80,7 +75,6 @@ require (
 	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	golang.org/x/text v0.3.2
-	golang.org/x/tools v0.0.0-20191127201027-ecd32218bd7f // indirect
 	gopkg.in/ini.v1 v1.42.0 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 )
