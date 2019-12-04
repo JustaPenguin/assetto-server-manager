@@ -117,6 +117,25 @@
 
             </form>
 
+            <form class="form p-1" id="send-chat-form" name="send-chat-form" action="/send-chat">
+                <div class="form-row" style="margin-bottom: -7px">
+                    <label for="send-chat">Send Chat to Driver: </label>
+                </div>
+
+                <div class="form-row mb-2">
+                    <select class="form-control-sm chat-user" name="chat-user" id="chat-user">
+                        <option value="default-driver-spacer">No drivers found!</option>
+                        <!-- driver kick opts appended by javascript -->
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <input type="text" name="send-chat" id="send-chat" class="send-chat form-control form-control-sm admin-command-input" placeholder="Watch those track limits!">
+
+                    <button class="btn btn-success btn-sm ml-1" type="submit">Send</button>
+                </div>
+            </form>
+
             <form class="form-inline p-1" id="admin-command-form" name="admin-command-form" action="/admin-command">
 
                 <div class="form-row">
@@ -133,7 +152,7 @@
 
             <form class="form p-1" id="kick-user-form" name="kick-user-form" action="/kick-user">
                 <div class="form-row" style="margin-bottom: -7px">
-                    <label for="kick-user">Kick User: </label>
+                    <label for="kick-user">Kick Driver: </label>
                 </div>
 
                 <div class="form-row">
