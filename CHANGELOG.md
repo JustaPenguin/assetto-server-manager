@@ -1,3 +1,14 @@
+v1.6.1
+------
+
+Added:
+
+* Added send chat to driver option to the admin panel on the Live Timings page.
+
+Fixes:
+
+---
+
 v1.6.0
 ------
 
