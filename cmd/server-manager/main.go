@@ -1,7 +1,6 @@
 package main
 
 import (
-	lua "github.com/yuin/gopher-lua"
 	"net"
 	"net/http"
 	"os"
@@ -24,6 +23,7 @@ import (
 	"github.com/lorenzosaino/go-sysctl"
 	"github.com/pkg/browser"
 	"github.com/sirupsen/logrus"
+	"github.com/yuin/gopher-lua"
 )
 
 var defaultAddress = "0.0.0.0:8772"
@@ -163,7 +163,7 @@ func main() {
 	}
 }
 
-const udpBufferRecommendedSize = uint64(2e7) // 20MB
+const udpBufferRecommendedSize = uint64(2e6) // 2MB
 
 func checkMemValue(key string) {
 	val, err := sysctlAsUint64(key)

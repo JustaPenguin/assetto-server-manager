@@ -319,6 +319,7 @@ class LiveMap implements WebsocketHandler {
                     }
                 }
 
+                $(".dot").css({"transition": this.raceControl.status.CurrentRealtimePosInterval + "ms linear"});
                 break;
 
             case EventNewConnection:

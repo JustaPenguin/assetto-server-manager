@@ -18,10 +18,11 @@ type RaceControl struct {
 	process ServerProcess
 	store   Store
 
-	SessionInfo      udp.SessionInfo `json:"SessionInfo"`
-	TrackMapData     TrackMapData    `json:"TrackMapData"`
-	TrackInfo        TrackInfo       `json:"TrackInfo"`
-	SessionStartTime time.Time       `json:"SessionStartTime"`
+	SessionInfo                udp.SessionInfo `json:"SessionInfo"`
+	TrackMapData               TrackMapData    `json:"TrackMapData"`
+	TrackInfo                  TrackInfo       `json:"TrackInfo"`
+	SessionStartTime           time.Time       `json:"SessionStartTime"`
+	CurrentRealtimePosInterval int             `json:"CurrentRealtimePosInterval"`
 
 	ConnectedDrivers    *DriverMap `json:"ConnectedDrivers"`
 	DisconnectedDrivers *DriverMap `json:"DisconnectedDrivers"`
@@ -133,6 +134,9 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 	}
 
 	if sendUpdatedRaceControlStatus {
+		// update the current refresh rate
+		rc.CurrentRealtimePosInterval = udp.CurrentRealtimePosIntervalMs
+
 		err = rc.broadcaster.Send(rc)
 
 		if err != nil {
