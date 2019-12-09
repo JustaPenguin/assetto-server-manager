@@ -1,9 +1,15 @@
 v1.6.1
 ------
 
+Added:
+
+* Added send chat to driver option to the admin panel on the Live Timings page.
+
 Fixes:
 
 * Fixed an issue with filtering from results files in Race Weekends when the Race Weekend is within a Championship.
+
+---
 
 v1.6.0
 ------
