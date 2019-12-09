@@ -7,6 +7,8 @@ Added:
 
 Fixes:
 
+* Fixed an issue with filtering from results files in Race Weekends when the Race Weekend is within a Championship.
+
 ---
 
 v1.6.0
