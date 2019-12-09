@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/cj123/assetto-server-manager/pkg/when"
 
 	"github.com/cj123/caldav-go/icalendar"
 	"github.com/cj123/caldav-go/icalendar/components"
@@ -32,8 +33,8 @@ type ChampionshipManager struct {
 	activeChampionship *ActiveChampionship
 	mutex              sync.Mutex
 
-	championshipEventStartTimers    map[string]*time.Timer
-	championshipEventReminderTimers map[string]*time.Timer
+	championshipEventStartTimers    map[string]chan<- struct{}
+	championshipEventReminderTimers map[string]chan<- struct{}
 }
 
 func NewChampionshipManager(raceManager *RaceManager) *ChampionshipManager {
@@ -640,12 +641,12 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 	event.ScheduledServerID = serverID
 
 	// if there is an existing schedule timer for this event stop it
-	if timer := cm.championshipEventStartTimers[event.ID.String()]; timer != nil {
-		timer.Stop()
+	if timerStop := cm.championshipEventStartTimers[event.ID.String()]; timerStop != nil {
+		timerStop <- struct{}{}
 	}
 
-	if timer := cm.championshipEventReminderTimers[event.ID.String()]; timer != nil {
-		timer.Stop()
+	if timerStop := cm.championshipEventReminderTimers[event.ID.String()]; timerStop != nil {
+		timerStop <- struct{}{}
 	}
 
 	if action == "add" {
@@ -654,8 +655,6 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 		}
 
 		// add a scheduled event on date
-		duration := time.Until(date)
-
 		if recurrence != "already-set" {
 			if recurrence != "" {
 				err := event.SetRecurrenceRule(recurrence)
@@ -679,7 +678,7 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 			}
 		}
 
-		cm.championshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+		cm.championshipEventStartTimers[event.ID.String()], err = when.When(date, func() {
 			err := cm.StartScheduledEvent(championship, event)
 
 			if err != nil {
@@ -687,12 +686,15 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 			}
 		})
 
+		if err != nil {
+			return err
+		}
+
 		if cm.notificationManager.HasNotificationReminders() {
 			for _, timer := range cm.notificationManager.GetNotificationReminders() {
-				duration = time.Until(date.Add(time.Duration(0-timer) * time.Minute))
 				thisTimer := timer
 
-				cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+				cm.championshipEventReminderTimers[event.ID.String()], err = when.When(date.Add(time.Duration(0-timer)*time.Minute), func() {
 					cm.notificationManager.SendChampionshipReminderMessage(championship, event, thisTimer)
 				})
 			}
@@ -1598,8 +1600,8 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 }
 
 func (cm *ChampionshipManager) InitScheduledChampionships() error {
-	cm.championshipEventStartTimers = make(map[string]*time.Timer)
-	cm.championshipEventReminderTimers = make(map[string]*time.Timer)
+	cm.championshipEventStartTimers = make(map[string]chan<- struct{})
+	cm.championshipEventReminderTimers = make(map[string]chan<- struct{})
 	championships, err := cm.ListChampionships()
 
 	if err != nil {
@@ -1618,9 +1620,7 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 
 			if event.Scheduled.After(time.Now()) {
 				// add a scheduled event on date
-				duration := time.Until(event.Scheduled)
-
-				cm.championshipEventStartTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+				cm.championshipEventStartTimers[event.ID.String()], err = when.When(event.Scheduled, func() {
 					err := cm.StartScheduledEvent(championship, event)
 
 					if err != nil {
@@ -1628,16 +1628,25 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 					}
 				})
 
+				if err != nil {
+					logrus.WithError(err).Errorf("Could not schedule event: %s", event.ID.String())
+					continue
+				}
+
 				if cm.notificationManager.HasNotificationReminders() {
 					for _, timer := range cm.notificationManager.GetNotificationReminders() {
 						if event.Scheduled.Add(time.Duration(0-timer) * time.Minute).After(time.Now()) {
 							// add reminder
-							duration = time.Until(event.Scheduled.Add(time.Duration(0-timer) * time.Minute))
 							thisTimer := timer
 
-							cm.championshipEventReminderTimers[event.ID.String()] = time.AfterFunc(duration, func() {
+							cm.championshipEventReminderTimers[event.ID.String()], err = when.When(event.Scheduled.Add(time.Duration(0-timer)*time.Minute), func() {
 								cm.notificationManager.SendChampionshipReminderMessage(championship, event, thisTimer)
 							})
+
+							if err != nil {
+								logrus.WithError(err).Errorf("Could not schedule event: %s", event.ID.String())
+								continue
+							}
 						}
 					}
 				}
