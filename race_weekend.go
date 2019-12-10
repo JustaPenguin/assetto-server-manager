@@ -24,6 +24,7 @@ type RaceWeekend struct {
 	// Filters is a map of Parent ID -> Child ID -> Filter
 	Filters map[string]map[string]*RaceWeekendSessionToSessionFilter
 
+	// Deprecated: use GetEntryList() instead
 	EntryList EntryList
 	Sessions  []*RaceWeekendSession
 
