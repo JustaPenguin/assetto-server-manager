@@ -31,8 +31,8 @@ type RaceWeekendManager struct {
 	activeRaceWeekend *ActiveRaceWeekend
 	mutex             sync.Mutex
 
-	scheduledSessionTimers         map[string]chan<- struct{}
-	scheduledSessionReminderTimers map[string]chan<- struct{}
+	scheduledSessionTimers         map[string]*when.Timer
+	scheduledSessionReminderTimers map[string]*when.Timer
 }
 
 func NewRaceWeekendManager(raceManager *RaceManager, championshipManager *ChampionshipManager, store Store, process ServerProcess, notificationManager NotificationDispatcher) *RaceWeekendManager {
@@ -43,8 +43,8 @@ func NewRaceWeekendManager(raceManager *RaceManager, championshipManager *Champi
 		store:               store,
 		process:             process,
 
-		scheduledSessionTimers:         make(map[string]chan<- struct{}),
-		scheduledSessionReminderTimers: make(map[string]chan<- struct{}),
+		scheduledSessionTimers:         make(map[string]*when.Timer),
+		scheduledSessionReminderTimers: make(map[string]*when.Timer),
 	}
 }
 
@@ -1088,8 +1088,8 @@ func (rwm *RaceWeekendManager) WatchForScheduledSessions() error {
 }
 
 func (rwm *RaceWeekendManager) clearScheduledSessionTimer(session *RaceWeekendSession) {
-	if timerStop := rwm.scheduledSessionTimers[session.ID.String()]; timerStop != nil {
-		timerStop <- struct{}{}
+	if timer := rwm.scheduledSessionTimers[session.ID.String()]; timer != nil {
+		timer.Stop()
 	}
 }
 

@@ -8,21 +8,36 @@ import (
 
 var (
 	// Resolution is how often each When is checked.
-	Resolution = time.Minute
+	Resolution = time.Second
 
-	events = make(map[chan struct{}]Runnable)
+	timers = make(map[*Timer]bool)
 	mutex  = sync.Mutex{}
 	once   = sync.Once{}
 )
 
-type Runnable struct {
+type Timer struct {
 	fn func()
 	t  time.Time
 }
 
+func newTimer(t time.Time, fn func()) *Timer {
+	r := &Timer{
+		t:  t,
+		fn: fn,
+	}
+
+	return r
+}
+
+func (t *Timer) Stop() {
+	mutex.Lock()
+	delete(timers, t)
+	mutex.Unlock()
+}
+
 var ErrTimeInPast = errors.New("when: time specified is in the past")
 
-func When(t time.Time, fn func()) (chan<- struct{}, error) {
+func When(t time.Time, fn func()) (*Timer, error) {
 	if t.Before(time.Now()) {
 		return nil, ErrTimeInPast
 	}
@@ -34,44 +49,30 @@ func When(t time.Time, fn func()) (chan<- struct{}, error) {
 			for {
 				select {
 				case t := <-ticker.C:
-					var toDelete []chan struct{}
+					var toStop []*Timer
 
 					mutex.Lock()
-
-					for k, event := range events {
-						if t.Round(Resolution).Equal(event.t.Round(Resolution)) {
-							go event.fn()
-							toDelete = append(toDelete, k)
+					for timer := range timers {
+						if t.Round(Resolution).Equal(timer.t.Round(Resolution)) {
+							go timer.fn()
+							toStop = append(toStop, timer)
 						}
 					}
-
-					for _, ch := range toDelete {
-						delete(events, ch)
-						close(ch)
-					}
-
 					mutex.Unlock()
+
+					for _, timer := range toStop {
+						timer.Stop()
+					}
 				}
 			}
 		}()
 	})
 
-	ch := make(chan struct{})
+	x := newTimer(t, fn)
 
 	mutex.Lock()
-	events[ch] = Runnable{t: t, fn: fn}
+	timers[x] = true
 	mutex.Unlock()
 
-	go func() {
-		select {
-		case <-ch:
-			mutex.Lock()
-			delete(events, ch)
-			mutex.Unlock()
-			close(ch)
-			return
-		}
-	}()
-
-	return ch, nil
+	return x, nil
 }

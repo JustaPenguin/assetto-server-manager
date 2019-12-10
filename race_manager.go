@@ -40,8 +40,8 @@ type RaceManager struct {
 	loopedRaceWaitForSecondRace bool
 
 	// scheduled races
-	customRaceStartTimers    map[string]chan<- struct{}
-	customRaceReminderTimers map[string]chan<- struct{}
+	customRaceStartTimers    map[string]*when.Timer
+	customRaceReminderTimers map[string]*when.Timer
 }
 
 func NewRaceManager(
@@ -1055,12 +1055,12 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 	race.ScheduledServerID = serverID
 
 	// if there is an existing schedule timer for this event stop it
-	if timerStop := rm.customRaceStartTimers[race.UUID.String()]; timerStop != nil {
-		timerStop <- struct{}{}
+	if timer := rm.customRaceStartTimers[race.UUID.String()]; timer != nil {
+		timer.Stop()
 	}
 
-	if timerStop := rm.customRaceReminderTimers[race.UUID.String()]; timerStop != nil {
-		timerStop <- struct{}{}
+	if timer := rm.customRaceReminderTimers[race.UUID.String()]; timer != nil {
+		timer.Stop()
 	}
 
 	if action == "add" {
@@ -1410,8 +1410,8 @@ func (rm *RaceManager) clearLoopedRaceSessionTypes() {
 }
 
 func (rm *RaceManager) InitScheduledRaces() error {
-	rm.customRaceStartTimers = make(map[string]chan<- struct{})
-	rm.customRaceReminderTimers = make(map[string]chan<- struct{})
+	rm.customRaceStartTimers = make(map[string]*when.Timer)
+	rm.customRaceReminderTimers = make(map[string]*when.Timer)
 
 	races, err := rm.store.ListCustomRaces()
 
@@ -1498,12 +1498,12 @@ func (rm *RaceManager) RescheduleNotifications(oldServerOpts *GlobalServerConfig
 	}
 
 	// stop all existing timers
-	for _, timerStop := range rm.customRaceReminderTimers {
-		timerStop <- struct{}{}
+	for _, timer := range rm.customRaceReminderTimers {
+		timer.Stop()
 	}
 
 	// rebuild the timers
-	rm.customRaceReminderTimers = make(map[string]chan<- struct{})
+	rm.customRaceReminderTimers = make(map[string]*when.Timer)
 
 	if rm.notificationManager.HasNotificationReminders() {
 		races, err := rm.store.ListCustomRaces()
@@ -1516,19 +1516,16 @@ func (rm *RaceManager) RescheduleNotifications(oldServerOpts *GlobalServerConfig
 			for _, race := range races {
 				race := race
 
-				if race.Scheduled.After(time.Now()) {
+				if race.Scheduled.After(time.Now()) && race.Scheduled.Add(time.Duration(0-timer)*time.Minute).After(time.Now()) {
+					// add reminder
+					thisTimer := timer
 
-					if race.Scheduled.Add(time.Duration(0-timer) * time.Minute).After(time.Now()) {
-						// add reminder
-						thisTimer := timer
+					rm.customRaceReminderTimers[race.UUID.String()], err = when.When(race.Scheduled.Add(time.Duration(0-timer)*time.Minute), func() {
+						_ = rm.notificationManager.SendRaceReminderMessage(race, thisTimer)
+					})
 
-						rm.customRaceReminderTimers[race.UUID.String()], err = when.When(race.Scheduled.Add(time.Duration(0-timer)*time.Minute), func() {
-							_ = rm.notificationManager.SendRaceReminderMessage(race, thisTimer)
-						})
-
-						if err != nil {
-							logrus.WithError(err).Error("Could not set up scheduled race reminder timer")
-						}
+					if err != nil {
+						logrus.WithError(err).Error("Could not set up scheduled race reminder timer")
 					}
 				}
 			}

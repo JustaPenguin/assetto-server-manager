@@ -33,8 +33,8 @@ type ChampionshipManager struct {
 	activeChampionship *ActiveChampionship
 	mutex              sync.Mutex
 
-	championshipEventStartTimers    map[string]chan<- struct{}
-	championshipEventReminderTimers map[string]chan<- struct{}
+	championshipEventStartTimers    map[string]*when.Timer
+	championshipEventReminderTimers map[string]*when.Timer
 }
 
 func NewChampionshipManager(raceManager *RaceManager) *ChampionshipManager {
@@ -641,12 +641,12 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 	event.ScheduledServerID = serverID
 
 	// if there is an existing schedule timer for this event stop it
-	if timerStop := cm.championshipEventStartTimers[event.ID.String()]; timerStop != nil {
-		timerStop <- struct{}{}
+	if timer := cm.championshipEventStartTimers[event.ID.String()]; timer != nil {
+		timer.Stop()
 	}
 
-	if timerStop := cm.championshipEventReminderTimers[event.ID.String()]; timerStop != nil {
-		timerStop <- struct{}{}
+	if timer := cm.championshipEventReminderTimers[event.ID.String()]; timer != nil {
+		timer.Stop()
 	}
 
 	if action == "add" {
@@ -1600,8 +1600,8 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 }
 
 func (cm *ChampionshipManager) InitScheduledChampionships() error {
-	cm.championshipEventStartTimers = make(map[string]chan<- struct{})
-	cm.championshipEventReminderTimers = make(map[string]chan<- struct{})
+	cm.championshipEventStartTimers = make(map[string]*when.Timer)
+	cm.championshipEventReminderTimers = make(map[string]*when.Timer)
 	championships, err := cm.ListChampionships()
 
 	if err != nil {
