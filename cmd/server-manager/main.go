@@ -1,7 +1,6 @@
 package main
 
 import (
-	lua "github.com/yuin/gopher-lua"
 	"net"
 	"net/http"
 	"os"
@@ -24,6 +23,7 @@ import (
 	"github.com/lorenzosaino/go-sysctl"
 	"github.com/pkg/browser"
 	"github.com/sirupsen/logrus"
+	"github.com/yuin/gopher-lua"
 )
 
 var defaultAddress = "0.0.0.0:8772"
@@ -91,6 +91,24 @@ func main() {
 		return
 	}
 
+	if config.LiveMap.IsEnabled() {
+		if config.LiveMap.IntervalMs < udpRealtimePosRefreshIntervalMin {
+			udp.RealtimePosIntervalMs = udpRealtimePosRefreshIntervalMin
+		} else {
+			udp.RealtimePosIntervalMs = config.LiveMap.IntervalMs
+		}
+
+		if runtime.GOOS == "linux" {
+			// check known kernel net memory restrictions. if they're lower than the recommended
+			// values, then print out explaining how to increase them
+			memValues := []string{"net.core.rmem_max", "net.core.rmem_default", "net.core.wmem_max", "net.core.wmem_default"}
+
+			for _, val := range memValues {
+				checkMemValue(val)
+			}
+		}
+	}
+
 	if config.Lua.Enabled && servermanager.IsPremium == "true" {
 		luaPath := os.Getenv("LUA_PATH")
 
@@ -125,24 +143,6 @@ func main() {
 		return
 	}
 
-	if config.LiveMap.IsEnabled() {
-		if config.LiveMap.IntervalMs < udpRealtimePosRefreshIntervalMin {
-			udp.RealtimePosIntervalMs = udpRealtimePosRefreshIntervalMin
-		} else {
-			udp.RealtimePosIntervalMs = config.LiveMap.IntervalMs
-		}
-
-		if runtime.GOOS == "linux" && checkUDPBufferSizes {
-			// check known kernel net memory restrictions. if they're lower than the recommended
-			// values, then print out explaining how to increase them
-			memValues := []string{"net.core.rmem_max", "net.core.rmem_default", "net.core.wmem_max", "net.core.wmem_default"}
-
-			for _, val := range memValues {
-				checkMemValue(val)
-			}
-		}
-	}
-
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 
 	if err != nil {
@@ -163,8 +163,7 @@ func main() {
 	}
 }
 
-const checkUDPBufferSizes = false
-const udpBufferRecommendedSize = uint64(2e7) // 20MB
+const udpBufferRecommendedSize = uint64(2e6) // 2MB
 
 func checkMemValue(key string) {
 	val, err := sysctlAsUint64(key)

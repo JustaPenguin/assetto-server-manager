@@ -4,6 +4,8 @@ v1.6.1
 Added:
 
 * Added send chat to driver option to the admin panel on the Live Timings page.
+* The UDP message receiver now detects if it has fallen behind while handling messages. If it has, it reduces the refresh rate that the Assetto Corsa Server sends messages at, so it can catch up. If you see a lot of "can't keep up!" messages in the Server Logs, you probably need to increase your 'refresh_interval_ms' in the config.yml.
+* Optimised the handling of UDP messages to improve performance.
 
 Fixes:
 

@@ -717,7 +717,7 @@ func TestRaceControl_OnCarUpdate(t *testing.T) {
 		return
 	}
 
-	err = raceControl.OnCarUpdate(udp.CarUpdate{
+	err = raceControl.handleCarUpdate(udp.CarUpdate{
 		CarID:               drivers[1].CarID,
 		Pos:                 udp.Vec{X: 100, Y: 20, Z: 3},
 		Velocity:            udp.Vec{X: 10, Y: 20, Z: 20},
@@ -731,12 +731,25 @@ func TestRaceControl_OnCarUpdate(t *testing.T) {
 		return
 	}
 
-	if driver, ok := raceControl.ConnectedDrivers.Get(drivers[1].DriverGUID); !ok || (driver.LastPos.X == 0 && driver.LastPos.Y == 0 && driver.LastPos.Z == 0) || driver.CurrentCar().TopSpeedThisLap == 0 {
+	driver, ok := raceControl.ConnectedDrivers.Get(drivers[1].DriverGUID)
+
+	if !ok {
+		t.Log("Driver 1 not found")
+		t.Fail()
+	}
+
+	if driver.LastPos.X == 0 && driver.LastPos.Y == 0 && driver.LastPos.Z == 0 {
+		t.Log("Driver 1 has no last position")
+		t.Fail()
+	}
+
+	if driver.CurrentCar().TopSpeedThisLap == 0 {
+		t.Log("Driver 1 has no top speed")
 		t.Fail()
 	}
 
 	t.Run("Unknown driver", func(t *testing.T) {
-		err := raceControl.OnCarUpdate(udp.CarUpdate{
+		err := raceControl.handleCarUpdate(udp.CarUpdate{
 			CarID:               100, // unknown car
 			Pos:                 udp.Vec{X: 100, Y: 20, Z: 3},
 			Velocity:            udp.Vec{X: 10, Y: 20, Z: 20},
@@ -747,71 +760,6 @@ func TestRaceControl_OnCarUpdate(t *testing.T) {
 
 		if err == nil {
 			t.Error("Error was nil, expected error")
-			return
-		}
-	})
-
-	t.Run("Driver disconnect", func(t *testing.T) {
-		for i := 0; i < 100; i++ {
-			for _, entrant := range drivers {
-				err := raceControl.OnCarUpdate(udp.CarUpdate{
-					CarID:               entrant.CarID,
-					Pos:                 udp.Vec{X: rand.Float32() * 100, Y: rand.Float32() * 100, Z: rand.Float32() * 100},
-					Velocity:            udp.Vec{X: rand.Float32() * 100, Y: rand.Float32() * 100, Z: rand.Float32() * 100},
-					Gear:                uint8(rand.Intn(6)),
-					EngineRPM:           uint16(rand.Intn(4000)),
-					NormalisedSplinePos: rand.Float32(),
-				})
-
-				if err != nil {
-					t.Error(err)
-					return
-				}
-
-				err = raceControl.OnLapCompleted(udp.LapCompleted{
-					CarID:   entrant.CarID,
-					LapTime: uint32(rand.Intn(50000)),
-					Cuts:    0,
-				})
-
-				if err != nil {
-					t.Error(err)
-					return
-				}
-			}
-		}
-
-		if raceControl.ConnectedDrivers.Len() != len(drivers) {
-			t.Error("Expected all drivers to be connected")
-			return
-		}
-
-		// run 6 updates but not for driver 0
-		for i := 0; i < 6; i++ {
-			for _, entrant := range drivers[1:] {
-				err := raceControl.OnCarUpdate(udp.CarUpdate{
-					CarID:               entrant.CarID,
-					Pos:                 udp.Vec{X: rand.Float32() * 100, Y: rand.Float32() * 100, Z: rand.Float32() * 100},
-					Velocity:            udp.Vec{X: rand.Float32() * 100, Y: rand.Float32() * 100, Z: rand.Float32() * 100},
-					Gear:                uint8(rand.Intn(6)),
-					EngineRPM:           uint16(rand.Intn(4000)),
-					NormalisedSplinePos: rand.Float32(),
-				})
-
-				if err != nil {
-					t.Error(err)
-					return
-				}
-			}
-		}
-
-		if raceControl.ConnectedDrivers.Len() != len(drivers)-1 {
-			t.Error("Expected all but one driver to be connected")
-			return
-		}
-
-		if _, ok := raceControl.DisconnectedDrivers.Get(drivers[0].DriverGUID); !ok {
-			t.Error("Expected to find driver 0 in disconnected drivers")
 			return
 		}
 	})

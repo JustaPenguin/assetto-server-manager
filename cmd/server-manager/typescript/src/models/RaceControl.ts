@@ -353,6 +353,7 @@ class RaceControl {
     TrackMapData: RaceControlTrackMapData;
     TrackInfo: RaceControlTrackInfo;
     SessionStartTime: Date;
+    CurrentRealtimePosInterval: number;
     ConnectedDrivers: RaceControlDriverMap | null;
     DisconnectedDrivers: RaceControlDriverMap | null;
     CarIDToGUID: { [key: number]: string };
@@ -363,6 +364,7 @@ class RaceControl {
         this.TrackMapData = new RaceControlTrackMapData(d.TrackMapData);
         this.TrackInfo = new RaceControlTrackInfo(d.TrackInfo);
         this.SessionStartTime = ('SessionStartTime' in d) ? ParseDate(d.SessionStartTime) : new Date();
+        this.CurrentRealtimePosInterval = ('CurrentRealtimePosInterval' in d) ? d.CurrentRealtimePosInterval as number : 0;
         this.ConnectedDrivers = ('ConnectedDrivers' in d) ? new RaceControlDriverMap(d.ConnectedDrivers) : null;
         this.DisconnectedDrivers = ('DisconnectedDrivers' in d) ? new RaceControlDriverMap(d.DisconnectedDrivers) : null;
         this.CarIDToGUID = ('CarIDToGUID' in d) ? d.CarIDToGUID as { [key: number]: string } : {};
@@ -371,6 +373,7 @@ class RaceControl {
     toObject(): any {
         const cfg: any = {};
         cfg.SessionStartTime = 'string';
+        cfg.CurrentRealtimePosInterval = 'number';
         return ToObject(this, cfg);
     }
 }
