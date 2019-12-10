@@ -17,11 +17,11 @@ import (
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 
+	"github.com/cj123/caldav-go/icalendar"
+	"github.com/cj123/caldav-go/icalendar/components"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 	"github.com/haisum/recaptcha"
-	"github.com/heindl/caldav-go/icalendar"
-	"github.com/heindl/caldav-go/icalendar/components"
 	"github.com/mitchellh/go-wordwrap"
 	"github.com/sirupsen/logrus"
 )
@@ -736,9 +736,24 @@ func (cm *ChampionshipManager) StartScheduledEvent(championship *Championship, e
 			return err
 		}
 	} else {
+		// our copy of the championship is outdated, get the latest version
+		var err error
+
+		championship, err = cm.store.LoadChampionship(championship.ID.String())
+
+		if err != nil {
+			return err
+		}
+
+		event, err = championship.EventByID(event.ID.String())
+
+		if err != nil {
+			return err
+		}
+
 		event.Scheduled = time.Time{}
 
-		err := cm.store.UpsertChampionship(championship)
+		err = cm.store.UpsertChampionship(championship)
 
 		if err != nil {
 			return err

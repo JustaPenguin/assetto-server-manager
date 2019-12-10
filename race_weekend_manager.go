@@ -787,9 +787,9 @@ func (rwm *RaceWeekendManager) ListAvailableResultsFilesForSorting(raceWeekend *
 
 		found := false
 
-	carCheck:
+		carCheck:
 		for _, car := range result.Cars {
-			for _, entryListCar := range raceWeekend.EntryList.CarIDs() {
+			for _, entryListCar := range raceWeekend.GetEntryList().CarIDs() {
 				if car.Model == entryListCar {
 					// result car found in entry list
 					found = true

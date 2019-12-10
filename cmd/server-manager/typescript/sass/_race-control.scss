@@ -193,6 +193,10 @@ td .dot-inactive {
   animation: cssAnimation 3s forwards;
 }
 
+.admin-command-input {
+    width: auto;
+}
+
 @keyframes cssAnimation {
   0% {
     opacity: 1;
