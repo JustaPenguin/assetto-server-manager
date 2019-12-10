@@ -10,12 +10,12 @@ var (
 	// Resolution is how often each When is checked.
 	Resolution = time.Minute
 
-	events = make(map[chan struct{}]runnable)
+	events = make(map[chan struct{}]Runnable)
 	mutex  = sync.Mutex{}
 	once   = sync.Once{}
 )
 
-type runnable struct {
+type Runnable struct {
 	fn func()
 	t  time.Time
 }
@@ -47,6 +47,7 @@ func When(t time.Time, fn func()) (chan<- struct{}, error) {
 
 					for _, ch := range toDelete {
 						delete(events, ch)
+						close(ch)
 					}
 
 					mutex.Unlock()
@@ -58,7 +59,7 @@ func When(t time.Time, fn func()) (chan<- struct{}, error) {
 	ch := make(chan struct{})
 
 	mutex.Lock()
-	events[ch] = runnable{t: t, fn: fn}
+	events[ch] = Runnable{t: t, fn: fn}
 	mutex.Unlock()
 
 	go func() {
@@ -67,6 +68,7 @@ func When(t time.Time, fn func()) (chan<- struct{}, error) {
 			mutex.Lock()
 			delete(events, ch)
 			mutex.Unlock()
+			close(ch)
 			return
 		}
 	}()
