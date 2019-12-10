@@ -59,7 +59,7 @@ func (h *RaceControlHub) Send(message udp.Message) error {
 
 func newRaceControlHub() *RaceControlHub {
 	return &RaceControlHub{
-		broadcast: make(chan raceControlMessage),
+		broadcast: make(chan raceControlMessage, 1000),
 		register:  make(chan *raceControlClient),
 		clients:   make(map[*raceControlClient]bool),
 	}

@@ -68,10 +68,13 @@ func (r *Resolver) UDPCallback(message udp.Message) {
 	if !config.Server.PerformanceMode {
 		r.resolveRaceControl().UDPCallback(message)
 	}
-	r.resolveChampionshipManager().ChampionshipEventCallback(message)
-	r.resolveRaceWeekendManager().UDPCallback(message)
-	r.resolveRaceManager().LoopCallback(message)
-	r.resolveContentManagerWrapper().UDPCallback(message)
+
+	if message.Event() != udp.EventCarUpdate {
+		r.resolveChampionshipManager().ChampionshipEventCallback(message)
+		r.resolveRaceWeekendManager().UDPCallback(message)
+		r.resolveRaceManager().LoopCallback(message)
+		r.resolveContentManagerWrapper().UDPCallback(message)
+	}
 }
 
 func (r *Resolver) initViewRenderer() error {
