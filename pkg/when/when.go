@@ -8,7 +8,7 @@ import (
 
 var (
 	// Resolution is how often each When is checked.
-	Resolution = time.Second
+	Resolution = time.Minute
 
 	events = make(map[chan struct{}]runnable)
 	mutex  = sync.Mutex{}
@@ -34,12 +34,21 @@ func When(t time.Time, fn func()) (chan<- struct{}, error) {
 			for {
 				select {
 				case t := <-ticker.C:
+					var toDelete []chan struct{}
+
 					mutex.Lock()
-					for _, event := range events {
+
+					for k, event := range events {
 						if t.Round(Resolution).Equal(event.t.Round(Resolution)) {
 							go event.fn()
+							toDelete = append(toDelete, k)
 						}
 					}
+
+					for _, ch := range toDelete {
+						delete(events, ch)
+					}
+
 					mutex.Unlock()
 				}
 			}

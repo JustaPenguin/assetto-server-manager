@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/cj123/assetto-server-manager/pkg/when"
 
 	"github.com/cj123/ini"
 	"github.com/go-chi/chi"
@@ -30,8 +31,8 @@ type RaceWeekendManager struct {
 	activeRaceWeekend *ActiveRaceWeekend
 	mutex             sync.Mutex
 
-	scheduledSessionTimers         map[string]*time.Timer
-	scheduledSessionReminderTimers map[string]*time.Timer
+	scheduledSessionTimers         map[string]chan<- struct{}
+	scheduledSessionReminderTimers map[string]chan<- struct{}
 }
 
 func NewRaceWeekendManager(raceManager *RaceManager, championshipManager *ChampionshipManager, store Store, process ServerProcess, notificationManager NotificationDispatcher) *RaceWeekendManager {
@@ -42,8 +43,8 @@ func NewRaceWeekendManager(raceManager *RaceManager, championshipManager *Champi
 		store:               store,
 		process:             process,
 
-		scheduledSessionTimers:         make(map[string]*time.Timer),
-		scheduledSessionReminderTimers: make(map[string]*time.Timer),
+		scheduledSessionTimers:         make(map[string]chan<- struct{}),
+		scheduledSessionReminderTimers: make(map[string]chan<- struct{}),
 	}
 }
 
@@ -787,7 +788,7 @@ func (rwm *RaceWeekendManager) ListAvailableResultsFilesForSorting(raceWeekend *
 
 		found := false
 
-		carCheck:
+	carCheck:
 		for _, car := range result.Cars {
 			for _, entryListCar := range raceWeekend.GetEntryList().CarIDs() {
 				if car.Model == entryListCar {
@@ -1087,15 +1088,17 @@ func (rwm *RaceWeekendManager) WatchForScheduledSessions() error {
 }
 
 func (rwm *RaceWeekendManager) clearScheduledSessionTimer(session *RaceWeekendSession) {
-	if timer := rwm.scheduledSessionTimers[session.ID.String()]; timer != nil {
-		timer.Stop()
+	if timerStop := rwm.scheduledSessionTimers[session.ID.String()]; timerStop != nil {
+		timerStop <- struct{}{}
 	}
 }
 
 func (rwm *RaceWeekendManager) setupScheduledSessionTimer(raceWeekend *RaceWeekend, session *RaceWeekendSession) error {
 	rwm.clearScheduledSessionTimer(session)
 
-	rwm.scheduledSessionTimers[session.ID.String()] = time.AfterFunc(time.Until(session.ScheduledTime), func() {
+	var err error
+
+	rwm.scheduledSessionTimers[session.ID.String()], err = when.When(session.ScheduledTime, func() {
 		err := rwm.StartSession(raceWeekend.ID.String(), session.ID.String(), false)
 
 		if err != nil {
@@ -1116,22 +1119,29 @@ func (rwm *RaceWeekendManager) setupScheduledSessionTimer(raceWeekend *RaceWeeke
 		}
 	})
 
+	if err != nil {
+		return err
+	}
+
 	if rwm.notificationManager.HasNotificationReminders() {
 		for _, timer := range rwm.notificationManager.GetNotificationReminders() {
 			reminderTime := session.ScheduledTime.Add(time.Duration(-timer) * time.Minute)
 
 			if reminderTime.After(time.Now()) {
 				// add reminder
-				duration := time.Until(reminderTime)
 				thisTimer := timer
 
-				rwm.scheduledSessionReminderTimers[session.ID.String()] = time.AfterFunc(duration, func() {
+				rwm.scheduledSessionReminderTimers[session.ID.String()], err = when.When(reminderTime, func() {
 					err := rwm.notificationManager.SendRaceWeekendReminderMessage(raceWeekend, session, thisTimer)
 
 					if err != nil {
 						logrus.WithError(err).Errorf("Could not send race weekend reminder message")
 					}
 				})
+
+				if err != nil {
+					logrus.WithError(err).Error("Could not set up race weekend reminder timer")
+				}
 			}
 		}
 	}

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/cj123/assetto-server-manager/pkg/when"
 
 	"github.com/etcd-io/bbolt"
 	"github.com/go-chi/chi"
@@ -39,8 +40,8 @@ type RaceManager struct {
 	loopedRaceWaitForSecondRace bool
 
 	// scheduled races
-	customRaceStartTimers    map[string]*time.Timer
-	customRaceReminderTimers map[string]*time.Timer
+	customRaceStartTimers    map[string]chan<- struct{}
+	customRaceReminderTimers map[string]chan<- struct{}
 }
 
 func NewRaceManager(
@@ -1054,12 +1055,12 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 	race.ScheduledServerID = serverID
 
 	// if there is an existing schedule timer for this event stop it
-	if timer := rm.customRaceStartTimers[race.UUID.String()]; timer != nil {
-		timer.Stop()
+	if timerStop := rm.customRaceStartTimers[race.UUID.String()]; timerStop != nil {
+		timerStop <- struct{}{}
 	}
 
-	if timer := rm.customRaceReminderTimers[race.UUID.String()]; timer != nil {
-		timer.Stop()
+	if timerStop := rm.customRaceReminderTimers[race.UUID.String()]; timerStop != nil {
+		timerStop <- struct{}{}
 	}
 
 	if action == "add" {
@@ -1068,8 +1069,6 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 		}
 
 		// add a scheduled event on date
-		duration := time.Until(race.Scheduled)
-
 		if recurrence != "already-set" {
 			if recurrence != "" {
 				err := race.SetRecurrenceRule(recurrence)
@@ -1093,7 +1092,7 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 			}
 		}
 
-		rm.customRaceStartTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+		rm.customRaceStartTimers[race.UUID.String()], err = when.When(race.Scheduled, func() {
 			err := rm.StartScheduledRace(race)
 
 			if err != nil {
@@ -1101,16 +1100,23 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 			}
 		})
 
+		if err != nil {
+			return err
+		}
+
 		if rm.notificationManager.HasNotificationReminders() {
 			_ = rm.notificationManager.SendRaceScheduledMessage(race, race.Scheduled)
 
 			for _, timer := range rm.notificationManager.GetNotificationReminders() {
-				duration = time.Until(race.Scheduled.Add(time.Duration(0-timer) * time.Minute))
 				thisTimer := timer
 
-				rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+				rm.customRaceReminderTimers[race.UUID.String()], err = when.When(race.Scheduled.Add(time.Duration(0-timer)*time.Minute), func() {
 					_ = rm.notificationManager.SendRaceReminderMessage(race, thisTimer)
 				})
+
+				if err != nil {
+					logrus.WithError(err).Error("Could not set up race reminder timer")
+				}
 			}
 		}
 
@@ -1404,8 +1410,8 @@ func (rm *RaceManager) clearLoopedRaceSessionTypes() {
 }
 
 func (rm *RaceManager) InitScheduledRaces() error {
-	rm.customRaceStartTimers = make(map[string]*time.Timer)
-	rm.customRaceReminderTimers = make(map[string]*time.Timer)
+	rm.customRaceStartTimers = make(map[string]chan<- struct{})
+	rm.customRaceReminderTimers = make(map[string]chan<- struct{})
 
 	races, err := rm.store.ListCustomRaces()
 
@@ -1422,9 +1428,7 @@ func (rm *RaceManager) InitScheduledRaces() error {
 
 		if race.Scheduled.After(time.Now()) {
 			// add a scheduled event on date
-			duration := time.Until(race.Scheduled)
-
-			rm.customRaceStartTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+			rm.customRaceStartTimers[race.UUID.String()], err = when.When(race.Scheduled, func() {
 				err := rm.StartScheduledRace(race)
 
 				if err != nil {
@@ -1432,16 +1436,23 @@ func (rm *RaceManager) InitScheduledRaces() error {
 				}
 			})
 
+			if err != nil {
+				logrus.WithError(err).Error("Could not set up scheduled race timer")
+			}
+
 			if rm.notificationManager.HasNotificationReminders() {
 				for _, timer := range rm.notificationManager.GetNotificationReminders() {
 					if race.Scheduled.Add(time.Duration(0-timer) * time.Minute).After(time.Now()) {
 						// add reminder
-						duration = time.Until(race.Scheduled.Add(time.Duration(0-timer) * time.Minute))
 						thisTimer := timer
 
-						rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+						rm.customRaceReminderTimers[race.UUID.String()], err = when.When(race.Scheduled.Add(time.Duration(0-timer)*time.Minute), func() {
 							_ = rm.notificationManager.SendRaceReminderMessage(race, thisTimer)
 						})
+
+						if err != nil {
+							logrus.WithError(err).Error("Could not set up scheduled race reminder timer")
+						}
 					}
 				}
 			}
@@ -1487,12 +1498,12 @@ func (rm *RaceManager) RescheduleNotifications(oldServerOpts *GlobalServerConfig
 	}
 
 	// stop all existing timers
-	for _, timer := range rm.customRaceReminderTimers {
-		timer.Stop()
+	for _, timerStop := range rm.customRaceReminderTimers {
+		timerStop <- struct{}{}
 	}
 
 	// rebuild the timers
-	rm.customRaceReminderTimers = make(map[string]*time.Timer)
+	rm.customRaceReminderTimers = make(map[string]chan<- struct{})
 
 	if rm.notificationManager.HasNotificationReminders() {
 		races, err := rm.store.ListCustomRaces()
@@ -1506,16 +1517,18 @@ func (rm *RaceManager) RescheduleNotifications(oldServerOpts *GlobalServerConfig
 				race := race
 
 				if race.Scheduled.After(time.Now()) {
-					duration := time.Until(race.Scheduled)
 
 					if race.Scheduled.Add(time.Duration(0-timer) * time.Minute).After(time.Now()) {
 						// add reminder
-						duration = time.Until(race.Scheduled.Add(time.Duration(0-timer) * time.Minute))
 						thisTimer := timer
 
-						rm.customRaceReminderTimers[race.UUID.String()] = time.AfterFunc(duration, func() {
+						rm.customRaceReminderTimers[race.UUID.String()], err = when.When(race.Scheduled.Add(time.Duration(0-timer)*time.Minute), func() {
 							_ = rm.notificationManager.SendRaceReminderMessage(race, thisTimer)
 						})
+
+						if err != nil {
+							logrus.WithError(err).Error("Could not set up scheduled race reminder timer")
+						}
 					}
 				}
 			}
