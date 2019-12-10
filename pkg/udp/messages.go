@@ -163,6 +163,7 @@ func (asu *AssettoServerUDP) serve() {
 				}
 			case <-ticker.C:
 				if RealtimePosIntervalMs < 0 {
+					// there is no real time pos interval set, we don't need to check if we're keeping up with messages
 					continue
 				}
 
