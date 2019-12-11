@@ -4,6 +4,8 @@ import (
 	"errors"
 	"sync"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -48,12 +50,13 @@ func When(t time.Time, fn func()) (*Timer, error) {
 
 			for {
 				select {
-				case t := <-ticker.C:
+				case tick := <-ticker.C:
 					var toStop []*Timer
 
 					mutex.Lock()
 					for timer := range timers {
-						if t.Round(Resolution).Equal(timer.t.Round(Resolution)) {
+						if tick.Round(Resolution).Equal(timer.t.Round(Resolution)) {
+							logrus.Debugf("Starting scheduled event (is now %s)", timer.t)
 							go timer.fn()
 							toStop = append(toStop, timer)
 						}
