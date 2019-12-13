@@ -16,7 +16,6 @@ import (
 	"github.com/cj123/assetto-server-manager/internal/changelog"
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
-	"github.com/cj123/assetto-server-manager/pkg/when"
 
 	"github.com/dustin/go-humanize"
 	"github.com/etcd-io/bbolt"
@@ -36,9 +35,6 @@ const (
 func init() {
 	runtime.LockOSThread()
 	servermanager.InitLogging()
-
-	// Our scheduled events run on minute intervals, so it's only necessary to check each minute
-	when.Resolution = time.Minute
 }
 
 func main() {

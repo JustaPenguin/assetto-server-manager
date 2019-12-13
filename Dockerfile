@@ -41,9 +41,6 @@ RUN steamcmd.sh +login anonymous +quit; exit 0
 # dependencies for plugins, e.g. stracker, kissmyrank
 RUN apt-get update && apt-get install -y lib32gcc1 lib32stdc++6 zlib1g zlib1g lib32z1 ca-certificates && rm -rf /var/lib/apt/lists/*
 
-# timezone info
-ADD https://github.com/golang/go/raw/master/lib/time/zoneinfo.zip /usr/local/go/lib/time/zoneinfo.zip
-
 RUN useradd -ms /bin/bash ${SERVER_USER}
 
 RUN mkdir -p ${SERVER_MANAGER_DIR} && mkdir ${SERVER_INSTALL_DIR}

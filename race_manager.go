@@ -15,6 +15,7 @@ import (
 	"github.com/cj123/assetto-server-manager/pkg/udp"
 	"github.com/cj123/assetto-server-manager/pkg/when"
 
+	"4d63.com/tz"
 	"github.com/etcd-io/bbolt"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
@@ -681,7 +682,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 			timeString := r.FormValue("CustomRaceScheduledTime")
 			timezone := r.FormValue("CustomRaceScheduledTimezone")
 
-			location, err := time.LoadLocation(timezone)
+			location, err := tz.LoadLocation(timezone)
 
 			if err != nil {
 				logrus.WithError(err).Errorf("could not find location: %s", location)

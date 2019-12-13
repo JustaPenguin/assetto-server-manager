@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"4d63.com/tz"
 	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
 )
@@ -485,7 +486,7 @@ func (rwh *RaceWeekendHandler) scheduleSession(w http.ResponseWriter, r *http.Re
 	if !startWhenParentFinished {
 		var location *time.Location
 
-		location, err := time.LoadLocation(timezone)
+		location, err := tz.LoadLocation(timezone)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("could not find location: %s", location)

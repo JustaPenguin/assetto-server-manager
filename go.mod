@@ -1,6 +1,7 @@
 module github.com/cj123/assetto-server-manager
 
 require (
+	4d63.com/tz v1.1.0
 	github.com/Clinet/discordgo-embed v0.0.0-20190411043415-d754bc1a576c
 	github.com/Masterminds/goutils v1.1.0 // indirect
 	github.com/Masterminds/semver v1.4.2
