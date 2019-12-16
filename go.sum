@@ -1,3 +1,7 @@
+4d63.com/embedfiles v0.0.0-20190311033909-995e0740726f h1:oyYjGRBNq1TxAIG8aHqtxlvqUfzdZf+MbcRb/oweNfY=
+4d63.com/embedfiles v0.0.0-20190311033909-995e0740726f/go.mod h1:HxEsUxoVZyRxsZML/S6e2xAuieFMlGO0756ncWx1aXE=
+4d63.com/tz v1.1.0 h1:Hi58WbeFjiUH4XOWuCpl5iSzuUuw1axZzTqIfMKPKrg=
+4d63.com/tz v1.1.0/go.mod h1:SHGqVdL7hd2ZaX2T9uEiOZ/OFAUfCCLURdLPJsd8ZNs=
 github.com/Clinet/discordgo-embed v0.0.0-20190411043415-d754bc1a576c h1:XB4X3MWxiq+Tb0lmc6CY1S9t5sJG1zFCrfpGQuKEGFc=
 github.com/Clinet/discordgo-embed v0.0.0-20190411043415-d754bc1a576c/go.mod h1:0ydUl+01209LCyzJk68BeRtCN1IMrNJgX4IBmwmC1f8=
 github.com/Masterminds/goutils v1.1.0 h1:zukEsf/1JZwCMgHiK3GZftabmxiCw4apj3a28RPBiVg=
