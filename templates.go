@@ -514,12 +514,16 @@ func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, vars Templat
 	data.RecaptchaSiteKey = config.Championships.RecaptchaConfig.SiteKey
 
 	if IsPremium == "true" {
-		championship, err := tr.store.LoadChampionship(chi.URLParam(r, "championshipID"))
+		data.OGImage = opts.OGImage
 
-		if err == nil && championship.OGImage != "" {
-			data.OGImage = championship.OGImage
-		} else {
-			data.OGImage = opts.OGImage
+		id := chi.URLParam(r, "championshipID")
+
+		if id != "" {
+			championship, err := tr.store.LoadChampionship(id)
+
+			if err == nil && championship.OGImage != "" {
+				data.OGImage = championship.OGImage
+			}
 		}
 	}
 
