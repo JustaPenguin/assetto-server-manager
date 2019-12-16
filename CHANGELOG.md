@@ -12,6 +12,7 @@ Fixes:
 
 * Fixed an issue with filtering from results files in Race Weekends when the Race Weekend is within a Championship.
 * We've changed the method that we use to check if scheduled events need running. Hopefully this should make scheduled events more reliable!
+* Fixes a memory leak when proxying STracker pages
 
 ---
 

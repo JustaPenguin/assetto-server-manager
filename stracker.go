@@ -374,6 +374,10 @@ func (sth *StrackerHandler) proxy(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
+		if err := r.Body.Close(); err != nil {
+			return err
+		}
+
 		r.Body = ioutil.NopCloser(buf)
 		r.Header.Set("Content-Length", fmt.Sprint(buf.Len()))
 
