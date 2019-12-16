@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/go-chi/chi"
 	"html/template"
 	"net"
 	"net/http"
@@ -466,6 +467,7 @@ type BaseTemplateVars struct {
 	SentryDSN          template.JSStr
 	RecaptchaSiteKey   string
 	WideContainer      bool
+	OGImage            string
 }
 
 func (b *BaseTemplateVars) Get() *BaseTemplateVars {
@@ -510,6 +512,16 @@ func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, vars Templat
 	data.MonitoringEnabled = config.Monitoring.Enabled
 	data.SentryDSN = sentryJSDSN
 	data.RecaptchaSiteKey = config.Championships.RecaptchaConfig.SiteKey
+
+	if IsPremium == "true" {
+		championship, err := tr.store.LoadChampionship(chi.URLParam(r, "championshipID"))
+
+		if err == nil && championship.OGImage != "" {
+			data.OGImage = championship.OGImage
+		} else {
+			data.OGImage = opts.OGImage
+		}
+	}
 
 	return nil
 }

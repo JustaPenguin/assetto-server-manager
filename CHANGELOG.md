@@ -5,6 +5,7 @@ Added:
 
 * Added send chat to driver option to the admin panel on the Live Timings page.
 * The UDP message receiver now detects if it has fallen behind while handling messages. If it has, it reduces the refresh rate that the Assetto Corsa Server sends messages at, so it can catch up. If you see a lot of "can't keep up!" messages in the Server Logs, you probably need to increase your 'refresh_interval_ms' in the config.yml.
+* Added configurable Open Graph images to both the manager as a whole and championships, with these you can link to images that will be shown whenever you share a link of the manager/championship pages on social media (premium).
 * Optimised the handling of UDP messages to improve performance.
 
 Fixes:

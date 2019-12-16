@@ -123,7 +123,7 @@ func (f Form) buildOpts(val reflect.Value, t reflect.Type, parentName string) []
 		formShow := typeField.Tag.Get(formShowTagName)
 
 		// check to see if we should be showing this tag
-		if formShow == "-" || (formShow != "open" && f.visibility != "" && formShow != f.visibility) {
+		if formShow == "-" || (formShow != "open" && f.visibility != "" && formShow != f.visibility) || formShow == "premium" && IsPremium != "true" {
 			continue
 		}
 
