@@ -186,7 +186,7 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 		for _, entrant := range entryList {
 			if entrant.Model == AnyCarModel {
 				entrant.Model = car
-				entrant.Skin = rm.randomSkin(entrant.Model)
+				entrant.Skin = rm.carManager.RandomSkin(entrant.Model)
 				break
 			}
 		}
@@ -196,7 +196,7 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 		if entrant.Model == AnyCarModel {
 			// cars with 'any car model' become random in the entry list.
 			entrant.Model = finalCars[rand.Intn(len(finalCars))]
-			entrant.Skin = rm.randomSkin(entrant.Model)
+			entrant.Skin = rm.carManager.RandomSkin(entrant.Model)
 		}
 	}
 
@@ -228,20 +228,6 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 	}
 
 	return nil
-}
-
-func (rm *RaceManager) randomSkin(model string) string {
-	car, err := rm.carManager.LoadCar(model, nil)
-
-	if err != nil {
-		logrus.WithError(err).Errorf("Could not load car %s. No skin will be specified", model)
-		return ""
-	} else if len(car.Skins) == 0 {
-		logrus.Warnf("Car %s has no skins uploaded. No skin will be specified", model)
-		return ""
-	} else {
-		return car.Skins[rand.Intn(len(car.Skins))]
-	}
 }
 
 func eventStartPlugin(raceConfig *CurrentRaceConfig, serverOpts *GlobalServerConfig, entryList *EntryList) error {
