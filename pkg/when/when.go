@@ -48,24 +48,21 @@ func When(t time.Time, fn func()) (*Timer, error) {
 		go func() {
 			ticker := time.NewTicker(Resolution)
 
-			for {
-				select {
-				case tick := <-ticker.C:
-					var toStop []*Timer
+			for tick := range ticker.C {
+				var toStop []*Timer
 
-					mutex.Lock()
-					for timer := range timers {
-						if tick.Round(Resolution).Equal(timer.t.Round(Resolution)) {
-							logrus.Debugf("Starting scheduled event (is now %s)", timer.t)
-							go timer.fn()
-							toStop = append(toStop, timer)
-						}
+				mutex.Lock()
+				for timer := range timers {
+					if tick.Round(Resolution).Equal(timer.t.Round(Resolution)) || tick.Round(Resolution).After(timer.t.Round(Resolution)) {
+						logrus.Debugf("Starting scheduled event (is now %s)", timer.t)
+						go timer.fn()
+						toStop = append(toStop, timer)
 					}
-					mutex.Unlock()
+				}
+				mutex.Unlock()
 
-					for _, timer := range toStop {
-						timer.Stop()
-					}
+				for _, timer := range toStop {
+					timer.Stop()
 				}
 			}
 		}()
