@@ -20,6 +20,7 @@ import (
 
 	"github.com/Masterminds/sprig"
 	"github.com/getsentry/raven-go"
+	"github.com/go-chi/chi"
 	"github.com/mattn/go-zglob"
 	"github.com/sirupsen/logrus"
 )
@@ -466,6 +467,7 @@ type BaseTemplateVars struct {
 	SentryDSN          template.JSStr
 	RecaptchaSiteKey   string
 	WideContainer      bool
+	OGImage            string
 }
 
 func (b *BaseTemplateVars) Get() *BaseTemplateVars {
@@ -510,6 +512,20 @@ func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, vars Templat
 	data.MonitoringEnabled = config.Monitoring.Enabled
 	data.SentryDSN = sentryJSDSN
 	data.RecaptchaSiteKey = config.Championships.RecaptchaConfig.SiteKey
+
+	if IsPremium == "true" {
+		data.OGImage = opts.OGImage
+
+		id := chi.URLParam(r, "championshipID")
+
+		if id != "" {
+			championship, err := tr.store.LoadChampionship(id)
+
+			if err == nil && championship.OGImage != "" {
+				data.OGImage = championship.OGImage
+			}
+		}
+	}
 
 	return nil
 }

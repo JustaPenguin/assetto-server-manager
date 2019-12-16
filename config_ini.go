@@ -176,6 +176,7 @@ type GlobalServerConfig struct {
 	Theme     FormHeading `ini:"-" json:"-" input:"heading"`
 	DarkTheme int         `ini:"-" input:"checkbox" help:"Enable Server Manager's Dark Theme by default"`
 	CustomCSS string      `ini:"-" input:"textarea" help:"Customise the style of Server Manager! You can <a href='https://github.com/cj123/assetto-server-manager/wiki/Custom-CSS-Examples'>view some examples</a> on the Server Manager Wiki!"`
+	OGImage   string      `ini:"-" show:"premium" help:"Link to an image on the web here to set it as your default Open Graph image (will show in links)"`
 
 	ContentManagerIntegration   FormHeading `ini:"-" json:"-" input:"heading"`
 	EnableContentManagerWrapper int         `ini:"-" input:"checkbox" help:"When on, this option makes Server Manager provide extra information to Content Manager. This includes more detail about connected clients, event descriptions and download links. A side-effect of this is that your server name will contain a new piece of information (an 'i' character followed by a port - which Content Manager requires). Also - if enabled - this wrapper uses a GeoIP functionality provided by <a href='https://freegeoip.app''>freegeoip.app</a>."`

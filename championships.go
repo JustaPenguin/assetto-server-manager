@@ -102,6 +102,9 @@ type Championship struct {
 	// Raw html can be attached to championships, used to share tracks/cars etc.
 	Info template.HTML
 
+	// URL to a specific OG Image for the championship
+	OGImage string
+
 	// OpenEntrants indicates that entrant names do not need to be specified in the EntryList.
 	// As Entrants join a championship, the available Entrant slots will be filled by the information
 	// provided by a join message. The EntryList for each class will still need creating, but

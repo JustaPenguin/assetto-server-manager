@@ -204,6 +204,10 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	championship.Info = template.HTML(r.FormValue("ChampionshipInfo"))
 	championship.OverridePassword = r.FormValue("OverridePassword") == "on" || r.FormValue("OverridePassword") == "1"
 
+	if IsPremium == "true" {
+		championship.OGImage = r.FormValue("ChampionshipOGImage")
+	}
+
 	newACSR := r.FormValue("ACSR") == "on" || r.FormValue("ACSR") == "1"
 
 	if championship.ACSR && !newACSR {

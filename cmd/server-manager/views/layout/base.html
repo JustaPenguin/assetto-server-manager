@@ -3,6 +3,9 @@
     <html lang="en">
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        {{ with $.OGImage }}<meta property="og:image" content="{{ $.OGImage }}">{{ end }}
+
         <link rel="shortcut icon" href="/static/favicon.ico">
         <meta charset="UTF-8">
         <title>{{ block "title" . }}{{ end }} / {{ $.ServerName }}</title>
