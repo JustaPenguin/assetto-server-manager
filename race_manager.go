@@ -181,25 +181,22 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 		return err
 	}
 
+	// any available car should make sure you have one of each before randomising (#678)
+	for _, car := range finalCars {
+		for _, entrant := range entryList {
+			if entrant.Model == AnyCarModel {
+				entrant.Model = car
+				entrant.Skin = rm.carManager.RandomSkin(entrant.Model)
+				break
+			}
+		}
+	}
+
 	for _, entrant := range entryList {
 		if entrant.Model == AnyCarModel {
 			// cars with 'any car model' become random in the entry list.
-			cars := strings.Split(config.CurrentRaceConfig.Cars, ";")
-
-			entrant.Model = cars[rand.Intn(len(cars))]
-
-			// generate a random skin too
-			car, err := rm.carManager.LoadCar(entrant.Model, nil)
-
-			if err != nil {
-				logrus.WithError(err).Errorf("Could not load car %s. No skin will be specified", entrant.Model)
-				entrant.Skin = ""
-			} else if len(car.Skins) == 0 {
-				logrus.Warnf("Car %s has no skins uploaded. No skin will be specified", entrant.Model)
-				entrant.Skin = ""
-			} else {
-				entrant.Skin = car.Skins[rand.Intn(len(car.Skins))]
-			}
+			entrant.Model = finalCars[rand.Intn(len(finalCars))]
+			entrant.Skin = rm.carManager.RandomSkin(entrant.Model)
 		}
 	}
 
