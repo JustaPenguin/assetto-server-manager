@@ -227,7 +227,7 @@ server:
   plugins:
     # uncomment the two lines below to run the command '/my/cool/plugin/path/run.sh --some-opt config.json'
     # - executable: /my/cool/plugin/path/run.sh
-    #  arguments: ["--some-opt", "config.json"]
+    #   arguments: ["--some-opt", "config.json"]
 
 ################################################################################
 #
