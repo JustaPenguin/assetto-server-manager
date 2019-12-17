@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/cj123/sessions"
 	"github.com/etcd-io/bbolt"
@@ -141,11 +142,26 @@ func (s *StoreConfig) BuildStore() (Store, error) {
 }
 
 type ServerExtraConfig struct {
-	RunOnStart                  []string `yaml:"run_on_start"`
-	AuditLogging                bool     `yaml:"audit_logging"`
-	PerformanceMode             bool     `yaml:"performance_mode"`
-	DisableWindowsBrowserOpen   bool     `yaml:"dont_open_browser"`
-	ScanContentFolderForChanges bool     `yaml:"scan_content_folder_for_changes"`
+	Plugins                     []*CommandPlugin `yaml:"plugins"`
+	AuditLogging                bool             `yaml:"audit_logging"`
+	PerformanceMode             bool             `yaml:"performance_mode"`
+	DisableWindowsBrowserOpen   bool             `yaml:"dont_open_browser"`
+	ScanContentFolderForChanges bool             `yaml:"scan_content_folder_for_changes"`
+
+	// Deprecated; use Plugins instead
+	RunOnStart []string `yaml:"run_on_start"`
+}
+
+type CommandPlugin struct {
+	Executable string   `yaml:"executable"`
+	Arguments  []string `yaml:"arguments"`
+}
+
+func (c *CommandPlugin) String() string {
+	out := c.Executable
+	out += strings.Join(c.Arguments, " ")
+
+	return out
 }
 
 const acsrURL = "https://acsr.assettocorsaservers.com"

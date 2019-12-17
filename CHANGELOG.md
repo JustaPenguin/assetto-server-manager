@@ -1,6 +1,8 @@
 v1.6.1
 ------
 
+**Please note, this release deprecates use of "run_on_start" in config.yml. Please read the new config.yml "plugins" section if you were using run_on_start!**
+
 Added:
 
 * Added send chat to driver option to the admin panel on the Live Timings page.
@@ -8,6 +10,7 @@ Added:
 * Added configurable Open Graph images to both the manager as a whole and championships, with these you can link to images that will be shown whenever you share a link of the manager/championship pages on social media (premium).
 * Optimised the handling of UDP messages to improve performance.
 * When using "Any Available Car", one of each car is added to the EntryList (so long as there are enough entrants!) and then after that Entrant cars are randomised.
+* Added a new 'plugins' section to config.yml. Please use this instead of 'run_on_start'. This has been added to fix issues with spaces in plugin path names.
 
 Fixes:
 
