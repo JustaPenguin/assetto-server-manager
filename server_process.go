@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"net"
 	"os"
 	"os/exec"
@@ -164,7 +163,13 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 				return err
 			}
 
-			err = as.startChildProcess(wd, fmt.Sprintf("%s --stracker_ini %s", StrackerExecutablePath(), filepath.Join(StrackerFolderPath(), strackerConfigIniFilename)))
+			err = as.startPlugin(wd, &CommandPlugin{
+				Executable: StrackerExecutablePath(),
+				Arguments: []string{
+					"--stracker_ini",
+					filepath.Join(StrackerFolderPath(), strackerConfigIniFilename),
+				},
+			})
 
 			if err != nil {
 				return err
@@ -174,6 +179,18 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 		} else {
 			logrus.WithError(ErrStrackerConfigurationRequiresUDPPluginConfiguration).Error("Please check your server configuration")
 		}
+	}
+
+	for _, plugin := range config.Server.Plugins {
+		err = as.startPlugin(wd, plugin)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("Could not run extra command: %s", plugin.String())
+		}
+	}
+
+	if len(config.Server.RunOnStart) > 0 {
+		logrus.Warnf("Use of run_on_start in config.yml is deprecated. Please use 'plugins' instead")
 	}
 
 	for _, command := range config.Server.RunOnStart {
@@ -193,7 +210,42 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 	return nil
 }
 
+func (as *AssettoServerProcess) startPlugin(wd string, plugin *CommandPlugin) error {
+	commandFullPath, err := filepath.Abs(plugin.Executable)
+
+	if err != nil {
+		as.cmd = nil
+		return err
+	}
+
+	cmd := buildCommand(as.ctx, commandFullPath, plugin.Arguments...)
+
+	pluginDir, err := filepath.Abs(filepath.Dir(commandFullPath))
+
+	if err != nil {
+		logrus.WithError(err).Warnf("Could not determine plugin directory. Setting working dir to: %s", wd)
+		pluginDir = wd
+	}
+
+	cmd.Stdout = pluginsOutput
+	cmd.Stderr = pluginsOutput
+
+	cmd.Dir = pluginDir
+
+	err = cmd.Start()
+
+	if err != nil {
+		return err
+	}
+
+	as.extraProcesses = append(as.extraProcesses, cmd)
+
+	return nil
+}
+
+// Deprecated: use startPlugin instead
 func (as *AssettoServerProcess) startChildProcess(wd string, command string) error {
+	// BUG(cj): splitting commands on spaces breaks child processes that have a space in their path name
 	parts := strings.Split(command, " ")
 
 	if len(parts) == 0 {

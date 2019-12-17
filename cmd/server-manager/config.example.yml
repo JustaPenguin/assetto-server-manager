@@ -219,14 +219,15 @@ server:
   # each executable specified is run from the directory it is inside, for example,
   # the command:
   #
-  # ./my/cool/plugin/path/run.sh --some-opt config.json
+  # /my/cool/plugin/path/run.sh --some-opt config.json
   # now actually performs the following two commands:
   #
-  # 1. cd ./my/cool/plugin/path
+  # 1. cd /my/cool/plugin/path
   # 2. ./run.sh --some-opt config.json
-  run_on_start:
-    # e.g. uncomment the line below to run a 'start.sh' for kissmyrank
-    # - ./assetto/kissmyrank/start.sh
+  plugins:
+    # uncomment the two lines below to run the command '/my/cool/plugin/path/run.sh --some-opt config.json'
+    # - executable: /my/cool/plugin/path/run.sh
+    #  arguments: ["--some-opt", "config.json"]
 
 ################################################################################
 #
