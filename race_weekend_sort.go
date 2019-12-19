@@ -226,7 +226,7 @@ func FastestResultsFileRaceWeekendEntryListSort(_ *RaceWeekend, _ *RaceWeekendSe
 		}
 
 		for _, driverResult := range result.Result {
-			if driverResult.BestLap < bestDriverLaps[driverResult.DriverGUID] || bestDriverLaps[driverResult.DriverGUID] == 0 {
+			if driverResult.BestLap != 0 && (driverResult.BestLap < bestDriverLaps[driverResult.DriverGUID] || bestDriverLaps[driverResult.DriverGUID] == 0) {
 				bestDriverLaps[driverResult.DriverGUID] = driverResult.BestLap
 			}
 		}
