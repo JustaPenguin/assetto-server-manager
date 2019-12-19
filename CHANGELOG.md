@@ -1,3 +1,14 @@
+v1.6.2
+------
+
+Added:
+
+Fixes:
+
+* Improved the logic of "fastest lap across multiple results files" sorting in Race Weekends whilst using fallback results sorting (premium)
+
+---
+
 v1.6.1
 ------
 
