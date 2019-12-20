@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -79,6 +80,22 @@ func Router(
 	if Debug {
 		r.Mount("/debug/", middleware.Profiler())
 	}
+
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		// if a user comes from an stracker page and hits a 404, the likelihood is that they found a link that does
+		// not have an stracker prefix added to it. Catch it, and forward them back to an URL that has the prefix.
+		u, err := url.Parse(r.Referer())
+
+		if err == nil && strings.HasPrefix(u.Path, "/stracker/") {
+			// try to redirect back to /stracker/<url request>
+			r.URL.Path = "/stracker" + r.URL.Path
+
+			http.Redirect(w, r, r.URL.String(), http.StatusTemporaryRedirect)
+			return
+		}
+
+		http.NotFound(w, r)
+	})
 
 	// readers
 	r.Group(func(r chi.Router) {

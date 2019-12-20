@@ -6,6 +6,8 @@ Added:
 Fixes:
 
 * Improved the logic of "fastest lap across multiple results files" sorting in Race Weekends whilst using fallback results sorting (premium)
+* Drastically improved the speed of STracker pages through some reworking of how STracker is proxied.
+* Fixed an issue where some STracker links would not work correctly.
 
 ---
 
