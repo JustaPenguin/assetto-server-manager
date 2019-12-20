@@ -6,7 +6,7 @@ Added:
 Fixes:
 
 * Improved the logic of "fastest lap across multiple results files" sorting in Race Weekends whilst using fallback results sorting (premium)
-
+* Fixes an issue where the server name could not be clicked to go to the homepage on mobile devices
 ---
 
 v1.6.1
