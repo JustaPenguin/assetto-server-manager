@@ -397,18 +397,29 @@ func (sth *StrackerHandler) proxy(w http.ResponseWriter, r *http.Request) {
 	reverseProxy.ServeHTTP(w, r)
 }
 
-func recurseStrackerProxyHTMLTree(n *html.Node) {
-	if n.Data == "script" || n.Data == "img" {
-		for attrIndex, attr := range n.Attr {
-			if attr.Key == "src" {
-				processSTrackerLink(&n.Attr[attrIndex])
-			}
-		}
-	}
+// strackerLinkTagReplacements is a map of html tags to their attributes which need their links prefixing
+var strackerLinkTagReplacements = map[string]map[string]bool{
+	"script": {
+		"src": true,
+	},
+	"img": {
+		"src": true,
+	},
+	"link": {
+		"href": true,
+	},
+	"a": {
+		"href": true,
+	},
+	"form": {
+		"action": true,
+	},
+}
 
-	if n.Data == "link" || n.Data == "a" {
+func recurseStrackerProxyHTMLTree(n *html.Node) {
+	if tag, tagIsReplaceable := strackerLinkTagReplacements[n.Data]; tagIsReplaceable {
 		for attrIndex, attr := range n.Attr {
-			if attr.Key == "href" {
+			if _, hasAttrReplacement := tag[attr.Key]; hasAttrReplacement {
 				processSTrackerLink(&n.Attr[attrIndex])
 			}
 		}
