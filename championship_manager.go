@@ -165,6 +165,8 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		return nil, false, err
 	}
 
+	previousClasses := make(map[uuid.UUID]ChampionshipClass)
+
 	if championshipID := r.FormValue("Editing"); championshipID != "" {
 		// championship is being edited. find the current version
 		edited = true
@@ -175,6 +177,10 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 
 		if err != nil {
 			return nil, edited, err
+		}
+
+		for _, class := range championship.Classes {
+			previousClasses[class.ID] = *class
 		}
 
 		championship.Classes = []*ChampionshipClass{}
@@ -263,6 +269,12 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		class.Points.CollisionWithDriver = formValueAsInt(r.Form["Points.CollisionWithDriver"][i])
 		class.Points.CollisionWithEnv = formValueAsInt(r.Form["Points.CollisionWithEnv"][i])
 		class.Points.CutTrack = formValueAsInt(r.Form["Points.CutTrack"][i])
+
+		if previousClass, ok := previousClasses[class.ID]; ok {
+			// look for previous penalties and apply them back across
+			class.DriverPenalties = previousClass.DriverPenalties
+			class.TeamPenalties = previousClass.TeamPenalties
+		}
 
 		championship.AddClass(class)
 
