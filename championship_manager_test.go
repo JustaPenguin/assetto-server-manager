@@ -142,11 +142,11 @@ func (d dummyNotificationManager) SendRaceStartMessage(config ServerConfig, even
 	return nil
 }
 
-func (d NotificationManager) GetCarList(cars string) string {
+func (d dummyNotificationManager) GetCarList(cars string) string {
 	return "nil"
 }
 
-func (d NotificationManager) GetTrackInfo(track string, layout string, download bool) string {
+func (d dummyNotificationManager) GetTrackInfo(track string, layout string, download bool) string {
 	return "nil"
 }
 
