@@ -3,6 +3,8 @@ v1.6.2
 
 Added:
 
+* Admins can now export full Championship information, including Sign Up Form responses.
+
 Fixes:
 
 * Improved the logic of "fastest lap across multiple results files" sorting in Race Weekends whilst using fallback results sorting (premium)
