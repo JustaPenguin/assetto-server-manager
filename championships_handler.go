@@ -161,6 +161,8 @@ func (ch *ChampionshipsHandler) export(w http.ResponseWriter, r *http.Request) {
 		championship.OverridePassword = false
 	}
 
+	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s.json", championship.Name))
+
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	_ = enc.Encode(championship)
