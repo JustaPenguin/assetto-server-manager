@@ -808,7 +808,7 @@ class RaceSetup {
                     skin = availableCars[currentCar][0]
                 }
 
-                let path = "/content/cars/" + currentCar + "/skins/" + skin + "/preview.jpg";
+                let path = "/content/cars/" + encodeURIComponent(currentCar) + "/skins/" + encodeURIComponent(skin) + "/preview.jpg";
 
                 $.get(path)
                     .done(function () {
@@ -2167,7 +2167,7 @@ let championships = {
         }
 
         function showCarImage(car, skin) {
-            let path = "/content/cars/" + car + "/skins/" + skin + "/preview.jpg";
+            let path = "/content/cars/" + encodeURIComponent(car) + "/skins/" + encodeURIComponent(skin) + "/preview.jpg";
 
             $.get(path)
                 .done(function () {
