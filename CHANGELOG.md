@@ -5,6 +5,7 @@ Added:
 
 * Admins can now export full Championship information, including Sign Up Form responses.
 * Exported Championships and Race Weekends now export as JSON files to download, rather than showing JSON in the browser.
+* Improved Discord message formatting (thanks @cheesegrits!)
 
 Fixes:
 
@@ -14,6 +15,7 @@ Fixes:
 * Drastically improved the speed of STracker pages through some reworking of how STracker is proxied.
 * Fixed an issue where some STracker links would not work correctly.
 * Fixes an issue where car skins with special characters in their name would not display in the race setup page and Championship Sign Up form.
+* Fixes issues with download links in Discord messages (thanks @cheesegrits!)
 
 ---
 
