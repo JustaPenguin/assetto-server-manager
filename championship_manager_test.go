@@ -130,16 +130,24 @@ func (d dummyNotificationManager) SendRaceWeekendReminderMessage(raceWeekend *Ra
 	return nil
 }
 
-func (d dummyNotificationManager) SendMessage(msg string) error {
+func (d dummyNotificationManager) SendMessage(title string, msg string) error {
 	return nil
 }
 
-func (d dummyNotificationManager) SendMessageWithLink(msg string, linkText string, link *url.URL) error {
+func (d dummyNotificationManager) SendMessageWithLink(title string, msg string, linkText string, link *url.URL) error {
 	return nil
 }
 
 func (d dummyNotificationManager) SendRaceStartMessage(config ServerConfig, event RaceEvent) error {
 	return nil
+}
+
+func (d dummyNotificationManager) GetCarList(cars string) string {
+	return "nil"
+}
+
+func (d dummyNotificationManager) GetTrackInfo(track string, layout string, download bool) string {
+	return "nil"
 }
 
 func (d dummyNotificationManager) SendRaceScheduledMessage(event *CustomRace, date time.Time) error {

@@ -41,6 +41,7 @@ require (
 	github.com/gopherjs/gopherjs v0.0.0-20190309154008-847fc94819f9 // indirect
 	github.com/gorilla/websocket v1.4.0
 	github.com/haisum/recaptcha v0.0.0-20170327142240-7d3b8053900e
+	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/jaytaylor/html2text v0.0.0-20190408195923-01ec452cbe43

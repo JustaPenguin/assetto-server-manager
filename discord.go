@@ -310,7 +310,7 @@ func (dm *DiscordManager) Stop() error {
 }
 
 // SendMessage sends a message to the configured channel and logs any errors
-func (dm *DiscordManager) SendMessage(msg string) error {
+func (dm *DiscordManager) SendMessage(title string, msg string) error {
 	if dm.enabled {
 		opts, err := dm.store.LoadServerOptions()
 
@@ -323,15 +323,15 @@ func (dm *DiscordManager) SendMessage(msg string) error {
 		// it in as an arg and check it here anyway
 		if opts.DiscordChannelID != "" {
 			if opts.DiscordRoleID != "" {
-				mention := fmt.Sprintf("Attention <@&%s>\n", opts.DiscordRoleID)
+				mention := fmt.Sprintf("Attention <@&%s> - %s\n", opts.DiscordRoleID, title)
 				messageSend := &discordgo.MessageSend{
 					Content: mention,
-					Embed:   embed.NewGenericEmbed(msg, ""),
+					Embed:   embed.NewEmbed().SetDescription(msg).SetColor(0x1c1c1c).MessageEmbed,
 				}
 				_, err = dm.discord.ChannelMessageSendComplex(opts.DiscordChannelID, messageSend)
 			} else {
 
-				_, err = dm.discord.ChannelMessageSendEmbed(opts.DiscordChannelID, embed.NewGenericEmbed(msg, ""))
+				_, err = dm.discord.ChannelMessageSendEmbed(opts.DiscordChannelID, embed.NewGenericEmbed(title, msg))
 			}
 
 			if err != nil {
@@ -349,7 +349,7 @@ func (dm *DiscordManager) SendMessage(msg string) error {
 }
 
 // SendMessage sends a message to the configured channel and logs any errors
-func (dm *DiscordManager) SendMessageWithLink(msg string, linkText string, link *url.URL) error {
+func (dm *DiscordManager) SendMessageWithLink(title string, msg string, linkText string, link *url.URL) error {
 	if !dm.enabled {
 		return nil
 	}
@@ -367,15 +367,15 @@ func (dm *DiscordManager) SendMessageWithLink(msg string, linkText string, link 
 	// it in as an arg and check it here anyway
 	if opts.DiscordChannelID != "" {
 		if opts.DiscordRoleID != "" {
-			mention := fmt.Sprintf("Attention <@&%s>\n", opts.DiscordRoleID)
+			mention := fmt.Sprintf("Attention <@&%s> - %s\n", opts.DiscordRoleID, title)
 			messageSend := &discordgo.MessageSend{
 				Content: mention,
-				Embed:   embed.NewGenericEmbed(msg, "%s", linkMsg),
+				Embed:   embed.NewEmbed().SetDescription(msg + "\n" + linkMsg).SetColor(0x1c1c1c).MessageEmbed,
 			}
 			_, err = dm.discord.ChannelMessageSendComplex(opts.DiscordChannelID, messageSend)
 		} else {
 
-			_, err = dm.discord.ChannelMessageSendEmbed(opts.DiscordChannelID, embed.NewGenericEmbed(msg, "%s", linkMsg))
+			_, err = dm.discord.ChannelMessageSendEmbed(opts.DiscordChannelID, embed.NewGenericEmbed(title, msg+"\n"+linkMsg))
 		}
 
 		if err != nil {
