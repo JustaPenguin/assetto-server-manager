@@ -3,6 +3,9 @@ v1.6.2
 
 Added:
 
+* Admins can now export full Championship information, including Sign Up Form responses.
+* Exported Championships and Race Weekends now export as JSON files to download, rather than showing JSON in the browser.
+
 Fixes:
 
 * Improved the logic of "fastest lap across multiple results files" sorting in Race Weekends whilst using fallback results sorting (premium)

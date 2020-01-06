@@ -148,14 +148,20 @@ func (ch *ChampionshipsHandler) export(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// sign up responses are hidden for data protection reasons
-	championship.SignUpForm.Responses = nil
+	account := AccountFromRequest(r)
 
-	if !AccountFromRequest(r).HasGroupPrivilege(GroupWrite) {
+	if !account.HasGroupPrivilege(GroupAdmin) {
+		// sign up responses are hidden for data protection reasons
+		championship.SignUpForm.Responses = nil
+	}
+
+	if !account.HasGroupPrivilege(GroupWrite) {
 		// if you don't have write access or above you can't see the replacement password
 		championship.ReplacementPassword = ""
 		championship.OverridePassword = false
 	}
+
+	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s.json", championship.Name))
 
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
