@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp"
-	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp/replay"
 
 	"github.com/etcd-io/bbolt"
 )

@@ -2,7 +2,7 @@ FROM golang:1.13 AS build
 
 ARG SM_VERSION
 ENV DEBIAN_FRONTEND noninteractive
-ENV BUILD_DIR ${GOPATH}/src/github.com/cj123/assetto-server-manager
+ENV BUILD_DIR ${GOPATH}/src/github.com/JustaPenguin/assetto-server-manager
 ENV GO111MODULE on
 
 RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -

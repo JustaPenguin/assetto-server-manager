@@ -10,12 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cj123/assetto-server-manager"
-	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
-	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
-	"github.com/cj123/assetto-server-manager/internal/changelog"
-	"github.com/cj123/assetto-server-manager/pkg/udp"
-	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
+	"github.com/JustaPenguin/assetto-server-manager"
+	"github.com/JustaPenguin/assetto-server-manager/cmd/server-manager/static"
+	"github.com/JustaPenguin/assetto-server-manager/cmd/server-manager/views"
+	"github.com/JustaPenguin/assetto-server-manager/internal/changelog"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp/replay"
 
 	"github.com/dustin/go-humanize"
 	"github.com/etcd-io/bbolt"

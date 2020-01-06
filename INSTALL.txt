@@ -6,7 +6,7 @@ Hi! Welcome to Assetto Server Manager! We're pretty proud of our tool and we hop
 However, if you have any problems, please don't hesitate to ask questions in one of the following places:
 
 * Race Department Support thread: https://www.racedepartment.com/threads/ac-server-manager.165662/
-* GitHub: https://github.com/cj123/assetto-server-manager/issues
+* GitHub: https://github.com/JustaPenguin/assetto-server-manager/issues
 
 We'd also like to ask that you consider donating to help fund the development of Server Manager. We're a two
 person team who dedicate a lot of our time to make cool things for the community. If you can help out, we'd

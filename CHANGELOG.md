@@ -350,7 +350,7 @@ Added:
   acting maliciously or just making mistakes, for example deleting a whole Championship an hour before it was 
   meant to start (we're looking at you, Greg).
 * Added a link to our new Wiki in the footer! If you want to contribute tips and tricks for Server Manager, the wiki is the place!
-  You can access the wiki here: https://github.com/cj123/assetto-server-manager/wiki
+  You can access the wiki here: https://github.com/JustaPenguin/assetto-server-manager/wiki
 * The Server Manager javascript is now minified, which should make the pages load quicker!
 * Results tables now use the same time format as Live Timings (e.g. 01:23.234 instead of 1m23.234s).
 * You can now split the JSON store into two separate directories: private and shared. This is useful for multiserver setups,

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 	"github.com/mitchellh/go-wordwrap"
 
 	"github.com/gorilla/websocket"

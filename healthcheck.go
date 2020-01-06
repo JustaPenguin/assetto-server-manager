@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 )
 
 var LaunchTime = time.Now()
