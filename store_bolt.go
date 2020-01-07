@@ -759,7 +759,7 @@ func (rs *BoltStore) ListRaceWeekends() ([]*RaceWeekend, error) {
 				return err
 			}
 
-			if !raceWeekend.Deleted.IsZero() {
+			if !raceWeekend.Deleted.IsZero() && !rs.ShowDeleted {
 				// race weekend deleted
 				return nil // continue
 			}
