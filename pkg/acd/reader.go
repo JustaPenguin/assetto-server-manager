@@ -38,7 +38,9 @@ type File struct {
 func (f *File) Bytes() ([]byte, error) {
 	out := make([]byte, f.length)
 
-	_, err := f.reader.Seek(f.start, io.SeekStart)
+	if _, err := f.reader.Seek(f.start, io.SeekStart); err != nil {
+		return nil, err
+	}
 
 	if err := binary.Read(f.reader, binary.LittleEndian, &out); err != nil {
 		return nil, err
@@ -108,7 +110,20 @@ func (r *Reader) nextFileInfo() (*File, error) {
 
 	// -1111 appears to be a magic number of sorts.
 	if strlen == -1111 {
-		return r.nextFileInfo()
+		// it signifies that the next int32 should be thrown away, _then_ we get the strlen
+		var throwaway int32
+
+		err := binary.Read(r.r, binary.LittleEndian, &throwaway)
+
+		if err != nil {
+			return nil, err
+		}
+
+		err = binary.Read(r.r, binary.LittleEndian, &strlen)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	name := make([]byte, strlen)

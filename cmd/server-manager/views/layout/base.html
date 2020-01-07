@@ -3,15 +3,22 @@
     <html lang="en">
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        {{ with $.OGImage }}<meta property="og:image" content="{{ $.OGImage }}">{{ end }}
+
         <link rel="shortcut icon" href="/static/favicon.ico">
         <meta charset="UTF-8">
-        <title>{{ block "title" . }}{{ end }} / {{ $.server_name }}</title>
+        <title>{{ block "title" . }}{{ end }} / {{ $.ServerName }}</title>
 
         {{ block "stylesheets" . }}
-            <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/server-manager.css" }}">
+            {{ if $.User.ShowDarkTheme $.IsDarkTheme }}
+                <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/server-manager-dark.css" }}">
+            {{ else }}
+                <link rel="stylesheet" type="text/css" href="{{ asset "/static/css/server-manager.css" }}">
+            {{ end }}
 
             <style type="text/css">
-                {{ .custom_css }}
+                {{ .CustomCSS }}
             </style>
         {{ end }}
 
@@ -43,29 +50,38 @@
 
     <nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-primary">
         <div class="{{ with $.WideContainer }}container-fluid{{ else }}container{{ end }}">
-            <a class="navbar-brand" href="/" data-toggle="tooltip" title="{{ $.server_name }}">{{ $.server_name }}</a>
+            <a class="navbar-brand d-none d-sm-block" href="/" data-toggle="tooltip" title="{{ $.ServerName }}">{{ $.ServerName }}</a>
+            <a class="navbar-brand d-sm-none" href="/">{{ $.ServerName }}</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav mr-auto">
-                    {{ if WriteAccess }}
 
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Races
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Races
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            {{ if WriteAccess }}
                                 <a class="dropdown-item" href="/quick">Quick</a>
                                 <div class="dropdown-divider"></div>
                                 <h4 class="dropdown-header font-italic">Custom</h4>
                                 <a class="dropdown-item pl-4-5" href="/custom">View Existing</a>
                                 <a class="dropdown-item pl-4-5" href="/custom/new">Create New</a>
-                            </div>
-                        </li>
 
-                    {{ end }}
+                                <div class="dropdown-divider"></div>
+                            {{ end }}
+
+
+                            <h4 class="dropdown-header font-italic">Race Weekends</h4>
+                            <a class="dropdown-item pl-4-5" href="/race-weekends">View Existing</a>
+                            {{ if WriteAccess }}
+                                <a class="dropdown-item pl-4-5" href="/race-weekends/new">Create New</a>
+                            {{ end }}
+                        </div>
+                    </li>
 
                     <li class="nav-item">
                         <a class="nav-link" href="/results">Results</a>
@@ -112,6 +128,7 @@
                                     <a class="dropdown-item" href="/blacklist">Blacklist</a>
                                     <a class="dropdown-item" href="/motd">Messages</a>
                                     <a class="dropdown-item" href="/audit-logs">Audit Logs</a>
+                                    <a class="dropdown-item" href="/stracker/options">STracker</a>
                                 {{ end }}
                                 {{ if DeleteAccess }}
                                     <a class="dropdown-item" href="/autofill-entrants">AutoFill Entrants</a>
@@ -124,26 +141,29 @@
                 </ul>
 
                 <ul class="navbar-nav">
-                    {{ if .server_status  }}
+                    {{ if .ServerStatus  }}
                         <li class="nav-item dropdown mr-2 {{ if not WriteAccess }} mt-2 {{ end }}">
                             {{ if WriteAccess }}
-                                {{ if .server_event.IsChampionship }}
-                                    <a class="nav-link dropdown-toggle" href="#" id="navBarStatusDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <span class="badge badge-warning">Championship in Progress</span>
-                                    </a>
-                                {{ else }}
-                                    <a class="nav-link dropdown-toggle" href="#" id="navBarStatusDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <a class="nav-link dropdown-toggle" href="#" id="navBarStatusDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    {{ if .ServerEvent.IsChampionship }}
+                                        <span class="badge badge-warning">Championship {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
+                                    {{ else if .ServerEvent.IsRaceWeekend }}
+                                        <span class="badge badge-info">Race Weekend {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
+                                    {{ else }}
                                         <span class="badge badge-success">Assetto Server Running</span>
-                                    </a>
-                                {{ end }}
-
+                                    {{ end }}
+                                </a>
                                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navBarStatusDropdown">
                                     <a
                                         class="dropdown-item"
                                         href="/process/restart"
 
-                                        {{ if .server_event.IsChampionship }}
-                                            onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                        {{ if not $.ServerEvent.IsPractice }}
+                                            {{ if $.ServerEvent.IsChampionship }}
+                                                onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                            {{ else if $.ServerEvent.IsRaceWeekend }}
+                                                onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
+                                            {{ end }}
                                         {{ end }}
                                     >
                                         Restart
@@ -152,16 +172,22 @@
                                         class="dropdown-item"
                                         href="/process/stop"
 
-                                        {{ if .server_event.IsChampionship }}
-                                            onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                        {{ if not $.ServerEvent.IsPractice }}
+                                            {{ if $.ServerEvent.IsChampionship }}
+                                                onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                            {{ else if $.ServerEvent.IsRaceWeekend }}
+                                                onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
+                                            {{ end }}
                                         {{ end }}
                                     >
                                         Stop
                                     </a>
                                 </div>
                             {{ else }}
-                                {{ if .server_event.IsChampionship }}
-                                    <span class="badge badge-warning">Championship in Progress</span>
+                                {{ if .ServerEvent.IsChampionship }}
+                                    <span class="badge badge-warning">Championship {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
+                                {{ else if .ServerEvent.IsRaceWeekend }}
+                                    <span class="badge badge-info">Race Weekend {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
                                 {{ else }}
                                     <span class="badge badge-success">Assetto Server Running</span>
                                 {{ end }}
@@ -173,7 +199,7 @@
                         </li>
                     {{ end }}
 
-                    <li class="nav-item dropdown">
+                    <li class="nav-item dropdown" id="user-account-dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navBarAccountDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-user"></i>
                         </a>
@@ -189,7 +215,6 @@
                             {{ end }}
                         </div>
                     </li>
-
                 </ul>
             </div>
 
@@ -202,7 +227,7 @@
 
 
         {{ block "showpremium" . }}
-            {{ if ne $._request.URL.Path "/" }}
+            {{ if ne $.Request.URL.Path "/" }}
                 <div class="clearfix"></div>
 
                 <div class="mt-5">
@@ -214,15 +239,17 @@
         <footer class="pt-4 my-md-5 pt-md-5 border-top">
             <div class="row">
                 <div class="col-sm-7">
-                    <a href="https://github.com/cj123/assetto-server-manager" class="mr-3"><i class="fab fa-github"></i> GitHub</a>
-                    <a href="https://github.com/cj123/assetto-server-manager/issues" class="mr-3"><i class="fas fa-bug"></i> Submit a Bug Report</a>
-                    <a href="https://paypal.me/JustaPenguinUK" class="mr-3"><i class="fas fa-heart"></i> Donate</a>
+                    <a href="https://github.com/JustaPenguin/assetto-server-manager" class="mr-3"><i class="fab fa-github"></i> GitHub</a>
+                    <a href="https://github.com/JustaPenguin/assetto-server-manager/issues" class="mr-3"><i class="fas fa-bug"></i> Submit a Bug Report</a>
+                    {{ if ne $.IsPremium "true" }}
+                        <a href="https://paypal.me/JustaPenguinUK" class="mr-3"><i class="fas fa-heart"></i> Go Premium</a>
+                    {{ end }}
                     <a href="/changelog" class="mr-3"><i class="fas fa-pencil-alt"></i> Changelog</a>
-                    <a href="https://github.com/cj123/assetto-server-manager/wiki"><i class="fas fa-book"></i> Wiki</a>
+                    <a href="https://github.com/JustaPenguin/assetto-server-manager/wiki"><i class="fas fa-book"></i> Wiki</a>
                 </div>
                 <div class="col-sm-5 text-right">
                     <img src="/static/img/racer.png" class="img img-footer float-right">
-                    Assetto Corsa Server Manager {{ Version }}<br> &copy; <a href="https://justapengu.in">Just a Penguin</a> 2010-{{ now.Format "2006" }}
+                    Assetto Corsa Server Manager {{ if eq $.IsPremium "true" }}Premium {{ end }}{{ Version }}<br> &copy; <a href="https://justapengu.in">Just a Penguin</a> 2010-{{ now.Format "2006" }}
                 </div>
             </div>
 
@@ -232,7 +259,7 @@
     <div class="messages">
         <div class="container">
             <div class="col-md-10 mx-auto">
-                {{ range $i, $message := .messages }}
+                {{ range $i, $message := .Messages }}
 
                     <div class="alert alert-success alert-dismissible" role="alert">
                         {{ $message }}
@@ -243,7 +270,7 @@
 
                 {{ end }}
 
-                {{ range $i, $error := .errors }}
+                {{ range $i, $error := .Errors }}
 
                     <div class="alert alert-danger alert-dismissible mx-auto" role="alert">
                         {{ $error }}

@@ -12,13 +12,20 @@ $(document).ready(function () {
 
     $document = $(document);
 
+    // init bootstrap-switch
+    $.fn.bootstrapSwitch.defaults.size = 'small';
+    $.fn.bootstrapSwitch.defaults.animate = false;
+    $.fn.bootstrapSwitch.defaults.onColor = "success";
+    $document.find("input[type='checkbox']:not(input[name='EntryList.OverwriteAllEvents']:hidden):not(input[name='session-start-after-parent']:hidden)").bootstrapSwitch();
+
     championships.init();
     $document.find(".race-setup").each(function (index, elem) {
         new RaceSetup($(elem));
     });
 
     $document.find("#open-in-simres").each(function (index, elem) {
-        let link = window.location.href.split("#")[0].replace("results", "results/download") + ".json";
+        let query = window.location.search;
+        let link = window.location.href.replace(query, "").split("#")[0].replace("results", "results/download") + ".json" + query;
 
         $(elem).attr('href', "http://simresults.net/remote?result=" + link);
 
@@ -26,7 +33,8 @@ $(document).ready(function () {
     });
 
     $document.find("#simres-group").each(function (index, elem) {
-        let link = window.location.href + "/export-results";
+        let query = window.location.search;
+        let link = window.location.href.replace(query, "") + "/export-results" + query;
 
         $(elem).attr('href', "http://simresults.net/remote?results=" + link);
 
@@ -35,12 +43,6 @@ $(document).ready(function () {
 
     serverLogs.init();
     initUploaders();
-
-    // init bootstrap-switch
-    $.fn.bootstrapSwitch.defaults.size = 'small';
-    $.fn.bootstrapSwitch.defaults.animate = false;
-    $.fn.bootstrapSwitch.defaults.onColor = "success";
-    $document.find("input[type='checkbox']").bootstrapSwitch();
 
     $document.find('[data-toggle="tooltip"]').tooltip();
 
@@ -52,7 +54,7 @@ $(document).ready(function () {
                 let id = $(this).attr('id');
 
                 return $('#popover-content-' + id).html();
-            }
+            },
         });
     });
 
@@ -62,10 +64,17 @@ $(document).ready(function () {
         $elem.text(moment.parseZone($elem.attr("data-time")).tz(moment.tz.guess()).format('LLLL (z)'));
     });
 
+    $(".time-local-kitchen").each(function (i, elem) {
+        let $elem = $(elem);
+
+        $elem.text(moment.parseZone($elem.attr("data-time")).tz(moment.tz.guess()).calendar());
+    });
+
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     $(".timezone").text(timezone);
     $(".event-schedule-timezone").val(timezone);
+    $(".session-schedule-timezone").val(timezone);
     $(".sol-timezone").val(timezone);
 
     $document.find(".row-link").click(function () {
@@ -139,7 +148,6 @@ $(document).ready(function () {
         } else {
             $document.find("#start-race-button").show();
             $document.find("#save-race-button").val("justSave");
-
         }
     });
 });
@@ -147,31 +155,35 @@ $(document).ready(function () {
 const nameRegex = /^[A-Za-z]{0,5}[0-9]+/;
 
 function prettifyName(name, acronyms) {
-    if (!name || name.length === 0) {
-        return "";
-    }
-
-    let parts = name.split("_");
-
-    if (parts[0] === "ks") {
-        parts.shift();
-    }
-
-    for (let i = 0; i < parts.length; i++) {
-        if ((acronyms && parts[i].length <= 3) || (acronyms && parts[i].match(nameRegex))) {
-            parts[i] = parts[i].toUpperCase();
-        } else {
-            parts[i] = parts[i].split(' ')
-                .map(w => w[0].toUpperCase() + w.substr(1).toLowerCase())
-                .join(' ');
+    try {
+        if (!name || name.length === 0) {
+            return "";
         }
-    }
 
-    return parts.join(" ")
+        let parts = name.split("_");
+
+        if (parts[0] === "ks") {
+            parts.shift();
+        }
+
+        for (let i = 0; i < parts.length; i++) {
+            if ((acronyms && parts[i].length <= 3) || (acronyms && parts[i].match(nameRegex))) {
+                parts[i] = parts[i].toUpperCase();
+            } else {
+                let split = parts[i].split(' ');
+
+                parts[i] = split.map(w => w.length > 0 ? w[0].toUpperCase() + w.substr(1).toLowerCase() : "").join(' ');
+            }
+        }
+
+        return parts.join(" ")
+    } catch(error) {
+         return name
+    }
 }
 
 
-function initMultiSelect($element) {
+export function initMultiSelect($element) {
     $element.each(function (i, elem) {
         let $elem = $(elem);
 
@@ -293,6 +305,49 @@ class RaceSetup {
         this.initEntrantsList();
         this.initSunAngle();
         this.initSurfacePresets();
+
+        this.initPickupModeWatcher();
+    }
+
+    initPickupModeWatcher() {
+        let that = this;
+
+        let $pickupModeSwitch = $("#PickupModeEnabled");
+        let $lockedEntryListSwitch = $("#LockedEntryList");
+        let $reversedGridRacePositions = $("#ReversedGridRacePositions");
+
+        this.setPickupSwitches();
+
+        $pickupModeSwitch.on('switchChange.bootstrapSwitch', function (event, state) {
+            that.setPickupSwitches();
+        });
+
+        $lockedEntryListSwitch.on('switchChange.bootstrapSwitch', function (event, state) {
+            that.setPickupSwitches();
+        });
+
+        $reversedGridRacePositions.on('change', function () {
+            that.setPickupSwitches();
+        });
+    }
+
+    setPickupSwitches() {
+        let $lockedEntryListSwitch = $("#LockedEntryList");
+        let $lockedReverseWarning = $("#locked-reverse-warning");
+
+        let pickup = $("#PickupModeEnabled").bootstrapSwitch('state');
+        let reversed = $("#ReversedGridRacePositions").val();
+
+        if (pickup === false && reversed != 0) {
+            $lockedEntryListSwitch.bootstrapSwitch('state', false);
+            $lockedEntryListSwitch.bootstrapSwitch('disabled', true);
+
+            $lockedReverseWarning.show();
+        } else {
+            $lockedEntryListSwitch.bootstrapSwitch('disabled', false);
+
+            $lockedReverseWarning.hide();
+        }
     }
 
     updateWeatherGraphics() {
@@ -337,33 +392,36 @@ class RaceSetup {
             $visibleWhenBookingEnabled.hide();
         }
 
-        $(".session-enabler").each(function (index, elem) {
-            $(elem).on('switchChange.bootstrapSwitch', function (event, state) {
-                let $this = $(this);
-                let $elem = $this.closest(".tab-pane").find(".session-details");
-                let $panelLabel = that.$parent.find("#" + $this.closest(".tab-pane").attr("aria-labelledby"));
+        if (!$("#race-weekend-session").length) {
+            // session enabling is very different in race weekends, don't interfere with that here.
+            $(".session-enabler").each(function (index, elem) {
+                $(elem).on('switchChange.bootstrapSwitch', function (event, state) {
+                    let $this = $(this);
+                    let $elem = $this.closest(".tab-pane").find(".session-details");
+                    let $panelLabel = that.$parent.find("#" + $this.closest(".tab-pane").attr("aria-labelledby"));
 
-                let isBooking = $(elem).attr("name") === "Booking.Enabled";
+                    let isBooking = $(elem).attr("name") === "Booking.Enabled";
 
-                if (state) {
-                    $elem.show();
-                    $panelLabel.addClass("text-success");
+                    if (state) {
+                        $elem.show();
+                        $panelLabel.addClass("text-success");
 
-                    if (isBooking) {
-                        $hiddenWhenBookingEnabled.hide();
-                        $visibleWhenBookingEnabled.show();
+                        if (isBooking) {
+                            $hiddenWhenBookingEnabled.hide();
+                            $visibleWhenBookingEnabled.show();
+                        }
+                    } else {
+                        $elem.hide();
+                        $panelLabel.removeClass("text-success");
+
+                        if (isBooking) {
+                            $hiddenWhenBookingEnabled.show();
+                            $visibleWhenBookingEnabled.hide();
+                        }
                     }
-                } else {
-                    $elem.hide();
-                    $panelLabel.removeClass("text-success");
-
-                    if (isBooking) {
-                        $hiddenWhenBookingEnabled.show();
-                        $visibleWhenBookingEnabled.hide();
-                    }
-                }
+                });
             });
-        });
+        }
     }
 
     /**
@@ -444,7 +502,7 @@ class RaceSetup {
      */
     populateTyreDropdown() {
         // quick race doesn't have tyre set up.
-        if (typeof availableTyres === "undefined") {
+        if (typeof availableTyres === "undefined" || !this.$carsDropdown.length) {
             return
         }
 
@@ -737,13 +795,20 @@ class RaceSetup {
         }
 
         function showEntrantSkin(currentCar, skin, $this) {
+            let fallBackImage = "/static/img/no-preview-car.png";
+            let $preview = $this.closest(".entrant").find(".entryListCarPreview");
+
+            if (currentCar === "any_car_model") {
+                $preview.attr({"src": fallBackImage, "alt": "Preview Image"});
+                return;
+            }
+
             if (currentCar in availableCars && availableCars[currentCar] != null && availableCars[currentCar].length > 0) {
                 if (skin === "random_skin") {
                     skin = availableCars[currentCar][0]
                 }
 
-                let path = "/content/cars/" + currentCar + "/skins/" + skin + "/preview.jpg";
-                let $preview = $this.closest(".entrant").find(".entryListCarPreview");
+                let path = "/content/cars/" + encodeURIComponent(currentCar) + "/skins/" + encodeURIComponent(skin) + "/preview.jpg";
 
                 $.get(path)
                     .done(function () {
@@ -751,7 +816,7 @@ class RaceSetup {
                         $preview.attr({"src": path, "alt": prettifyName(skin, false)})
                     }).fail(function () {
                     // preview doesn't exist, load default fall back image
-                    path = "/static/img/no-preview-car.png";
+                    path = fallBackImage;
                     $preview.attr({"src": path, "alt": "Preview Image"})
                 });
             }
@@ -876,19 +941,27 @@ class RaceSetup {
             that.$parent.find(".entryListCar").each(function (index, val) {
                 let $val = $(val);
                 let selected = $val.find("option:selected").val();
+                let $anyCar = $("<option value='any_car_model'>Any Available Car</option>");
 
                 if (!selected || !cars.has(selected)) {
-                    selected = that.$carsDropdown.val()[0];
+                    if (selected === 'any_car_model' || cars.size < 1) {
+                        selected = $anyCar.val();
+                    } else {
+                        selected = cars.values().next().value;
+                    }
+
                     showEntrantSkin(selected, "random_skin", $val);
                 }
 
+
                 $val.empty();
+                $anyCar.appendTo($val);
 
                 for (let val of cars.values()) {
                     let $opt = $("<option />");
                     $opt.attr({'value': val});
                     // use the text from the cars dropdown to populate the name, fallback to prettify if necessary
-                    let realCarName = that.$carsDropdown.find("option[value='"+val+"']").text();
+                    let realCarName = that.$carsDropdown.find("option[value='" + val + "']").text();
 
                     if (!realCarName) {
                         realCarName = prettifyName(val, true);
@@ -1188,11 +1261,11 @@ let serverLogs = {
 
 
 function initUploaders() {
-    $("#input-folder-car").on("change", function() {
+    $("#input-folder-car").on("change", function () {
         handleCarFiles(this.files);
     });
 
-    $("#drop-zone.car-drop").on("drop", function(e) {
+    $("#drop-zone.car-drop").on("drop", function (e) {
         handleCarDropFiles(e);
     });
 
@@ -1200,19 +1273,19 @@ function initUploaders() {
     $("#drop-zone").on("dragleave", dragOutHandler);
     $("#only-ks").on("switchChange.bootstrapSwitch", toggleKS);
 
-    $("#input-folder-track").on("change", function() {
+    $("#input-folder-track").on("change", function () {
         handleTrackFiles(this.files);
     });
 
-    $("#drop-zone.track-drop").on("drop", function(e) {
+    $("#drop-zone.track-drop").on("drop", function (e) {
         handleTrackDropFiles(e);
     });
 
-    $("#input-folder-weather").on("change", function() {
+    $("#input-folder-weather").on("change", function () {
         handleWeatherFiles(this.files);
     });
 
-    $("#drop-zone.weather-drop").on("drop", function(e) {
+    $("#drop-zone.weather-drop").on("drop", function (e) {
         handleWeatherDropFiles(e);
     });
 }
@@ -1950,6 +2023,13 @@ let championships = {
     init: function () {
         let $pointsTemplate = $document.find(".points-place").last().clone();
 
+        $(".race-setup").each(function (index, elem) {
+            // init totalNumPoints val to be equal to the number of .points-place's visible in the class.
+            let $raceSetup = $(elem);
+            let $savedNumPoints = $raceSetup.find(".totalNumPoints");
+            $savedNumPoints.val($raceSetup.find(".points-place:visible").length);
+        });
+
         $document.on("click", ".addEntrant", function (e) {
             e.preventDefault();
 
@@ -1989,6 +2069,46 @@ let championships = {
         championships.initDisplayOrder();
         championships.initConfigureSignUpForm();
         championships.initSignUpForm();
+        championships.initACSRWatcher();
+    },
+
+    initACSRWatcher: function () {
+        let $acsrSwitch = $("#ACSR");
+
+        if ($acsrSwitch.length) {
+            let state = $acsrSwitch.bootstrapSwitch('state');
+
+            championships.setSwitchesForACSR(state);
+        }
+
+        $acsrSwitch.on('switchChange.bootstrapSwitch', function (event, state) {
+            championships.setSwitchesForACSR(state);
+        });
+    },
+
+    setSwitchesForACSR: function (state) {
+        let $openEntrantsSwitch = $("#ChampionshipOpenEntrants");
+        let $signUpFormSwitch = $("#ChampionshipSignUpFormEnabled");
+        let $overridePasswordSwitch = $("#OverridePassword");
+
+        if (state) {
+            $openEntrantsSwitch.bootstrapSwitch('state', false);
+            $openEntrantsSwitch.bootstrapSwitch('disabled', true);
+
+            $signUpFormSwitch.bootstrapSwitch('state', true);
+            $signUpFormSwitch.bootstrapSwitch('disabled', true);
+
+            $overridePasswordSwitch.bootstrapSwitch('state', true);
+            $overridePasswordSwitch.bootstrapSwitch('disabled', true);
+
+            $overridePasswordSwitch.closest(".card-body").find("#ReplacementPasswordWrapper").hide();
+        } else {
+            $overridePasswordSwitch.closest(".card-body").find("#ReplacementPasswordWrapper").show();
+
+            $openEntrantsSwitch.bootstrapSwitch('disabled', false);
+            $signUpFormSwitch.bootstrapSwitch('disabled', false);
+            $overridePasswordSwitch.bootstrapSwitch('disabled', false);
+        }
     },
 
     initConfigureSignUpForm: function () {
@@ -2047,7 +2167,7 @@ let championships = {
         }
 
         function showCarImage(car, skin) {
-            let path = "/content/cars/" + car + "/skins/" + skin + "/preview.jpg";
+            let path = "/content/cars/" + encodeURIComponent(car) + "/skins/" + encodeURIComponent(skin) + "/preview.jpg";
 
             $.get(path)
                 .done(function () {
@@ -2110,6 +2230,18 @@ let championships = {
 
         $document.on("input", ".entrant-team", function () {
             $(this).closest(".entrant").find(".points-transfer").show();
+        });
+
+        $(".Cars").each(function(index, element) {
+            let $target = $(element);
+
+            $target.closest(".race-setup").find("input[name='NumCars']").val($target.val().length);
+        });
+
+        $document.on("change", ".Cars", function(e) {
+            let $target = $(e.currentTarget);
+
+            $target.closest(".race-setup").find("input[name='NumCars']").val($target.val().length);
         });
     },
 

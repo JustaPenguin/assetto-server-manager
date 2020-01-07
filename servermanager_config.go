@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/cj123/sessions"
 	"github.com/etcd-io/bbolt"
@@ -22,6 +23,8 @@ type Configuration struct {
 	Accounts      AccountsConfig      `yaml:"accounts"`
 	Monitoring    MonitoringConfig    `yaml:"monitoring"`
 	Championships ChampionshipsConfig `yaml:"championships"`
+	ACSR          ACSRConfig          `yaml:"acsr"`
+	Lua           LuaConfig           `yaml:"lua"`
 }
 
 type ChampionshipsConfig struct {
@@ -55,6 +58,10 @@ type HTTPConfig struct {
 	BaseURL          string `yaml:"server_manager_base_URL"`
 }
 
+type LuaConfig struct {
+	Enabled bool `yaml:"enabled"`
+}
+
 const (
 	sessionStoreCookie     = "cookie"
 	sessionStoreFilesystem = "filesystem"
@@ -82,6 +89,13 @@ func (h *HTTPConfig) createSessionStore() (sessions.Store, error) {
 	default:
 		return sessions.NewCookieStore([]byte(h.SessionKey)), nil
 	}
+}
+
+type ACSRConfig struct {
+	URL       string `yaml:"url"`
+	Enabled   bool   `yaml:"enabled"`
+	APIKey    string `yaml:"api_key"`
+	AccountID string `yaml:"account_id"`
 }
 
 type SteamConfig struct {
@@ -128,10 +142,29 @@ func (s *StoreConfig) BuildStore() (Store, error) {
 }
 
 type ServerExtraConfig struct {
-	RunOnStart      []string `yaml:"run_on_start"`
-	AuditLogging    bool     `yaml:"audit_logging"`
-	PerformanceMode bool     `yaml:"performance_mode"`
+	Plugins                     []*CommandPlugin `yaml:"plugins"`
+	AuditLogging                bool             `yaml:"audit_logging"`
+	PerformanceMode             bool             `yaml:"performance_mode"`
+	DisableWindowsBrowserOpen   bool             `yaml:"dont_open_browser"`
+	ScanContentFolderForChanges bool             `yaml:"scan_content_folder_for_changes"`
+
+	// Deprecated; use Plugins instead
+	RunOnStart []string `yaml:"run_on_start"`
 }
+
+type CommandPlugin struct {
+	Executable string   `yaml:"executable"`
+	Arguments  []string `yaml:"arguments"`
+}
+
+func (c *CommandPlugin) String() string {
+	out := c.Executable
+	out += strings.Join(c.Arguments, " ")
+
+	return out
+}
+
+const acsrURL = "https://acsr.assettocorsaservers.com"
 
 func ReadConfig(location string) (conf *Configuration, err error) {
 	f, err := os.Open(location)
@@ -153,13 +186,45 @@ func ReadConfig(location string) (conf *Configuration, err error) {
 		return nil, err
 	}
 
+	if config.ACSR.URL == "" {
+		config.ACSR.URL = acsrURL
+	}
+
 	if config.Accounts.AdminPasswordOverride != "" {
 		logrus.Infof("WARNING! Admin Password Override is set. Please only have this set if you are resetting your admin account password!")
 	}
 
 	if config.Steam.ExecutablePath == "" {
-		config.Steam.ExecutablePath = serverExecutablePath
+		config.Steam.ExecutablePath = ServerExecutablePath
 	}
 
 	return conf, err
+}
+
+type Theme string
+
+const (
+	ThemeDefault = "default"
+	ThemeLight   = "light"
+	ThemeDark    = "dark"
+)
+
+type ThemeDetails struct {
+	Theme Theme
+	Name  string
+}
+
+var ThemeOptions = []ThemeDetails{
+	{
+		Theme: ThemeDefault,
+		Name:  "Use Default",
+	},
+	{
+		Theme: ThemeLight,
+		Name:  "Light",
+	},
+	{
+		Theme: ThemeDark,
+		Name:  "Dark",
+	},
 }

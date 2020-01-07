@@ -143,17 +143,23 @@ func NewWeatherHandler(baseHandler *BaseHandler) *WeatherHandler {
 	}
 }
 
+type weatherListTemplateVars struct {
+	BaseTemplateVars
+
+	Weathers Weather
+}
+
 func (wh *WeatherHandler) list(w http.ResponseWriter, r *http.Request) {
 	weather, err := ListWeather()
 
 	if err != nil {
-		logrus.Errorf("could not get weather list, err: %s", err)
+		logrus.WithError(err).Errorf("could not get weather list")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	wh.viewRenderer.MustLoadTemplate(w, r, "content/weather.html", map[string]interface{}{
-		"weathers": weather,
+	wh.viewRenderer.MustLoadTemplate(w, r, "content/weather.html", &weatherListTemplateVars{
+		Weathers: weather,
 	})
 }
 
@@ -164,12 +170,9 @@ func (wh *WeatherHandler) delete(w http.ResponseWriter, r *http.Request) {
 	existingWeather, err := ListWeather()
 
 	if err != nil {
-		logrus.Errorf("could not get weather list, err: %s", err)
-
+		logrus.WithError(err).Errorf("could not get weather list")
 		AddErrorFlash(w, r, "Couldn't get weather list")
-
 		http.Redirect(w, r, r.Referer(), http.StatusFound)
-
 		return
 	}
 
@@ -184,11 +187,10 @@ func (wh *WeatherHandler) delete(w http.ResponseWriter, r *http.Request) {
 
 			if err != nil {
 				found = false
-				logrus.Errorf("could not remove weather files, err: %s", err)
+				logrus.WithError(err).Errorf("could not remove weather files")
 			}
 
 			delete(existingWeather, key)
-
 			break
 		}
 	}

@@ -1,3 +1,5 @@
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.carListTemplateVars */}}
+
 {{ define "title" }}Cars{{ end }}
 
 {{ define "content" }}
@@ -61,7 +63,7 @@
     {{ with .Results }}
         {{- /*gotype: github.com/blevesearch/bleve.SearchResult */ -}}
 
-        <div class="text-black-50 mb-2">
+        <div id="search-info" class="text-black-50 mb-2">
             <div class="float-left">
                 {{ $pageStart := mul $.CurrentPage $.PageSize }}
                 <small>Showing results {{ $pageStart }}-{{ add $pageStart (len .Hits) }} of {{ .Total }}</small>
@@ -93,13 +95,17 @@
                     <div class="d-block d-sm-none pt-2">&nbsp;</div>
 
                     <div class="col-12 col-sm-8 col-md-10">
-                        <h3>{{ $car.Details.Name }}</h3>
+                        <h3 class="mb-0">{{ $car.Details.Name }}</h3>
+
+                        <div class="mb-2">
+                            {{ if $car.IsPaidDLC }}<span class="badge bg-dlc">DLC</span>{{ end }}
+                            {{ if $car.IsMod }}<span class="badge bg-mod">Mod</span>{{ end }}
+                            {{ if not (or $car.IsPaidDLC $car.IsMod) }}<span class="badge bg-default-content">Default</span>{{ end }}
+                        </div>
 
                         {{ if DeleteAccess }}
                             <a class="delete-car" href="/car/{{ $car.Name }}/delete"><i class="fa fa-trash"></i></a>
                         {{ end }}
-
-                        <br>
 
                         {{ range $index, $tag := $car.Details.Tags }}
                             <span class="badge badge-secondary">
@@ -117,7 +123,7 @@
 
 
         {{ if gt (len .Hits) 0 }}
-            {{ template "pagination" dict "CurrentPage" $.CurrentPage "NumPages" $.NumPages "_request" $._request }}
+            {{ template "pagination" dict "CurrentPage" $.CurrentPage "NumPages" $.NumPages "Request" $.Request }}
         {{ end }}
     {{ end }}
 

@@ -1,13 +1,8 @@
 
-@media screen and (min-width: 400px) {
-  a.card {
-    padding-top: 40px;
-    padding-bottom: 40px;
-  }
-}
-
-a.card h2 {
-  color: black;
+a.card h3 {
+  color: $body-color;
+  margin-top: 20px;
+  font-size: 1.50rem;
 }
 
 

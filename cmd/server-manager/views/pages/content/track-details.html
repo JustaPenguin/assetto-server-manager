@@ -1,0 +1,173 @@
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.trackDetailsTemplateVars */}}
+
+{{ define "title" }}{{ $.Track.PrettyName }}{{ end }}
+
+{{ define "content" }}
+    <div class="track-details">
+        <h1 class="text-center mb-0">{{ $.Track.PrettyName }}</h1>
+
+        <div class="mb-2 text-center">
+            {{ if $.Track.IsPaidDLC }}<span class="badge bg-dlc">DLC</span>{{ end }}
+            {{ if $.Track.IsMod }}<span class="badge bg-mod">Mod</span>{{ end }}
+            {{ if not (or $.Track.IsPaidDLC $.Track.IsMod) }}<span class="badge bg-default-content">Default</span>{{ end }}
+        </div>
+
+        {{ with $.Track.MetaData.Notes }}
+            <h2>Notes</h2>
+
+            <p>{{ trustHTML . }}</p>
+        {{ end }}
+
+        {{ with $.Track.MetaData.DownloadURL }}
+            <div class="mb-2 float-right"><a class="btn btn-primary" href="{{ . }}">Download</a></div>
+
+            <div class="clearfix"></div>
+        {{ end }}
+
+        <h2>Layouts</h2>
+
+        {{ range $index, $layout := $.Track.Layouts }}
+            <div class="card mt-2">
+                <div class="card-body">
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card-img track-layout">
+                                <img class="img img-fluid car-image" src="{{ trackLayoutURL $.Track.Name $layout }}"
+                                     alt="{{ $.Track.PrettyName }}, layout {{ $layout }}"
+                                     title="{{ prettify $layout true }}" data-layout="{{ $layout }}"
+                                     data-toggle="tooltip" data-placement="bottom">
+                            </div>
+                        </div>
+
+                        <div class="col-md-8">
+                            <h3 class="card-title mb-0">{{ prettify $layout true }} Layout</h3>
+
+                            {{ $info := index $.TrackInfo $layout }}
+
+                            {{ with $info }}
+                                <div class="mb-1"><i>{{ $info.City }} {{ $info.Country }}</i></div>
+
+                                <span><strong>Length: </strong>{{ $info.Length }}</span>
+                                <span><strong>Run: </strong>{{ $info.Run }}</span>
+                                <span><strong>Width: </strong>{{ $info.Width }}</span>
+                                <span><strong>Pitboxes: </strong>{{ $info.Pitboxes }}</span>
+
+                                <div><strong>Geotags: </strong>{{ stringArrayToCSV $info.Geotags }}</div>
+
+                                <div><strong>Tags: </strong>{{ stringArrayToCSV $info.Tags }}</div>
+                            {{ end }}
+                        </div>
+                    </div>
+
+                    {{ with $info }}
+                        <div class="row mt-2">
+                            <div class="col-md-12">
+                                <p>{{ $info.Description }}</p>
+                            </div>
+                        </div>
+                    {{ end }}
+                </div>
+
+                <hr>
+
+                <div class="card-body">
+
+                    <h2>Sessions</h2>
+
+                    {{ $results := index $.Results $layout }}
+
+                    <p>This layout has been used in {{ len $results}} sessions.</p>
+
+                    <div class="list-group overflow-auto mt-3 mb-3" style="max-height: 300px;">
+                        {{ range $index, $session := $results }}
+                            <a class="list-group-item list-group-item-action"
+                               href="/results/{{ $session.SessionFile }}">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-2 text-primary">
+                                        <strong>{{ title (lower $session.Type.String) }}</strong></h5>
+                                    <small>{{ fullTimeFormat $session.Date }}</small>
+                                </div>
+                                <p class="mb-1">{{ carList $session.Cars }}</p>
+                            </a>
+                        {{ end }}
+                    </div>
+
+                </div>
+            </div>
+
+        {{ end }}
+
+        {{ if WriteAccess }}
+            <form method="post" action="/track/{{ $.Track.Name }}/metadata">
+                <div class="card mt-3 border-primary mt-5 mb-3">
+                    <div class="card-header text-white bg-primary">
+                        <strong>Track Metadata</strong>
+                    </div>
+                    <div class="card-body">
+
+                        <div class="form-group row">
+                            <label for="DownloadURL" class="col-sm-3 col-form-label">Download URL</label>
+
+                            <div class="col-sm-9">
+
+                                <input
+                                        class="form-control"
+                                        type="url"
+                                        id="DownloadURL"
+                                        name="DownloadURL"
+                                        value="{{ $.Track.MetaData.DownloadURL }}"
+                                        placeholder="e.g. http://racedepartment.com/..."
+                                >
+
+                                <small>Download links for tracks will be shown in
+                                    Content Manager's server information screen.</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            {{ with $.Track.MetaData.Notes }}
+                                <div class="d-none" id="TrackNotes">{{ trustHTML . }}</div>
+                            {{ end }}
+
+                            <label for="summernote" class="col-sm-3 col-form-label">Notes</label>
+
+                            <div class="col-sm-9" id="championship-info">
+                                <textarea id="summernote" name="Notes"></textarea>
+                                <div class="clearfix"></div>
+
+                                <small>Notes will be shown to all users when they visit this track
+                                    page.</small>
+                            </div>
+                        </div>
+
+                        <div class="float-right mt-5">
+                            <button class="btn btn-primary" type="submit">Save Track Metadata</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        {{ end }}
+
+        {{ if DeleteAccess }}
+            <div class="card border-danger mt-3 mb-3">
+                <div class="card-header text-white bg-danger">
+                    Danger Zone!
+                </div>
+
+                <div class="card-body">
+                    <p class="float-left">Permanently delete this track and all associated layouts.</p>
+
+                    <a onclick="return confirm('Are you sure you want to permanently delete this track and all associated layouts?');"
+                       class="btn btn-danger float-right"
+                       href="/track/{{ $.Track.Name }}/delete">
+                        Delete Track
+                    </a>
+
+                    <div class="clearfix"></div>
+                </div>
+            </div>
+        {{ end }}
+    </div>
+
+{{ end }}

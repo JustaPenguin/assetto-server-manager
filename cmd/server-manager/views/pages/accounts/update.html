@@ -1,3 +1,5 @@
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.updateAccountTemplateVars */}}
+
 {{ define "title" }}Update Account Details{{ end }}
 
 {{ define "content" }}
@@ -20,7 +22,7 @@
                                     name="DriverName"
                                     class="form-control"
                                     placeholder=""
-                                    value="{{ .account.DriverName }}"
+                                    value="{{ .Account.DriverName }}"
                             >
                         </div>
                     </div>
@@ -35,12 +37,20 @@
                                     name="DriverGUID"
                                     class="form-control"
                                     placeholder=""
-                                    value="{{ .account.GUID }}"
+                                    {{ with .SteamGUIDOverride }}
+                                        value="{{ . }}"
+                                        readonly
+                                    {{ else }}
+                                        value="{{ .Account.GUID }}"
+                                    {{ end }}
                             >
-                            <small>You can find your Steam ID at
-                                <a href="https://steamid.io/" target="_blank">steamid.io</a>
-                                or in your Steam Profile URL. Note that we require the
-                                <strong>SteamID64</strong>.</small>
+
+                            {{ if eq .SteamGUIDOverride "" }}
+                                <small>
+                                    If you don't know your Steam GUID, you can <a href="/accounts/update/steam">Sign in with Steam</a>
+                                    to autofill it.
+                                </small>
+                            {{ end }}
                         </div>
                     </div>
 
@@ -54,8 +64,20 @@
                                     name="DriverTeam"
                                     class="form-control"
                                     placeholder=""
-                                    value="{{ .account.Team }}"
+                                    value="{{ .Account.Team }}"
                             >
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="Theme" class="col-sm-3 col-form-label">Theme</label>
+
+                        <div class="col-sm-9">
+                            <select id="Theme" name="Theme" class="form-control">
+                                {{ range $index, $theme := .ThemeOptions }}
+                                    <option value="{{ $theme.Theme }}" {{ if eq $.Account.Theme $theme.Theme }}selected="selected" {{ end }}>{{ $theme.Name }}</option>
+                                {{ end }}
+                            </select>
                         </div>
                     </div>
 

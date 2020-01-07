@@ -1,0 +1,41 @@
+{{/* gotype:github.com/JustaPenguin/assetto-server-manager.raceWeekendSessionImportTemplateVars */}}
+
+{{ define "title" }}Import a Race Weekend Session{{ end }}
+
+{{ define "content" }}
+    {{ $writeAccess := WriteAccess }}
+
+    <h1 class="text-center">Import a Race Weekend Session for {{ prettify .Session.RaceConfig.Track false }} ({{ prettify .Session.RaceConfig.TrackLayout true }})</h1>
+
+
+    <form action="/race-weekend/{{ .RaceWeekendID }}/session/{{ .Session.ID.String }}/import" method="post" data-safe-submit>
+
+        <div class="card mt-3 border-secondary">
+            <div class="card-header">
+                <strong>Session</strong>
+            </div>
+
+            <div class="card-body">
+
+                <div class="form-group row">
+                    <label for="ResultFile" class="col-sm-3 col-form-label">{{ $.Session.SessionInfo.Name }} Result File</label>
+
+                    <div class="col-sm-9">
+                        <select name="ResultFile" id="ResultFile" class="form-control">
+                            {{ range $index, $result := .Results }}
+                                {{ if eq $result.Type $.Session.SessionType }}
+                                    <option value="{{ $result.SessionFile }}">{{ $result.TrackName }} ({{ $result.TrackConfig }}) on {{ $result.Date }}</option>
+                                {{ end }}
+                            {{ end }}
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success float-right">Import Session</button>
+
+            </div>
+        </div>
+    </form>
+
+    <div class="clearfix"></div>
+{{ end }}

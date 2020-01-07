@@ -1,0 +1,126 @@
+{{ define "points" }}
+    {{ $defaultPoints := .DefaultPoints }}
+    {{ $isRaceWeekend := .IsRaceWeekend }}
+
+    <div class="mt-5 points-parent">
+
+
+        {{ if and .IsEditing $.Points }}
+
+            {{ $pointsCount := int64 1 }}
+
+            {{ range $index, $points := $.Points.Places }}
+                <div class="form-group row points-place">
+                    <label for="Points.Place" class="col-sm-3 col-form-label">
+                        {{ $pointsCount }}{{ ordinal $pointsCount }} Place
+                    </label>
+
+                    <div class="col-sm-9">
+                        <input type="number" class="form-control init-empty-non-race" name="Points.Place"
+                               placeholder="Points" value="{{ index $.Points.Places (sub $pointsCount 1) }}" data-default-value="{{ index $.Points.Places (sub $pointsCount 1) }}">
+                    </div>
+                </div>
+
+                {{ $pointsCount = add $pointsCount 1 }}
+            {{ end }}
+        {{ else }}
+            <div class="form-group row points-place">
+                <label for="Points.Place" class="col-sm-3 col-form-label">
+                    1st Place
+                </label>
+
+                <div class="col-sm-9">
+                    <input type="number" class="form-control init-empty-non-race" name="Points.Place"
+                           placeholder="Points" value="{{ index $defaultPoints.Places 0 }}" data-default-value="{{ index $defaultPoints.Places 0 }}">
+                </div>
+            </div>
+        {{ end }}
+    </div>
+
+    <input type="hidden" class="totalNumPoints" name="NumPoints" value="{{ with $.Points.Places }}{{ len $.Points.Places }}{{ else }}0{{ end }}">
+
+    <div class="row">
+        <div class="col-sm-9 offset-sm-3">
+            <small>
+                Once added, Championship Points cannot be removed. Results for Championships are calculated on page load (allowing for much
+                greater flexibility for improvements), so previous Championship points must be available to do that. If you wish to disable
+                points entirely for this class, set all the above values to zero. This will affect all entrants points who raced in this
+                class in this Championship.
+            </small>
+        </div>
+    </div>
+    <hr>
+
+    <h5 class="mb-0">Positive Modifiers</h5>
+    <p><small class="font-italic">These modifiers add points to drivers for certain actions!</small></p>
+
+    <div class="form-group row">
+        <label for="Points.BestLap" class="col-sm-3 col-form-label">Best Lap</label>
+
+        <div class="col-sm-9">
+            <input type="number" class="form-control init-empty-non-race" name="Points.BestLap"
+                   placeholder="Points" value="{{ with $.Points.BestLap }}{{ . }}{{ else }}0{{ end }}" data-default-value="{{ with $.Points.BestLap }}{{ . }}{{ else }}0{{ end }}">
+        </div>
+    </div>
+
+    {{ if not $isRaceWeekend }}
+        <div class="form-group row">
+            <label for="Points.PolePosition" class="col-sm-3 col-form-label">Pole Position</label>
+
+
+            <div class="col-sm-9">
+                <input type="number" class="form-control" name="Points.PolePosition"
+                       placeholder="Points" value="{{ with $.Points.PolePosition }}{{ . }}{{ else }}0{{ end }}">
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label for="Points.SecondRaceMultiplier" class="col-sm-3 col-form-label">Second Race Multiplier</label>
+
+            <div class="col-sm-9">
+                <input type="number" class="form-control" name="Points.SecondRaceMultiplier" step="0.01"
+                       placeholder="Multiplier" value="{{ with $.Points.SecondRaceMultiplier }}{{ . }}{{ else }}0{{ end }}">
+
+                <small>
+                    This multiplier is applied when giving points to any events which make use of the "Reversed Grid Positions"
+                    functionality. If a second race occurs, the points given to each player will be multiplied by the given multiplier.
+
+                    To disable points for a second race, set this to 0. The value can be negative if you like!
+                </small>
+            </div>
+        </div>
+    {{ end }}
+
+    <hr>
+
+    <h5 class="mb-0">Negative Modifiers</h5>
+    <p><small class="font-italic">These modifiers remove points from drivers for certain actions (all only in race sessions)!</small></p>
+
+    <div class="form-group row">
+        <label for="Points.CollsionWithDriver" class="col-sm-3 col-form-label">Collision with Other Driver</label>
+
+        <div class="col-sm-9">
+            <input type="number" class="form-control init-empty-non-race" name="Points.CollisionWithDriver"
+                   placeholder="Points" value="{{ with $.Points.CollisionWithDriver }}{{ . }}{{ else }}0{{ end }}" data-default-value="{{ with $.Points.CollisionWithDriver }}{{ . }}{{ else }}0{{ end }}">
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label for="Points.CollisionWithEnv" class="col-sm-3 col-form-label">Collision with Environment</label>
+
+        <div class="col-sm-9">
+            <input type="number" class="form-control init-empty-non-race" name="Points.CollisionWithEnv"
+                   placeholder="Points" value="{{ with $.Points.CollisionWithEnv }}{{ . }}{{ else }}0{{ end }}" data-default-value="{{ with $.Points.CollisionWithEnv }}{{ . }}{{ else }}0{{ end }}">
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label for="Points.CutTrack" class="col-sm-3 col-form-label">Cut Track</label>
+
+        <div class="col-sm-9">
+            <input type="number" class="form-control init-empty-non-race" name="Points.CutTrack"
+                   placeholder="Points" value="{{ with $.Points.CutTrack }}{{ . }}{{ else }}0{{ end }}" data-default-value="{{ with $.Points.CutTrack }}{{ . }}{{ else }}0{{ end }}">
+        </div>
+    </div>
+
+{{ end }}

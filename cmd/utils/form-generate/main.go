@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/cj123/assetto-server-manager"
+
+	"github.com/JustaPenguin/assetto-server-manager"
 )
 
 func main() {

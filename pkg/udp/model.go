@@ -242,10 +242,10 @@ func (EnableRealtimePosInterval) Event() Event {
 	return EventRealtimeposInterval
 }
 
-func NewEnableRealtimePosInterval(interval uint16) EnableRealtimePosInterval {
+func NewEnableRealtimePosInterval(interval int) EnableRealtimePosInterval {
 	return EnableRealtimePosInterval{
 		Type:     uint8(EventRealtimeposInterval),
-		Interval: interval,
+		Interval: uint16(interval),
 	}
 }
 
@@ -275,6 +275,91 @@ func NewSendChat(carID CarID, data string) (*SendChat, error) {
 	return &SendChat{
 		EventType:    uint8(EventSendChat),
 		CarID:        uint8(carID),
+		Len:          uint8(strlen),
+		UTF32Encoded: encoded,
+	}, nil
+}
+
+type BroadcastChat struct {
+	EventType    uint8
+	Len          uint8
+	UTF32Encoded []byte
+}
+
+func (BroadcastChat) Event() Event {
+	return EventBroadcastChat
+}
+
+func NewBroadcastChat(data string) (*BroadcastChat, error) {
+	// the Assetto Corsa chat seems to not cope well with non-ascii characters. remove them.
+	data = regexp.MustCompile("[[:^ascii:]]").ReplaceAllLiteralString(data, "")
+
+	strlen := len(data)
+
+	encoded, err := utf32.UTF32(utf32.LittleEndian, utf32.IgnoreBOM).NewEncoder().Bytes([]byte(data))
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &BroadcastChat{
+		EventType:    uint8(EventBroadcastChat),
+		Len:          uint8(strlen),
+		UTF32Encoded: encoded,
+	}, nil
+}
+
+type KickUser struct {
+	EventType uint8
+	CarID     uint8
+}
+
+func (KickUser) Event() Event {
+	return EventKickUser
+}
+
+func NewKickUser(carID uint8) *KickUser {
+	return &KickUser{
+		CarID:     carID,
+		EventType: uint8(EventKickUser),
+	}
+}
+
+type NextSession struct {
+}
+
+func (NextSession) Event() Event {
+	return EventNextSession
+}
+
+type RestartSession struct {
+}
+
+func (RestartSession) Event() Event {
+	return EventRestartSession
+}
+
+type AdminCommand struct {
+	EventType    uint8
+	Len          uint8
+	UTF32Encoded []byte
+}
+
+func (AdminCommand) Event() Event {
+	return EventAdminCommand
+}
+
+func NewAdminCommand(data string) (*AdminCommand, error) {
+	strlen := len(data)
+
+	encoded, err := utf32.UTF32(utf32.LittleEndian, utf32.IgnoreBOM).NewEncoder().Bytes([]byte(data))
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &AdminCommand{
+		EventType:    uint8(EventAdminCommand),
 		Len:          uint8(strlen),
 		UTF32Encoded: encoded,
 	}, nil

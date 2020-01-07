@@ -1,0 +1,68 @@
+{{ define "title"}}Import Custom Race{{ end }}
+
+{{ define "custom-race-championship-import" }}
+    {{ $writeAccess := WriteAccess }}
+    {{ $championship := .Championship }}
+
+    <div class="table-responsive mt-4">
+        <table class="table table-striped table-bordered">
+            <tr>
+                <th>Details</th>
+                <th>Created</th>
+                {{ if $writeAccess }}
+                    <th>Actions</th>
+                {{ end }}
+            </tr>
+
+            {{ range $index, $race := .Races }}
+                <tr>
+                    <td class="align-left">
+                        {{ template "race-card" $race }}
+
+                        <br>
+
+                        <i>{{ $race.Name }}</i>
+                    </td>
+
+                    <td class="align-middle">{{ timeFormat $race.Created }}<br> {{ dateFormat $race.Created }}</td>
+
+                    {{ if $writeAccess }}
+                        <td class="align-middle custom-race-actions">
+                            <a class="btn btn-sm btn-primary" href="/championship/{{ $championship.ID.String }}/custom/{{ $race.UUID.String }}/import">Import</a>
+                        </td>
+                    {{ end }}
+                </tr>
+            {{ end }}
+        </table>
+    </div>
+{{ end }}
+
+{{ define "content" }}
+
+    <h2 class="text-center">Import Custom Race to {{ .Championship.Name }} Championship</h2>
+
+    {{ if gt (len .Starred) 0 }}
+        <h4>Starred</h4>
+
+        {{ template "custom-race-championship-import" dict "Races" .Starred "Championship" .Championship }}
+    {{ end }}
+
+    {{ if gt (len .Scheduled) 0 }}
+        <h4>Scheduled</h4>
+
+        {{ template "custom-race-championship-import" dict "Races" .Scheduled "Championship" .Championship }}
+    {{ end }}
+
+    {{ if gt (len .Loop) 0 }}
+        <h4>Auto Loop</h4>
+
+        {{ template "custom-race-championship-import" dict "Races" .Loop "Championship" .Championship }}
+    {{ end }}
+
+    {{ if gt (len .Recent) 0 }}
+        <h4>Recent</h4>
+
+        {{ template "custom-race-championship-import" dict "Races" .Recent "Championship" .Championship }}
+    {{ end }}
+
+{{ end }}

@@ -1,0 +1,111 @@
+{{/* gotype:github.com/JustaPenguin/assetto-server-manager.raceWeekendManageEntryListTemplateVars */}}
+
+{{ define "partial" }}
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Configure {{ $.Session.Name }} Combined Entry List</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                {{ if $.RaceWeekend.HasLinkedChampionship }}
+                    {{ if $.RaceWeekend.Championship.IsMultiClass }}
+                        <p class="text-primary">This Race Weekend is linked to a Multi-Class Championship. Sorting will apply in-class, with the classes ordered by the fastest lap for the class (So hopefully, LMP1 cars would be put on the grid ahead of GTE cars - for example)</p>
+                    {{ end }}
+                {{ end }}
+
+                <p>Sort the combined drivers in the <strong>{{ $.Session.Name }}</strong> Entry List by:</p>
+
+                <div class="form-group row">
+                    <label for="SortType" class="col-sm-4 col-form-label">Sort By</label>
+
+                    <div class="col-sm-8">
+                        {{ if WriteAccess }}
+                            <select id="SortType" name="SortType" class="form-control">
+                                {{ range $index, $sorter := $.AvailableSorters }}
+                                    {{ if $sorter.ShowInManageEntryList }}
+                                        <option value="{{ $sorter.Key }}" {{ if eq $sorter.Key $.Session.SortType }}selected="selected"{{ end }}>{{ $sorter.Name }}</option>
+                                    {{ end }}
+                                {{ end }}
+                            </select>
+                        {{ else }}
+                            <label class="col-form-label">
+                                {{ range $index, $sorter := $.AvailableSorters }}
+                                    {{ if $sorter.ShowInManageEntryList }}
+                                        {{ if eq $sorter.Key $.Session.SortType }}
+                                            {{ $sorter.Name }}
+                                        {{ end }}
+                                    {{ end}}
+                                {{ end }}
+                            </label>
+                        {{ end }}
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="ReverseGrid" class="col-sm-4 col-form-label">Reverse?</label>
+
+                    <div class="col-sm-8">
+                        <input
+                                {{ if WriteAccess }}
+                                    type="number"
+                                {{ else }}
+                                    type="hidden"
+                                {{ end }}
+                                class="form-control"
+                                id="ReverseGrid"
+                                name="ReverseGrid"
+                                value="{{ $.Session.NumEntrantsToReverse }}"
+                        >
+
+                        {{ if WriteAccess }}
+                            <small>
+                                0 = Don't Reverse. -1 = Reverse all. N = Reverse the first N.
+                            </small>
+                        {{ else }}
+                            <label class="col-form-label">
+                                {{ if eq $.Session.NumEntrantsToReverse 0 }}
+                                    No
+                                {{ else if lt $.Session.NumEntrantsToReverse 0 }}
+                                    All
+                                {{ else }}
+                                    {{ $.Session.NumEntrantsToReverse }}
+                                {{ end }}
+                            </label>
+                        {{ end }}
+                    </div>
+
+                    {{ if WriteAccess }}
+                        <div class="pl-3">
+                        </div>
+                    {{ end }}
+                </div>
+
+                {{ if $.RaceWeekend.SessionCanBeRun $.Session }}
+                    <h4>Starting Grid</h4>
+
+                    <div id="table-key"></div>
+
+                    <table class="table table-bordered table-striped table-sm" id="entrylist-preview">
+                        <tr>
+                            <th>#</th>
+                            <th>Driver</th>
+                        </tr>
+                    </table>
+                {{ else }}
+                    <p>A combined starting grid preview for the <strong>{{ $.Session.Name }}</strong> session will be available when all parent sessions have been completed.</p>
+                {{ end }}
+
+            </div>
+
+            <div class="modal-footer">
+                {{ if WriteAccess }}
+                    <button type="button" class="btn btn-primary" id="save-filters">Save changes</button>
+                {{ end }}
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ if WriteAccess }}Cancel{{ else }}Close{{ end }}</button>
+            </div>
+        </div>
+    </div>
+{{ end }}

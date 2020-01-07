@@ -47,6 +47,7 @@ func NewAccount() *Account {
 		ID:              uuid.New(),
 		Created:         time.Now(),
 		LastSeenVersion: BuildVersion,
+		Theme:           ThemeDefault,
 	}
 }
 
@@ -67,6 +68,16 @@ type Account struct {
 
 	DefaultPassword string
 	LastSeenVersion string
+
+	Theme Theme
+}
+
+func (a Account) ShowDarkTheme(serverManagerDarkThemeEnabled bool) bool {
+	if (a.Theme == "" || a.Theme == ThemeDefault) && serverManagerDarkThemeEnabled {
+		return true
+	}
+
+	return a.Theme == ThemeDark
 }
 
 func (a Account) HasSeenCurrentVersion() bool {
@@ -130,6 +141,7 @@ var OpenAccount = &Account{
 	Name:            "Free Access",
 	Group:           GroupRead,
 	LastSeenVersion: BuildVersion,
+	Theme:           ThemeDefault,
 }
 
 // MustLoginMiddleware determines whether an account needs to log in to access a given Group page
@@ -264,6 +276,7 @@ func AdminAccess(r *http.Request) func() bool {
 
 type AccountHandler struct {
 	*BaseHandler
+	SteamLoginHandler
 
 	store          Store
 	accountManager *AccountManager
@@ -288,7 +301,7 @@ func (ah *AccountHandler) login(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/accounts/new-password", http.StatusFound)
 			return
 		} else if err != nil {
-			logrus.Errorf("Couldn't log in account, err: %s", err)
+			logrus.WithError(err).Errorf("Couldn't log in account")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		} else { // err == nil, successful auth
@@ -324,11 +337,17 @@ func (ah *AccountHandler) toggleServerOpenStatus(w http.ResponseWriter, r *http.
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+type newPasswordTemplateVars struct {
+	BaseTemplateVars
+
+	NewAccount bool
+}
+
 func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 	account := AccountFromRequest(r)
 
 	if r.Method == http.MethodPost {
-		var set = true
+		set := true
 
 		password, repeatPassword, currentPassword := r.FormValue("Password"), r.FormValue("RepeatPassword"), r.FormValue("CurrentPassword")
 
@@ -350,7 +369,7 @@ func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 			if password == repeatPassword {
 				updateDetails := account.NeedsPasswordReset()
 
-				if err := ah.accountManager.changePassword(account, password); err == nil {
+				if err := ah.accountManager.ChangePassword(account, password); err == nil {
 					AddFlash(w, r, "Your password was successfully changed!")
 					if updateDetails {
 						http.Redirect(w, r, "/accounts/update", http.StatusFound)
@@ -368,9 +387,17 @@ func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new-password.html", map[string]interface{}{
-		"newAccount": account.NeedsPasswordReset(),
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new-password.html", &newPasswordTemplateVars{
+		NewAccount: account.NeedsPasswordReset(),
 	})
+}
+
+type updateAccountTemplateVars struct {
+	BaseTemplateVars
+
+	Account           *Account
+	ThemeOptions      []ThemeDetails
+	SteamGUIDOverride string
 }
 
 func (ah *AccountHandler) update(w http.ResponseWriter, r *http.Request) {
@@ -378,9 +405,10 @@ func (ah *AccountHandler) update(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 		driverName, guid, team := r.FormValue("DriverName"), r.FormValue("DriverGUID"), r.FormValue("DriverTeam")
+		theme := r.FormValue("Theme")
 
-		if driverName != "" || guid != "" || team != "" {
-			err := ah.accountManager.updateDetails(account, driverName, guid, team)
+		if driverName != "" || guid != "" || team != "" || theme != "" {
+			err := ah.accountManager.updateDetails(account, driverName, guid, team, theme)
 
 			if err != nil {
 				AddErrorFlash(w, r, "Unable to update account details")
@@ -404,13 +432,23 @@ func (ah *AccountHandler) update(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/update.html", map[string]interface{}{
-		"account": account,
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/update.html", &updateAccountTemplateVars{
+		Account:           account,
+		ThemeOptions:      ThemeOptions,
+		SteamGUIDOverride: r.URL.Query().Get("steamGUID"),
 	})
 }
 
 func (ah *AccountHandler) deleteAccount(w http.ResponseWriter, r *http.Request) {
+	requestAccount := AccountFromRequest(r)
+
 	accountID := chi.URLParam(r, "id")
+
+	if requestAccount.ID.String() == accountID {
+		AddErrorFlash(w, r, "You can't delete your own account!")
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+		return
+	}
 
 	if err := ah.store.DeleteAccount(accountID); err != nil {
 		logrus.WithError(err).Errorf("Could not delete account")
@@ -526,7 +564,7 @@ func (am *AccountManager) SetCurrentVersion(account *Account) error {
 	return am.store.UpsertAccount(account)
 }
 
-func (am *AccountManager) changePassword(account *Account, password string) error {
+func (am *AccountManager) ChangePassword(account *Account, password string) error {
 	salt, err := generateSalt()
 
 	if err != nil {
@@ -546,10 +584,11 @@ func (am *AccountManager) changePassword(account *Account, password string) erro
 	return am.store.UpsertAccount(account)
 }
 
-func (am *AccountManager) updateDetails(account *Account, name, guid, team string) error {
+func (am *AccountManager) updateDetails(account *Account, name, guid, team, theme string) error {
 	account.DriverName = name
 	account.GUID = guid
 	account.Team = team
+	account.Theme = Theme(theme)
 
 	return am.store.UpsertAccount(account)
 }
@@ -561,6 +600,13 @@ func (ah *AccountHandler) logout(w http.ResponseWriter, r *http.Request) {
 	_ = sess.Save(r, w)
 
 	http.Redirect(w, r, "/", http.StatusFound)
+}
+
+type createAccountTemplateVars struct {
+	BaseTemplateVars
+
+	Account   *Account
+	IsEditing bool
 }
 
 func (ah *AccountHandler) createOrEditAccount(w http.ResponseWriter, r *http.Request) {
@@ -623,10 +669,17 @@ func (ah *AccountHandler) createOrEditAccount(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new.html", map[string]interface{}{
-		"Account":   account,
-		"IsEditing": isEditing,
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new.html", &createAccountTemplateVars{
+		Account:   account,
+		IsEditing: isEditing,
 	})
+}
+
+type manageAccountsTemplateVars struct {
+	BaseTemplateVars
+
+	Accounts         []*Account
+	ServerReadIsOpen bool
 }
 
 func (ah *AccountHandler) manageAccounts(w http.ResponseWriter, r *http.Request) {
@@ -638,9 +691,9 @@ func (ah *AccountHandler) manageAccounts(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/manage.html", map[string]interface{}{
-		"Accounts":         accounts,
-		"ServerReadIsOpen": accountOptions.IsOpen,
+	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/manage.html", &manageAccountsTemplateVars{
+		Accounts:         accounts,
+		ServerReadIsOpen: accountOptions.IsOpen,
 	})
 }
 

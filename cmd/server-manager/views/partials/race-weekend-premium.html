@@ -1,0 +1,33 @@
+{{ define "raceweekend-premium" }}
+    {{ if ne $.IsPremium "true" }}
+        <div class="card border-success mb-4 {{ randAlphaNum 10 }}" id="{{ randAlphaNum 10 }}">
+            <div class="card-body">
+                <p>
+                    Race Weekends are a premium feature. You can create and set up Race Weekends in the non-premium version of Server Manager,
+                    but you can only start them if you have the premium version of Server Manager.
+                </p>
+
+                <p>
+                    We hope that you are as excited about Race Weekends as we are, and that you will consider supporting us (and unlocking Race Weekends!)
+                    by purchasing a premium version of Server Manager. You can do that in one of two ways:
+                </p>
+
+                <ul>
+                    <li>
+                        <strong>Rent a Server</strong> - always-online server hosting for Assetto Corsa - with Server Manager Premium (obviously!).
+                        We handle setup and updates so you can get on and race!
+                    </li>
+
+                    <li>
+                        <strong>Go Premium</strong> - purchase Server Manager Premium with PayPal. This is a one-off purchase. If you send $10 or more, we will email you a copy of Server Manager Premium,
+                        and all updates we make to Server Manager in the future (including Race Weekends and any new Premium features).
+                    </li>
+                </ul>
+            </div>
+            <div class="card-footer text-right">
+                <a class="btn btn-success" href="https://assettocorsaservers.com">Rent a Server <i class="ml-1 fas fa-server"></i></a>
+                <a class="btn btn-danger" href="https://paypal.me/JustaPenguinUK">Go Premium <i class="ml-1 fas fa-heart"></i></a>
+            </div>
+        </div>
+    {{ end }}
+{{ end }}

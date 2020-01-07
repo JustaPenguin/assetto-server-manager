@@ -1,0 +1,62 @@
+.race-weekend-session {
+  width: 515px;
+  display: block;
+  position: absolute;
+}
+
+.jtk-connector {
+  // @TODO blending with things can cause problems
+  mix-blend-mode: hard-light;
+  z-index: 1000;
+
+  &:hover {
+    cursor: pointer;
+  }
+}
+
+#race-weekend-graph-container {
+  position: relative;
+  padding-bottom: 250px;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+svg.race-weekend-connector path {
+  stroke: $gray-800;
+}
+
+svg path.race-weekend-arrow {
+  stroke: $gray-800;
+  fill: $gray-800;
+
+  &:hover {
+    stroke: $primary;
+    fill: $primary;
+  }
+}
+
+.race-weekend-entrylist {
+  border-radius: calc(.25rem - 1px) !important;
+}
+
+.modal-lg {
+  max-width: 1000px;
+}
+
+.class-key {
+  display: inline-block;
+  margin-right: 20px;
+  margin-bottom: 20px;
+
+  &__background {
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+    margin-right: 5px;
+  }
+
+  &__name {
+    display: inline-block;
+  }
+}

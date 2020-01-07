@@ -1,0 +1,128 @@
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.raceWeekendListTemplateVars */}}
+
+{{ define "title" }}Race Weekends{{ end }}
+
+{{ define "content" }}
+    <div class="row">
+        <div class="col-sm-4"></div>
+        <div class="col-sm-4"><h1 class="text-center">Race Weekends</h1></div>
+        <div class="col-sm-4">
+            {{ if WriteAccess }}
+                <div class="btn-group float-right" role="group" aria-label="New Race Weekend">
+                    <a href="/race-weekends/new" class="btn btn-success">Create a new Race Weekend</a>
+
+                    <div class="btn-group" role="group">
+                        <button id="btnGroupDrop1" type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="btnGroupDrop1">
+                            <a href="/race-weekend/import" class="dropdown-item">Import Race Weekend</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="clearfix mb-5"></div>
+            {{ end }}
+        </div>
+    </div>
+
+    <p>
+        A Race Weekend is a group of sequential sessions that can be run at any time. For example, you could set up a
+        Qualifying session to run on a Saturday, then the Race to follow it on a Sunday. Server Manager handles the
+        starting grid for you, and lets you organise Entrants into splits based on their results and other factors!
+    </p>
+
+    {{ template "raceweekend-premium" dict "IsPremium" $.IsPremium }}
+
+
+    <h2>Active</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-championship">
+            <tr>
+                <th>Name</th>
+                <th>Progress</th>
+                <th>Number of Sessions</th>
+                <th>Number of Entrants</th>
+                <th>Actions</th>
+            </tr>
+
+            {{ range $.RaceWeekends }}
+                {{ if and (not .HasLinkedChampionship) (ne .Progress 100.0) }}
+                    <tr>
+                        <td>
+                            <a href="/race-weekend/{{ .ID.String }}">{{ .Name }}</a>
+                        </td>
+
+                        <td>
+                            {{ int .Progress }}%
+                        </td>
+
+                        <td>
+                            {{ len .Sessions }}
+                        </td>
+
+                        <td>
+                            {{ len .GetEntryList }}
+                        </td>
+
+                        <td class="align-middle custom-race-actions">
+                            <a class="btn btn-sm btn-success" href="/race-weekend/{{ .ID }}">View</a>
+                            <a class="btn btn-sm btn-primary" href="/race-weekend/{{ .ID }}/export">Export</a>
+
+                            {{ if WriteAccess }}
+                                <a class="btn btn-sm btn-warning" href="/race-weekend/{{ .ID }}/edit">Edit</a>
+                                <a onClick="return confirm('I understand that this will delete the entire Race Weekend permanently.') "
+                                   class="btn btn-sm btn-danger {{ if not DeleteAccess }}disabled{{ end }}" href="/race-weekend/{{ .ID }}/delete">Delete</a>
+                            {{ end }}
+                        </td>
+                    </tr>
+                {{ end }}
+            {{ end }}
+        </table>
+    </div>
+
+    <hr>
+
+    <h2>Completed</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-championship">
+            <tr>
+                <th>Name</th>
+                <th>Number of Sessions</th>
+                <th>Number of Entrants</th>
+                <th>Actions</th>
+            </tr>
+
+            {{ range $.RaceWeekends }}
+                {{ if and (not .HasLinkedChampionship) (eq .Progress 100.0) }}
+                    <tr>
+                        <td>
+                            <a href="/race-weekend/{{ .ID.String }}">{{ .Name }}</a>
+                        </td>
+
+                        <td>
+                            {{ len .Sessions }}
+                        </td>
+
+                        <td>
+                            {{ len .GetEntryList }}
+                        </td>
+
+                        <td class="align-middle custom-race-actions">
+                            <a class="btn btn-sm btn-success" href="/race-weekend/{{ .ID }}">View</a>
+                            <a class="btn btn-sm btn-primary" href="/race-weekend/{{ .ID }}/export">Export</a>
+
+                            {{ if WriteAccess }}
+                                <a class="btn btn-sm btn-warning" href="/race-weekend/{{ .ID }}/edit">Edit</a>
+                                <a onClick="return confirm('I understand that this will delete the entire Race Weekend permanently.') "
+                                   class="btn btn-sm btn-danger {{ if not DeleteAccess }}disabled{{ end }}" href="/race-weekend/{{ .ID }}/delete">Delete</a>
+                            {{ end }}
+                        </td>
+                    </tr>
+                {{ end }}
+            {{ end }}
+        </table>
+    </div>
+{{ end }}

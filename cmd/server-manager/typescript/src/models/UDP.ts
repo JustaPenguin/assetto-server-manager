@@ -54,7 +54,7 @@ function ToObject(o: any, typeOrCfg: any = {}, child = false): any {
 }
 
 // classes
-// struct2ts:github.com/cj123/assetto-server-manager/pkg/udp.SessionInfo
+// struct2ts:github.com/JustaPenguin/assetto-server-manager/pkg/udp.SessionInfo
 class SessionInfo {
     Version: number;
     SessionIndex: number;
@@ -113,7 +113,7 @@ class SessionInfo {
     }
 }
 
-// struct2ts:github.com/cj123/assetto-server-manager/pkg/udp.CarUpdateVec
+// struct2ts:github.com/JustaPenguin/assetto-server-manager/pkg/udp.CarUpdateVec
 class CarUpdateVec {
     X: number;
     Y: number;
@@ -135,7 +135,7 @@ class CarUpdateVec {
     }
 }
 
-// struct2ts:github.com/cj123/assetto-server-manager/pkg/udp.CarUpdate
+// struct2ts:github.com/JustaPenguin/assetto-server-manager/pkg/udp.CarUpdate
 class CarUpdate {
     CarID: number;
     Pos: CarUpdateVec;
@@ -164,7 +164,7 @@ class CarUpdate {
     }
 }
 
-// struct2ts:github.com/cj123/assetto-server-manager/pkg/udp.LapCompletedLapCompletedCar
+// struct2ts:github.com/JustaPenguin/assetto-server-manager/pkg/udp.LapCompletedLapCompletedCar
 class LapCompletedLapCompletedCar {
     CarID: number;
     LapTime: number;
@@ -189,7 +189,7 @@ class LapCompletedLapCompletedCar {
     }
 }
 
-// struct2ts:github.com/cj123/assetto-server-manager/pkg/udp.LapCompleted
+// struct2ts:github.com/JustaPenguin/assetto-server-manager/pkg/udp.LapCompleted
 class LapCompleted {
     CarID: number;
     LapTime: number;
@@ -216,7 +216,7 @@ class LapCompleted {
     }
 }
 
-// struct2ts:github.com/cj123/assetto-server-manager/pkg/udp.CollisionWithEnvironment
+// struct2ts:github.com/JustaPenguin/assetto-server-manager/pkg/udp.CollisionWithEnvironment
 class CollisionWithEnvironment {
     CarID: number;
     ImpactSpeed: number;
@@ -239,7 +239,7 @@ class CollisionWithEnvironment {
     }
 }
 
-// struct2ts:github.com/cj123/assetto-server-manager/pkg/udp.CollisionWithCar
+// struct2ts:github.com/JustaPenguin/assetto-server-manager/pkg/udp.CollisionWithCar
 class CollisionWithCar {
     CarID: number;
     OtherCarID: number;
@@ -265,7 +265,7 @@ class CollisionWithCar {
     }
 }
 
-// struct2ts:github.com/cj123/assetto-server-manager/pkg/udp.Chat
+// struct2ts:github.com/JustaPenguin/assetto-server-manager/pkg/udp.Chat
 class Chat {
     CarID: number;
     Message: string;

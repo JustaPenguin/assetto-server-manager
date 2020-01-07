@@ -13,20 +13,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 
 	"github.com/mitchellh/go-ps"
 	"github.com/sirupsen/logrus"
 )
 
 const MaxLogSizeBytes = 1e6
-
-type ServerEventType string
-
-const (
-	EventTypeRace         ServerEventType = "RACE"
-	EventTypeChampionship ServerEventType = "CHAMPIONSHIP"
-)
 
 type ServerProcess interface {
 	Logs() string
@@ -57,6 +50,7 @@ type AssettoServerProcess struct {
 	cfn context.CancelFunc
 
 	doneCh chan struct{}
+	store  Store
 
 	extraProcesses []*exec.Cmd
 
@@ -70,7 +64,7 @@ type AssettoServerProcess struct {
 	event             RaceEvent
 }
 
-func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, contentManagerWrapper *ContentManagerWrapper) *AssettoServerProcess {
+func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, store Store, contentManagerWrapper *ContentManagerWrapper) *AssettoServerProcess {
 	ctx, cfn := context.WithCancel(context.Background())
 
 	return &AssettoServerProcess{
@@ -79,6 +73,7 @@ func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, contentManagerWrappe
 		doneCh:                make(chan struct{}),
 		callbackFunc:          callbackFunc,
 		contentManagerWrapper: contentManagerWrapper,
+		store:                 store,
 	}
 }
 
@@ -157,47 +152,53 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 		}()
 	}
 
-	for _, command := range config.Server.RunOnStart {
-		parts := strings.Split(command, " ")
+	if strackerOptions, err := as.store.LoadStrackerOptions(); err == nil && strackerOptions.EnableStracker && IsStrackerInstalled() {
+		if as.forwardListenPort >= 0 && as.forwardingAddress != "" || strings.Contains(as.forwardingAddress, ":") {
+			strackerOptions.ACPlugin.SendPort = as.forwardListenPort
+			strackerOptions.ACPlugin.ReceivePort = formValueAsInt(strings.Split(as.forwardingAddress, ":")[1])
 
-		if len(parts) == 0 {
-			continue
-		}
+			err = strackerOptions.Write()
 
-		commandFullPath, err := filepath.Abs(parts[0])
+			if err != nil {
+				return err
+			}
 
-		if err != nil {
-			as.cmd = nil
-			return err
-		}
+			err = as.startPlugin(wd, &CommandPlugin{
+				Executable: StrackerExecutablePath(),
+				Arguments: []string{
+					"--stracker_ini",
+					filepath.Join(StrackerFolderPath(), strackerConfigIniFilename),
+				},
+			})
 
-		var cmd *exec.Cmd
+			if err != nil {
+				return err
+			}
 
-		if len(parts) > 1 {
-			cmd = buildCommand(as.ctx, commandFullPath, parts[1:]...)
+			logrus.Infof("Started stracker. Listening for ptracker connections on port %d", strackerOptions.InstanceConfiguration.ListeningPort)
 		} else {
-			cmd = buildCommand(as.ctx, commandFullPath)
+			logrus.WithError(ErrStrackerConfigurationRequiresUDPPluginConfiguration).Error("Please check your server configuration")
 		}
+	}
 
-		pluginDir, err := filepath.Abs(filepath.Dir(command))
+	for _, plugin := range config.Server.Plugins {
+		err = as.startPlugin(wd, plugin)
 
 		if err != nil {
-			logrus.WithError(err).Warnf("Could not determine plugin directory. Setting working dir to: %s", wd)
-			pluginDir = wd
+			logrus.WithError(err).Errorf("Could not run extra command: %s", plugin.String())
 		}
+	}
 
-		cmd.Stdout = pluginsOutput
-		cmd.Stderr = pluginsOutput
-		cmd.Dir = pluginDir
+	if len(config.Server.RunOnStart) > 0 {
+		logrus.Warnf("Use of run_on_start in config.yml is deprecated. Please use 'plugins' instead")
+	}
 
-		err = cmd.Start()
+	for _, command := range config.Server.RunOnStart {
+		err = as.startChildProcess(wd, command)
 
 		if err != nil {
-			logrus.Errorf("Could not run extra command: %s, err: %s", command, err)
-			continue
+			logrus.WithError(err).Errorf("Could not run extra command: %s", command)
 		}
-
-		as.extraProcesses = append(as.extraProcesses, cmd)
 	}
 
 	go func() {
@@ -205,6 +206,86 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 		as.stopChildProcesses()
 		as.closeUDPConnection()
 	}()
+
+	return nil
+}
+
+func (as *AssettoServerProcess) startPlugin(wd string, plugin *CommandPlugin) error {
+	commandFullPath, err := filepath.Abs(plugin.Executable)
+
+	if err != nil {
+		as.cmd = nil
+		return err
+	}
+
+	cmd := buildCommand(as.ctx, commandFullPath, plugin.Arguments...)
+
+	pluginDir, err := filepath.Abs(filepath.Dir(commandFullPath))
+
+	if err != nil {
+		logrus.WithError(err).Warnf("Could not determine plugin directory. Setting working dir to: %s", wd)
+		pluginDir = wd
+	}
+
+	cmd.Stdout = pluginsOutput
+	cmd.Stderr = pluginsOutput
+
+	cmd.Dir = pluginDir
+
+	err = cmd.Start()
+
+	if err != nil {
+		return err
+	}
+
+	as.extraProcesses = append(as.extraProcesses, cmd)
+
+	return nil
+}
+
+// Deprecated: use startPlugin instead
+func (as *AssettoServerProcess) startChildProcess(wd string, command string) error {
+	// BUG(cj): splitting commands on spaces breaks child processes that have a space in their path name
+	parts := strings.Split(command, " ")
+
+	if len(parts) == 0 {
+		return nil
+	}
+
+	commandFullPath, err := filepath.Abs(parts[0])
+
+	if err != nil {
+		as.cmd = nil
+		return err
+	}
+
+	var cmd *exec.Cmd
+
+	if len(parts) > 1 {
+		cmd = buildCommand(as.ctx, commandFullPath, parts[1:]...)
+	} else {
+		cmd = buildCommand(as.ctx, commandFullPath)
+	}
+
+	pluginDir, err := filepath.Abs(filepath.Dir(commandFullPath))
+
+	if err != nil {
+		logrus.WithError(err).Warnf("Could not determine plugin directory. Setting working dir to: %s", wd)
+		pluginDir = wd
+	}
+
+	cmd.Stdout = pluginsOutput
+	cmd.Stderr = pluginsOutput
+
+	cmd.Dir = pluginDir
+
+	err = cmd.Start()
+
+	if err != nil {
+		return err
+	}
+
+	as.extraProcesses = append(as.extraProcesses, cmd)
 
 	return nil
 }
@@ -280,7 +361,7 @@ func (as *AssettoServerProcess) stopChildProcesses() {
 		err := kill(command.Process)
 
 		if err != nil {
-			logrus.Errorf("Can't kill process: %d, err: %s", command.Process.Pid, err)
+			logrus.WithError(err).Errorf("Can't kill process: %d", command.Process.Pid)
 			continue
 		}
 
@@ -313,7 +394,7 @@ func (as *AssettoServerProcess) IsRunning() bool {
 
 func (as *AssettoServerProcess) Event() RaceEvent {
 	if as.event == nil {
-		return normalEvent{}
+		return QuickRace{}
 	}
 
 	return as.event

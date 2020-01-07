@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -10,12 +11,26 @@ import (
 	"github.com/google/uuid"
 )
 
-const entryListFilename = "entry_list.ini"
+const (
+	AnyCarModel       = "any_car_model"
+	entryListFilename = "entry_list.ini"
+)
 
 type EntryList map[string]*Entrant
 
 // Write the EntryList to the server location
 func (e EntryList) Write() error {
+	setupDirectory := filepath.Join(ServerInstallPath, "setups")
+
+	// belt and braces check to make sure setup file exists
+	for _, entrant := range e.AsSlice() {
+		if entrant.FixedSetup != "" {
+			if _, err := os.Stat(filepath.Join(setupDirectory, entrant.FixedSetup)); os.IsNotExist(err) {
+				return err
+			}
+		}
+	}
+
 	for i, entrant := range e.AsSlice() {
 		entrant.PitBox = i
 	}
@@ -50,7 +65,13 @@ func (e EntryList) Write() error {
 
 // Add an Entrant to the EntryList
 func (e EntryList) Add(entrant *Entrant) {
-	e[fmt.Sprintf("CAR_%d", len(e))] = entrant
+	e.AddInPitBox(entrant, len(e))
+}
+
+// AddInPitBox adds an Entrant in a specific pitbox - overwriting any entrant that was in that pitbox previously.
+func (e EntryList) AddInPitBox(entrant *Entrant, pitBox int) {
+	entrant.PitBox = pitBox
+	e[fmt.Sprintf("CAR_%d", pitBox)] = entrant
 }
 
 // Remove an Entrant from the EntryList
@@ -77,6 +98,20 @@ func (e EntryList) AsSlice() []*Entrant {
 	return entrants
 }
 
+func (e EntryList) AlphaSlice() []*Entrant {
+	var entrants []*Entrant
+
+	for _, x := range e {
+		entrants = append(entrants, x)
+	}
+
+	sort.Slice(entrants, func(i, j int) bool {
+		return entrants[i].Name < entrants[j].Name
+	})
+
+	return entrants
+}
+
 func (e EntryList) PrettyList() []*Entrant {
 	var entrants []*Entrant
 
@@ -85,6 +120,10 @@ func (e EntryList) PrettyList() []*Entrant {
 	for _, x := range e {
 		if x.GUID == "" {
 			numOpenSlots++
+			continue
+		}
+
+		if x.Model == AnyCarModel {
 			continue
 		}
 
@@ -133,6 +172,36 @@ func (e EntryList) FindEntrantByInternalUUID(internalUUID uuid.UUID) *Entrant {
 	return &Entrant{}
 }
 
+// CarIDs returns a unique list of car IDs used in the EntryList
+func (e EntryList) CarIDs() []string {
+	cars := make(map[string]bool)
+
+	for _, entrant := range e {
+		cars[entrant.Model] = true
+	}
+
+	var out []string
+
+	for car := range cars {
+		out = append(out, car)
+	}
+
+	return out
+}
+
+// returns the greatest ballast set on any entrant
+func (e EntryList) FindGreatestBallast() int {
+	var greatest int
+
+	for _, entrant := range e {
+		if entrant.Ballast > greatest {
+			greatest = entrant.Ballast
+		}
+	}
+
+	return greatest
+}
+
 func NewEntrant() *Entrant {
 	return &Entrant{
 		InternalUUID: uuid.New(),
@@ -157,6 +226,7 @@ type Entrant struct {
 
 	TransferTeamPoints bool `ini:"-" json:"-"`
 	OverwriteAllEvents bool `ini:"-" json:"-"`
+	IsPlaceHolder      bool `ini:"-"`
 }
 
 func (e Entrant) ID() string {
@@ -188,4 +258,41 @@ func (e *Entrant) SwapProperties(other *Entrant, entrantRemainedInClass bool) {
 	e.Team, other.Team = other.Team, e.Team
 	e.InternalUUID, other.InternalUUID = other.InternalUUID, e.InternalUUID
 	e.PitBox, other.PitBox = other.PitBox, e.PitBox
+}
+
+func (e *Entrant) AssignFromResult(result *SessionResult, car *SessionCar) {
+	e.Name = result.DriverName
+	e.Team = car.Driver.Team
+	e.GUID = result.DriverGUID
+	e.Model = result.CarModel
+	e.Skin = car.Skin
+	e.Restrictor = car.Restrictor
+	e.Ballast = car.BallastKG
+}
+
+func (e *Entrant) AsSessionCar() *SessionCar {
+	return &SessionCar{
+		BallastKG: e.Ballast,
+		CarID:     e.PitBox,
+		Driver: SessionDriver{
+			GUID:      e.GUID,
+			GuidsList: []string{e.GUID},
+			Name:      e.Name,
+			Team:      e.Team,
+		},
+		Model:      e.Model,
+		Restrictor: e.Restrictor,
+		Skin:       e.Skin,
+	}
+}
+
+func (e *Entrant) AsSessionResult() *SessionResult {
+	return &SessionResult{
+		BallastKG:  e.Ballast,
+		CarID:      e.PitBox,
+		CarModel:   e.Model,
+		DriverGUID: e.GUID,
+		DriverName: e.Name,
+		Restrictor: e.Restrictor,
+	}
 }

@@ -2,13 +2,14 @@ package servermanager
 
 import (
 	"encoding/json"
+	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp"
-	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp/replay"
 
 	"github.com/etcd-io/bbolt"
 )
@@ -58,7 +59,9 @@ var TestEntryList = EntryList{
 	},
 }
 
-type dummyServerProcess struct{}
+type dummyServerProcess struct {
+	doneCh chan struct{}
+}
 
 func (dummyServerProcess) Logs() string {
 	return ""
@@ -68,7 +71,10 @@ func (dummyServerProcess) Start(cfg ServerConfig, entryList EntryList, forwardin
 	return nil
 }
 
-func (dummyServerProcess) Stop() error {
+func (d dummyServerProcess) Stop() error {
+	if d.doneCh != nil {
+		d.doneCh <- struct{}{}
+	}
 	return nil
 }
 
@@ -85,19 +91,18 @@ func (dummyServerProcess) Event() RaceEvent {
 }
 
 func (dummyServerProcess) UDPCallback(message udp.Message) {
-
 }
 
 func (dummyServerProcess) SendUDPMessage(message udp.Message) error {
 	return nil
 }
 
-func (dummyServerProcess) Done() <-chan struct{} {
-	return nil
+func (d dummyServerProcess) Done() <-chan struct{} {
+	return d.doneCh
 }
 
 func (dummyServerProcess) GetServerConfig() ServerConfig {
-	return ConfigIniDefault
+	return ConfigIniDefault()
 }
 
 var championshipEventFixtures = []string{
@@ -109,10 +114,73 @@ var championshipEventFixtures = []string{
 
 var championshipManager *ChampionshipManager
 
-var dummyNotificationManager *NotificationManager
+type dummyNotificationManager struct{}
+
+func (d *dummyNotificationManager) HasNotificationReminders() bool {
+	return false
+}
+
+func (d *dummyNotificationManager) GetNotificationReminders() []int {
+	var reminders []int
+
+	return reminders
+}
+
+func (d dummyNotificationManager) SendRaceWeekendReminderMessage(raceWeekend *RaceWeekend, session *RaceWeekendSession, timer int) error {
+	return nil
+}
+
+func (d dummyNotificationManager) SendMessage(title string, msg string) error {
+	return nil
+}
+
+func (d dummyNotificationManager) SendMessageWithLink(title string, msg string, linkText string, link *url.URL) error {
+	return nil
+}
+
+func (d dummyNotificationManager) SendRaceStartMessage(config ServerConfig, event RaceEvent) error {
+	return nil
+}
+
+func (d dummyNotificationManager) GetCarList(cars string) string {
+	return "nil"
+}
+
+func (d dummyNotificationManager) GetTrackInfo(track string, layout string, download bool) string {
+	return "nil"
+}
+
+func (d dummyNotificationManager) SendRaceScheduledMessage(event *CustomRace, date time.Time) error {
+	return nil
+}
+
+func (d dummyNotificationManager) SendRaceCancelledMessage(event *CustomRace, date time.Time) error {
+	return nil
+}
+
+func (d dummyNotificationManager) SendRaceReminderMessage(event *CustomRace, timer int) error {
+	return nil
+}
+
+func (d dummyNotificationManager) SendChampionshipReminderMessage(championship *Championship, event *ChampionshipEvent, timer int) error {
+	return nil
+}
+
+func (d dummyNotificationManager) SaveServerOptions(oldServerOpts *GlobalServerConfig, newServerOpts *GlobalServerConfig) error {
+	return nil
+}
 
 func init() {
-	championshipManager = NewChampionshipManager(NewRaceManager(NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"), filepath.Join(os.TempDir(), "asm-race-store-shared")), dummyServerProcess{}, NewCarManager(), dummyNotificationManager))
+	config = &Configuration{}
+	championshipManager = NewChampionshipManager(
+		NewRaceManager(
+			NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"), filepath.Join(os.TempDir(), "asm-race-store-shared")),
+			dummyServerProcess{},
+			NewCarManager(NewTrackManager(), false),
+			NewTrackManager(),
+			&dummyNotificationManager{},
+		),
+	)
 }
 
 func doReplay(filename string, multiplier int, callbackFunc udp.CallbackFunc, waitTime time.Duration) error {
@@ -140,7 +208,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 
 		for range championshipEventFixtures {
 			e := NewChampionshipEvent()
-			e.RaceSetup = ConfigIniDefault.CurrentRaceConfig
+			e.RaceSetup = ConfigIniDefault().CurrentRaceConfig
 
 			champ.Events = append(champ.Events, e)
 		}
@@ -182,7 +250,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 
 		for range championshipEventFixtures {
 			e := NewChampionshipEvent()
-			e.RaceSetup = ConfigIniDefault.CurrentRaceConfig
+			e.RaceSetup = ConfigIniDefault().CurrentRaceConfig
 
 			champ.Events = append(champ.Events, e)
 		}
@@ -232,7 +300,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 
 		for range championshipEventFixtures {
 			e := NewChampionshipEvent()
-			e.RaceSetup = ConfigIniDefault.CurrentRaceConfig
+			e.RaceSetup = ConfigIniDefault().CurrentRaceConfig
 
 			champ.Events = append(champ.Events, e)
 		}
@@ -282,7 +350,7 @@ func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
 
 		for range championshipEventFixtures {
 			e := NewChampionshipEvent()
-			e.RaceSetup = ConfigIniDefault.CurrentRaceConfig
+			e.RaceSetup = ConfigIniDefault().CurrentRaceConfig
 
 			champ.Events = append(champ.Events, e)
 		}
@@ -431,5 +499,4 @@ func TestChampionshipManager_ChampionshipEventCallbackOpenChampionshipExample(t 
 		checkChampionshipEventCompletion(t, champ.ID.String(), eventID)
 		eventNum++
 	}
-
 }

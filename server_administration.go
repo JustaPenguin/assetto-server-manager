@@ -2,10 +2,12 @@ package servermanager
 
 import (
 	"encoding/json"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/mitchellh/go-wordwrap"
@@ -18,6 +20,7 @@ type ServerAdministrationHandler struct {
 	store               Store
 	raceManager         *RaceManager
 	championshipManager *ChampionshipManager
+	raceWeekendManager  *RaceWeekendManager
 	process             ServerProcess
 }
 
@@ -26,6 +29,7 @@ func NewServerAdministrationHandler(
 	store Store,
 	raceManager *RaceManager,
 	championshipManager *ChampionshipManager,
+	raceWeekendManager *RaceWeekendManager,
 	process ServerProcess,
 ) *ServerAdministrationHandler {
 	return &ServerAdministrationHandler{
@@ -33,8 +37,16 @@ func NewServerAdministrationHandler(
 		store:               store,
 		raceManager:         raceManager,
 		championshipManager: championshipManager,
+		raceWeekendManager:  raceWeekendManager,
 		process:             process,
 	}
+}
+
+type homeTemplateVars struct {
+	BaseTemplateVars
+
+	RaceDetails     *CustomRace
+	PerformanceMode bool
 }
 
 // homeHandler serves content to /
@@ -47,13 +59,20 @@ func (sah *ServerAdministrationHandler) home(w http.ResponseWriter, r *http.Requ
 		customRace = &CustomRace{EntryList: entryList, RaceConfig: currentRace.CurrentRaceConfig}
 	}
 
-	sah.viewRenderer.MustLoadTemplate(w, r, "home.html", map[string]interface{}{
-		"RaceDetails":     customRace,
-		"PerformanceMode": config.Server.PerformanceMode,
+	sah.viewRenderer.MustLoadTemplate(w, r, "home.html", &homeTemplateVars{
+		RaceDetails:     customRace,
+		PerformanceMode: config.Server.PerformanceMode,
 	})
 }
 
 const MOTDFilename = "motd.txt"
+
+type motdTemplateVars struct {
+	BaseTemplateVars
+
+	MOTDText string
+	Opts     *GlobalServerConfig
+}
 
 func (sah *ServerAdministrationHandler) motd(w http.ResponseWriter, r *http.Request) {
 	opts, err := sah.store.LoadServerOptions()
@@ -99,17 +118,23 @@ func (sah *ServerAdministrationHandler) motd(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	sah.viewRenderer.MustLoadTemplate(w, r, "server/motd.html", map[string]interface{}{
-		"motdText": string(b),
-		"Opts":     opts,
+	sah.viewRenderer.MustLoadTemplate(w, r, "server/motd.html", &motdTemplateVars{
+		MOTDText: string(b),
+		Opts:     opts,
 	})
+}
+
+type serverOptionsTemplateVars struct {
+	BaseTemplateVars
+
+	Form *Form
 }
 
 func (sah *ServerAdministrationHandler) options(w http.ResponseWriter, r *http.Request) {
 	serverOpts, err := sah.raceManager.LoadServerOptions()
 
 	if err != nil {
-		logrus.Errorf("couldn't load server options, err: %s", err)
+		logrus.WithError(err).Errorf("couldn't load server options")
 	}
 
 	form := NewForm(serverOpts, nil, "", AccountFromRequest(r).Name == "admin")
@@ -118,7 +143,7 @@ func (sah *ServerAdministrationHandler) options(w http.ResponseWriter, r *http.R
 		err := form.Submit(r)
 
 		if err != nil {
-			logrus.Errorf("couldn't submit form, err: %s", err)
+			logrus.WithError(err).Errorf("couldn't submit form")
 		}
 
 		UseShortenedDriverNames = serverOpts.UseShortenedDriverNames == 1
@@ -128,22 +153,44 @@ func (sah *ServerAdministrationHandler) options(w http.ResponseWriter, r *http.R
 		err = sah.raceManager.SaveServerOptions(serverOpts)
 
 		if err != nil {
-			logrus.Errorf("couldn't save config, err: %s", err)
+			logrus.WithError(err).Errorf("couldn't save config")
 			AddErrorFlash(w, r, "Failed to save server options")
 		} else {
 			AddFlash(w, r, "Server options successfully saved!")
 		}
 	}
 
-	sah.viewRenderer.MustLoadTemplate(w, r, "server/options.html", map[string]interface{}{
-		"form": form,
+	sah.viewRenderer.MustLoadTemplate(w, r, "server/options.html", &serverOptionsTemplateVars{
+		Form: form,
 	})
+}
+
+type serverBlacklistTemplateVars struct {
+	BaseTemplateVars
+
+	Text string
 }
 
 func (sah *ServerAdministrationHandler) blacklist(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		// save to blacklist.txt
-		text := r.FormValue("blacklist")
+		var text string
+
+		if r.FormValue("type") == "single" {
+			// we're adding a single GUID, load the existing blacklist list then append
+			b, err := ioutil.ReadFile(filepath.Join(ServerInstallPath, "blacklist.txt"))
+			if err != nil {
+				logrus.WithError(err).Error("couldn't find blacklist.txt")
+			}
+
+			text = string(b) + r.FormValue("blacklist")
+		} else {
+			text = r.FormValue("blacklist")
+		}
+
+		if !strings.HasSuffix(text, "\n") {
+			text += "\n"
+		}
 
 		err := ioutil.WriteFile(filepath.Join(ServerInstallPath, "blacklist.txt"), []byte(text), 0644)
 
@@ -162,9 +209,15 @@ func (sah *ServerAdministrationHandler) blacklist(w http.ResponseWriter, r *http
 	}
 
 	// render blacklist edit page
-	sah.viewRenderer.MustLoadTemplate(w, r, "server/blacklist.html", map[string]interface{}{
-		"text": string(b),
+	sah.viewRenderer.MustLoadTemplate(w, r, "server/blacklist.html", &serverBlacklistTemplateVars{
+		Text: string(b),
 	})
+}
+
+type autoFillEntrantListTemplateVars struct {
+	BaseTemplateVars
+
+	Entrants []*Entrant
 }
 
 func (sah *ServerAdministrationHandler) autoFillEntrantList(w http.ResponseWriter, r *http.Request) {
@@ -176,13 +229,13 @@ func (sah *ServerAdministrationHandler) autoFillEntrantList(w http.ResponseWrite
 		return
 	}
 
-	sah.viewRenderer.MustLoadTemplate(w, r, "server/autofill-entrants.html", map[string]interface{}{
-		"Entrants": entrants,
+	sah.viewRenderer.MustLoadTemplate(w, r, "server/autofill-entrants.html", &autoFillEntrantListTemplateVars{
+		Entrants: entrants,
 	})
 }
 
 func (sah *ServerAdministrationHandler) autoFillEntrantDelete(w http.ResponseWriter, r *http.Request) {
-	err := sah.raceManager.raceStore.DeleteEntrant(chi.URLParam(r, "entrantID"))
+	err := sah.raceManager.store.DeleteEntrant(chi.URLParam(r, "entrantID"))
 
 	if err != nil {
 		logrus.WithError(err).Error("could not delete entrant")
@@ -221,15 +274,19 @@ func (sah *ServerAdministrationHandler) serverProcess(w http.ResponseWriter, r *
 
 	switch chi.URLParam(r, "action") {
 	case "stop":
-		if event.IsChampionship() {
+		if event.IsChampionship() && !event.IsPractice() {
 			err = sah.championshipManager.StopActiveEvent()
+		} else if event.IsRaceWeekend() && !event.IsPractice() {
+			err = sah.raceWeekendManager.StopActiveSession()
 		} else {
 			err = sah.process.Stop()
 		}
 		txt = "stopped"
 	case "restart":
-		if event.IsChampionship() {
+		if event.IsChampionship() && !event.IsPractice() {
 			err = sah.championshipManager.RestartActiveEvent()
+		} else if event.IsRaceWeekend() && !event.IsPractice() {
+			err = sah.raceWeekendManager.RestartActiveSession()
 		} else {
 			err = sah.process.Restart()
 		}
@@ -240,10 +297,16 @@ func (sah *ServerAdministrationHandler) serverProcess(w http.ResponseWriter, r *
 
 	if event.IsChampionship() {
 		noun = "Championship"
+	} else if event.IsRaceWeekend() {
+		noun = "Race Weekend"
+	}
+
+	if event.IsPractice() {
+		noun += " Practice"
 	}
 
 	if err != nil {
-		logrus.Errorf("could not change "+noun+" status, err: %s", err)
+		logrus.WithError(err).Errorf("could not change " + noun + " status")
 		AddErrorFlash(w, r, "Unable to change "+noun+" status")
 	} else {
 		AddFlash(w, r, noun+" successfully "+txt)
@@ -252,16 +315,43 @@ func (sah *ServerAdministrationHandler) serverProcess(w http.ResponseWriter, r *
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+type changelogTemplateVars struct {
+	BaseTemplateVars
+
+	Changelog template.HTML
+}
+
 func (sah *ServerAdministrationHandler) changelog(w http.ResponseWriter, r *http.Request) {
-	changelog, err := LoadChangelog()
+	sah.viewRenderer.MustLoadTemplate(w, r, "changelog.html", &changelogTemplateVars{
+		Changelog: Changelog,
+	})
+}
+
+func (sah *ServerAdministrationHandler) robots(w http.ResponseWriter, r *http.Request) {
+	// do we want to let robots on the internet know things about us?!?
+	serverOpts, err := sah.store.LoadServerOptions()
 
 	if err != nil {
-		logrus.WithError(err).Error("could not load changelog")
+		logrus.WithError(err).Errorf("couldn't load server options")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	sah.viewRenderer.MustLoadTemplate(w, r, "changelog.html", map[string]interface{}{
-		"Changelog": changelog,
-	})
+	var response string
+
+	w.Header().Set("Content-Type", "text/plain")
+
+	if serverOpts.PreventWebCrawlers == 1 {
+		response = "User-agent: *\nDisallow: /"
+	} else {
+		response = "User-agent: *\nDisallow:"
+	}
+
+	_, err = w.Write([]byte(response))
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't write response text")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 }

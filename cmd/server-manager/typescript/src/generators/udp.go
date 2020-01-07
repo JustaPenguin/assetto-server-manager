@@ -1,4 +1,4 @@
-// this file was automatically generated using struct2ts github.com/cj123/assetto-server-manager.RaceControl
+// this file was automatically generated using struct2ts github.com/JustaPenguin/assetto-server-manager.RaceControl
 // +build ignore
 
 package main
@@ -9,8 +9,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 	"github.com/OneOfOne/struct2ts"
-	"github.com/cj123/assetto-server-manager/pkg/udp"
 )
 
 func main() {

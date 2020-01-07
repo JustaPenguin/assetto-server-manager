@@ -3,7 +3,7 @@ package servermanager
 import (
 	"net/http"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 )
 
 type Resolver struct {
@@ -11,12 +11,15 @@ type Resolver struct {
 	templateLoader  TemplateLoader
 	reloadTemplates bool
 
-	raceManager         *RaceManager
-	carManager          *CarManager
-	championshipManager *ChampionshipManager
-	accountManager      *AccountManager
-	discordManager      *DiscordManager
-	notificationManager *NotificationManager
+	raceManager           *RaceManager
+	carManager            *CarManager
+	trackManager          *TrackManager
+	championshipManager   *ChampionshipManager
+	accountManager        *AccountManager
+	discordManager        *DiscordManager
+	notificationManager   *NotificationManager
+	scheduledRacesManager *ScheduledRacesManager
+	raceWeekendManager    *RaceWeekendManager
 
 	viewRenderer          *Renderer
 	serverProcess         ServerProcess
@@ -40,6 +43,9 @@ type Resolver struct {
 	contentUploadHandler        *ContentUploadHandler
 	raceControlHandler          *RaceControlHandler
 	serverAdministrationHandler *ServerAdministrationHandler
+	raceWeekendHandler          *RaceWeekendHandler
+	strackerHandler             *StrackerHandler
+	healthCheck                 *HealthCheck
 }
 
 func NewResolver(templateLoader TemplateLoader, reloadTemplates bool, store Store) (*Resolver, error) {
@@ -62,9 +68,13 @@ func (r *Resolver) UDPCallback(message udp.Message) {
 	if !config.Server.PerformanceMode {
 		r.resolveRaceControl().UDPCallback(message)
 	}
-	r.resolveChampionshipManager().ChampionshipEventCallback(message)
-	r.resolveRaceManager().LoopCallback(message)
-	r.resolveContentManagerWrapper().UDPCallback(message)
+
+	if message.Event() != udp.EventCarUpdate {
+		r.resolveChampionshipManager().ChampionshipEventCallback(message)
+		r.resolveRaceWeekendManager().UDPCallback(message)
+		r.resolveRaceManager().LoopCallback(message)
+		r.resolveContentManagerWrapper().UDPCallback(message)
+	}
 }
 
 func (r *Resolver) initViewRenderer() error {
@@ -92,7 +102,7 @@ func (r *Resolver) resolveServerProcess() ServerProcess {
 		return r.serverProcess
 	}
 
-	r.serverProcess = NewAssettoServerProcess(r.UDPCallback, r.resolveContentManagerWrapper())
+	r.serverProcess = NewAssettoServerProcess(r.UDPCallback, r.ResolveStore(), r.resolveContentManagerWrapper())
 
 	return r.serverProcess
 }
@@ -102,7 +112,7 @@ func (r *Resolver) resolveContentManagerWrapper() *ContentManagerWrapper {
 		return r.contentManagerWrapper
 	}
 
-	r.contentManagerWrapper = NewContentManagerWrapper(r.ResolveStore(), r.resolveCarManager())
+	r.contentManagerWrapper = NewContentManagerWrapper(r.ResolveStore(), r.resolveCarManager(), r.resolveTrackManager())
 
 	return r.contentManagerWrapper
 }
@@ -116,6 +126,7 @@ func (r *Resolver) resolveRaceManager() *RaceManager {
 		r.store,
 		r.resolveServerProcess(),
 		r.resolveCarManager(),
+		r.resolveTrackManager(),
 		r.resolveNotificationManager(),
 	)
 
@@ -187,7 +198,7 @@ func (r *Resolver) resolveCarManager() *CarManager {
 		return r.carManager
 	}
 
-	r.carManager = NewCarManager()
+	r.carManager = NewCarManager(r.resolveTrackManager(), config.Server.ScanContentFolderForChanges)
 
 	return r.carManager
 }
@@ -224,12 +235,22 @@ func (r *Resolver) resolveChampionshipsHandler() *ChampionshipsHandler {
 	return r.championshipsHandler
 }
 
+func (r *Resolver) resolveTrackManager() *TrackManager {
+	if r.trackManager != nil {
+		return r.trackManager
+	}
+
+	r.trackManager = NewTrackManager()
+
+	return r.trackManager
+}
+
 func (r *Resolver) resolveTracksHandler() *TracksHandler {
 	if r.tracksHandler != nil {
 		return r.tracksHandler
 	}
 
-	r.tracksHandler = NewTracksHandler(r.resolveBaseHandler())
+	r.tracksHandler = NewTracksHandler(r.resolveBaseHandler(), r.resolveTrackManager())
 
 	return r.tracksHandler
 }
@@ -249,7 +270,7 @@ func (r *Resolver) resolvePenaltiesHandler() *PenaltiesHandler {
 		return r.penaltiesHandler
 	}
 
-	r.penaltiesHandler = NewPenaltiesHandler(r.resolveBaseHandler(), r.resolveChampionshipManager())
+	r.penaltiesHandler = NewPenaltiesHandler(r.resolveBaseHandler(), r.resolveChampionshipManager(), r.resolveRaceWeekendManager())
 
 	return r.penaltiesHandler
 }
@@ -259,9 +280,19 @@ func (r *Resolver) resolveResultsHandler() *ResultsHandler {
 		return r.resultsHandler
 	}
 
-	r.resultsHandler = NewResultsHandler(r.resolveBaseHandler())
+	r.resultsHandler = NewResultsHandler(r.resolveBaseHandler(), r.ResolveStore())
 
 	return r.resultsHandler
+}
+
+func (r *Resolver) resolveScheduledRacesManager() *ScheduledRacesManager {
+	if r.scheduledRacesManager != nil {
+		return r.scheduledRacesManager
+	}
+
+	r.scheduledRacesManager = NewScheduledRacesManager(r.ResolveStore())
+
+	return r.scheduledRacesManager
 }
 
 func (r *Resolver) resolveScheduledRacesHandler() *ScheduledRacesHandler {
@@ -269,7 +300,7 @@ func (r *Resolver) resolveScheduledRacesHandler() *ScheduledRacesHandler {
 		return r.scheduledRacesHandler
 	}
 
-	r.scheduledRacesHandler = NewScheduledRacesHandler(r.resolveBaseHandler(), r.store, r.resolveRaceManager(), r.resolveChampionshipManager())
+	r.scheduledRacesHandler = NewScheduledRacesHandler(r.resolveBaseHandler(), r.resolveScheduledRacesManager())
 
 	return r.scheduledRacesHandler
 }
@@ -284,6 +315,7 @@ func (r *Resolver) resolveServerAdministrationHandler() *ServerAdministrationHan
 		r.ResolveStore(),
 		r.resolveRaceManager(),
 		r.resolveChampionshipManager(),
+		r.resolveRaceWeekendManager(),
 		r.resolveServerProcess(),
 	)
 
@@ -316,13 +348,17 @@ func (r *Resolver) resolveRaceControl() *RaceControl {
 		return r.raceControl
 	}
 
-	r.raceControl = NewRaceControl(r.resolveRaceControlHub(), filesystemTrackData{}, r.resolveServerProcess())
+	r.raceControl = NewRaceControl(
+		r.resolveRaceControlHub(),
+		filesystemTrackData{},
+		r.resolveServerProcess(),
+		r.ResolveStore(),
+	)
 
 	return r.raceControl
 }
 
 func (r *Resolver) resolveRaceControlHandler() *RaceControlHandler {
-
 	if config.Server.PerformanceMode {
 		return nil
 	}
@@ -343,13 +379,33 @@ func (r *Resolver) resolveRaceControlHandler() *RaceControlHandler {
 	return r.raceControlHandler
 }
 
+func (r *Resolver) resolveRaceWeekendManager() *RaceWeekendManager {
+	if r.raceWeekendManager != nil {
+		return r.raceWeekendManager
+	}
+
+	r.raceWeekendManager = NewRaceWeekendManager(r.resolveRaceManager(), r.resolveChampionshipManager(), r.ResolveStore(), r.resolveServerProcess(), r.resolveNotificationManager())
+
+	return r.raceWeekendManager
+}
+
+func (r *Resolver) resolveRaceWeekendHandler() *RaceWeekendHandler {
+	if r.raceWeekendHandler != nil {
+		return r.raceWeekendHandler
+	}
+
+	r.raceWeekendHandler = NewRaceWeekendHandler(r.resolveBaseHandler(), r.resolveRaceWeekendManager())
+
+	return r.raceWeekendHandler
+}
+
 func (r *Resolver) resolveDiscordManager() *DiscordManager {
 	if r.discordManager != nil {
 		return r.discordManager
 	}
 
 	// if manager errors, it will log the error and return discordManager flagged as disabled, so no need to handle err
-	r.discordManager, _ = NewDiscordManager(r.store, r)
+	r.discordManager, _ = NewDiscordManager(r.store, r.resolveScheduledRacesManager())
 
 	return r.discordManager
 }
@@ -362,6 +418,26 @@ func (r *Resolver) resolveNotificationManager() *NotificationManager {
 	r.notificationManager = NewNotificationManager(r.resolveDiscordManager(), r.resolveCarManager(), r.store)
 
 	return r.notificationManager
+}
+
+func (r *Resolver) resolveStrackerHandler() *StrackerHandler {
+	if r.strackerHandler != nil {
+		return r.strackerHandler
+	}
+
+	r.strackerHandler = NewStrackerHandler(r.resolveBaseHandler(), r.ResolveStore())
+
+	return r.strackerHandler
+}
+
+func (r *Resolver) resolveHealthCheck() *HealthCheck {
+	if r.healthCheck != nil {
+		return r.healthCheck
+	}
+
+	r.healthCheck = NewHealthCheck(r.resolveRaceControl(), r.ResolveStore())
+
+	return r.healthCheck
 }
 
 func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
@@ -381,6 +457,9 @@ func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
 		r.resolveServerAdministrationHandler(),
 		r.resolveRaceControlHandler(),
 		r.resolveScheduledRacesHandler(),
+		r.resolveRaceWeekendHandler(),
+		r.resolveStrackerHandler(),
+		r.resolveHealthCheck(),
 	)
 }
 

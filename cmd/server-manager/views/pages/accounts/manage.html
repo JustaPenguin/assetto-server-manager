@@ -1,3 +1,5 @@
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.manageAccountsTemplateVars */}}
+
 {{ define "title" }}Manage Accounts{{ end }}
 
 {{ define "content" }}
@@ -21,10 +23,12 @@
                         <a class="btn btn-warning" href="/accounts/edit/{{ $account.ID.String }}">
                             Edit
                         </a>
-                        <a onClick="return confirm('I understand that this will delete this account permanently.') "
-                           class="btn btn-danger" href="/accounts/delete/{{ $account.ID.String }}">
-                            Delete
-                        </a>
+                        {{ if ne $.BaseTemplateVars.User.ID.String $account.ID.String }}
+                            <a onClick="return confirm('I understand that this will delete this account permanently.') "
+                               class="btn btn-danger" href="/accounts/delete/{{ $account.ID.String }}">
+                                Delete
+                            </a>
+                        {{ end }}
                     {{ end }}
                 </td>
             </tr>

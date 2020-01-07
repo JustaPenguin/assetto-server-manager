@@ -1,3 +1,5 @@
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.carDetailsTemplateVars */}}
+
 {{ define "title" }}{{ $.Car.Details.Name }}{{ end }}
 
 {{ define "content" }}
@@ -5,6 +7,11 @@
         <h1 class="text-center">{{ $.Car.Details.Name }}</h1>
         <div class="text-center mb-3">
             <small>({{ $.Car.Name}})</small>
+
+            {{ if $.Car.IsPaidDLC }}<span class="badge bg-dlc">DLC</span>{{ end }}
+            {{ if $.Car.IsMod }}<span class="badge bg-mod">Mod</span>{{ end }}
+            {{ if not (or $.Car.IsPaidDLC $.Car.IsMod) }}<span class="badge bg-default-content">Default</span>{{ end }}
+
         </div>
 
         {{ if gt (len $.Car.Skins) 0 }}
@@ -182,7 +189,7 @@
                     {{ range $index, $session := $.Results }}
                         <a class="list-group-item list-group-item-action" href="/results/{{ $session.SessionFile }}">
                             <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-2 text-primary"><strong>{{ title (lower $session.Type) }}</strong></h5>
+                                <h5 class="mb-2 text-primary"><strong>{{ title (lower $session.Type.String) }}</strong></h5>
                                 <small>{{ fullTimeFormat $session.Date }}</small>
                             </div>
                             <p class="mb-1">{{ prettify $session.TrackName false }} {{ with $session.TrackConfig }}({{ prettify . true }}){{ end }}</p>
@@ -239,7 +246,7 @@
 
                 {{ if WriteAccess }}
                     <form method="post" action="/car/{{ $.Car.Name }}/metadata">
-                        <div class="card mt-3 border-info mt-5 mb-3">
+                        <div class="card mt-3 border-primary mt-5 mb-3">
                             <div class="card-header text-white bg-primary">
                                 <strong>Car Metadata</strong>
                             </div>
@@ -259,7 +266,7 @@
                                                 placeholder="e.g. http://racedepartment.com/..."
                                         >
 
-                                        <small>Download links for cars will be shown in Championship pages and in Content Manager's server information screen.</small>
+                                        <small>Download links for cars will be shown in Content Manager's server information screen.</small>
                                     </div>
                                 </div>
 

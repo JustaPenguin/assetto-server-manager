@@ -17,7 +17,7 @@ test:
 
 generate:
 	go get -u github.com/mjibson/esc
-	go generate .
+	go generate ./...
 
 assets:
 	$(MAKE) -C cmd/server-manager assets

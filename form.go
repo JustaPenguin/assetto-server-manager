@@ -52,25 +52,40 @@ func (f Form) Submit(r *http.Request) error {
 	val := reflect.ValueOf(f.data).Elem()
 
 	for name, vals := range r.Form {
-		f := val.FieldByName(name)
-
-		if f.IsValid() && f.CanSet() {
-			switch f.Kind() {
-			case reflect.String:
-				f.SetString(strings.Join(vals, ";"))
-			case reflect.Int:
-				if vals[0] == "on" {
-					f.SetInt(1)
-				} else {
-					f.SetInt(int64(formValueAsInt(vals[0])))
-				}
-			default:
-				panic("form submit - unknown type")
-			}
-		}
+		f.assignFieldValues(val, name, vals)
 	}
 
 	return nil
+}
+
+func (f Form) assignFieldValues(val reflect.Value, name string, vals []string) {
+	parts := strings.Split(name, ".")
+	field := val.FieldByName(parts[0])
+
+	if field.IsValid() && field.CanSet() {
+		switch field.Kind() {
+		case reflect.Struct:
+			if len(parts) > 1 {
+				f.assignFieldValues(field, strings.Join(parts[1:], "."), vals)
+			}
+		case reflect.String:
+			field.SetString(strings.Join(vals, ";"))
+		case reflect.Int:
+			if vals[0] == "on" {
+				field.SetInt(1)
+			} else {
+				field.SetInt(int64(formValueAsInt(vals[0])))
+			}
+		case reflect.Bool:
+			if vals[0] == "on" {
+				field.SetBool(true)
+			} else {
+				field.SetBool(formValueAsInt(vals[0]) == 1)
+			}
+		default:
+			panic("form submit - unknown type")
+		}
+	}
 }
 
 func (f Form) Fields() []FormElement {
@@ -105,6 +120,13 @@ func (f Form) buildOpts(val reflect.Value, t reflect.Type, parentName string) []
 		typeField := t.Field(i)
 		valField := val.Field(i)
 
+		formShow := typeField.Tag.Get(formShowTagName)
+
+		// check to see if we should be showing this tag
+		if formShow == "-" || (formShow != "open" && f.visibility != "" && formShow != f.visibility) || formShow == "premium" && IsPremium != "true" {
+			continue
+		}
+
 		switch valField.Kind() {
 		case reflect.Struct:
 			opts = append(opts, f.buildOpts(valField, typeField.Type, fmt.Sprintf("%s%s.", parentName, typeField.Name))...)
@@ -123,12 +145,6 @@ func (f Form) buildOpts(val reflect.Value, t reflect.Type, parentName string) []
 			}
 
 		default:
-			formShow := typeField.Tag.Get(formShowTagName)
-
-			// check to see if we should be showing this tag
-			if formShow == "-" || (formShow != "open" && f.visibility != "" && formShow != f.visibility) {
-				continue
-			}
 
 			// formType can be e.g. dropdown
 			formType := typeField.Tag.Get(formTypeTagName)
@@ -139,7 +155,7 @@ func (f Form) buildOpts(val reflect.Value, t reflect.Type, parentName string) []
 
 			formOpt := FormOption{
 				Name:     strings.Join(camelcase.Split(typeField.Name), " "),
-				Key:      typeField.Name,
+				Key:      parentName + typeField.Name,
 				Value:    valField.Interface(),
 				HelpText: template.HTML(typeField.Tag.Get("help")),
 				Type:     formType,
@@ -235,6 +251,14 @@ func (f FormOption) renderDropdown() template.HTML {
 }
 
 func (f FormOption) renderCheckbox() template.HTML {
+	if b, ok := f.Value.(bool); ok {
+		if b {
+			f.Value = 1
+		} else {
+			f.Value = 0
+		}
+	}
+
 	const checkboxTemplate = `
 		{{ if not .Hidden }}
 			<div class="form-group row">
@@ -248,7 +272,7 @@ func (f FormOption) renderCheckbox() template.HTML {
 				</div>
 			</div>
 		{{ else }}
-			<input type="hidden" id="{{ .Key }}" name="{{ .Key }}" {{ if eq .Value 1 }}value="1"{{ else }}value="0"{{ end }}><br>
+			<input type="hidden" id="{{ .Key }}" name="{{ .Key }}" {{ if eq .Value 1 }}value="1"{{ else }}value="0"{{ end }}>
 		{{ end }}
 	`
 
@@ -344,11 +368,29 @@ func (f FormOption) renderNumberInput() template.HTML {
 	return tmpl
 }
 
+type FormHeading string
+
+func (f FormOption) renderHeading() template.HTML {
+	if f.Hidden {
+		return ""
+	}
+
+	const headingTemplate = `<hr class="mt-5"><h3 class="mt-4 mb-4">{{ .Name }}</h3>`
+
+	tmpl, err := f.render(headingTemplate)
+
+	if err != nil {
+		return template.HTML(fmt.Sprintf("err: %s", err))
+	}
+
+	return tmpl
+}
+
 func (f FormOption) HTML() template.HTML {
 	switch f.Type {
 	case "dropdown", "multiSelect":
 		return f.renderDropdown()
-	case "checkbox":
+	case "checkbox", "bool":
 		return f.renderCheckbox()
 	case "int":
 		if f.Value == nil {
@@ -360,6 +402,8 @@ func (f FormOption) HTML() template.HTML {
 		return f.renderTextarea()
 	case "string", "password":
 		return f.renderTextInput()
+	case "heading":
+		return f.renderHeading()
 	default:
 		logrus.Errorf("Unknown type: %s", f.Type)
 		return ""

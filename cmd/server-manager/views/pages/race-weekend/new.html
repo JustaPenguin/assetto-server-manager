@@ -1,0 +1,108 @@
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.RaceTemplateVars */}}
+
+{{ define "title" }}Create a Race Weekend{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">
+        {{ if not $.IsEditing }}
+            Create a new Race Weekend
+        {{ else }}
+            Edit the {{ $.RaceWeekend.Name }} Race Weekend
+        {{ end }}
+    </h1>
+
+    {{ if $.RaceWeekend.HasLinkedChampionship }}
+        <h4 class="text-center">in the {{ $.Championship.Name }} Championship</h4>
+    {{ end }}
+
+    {{ template "raceweekend-premium" dict "IsPremium" $.IsPremium }}
+
+    <form action="/race-weekends/new/submit" class="race-setup" method="post" id="raceweekend-form" data-safe-submit>
+        <div class="card mt-3 border-secondary" id="entrants">
+            <div class="card-header">
+                <strong>Race Weekend</strong>
+
+                {{ if .IsEditing }}
+                    <button type="submit" class="btn btn-success float-right">Save Race Weekend</button>
+                {{ end }}
+            </div>
+
+            <div class="card-body">
+                <div class="form-group row">
+                    <label for="RaceWeekendName" class="col-sm-3 col-form-label">Name</label>
+
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="RaceWeekendName" name="RaceWeekendName" required
+                               placeholder="My awesome Race Weekend" value="{{ $.RaceWeekend.Name }}">
+                    </div>
+                </div>
+
+                {{ if not $.RaceWeekend.HasLinkedChampionship }}
+
+                    <div class="form-group row">
+                        <label for="Cars" class="col-sm-3 col-form-label">
+                            Cars
+                        </label>
+
+                        <div class="col-sm-9">
+                            {{ template "cars" dict "CarOpts" $.CarOpts "Current" nil "ValidCarIDs" $.RaceWeekend.GetEntryList.CarIDs  }}
+                        </div>
+                    </div>
+
+
+                    <div class="entrants-block">
+                        <div id="entrantTemplate" class="entrant">
+                            {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" false "NameAndGUIDRequired" true }}
+                        </div>
+
+                        {{ range $index, $entrant := $.RaceWeekend.GetEntryList.AsSlice }}
+                            <div class="entrant">
+                                {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" false "IsEditing" $.IsEditing "IsChampionship" false "NameAndGUIDRequired" true }}
+                            </div>
+                        {{ else }}
+                            {{ if not $.IsEditing }}
+                                <div class="entrant">
+                                    {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" false "NameAndGUIDRequired" true }}
+                                </div>
+                            {{ end }}
+                        {{ end }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-8 pt-2">
+                            <p>Car, Skin, Ballast, Restrictor and Fixed Setup from the last Entrant will be cloned into new Entrants.</p>
+                        </div>
+                        <div class="col-md-4 text-right">
+                            <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
+
+                            <button class="btn btn-warning addEntrant">Add Entrant(s)</button>
+                        </div>
+                    </div>
+                {{ else }}
+                    <input type="hidden" name="ChampionshipID" id="ChampionshipID" value="{{ $.Championship.ID }}">
+                {{ end }}
+
+                <div class="clearfix"></div>
+            </div>
+        </div>
+
+
+        <div class="mt-5">
+            {{ if .IsEditing }}
+                <input type="hidden" name="Editing" id="Editing" value="{{ $.RaceWeekend.ID.String }}">
+                <button type="submit" class="btn btn-success float-right">Save Race Weekend</button>
+            {{ else }}
+                <div class="float-right">
+                    <button type="submit" name="action" value="addEvent" class="btn btn-success">Add a Session</button>
+                </div>
+            {{ end }}
+        </div>
+    </form>
+
+    <script type="text/javascript">
+        const availableTyres = {{ jsonEncode .Tyres }};
+        const possibleEntrants = {{ jsonEncode .PossibleEntrants }};
+        const availableCars = {{ jsonEncode .CarOpts.AsMap }};
+        const fixedSetups = {{ jsonEncode .FixedSetups }};
+    </script>
+{{ end }}

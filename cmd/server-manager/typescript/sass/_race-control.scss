@@ -21,6 +21,9 @@
   color: #127ba3;
 }
 
+#track-location {
+  color: $black;
+}
 
 #road-temp-wrapper {
   display: block;
@@ -190,6 +193,10 @@ td .dot-inactive {
   animation: cssAnimation 3s forwards;
 }
 
+.admin-command-input {
+    width: auto;
+}
+
 @keyframes cssAnimation {
   0% {
     opacity: 1;
@@ -222,4 +229,11 @@ td .dot-inactive {
 
 .live-events {
   width: 220px;
+}
+
+@media screen and (min-width: 550px) {
+  .race-control-buttons {
+    position: relative;
+    top: -50px;
+  }
 }

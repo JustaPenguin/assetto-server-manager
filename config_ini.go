@@ -1,12 +1,15 @@
 package servermanager
 
 import (
+	"bytes"
 	"fmt"
 	"path/filepath"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/cj123/ini"
+	"github.com/sirupsen/logrus"
 )
 
 func init() {
@@ -28,6 +31,10 @@ const (
 
 	serverConfigIniPath = "server_cfg.ini"
 )
+
+func (s SessionType) OriginalString() string {
+	return string(s)
+}
 
 func (s SessionType) String() string {
 	switch s {
@@ -53,7 +60,7 @@ var AvailableSessions = []SessionType{
 	SessionTypeBooking,
 }
 
-var AvailableSessionsClosedChampionship = []SessionType{
+var AvailableSessionsNoBooking = []SessionType{
 	SessionTypeRace,
 	SessionTypeQualifying,
 	SessionTypePractice,
@@ -135,6 +142,8 @@ func (sc ServerConfig) Write() error {
 }
 
 type GlobalServerConfig struct {
+	AssettoCorsaServer FormHeading `ini:"-" json:"-" input:"heading"`
+
 	Name                      string `ini:"NAME" help:"Server Name"`
 	Password                  string `ini:"PASSWORD" input:"password" help:"Server password"`
 	AdminPassword             string `ini:"ADMIN_PASSWORD" input:"password" help:"The password needed to be recognized as server administrator: you can join the server using it to be recognized automatically. Type /help in the game's chat to see the command list"`
@@ -160,23 +169,42 @@ type GlobalServerConfig struct {
 	FreeUDPPluginLocalPort int    `ini:"-" show:"-"`
 	FreeUDPPluginAddress   string `ini:"-" show:"-"`
 
-	ShowRaceNameInServerLobby   int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager append the Custom Race or Championship name to the Server name in the lobby."`
-	CustomCSS                   string `ini:"-" input:"textarea" help:"Customise the style of Server Manager! You can <a href='https://github.com/cj123/assetto-server-manager/wiki/Custom-CSS-Examples'>view some examples</a> on the Server Manager Wiki!"`
-	UseShortenedDriverNames     int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager hide driver's last names, for example 'John Smith' becomes 'John S.'"`
-	FallBackResultsSorting      int    `ini:"-" input:"checkbox" help:"When on results will use a fallback method of sorting. Only enable this if you are experiencing results that are in the wrong order in the json file."`
-	EnableContentManagerWrapper int    `ini:"-" input:"checkbox" help:"When on, this option makes Server Manager provide extra information to Content Manager. This includes more detail about connected clients, event descriptions and download links. A side-effect of this is that your server name will contain a new piece of information (an 'i' character followed by a port - which Content Manager requires). Also - if enabled - this wrapper uses a GeoIP functionality provided by <a href='https://freegeoip.app''>freegeoip.app</a>."`
-	ContentManagerWrapperPort   int    `ini:"-" min:"0" max:"65535" help:"The port on which to serve Content Manager with the above information. Please make sure this port is open on your firewall."`
-	ShowContentManagerJoinLink  int    `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager display Content Manager join links on the Live Timing page and (if enabled) in Discord race start notifications."`
+	ServerName                FormHeading `ini:"-" json:"-" input:"heading"`
+	ShowRaceNameInServerLobby int         `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager append the Custom Race or Championship name to the Server name in the lobby."`
+	ServerNameTemplate        string      `ini:"-" help:"You can enter anything you like in here. If you put <code>{{ .ServerName }}</code> in, the Server Name will replace it. If you put <code>{{ .EventName }}</code>, then the Event Name will replace it. Note this only works if 'Show Race Name In Server Lobby' (above) is enabled. You can <a href='https://github.com/JustaPenguin/assetto-server-manager/wiki/Server-Name-Template-Examples'>view some examples</a> on the Server Manager Wiki!"`
+
+	Theme     FormHeading `ini:"-" json:"-" input:"heading"`
+	DarkTheme int         `ini:"-" input:"checkbox" help:"Enable Server Manager's Dark Theme by default"`
+	CustomCSS string      `ini:"-" input:"textarea" help:"Customise the style of Server Manager! You can <a href='https://github.com/JustaPenguin/assetto-server-manager/wiki/Custom-CSS-Examples'>view some examples</a> on the Server Manager Wiki!"`
+	OGImage   string      `ini:"-" show:"premium" help:"Link to an image on the web here to set it as your default Open Graph image (will show in links)"`
+
+	ContentManagerIntegration   FormHeading `ini:"-" json:"-" input:"heading"`
+	EnableContentManagerWrapper int         `ini:"-" input:"checkbox" help:"When on, this option makes Server Manager provide extra information to Content Manager. This includes more detail about connected clients, event descriptions and download links. A side-effect of this is that your server name will contain a new piece of information (an 'i' character followed by a port - which Content Manager requires). Also - if enabled - this wrapper uses a GeoIP functionality provided by <a href='https://freegeoip.app''>freegeoip.app</a>."`
+	ContentManagerWrapperPort   int         `ini:"-" min:"0" max:"65535" help:"The port on which to serve Content Manager with the above information. Please make sure this port is open on your firewall."`
+	ShowContentManagerJoinLink  int         `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager display Content Manager join links on the Live Timing page and (if enabled) in Discord race start notifications."`
+
+	Miscellaneous                     FormHeading `ini:"-" json:"-" input:"heading"`
+	UseShortenedDriverNames           int         `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager hide driver's last names, for example 'John Smith' becomes 'John S.'"`
+	FallBackResultsSorting            int         `ini:"-" input:"checkbox" help:"When on results will use a fallback method of sorting. Only enable this if you are experiencing results that are in the wrong order in the json file."`
+	UseMPH                            int         `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager use MPH instead of Km/h for all speed values."`
+	PreventWebCrawlers                int         `ini:"-" input:"checkbox" help:"When on, robots will be prohibited from indexing this manager by the robots.txt. Please note this will only deter well behaved bots, and not malware/spam bots etc."`
+	RestartEventOnServerManagerLaunch int         `ini:"-" input:"checkbox" help:"When on, if Server Manager is stopped while there is an event in progress, Server Manager will try to restart the event when Server Manager is restarted."`
+
+	// Discord Integration
+	DiscordIntegration FormHeading `ini:"-" json:"-" input:"heading"`
+	DiscordAPIToken    string      `ini:"-" help:"If set, will enable race start and scheduled reminder messages to the Discord channel ID specified below.  Use your bot's user token, not the OAuth token."`
+	DiscordChannelID   string      `ini:"-" help:"If Discord is enabled, this is the channel ID it will send messages to.  To find the channel ID, enable Developer mode in Discord (user settings, Appearance), then Server Settings, Roles, and right click on the channel and Copy ID."`
+	DiscordRoleID      string      `ini:"-" help:"If set, this role will be mentioned in all Discord notifications.  Any users with this role and access to the channel will be pinged.  To find the role ID, enable Developer mode (see above)), then Server Settings, Roles, right click on the role and Copy ID."`
+	DiscordRoleCommand string      `ini:"-" help:"If the Discord Role ID is set, you can optionally specify a command string here, like \"notify\" (no ! prefix), which if run as a ! command by a user (on a line by itself) in Discord will cause this server to attempt to add the configured role to the user.  If you run multiple servers with Discord enabled, only set this on one of them.  In order for this to work your bot must have the \"Manage Roles\" permission."`
+
+	NotificationReminderTimer   int    `ini:"-"  show:"-" min:"0" max:"65535" help:"This setting has been deprecated and will be removed in the next release.  Use Notification Reminder Timers instead."`
+	NotificationReminderTimers  string `ini:"-" help:"If Discord is enabled, a reminder will be sent this many minutes prior to race start.  If 0 or empty, only race start messages will be sent.  You may schedule multiple reminders by using a comma separated list like 120,15."`
+	ShowPasswordInNotifications int    `ini:"-" input:"checkbox" help:"Show the server password in race start notifications."`
+	NotifyWhenScheduled         int    `ini:"-" input:"checkbox" help:"Send a notification when a race is scheduled (or cancelled)."`
 
 	// Messages
 	ContentManagerWelcomeMessage string `ini:"-" show:"-"`
 	ServerJoinMessage            string `ini:"-" show:"-"`
-
-	// Discord Integration
-	DiscordAPIToken             string `ini:"-" help:"If set, will enable race start and scheduled reminder messages to the Discord channel ID specified below.  Use your bot's user token, not the OAuth token."`
-	DiscordChannelID            string `ini:"-" help:"If Discord is enabled, this is the channel ID it will send messages to"`
-	NotificationReminderTimer   int    `ini:"-" min:"0" max:"65535" help:"If Discord is enabled, a reminder will be sent this many minutes prior to race start.  If 0, only race start messages will be sent."`
-	ShowPasswordInNotifications int    `ini:"-" show:"open" input:"checkbox" help:"Show the server password in race start notifications"`
 }
 
 func (gsc GlobalServerConfig) GetName() string {
@@ -211,7 +239,7 @@ type CurrentRaceConfig struct {
 	TimeOfDayMultiplier       int    `ini:"TIME_OF_DAY_MULT" help:"multiplier for the time of day"`
 	QualifyMaxWaitPercentage  int    `ini:"QUALIFY_MAX_WAIT_PERC" help:"The factor to calculate the remaining time in a qualify session after the session is ended: 120 means that 120% of the session fastest lap remains to end the current lap."`
 	RaceGasPenaltyDisabled    int    `ini:"RACE_GAS_PENALTY_DISABLED" input:"checkbox" help:"0 = any cut will be penalized with the gas cut message; 1 = no penalization will be forced, but cuts will be saved in the race result json."`
-	MaxBallastKilograms       int    `ini:"MAX_BALLAST_KG" help:"the max total of ballast that can be added through the admin command"`
+	MaxBallastKilograms       int    `ini:"MAX_BALLAST_KG" help:"the max total of ballast that can be added to an entrant in the entry list or through the admin command"`
 	RaceExtraLap              int    `ini:"RACE_EXTRA_LAP" input:"checkbox" help:"If the race is timed, force an extra lap after the leader has crossed the line"`
 	MaxContactsPerKilometer   int    `ini:"MAX_CONTACTS_PER_KM" help:"Maximum number times you can make contact with another car in 1 kilometer."`
 	ResultScreenTime          int    `ini:"RESULT_SCREEN_TIME" help:"Seconds of result screen between racing sessions"`
@@ -239,10 +267,20 @@ type CurrentRaceConfig struct {
 	Weather  map[string]*WeatherConfig `ini:"-"`
 }
 
-type Sessions map[SessionType]SessionConfig
+func (c CurrentRaceConfig) Tyres() map[string]bool {
+	tyres := make(map[string]bool)
 
-func (s Sessions) AsSlice() []SessionConfig {
-	var out []SessionConfig
+	for _, tyre := range strings.Split(c.LegalTyres, ";") {
+		tyres[tyre] = true
+	}
+
+	return tyres
+}
+
+type Sessions map[SessionType]*SessionConfig
+
+func (s Sessions) AsSlice() []*SessionConfig {
+	var out []*SessionConfig
 
 	if x, ok := s[SessionTypeBooking]; ok {
 		out = append(out, x)
@@ -273,9 +311,19 @@ func (c CurrentRaceConfig) HasSession(sess SessionType) bool {
 	return ok
 }
 
-func (c *CurrentRaceConfig) AddSession(sessionType SessionType, config SessionConfig) {
+func (c CurrentRaceConfig) GetSession(sessionType SessionType) *SessionConfig {
+	sess, ok := c.Sessions[sessionType]
+
+	if !ok {
+		return &SessionConfig{}
+	}
+
+	return sess
+}
+
+func (c *CurrentRaceConfig) AddSession(sessionType SessionType, config *SessionConfig) {
 	if c.Sessions == nil {
-		c.Sessions = make(map[SessionType]SessionConfig)
+		c.Sessions = make(map[SessionType]*SessionConfig)
 	}
 
 	c.Sessions[sessionType] = config
@@ -341,4 +389,37 @@ func (w WeatherConfig) UnixToTime(unix int) time.Time {
 func (w WeatherConfig) TrimName(name string) string {
 	// Should not clash with normal weathers, but required for Sol weather setup
 	return strings.TrimSuffix(strings.Split(name, "=")[0], "_type")
+}
+
+type serverNameTemplateOpts struct {
+	GlobalServerConfig
+	CurrentRaceConfig
+	RaceEvent
+
+	ServerName string
+}
+
+func buildFinalServerName(userTemplate string, event RaceEvent, config ServerConfig) string {
+	t, err := template.New("serverName").Parse(userTemplate)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("could not parse user server name template.")
+		return config.GlobalServerConfig.Name
+	}
+
+	out := new(bytes.Buffer)
+
+	err = t.Execute(out, serverNameTemplateOpts{
+		ServerName:         config.GlobalServerConfig.Name,
+		CurrentRaceConfig:  config.CurrentRaceConfig,
+		GlobalServerConfig: config.GlobalServerConfig,
+		RaceEvent:          event,
+	})
+
+	if err != nil {
+		logrus.WithError(err).Errorf("could not execute user server name template.")
+		return config.GlobalServerConfig.Name
+	}
+
+	return out.String()
 }

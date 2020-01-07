@@ -1,3 +1,5 @@
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.serverOptionsTemplateVars */}}
+
 {{ define "title" }}Options{{ end }}
 
 {{ define "content" }}
@@ -6,7 +8,7 @@
     <p>These configuration options are applied globally - they are applied to each race setup started by Server Manager.</p>
 
     <form method="post" action="/server-options">
-        {{ range $k, $v := .form.Fields }}
+        {{ range $k, $v := .Form.Fields }}
             {{ $v.HTML }}
         {{ end }}
 

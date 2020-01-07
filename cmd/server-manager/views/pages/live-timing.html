@@ -1,3 +1,5 @@
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.liveTimingTemplateVars */}}
+
 {{ define "title" }}Live Timing{{ end }}
 
 {{ define "extracss" }}
@@ -33,6 +35,8 @@
 
 {{ define "content" }}
     {{ $CMJoinLink := .CMJoinLink }}
+    {{ $UseMPH := .UseMPH }}
+
     {{ with .RaceDetails }}
         <div class="race-control-event-info">
             {{ range $sessionName, $session := .RaceConfig.Sessions }}
@@ -43,9 +47,6 @@
 
             <small class="mr-1" data-toggle="tooltip" title="{{ .EntryList.Entrants }}" >{{ len .EntryList }} <i class="fa fa-user"></i></small>
 
-            <br>
-
-            {{ with $CMJoinLink }} <a id="cm-join-link" href="{{ . }}" class="btn btn-success btn-sm mt-1">Join</a> {{ end }}
         </div>
 
         <div class="race-control-weather-info">
@@ -65,9 +66,25 @@
 
         <div class="text-center pl-5 pr-5" style="margin-top: -15px">
             <a href="#" id="event-title" data-toggle="popover" data-placement="bottom"></a>
-            <div class="text-black-50" id="track-location"></div>
+            <div id="track-location"></div>
 
-            <span id="race-time" class="mt-2 badge badge-primary" style="font-size: 1em;"></span>
+            <span id="race-time" class="mt-2 badge badge-primary" style="font-size: 1em;">--:--:--</span>
+        </div>
+
+        <br>
+
+        <div class="race-control-buttons">
+            {{ with $CMJoinLink }}
+                <a id="cm-join-link" href="{{ . }}" class="btn btn-success btn-sm mt-1">Join</a>
+            {{ end }}
+
+            {{ if AdminAccess }}
+                <button id="admin-panel" data-toggle="popover" class="btn btn-sm btn-info mt-1" data-placement="bottom">Admin Panel</button>
+            {{ end }}
+
+            {{ if $.IsStrackerEnabled }}
+                <a href="/stracker/mainpage" class="btn btn-primary btn-sm mt-1">STracker</a>
+            {{ end }}
         </div>
 
         <div id="popover-content-event-title" class="d-none">
@@ -83,6 +100,76 @@
                 <li><strong>Width:</strong> <span id="track-width"></span></li>
                 <li><strong>Run:</strong> <span id="track-run"></span></li>
             </ul>
+        </div>
+
+        <div id="popover-content-admin-panel" class="d-none">
+            <form class="form-inline p-1" id="broadcast-chat-form" name="broadcast-chat-form" action="/broadcast-chat">
+
+                <div class="form-row">
+                    <label for="broadcast-chat">Broadcast Chat: </label>
+                </div>
+
+                <div class="form-row">
+                    <input type="text" name="broadcast-chat" id="broadcast-chat" class="broadcast-chat form-control form-control-sm" placeholder="Have a great race everybody!">
+
+                    <button class="btn btn-success btn-sm ml-1" type="submit">Send</button>
+                </div>
+
+            </form>
+
+            <form class="form p-1" id="send-chat-form" name="send-chat-form" action="/send-chat">
+                <div class="form-row" style="margin-bottom: -7px">
+                    <label for="send-chat">Send Chat to Driver: </label>
+                </div>
+
+                <div class="form-row mb-2">
+                    <select class="form-control-sm chat-user" name="chat-user" id="chat-user">
+                        <option value="default-driver-spacer">No drivers found!</option>
+                        <!-- driver kick opts appended by javascript -->
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <input type="text" name="send-chat" id="send-chat" class="send-chat form-control form-control-sm admin-command-input" placeholder="Watch those track limits!">
+
+                    <button class="btn btn-success btn-sm ml-1" type="submit">Send</button>
+                </div>
+            </form>
+
+            <form class="form-inline p-1" id="admin-command-form" name="admin-command-form" action="/admin-command">
+
+                <div class="form-row">
+                    <label for="admin-command">Admin Command: </label>
+                </div>
+
+                <div class="form-row">
+                    <input type="text" name="admin-command" id="admin-command" class="admin-command form-control form-control-sm" placeholder="/ballast 2 100">
+
+                    <button class="btn btn-success btn-sm ml-1" type="submit">Send</button>
+                </div>
+
+            </form>
+
+            <form class="form p-1" id="kick-user-form" name="kick-user-form" action="/kick-user">
+                <div class="form-row" style="margin-bottom: -7px">
+                    <label for="kick-user">Kick Driver: </label>
+                </div>
+
+                <div class="form-row">
+                    <select class="form-control-sm kick-user" name="kick-user" id="kick-user">
+                        <option value="default-driver-spacer">No drivers found!</option>
+                        <!-- driver kick opts appended by javascript -->
+                    </select>
+
+                    <button class="btn btn-danger btn-sm ml-1" type="submit">Kick</button>
+                </div>
+            </form>
+
+            <a id="next-session" href="/next-session" class="btn btn-success btn-sm mt-3">Next Session</a>
+            <a id="restart-session" href="/restart-session" class="btn btn-warning btn-sm mt-3">Restart Session</a>
+
+
+
         </div>
 
         <div class="clearfix"></div>
@@ -157,5 +244,9 @@
                 </div>
             {{ end }}
         </form>
+
+        <script type="text/javascript">
+            const useMPH = {{ $UseMPH }};
+        </script>
     {{ end }}
 {{ end }}

@@ -273,6 +273,8 @@ export class RaceControl {
     }
 }
 
+declare var useMPH: boolean;
+
 class LiveMap implements WebsocketHandler {
     private mapImageHasLoaded: boolean = false;
 
@@ -317,6 +319,7 @@ class LiveMap implements WebsocketHandler {
                     }
                 }
 
+                $(".dot").css({"transition": this.raceControl.status.CurrentRealtimePosInterval + "ms linear"});
                 break;
 
             case EventNewConnection:
@@ -365,7 +368,14 @@ class LiveMap implements WebsocketHandler {
                     "top": dotPos.Z,
                 });
 
+                // working here
                 let speed = Math.floor(Math.sqrt((Math.pow(update.Velocity.X, 2) + Math.pow(update.Velocity.Z, 2))) * 3.6);
+                let speedUnits = "Km/h ";
+
+                if (useMPH) {
+                    speed = Math.floor(speed * 0.621371);
+                    speedUnits = "MPH ";
+                }
 
                 let maxRPM = this.maxRPMs.get(driverGUID);
 
@@ -387,7 +397,7 @@ class LiveMap implements WebsocketHandler {
                 });
 
                 $rpmGaugeOuter.append($rpmGaugeInner);
-                $myDot!.find(".info").text(speed + "Km/h " + (update.Gear - 1));
+                $myDot!.find(".info").text(speed + speedUnits + (update.Gear - 1));
                 $myDot!.find(".info").append($rpmGaugeOuter);
                 break;
 
@@ -554,14 +564,70 @@ class LiveTimings implements WebsocketHandler {
         setInterval(this.populateConnectedDrivers.bind(this), 1000);
 
         $(document).on("click", ".driver-link", this.toggleDriverSpeed.bind(this));
+
+        $(document).on("submit", "#broadcast-chat-form", this.processChatForm.bind(this));
+        $(document).on("submit", "#admin-command-form", this.processAdminCommandForm.bind(this));
+        $(document).on("submit", "#kick-user-form", this.processKickUserForm.bind(this));
+        $(document).on("submit", "#send-chat-form", this.processSendChatForm.bind(this));
+    }
+
+    private processChatForm(e: JQuery.SubmitEvent): boolean {
+        this.postForm(e);
+
+        $(".broadcast-chat").val('');
+
+        return false
+    }
+
+    private processSendChatForm(e: JQuery.SubmitEvent): boolean {
+        this.postForm(e);
+
+        $(".send-chat").val('');
+
+        return false
+    }
+
+    private processAdminCommandForm(e: JQuery.SubmitEvent): boolean {
+        this.postForm(e);
+
+        $(".admin-command").val('');
+
+        return false
+    }
+
+    private processKickUserForm(e: JQuery.SubmitEvent): boolean {
+        this.postForm(e);
+
+        return false
+    }
+
+    private postForm(e: JQuery.SubmitEvent) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        this.post($(e.currentTarget));
+    }
+
+    private post(form: JQuery<HTMLFormElement>) {
+        $.ajax({
+            url: form.attr("action"),
+            type: 'post',
+            data: form.serialize(),
+            success:function(){
+
+            }
+        });
     }
 
     public handleWebsocketMessage(message: WSMessage): void {
         if (message.EventType === EventRaceControl) {
             this.populateConnectedDrivers();
+            this.initialiseAdminSelects();
             this.populateDisconnectedDrivers();
         } else if (message.EventType === EventConnectionClosed) {
             const closedConnection = message.Message as SessionCarInfo;
+
+            this.removeDriverFromAdminSelects(closedConnection);
 
             if (this.raceControl.status.ConnectedDrivers) {
                 const driver = this.raceControl.status.ConnectedDrivers.Drivers[closedConnection.DriverGUID];
@@ -569,8 +635,13 @@ class LiveTimings implements WebsocketHandler {
                 if (driver && driver.LoadedTime.toString() === "0001-01-01T00:00:00Z") {
                     // a driver joined but never loaded. remove them from the connected drivers table.
                     this.$connectedDriversTable.find("tr[data-guid='" + closedConnection.DriverGUID + "']").remove();
+                    this.removeDriverFromAdminSelects(driver.CarInfo)
                 }
             }
+        } else if (message.EventType === EventNewConnection) {
+            const connectedDriver = new SessionCarInfo(message.Message);
+
+            this.addDriverToAdminSelects(connectedDriver);
         }
     }
 
@@ -745,7 +816,18 @@ class LiveTimings implements WebsocketHandler {
         // lap number
         $tr.find(".num-laps").text(carInfo.NumLaps ? carInfo.NumLaps : "0");
 
-        $tr.find(".top-speed").text(carInfo.TopSpeedBestLap ? carInfo.TopSpeedBestLap.toFixed(2) + "Km/h" : "");
+        let topSpeed;
+        let speedUnits;
+
+        if (useMPH) {
+            topSpeed = carInfo.TopSpeedBestLap * 0.621371;
+            speedUnits = "MPH";
+        } else {
+            topSpeed = carInfo.TopSpeedBestLap;
+            speedUnits = "Km/h";
+        }
+
+        $tr.find(".top-speed").text(topSpeed ? topSpeed.toFixed(2) + speedUnits : "");
 
         if (addingDriverToConnectedTable) {
             // events
@@ -774,13 +856,21 @@ class LiveTimings implements WebsocketHandler {
                         $tag.attr("id", collisionID);
                         $tag.attr({'class': 'badge badge-danger live-badge'});
 
+                        let crashSpeed;
+
+                        if (useMPH) {
+                            crashSpeed = collision.Speed * 0.621371;
+                        } else {
+                            crashSpeed = collision.Speed;
+                        }
+
                         if (collision.Type === Collision.WithCar) {
                             $tag.text(
-                                "Crash with " + collision.OtherDriverName + " at " + collision.Speed.toFixed(2) + "Km/h"
+                                "Crash with " + collision.OtherDriverName + " at " + crashSpeed.toFixed(2) + speedUnits
                             );
                         } else {
                             $tag.text(
-                                "Crash " + collision.Type + " at " + collision.Speed.toFixed(2) + "Km/h"
+                                "Crash " + collision.Type + " at " + crashSpeed.toFixed(2) + speedUnits
                             );
                         }
 
@@ -861,6 +951,60 @@ class LiveTimings implements WebsocketHandler {
 
         $driverDot.find(".info").toggle();
         $target.find(".dot").toggleClass("dot-inactive");
+    }
+
+    private initialisedAdmin = false;
+
+    private initialiseAdminSelects() {
+        if (this.initialisedAdmin) {
+            return
+        }
+
+        if (!this.raceControl.status || !this.raceControl.status.ConnectedDrivers) {
+            return;
+        }
+
+        for (const driverGUID of this.raceControl.status.ConnectedDrivers.GUIDsInPositionalOrder) {
+            const driver = this.raceControl.status.ConnectedDrivers.Drivers[driverGUID];
+
+            if (!driver) {
+                continue;
+            }
+
+            this.addDriverToAdminSelects(driver.CarInfo);
+        }
+
+        this.initialisedAdmin = true
+    }
+
+    private addDriverToAdminSelects(carInfo: SessionCarInfo) {
+        $(".kick-user option[value='default-driver-spacer']").remove();
+        $(".chat-user option[value='default-driver-spacer']").remove();
+
+        if ($(".kick-user option[value=" + carInfo.DriverGUID + "]").length != 0) {
+            // driver already exists
+        } else {
+            // add driver to admin kick list
+            $('.kick-user').append($('<option>', {
+                value: carInfo.DriverGUID,
+                text: carInfo.DriverName,
+            }));
+        }
+
+        if ($(".chat-user option[value=" + carInfo.DriverGUID + "]").length != 0) {
+            // driver already exists
+        } else {
+            // add driver to admin kick list
+            $('.chat-user').append($('<option>', {
+                value: carInfo.DriverGUID,
+                text: carInfo.DriverName,
+            }));
+        }
+    }
+
+    private removeDriverFromAdminSelects(carInfo: SessionCarInfo) {
+        $(".kick-user option[value=" + carInfo.DriverGUID + "]").remove();
+        $(".chat-user option[value=" + carInfo.DriverGUID + "]").remove();
     }
 }
 
