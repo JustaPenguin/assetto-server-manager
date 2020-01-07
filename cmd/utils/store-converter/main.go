@@ -5,18 +5,23 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cj123/assetto-server-manager"
+	"github.com/JustaPenguin/assetto-server-manager"
 	"github.com/etcd-io/bbolt"
 )
 
 var (
-	oldStore, newStore string
+	oldStore, newStore, sharedStore string
 )
 
 func init() {
 	flag.StringVar(&oldStore, "old", "", "the store to convert (bolt format)")
 	flag.StringVar(&newStore, "new", "", "the store to output (json format)")
+	flag.StringVar(&sharedStore, "shared", "", "the shared store")
 	flag.Parse()
+
+	if sharedStore == "" {
+		sharedStore = newStore
+	}
 }
 
 func main() {
@@ -35,7 +40,7 @@ func main() {
 
 	old := servermanager.NewBoltStore(bdb).(*servermanager.BoltStore)
 	old.ShowDeleted = true
-	new := servermanager.NewJSONStore(newStore)
+	new := servermanager.NewJSONStore(newStore, sharedStore)
 
 	err = convertStore(old, new)
 
@@ -157,6 +162,63 @@ func convertStore(old servermanager.Store, new servermanager.Store) error {
 	}
 
 	err = new.SetMeta("version", version)
+
+	if err != nil {
+		return err
+	}
+
+	var serverID string
+
+	err = old.GetMeta("server_id", &serverID)
+
+	if err != nil {
+		return err
+	}
+
+	err = new.SetMeta("server_id", serverID)
+
+	if err != nil {
+		return err
+	}
+
+	// audit log
+	auditLogs, err := old.GetAuditEntries()
+
+	if err != nil {
+		return err
+	}
+
+	for _, auditLog := range auditLogs {
+		err := new.AddAuditEntry(auditLog)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	// race weekends
+	raceWeekends, err := old.ListRaceWeekends()
+
+	if err != nil {
+		return err
+	}
+
+	for _, raceWeekend := range raceWeekends {
+		err := new.UpsertRaceWeekend(raceWeekend)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	// stracker
+	stracker, err := old.LoadStrackerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	err = new.UpsertStrackerOptions(stracker)
 
 	if err != nil {
 		return err
