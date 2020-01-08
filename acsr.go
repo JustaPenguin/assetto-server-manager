@@ -9,14 +9,36 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/sirupsen/logrus"
 )
 
+var acsrURL = "https://acsr.assettocorsaservers.com"
+
+func init() {
+	if acsrOverrideURL := os.Getenv("ACSR_URL"); acsrOverrideURL != "" {
+		acsrURL = acsrOverrideURL
+	}
+}
+
+type ACSRClient struct {
+	Enabled   bool
+	AccountID string
+	APIKey    string
+}
+
+func NewACSRClient(accountID, apiKey string, enabled bool) *ACSRClient {
+	return &ACSRClient{
+		AccountID: accountID,
+		APIKey:    apiKey,
+		Enabled:   enabled && IsPremium == "true",
+	}
+}
+
 // Sends a championship to ACSR, called OnEndSession and when a championship is created
-func ACSRSendResult(championship Championship) {
-	if config == nil || (config.ACSR.APIKey == "" || config.ACSR.AccountID == "" || !config.ACSR.Enabled) ||
-		len(championship.Events) == 0 || IsPremium != "true" {
+func (a *ACSRClient) SendChampionship(championship Championship) {
+	if !a.Enabled || len(championship.Events) == 0 {
 		return
 	}
 
@@ -32,27 +54,25 @@ func ACSRSendResult(championship Championship) {
 
 	output, err := json.Marshal(championship)
 	if err != nil {
-		logrus.WithError(err).Error("couldn't JSON marshal championship")
+		logrus.WithError(err).Error("acsr: couldn't JSON marshal championship")
 		return
 	}
 
-	key, err := hex.DecodeString(config.ACSR.APIKey)
+	key, err := hex.DecodeString(a.APIKey)
 
 	if err != nil {
-		logrus.WithError(err).Error("api key in config is incorrect")
+		logrus.WithError(err).Error("acsr: api key in config is incorrect")
 		return
 	}
 
 	encryptedChampionship, err := encrypt(output, key)
 
 	if err != nil {
-		logrus.Error("ACSR output encryption failed")
+		logrus.Error("acsr: output encryption failed")
 		return
 	}
 
-	client := http.Client{}
-
-	req, err := http.NewRequest("POST", config.ACSR.URL+"/submit-result", bytes.NewBuffer(encryptedChampionship))
+	req, err := http.NewRequest("POST", acsrURL+"/submit-result", bytes.NewBuffer(encryptedChampionship))
 
 	if err != nil {
 		logrus.Error(err)
@@ -62,25 +82,25 @@ func ACSRSendResult(championship Championship) {
 	geoIP, err := geoIP()
 
 	if err != nil {
-		logrus.WithError(err).Error("couldn't get server geoIP for acsr request")
+		logrus.WithError(err).Error("acsr: couldn't get server geoIP for request")
 		return
 	}
 
 	q := req.URL.Query()
 	q.Add("baseurl", config.HTTP.BaseURL)
-	q.Add("guid", config.ACSR.AccountID)
+	q.Add("guid", a.AccountID)
 	q.Add("geoip", geoIP.CountryName)
 	req.URL.RawQuery = q.Encode()
 	req.Header.Set("Content-Type", "application/json")
 
-	_, err = client.Do(req)
+	_, err = http.DefaultClient.Do(req)
 
 	if err != nil {
 		logrus.Error(err)
 		return
 	}
 
-	logrus.Debugf("updated championship: %s sent to ACSR", championship.ID.String())
+	logrus.Debugf("acsr: updated championship: %s sent", championship.ID.String())
 }
 
 func encrypt(data, key []byte) ([]byte, error) {

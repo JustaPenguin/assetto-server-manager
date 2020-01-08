@@ -169,6 +169,12 @@ type GlobalServerConfig struct {
 	FreeUDPPluginLocalPort int    `ini:"-" show:"-"`
 	FreeUDPPluginAddress   string `ini:"-" show:"-"`
 
+	// ACSR
+	AssettoCorsaSkillRating FormHeading `ini:"-" json:"-" show:"premium" input:"heading"`
+	EnableACSR              bool        `ini:"-" show:"premium" input:"checkbox" help:"Enable ACSR integration. <a href='https://acsr.assettocorsaservers.com'>You can read more about ACSR here</a>."`
+	ACSRAccountID           string      `ini:"-" show:"premium" help:"Your ACSR account ID. You can <a href='https://acsr.assettocorsaservers.com/account'>request an ACSR key here</a>."`
+	ACSRAPIKey              string      `ini:"-" show:"premium" help:"Your ACSR API Key. You can <a href='https://acsr.assettocorsaservers.com/account'>request an ACSR key here</a>."`
+
 	ServerName                FormHeading `ini:"-" json:"-" input:"heading"`
 	ShowRaceNameInServerLobby int         `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager append the Custom Race or Championship name to the Server name in the lobby."`
 	ServerNameTemplate        string      `ini:"-" help:"You can enter anything you like in here. If you put <code>{{ .ServerName }}</code> in, the Server Name will replace it. If you put <code>{{ .EventName }}</code>, then the Event Name will replace it. Note this only works if 'Show Race Name In Server Lobby' (above) is enabled. You can <a href='https://github.com/JustaPenguin/assetto-server-manager/wiki/Server-Name-Template-Examples'>view some examples</a> on the Server Manager Wiki!"`

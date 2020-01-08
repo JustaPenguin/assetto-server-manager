@@ -153,8 +153,10 @@ func (f Form) buildOpts(val reflect.Value, t reflect.Type, parentName string) []
 				formType = typeField.Type.String()
 			}
 
+			formName := strings.Replace(strings.Join(camelcase.Split(typeField.Name), " "), "ACSRAPI", "ACSR API", 1)
+
 			formOpt := FormOption{
-				Name:     strings.Join(camelcase.Split(typeField.Name), " "),
+				Name:     formName,
 				Key:      parentName + typeField.Name,
 				Value:    valField.Interface(),
 				HelpText: template.HTML(typeField.Tag.Get("help")),
