@@ -180,6 +180,7 @@ func init() {
 			NewTrackManager(),
 			&dummyNotificationManager{},
 		),
+		&ACSRClient{Enabled: false},
 	)
 }
 
