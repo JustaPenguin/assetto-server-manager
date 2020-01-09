@@ -12,7 +12,13 @@
 
         <h1 class="text-center">{{ $championship.Name }}</h1>
 
-
+        {{ if $championship.ACSR }}
+            <div class="text-center">
+                <em>
+                    An <a href="https://acsr.assettocorsaservers.com">Assetto Corsa Skill Rating</a> Championship
+                </em>
+            </div>
+        {{ end }}
 
         {{ if $championship.SignUpAvailable }}
             <div class="card border-primary mb-3 mt-3">

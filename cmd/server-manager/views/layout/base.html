@@ -227,7 +227,7 @@
 
 
         {{ block "showpremium" . }}
-            {{ if ne $.Request.URL.Path "/" }}
+            {{ if and (ne $.Request.URL.Path "/") (ne $.Request.URL.Path "/premium") }}
                 <div class="clearfix"></div>
 
                 <div class="mt-5">
@@ -242,7 +242,9 @@
                     <a href="https://github.com/JustaPenguin/assetto-server-manager" class="mr-3"><i class="fab fa-github"></i> GitHub</a>
                     <a href="https://github.com/JustaPenguin/assetto-server-manager/issues" class="mr-3"><i class="fas fa-bug"></i> Submit a Bug Report</a>
                     {{ if ne $.IsPremium "true" }}
-                        <a href="https://paypal.me/JustaPenguinUK" class="mr-3"><i class="fas fa-heart"></i> Go Premium</a>
+                        <a href="/premium" class="mr-3"><i class="fas fa-heart"></i> Go Premium</a>
+                    {{ else }}
+                        <a href="https://paypal.me/JustaPenguinUK" class="mr-3"><i class="fas fa-heart"></i> Donate</a>
                     {{ end }}
                     <a href="/changelog" class="mr-3"><i class="fas fa-pencil-alt"></i> Changelog</a>
                     <a href="https://github.com/JustaPenguin/assetto-server-manager/wiki"><i class="fas fa-book"></i> Wiki</a>
