@@ -104,6 +104,7 @@ func Router(
 		// pages
 		r.Get("/", serverAdministrationHandler.home)
 		r.Get("/changelog", serverAdministrationHandler.changelog)
+		r.Get("/premium", serverAdministrationHandler.premium)
 
 		r.Mount("/stracker/", http.HandlerFunc(strackerHandler.proxy))
 
