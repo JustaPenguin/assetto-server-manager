@@ -29,6 +29,7 @@ import (
 
 type ChampionshipManager struct {
 	*RaceManager
+	acsrClient *ACSRClient
 
 	activeChampionship *ActiveChampionship
 	mutex              sync.Mutex
@@ -37,9 +38,10 @@ type ChampionshipManager struct {
 	championshipEventReminderTimers map[string]*when.Timer
 }
 
-func NewChampionshipManager(raceManager *RaceManager) *ChampionshipManager {
+func NewChampionshipManager(raceManager *RaceManager, acsrClient *ACSRClient) *ChampionshipManager {
 	return &ChampionshipManager{
 		RaceManager: raceManager,
+		acsrClient:  acsrClient,
 	}
 }
 
@@ -81,8 +83,8 @@ func (cm *ChampionshipManager) UpsertChampionship(c *Championship) error {
 		return err
 	}
 
-	if config != nil && config.ACSR.Enabled && c.ACSR {
-		ACSRSendResult(*c)
+	if c.ACSR {
+		cm.acsrClient.SendChampionship(*c)
 	}
 
 	return nil
@@ -98,7 +100,7 @@ func (cm *ChampionshipManager) DeleteChampionship(id string) error {
 	if championship.ACSR {
 		championship.ACSR = false
 
-		ACSRSendResult(*championship)
+		cm.acsrClient.SendChampionship(*championship)
 	}
 
 	return cm.store.DeleteChampionship(id)
@@ -155,7 +157,7 @@ func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (champions
 	}
 
 	opts.Championship = championship
-	opts.ACSREnabled = config.ACSR.Enabled
+	opts.ACSREnabled = cm.acsrClient.Enabled
 
 	return championship, opts, nil
 }
@@ -220,7 +222,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	if championship.ACSR && !newACSR {
 		championship.ACSR = newACSR
 
-		ACSRSendResult(*championship)
+		cm.acsrClient.SendChampionship(*championship)
 	} else {
 		championship.ACSR = newACSR
 	}
@@ -1017,6 +1019,8 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 					return
 				}
 			}
+		} else {
+			saveChampionship = false
 		}
 	case udp.LapCompleted:
 		cm.activeChampionship.NumLapsCompleted++
@@ -1068,8 +1072,8 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			}
 		}
 
-		if championship.ACSR && config != nil && config.ACSR.Enabled {
-			go ACSRSendResult(*championship)
+		if championship.ACSR {
+			go cm.acsrClient.SendChampionship(*championship)
 		}
 	default:
 		saveChampionship = false

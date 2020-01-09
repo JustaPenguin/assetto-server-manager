@@ -22,6 +22,7 @@ type ServerAdministrationHandler struct {
 	championshipManager *ChampionshipManager
 	raceWeekendManager  *RaceWeekendManager
 	process             ServerProcess
+	acsrClient          *ACSRClient
 }
 
 func NewServerAdministrationHandler(
@@ -31,6 +32,7 @@ func NewServerAdministrationHandler(
 	championshipManager *ChampionshipManager,
 	raceWeekendManager *RaceWeekendManager,
 	process ServerProcess,
+	acsrClient *ACSRClient,
 ) *ServerAdministrationHandler {
 	return &ServerAdministrationHandler{
 		BaseHandler:         baseHandler,
@@ -39,6 +41,7 @@ func NewServerAdministrationHandler(
 		championshipManager: championshipManager,
 		raceWeekendManager:  raceWeekendManager,
 		process:             process,
+		acsrClient:          acsrClient,
 	}
 }
 
@@ -158,6 +161,11 @@ func (sah *ServerAdministrationHandler) options(w http.ResponseWriter, r *http.R
 		} else {
 			AddFlash(w, r, "Server options successfully saved!")
 		}
+
+		// update ACSR options to the client
+		sah.acsrClient.AccountID = serverOpts.ACSRAccountID
+		sah.acsrClient.APIKey = serverOpts.ACSRAPIKey
+		sah.acsrClient.Enabled = serverOpts.EnableACSR
 	}
 
 	sah.viewRenderer.MustLoadTemplate(w, r, "server/options.html", &serverOptionsTemplateVars{

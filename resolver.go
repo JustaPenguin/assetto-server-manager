@@ -26,6 +26,7 @@ type Resolver struct {
 	raceControl           *RaceControl
 	raceControlHub        *RaceControlHub
 	contentManagerWrapper *ContentManagerWrapper
+	acsrClient            *ACSRClient
 
 	// handlers
 	baseHandler                 *BaseHandler
@@ -55,9 +56,11 @@ func NewResolver(templateLoader TemplateLoader, reloadTemplates bool, store Stor
 		store:           store,
 	}
 
-	err := r.initViewRenderer()
+	if err := r.initViewRenderer(); err != nil {
+		return nil, err
+	}
 
-	if err != nil {
+	if err := r.initACSRClient(); err != nil {
 		return nil, err
 	}
 
@@ -89,6 +92,18 @@ func (r *Resolver) initViewRenderer() error {
 	}
 
 	r.viewRenderer = viewRenderer
+
+	return nil
+}
+
+func (r *Resolver) initACSRClient() error {
+	serverOptions, err := r.store.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	r.acsrClient = NewACSRClient(serverOptions.ACSRAccountID, serverOptions.ACSRAPIKey, serverOptions.EnableACSR)
 
 	return nil
 }
@@ -220,6 +235,7 @@ func (r *Resolver) resolveChampionshipManager() *ChampionshipManager {
 
 	r.championshipManager = NewChampionshipManager(
 		r.resolveRaceManager(),
+		r.acsrClient,
 	)
 
 	return r.championshipManager
@@ -317,6 +333,7 @@ func (r *Resolver) resolveServerAdministrationHandler() *ServerAdministrationHan
 		r.resolveChampionshipManager(),
 		r.resolveRaceWeekendManager(),
 		r.resolveServerProcess(),
+		r.acsrClient,
 	)
 
 	return r.serverAdministrationHandler
@@ -384,7 +401,14 @@ func (r *Resolver) resolveRaceWeekendManager() *RaceWeekendManager {
 		return r.raceWeekendManager
 	}
 
-	r.raceWeekendManager = NewRaceWeekendManager(r.resolveRaceManager(), r.resolveChampionshipManager(), r.ResolveStore(), r.resolveServerProcess(), r.resolveNotificationManager())
+	r.raceWeekendManager = NewRaceWeekendManager(
+		r.resolveRaceManager(),
+		r.resolveChampionshipManager(),
+		r.ResolveStore(),
+		r.resolveServerProcess(),
+		r.resolveNotificationManager(),
+		r.acsrClient,
+	)
 
 	return r.raceWeekendManager
 }
