@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -39,6 +40,16 @@ func NewACSRClient(accountID, apiKey string, enabled bool) *ACSRClient {
 // Sends a championship to ACSR, called OnEndSession and when a championship is created
 func (a *ACSRClient) SendChampionship(championship Championship) {
 	if !a.Enabled || len(championship.Events) == 0 {
+		return
+	}
+
+	if !baseURLIsSet() {
+		logrus.Errorf("Cannot send Championship to ACSR - no baseURL is set.")
+		return
+	}
+
+	if !baseURLIsValid() {
+		logrus.Errorf("Cannot send Championship to ACSR - baseURL is not valid.")
 		return
 	}
 
@@ -123,4 +134,18 @@ func encrypt(data, key []byte) ([]byte, error) {
 	}
 
 	return gcm.Seal(nonce, nonce, data, nil), nil
+}
+
+func baseURLIsValid() bool {
+	if !baseURLIsSet() {
+		return false
+	}
+
+	_, err := url.Parse(config.HTTP.BaseURL)
+
+	return err == nil
+}
+
+func baseURLIsSet() bool {
+	return config != nil && config.HTTP.BaseURL != ""
 }

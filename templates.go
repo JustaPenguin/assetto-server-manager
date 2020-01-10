@@ -468,6 +468,9 @@ type BaseTemplateVars struct {
 	RecaptchaSiteKey   string
 	WideContainer      bool
 	OGImage            string
+	ACSREnabled        bool
+	BaseURLIsSet       bool
+	BaseURLIsValid     bool
 }
 
 func (b *BaseTemplateVars) Get() *BaseTemplateVars {
@@ -512,6 +515,9 @@ func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, vars Templat
 	data.MonitoringEnabled = config.Monitoring.Enabled
 	data.SentryDSN = sentryJSDSN
 	data.RecaptchaSiteKey = config.Championships.RecaptchaConfig.SiteKey
+	data.BaseURLIsSet = baseURLIsSet()
+	data.BaseURLIsValid = baseURLIsValid()
+	data.ACSREnabled = opts.EnableACSR
 
 	if IsPremium == "true" {
 		data.OGImage = opts.OGImage

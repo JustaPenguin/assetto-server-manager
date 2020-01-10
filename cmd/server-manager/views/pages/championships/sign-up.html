@@ -8,6 +8,14 @@
         {{ $championship.Name }}
     </h1>
 
+    {{ if $championship.ACSR }}
+        <div class="text-center">
+            <em>
+                An <a href="https://acsr.assettocorsaservers.com">Assetto Corsa Skill Rating</a> Championship
+            </em>
+        </div>
+    {{ end }}
+
     {{ with $championship.Info }}
         <div class="card mt-3 border-secondary">
             <div class="card-header">
@@ -160,6 +168,28 @@
                             </div>
                         </div>
                     {{ end }}
+                </div>
+            </div>
+        {{ end }}
+
+
+        {{ if $championship.ACSR }}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <strong>Assetto Corsa Skill Rating Championship</strong>
+                </div>
+                <div class="card-body">
+                    <p>
+                        This is an <a target="_blanK" href="https://acsr.assettocorsaservers.com">ACSR</a> Championship.
+                        That means that when you sign up for this Championship, the following details will be sent to ACSR:
+                    </p>
+                    <ul>
+                        <li>Your Name, as provided in the form above (anonymised if possible, e.g. "Alan Turing" would become "Alan T.")</li>
+                        <li>An anonymized version of your Steam GUID</li>
+                        <li>All Race, Qualifying and Practice results and Championship Positions</li>
+                    </ul>
+
+                    <p>By signing up to this Championship, you agree that this data can be shared with ACSR.</p>
                 </div>
             </div>
         {{ end }}
