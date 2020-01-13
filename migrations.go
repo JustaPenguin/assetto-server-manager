@@ -106,6 +106,19 @@ func addEntrantIDToChampionships(rs Store) error {
 }
 
 func addAdminAccount(rs Store) error {
+	accounts, err := rs.ListAccounts()
+
+	if err != nil {
+		return err
+	}
+
+	for _, account := range accounts {
+		// in a multi-server scenario, don't reset the admin account password to 'servermanager'
+		if account.Name == adminUserName {
+			return nil
+		}
+	}
+
 	logrus.Infof("Running migration: Add Admin Account")
 
 	account := NewAccount()

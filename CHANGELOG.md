@@ -29,6 +29,7 @@ Fixes:
 * Fixed an issue where some STracker links would not work correctly.
 * Fixes an issue where car skins with special characters in their name would not display in the race setup page and Championship Sign Up form.
 * Fixes issues with download links in Discord messages (thanks @cheesegrits!)
+* On initial server setup, the admin account is only created if one doesn't exist.
 
 ---
 
