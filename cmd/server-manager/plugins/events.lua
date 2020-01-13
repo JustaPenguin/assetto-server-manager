@@ -92,7 +92,8 @@ function weatherAPI(raceConfig, serverOpts, apiKey)
             weather["BaseTemperatureRoad"] = 4
         else
             -- sun is down, base road temp is lower than ambient (large assumption, definitely wrong, please improve!)
-            weather["BaseTemperatureRoad"] = -4
+            -- Mikado : Road can't be colder than the air :)
+	        -- weather["BaseTemperatureRoad"] = -4
         end
 
         weather["VariationRoad"] = 1
@@ -105,10 +106,16 @@ function weatherAPI(raceConfig, serverOpts, apiKey)
             weather["CMWFUseCustomTime"] = 1
             weather["CMWFXTime"] = 0
             weather["CMWFXUseCustomDate"] = 1
+            
+            -- Comment this two lines and uncomment below to prevent night hours
             weather["CMWFXDateUnModified"] = weatherData["dt"]
             weather["CMWFXDate"] = weatherData["dt"] - (3600 * 5 * weather["CMWFXTimeMulti"]) -- don't ask
 
+	        -- Uncomment to force time 5 hour before sunset (18000s) to prevent night
+            -- weather["CMWFXDate"] = (weatherData["sys"]["sunset"] - 18000) - (3600 * 5 * weather["CMWFXTimeMulti"]) -- don't ask
+
             -- set graphics
+            -- Added some options to replace rainy weather by some looking the same but without rain (for rain sound disturbing)
             if     w == 800 then weather["CMGraphics"] = "sol_01_CLear"; weather["CMWFXType"] = 15;
             elseif w == 801 then weather["CMGraphics"] = "sol_02_Few Clouds"; weather["CMWFXType"] = 16
             elseif w == 802 then weather["CMGraphics"] = "sol_03_Scattered Clouds"; weather["CMWFXType"] = 17
@@ -121,24 +128,56 @@ function weatherAPI(raceConfig, serverOpts, apiKey)
             elseif w == 731 then weather["CMGraphics"] = "sol_22_Dust"; weather["CMWFXType"] = 25
             elseif w == 751 then weather["CMGraphics"] = "sol_23_Sand"; weather["CMWFXType"] = 24
             elseif w == 711 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 22
-            elseif w == 300 then weather["CMGraphics"] = "sol_31_Light Drizzle"; weather["CMWFXType"] = 3
-            elseif w == 301 then weather["CMGraphics"] = "sol_32_Drizzle"; weather["CMWFXType"] = 4
-            elseif w >= 302 and w <= 321 then weather["CMGraphics"] = "sol_33_Heavy Drizzle"; weather["CMWFXType"] = 5
-            elseif w == 500 then weather["CMGraphics"] = "sol_34_Light Rain"; weather["CMWFXType"] = 6
-            elseif w == 501 then weather["CMGraphics"] = "sol_35_Rain"; weather["CMWFXType"] = 7
-            elseif w >= 502 and w <= 531 then weather["CMGraphics"] = "sol_36_Heavy Rain"; weather["CMWFXType"] = 8
-            elseif w == 200 or w == 210 or w == 230 then weather["CMGraphics"] = "sol_41_Light Thunderstorm"; weather["CMWFXType"] = 0
-            elseif w == 201 or w == 211 or w == 231 then weather["CMGraphics"] = "sol_42_Thunderstorm"; weather["CMWFXType"] = 1
+			-- For same looking weather without rain, commment the line and uncomment the one below
+            -- elseif w == 300 then weather["CMGraphics"] = "sol_31_Light Drizzle"; weather["CMWFXType"] = 3
+			elseif w == 300 then weather["CMGraphics"] = "sol_05_Broken Clouds"; weather["CMWFXType"] = 3
+			-- For same looking weather without rain, commment the line and uncomment the one below
+            -- elseif w == 301 then weather["CMGraphics"] = "sol_32_Drizzle"; weather["CMWFXType"] = 4
+			elseif w == 301 then weather["CMGraphics"] = "sol_06_Overcast"; weather["CMWFXType"] = 4
+            -- For same looking weather without rain, commment the line and uncomment the one below
+			-- elseif w >= 302 and w <= 321 then weather["CMGraphics"] = "sol_33_Heavy Drizzle"; weather["CMWFXType"] = 5
+			elseif w >= 302 and w <= 321 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 5
+			-- For same looking weather without rain, commment the line and uncomment the one below
+            -- elseif w == 500 then weather["CMGraphics"] = "sol_34_Light Rain"; weather["CMWFXType"] = 6
+			elseif w == 500 then weather["CMGraphics"] = "sol_05_Broken Clouds"; weather["CMWFXType"] = 6
+			-- For same looking weather without rain, commment the line and uncomment the one below
+            -- elseif w == 501 then weather["CMGraphics"] = "sol_35_Rain"; weather["CMWFXType"] = 7
+			elseif w == 501 then weather["CMGraphics"] = "sol_06_Overcast"; weather["CMWFXType"] = 7
+			-- For same looking weather without rain, commment the line and uncomment the one below
+            -- elseif w >= 502 and w <= 531 then weather["CMGraphics"] = "sol_36_Heavy Rain"; weather["CMWFXType"] = 8
+			elseif w >= 502 and w <= 531 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 8
+			-- For same looking weather without rain, commment the line and uncomment the one below
+            -- elseif w == 200 or w == 210 or w == 230 then weather["CMGraphics"] = "sol_41_Light Thunderstorm"; weather["CMWFXType"] = 0
+			elseif w == 200 or w == 210 or w == 230 then weather["CMGraphics"] = "sol_06_Overcast"; weather["CMWFXType"] = 0
+			-- For same looking weather without rain, commment the line and uncomment the one below
+            -- elseif w == 201 or w == 211 or w == 231 then weather["CMGraphics"] = "sol_42_Thunderstorm"; weather["CMWFXType"] = 1
+			elseif w == 201 or w == 211 or w == 231 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 1
+			-- For same looking weather without rain, commment the line and uncomment the one below
             elseif w == 202 or w == 212 or w == 221 or w == 232 then weather["CMGraphics"] = "sol_43_Heavy Thunderstorm"; weather["CMWFXType"] = 2
+			-- elseif w == 202 or w == 212 or w == 221 or w == 232 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 2
             elseif w == 771 then weather["CMGraphics"] = "sol_44_Squalls"; weather["CMWFXType"] = 26
-            elseif w == 781 then weather["CMGraphics"] = "sol_45_Tornado"; weather["CMWFXType"] = 27
+			-- For same looking weather without rain, commment the line and uncomment the one below
+            -- elseif w == 781 then weather["CMGraphics"] = "sol_45_Tornado"; weather["CMWFXType"] = 27
+			elseif w == 781 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 27
             --elseif w ==  then weather["CMGraphics"] = "sol_46_Hurricane"; weather["CMWFXType"] = 28 --no real weather for hurricane
-            elseif w == 600 or w == 620 then weather["CMGraphics"] = "sol_51_Light Snow"; weather["CMWFXType"] = 9
-            elseif w == 601 or w == 621 then weather["CMGraphics"] = "sol_52_Snow"; weather["CMWFXType"] = 10
-            elseif w == 602 or w == 622 then weather["CMGraphics"] = "sol_53_Heavy Snow"; weather["CMWFXType"] = 11
-            elseif w == 611 or w == 615 then weather["CMGraphics"] = "sol_54_Light Sleet"; weather["CMWFXType"] = 12
-            elseif w == 612 or w == 616 then weather["CMGraphics"] = "sol_55_Sleet"; weather["CMWFXType"] = 13
-            elseif w == 613 then weather["CMGraphics"] = "sol_56_Heavy Sleet"; weather["CMWFXType"] = 14
+			-- For same looking weather without rain, commment the line and uncomment the one below
+            -- elseif w == 600 or w == 620 then weather["CMGraphics"] = "sol_51_Light Snow"; weather["CMWFXType"] = 9
+			elseif w == 600 or w == 620 then weather["CMGraphics"] = "sol_05_Broken Clouds"; weather["CMWFXType"] = 9
+			-- For same looking weather without rain, commment the line and uncomment the one below
+            -- elseif w == 601 or w == 621 then weather["CMGraphics"] = "sol_52_Snow"; weather["CMWFXType"] = 10
+			elseif w == 601 or w == 621 then weather["CMGraphics"] = "sol_12_Fog"; weather["CMWFXType"] = 10
+			-- For same looking weather without rain, commment the line and uncomment the one below
+            -- elseif w == 602 or w == 622 then weather["CMGraphics"] = "sol_53_Heavy Snow"; weather["CMWFXType"] = 11
+			elseif w == 602 or w == 622 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 11
+			-- For same looking weather without rain, commment the line and uncomment the one below
+            -- elseif w == 611 or w == 615 then weather["CMGraphics"] = "sol_54_Light Sleet"; weather["CMWFXType"] = 12
+			elseif w == 611 or w == 615 then weather["CMGraphics"] = "sol_05_Broken Clouds"; weather["CMWFXType"] = 12
+			-- For same looking weather without rain, commment the line and uncomment the one below
+            -- elseif w == 612 or w == 616 then weather["CMGraphics"] = "sol_55_Sleet"; weather["CMWFXType"] = 13
+			elseif w == 612 or w == 616 then weather["CMGraphics"] = "sol_12_Fog"; weather["CMWFXType"] = 13
+			-- For same looking weather without rain, commment the line and uncomment the one below
+            -- elseif w == 613 then weather["CMGraphics"] = "sol_56_Heavy Sleet"; weather["CMWFXType"] = 14
+			elseif w == 613 then weather["CMGraphics"] = "sol_06_Overcast"; weather["CMWFXType"] = 14
             --elseif w ==  then weather["CMGraphics"] = "sol_57_Hail"; weather["CMWFXType"] = 32 --no real weather for hail
             end
 
