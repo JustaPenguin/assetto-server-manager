@@ -1,5 +1,18 @@
-v1.6.2
+v1.7.0
 ------
+
+### ACSR
+
+This release adds support for Assetto Corsa Skill Ratings (ACSR). ACSR is a new service for organising and taking part in Championships through Assetto Corsa Server Manager. 
+
+When you set up a Championship in Server Manager, you will be given the option to "Export to Assetto Corsa Skill Ratings". This publishes your Championship to the ACSR Championships List page, so that drivers can find your Championship and sign up to it!
+
+* You can view more about ACSR here: https://acsr.assettocorsaservers.com
+* For help configuring ACSR, check out our wiki: https://github.com/JustaPenguin/assetto-server-manager/wiki/ACSR-Configuration
+
+ACSR requires Server Manager Premium. You can purchase Server Manager Premium by following the instructions in the free version of Server Manager.
+
+### Server Manager
 
 Added:
 
