@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -170,6 +171,8 @@ func (rs *JSONStore) decodeFile(path, filename string, out interface{}) error {
 }
 
 func (rs *JSONStore) UpsertCustomRace(race *CustomRace) error {
+	race.Updated = time.Now()
+
 	return rs.encodeFile(rs.shared, filepath.Join(customRacesDir, race.UUID.String()+".json"), race)
 }
 
@@ -203,6 +206,10 @@ func (rs *JSONStore) ListCustomRaces() ([]*CustomRace, error) {
 
 		customRaces = append(customRaces, race)
 	}
+
+	sort.Slice(customRaces, func(i, j int) bool {
+		return customRaces[i].Updated.After(customRaces[j].Updated)
+	})
 
 	return customRaces, nil
 }
@@ -296,6 +303,8 @@ func (rs *JSONStore) LoadServerOptions() (*GlobalServerConfig, error) {
 }
 
 func (rs *JSONStore) UpsertChampionship(c *Championship) error {
+	c.Updated = time.Now()
+
 	return rs.encodeFile(rs.shared, filepath.Join(championshipsDir, c.ID.String()+".json"), c)
 }
 
@@ -317,6 +326,10 @@ func (rs *JSONStore) ListChampionships() ([]*Championship, error) {
 
 		championships = append(championships, c)
 	}
+
+	sort.Slice(championships, func(i, j int) bool {
+		return championships[i].Updated.After(championships[j].Updated)
+	})
 
 	return championships, nil
 }
@@ -492,10 +505,16 @@ func (rs *JSONStore) ListRaceWeekends() ([]*RaceWeekend, error) {
 		raceWeekends = append(raceWeekends, rw)
 	}
 
+	sort.Slice(raceWeekends, func(i, j int) bool {
+		return raceWeekends[i].Updated.After(raceWeekends[j].Updated)
+	})
+
 	return raceWeekends, nil
 }
 
 func (rs *JSONStore) UpsertRaceWeekend(rw *RaceWeekend) error {
+	rw.Updated = time.Now()
+
 	return rs.encodeFile(rs.shared, filepath.Join(raceWeekendsDir, rw.ID.String()+".json"), rw)
 }
 

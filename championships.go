@@ -1177,6 +1177,7 @@ func ExtractRaceWeekendSessionsIntoIndividualEvents(inEvents []*ChampionshipEven
 				e.RaceSetup = session.RaceConfig
 				e.CompletedTime = session.CompletedTime
 				e.StartedTime = session.StartedTime
+				e.Scheduled = session.ScheduledTime
 
 				e.Sessions[session.SessionType()] = &ChampionshipSession{
 					StartedTime:        session.StartedTime,
