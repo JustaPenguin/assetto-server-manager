@@ -773,7 +773,7 @@ func (cm *ChampionshipManager) StartScheduledEvent(championship *Championship, e
 
 		event.Scheduled = time.Time{}
 
-		err = cm.store.UpsertChampionship(championship)
+		err = cm.UpsertChampionship(championship)
 
 		if err != nil {
 			return err
@@ -791,7 +791,7 @@ func (cm *ChampionshipManager) ScheduleNextEventFromRecurrence(championship *Cha
 	eventCopy := DuplicateChampionshipEvent(event)
 	championship.Events = append(championship.Events, eventCopy)
 
-	err := cm.store.UpsertChampionship(championship)
+	err := cm.UpsertChampionship(championship)
 
 	if err != nil {
 		return err
