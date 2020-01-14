@@ -104,14 +104,20 @@ func (a *ACSRClient) SendChampionship(championship Championship) {
 	req.URL.RawQuery = q.Encode()
 	req.Header.Set("Content-Type", "application/json")
 
-	_, err = http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 
 	if err != nil {
 		logrus.Error(err)
 		return
 	}
 
-	logrus.Debugf("acsr: updated championship: %s sent", championship.ID.String())
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 400 {
+		logrus.Debugf("acsr: updated championship: %s sent", championship.ID.String())
+	} else {
+		logrus.Errorf("acsr: sent championship: %s was not accepted. Please check your credentials.", championship.ID.String())
+	}
 }
 
 func encrypt(data, key []byte) ([]byte, error) {
