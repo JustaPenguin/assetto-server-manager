@@ -1615,7 +1615,7 @@
 
                         <div class="col-sm-9">
                             <select name="ParentSessions" id="ParentSessions" class="form-control" multiple>
-                                <option value="no_parent">No parent</option>
+                                <option value="{{ $.RaceWeekend.ID.String }}" {{ if $.RaceWeekendSession.HasParent $.RaceWeekend.ID.String }}selected="selected"{{ end }}>Race Weekend EntryList</option>
 
                                 {{ $numSessions := len $.RaceWeekend.Sessions }}
 
