@@ -19,6 +19,7 @@ Added:
 * Admins can now export full Championship information, including Sign Up Form responses.
 * Exported Championships and Race Weekends now export as JSON files to download, rather than showing JSON in the browser.
 * Improved Discord message formatting (thanks @cheesegrits!)
+* It is now possible to specify a Race Weekend's initial Entry List as the parent for a session. You can also now use a grid offset when filtering entrants from this entrylist.
 
 Fixes:
 
