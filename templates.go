@@ -347,6 +347,10 @@ func carList(cars interface{}) string {
 	var out []string
 
 	for _, s := range split {
+		if s == AnyCarModel {
+			continue
+		}
+
 		out = append(out, prettifyName(s, true))
 	}
 
