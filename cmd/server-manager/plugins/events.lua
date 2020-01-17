@@ -2,7 +2,7 @@ json = require "json"
 utils = require "utils"
 
 -- Insert json folder path here
-local jsonPath = "your_server_folder/json"
+local jsonPath = "your_plugin_folder"
 local contentPath = "your_content_path"
 
 -- these are lua hooks related to the manager itself, for help please view lua_readme.md!
