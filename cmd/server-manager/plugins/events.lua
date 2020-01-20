@@ -207,7 +207,7 @@ function weatherAPI(raceConfig, serverOpts, apiKey)
 	    --elseif w == 612 or w == 616 then weather["CMGraphics"] = "sol_12_Fog"; weather["CMWFXType"] = 20
 	    --elseif w == 613 then weather["CMGraphics"] = "sol_06_Overcast"; weather["CMWFXType"] = 19
             --Do not uncomment elseif w ==  then weather["CMGraphics"] = "sol_57_Hail"; weather["CMWFXType"] = 32 --no real weather for hail
-            -end
+            --end
 			
             weather["Graphics"] = weather["CMGraphics"] .. "_type=" .. weather["CMWFXType"] .. "_time=0_mult=" .. weather["CMWFXTimeMulti"] .. "_start=" .. weather["CMWFXDate"]
         else
