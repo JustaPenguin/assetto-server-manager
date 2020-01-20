@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
-
 	"github.com/mitchellh/go-ps"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -203,8 +203,38 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 
 	go func() {
 		_ = as.cmd.Wait()
+
+		loopNum := 0
+
+		for {
+			if loopNum > 50 {
+				break
+			}
+
+			proc, err := ps.FindProcess(as.cmd.Process.Pid)
+
+			if err != nil {
+				logrus.WithError(err).Warnf("Could not find process: %d", as.cmd.Process.Pid)
+			}
+
+			if proc == nil {
+				break
+			}
+
+			logrus.Debugf("Waiting for Assetto Corsa Server process to finish...")
+			time.Sleep(time.Millisecond * 500)
+			loopNum++
+		}
+
+		logrus.Infof("Detected server shutdown. Closing child processes")
+
 		as.stopChildProcesses()
 		as.closeUDPConnection()
+
+		as.cmd = nil
+		go func() {
+			as.doneCh <- struct{}{}
+		}()
 	}()
 
 	return nil
@@ -357,6 +387,10 @@ func (as *AssettoServerProcess) SendUDPMessage(message udp.Message) error {
 }
 
 func (as *AssettoServerProcess) stopChildProcesses() {
+	if as.serverConfig.GlobalServerConfig.EnableContentManagerWrapper == 1 && as.serverConfig.GlobalServerConfig.ContentManagerWrapperPort > 0 {
+		as.contentManagerWrapper.Stop()
+	}
+
 	for _, command := range as.extraProcesses {
 		err := kill(command.Process)
 
@@ -414,39 +448,6 @@ func (as *AssettoServerProcess) Stop() error {
 	if err != nil && !strings.Contains(err.Error(), "process already finished") {
 		logrus.WithError(err).Errorf("Stopping server reported an error (continuing anyway...)")
 	}
-
-	as.stopChildProcesses()
-
-	loopNum := 0
-
-	for {
-		if loopNum > 50 {
-			break
-		}
-
-		proc, err := ps.FindProcess(as.cmd.Process.Pid)
-
-		if err != nil {
-			logrus.WithError(err).Warnf("Could not find process: %d", as.cmd.Process.Pid)
-		}
-
-		if proc == nil {
-			break
-		}
-
-		logrus.Debugf("Waiting for Assetto Corsa Server process to finish...")
-		time.Sleep(time.Millisecond * 500)
-		loopNum++
-	}
-
-	if as.serverConfig.GlobalServerConfig.EnableContentManagerWrapper == 1 && as.serverConfig.GlobalServerConfig.ContentManagerWrapperPort > 0 {
-		as.contentManagerWrapper.Stop()
-	}
-
-	as.cmd = nil
-	go func() {
-		as.doneCh <- struct{}{}
-	}()
 
 	return nil
 }
