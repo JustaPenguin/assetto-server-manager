@@ -72,6 +72,7 @@ type CMContent struct {
 	Cars  map[string]ContentURL `json:"cars"`
 	Track ContentURL            `json:"track"`
 
+	// @TODO not functional
 	Password bool `json:"password"`
 }
 
@@ -412,7 +413,8 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 
 	description += cmw.description
 
-	cmContent, err := cmw.NewCMContent(sessionInfo.Cars, race.Track, global.ContentManagerWrapperContentRequiresPassword == 1)
+	// @TODO ContentManagerWrapperContentRequiresPassword from config_ini.go
+	cmContent, err := cmw.NewCMContent(sessionInfo.Cars, race.Track, false)
 
 	if err != nil {
 		logrus.Errorf("Couldn't attach content download URL(s) through CM Wrapper!")
