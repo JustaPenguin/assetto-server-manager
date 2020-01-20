@@ -1,3 +1,10 @@
+v1.7.1
+------
+
+Fixes:
+
+* Fixes an issue where ACSR enabled Championships could cause Championship Event points to be incorrect.
+
 v1.7.0
 ------
 
