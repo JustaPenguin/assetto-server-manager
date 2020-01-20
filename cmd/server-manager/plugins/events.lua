@@ -21,10 +21,9 @@ function onEventStart(encodedRaceConfig, encodedServerOpts, encodedEntryList)
     --print("Race Config:", utils.dump(raceConfig))
     --print("Server Options:", utils.dump(serverOpts))
     --print("Entry List:", utils.dump(entryList))
-    --print("Countrycodes", utils.dump(countryCodes))
     -- Function block NOTE: this hook BLOCKS, make sure your functions don't loop forever!
     --Uncomment this line to set Weather API On, don't forget to put you openweathermap API key line 55
-    getTrackInfo(raceConfig, serverOpts)
+    raceConfig, serverOpts = getTrackInfo(raceConfig, serverOpts)
 
 -- Encode block, you probably shouldn't touch these either!
     return json.encode(entryList), json.encode(serverOpts), json.encode(raceConfig)
