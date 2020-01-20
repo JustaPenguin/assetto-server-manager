@@ -71,6 +71,8 @@ type CMAssists struct {
 type CMContent struct {
 	Cars  map[string]ContentURL `json:"cars"`
 	Track ContentURL            `json:"track"`
+
+	Password bool `json:"password"`
 }
 
 type ContentURL struct {
@@ -118,7 +120,7 @@ func NewContentManagerWrapper(store Store, carManager *CarManager, trackManager 
 	}
 }
 
-func (cmw *ContentManagerWrapper) NewCMContent(cars []string, trackName string) (*CMContent, error) {
+func (cmw *ContentManagerWrapper) NewCMContent(cars []string, trackName string, requirePassword bool) (*CMContent, error) {
 	carsMap := make(map[string]ContentURL)
 	var trackDownload string
 
@@ -146,6 +148,7 @@ func (cmw *ContentManagerWrapper) NewCMContent(cars []string, trackName string) 
 		Track: ContentURL{
 			URL: trackDownload,
 		},
+		Password: requirePassword,
 	}, nil
 }
 
@@ -409,7 +412,7 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 
 	description += cmw.description
 
-	cmContent, err := cmw.NewCMContent(sessionInfo.Cars, race.Track)
+	cmContent, err := cmw.NewCMContent(sessionInfo.Cars, race.Track, global.ContentManagerWrapperContentRequiresPassword == 1)
 
 	if err != nil {
 		logrus.Errorf("Couldn't attach content download URL(s) through CM Wrapper!")

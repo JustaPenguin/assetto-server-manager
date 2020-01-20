@@ -865,7 +865,7 @@ func ListAllResults() ([]SessionResults, error) {
 	var results []SessionResults
 
 	for _, resultFile := range resultFiles {
-		result, err := LoadResult(resultFile.Name())
+		result, err := LoadResult(resultFile.Name(), LoadResultWithoutPluginFire)
 
 		if err != nil {
 			return nil, err
@@ -895,7 +895,11 @@ func GetResultDate(name string) (time.Time, error) {
 
 var UseFallBackSorting = false
 
-func LoadResult(fileName string) (*SessionResults, error) {
+type LoadResultOpts int
+
+const LoadResultWithoutPluginFire LoadResultOpts = 0
+
+func LoadResult(fileName string, opts ...LoadResultOpts) (*SessionResults, error) {
 	var result *SessionResults
 
 	resultsPath := filepath.Join(ServerInstallPath, "results")
@@ -936,7 +940,15 @@ func LoadResult(fileName string) (*SessionResults, error) {
 		result.FallBackSort()
 	}
 
-	if config.Lua.Enabled && IsPremium == "true" {
+	var skipLua bool
+
+	for _, opt := range opts {
+		if opt == LoadResultWithoutPluginFire {
+			skipLua = true
+		}
+	}
+	
+	if !skipLua && config.Lua.Enabled && IsPremium == "true" {
 		err = resultsLoadPlugin(result)
 
 		if err != nil {
