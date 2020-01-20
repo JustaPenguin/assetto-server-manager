@@ -1,3 +1,10 @@
+v1.7.1
+------
+
+Fixes:
+
+* Fixes an issue where ACSR enabled Championships could cause Championship Event points to be incorrect. If your Championship points are incorrect, re-import the results files in the Championship Event ("Manage Event" -> "Import Results")
+
 v1.7.0
 ------
 

@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
 	"io"
@@ -38,8 +39,8 @@ func NewACSRClient(accountID, apiKey string, enabled bool) *ACSRClient {
 }
 
 // Sends a championship to ACSR, called OnEndSession and when a championship is created
-func (a *ACSRClient) SendChampionship(championship Championship) {
-	if !a.Enabled || len(championship.Events) == 0 {
+func (a *ACSRClient) SendChampionship(inChampionship Championship) {
+	if !a.Enabled || len(inChampionship.Events) == 0 {
 		return
 	}
 
@@ -50,6 +51,15 @@ func (a *ACSRClient) SendChampionship(championship Championship) {
 
 	if !baseURLIsValid() {
 		logrus.Errorf("Cannot send Championship to ACSR - baseURL is not valid.")
+		return
+	}
+
+	// championships are cloned before being sent to ACSR. this prevents any issues with pointers within the
+	// struct being erroneously modified in our original championship struct.
+	championship, err := cloneChampionship(inChampionship)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Cannot clone Championship for ACSR")
 		return
 	}
 
@@ -118,6 +128,25 @@ func (a *ACSRClient) SendChampionship(championship Championship) {
 	} else {
 		logrus.Errorf("acsr: sent championship: %s was not accepted. Please check your credentials.", championship.ID.String())
 	}
+}
+
+func init() {
+	gob.Register(Championship{})
+}
+
+// cloneChampionship takes a Championship and returns a complete new copy of it.
+func cloneChampionship(c Championship) (out Championship, err error) {
+	buf := new(bytes.Buffer)
+
+	err = gob.NewEncoder(buf).Encode(c)
+
+	if err != nil {
+		return out, err
+	}
+
+	err = gob.NewDecoder(buf).Decode(&out)
+
+	return out, err
 }
 
 func encrypt(data, key []byte) ([]byte, error) {
