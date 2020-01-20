@@ -47,7 +47,6 @@ function getTrackInfo(raceConfig, serverOpts)
     	local encodedCountryCodes = utils.jsonOpen(jsonPath, "countryCodes.json")
     	local countryCodes = json.decode(encodedCountryCodes)
     	location = city .. "," .. countryCodes[countryFull]
-	print(location)
 	print("Location found, dynamic weather set at " .. location)
 	
 	-- in order to use the weatherAPI you need to get a free API key from https://openweathermap.org/
@@ -155,13 +154,13 @@ function weatherAPI(raceConfig, serverOpts, apiKey)
             elseif w == 711 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 22
             elseif w == 300 then weather["CMGraphics"] = "sol_31_Light Drizzle"; weather["CMWFXType"] = 3
             elseif w == 301 then weather["CMGraphics"] = "sol_32_Drizzle"; weather["CMWFXType"] = 4
-			elseif w >= 302 and w <= 321 then weather["CMGraphics"] = "sol_33_Heavy Drizzle"; weather["CMWFXType"] = 5
+	    elseif w >= 302 and w <= 321 then weather["CMGraphics"] = "sol_33_Heavy Drizzle"; weather["CMWFXType"] = 5
             elseif w == 500 then weather["CMGraphics"] = "sol_34_Light Rain"; weather["CMWFXType"] = 6
             elseif w == 501 then weather["CMGraphics"] = "sol_35_Rain"; weather["CMWFXType"] = 7
             elseif w >= 502 and w <= 531 then weather["CMGraphics"] = "sol_36_Heavy Rain"; weather["CMWFXType"] = 8
             elseif w == 200 or w == 210 or w == 230 then weather["CMGraphics"] = "sol_41_Light Thunderstorm"; weather["CMWFXType"] = 0
             elseif w == 201 or w == 211 or w == 231 then weather["CMGraphics"] = "sol_42_Thunderstorm"; weather["CMWFXType"] = 1
-			elseif w == 202 or w == 212 or w == 221 or w == 232 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 2
+	    elseif w == 202 or w == 212 or w == 221 or w == 232 then weather["CMGraphics"] = "sol_43_Heavy Thunderstorm"; weather["CMWFXType"] = 2
             elseif w == 771 then weather["CMGraphics"] = "sol_44_Squalls"; weather["CMWFXType"] = 26
             elseif w == 781 then weather["CMGraphics"] = "sol_45_Tornado"; weather["CMWFXType"] = 27
             --Do not uncomment elseif w ==  then weather["CMGraphics"] = "sol_46_Hurricane"; weather["CMWFXType"] = 28 --no real weather for hurricane
@@ -189,22 +188,22 @@ function weatherAPI(raceConfig, serverOpts, apiKey)
             --elseif w == 711 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 22
 	    --elseif w == 300 then weather["CMGraphics"] = "sol_05_Broken Clouds"; weather["CMWFXType"] = 3
 	    --elseif w == 301 then weather["CMGraphics"] = "sol_06_Overcast"; weather["CMWFXType"] = 4
-   	    --elseif w >= 302 and w <= 321 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 5
-	    --elseif w == 500 then weather["CMGraphics"] = "sol_05_Broken Clouds"; weather["CMWFXType"] = 6
-	    --elseif w == 501 then weather["CMGraphics"] = "sol_06_Overcast"; weather["CMWFXType"] = 7
-	    --elseif w >= 502 and w <= 531 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 8
-	    --elseif w == 200 or w == 210 or w == 230 then weather["CMGraphics"] = "sol_06_Overcast"; weather["CMWFXType"] = 0
-	    --elseif w == 201 or w == 211 or w == 231 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 1
-            --elseif w == 202 or w == 212 or w == 221 or w == 232 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 2
+   	    --elseif w >= 302 and w <= 321 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 22
+	    --elseif w == 500 then weather["CMGraphics"] = "sol_05_Broken Clouds"; weather["CMWFXType"] = 18
+	    --elseif w == 501 then weather["CMGraphics"] = "sol_06_Overcast"; weather["CMWFXType"] = 19
+	    --elseif w >= 502 and w <= 531 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 22
+	    --elseif w == 200 or w == 210 or w == 230 then weather["CMGraphics"] = "sol_06_Overcast"; weather["CMWFXType"] = 19
+	    --elseif w == 201 or w == 211 or w == 231 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 22
+            --elseif w == 202 or w == 212 or w == 221 or w == 232 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 22
             --elseif w == 771 then weather["CMGraphics"] = "sol_44_Squalls"; weather["CMWFXType"] = 26
-	    --elseif w == 781 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 27
+	    --elseif w == 781 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 22
             --Do not uncomment elseif w ==  then weather["CMGraphics"] = "sol_46_Hurricane"; weather["CMWFXType"] = 28 --no real weather for hurricane
-	    --elseif w == 600 or w == 620 then weather["CMGraphics"] = "sol_05_Broken Clouds"; weather["CMWFXType"] = 9
-	    --elseif w == 601 or w == 621 then weather["CMGraphics"] = "sol_12_Fog"; weather["CMWFXType"] = 10
-	    --elseif w == 602 or w == 622 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 11
-	    --elseif w == 611 or w == 615 then weather["CMGraphics"] = "sol_05_Broken Clouds"; weather["CMWFXType"] = 12
-	    --elseif w == 612 or w == 616 then weather["CMGraphics"] = "sol_12_Fog"; weather["CMWFXType"] = 13
-	    --elseif w == 613 then weather["CMGraphics"] = "sol_06_Overcast"; weather["CMWFXType"] = 14
+	    --elseif w == 600 or w == 620 then weather["CMGraphics"] = "sol_05_Broken Clouds"; weather["CMWFXType"] = 18
+	    --elseif w == 601 or w == 621 then weather["CMGraphics"] = "sol_12_Fog"; weather["CMWFXType"] = 20
+	    --elseif w == 602 or w == 622 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 22
+	    --elseif w == 611 or w == 615 then weather["CMGraphics"] = "sol_05_Broken Clouds"; weather["CMWFXType"] = 18
+	    --elseif w == 612 or w == 616 then weather["CMGraphics"] = "sol_12_Fog"; weather["CMWFXType"] = 20
+	    --elseif w == 613 then weather["CMGraphics"] = "sol_06_Overcast"; weather["CMWFXType"] = 19
             --Do not uncomment elseif w ==  then weather["CMGraphics"] = "sol_57_Hail"; weather["CMWFXType"] = 32 --no real weather for hail
             -end
 			
