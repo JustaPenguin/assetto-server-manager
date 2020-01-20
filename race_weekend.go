@@ -1,6 +1,8 @@
 package servermanager
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"html/template"
 	"sort"
@@ -12,6 +14,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/teambition/rrule-go"
 )
+
+func init() {
+	gob.Register(&RaceWeekend{})
+}
 
 // RaceWeekends are a collection of sessions, where one session influences the EntryList of the next.
 type RaceWeekend struct {
@@ -41,6 +47,38 @@ func NewRaceWeekend() *RaceWeekend {
 		ID:      uuid.New(),
 		Created: time.Now(),
 	}
+}
+
+func (rw *RaceWeekend) SetID(newID uuid.UUID) {
+	oldID := rw.ID
+	rw.ID = newID
+
+	filters := rw.Filters[oldID.String()]
+	delete(rw.Filters, oldID.String())
+	rw.Filters[rw.ID.String()] = filters
+}
+
+func (rw *RaceWeekend) Duplicate() (*RaceWeekend, error) {
+	buf := new(bytes.Buffer)
+
+	var newRaceWeekend RaceWeekend
+
+	if err := gob.NewEncoder(buf).Encode(rw); err != nil {
+		return nil, err
+	}
+
+	if err := gob.NewDecoder(buf).Decode(&newRaceWeekend); err != nil {
+		return nil, err
+	}
+
+	newRaceWeekend.SetID(uuid.New())
+
+	for _, session := range rw.Sessions {
+		session.Results = nil
+		session.CompletedTime = time.Time{}
+	}
+
+	return &newRaceWeekend, nil
 }
 
 func (rw *RaceWeekend) HasLinkedChampionship() bool {

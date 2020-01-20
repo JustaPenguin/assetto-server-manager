@@ -225,6 +225,8 @@ func Router(
 		r.Get("/championship/{championshipID}/event/{eventID}/practice", championshipsHandler.startPracticeEvent)
 		r.Get("/championship/{championshipID}/event/{eventID}/cancel", championshipsHandler.cancelEvent)
 		r.Get("/championship/{championshipID}/event/{eventID}/restart", championshipsHandler.restartEvent)
+		r.Get("/championship/{championshipID}/event/{eventID}/duplicate", championshipsHandler.duplicateEvent)
+
 		r.Post("/championship/{championshipID}/driver-penalty/{classID}/{driverGUID}", championshipsHandler.driverPenalty)
 		r.Post("/championship/{championshipID}/team-penalty/{classID}/{team}", championshipsHandler.teamPenalty)
 		r.Get("/championship/{championshipID}/entrants", championshipsHandler.signedUpEntrants)

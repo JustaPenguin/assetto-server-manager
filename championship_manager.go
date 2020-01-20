@@ -1688,3 +1688,47 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 
 	return nil
 }
+
+func (cm *ChampionshipManager) DuplicateEvent(championshipID, eventID string) (*ChampionshipEvent, error) {
+	championship, err := cm.LoadChampionship(championshipID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	event, err := championship.EventByID(eventID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	newEvent := NewChampionshipEvent()
+
+	if !event.IsRaceWeekend() {
+		newEvent.RaceSetup = event.RaceSetup
+		newEvent.EntryList = event.EntryList
+	} else {
+		raceWeekend, err := event.RaceWeekend.Duplicate()
+
+		if err != nil {
+			return nil, err
+		}
+
+		raceWeekend.Name = "Duplicate: " + raceWeekend.Name
+
+		if err := cm.store.UpsertRaceWeekend(raceWeekend); err != nil {
+			return nil, err
+		}
+
+		newEvent.RaceWeekendID = raceWeekend.ID
+		newEvent.RaceWeekend = raceWeekend
+	}
+
+	championship.Events = append(championship.Events, event)
+
+	if err := cm.UpsertChampionship(championship); err != nil {
+		return nil, err
+	}
+
+	return newEvent, nil
+}
