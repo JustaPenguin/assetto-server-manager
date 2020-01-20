@@ -333,6 +333,8 @@ func (rc *RaceControl) requestSessionInfo() {
 		rc.sessionInfoTicker.Stop()
 	}
 
+	serverStopped := make(chan struct{})
+	rc.process.NotifyDone(serverStopped)
 	rc.sessionInfoTicker = time.NewTicker(sessionInfoRequestInterval)
 	rc.sessionInfoContext, rc.sessionInfoCfn = context.WithCancel(context.Background())
 
@@ -349,7 +351,7 @@ func (rc *RaceControl) requestSessionInfo() {
 				logrus.WithError(err).Errorf("Couldn't send session info udp request")
 			}
 
-		case <-rc.process.Done():
+		case <-serverStopped:
 			rc.sessionInfoTicker.Stop()
 
 			logrus.Debugf("Assetto Process completed. Disconnecting all connected drivers. Session done.")
@@ -379,6 +381,7 @@ func (rc *RaceControl) requestSessionInfo() {
 				logrus.WithError(err).Errorf("Couldn't broadcast race control")
 			}
 
+			return
 		case <-rc.sessionInfoContext.Done():
 			rc.sessionInfoTicker.Stop()
 			return

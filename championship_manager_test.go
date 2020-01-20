@@ -97,8 +97,8 @@ func (dummyServerProcess) SendUDPMessage(message udp.Message) error {
 	return nil
 }
 
-func (d dummyServerProcess) Done() <-chan struct{} {
-	return d.doneCh
+func (d dummyServerProcess) NotifyDone(chan struct{}) {
+
 }
 
 func (dummyServerProcess) GetServerConfig() ServerConfig {

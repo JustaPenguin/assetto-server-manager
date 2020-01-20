@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
-
 	"github.com/mitchellh/go-ps"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,8 +31,7 @@ type ServerProcess interface {
 	UDPCallback(message udp.Message)
 	SendUDPMessage(message udp.Message) error
 	GetServerConfig() ServerConfig
-
-	Done() <-chan struct{}
+	NotifyDone(chan struct{})
 }
 
 var ErrServerAlreadyRunning = errors.New("servermanager: assetto corsa server is already running")
@@ -49,8 +48,8 @@ type AssettoServerProcess struct {
 	ctx context.Context
 	cfn context.CancelFunc
 
-	doneCh chan struct{}
-	store  Store
+	doneChs []chan struct{}
+	store   Store
 
 	extraProcesses []*exec.Cmd
 
@@ -70,15 +69,14 @@ func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, store Store, content
 	return &AssettoServerProcess{
 		ctx:                   ctx,
 		cfn:                   cfn,
-		doneCh:                make(chan struct{}),
 		callbackFunc:          callbackFunc,
 		contentManagerWrapper: contentManagerWrapper,
 		store:                 store,
 	}
 }
 
-func (as *AssettoServerProcess) Done() <-chan struct{} {
-	return as.doneCh
+func (as *AssettoServerProcess) NotifyDone(ch chan struct{}) {
+	as.doneChs = append(as.doneChs, ch)
 }
 
 // Logs outputs the server logs
@@ -203,8 +201,45 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 
 	go func() {
 		_ = as.cmd.Wait()
+
+		loopNum := 0
+
+		for {
+			if loopNum > 50 {
+				break
+			}
+
+			proc, err := ps.FindProcess(as.cmd.Process.Pid)
+
+			if err != nil {
+				logrus.WithError(err).Warnf("Could not find process: %d", as.cmd.Process.Pid)
+			}
+
+			if proc == nil {
+				break
+			}
+
+			logrus.Debugf("Waiting for Assetto Corsa Server process to finish...")
+			time.Sleep(time.Millisecond * 500)
+			loopNum++
+		}
+
+		logrus.Infof("Detected server shutdown. Closing child processes")
+
 		as.stopChildProcesses()
 		as.closeUDPConnection()
+
+		as.cmd = nil
+
+		for _, ch := range as.doneChs {
+			select {
+			case ch <- struct{}{}:
+
+			default:
+			}
+		}
+
+		as.doneChs = []chan struct{}{}
 	}()
 
 	return nil
@@ -357,6 +392,10 @@ func (as *AssettoServerProcess) SendUDPMessage(message udp.Message) error {
 }
 
 func (as *AssettoServerProcess) stopChildProcesses() {
+	if as.serverConfig.GlobalServerConfig.EnableContentManagerWrapper == 1 && as.serverConfig.GlobalServerConfig.ContentManagerWrapperPort > 0 {
+		as.contentManagerWrapper.Stop()
+	}
+
 	for _, command := range as.extraProcesses {
 		err := kill(command.Process)
 
@@ -406,6 +445,9 @@ func (as *AssettoServerProcess) Stop() error {
 		return nil
 	}
 
+	done := make(chan struct{})
+	as.NotifyDone(done)
+
 	as.mutex.Lock()
 	defer as.mutex.Unlock()
 
@@ -415,38 +457,7 @@ func (as *AssettoServerProcess) Stop() error {
 		logrus.WithError(err).Errorf("Stopping server reported an error (continuing anyway...)")
 	}
 
-	as.stopChildProcesses()
-
-	loopNum := 0
-
-	for {
-		if loopNum > 50 {
-			break
-		}
-
-		proc, err := ps.FindProcess(as.cmd.Process.Pid)
-
-		if err != nil {
-			logrus.WithError(err).Warnf("Could not find process: %d", as.cmd.Process.Pid)
-		}
-
-		if proc == nil {
-			break
-		}
-
-		logrus.Debugf("Waiting for Assetto Corsa Server process to finish...")
-		time.Sleep(time.Millisecond * 500)
-		loopNum++
-	}
-
-	if as.serverConfig.GlobalServerConfig.EnableContentManagerWrapper == 1 && as.serverConfig.GlobalServerConfig.ContentManagerWrapperPort > 0 {
-		as.contentManagerWrapper.Stop()
-	}
-
-	as.cmd = nil
-	go func() {
-		as.doneCh <- struct{}{}
-	}()
+	<-done
 
 	return nil
 }
