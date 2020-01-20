@@ -15,15 +15,25 @@ function onEventStart(encodedRaceConfig, encodedServerOpts, encodedEntryList)
     local raceConfig = json.decode(encodedRaceConfig)
     local serverOpts = json.decode(encodedServerOpts)
     local entryList = json.decode(encodedEntryList)
-
+    
+	--Getting location from track_ui.json
+	location = getTrackInfo(raceConfig, serverOpts)
+	
+	-- if you want to manually set the location for tracks without location info uncomment this line and set the location, you can download a city list here: http://bulk.openweathermap.org/sample/
+	-- location = "Manchester,uk"
+	
+	if location == nil then
+		--Set location to Manchester UK if no trackinfo is found
+		location = "Manchester,UK"
+	end
 
     -- Uncomment these lines and run the function (start any event) to print out the structure of each object.
     --print("Race Config:", utils.dump(raceConfig))
     --print("Server Options:", utils.dump(serverOpts))
     --print("Entry List:", utils.dump(entryList))
     -- Function block NOTE: this hook BLOCKS, make sure your functions don't loop forever!
-    --Uncomment this line to set Weather API On, don't forget to put you openweathermap API key line 55
-    raceConfig, serverOpts = getTrackInfo(raceConfig, serverOpts)
+	--Uncomment this line to set Weather API On, don't forget to put you openweathermap API key line 55
+	raceConfig, serverOpts = weatherAPI(raceConfig, serverOpts, "get-an-api-key-from-https://openweathermap.org/")
 
 -- Encode block, you probably shouldn't touch these either!
     return json.encode(entryList), json.encode(serverOpts), json.encode(raceConfig)
@@ -39,20 +49,12 @@ function getTrackInfo(raceConfig, serverOpts)
     local trackJson = json.decode(encodedTrackJson)
     countryFull = trackJson["country"]
     city = trackJson["city"]
-    -- If Country or City is missing, stop the function and use weather configured in web manager
-    if city == nil or countryFull == nil then
-	print("No location found on track UI file, dynamic weather is OFF")
-	return raceConfig, serverOpts
-    else
-    	local encodedCountryCodes = utils.jsonOpen(jsonPath, "countryCodes.json")
-    	local countryCodes = json.decode(encodedCountryCodes)
-    	location = city .. "," .. countryCodes[countryFull]
-	print("Location found, dynamic weather set at " .. location)
+    local encodedCountryCodes = utils.jsonOpen(jsonPath, "countryCodes.json")
+    local countryCodes = json.decode(encodedCountryCodes)
+    location = city .. "," .. countryCodes[countryFull]
 	
 	-- in order to use the weatherAPI you need to get a free API key from https://openweathermap.org/
-    	raceConfig, serverOpts = weatherAPI(raceConfig, serverOpts, "get-an-api-key-from-https://openweathermap.org/")
-    return raceConfig, serverOpts
-    end
+    return location
 end
 
 
@@ -94,7 +96,7 @@ function weatherAPI(raceConfig, serverOpts, apiKey)
     local body, status = httpRequest("http://api.openweathermap.org/data/2.5/weather?q=" .. location .. "&APPID=" .. apiKey, "GET", "")
 
     -- If location not found in openWeatherMap, stop the function and use weather configured in web manager
-    if status == 404 then
+    if status >= 404 then
         return raceConfig, serverOpts
     end
 
