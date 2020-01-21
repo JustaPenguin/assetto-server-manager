@@ -641,6 +641,10 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		}
 	}
 
+	if err := rm.SaveEntrantsForAutoFill(entryList); err != nil {
+		return err
+	}
+
 	completeConfig := ConfigIniDefault()
 	completeConfig.CurrentRaceConfig = *raceConfig
 
@@ -996,10 +1000,6 @@ func (rm *RaceManager) SaveCustomRace(
 		)
 
 		hasCustomRaceName = false
-	}
-
-	if err := rm.SaveEntrantsForAutoFill(entryList); err != nil {
-		return nil, err
 	}
 
 	race := &CustomRace{
