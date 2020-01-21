@@ -5,6 +5,10 @@ Added:
 
 * You can now duplicate any Championship Event (including Race Weekends!)
 
+Fixes:
+
+* Fixes an issue where car setups with invalid ini keys would not upload properly.
+
 v1.7.1
 ------
 
