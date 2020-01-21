@@ -5,6 +5,10 @@ Added:
 
 * You can now duplicate any Championship Event (including Race Weekends!)
 
+Fixes:
+
+* Fixes an issue where AutoFill Entrants would not be saved when editing a Custom Race
+
 v1.7.1
 ------
 
