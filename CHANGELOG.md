@@ -4,6 +4,7 @@ v1.7.1
 Fixes:
 
 * Fixes an issue where ACSR enabled Championships could cause Championship Event points to be incorrect. If your Championship points are incorrect, re-import the results files in the Championship Event ("Manage Event" -> "Import Results")
+* Fixes an issue where Server Manager sometimes would not detect and handle acServer shutdown correctly.
 
 v1.7.0
 ------
