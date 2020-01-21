@@ -105,7 +105,7 @@ func (a Account) HasSeenVersion(version string) bool {
 }
 
 func (a Account) NeedsPasswordReset() bool {
-	return a.DefaultPassword != ""
+	return a.DefaultPassword != "" || (a.Name == adminUserName && config.Accounts.AdminPasswordOverride != "")
 }
 
 func (a Account) HasGroupPrivilege(g Group) bool {
@@ -351,7 +351,7 @@ func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 
 		password, repeatPassword, currentPassword := r.FormValue("Password"), r.FormValue("RepeatPassword"), r.FormValue("CurrentPassword")
 
-		if !account.NeedsPasswordReset() && (config.Accounts.AdminPasswordOverride == "" && account.Name == adminUserName) {
+		if !account.NeedsPasswordReset() {
 			currentPasswordHash, err := hashPassword([]byte(currentPassword), []byte(account.PasswordSalt))
 
 			if err != nil {
@@ -388,7 +388,7 @@ func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new-password.html", &newPasswordTemplateVars{
-		NewAccount: account.NeedsPasswordReset() || (config.Accounts.AdminPasswordOverride != "" && account.Name == adminUserName),
+		NewAccount: account.NeedsPasswordReset(),
 	})
 }
 
