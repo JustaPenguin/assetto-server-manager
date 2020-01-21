@@ -867,3 +867,24 @@ func (ch *ChampionshipsHandler) reorderEvents(w http.ResponseWriter, r *http.Req
 		return
 	}
 }
+
+func (ch *ChampionshipsHandler) duplicateEvent(w http.ResponseWriter, r *http.Request) {
+	championshipID := chi.URLParam(r, "championshipID")
+	eventID := chi.URLParam(r, "eventID")
+
+	newEvent, err := ch.championshipManager.DuplicateEvent(championshipID, eventID)
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't duplicate championship race weekend")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if newEvent.IsRaceWeekend() {
+		AddFlash(w, r, "Championship Race Weekend was successfully duplicated!")
+		http.Redirect(w, r, "/race-weekend/"+newEvent.RaceWeekendID.String(), http.StatusFound)
+	} else {
+		AddFlash(w, r, "Championship Event was successfully duplicated!")
+		http.Redirect(w, r, "/championship/"+championshipID+"/event/"+newEvent.ID.String()+"/edit", http.StatusFound)
+	}
+}

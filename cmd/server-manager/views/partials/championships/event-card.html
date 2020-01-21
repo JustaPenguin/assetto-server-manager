@@ -35,7 +35,7 @@
         {{ $scheduled := $event.Scheduled }}
 
         <div class="card-body">
-            <div class="row">
+            <div class="row" style="min-height: 200px;">
                 <div class="col-md-8 mb-3">
                     <div class="row">
                         {{ with $trackInfo }}
@@ -207,51 +207,51 @@
 
                                             {{ if $championship.IsMultiClass }}
                                                 <span class="font-weight-normal">
-                                                                {{ range $classIndex, $class := $championship.Classes }}
-                                                                    {{ with ($session.Results.FastestLapInClass $class.ID) }}
-                                                                        <br>
-                                                                        {{ $class.Name }}: {{ driverName .DriverName }}
-                                                                    {{ end }}
-                                                                {{ end }}
-                                                            </span>
+                                                    {{ range $classIndex, $class := $championship.Classes }}
+                                                        {{ with ($session.Results.FastestLapInClass $class.ID) }}
+                                                            <br>
+                                                            {{ $class.Name }}: {{ driverName .DriverName }}
+                                                        {{ end }}
+                                                    {{ end }}
+                                                </span>
                                             {{ else }}
                                                 {{ driverName $session.Results.FastestLap.DriverName }}
                                             {{ end }}
-                                                    </span><br>
+                                        </span><br>
                                     {{ else if eq $sessionName "RACEx2" }}
                                         <span class="badge badge-best {{ if $championship.IsMultiClass }}text-left{{ end }}">
                                                         Fastest Lap (2nd Race){{ if not $championship.IsMultiClass }}:{{ end }}
 
                                             {{ if $championship.IsMultiClass }}
                                                 <span class="font-weight-normal">
-                                                                {{ range $classIndex, $class := $championship.Classes }}
-                                                                    {{ with ($session.Results.FastestLapInClass $class.ID) }}
-                                                                        <br>
-                                                                        {{ $class.Name }}: {{ driverName .DriverName }}
-                                                                    {{ end }}
-                                                                {{ end }}
-                                                            </span>
+                                                    {{ range $classIndex, $class := $championship.Classes }}
+                                                        {{ with ($session.Results.FastestLapInClass $class.ID) }}
+                                                            <br>
+                                                            {{ $class.Name }}: {{ driverName .DriverName }}
+                                                        {{ end }}
+                                                    {{ end }}
+                                                </span>
                                             {{ else }}
                                                 {{ driverName $session.Results.FastestLap.DriverName }}
                                             {{ end }}
-                                                    </span><br>
+                                        </span><br>
                                     {{ else if eq $sessionName "QUALIFY" }}
                                         <span class="badge badge-success {{ if $championship.IsMultiClass }}text-left{{ end }}">
                                                         Best Qualifying{{ if not $championship.IsMultiClass }}:{{ end }}
 
                                             {{ if $championship.IsMultiClass }}
                                                 <span class="font-weight-normal">
-                                                                {{ range $classIndex, $class := $championship.Classes }}
-                                                                    {{ with ($session.Results.FastestLapInClass $class.ID) }}
-                                                                        <br>
-                                                                        {{ $class.Name }}: {{ driverName .DriverName }}
-                                                                    {{ end }}
-                                                                {{ end }}
-                                                            </span>
+                                                    {{ range $classIndex, $class := $championship.Classes }}
+                                                        {{ with ($session.Results.FastestLapInClass $class.ID) }}
+                                                            <br>
+                                                            {{ $class.Name }}: {{ driverName .DriverName }}
+                                                        {{ end }}
+                                                    {{ end }}
+                                                </span>
                                             {{ else }}
                                                 {{ driverName $session.Results.FastestLap.DriverName }}
                                             {{ end }}
-                                                    </span><br>
+                                        </span><br>
                                     {{ end }}
                                 {{ end }}
                             {{ end }}
@@ -333,6 +333,10 @@
 
                                         <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/import">
                                             Import Results
+                                        </a>
+
+                                        <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/duplicate">
+                                            Duplicate
                                         </a>
 
                                         {{ if DeleteAccess }}

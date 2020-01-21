@@ -1,3 +1,10 @@
+v1.7.2
+------
+
+Added:
+
+* You can now duplicate any Championship Event (including Race Weekends!)
+
 v1.7.1
 ------
 

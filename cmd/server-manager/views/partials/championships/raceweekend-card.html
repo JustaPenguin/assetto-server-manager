@@ -76,11 +76,26 @@
                             View{{ if WriteAccess }}/Edit{{ end }} Race Weekend
                         </a>
 
-                        {{ if DeleteAccess }}
-                            <a onClick="return confirm('I understand that this will delete this entire event and Race Weekend permanently.') "
-                               class="btn btn-danger"  href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/delete">
-                                Delete Race Weekend
-                            </a>
+
+                        {{ if WriteAccess }}
+                            <div class="dropdown show" style="display: inline-block">
+                                <a class="btn btn-warning dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Manage Race Weekend
+                                </a>
+
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                                    <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/duplicate">
+                                        Duplicate
+                                    </a>
+
+                                    {{ if DeleteAccess }}
+                                        <a onClick="return confirm('I understand that this will delete this entire event and Race Weekend permanently.') "
+                                           class="dropdown-item text-danger"  href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/delete">
+                                            Delete
+                                        </a>
+                                    {{ end }}
+                                </div>
+                            </div>
                         {{ end }}
                     </div>
                 </div>

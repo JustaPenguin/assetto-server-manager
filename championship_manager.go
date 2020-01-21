@@ -1244,7 +1244,7 @@ func (cm *ChampionshipManager) ImportEventSetup(championshipID string, eventID s
 		return err
 	}
 
-	err = championship.ImportEvent(race)
+	_, err = championship.ImportEvent(race)
 
 	if err != nil {
 		return err
@@ -1266,7 +1266,7 @@ func (cm *ChampionshipManager) ImportRaceWeekendSetup(championshipID string, eve
 		return err
 	}
 
-	err = championship.ImportEvent(weekend)
+	_, err = championship.ImportEvent(weekend)
 
 	if err != nil {
 		return err
@@ -1687,4 +1687,52 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 	}
 
 	return nil
+}
+
+func (cm *ChampionshipManager) DuplicateEvent(championshipID, eventID string) (*ChampionshipEvent, error) {
+	championship, err := cm.LoadChampionship(championshipID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	event, err := championship.EventByID(eventID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var newEvent *ChampionshipEvent
+
+	if !event.IsRaceWeekend() {
+		newEvent, err = championship.ImportEvent(event)
+
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		duplicateRaceWeekend, err := event.RaceWeekend.Duplicate()
+
+		if err != nil {
+			return nil, err
+		}
+
+		newEvent, err = championship.ImportEvent(duplicateRaceWeekend)
+
+		if err != nil {
+			return nil, err
+		}
+
+		newEvent.RaceWeekend.Name = "Duplicate: " + newEvent.RaceWeekend.Name
+
+		if err := cm.store.UpsertRaceWeekend(newEvent.RaceWeekend); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := cm.UpsertChampionship(championship); err != nil {
+		return nil, err
+	}
+
+	return newEvent, nil
 }
