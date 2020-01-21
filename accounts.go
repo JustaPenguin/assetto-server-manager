@@ -351,7 +351,7 @@ func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 
 		password, repeatPassword, currentPassword := r.FormValue("Password"), r.FormValue("RepeatPassword"), r.FormValue("CurrentPassword")
 
-		if !account.NeedsPasswordReset() {
+		if !account.NeedsPasswordReset() && (config.Accounts.AdminPasswordOverride == "" && account.Name == adminUserName) {
 			currentPasswordHash, err := hashPassword([]byte(currentPassword), []byte(account.PasswordSalt))
 
 			if err != nil {
@@ -388,7 +388,7 @@ func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new-password.html", &newPasswordTemplateVars{
-		NewAccount: account.NeedsPasswordReset(),
+		NewAccount: account.NeedsPasswordReset() || (config.Accounts.AdminPasswordOverride != "" && account.Name == adminUserName),
 	})
 }
 
