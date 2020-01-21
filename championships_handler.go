@@ -881,8 +881,10 @@ func (ch *ChampionshipsHandler) duplicateEvent(w http.ResponseWriter, r *http.Re
 	}
 
 	if newEvent.IsRaceWeekend() {
+		AddFlash(w, r, "Championship Race Weekend was successfully duplicated!")
 		http.Redirect(w, r, "/race-weekend/"+newEvent.RaceWeekendID.String(), http.StatusFound)
 	} else {
-		http.Redirect(w, r, "/championship/" + championshipID + "/event/" + newEvent.ID.String() + "/edit", http.StatusFound)
+		AddFlash(w, r, "Championship Event was successfully duplicated!")
+		http.Redirect(w, r, "/championship/"+championshipID+"/event/"+newEvent.ID.String()+"/edit", http.StatusFound)
 	}
 }

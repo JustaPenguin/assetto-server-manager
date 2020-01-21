@@ -241,8 +241,8 @@ func Router(
 
 		r.Get("/championship/{championshipID}/custom/list", championshipsHandler.listCustomRacesForImport)
 		r.Get("/championship/{championshipID}/custom/{eventID}/import", championshipsHandler.customRaceImport)
-		r.Get("/championship/{championshipID}/weekend/list", championshipsHandler.listRaceWeekendsForImport)
-		r.Get("/championship/{championshipID}/weekend/{weekendID}/import", championshipsHandler.raceWeekendImport)
+		r.Get("/championship/{championshipID}/race-weekend/list", championshipsHandler.listRaceWeekendsForImport)
+		r.Get("/championship/{championshipID}/race-weekend/{weekendID}/import", championshipsHandler.raceWeekendImport)
 
 		// penalties
 		r.Post("/penalties/{sessionFile}/{driverGUID}", penaltiesHandler.managePenalty)

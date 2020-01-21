@@ -49,15 +49,6 @@ func NewRaceWeekend() *RaceWeekend {
 	}
 }
 
-func (rw *RaceWeekend) SetID(newID uuid.UUID) {
-	oldID := rw.ID
-	rw.ID = newID
-
-	filters := rw.Filters[oldID.String()]
-	delete(rw.Filters, oldID.String())
-	rw.Filters[rw.ID.String()] = filters
-}
-
 func (rw *RaceWeekend) Duplicate() (*RaceWeekend, error) {
 	buf := new(bytes.Buffer)
 
@@ -69,13 +60,6 @@ func (rw *RaceWeekend) Duplicate() (*RaceWeekend, error) {
 
 	if err := gob.NewDecoder(buf).Decode(&newRaceWeekend); err != nil {
 		return nil, err
-	}
-
-	newRaceWeekend.SetID(uuid.New())
-
-	for _, session := range rw.Sessions {
-		session.Results = nil
-		session.CompletedTime = time.Time{}
 	}
 
 	return &newRaceWeekend, nil
