@@ -187,8 +187,6 @@ func (stc *StrackerConfiguration) Write() error {
 }
 
 type StrackerInstanceConfiguration struct {
-	InstanceConfiguration FormHeading `ini:"-" show:"open" input:"heading"`
-
 	ACServerAddress              string `ini:"ac_server_address" show:"open" help:"Server ip address or name used to poll results from. You should not touch the default value: 127.0.0.1"`
 	ACServerConfigIni            string `ini:"ac_server_cfg_ini" show:"open" help:"Path to configuration file of ac server. Note: whenever the server is restarted, it is required to restart stracker as well"`
 	ACServerWorkingDir           string `ini:"ac_server_working_dir" show:"open" help:"Working directory of the ac server, needed to read the race result json files. If empty, the directory is deduced from the ac_server_cfg_ini path assuming the default directory structure"`
@@ -207,8 +205,6 @@ type StrackerInstanceConfiguration struct {
 }
 
 type StrackerSwearFilter struct {
-	SwearFilter FormHeading `ini:"-" input:"heading"`
-
 	Action           string `ini:"action" help:"Valid values are 'none', 'kick' and 'ban'"`
 	BanDuration      int    `ini:"ban_duration" help:"The number of days to ban a player for (if the Action is 'ban')"`
 	NumberOfWarnings int    `ini:"num_warnings" help:"The number of warnings issued before the player is kicked"`
@@ -217,23 +213,17 @@ type StrackerSwearFilter struct {
 }
 
 type StrackerSessionManagement struct {
-	SessionManagement FormHeading `ini:"-" input:"heading"`
-
 	RaceOverStrategy      string `ini:"race_over_strategy" help:"What to do when the race is over and no player is actively racing. Valid values are: 'none' or 'skip'."`
 	WaitSecondsBeforeSkip int    `ini:"wait_secs_before_skip" help:"Number of seconds to wait before the session skip is executed (if Race Over Strategy is set to 'skip')"`
 }
 
 type StrackerMessages struct {
-	Messages FormHeading `ini:"-" input:"heading"`
-
 	BestLapTimeBroadcastThreshold int    `ini:"best_lap_time_broadcast_threshold" help:"Lap times below this threshold (in percent of the best time) will be broadcasted as best laps. Lap times above this will be whispered to the player achieving it."`
 	CarToCarCollisionMessage      bool   `ini:"car_to_car_collision_msg" help:"Set to ON to enable car to car private messages."`
 	MessageTypesToSendOverChat    string `ini:"message_types_to_send_over_chat" help:"Available message types are 'enter_leave','best_lap','checksum_errors','welcome','race_finished' and 'collision'. Connect them using a + sign without spaces."`
 }
 
 type StrackerDatabase struct {
-	Database FormHeading `ini:"-" show:"open" input:"heading"`
-
 	DatabaseFile         string `ini:"database_file" show:"open" help:"Only relevant if database_type=sqlite3. Path to the stracker database. If a relative path is given, it is relative to the <stracker> executable"`
 	DatabaseType         string `ini:"database_type" show:"open" help:"Valid values are 'sqlite3' and 'postgres'. Selects the database to be used."`
 	PerformBackups       bool   `ini:"perform_backups" show:"open" help:"Set to OFF if you do not want stracker to backup the database before migrating to a new db version. Note: The backups will be created as sqlite3 db in the current working directory."`
@@ -244,16 +234,12 @@ type StrackerDatabase struct {
 }
 
 type StrackerDatabaseCompression struct {
-	DatabaseCompression FormHeading `ini:"-" show:"open" input:"heading"`
-
 	Interval         int    `ini:"interval" show:"open" help:"Interval of database compression in minutes"`
 	Mode             string `ini:"mode" show:"open" help:"Various options to minimize database size. Valid values are 'none' (no compression, save all available infos), 'remove_slow_laps' (save detailed infos for fast laps only) and 'remove_all' (save no detailed lap info)."`
 	NeedsEmptyServer int    `ini:"needs_empty_server" show:"open" input:"checkbox" help:"If set to ON database compression will only take place if the server is empty."`
 }
 
 type StrackerHTTPConfiguration struct {
-	HTTPConfiguration FormHeading `ini:"-" input:"heading"`
-
 	Enabled       bool   `ini:"enabled" show:"open"`
 	ListenAddress string `ini:"listen_addr" show:"open" help:"Listening address of the http server (normally there is no need to change the default value 0.0.0.0 which means that the whole internet can connect to the server)"`
 	ListenPort    int    `ini:"listen_port" show:"open" help:"TCP listening port of the http server"`
@@ -280,8 +266,6 @@ type StrackerHTTPConfiguration struct {
 }
 
 type StrackerWelcomeMessage struct {
-	WelcomeMessage FormHeading `ini:"-" input:"heading"`
-
 	Line1 string `ini:"line1"`
 	Line2 string `ini:"line2"`
 	Line3 string `ini:"line3"`
@@ -291,8 +275,6 @@ type StrackerWelcomeMessage struct {
 }
 
 type StrackerACPlugin struct {
-	AssettoCorsaPlugin FormHeading `ini:"-" show:"open" input:"heading"`
-
 	ReceivePort int `ini:"rcvPort" show:"open" help:"UDP port the plugins receives from. -1 means to use the AC servers setting UDP_PLUGIN_ADDRESS"`
 	SendPort    int `ini:"sendPort" show:"open" help:"UDP port the plugins sends to. -1 means to use the AC servers setting UDP_PLUGIN_LOCAL_PORT"`
 
@@ -301,8 +283,6 @@ type StrackerACPlugin struct {
 }
 
 type StrackerLapValidChecks struct {
-	LapValidChecks FormHeading `ini:"-" input:"heading"`
-
 	InvalidateOnCarCollisions         bool `ini:"invalidateOnCarCollisions" help:"If ON, collisions with other cars will invalidate laps"`
 	InvalidateOnEnvironmentCollisions bool `ini:"invalidateOnEnvCollisions" help:"If ON, collisions with environment objects will invalidate laps"`
 	PtrackerAllowedTyresOut           int  `ini:"ptrackerAllowedTyresOut" help:"If -1: use server penalty setting, if available, otherwise use 2. All other values are passed to ptracker."`

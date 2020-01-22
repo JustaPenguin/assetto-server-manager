@@ -1,5 +1,15 @@
 package servermanager
 
+import (
+	"encoding/json"
+	"net/http"
+	"strings"
+)
+
+func DefaultKissMyRankConfig() *KissMyRankConfig {
+	return &KissMyRankConfig{}
+}
+
 type KissMyRankConfig struct {
 	MaxPlayers int `json:"max_players" help:"Number of server slots."`
 
@@ -56,5 +66,141 @@ type KissMyRankConfig struct {
 	LaptimeChallengeLevelAverageSpeedGap int     `json:"laptime_challenge_level_average_speed_gap" help:"The Average Speed Gap between two consecutive Laptime Challenge Levels in (km/h). 1=1km/h (e.g. Level 0 => 110km/h, Level 1 => 111km."`
 	AlltimeFastestLapPrize               float64 `json:"alltime_fastest_lap_prize" help:"How much a driver will be paid for the fastest lap of all times  (in thousands). 1.5 = 1500€."`
 
-	DamageCostBetweenCars int
+	PenaltyCosts   PenaltyCostMap   `json:"penalty_cost_map"`
+	PenaltyActions PenaltyActionMap `json:"penalty_action_map"`
+
+	NoMoney                       int                  `json:"no_money" input:"checkbox" help:"Set this to ON if you wish to use points instead of money (no money, no party :D)."`
+	MaxInfractions                int                  `json:"max_infractions" help:"The maximum number of times a driver is allowed to violate the server rules (cut track, speeding, pit exit line crossing etc.) before receiving the penalties set in the Penalty Costs and Penalty Actions."`
+	AssettoCorsaChatAdminGUIDList NewLineSeparatedList `json:"ac_chat_admin_guid_list" help:"One GUID per line. A list of the GUIDs for the drivers that can send Kissmyrank Admin Commands via the Assetto Corsa Chat (type '/kmr login password' in the chat to login and '/kmr command' to launch one of the supported commands)."`
+}
+
+type NewLineSeparatedList string
+
+func (c NewLineSeparatedList) MarshalJSON() ([]byte, error) {
+	var out []string
+
+	for _, val := range strings.Split(string(c), "\n") {
+		out = append(out, strings.TrimSpace(val))
+	}
+
+	return json.Marshal(out)
+}
+
+func (c *NewLineSeparatedList) UnmarshalJSON(data []byte) error {
+	var out []string
+
+	if err := json.Unmarshal(data, &out); err != nil {
+		return err
+	}
+
+	*c = NewLineSeparatedList(strings.Join(out, "\n"))
+
+	return nil
+}
+
+type PenaltyCostSessions struct {
+	Practice float64 `json:"practice" help:"The money penalties (in thousands) that you would like to give for any given situation."`
+	Qualify  float64 `json:"qualify" help:"The money penalties (in thousands) that you would like to give for any given situation."`
+	Race     float64 `json:"race" help:"The money penalties (in thousands) that you would like to give for any given situation."`
+	Other    float64 `json:"other" help:"The money penalties (in thousands) that you would like to give for any given situation."`
+}
+
+type PenaltyCostMap struct {
+	HotLapProtection                       PenaltyCostSessions `json:"hotlap_protection"`
+	HotLappingCarCollision                 PenaltyCostSessions `json:"hotlapping_car_collision"`
+	LappingProtection                      PenaltyCostSessions `json:"lapping_protection"`
+	LappingCarCollision                    PenaltyCostSessions `json:"lapping_car_collision"`
+	ReverseGear                            PenaltyCostSessions `json:"reverse_gear"`
+	TrackBoundaryCut                       PenaltyCostSessions `json:"track_boundary_cut"`
+	TrackRejoinMaxSpeed                    PenaltyCostSessions `json:"track_rejoin_max_speed"`
+	MaxInfractions                         PenaltyCostSessions `json:"max_infractions"`
+	MaxCollisions                          PenaltyCostSessions `json:"max_collisions"`
+	FirstBlood                             PenaltyCostSessions `json:"first_blood"`
+	PitLaneSpeeding                        PenaltyCostSessions `json:"pit_lane_speeding"`
+	PitExitLineCrossing                    PenaltyCostSessions `json:"pit_exit_line_crossing"`
+	CutLineYourCustomCutLine               PenaltyCostSessions `json:"cut_line_your_custom_cut_line"`
+	AntiCheatMaxClockDeltaConsecutiveHits  PenaltyCostSessions `json:"anticheat_max_clock_delta_consecutive_hits"`
+	SpeedingUnderVirtualSafetyCar          PenaltyCostSessions `json:"speeding_under_vsc"`
+	SlowingUnderVirtualSafetyCar           PenaltyCostSessions `json:"slowing_under_vsc"`
+	OvertakingUnderVirtualSafety           PenaltyCostSessions `json:"overtaking_under_vsc"`
+	ImprovingQualifyLapTimeWithInfractions PenaltyCostSessions `json:"improving_qualify_laptime_with_infractions"`
+	ParkingNearTrack                       PenaltyCostSessions `json:"parking_near_track"`
+}
+
+type PenaltyActionSessions struct {
+	Practice string `json:"practice" help:"DT0 for a drive through before the end of the lap. DT1 for a drive through before the end of the following lap and so on. DT given during qualify and practice will have to be cleared during the following race. K to kick immediately. TB30 to issue a temporary ban for 30 minutes. TB60 to issue a temporary ban for 60 minutes."`
+	Qualify  string `json:"qualify" help:"DT0 for a drive through before the end of the lap. DT1 for a drive through before the end of the following lap and so on. DT given during qualify and practice will have to be cleared during the following race. K to kick immediately. TB30 to issue a temporary ban for 30 minutes. TB60 to issue a temporary ban for 60 minutes."`
+	Race     string `json:"race" help:"DT0 for a drive through before the end of the lap. DT1 for a drive through before the end of the following lap and so on. DT given during qualify and practice will have to be cleared during the following race. K to kick immediately. TB30 to issue a temporary ban for 30 minutes. TB60 to issue a temporary ban for 60 minutes."`
+}
+
+type PenaltyActionMap struct {
+	HotLapProtection                       PenaltyActionSessions `json:"hotlap_protection"`
+	HotLappingCarCollision                 PenaltyActionSessions `json:"hotlapping_car_collision"`
+	LappingProtection                      PenaltyActionSessions `json:"lapping_protection"`
+	LappingCarCollision                    PenaltyActionSessions `json:"lapping_car_collision"`
+	ReverseGear                            PenaltyActionSessions `json:"reverse_gear"`
+	TrackBoundaryCut                       PenaltyActionSessions `json:"track_boundary_cut"`
+	TrackRejoinMaxSpeed                    PenaltyActionSessions `json:"track_rejoin_max_speed"`
+	MaxInfractions                         PenaltyActionSessions `json:"max_infractions"`
+	MaxCollisions                          PenaltyActionSessions `json:"max_collisions"`
+	FirstBlood                             PenaltyActionSessions `json:"first_blood"`
+	PitLaneSpeeding                        PenaltyActionSessions `json:"pit_lane_speeding"`
+	PitExitLineCrossing                    PenaltyActionSessions `json:"pit_exit_line_crossing"`
+	CutLineYourCustomCutLine               PenaltyActionSessions `json:"cut_line_your_custom_cut_line"`
+	AntiCheatMaxClockDeltaConsecutiveHits  PenaltyActionSessions `json:"anticheat_max_clock_delta_consecutive_hits"`
+	SpeedingUnderVirtualSafetyCar          PenaltyActionSessions `json:"speeding_under_vsc"`
+	SlowingUnderVirtualSafetyCar           PenaltyActionSessions `json:"slowing_under_vsc"`
+	OvertakingUnderVirtualSafety           PenaltyActionSessions `json:"overtaking_under_vsc"`
+	ImprovingQualifyLapTimeWithInfractions PenaltyActionSessions `json:"improving_qualify_laptime_with_infractions"`
+	ParkingNearTrack                       PenaltyActionSessions `json:"parking_near_track"`
+}
+
+type kissMyRankConfigurationTemplateVars struct {
+	BaseTemplateVars
+
+	Form *Form
+	// @TODO IsKMRInstalled bool
+}
+
+type KissMyRankHandler struct {
+	*BaseHandler
+}
+
+func NewKissMyRankHandler(baseHandler *BaseHandler) *KissMyRankHandler {
+	return &KissMyRankHandler{BaseHandler: baseHandler}
+}
+
+func (kmrh *KissMyRankHandler) options(w http.ResponseWriter, r *http.Request) {
+	kmrOpts := &KissMyRankConfig{}
+
+	form := NewForm(kmrOpts, nil, "", AccountFromRequest(r).Name == "admin")
+	/*
+		if r.Method == http.MethodPost {
+			err := form.Submit(r)
+
+			if err != nil {
+				logrus.WithError(err).Errorf("couldn't submit form")
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
+			}
+
+			err = sth.store.UpsertStrackerOptions(strackerOptions)
+
+			if err != nil {
+				logrus.WithError(err).Errorf("couldn't save stracker options")
+				AddErrorFlash(w, r, "Failed to save stracker options")
+			} else {
+				AddFlash(w, r, "Stracker options successfully saved!")
+			}
+
+			err = sth.initReverseProxy()
+
+			if err != nil {
+				logrus.WithError(err).Errorf("couldn't re-init stracker proxy")
+			}
+		}
+	*/
+	kmrh.viewRenderer.MustLoadTemplate(w, r, "server/kissmyrank.html", &kissMyRankConfigurationTemplateVars{
+		Form: form,
+	})
 }
