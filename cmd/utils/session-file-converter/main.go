@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp/replay"
 	"github.com/etcd-io/bbolt"
 	"github.com/google/uuid"
 )

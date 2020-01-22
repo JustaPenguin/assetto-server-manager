@@ -8,6 +8,7 @@ import (
 	"sort"
 	"time"
 
+	"4d63.com/tz"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -147,14 +148,20 @@ func (ch *ChampionshipsHandler) export(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// sign up responses are hidden for data protection reasons
-	championship.SignUpForm.Responses = nil
+	account := AccountFromRequest(r)
 
-	if !AccountFromRequest(r).HasGroupPrivilege(GroupWrite) {
+	if !account.HasGroupPrivilege(GroupAdmin) {
+		// sign up responses are hidden for data protection reasons
+		championship.SignUpForm.Responses = nil
+	}
+
+	if !account.HasGroupPrivilege(GroupWrite) {
 		// if you don't have write access or above you can't see the replacement password
 		championship.ReplacementPassword = ""
 		championship.OverridePassword = false
 	}
+
+	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s.json", championship.Name))
 
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
@@ -368,7 +375,7 @@ func (ch *ChampionshipsHandler) scheduleEvent(w http.ResponseWriter, r *http.Req
 	timeString := r.FormValue("event-schedule-time")
 	timezone := r.FormValue("event-schedule-timezone")
 
-	location, err := time.LoadLocation(timezone)
+	location, err := tz.LoadLocation(timezone)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("could not find location: %s", location)
@@ -858,5 +865,26 @@ func (ch *ChampionshipsHandler) reorderEvents(w http.ResponseWriter, r *http.Req
 		logrus.WithError(err).Error("couldn't reorder championship events")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
+	}
+}
+
+func (ch *ChampionshipsHandler) duplicateEvent(w http.ResponseWriter, r *http.Request) {
+	championshipID := chi.URLParam(r, "championshipID")
+	eventID := chi.URLParam(r, "eventID")
+
+	newEvent, err := ch.championshipManager.DuplicateEvent(championshipID, eventID)
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't duplicate championship race weekend")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if newEvent.IsRaceWeekend() {
+		AddFlash(w, r, "Championship Race Weekend was successfully duplicated!")
+		http.Redirect(w, r, "/race-weekend/"+newEvent.RaceWeekendID.String(), http.StatusFound)
+	} else {
+		AddFlash(w, r, "Championship Event was successfully duplicated!")
+		http.Redirect(w, r, "/championship/"+championshipID+"/event/"+newEvent.ID.String()+"/edit", http.StatusFound)
 	}
 }

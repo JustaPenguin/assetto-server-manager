@@ -11,7 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/when"
 
 	"github.com/cj123/ini"
 	"github.com/go-chi/chi"
@@ -26,24 +27,33 @@ type RaceWeekendManager struct {
 	notificationManager NotificationDispatcher
 	store               Store
 	process             ServerProcess
+	acsrClient          *ACSRClient
 
 	activeRaceWeekend *ActiveRaceWeekend
 	mutex             sync.Mutex
 
-	scheduledSessionTimers         map[string]*time.Timer
-	scheduledSessionReminderTimers map[string]*time.Timer
+	scheduledSessionTimers         map[string]*when.Timer
+	scheduledSessionReminderTimers map[string]*when.Timer
 }
 
-func NewRaceWeekendManager(raceManager *RaceManager, championshipManager *ChampionshipManager, store Store, process ServerProcess, notificationManager NotificationDispatcher) *RaceWeekendManager {
+func NewRaceWeekendManager(
+	raceManager *RaceManager,
+	championshipManager *ChampionshipManager,
+	store Store,
+	process ServerProcess,
+	notificationManager NotificationDispatcher,
+	acsrClient *ACSRClient,
+) *RaceWeekendManager {
 	return &RaceWeekendManager{
 		raceManager:         raceManager,
 		championshipManager: championshipManager,
 		notificationManager: notificationManager,
 		store:               store,
 		process:             process,
+		acsrClient:          acsrClient,
 
-		scheduledSessionTimers:         make(map[string]*time.Timer),
-		scheduledSessionReminderTimers: make(map[string]*time.Timer),
+		scheduledSessionTimers:         make(map[string]*when.Timer),
+		scheduledSessionReminderTimers: make(map[string]*when.Timer),
 	}
 }
 
@@ -191,7 +201,7 @@ func (rwm *RaceWeekendManager) UpsertRaceWeekend(raceWeekend *RaceWeekend) error
 		}
 
 		if championship.ACSR {
-			ACSRSendResult(*championship)
+			rwm.acsrClient.SendChampionship(*championship)
 		}
 	}
 
@@ -789,7 +799,7 @@ func (rwm *RaceWeekendManager) ListAvailableResultsFilesForSorting(raceWeekend *
 
 	carCheck:
 		for _, car := range result.Cars {
-			for _, entryListCar := range raceWeekend.EntryList.CarIDs() {
+			for _, entryListCar := range raceWeekend.GetEntryList().CarIDs() {
 				if car.Model == entryListCar {
 					// result car found in entry list
 					found = true
@@ -1095,7 +1105,9 @@ func (rwm *RaceWeekendManager) clearScheduledSessionTimer(session *RaceWeekendSe
 func (rwm *RaceWeekendManager) setupScheduledSessionTimer(raceWeekend *RaceWeekend, session *RaceWeekendSession) error {
 	rwm.clearScheduledSessionTimer(session)
 
-	rwm.scheduledSessionTimers[session.ID.String()] = time.AfterFunc(time.Until(session.ScheduledTime), func() {
+	var err error
+
+	rwm.scheduledSessionTimers[session.ID.String()], err = when.When(session.ScheduledTime, func() {
 		err := rwm.StartSession(raceWeekend.ID.String(), session.ID.String(), false)
 
 		if err != nil {
@@ -1116,22 +1128,29 @@ func (rwm *RaceWeekendManager) setupScheduledSessionTimer(raceWeekend *RaceWeeke
 		}
 	})
 
+	if err != nil {
+		return err
+	}
+
 	if rwm.notificationManager.HasNotificationReminders() {
 		for _, timer := range rwm.notificationManager.GetNotificationReminders() {
 			reminderTime := session.ScheduledTime.Add(time.Duration(-timer) * time.Minute)
 
 			if reminderTime.After(time.Now()) {
 				// add reminder
-				duration := time.Until(reminderTime)
 				thisTimer := timer
 
-				rwm.scheduledSessionReminderTimers[session.ID.String()] = time.AfterFunc(duration, func() {
+				rwm.scheduledSessionReminderTimers[session.ID.String()], err = when.When(reminderTime, func() {
 					err := rwm.notificationManager.SendRaceWeekendReminderMessage(raceWeekend, session, thisTimer)
 
 					if err != nil {
 						logrus.WithError(err).Errorf("Could not send race weekend reminder message")
 					}
 				})
+
+				if err != nil {
+					logrus.WithError(err).Error("Could not set up race weekend reminder timer")
+				}
 			}
 		}
 	}

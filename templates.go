@@ -20,6 +20,7 @@ import (
 
 	"github.com/Masterminds/sprig"
 	"github.com/getsentry/raven-go"
+	"github.com/go-chi/chi"
 	"github.com/mattn/go-zglob"
 	"github.com/sirupsen/logrus"
 )
@@ -346,6 +347,10 @@ func carList(cars interface{}) string {
 	var out []string
 
 	for _, s := range split {
+		if s == AnyCarModel {
+			continue
+		}
+
 		out = append(out, prettifyName(s, true))
 	}
 
@@ -466,6 +471,10 @@ type BaseTemplateVars struct {
 	SentryDSN          template.JSStr
 	RecaptchaSiteKey   string
 	WideContainer      bool
+	OGImage            string
+	ACSREnabled        bool
+	BaseURLIsSet       bool
+	BaseURLIsValid     bool
 }
 
 func (b *BaseTemplateVars) Get() *BaseTemplateVars {
@@ -510,6 +519,23 @@ func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, vars Templat
 	data.MonitoringEnabled = config.Monitoring.Enabled
 	data.SentryDSN = sentryJSDSN
 	data.RecaptchaSiteKey = config.Championships.RecaptchaConfig.SiteKey
+	data.BaseURLIsSet = baseURLIsSet()
+	data.BaseURLIsValid = baseURLIsValid()
+	data.ACSREnabled = opts.EnableACSR
+
+	if IsPremium == "true" {
+		data.OGImage = opts.OGImage
+
+		id := chi.URLParam(r, "championshipID")
+
+		if id != "" {
+			championship, err := tr.store.LoadChampionship(id)
+
+			if err == nil && championship.OGImage != "" {
+				data.OGImage = championship.OGImage
+			}
+		}
+	}
 
 	return nil
 }

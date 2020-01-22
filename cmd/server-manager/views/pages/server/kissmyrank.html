@@ -1,0 +1,32 @@
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.kissMyRankConfigurationTemplateVars*/}}
+
+{{ define "title" }}KissMyRank Options{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">KissMyRank Options</h1>
+
+        <!-- @TODO KMR blurb
+    <p>
+        <a href="https://www.racedepartment.com/downloads/stracker.3510/">STracker</a> is the popular server side app
+        companion to <a href="https://www.racedepartment.com/downloads/ptracker.3509/">PTracker</a>, for lap and race
+        tracking.
+    </p>
+
+    -->
+
+        <p>
+            These configuration options are applied globally - they are applied to the KissMyRank configuration file
+            whenever a race setup is started by Server Manager.
+        </p>
+
+        <form method="post" action="/kissmyrank/options">
+            {{ range $k, $v := .Form.Fields }}
+                {{ $v.HTML }}
+            {{ end }}
+
+            <button class="btn btn-success float-right" type="submit">Save</button>
+
+            <div class="clearfix"></div>
+        </form>
+
+{{ end }}

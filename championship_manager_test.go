@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp"
-	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp/replay"
 
 	"github.com/etcd-io/bbolt"
 )
@@ -97,8 +97,8 @@ func (dummyServerProcess) SendUDPMessage(message udp.Message) error {
 	return nil
 }
 
-func (d dummyServerProcess) Done() <-chan struct{} {
-	return d.doneCh
+func (d dummyServerProcess) NotifyDone(chan struct{}) {
+
 }
 
 func (dummyServerProcess) GetServerConfig() ServerConfig {
@@ -130,16 +130,24 @@ func (d dummyNotificationManager) SendRaceWeekendReminderMessage(raceWeekend *Ra
 	return nil
 }
 
-func (d dummyNotificationManager) SendMessage(msg string) error {
+func (d dummyNotificationManager) SendMessage(title string, msg string) error {
 	return nil
 }
 
-func (d dummyNotificationManager) SendMessageWithLink(msg string, linkText string, link *url.URL) error {
+func (d dummyNotificationManager) SendMessageWithLink(title string, msg string, linkText string, link *url.URL) error {
 	return nil
 }
 
 func (d dummyNotificationManager) SendRaceStartMessage(config ServerConfig, event RaceEvent) error {
 	return nil
+}
+
+func (d dummyNotificationManager) GetCarList(cars string) string {
+	return "nil"
+}
+
+func (d dummyNotificationManager) GetTrackInfo(track string, layout string, download bool) string {
+	return "nil"
 }
 
 func (d dummyNotificationManager) SendRaceScheduledMessage(event *CustomRace, date time.Time) error {
@@ -172,6 +180,7 @@ func init() {
 			NewTrackManager(),
 			&dummyNotificationManager{},
 		),
+		&ACSRClient{Enabled: false},
 	)
 }
 

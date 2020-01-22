@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/cj123/assetto-server-manager/fixtures/default-content"
+	"github.com/JustaPenguin/assetto-server-manager/fixtures/default-content"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -106,6 +106,19 @@ func addEntrantIDToChampionships(rs Store) error {
 }
 
 func addAdminAccount(rs Store) error {
+	accounts, err := rs.ListAccounts()
+
+	if err != nil {
+		return err
+	}
+
+	for _, account := range accounts {
+		// in a multi-server scenario, don't reset the admin account password to 'servermanager'
+		if account.Name == adminUserName {
+			return nil
+		}
+	}
+
 	logrus.Infof("Running migration: Add Admin Account")
 
 	account := NewAccount()

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -62,6 +63,7 @@ func Router(
 	raceWeekendHandler *RaceWeekendHandler,
 	strackerHandler *StrackerHandler,
 	healthCheck *HealthCheck,
+	kissMyRankHandler *KissMyRankHandler,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -80,6 +82,22 @@ func Router(
 		r.Mount("/debug/", middleware.Profiler())
 	}
 
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		// if a user comes from an stracker page and hits a 404, the likelihood is that they found a link that does
+		// not have an stracker prefix added to it. Catch it, and forward them back to an URL that has the prefix.
+		u, err := url.Parse(r.Referer())
+
+		if err == nil && strings.HasPrefix(u.Path, "/stracker/") {
+			// try to redirect back to /stracker/<url request>
+			r.URL.Path = "/stracker" + r.URL.Path
+
+			http.Redirect(w, r, r.URL.String(), http.StatusTemporaryRedirect)
+			return
+		}
+
+		http.NotFound(w, r)
+	})
+
 	// readers
 	r.Group(func(r chi.Router) {
 		r.Use(accountHandler.ReadAccessMiddleware)
@@ -87,6 +105,7 @@ func Router(
 		// pages
 		r.Get("/", serverAdministrationHandler.home)
 		r.Get("/changelog", serverAdministrationHandler.changelog)
+		r.Get("/premium", serverAdministrationHandler.premium)
 
 		r.Mount("/stracker/", http.HandlerFunc(strackerHandler.proxy))
 
@@ -207,6 +226,8 @@ func Router(
 		r.Get("/championship/{championshipID}/event/{eventID}/practice", championshipsHandler.startPracticeEvent)
 		r.Get("/championship/{championshipID}/event/{eventID}/cancel", championshipsHandler.cancelEvent)
 		r.Get("/championship/{championshipID}/event/{eventID}/restart", championshipsHandler.restartEvent)
+		r.Get("/championship/{championshipID}/event/{eventID}/duplicate", championshipsHandler.duplicateEvent)
+
 		r.Post("/championship/{championshipID}/driver-penalty/{classID}/{driverGUID}", championshipsHandler.driverPenalty)
 		r.Post("/championship/{championshipID}/team-penalty/{classID}/{team}", championshipsHandler.teamPenalty)
 		r.Get("/championship/{championshipID}/entrants", championshipsHandler.signedUpEntrants)
@@ -221,8 +242,8 @@ func Router(
 
 		r.Get("/championship/{championshipID}/custom/list", championshipsHandler.listCustomRacesForImport)
 		r.Get("/championship/{championshipID}/custom/{eventID}/import", championshipsHandler.customRaceImport)
-		r.Get("/championship/{championshipID}/weekend/list", championshipsHandler.listRaceWeekendsForImport)
-		r.Get("/championship/{championshipID}/weekend/{weekendID}/import", championshipsHandler.raceWeekendImport)
+		r.Get("/championship/{championshipID}/race-weekend/list", championshipsHandler.listRaceWeekendsForImport)
+		r.Get("/championship/{championshipID}/race-weekend/{weekendID}/import", championshipsHandler.raceWeekendImport)
 
 		// penalties
 		r.Post("/penalties/{sessionFile}/{driverGUID}", penaltiesHandler.managePenalty)
@@ -308,8 +329,10 @@ func Router(
 		r.HandleFunc("/broadcast-chat", raceControlHandler.broadcastChat)
 		r.HandleFunc("/admin-command", raceControlHandler.adminCommand)
 		r.HandleFunc("/kick-user", raceControlHandler.kickUser)
+		r.HandleFunc("/send-chat", raceControlHandler.sendChat)
 
 		r.HandleFunc("/stracker/options", strackerHandler.options)
+		r.HandleFunc("/kissmyrank/options", kissMyRankHandler.options)
 	})
 
 	FileServer(r, "/static", fs, false)

@@ -5,18 +5,61 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/url"
+	"os"
 
 	"github.com/sirupsen/logrus"
 )
 
+var acsrURL = "https://acsr.assettocorsaservers.com"
+
+func init() {
+	if acsrOverrideURL := os.Getenv("ACSR_URL"); acsrOverrideURL != "" {
+		acsrURL = acsrOverrideURL
+	}
+}
+
+type ACSRClient struct {
+	Enabled   bool
+	AccountID string
+	APIKey    string
+}
+
+func NewACSRClient(accountID, apiKey string, enabled bool) *ACSRClient {
+	return &ACSRClient{
+		AccountID: accountID,
+		APIKey:    apiKey,
+		Enabled:   enabled && IsPremium == "true",
+	}
+}
+
 // Sends a championship to ACSR, called OnEndSession and when a championship is created
-func ACSRSendResult(championship Championship) {
-	if config == nil || (config.ACSR.APIKey == "" || config.ACSR.AccountID == "" || !config.ACSR.Enabled) ||
-		len(championship.Events) == 0 || IsPremium != "true" {
+func (a *ACSRClient) SendChampionship(inChampionship Championship) {
+	if !a.Enabled || len(inChampionship.Events) == 0 {
+		return
+	}
+
+	if !baseURLIsSet() {
+		logrus.Errorf("Cannot send Championship to ACSR - no baseURL is set.")
+		return
+	}
+
+	if !baseURLIsValid() {
+		logrus.Errorf("Cannot send Championship to ACSR - baseURL is not valid.")
+		return
+	}
+
+	// championships are cloned before being sent to ACSR. this prevents any issues with pointers within the
+	// struct being erroneously modified in our original championship struct.
+	championship, err := cloneChampionship(inChampionship)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Cannot clone Championship for ACSR")
 		return
 	}
 
@@ -32,27 +75,25 @@ func ACSRSendResult(championship Championship) {
 
 	output, err := json.Marshal(championship)
 	if err != nil {
-		logrus.WithError(err).Error("couldn't JSON marshal championship")
+		logrus.WithError(err).Error("acsr: couldn't JSON marshal championship")
 		return
 	}
 
-	key, err := hex.DecodeString(config.ACSR.APIKey)
+	key, err := hex.DecodeString(a.APIKey)
 
 	if err != nil {
-		logrus.WithError(err).Error("api key in config is incorrect")
+		logrus.WithError(err).Error("acsr: api key in config is incorrect")
 		return
 	}
 
 	encryptedChampionship, err := encrypt(output, key)
 
 	if err != nil {
-		logrus.Error("ACSR output encryption failed")
+		logrus.Error("acsr: output encryption failed")
 		return
 	}
 
-	client := http.Client{}
-
-	req, err := http.NewRequest("POST", config.ACSR.URL+"/submit-result", bytes.NewBuffer(encryptedChampionship))
+	req, err := http.NewRequest("POST", acsrURL+"/submit-result", bytes.NewBuffer(encryptedChampionship))
 
 	if err != nil {
 		logrus.Error(err)
@@ -62,25 +103,50 @@ func ACSRSendResult(championship Championship) {
 	geoIP, err := geoIP()
 
 	if err != nil {
-		logrus.WithError(err).Error("couldn't get server geoIP for acsr request")
+		logrus.WithError(err).Error("acsr: couldn't get server geoIP for request")
 		return
 	}
 
 	q := req.URL.Query()
 	q.Add("baseurl", config.HTTP.BaseURL)
-	q.Add("guid", config.ACSR.AccountID)
+	q.Add("guid", a.AccountID)
 	q.Add("geoip", geoIP.CountryName)
 	req.URL.RawQuery = q.Encode()
 	req.Header.Set("Content-Type", "application/json")
 
-	_, err = client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 
 	if err != nil {
 		logrus.Error(err)
 		return
 	}
 
-	logrus.Debugf("updated championship: %s sent to ACSR", championship.ID.String())
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 400 {
+		logrus.Debugf("acsr: updated championship: %s sent", championship.ID.String())
+	} else {
+		logrus.Errorf("acsr: sent championship: %s was not accepted. Please check your credentials.", championship.ID.String())
+	}
+}
+
+func init() {
+	gob.Register(Championship{})
+}
+
+// cloneChampionship takes a Championship and returns a complete new copy of it.
+func cloneChampionship(c Championship) (out Championship, err error) {
+	buf := new(bytes.Buffer)
+
+	err = gob.NewEncoder(buf).Encode(c)
+
+	if err != nil {
+		return out, err
+	}
+
+	err = gob.NewDecoder(buf).Decode(&out)
+
+	return out, err
 }
 
 func encrypt(data, key []byte) ([]byte, error) {
@@ -103,4 +169,18 @@ func encrypt(data, key []byte) ([]byte, error) {
 	}
 
 	return gcm.Seal(nonce, nonce, data, nil), nil
+}
+
+func baseURLIsValid() bool {
+	if !baseURLIsSet() {
+		return false
+	}
+
+	_, err := url.Parse(config.HTTP.BaseURL)
+
+	return err == nil
+}
+
+func baseURLIsSet() bool {
+	return config != nil && config.HTTP.BaseURL != ""
 }

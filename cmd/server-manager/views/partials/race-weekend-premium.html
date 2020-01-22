@@ -1,6 +1,6 @@
 {{ define "raceweekend-premium" }}
     {{ if ne $.IsPremium "true" }}
-        <div class="card border-success mb-4 {{ randAlphaNum 10 }}" id="{{ randAlphaNum 10 }}">
+        <div class="card border-primary mb-4 {{ randAlphaNum 10 }}" id="{{ randAlphaNum 10 }}">
             <div class="card-body">
                 <p>
                     Race Weekends are a premium feature. You can create and set up Race Weekends in the non-premium version of Server Manager,
@@ -24,10 +24,15 @@
                     </li>
                 </ul>
             </div>
-            <div class="card-footer text-right">
-                <a class="btn btn-success" href="https://assettocorsaservers.com">Rent a Server <i class="ml-1 fas fa-server"></i></a>
-                <a class="btn btn-danger" href="https://paypal.me/JustaPenguinUK">Go Premium <i class="ml-1 fas fa-heart"></i></a>
-            </div>
+            <div class="card-footer">
+                <div class="float-left">
+                    <a class="btn btn-primary" href="/premium">Learn more about Premium</a>
+                </div>
+                <div class="float-right text-right">
+                    <a class="btn btn-success" href="https://assettocorsaservers.com">Rent a Server <i class="ml-1 fas fa-server"></i></a>
+                    <a class="btn btn-danger" href="https://paypal.me/JustaPenguinUK">Go Premium <i class="ml-1 fas fa-heart"></i></a>
+                </div>
+           </div>
         </div>
     {{ end }}
 {{ end }}

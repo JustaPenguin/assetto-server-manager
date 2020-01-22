@@ -58,7 +58,7 @@ independently), so there's a huge range of possibilities!
 
 I'm excited to see what people start using Lua plugins for, and hope that this guide is at least a little bit useful! 
 If you make something cool please share it with the 
-community by making a pull request on [Github](https://github.com/cj123/assetto-server-manager).
+community by making a pull request on [Github](https://github.com/JustaPenguin/assetto-server-manager).
 
 **Now the best way to learn is to get stuck in! Have a look at the example functions in the existing Lua files, they 
 are well documented and should get you on the right track. If you have any further questions please join our 

@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"math"
+	"math/rand"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -403,6 +404,20 @@ func (cm *CarManager) LoadCar(name string, tyres Tyres) (*Car, error) {
 		Tyres:   tyres[name],
 		Details: carDetails,
 	}, nil
+}
+
+func (cm *CarManager) RandomSkin(model string) string {
+	car, err := cm.LoadCar(model, nil)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Could not load car %s. No skin will be specified", model)
+		return ""
+	} else if len(car.Skins) == 0 {
+		logrus.Warnf("Car %s has no skins uploaded. No skin will be specified", model)
+		return ""
+	} else {
+		return car.Skins[rand.Intn(len(car.Skins))]
+	}
 }
 
 // ResultsForCar finds results for a given car.

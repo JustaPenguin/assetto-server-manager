@@ -1,4 +1,4 @@
-{{/* gotype: github.com/cj123/assetto-server-manager.championshipViewTemplateVars */}}
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.championshipViewTemplateVars */}}
 
 {{ define "title" }}{{ .Championship.Name }}{{ end }}
 
@@ -12,7 +12,13 @@
 
         <h1 class="text-center">{{ $championship.Name }}</h1>
 
-
+        {{ if $championship.ACSR }}
+            <div class="text-center">
+                <em>
+                    An <a href="https://acsr.assettocorsaservers.com">Assetto Corsa Skill Rating</a> Championship
+                </em>
+            </div>
+        {{ end }}
 
         {{ if $championship.SignUpAvailable }}
             <div class="card border-primary mb-3 mt-3">
@@ -439,7 +445,7 @@
                     ></a>
 
                     <div class="dropdown-menu" aria-labelledby="importWeekendDropdown">
-                        <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/weekend/list">Import Race Weekend</a>
+                        <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/race-weekend/list">Import Race Weekend</a>
                     </div>
                 </div>
             {{ end }}

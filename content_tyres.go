@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cj123/assetto-server-manager/pkg/acd"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/acd"
 
 	"github.com/cj123/ini"
 	"github.com/sirupsen/logrus"

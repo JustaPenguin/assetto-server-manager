@@ -54,7 +54,7 @@ function ToObject(o: any, typeOrCfg: any = {}, child = false): any {
 }
 
 // classes
-// struct2ts:github.com/cj123/assetto-server-manager/pkg/udp.RaceControlSessionInfo
+// struct2ts:github.com/JustaPenguin/assetto-server-manager/pkg/udp.RaceControlSessionInfo
 class RaceControlSessionInfo {
     Version: number;
     SessionIndex: number;
@@ -113,7 +113,7 @@ class RaceControlSessionInfo {
     }
 }
 
-// struct2ts:github.com/cj123/assetto-server-manager.RaceControlTrackMapData
+// struct2ts:github.com/JustaPenguin/assetto-server-manager.RaceControlTrackMapData
 class RaceControlTrackMapData {
     width: number;
     height: number;
@@ -147,7 +147,7 @@ class RaceControlTrackMapData {
     }
 }
 
-// struct2ts:github.com/cj123/assetto-server-manager.RaceControlTrackInfo
+// struct2ts:github.com/JustaPenguin/assetto-server-manager.RaceControlTrackInfo
 class RaceControlTrackInfo {
     name: string;
     city: string;
@@ -180,7 +180,7 @@ class RaceControlTrackInfo {
     }
 }
 
-// struct2ts:github.com/cj123/assetto-server-manager/pkg/udp.RaceControlDriverMapRaceControlDriverSessionCarInfo
+// struct2ts:github.com/JustaPenguin/assetto-server-manager/pkg/udp.RaceControlDriverMapRaceControlDriverSessionCarInfo
 class RaceControlDriverMapRaceControlDriverSessionCarInfo {
     CarID: number;
     DriverName: string;
@@ -209,7 +209,7 @@ class RaceControlDriverMapRaceControlDriverSessionCarInfo {
     }
 }
 
-// struct2ts:github.com/cj123/assetto-server-manager/pkg/udp.RaceControlDriverMapRaceControlDriverVec
+// struct2ts:github.com/JustaPenguin/assetto-server-manager/pkg/udp.RaceControlDriverMapRaceControlDriverVec
 class RaceControlDriverMapRaceControlDriverVec {
     X: number;
     Y: number;
@@ -231,7 +231,7 @@ class RaceControlDriverMapRaceControlDriverVec {
     }
 }
 
-// struct2ts:github.com/cj123/assetto-server-manager.RaceControlDriverMapRaceControlDriverCollision
+// struct2ts:github.com/JustaPenguin/assetto-server-manager.RaceControlDriverMapRaceControlDriverCollision
 class RaceControlDriverMapRaceControlDriverCollision {
     ID: string;
     Type: string;
@@ -258,7 +258,7 @@ class RaceControlDriverMapRaceControlDriverCollision {
     }
 }
 
-// struct2ts:github.com/cj123/assetto-server-manager.RaceControlDriverMapRaceControlDriverRaceControlCarLapInfo
+// struct2ts:github.com/JustaPenguin/assetto-server-manager.RaceControlDriverMapRaceControlDriverRaceControlCarLapInfo
 class RaceControlDriverMapRaceControlDriverRaceControlCarLapInfo {
     TopSpeedThisLap: number;
     TopSpeedBestLap: number;
@@ -292,7 +292,7 @@ class RaceControlDriverMapRaceControlDriverRaceControlCarLapInfo {
     }
 }
 
-// struct2ts:github.com/cj123/assetto-server-manager.RaceControlDriverMapRaceControlDriver
+// struct2ts:github.com/JustaPenguin/assetto-server-manager.RaceControlDriverMapRaceControlDriver
 class RaceControlDriverMapRaceControlDriver {
     CarInfo: RaceControlDriverMapRaceControlDriverSessionCarInfo;
     TotalNumLaps: number;
@@ -330,7 +330,7 @@ class RaceControlDriverMapRaceControlDriver {
     }
 }
 
-// struct2ts:github.com/cj123/assetto-server-manager.RaceControlDriverMap
+// struct2ts:github.com/JustaPenguin/assetto-server-manager.RaceControlDriverMap
 class RaceControlDriverMap {
     Drivers: { [key: string]: RaceControlDriverMapRaceControlDriver };
     GUIDsInPositionalOrder: string[];
@@ -347,12 +347,13 @@ class RaceControlDriverMap {
     }
 }
 
-// struct2ts:github.com/cj123/assetto-server-manager.RaceControl
+// struct2ts:github.com/JustaPenguin/assetto-server-manager.RaceControl
 class RaceControl {
     SessionInfo: RaceControlSessionInfo;
     TrackMapData: RaceControlTrackMapData;
     TrackInfo: RaceControlTrackInfo;
     SessionStartTime: Date;
+    CurrentRealtimePosInterval: number;
     ConnectedDrivers: RaceControlDriverMap | null;
     DisconnectedDrivers: RaceControlDriverMap | null;
     CarIDToGUID: { [key: number]: string };
@@ -363,6 +364,7 @@ class RaceControl {
         this.TrackMapData = new RaceControlTrackMapData(d.TrackMapData);
         this.TrackInfo = new RaceControlTrackInfo(d.TrackInfo);
         this.SessionStartTime = ('SessionStartTime' in d) ? ParseDate(d.SessionStartTime) : new Date();
+        this.CurrentRealtimePosInterval = ('CurrentRealtimePosInterval' in d) ? d.CurrentRealtimePosInterval as number : 0;
         this.ConnectedDrivers = ('ConnectedDrivers' in d) ? new RaceControlDriverMap(d.ConnectedDrivers) : null;
         this.DisconnectedDrivers = ('DisconnectedDrivers' in d) ? new RaceControlDriverMap(d.DisconnectedDrivers) : null;
         this.CarIDToGUID = ('CarIDToGUID' in d) ? d.CarIDToGUID as { [key: number]: string } : {};
@@ -371,6 +373,7 @@ class RaceControl {
     toObject(): any {
         const cfg: any = {};
         cfg.SessionStartTime = 'string';
+        cfg.CurrentRealtimePosInterval = 'number';
         return ToObject(this, cfg);
     }
 }
