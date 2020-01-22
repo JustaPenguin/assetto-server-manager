@@ -44,7 +44,7 @@ we want people to see an accurate representation of the awesome tool we know ser
 - The Just a Penguin Team
 
 Email: support@justapengu.in
-GitHub: https://github.com/cj123/assetto-server-manager
+GitHub: https://github.com/JustaPenguin/assetto-server-manager
 
 `
 

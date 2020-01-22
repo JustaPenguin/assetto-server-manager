@@ -1,4 +1,4 @@
-{{/* gotype: github.com/cj123/assetto-server-manager.RaceTemplateVars */}}
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.RaceTemplateVars */}}
 
 {{ define "title" }}
     {{ if .IsChampionship }}
@@ -708,7 +708,7 @@
                                 <p>Car, Skin, Ballast, Restrictor and Fixed Setup from the last Entrant will be cloned into new Entrants.</p>
                             </div>
                             <div class="col-md-4 text-right">
-                                <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
+                                <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0">
 
                                 <button class="btn btn-warning addEntrant">Add Entrant(s)</button>
                             </div>
@@ -1615,7 +1615,7 @@
 
                         <div class="col-sm-9">
                             <select name="ParentSessions" id="ParentSessions" class="form-control" multiple>
-                                <option value="no_parent">No parent</option>
+                                <option value="{{ $.RaceWeekend.ID.String }}" {{ if $.RaceWeekendSession.HasParent $.RaceWeekend.ID.String }}selected="selected"{{ end }}>Race Weekend EntryList</option>
 
                                 {{ $numSessions := len $.RaceWeekend.Sessions }}
 

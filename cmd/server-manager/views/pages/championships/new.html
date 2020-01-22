@@ -1,4 +1,4 @@
-{{/* gotype: github.com/cj123/assetto-server-manager.ChampionshipTemplateVars */}}
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.ChampionshipTemplateVars */}}
 
 {{ define "title" }}
     {{ if .IsEditing }}
@@ -181,6 +181,19 @@
                     </div>
 
                 </div>
+
+                {{ if eq $.RaceTemplateVars.BaseTemplateVars.IsPremium "true" }}
+                    <div class="form-group row">
+                        <label for="ChampionshipOGImage" class="col-sm-3 col-form-label">Championship Open Graph Image</label>
+
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="ChampionshipOGImage" name="ChampionshipOGImage"
+                                   placeholder="Any image URL" {{ with $f.OGImage }} value="{{.}}" {{ end }}>
+
+                            <small>The URL of an image to be shown in any link to this championship.</small>
+                        </div>
+                    </div>
+                {{ end }}
             </div>
         </div>
 

@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/cj123/ini"
 	"github.com/sirupsen/logrus"
@@ -310,7 +311,8 @@ type StrackerLapValidChecks struct {
 type StrackerHandler struct {
 	*BaseHandler
 
-	store Store
+	store        Store
+	reverseProxy *httputil.ReverseProxy
 }
 
 func NewStrackerHandler(baseHandler *BaseHandler, store Store) *StrackerHandler {
@@ -324,21 +326,17 @@ type strackerConfigurationTemplateVars struct {
 	IsStrackerInstalled bool
 }
 
-func (sth *StrackerHandler) proxy(w http.ResponseWriter, r *http.Request) {
+func (sth *StrackerHandler) initReverseProxy() error {
 	strackerOptions, err := sth.store.LoadStrackerOptions()
 
 	if err != nil {
-		logrus.WithError(err).Errorf("couldn't load stracker options")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	proxyURL, err := url.Parse(fmt.Sprintf("http://%s:%d/", strackerOptions.HTTPConfiguration.ListenAddress, strackerOptions.HTTPConfiguration.ListenPort))
 
 	if err != nil {
-		logrus.WithError(err).Errorf("couldn't build stracker proxy url")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	reverseProxy := httputil.NewSingleHostReverseProxy(proxyURL)
@@ -351,6 +349,7 @@ func (sth *StrackerHandler) proxy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	reverseProxy.Transport = &http.Transport{DisableCompression: true}
+	reverseProxy.FlushInterval = time.Millisecond * 200
 
 	reverseProxy.ModifyResponse = func(r *http.Response) error {
 		if r.Header.Get("Content-Type") != "text/html;charset=utf-8" {
@@ -374,10 +373,30 @@ func (sth *StrackerHandler) proxy(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
+		if err := r.Body.Close(); err != nil {
+			return err
+		}
+
 		r.Body = ioutil.NopCloser(buf)
 		r.Header.Set("Content-Length", fmt.Sprint(buf.Len()))
 
 		return nil
+	}
+
+	sth.reverseProxy = reverseProxy
+
+	return nil
+}
+
+func (sth *StrackerHandler) proxy(w http.ResponseWriter, r *http.Request) {
+	if sth.reverseProxy == nil {
+		err := sth.initReverseProxy()
+
+		if err != nil {
+			logrus.WithError(err).Error("Could not initialise stracker reverse proxy")
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	r.URL.Path = strings.TrimPrefix(r.URL.Path, "/stracker")
@@ -390,21 +409,32 @@ func (sth *StrackerHandler) proxy(w http.ResponseWriter, r *http.Request) {
 		r.URL.Path = "/admin/mainpage"
 	}
 
-	reverseProxy.ServeHTTP(w, r)
+	sth.reverseProxy.ServeHTTP(w, r)
+}
+
+// strackerLinkTagReplacements is a map of html tags to their attributes which need their links prefixing
+var strackerLinkTagReplacements = map[string]map[string]bool{
+	"script": {
+		"src": true,
+	},
+	"img": {
+		"src": true,
+	},
+	"link": {
+		"href": true,
+	},
+	"a": {
+		"href": true,
+	},
+	"form": {
+		"action": true,
+	},
 }
 
 func recurseStrackerProxyHTMLTree(n *html.Node) {
-	if n.Data == "script" || n.Data == "img" {
+	if tag, tagIsReplaceable := strackerLinkTagReplacements[n.Data]; tagIsReplaceable {
 		for attrIndex, attr := range n.Attr {
-			if attr.Key == "src" {
-				processSTrackerLink(&n.Attr[attrIndex])
-			}
-		}
-	}
-
-	if n.Data == "link" || n.Data == "a" {
-		for attrIndex, attr := range n.Attr {
-			if attr.Key == "href" {
+			if _, hasAttrReplacement := tag[attr.Key]; hasAttrReplacement {
 				processSTrackerLink(&n.Attr[attrIndex])
 			}
 		}
@@ -459,6 +489,12 @@ func (sth *StrackerHandler) options(w http.ResponseWriter, r *http.Request) {
 			AddErrorFlash(w, r, "Failed to save stracker options")
 		} else {
 			AddFlash(w, r, "Stracker options successfully saved!")
+		}
+
+		err = sth.initReverseProxy()
+
+		if err != nil {
+			logrus.WithError(err).Errorf("couldn't re-init stracker proxy")
 		}
 	}
 

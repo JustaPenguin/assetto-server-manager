@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 	"github.com/mitchellh/go-wordwrap"
 
 	"github.com/gorilla/websocket"
@@ -59,7 +59,7 @@ func (h *RaceControlHub) Send(message udp.Message) error {
 
 func newRaceControlHub() *RaceControlHub {
 	return &RaceControlHub{
-		broadcast: make(chan raceControlMessage),
+		broadcast: make(chan raceControlMessage, 1000),
 		register:  make(chan *raceControlClient),
 		clients:   make(map[*raceControlClient]bool),
 	}
@@ -330,6 +330,46 @@ func (rch *RaceControlHandler) kickUser(w http.ResponseWriter, r *http.Request) 
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Unable to send kick command")
+	}
+}
+
+func (rch *RaceControlHandler) sendChat(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		return
+	}
+
+	guid := r.FormValue("chat-user")
+
+	if (guid == "") || (guid == "default-driver-spacer") {
+		return
+	}
+
+	var carID uint8
+
+	for id, rangeGuid := range rch.raceControl.CarIDToGUID {
+		if string(rangeGuid) == guid {
+			carID = uint8(id)
+			break
+		}
+	}
+
+	wrapped := strings.Split(wordwrap.WrapString(
+		r.FormValue("send-chat"),
+		60,
+	), "\n")
+
+	for _, msg := range wrapped {
+		welcomeMessage, err := udp.NewSendChat(udp.CarID(carID), msg)
+
+		if err == nil {
+			err := rch.serverProcess.SendUDPMessage(welcomeMessage)
+
+			if err != nil {
+				logrus.WithError(err).Errorf("Unable to send chat message to car: %d", carID)
+			}
+		} else {
+			logrus.WithError(err).Errorf("Unable to build chat message to car: %d", carID)
+		}
 	}
 }
 

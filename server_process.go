@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"net"
 	"os"
 	"os/exec"
@@ -14,9 +13,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp"
-
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 	"github.com/mitchellh/go-ps"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -32,8 +31,7 @@ type ServerProcess interface {
 	UDPCallback(message udp.Message)
 	SendUDPMessage(message udp.Message) error
 	GetServerConfig() ServerConfig
-
-	Done() <-chan struct{}
+	NotifyDone(chan struct{})
 }
 
 var ErrServerAlreadyRunning = errors.New("servermanager: assetto corsa server is already running")
@@ -50,8 +48,8 @@ type AssettoServerProcess struct {
 	ctx context.Context
 	cfn context.CancelFunc
 
-	doneCh chan struct{}
-	store  Store
+	doneChs []chan struct{}
+	store   Store
 
 	extraProcesses []*exec.Cmd
 
@@ -71,15 +69,14 @@ func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, store Store, content
 	return &AssettoServerProcess{
 		ctx:                   ctx,
 		cfn:                   cfn,
-		doneCh:                make(chan struct{}),
 		callbackFunc:          callbackFunc,
 		contentManagerWrapper: contentManagerWrapper,
 		store:                 store,
 	}
 }
 
-func (as *AssettoServerProcess) Done() <-chan struct{} {
-	return as.doneCh
+func (as *AssettoServerProcess) NotifyDone(ch chan struct{}) {
+	as.doneChs = append(as.doneChs, ch)
 }
 
 // Logs outputs the server logs
@@ -164,7 +161,13 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 				return err
 			}
 
-			err = as.startChildProcess(wd, fmt.Sprintf("%s --stracker_ini %s", StrackerExecutablePath(), filepath.Join(StrackerFolderPath(), strackerConfigIniFilename)))
+			err = as.startPlugin(wd, &CommandPlugin{
+				Executable: StrackerExecutablePath(),
+				Arguments: []string{
+					"--stracker_ini",
+					filepath.Join(StrackerFolderPath(), strackerConfigIniFilename),
+				},
+			})
 
 			if err != nil {
 				return err
@@ -174,6 +177,18 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 		} else {
 			logrus.WithError(ErrStrackerConfigurationRequiresUDPPluginConfiguration).Error("Please check your server configuration")
 		}
+	}
+
+	for _, plugin := range config.Server.Plugins {
+		err = as.startPlugin(wd, plugin)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("Could not run extra command: %s", plugin.String())
+		}
+	}
+
+	if len(config.Server.RunOnStart) > 0 {
+		logrus.Warnf("Use of run_on_start in config.yml is deprecated. Please use 'plugins' instead")
 	}
 
 	for _, command := range config.Server.RunOnStart {
@@ -186,14 +201,86 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 
 	go func() {
 		_ = as.cmd.Wait()
+
+		loopNum := 0
+
+		for {
+			if loopNum > 50 {
+				break
+			}
+
+			proc, err := ps.FindProcess(as.cmd.Process.Pid)
+
+			if err != nil {
+				logrus.WithError(err).Warnf("Could not find process: %d", as.cmd.Process.Pid)
+			}
+
+			if proc == nil {
+				break
+			}
+
+			logrus.Debugf("Waiting for Assetto Corsa Server process to finish...")
+			time.Sleep(time.Millisecond * 500)
+			loopNum++
+		}
+
+		logrus.Infof("Detected server shutdown. Closing child processes")
+
 		as.stopChildProcesses()
 		as.closeUDPConnection()
+
+		as.cmd = nil
+
+		for _, ch := range as.doneChs {
+			select {
+			case ch <- struct{}{}:
+
+			default:
+			}
+		}
+
+		as.doneChs = []chan struct{}{}
 	}()
 
 	return nil
 }
 
+func (as *AssettoServerProcess) startPlugin(wd string, plugin *CommandPlugin) error {
+	commandFullPath, err := filepath.Abs(plugin.Executable)
+
+	if err != nil {
+		as.cmd = nil
+		return err
+	}
+
+	cmd := buildCommand(as.ctx, commandFullPath, plugin.Arguments...)
+
+	pluginDir, err := filepath.Abs(filepath.Dir(commandFullPath))
+
+	if err != nil {
+		logrus.WithError(err).Warnf("Could not determine plugin directory. Setting working dir to: %s", wd)
+		pluginDir = wd
+	}
+
+	cmd.Stdout = pluginsOutput
+	cmd.Stderr = pluginsOutput
+
+	cmd.Dir = pluginDir
+
+	err = cmd.Start()
+
+	if err != nil {
+		return err
+	}
+
+	as.extraProcesses = append(as.extraProcesses, cmd)
+
+	return nil
+}
+
+// Deprecated: use startPlugin instead
 func (as *AssettoServerProcess) startChildProcess(wd string, command string) error {
+	// BUG(cj): splitting commands on spaces breaks child processes that have a space in their path name
 	parts := strings.Split(command, " ")
 
 	if len(parts) == 0 {
@@ -305,6 +392,10 @@ func (as *AssettoServerProcess) SendUDPMessage(message udp.Message) error {
 }
 
 func (as *AssettoServerProcess) stopChildProcesses() {
+	if as.serverConfig.GlobalServerConfig.EnableContentManagerWrapper == 1 && as.serverConfig.GlobalServerConfig.ContentManagerWrapperPort > 0 {
+		as.contentManagerWrapper.Stop()
+	}
+
 	for _, command := range as.extraProcesses {
 		err := kill(command.Process)
 
@@ -354,6 +445,9 @@ func (as *AssettoServerProcess) Stop() error {
 		return nil
 	}
 
+	done := make(chan struct{})
+	as.NotifyDone(done)
+
 	as.mutex.Lock()
 	defer as.mutex.Unlock()
 
@@ -363,38 +457,7 @@ func (as *AssettoServerProcess) Stop() error {
 		logrus.WithError(err).Errorf("Stopping server reported an error (continuing anyway...)")
 	}
 
-	as.stopChildProcesses()
-
-	loopNum := 0
-
-	for {
-		if loopNum > 50 {
-			break
-		}
-
-		proc, err := ps.FindProcess(as.cmd.Process.Pid)
-
-		if err != nil {
-			logrus.WithError(err).Warnf("Could not find process: %d", as.cmd.Process.Pid)
-		}
-
-		if proc == nil {
-			break
-		}
-
-		logrus.Debugf("Waiting for Assetto Corsa Server process to finish...")
-		time.Sleep(time.Millisecond * 500)
-		loopNum++
-	}
-
-	if as.serverConfig.GlobalServerConfig.EnableContentManagerWrapper == 1 && as.serverConfig.GlobalServerConfig.ContentManagerWrapperPort > 0 {
-		as.contentManagerWrapper.Stop()
-	}
-
-	as.cmd = nil
-	go func() {
-		as.doneCh <- struct{}{}
-	}()
+	<-done
 
 	return nil
 }

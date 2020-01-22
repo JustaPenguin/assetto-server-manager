@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/cj123/assetto-server-manager"
+	"github.com/JustaPenguin/assetto-server-manager"
 	"github.com/etcd-io/bbolt"
 )
 

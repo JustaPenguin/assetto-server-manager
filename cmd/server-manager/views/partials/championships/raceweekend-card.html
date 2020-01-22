@@ -27,7 +27,9 @@
             <div class="row">
                 <div class="col-md-8 mb-3">
                     <ul class="list-unstyled">
-                        {{ range $sessionIndex, $session := $raceWeekend.Sessions }}
+                        {{ $sessions := $raceWeekend.SortedSessions }}
+
+                        {{ range $sessionIndex, $session := $sessions }}
                             <li>
                                 <strong>{{ $session.Name }}</strong> at
 
@@ -76,17 +78,32 @@
                             View{{ if WriteAccess }}/Edit{{ end }} Race Weekend
                         </a>
 
-                        {{ if DeleteAccess }}
-                            <a onClick="return confirm('I understand that this will delete this entire event and Race Weekend permanently.') "
-                               class="btn btn-danger"  href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/delete">
-                                Delete Race Weekend
-                            </a>
+
+                        {{ if WriteAccess }}
+                            <div class="dropdown show" style="display: inline-block">
+                                <a class="btn btn-warning dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Manage Race Weekend
+                                </a>
+
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                                    <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/duplicate">
+                                        Duplicate
+                                    </a>
+
+                                    {{ if DeleteAccess }}
+                                        <a onClick="return confirm('I understand that this will delete this entire event and Race Weekend permanently.') "
+                                           class="dropdown-item text-danger"  href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/delete">
+                                            Delete
+                                        </a>
+                                    {{ end }}
+                                </div>
+                            </div>
                         {{ end }}
                     </div>
                 </div>
 
-                {{ if gt (len $raceWeekend.Sessions) 0 }}
-                    {{ $setup := (index $raceWeekend.Sessions 0).RaceConfig }}
+                {{ if gt (len $sessions) 0 }}
+                    {{ $setup := (index $sessions 0).RaceConfig }}
                     <div class="col-md-4">
                         <img class="img img-fluid ml-2 float-right image-track mb-2"
                              src="/content/tracks/{{ $setup.Track }}/ui{{ with $setup.TrackLayout }}/{{.}}{{ end }}/preview.png"
@@ -104,9 +121,9 @@
 
                             <ul class="nav nav-tabs mt-3" role="tablist">
                                 {{ $sessionCount := 1 }}
-                                {{ $sessionsLen := len $raceWeekend.Sessions }}
+                                {{ $sessionsLen := len $sessions }}
 
-                                {{ range $sessionIndex, $session := $raceWeekend.Sessions }}
+                                {{ range $sessionIndex, $session := $sessions }}
                                     <li class="nav-item">
                                         <a class="nav-link   {{ if and (not $raceWeekend.Completed) (eq $sessionCount $sessionsLen) }}  active {{ end }}"
                                            id="results-{{ $sessionCount }}-{{ $eventIndex}}-tab" data-toggle="tab"
@@ -136,7 +153,7 @@
                             <div class="tab-content">
                                 {{ $sessionCount = 1 }}
 
-                                {{ range $sessionIndex, $session := $raceWeekend.Sessions }}
+                                {{ range $sessionIndex, $session := $sessions }}
                                     <div class="tab-pane fade {{ if and (not $raceWeekend.Completed) (eq $sessionCount $sessionsLen) }} show active {{ end }}"
                                          id="results-{{ $sessionCount }}-{{ $eventIndex }}" role="tabpanel"
                                          aria-labelledby="results-{{ $sessionCount }}-{{ $eventIndex }}-tab">

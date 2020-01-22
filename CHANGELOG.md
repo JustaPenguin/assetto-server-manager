@@ -1,3 +1,83 @@
+v1.7.2
+------
+
+Added:
+
+* You can now duplicate any Championship Event (including Race Weekends!)
+
+Fixes:
+
+* Fixes an issue where car setups with invalid ini keys would not upload properly.
+* Fixes an issue where AutoFill Entrants would not be saved when editing a Custom Race
+* Championship Race Weekends now display all sessions in the correct order
+
+v1.7.1
+------
+
+Fixes:
+
+* Fixes an issue where ACSR enabled Championships could cause Championship Event points to be incorrect. If your Championship points are incorrect, re-import the results files in the Championship Event ("Manage Event" -> "Import Results")
+* Fixes an issue where Server Manager sometimes would not detect and handle acServer shutdown correctly.
+
+v1.7.0
+------
+
+### ACSR
+
+This release adds support for Assetto Corsa Skill Ratings (ACSR). ACSR is a new service for organising and taking part in Championships through Assetto Corsa Server Manager. 
+
+When you set up a Championship in Server Manager, you will be given the option to "Export to Assetto Corsa Skill Ratings". This publishes your Championship to the ACSR Championships List page, so that drivers can find your Championship and sign up to it!
+
+* You can view more about ACSR here: https://acsr.assettocorsaservers.com
+* For help configuring ACSR, check out our wiki: https://github.com/JustaPenguin/assetto-server-manager/wiki/ACSR-Configuration
+
+ACSR requires Server Manager Premium. You can purchase Server Manager Premium by following the instructions in the free version of Server Manager.
+
+### Server Manager
+
+Added:
+
+* Admins can now export full Championship information, including Sign Up Form responses.
+* Exported Championships and Race Weekends now export as JSON files to download, rather than showing JSON in the browser.
+* Improved Discord message formatting (thanks @cheesegrits!)
+* It is now possible to specify a Race Weekend's initial Entry List as the parent for a session. You can also now use a grid offset when filtering entrants from this entrylist.
+
+Fixes:
+
+* Improved the logic of "fastest lap across multiple results files" sorting in Race Weekends whilst using fallback results sorting (premium)
+* Fixes an issue where the server name could not be clicked to go to the homepage on mobile devices
+* Fixes an issue where Championship Driver and Team penalties would be lost when editing a Championship.
+* Drastically improved the speed of STracker pages through some reworking of how STracker is proxied.
+* Fixed an issue where some STracker links would not work correctly.
+* Fixes an issue where car skins with special characters in their name would not display in the race setup page and Championship Sign Up form.
+* Fixes issues with download links in Discord messages (thanks @cheesegrits!)
+* On initial server setup, the admin account is only created if one doesn't exist.
+* The JSON Store now correctly sets the updated time of Custom Races, Championships and Race Weekends.
+
+---
+
+v1.6.1
+------
+
+**Please note, this release deprecates use of "run_on_start" in config.yml. Please read the new config.yml "plugins" section if you were using run_on_start!**
+
+Added:
+
+* Added send chat to driver option to the admin panel on the Live Timings page.
+* The UDP message receiver now detects if it has fallen behind while handling messages. If it has, it reduces the refresh rate that the Assetto Corsa Server sends messages at, so it can catch up. If you see a lot of "can't keep up!" messages in the Server Logs, you probably need to increase your 'refresh_interval_ms' in the config.yml.
+* Added configurable Open Graph images to both the manager as a whole and championships, with these you can link to images that will be shown whenever you share a link of the manager/championship pages on social media (premium).
+* Optimised the handling of UDP messages to improve performance.
+* When using "Any Available Car", one of each car is added to the EntryList (so long as there are enough entrants!) and then after that Entrant cars are randomised.
+* Added a new 'plugins' section to config.yml. Please use this instead of 'run_on_start'. This has been added to fix issues with spaces in plugin path names.
+
+Fixes:
+
+* Fixed an issue with filtering from results files in Race Weekends when the Race Weekend is within a Championship.
+* We've changed the method that we use to check if scheduled events need running. Hopefully this should make scheduled events more reliable!
+* Fixes a memory leak when proxying STracker pages
+
+---
+
 v1.6.0
 ------
 
@@ -36,11 +116,12 @@ As well as our premium features, we have the following additions...
 
 Fixes:
 
+* Fixed an issue with scheduled Championship events that could clear all of the other scheduled events on the Championship when they started.
 * Setting the ballast on an entrant to a larger value than the Max Ballast option no longer stops the server from starting.
 * Results pages now correctly display statistics per car - so if you're switching cars in a session you can see accurate reports for that car.
 * Penalties are now applied per driver and car, rather than just per driver.
 * Fixes an issue where events scheduled in a multi-server scenario would start on the wrong server.
-* Stracker proxy plugin local/plugin ports should now be properly set by the SM UI.
+* STracker proxy plugin local/plugin ports should now be properly set by the Server Manager UI.
 * Tyres with spaces in their short_names cause the server to fail to connect to lobby, stopped those tyres from being uploaded to the server.
 * Prevent users from being able to set up a race that will cause the server to crash by setting pickup mode off, locked entry list on and reverse grid race to anything other than 0.
 * Fixes an issue where a missing ui_track.json file would cause a track page to load incorrectly.
@@ -306,7 +387,7 @@ Added:
   acting maliciously or just making mistakes, for example deleting a whole Championship an hour before it was 
   meant to start (we're looking at you, Greg).
 * Added a link to our new Wiki in the footer! If you want to contribute tips and tricks for Server Manager, the wiki is the place!
-  You can access the wiki here: https://github.com/cj123/assetto-server-manager/wiki
+  You can access the wiki here: https://github.com/JustaPenguin/assetto-server-manager/wiki
 * The Server Manager javascript is now minified, which should make the pages load quicker!
 * Results tables now use the same time format as Live Timings (e.g. 01:23.234 instead of 1m23.234s).
 * You can now split the JSON store into two separate directories: private and shared. This is useful for multiserver setups,

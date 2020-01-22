@@ -105,7 +105,7 @@ func (a Account) HasSeenVersion(version string) bool {
 }
 
 func (a Account) NeedsPasswordReset() bool {
-	return a.DefaultPassword != ""
+	return a.DefaultPassword != "" || (a.Name == adminUserName && config.Accounts.AdminPasswordOverride != "")
 }
 
 func (a Account) HasGroupPrivilege(g Group) bool {

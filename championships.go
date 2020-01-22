@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -101,6 +101,9 @@ type Championship struct {
 
 	// Raw html can be attached to championships, used to share tracks/cars etc.
 	Info template.HTML
+
+	// URL to a specific OG Image for the championship
+	OGImage string
 
 	// OpenEntrants indicates that entrant names do not need to be specified in the EntryList.
 	// As Entrants join a championship, the available Entrant slots will be filled by the information
@@ -468,14 +471,16 @@ func (c *ChampionshipClass) ValidCarIDs() []string {
 	}
 }
 
-func (c *Championship) ImportEvent(eventToImport interface{}) error {
+func (c *Championship) ImportEvent(eventToImport interface{}) (*ChampionshipEvent, error) {
+	var newEvent *ChampionshipEvent
+
 	switch event := eventToImport.(type) {
 	case *CustomRace:
-		c.Events = append(c.Events, &ChampionshipEvent{
+		newEvent = &ChampionshipEvent{
 			ID:        uuid.New(),
 			RaceSetup: event.RaceConfig,
 			EntryList: c.AllEntrants(),
-		})
+		}
 	case *RaceWeekend:
 		// the filter between Entry List and any events uses the race weekend ID in the map
 		// as we are updating this ID we need to update it in the map too or filters between
@@ -483,18 +488,18 @@ func (c *Championship) ImportEvent(eventToImport interface{}) error {
 		oldID := event.ID.String()
 		event.ID = uuid.New()
 
-		oldFilter := event.Filters[oldID]
+		if event.Filters != nil {
+			oldFilter := event.Filters[oldID]
+			delete(event.Filters, oldID)
+			event.Filters[event.ID.String()] = oldFilter
+		}
 
-		delete(event.Filters, oldID)
-
-		event.Filters[event.ID.String()] = oldFilter
-
-		c.Events = append(c.Events, &ChampionshipEvent{
+		newEvent = &ChampionshipEvent{
 			ID:            uuid.New(),
 			EntryList:     c.AllEntrants(),
 			RaceWeekendID: event.ID,
 			RaceWeekend:   event,
-		})
+		}
 
 		event.Championship = c
 		event.ChampionshipID = c.ID
@@ -536,9 +541,20 @@ func (c *Championship) ImportEvent(eventToImport interface{}) error {
 				}
 			}
 		}
+
+	case *ChampionshipEvent:
+		newEvent = &ChampionshipEvent{
+			ID:        uuid.New(),
+			RaceSetup: event.RaceSetup,
+			EntryList: event.EntryList,
+		}
+	default:
+		return nil, errors.New("servermanager: unknown event type")
 	}
 
-	return nil
+	c.Events = append(c.Events, newEvent)
+
+	return newEvent, nil
 }
 
 // EventByID finds a ChampionshipEvent by its ID string.
@@ -1174,6 +1190,7 @@ func ExtractRaceWeekendSessionsIntoIndividualEvents(inEvents []*ChampionshipEven
 				e.RaceSetup = session.RaceConfig
 				e.CompletedTime = session.CompletedTime
 				e.StartedTime = session.StartedTime
+				e.Scheduled = session.ScheduledTime
 
 				e.Sessions[session.SessionType()] = &ChampionshipSession{
 					StartedTime:        session.StartedTime,

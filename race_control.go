@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 	"github.com/google/uuid"
 	"github.com/mitchellh/go-wordwrap"
 	"github.com/sirupsen/logrus"
@@ -18,10 +18,11 @@ type RaceControl struct {
 	process ServerProcess
 	store   Store
 
-	SessionInfo      udp.SessionInfo `json:"SessionInfo"`
-	TrackMapData     TrackMapData    `json:"TrackMapData"`
-	TrackInfo        TrackInfo       `json:"TrackInfo"`
-	SessionStartTime time.Time       `json:"SessionStartTime"`
+	SessionInfo                udp.SessionInfo `json:"SessionInfo"`
+	TrackMapData               TrackMapData    `json:"TrackMapData"`
+	TrackInfo                  TrackInfo       `json:"TrackInfo"`
+	SessionStartTime           time.Time       `json:"SessionStartTime"`
+	CurrentRealtimePosInterval int             `json:"CurrentRealtimePosInterval"`
 
 	ConnectedDrivers    *DriverMap `json:"ConnectedDrivers"`
 	DisconnectedDrivers *DriverMap `json:"DisconnectedDrivers"`
@@ -29,14 +30,14 @@ type RaceControl struct {
 	CarIDToGUID      map[udp.CarID]udp.DriverGUID `json:"CarIDToGUID"`
 	carIDToGUIDMutex sync.RWMutex
 
+	carUpdaters map[udp.CarID]chan udp.CarUpdate
+
 	sessionInfoTicker  *time.Ticker
 	sessionInfoContext context.Context
 	sessionInfoCfn     context.CancelFunc
 
-	broadcaster                  Broadcaster
-	trackDataGateway             TrackDataGateway
-	driverGUIDUpdateCounter      map[udp.DriverGUID]int
-	driverGUIDUpdateCounterMutex sync.RWMutex
+	broadcaster      Broadcaster
+	trackDataGateway TrackDataGateway
 
 	persistStoreDataMutex sync.Mutex
 }
@@ -68,9 +69,12 @@ func NewRaceControl(broadcaster Broadcaster, trackDataGateway TrackDataGateway, 
 		trackDataGateway: trackDataGateway,
 		process:          process,
 		store:            store,
+		carUpdaters:      make(map[udp.CarID]chan udp.CarUpdate),
 	}
 
 	rc.clearAllDrivers()
+
+	go rc.watchForTimedOutDrivers()
 
 	return rc
 }
@@ -130,6 +134,9 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 	}
 
 	if sendUpdatedRaceControlStatus {
+		// update the current refresh rate
+		rc.CurrentRealtimePosInterval = udp.CurrentRealtimePosIntervalMs
+
 		err = rc.broadcaster.Send(rc)
 
 		if err != nil {
@@ -141,6 +148,42 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 	}
 }
 
+var driverTimeout = time.Minute * 5
+
+func (rc *RaceControl) watchForTimedOutDrivers() {
+	ticker := time.NewTicker(time.Minute)
+
+	for range ticker.C {
+		var driversToDisconnect []*RaceControlDriver
+
+		_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
+			if !driver.LastSeen.IsZero() && time.Since(driver.LastSeen) > driverTimeout || driver.LastSeen.IsZero() && time.Since(driver.ConnectedTime) > driverTimeout {
+				driversToDisconnect = append(driversToDisconnect, driver)
+			}
+
+			return nil
+		})
+
+		for _, driver := range driversToDisconnect {
+			logrus.Debugf("Driver: %s (%s) has not been seen in 5 minutes, disconnecting", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
+			err := rc.disconnectDriver(driver)
+
+			if err != nil {
+				logrus.WithError(err).Errorf("Could not disconnect driver: %s (%s)", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
+				continue
+			}
+		}
+
+		if len(driversToDisconnect) > 0 {
+			err := rc.broadcaster.Send(rc)
+
+			if err != nil {
+				logrus.WithError(err).Error("Could not broadcast driver disconnect message")
+			}
+		}
+	}
+}
+
 // OnVersion occurs when the Assetto Corsa Server starts up for the first time.
 func (rc *RaceControl) OnVersion(version udp.Version) error {
 	return rc.broadcaster.Send(version)
@@ -149,45 +192,31 @@ func (rc *RaceControl) OnVersion(version udp.Version) error {
 // OnCarUpdate occurs every udp.RealTimePosInterval and returns car position, speed, etc.
 // drivers top speeds are recorded per lap, as well as their last seen updated.
 func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) error {
+	if ch, ok := rc.carUpdaters[update.CarID]; !ok || ch == nil {
+		rc.carUpdaters[update.CarID] = make(chan udp.CarUpdate, 1000)
+
+		go func() {
+			for update := range rc.carUpdaters[update.CarID] {
+				err := rc.handleCarUpdate(update)
+
+				if err != nil {
+					logrus.WithError(err).Error("Could not handle car update")
+				}
+			}
+		}()
+	}
+
+	rc.carUpdaters[update.CarID] <- update
+
+	return nil
+}
+
+func (rc *RaceControl) handleCarUpdate(update udp.CarUpdate) error {
 	driver, err := rc.findConnectedDriverByCarID(update.CarID)
 
 	if err != nil {
 		return err
 	}
-
-	var driversToDisconnect []*RaceControlDriver
-
-	rc.driverGUIDUpdateCounterMutex.Lock()
-
-	for guid := range rc.driverGUIDUpdateCounter {
-		rc.driverGUIDUpdateCounter[guid]++
-
-		// driver has missed 5 car updates, alt+f4/game crash?
-		if rc.driverGUIDUpdateCounter[guid] > rc.ConnectedDrivers.Len()*5 {
-			disconnectedDriver, ok := rc.ConnectedDrivers.Get(guid)
-
-			if ok {
-				driversToDisconnect = append(driversToDisconnect, disconnectedDriver)
-			}
-		}
-	}
-
-	rc.driverGUIDUpdateCounterMutex.Unlock()
-
-	for _, driver := range driversToDisconnect {
-		logrus.Debugf("Driver: %s (%s) has missed 5 car updates, disconnecting", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
-		err := rc.disconnectDriver(driver)
-
-		if err != nil {
-			logrus.WithError(err).Errorf("Could not disconnect driver: %s (%s)", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
-			continue
-		}
-	}
-
-	// reset the counter for this car
-	rc.driverGUIDUpdateCounterMutex.Lock()
-	rc.driverGUIDUpdateCounter[driver.CarInfo.DriverGUID] = 0
-	rc.driverGUIDUpdateCounterMutex.Unlock()
 
 	speed := metersPerSecondToKilometersPerHour(
 		math.Sqrt(math.Pow(float64(update.Velocity.X), 2) + math.Pow(float64(update.Velocity.Z), 2)),
@@ -200,14 +229,6 @@ func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) error {
 	driver.LastSeen = time.Now()
 	driver.LastPos = update.Pos
 
-	if len(driversToDisconnect) > 0 {
-		err := rc.broadcaster.Send(rc)
-
-		if err != nil {
-			return err
-		}
-	}
-
 	return rc.broadcaster.Send(update)
 }
 
@@ -217,10 +238,6 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 	oldSessionInfo := rc.SessionInfo
 	rc.SessionInfo = sessionInfo
 	rc.SessionStartTime = time.Now()
-
-	rc.driverGUIDUpdateCounterMutex.Lock()
-	rc.driverGUIDUpdateCounter = make(map[udp.DriverGUID]int)
-	rc.driverGUIDUpdateCounterMutex.Unlock()
 
 	emptyCarInfo := true
 
@@ -306,9 +323,6 @@ func (rc *RaceControl) clearAllDrivers() {
 	rc.carIDToGUIDMutex.Lock()
 	rc.CarIDToGUID = make(map[udp.CarID]udp.DriverGUID)
 	rc.carIDToGUIDMutex.Unlock()
-	rc.driverGUIDUpdateCounterMutex.Lock()
-	rc.driverGUIDUpdateCounter = make(map[udp.DriverGUID]int)
-	rc.driverGUIDUpdateCounterMutex.Unlock()
 }
 
 var sessionInfoRequestInterval = time.Second * 30
@@ -319,6 +333,8 @@ func (rc *RaceControl) requestSessionInfo() {
 		rc.sessionInfoTicker.Stop()
 	}
 
+	serverStopped := make(chan struct{})
+	rc.process.NotifyDone(serverStopped)
 	rc.sessionInfoTicker = time.NewTicker(sessionInfoRequestInterval)
 	rc.sessionInfoContext, rc.sessionInfoCfn = context.WithCancel(context.Background())
 
@@ -335,7 +351,7 @@ func (rc *RaceControl) requestSessionInfo() {
 				logrus.WithError(err).Errorf("Couldn't send session info udp request")
 			}
 
-		case <-rc.process.Done():
+		case <-serverStopped:
 			rc.sessionInfoTicker.Stop()
 
 			logrus.Debugf("Assetto Process completed. Disconnecting all connected drivers. Session done.")
@@ -365,6 +381,7 @@ func (rc *RaceControl) requestSessionInfo() {
 				logrus.WithError(err).Errorf("Couldn't broadcast race control")
 			}
 
+			return
 		case <-rc.sessionInfoContext.Done():
 			rc.sessionInfoTicker.Stop()
 			return
@@ -430,6 +447,7 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 	}
 
 	driver.ConnectedTime = time.Now()
+	driver.LastSeen = time.Time{}
 	driver.CurrentCar().LastLapCompletedTime = time.Now()
 
 	rc.ConnectedDrivers.Add(driver.CarInfo.DriverGUID, driver)
@@ -439,9 +457,10 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 
 // OnClientDisconnect moves a client from ConnectedDrivers to DisconnectedDrivers.
 func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
-	rc.driverGUIDUpdateCounterMutex.Lock()
-	delete(rc.driverGUIDUpdateCounter, client.DriverGUID)
-	rc.driverGUIDUpdateCounterMutex.Unlock()
+	if ch, ok := rc.carUpdaters[client.CarID]; ok && ch != nil {
+		close(ch)
+		delete(rc.carUpdaters, client.CarID)
+	}
 
 	driver, ok := rc.ConnectedDrivers.Get(client.DriverGUID)
 

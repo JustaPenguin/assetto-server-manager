@@ -1,7 +1,7 @@
 ################################################################################
 #
 #                      Assetto Server Manager Configuration
-#                 https://github.com/cj123/assetto-server-manager
+#             https://github.com/JustaPenguin/assetto-server-manager
 #
 #                       Thanks for using server manager!
 #
@@ -59,7 +59,7 @@ http:
   session_key: RANDOMLY_GENERATE_THIS
 
   # server manager base URL is the URL that the server manager is accessible on
-  # only used for links in championship welcome message in game
+  # used for ACSR integration and links in championship welcome message in game
   # you can leave this blank if not required
   # example: https://opengt3.assettocorsaservers.com <-- requires https:// or
   # http://, no closing / at the end
@@ -219,14 +219,15 @@ server:
   # each executable specified is run from the directory it is inside, for example,
   # the command:
   #
-  # ./my/cool/plugin/path/run.sh --some-opt config.json
+  # /my/cool/plugin/path/run.sh --some-opt config.json
   # now actually performs the following two commands:
   #
-  # 1. cd ./my/cool/plugin/path
+  # 1. cd /my/cool/plugin/path
   # 2. ./run.sh --some-opt config.json
-  run_on_start:
-    # e.g. uncomment the line below to run a 'start.sh' for kissmyrank
-    # - ./assetto/kissmyrank/start.sh
+  plugins:
+    # uncomment the two lines below to run the command '/my/cool/plugin/path/run.sh --some-opt config.json'
+    # - executable: /my/cool/plugin/path/run.sh
+    #   arguments: ["--some-opt", "config.json"]
 
 ################################################################################
 #

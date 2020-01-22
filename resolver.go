@@ -3,7 +3,7 @@ package servermanager
 import (
 	"net/http"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 )
 
 type Resolver struct {
@@ -26,6 +26,7 @@ type Resolver struct {
 	raceControl           *RaceControl
 	raceControlHub        *RaceControlHub
 	contentManagerWrapper *ContentManagerWrapper
+	acsrClient            *ACSRClient
 
 	// handlers
 	baseHandler                 *BaseHandler
@@ -55,9 +56,11 @@ func NewResolver(templateLoader TemplateLoader, reloadTemplates bool, store Stor
 		store:           store,
 	}
 
-	err := r.initViewRenderer()
+	if err := r.initViewRenderer(); err != nil {
+		return nil, err
+	}
 
-	if err != nil {
+	if err := r.initACSRClient(); err != nil {
 		return nil, err
 	}
 
@@ -68,10 +71,13 @@ func (r *Resolver) UDPCallback(message udp.Message) {
 	if !config.Server.PerformanceMode {
 		r.resolveRaceControl().UDPCallback(message)
 	}
-	r.resolveChampionshipManager().ChampionshipEventCallback(message)
-	r.resolveRaceWeekendManager().UDPCallback(message)
-	r.resolveRaceManager().LoopCallback(message)
-	r.resolveContentManagerWrapper().UDPCallback(message)
+
+	if message.Event() != udp.EventCarUpdate {
+		r.resolveChampionshipManager().ChampionshipEventCallback(message)
+		r.resolveRaceWeekendManager().UDPCallback(message)
+		r.resolveRaceManager().LoopCallback(message)
+		r.resolveContentManagerWrapper().UDPCallback(message)
+	}
 }
 
 func (r *Resolver) initViewRenderer() error {
@@ -86,6 +92,18 @@ func (r *Resolver) initViewRenderer() error {
 	}
 
 	r.viewRenderer = viewRenderer
+
+	return nil
+}
+
+func (r *Resolver) initACSRClient() error {
+	serverOptions, err := r.store.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	r.acsrClient = NewACSRClient(serverOptions.ACSRAccountID, serverOptions.ACSRAPIKey, serverOptions.EnableACSR)
 
 	return nil
 }
@@ -217,6 +235,7 @@ func (r *Resolver) resolveChampionshipManager() *ChampionshipManager {
 
 	r.championshipManager = NewChampionshipManager(
 		r.resolveRaceManager(),
+		r.acsrClient,
 	)
 
 	return r.championshipManager
@@ -314,6 +333,7 @@ func (r *Resolver) resolveServerAdministrationHandler() *ServerAdministrationHan
 		r.resolveChampionshipManager(),
 		r.resolveRaceWeekendManager(),
 		r.resolveServerProcess(),
+		r.acsrClient,
 	)
 
 	return r.serverAdministrationHandler
@@ -381,7 +401,14 @@ func (r *Resolver) resolveRaceWeekendManager() *RaceWeekendManager {
 		return r.raceWeekendManager
 	}
 
-	r.raceWeekendManager = NewRaceWeekendManager(r.resolveRaceManager(), r.resolveChampionshipManager(), r.ResolveStore(), r.resolveServerProcess(), r.resolveNotificationManager())
+	r.raceWeekendManager = NewRaceWeekendManager(
+		r.resolveRaceManager(),
+		r.resolveChampionshipManager(),
+		r.ResolveStore(),
+		r.resolveServerProcess(),
+		r.resolveNotificationManager(),
+		r.acsrClient,
+	)
 
 	return r.raceWeekendManager
 }
