@@ -49,6 +49,7 @@ type AssettoServerProcess struct {
 	cfn context.CancelFunc
 
 	doneChs []chan struct{}
+	doneMutex sync.Mutex
 	store   Store
 
 	extraProcesses []*exec.Cmd
@@ -76,6 +77,8 @@ func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, store Store, content
 }
 
 func (as *AssettoServerProcess) NotifyDone(ch chan struct{}) {
+	as.doneMutex.Lock()
+	defer as.doneMutex.Unlock()
 	as.doneChs = append(as.doneChs, ch)
 }
 
@@ -201,6 +204,23 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 
 	go func() {
 		_ = as.cmd.Wait()
+		as.mutex.Lock()
+		defer func() {
+			as.mutex.Unlock()
+
+			as.doneMutex.Lock()
+			defer as.doneMutex.Unlock()
+
+			for _, ch := range as.doneChs {
+				select {
+				case ch <- struct{}{}:
+
+				default:
+				}
+			}
+
+			as.doneChs = []chan struct{}{}
+		}()
 
 		loopNum := 0
 
@@ -230,16 +250,6 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 		as.closeUDPConnection()
 
 		as.cmd = nil
-
-		for _, ch := range as.doneChs {
-			select {
-			case ch <- struct{}{}:
-
-			default:
-			}
-		}
-
-		as.doneChs = []chan struct{}{}
 	}()
 
 	return nil
@@ -495,9 +505,14 @@ type logBuffer struct {
 	buf *bytes.Buffer
 
 	size int
+
+	mutex sync.Mutex
 }
 
 func (lb *logBuffer) Write(p []byte) (n int, err error) {
+	lb.mutex.Lock()
+	defer lb.mutex.Unlock()
+
 	b := lb.buf.Bytes()
 
 	if len(b) > lb.size {
