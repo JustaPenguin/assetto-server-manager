@@ -60,13 +60,14 @@ func InitWithResolver(resolver *Resolver) error {
 	UseShortenedDriverNames = opts != nil && opts.UseShortenedDriverNames == 1
 	UseFallBackSorting = opts != nil && opts.FallBackResultsSorting == 1
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-
 	process := resolver.resolveServerProcess()
 	championshipManager := resolver.resolveChampionshipManager()
 	raceWeekendManager := resolver.resolveRaceWeekendManager()
 	notificationManager := resolver.resolveNotificationManager()
+	raceControl := resolver.resolveRaceControl()
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
 
 	go func() {
 		for range c {
@@ -107,6 +108,8 @@ func InitWithResolver(resolver *Resolver) error {
 			if err := notificationManager.Stop(); err != nil {
 				logrus.WithError(err).Errorf("Could not stop notification manager")
 			}
+
+			raceControl.persistTimingData()
 
 			os.Exit(0)
 		}

@@ -1,7 +1,6 @@
 package servermanager
 
 import (
-	"context"
 	"fmt"
 	"math"
 	"strings"
@@ -33,8 +32,7 @@ type RaceControl struct {
 	carUpdaters map[udp.CarID]chan udp.CarUpdate
 
 	sessionInfoTicker  *time.Ticker
-	sessionInfoContext context.Context
-	sessionInfoCfn     context.CancelFunc
+
 
 	broadcaster      Broadcaster
 	trackDataGateway TrackDataGateway
@@ -143,8 +141,6 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 			logrus.WithError(err).Error("Unable to broadcast race control message")
 			return
 		}
-
-		go rc.persistTimingData()
 	}
 }
 
@@ -186,6 +182,8 @@ func (rc *RaceControl) watchForTimedOutDrivers() {
 
 // OnVersion occurs when the Assetto Corsa Server starts up for the first time.
 func (rc *RaceControl) OnVersion(version udp.Version) error {
+	go rc.requestSessionInfo()
+
 	return rc.broadcaster.Send(version)
 }
 
@@ -287,8 +285,6 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 
 	logrus.Debugf("New session detected: %s at %s (%s) [emptyCarInfo: %t]", sessionInfo.Type.String(), sessionInfo.Track, sessionInfo.TrackConfig, emptyCarInfo)
 
-	go rc.requestSessionInfo()
-
 	// look for live timings stored previously
 	persistedInfo, err := rc.store.LoadLiveTimingsData()
 
@@ -329,14 +325,10 @@ var sessionInfoRequestInterval = time.Second * 30
 
 // requestSessionInfo sends a request every sessionInfoRequestInterval to get information about temps, etc in the session.
 func (rc *RaceControl) requestSessionInfo() {
-	if rc.sessionInfoTicker != nil {
-		rc.sessionInfoTicker.Stop()
-	}
 
 	serverStopped := make(chan struct{})
 	rc.process.NotifyDone(serverStopped)
 	rc.sessionInfoTicker = time.NewTicker(sessionInfoRequestInterval)
-	rc.sessionInfoContext, rc.sessionInfoCfn = context.WithCancel(context.Background())
 
 	for {
 		select {
@@ -352,11 +344,12 @@ func (rc *RaceControl) requestSessionInfo() {
 			}
 
 		case <-serverStopped:
+			logrus.Debugf("Assetto Process completed. Disconnecting all connected drivers. Session done.")
 			rc.sessionInfoTicker.Stop()
 
-			logrus.Debugf("Assetto Process completed. Disconnecting all connected drivers. Session done.")
-
 			var drivers []*RaceControlDriver
+
+			rc.persistTimingData()
 
 			// the server has just stopped. send disconnect messages for all connected cars.
 			_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
@@ -381,9 +374,6 @@ func (rc *RaceControl) requestSessionInfo() {
 				logrus.WithError(err).Errorf("Couldn't broadcast race control")
 			}
 
-			return
-		case <-rc.sessionInfoContext.Done():
-			rc.sessionInfoTicker.Stop()
 			return
 		}
 	}
@@ -413,10 +403,6 @@ func (rc *RaceControl) OnSessionUpdate(sessionInfo udp.SessionInfo) (bool, error
 
 // OnEndSession is called at the end of every session.
 func (rc *RaceControl) OnEndSession(sessionFile udp.EndSession) error {
-	if rc.sessionInfoCfn != nil {
-		rc.sessionInfoCfn()
-	}
-
 	return nil
 }
 
@@ -745,6 +731,8 @@ func (rc *RaceControl) persistTimingData() {
 	if err != nil {
 		logrus.WithError(err).Errorf("Could not save live timings data")
 	}
+
+	logrus.Debug("successfully persisted live timing data")
 }
 
 func (rc *RaceControl) AllLapTimes() map[udp.DriverGUID]*RaceControlDriver {
