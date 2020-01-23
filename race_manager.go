@@ -260,8 +260,7 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 					logrus.Infof("Force Stop time expired, the server has been successfully stopped.")
 				} else {
 					logrus.Infof("Force Stop time expired, but %d drivers are on the server! Force stop aborted. "+
-						"The server should stop automatically on event completion.",
-						rm.raceControl.ConnectedDrivers.Len(), event.GetForceStopTime())
+						"The server should stop automatically on event completion.", rm.raceControl.ConnectedDrivers.Len())
 				}
 
 			}
