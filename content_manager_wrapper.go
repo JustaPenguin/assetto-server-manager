@@ -219,7 +219,7 @@ func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 	return nil
 }
 
-func (cmw *ContentManagerWrapper) Start(process ServerProcess, servePort int, serverConfig ServerConfig, entryList EntryList, event RaceEvent) error {
+func (cmw *ContentManagerWrapper) Start(servePort int, serverConfig ServerConfig, entryList EntryList, event RaceEvent) error {
 	cmw.mutex.Lock()
 	defer cmw.mutex.Unlock()
 

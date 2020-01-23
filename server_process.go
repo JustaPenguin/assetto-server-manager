@@ -40,7 +40,8 @@ var ErrServerAlreadyRunning = errors.New("servermanager: assetto corsa server is
 type AssettoServerProcess struct {
 	contentManagerWrapper *ContentManagerWrapper
 
-	cmd *exec.Cmd
+	cmd      *exec.Cmd
+	cmdMutex sync.Mutex
 
 	out   *logBuffer
 	mutex sync.Mutex
@@ -49,7 +50,6 @@ type AssettoServerProcess struct {
 	cfn context.CancelFunc
 
 	doneChs []chan struct{}
-	doneMutex sync.Mutex
 	store   Store
 
 	extraProcesses []*exec.Cmd
@@ -77,8 +77,9 @@ func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, store Store, content
 }
 
 func (as *AssettoServerProcess) NotifyDone(ch chan struct{}) {
-	as.doneMutex.Lock()
-	defer as.doneMutex.Unlock()
+	as.mutex.Lock()
+	defer as.mutex.Unlock()
+
 	as.doneChs = append(as.doneChs, ch)
 }
 
@@ -136,16 +137,18 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 	as.cmd.Stdout = as.out
 	as.cmd.Stderr = as.out
 
+	as.cmdMutex.Lock()
 	err = as.cmd.Start()
 
 	if err != nil {
+		as.cmdMutex.Unlock()
 		as.cmd = nil
 		return err
 	}
 
 	if cfg.GlobalServerConfig.EnableContentManagerWrapper == 1 && cfg.GlobalServerConfig.ContentManagerWrapperPort > 0 {
 		go func() {
-			err := as.contentManagerWrapper.Start(as, cfg.GlobalServerConfig.ContentManagerWrapperPort, cfg, entryList, event)
+			err := as.contentManagerWrapper.Start(cfg.GlobalServerConfig.ContentManagerWrapperPort, cfg, entryList, event)
 
 			if err != nil {
 				logrus.WithError(err).Error("Could not start Content Manager wrapper server")
@@ -161,6 +164,7 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 			err = strackerOptions.Write()
 
 			if err != nil {
+				as.cmdMutex.Unlock()
 				return err
 			}
 
@@ -173,6 +177,7 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 			})
 
 			if err != nil {
+				as.cmdMutex.Unlock()
 				return err
 			}
 
@@ -204,23 +209,7 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 
 	go func() {
 		_ = as.cmd.Wait()
-		as.mutex.Lock()
-		defer func() {
-			as.mutex.Unlock()
-
-			as.doneMutex.Lock()
-			defer as.doneMutex.Unlock()
-
-			for _, ch := range as.doneChs {
-				select {
-				case ch <- struct{}{}:
-
-				default:
-				}
-			}
-
-			as.doneChs = []chan struct{}{}
-		}()
+		as.cmdMutex.Unlock()
 
 		loopNum := 0
 
@@ -250,6 +239,16 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 		as.closeUDPConnection()
 
 		as.cmd = nil
+
+		for _, ch := range as.doneChs {
+			select {
+			case ch <- struct{}{}:
+
+			default:
+			}
+		}
+
+		as.doneChs = []chan struct{}{}
 	}()
 
 	return nil
@@ -523,5 +522,8 @@ func (lb *logBuffer) Write(p []byte) (n int, err error) {
 }
 
 func (lb *logBuffer) String() string {
+	lb.mutex.Lock()
+	defer lb.mutex.Unlock()
+
 	return lb.buf.String()
 }

@@ -31,11 +31,13 @@ type RaceControl struct {
 
 	carUpdaters map[udp.CarID]chan udp.CarUpdate
 
-	sessionInfoTicker  *time.Ticker
-
+	sessionInfoTicker *time.Ticker
 
 	broadcaster      Broadcaster
 	trackDataGateway TrackDataGateway
+
+	lastUpdateMessage      []byte
+	lastUpdateMessageMutex sync.Mutex
 
 	persistStoreDataMutex sync.Mutex
 }
@@ -135,12 +137,16 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 		// update the current refresh rate
 		rc.CurrentRealtimePosInterval = udp.CurrentRealtimePosIntervalMs
 
-		err = rc.broadcaster.Send(rc)
+		lastUpdateMessage, err := rc.broadcaster.Send(rc)
 
 		if err != nil {
 			logrus.WithError(err).Error("Unable to broadcast race control message")
 			return
 		}
+
+		rc.lastUpdateMessageMutex.Lock()
+		rc.lastUpdateMessage = lastUpdateMessage
+		rc.lastUpdateMessageMutex.Unlock()
 	}
 }
 
@@ -171,7 +177,7 @@ func (rc *RaceControl) watchForTimedOutDrivers() {
 		}
 
 		if len(driversToDisconnect) > 0 {
-			err := rc.broadcaster.Send(rc)
+			_, err := rc.broadcaster.Send(rc)
 
 			if err != nil {
 				logrus.WithError(err).Error("Could not broadcast driver disconnect message")
@@ -184,7 +190,9 @@ func (rc *RaceControl) watchForTimedOutDrivers() {
 func (rc *RaceControl) OnVersion(version udp.Version) error {
 	go rc.requestSessionInfo()
 
-	return rc.broadcaster.Send(version)
+	_, err := rc.broadcaster.Send(version)
+
+	return err
 }
 
 // OnCarUpdate occurs every udp.RealTimePosInterval and returns car position, speed, etc.
@@ -227,7 +235,9 @@ func (rc *RaceControl) handleCarUpdate(update udp.CarUpdate) error {
 	driver.LastSeen = time.Now()
 	driver.LastPos = update.Pos
 
-	return rc.broadcaster.Send(update)
+	_, err = rc.broadcaster.Send(update)
+
+	return err
 }
 
 // OnNewSession occurs every new session. If the session is the first in an event and it is not a looped practice,
@@ -309,7 +319,9 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 		logrus.WithError(err).Debugf("Could not load persisted live timings practice data")
 	}
 
-	return rc.broadcaster.Send(sessionInfo)
+	_, err = rc.broadcaster.Send(sessionInfo)
+
+	return err
 }
 
 // clearAllDrivers removes all known information about connected and disconnected drivers from RaceControl
@@ -325,7 +337,6 @@ var sessionInfoRequestInterval = time.Second * 30
 
 // requestSessionInfo sends a request every sessionInfoRequestInterval to get information about temps, etc in the session.
 func (rc *RaceControl) requestSessionInfo() {
-
 	serverStopped := make(chan struct{})
 	rc.process.NotifyDone(serverStopped)
 	rc.sessionInfoTicker = time.NewTicker(sessionInfoRequestInterval)
@@ -370,7 +381,7 @@ func (rc *RaceControl) requestSessionInfo() {
 				}
 			}
 
-			if err := rc.broadcaster.Send(rc); err != nil {
+			if _, err := rc.broadcaster.Send(rc); err != nil {
 				logrus.WithError(err).Errorf("Couldn't broadcast race control")
 			}
 
@@ -438,7 +449,9 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 
 	rc.ConnectedDrivers.Add(driver.CarInfo.DriverGUID, driver)
 
-	return rc.broadcaster.Send(client)
+	_, err := rc.broadcaster.Send(client)
+
+	return err
 }
 
 // OnClientDisconnect moves a client from ConnectedDrivers to DisconnectedDrivers.
@@ -462,7 +475,9 @@ func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
 		rc.DisconnectedDrivers.Add(driver.CarInfo.DriverGUID, driver)
 	}
 
-	return rc.broadcaster.Send(client)
+	_, err := rc.broadcaster.Send(client)
+
+	return err
 }
 
 // findConnectedDriverByCarID looks for a driver in ConnectedDrivers by their CarID. This is the only place CarID
@@ -536,7 +551,9 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 
 	driver.LoadedTime = time.Now()
 
-	return rc.broadcaster.Send(loadedCar)
+	_, err = rc.broadcaster.Send(loadedCar)
+
+	return err
 }
 
 // OnLapCompleted occurs every time a driver crosses the line. Lap information is collected for the driver
@@ -683,7 +700,9 @@ func (rc *RaceControl) OnCollisionWithCar(collision udp.CollisionWithCar) error 
 
 	driver.Collisions = append(driver.Collisions, c)
 
-	return rc.broadcaster.Send(collision)
+	_, err = rc.broadcaster.Send(collision)
+
+	return err
 }
 
 // OnCollisionWithEnvironment registers a driver's collision with the environment.
@@ -701,7 +720,9 @@ func (rc *RaceControl) OnCollisionWithEnvironment(collision udp.CollisionWithEnv
 		Speed: metersPerSecondToKilometersPerHour(float64(collision.ImpactSpeed)),
 	})
 
-	return rc.broadcaster.Send(collision)
+	_, err = rc.broadcaster.Send(collision)
+
+	return err
 }
 
 type LiveTimingsPersistedData struct {
