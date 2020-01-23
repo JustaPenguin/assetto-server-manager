@@ -24,6 +24,9 @@ type CustomRace struct {
 	UUID          uuid.UUID
 	Starred, Loop bool
 
+	ForceStopTime int
+	ForceStopWithDrivers bool
+
 	RaceConfig CurrentRaceConfig
 	EntryList  EntryList
 }
@@ -94,6 +97,14 @@ func (cr *CustomRace) EventDescription() string {
 
 func (cr *CustomRace) ReadOnlyEntryList() EntryList {
 	return cr.EntryList
+}
+
+func (cr *CustomRace) GetForceStopTime() int {
+	return cr.ForceStopTime
+}
+
+func (cr *CustomRace) GetForceStopWithDrivers() bool {
+	return cr.ForceStopWithDrivers
 }
 
 type CustomRaceHandler struct {

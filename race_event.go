@@ -18,6 +18,9 @@ type RaceEvent interface {
 	OverrideServerPassword() bool
 	ReplacementServerPassword() string
 
+	GetForceStopTime() int
+	GetForceStopWithDrivers() bool
+
 	EventName() string
 	EventDescription() string
 	GetURL() string

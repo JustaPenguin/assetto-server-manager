@@ -103,3 +103,11 @@ func (q QuickRace) EventDescription() string {
 func (q QuickRace) GetURL() string {
 	return ""
 }
+
+func (q QuickRace) GetForceStopTime() int {
+	return 0
+}
+
+func (q QuickRace) GetForceStopWithDrivers() bool {
+	return false
+}

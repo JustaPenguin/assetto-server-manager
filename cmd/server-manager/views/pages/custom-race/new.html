@@ -1531,7 +1531,7 @@
         {{ if $.ShowOverridePasswordCard }}
             <div class="card mt-3 border-secondary">
                 <div class="card-header">
-                    <strong>Password Override</strong>
+                    <strong>Server Options</strong>
                 </div>
                 <div class="card-body">
                     <div class="form-group row">
@@ -1569,6 +1569,47 @@
                             <small>If left empty then the server will have no password.</small>
                         </div>
                     </div>
+
+                    {{ if and (not .IsChampionship) (not .IsRaceWeekend) }}
+                        <div class="form-group row">
+                            <label for="ForceStopTime" class="col-sm-3 col-form-label">Force Stop Time</label>
+
+                            <div class="col-sm-9">
+                                <input
+                                        type="number"
+                                        id="ForceStopTime"
+                                        name="ForceStopTime"
+                                        class="form-control"
+                                        {{ with .ForceStopTime }}
+                                            value="{{ . }}"
+                                        {{ end }}
+                                        min="0"
+                                >
+
+                                <small>Maximum number of minutes that this event will run for (across all sessions) before the server will forcibly stop. This will allow for auto loop track rotation even if there are no drivers on the server. Disabled if 0</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="ForceStopWithDrivers" class="col-sm-3 col-form-label">Force Stop With Drivers</label>
+
+                            <div class="col-sm-9">
+
+                                <input
+                                        class="form-control"
+                                        type="checkbox"
+                                        id="ForceStopWithDrivers"
+                                        name="ForceStopWithDrivers"
+                                        {{ if .ForceStopWithDrivers }}
+                                            checked="checked"
+                                        {{ end }}
+                                ><br/>
+
+                                <small>If enabled then the server will forcibly stop after the Force Stop Time even if there are drivers on the server.</small>
+                            </div>
+                        </div>
+                    {{ end }}
+
                 </div>
             </div>
         {{ end }}

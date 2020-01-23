@@ -945,3 +945,11 @@ func (a ActiveRaceWeekend) GetURL() string {
 		return ""
 	}
 }
+
+func (a ActiveRaceWeekend) GetForceStopTime() int {
+	return 0
+}
+
+func (a ActiveRaceWeekend) GetForceStopWithDrivers() bool {
+	return false
+}
