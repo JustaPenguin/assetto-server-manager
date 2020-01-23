@@ -470,7 +470,10 @@ func (r *Resolver) resolveKissMyRankHandler() *KissMyRankHandler {
 		return r.kissMyRankHandler
 	}
 
-	r.kissMyRankHandler = NewKissMyRankHandler(r.resolveBaseHandler())
+	r.kissMyRankHandler = NewKissMyRankHandler(
+		r.resolveBaseHandler(),
+		r.ResolveStore(),
+	)
 
 	return r.kissMyRankHandler
 }

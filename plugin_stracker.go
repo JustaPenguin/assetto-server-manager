@@ -2,7 +2,6 @@ package servermanager
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -25,10 +24,6 @@ import (
 const (
 	strackerBaseFolderName    = "stracker"
 	strackerConfigIniFilename = "stracker.ini"
-)
-
-var (
-	ErrStrackerConfigurationRequiresUDPPluginConfiguration = errors.New("servermanager: stracker configuration requires UDP plugin configuration in Server Options")
 )
 
 func StrackerExecutablePath() string {

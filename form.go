@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/fatih/camelcase"
@@ -58,7 +59,7 @@ func (f Form) Submit(r *http.Request) error {
 	return nil
 }
 
-func (f Form) assignFieldValues(val reflect.Value, name string, vals []string) {
+func (f Form) assignFieldValues(val reflect.Value, name string, vals []string) error {
 	parts := strings.Split(name, ".")
 	field := val.FieldByName(parts[0])
 
@@ -66,7 +67,11 @@ func (f Form) assignFieldValues(val reflect.Value, name string, vals []string) {
 		switch field.Kind() {
 		case reflect.Struct:
 			if len(parts) > 1 {
-				f.assignFieldValues(field, strings.Join(parts[1:], "."), vals)
+				err := f.assignFieldValues(field, strings.Join(parts[1:], "."), vals)
+
+				if err != nil {
+					return err
+				}
 			}
 		case reflect.String:
 			field.SetString(strings.Join(vals, ";"))
@@ -76,6 +81,14 @@ func (f Form) assignFieldValues(val reflect.Value, name string, vals []string) {
 			} else {
 				field.SetInt(int64(formValueAsInt(vals[0])))
 			}
+		case reflect.Float64:
+			f, err := strconv.ParseFloat(vals[0], 64)
+
+			if err != nil {
+				return err
+			}
+
+			field.SetFloat(f)
 		case reflect.Bool:
 			if vals[0] == "on" {
 				field.SetBool(true)
@@ -83,9 +96,11 @@ func (f Form) assignFieldValues(val reflect.Value, name string, vals []string) {
 				field.SetBool(formValueAsInt(vals[0]) == 1)
 			}
 		default:
-			panic("form submit - unknown type")
+			panic("form submit - unknown type: " + field.Kind().String())
 		}
 	}
+
+	return nil
 }
 
 func (f Form) Fields() []FormElement {
@@ -365,7 +380,7 @@ func (f FormOption) renderNumberInput() template.HTML {
 						value="{{ .Value }}"
 						{{ with .Min }}min="{{ . }}"{{ end }}
 						{{ with .Max }}min="{{ . }}"{{ end }}
-						step="1"
+						step="any"
 					>
 
 					<small>{{ .HelpText }}</small>
