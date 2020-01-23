@@ -85,6 +85,10 @@
             {{ if $.IsStrackerEnabled }}
                 <a href="/stracker/mainpage" class="btn btn-primary btn-sm mt-1">STracker</a>
             {{ end }}
+
+            {{ if $.IsKissMyRankEnabled }}
+                <a href="/kissmyrank" class="btn btn-warning btn-sm mt-1">KissMyRank</a>
+            {{ end }}
         </div>
 
         <div id="popover-content-event-title" class="d-none">

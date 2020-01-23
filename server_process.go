@@ -214,6 +214,8 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 		kissMyRankOptions.ACServerIP = "127.0.0.1"
 		kissMyRankOptions.ACServerHTTPPort = cfg.GlobalServerConfig.HTTPPort
 		kissMyRankOptions.UpdateInterval = config.LiveMap.IntervalMs
+		//kissMyRankOptions.ACServerConfigIniPath = filepath.Join(ServerInstallPath, "cfg", serverConfigIniPath)
+		//kissMyRankOptions.ACServerBinaryPath = filepath.Join(ServerInstallPath, ServerExecutablePath)
 		kissMyRankOptions.ACServerResultsBasePath = filepath.Join(ServerInstallPath, "results")
 		kissMyRankOptions.MaxPlayers = cfg.CurrentRaceConfig.MaxClients
 
@@ -223,7 +225,7 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 
 		if strackerEnabled {
 			// stracker is enabled, use its forwarding port
-			logrus.Infof("sTracker and KissMyRank both enabled. Using plugin forwarding method: [Server Manager] -> [sTracker] -> [KissMyRank]")
+			logrus.Infof("sTracker and KissMyRank both enabled. Using plugin forwarding method: [Server Manager] <-> [sTracker] <-> [KissMyRank]")
 			kissMyRankOptions.ACServerPluginLocalPort = strackerOptions.ACPlugin.ProxyPluginLocalPort
 			kissMyRankOptions.ACServerPluginAddressPort = strackerOptions.ACPlugin.ProxyPluginPort
 		} else {
