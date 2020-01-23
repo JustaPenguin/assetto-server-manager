@@ -62,7 +62,7 @@ func NewRaceManager(
 		carManager:          carManager,
 		trackManager:        trackManager,
 		notificationManager: notificationManager,
-		raceControl: raceControl,
+		raceControl:         raceControl,
 	}
 }
 
@@ -246,7 +246,7 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 
 		logrus.Infof("Force Stop timer initialised, the server will be forcibly stopped after %d minutes %s.", event.GetForceStopTime(), withDrivers)
 
-		rm.forceStopTimer, err = when.When(time.Now().Add(time.Minute * time.Duration(event.GetForceStopTime())), func() {
+		rm.forceStopTimer, err = when.When(time.Now().Add(time.Minute*time.Duration(event.GetForceStopTime())), func() {
 			if rm.process.IsRunning() {
 
 				if (event.GetForceStopWithDrivers()) || (rm.raceControl.ConnectedDrivers.Len() == 0) {
@@ -259,7 +259,7 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 
 					logrus.Infof("Force Stop time expired, the server has been successfully stopped.")
 				} else {
-					logrus.Infof("Force Stop time expired, but %d drivers are on the server! Force stop aborted. " +
+					logrus.Infof("Force Stop time expired, but %d drivers are on the server! Force stop aborted. "+
 						"The server should stop automatically on event completion.",
 						rm.raceControl.ConnectedDrivers.Len(), event.GetForceStopTime())
 				}
@@ -1069,7 +1069,7 @@ func (rm *RaceManager) SaveCustomRace(
 		UUID:                uuid.New(),
 		Starred:             starred,
 
-		ForceStopTime: forceStopTime,
+		ForceStopTime:        forceStopTime,
 		ForceStopWithDrivers: forceStopWithDrivers,
 
 		RaceConfig: config,

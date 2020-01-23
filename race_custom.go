@@ -24,7 +24,7 @@ type CustomRace struct {
 	UUID          uuid.UUID
 	Starred, Loop bool
 
-	ForceStopTime int
+	ForceStopTime        int
 	ForceStopWithDrivers bool
 
 	RaceConfig CurrentRaceConfig
