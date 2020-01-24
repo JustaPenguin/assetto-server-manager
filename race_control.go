@@ -76,7 +76,7 @@ func NewRaceControl(broadcaster Broadcaster, trackDataGateway TrackDataGateway, 
 
 	rc.clearAllDrivers()
 
-	go rc.watchForTimedOutDrivers()
+	go panicCapture(rc.watchForTimedOutDrivers)
 
 	return rc
 }
@@ -193,7 +193,7 @@ func (rc *RaceControl) watchForTimedOutDrivers() {
 
 // OnVersion occurs when the Assetto Corsa Server starts up for the first time.
 func (rc *RaceControl) OnVersion(version udp.Version) error {
-	go rc.requestSessionInfo()
+	go panicCapture(rc.requestSessionInfo)
 
 	_, err := rc.broadcaster.Send(version)
 
@@ -206,7 +206,7 @@ func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) error {
 	if ch, ok := rc.carUpdaters[update.CarID]; !ok || ch == nil {
 		rc.carUpdaters[update.CarID] = make(chan udp.CarUpdate, 1000)
 
-		go func() {
+		go panicCapture(func() {
 			for update := range rc.carUpdaters[update.CarID] {
 				err := rc.handleCarUpdate(update)
 
@@ -214,7 +214,7 @@ func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) error {
 					logrus.WithError(err).Error("Could not handle car update")
 				}
 			}
-		}()
+		})
 	}
 
 	rc.carUpdaters[update.CarID] <- update
