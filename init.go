@@ -64,7 +64,6 @@ func InitWithResolver(resolver *Resolver) error {
 	championshipManager := resolver.resolveChampionshipManager()
 	raceWeekendManager := resolver.resolveRaceWeekendManager()
 	notificationManager := resolver.resolveNotificationManager()
-	raceControl := resolver.resolveRaceControl()
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
