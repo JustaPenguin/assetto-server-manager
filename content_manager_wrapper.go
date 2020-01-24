@@ -227,12 +227,14 @@ func (cmw *ContentManagerWrapper) Start(servePort int, event RaceEvent) error {
 	serverOptions, err := cmw.store.LoadServerOptions()
 
 	if err != nil {
+		cmw.mutex.Unlock()
 		return err
 	}
 
 	u, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", serverOptions.HTTPPort))
 
 	if err != nil {
+		cmw.mutex.Unlock()
 		return err
 	}
 
