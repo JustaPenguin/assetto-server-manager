@@ -478,7 +478,6 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 // OnClientDisconnect moves a client from ConnectedDrivers to DisconnectedDrivers.
 func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
 	if ch, ok := rc.carUpdaters[client.CarID]; ok && ch != nil {
-		close(ch)
 		delete(rc.carUpdaters, client.CarID)
 	}
 
