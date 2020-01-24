@@ -221,7 +221,6 @@ func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 
 func (cmw *ContentManagerWrapper) Start(servePort int, serverConfig ServerConfig, entryList EntryList, event RaceEvent) error {
 	cmw.mutex.Lock()
-	defer cmw.mutex.Unlock()
 
 	logrus.Infof("Starting content manager wrapper server on port %d", servePort)
 
@@ -243,6 +242,8 @@ func (cmw *ContentManagerWrapper) Start(servePort int, serverConfig ServerConfig
 	cmw.srv = &http.Server{Addr: fmt.Sprintf(":%d", servePort)}
 	cmw.srv.Handler = cmw
 
+	cmw.mutex.Unlock()
+
 	if err := cmw.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return err
 	}
@@ -251,6 +252,9 @@ func (cmw *ContentManagerWrapper) Start(servePort int, serverConfig ServerConfig
 }
 
 func (cmw *ContentManagerWrapper) Stop() {
+	cmw.mutex.Lock()
+	defer cmw.mutex.Unlock()
+
 	if cmw.srv == nil {
 		return
 	}
