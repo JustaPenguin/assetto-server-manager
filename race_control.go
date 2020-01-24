@@ -29,7 +29,8 @@ type RaceControl struct {
 	CarIDToGUID      map[udp.CarID]udp.DriverGUID `json:"CarIDToGUID"`
 	carIDToGUIDMutex sync.RWMutex
 
-	carUpdaters map[udp.CarID]chan udp.CarUpdate
+	carUpdaters          map[udp.CarID]chan udp.CarUpdate
+	serverProcessStopped chan struct{}
 
 	sessionInfoTicker *time.Ticker
 
@@ -65,12 +66,15 @@ type Collision struct {
 
 func NewRaceControl(broadcaster Broadcaster, trackDataGateway TrackDataGateway, process ServerProcess, store Store) *RaceControl {
 	rc := &RaceControl{
-		broadcaster:      broadcaster,
-		trackDataGateway: trackDataGateway,
-		process:          process,
-		store:            store,
-		carUpdaters:      make(map[udp.CarID]chan udp.CarUpdate),
+		broadcaster:          broadcaster,
+		trackDataGateway:     trackDataGateway,
+		process:              process,
+		store:                store,
+		carUpdaters:          make(map[udp.CarID]chan udp.CarUpdate),
+		serverProcessStopped: make(chan struct{}),
 	}
+
+	process.NotifyDone(rc.serverProcessStopped)
 
 	rc.clearAllDrivers()
 
@@ -337,8 +341,6 @@ var sessionInfoRequestInterval = time.Second * 30
 
 // requestSessionInfo sends a request every sessionInfoRequestInterval to get information about temps, etc in the session.
 func (rc *RaceControl) requestSessionInfo() {
-	serverStopped := make(chan struct{})
-	rc.process.NotifyDone(serverStopped)
 	rc.sessionInfoTicker = time.NewTicker(sessionInfoRequestInterval)
 
 	for {
@@ -354,7 +356,7 @@ func (rc *RaceControl) requestSessionInfo() {
 				logrus.WithError(err).Errorf("Couldn't send session info udp request")
 			}
 
-		case <-serverStopped:
+		case <-rc.serverProcessStopped:
 			logrus.Debugf("Assetto Process completed. Disconnecting all connected drivers. Session done.")
 			rc.sessionInfoTicker.Stop()
 
@@ -508,12 +510,16 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 		return err
 	}
 
-	serverConfig := rc.process.GetServerConfig()
+	serverConfig, err := rc.store.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
 
 	solWarning := ""
 	liveLink := ""
 
-	if serverConfig.CurrentRaceConfig.IsSol == 1 {
+	if rc.process.Event().GetRaceConfig().IsSol == 1 {
 		solWarning = "This server is running Sol. For the best experience please install Sol, and remember the other drivers may be driving in night conditions."
 	}
 
@@ -525,8 +531,8 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 		fmt.Sprintf(
 			"Hi, %s! Welcome to the %s server! %s %s Make this race count! %s\n",
 			driver.CarInfo.DriverName,
-			serverConfig.GlobalServerConfig.GetName(),
-			serverConfig.GlobalServerConfig.ServerJoinMessage,
+			serverConfig.GetName(),
+			serverConfig.ServerJoinMessage,
 			solWarning,
 			liveLink,
 		),

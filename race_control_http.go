@@ -183,24 +183,24 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	linkString := ""
-
-	if rch.serverProcess.GetServerConfig().GlobalServerConfig.ShowContentManagerJoinLink == 1 {
-		link, err := getContentManagerJoinLink(rch.serverProcess.GetServerConfig())
-
-		if err != nil {
-			logrus.WithError(err).Errorf("could not get content manager join link")
-		} else {
-			linkString = link.String()
-		}
-	}
-
 	serverOpts, err := rch.store.LoadServerOptions()
 
 	if err != nil {
 		logrus.WithError(err).Errorf("couldn't load server options")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
+	}
+
+	linkString := ""
+
+	if serverOpts.ShowContentManagerJoinLink == 1 {
+		link, err := getContentManagerJoinLink(*serverOpts)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("could not get content manager join link")
+		} else {
+			linkString = link.String()
+		}
 	}
 
 	strackerOptions, err := rch.store.LoadStrackerOptions()

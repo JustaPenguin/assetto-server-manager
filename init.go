@@ -99,10 +99,6 @@ func InitWithResolver(resolver *Resolver) error {
 						logrus.WithError(err).Errorf("Could not stop server")
 					}
 				}
-
-				if p, ok := process.(*AssettoServerProcess); ok {
-					p.stopChildProcesses()
-				}
 			}
 
 			if err := notificationManager.Stop(); err != nil {

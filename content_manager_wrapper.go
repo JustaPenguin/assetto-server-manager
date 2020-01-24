@@ -219,20 +219,26 @@ func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 	return nil
 }
 
-func (cmw *ContentManagerWrapper) Start(servePort int, serverConfig ServerConfig, entryList EntryList, event RaceEvent) error {
+func (cmw *ContentManagerWrapper) Start(servePort int, event RaceEvent) error {
 	cmw.mutex.Lock()
 	defer cmw.mutex.Unlock()
 
 	logrus.Infof("Starting content manager wrapper server on port %d", servePort)
 
-	u, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", serverConfig.GlobalServerConfig.HTTPPort))
+	serverOptions, err := cmw.store.LoadServerOptions()
 
 	if err != nil {
 		return err
 	}
 
-	cmw.serverConfig = serverConfig
-	cmw.entryList = entryList
+	u, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", serverOptions.HTTPPort))
+
+	if err != nil {
+		return err
+	}
+
+	cmw.serverConfig = ServerConfig{GlobalServerConfig: *serverOptions, CurrentRaceConfig: event.GetRaceConfig()}
+	cmw.entryList = event.GetEntryList()
 	cmw.event = event
 	cmw.reverseProxy = httputil.NewSingleHostReverseProxy(u)
 
@@ -525,7 +531,7 @@ func geoIP() (*GeoIP, error) {
 	return geoIPData, nil
 }
 
-func getContentManagerJoinLink(config ServerConfig) (*url.URL, error) {
+func getContentManagerJoinLink(config GlobalServerConfig) (*url.URL, error) {
 	geoIP, err := geoIP()
 
 	if err != nil {
@@ -540,7 +546,7 @@ func getContentManagerJoinLink(config ServerConfig) (*url.URL, error) {
 
 	queryString := cmUrl.Query()
 	queryString.Set("ip", geoIP.IP)
-	queryString.Set("httpPort", strconv.Itoa(config.GlobalServerConfig.HTTPPort))
+	queryString.Set("httpPort", strconv.Itoa(config.HTTPPort))
 
 	cmUrl.RawQuery = queryString.Encode()
 

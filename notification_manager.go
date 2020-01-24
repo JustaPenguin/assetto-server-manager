@@ -158,7 +158,7 @@ func (nm *NotificationManager) SendRaceStartMessage(config ServerConfig, event R
 	title := fmt.Sprintf("Race starting at %s", trackInfo)
 
 	if config.GlobalServerConfig.ShowContentManagerJoinLink == 1 {
-		link, err := getContentManagerJoinLink(config)
+		link, err := getContentManagerJoinLink(config.GlobalServerConfig)
 		linkText := ""
 
 		if err != nil {
