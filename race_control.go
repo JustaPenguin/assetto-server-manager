@@ -161,6 +161,9 @@ func (rc *RaceControl) watchForTimedOutDrivers() {
 		var driversToDisconnect []*RaceControlDriver
 
 		_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
+			driver.mutex.Lock()
+			defer driver.mutex.Unlock()
+
 			if !driver.LastSeen.IsZero() && time.Since(driver.LastSeen) > driverTimeout || driver.LastSeen.IsZero() && time.Since(driver.ConnectedTime) > driverTimeout {
 				driversToDisconnect = append(driversToDisconnect, driver)
 			}
@@ -226,6 +229,9 @@ func (rc *RaceControl) handleCarUpdate(update udp.CarUpdate) error {
 		return err
 	}
 
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
 	speed := metersPerSecondToKilometersPerHour(
 		math.Sqrt(math.Pow(float64(update.Velocity.X), 2) + math.Pow(float64(update.Velocity.Z), 2)),
 	)
@@ -260,6 +266,12 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 
 	if emptyCarInfo {
 		_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
+			// driver.mutex is saved here as we have a new driver at the end of this function,
+			// so driver.mutex.Unlock would cause a panic
+			driver.mutex.Lock()
+			m := driver.mutex
+			defer m.Unlock()
+
 			*driver = *NewRaceControlDriver(driver.CarInfo)
 
 			return nil
@@ -272,6 +284,9 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 
 	// clear out last lap completed time each new session
 	_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
+		driver.mutex.Lock()
+		defer driver.mutex.Unlock()
+
 		driver.CurrentCar().LastLapCompletedTime = time.Now()
 
 		return nil
@@ -391,8 +406,11 @@ func (rc *RaceControl) requestSessionInfo() {
 }
 
 func (rc *RaceControl) disconnectDriver(driver *RaceControlDriver) error {
+	driver.mutex.Lock()
 	carInfo := driver.CarInfo
 	carInfo.EventType = udp.EventConnectionClosed
+	driver.mutex.Unlock()
+
 	return rc.OnClientDisconnect(carInfo)
 }
 
@@ -431,13 +449,16 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 
 	if disconnectedDriver, ok := rc.DisconnectedDrivers.Get(client.DriverGUID); ok {
 		driver = disconnectedDriver
-		driver.CarInfo = client
 		logrus.Debugf("Driver %s (%s) reconnected in %s (car id: %d)", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID, driver.CarInfo.CarModel, client.CarID)
 		rc.DisconnectedDrivers.Del(client.DriverGUID)
 	} else {
 		driver = NewRaceControlDriver(client)
 		logrus.Debugf("Driver %s (%s) connected in %s (car id: %d)", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID, driver.CarInfo.CarModel, client.CarID)
 	}
+
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+	driver.CarInfo = client
 
 	if _, ok := driver.Cars[driver.CarInfo.CarModel]; !ok {
 		driver.Cars[driver.CarInfo.CarModel] = &RaceControlCarLapInfo{}
@@ -466,6 +487,9 @@ func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
 	if !ok {
 		return fmt.Errorf("racecontrol: client disconnected without ever being connected: %s (%s)", client.DriverName, client.DriverGUID)
 	}
+
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
 
 	logrus.Debugf("Driver %s (%s) disconnected", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
 
@@ -569,6 +593,9 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 	if err != nil {
 		return err
 	}
+
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
 
 	lapDuration := lapToDuration(int(lap.LapTime))
 
@@ -695,6 +722,9 @@ func (rc *RaceControl) OnCollisionWithCar(collision udp.CollisionWithCar) error 
 		Speed: metersPerSecondToKilometersPerHour(float64(collision.ImpactSpeed)),
 	}
 
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
 	otherDriver, err := rc.findConnectedDriverByCarID(collision.OtherCarID)
 
 	if err == nil {
@@ -716,6 +746,9 @@ func (rc *RaceControl) OnCollisionWithEnvironment(collision udp.CollisionWithEnv
 	if err != nil {
 		return err
 	}
+
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
 
 	driver.Collisions = append(driver.Collisions, Collision{
 		ID:    uuid.New().String(),
