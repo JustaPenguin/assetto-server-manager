@@ -359,8 +359,7 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 
 		time.Sleep(time.Millisecond * 10)
 
-		// stop the session info ticker
-		defer raceControl.sessionInfoCfn()
+		defer func() { raceControl.serverProcessStopped <- struct{}{} }()
 
 		// this is a completely new session, connected drivers and disconnected drivers should be empty
 		if raceControl.ConnectedDrivers.Len() > 0 || raceControl.DisconnectedDrivers.Len() > 0 {
@@ -407,7 +406,7 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 		time.Sleep(time.Millisecond * 10)
 
 		// stop the session info ticker
-		defer raceControl.sessionInfoCfn()
+		defer func() { raceControl.serverProcessStopped <- struct{}{} }()
 
 		// join and load all drivers
 		for _, entrant := range drivers {
@@ -554,7 +553,7 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 		time.Sleep(time.Millisecond * 10)
 
 		// stop the session info ticker
-		defer raceControl.sessionInfoCfn()
+		defer func() { raceControl.serverProcessStopped <- struct{}{} }()
 
 		// join and load all drivers
 		for _, entrant := range drivers {
@@ -697,7 +696,7 @@ func TestRaceControl_OnCarUpdate(t *testing.T) {
 	time.Sleep(time.Millisecond * 10)
 
 	// stop the session info ticker
-	defer raceControl.sessionInfoCfn()
+	defer func() { raceControl.serverProcessStopped <- struct{}{} }()
 
 	// join and load all drivers
 	for _, entrant := range drivers {
@@ -849,7 +848,7 @@ func TestRaceControl_OnLapCompleted(t *testing.T) {
 	time.Sleep(time.Millisecond * 10)
 
 	// stop the session info ticker
-	defer raceControl.sessionInfoCfn()
+	defer func() { raceControl.serverProcessStopped <- struct{}{} }()
 
 	driversOnFirstLap := raceLapTest[0:3]
 
@@ -1121,7 +1120,7 @@ func TestRaceControl_OnSessionUpdate(t *testing.T) {
 		time.Sleep(time.Millisecond * 10)
 
 		// stop the session info ticker
-		defer raceControl.sessionInfoCfn()
+		defer func() { raceControl.serverProcessStopped <- struct{}{} }()
 
 		// join and load all drivers
 		for _, entrant := range drivers {

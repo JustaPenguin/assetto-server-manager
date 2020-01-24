@@ -114,6 +114,7 @@ func (sp *AssettoServerProcess) Stop() error {
 		case err := <-sp.stopped:
 			return err
 		case <-timeout:
+			// @TODO there needs to be some exit condition here...
 			sp.mutex.Lock()
 			logrus.Debug("Server process did not naturally stop after 10s. Attempting manual kill")
 			err := kill(sp.cmd.Process)
@@ -164,6 +165,7 @@ func (sp *AssettoServerProcess) loop() {
 			if sp.IsRunning() {
 				if err := sp.Stop(); err != nil {
 					sp.started <- err
+					break
 				}
 			}
 
