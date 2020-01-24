@@ -3,6 +3,7 @@ package servermanager
 import (
 	"context"
 	"fmt"
+	lua "github.com/yuin/gopher-lua"
 	"math"
 	"strings"
 	"sync"
@@ -763,6 +764,92 @@ func (rc *RaceControl) AllLapTimes() map[udp.DriverGUID]*RaceControlDriver {
 	})
 
 	return out
+}
+
+func (rc *RaceControl) LuaBroadcastChat(L *lua.LState) int {
+	message := L.ToString(1)
+
+	err := rc.splitAndBroadcastChat(message)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Unable to broadcast chat message")
+		L.Push(lua.LBool(false))
+	} else {
+		L.Push(lua.LBool(true))
+	}
+
+	return 1
+}
+
+func (rc *RaceControl) LuaSendChat(L *lua.LState) int {
+	message := L.ToString(1)
+	guid := L.ToString(2)
+
+	err := rc.splitAndSendChat(message, guid)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Unable to broadcast chat message")
+		L.Push(lua.LBool(false))
+	} else {
+		L.Push(lua.LBool(true))
+	}
+
+	return 1
+}
+
+func (rc *RaceControl) splitAndBroadcastChat(message string) error {
+	wrapped := strings.Split(wordwrap.WrapString(
+		message,
+		60,
+	), "\n")
+
+	for _, msg := range wrapped {
+		broadcastMessage, err := udp.NewBroadcastChat(msg)
+
+		if err == nil {
+			err := rc.process.SendUDPMessage(broadcastMessage)
+
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (rc *RaceControl) splitAndSendChat(message, guid string) error {
+	var carID uint8
+
+	for id, rangeGuid := range rc.CarIDToGUID {
+		if string(rangeGuid) == guid {
+			carID = uint8(id)
+			break
+		}
+	}
+
+	wrapped := strings.Split(wordwrap.WrapString(
+		message,
+		60,
+	), "\n")
+
+	for _, msg := range wrapped {
+		welcomeMessage, err := udp.NewSendChat(udp.CarID(carID), msg)
+
+		if err == nil {
+			err := rc.process.SendUDPMessage(welcomeMessage)
+
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func lapToDuration(i int) time.Duration {
