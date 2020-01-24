@@ -32,8 +32,6 @@ type RaceControl struct {
 	carUpdaters          map[udp.CarID]chan udp.CarUpdate
 	serverProcessStopped chan struct{}
 
-	sessionInfoTicker *time.Ticker
-
 	broadcaster      Broadcaster
 	trackDataGateway TrackDataGateway
 
@@ -341,16 +339,16 @@ var sessionInfoRequestInterval = time.Second * 30
 
 // requestSessionInfo sends a request every sessionInfoRequestInterval to get information about temps, etc in the session.
 func (rc *RaceControl) requestSessionInfo() {
-	rc.sessionInfoTicker = time.NewTicker(sessionInfoRequestInterval)
+	sessionInfoTicker := time.NewTicker(sessionInfoRequestInterval)
 
 	for {
 		select {
-		case <-rc.sessionInfoTicker.C:
+		case <-sessionInfoTicker.C:
 			err := rc.process.SendUDPMessage(udp.GetSessionInfo{})
 
 			if err == ErrNoOpenUDPConnection {
 				logrus.WithError(err).Warnf("Couldn't send session info udp request. Breaking loop.")
-				rc.sessionInfoTicker.Stop()
+				sessionInfoTicker.Stop()
 				return
 			} else if err != nil {
 				logrus.WithError(err).Errorf("Couldn't send session info udp request")
@@ -358,7 +356,7 @@ func (rc *RaceControl) requestSessionInfo() {
 
 		case <-rc.serverProcessStopped:
 			logrus.Debugf("Assetto Process completed. Disconnecting all connected drivers. Session done.")
-			rc.sessionInfoTicker.Stop()
+			sessionInfoTicker.Stop()
 
 			var drivers []*RaceControlDriver
 

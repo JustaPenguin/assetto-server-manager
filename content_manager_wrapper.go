@@ -154,6 +154,9 @@ func (cmw *ContentManagerWrapper) NewCMContent(cars []string, trackName string, 
 }
 
 func (cmw *ContentManagerWrapper) UDPCallback(message udp.Message) {
+	cmw.mutex.Lock()
+	defer cmw.mutex.Unlock()
+
 	switch m := message.(type) {
 	case udp.SessionInfo:
 		cmw.sessionInfo = m
@@ -360,6 +363,9 @@ func (cmw *ContentManagerWrapper) getPlayers(guid string) (*ACHTTPPlayers, error
 }
 
 func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*ContentManagerWrapperData, error) {
+	cmw.mutex.Lock()
+	defer cmw.mutex.Unlock()
+
 	race := cmw.serverConfig.CurrentRaceConfig
 	global := cmw.serverConfig.GlobalServerConfig
 	live := cmw.sessionInfo

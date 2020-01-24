@@ -117,7 +117,7 @@ func (r *Resolver) resolveServerProcess() ServerProcess {
 		return r.serverProcess
 	}
 
-	r.serverProcess = NewServerProcess2(r.UDPCallback, r.ResolveStore(), r.resolveContentManagerWrapper())
+	r.serverProcess = NewAssettoServerProcess(r.UDPCallback, r.ResolveStore(), r.resolveContentManagerWrapper())
 
 	return r.serverProcess
 }

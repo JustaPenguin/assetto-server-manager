@@ -61,7 +61,7 @@ type AssettoServerProcess struct {
 	forwardListenPort  int
 }
 
-func NewServerProcess2(callbackFunc udp.CallbackFunc, store Store, contentManagerWrapper *ContentManagerWrapper) *AssettoServerProcess {
+func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, store Store, contentManagerWrapper *ContentManagerWrapper) *AssettoServerProcess {
 	sp := &AssettoServerProcess{
 		start:                 make(chan RaceEvent),
 		stop:                  make(chan struct{}),
@@ -313,6 +313,9 @@ func (sp *AssettoServerProcess) Event() RaceEvent {
 var ErrNoOpenUDPConnection = errors.New("servermanager: no open UDP connection found")
 
 func (sp *AssettoServerProcess) SendUDPMessage(message udp.Message) error {
+	sp.mutex.Lock()
+	defer sp.mutex.Unlock()
+
 	if sp.udpServerConn == nil {
 		return ErrNoOpenUDPConnection
 	}
