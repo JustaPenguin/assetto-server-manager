@@ -8,7 +8,6 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/RoaringBitmap/roaring v0.4.21 // indirect
-	github.com/akavel/rsrc v0.8.0 // indirect
 	github.com/blevesearch/bleve v0.8.1
 	github.com/blevesearch/blevex v0.0.0-20180227211930-4b158bb555a3 // indirect
 	github.com/blevesearch/go-porterstemmer v1.0.2 // indirect
@@ -52,10 +51,8 @@ require (
 	github.com/mattn/go-runewidth v0.0.8 // indirect
 	github.com/mattn/go-zglob v0.0.1
 	github.com/mitchellh/copystructure v1.0.0 // indirect
-	github.com/mitchellh/go-ps v0.0.0-20190716172923-621e5597135b
 	github.com/mitchellh/go-wordwrap v1.0.0
 	github.com/mitchellh/reflectwalk v1.0.1 // indirect
-	github.com/mjibson/esc v0.2.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pkg/errors v0.9.1
@@ -83,7 +80,6 @@ require (
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20200121082415-34d275377bf9 // indirect
 	golang.org/x/text v0.3.2
-	golang.org/x/tools v0.0.0-20200124220429-8fe064f891f2 // indirect
 	gopkg.in/ini.v1 v1.42.0 // indirect
 	gopkg.in/yaml.v2 v2.2.7
 )
