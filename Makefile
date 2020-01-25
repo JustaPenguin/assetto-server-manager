@@ -3,7 +3,7 @@ VERSION?=unstable
 # enable go modules
 export GO111MODULE=on
 
-all: clean test assets build
+all: clean vet test assets build
 
 clean:
 	rm -rf changelog_embed.go
@@ -14,6 +14,10 @@ test:
 	mkdir -p cmd/server-manager/assetto/results
 	cp -R fixtures/results/*.json cmd/server-manager/assetto/results
 	go test -race
+
+vet: generate
+	go vet ./...
+	golangci-lint -E bodyclose,misspell,gofmt,golint,unconvert,goimports,depguard,gocritic,interfacer run --skip-files content_cars_skins.go
 
 generate:
 	go get -u github.com/mjibson/esc
@@ -28,7 +32,7 @@ asset-embed: generate
 build:
 	$(MAKE) -C cmd/server-manager build
 
-deploy: clean generate test
+deploy: clean generate vet test
 	$(MAKE) -C cmd/server-manager deploy
 
 run:

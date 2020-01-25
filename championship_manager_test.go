@@ -193,7 +193,7 @@ func doReplay(filename string, multiplier int, callbackFunc udp.CallbackFunc, wa
 
 	defer db.Close()
 
-	return replay.ReplayUDPMessages(db, multiplier, callbackFunc, waitTime)
+	return replay.UDPMessages(db, multiplier, callbackFunc, waitTime)
 }
 
 func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {

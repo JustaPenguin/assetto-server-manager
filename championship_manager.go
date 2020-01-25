@@ -713,8 +713,16 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 				thisTimer := timer
 
 				cm.championshipEventReminderTimers[event.ID.String()], err = when.When(date.Add(time.Duration(0-timer)*time.Minute), func() {
-					cm.notificationManager.SendChampionshipReminderMessage(championship, event, thisTimer)
+					err := cm.notificationManager.SendChampionshipReminderMessage(championship, event, thisTimer)
+
+					if err != nil {
+						logrus.WithError(err).Errorf("couldn't send championship reminder message")
+					}
 				})
+
+				if err != nil {
+					logrus.WithError(err).Errorf("couldn't send championship reminder message")
+				}
 			}
 		}
 	} else {
@@ -1656,11 +1664,14 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 				if cm.notificationManager.HasNotificationReminders() {
 					for _, timer := range cm.notificationManager.GetNotificationReminders() {
 						if event.Scheduled.Add(time.Duration(0-timer) * time.Minute).After(time.Now()) {
-							// add reminder
 							thisTimer := timer
 
 							cm.championshipEventReminderTimers[event.ID.String()], err = when.When(event.Scheduled.Add(time.Duration(0-timer)*time.Minute), func() {
-								cm.notificationManager.SendChampionshipReminderMessage(championship, event, thisTimer)
+								err := cm.notificationManager.SendChampionshipReminderMessage(championship, event, thisTimer)
+
+								if err != nil {
+									logrus.WithError(err).Errorf("Could not send championship reminder message for event: %s", event.ID.String())
+								}
 							})
 
 							if err != nil {

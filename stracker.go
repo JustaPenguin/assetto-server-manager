@@ -270,7 +270,7 @@ type StrackerHTTPConfiguration struct {
 	InverseNavbar            bool   `ini:"inverse_navbar" help:"Set to true to get the navbar inverted (i.e., dark instead of bright)"`
 	ItemsPerPage             int    `ini:"items_per_page" help:"Number of items displayed per page"`
 
-	LapTimesAddColumns      string `ini:"lap_times_add_columns" help:"Additional columns to be displayed in LapTimes table (seperated by a + sign). Columns can be 'valid', 'aids', 'laps', 'date', 'grip', 'cuts', 'collisions', 'tyres', 'temps', 'ballast' and 'vmax'. Note that too many displayed columns might cause problems on some browsers."`
+	LapTimesAddColumns      string `ini:"lap_times_add_columns" help:"Additional columns to be displayed in LapTimes table (separated by a + sign). Columns can be 'valid', 'aids', 'laps', 'date', 'grip', 'cuts', 'collisions', 'tyres', 'temps', 'ballast' and 'vmax'. Note that too many displayed columns might cause problems on some browsers."`
 	LogRequests             bool   `ini:"log_requests" show:"open" help:"If set to ON, http requests will be logged in stracker.log. Otherwise they are not logged."`
 	MaximumStreamingClients int    `ini:"max_streaming_clients" show:"open" help:"Maximum number of streaming clients (LiveMap/Log users) allowed to connect to this server in parallel. The number of threads allocated for http serving will be max(10, max_streaming_clients + 5)"`
 

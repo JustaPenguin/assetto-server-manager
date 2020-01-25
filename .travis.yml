@@ -21,7 +21,7 @@ install:
 
 script:
   - make generate
-  - go vet ./...
+  - make vet
   # run a go build before doing deployment to ensure that the package is importable
   - go build
 

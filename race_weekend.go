@@ -252,7 +252,7 @@ func (rw *RaceWeekend) SessionCanBeRun(s *RaceWeekendSession) bool {
 	for _, parentID := range s.ParentIDs {
 		parent, err := rw.FindSessionByID(parentID.String())
 
-		if err == RaceWeekendSessionNotFound {
+		if err == ErrRaceWeekendSessionNotFound {
 			logrus.Warnf("Race weekend session for id: %s not found", parentID.String())
 			continue
 		} else if err != nil {
@@ -393,8 +393,8 @@ func (rw *RaceWeekend) TrackOverview() string {
 }
 
 var (
-	ErrRaceWeekendNotFound     = errors.New("servermanager: race weekend not found")
-	RaceWeekendSessionNotFound = errors.New("servermanager: race weekend session not found")
+	ErrRaceWeekendNotFound        = errors.New("servermanager: race weekend not found")
+	ErrRaceWeekendSessionNotFound = errors.New("servermanager: race weekend session not found")
 )
 
 // FindSessionByID finds a RaceWeekendSession by its unique identifier
@@ -416,7 +416,7 @@ func (rw *RaceWeekend) FindSessionByID(id string) (*RaceWeekendSession, error) {
 		return sess, nil
 	}
 
-	return nil, RaceWeekendSessionNotFound
+	return nil, ErrRaceWeekendSessionNotFound
 }
 
 // EnhanceResults takes a set of SessionResults and attaches Championship information to them.
@@ -448,7 +448,7 @@ type RaceWeekendSessionEntrant struct {
 
 	IsPlaceholder bool `json:"-"`
 
-	// OverrideSetupFile is a path to an overriden setup for a Race Weekend
+	// OverrideSetupFile is a path to an overridden setup for a Race Weekend
 	OverrideSetupFile string
 }
 

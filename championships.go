@@ -1380,16 +1380,17 @@ func (cr *ChampionshipEvent) CombineEntryLists(championship *Championship) Entry
 // LastSession returns the last configured session in the championship, in the following order:
 // Race, Qualifying, Practice, Booking
 func (cr *ChampionshipEvent) LastSession() SessionType {
-	if cr.RaceSetup.HasMultipleRaces() {
+	switch {
+	case cr.RaceSetup.HasMultipleRaces():
 		// there must be two races as reversed grid positions are on
 		return SessionTypeSecondRace
-	} else if cr.RaceSetup.HasSession(SessionTypeRace) {
+	case cr.RaceSetup.HasSession(SessionTypeRace):
 		return SessionTypeRace
-	} else if cr.RaceSetup.HasSession(SessionTypeQualifying) {
+	case cr.RaceSetup.HasSession(SessionTypeQualifying):
 		return SessionTypeQualifying
-	} else if cr.RaceSetup.HasSession(SessionTypePractice) {
+	case cr.RaceSetup.HasSession(SessionTypePractice):
 		return SessionTypePractice
-	} else {
+	default:
 		return SessionTypeBooking
 	}
 }

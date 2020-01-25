@@ -182,7 +182,7 @@ func (asu *AssettoServerUDP) serve() {
 					logrus.Debugf("Catching up, queue size: %d vs %d: changed by %d", currentQueueSize, lastQueueSize, currentQueueSize-lastQueueSize)
 
 					if CurrentRealtimePosIntervalMs-1 >= RealtimePosIntervalMs {
-						CurrentRealtimePosIntervalMs -= 1
+						CurrentRealtimePosIntervalMs--
 
 						logrus.Debugf("Adjusting real time pos interval, is now: %d", CurrentRealtimePosIntervalMs)
 						err := asu.SendMessage(NewEnableRealtimePosInterval(CurrentRealtimePosIntervalMs))
@@ -250,9 +250,9 @@ func readString(r io.Reader, sizeMultiplier int) string {
 		}
 
 		return string(bs)
-	} else {
-		return string(b)
 	}
+
+	return string(b)
 }
 
 func (asu *AssettoServerUDP) SendMessage(message Message) error {

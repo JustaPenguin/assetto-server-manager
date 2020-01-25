@@ -748,9 +748,7 @@ func (ch *ChampionshipsHandler) signedUpEntrantsCSV(w http.ResponseWriter, r *ht
 		"Status",
 	}
 
-	for _, question := range championship.SignUpForm.ExtraFields {
-		headers = append(headers, question)
-	}
+	headers = append(headers, championship.SignUpForm.ExtraFields...)
 
 	var out [][]string
 

@@ -300,6 +300,11 @@ func (cm *CarManager) watchForCarChanges() error {
 					}
 
 					err = cm.IndexCar(car)
+
+					if err != nil {
+						logrus.WithError(err).Errorf("Could not index car: %s", carName)
+						continue
+					}
 				case watcher.Remove:
 					carName = filepath.Base(event.OldPath)
 					logrus.Infof("De-indexing car: %s", carName)
@@ -564,7 +569,7 @@ func (cm *CarManager) IndexAllCars() error {
 		return err
 	}
 
-	logrus.Infof("Search index build is complete (took: %s)", time.Now().Sub(started).String())
+	logrus.Infof("Search index build is complete (took: %s)", time.Since(started).String())
 
 	return nil
 }

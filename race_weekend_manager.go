@@ -543,8 +543,7 @@ func (rwm *RaceWeekendManager) UDPCallback(message udp.Message) {
 		return
 	}
 
-	switch m := message.(type) {
-	case udp.EndSession:
+	if m, ok := message.(udp.EndSession); ok {
 		filename := filepath.Base(string(m))
 		logrus.Infof("Race Weekend: End session found, result file: %s", filename)
 

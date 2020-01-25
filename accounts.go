@@ -23,11 +23,13 @@ import (
 )
 
 const (
-	sessionAccountID            = "account_id"
-	requestContextKeyAccount    = "account"
-	adminUserName               = "admin"
-	serverAccountOptionsMetaKey = "server-account-options"
+	sessionAccountID                              = "account_id"
+	requestContextKeyAccount    accountContextKey = iota
+	adminUserName                                 = "admin"
+	serverAccountOptionsMetaKey                   = "server-account-options"
 )
+
+type accountContextKey int
 
 type ServerAccountOptions struct {
 	IsOpen bool
@@ -158,21 +160,21 @@ func (ah *AccountHandler) MustLoginMiddleware(requiredGroup Group, next http.Han
 				if account.HasGroupPrivilege(requiredGroup) {
 					next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), requestContextKeyAccount, account)))
 					return
-				} else {
-					AddErrorFlash(w, r, "You do not have permission to view this page.")
-					http.Redirect(w, r, "/", http.StatusFound)
-					return
 				}
-			} else {
-				logrus.WithError(err).Errorf("Could not find account for id: %s", accountID)
-				delete(sess.Values, sessionAccountID)
-				_ = sessions.Save(r, w)
 
-				AddFlash(w, r, "You have been logged out")
-
+				AddErrorFlash(w, r, "You do not have permission to view this page.")
 				http.Redirect(w, r, "/", http.StatusFound)
 				return
 			}
+
+			logrus.WithError(err).Errorf("Could not find account for id: %s", accountID)
+			delete(sess.Values, sessionAccountID)
+			_ = sessions.Save(r, w)
+
+			AddFlash(w, r, "You have been logged out")
+
+			http.Redirect(w, r, "/", http.StatusFound)
+			return
 		}
 
 		if requiredGroup == GroupRead && accountOptions.IsOpen {
@@ -294,17 +296,18 @@ func (ah *AccountHandler) login(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		err := ah.accountManager.login(r, w)
 
-		if err == ErrInvalidUsernameOrPassword {
+		switch {
+		case err == ErrInvalidUsernameOrPassword:
 			AddErrorFlash(w, r, "Invalid username or password. Check your details and try again.")
-		} else if err == ErrAccountNeedsPassword {
+		case err == ErrAccountNeedsPassword:
 			AddFlash(w, r, "Thanks for logging in. We need you to set up a permanent password for your account.")
 			http.Redirect(w, r, "/accounts/new-password", http.StatusFound)
 			return
-		} else if err != nil {
+		case err != nil:
 			logrus.WithError(err).Errorf("Couldn't log in account")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
-		} else { // err == nil, successful auth
+		default: // err == nil, successful auth
 			AddFlash(w, r, "Thanks for logging in!")
 			http.Redirect(w, r, "/", http.StatusFound)
 			return
@@ -368,8 +371,9 @@ func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 		if set {
 			if password == repeatPassword {
 				updateDetails := account.NeedsPasswordReset()
+				err := ah.accountManager.ChangePassword(account, password)
 
-				if err := ah.accountManager.ChangePassword(account, password); err == nil {
+				if err == nil {
 					AddFlash(w, r, "Your password was successfully changed!")
 					if updateDetails {
 						http.Redirect(w, r, "/accounts/update", http.StatusFound)
@@ -377,10 +381,10 @@ func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 						http.Redirect(w, r, "/", http.StatusFound)
 					}
 					return
-				} else {
-					AddErrorFlash(w, r, "Unable to change your password")
-					logrus.WithError(err).Errorf("Could not change password for account id: %s", account.ID.String())
 				}
+
+				AddErrorFlash(w, r, "Unable to change your password")
+				logrus.WithError(err).Errorf("Could not change password for account id: %s", account.ID.String())
 			} else {
 				AddErrorFlash(w, r, "Your passwords must match")
 			}

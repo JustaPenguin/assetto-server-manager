@@ -3,11 +3,12 @@ package servermanager
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/sirupsen/logrus"
-	lua "github.com/yuin/gopher-lua"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	lua "github.com/yuin/gopher-lua"
 )
 
 var Lua *lua.LState
@@ -30,17 +31,13 @@ type LuaPlugin struct {
 }
 
 func (l *LuaPlugin) Inputs(i ...interface{}) *LuaPlugin {
-	for _, x := range i {
-		l.inputs = append(l.inputs, x)
-	}
+	l.inputs = append(l.inputs, i...)
 
 	return l
 }
 
 func (l *LuaPlugin) Outputs(o ...interface{}) *LuaPlugin {
-	for _, x := range o {
-		l.outputs = append(l.outputs, x)
-	}
+	l.outputs = append(l.outputs, o...)
 
 	return l
 }
@@ -85,10 +82,10 @@ func (l *LuaPlugin) Call(fileName, functionName string) error {
 	return nil
 }
 
-func LuaHTTPRequest(L *lua.LState) int {
-	url := L.ToString(1)
-	method := L.ToString(2)
-	reqBodyString := L.ToString(3)
+func LuaHTTPRequest(l *lua.LState) int {
+	url := l.ToString(1)
+	method := l.ToString(2)
+	reqBodyString := l.ToString(3)
 
 	httpClient := http.Client{
 		Timeout: time.Second * 2, // Maximum of 2 secs
@@ -124,8 +121,8 @@ func LuaHTTPRequest(L *lua.LState) int {
 		return 0
 	}
 
-	L.Push(lua.LString(body))
-	L.Push(lua.LNumber(res.StatusCode))
+	l.Push(lua.LString(body))
+	l.Push(lua.LNumber(res.StatusCode))
 
 	return 2
 }
