@@ -459,7 +459,7 @@ func (r *Resolver) resolveHealthCheck() *HealthCheck {
 		return r.healthCheck
 	}
 
-	r.healthCheck = NewHealthCheck(r.resolveRaceControl(), r.ResolveStore())
+	r.healthCheck = NewHealthCheck(r.resolveRaceControl(), r.ResolveStore(), r.resolveServerProcess())
 
 	return r.healthCheck
 }
