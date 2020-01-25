@@ -312,6 +312,10 @@ func (sp *AssettoServerProcess) Event() RaceEvent {
 	sp.mutex.Lock()
 	defer sp.mutex.Unlock()
 
+	if sp.event == nil {
+		return QuickRace{}
+	}
+
 	return sp.raceEvent
 }
 
