@@ -32,7 +32,7 @@ type ServerProcess interface {
 	Logs() string
 }
 
-// AssettoServerProcess manages the assetto corsa server process.
+// AssettoServerProcess manages the Assetto Corsa Server process.
 type AssettoServerProcess struct {
 	store                 Store
 	contentManagerWrapper *ContentManagerWrapper
@@ -105,8 +105,11 @@ func (sp *AssettoServerProcess) IsRunning() bool {
 	return sp.raceEvent != nil
 }
 
+var ErrServerProcessTimeout = errors.New("servermanager: server process did not stop even after manual kill. please check your server configuration")
+
 func (sp *AssettoServerProcess) Stop() error {
 	timeout := time.After(time.Second * 10)
+	fullTimeout := time.After(time.Second * 20)
 	sp.cfn()
 
 	for {
@@ -116,17 +119,17 @@ func (sp *AssettoServerProcess) Stop() error {
 		case <-timeout:
 			// @TODO there needs to be some exit condition here...
 			sp.mutex.Lock()
-			logrus.Debug("Server process did not naturally stop after 10s. Attempting manual kill")
+			logrus.Debug("Server process did not naturally stop after 10s. Attempting manual kill.")
 			err := kill(sp.cmd.Process)
 
 			if err != nil {
 				logrus.WithError(err).Error("Could not forcibly kill command")
 			}
 			sp.mutex.Unlock()
+		case <-fullTimeout:
+			return ErrServerProcessTimeout
 		}
 	}
-
-	return nil
 }
 
 func (sp *AssettoServerProcess) Restart() error {
@@ -154,7 +157,7 @@ func (sp *AssettoServerProcess) loop() {
 		select {
 		case err := <-sp.run:
 			if err != nil {
-				logrus.WithError(err).Error("acServer process ended with error")
+				logrus.WithError(err).Warn("acServer process ended with error. If everything seems fine, you can safely ignore this error.")
 			}
 
 			select {
@@ -249,7 +252,7 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 				return err
 			}
 
-			logrus.Infof("Started stracker. Listening for ptracker connections on port %d", strackerOptions.InstanceConfiguration.ListeningPort)
+			logrus.Infof("Started sTracker. Listening for pTracker connections on port %d", strackerOptions.InstanceConfiguration.ListeningPort)
 		} else {
 			logrus.WithError(ErrStrackerConfigurationRequiresUDPPluginConfiguration).Error("Please check your server configuration")
 		}
@@ -265,13 +268,13 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 
 	if len(config.Server.RunOnStart) > 0 {
 		logrus.Warnf("Use of run_on_start in config.yml is deprecated. Please use 'plugins' instead")
-	}
 
-	for _, command := range config.Server.RunOnStart {
-		err = sp.startChildProcess(wd, command)
+		for _, command := range config.Server.RunOnStart {
+			err = sp.startChildProcess(wd, command)
 
-		if err != nil {
-			logrus.WithError(err).Errorf("Could not run extra command: %s", command)
+			if err != nil {
+				logrus.WithError(err).Errorf("Could not run extra command: %s", command)
+			}
 		}
 	}
 
@@ -281,7 +284,7 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 func (sp *AssettoServerProcess) onStop() error {
 	sp.mutex.Lock()
 	defer sp.mutex.Unlock()
-	logrus.Debugf("Server stopped")
+	logrus.Debugf("Server stopped. Stopping UDP listener and child processes.")
 
 	sp.raceEvent = nil
 

@@ -13,7 +13,7 @@ test:
 	mkdir -p cmd/server-manager/assetto/cfg
 	mkdir -p cmd/server-manager/assetto/results
 	cp -R fixtures/results/*.json cmd/server-manager/assetto/results
-	go test
+	go test -race
 
 generate:
 	go get -u github.com/mjibson/esc
