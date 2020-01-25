@@ -20,7 +20,7 @@ install:
   - go version
 
 script:
-  - go generate ./...
+  - make generate
   - go vet ./...
   # run a go build before doing deployment to ensure that the package is importable
   - go build
