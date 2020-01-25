@@ -25,7 +25,7 @@ type Broadcaster interface {
 type NilBroadcaster struct{}
 
 func (NilBroadcaster) Send(message udp.Message) ([]byte, error) {
-	logrus.WithField("message", message).Infof("Message send %d", message.Event())
+	logrus.WithField("message", message).Debugf("Message send %d", message.Event())
 	return nil, nil
 }
 
