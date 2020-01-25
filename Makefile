@@ -17,7 +17,7 @@ test:
 
 vet: generate
 	go vet ./...
-	golangci-lint -E bodyclose,misspell,gofmt,golint,unconvert,goimports,depguard,gocritic,interfacer run --skip-files content_cars_skins.go
+	golangci-lint -E bodyclose,misspell,gofmt,golint,unconvert,goimports,depguard,interfacer run --skip-files content_cars_skins.go
 
 generate:
 	go get -u github.com/mjibson/esc

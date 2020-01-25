@@ -319,9 +319,9 @@ func (c *Championship) GetPlayerSummary(guid string) string {
 func (c *Championship) GetURL() string {
 	if config.HTTP.BaseURL != "" {
 		return config.HTTP.BaseURL + "/championship/" + c.ID.String()
-	} else {
-		return ""
 	}
+
+	return ""
 }
 
 // IsMultiClass is true if the Championship has more than one Class
@@ -464,9 +464,9 @@ func (c *ChampionshipClass) ValidCarIDs() []string {
 		}
 
 		return availableCars
-	} else {
-		return c.AvailableCars
 	}
+
+	return c.AvailableCars
 }
 
 func (c *Championship) ImportEvent(eventToImport interface{}) (*ChampionshipEvent, error) {
@@ -967,17 +967,17 @@ func (c *ChampionshipClass) ResultsForClass(results []*SessionResult) (filtered 
 func (c *ChampionshipClass) PenaltyForGUID(guid string) int {
 	if penalty, ok := c.DriverPenalties[guid]; ok {
 		return penalty
-	} else {
-		return 0
 	}
+
+	return 0
 }
 
 func (c *ChampionshipClass) PenaltyForTeam(name string) int {
 	if teamPenalty, ok := c.TeamPenalties[name]; ok {
 		return teamPenalty
-	} else {
-		return 0
 	}
+
+	return 0
 }
 
 type PointsReason int
@@ -1351,9 +1351,9 @@ func (cr *ChampionshipEvent) Cars(c *Championship) []string {
 		}
 
 		return out
-	} else {
-		return c.ValidCarIDs()
 	}
+
+	return c.ValidCarIDs()
 }
 
 func (cr *ChampionshipEvent) CombineEntryLists(championship *Championship) EntryList {
@@ -1465,9 +1465,9 @@ func (a *ActiveChampionship) IsPractice() bool {
 func (a *ActiveChampionship) GetURL() string {
 	if config.HTTP.BaseURL != "" {
 		return config.HTTP.BaseURL + "/championship/" + a.ChampionshipID.String()
-	} else {
-		return ""
 	}
+
+	return ""
 }
 
 func (a *ActiveChampionship) IsChampionship() bool {

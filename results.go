@@ -442,10 +442,10 @@ cars:
 
 			return s.GetNumLaps(s.Result[i].DriverGUID, s.Result[i].CarModel) >= s.GetNumLaps(s.Result[j].DriverGUID, s.Result[j].CarModel)
 
-		} else {
-			// driver i is closer to the front than j if they are not disqualified and j is
-			return s.Result[j].Disqualified
 		}
+
+		// driver i is closer to the front than j if they are not disqualified and j is
+		return s.Result[j].Disqualified
 	})
 }
 

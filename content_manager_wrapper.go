@@ -157,8 +157,7 @@ func (cmw *ContentManagerWrapper) UDPCallback(message udp.Message) {
 	cmw.mutex.Lock()
 	defer cmw.mutex.Unlock()
 
-	switch m := message.(type) {
-	case udp.SessionInfo:
+	if m, ok := message.(udp.SessionInfo); ok {
 		cmw.sessionInfo = m
 	}
 }
@@ -571,17 +570,17 @@ func getContentManagerJoinLink(config GlobalServerConfig) (*url.URL, error) {
 		return nil, err
 	}
 
-	cmUrl, err := url.Parse(ContentManagerJoinLinkBase)
+	cmURL, err := url.Parse(ContentManagerJoinLinkBase)
 
 	if err != nil {
 		return nil, err
 	}
 
-	queryString := cmUrl.Query()
+	queryString := cmURL.Query()
 	queryString.Set("ip", geoIP.IP)
 	queryString.Set("httpPort", strconv.Itoa(config.HTTPPort))
 
-	cmUrl.RawQuery = queryString.Encode()
+	cmURL.RawQuery = queryString.Encode()
 
-	return cmUrl, nil
+	return cmURL, nil
 }

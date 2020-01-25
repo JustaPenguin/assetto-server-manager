@@ -34,17 +34,17 @@ var (
 func StrackerExecutablePath() string {
 	if runtime.GOOS == "windows" {
 		return filepath.Join(StrackerFolderPath(), "stracker.exe")
-	} else {
-		return filepath.Join(StrackerFolderPath(), "stracker")
 	}
+
+	return filepath.Join(StrackerFolderPath(), "stracker")
 }
 
 func StrackerFolderPath() string {
 	if runtime.GOOS == "windows" {
 		return filepath.Join(ServerInstallPath, strackerBaseFolderName)
-	} else {
-		return filepath.Join(ServerInstallPath, strackerBaseFolderName, "stracker_linux_x86")
 	}
+
+	return filepath.Join(ServerInstallPath, strackerBaseFolderName, "stracker_linux_x86")
 }
 
 // IsStrackerInstalled looks in the ServerInstallPath for an "stracker" directory with the correct stracker executable for the given platform

@@ -43,9 +43,9 @@ func (cr *CustomRace) IsLooping() bool {
 func (cr *CustomRace) EventName() string {
 	if cr.HasCustomName {
 		return cr.Name
-	} else {
-		return trackSummary(cr.RaceConfig.Track, cr.RaceConfig.TrackLayout)
 	}
+
+	return trackSummary(cr.RaceConfig.Track, cr.RaceConfig.TrackLayout)
 }
 
 func (cr *CustomRace) OverrideServerPassword() bool {

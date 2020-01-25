@@ -328,8 +328,8 @@ func (rch *RaceControlHandler) kickUser(w http.ResponseWriter, r *http.Request) 
 
 	var carID uint8
 
-	for id, rangeGuid := range rch.raceControl.CarIDToGUID {
-		if string(rangeGuid) == guid {
+	for id, rangeGUID := range rch.raceControl.CarIDToGUID {
+		if string(rangeGUID) == guid {
 			carID = uint8(id)
 			break
 		}
@@ -357,8 +357,8 @@ func (rch *RaceControlHandler) sendChat(w http.ResponseWriter, r *http.Request) 
 
 	var carID uint8
 
-	for id, rangeGuid := range rch.raceControl.CarIDToGUID {
-		if string(rangeGuid) == guid {
+	for id, rangeGUID := range rch.raceControl.CarIDToGUID {
+		if string(rangeGUID) == guid {
 			carID = uint8(id)
 			break
 		}

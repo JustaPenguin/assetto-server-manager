@@ -98,9 +98,9 @@ func (rw *RaceWeekend) GetEntryList() EntryList {
 		}
 
 		return entryList
-	} else {
-		return rw.EntryList
 	}
+
+	return rw.EntryList
 }
 
 func (rw *RaceWeekend) Completed() bool {
@@ -583,9 +583,9 @@ func NewRaceWeekendSession() *RaceWeekendSession {
 func (rws *RaceWeekendSession) Name() string {
 	if rws.isBase {
 		return "Entry List"
-	} else {
-		return rws.SessionInfo().Name
 	}
+
+	return rws.SessionInfo().Name
 }
 
 // SessionInfo returns the information about the Assetto Corsa Session (i.e. practice, qualifying, race)
@@ -941,7 +941,7 @@ func (a ActiveRaceWeekend) EventDescription() string {
 func (a ActiveRaceWeekend) GetURL() string {
 	if config.HTTP.BaseURL != "" {
 		return config.HTTP.BaseURL + "/race-weekend/" + a.RaceWeekendID.String()
-	} else {
-		return ""
 	}
+
+	return ""
 }

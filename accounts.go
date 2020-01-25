@@ -533,9 +533,9 @@ func (am *AccountManager) login(r *http.Request, w http.ResponseWriter) error {
 				sess.Values[sessionAccountID] = account.ID.String()
 
 				return sess.Save(r, w)
-			} else {
-				break
 			}
+
+			break
 		}
 	}
 

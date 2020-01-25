@@ -530,9 +530,9 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		raceWeekendRaceEvent.EntryList = entryList
 
 		return rwm.raceManager.applyConfigAndStart(raceWeekendRaceEvent)
-	} else {
-		return rwm.applyConfigAndStart(raceWeekendRaceEvent)
 	}
+
+	return rwm.applyConfigAndStart(raceWeekendRaceEvent)
 }
 
 func (rwm *RaceWeekendManager) UDPCallback(message udp.Message) {

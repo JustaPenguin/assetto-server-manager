@@ -142,10 +142,10 @@ func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
 				return results.GetTime(results.Result[i].BestLap, results.Result[i].DriverGUID, results.Result[i].CarModel, true) <
 					results.GetTime(results.Result[j].BestLap, results.Result[j].DriverGUID, results.Result[j].CarModel, true)
 
-			} else {
-				// driver i is closer to the front than j if they are not disqualified and j is
-				return results.Result[j].Disqualified
 			}
+
+			// driver i is closer to the front than j if they are not disqualified and j is
+			return results.Result[j].Disqualified
 		})
 	case SessionTypeRace:
 		// sort results.Result, if disqualified go to back, if time penalty sort by laps completed then lap time

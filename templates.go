@@ -99,9 +99,9 @@ func shortenDriverName(name string) string {
 func driverName(name string) string {
 	if UseShortenedDriverNames {
 		return shortenDriverName(name)
-	} else {
-		return name
 	}
+
+	return name
 }
 
 func driverInitials(name string) string {
@@ -119,15 +119,15 @@ func driverInitials(name string) string {
 		}
 
 		return strings.ToUpper(strings.Join(nameParts, ""))
-	} else {
-		nameParts := strings.Split(name, " ")
-
-		if len(nameParts) > 0 && len(nameParts[len(nameParts)-1]) >= 3 {
-			return strings.ToUpper(nameParts[len(nameParts)-1][:3])
-		}
-
-		return strings.ToUpper(name)
 	}
+
+	nameParts := strings.Split(name, " ")
+
+	if len(nameParts) > 0 && len(nameParts[len(nameParts)-1]) >= 3 {
+		return strings.ToUpper(nameParts[len(nameParts)-1][:3])
+	}
+
+	return strings.ToUpper(name)
 }
 
 // Renderer is the template engine.
@@ -408,9 +408,9 @@ func stripGeotagCrap(tag string, north bool) string {
 	// Geotags of "lost" - a hamlet in Scotland
 	if north {
 		return "57.2050"
-	} else {
-		return "-3.0774"
 	}
+
+	return "-3.0774"
 }
 
 var nameRegex = regexp.MustCompile(`^[A-Za-z]{0,5}[0-9]+`)
