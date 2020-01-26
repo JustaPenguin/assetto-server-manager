@@ -232,10 +232,11 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 		_ = rm.notificationManager.SendRaceStartMessage(config, event)
 	}
 
+	// existing timer needs to be stopped in all cases
+	rm.forceStopTimer.Stop()
+
 	if event.GetForceStopTime() != 0 {
 		// initiate force stop timer
-		rm.forceStopTimer.Stop()
-
 		var withDrivers string
 
 		if !event.GetForceStopWithDrivers() {
@@ -244,9 +245,9 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 			withDrivers = "(even if there are drivers on the server at that time)"
 		}
 
-		logrus.Infof("Force Stop timer initialised, the server will be forcibly stopped after %d minutes %s.", event.GetForceStopTime(), withDrivers)
+		logrus.Infof("Force Stop timer initialised, the server will be forcibly stopped after %.2f minutes %s.", event.GetForceStopTime().Minutes(), withDrivers)
 
-		rm.forceStopTimer, err = when.When(time.Now().Add(time.Minute*time.Duration(event.GetForceStopTime())), func() {
+		rm.forceStopTimer, err = when.When(time.Now().Add(event.GetForceStopTime()), func() {
 			if rm.process.IsRunning() {
 
 				if (event.GetForceStopWithDrivers()) || (rm.raceControl.ConnectedDrivers.Len() == 0) {
@@ -265,6 +266,10 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 
 			}
 		})
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

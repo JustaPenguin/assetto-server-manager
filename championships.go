@@ -1497,7 +1497,7 @@ func (a *ActiveChampionship) EventDescription() string {
 	return a.Description
 }
 
-func (a *ActiveChampionship) GetForceStopTime() int {
+func (a *ActiveChampionship) GetForceStopTime() time.Duration {
 	return 0
 }
 

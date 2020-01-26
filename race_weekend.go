@@ -946,7 +946,7 @@ func (a ActiveRaceWeekend) GetURL() string {
 	}
 }
 
-func (a ActiveRaceWeekend) GetForceStopTime() int {
+func (a ActiveRaceWeekend) GetForceStopTime() time.Duration {
 	return 0
 }
 

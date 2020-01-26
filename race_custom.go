@@ -99,8 +99,8 @@ func (cr *CustomRace) ReadOnlyEntryList() EntryList {
 	return cr.EntryList
 }
 
-func (cr *CustomRace) GetForceStopTime() int {
-	return cr.ForceStopTime
+func (cr *CustomRace) GetForceStopTime() time.Duration {
+	return time.Minute * time.Duration(cr.ForceStopTime)
 }
 
 func (cr *CustomRace) GetForceStopWithDrivers() bool {
