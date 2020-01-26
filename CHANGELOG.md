@@ -3,6 +3,7 @@ v1.7.2
 
 Added:
 
+* KissMyRank integration! We've even made it so you can use both sTracker and KissMyRank! Go to the new "KissMyRank" page to find out how to set up KissMyRank. We're marking this as "beta" currently. If you find any issues - please report them to us!
 * You can now duplicate any Championship Event (including Race Weekends!)
 
 Fixes:

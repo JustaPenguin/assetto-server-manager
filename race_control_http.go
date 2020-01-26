@@ -158,13 +158,14 @@ func NewRaceControlHandler(baseHandler *BaseHandler, store Store, raceManager *R
 type liveTimingTemplateVars struct {
 	BaseTemplateVars
 
-	RaceDetails         *CustomRace
-	FrameLinks          []string
-	CSSDotSmoothing     int
-	CMJoinLink          string
-	UseMPH              bool
-	IsStrackerEnabled   bool
-	IsKissMyRankEnabled bool
+	RaceDetails                 *CustomRace
+	FrameLinks                  []string
+	CSSDotSmoothing             int
+	CMJoinLink                  string
+	UseMPH                      bool
+	IsStrackerEnabled           bool
+	IsKissMyRankEnabled         bool
+	KissMyRankWebStatsPublicURL string
 }
 
 func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request) {
@@ -224,13 +225,14 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		BaseTemplateVars: BaseTemplateVars{
 			WideContainer: true,
 		},
-		RaceDetails:         customRace,
-		FrameLinks:          frameLinks,
-		CSSDotSmoothing:     udp.RealtimePosIntervalMs,
-		CMJoinLink:          linkString,
-		UseMPH:              serverOpts.UseMPH == 1,
-		IsStrackerEnabled:   IsStrackerInstalled() && strackerOptions.EnableStracker,
-		IsKissMyRankEnabled: IsKissMyRankInstalled() && kissMyRankOptions.EnableKissMyRank,
+		RaceDetails:                 customRace,
+		FrameLinks:                  frameLinks,
+		CSSDotSmoothing:             udp.RealtimePosIntervalMs,
+		CMJoinLink:                  linkString,
+		UseMPH:                      serverOpts.UseMPH == 1,
+		IsStrackerEnabled:           IsStrackerInstalled() && strackerOptions.EnableStracker,
+		IsKissMyRankEnabled:         IsKissMyRankInstalled() && kissMyRankOptions.EnableKissMyRank,
+		KissMyRankWebStatsPublicURL: kissMyRankOptions.WebStatsPublicURL,
 	})
 }
 

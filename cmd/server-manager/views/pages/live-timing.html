@@ -86,8 +86,8 @@
                 <a href="/stracker/mainpage" class="btn btn-primary btn-sm mt-1">STracker</a>
             {{ end }}
 
-            {{ if $.IsKissMyRankEnabled }}
-                <a href="/kissmyrank" class="btn btn-warning btn-sm mt-1">KissMyRank</a>
+            {{ if and $.IsKissMyRankEnabled (ne $.KissMyRankWebStatsPublicURL "") }}
+                <a href="{{ $.KissMyRankWebStatsPublicURL }}" target="_blank" class="btn btn-warning btn-sm mt-1">KissMyRank</a>
             {{ end }}
         </div>
 

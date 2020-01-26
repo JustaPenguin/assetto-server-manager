@@ -358,6 +358,7 @@ type KissMyRankConfig struct {
 	WebStatsInterface             int         `json:"web_stats_interface" input:"checkbox" help:"Whether to enable the web stats interface (required for Race Control and Race Director collision moderation)."`
 	WebStatsServerAddress         string      `json:"web_stats_server_address" help:"Stats Web Server Address (change this if you want to listen only on a certain interface, not recommended)."`
 	WebStatsServerPort            int         `json:"web_stats_server_port" help:"Stats Web Server Port. For linux read the troubleshooting section of the readme.txt help file."`
+	WebStatsPublicURL             string      `json:"web_stats_public_url" help:"<strong>Please set up this value if you are using the web stats port!</strong> This should be set to the URL that anyone can access. This link will be displayed on Server Manager's Live Timings page so that anybody can view the KMR interface. If this is left blank, no link will be shown on the Live Timings page!'"`
 	WebStatsDriversPerPage        int         `json:"web_stats_drivers_per_page" help:"Web Stats Drivers per page. Sets how many drivers per page will show on the Web Stats Drivers list."`
 	WebStatsCacheTime             int         `json:"web_stats_cache_time" help:"Time to cache the stats in seconds (decreasing might increase CPU usage)"`
 	WebStatsOverridePublicAddress string      `json:"web_stats_override_public_address" help:"Set this to your server public Web Stats address if you wish to override the plugin public address autodetection."`
@@ -703,14 +704,6 @@ func (kmrh *KissMyRankHandler) options(w http.ResponseWriter, r *http.Request) {
 		} else {
 			AddFlash(w, r, "KissMyRank options successfully saved!")
 		}
-
-		/*
-			err = kmrh.initReverseProxy()
-
-			if err != nil {
-				logrus.WithError(err).Errorf("couldn't re-init KissMyRank proxy")
-			}
-		*/
 	}
 
 	kmrh.viewRenderer.MustLoadTemplate(w, r, "server/kissmyrank-options.html", &kissMyRankConfigurationTemplateVars{
