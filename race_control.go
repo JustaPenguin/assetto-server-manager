@@ -1,7 +1,6 @@
 package servermanager
 
 import (
-	"context"
 	"fmt"
 	"math"
 	"strings"
@@ -30,14 +29,14 @@ type RaceControl struct {
 	CarIDToGUID      map[udp.CarID]udp.DriverGUID `json:"CarIDToGUID"`
 	carIDToGUIDMutex sync.RWMutex
 
-	carUpdaters map[udp.CarID]chan udp.CarUpdate
-
-	sessionInfoTicker  *time.Ticker
-	sessionInfoContext context.Context
-	sessionInfoCfn     context.CancelFunc
+	carUpdaters          map[udp.CarID]chan udp.CarUpdate
+	serverProcessStopped chan struct{}
 
 	broadcaster      Broadcaster
 	trackDataGateway TrackDataGateway
+
+	lastUpdateMessage      []byte
+	lastUpdateMessageMutex sync.Mutex
 
 	persistStoreDataMutex sync.Mutex
 }
@@ -65,16 +64,19 @@ type Collision struct {
 
 func NewRaceControl(broadcaster Broadcaster, trackDataGateway TrackDataGateway, process ServerProcess, store Store) *RaceControl {
 	rc := &RaceControl{
-		broadcaster:      broadcaster,
-		trackDataGateway: trackDataGateway,
-		process:          process,
-		store:            store,
-		carUpdaters:      make(map[udp.CarID]chan udp.CarUpdate),
+		broadcaster:          broadcaster,
+		trackDataGateway:     trackDataGateway,
+		process:              process,
+		store:                store,
+		carUpdaters:          make(map[udp.CarID]chan udp.CarUpdate),
+		serverProcessStopped: make(chan struct{}),
 	}
+
+	process.NotifyDone(rc.serverProcessStopped)
 
 	rc.clearAllDrivers()
 
-	go rc.watchForTimedOutDrivers()
+	go panicCapture(rc.watchForTimedOutDrivers)
 
 	return rc
 }
@@ -137,14 +139,16 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 		// update the current refresh rate
 		rc.CurrentRealtimePosInterval = udp.CurrentRealtimePosIntervalMs
 
-		err = rc.broadcaster.Send(rc)
+		lastUpdateMessage, err := rc.broadcaster.Send(rc)
 
 		if err != nil {
 			logrus.WithError(err).Error("Unable to broadcast race control message")
 			return
 		}
 
-		go rc.persistTimingData()
+		rc.lastUpdateMessageMutex.Lock()
+		rc.lastUpdateMessage = lastUpdateMessage
+		rc.lastUpdateMessageMutex.Unlock()
 	}
 }
 
@@ -157,6 +161,9 @@ func (rc *RaceControl) watchForTimedOutDrivers() {
 		var driversToDisconnect []*RaceControlDriver
 
 		_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
+			driver.mutex.Lock()
+			defer driver.mutex.Unlock()
+
 			if !driver.LastSeen.IsZero() && time.Since(driver.LastSeen) > driverTimeout || driver.LastSeen.IsZero() && time.Since(driver.ConnectedTime) > driverTimeout {
 				driversToDisconnect = append(driversToDisconnect, driver)
 			}
@@ -175,7 +182,7 @@ func (rc *RaceControl) watchForTimedOutDrivers() {
 		}
 
 		if len(driversToDisconnect) > 0 {
-			err := rc.broadcaster.Send(rc)
+			_, err := rc.broadcaster.Send(rc)
 
 			if err != nil {
 				logrus.WithError(err).Error("Could not broadcast driver disconnect message")
@@ -186,7 +193,11 @@ func (rc *RaceControl) watchForTimedOutDrivers() {
 
 // OnVersion occurs when the Assetto Corsa Server starts up for the first time.
 func (rc *RaceControl) OnVersion(version udp.Version) error {
-	return rc.broadcaster.Send(version)
+	go panicCapture(rc.requestSessionInfo)
+
+	_, err := rc.broadcaster.Send(version)
+
+	return err
 }
 
 // OnCarUpdate occurs every udp.RealTimePosInterval and returns car position, speed, etc.
@@ -195,7 +206,7 @@ func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) error {
 	if ch, ok := rc.carUpdaters[update.CarID]; !ok || ch == nil {
 		rc.carUpdaters[update.CarID] = make(chan udp.CarUpdate, 1000)
 
-		go func() {
+		go panicCapture(func() {
 			for update := range rc.carUpdaters[update.CarID] {
 				err := rc.handleCarUpdate(update)
 
@@ -203,7 +214,7 @@ func (rc *RaceControl) OnCarUpdate(update udp.CarUpdate) error {
 					logrus.WithError(err).Error("Could not handle car update")
 				}
 			}
-		}()
+		})
 	}
 
 	rc.carUpdaters[update.CarID] <- update
@@ -218,6 +229,9 @@ func (rc *RaceControl) handleCarUpdate(update udp.CarUpdate) error {
 		return err
 	}
 
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
 	speed := metersPerSecondToKilometersPerHour(
 		math.Sqrt(math.Pow(float64(update.Velocity.X), 2) + math.Pow(float64(update.Velocity.Z), 2)),
 	)
@@ -229,8 +243,12 @@ func (rc *RaceControl) handleCarUpdate(update udp.CarUpdate) error {
 	driver.LastSeen = time.Now()
 	driver.LastPos = update.Pos
 
-	return rc.broadcaster.Send(update)
+	_, err = rc.broadcaster.Send(update)
+
+	return err
 }
+
+var emptyCarInfoMutex = sync.Mutex{}
 
 // OnNewSession occurs every new session. If the session is the first in an event and it is not a looped practice,
 // then all driver information is cleared.
@@ -250,6 +268,9 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 
 	if emptyCarInfo {
 		_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
+			emptyCarInfoMutex.Lock()
+			defer emptyCarInfoMutex.Unlock()
+
 			*driver = *NewRaceControlDriver(driver.CarInfo)
 
 			return nil
@@ -262,6 +283,9 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 
 	// clear out last lap completed time each new session
 	_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
+		driver.mutex.Lock()
+		defer driver.mutex.Unlock()
+
 		driver.CurrentCar().LastLapCompletedTime = time.Now()
 
 		return nil
@@ -287,8 +311,6 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 
 	logrus.Debugf("New session detected: %s at %s (%s) [emptyCarInfo: %t]", sessionInfo.Type.String(), sessionInfo.Track, sessionInfo.TrackConfig, emptyCarInfo)
 
-	go rc.requestSessionInfo()
-
 	// look for live timings stored previously
 	persistedInfo, err := rc.store.LoadLiveTimingsData()
 
@@ -313,7 +335,9 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 		logrus.WithError(err).Debugf("Could not load persisted live timings practice data")
 	}
 
-	return rc.broadcaster.Send(sessionInfo)
+	_, err = rc.broadcaster.Send(sessionInfo)
+
+	return err
 }
 
 // clearAllDrivers removes all known information about connected and disconnected drivers from RaceControl
@@ -329,34 +353,28 @@ var sessionInfoRequestInterval = time.Second * 30
 
 // requestSessionInfo sends a request every sessionInfoRequestInterval to get information about temps, etc in the session.
 func (rc *RaceControl) requestSessionInfo() {
-	if rc.sessionInfoTicker != nil {
-		rc.sessionInfoTicker.Stop()
-	}
-
-	serverStopped := make(chan struct{})
-	rc.process.NotifyDone(serverStopped)
-	rc.sessionInfoTicker = time.NewTicker(sessionInfoRequestInterval)
-	rc.sessionInfoContext, rc.sessionInfoCfn = context.WithCancel(context.Background())
+	sessionInfoTicker := time.NewTicker(sessionInfoRequestInterval)
 
 	for {
 		select {
-		case <-rc.sessionInfoTicker.C:
+		case <-sessionInfoTicker.C:
 			err := rc.process.SendUDPMessage(udp.GetSessionInfo{})
 
 			if err == ErrNoOpenUDPConnection {
 				logrus.WithError(err).Warnf("Couldn't send session info udp request. Breaking loop.")
-				rc.sessionInfoTicker.Stop()
+				sessionInfoTicker.Stop()
 				return
 			} else if err != nil {
 				logrus.WithError(err).Errorf("Couldn't send session info udp request")
 			}
 
-		case <-serverStopped:
-			rc.sessionInfoTicker.Stop()
-
+		case <-rc.serverProcessStopped:
 			logrus.Debugf("Assetto Process completed. Disconnecting all connected drivers. Session done.")
+			sessionInfoTicker.Stop()
 
 			var drivers []*RaceControlDriver
+
+			rc.persistTimingData()
 
 			// the server has just stopped. send disconnect messages for all connected cars.
 			_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
@@ -377,21 +395,21 @@ func (rc *RaceControl) requestSessionInfo() {
 				}
 			}
 
-			if err := rc.broadcaster.Send(rc); err != nil {
+			if _, err := rc.broadcaster.Send(rc); err != nil {
 				logrus.WithError(err).Errorf("Couldn't broadcast race control")
 			}
 
-			return
-		case <-rc.sessionInfoContext.Done():
-			rc.sessionInfoTicker.Stop()
 			return
 		}
 	}
 }
 
 func (rc *RaceControl) disconnectDriver(driver *RaceControlDriver) error {
+	driver.mutex.Lock()
 	carInfo := driver.CarInfo
 	carInfo.EventType = udp.EventConnectionClosed
+	driver.mutex.Unlock()
+
 	return rc.OnClientDisconnect(carInfo)
 }
 
@@ -413,10 +431,6 @@ func (rc *RaceControl) OnSessionUpdate(sessionInfo udp.SessionInfo) (bool, error
 
 // OnEndSession is called at the end of every session.
 func (rc *RaceControl) OnEndSession(sessionFile udp.EndSession) error {
-	if rc.sessionInfoCfn != nil {
-		rc.sessionInfoCfn()
-	}
-
 	return nil
 }
 
@@ -434,13 +448,16 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 
 	if disconnectedDriver, ok := rc.DisconnectedDrivers.Get(client.DriverGUID); ok {
 		driver = disconnectedDriver
-		driver.CarInfo = client
 		logrus.Debugf("Driver %s (%s) reconnected in %s (car id: %d)", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID, driver.CarInfo.CarModel, client.CarID)
 		rc.DisconnectedDrivers.Del(client.DriverGUID)
 	} else {
 		driver = NewRaceControlDriver(client)
 		logrus.Debugf("Driver %s (%s) connected in %s (car id: %d)", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID, driver.CarInfo.CarModel, client.CarID)
 	}
+
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+	driver.CarInfo = client
 
 	if _, ok := driver.Cars[driver.CarInfo.CarModel]; !ok {
 		driver.Cars[driver.CarInfo.CarModel] = &RaceControlCarLapInfo{}
@@ -452,7 +469,9 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 
 	rc.ConnectedDrivers.Add(driver.CarInfo.DriverGUID, driver)
 
-	return rc.broadcaster.Send(client)
+	_, err := rc.broadcaster.Send(client)
+
+	return err
 }
 
 // OnClientDisconnect moves a client from ConnectedDrivers to DisconnectedDrivers.
@@ -467,6 +486,9 @@ func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
 		return fmt.Errorf("racecontrol: client disconnected without ever being connected: %s (%s)", client.DriverName, client.DriverGUID)
 	}
 
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
 	logrus.Debugf("Driver %s (%s) disconnected", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
 
 	rc.ConnectedDrivers.Del(driver.CarInfo.DriverGUID)
@@ -475,7 +497,9 @@ func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
 		rc.DisconnectedDrivers.Add(driver.CarInfo.DriverGUID, driver)
 	}
 
-	return rc.broadcaster.Send(client)
+	_, err := rc.broadcaster.Send(client)
+
+	return err
 }
 
 // findConnectedDriverByCarID looks for a driver in ConnectedDrivers by their CarID. This is the only place CarID
@@ -506,12 +530,16 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 		return err
 	}
 
-	serverConfig := rc.process.GetServerConfig()
+	serverConfig, err := rc.store.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
 
 	solWarning := ""
 	liveLink := ""
 
-	if serverConfig.CurrentRaceConfig.IsSol == 1 {
+	if rc.process.Event().GetRaceConfig().IsSol == 1 {
 		solWarning = "This server is running Sol. For the best experience please install Sol, and remember the other drivers may be driving in night conditions."
 	}
 
@@ -523,8 +551,8 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 		fmt.Sprintf(
 			"Hi, %s! Welcome to the %s server! %s %s Make this race count! %s\n",
 			driver.CarInfo.DriverName,
-			serverConfig.GlobalServerConfig.GetName(),
-			serverConfig.GlobalServerConfig.ServerJoinMessage,
+			serverConfig.GetName(),
+			serverConfig.ServerJoinMessage,
 			solWarning,
 			liveLink,
 		),
@@ -549,7 +577,9 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 
 	driver.LoadedTime = time.Now()
 
-	return rc.broadcaster.Send(loadedCar)
+	_, err = rc.broadcaster.Send(loadedCar)
+
+	return err
 }
 
 // OnLapCompleted occurs every time a driver crosses the line. Lap information is collected for the driver
@@ -561,6 +591,9 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 	if err != nil {
 		return err
 	}
+
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
 
 	lapDuration := lapToDuration(int(lap.LapTime))
 
@@ -687,6 +720,9 @@ func (rc *RaceControl) OnCollisionWithCar(collision udp.CollisionWithCar) error 
 		Speed: metersPerSecondToKilometersPerHour(float64(collision.ImpactSpeed)),
 	}
 
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
 	otherDriver, err := rc.findConnectedDriverByCarID(collision.OtherCarID)
 
 	if err == nil {
@@ -696,7 +732,9 @@ func (rc *RaceControl) OnCollisionWithCar(collision udp.CollisionWithCar) error 
 
 	driver.Collisions = append(driver.Collisions, c)
 
-	return rc.broadcaster.Send(collision)
+	_, err = rc.broadcaster.Send(collision)
+
+	return err
 }
 
 // OnCollisionWithEnvironment registers a driver's collision with the environment.
@@ -707,6 +745,9 @@ func (rc *RaceControl) OnCollisionWithEnvironment(collision udp.CollisionWithEnv
 		return err
 	}
 
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
 	driver.Collisions = append(driver.Collisions, Collision{
 		ID:    uuid.New().String(),
 		Type:  CollisionWithEnvironment,
@@ -714,7 +755,9 @@ func (rc *RaceControl) OnCollisionWithEnvironment(collision udp.CollisionWithEnv
 		Speed: metersPerSecondToKilometersPerHour(float64(collision.ImpactSpeed)),
 	})
 
-	return rc.broadcaster.Send(collision)
+	_, err = rc.broadcaster.Send(collision)
+
+	return err
 }
 
 type LiveTimingsPersistedData struct {
@@ -744,6 +787,8 @@ func (rc *RaceControl) persistTimingData() {
 	if err != nil {
 		logrus.WithError(err).Errorf("Could not save live timings data")
 	}
+
+	logrus.Debug("successfully persisted live timing data")
 }
 
 func (rc *RaceControl) AllLapTimes() map[udp.DriverGUID]*RaceControlDriver {

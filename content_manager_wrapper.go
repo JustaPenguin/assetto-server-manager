@@ -154,6 +154,9 @@ func (cmw *ContentManagerWrapper) NewCMContent(cars []string, trackName string, 
 }
 
 func (cmw *ContentManagerWrapper) UDPCallback(message udp.Message) {
+	cmw.mutex.Lock()
+	defer cmw.mutex.Unlock()
+
 	switch m := message.(type) {
 	case udp.SessionInfo:
 		cmw.sessionInfo = m
@@ -219,20 +222,27 @@ func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 	return nil
 }
 
-func (cmw *ContentManagerWrapper) Start(process ServerProcess, servePort int, serverConfig ServerConfig, entryList EntryList, event RaceEvent) error {
+func (cmw *ContentManagerWrapper) Start(servePort int, event RaceEvent) error {
 	cmw.mutex.Lock()
-	defer cmw.mutex.Unlock()
 
 	logrus.Infof("Starting content manager wrapper server on port %d", servePort)
 
-	u, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", serverConfig.GlobalServerConfig.HTTPPort))
+	serverOptions, err := cmw.store.LoadServerOptions()
 
 	if err != nil {
+		cmw.mutex.Unlock()
 		return err
 	}
 
-	cmw.serverConfig = serverConfig
-	cmw.entryList = entryList
+	u, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", serverOptions.HTTPPort))
+
+	if err != nil {
+		cmw.mutex.Unlock()
+		return err
+	}
+
+	cmw.serverConfig = ServerConfig{GlobalServerConfig: *serverOptions, CurrentRaceConfig: event.GetRaceConfig()}
+	cmw.entryList = event.GetEntryList()
 	cmw.event = event
 	cmw.reverseProxy = httputil.NewSingleHostReverseProxy(u)
 
@@ -243,6 +253,8 @@ func (cmw *ContentManagerWrapper) Start(process ServerProcess, servePort int, se
 	cmw.srv = &http.Server{Addr: fmt.Sprintf(":%d", servePort)}
 	cmw.srv.Handler = cmw
 
+	cmw.mutex.Unlock()
+
 	if err := cmw.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return err
 	}
@@ -251,6 +263,9 @@ func (cmw *ContentManagerWrapper) Start(process ServerProcess, servePort int, se
 }
 
 func (cmw *ContentManagerWrapper) Stop() {
+	cmw.mutex.Lock()
+	defer cmw.mutex.Unlock()
+
 	if cmw.srv == nil {
 		return
 	}
@@ -348,6 +363,9 @@ func (cmw *ContentManagerWrapper) getPlayers(guid string) (*ACHTTPPlayers, error
 }
 
 func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*ContentManagerWrapperData, error) {
+	cmw.mutex.Lock()
+	defer cmw.mutex.Unlock()
+
 	race := cmw.serverConfig.CurrentRaceConfig
 	global := cmw.serverConfig.GlobalServerConfig
 	live := cmw.sessionInfo
@@ -525,7 +543,7 @@ func geoIP() (*GeoIP, error) {
 	return geoIPData, nil
 }
 
-func getContentManagerJoinLink(config ServerConfig) (*url.URL, error) {
+func getContentManagerJoinLink(config GlobalServerConfig) (*url.URL, error) {
 	geoIP, err := geoIP()
 
 	if err != nil {
@@ -540,7 +558,7 @@ func getContentManagerJoinLink(config ServerConfig) (*url.URL, error) {
 
 	queryString := cmUrl.Query()
 	queryString.Set("ip", geoIP.IP)
-	queryString.Set("httpPort", strconv.Itoa(config.GlobalServerConfig.HTTPPort))
+	queryString.Set("httpPort", strconv.Itoa(config.HTTPPort))
 
 	cmUrl.RawQuery = queryString.Encode()
 

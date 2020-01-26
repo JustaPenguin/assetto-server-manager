@@ -237,8 +237,8 @@ func (cs CarSpecs) Numeric() CarSpecsNumeric {
 type CarManager struct {
 	carIndex bleve.Index
 
-	searchIndexRebuildMutex sync.Mutex
-	trackManager            *TrackManager
+	searchMutex  sync.Mutex
+	trackManager *TrackManager
 }
 
 func NewCarManager(trackManager *TrackManager, watchForCarChanges bool) *CarManager {
@@ -479,6 +479,9 @@ const searchPageSize = 50
 
 // CreateSearchIndex builds a search index for the cars
 func (cm *CarManager) CreateOrOpenSearchIndex() error {
+	cm.searchMutex.Lock()
+	defer cm.searchMutex.Unlock()
+
 	indexPath := filepath.Join(ServerInstallPath, "search-index", "cars")
 
 	var err error
@@ -518,9 +521,6 @@ func (cm *CarManager) DeIndexCar(name string) error {
 
 // IndexAllCars loads all current cars and adds them to the search index
 func (cm *CarManager) IndexAllCars() error {
-	cm.searchIndexRebuildMutex.Lock()
-	defer cm.searchIndexRebuildMutex.Unlock()
-
 	logrus.Infof("Building search index for all cars")
 	started := time.Now()
 
@@ -585,6 +585,9 @@ func (cm *CarManager) rebuildTerm(term string) string {
 
 // Search looks for cars in the search index.
 func (cm *CarManager) Search(ctx context.Context, term string, from, size int) (*bleve.SearchResult, Cars, error) {
+	cm.searchMutex.Lock()
+	defer cm.searchMutex.Unlock()
+
 	var q query.Query
 
 	term = cm.rebuildTerm(term)

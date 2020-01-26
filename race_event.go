@@ -95,3 +95,9 @@ func unmarshalRaceEvent(data []byte) (RaceEvent, error) {
 
 	return raceEvent, err
 }
+
+func describeRaceEvent(raceEvent RaceEvent) string {
+	cfg := raceEvent.GetRaceConfig()
+
+	return fmt.Sprintf("%d sessions with %d entrants at %s (%s)", len(cfg.Sessions), len(raceEvent.GetEntryList()), cfg.Track, cfg.TrackLayout)
+}

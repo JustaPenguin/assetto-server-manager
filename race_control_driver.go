@@ -38,6 +38,8 @@ type RaceControlDriver struct {
 
 	// Cars is a map of CarModel to the information for that car.
 	Cars map[string]*RaceControlCarLapInfo `json:"Cars"`
+
+	mutex sync.Mutex
 }
 
 func (rcd *RaceControlDriver) CurrentCar() *RaceControlCarLapInfo {
