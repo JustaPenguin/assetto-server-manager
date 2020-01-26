@@ -4,6 +4,7 @@ v1.7.2
 Added:
 
 * You can now duplicate any Championship Event (including Race Weekends!)
+* The Championship Sign Up form now allows multiple Steam GUIDs separated by a semi-colon (for driver swaps).
 
 Fixes:
 
