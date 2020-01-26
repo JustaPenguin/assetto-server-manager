@@ -53,7 +53,11 @@ func (f Form) Submit(r *http.Request) error {
 	val := reflect.ValueOf(f.data).Elem()
 
 	for name, vals := range r.Form {
-		f.assignFieldValues(val, name, vals)
+		err := f.assignFieldValues(val, name, vals)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

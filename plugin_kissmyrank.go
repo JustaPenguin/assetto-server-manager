@@ -22,17 +22,17 @@ const (
 func KissMyRankExecutablePath() string {
 	if runtime.GOOS == "windows" {
 		return filepath.Join(KissMyRankFolderPath(), "ac_kissmyrank-win.exe")
-	} else {
-		return filepath.Join(KissMyRankFolderPath(), "ac_kissmyrank-linux")
 	}
+
+	return filepath.Join(KissMyRankFolderPath(), "ac_kissmyrank-linux")
 }
 
 func fixKissMyRankExecutablePermissions() error {
 	if runtime.GOOS == "linux" {
 		return os.Chmod(KissMyRankExecutablePath(), 0755)
-	} else {
-		return nil
 	}
+
+	return nil
 }
 
 func KissMyRankFolderPath() string {
@@ -383,7 +383,7 @@ type KissMyRankConfig struct {
 	CurrencySymbol                       string      `json:"currency_symbol" help:"The symbol of the currency used for all drivers fines and payments (e.g. €,$,RUB)."`
 	ThousandSeparator                    string      `json:"thousand_separator" help:"The symbol to be used to separate thousands (e.g. 19,000 or 19.000)."`
 	StartMoney                           float64     `json:"start_money" help:"The money (in thousands) that any unranked player is given when he joins the server the first time (30=30000€). Please also check min_money in order to make sure that this value makes sense."`
-	MinMoney                             int         `json:"Minimum amount of money (in thousands) a driver must have to stay on the server. 1 = 1000€ (e.g. -12 -> drivers with more than 12000€ of debt will be kicked). Please also check start_money in order to make sure that this value makes sense."`
+	MinMoney                             int         `json:"min_money" help:"Minimum amount of money (in thousands) a driver must have to stay on the server. 1 = 1000€ (e.g. -12 -> drivers with more than 12000€ of debt will be kicked). Please also check start_money in order to make sure that this value makes sense."`
 	NoMoney                              int         `json:"no_money" input:"checkbox" help:"Set this to ON if you wish to use points instead of money (no money, no party :D)."`
 	RaceMinimumPlayers                   int         `json:"race_min_players" help:"Minimum number of players required to race (must be >=2 if you're using the money system). If there are not enough players the server will skip the race session."`
 	RaceDriverEntryFee                   float64     `json:"race_driver_entry_fee" help:"How much a driver has to pay to enter a race session on the server (in thousands). 0.3 = 300€ (e.g. drivers will be charged 300€ at the beginning of each race)."`
