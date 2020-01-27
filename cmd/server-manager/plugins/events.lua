@@ -1,5 +1,5 @@
 json = require "json"
-
+utils = require "utils"
 
 -- these are lua hooks related to the manager itself, for help please view lua_readme.md!
 -- there are some example functions here to give you an idea of what is possible, feel free to write your own!
