@@ -28,4 +28,28 @@ dump = function(o, d)
     end
 end
 
+-- let's call this future proofing
+-- broadcast chat to all drivers on server
+function utils.broadcastChat(message)
+    local success = broadcastChat(message)
+
+    if not success or success == nil then
+        print("lua: failed to broadcast chat")
+    end
+end
+
+-- send chat to specific driver on server, by guid
+function utils.sendChat(message, guid)
+    local success = sendChatChat(message, guid)
+
+    if not success or success == nil then
+        print("lua: failed to broadcast chat")
+    end
+end
+
+-- probably only works on Linux
+function utils.sleep(n)
+    os.execute("sleep " .. tonumber(n))
+end
+
 return utils

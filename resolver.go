@@ -69,7 +69,7 @@ func NewResolver(templateLoader TemplateLoader, reloadTemplates bool, store Stor
 
 func (r *Resolver) UDPCallback(message udp.Message) {
 	if !config.Server.PerformanceMode {
-		r.resolveRaceControl().UDPCallback(message)
+		r.ResolveRaceControl().UDPCallback(message)
 	}
 
 	if message.Event() != udp.EventCarUpdate {
@@ -143,7 +143,7 @@ func (r *Resolver) resolveRaceManager() *RaceManager {
 		r.resolveCarManager(),
 		r.resolveTrackManager(),
 		r.resolveNotificationManager(),
-		r.resolveRaceControl(),
+		r.ResolveRaceControl(),
 	)
 
 	return r.raceManager
@@ -361,7 +361,7 @@ func (r *Resolver) resolveRaceControlHub() *RaceControlHub {
 	return r.raceControlHub
 }
 
-func (r *Resolver) resolveRaceControl() *RaceControl {
+func (r *Resolver) ResolveRaceControl() *RaceControl {
 	if r.raceControl != nil {
 		return r.raceControl
 	}
@@ -389,7 +389,7 @@ func (r *Resolver) resolveRaceControlHandler() *RaceControlHandler {
 		r.resolveBaseHandler(),
 		r.ResolveStore(),
 		r.resolveRaceManager(),
-		r.resolveRaceControl(),
+		r.ResolveRaceControl(),
 		r.resolveRaceControlHub(),
 		r.resolveServerProcess(),
 	)
@@ -460,7 +460,7 @@ func (r *Resolver) resolveHealthCheck() *HealthCheck {
 		return r.healthCheck
 	}
 
-	r.healthCheck = NewHealthCheck(r.resolveRaceControl(), r.ResolveStore())
+	r.healthCheck = NewHealthCheck(r.ResolveRaceControl(), r.ResolveStore())
 
 	return r.healthCheck
 }
