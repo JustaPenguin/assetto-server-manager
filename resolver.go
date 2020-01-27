@@ -47,6 +47,7 @@ type Resolver struct {
 	raceWeekendHandler          *RaceWeekendHandler
 	strackerHandler             *StrackerHandler
 	healthCheck                 *HealthCheck
+	kissMyRankHandler           *KissMyRankHandler
 }
 
 func NewResolver(templateLoader TemplateLoader, reloadTemplates bool, store Store) (*Resolver, error) {
@@ -465,6 +466,19 @@ func (r *Resolver) resolveHealthCheck() *HealthCheck {
 	return r.healthCheck
 }
 
+func (r *Resolver) resolveKissMyRankHandler() *KissMyRankHandler {
+	if r.kissMyRankHandler != nil {
+		return r.kissMyRankHandler
+	}
+
+	r.kissMyRankHandler = NewKissMyRankHandler(
+		r.resolveBaseHandler(),
+		r.ResolveStore(),
+	)
+
+	return r.kissMyRankHandler
+}
+
 func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
 	return Router(
 		fs,
@@ -485,6 +499,7 @@ func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
 		r.resolveRaceWeekendHandler(),
 		r.resolveStrackerHandler(),
 		r.resolveHealthCheck(),
+		r.resolveKissMyRankHandler(),
 	)
 }
 
