@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
-	"github.com/mitchellh/go-ps"
 
 	"github.com/sirupsen/logrus"
 )
@@ -22,90 +21,180 @@ import (
 const MaxLogSizeBytes = 1e6
 
 type ServerProcess interface {
-	Logs() string
-	Start(cfg ServerConfig, entryList EntryList, forwardingAddress string, forwardListenPort int, event RaceEvent) error
+	Start(event RaceEvent, udpPluginAddress string, udpPluginLocalPort int, forwardingAddress string, forwardListenPort int) error
 	Stop() error
 	Restart() error
 	IsRunning() bool
 	Event() RaceEvent
 	UDPCallback(message udp.Message)
 	SendUDPMessage(message udp.Message) error
-	GetServerConfig() ServerConfig
 	NotifyDone(chan struct{})
+	Logs() string
 }
 
-var ErrServerAlreadyRunning = errors.New("servermanager: assetto corsa server is already running")
-
-// AssettoServerProcess manages the assetto corsa server process.
+// AssettoServerProcess manages the Assetto Corsa Server process.
 type AssettoServerProcess struct {
+	store                 Store
 	contentManagerWrapper *ContentManagerWrapper
 
-	cmd *exec.Cmd
-
-	out   *logBuffer
-	mutex sync.Mutex
+	start                 chan RaceEvent
+	started, stopped, run chan error
+	notifyDoneChs         []chan struct{}
 
 	ctx context.Context
 	cfn context.CancelFunc
 
-	doneChs []chan struct{}
-	store   Store
+	logBuffer *logBuffer
 
+	raceEvent      RaceEvent
+	cmd            *exec.Cmd
+	mutex          sync.Mutex
 	extraProcesses []*exec.Cmd
 
-	serverConfig      ServerConfig
-	entryList         EntryList
-	forwardingAddress string
-	forwardListenPort int
-	udpServerConn     *udp.AssettoServerUDP
-	udpStatusMutex    sync.Mutex
-	callbackFunc      udp.CallbackFunc
-	event             RaceEvent
+	// udp
+	callbackFunc       udp.CallbackFunc
+	udpServerConn      *udp.AssettoServerUDP
+	udpPluginAddress   string
+	udpPluginLocalPort int
+	forwardingAddress  string
+	forwardListenPort  int
 }
 
 func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, store Store, contentManagerWrapper *ContentManagerWrapper) *AssettoServerProcess {
-	ctx, cfn := context.WithCancel(context.Background())
-
-	return &AssettoServerProcess{
-		ctx:                   ctx,
-		cfn:                   cfn,
+	sp := &AssettoServerProcess{
+		start:                 make(chan RaceEvent),
+		started:               make(chan error),
+		stopped:               make(chan error),
+		run:                   make(chan error),
+		logBuffer:             newLogBuffer(MaxLogSizeBytes),
 		callbackFunc:          callbackFunc,
-		contentManagerWrapper: contentManagerWrapper,
 		store:                 store,
+		contentManagerWrapper: contentManagerWrapper,
+	}
+
+	go sp.loop()
+
+	return sp
+}
+
+func (sp *AssettoServerProcess) UDPCallback(message udp.Message) {
+	panicCapture(func() {
+		sp.callbackFunc(message)
+	})
+}
+
+func (sp *AssettoServerProcess) Start(event RaceEvent, udpPluginAddress string, udpPluginLocalPort int, forwardingAddress string, forwardListenPort int) error {
+	sp.mutex.Lock()
+	sp.udpPluginAddress = udpPluginAddress
+	sp.udpPluginLocalPort = udpPluginLocalPort
+	sp.forwardingAddress = forwardingAddress
+	sp.forwardListenPort = forwardListenPort
+	sp.mutex.Unlock()
+
+	sp.start <- event
+
+	return <-sp.started
+}
+
+func (sp *AssettoServerProcess) IsRunning() bool {
+	sp.mutex.Lock()
+	defer sp.mutex.Unlock()
+
+	return sp.raceEvent != nil
+}
+
+var ErrServerProcessTimeout = errors.New("servermanager: server process did not stop even after manual kill. please check your server configuration")
+
+func (sp *AssettoServerProcess) Stop() error {
+	timeout := time.After(time.Second * 10)
+	fullTimeout := time.After(time.Second * 15)
+	sp.cfn()
+
+	for {
+		select {
+		case err := <-sp.stopped:
+			return err
+		case <-timeout:
+			sp.mutex.Lock()
+			logrus.Debug("Server process did not naturally stop after 10s. Attempting manual kill.")
+			err := kill(sp.cmd.Process)
+
+			if err != nil {
+				logrus.WithError(err).Error("Could not forcibly kill command")
+			}
+			sp.mutex.Unlock()
+		case <-fullTimeout:
+			return ErrServerProcessTimeout
+		}
 	}
 }
 
-func (as *AssettoServerProcess) NotifyDone(ch chan struct{}) {
-	as.doneChs = append(as.doneChs, ch)
-}
+func (sp *AssettoServerProcess) Restart() error {
+	running := sp.IsRunning()
 
-// Logs outputs the server logs
-func (as *AssettoServerProcess) Logs() string {
-	if as.out == nil {
-		return ""
+	sp.mutex.Lock()
+	raceEvent := sp.raceEvent
+	udpPluginAddress := sp.udpPluginAddress
+	udpLocalPluginPort := sp.udpPluginLocalPort
+	forwardingAddress := sp.forwardingAddress
+	forwardListenPort := sp.forwardListenPort
+	sp.mutex.Unlock()
+
+	if running {
+		if err := sp.Stop(); err != nil {
+			return err
+		}
 	}
 
-	return as.out.String()
+	return sp.Start(raceEvent, udpPluginAddress, udpLocalPluginPort, forwardingAddress, forwardListenPort)
 }
 
-// Start the assetto server. If it's already running, an ErrServerAlreadyRunning is returned.
-func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, forwardingAddress string, forwardListenPort int, event RaceEvent) error {
-	if as.IsRunning() {
-		return ErrServerAlreadyRunning
+func (sp *AssettoServerProcess) loop() {
+	for {
+		select {
+		case err := <-sp.run:
+			if err != nil {
+				logrus.WithError(err).Warn("acServer process ended with error. If everything seems fine, you can safely ignore this error.")
+			}
+
+			select {
+			case sp.stopped <- sp.onStop():
+			default:
+			}
+		case raceEvent := <-sp.start:
+			if sp.IsRunning() {
+				if err := sp.Stop(); err != nil {
+					sp.started <- err
+					break
+				}
+			}
+
+			sp.started <- sp.startRaceEvent(raceEvent)
+		}
+	}
+}
+
+func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
+	sp.mutex.Lock()
+	defer sp.mutex.Unlock()
+
+	logrus.Infof("Starting Server Process with event: %s", describeRaceEvent(raceEvent))
+	var executablePath string
+
+	if filepath.IsAbs(config.Steam.ExecutablePath) {
+		executablePath = config.Steam.ExecutablePath
+	} else {
+		executablePath = filepath.Join(ServerInstallPath, config.Steam.ExecutablePath)
 	}
 
-	as.mutex.Lock()
-	defer as.mutex.Unlock()
+	sp.ctx, sp.cfn = context.WithCancel(context.Background())
+	sp.cmd = buildCommand(sp.ctx, executablePath)
+	sp.cmd.Dir = ServerInstallPath
 
-	logrus.Debugf("Starting assetto server process")
+	sp.cmd.Stdout = sp.logBuffer
+	sp.cmd.Stderr = sp.logBuffer
 
-	as.serverConfig = cfg
-	as.entryList = entryList
-	as.forwardingAddress = forwardingAddress
-	as.forwardListenPort = forwardListenPort
-	as.event = event
-
-	if err := as.startUDPListener(); err != nil {
+	if err := sp.startUDPListener(); err != nil {
 		return err
 	}
 
@@ -115,34 +204,21 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 		return err
 	}
 
-	var executablePath string
+	sp.raceEvent = raceEvent
 
-	if filepath.IsAbs(config.Steam.ExecutablePath) {
-		executablePath = config.Steam.ExecutablePath
-	} else {
-		executablePath = filepath.Join(ServerInstallPath, config.Steam.ExecutablePath)
-	}
+	go func() {
+		sp.run <- sp.cmd.Run()
+	}()
 
-	as.cmd = buildCommand(as.ctx, executablePath)
-	as.cmd.Dir = ServerInstallPath
-
-	if as.out == nil {
-		as.out = newLogBuffer(MaxLogSizeBytes)
-	}
-
-	as.cmd.Stdout = as.out
-	as.cmd.Stderr = as.out
-
-	err = as.cmd.Start()
+	serverOptions, err := sp.store.LoadServerOptions()
 
 	if err != nil {
-		as.cmd = nil
 		return err
 	}
 
-	if cfg.GlobalServerConfig.EnableContentManagerWrapper == 1 && cfg.GlobalServerConfig.ContentManagerWrapperPort > 0 {
+	if serverOptions.EnableContentManagerWrapper == 1 && serverOptions.ContentManagerWrapperPort > 0 {
 		go func() {
-			err := as.contentManagerWrapper.Start(as, cfg.GlobalServerConfig.ContentManagerWrapperPort, cfg, entryList, event)
+			err := sp.contentManagerWrapper.Start(serverOptions.ContentManagerWrapperPort, sp.raceEvent)
 
 			if err != nil {
 				logrus.WithError(err).Error("Could not start Content Manager wrapper server")
@@ -150,10 +226,10 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 		}()
 	}
 
-	if strackerOptions, err := as.store.LoadStrackerOptions(); err == nil && strackerOptions.EnableStracker && IsStrackerInstalled() {
-		if as.forwardListenPort >= 0 && as.forwardingAddress != "" || strings.Contains(as.forwardingAddress, ":") {
-			strackerOptions.ACPlugin.SendPort = as.forwardListenPort
-			strackerOptions.ACPlugin.ReceivePort = formValueAsInt(strings.Split(as.forwardingAddress, ":")[1])
+	if strackerOptions, err := sp.store.LoadStrackerOptions(); err == nil && strackerOptions.EnableStracker && IsStrackerInstalled() {
+		if serverOptions.UDPPluginLocalPort >= 0 && serverOptions.UDPPluginAddress != "" || strings.Contains(serverOptions.UDPPluginAddress, ":") {
+			strackerOptions.ACPlugin.SendPort = serverOptions.UDPPluginLocalPort
+			strackerOptions.ACPlugin.ReceivePort = formValueAsInt(strings.Split(serverOptions.UDPPluginAddress, ":")[1])
 
 			err = strackerOptions.Write()
 
@@ -161,7 +237,7 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 				return err
 			}
 
-			err = as.startPlugin(wd, &CommandPlugin{
+			err = sp.startPlugin(wd, &CommandPlugin{
 				Executable: StrackerExecutablePath(),
 				Arguments: []string{
 					"--stracker_ini",
@@ -173,14 +249,14 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 				return err
 			}
 
-			logrus.Infof("Started stracker. Listening for ptracker connections on port %d", strackerOptions.InstanceConfiguration.ListeningPort)
+			logrus.Infof("Started sTracker. Listening for pTracker connections on port %d", strackerOptions.InstanceConfiguration.ListeningPort)
 		} else {
 			logrus.WithError(ErrStrackerConfigurationRequiresUDPPluginConfiguration).Error("Please check your server configuration")
 		}
 	}
 
 	for _, plugin := range config.Server.Plugins {
-		err = as.startPlugin(wd, plugin)
+		err = sp.startPlugin(wd, plugin)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Could not run extra command: %s", plugin.String())
@@ -189,71 +265,87 @@ func (as *AssettoServerProcess) Start(cfg ServerConfig, entryList EntryList, for
 
 	if len(config.Server.RunOnStart) > 0 {
 		logrus.Warnf("Use of run_on_start in config.yml is deprecated. Please use 'plugins' instead")
-	}
 
-	for _, command := range config.Server.RunOnStart {
-		err = as.startChildProcess(wd, command)
-
-		if err != nil {
-			logrus.WithError(err).Errorf("Could not run extra command: %s", command)
-		}
-	}
-
-	go func() {
-		_ = as.cmd.Wait()
-
-		loopNum := 0
-
-		for {
-			if loopNum > 50 {
-				break
-			}
-
-			proc, err := ps.FindProcess(as.cmd.Process.Pid)
+		for _, command := range config.Server.RunOnStart {
+			err = sp.startChildProcess(wd, command)
 
 			if err != nil {
-				logrus.WithError(err).Warnf("Could not find process: %d", as.cmd.Process.Pid)
-			}
-
-			if proc == nil {
-				break
-			}
-
-			logrus.Debugf("Waiting for Assetto Corsa Server process to finish...")
-			time.Sleep(time.Millisecond * 500)
-			loopNum++
-		}
-
-		logrus.Infof("Detected server shutdown. Closing child processes")
-
-		as.stopChildProcesses()
-		as.closeUDPConnection()
-
-		as.cmd = nil
-
-		for _, ch := range as.doneChs {
-			select {
-			case ch <- struct{}{}:
-
-			default:
+				logrus.WithError(err).Errorf("Could not run extra command: %s", command)
 			}
 		}
-
-		as.doneChs = []chan struct{}{}
-	}()
+	}
 
 	return nil
 }
 
-func (as *AssettoServerProcess) startPlugin(wd string, plugin *CommandPlugin) error {
-	commandFullPath, err := filepath.Abs(plugin.Executable)
+func (sp *AssettoServerProcess) onStop() error {
+	sp.mutex.Lock()
+	defer sp.mutex.Unlock()
+	logrus.Debugf("Server stopped. Stopping UDP listener and child processes.")
 
-	if err != nil {
-		as.cmd = nil
+	sp.raceEvent = nil
+
+	if err := sp.stopUDPListener(); err != nil {
 		return err
 	}
 
-	cmd := buildCommand(as.ctx, commandFullPath, plugin.Arguments...)
+	sp.stopChildProcesses()
+
+	for _, doneCh := range sp.notifyDoneChs {
+		select {
+		case doneCh <- struct{}{}:
+		default:
+		}
+	}
+
+	return nil
+}
+
+func (sp *AssettoServerProcess) Logs() string {
+	return sp.logBuffer.String()
+}
+
+func (sp *AssettoServerProcess) Event() RaceEvent {
+	sp.mutex.Lock()
+	defer sp.mutex.Unlock()
+
+	if sp.raceEvent == nil {
+		return QuickRace{}
+	}
+
+	return sp.raceEvent
+}
+
+var ErrNoOpenUDPConnection = errors.New("servermanager: no open UDP connection found")
+
+func (sp *AssettoServerProcess) SendUDPMessage(message udp.Message) error {
+	sp.mutex.Lock()
+	defer sp.mutex.Unlock()
+
+	if sp.udpServerConn == nil {
+		return ErrNoOpenUDPConnection
+	}
+
+	return sp.udpServerConn.SendMessage(message)
+}
+
+func (sp *AssettoServerProcess) NotifyDone(ch chan struct{}) {
+	sp.mutex.Lock()
+	defer sp.mutex.Unlock()
+
+	sp.notifyDoneChs = append(sp.notifyDoneChs, ch)
+}
+
+func (sp *AssettoServerProcess) startPlugin(wd string, plugin *CommandPlugin) error {
+	commandFullPath, err := filepath.Abs(plugin.Executable)
+
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+
+	cmd := buildCommand(ctx, commandFullPath, plugin.Arguments...)
 
 	pluginDir, err := filepath.Abs(filepath.Dir(commandFullPath))
 
@@ -273,13 +365,13 @@ func (as *AssettoServerProcess) startPlugin(wd string, plugin *CommandPlugin) er
 		return err
 	}
 
-	as.extraProcesses = append(as.extraProcesses, cmd)
+	sp.extraProcesses = append(sp.extraProcesses, cmd)
 
 	return nil
 }
 
 // Deprecated: use startPlugin instead
-func (as *AssettoServerProcess) startChildProcess(wd string, command string) error {
+func (sp *AssettoServerProcess) startChildProcess(wd string, command string) error {
 	// BUG(cj): splitting commands on spaces breaks child processes that have a space in their path name
 	parts := strings.Split(command, " ")
 
@@ -290,16 +382,16 @@ func (as *AssettoServerProcess) startChildProcess(wd string, command string) err
 	commandFullPath, err := filepath.Abs(parts[0])
 
 	if err != nil {
-		as.cmd = nil
 		return err
 	}
 
 	var cmd *exec.Cmd
+	ctx := context.Background()
 
 	if len(parts) > 1 {
-		cmd = buildCommand(as.ctx, commandFullPath, parts[1:]...)
+		cmd = buildCommand(ctx, commandFullPath, parts[1:]...)
 	} else {
-		cmd = buildCommand(as.ctx, commandFullPath)
+		cmd = buildCommand(ctx, commandFullPath)
 	}
 
 	pluginDir, err := filepath.Abs(filepath.Dir(commandFullPath))
@@ -320,41 +412,32 @@ func (as *AssettoServerProcess) startChildProcess(wd string, command string) err
 		return err
 	}
 
-	as.extraProcesses = append(as.extraProcesses, cmd)
+	sp.extraProcesses = append(sp.extraProcesses, cmd)
 
 	return nil
 }
 
-func (as *AssettoServerProcess) closeUDPConnection() {
-	as.udpStatusMutex.Lock()
-	defer as.udpStatusMutex.Unlock()
+func (sp *AssettoServerProcess) stopChildProcesses() {
+	sp.contentManagerWrapper.Stop()
 
-	if as.udpServerConn == nil {
-		return
+	for _, command := range sp.extraProcesses {
+		err := kill(command.Process)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("Can't kill process: %d", command.Process.Pid)
+			continue
+		}
+
+		_ = command.Process.Release()
 	}
 
-	logrus.Debugf("Closing UDP connection")
-
-	err := as.udpServerConn.Close()
-
-	if err != nil {
-		logrus.WithError(err).Errorf("Couldn't close UDP connection")
-	}
-
-	as.udpServerConn = nil
+	sp.extraProcesses = make([]*exec.Cmd, 0)
 }
 
-func (as *AssettoServerProcess) startUDPListener() error {
-	as.udpStatusMutex.Lock()
-	defer as.udpStatusMutex.Unlock()
-
-	if as.udpServerConn != nil {
-		return nil
-	}
-
+func (sp *AssettoServerProcess) startUDPListener() error {
 	var err error
 
-	host, portStr, err := net.SplitHostPort(as.serverConfig.GlobalServerConfig.FreeUDPPluginAddress)
+	host, portStr, err := net.SplitHostPort(sp.udpPluginAddress)
 
 	if err != nil {
 		return err
@@ -366,7 +449,7 @@ func (as *AssettoServerProcess) startUDPListener() error {
 		return err
 	}
 
-	as.udpServerConn, err = udp.NewServerClient(host, int(port), as.serverConfig.GlobalServerConfig.FreeUDPPluginLocalPort, true, as.forwardingAddress, as.forwardListenPort, as.UDPCallback)
+	sp.udpServerConn, err = udp.NewServerClient(host, int(port), sp.udpPluginLocalPort, true, sp.forwardingAddress, sp.forwardListenPort, sp.UDPCallback)
 
 	if err != nil {
 		return err
@@ -375,95 +458,43 @@ func (as *AssettoServerProcess) startUDPListener() error {
 	return nil
 }
 
-func (as *AssettoServerProcess) UDPCallback(message udp.Message) {
-	panicCapture(func() {
-		as.callbackFunc(message)
-	})
+func (sp *AssettoServerProcess) stopUDPListener() error {
+	return sp.udpServerConn.Close()
 }
 
-var ErrNoOpenUDPConnection = errors.New("servermanager: no open UDP connection found")
-
-func (as *AssettoServerProcess) SendUDPMessage(message udp.Message) error {
-	if as.udpServerConn == nil {
-		return ErrNoOpenUDPConnection
+func newLogBuffer(maxSize int) *logBuffer {
+	return &logBuffer{
+		size: maxSize,
+		buf:  new(bytes.Buffer),
 	}
-
-	return as.udpServerConn.SendMessage(message)
 }
 
-func (as *AssettoServerProcess) stopChildProcesses() {
-	if as.serverConfig.GlobalServerConfig.EnableContentManagerWrapper == 1 && as.serverConfig.GlobalServerConfig.ContentManagerWrapperPort > 0 {
-		as.contentManagerWrapper.Stop()
-	}
+type logBuffer struct {
+	buf *bytes.Buffer
 
-	for _, command := range as.extraProcesses {
-		err := kill(command.Process)
+	size int
 
-		if err != nil {
-			logrus.WithError(err).Errorf("Can't kill process: %d", command.Process.Pid)
-			continue
-		}
-
-		_ = command.Process.Release()
-	}
-
-	as.extraProcesses = make([]*exec.Cmd, 0)
+	mutex sync.Mutex
 }
 
-// Restart the assetto server.
-func (as *AssettoServerProcess) Restart() error {
-	if as.IsRunning() {
-		err := as.Stop()
+func (lb *logBuffer) Write(p []byte) (n int, err error) {
+	lb.mutex.Lock()
+	defer lb.mutex.Unlock()
 
-		if err != nil {
-			return err
-		}
+	b := lb.buf.Bytes()
+
+	if len(b) > lb.size {
+		lb.buf = bytes.NewBuffer(b[len(b)-lb.size:])
 	}
 
-	return as.Start(as.serverConfig, as.entryList, as.forwardingAddress, as.forwardListenPort, as.event)
+	return lb.buf.Write(p)
 }
 
-// IsRunning of the server. returns true if running
-func (as *AssettoServerProcess) IsRunning() bool {
-	as.mutex.Lock()
-	defer as.mutex.Unlock()
+func (lb *logBuffer) String() string {
+	lb.mutex.Lock()
+	defer lb.mutex.Unlock()
 
-	return as.cmd != nil && as.cmd.Process != nil
-}
-
-func (as *AssettoServerProcess) Event() RaceEvent {
-	if as.event == nil {
-		return QuickRace{}
-	}
-
-	return as.event
-}
-
-// Stop the assetto server.
-func (as *AssettoServerProcess) Stop() error {
-	if !as.IsRunning() {
-		return nil
-	}
-
-	done := make(chan struct{})
-	as.NotifyDone(done)
-
-	as.mutex.Lock()
-	defer as.mutex.Unlock()
-
-	err := kill(as.cmd.Process)
-
-	if err != nil && !strings.Contains(err.Error(), "process already finished") {
-		logrus.WithError(err).Errorf("Stopping server reported an error (continuing anyway...)")
-	}
-
-	<-done
-
-	return nil
-}
-
-func (as *AssettoServerProcess) GetServerConfig() ServerConfig {
-	return as.serverConfig
+	return lb.buf.String()
 }
 
 func FreeUDPPort() (int, error) {
@@ -482,31 +513,4 @@ func FreeUDPPort() (int, error) {
 	defer l.Close()
 
 	return l.LocalAddr().(*net.UDPAddr).Port, nil
-}
-
-func newLogBuffer(maxSize int) *logBuffer {
-	return &logBuffer{
-		size: maxSize,
-		buf:  new(bytes.Buffer),
-	}
-}
-
-type logBuffer struct {
-	buf *bytes.Buffer
-
-	size int
-}
-
-func (lb *logBuffer) Write(p []byte) (n int, err error) {
-	b := lb.buf.Bytes()
-
-	if len(b) > lb.size {
-		lb.buf = bytes.NewBuffer(b[len(b)-lb.size:])
-	}
-
-	return lb.buf.Write(p)
-}
-
-func (lb *logBuffer) String() string {
-	return lb.buf.String()
 }

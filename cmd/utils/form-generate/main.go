@@ -9,7 +9,7 @@ import (
 func main() {
 	data := &servermanager.Entrant{}
 
-	formElems := servermanager.NewForm(data, nil, "").Fields()
+	formElems := servermanager.NewForm(data, nil, "", true).Fields()
 
 	for _, formElem := range formElems {
 		fmt.Println(formElem.HTML())

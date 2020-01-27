@@ -11,6 +11,7 @@ Fixes:
 * Fixes an issue where car setups with invalid ini keys would not upload properly.
 * Fixes an issue where AutoFill Entrants would not be saved when editing a Custom Race
 * Championship Race Weekends now display all sessions in the correct order
+* Fixes issues where stopping the acServer process could cause Server Manager to lock up or crash
 
 v1.7.1
 ------

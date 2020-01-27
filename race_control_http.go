@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -16,14 +17,14 @@ const (
 )
 
 type Broadcaster interface {
-	Send(message udp.Message) error
+	Send(message udp.Message) ([]byte, error)
 }
 
 type NilBroadcaster struct{}
 
-func (NilBroadcaster) Send(message udp.Message) error {
-	logrus.WithField("message", message).Infof("Message send %d", message.Event())
-	return nil
+func (NilBroadcaster) Send(message udp.Message) ([]byte, error) {
+	logrus.WithField("message", message).Debugf("Message send %d", message.Event())
+	return nil, nil
 }
 
 var upgrader = websocket.Upgrader{
@@ -31,11 +32,13 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-func newRaceControlMessage(message udp.Message) raceControlMessage {
-	return raceControlMessage{
+func encodeRaceControlMessage(message udp.Message) ([]byte, error) {
+	m := raceControlMessage{
 		EventType: message.Event(),
 		Message:   message,
 	}
+
+	return json.Marshal(m)
 }
 
 type raceControlMessage struct {
@@ -45,19 +48,25 @@ type raceControlMessage struct {
 
 type RaceControlHub struct {
 	clients   map[*raceControlClient]bool
-	broadcast chan raceControlMessage
+	broadcast chan []byte
 	register  chan *raceControlClient
 }
 
-func (h *RaceControlHub) Send(message udp.Message) error {
-	h.broadcast <- newRaceControlMessage(message)
+func (h *RaceControlHub) Send(message udp.Message) ([]byte, error) {
+	encoded, err := encodeRaceControlMessage(message)
 
-	return nil
+	if err != nil {
+		return nil, err
+	}
+
+	h.broadcast <- encoded
+
+	return encoded, nil
 }
 
 func newRaceControlHub() *RaceControlHub {
 	return &RaceControlHub{
-		broadcast: make(chan raceControlMessage, 1000),
+		broadcast: make(chan []byte, 1000),
 		register:  make(chan *raceControlClient),
 		clients:   make(map[*raceControlClient]bool),
 	}
@@ -85,7 +94,7 @@ type raceControlClient struct {
 	hub *RaceControlHub
 
 	conn    *websocket.Conn
-	receive chan raceControlMessage
+	receive chan []byte
 }
 
 func (c *raceControlClient) writePump() {
@@ -108,7 +117,7 @@ func (c *raceControlClient) writePump() {
 				return
 			}
 
-			err := c.conn.WriteJSON(message)
+			err := c.conn.WriteMessage(websocket.TextMessage, message)
 
 			if err != nil && !strings.HasSuffix(err.Error(), "write: broken pipe") {
 				logrus.WithError(err).Errorf("Could not send websocket message")
@@ -172,24 +181,24 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	linkString := ""
-
-	if rch.serverProcess.GetServerConfig().GlobalServerConfig.ShowContentManagerJoinLink == 1 {
-		link, err := getContentManagerJoinLink(rch.serverProcess.GetServerConfig())
-
-		if err != nil {
-			logrus.WithError(err).Errorf("could not get content manager join link")
-		} else {
-			linkString = link.String()
-		}
-	}
-
 	serverOpts, err := rch.store.LoadServerOptions()
 
 	if err != nil {
 		logrus.WithError(err).Errorf("couldn't load server options")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
+	}
+
+	linkString := ""
+
+	if serverOpts.ShowContentManagerJoinLink == 1 {
+		link, err := getContentManagerJoinLink(*serverOpts)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("could not get content manager join link")
+		} else {
+			linkString = link.String()
+		}
 	}
 
 	strackerOptions, err := rch.store.LoadStrackerOptions()
@@ -250,13 +259,15 @@ func (rch *RaceControlHandler) websocket(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	client := &raceControlClient{hub: rch.raceControlHub, conn: c, receive: make(chan raceControlMessage, 256)}
+	client := &raceControlClient{hub: rch.raceControlHub, conn: c, receive: make(chan []byte, 256)}
 	client.hub.register <- client
 
 	go client.writePump()
 
 	// new client, send them an initial race control message.
-	client.receive <- newRaceControlMessage(rch.raceControl)
+	rch.raceControl.lastUpdateMessageMutex.Lock()
+	client.receive <- rch.raceControl.lastUpdateMessage
+	rch.raceControl.lastUpdateMessageMutex.Unlock()
 }
 
 func (rch *RaceControlHandler) broadcastChat(w http.ResponseWriter, r *http.Request) {

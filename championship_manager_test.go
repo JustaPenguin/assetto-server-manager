@@ -63,12 +63,12 @@ type dummyServerProcess struct {
 	doneCh chan struct{}
 }
 
-func (dummyServerProcess) Logs() string {
-	return ""
+func (dummyServerProcess) Start(event RaceEvent, udpPluginAddress string, udpPluginLocalPort int, forwardingAddress string, forwardListenPort int) error {
+	return nil
 }
 
-func (dummyServerProcess) Start(cfg ServerConfig, entryList EntryList, forwardingAddress string, forwardListenPort int, event RaceEvent) error {
-	return nil
+func (dummyServerProcess) Logs() string {
+	return ""
 }
 
 func (d dummyServerProcess) Stop() error {

@@ -156,10 +156,8 @@ func (asu *AssettoServerUDP) serve() {
 				asu.callback(msg)
 
 				if asu.forward && asu.forwarder != nil {
-					go func() {
-						// write the message to the forwarding address
-						_, _ = asu.forwarder.Write(buf)
-					}()
+					// write the message to the forwarding address
+					_, _ = asu.forwarder.Write(buf)
 				}
 			case <-ticker.C:
 				if RealtimePosIntervalMs < 0 {
@@ -181,7 +179,7 @@ func (asu *AssettoServerUDP) serve() {
 						logrus.WithError(err).Error("Could not send realtime pos interval adjustment")
 					}
 				} else if currentQueueSize <= lastQueueSize && CurrentRealtimePosIntervalMs > RealtimePosIntervalMs {
-					logrus.Infof("Catching up, queue size: %d vs %d: changed by %d", currentQueueSize, lastQueueSize, currentQueueSize-lastQueueSize)
+					logrus.Debugf("Catching up, queue size: %d vs %d: changed by %d", currentQueueSize, lastQueueSize, currentQueueSize-lastQueueSize)
 
 					if CurrentRealtimePosIntervalMs-1 >= RealtimePosIntervalMs {
 						CurrentRealtimePosIntervalMs -= 1

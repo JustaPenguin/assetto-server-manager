@@ -16,13 +16,15 @@ var LaunchTime = time.Now()
 
 type HealthCheck struct {
 	raceControl *RaceControl
+	process     ServerProcess
 	store       Store
 }
 
-func NewHealthCheck(raceControl *RaceControl, store Store) *HealthCheck {
+func NewHealthCheck(raceControl *RaceControl, store Store, process ServerProcess) *HealthCheck {
 	return &HealthCheck{
 		store:       store,
 		raceControl: raceControl,
+		process:     process,
 	}
 }
 
@@ -59,7 +61,7 @@ type HealthCheckResponse struct {
 }
 
 func (h *HealthCheck) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	event := h.raceControl.process.Event()
+	event := h.process.Event()
 	opts, err := h.store.LoadServerOptions()
 
 	var serverName string

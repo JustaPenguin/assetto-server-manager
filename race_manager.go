@@ -222,7 +222,7 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 		}
 	}
 
-	err = rm.process.Start(config, entryList, forwardingAddress, forwardListenPort, event)
+	err = rm.process.Start(event, config.GlobalServerConfig.UDPPluginAddress, config.GlobalServerConfig.UDPPluginLocalPort, forwardingAddress, forwardListenPort)
 
 	if err != nil {
 		return err
