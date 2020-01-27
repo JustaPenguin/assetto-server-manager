@@ -4,6 +4,7 @@ v1.7.2
 Added:
 
 * You can now duplicate any Championship Event (including Race Weekends!)
+* You can now set a timer to forcibly stop a Custom Race after a certain time period. This is intended to allow servers to rotate through looped events every x minutes regardless of players being active on the server. The timer can be set to not forcibly stop the server if drivers are online.
 
 Fixes:
 

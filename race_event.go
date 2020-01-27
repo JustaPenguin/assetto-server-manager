@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 )
 
 type RaceEvent interface {
@@ -17,6 +18,9 @@ type RaceEvent interface {
 
 	OverrideServerPassword() bool
 	ReplacementServerPassword() string
+
+	GetForceStopTime() time.Duration
+	GetForceStopWithDrivers() bool
 
 	EventName() string
 	EventDescription() string

@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
-	"github.com/mitchellh/go-wordwrap"
-
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
@@ -277,23 +275,10 @@ func (rch *RaceControlHandler) broadcastChat(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	wrapped := strings.Split(wordwrap.WrapString(
-		r.FormValue("broadcast-chat"),
-		60,
-	), "\n")
+	err := rch.raceControl.splitAndBroadcastChat(r.FormValue("broadcast-chat"))
 
-	for _, msg := range wrapped {
-		broadcastMessage, err := udp.NewBroadcastChat(msg)
-
-		if err == nil {
-			err := rch.serverProcess.SendUDPMessage(broadcastMessage)
-
-			if err != nil {
-				logrus.WithError(err).Errorf("Unable to broadcast chat message")
-			}
-		} else {
-			logrus.WithError(err).Errorf("Unable to build chat message")
-		}
+	if err != nil {
+		logrus.WithError(err).Errorf("Unable to broadcast chat message")
 	}
 }
 
@@ -355,32 +340,10 @@ func (rch *RaceControlHandler) sendChat(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var carID uint8
+	err := rch.raceControl.splitAndSendChat(r.FormValue("send-chat"), guid)
 
-	for id, rangeGuid := range rch.raceControl.CarIDToGUID {
-		if string(rangeGuid) == guid {
-			carID = uint8(id)
-			break
-		}
-	}
-
-	wrapped := strings.Split(wordwrap.WrapString(
-		r.FormValue("send-chat"),
-		60,
-	), "\n")
-
-	for _, msg := range wrapped {
-		welcomeMessage, err := udp.NewSendChat(udp.CarID(carID), msg)
-
-		if err == nil {
-			err := rch.serverProcess.SendUDPMessage(welcomeMessage)
-
-			if err != nil {
-				logrus.WithError(err).Errorf("Unable to send chat message to car: %d", carID)
-			}
-		} else {
-			logrus.WithError(err).Errorf("Unable to build chat message to car: %d", carID)
-		}
+	if err != nil {
+		logrus.WithError(err).Errorf("Unable to send chat message to driver: %s", guid)
 	}
 }
 
