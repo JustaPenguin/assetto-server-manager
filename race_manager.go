@@ -233,7 +233,9 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 	}
 
 	// existing timer needs to be stopped in all cases
-	rm.forceStopTimer.Stop()
+	if rm.forceStopTimer != nil {
+		rm.forceStopTimer.Stop()
+	}
 
 	if event.GetForceStopTime() != 0 {
 		// initiate force stop timer
