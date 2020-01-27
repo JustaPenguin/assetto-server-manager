@@ -44,8 +44,6 @@ github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5P
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/cj123/caldav-go v0.0.0-20191202141705-5d30c27975e9 h1:xZlbepPe910UkjXnCnx+e6q2CuekYhOk9qeslTjjt70=
 github.com/cj123/caldav-go v0.0.0-20191202141705-5d30c27975e9/go.mod h1:qZv/7clqXmcRq9V5WBnibPqGV9O4NBHDTYZ1Mg9XOvc=
-github.com/cj123/ini v1.42.0 h1:Bq9DGc91zoEOzXMMMRXwwGDhei3W5iA9rzlCOe1BLls=
-github.com/cj123/ini v1.42.0/go.mod h1:tgCpjdB9zHO3U/5Gnh3eDcjqfeevlVH2kmheMOnPiFc=
 github.com/cj123/ini v1.43.0 h1:ww0t1Kcz1tAyIPjU/BcsZuyOPvOVVgb1Q7YF7Y3cbrE=
 github.com/cj123/ini v1.43.0/go.mod h1:tgCpjdB9zHO3U/5Gnh3eDcjqfeevlVH2kmheMOnPiFc=
 github.com/cj123/sessions v1.1.5 h1:wWbgh9FwU/o53QJ6f/8PUEIHKQCghm9nZnGNOReUz2o=
@@ -177,8 +175,6 @@ github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5
 github.com/mitchellh/copystructure v1.0.0 h1:Laisrj+bAB6b/yJwB5Bt3ITZhGJdqmxquMKeZ+mmkFQ=
 github.com/mitchellh/copystructure v1.0.0/go.mod h1:SNtv71yrdKgLRyLFxmLdkAbkKEFWgYaq1OVrnRcwhnw=
 github.com/mitchellh/go-homedir v1.1.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
-github.com/mitchellh/go-ps v0.0.0-20190716172923-621e5597135b h1:9+ke9YJ9KGWw5ANXK6ozjoK47uI3uNbXv4YVINBnGm8=
-github.com/mitchellh/go-ps v0.0.0-20190716172923-621e5597135b/go.mod h1:r1VsdOzOPt1ZSrGZWFoNhsAedKnEd6r9Np1+5blZCWk=
 github.com/mitchellh/go-wordwrap v1.0.0 h1:6GlHJ/LTGMrIJbwgdqdl2eEH8o+Exx/0m8ir9Gns0u4=
 github.com/mitchellh/go-wordwrap v1.0.0/go.mod h1:ZXFpozHsX6DPmq2I0TCekCxypsnAUbP2oI0UX1GXzOo=
 github.com/mitchellh/mapstructure v1.1.2/go.mod h1:FVVH3fgwuzCH5S8UJGiWEs2h04kUh9fWfEaFds41c1Y=

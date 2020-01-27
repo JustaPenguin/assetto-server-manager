@@ -152,7 +152,6 @@ accounts:
   # username: admin
   # password: servermanager
   # As soon as you log in, you will be immediately asked to set a new password.
-  #
   admin_password_override:
 
 ################################################################################
@@ -196,21 +195,17 @@ server:
   # note: if you are looking for stracker support, Server Manager supports it via
   # the UI! Go to the "STracker" page in Server Manager for more instructions.
   #
+  # note #2: if you are looking for KissMyRank support, Server Manager supports it
+  # via the UI! Go to the "KissMyRank" page in Server Manager for more instructions.
+  #
   # you can use additional plugins with AC Server Manager, but while configuring
   # them you have to ignore the ports that AC Server Manager writes in the 
   # server_cfg.ini, as the Server Manager provides an interface to the plugins
   # instead. The plugin ports in the Server Options page are the ones that must
-  # be used for the plugin configuration. Here is an example for configuring KMR:
-  #
-  # KMR: 
-  # - ac_server_http_port must equal the value of HTTP Port
-  # - ac_server_plugin_local_port must equal the value of UDP Plugin Local Port
-  # - ac_server_plugin_address_port must equal the port from the UDP Plugin Address
-  # - web_auth_server_port must equal the port specified in UDP Auth Plugin Address
-  # - UDP Auth Plugin Address has to be configured in the way specified by KMR documentation
+  # be used for the plugin configuration.
   #
   # Note that AC Server Manager provides an interface for a single plugin only, 
-  # as the AC gameserver does. If you want to chain multiple plugins, please 
+  # as the AC game server does. If you want to chain multiple plugins, please
   # follow the documentation of the plugins you're using. Plugins usually 
   # feature interfaces so additional plugins can be chained between themselves.
   #

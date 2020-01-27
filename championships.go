@@ -121,8 +121,6 @@ type Championship struct {
 
 	Classes []*ChampionshipClass
 	Events  []*ChampionshipEvent
-
-	entryListMutex sync.Mutex
 }
 
 type ChampionshipSignUpForm struct {
@@ -727,9 +725,11 @@ type PotentialChampionshipEntrant interface {
 
 var ErrEntryListFull = errors.New("servermanager: entry list is full")
 
+var entryListMutex = sync.Mutex{}
+
 func (c *Championship) AddEntrantInFirstFreeSlot(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrant *Entrant, entrantClass *ChampionshipClass, err error) {
-	c.entryListMutex.Lock()
-	defer c.entryListMutex.Unlock()
+	entryListMutex.Lock()
+	defer entryListMutex.Unlock()
 
 	for _, class := range c.Classes {
 		for _, entrant := range class.Entrants {
@@ -760,8 +760,8 @@ func (c *Championship) AddEntrantInFirstFreeSlot(potentialEntrant PotentialChamp
 }
 
 func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrant *Entrant, entrantClass *ChampionshipClass, err error) {
-	c.entryListMutex.Lock()
-	defer c.entryListMutex.Unlock()
+	entryListMutex.Lock()
+	defer entryListMutex.Unlock()
 
 	classForCar, err := c.FindClassForCarModel(potentialEntrant.GetCar())
 
@@ -1495,6 +1495,14 @@ func (a *ActiveChampionship) EventName() string {
 
 func (a *ActiveChampionship) EventDescription() string {
 	return a.Description
+}
+
+func (a *ActiveChampionship) GetForceStopTime() time.Duration {
+	return 0
+}
+
+func (a *ActiveChampionship) GetForceStopWithDrivers() bool {
+	return false
 }
 
 func ChampionshipClassColor(i int) string {

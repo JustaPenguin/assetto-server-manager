@@ -51,7 +51,6 @@ require (
 	github.com/mattn/go-runewidth v0.0.8 // indirect
 	github.com/mattn/go-zglob v0.0.1
 	github.com/mitchellh/copystructure v1.0.0 // indirect
-	github.com/mitchellh/go-ps v0.0.0-20190716172923-621e5597135b
 	github.com/mitchellh/go-wordwrap v1.0.0
 	github.com/mitchellh/reflectwalk v1.0.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.4 // indirect

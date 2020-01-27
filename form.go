@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/fatih/camelcase"
@@ -52,13 +53,17 @@ func (f Form) Submit(r *http.Request) error {
 	val := reflect.ValueOf(f.data).Elem()
 
 	for name, vals := range r.Form {
-		f.assignFieldValues(val, name, vals)
+		err := f.assignFieldValues(val, name, vals)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func (f Form) assignFieldValues(val reflect.Value, name string, vals []string) {
+func (f Form) assignFieldValues(val reflect.Value, name string, vals []string) error {
 	parts := strings.Split(name, ".")
 	field := val.FieldByName(parts[0])
 
@@ -66,7 +71,11 @@ func (f Form) assignFieldValues(val reflect.Value, name string, vals []string) {
 		switch field.Kind() {
 		case reflect.Struct:
 			if len(parts) > 1 {
-				f.assignFieldValues(field, strings.Join(parts[1:], "."), vals)
+				err := f.assignFieldValues(field, strings.Join(parts[1:], "."), vals)
+
+				if err != nil {
+					return err
+				}
 			}
 		case reflect.String:
 			field.SetString(strings.Join(vals, ";"))
@@ -76,6 +85,14 @@ func (f Form) assignFieldValues(val reflect.Value, name string, vals []string) {
 			} else {
 				field.SetInt(int64(formValueAsInt(vals[0])))
 			}
+		case reflect.Float64:
+			f, err := strconv.ParseFloat(vals[0], 64)
+
+			if err != nil {
+				return err
+			}
+
+			field.SetFloat(f)
 		case reflect.Bool:
 			if vals[0] == "on" {
 				field.SetBool(true)
@@ -83,9 +100,11 @@ func (f Form) assignFieldValues(val reflect.Value, name string, vals []string) {
 				field.SetBool(formValueAsInt(vals[0]) == 1)
 			}
 		default:
-			panic("form submit - unknown type")
+			panic("form submit - unknown type: " + field.Kind().String())
 		}
 	}
+
+	return nil
 }
 
 func (f Form) Fields() []FormElement {
@@ -96,7 +115,7 @@ func (f Form) Fields() []FormElement {
 	val := reflect.ValueOf(f.data)
 	t := reflect.TypeOf(f.data)
 
-	opts := f.buildOpts(val.Elem(), t.Elem(), "")
+	opts := f.buildOpts(val.Elem(), t.Elem(), "", 0)
 
 	return opts
 }
@@ -113,7 +132,11 @@ type FormElement interface {
 	HTML() template.HTML
 }
 
-func (f Form) buildOpts(val reflect.Value, t reflect.Type, parentName string) []FormElement {
+func (f Form) buildName(name string) string {
+	return strings.Replace(strings.Join(camelcase.Split(name), " "), "ACSRAPI", "ACSR API", 1)
+}
+
+func (f Form) buildOpts(val reflect.Value, t reflect.Type, parentName string, recursionLevel int) []FormElement {
 	var opts []FormElement
 
 	for i := 0; i < t.NumField(); i++ {
@@ -129,23 +152,32 @@ func (f Form) buildOpts(val reflect.Value, t reflect.Type, parentName string) []
 
 		switch valField.Kind() {
 		case reflect.Struct:
-			opts = append(opts, f.buildOpts(valField, typeField.Type, fmt.Sprintf("%s%s.", parentName, typeField.Name))...)
+			if recursionLevel == 0 {
+				opts = append(opts, formCardOpen{name: f.buildName(typeField.Name)})
+			} else {
+				opts = append(opts, FormOption{Name: f.buildName(typeField.Name), Type: "heading", RecursionLevel: recursionLevel})
+			}
+
+			opts = append(opts, f.buildOpts(valField, typeField.Type, fmt.Sprintf("%s%s.", parentName, typeField.Name), recursionLevel+1)...)
+
+			if recursionLevel == 0 {
+				opts = append(opts, formCardClose{})
+			}
 		case reflect.Map:
 			for _, k := range valField.MapKeys() {
 				elem := valField.MapIndex(k)
 
 				opts = append(opts, FormHeader{Name: k.String()})
-				opts = append(opts, f.buildOpts(elem, elem.Type(), fmt.Sprintf("%s%s[%s].", parentName, typeField.Name, k.String()))...)
+				opts = append(opts, f.buildOpts(elem, elem.Type(), fmt.Sprintf("%s%s[%s].", parentName, typeField.Name, k.String()), recursionLevel+1)...)
 			}
 		case reflect.Slice, reflect.Array:
 			for i := 0; i < valField.Len(); i++ {
 				elem := valField.Index(i)
 
-				opts = append(opts, f.buildOpts(elem, elem.Type(), fmt.Sprintf("%s%s[%d].", parentName, typeField.Name, i))...)
+				opts = append(opts, f.buildOpts(elem, elem.Type(), fmt.Sprintf("%s%s[%d].", parentName, typeField.Name, i), recursionLevel+1)...)
 			}
 
 		default:
-
 			// formType can be e.g. dropdown
 			formType := typeField.Tag.Get(formTypeTagName)
 
@@ -153,16 +185,17 @@ func (f Form) buildOpts(val reflect.Value, t reflect.Type, parentName string) []
 				formType = typeField.Type.String()
 			}
 
-			formName := strings.Replace(strings.Join(camelcase.Split(typeField.Name), " "), "ACSRAPI", "ACSR API", 1)
+			formName := f.buildName(typeField.Name)
 
 			formOpt := FormOption{
-				Name:     formName,
-				Key:      parentName + typeField.Name,
-				Value:    valField.Interface(),
-				HelpText: template.HTML(typeField.Tag.Get("help")),
-				Type:     formType,
-				Opts:     make(map[string]bool),
-				Hidden:   formShow == "open" && IsHosted && !f.forceShowAllOptions,
+				Name:           formName,
+				Key:            parentName + typeField.Name,
+				Value:          valField.Interface(),
+				HelpText:       template.HTML(typeField.Tag.Get("help")),
+				Type:           formType,
+				Opts:           make(map[string]bool),
+				Hidden:         formShow == "open" && IsHosted && !f.forceShowAllOptions,
+				RecursionLevel: recursionLevel,
 			}
 
 			if formType == "dropdown" || formType == "multiSelect" {
@@ -187,13 +220,14 @@ func (f Form) buildOpts(val reflect.Value, t reflect.Type, parentName string) []
 }
 
 type FormOption struct {
-	Name     string
-	Key      string
-	Type     string
-	HelpText template.HTML
-	Value    interface{}
-	Min, Max string
-	Hidden   bool
+	Name           string
+	Key            string
+	Type           string
+	HelpText       template.HTML
+	Value          interface{}
+	Min, Max       string
+	Hidden         bool
+	RecursionLevel int
 
 	Opts map[string]bool
 }
@@ -350,7 +384,7 @@ func (f FormOption) renderNumberInput() template.HTML {
 						value="{{ .Value }}"
 						{{ with .Min }}min="{{ . }}"{{ end }}
 						{{ with .Max }}min="{{ . }}"{{ end }}
-						step="1"
+						step="any"
 					>
 
 					<small>{{ .HelpText }}</small>
@@ -377,7 +411,21 @@ func (f FormOption) renderHeading() template.HTML {
 		return ""
 	}
 
-	const headingTemplate = `<hr class="mt-5"><h3 class="mt-4 mb-4">{{ .Name }}</h3>`
+	headerType := "h2"
+	headingTemplate := ""
+
+	switch f.RecursionLevel {
+	case 0:
+		headingTemplate = `<hr class="mt-5">`
+	case 1:
+		headerType = "h3"
+	case 2:
+		headerType = "h4"
+	case 4:
+		headerType = "h5"
+	}
+
+	headingTemplate += fmt.Sprintf(`<%s class="mt-4 mb-4">{{ .Name }}</%s>`, headerType, headerType)
 
 	tmpl, err := f.render(headingTemplate)
 
@@ -394,13 +442,14 @@ func (f FormOption) HTML() template.HTML {
 		return f.renderDropdown()
 	case "checkbox", "bool":
 		return f.renderCheckbox()
-	case "int":
+	case "int", "float64":
 		if f.Value == nil {
 			f.Value = 0
 		}
 
 		return f.renderNumberInput()
-	case "textarea":
+
+	case "textarea", reflect.TypeOf(NewLineSeparatedList("")).String():
 		return f.renderTextarea()
 	case "string", "password":
 		return f.renderTextInput()
@@ -410,4 +459,25 @@ func (f FormOption) HTML() template.HTML {
 		logrus.Errorf("Unknown type: %s", f.Type)
 		return ""
 	}
+}
+
+type formCardOpen struct {
+	name string
+}
+
+func (f formCardOpen) HTML() template.HTML {
+	return template.HTML(`
+		<div class="card mt-3 mb-3">
+			<div class="card-header">
+				<strong>` + f.name + `</strong>
+			</div>
+
+			<div class="card-body">
+`)
+}
+
+type formCardClose struct{}
+
+func (f formCardClose) HTML() template.HTML {
+	return `</div></div>`
 }

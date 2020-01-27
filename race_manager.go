@@ -29,12 +29,15 @@ type RaceManager struct {
 	store               Store
 	carManager          *CarManager
 	trackManager        *TrackManager
+	raceControl         *RaceControl
 	notificationManager NotificationDispatcher
 
 	currentRace      *ServerConfig
 	currentEntryList EntryList
 
 	mutex sync.RWMutex
+
+	forceStopTimer *when.Timer
 
 	// looped races
 	loopedRaceSessionTypes      []SessionType
@@ -51,6 +54,7 @@ func NewRaceManager(
 	carManager *CarManager,
 	trackManager *TrackManager,
 	notificationManager NotificationDispatcher,
+	raceControl *RaceControl,
 ) *RaceManager {
 	return &RaceManager{
 		store:               store,
@@ -58,6 +62,7 @@ func NewRaceManager(
 		carManager:          carManager,
 		trackManager:        trackManager,
 		notificationManager: notificationManager,
+		raceControl:         raceControl,
 	}
 }
 
@@ -217,7 +222,7 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 		}
 	}
 
-	err = rm.process.Start(config, entryList, forwardingAddress, forwardListenPort, event)
+	err = rm.process.Start(event, config.GlobalServerConfig.UDPPluginAddress, config.GlobalServerConfig.UDPPluginLocalPort, forwardingAddress, forwardListenPort)
 
 	if err != nil {
 		return err
@@ -225,6 +230,48 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 
 	if !event.IsLooping() {
 		_ = rm.notificationManager.SendRaceStartMessage(config, event)
+	}
+
+	// existing timer needs to be stopped in all cases
+	if rm.forceStopTimer != nil {
+		rm.forceStopTimer.Stop()
+	}
+
+	if event.GetForceStopTime() != 0 {
+		// initiate force stop timer
+		var withDrivers string
+
+		if !event.GetForceStopWithDrivers() {
+			withDrivers = "(unless there are drivers on the server at that time)"
+		} else {
+			withDrivers = "(even if there are drivers on the server at that time)"
+		}
+
+		logrus.Infof("Force Stop timer initialised, the server will be forcibly stopped after %.2f minutes %s.", event.GetForceStopTime().Minutes(), withDrivers)
+
+		rm.forceStopTimer, err = when.When(time.Now().Add(event.GetForceStopTime()), func() {
+			if rm.process.IsRunning() {
+
+				if (event.GetForceStopWithDrivers()) || (rm.raceControl.ConnectedDrivers.Len() == 0) {
+					err := rm.process.Stop()
+
+					if err != nil {
+						logrus.WithError(err).Error("couldn't forcibly stop the server!")
+						return
+					}
+
+					logrus.Infof("Force Stop time expired, the server has been successfully stopped.")
+				} else {
+					logrus.Infof("Force Stop time expired, but %d drivers are on the server! Force stop aborted. "+
+						"The server should stop automatically on event completion.", rm.raceControl.ConnectedDrivers.Len())
+				}
+
+			}
+		})
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -651,6 +698,9 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 	overridePassword := r.FormValue("OverridePassword") == "1"
 	replacementPassword := r.FormValue("ReplacementPassword")
 
+	forceStopTime := formValueAsInt(r.FormValue("ForceStopTime"))
+	forceStopWithDrivers := r.FormValue("ForceStopWithDrivers") == "1"
+
 	if customRaceID := r.FormValue("Editing"); customRaceID != "" {
 		// we are editing the race. load the previous one and overwrite it with this one
 		customRace, err := rm.store.FindCustomRaceByID(customRaceID)
@@ -662,6 +712,9 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		customRace.OverridePassword = overridePassword
 		customRace.ReplacementPassword = replacementPassword
 
+		customRace.ForceStopTime = forceStopTime
+		customRace.ForceStopWithDrivers = forceStopWithDrivers
+
 		customRace.Name = r.FormValue("CustomRaceName")
 		customRace.EntryList = entryList
 		customRace.RaceConfig = *raceConfig
@@ -672,7 +725,7 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		schedule := r.FormValue("action") == "schedule"
 
 		// save the custom race preset
-		race, err := rm.SaveCustomRace(r.FormValue("CustomRaceName"), overridePassword, replacementPassword, *raceConfig, entryList, saveAsPresetWithoutStartingRace)
+		race, err := rm.SaveCustomRace(r.FormValue("CustomRaceName"), overridePassword, replacementPassword, *raceConfig, entryList, saveAsPresetWithoutStartingRace, forceStopTime, forceStopWithDrivers)
 
 		if err != nil {
 			return err
@@ -789,6 +842,9 @@ type RaceTemplateVars struct {
 	Tyres               Tyres
 	DeselectedTyres     map[string]bool
 
+	ForceStopTime        int
+	ForceStopWithDrivers bool
+
 	IsChampionship                 bool
 	Championship                   *Championship
 	ChampionshipHasAtLeastOnceRace bool
@@ -842,7 +898,8 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (*RaceTemplateVars, error)
 	templateIDForEditing := chi.URLParam(r, "uuid")
 	isEditing := templateIDForEditing != ""
 	var customRaceName, replacementPassword string
-	var overridePassword bool
+	var overridePassword, forceStopWithDrivers bool
+	var forceStopTime int
 
 	if isEditing {
 		customRace, err := rm.store.FindCustomRaceByID(templateIDForEditing)
@@ -856,6 +913,9 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (*RaceTemplateVars, error)
 		entrants = customRace.EntryList
 		overridePassword = customRace.OverrideServerPassword()
 		replacementPassword = customRace.ReplacementServerPassword()
+
+		forceStopTime = customRace.ForceStopTime
+		forceStopWithDrivers = customRace.ForceStopWithDrivers
 	}
 
 	possibleEntrants, err := rm.ListAutoFillEntrants()
@@ -906,6 +966,8 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (*RaceTemplateVars, error)
 		OverridePassword:         overridePassword,
 		ReplacementPassword:      replacementPassword,
 		ShowOverridePasswordCard: true,
+		ForceStopTime:            forceStopTime,
+		ForceStopWithDrivers:     forceStopWithDrivers,
 	}
 
 	err = rm.applyCurrentRaceSetupToOptions(opts, race.CurrentRaceConfig)
@@ -982,6 +1044,8 @@ func (rm *RaceManager) SaveCustomRace(
 	config CurrentRaceConfig,
 	entryList EntryList,
 	starred bool,
+	forceStopTime int,
+	forceStopWithDrivers bool,
 ) (*CustomRace, error) {
 	hasCustomRaceName := true
 
@@ -1010,6 +1074,9 @@ func (rm *RaceManager) SaveCustomRace(
 		Created:             time.Now(),
 		UUID:                uuid.New(),
 		Starred:             starred,
+
+		ForceStopTime:        forceStopTime,
+		ForceStopWithDrivers: forceStopWithDrivers,
 
 		RaceConfig: config,
 		EntryList:  entryList,

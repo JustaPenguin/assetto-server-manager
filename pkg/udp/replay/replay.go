@@ -231,6 +231,8 @@ func ReplayUDPMessages(db *bbolt.DB, multiplier int, callbackFunc udp.CallbackFu
 		timeStart := loadedEntries[0].Received
 
 		for _, entry := range loadedEntries {
+			entry := entry
+
 			tickDuration := entry.Received.Sub(timeStart) / time.Duration(multiplier)
 
 			if tickDuration > waitTime {
