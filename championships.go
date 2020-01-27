@@ -1497,6 +1497,14 @@ func (a *ActiveChampionship) EventDescription() string {
 	return a.Description
 }
 
+func (a *ActiveChampionship) GetForceStopTime() time.Duration {
+	return 0
+}
+
+func (a *ActiveChampionship) GetForceStopWithDrivers() bool {
+	return false
+}
+
 func ChampionshipClassColor(i int) string {
 	return ChampionshipClassColors[i%len(ChampionshipClassColors)]
 }

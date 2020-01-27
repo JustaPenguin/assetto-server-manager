@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -102,4 +103,12 @@ func (q QuickRace) EventDescription() string {
 
 func (q QuickRace) GetURL() string {
 	return ""
+}
+
+func (q QuickRace) GetForceStopTime() time.Duration {
+	return 0
+}
+
+func (q QuickRace) GetForceStopWithDrivers() bool {
+	return false
 }
