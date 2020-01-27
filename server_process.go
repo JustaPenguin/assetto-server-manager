@@ -39,7 +39,6 @@ type AssettoServerProcess struct {
 
 	start                 chan RaceEvent
 	started, stopped, run chan error
-	stop                  chan struct{}
 	notifyDoneChs         []chan struct{}
 
 	ctx context.Context
@@ -64,7 +63,6 @@ type AssettoServerProcess struct {
 func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, store Store, contentManagerWrapper *ContentManagerWrapper) *AssettoServerProcess {
 	sp := &AssettoServerProcess{
 		start:                 make(chan RaceEvent),
-		stop:                  make(chan struct{}),
 		started:               make(chan error),
 		stopped:               make(chan error),
 		run:                   make(chan error),
@@ -109,7 +107,7 @@ var ErrServerProcessTimeout = errors.New("servermanager: server process did not 
 
 func (sp *AssettoServerProcess) Stop() error {
 	timeout := time.After(time.Second * 10)
-	fullTimeout := time.After(time.Second * 20)
+	fullTimeout := time.After(time.Second * 15)
 	sp.cfn()
 
 	for {
@@ -117,7 +115,6 @@ func (sp *AssettoServerProcess) Stop() error {
 		case err := <-sp.stopped:
 			return err
 		case <-timeout:
-			// @TODO there needs to be some exit condition here...
 			sp.mutex.Lock()
 			logrus.Debug("Server process did not naturally stop after 10s. Attempting manual kill.")
 			err := kill(sp.cmd.Process)
