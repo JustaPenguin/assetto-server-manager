@@ -13,8 +13,10 @@ import (
 
 var Lua *lua.LState
 
-func InitLua() {
+func InitLua(raceControl *RaceControl) {
 	Lua.SetGlobal("httpRequest", Lua.NewFunction(LuaHTTPRequest))
+	Lua.SetGlobal("broadcastChat", Lua.NewFunction(raceControl.LuaBroadcastChat))
+	Lua.SetGlobal("sendChat", Lua.NewFunction(raceControl.LuaSendChat))
 
 	go func() {
 		err := managerStartPlugin()

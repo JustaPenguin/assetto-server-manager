@@ -63,6 +63,7 @@ func Router(
 	raceWeekendHandler *RaceWeekendHandler,
 	strackerHandler *StrackerHandler,
 	healthCheck *HealthCheck,
+	kissMyRankHandler *KissMyRankHandler,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -331,6 +332,7 @@ func Router(
 		r.HandleFunc("/send-chat", raceControlHandler.sendChat)
 
 		r.HandleFunc("/stracker/options", strackerHandler.options)
+		r.HandleFunc("/kissmyrank/options", kissMyRankHandler.options)
 	})
 
 	FileServer(r, "/static", fs, false)

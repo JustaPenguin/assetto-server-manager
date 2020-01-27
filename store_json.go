@@ -15,14 +15,15 @@ const (
 	maxAuditEntries = 1000
 
 	// private data
-	accountsDir         = "accounts"
-	serverOptionsFile   = "server_options.json"
-	frameLinksFile      = "frame_links.json"
-	serverMetaDir       = "meta"
-	auditFile           = "audit.json"
-	strackerOptionsFile = "stracker_options.json"
-	liveTimingsDataFile = "live_timings.json"
-	lastRaceEventFile   = "last_race_event.json"
+	accountsDir           = "accounts"
+	serverOptionsFile     = "server_options.json"
+	frameLinksFile        = "frame_links.json"
+	serverMetaDir         = "meta"
+	auditFile             = "audit.json"
+	strackerOptionsFile   = "stracker_options.json"
+	kissMyRankOptionsFile = "kissmyrank_options.json"
+	liveTimingsDataFile   = "live_timings.json"
+	lastRaceEventFile     = "last_race_event.json"
 
 	// shared data
 	championshipsDir = "championships"
@@ -555,6 +556,26 @@ func (rs *JSONStore) LoadStrackerOptions() (*StrackerConfiguration, error) {
 		strackerConfig := DefaultStrackerIni()
 
 		return strackerConfig, rs.UpsertStrackerOptions(strackerConfig)
+	} else if err != nil {
+		return nil, err
+	}
+
+	return out, err
+}
+
+func (rs *JSONStore) UpsertKissMyRankOptions(kmr *KissMyRankConfig) error {
+	return rs.encodeFile(rs.base, kissMyRankOptionsFile, kmr)
+}
+
+func (rs *JSONStore) LoadKissMyRankOptions() (*KissMyRankConfig, error) {
+	var out *KissMyRankConfig
+
+	err := rs.decodeFile(rs.base, kissMyRankOptionsFile, &out)
+
+	if os.IsNotExist(err) {
+		kmrConfig := DefaultKissMyRankConfig()
+
+		return kmrConfig, rs.UpsertKissMyRankOptions(kmrConfig)
 	} else if err != nil {
 		return nil, err
 	}

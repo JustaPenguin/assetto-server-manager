@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
-	"github.com/mitchellh/go-wordwrap"
-
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
@@ -158,12 +156,14 @@ func NewRaceControlHandler(baseHandler *BaseHandler, store Store, raceManager *R
 type liveTimingTemplateVars struct {
 	BaseTemplateVars
 
-	RaceDetails       *CustomRace
-	FrameLinks        []string
-	CSSDotSmoothing   int
-	CMJoinLink        string
-	UseMPH            bool
-	IsStrackerEnabled bool
+	RaceDetails                 *CustomRace
+	FrameLinks                  []string
+	CSSDotSmoothing             int
+	CMJoinLink                  string
+	UseMPH                      bool
+	IsStrackerEnabled           bool
+	IsKissMyRankEnabled         bool
+	KissMyRankWebStatsPublicURL string
 }
 
 func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request) {
@@ -206,7 +206,15 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 	strackerOptions, err := rch.store.LoadStrackerOptions()
 
 	if err != nil {
-		logrus.WithError(err).Errorf("couldn't load server options")
+		logrus.WithError(err).Errorf("couldn't load stracker options")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	kissMyRankOptions, err := rch.store.LoadKissMyRankOptions()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't load kissmyrank options")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -215,12 +223,14 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		BaseTemplateVars: BaseTemplateVars{
 			WideContainer: true,
 		},
-		RaceDetails:       customRace,
-		FrameLinks:        frameLinks,
-		CSSDotSmoothing:   udp.RealtimePosIntervalMs,
-		CMJoinLink:        linkString,
-		UseMPH:            serverOpts.UseMPH == 1,
-		IsStrackerEnabled: IsStrackerInstalled() && strackerOptions.EnableStracker,
+		RaceDetails:                 customRace,
+		FrameLinks:                  frameLinks,
+		CSSDotSmoothing:             udp.RealtimePosIntervalMs,
+		CMJoinLink:                  linkString,
+		UseMPH:                      serverOpts.UseMPH == 1,
+		IsStrackerEnabled:           IsStrackerInstalled() && strackerOptions.EnableStracker,
+		IsKissMyRankEnabled:         IsKissMyRankInstalled() && kissMyRankOptions.EnableKissMyRank,
+		KissMyRankWebStatsPublicURL: kissMyRankOptions.WebStatsPublicURL,
 	})
 }
 
@@ -277,23 +287,10 @@ func (rch *RaceControlHandler) broadcastChat(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	wrapped := strings.Split(wordwrap.WrapString(
-		r.FormValue("broadcast-chat"),
-		60,
-	), "\n")
+	err := rch.raceControl.splitAndBroadcastChat(r.FormValue("broadcast-chat"))
 
-	for _, msg := range wrapped {
-		broadcastMessage, err := udp.NewBroadcastChat(msg)
-
-		if err == nil {
-			err := rch.serverProcess.SendUDPMessage(broadcastMessage)
-
-			if err != nil {
-				logrus.WithError(err).Errorf("Unable to broadcast chat message")
-			}
-		} else {
-			logrus.WithError(err).Errorf("Unable to build chat message")
-		}
+	if err != nil {
+		logrus.WithError(err).Errorf("Unable to broadcast chat message")
 	}
 }
 
@@ -355,32 +352,10 @@ func (rch *RaceControlHandler) sendChat(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var carID uint8
+	err := rch.raceControl.splitAndSendChat(r.FormValue("send-chat"), guid)
 
-	for id, rangeGUID := range rch.raceControl.CarIDToGUID {
-		if string(rangeGUID) == guid {
-			carID = uint8(id)
-			break
-		}
-	}
-
-	wrapped := strings.Split(wordwrap.WrapString(
-		r.FormValue("send-chat"),
-		60,
-	), "\n")
-
-	for _, msg := range wrapped {
-		welcomeMessage, err := udp.NewSendChat(udp.CarID(carID), msg)
-
-		if err == nil {
-			err := rch.serverProcess.SendUDPMessage(welcomeMessage)
-
-			if err != nil {
-				logrus.WithError(err).Errorf("Unable to send chat message to car: %d", carID)
-			}
-		} else {
-			logrus.WithError(err).Errorf("Unable to build chat message to car: %d", carID)
-		}
+	if err != nil {
+		logrus.WithError(err).Errorf("Unable to send chat message to driver: %s", guid)
 	}
 }
 

@@ -39,7 +39,6 @@ type AssettoServerProcess struct {
 
 	start                 chan RaceEvent
 	started, stopped, run chan error
-	stop                  chan struct{}
 	notifyDoneChs         []chan struct{}
 
 	ctx context.Context
@@ -64,7 +63,6 @@ type AssettoServerProcess struct {
 func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, store Store, contentManagerWrapper *ContentManagerWrapper) *AssettoServerProcess {
 	sp := &AssettoServerProcess{
 		start:                 make(chan RaceEvent),
-		stop:                  make(chan struct{}),
 		started:               make(chan error),
 		stopped:               make(chan error),
 		run:                   make(chan error),
@@ -98,6 +96,8 @@ func (sp *AssettoServerProcess) Start(event RaceEvent, udpPluginAddress string, 
 	return <-sp.started
 }
 
+var ErrPluginConfigurationRequiresUDPPortSetup = errors.New("servermanager: kissmyrank and stracker configuration requires UDP plugin configuration in Server Options")
+
 func (sp *AssettoServerProcess) IsRunning() bool {
 	sp.mutex.Lock()
 	defer sp.mutex.Unlock()
@@ -109,7 +109,7 @@ var ErrServerProcessTimeout = errors.New("servermanager: server process did not 
 
 func (sp *AssettoServerProcess) Stop() error {
 	timeout := time.After(time.Second * 10)
-	fullTimeout := time.After(time.Second * 20)
+	fullTimeout := time.After(time.Second * 15)
 	sp.cfn()
 
 	for {
@@ -117,7 +117,6 @@ func (sp *AssettoServerProcess) Stop() error {
 		case err := <-sp.stopped:
 			return err
 		case <-timeout:
-			// @TODO there needs to be some exit condition here...
 			sp.mutex.Lock()
 			logrus.Debug("Server process did not naturally stop after 10s. Attempting manual kill.")
 			err := kill(sp.cmd.Process)
@@ -229,33 +228,103 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 		}()
 	}
 
-	if strackerOptions, err := sp.store.LoadStrackerOptions(); err == nil && strackerOptions.EnableStracker && IsStrackerInstalled() {
-		if serverOptions.UDPPluginLocalPort >= 0 && serverOptions.UDPPluginAddress != "" || strings.Contains(serverOptions.UDPPluginAddress, ":") {
-			strackerOptions.ACPlugin.SendPort = serverOptions.UDPPluginLocalPort
-			strackerOptions.ACPlugin.ReceivePort = formValueAsInt(strings.Split(serverOptions.UDPPluginAddress, ":")[1])
+	strackerOptions, err := sp.store.LoadStrackerOptions()
+	strackerEnabled := err == nil && strackerOptions.EnableStracker && IsStrackerInstalled()
 
-			err = strackerOptions.Write()
+	kissMyRankOptions, err := sp.store.LoadKissMyRankOptions()
+	kissMyRankEnabled := err == nil && kissMyRankOptions.EnableKissMyRank && IsKissMyRankInstalled()
 
-			if err != nil {
-				return err
+	udpPluginPortsSetup := sp.forwardListenPort >= 0 && sp.forwardingAddress != "" || strings.Contains(sp.forwardingAddress, ":")
+
+	if (strackerEnabled || kissMyRankEnabled) && !udpPluginPortsSetup {
+		logrus.WithError(ErrPluginConfigurationRequiresUDPPortSetup).Error("Please check your server configuration")
+	}
+
+	if strackerEnabled && strackerOptions != nil && udpPluginPortsSetup {
+		strackerOptions.ACPlugin.SendPort = sp.forwardListenPort
+		strackerOptions.ACPlugin.ReceivePort = formValueAsInt(strings.Split(sp.forwardingAddress, ":")[1])
+
+		if kissMyRankEnabled {
+			// kissmyrank uses stracker's forwarding to chain the plugins. make sure that it is set up.
+			if strackerOptions.ACPlugin.ProxyPluginLocalPort <= 0 {
+				strackerOptions.ACPlugin.ProxyPluginLocalPort, err = FreeUDPPort()
+
+				if err != nil {
+					return err
+				}
 			}
 
-			err = sp.startPlugin(wd, &CommandPlugin{
-				Executable: StrackerExecutablePath(),
-				Arguments: []string{
-					"--stracker_ini",
-					filepath.Join(StrackerFolderPath(), strackerConfigIniFilename),
-				},
-			})
+			for strackerOptions.ACPlugin.ProxyPluginPort <= 0 || strackerOptions.ACPlugin.ProxyPluginPort == strackerOptions.ACPlugin.ProxyPluginLocalPort {
+				strackerOptions.ACPlugin.ProxyPluginPort, err = FreeUDPPort()
 
-			if err != nil {
-				return err
+				if err != nil {
+					return err
+				}
 			}
-
-			logrus.Infof("Started sTracker. Listening for pTracker connections on port %d", strackerOptions.InstanceConfiguration.ListeningPort)
-		} else {
-			logrus.WithError(ErrStrackerConfigurationRequiresUDPPluginConfiguration).Error("Please check your server configuration")
 		}
+
+		if err := strackerOptions.Write(); err != nil {
+			return err
+		}
+
+		err = sp.startPlugin(wd, &CommandPlugin{
+			Executable: StrackerExecutablePath(),
+			Arguments: []string{
+				"--stracker_ini",
+				filepath.Join(StrackerFolderPath(), strackerConfigIniFilename),
+			},
+		})
+
+		if err != nil {
+			return err
+		}
+
+		logrus.Infof("Started sTracker. Listening for pTracker connections on port %d", strackerOptions.InstanceConfiguration.ListeningPort)
+	}
+
+	if kissMyRankEnabled && kissMyRankOptions != nil && udpPluginPortsSetup {
+		if err := fixKissMyRankExecutablePermissions(); err != nil {
+			return err
+		}
+
+		kissMyRankOptions.ACServerIP = "127.0.0.1"
+		kissMyRankOptions.ACServerHTTPPort = serverOptions.HTTPPort
+		kissMyRankOptions.UpdateInterval = config.LiveMap.IntervalMs
+		kissMyRankOptions.ACServerResultsBasePath = filepath.Join(ServerInstallPath, "results")
+
+		raceConfig := sp.raceEvent.GetRaceConfig()
+		entryList := sp.raceEvent.GetEntryList()
+
+		kissMyRankOptions.MaxPlayers = raceConfig.MaxClients
+
+		if len(entryList) > kissMyRankOptions.MaxPlayers {
+			kissMyRankOptions.MaxPlayers = len(entryList)
+		}
+
+		if strackerEnabled {
+			// stracker is enabled, use its forwarding port
+			logrus.Infof("sTracker and KissMyRank both enabled. Using plugin forwarding method: [Server Manager] <-> [sTracker] <-> [KissMyRank]")
+			kissMyRankOptions.ACServerPluginLocalPort = strackerOptions.ACPlugin.ProxyPluginLocalPort
+			kissMyRankOptions.ACServerPluginAddressPort = strackerOptions.ACPlugin.ProxyPluginPort
+		} else {
+			// stracker is disabled, use our forwarding port
+			kissMyRankOptions.ACServerPluginLocalPort = sp.forwardListenPort
+			kissMyRankOptions.ACServerPluginAddressPort = formValueAsInt(strings.Split(sp.forwardingAddress, ":")[1])
+		}
+
+		if err := kissMyRankOptions.Write(); err != nil {
+			return err
+		}
+
+		err = sp.startPlugin(wd, &CommandPlugin{
+			Executable: KissMyRankExecutablePath(),
+		})
+
+		if err != nil {
+			return err
+		}
+
+		logrus.Infof("Started KissMyRank")
 	}
 
 	for _, plugin := range config.Server.Plugins {

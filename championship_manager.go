@@ -1544,7 +1544,7 @@ func (e ValidationError) Error() string {
 	return string(e)
 }
 
-var steamGUIDRegex = regexp.MustCompile("^[0-9]{17}$")
+var steamGUIDRegex = regexp.MustCompile("^[0-9]{17}(;[0-9]{17})*$")
 
 func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (response *ChampionshipSignUpResponse, foundSlot bool, err error) {
 	if err := r.ParseForm(); err != nil {

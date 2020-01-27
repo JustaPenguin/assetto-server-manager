@@ -47,6 +47,7 @@ type Resolver struct {
 	raceWeekendHandler          *RaceWeekendHandler
 	strackerHandler             *StrackerHandler
 	healthCheck                 *HealthCheck
+	kissMyRankHandler           *KissMyRankHandler
 }
 
 func NewResolver(templateLoader TemplateLoader, reloadTemplates bool, store Store) (*Resolver, error) {
@@ -69,7 +70,7 @@ func NewResolver(templateLoader TemplateLoader, reloadTemplates bool, store Stor
 
 func (r *Resolver) UDPCallback(message udp.Message) {
 	if !config.Server.PerformanceMode {
-		r.resolveRaceControl().UDPCallback(message)
+		r.ResolveRaceControl().UDPCallback(message)
 	}
 
 	if message.Event() != udp.EventCarUpdate {
@@ -143,6 +144,7 @@ func (r *Resolver) resolveRaceManager() *RaceManager {
 		r.resolveCarManager(),
 		r.resolveTrackManager(),
 		r.resolveNotificationManager(),
+		r.ResolveRaceControl(),
 	)
 
 	return r.raceManager
@@ -360,7 +362,7 @@ func (r *Resolver) resolveRaceControlHub() *RaceControlHub {
 	return r.raceControlHub
 }
 
-func (r *Resolver) resolveRaceControl() *RaceControl {
+func (r *Resolver) ResolveRaceControl() *RaceControl {
 	if r.raceControl != nil {
 		return r.raceControl
 	}
@@ -388,7 +390,7 @@ func (r *Resolver) resolveRaceControlHandler() *RaceControlHandler {
 		r.resolveBaseHandler(),
 		r.ResolveStore(),
 		r.resolveRaceManager(),
-		r.resolveRaceControl(),
+		r.ResolveRaceControl(),
 		r.resolveRaceControlHub(),
 		r.resolveServerProcess(),
 	)
@@ -459,9 +461,22 @@ func (r *Resolver) resolveHealthCheck() *HealthCheck {
 		return r.healthCheck
 	}
 
-	r.healthCheck = NewHealthCheck(r.resolveRaceControl(), r.ResolveStore(), r.resolveServerProcess())
+	r.healthCheck = NewHealthCheck(r.ResolveRaceControl(), r.ResolveStore(), r.resolveServerProcess())
 
 	return r.healthCheck
+}
+
+func (r *Resolver) resolveKissMyRankHandler() *KissMyRankHandler {
+	if r.kissMyRankHandler != nil {
+		return r.kissMyRankHandler
+	}
+
+	r.kissMyRankHandler = NewKissMyRankHandler(
+		r.resolveBaseHandler(),
+		r.ResolveStore(),
+	)
+
+	return r.kissMyRankHandler
 }
 
 func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
@@ -484,6 +499,7 @@ func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
 		r.resolveRaceWeekendHandler(),
 		r.resolveStrackerHandler(),
 		r.resolveHealthCheck(),
+		r.resolveKissMyRankHandler(),
 	)
 }
 

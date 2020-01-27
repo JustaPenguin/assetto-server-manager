@@ -56,4 +56,8 @@ type Store interface {
 	// Stracker Options
 	UpsertStrackerOptions(sto *StrackerConfiguration) error
 	LoadStrackerOptions() (*StrackerConfiguration, error)
+
+	// KissMyRank Options
+	UpsertKissMyRankOptions(kmr *KissMyRankConfig) error
+	LoadKissMyRankOptions() (*KissMyRankConfig, error)
 }

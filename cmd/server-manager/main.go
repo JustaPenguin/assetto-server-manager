@@ -130,7 +130,7 @@ func main() {
 		servermanager.Lua = lua.NewState()
 		defer servermanager.Lua.Close()
 
-		servermanager.InitLua()
+		servermanager.InitLua(resolver.ResolveRaceControl())
 	}
 
 	err = servermanager.InitWithResolver(resolver)
