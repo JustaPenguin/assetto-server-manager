@@ -21,7 +21,6 @@ require (
 	github.com/cznic/b v0.0.0-20181122101859-a26611c4d92d // indirect
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/cznic/strutil v0.0.0-20181122101858-275e90344537 // indirect
-	github.com/davecgh/go-spew v1.1.1
 	github.com/dimchansky/utfbom v1.1.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/etcd-io/bbolt v1.3.3
@@ -53,7 +52,6 @@ require (
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.0
 	github.com/mitchellh/reflectwalk v1.0.1 // indirect
-	github.com/mjibson/esc v0.2.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pkg/errors v0.9.1
@@ -81,7 +79,6 @@ require (
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20200121082415-34d275377bf9 // indirect
 	golang.org/x/text v0.3.2
-	golang.org/x/tools v0.0.0-20200125223703-d33eef8e6825 // indirect
 	gopkg.in/ini.v1 v1.42.0 // indirect
 	gopkg.in/yaml.v2 v2.2.7
 )
