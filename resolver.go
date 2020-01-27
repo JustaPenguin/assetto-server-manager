@@ -143,7 +143,7 @@ func (r *Resolver) resolveRaceManager() *RaceManager {
 		r.resolveCarManager(),
 		r.resolveTrackManager(),
 		r.resolveNotificationManager(),
-		r.resolveRaceControl(),
+		r.ResolveRaceControl(),
 	)
 
 	return r.raceManager
