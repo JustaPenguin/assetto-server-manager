@@ -74,6 +74,7 @@ var (
 		changeNotificationTimer,
 		addContentExamples,
 		addServerIDToScheduledEvents,
+		addLoopServerToCustomRace,
 	}
 )
 
@@ -677,6 +678,22 @@ func addServerIDToScheduledEvents(s Store) error {
 
 		if err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+func addLoopServerToCustomRace(s Store) error {
+	customRaces, err := s.ListCustomRaces()
+
+	if err != nil {
+		return err
+	}
+
+	for _, customRace := range customRaces {
+		if customRace.Loop {
+			customRace.LoopServer[serverID] = true
 		}
 	}
 

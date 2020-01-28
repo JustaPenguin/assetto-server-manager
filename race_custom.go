@@ -23,6 +23,7 @@ type CustomRace struct {
 	Deleted       time.Time
 	UUID          uuid.UUID
 	Starred, Loop bool
+	LoopServer    map[string]bool
 
 	ForceStopTime        int
 	ForceStopWithDrivers bool
@@ -40,7 +41,7 @@ func (cr *CustomRace) GetEntryList() EntryList {
 }
 
 func (cr *CustomRace) IsLooping() bool {
-	return cr.Loop
+	return cr.LoopServer[serverID]
 }
 
 func (cr *CustomRace) EventName() string {
