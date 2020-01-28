@@ -45,10 +45,10 @@ type RaceControlDriver struct {
 func (rcd *RaceControlDriver) CurrentCar() *RaceControlCarLapInfo {
 	if car, ok := rcd.Cars[rcd.CarInfo.CarModel]; ok {
 		return car
-	} else {
-		logrus.Warnf("Could not find current car for driver: %s (current car: %s)", rcd.CarInfo.DriverGUID, rcd.CarInfo.CarModel)
-		return &RaceControlCarLapInfo{}
 	}
+
+	logrus.Warnf("Could not find current car for driver: %s (current car: %s)", rcd.CarInfo.DriverGUID, rcd.CarInfo.CarModel)
+	return &RaceControlCarLapInfo{}
 }
 
 type RaceControlCarLapInfo struct {

@@ -157,8 +157,7 @@ func (cmw *ContentManagerWrapper) UDPCallback(message udp.Message) {
 	cmw.mutex.Lock()
 	defer cmw.mutex.Unlock()
 
-	switch m := message.(type) {
-	case udp.SessionInfo:
+	if m, ok := message.(udp.SessionInfo); ok {
 		cmw.sessionInfo = m
 	}
 }
@@ -391,14 +390,27 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 
 	for entrantNum, entrant := range cmw.entryList.AsSlice() {
 		if entrantNum < len(players.Cars) {
-			players.Cars[entrantNum].ID = contentManagerIDChecksum(entrant.GUID)
+			players.Cars[entrantNum].ID, err = contentManagerIDChecksum(entrant.GUID)
+
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	var passwordChecksum [2]string
 
 	if global.Password != "" {
-		passwordChecksum[0] = contentManagerPasswordChecksum(global.Name, global.Password)
-		passwordChecksum[1] = contentManagerPasswordChecksum(global.Name, global.AdminPassword)
+		passwordChecksum[0], err = contentManagerPasswordChecksum(global.Name, global.Password)
+
+		if err != nil {
+			return nil, err
+		}
+
+		passwordChecksum[1], err = contentManagerPasswordChecksum(global.Name, global.AdminPassword)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	geoInfo, err := geoIP()
@@ -499,18 +511,26 @@ func getSolWeatherPrettyName(weatherName string) string {
 	return "Sol: " + solName
 }
 
-func contentManagerPasswordChecksum(serverName, password string) string {
+func contentManagerPasswordChecksum(serverName, password string) (string, error) {
 	h := sha1.New()
-	h.Write([]byte("apatosaur" + serverName + password))
+	_, err := h.Write([]byte("apatosaur" + serverName + password))
 
-	return hex.EncodeToString(h.Sum(nil))
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
-func contentManagerIDChecksum(guid string) string {
+func contentManagerIDChecksum(guid string) (string, error) {
 	h := sha1.New()
-	h.Write([]byte("antarcticfurseal" + guid))
+	_, err := h.Write([]byte("antarcticfurseal" + guid))
 
-	return hex.EncodeToString(h.Sum(nil))
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 var geoIPData *GeoIP
@@ -550,17 +570,17 @@ func getContentManagerJoinLink(config GlobalServerConfig) (*url.URL, error) {
 		return nil, err
 	}
 
-	cmUrl, err := url.Parse(ContentManagerJoinLinkBase)
+	cmURL, err := url.Parse(ContentManagerJoinLinkBase)
 
 	if err != nil {
 		return nil, err
 	}
 
-	queryString := cmUrl.Query()
+	queryString := cmURL.Query()
 	queryString.Set("ip", geoIP.IP)
 	queryString.Set("httpPort", strconv.Itoa(config.HTTPPort))
 
-	cmUrl.RawQuery = queryString.Encode()
+	cmURL.RawQuery = queryString.Encode()
 
-	return cmUrl, nil
+	return cmURL, nil
 }
