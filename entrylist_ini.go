@@ -232,9 +232,9 @@ type Entrant struct {
 func (e Entrant) ID() string {
 	if e.GUID != "" {
 		return e.GUID
-	} else {
-		return e.Name
 	}
+
+	return e.Name
 }
 
 func (e *Entrant) OverwriteProperties(other *Entrant) {

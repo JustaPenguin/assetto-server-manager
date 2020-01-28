@@ -43,9 +43,9 @@ func (c Car) PrettyName() string {
 func (c Car) IsPaidDLC() bool {
 	if _, ok := isCarPaidDLC[c.Name]; ok {
 		return isCarPaidDLC[c.Name]
-	} else {
-		return false
 	}
+
+	return false
 }
 
 func (c Car) IsMod() bool {
@@ -300,6 +300,11 @@ func (cm *CarManager) watchForCarChanges() error {
 					}
 
 					err = cm.IndexCar(car)
+
+					if err != nil {
+						logrus.WithError(err).Errorf("Could not index car: %s", carName)
+						continue
+					}
 				case watcher.Remove:
 					carName = filepath.Base(event.OldPath)
 					logrus.Infof("De-indexing car: %s", carName)
@@ -409,13 +414,14 @@ func (cm *CarManager) LoadCar(name string, tyres Tyres) (*Car, error) {
 func (cm *CarManager) RandomSkin(model string) string {
 	car, err := cm.LoadCar(model, nil)
 
-	if err != nil {
+	switch {
+	case err != nil:
 		logrus.WithError(err).Errorf("Could not load car %s. No skin will be specified", model)
 		return ""
-	} else if len(car.Skins) == 0 {
+	case len(car.Skins) == 0:
 		logrus.Warnf("Car %s has no skins uploaded. No skin will be specified", model)
 		return ""
-	} else {
+	default:
 		return car.Skins[rand.Intn(len(car.Skins))]
 	}
 }
@@ -564,7 +570,7 @@ func (cm *CarManager) IndexAllCars() error {
 		return err
 	}
 
-	logrus.Infof("Search index build is complete (took: %s)", time.Now().Sub(started).String())
+	logrus.Infof("Search index build is complete (took: %s)", time.Since(started).String())
 
 	return nil
 }
@@ -666,8 +672,8 @@ type carDetailsTemplateVars struct {
 	TrackOpts []Track
 }
 
-// LoadCarDetailsForTemplate loads all necessary items to generate the car details template.
-func (cm *CarManager) LoadCarDetailsForTemplate(carName string) (*carDetailsTemplateVars, error) {
+// loadCarDetailsForTemplate loads all necessary items to generate the car details template.
+func (cm *CarManager) loadCarDetailsForTemplate(carName string) (*carDetailsTemplateVars, error) {
 	tyres, err := ListTyres()
 
 	if err != nil {
@@ -800,7 +806,7 @@ func (ch *CarsHandler) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	numPages := int(math.Ceil(float64(float64(results.Total)) / float64(searchPageSize)))
+	numPages := int(math.Ceil(float64(results.Total) / float64(searchPageSize)))
 
 	ch.viewRenderer.MustLoadTemplate(w, r, "content/cars.html", &carListTemplateVars{
 		Results:     results,
@@ -890,7 +896,7 @@ func carSkinURL(car, skin string) string {
 
 func (ch *CarsHandler) view(w http.ResponseWriter, r *http.Request) {
 	carName := chi.URLParam(r, "car_id")
-	templateParams, err := ch.carManager.LoadCarDetailsForTemplate(carName)
+	templateParams, err := ch.carManager.loadCarDetailsForTemplate(carName)
 
 	if os.IsNotExist(err) {
 		http.NotFound(w, r)

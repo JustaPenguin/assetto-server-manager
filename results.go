@@ -93,7 +93,7 @@ func (s *SessionResults) Anonymize() {
 
 func GetMD5Hash(guid string) string {
 	hasher := md5.New()
-	hasher.Write([]byte(guid))
+	_, _ = hasher.Write([]byte(guid))
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
@@ -442,10 +442,10 @@ cars:
 
 			return s.GetNumLaps(s.Result[i].DriverGUID, s.Result[i].CarModel) >= s.GetNumLaps(s.Result[j].DriverGUID, s.Result[j].CarModel)
 
-		} else {
-			// driver i is closer to the front than j if they are not disqualified and j is
-			return s.Result[j].Disqualified
 		}
+
+		// driver i is closer to the front than j if they are not disqualified and j is
+		return s.Result[j].Disqualified
 	})
 }
 
@@ -487,8 +487,7 @@ func (s *SessionResults) GetTime(timeINT int, driverGUID, model string, penalty 
 			if driver.DriverGUID == driverGUID && driver.CarModel == model && driver.HasPenalty {
 				d += driver.PenaltyTime
 
-				switch s.Type {
-				case SessionTypeRace:
+				if s.Type == SessionTypeRace {
 					d -= time.Duration(driver.LapPenalty) * s.GetLastLapTime(driverGUID, model)
 				}
 			}
@@ -527,9 +526,9 @@ func (s *SessionResults) GetNumLaps(driverGUID, model string) int {
 	return i
 }
 
-func (s *SessionResults) GetLastLapTime(driverGuid, model string) time.Duration {
+func (s *SessionResults) GetLastLapTime(driverGUID, model string) time.Duration {
 	for i := len(s.Laps) - 1; i >= 0; i-- {
-		if s.Laps[i].DriverGUID == driverGuid && s.Laps[i].CarModel == model {
+		if s.Laps[i].DriverGUID == driverGUID && s.Laps[i].CarModel == model {
 			return s.Laps[i].GetLapTime()
 		}
 	}
@@ -571,21 +570,21 @@ func (s *SessionResults) GetPotentialLap(driverGUID, model string) time.Duration
 	return totalSectorTime
 }
 
-func (s *SessionResults) GetLastLapPos(driverGuid, model string) int {
+func (s *SessionResults) GetLastLapPos(driverGUID, model string) int {
 	var driverLaps int
 
 	for i := range s.Laps {
-		if s.Laps[i].DriverGUID == driverGuid && s.Laps[i].CarModel == model {
+		if s.Laps[i].DriverGUID == driverGUID && s.Laps[i].CarModel == model {
 			driverLaps++
 		}
 	}
 
-	return s.GetPosForLap(driverGuid, model, int64(driverLaps))
+	return s.GetPosForLap(driverGUID, model, int64(driverLaps))
 }
 
-func (s *SessionResults) GetDriverPosition(driverGuid, model string) int {
+func (s *SessionResults) GetDriverPosition(driverGUID, model string) int {
 	for i := range s.Result {
-		if s.Result[i].DriverGUID == driverGuid && s.Result[i].CarModel == model {
+		if s.Result[i].DriverGUID == driverGUID && s.Result[i].CarModel == model {
 			return i + 1
 		}
 	}
@@ -593,11 +592,11 @@ func (s *SessionResults) GetDriverPosition(driverGuid, model string) int {
 	return 0
 }
 
-func (s *SessionResults) GetCuts(driverGuid, model string) int {
+func (s *SessionResults) GetCuts(driverGUID, model string) int {
 	var i int
 
 	for _, lap := range s.Laps {
-		if lap.DriverGUID == driverGuid && lap.CarModel == model {
+		if lap.DriverGUID == driverGUID && lap.CarModel == model {
 			i += lap.Cuts
 		}
 	}

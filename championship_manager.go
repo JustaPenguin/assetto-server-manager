@@ -576,35 +576,35 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 			RaceConfig:          event.RaceSetup,
 			EntryList:           entryList,
 		})
-	} else {
-		// delete all sessions other than booking (if there is a booking session)
-		delete(event.RaceSetup.Sessions, SessionTypePractice)
-		delete(event.RaceSetup.Sessions, SessionTypeQualifying)
-		delete(event.RaceSetup.Sessions, SessionTypeRace)
-
-		event.RaceSetup.Sessions[SessionTypePractice] = &SessionConfig{
-			Name:   "Practice",
-			Time:   120,
-			IsOpen: 1,
-		}
-
-		if !event.RaceSetup.HasSession(SessionTypeBooking) {
-			// #271: override pickup mode to ON for practice sessions
-			event.RaceSetup.PickupModeEnabled = 1
-		}
-
-		return cm.RaceManager.applyConfigAndStart(&ActiveChampionship{
-			ChampionshipID:      championship.ID,
-			EventID:             event.ID,
-			Name:                championship.Name,
-			OverridePassword:    championship.OverridePassword,
-			ReplacementPassword: championship.ReplacementPassword,
-			Description:         string(championship.Info),
-			IsPracticeSession:   true,
-			RaceConfig:          event.RaceSetup,
-			EntryList:           entryList,
-		})
 	}
+
+	// delete all sessions other than booking (if there is a booking session)
+	delete(event.RaceSetup.Sessions, SessionTypePractice)
+	delete(event.RaceSetup.Sessions, SessionTypeQualifying)
+	delete(event.RaceSetup.Sessions, SessionTypeRace)
+
+	event.RaceSetup.Sessions[SessionTypePractice] = &SessionConfig{
+		Name:   "Practice",
+		Time:   120,
+		IsOpen: 1,
+	}
+
+	if !event.RaceSetup.HasSession(SessionTypeBooking) {
+		// #271: override pickup mode to ON for practice sessions
+		event.RaceSetup.PickupModeEnabled = 1
+	}
+
+	return cm.RaceManager.applyConfigAndStart(&ActiveChampionship{
+		ChampionshipID:      championship.ID,
+		EventID:             event.ID,
+		Name:                championship.Name,
+		OverridePassword:    championship.OverridePassword,
+		ReplacementPassword: championship.ReplacementPassword,
+		Description:         string(championship.Info),
+		IsPracticeSession:   true,
+		RaceConfig:          event.RaceSetup,
+		EntryList:           entryList,
+	})
 }
 
 func championshipEventStartPlugin(event *ChampionshipEvent, championship *Championship) error {
@@ -713,8 +713,16 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 				thisTimer := timer
 
 				cm.championshipEventReminderTimers[event.ID.String()], err = when.When(date.Add(time.Duration(0-timer)*time.Minute), func() {
-					cm.notificationManager.SendChampionshipReminderMessage(championship, event, thisTimer)
+					err := cm.notificationManager.SendChampionshipReminderMessage(championship, event, thisTimer)
+
+					if err != nil {
+						logrus.WithError(err).Errorf("couldn't send championship reminder message")
+					}
 				})
+
+				if err != nil {
+					logrus.WithError(err).Errorf("couldn't send championship reminder message")
+				}
 			}
 		}
 	} else {
@@ -812,9 +820,9 @@ func (cm *ChampionshipManager) FindNextEventRecurrence(event *ChampionshipEvent,
 
 	if next.After(time.Now()) {
 		return next
-	} else {
-		return cm.FindNextEventRecurrence(event, next)
 	}
+
+	return cm.FindNextEventRecurrence(event, next)
 }
 
 func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
@@ -1656,11 +1664,14 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 				if cm.notificationManager.HasNotificationReminders() {
 					for _, timer := range cm.notificationManager.GetNotificationReminders() {
 						if event.Scheduled.Add(time.Duration(0-timer) * time.Minute).After(time.Now()) {
-							// add reminder
 							thisTimer := timer
 
 							cm.championshipEventReminderTimers[event.ID.String()], err = when.When(event.Scheduled.Add(time.Duration(0-timer)*time.Minute), func() {
-								cm.notificationManager.SendChampionshipReminderMessage(championship, event, thisTimer)
+								err := cm.notificationManager.SendChampionshipReminderMessage(championship, event, thisTimer)
+
+								if err != nil {
+									logrus.WithError(err).Errorf("Could not send championship reminder message for event: %s", event.ID.String())
+								}
 							})
 
 							if err != nil {
@@ -1672,16 +1683,17 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 				}
 
 				return cm.UpsertChampionship(championship)
-			} else {
-				emptyTime := time.Time{}
-				if event.Scheduled != emptyTime {
-					logrus.Infof("Looks like the server was offline whilst a scheduled event was meant to start!"+
-						" Start time: %s. The schedule has been cleared. Start the event manually if you wish to run it.", event.Scheduled.String())
+			}
 
-					event.Scheduled = emptyTime
+			zeroTime := time.Time{}
 
-					return cm.UpsertChampionship(championship)
-				}
+			if event.Scheduled != zeroTime {
+				logrus.Infof("Looks like the server was offline whilst a scheduled event was meant to start!"+
+					" Start time: %s. The schedule has been cleared. Start the event manually if you wish to run it.", event.Scheduled.String())
+
+				event.Scheduled = zeroTime
+
+				return cm.UpsertChampionship(championship)
 			}
 		}
 	}
