@@ -183,8 +183,8 @@ func (stc *StrackerConfiguration) Write() error {
 
 type StrackerInstanceConfiguration struct {
 	ACServerAddress              string `ini:"ac_server_address" show:"open" help:"Server ip address or name used to poll results from. You should not touch the default value: 127.0.0.1"`
-	ACServerConfigIni            string `ini:"ac_server_cfg_ini" show:"open" help:"Path to configuration file of ac server. Note: whenever the server is restarted, it is required to restart stracker as well"`
-	ACServerWorkingDir           string `ini:"ac_server_working_dir" show:"open" help:"Working directory of the ac server, needed to read the race result json files. If empty, the directory is deduced from the ac_server_cfg_ini path assuming the default directory structure"`
+	ACServerConfigIni            string `ini:"ac_server_cfg_ini" show:"-" help:"Path to configuration file of ac server. Note: whenever the server is restarted, it is required to restart stracker as well"`
+	ACServerWorkingDir           string `ini:"ac_server_working_dir" show:"-" help:"Working directory of the ac server, needed to read the race result json files. If empty, the directory is deduced from the ac_server_cfg_ini path assuming the default directory structure"`
 	AppendLogFile                bool   `ini:"append_log_file" show:"open" help:"Set to ON, if you want to append to log files rather than overwriting them. Only meaningful with an external log file rotation system."`
 	IDBasedOnDriverNames         bool   `ini:"guids_based_on_driver_names" show:"open" help:"You normally want to leave this at the default (OFF). Use case for this is an environment where the same steam account is used by different drivers."`
 	KeepAlivePtrackerConnections bool   `ini:"keep_alive_ptracker_conns" show:"open" help:"Set to OFF if you want to disable the TCP keep_alive option (that was the behaviour pre 3.1.7)."`
