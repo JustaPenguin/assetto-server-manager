@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/JustaPenguin/assetto-server-manager/fixtures/default-content"
+	defaultcontent "github.com/JustaPenguin/assetto-server-manager/fixtures/default-content"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"

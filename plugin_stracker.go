@@ -29,17 +29,17 @@ const (
 func StrackerExecutablePath() string {
 	if runtime.GOOS == "windows" {
 		return filepath.Join(StrackerFolderPath(), "stracker.exe")
-	} else {
-		return filepath.Join(StrackerFolderPath(), "stracker")
 	}
+
+	return filepath.Join(StrackerFolderPath(), "stracker")
 }
 
 func StrackerFolderPath() string {
 	if runtime.GOOS == "windows" {
 		return filepath.Join(ServerInstallPath, strackerBaseFolderName)
-	} else {
-		return filepath.Join(ServerInstallPath, strackerBaseFolderName, "stracker_linux_x86")
 	}
+
+	return filepath.Join(ServerInstallPath, strackerBaseFolderName, "stracker_linux_x86")
 }
 
 // IsStrackerInstalled looks in the ServerInstallPath for an "stracker" directory with the correct stracker executable for the given platform
@@ -183,8 +183,8 @@ func (stc *StrackerConfiguration) Write() error {
 
 type StrackerInstanceConfiguration struct {
 	ACServerAddress              string `ini:"ac_server_address" show:"open" help:"Server ip address or name used to poll results from. You should not touch the default value: 127.0.0.1"`
-	ACServerConfigIni            string `ini:"ac_server_cfg_ini" show:"open" help:"Path to configuration file of ac server. Note: whenever the server is restarted, it is required to restart stracker as well"`
-	ACServerWorkingDir           string `ini:"ac_server_working_dir" show:"open" help:"Working directory of the ac server, needed to read the race result json files. If empty, the directory is deduced from the ac_server_cfg_ini path assuming the default directory structure"`
+	ACServerConfigIni            string `ini:"ac_server_cfg_ini" show:"-" help:"Path to configuration file of ac server. Note: whenever the server is restarted, it is required to restart stracker as well"`
+	ACServerWorkingDir           string `ini:"ac_server_working_dir" show:"-" help:"Working directory of the ac server, needed to read the race result json files. If empty, the directory is deduced from the ac_server_cfg_ini path assuming the default directory structure"`
 	AppendLogFile                bool   `ini:"append_log_file" show:"open" help:"Set to ON, if you want to append to log files rather than overwriting them. Only meaningful with an external log file rotation system."`
 	IDBasedOnDriverNames         bool   `ini:"guids_based_on_driver_names" show:"open" help:"You normally want to leave this at the default (OFF). Use case for this is an environment where the same steam account is used by different drivers."`
 	KeepAlivePtrackerConnections bool   `ini:"keep_alive_ptracker_conns" show:"open" help:"Set to OFF if you want to disable the TCP keep_alive option (that was the behaviour pre 3.1.7)."`
@@ -251,7 +251,7 @@ type StrackerHTTPConfiguration struct {
 	InverseNavbar            bool   `ini:"inverse_navbar" help:"Set to true to get the navbar inverted (i.e., dark instead of bright)"`
 	ItemsPerPage             int    `ini:"items_per_page" help:"Number of items displayed per page"`
 
-	LapTimesAddColumns      string `ini:"lap_times_add_columns" help:"Additional columns to be displayed in LapTimes table (seperated by a + sign). Columns can be 'valid', 'aids', 'laps', 'date', 'grip', 'cuts', 'collisions', 'tyres', 'temps', 'ballast' and 'vmax'. Note that too many displayed columns might cause problems on some browsers."`
+	LapTimesAddColumns      string `ini:"lap_times_add_columns" help:"Additional columns to be displayed in LapTimes table (separated by a + sign). Columns can be 'valid', 'aids', 'laps', 'date', 'grip', 'cuts', 'collisions', 'tyres', 'temps', 'ballast' and 'vmax'. Note that too many displayed columns might cause problems on some browsers."`
 	LogRequests             bool   `ini:"log_requests" show:"open" help:"If set to ON, http requests will be logged in stracker.log. Otherwise they are not logged."`
 	MaximumStreamingClients int    `ini:"max_streaming_clients" show:"open" help:"Maximum number of streaming clients (LiveMap/Log users) allowed to connect to this server in parallel. The number of threads allocated for http serving will be max(10, max_streaming_clients + 5)"`
 

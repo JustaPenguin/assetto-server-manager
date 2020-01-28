@@ -10,8 +10,6 @@ import (
 
 type TemplateLoader struct {
 	pages, partials []string
-
-	baseTemplate *_escFile
 }
 
 func (t *TemplateLoader) Init() error {

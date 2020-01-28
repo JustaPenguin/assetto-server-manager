@@ -104,16 +104,16 @@ func (c *raceControlClient) writePump() {
 			logrus.WithField("panic", rvr).Errorf("Recovered from panic")
 		}
 		ticker.Stop()
-		c.conn.Close()
+		_ = c.conn.Close()
 	}()
 
 	for {
 		select {
 		case message, ok := <-c.receive:
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The hub closed the channel.
-				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 
@@ -124,7 +124,7 @@ func (c *raceControlClient) writePump() {
 				return
 			}
 		case <-ticker.C:
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
@@ -325,8 +325,8 @@ func (rch *RaceControlHandler) kickUser(w http.ResponseWriter, r *http.Request) 
 
 	var carID uint8
 
-	for id, rangeGuid := range rch.raceControl.CarIDToGUID {
-		if string(rangeGuid) == guid {
+	for id, rangeGUID := range rch.raceControl.CarIDToGUID {
+		if string(rangeGUID) == guid {
 			carID = uint8(id)
 			break
 		}

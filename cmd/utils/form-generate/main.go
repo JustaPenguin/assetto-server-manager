@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/JustaPenguin/assetto-server-manager"
+	servermanager "github.com/JustaPenguin/assetto-server-manager"
 )
 
 func main() {

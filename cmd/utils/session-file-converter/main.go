@@ -68,7 +68,11 @@ func main() {
 		panic(err)
 	}
 
-	db.Sync()
+	err = db.Sync()
+
+	if err != nil {
+		panic(err)
+	}
 
 	fmt.Printf("Successfully converted %d entries\n", len(entries))
 }

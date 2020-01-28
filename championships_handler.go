@@ -340,10 +340,10 @@ func (ch *ChampionshipsHandler) submitEventConfiguration(w http.ResponseWriter, 
 		// end the race creation flow
 		http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
 		return
-	} else {
-		// add another event
-		http.Redirect(w, r, "/championship/"+championship.ID.String()+"/event", http.StatusFound)
 	}
+
+	// add another event
+	http.Redirect(w, r, "/championship/"+championship.ID.String()+"/event", http.StatusFound)
 }
 
 // startEvent begins a championship event given by its ID
@@ -678,16 +678,16 @@ func (ch *ChampionshipsHandler) signUpForm(w http.ResponseWriter, r *http.Reques
 				AddFlash(w, r, "Thanks for registering for the championship! Your registration is pending approval by an administrator.")
 				http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
 				return
-			} else {
-				if foundSlot {
-					AddFlash(w, r, "Thanks for registering for the championship!")
-					http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
-					return
-				} else {
-					opts.FormData = signUpResponse
-					opts.ValidationError = fmt.Sprintf("There are no more available slots for the car: %s. Please pick a different car.", prettifyName(signUpResponse.GetCar(), true))
-				}
 			}
+
+			if foundSlot {
+				AddFlash(w, r, "Thanks for registering for the championship!")
+				http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
+				return
+			}
+
+			opts.FormData = signUpResponse
+			opts.ValidationError = fmt.Sprintf("There are no more available slots for the car: %s. Please pick a different car.", prettifyName(signUpResponse.GetCar(), true))
 		}
 	}
 
@@ -748,9 +748,7 @@ func (ch *ChampionshipsHandler) signedUpEntrantsCSV(w http.ResponseWriter, r *ht
 		"Status",
 	}
 
-	for _, question := range championship.SignUpForm.ExtraFields {
-		headers = append(headers, question)
-	}
+	headers = append(headers, championship.SignUpForm.ExtraFields...)
 
 	var out [][]string
 

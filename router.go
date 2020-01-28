@@ -353,12 +353,12 @@ func FileServer(r chi.Router, path string, root http.FileSystem, useRevalidation
 	}
 	path += "*"
 
-	r.Get(path, AssetCacheHeaders(fs.ServeHTTP, useRevalidation))
+	r.Get(path, AssetCacheHeaders(fs, useRevalidation))
 }
 
 const maxAge30Days = 2592000
 
-func AssetCacheHeaders(next http.HandlerFunc, useRevalidation bool) http.HandlerFunc {
+func AssetCacheHeaders(next http.Handler, useRevalidation bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if useRevalidation {
 			w.Header().Add("Cache-Control", fmt.Sprintf("public, must-revalidate"))
@@ -366,7 +366,7 @@ func AssetCacheHeaders(next http.HandlerFunc, useRevalidation bool) http.Handler
 		} else {
 			w.Header().Add("Cache-Control", fmt.Sprintf("public, max-age=%d", maxAge30Days))
 
-			next(w, r)
+			next.ServeHTTP(w, r)
 		}
 	}
 }
