@@ -557,7 +557,13 @@ func getContentManagerJoinLink(config GlobalServerConfig) (*url.URL, error) {
 	}
 
 	queryString := cmUrl.Query()
-	queryString.Set("ip", geoIP.IP)
+
+	if config.ContentManagerIPOverride != "" {
+		queryString.Set("ip", config.ContentManagerIPOverride)
+	} else {
+		queryString.Set("ip", geoIP.IP)
+	}
+
 	queryString.Set("httpPort", strconv.Itoa(config.HTTPPort))
 
 	cmUrl.RawQuery = queryString.Encode()
