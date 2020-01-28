@@ -7,7 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/JustaPenguin/assetto-server-manager/pkg/csp"
 	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
+
 	"github.com/google/uuid"
 	"github.com/mitchellh/go-wordwrap"
 	"github.com/sirupsen/logrus"
@@ -126,6 +128,9 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 		err = rc.OnLapCompleted(m)
 
 		sendUpdatedRaceControlStatus = true
+
+	case udp.Chat:
+		err = rc.OnChat(m)
 	default:
 		// unhandled event
 		return
@@ -470,9 +475,23 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 
 	rc.ConnectedDrivers.Add(driver.CarInfo.DriverGUID, driver)
 
+
 	_, err := rc.broadcaster.Send(client)
 
+
 	return err
+}
+
+func (rc *RaceControl) OnChat(chat udp.Chat) error {
+	fmt.Println("received chat message", chat.Message)
+
+	_, err := csp.FromChatMessage(chat.Message)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // OnClientDisconnect moves a client from ConnectedDrivers to DisconnectedDrivers.
@@ -539,6 +558,39 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 
 	solWarning := ""
 	liveLink := ""
+
+
+	go func() {
+		time.Sleep(time.Second * 2)
+
+		var current csp.Weather
+
+		for _, weather := range csp.AvailableWeathers {
+			message, err := csp.ToChatMessage(driver.CarInfo.CarID, csp.WeatherConditions{
+				Timestamp:   uint64(time.Now().Add(time.Second * 10).Unix()),
+				Current:     current,
+				Next:        weather,
+				Transition:  10,
+				TimeToApply: 20,
+			})
+
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			err = rc.process.SendUDPMessage(message)
+
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			time.Sleep(time.Second * 50)
+			current = weather
+		}
+	}()
+
 
 	if rc.process.Event().GetRaceConfig().IsSol == 1 {
 		solWarning = "This server is running Sol. For the best experience please install Sol, and remember the other drivers may be driving in night conditions."
