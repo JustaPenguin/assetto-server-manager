@@ -530,9 +530,9 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		raceWeekendRaceEvent.EntryList = entryList
 
 		return rwm.raceManager.applyConfigAndStart(raceWeekendRaceEvent)
-	} else {
-		return rwm.applyConfigAndStart(raceWeekendRaceEvent)
 	}
+
+	return rwm.applyConfigAndStart(raceWeekendRaceEvent)
 }
 
 func (rwm *RaceWeekendManager) UDPCallback(message udp.Message) {
@@ -543,8 +543,7 @@ func (rwm *RaceWeekendManager) UDPCallback(message udp.Message) {
 		return
 	}
 
-	switch m := message.(type) {
-	case udp.EndSession:
+	if m, ok := message.(udp.EndSession); ok {
 		filename := filepath.Base(string(m))
 		logrus.Infof("Race Weekend: End session found, result file: %s", filename)
 
