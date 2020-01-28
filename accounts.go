@@ -156,24 +156,24 @@ func (ah *AccountHandler) MustLoginMiddleware(requiredGroup Group, next http.Han
 		if ok {
 			account, err := ah.store.FindAccountByID(accountID)
 
-			if err == nil {
-				if account.HasGroupPrivilege(requiredGroup) {
-					next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), requestContextKeyAccount, account)))
-					return
-				}
+			if err != nil {
+				logrus.WithError(err).Errorf("Could not find account for id: %s", accountID)
+				delete(sess.Values, sessionAccountID)
+				_ = sessions.Save(r, w)
 
+				AddFlash(w, r, "You have been logged out")
+
+				http.Redirect(w, r, "/", http.StatusFound)
+				return
+			}
+
+			if !account.HasGroupPrivilege(requiredGroup) {
 				AddErrorFlash(w, r, "You do not have permission to view this page.")
 				http.Redirect(w, r, "/", http.StatusFound)
 				return
 			}
 
-			logrus.WithError(err).Errorf("Could not find account for id: %s", accountID)
-			delete(sess.Values, sessionAccountID)
-			_ = sessions.Save(r, w)
-
-			AddFlash(w, r, "You have been logged out")
-
-			http.Redirect(w, r, "/", http.StatusFound)
+			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), requestContextKeyAccount, account)))
 			return
 		}
 
