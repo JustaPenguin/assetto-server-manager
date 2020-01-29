@@ -475,6 +475,7 @@ type BaseTemplateVars struct {
 	ACSREnabled        bool
 	BaseURLIsSet       bool
 	BaseURLIsValid     bool
+	ServerID           string
 }
 
 func (b *BaseTemplateVars) Get() *BaseTemplateVars {
@@ -522,6 +523,7 @@ func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, vars Templat
 	data.BaseURLIsSet = baseURLIsSet()
 	data.BaseURLIsValid = baseURLIsValid()
 	data.ACSREnabled = opts.EnableACSR
+	data.ServerID = serverID
 
 	if IsPremium == "true" {
 		data.OGImage = opts.OGImage

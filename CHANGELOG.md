@@ -4,6 +4,7 @@ v1.7.2
 Added:
 
 * KissMyRank integration! We've even made it so you can use both sTracker and KissMyRank! Go to the new "KissMyRank" page to find out how to set up KissMyRank. We're marking this as "beta" currently. If you find any issues - please report them to us!
+* In a Multiserver setup Auto Loop events are now per-server! You can loop different events on different servers, only have one looping server etc.
 * You can now duplicate any Championship Event (including Race Weekends!)
 * The Championship Sign Up form now allows multiple Steam GUIDs separated by a semi-colon (for driver swaps).
 * You can now set a timer to forcibly stop a Custom Race after a certain time period. This is intended to allow servers to rotate through looped events every x minutes regardless of players being active on the server. The timer can be set to not forcibly stop the server if drivers are online.

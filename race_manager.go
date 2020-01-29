@@ -997,7 +997,7 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*
 	var filteredRecent []*CustomRace
 
 	for _, race := range recent {
-		if race.Loop {
+		if race.IsLooping() {
 			looped = append(looped, race)
 		}
 
@@ -1009,7 +1009,7 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*
 			scheduled = append(scheduled, race)
 		}
 
-		if !race.Starred && !race.Loop && !race.Scheduled.After(time.Now()) {
+		if !race.Starred && !race.IsLooping() && !race.Scheduled.After(time.Now()) {
 			filteredRecent = append(filteredRecent, race)
 		}
 	}
@@ -1103,7 +1103,9 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 		race.RaceConfig.LoopMode = 1
 	}
 
-	race.Loop = forceRestart
+	if race.LoopServer != nil {
+		race.LoopServer[serverID] = forceRestart
+	}
 
 	return rm.applyConfigAndStart(race)
 }
@@ -1296,7 +1298,11 @@ func (rm *RaceManager) ToggleLoopCustomRace(uuid string) error {
 		return err
 	}
 
-	race.Loop = !race.Loop
+	if race.LoopServer == nil {
+		race.LoopServer = make(map[string]bool)
+	}
+
+	race.LoopServer[serverID] = !race.LoopServer[serverID]
 
 	return rm.store.UpsertCustomRace(race)
 }
