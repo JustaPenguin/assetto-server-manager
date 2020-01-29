@@ -9,6 +9,7 @@ Added:
 * The Championship Sign Up form now allows multiple Steam GUIDs separated by a semi-colon (for driver swaps).
 * You can now set a timer to forcibly stop a Custom Race after a certain time period. This is intended to allow servers to rotate through looped events every x minutes regardless of players being active on the server. The timer can be set to not forcibly stop the server if drivers are online.
 * Server Manager now automatically sets up the sTracker config path and server folder path.
+* You can now manually specify the IP address used by the Content Manager Wrapper. This fixes issues with IPv6 incompatibilities (thanks @mazzn!)
 
 Fixes:
 
