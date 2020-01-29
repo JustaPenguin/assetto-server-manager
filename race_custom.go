@@ -18,12 +18,14 @@ type CustomRace struct {
 	HasCustomName, OverridePassword bool
 	ReplacementPassword             string
 
-	Created       time.Time
-	Updated       time.Time
-	Deleted       time.Time
-	UUID          uuid.UUID
-	Starred, Loop bool
-	LoopServer    map[string]bool
+	Created time.Time
+	Updated time.Time
+	Deleted time.Time
+	UUID    uuid.UUID
+	Starred bool
+	// Deprecated: Replaced by LoopServer
+	Loop       bool
+	LoopServer map[string]bool
 
 	ForceStopTime        int
 	ForceStopWithDrivers bool
@@ -41,6 +43,10 @@ func (cr *CustomRace) GetEntryList() EntryList {
 }
 
 func (cr *CustomRace) IsLooping() bool {
+	if cr.LoopServer == nil {
+		return false
+	}
+
 	return cr.LoopServer[serverID]
 }
 

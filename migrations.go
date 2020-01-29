@@ -685,6 +685,12 @@ func addServerIDToScheduledEvents(s Store) error {
 }
 
 func addLoopServerToCustomRace(s Store) error {
+	logrus.Infof("Running migration: Add Loop Per Server to Custom Race")
+
+	if err := initServerID(s); err != nil {
+		return err
+	}
+
 	customRaces, err := s.ListCustomRaces()
 
 	if err != nil {
@@ -692,8 +698,17 @@ func addLoopServerToCustomRace(s Store) error {
 	}
 
 	for _, customRace := range customRaces {
+
+		customRace.LoopServer = make(map[string]bool)
+
 		if customRace.Loop {
 			customRace.LoopServer[serverID] = true
+
+			err := s.UpsertCustomRace(customRace)
+
+			if err != nil {
+				return err
+			}
 		}
 	}
 
