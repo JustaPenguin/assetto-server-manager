@@ -67,23 +67,25 @@ func (cs Cars) AsMap() map[string][]string {
 }
 
 type CarDetails struct {
-	Author       string          `json:"author"`
-	Brand        string          `json:"brand"`
-	Class        string          `json:"class"`
-	Country      string          `json:"country"`
-	Description  string          `json:"description"`
-	Name         string          `json:"name"`
-	PowerCurve   [][]json.Number `json:"powerCurve"`
-	Specs        CarSpecs        `json:"specs"`
-	SpecsNumeric CarSpecsNumeric `json:"spec"`
-	Tags         []string        `json:"tags"`
-	TorqueCurve  [][]json.Number `json:"torqueCurve"`
-	URL          string          `json:"url"`
-	Version      string          `json:"version"`
-	Year         ShouldBeAnInt   `json:"year"`
-	IsStock      bool            `json:"stock"`
-	IsDLC        bool            `json:"dlc"`
-	IsMod        bool            `json:"mod"`
+	Author        string          `json:"author"`
+	Brand         string          `json:"brand"`
+	Class         string          `json:"class"`
+	Country       string          `json:"country"`
+	Description   string          `json:"description"`
+	Name          string          `json:"name"`
+	PowerCurve    [][]json.Number `json:"powerCurve"`
+	Specs         CarSpecs        `json:"specs"`
+	SpecsNumeric  CarSpecsNumeric `json:"spec"`
+	Tags          []string        `json:"tags"`
+	TorqueCurve   [][]json.Number `json:"torqueCurve"`
+	URL           string          `json:"url"`
+	Version       string          `json:"version"`
+	Year          ShouldBeAnInt   `json:"year"`
+	IsStock       bool            `json:"stock"`
+	IsDLC         bool            `json:"dlc"`
+	IsMod         bool            `json:"mod"`
+	Key           string          `json:"key"`
+	PrettifiedKey string          `json:"prettified_key"`
 
 	DownloadURL string `json:"downloadURL"`
 	Notes       string `json:"notes"`
@@ -403,6 +405,9 @@ func (cm *CarManager) LoadCar(name string, tyres Tyres) (*Car, error) {
 		carDetails.Name = prettifyName(name, true)
 	}
 
+	carDetails.Key = name
+	carDetails.PrettifiedKey = prettifyName(name, true)
+
 	return &Car{
 		Name:    name,
 		Skins:   skins,
@@ -486,13 +491,12 @@ const searchPageSize = 50
 // CreateSearchIndex builds a search index for the cars
 func (cm *CarManager) CreateOrOpenSearchIndex() error {
 	cm.searchMutex.Lock()
-	defer cm.searchMutex.Unlock()
-
 	indexPath := filepath.Join(ServerInstallPath, "search-index", "cars")
 
 	var err error
 
 	cm.carIndex, err = bleve.Open(indexPath)
+	cm.searchMutex.Unlock()
 
 	if err == bleve.ErrorIndexPathDoesNotExist {
 		logrus.Infof("Creating car search index")
