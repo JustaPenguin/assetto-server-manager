@@ -10,6 +10,7 @@ Added:
 * You can now set a timer to forcibly stop a Custom Race after a certain time period. This is intended to allow servers to rotate through looped events every x minutes regardless of players being active on the server. The timer can be set to not forcibly stop the server if drivers are online.
 * Server Manager now automatically sets up the sTracker config path and server folder path.
 * You can now manually specify the IP address used by the Content Manager Wrapper. This fixes issues with IPv6 incompatibilities (thanks @mazzn!)
+* Search Index Improvements - the folder name of the cars is now included in the search index. This should help yield more results for searches. Note that you will have to rebuild your search index (at the bottom of the Server Options page) for this to take effect.
 
 Fixes:
 
