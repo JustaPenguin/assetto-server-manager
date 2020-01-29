@@ -997,7 +997,7 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*
 	var filteredRecent []*CustomRace
 
 	for _, race := range recent {
-		if race.LoopServer != nil && race.LoopServer[serverID] {
+		if race.IsLooping() {
 			looped = append(looped, race)
 		}
 
@@ -1009,7 +1009,7 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*
 			scheduled = append(scheduled, race)
 		}
 
-		if !race.Starred && (race.LoopServer == nil || !race.LoopServer[serverID]) && !race.Scheduled.After(time.Now()) {
+		if !race.Starred && !race.IsLooping() && !race.Scheduled.After(time.Now()) {
 			filteredRecent = append(filteredRecent, race)
 		}
 	}

@@ -699,9 +699,9 @@ func addLoopServerToCustomRace(s Store) error {
 
 	for _, customRace := range customRaces {
 
-		customRace.LoopServer = make(map[string]bool)
-
 		if customRace.Loop {
+			customRace.LoopServer = make(map[string]bool)
+
 			customRace.LoopServer[serverID] = true
 
 			err := s.UpsertCustomRace(customRace)
