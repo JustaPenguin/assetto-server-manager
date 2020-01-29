@@ -559,20 +559,84 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 	solWarning := ""
 	liveLink := ""
 
+	go func() {
+		time.Sleep(time.Second * 10)
+
+		current := csp.ScatteredClouds
+		next := csp.HeavyRain
+
+		cfg := rc.process.Event().GetRaceConfig()
+
+		var w *WeatherConfig
+
+		for _, weather := range cfg.Weather {
+			w = weather
+			break
+		}
+
+		secondsToApply := 5
+
+		weatherChange := csp.WeatherConditions{
+			Timestamp:   uint64(w.CMWFXDate),
+			Current:     current,
+			Next:        next,
+			Transition:  0,
+			TimeToApply: float32(secondsToApply),
+		}
+
+		i := float32(0.1)
+
+		for ; i <= 1.1; i += 0.1 {
+			time.Sleep(time.Duration(secondsToApply) * time.Second)
+			fmt.Println(i)
+			weatherChange.Transition = i
+
+			message, err := csp.ToChatMessage(driver.CarInfo.CarID, weatherChange)
+
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			err = rc.process.SendUDPMessage(message)
+
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+		}
+	}()
 
 	go func() {
-		time.Sleep(time.Second * 2)
+		time.Sleep(time.Second * 30)
 
-		var current csp.Weather
+		current := csp.HeavyRain
+		next := csp.Clear
 
-		for _, weather := range csp.AvailableWeathers {
-			message, err := csp.ToChatMessage(driver.CarInfo.CarID, csp.WeatherConditions{
-				Timestamp:   uint64(time.Now().Add(time.Second * 10).Unix()),
-				Current:     current,
-				Next:        weather,
-				Transition:  10,
-				TimeToApply: 20,
-			})
+
+		cfg := rc.process.Event().GetRaceConfig()
+
+		var w *WeatherConfig
+
+		for _, weather := range cfg.Weather {
+			w = weather
+			break
+		}
+		secondsToApply := 5
+
+		weatherChange := csp.WeatherConditions{
+			Timestamp:   uint64(w.CMWFXDate),
+			Current:     current,
+			Next:        next,
+			Transition:  0,
+			TimeToApply: float32(secondsToApply),
+		}
+
+		for i := float32(0); i <= 1.1; i += 0.1 {
+			fmt.Println(i)
+			weatherChange.Transition = i
+
+			message, err := csp.ToChatMessage(driver.CarInfo.CarID, weatherChange)
 
 			if err != nil {
 				fmt.Println(err)
@@ -586,9 +650,40 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 				continue
 			}
 
-			time.Sleep(time.Second * 50)
-			current = weather
+			time.Sleep(time.Duration(secondsToApply) * time.Second)
 		}
+/*
+		current = csp.OvercastClouds
+		next = csp.HeavyRain
+
+		weatherChange = csp.WeatherConditions{
+			Timestamp:   uint64(w.CMWFXDate),
+			Current:     current,
+			Next:        next,
+			Transition:  0,
+			TimeToApply: float32(secondsToApply),
+		}
+
+		for ; i <= 1; i += 0.03 {
+			fmt.Println(i)
+			weatherChange.Transition = i
+
+			message, err := csp.ToChatMessage(driver.CarInfo.CarID, weatherChange)
+
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			err = rc.process.SendUDPMessage(message)
+
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			time.Sleep(time.Duration(secondsToApply) * time.Second)
+		}*/
 	}()
 
 
