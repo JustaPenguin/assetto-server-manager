@@ -283,11 +283,11 @@ func (sah *ServerAdministrationHandler) logsDownload(w http.ResponseWriter, r *h
 	logFile := chi.URLParam(r, "logFile")
 	var outputString string
 
-	if logFile == "ServerLog" {
+	if logFile == "server" {
 		outputString = sah.process.Logs()
-	} else if logFile == "ManagerLog" {
+	} else if logFile == "manager" {
 		outputString = logOutput.String()
-	} else if logFile == "PluginsLog" {
+	} else if logFile == "plugins" {
 		outputString = pluginsOutput.String()
 	} else {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
