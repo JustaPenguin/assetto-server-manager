@@ -8,6 +8,9 @@ export GO111MODULE=on
 
 all: clean vet test assets build
 
+install-linter:
+	which golangci-lint || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin v1.23.1
+
 clean:
 	rm -rf changelog_embed.go
 	$(MAKE) -C cmd/server-manager clean
@@ -18,7 +21,7 @@ test:
 	cp -R fixtures/results/*.json cmd/server-manager/assetto/results
 	go test -race
 
-vet: generate
+vet: install-linter generate
 	go vet ./...
 	golangci-lint -E bodyclose,misspell,gofmt,golint,unconvert,goimports,depguard,interfacer run --skip-files content_cars_skins.go,plugin_kissmyrank_config.go
 
