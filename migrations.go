@@ -717,7 +717,7 @@ func addLoopServerToCustomRace(s Store) error {
 }
 
 func amendChampionshipClassIDIncorrectValues(s Store) error {
-	logrus.Infof("Correcting multiclass incorrect ClassIDs")
+	logrus.Infof("Running migration: Correcting Multiclass Championship incorrect ClassIDs (if any)")
 
 	championships, err := s.ListChampionships()
 
