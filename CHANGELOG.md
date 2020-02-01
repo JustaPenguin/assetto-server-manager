@@ -1,3 +1,12 @@
+v1.7.3
+------
+
+Fixes:
+
+* Fixes an issue where Championship Class IDs could overlap causing Multi-class championships to incorrectly report standings.
+* Fixes an issue where Championship and Race Weekend exports on Firefox would not export with their full name.
+* Fixes an issue where Championship/Race Weekend sessions could not be cancelled if the server is not running.
+
 v1.7.2
 ------
 

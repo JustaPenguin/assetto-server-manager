@@ -75,6 +75,7 @@ var (
 		addContentExamples,
 		addServerIDToScheduledEvents,
 		addLoopServerToCustomRace,
+		amendChampionshipClassIDIncorrectValues,
 	}
 )
 
@@ -709,6 +710,147 @@ func addLoopServerToCustomRace(s Store) error {
 			if err != nil {
 				return err
 			}
+		}
+	}
+
+	return nil
+}
+
+func amendChampionshipClassIDIncorrectValues(s Store) error {
+	logrus.Infof("Correcting multiclass incorrect ClassIDs")
+
+	championships, err := s.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	for _, championship := range championships {
+		if !championship.IsMultiClass() {
+			continue
+		}
+
+		foundClasses := make(map[uuid.UUID]bool)
+
+		for _, class := range championship.Classes {
+			if _, ok := foundClasses[class.ID]; ok {
+				logrus.Infof("Duplicated class id: %s in Championship: %s", class.ID, championship.ID)
+
+				class.ID = uuid.New()
+
+				for _, event := range championship.Events {
+					if event.IsRaceWeekend() {
+						rw, err := s.LoadRaceWeekend(event.RaceWeekendID.String())
+
+						if err != nil {
+							continue
+						}
+
+						for _, session := range rw.Sessions {
+
+							if session.SessionType() == SessionTypeRace {
+								session.Points[class.ID] = &class.Points
+							} else {
+								var points []int
+
+								for range class.Points.Places {
+									points = append(points, 0)
+								}
+
+								session.Points[class.ID] = &ChampionshipPoints{
+									Places:               points,
+									BestLap:              0,
+									PolePosition:         0,
+									CollisionWithDriver:  0,
+									CollisionWithEnv:     0,
+									CutTrack:             0,
+									SecondRaceMultiplier: 0,
+								}
+							}
+
+							if !session.Completed() {
+								continue
+							}
+
+							for _, car := range session.Results.Cars {
+								class, err := championship.FindClassForCarModel(car.Model)
+
+								if err != nil {
+									continue
+								}
+
+								car.Driver.ClassID = class.ID
+							}
+
+							for _, result := range session.Results.Result {
+								class, err := championship.FindClassForCarModel(result.CarModel)
+
+								if err != nil {
+									continue
+								}
+
+								result.ClassID = class.ID
+							}
+
+							for _, lap := range session.Results.Laps {
+								class, err := championship.FindClassForCarModel(lap.CarModel)
+
+								if err != nil {
+									continue
+								}
+
+								lap.ClassID = class.ID
+							}
+						}
+
+						if err := s.UpsertRaceWeekend(rw); err != nil {
+							return err
+						}
+					} else {
+						for _, session := range event.Sessions {
+							if !session.Completed() {
+								continue
+							}
+
+							for _, car := range session.Results.Cars {
+								class, err := championship.FindClassForCarModel(car.Model)
+
+								if err != nil {
+									continue
+								}
+
+								car.Driver.ClassID = class.ID
+							}
+
+							for _, result := range session.Results.Result {
+								class, err := championship.FindClassForCarModel(result.CarModel)
+
+								if err != nil {
+									continue
+								}
+
+								result.ClassID = class.ID
+							}
+
+							for _, lap := range session.Results.Laps {
+								class, err := championship.FindClassForCarModel(lap.CarModel)
+
+								if err != nil {
+									continue
+								}
+
+								lap.ClassID = class.ID
+							}
+						}
+					}
+				}
+			}
+
+			foundClasses[class.ID] = true
+		}
+
+		if err := s.UpsertChampionship(championship); err != nil {
+			return err
 		}
 	}
 

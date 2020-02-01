@@ -135,10 +135,13 @@ func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (champions
 		return nil, nil, err
 	}
 
+	defaultClass := NewChampionshipClass("")
+	defaultClass.ID = uuid.Nil
+
 	opts = &ChampionshipTemplateVars{
 		RaceTemplateVars: raceOpts,
 		DefaultPoints:    DefaultChampionshipPoints,
-		DefaultClass:     NewChampionshipClass(""),
+		DefaultClass:     defaultClass,
 	}
 
 	championshipID := chi.URLParam(r, "championshipID")

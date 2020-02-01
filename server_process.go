@@ -108,6 +108,10 @@ func (sp *AssettoServerProcess) IsRunning() bool {
 var ErrServerProcessTimeout = errors.New("servermanager: server process did not stop even after manual kill. please check your server configuration")
 
 func (sp *AssettoServerProcess) Stop() error {
+	if !sp.IsRunning() {
+		return nil
+	}
+
 	timeout := time.After(time.Second * 10)
 	fullTimeout := time.After(time.Second * 15)
 	sp.cfn()
