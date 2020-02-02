@@ -7,6 +7,7 @@ Fixes:
 * Fixes an issue where Championship and Race Weekend exports on Firefox would not export with their full name.
 * Fixes an issue where Championship/Race Weekend sessions could not be cancelled if the server is not running.
 * Fixes an issue where Race Weekend Race sessions would have their wait time forced to 120 seconds.
+* Fixes an issue where the progress of a Championship with Race Weekends would be incorrectly reported on the Championship List page.
 
 v1.7.2
 ------

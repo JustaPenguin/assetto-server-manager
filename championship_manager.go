@@ -107,17 +107,29 @@ func (cm *ChampionshipManager) DeleteChampionship(id string) error {
 }
 
 func (cm *ChampionshipManager) ListChampionships() ([]*Championship, error) {
-	champs, err := cm.store.ListChampionships()
+	championships, err := cm.store.ListChampionships()
 
 	if err != nil {
 		return nil, err
 	}
 
-	sort.Slice(champs, func(i, j int) bool {
-		return champs[i].Updated.After(champs[j].Updated)
+	sort.Slice(championships, func(i, j int) bool {
+		return championships[i].Updated.After(championships[j].Updated)
 	})
 
-	return champs, nil
+	for _, championship := range championships {
+		for _, event := range championship.Events {
+			if event.IsRaceWeekend() {
+				event.RaceWeekend, err = cm.store.LoadRaceWeekend(event.RaceWeekendID.String())
+
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+
+	return championships, nil
 }
 
 type ChampionshipTemplateVars struct {
