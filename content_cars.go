@@ -237,24 +237,15 @@ func (cs CarSpecs) Numeric() CarSpecsNumeric {
 }
 
 type CarManager struct {
-	carIndex bleve.Index
+	carIndex                     bleve.Index
+	watchFilesystemForCarChanges bool
 
 	searchMutex  sync.Mutex
 	trackManager *TrackManager
 }
 
 func NewCarManager(trackManager *TrackManager, watchForCarChanges bool) *CarManager {
-	cm := &CarManager{trackManager: trackManager}
-
-	if watchForCarChanges {
-		go func() {
-			err := cm.watchForCarChanges()
-
-			if err != nil {
-				logrus.WithError(err).Error("Could not watch for changes in the content/cars directory")
-			}
-		}()
-	}
+	cm := &CarManager{trackManager: trackManager, watchFilesystemForCarChanges: watchForCarChanges}
 
 	return cm
 }
@@ -514,6 +505,16 @@ func (cm *CarManager) CreateOrOpenSearchIndex() error {
 		}
 	} else if err != nil {
 		return err
+	}
+
+	if cm.watchFilesystemForCarChanges {
+		go func() {
+			err := cm.watchForCarChanges()
+
+			if err != nil {
+				logrus.WithError(err).Error("Could not watch for changes in the content/cars directory")
+			}
+		}()
 	}
 
 	return nil
