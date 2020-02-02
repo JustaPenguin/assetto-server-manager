@@ -74,6 +74,15 @@ func (rwm *RaceWeekendManager) LoadRaceWeekend(id string) (*RaceWeekend, error) 
 		if err != nil {
 			return nil, err
 		}
+
+		// make sure that session points only exist for classes that exist.
+		for _, session := range raceWeekend.Sessions {
+			for championshipClassID := range session.Points {
+				if _, err := raceWeekend.Championship.ClassByID(championshipClassID.String()); err != nil {
+					delete(session.Points, championshipClassID)
+				}
+			}
+		}
 	}
 
 	return raceWeekend, nil
