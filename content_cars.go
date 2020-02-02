@@ -274,7 +274,7 @@ func (cm *CarManager) watchForCarChanges() error {
 		return watcher.ErrSkip
 	})
 
-	go func() {
+	go panicCapture(func() {
 		for {
 			select {
 			case event := <-w.Event:
@@ -315,7 +315,7 @@ func (cm *CarManager) watchForCarChanges() error {
 				return
 			}
 		}
-	}()
+	})
 
 	return w.Start(time.Second * 15)
 }
@@ -508,13 +508,13 @@ func (cm *CarManager) CreateOrOpenSearchIndex() error {
 	}
 
 	if cm.watchFilesystemForCarChanges {
-		go func() {
+		go panicCapture(func() {
 			err := cm.watchForCarChanges()
 
 			if err != nil {
 				logrus.WithError(err).Error("Could not watch for changes in the content/cars directory")
 			}
-		}()
+		})
 	}
 
 	return nil
@@ -996,13 +996,13 @@ func (ch *CarsHandler) deleteSkin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ch *CarsHandler) rebuildSearchIndex(w http.ResponseWriter, r *http.Request) {
-	go func() {
+	go panicCapture(func() {
 		err := ch.carManager.IndexAllCars()
 
 		if err != nil {
 			logrus.WithError(err).Error("could not rebuild search index")
 		}
-	}()
+	})
 
 	AddFlash(w, r, "Started re-indexing cars!")
 	http.Redirect(w, r, r.Referer(), http.StatusFound)

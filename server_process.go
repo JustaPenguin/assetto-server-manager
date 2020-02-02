@@ -223,13 +223,13 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 	}
 
 	if serverOptions.EnableContentManagerWrapper == 1 && serverOptions.ContentManagerWrapperPort > 0 {
-		go func() {
+		go panicCapture(func() {
 			err := sp.contentManagerWrapper.Start(serverOptions.ContentManagerWrapperPort, sp.raceEvent)
 
 			if err != nil {
 				logrus.WithError(err).Error("Could not start Content Manager wrapper server")
 			}
-		}()
+		})
 	}
 
 	strackerOptions, err := sp.store.LoadStrackerOptions()

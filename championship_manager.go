@@ -1113,7 +1113,9 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 		}
 
 		if championship.ACSR {
-			go cm.acsrClient.SendChampionship(*championship)
+			go panicCapture(func() {
+				cm.acsrClient.SendChampionship(*championship)
+			})
 		}
 	default:
 		saveChampionship = false
