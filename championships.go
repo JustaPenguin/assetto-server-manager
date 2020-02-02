@@ -635,7 +635,7 @@ func (c *Championship) AllEntrants() EntryList {
 func (c *Championship) EntrantAttendance(guid string) int {
 	i := 0
 
-	for _, event := range c.Events {
+	for _, event := range ExtractRaceWeekendSessionsIntoIndividualEvents(c.Events) {
 		if event.Completed() {
 			for _, class := range c.Classes {
 				standings := class.StandingsForEvent(event)
@@ -655,7 +655,7 @@ func (c *Championship) EntrantAttendance(guid string) int {
 func (c *Championship) NumCompletedEvents() int {
 	i := 0
 
-	for _, event := range c.Events {
+	for _, event := range ExtractRaceWeekendSessionsIntoIndividualEvents(c.Events) {
 		if event.Completed() {
 			i++
 		}
