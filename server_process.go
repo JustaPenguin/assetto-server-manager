@@ -113,26 +113,26 @@ func (sp *AssettoServerProcess) Stop() error {
 	}
 
 	timeout := time.After(time.Second * 10)
-	fullTimeout := time.After(time.Second * 15)
-	sp.cfn()
+	errCh := make(chan error)
 
-	for {
+	go func() {
 		select {
 		case err := <-sp.stopped:
-			return err
+			errCh <- err
+			return
 		case <-timeout:
-			sp.mutex.Lock()
-			logrus.Debug("Server process did not naturally stop after 10s. Attempting manual kill.")
-			err := kill(sp.cmd.Process)
-
-			if err != nil {
-				logrus.WithError(err).Error("Could not forcibly kill command")
-			}
-			sp.mutex.Unlock()
-		case <-fullTimeout:
-			return ErrServerProcessTimeout
+			errCh <- ErrServerProcessTimeout
+			return
 		}
+	}()
+
+	if err := kill(sp.cmd.Process); err != nil {
+		logrus.WithError(err).Error("Could not forcibly kill command")
 	}
+
+	sp.cfn()
+
+	return <-errCh
 }
 
 func (sp *AssettoServerProcess) Restart() error {

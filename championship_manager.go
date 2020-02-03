@@ -122,7 +122,9 @@ func (cm *ChampionshipManager) ListChampionships() ([]*Championship, error) {
 			if event.IsRaceWeekend() {
 				event.RaceWeekend, err = cm.store.LoadRaceWeekend(event.RaceWeekendID.String())
 
-				if err != nil {
+				if err == ErrRaceWeekendNotFound {
+					continue
+				} else if err != nil {
 					return nil, err
 				}
 			}
