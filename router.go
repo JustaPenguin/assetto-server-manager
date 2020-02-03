@@ -212,6 +212,7 @@ func Router(
 		r.Get("/process/{action}", serverAdministrationHandler.serverProcess)
 		r.Get("/logs", serverAdministrationHandler.logs)
 		r.Get("/api/logs", serverAdministrationHandler.logsAPI)
+		r.Get("/api/log-download/{logFile}", serverAdministrationHandler.logsDownload)
 
 		// championships
 		r.Get("/championships/new", championshipsHandler.createOrEdit)
