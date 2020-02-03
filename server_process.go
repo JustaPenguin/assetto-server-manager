@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
+	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -50,6 +53,8 @@ type AssettoServerProcess struct {
 	cmd            *exec.Cmd
 	mutex          sync.Mutex
 	extraProcesses []*exec.Cmd
+
+	logFile, errorLogFile io.WriteCloser
 
 	// udp
 	callbackFunc       udp.CallbackFunc
@@ -193,12 +198,58 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 		executablePath = filepath.Join(ServerInstallPath, config.Steam.ExecutablePath)
 	}
 
+	serverOptions, err := sp.store.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
 	sp.ctx, sp.cfn = context.WithCancel(context.Background())
 	sp.cmd = buildCommand(sp.ctx, executablePath)
 	sp.cmd.Dir = ServerInstallPath
 
-	sp.cmd.Stdout = sp.logBuffer
-	sp.cmd.Stderr = sp.logBuffer
+	var logOutput io.Writer
+	var errorOutput io.Writer
+
+	if serverOptions.LogACServerOutputToFile {
+		logDirectory := filepath.Join(ServerInstallPath, "logs", "session")
+		errorDirectory := filepath.Join(ServerInstallPath, "logs", "error")
+
+		if err := os.MkdirAll(logDirectory, 0755); err != nil {
+			return err
+		}
+
+		if err := os.MkdirAll(errorDirectory, 0755); err != nil {
+			return err
+		}
+
+		if err := sp.tidyUpLogFiles(serverOptions.NumberOfACServerLogsToKeep); err != nil {
+			return err
+		}
+
+		timestamp := time.Now().Format("2006-02-01_15-04-05")
+
+		sp.logFile, err = os.Create(filepath.Join(logDirectory, "output_"+timestamp+".log"))
+
+		if err != nil {
+			return err
+		}
+
+		sp.errorLogFile, err = os.Create(filepath.Join(errorDirectory, "error_"+timestamp+".log"))
+
+		if err != nil {
+			return err
+		}
+
+		logOutput = io.MultiWriter(sp.logBuffer, sp.logFile)
+		errorOutput = io.MultiWriter(sp.logBuffer, sp.errorLogFile)
+	} else {
+		logOutput = sp.logBuffer
+		errorOutput = sp.logBuffer
+	}
+
+	sp.cmd.Stdout = logOutput
+	sp.cmd.Stderr = errorOutput
 
 	if err := sp.startUDPListener(); err != nil {
 		return err
@@ -215,12 +266,6 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 	go func() {
 		sp.run <- sp.cmd.Run()
 	}()
-
-	serverOptions, err := sp.store.LoadServerOptions()
-
-	if err != nil {
-		return err
-	}
 
 	if serverOptions.EnableContentManagerWrapper == 1 && serverOptions.ContentManagerWrapperPort > 0 {
 		go panicCapture(func() {
@@ -356,6 +401,49 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 	return nil
 }
 
+func (sp *AssettoServerProcess) tidyUpLogFiles(numFilesToKeep int) error {
+	if numFilesToKeep <= 0 {
+		return nil
+	}
+
+	tidyFunc := func(directory string) error {
+		logFiles, err := ioutil.ReadDir(directory)
+
+		if err != nil {
+			return err
+		}
+
+		if len(logFiles) >= numFilesToKeep {
+			sort.Slice(logFiles, func(i, j int) bool {
+				return logFiles[i].ModTime().After(logFiles[j].ModTime())
+			})
+
+			for _, f := range logFiles[numFilesToKeep-1:] {
+				if err := os.Remove(filepath.Join(directory, f.Name())); err != nil {
+					return err
+				}
+			}
+
+			logrus.Debugf("Successfully cleared %d log files from %s", len(logFiles[numFilesToKeep-1:]), directory)
+		}
+
+		return nil
+	}
+
+	logDirectory := filepath.Join(ServerInstallPath, "logs", "session")
+	errorDirectory := filepath.Join(ServerInstallPath, "logs", "error")
+
+	if err := tidyFunc(logDirectory); err != nil {
+		return err
+	}
+
+	if err := tidyFunc(errorDirectory); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (sp *AssettoServerProcess) onStop() error {
 	sp.mutex.Lock()
 	defer sp.mutex.Unlock()
@@ -374,6 +462,22 @@ func (sp *AssettoServerProcess) onStop() error {
 		case doneCh <- struct{}{}:
 		default:
 		}
+	}
+
+	if sp.logFile != nil {
+		if err := sp.logFile.Close(); err != nil {
+			return err
+		}
+
+		sp.logFile = nil
+	}
+
+	if sp.errorLogFile != nil {
+		if err := sp.errorLogFile.Close(); err != nil {
+			return err
+		}
+
+		sp.errorLogFile = nil
 	}
 
 	return nil

@@ -4,6 +4,7 @@ v1.7.3
 Added:
 
 * You can now download Server Logs from Server Manager (thanks @mazzn!)
+* Server Manager now logs the output of the acServer executable to the logs folder inside your Server Install Path. You can configure this in Server Options -> Miscellaneous
 
 Fixes:
 

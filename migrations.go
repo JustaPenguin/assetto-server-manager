@@ -76,6 +76,7 @@ var (
 		addServerIDToScheduledEvents,
 		addLoopServerToCustomRace,
 		amendChampionshipClassIDIncorrectValues,
+		enableLoggingWith5LogsKept,
 	}
 )
 
@@ -855,4 +856,19 @@ func amendChampionshipClassIDIncorrectValues(s Store) error {
 	}
 
 	return nil
+}
+
+func enableLoggingWith5LogsKept(s Store) error {
+	logrus.Infof("Running migration: Enable AC Server Logging")
+
+	opts, err := s.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	opts.LogACServerOutputToFile = true
+	opts.NumberOfACServerLogsToKeep = 5
+
+	return s.UpsertServerOptions(opts)
 }
