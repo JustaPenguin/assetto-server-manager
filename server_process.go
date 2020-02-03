@@ -223,7 +223,7 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 			return err
 		}
 
-		if err := sp.tidyUpLogFiles(serverOptions.NumberOfACServerLogsToKeep); err != nil {
+		if err := sp.deleteOldLogFiles(serverOptions.NumberOfACServerLogsToKeep); err != nil {
 			return err
 		}
 
@@ -401,7 +401,7 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 	return nil
 }
 
-func (sp *AssettoServerProcess) tidyUpLogFiles(numFilesToKeep int) error {
+func (sp *AssettoServerProcess) deleteOldLogFiles(numFilesToKeep int) error {
 	if numFilesToKeep <= 0 {
 		return nil
 	}
