@@ -1,6 +1,10 @@
 v1.7.3
 ------
 
+Added:
+
+* You can now download Server Logs from Server Manager (thanks @mazzn!)
+
 Fixes:
 
 * Fixes an issue where Championship Class IDs could overlap causing Multi-class championships to incorrectly report standings.
