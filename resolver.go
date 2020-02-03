@@ -357,7 +357,7 @@ func (r *Resolver) resolveRaceControlHub() *RaceControlHub {
 	}
 
 	r.raceControlHub = newRaceControlHub()
-	go r.raceControlHub.run()
+	go panicCapture(r.raceControlHub.run)
 
 	return r.raceControlHub
 }

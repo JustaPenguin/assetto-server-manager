@@ -1015,9 +1015,9 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 
 				if !ok {
 					logrus.Warnf("Could not find points for Race Weekend Session class: %s", c.ID)
+				} else {
+					points = *classPoints
 				}
-
-				points = *classPoints
 			} else {
 				switch sessionType {
 				case SessionTypeQualifying:

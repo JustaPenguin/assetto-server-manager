@@ -237,24 +237,15 @@ func (cs CarSpecs) Numeric() CarSpecsNumeric {
 }
 
 type CarManager struct {
-	carIndex bleve.Index
+	carIndex                     bleve.Index
+	watchFilesystemForCarChanges bool
 
 	searchMutex  sync.Mutex
 	trackManager *TrackManager
 }
 
 func NewCarManager(trackManager *TrackManager, watchForCarChanges bool) *CarManager {
-	cm := &CarManager{trackManager: trackManager}
-
-	if watchForCarChanges {
-		go func() {
-			err := cm.watchForCarChanges()
-
-			if err != nil {
-				logrus.WithError(err).Error("Could not watch for changes in the content/cars directory")
-			}
-		}()
-	}
+	cm := &CarManager{trackManager: trackManager, watchFilesystemForCarChanges: watchForCarChanges}
 
 	return cm
 }
@@ -283,7 +274,7 @@ func (cm *CarManager) watchForCarChanges() error {
 		return watcher.ErrSkip
 	})
 
-	go func() {
+	go panicCapture(func() {
 		for {
 			select {
 			case event := <-w.Event:
@@ -324,7 +315,7 @@ func (cm *CarManager) watchForCarChanges() error {
 				return
 			}
 		}
-	}()
+	})
 
 	return w.Start(time.Second * 15)
 }
@@ -514,6 +505,16 @@ func (cm *CarManager) CreateOrOpenSearchIndex() error {
 		}
 	} else if err != nil {
 		return err
+	}
+
+	if cm.watchFilesystemForCarChanges {
+		go panicCapture(func() {
+			err := cm.watchForCarChanges()
+
+			if err != nil {
+				logrus.WithError(err).Error("Could not watch for changes in the content/cars directory")
+			}
+		})
 	}
 
 	return nil
@@ -995,13 +996,13 @@ func (ch *CarsHandler) deleteSkin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ch *CarsHandler) rebuildSearchIndex(w http.ResponseWriter, r *http.Request) {
-	go func() {
+	go panicCapture(func() {
 		err := ch.carManager.IndexAllCars()
 
 		if err != nil {
 			logrus.WithError(err).Error("could not rebuild search index")
 		}
-	}()
+	})
 
 	AddFlash(w, r, "Started re-indexing cars!")
 	http.Redirect(w, r, r.Referer(), http.StatusFound)

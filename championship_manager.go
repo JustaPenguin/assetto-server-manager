@@ -135,10 +135,13 @@ func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (champions
 		return nil, nil, err
 	}
 
+	defaultClass := NewChampionshipClass("")
+	defaultClass.ID = uuid.Nil
+
 	opts = &ChampionshipTemplateVars{
 		RaceTemplateVars: raceOpts,
 		DefaultPoints:    DefaultChampionshipPoints,
-		DefaultClass:     NewChampionshipClass(""),
+		DefaultClass:     defaultClass,
 	}
 
 	championshipID := chi.URLParam(r, "championshipID")
@@ -279,6 +282,35 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		}
 
 		championship.AddClass(class)
+
+		// ensure that linked race weekends (if any) have points set up for this class
+		for _, event := range championship.Events {
+			if !event.IsRaceWeekend() {
+				continue
+			}
+
+			updatedRaceWeekend := false
+
+			for _, session := range event.RaceWeekend.Sessions {
+				if _, ok := session.Points[class.ID]; ok {
+					continue
+				}
+
+				if session.SessionType() == SessionTypeRace {
+					session.Points[class.ID] = &class.Points
+				} else {
+					session.Points[class.ID] = &ChampionshipPoints{Places: make([]int, len(class.Points.Places))}
+				}
+
+				updatedRaceWeekend = true
+			}
+
+			if updatedRaceWeekend {
+				if err := cm.store.UpsertRaceWeekend(event.RaceWeekend); err != nil {
+					return nil, edited, err
+				}
+			}
+		}
 
 		previousNumEntrants += numEntrantsForClass
 		previousNumPoints += numPointsForClass
@@ -1081,7 +1113,9 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 		}
 
 		if championship.ACSR {
-			go cm.acsrClient.SendChampionship(*championship)
+			go panicCapture(func() {
+				cm.acsrClient.SendChampionship(*championship)
+			})
 		}
 	default:
 		saveChampionship = false

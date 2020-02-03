@@ -445,7 +445,7 @@ func (rwh *RaceWeekendHandler) export(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s.json", raceWeekend.Name))
+	w.Header().Add("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.json"`, raceWeekend.Name))
 
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")

@@ -108,6 +108,10 @@ func (sp *AssettoServerProcess) IsRunning() bool {
 var ErrServerProcessTimeout = errors.New("servermanager: server process did not stop even after manual kill. please check your server configuration")
 
 func (sp *AssettoServerProcess) Stop() error {
+	if !sp.IsRunning() {
+		return nil
+	}
+
 	timeout := time.After(time.Second * 10)
 	fullTimeout := time.After(time.Second * 15)
 	sp.cfn()
@@ -219,13 +223,13 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 	}
 
 	if serverOptions.EnableContentManagerWrapper == 1 && serverOptions.ContentManagerWrapperPort > 0 {
-		go func() {
+		go panicCapture(func() {
 			err := sp.contentManagerWrapper.Start(serverOptions.ContentManagerWrapperPort, sp.raceEvent)
 
 			if err != nil {
 				logrus.WithError(err).Error("Could not start Content Manager wrapper server")
 			}
-		}()
+		})
 	}
 
 	strackerOptions, err := sp.store.LoadStrackerOptions()

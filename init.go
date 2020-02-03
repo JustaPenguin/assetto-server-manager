@@ -109,7 +109,7 @@ func InitWithResolver(resolver *Resolver) error {
 	}()
 
 	raceManager := resolver.resolveRaceManager()
-	go raceManager.LoopRaces()
+	go panicCapture(raceManager.LoopRaces)
 
 	err = raceManager.InitScheduledRaces()
 

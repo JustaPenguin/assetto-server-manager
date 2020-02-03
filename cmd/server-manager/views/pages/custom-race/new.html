@@ -392,7 +392,7 @@
                                                     id="{{ $sessionType }}.WaitTime"
                                                     name="{{ $sessionType }}.WaitTime"
                                                     class="form-control"
-                                                    value="{{ if $.IsRaceWeekend }}120{{ else }}{{ $session.WaitTime }}{{ end }}"
+                                                    value="{{ if and $.IsRaceWeekend (lt $session.WaitTime 120) }}120{{ else }}{{ $session.WaitTime }}{{ end }}"
 
 
                                                     step="1"
