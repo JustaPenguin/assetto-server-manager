@@ -5,6 +5,7 @@ Added:
 
 * You can now download Server Logs from Server Manager (thanks @mazzn!)
 * You can now run Open Championships with ACSR integration!
+* Server Manager now logs the output of the acServer executable to the logs folder inside your Server Install Path. You can configure this in Server Options -> Miscellaneous
 
 Fixes:
 
