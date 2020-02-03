@@ -4,6 +4,7 @@ v1.7.3
 Added:
 
 * You can now download Server Logs from Server Manager (thanks @mazzn!)
+* You can now run Open Championships with ACSR integration!
 
 Fixes:
 
