@@ -116,15 +116,13 @@ func (sp *AssettoServerProcess) Stop() error {
 	errCh := make(chan error)
 
 	go func() {
-		for {
-			select {
-			case err := <-sp.stopped:
-				errCh <- err
-				return
-			case <-timeout:
-				errCh <- ErrServerProcessTimeout
-				return
-			}
+		select {
+		case err := <-sp.stopped:
+			errCh <- err
+			return
+		case <-timeout:
+			errCh <- ErrServerProcessTimeout
+			return
 		}
 	}()
 
