@@ -524,7 +524,9 @@ func (rs *JSONStore) LoadRaceWeekend(id string) (*RaceWeekend, error) {
 
 	err := rs.decodeFile(rs.shared, filepath.Join(raceWeekendsDir, id+".json"), &raceWeekend)
 
-	if err != nil {
+	if os.IsNotExist(err) {
+		return nil, ErrRaceWeekendNotFound
+	} else if err != nil {
 		return nil, err
 	}
 

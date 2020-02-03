@@ -785,7 +785,7 @@ func (rs *BoltStore) LoadRaceWeekend(id string) (*RaceWeekend, error) {
 		data := b.Get([]byte(id))
 
 		if data == nil {
-			return ErrChampionshipNotFound
+			return ErrRaceWeekendNotFound
 		}
 
 		return rs.decode(data, &raceWeekend)
