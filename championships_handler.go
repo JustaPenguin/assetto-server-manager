@@ -19,12 +19,14 @@ type ChampionshipsHandler struct {
 	SteamLoginHandler
 
 	championshipManager *ChampionshipManager
+	acsrClient          *ACSRClient
 }
 
-func NewChampionshipsHandler(baseHandler *BaseHandler, championshipManager *ChampionshipManager) *ChampionshipsHandler {
+func NewChampionshipsHandler(baseHandler *BaseHandler, championshipManager *ChampionshipManager, acsrClient *ACSRClient) *ChampionshipsHandler {
 	return &ChampionshipsHandler{
 		BaseHandler:         baseHandler,
 		championshipManager: championshipManager,
+		acsrClient:          acsrClient,
 	}
 }
 
@@ -95,6 +97,7 @@ type championshipViewTemplateVars struct {
 	EventInProgress bool
 	Account         *Account
 	RaceWeekends    map[uuid.UUID]*RaceWeekend
+	DriverRatings   map[string]*ACSRDriverRating
 }
 
 // view shows details of a given Championship
@@ -113,6 +116,34 @@ func (ch *ChampionshipsHandler) view(w http.ResponseWriter, r *http.Request) {
 		if event.InProgress() && ch.championshipManager.activeChampionship != nil {
 			eventInProgress = true
 			break
+		}
+	}
+
+	var ratings map[string]*ACSRDriverRating
+
+	if championship.ACSR && IsPremium == "true" {
+		guidMap := make(map[string]bool)
+
+		for _, class := range championship.Classes {
+			for _, standing := range class.Standings(championship.Events) {
+				guidMap[standing.Car.Driver.GUID] = true
+			}
+		}
+
+		for _, entrant := range championship.AllEntrants() {
+			guidMap[entrant.GUID] = true
+		}
+
+		var guids []string
+
+		for guid := range guidMap {
+			guids = append(guids, guid)
+		}
+
+		ratings, err = ch.acsrClient.GetRating(guids...)
+
+		if err != nil {
+			logrus.WithError(err).Error("could not get driver ratings from ACSR")
 		}
 	}
 
@@ -135,6 +166,7 @@ func (ch *ChampionshipsHandler) view(w http.ResponseWriter, r *http.Request) {
 		EventInProgress: eventInProgress,
 		Account:         AccountFromRequest(r),
 		RaceWeekends:    raceWeekends,
+		DriverRatings:   ratings,
 	})
 }
 

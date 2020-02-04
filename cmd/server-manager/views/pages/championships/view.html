@@ -95,6 +95,11 @@
                                 {{ if $championship.IsMultiClass }}<th>Class</th>{{ end }}
                                 <th>#</th>
                                 <th>Driver</th>
+                                {{ with $.DriverRatings }}
+                                    <th>
+                                        Rating
+                                    </th>
+                                {{ end }}
 
                                 {{ if $championship.HasTeamNames }}
                                     <th>Team</th>
@@ -130,6 +135,25 @@
                                                 <span class="badge badge-danger ml-2">Points Penalty: {{ $driverPenalty }}</span>
                                             {{ end }}
                                         </td>
+
+                                        {{ with $.DriverRatings }}
+                                            <td>
+                                                {{ $driverRating := index $.DriverRatings $entrant.Car.GetGUID }}
+
+                                                {{ with $driverRating }}
+                                                    {{ if not $driverRating.IsProvisional }}
+                                                        <a class="acsr-link" href="https://acsr.assettocorsaservers.com/ratings/{{ $driverRating.DriverID }}">
+                                                            <span data-toggle="tooltip" title="Skill from {{ $driverRating.NumEvents }} Sessions" class="badge badge-primary acsr-badge--skill" style="">{{ $driverRating.SkillRatingGrade }}</span>
+                                                            <span data-toggle="tooltip" title="Safety from {{ $driverRating.NumEvents }} Sessions" class="badge badge-success acsr-badge--safety">{{ $driverRating.SafetyRating }}</span>
+                                                        </a>
+                                                    {{ else }}
+                                                        <span data-toggle="tooltip" title="This driver needs to complete more races for an accurate rating!" class="badge badge-warning acsr-badge--unranked">Provisional</span>
+                                                    {{ end }}
+                                                {{ else }}
+                                                    <span data-toggle="tooltip" title="There are no ratings for this driver yet!" class="badge badge-warning acsr-badge--unranked">Unranked</span>
+                                                {{ end }}
+                                            </td>
+                                        {{ end }}
 
                                         {{ if $championship.HasTeamNames }}
                                             <td>{{ $entrant.TeamSummary }}</td>

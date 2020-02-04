@@ -54,44 +54,44 @@ func (s *SessionResults) FindCarByGUIDAndModel(guid, model string) (*SessionCar,
 
 func (s *SessionResults) Anonymize() {
 	for _, car := range s.Cars {
-		car.Driver.GUID = GetMD5Hash(car.Driver.GUID)
+		car.Driver.GUID = AnonymiseDriverGUID(car.Driver.GUID)
 		car.Driver.Name = shortenDriverName(car.Driver.Name)
 
 		for index := range car.Driver.GuidsList {
-			car.Driver.GuidsList[index] = GetMD5Hash(car.Driver.GuidsList[index])
+			car.Driver.GuidsList[index] = AnonymiseDriverGUID(car.Driver.GuidsList[index])
 		}
 	}
 
 	for _, event := range s.Events {
-		event.Driver.GUID = GetMD5Hash(event.Driver.GUID)
-		event.OtherDriver.GUID = GetMD5Hash(event.OtherDriver.GUID)
+		event.Driver.GUID = AnonymiseDriverGUID(event.Driver.GUID)
+		event.OtherDriver.GUID = AnonymiseDriverGUID(event.OtherDriver.GUID)
 
 		event.Driver.Name = shortenDriverName(event.Driver.Name)
 		event.OtherDriver.Name = shortenDriverName(event.OtherDriver.Name)
 
 		for i, guid := range event.Driver.GuidsList {
-			event.Driver.GuidsList[i] = GetMD5Hash(guid)
+			event.Driver.GuidsList[i] = AnonymiseDriverGUID(guid)
 		}
 
 		for i, guid := range event.OtherDriver.GuidsList {
-			event.Driver.GuidsList[i] = GetMD5Hash(guid)
+			event.Driver.GuidsList[i] = AnonymiseDriverGUID(guid)
 		}
 	}
 
 	for _, lap := range s.Laps {
-		lap.DriverGUID = GetMD5Hash(lap.DriverGUID)
+		lap.DriverGUID = AnonymiseDriverGUID(lap.DriverGUID)
 
 		lap.DriverName = shortenDriverName(lap.DriverName)
 	}
 
 	for _, result := range s.Result {
-		result.DriverGUID = GetMD5Hash(result.DriverGUID)
+		result.DriverGUID = AnonymiseDriverGUID(result.DriverGUID)
 
 		result.DriverName = shortenDriverName(result.DriverName)
 	}
 }
 
-func GetMD5Hash(guid string) string {
+func AnonymiseDriverGUID(guid string) string {
 	hasher := md5.New()
 	_, _ = hasher.Write([]byte(guid))
 	return hex.EncodeToString(hasher.Sum(nil))

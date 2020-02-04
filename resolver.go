@@ -248,7 +248,7 @@ func (r *Resolver) resolveChampionshipsHandler() *ChampionshipsHandler {
 		return r.championshipsHandler
 	}
 
-	r.championshipsHandler = NewChampionshipsHandler(r.resolveBaseHandler(), r.resolveChampionshipManager())
+	r.championshipsHandler = NewChampionshipsHandler(r.resolveBaseHandler(), r.resolveChampionshipManager(), r.acsrClient)
 
 	return r.championshipsHandler
 }
