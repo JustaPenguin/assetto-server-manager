@@ -19,14 +19,12 @@ type ChampionshipsHandler struct {
 	SteamLoginHandler
 
 	championshipManager *ChampionshipManager
-	acsrClient          *ACSRClient
 }
 
-func NewChampionshipsHandler(baseHandler *BaseHandler, championshipManager *ChampionshipManager, acsrClient *ACSRClient) *ChampionshipsHandler {
+func NewChampionshipsHandler(baseHandler *BaseHandler, championshipManager *ChampionshipManager) *ChampionshipsHandler {
 	return &ChampionshipsHandler{
 		BaseHandler:         baseHandler,
 		championshipManager: championshipManager,
-		acsrClient:          acsrClient,
 	}
 }
 
@@ -119,32 +117,10 @@ func (ch *ChampionshipsHandler) view(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var ratings map[string]*ACSRDriverRating
+	ratings, err := ch.championshipManager.LoadACSRRatings(championship)
 
-	if championship.ACSR && IsPremium == "true" {
-		guidMap := make(map[string]bool)
-
-		for _, class := range championship.Classes {
-			for _, standing := range class.Standings(championship.Events) {
-				guidMap[standing.Car.Driver.GUID] = true
-			}
-		}
-
-		for _, entrant := range championship.AllEntrants() {
-			guidMap[entrant.GUID] = true
-		}
-
-		var guids []string
-
-		for guid := range guidMap {
-			guids = append(guids, guid)
-		}
-
-		ratings, err = ch.acsrClient.GetRating(guids...)
-
-		if err != nil {
-			logrus.WithError(err).Error("could not get driver ratings from ACSR")
-		}
+	if err != nil {
+		logrus.WithError(err).Error("could not get driver ratings from ACSR")
 	}
 
 	raceWeekends := make(map[uuid.UUID]*RaceWeekend)
@@ -734,7 +710,8 @@ func (ch *ChampionshipsHandler) signUpForm(w http.ResponseWriter, r *http.Reques
 type signedUpEntrantsTemplateVars struct {
 	BaseTemplateVars
 
-	Championship *Championship
+	Championship  *Championship
+	DriverRatings map[string]*ACSRDriverRating
 }
 
 func (ch *ChampionshipsHandler) signedUpEntrants(w http.ResponseWriter, r *http.Request) {
@@ -751,12 +728,19 @@ func (ch *ChampionshipsHandler) signedUpEntrants(w http.ResponseWriter, r *http.
 		return
 	}
 
+	ratings, err := ch.championshipManager.LoadACSRRatings(championship)
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't load ratings from ACSR")
+	}
+
 	sort.Slice(championship.SignUpForm.Responses, func(i, j int) bool {
 		return championship.SignUpForm.Responses[i].Created.After(championship.SignUpForm.Responses[j].Created)
 	})
 
 	ch.viewRenderer.MustLoadTemplate(w, r, "championships/signed-up-entrants.html", &signedUpEntrantsTemplateVars{
-		Championship: championship,
+		Championship:  championship,
+		DriverRatings: ratings,
 	})
 }
 
