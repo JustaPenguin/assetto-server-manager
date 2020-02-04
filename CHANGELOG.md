@@ -15,6 +15,7 @@ Fixes:
 * Fixes an issue where Race Weekend Race sessions would have their wait time forced to 120 seconds.
 * Fixes an issue where the progress of a Championship with Race Weekends would be incorrectly reported on the Championship List page.
 * Fixes an issue where Championship attendance would not work correctly for event with Race Weekends.
+* Fixes an issue where watching content folder for changes could cause a crash on Windows.
 
 v1.7.2
 ------

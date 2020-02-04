@@ -21,10 +21,10 @@ import (
 
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/search/query"
+	"github.com/cj123/watcher"
 	"github.com/dimchansky/utfbom"
 	"github.com/go-chi/chi"
 	"github.com/pkg/errors"
-	"github.com/radovskyb/watcher"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
