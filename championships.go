@@ -242,6 +242,10 @@ func (c *Championship) FindLastResultForDriver(guid string) (out *SessionResult,
 
 func (c *Championship) GetPlayerSummary(guid string) string {
 	if c.Progress() == 0 {
+		if len(c.Events) <= 1 {
+			return ""
+		}
+
 		return "This is the first event of the Championship!"
 	}
 

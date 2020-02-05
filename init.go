@@ -64,6 +64,7 @@ func InitWithResolver(resolver *Resolver) error {
 	championshipManager := resolver.resolveChampionshipManager()
 	raceWeekendManager := resolver.resolveRaceWeekendManager()
 	notificationManager := resolver.resolveNotificationManager()
+	raceControl := resolver.ResolveRaceControl()
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -103,6 +104,8 @@ func InitWithResolver(resolver *Resolver) error {
 			if err := notificationManager.Stop(); err != nil {
 				logrus.WithError(err).Errorf("Could not stop notification manager")
 			}
+
+			raceControl.persistTimingData()
 
 			os.Exit(0)
 		}

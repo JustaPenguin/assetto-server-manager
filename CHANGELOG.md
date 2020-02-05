@@ -22,6 +22,10 @@ Fixes:
 * Championship Event Pitbox overrides are now applied correctly on Championships with Sign Up forms enabled.
 * Fixes an issue where Sol dates could be set to dates before 1st January 1970, leading to a Shaders Patch crash on game launch. Dates before 01/01/1970 are now set to 01/01/1970.
 
+Removed:
+
+* Removed max limit of Damage Multiplier (was 100%). Happy crashing!
+
 v1.7.2
 ------
 
