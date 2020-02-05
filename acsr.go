@@ -8,6 +8,7 @@ import (
 	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -170,6 +171,10 @@ func (a *ACSRClient) GetRating(guids ...string) (map[string]*ACSRDriverRating, e
 	}
 
 	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("servermanager: acsr request responded with a bad status code (%d). check your credentials", resp.StatusCode)
+	}
 
 	var anonymisedOut map[string]*ACSRDriverRating
 
