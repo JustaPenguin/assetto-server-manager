@@ -95,6 +95,11 @@
                                 {{ if $championship.IsMultiClass }}<th>Class</th>{{ end }}
                                 <th>#</th>
                                 <th>Driver</th>
+                                {{ with $.DriverRatings }}
+                                    <th>
+                                        Rating
+                                    </th>
+                                {{ end }}
 
                                 {{ if $championship.HasTeamNames }}
                                     <th>Team</th>
@@ -130,6 +135,12 @@
                                                 <span class="badge badge-danger ml-2">Points Penalty: {{ $driverPenalty }}</span>
                                             {{ end }}
                                         </td>
+
+                                        {{ with $.DriverRatings }}
+                                            <td>
+                                                {{ template "acsr-rating" dict "DriverRatings" $.DriverRatings "GUID" $entrant.Car.Driver.GUID }}
+                                            </td>
+                                        {{ end }}
 
                                         {{ if $championship.HasTeamNames }}
                                             <td>{{ $entrant.TeamSummary }}</td>
@@ -256,6 +267,9 @@
                             {{ if $championship.IsMultiClass }}<th>Class</th>{{ end }}
                             <th>#</th>
                             <th>Driver</th>
+                            {{ with $.DriverRatings }}
+                                <th>Rating</th>
+                            {{ end }}
                             {{ if $championship.HasTeamNames }}
                                 <th>Team</th>
                             {{ end }}
@@ -281,7 +295,11 @@
                                         {{ end }}
                                         <td><span data-toggle="tooltip" title="Pit Box: {{ $entrant.PitBox }}">{{ add $i 1 }}</span></td>
                                         <td>{{ driverName $entrant.Name }}</td>
-
+                                        {{ with $.DriverRatings }}
+                                            <td>
+                                                {{ template "acsr-rating" dict "DriverRatings" $.DriverRatings "GUID" $entrant.GUID }}
+                                            </td>
+                                        {{ end }}
                                         {{ if $championship.HasTeamNames }}
                                             <td>{{ $entrant.Team }}</td>
                                         {{ end }}

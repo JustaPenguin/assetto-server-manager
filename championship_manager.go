@@ -134,6 +134,32 @@ func (cm *ChampionshipManager) ListChampionships() ([]*Championship, error) {
 	return championships, nil
 }
 
+func (cm *ChampionshipManager) LoadACSRRatings(championship *Championship) (map[string]*ACSRDriverRating, error) {
+	if !championship.ACSR || IsPremium != "true" {
+		return nil, nil
+	}
+
+	guidMap := make(map[string]bool)
+
+	for _, class := range championship.Classes {
+		for _, standing := range class.Standings(championship.Events) {
+			guidMap[standing.Car.Driver.GUID] = true
+		}
+	}
+
+	for _, entrant := range championship.AllEntrants() {
+		guidMap[entrant.GUID] = true
+	}
+
+	var guids []string
+
+	for guid := range guidMap {
+		guids = append(guids, guid)
+	}
+
+	return cm.acsrClient.GetRating(guids...)
+}
+
 type ChampionshipTemplateVars struct {
 	*RaceTemplateVars
 
