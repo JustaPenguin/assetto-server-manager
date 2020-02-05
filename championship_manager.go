@@ -605,7 +605,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 		// here we are building a new filtered entry list so grid positions are not 'missing'
 		for _, entrant := range entryList {
 			if entrant.GUID != "" {
-				filteredEntryList.Add(entrant)
+				filteredEntryList.AddInPitBox(entrant, entrant.PitBox)
 			}
 		}
 

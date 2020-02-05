@@ -17,6 +17,7 @@ Fixes:
 * Fixes an issue where the progress of a Championship with Race Weekends would be incorrectly reported on the Championship List page.
 * Fixes an issue where Championship attendance would not work correctly for event with Race Weekends.
 * The Championship Entrant table is now sorted alphabetically.
+* Championship Event Pitbox overrides are now applied correctly on Championships with Sign Up forms enabled.
 
 v1.7.2
 ------
