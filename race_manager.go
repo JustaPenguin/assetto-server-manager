@@ -644,6 +644,12 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 			// This is probably a bit hacky, and may need removing with a future Sol update
 			startTimeFinal := startTime.Add(-(time.Duration(timeMultiInt) * 5 * time.Hour))
 
+			unixTime := time.Unix(0, 0)
+
+			if startTimeFinal.Before(unixTime) {
+				startTimeFinal = unixTime
+			}
+
 			raceConfig.AddWeather(&WeatherConfig{
 				Graphics: weatherName + "_type=" + strconv.Itoa(WFXType) + "_time=0_mult=" +
 					timeMulti + "_start=" + strconv.Itoa(int(startTimeFinal.Unix())),
@@ -941,7 +947,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (*RaceTemplateVars, error)
 
 	// default sol time to now
 	for _, weather := range race.CurrentRaceConfig.Weather {
-		if weather.CMWFXDate == 0 {
+		if weather.CMWFXDate <= 0 {
 			weather.CMWFXDate = int(time.Now().Unix())
 			weather.CMWFXDateUnModified = int(time.Now().Unix())
 		}
