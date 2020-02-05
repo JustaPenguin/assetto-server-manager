@@ -3,6 +3,7 @@ v1.7.3
 
 Added:
 
+* ACSR Ratings are now shown in ACSR enabled Championships, in Driver Standings, the Entrants tables and the Sign Up form responses (including the CSV export).
 * You can now download Server Logs from Server Manager (thanks @mazzn!)
 * Server Manager now logs the output of the acServer executable to the logs folder inside your Server Install Path. You can configure this in Server Options -> Miscellaneous
 
@@ -15,6 +16,7 @@ Fixes:
 * Fixes an issue where Race Weekend Race sessions would have their wait time forced to 120 seconds.
 * Fixes an issue where the progress of a Championship with Race Weekends would be incorrectly reported on the Championship List page.
 * Fixes an issue where Championship attendance would not work correctly for event with Race Weekends.
+* The Championship Entrant table is now sorted alphabetically.
 
 v1.7.2
 ------

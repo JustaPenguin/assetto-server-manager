@@ -131,7 +131,7 @@ func (e EntryList) PrettyList() []*Entrant {
 	}
 
 	sort.Slice(entrants, func(i, j int) bool {
-		return entrants[i].PitBox < entrants[j].PitBox
+		return entrants[i].Name < entrants[j].Name
 	})
 
 	entrants = append(entrants, &Entrant{

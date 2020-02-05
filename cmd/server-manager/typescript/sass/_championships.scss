@@ -54,3 +54,36 @@
     bottom: 0;
   }
 }
+
+.acsr-link {
+  span.badge {
+    display: inline-block;
+  }
+
+  &:hover {
+    cursor: pointer;
+    text-decoration: none;
+
+    span.badge {
+      cursor: pointer;
+    }
+  }
+}
+
+.acsr-badge {
+  &--skill {
+    min-width: 25px;
+  }
+
+  &--safety {
+    min-width: 40px;
+  }
+
+  &--provisional {
+    min-width: 68px;
+  }
+
+  &--unranked {
+    min-width: 68px;
+  }
+}
