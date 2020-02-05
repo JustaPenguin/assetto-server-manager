@@ -5,7 +5,7 @@
         {{ with $driverRating }}
             {{ if not $driverRating.IsProvisional }}
                 <a class="acsr-link" href="https://acsr.assettocorsaservers.com/ratings/{{ $driverRating.DriverID }}">
-                    <span data-toggle="tooltip" title="Skill from {{ $driverRating.NumEvents }} Sessions" class="badge badge-primary acsr-badge--skill" style="">{{ $driverRating.SkillRatingGrade }}</span>
+                    <span data-toggle="tooltip" title="Skill from {{ $driverRating.NumEvents }} Sessions" class="badge badge-primary acsr-badge--skill">{{ $driverRating.SkillRatingGrade }}</span>
                     <span data-toggle="tooltip" title="Safety from {{ $driverRating.NumEvents }} Sessions" class="badge badge-success acsr-badge--safety">{{ $driverRating.SafetyRating }}</span>
                 </a>
             {{ else }}
