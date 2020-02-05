@@ -17,6 +17,7 @@ require (
 	github.com/cj123/caldav-go v0.0.0-20191202141705-5d30c27975e9
 	github.com/cj123/ini v1.43.0
 	github.com/cj123/sessions v1.1.5
+	github.com/cj123/watcher v1.0.9
 	github.com/couchbase/vellum v0.0.0-20190829182332-ef2e028c01fd // indirect
 	github.com/cznic/b v0.0.0-20181122101859-a26611c4d92d // indirect
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
@@ -52,13 +53,11 @@ require (
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.0
 	github.com/mitchellh/reflectwalk v1.0.1 // indirect
-	github.com/mjibson/esc v0.2.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.3.0
 	github.com/prometheus/common v0.9.1 // indirect
-	github.com/radovskyb/watcher v1.0.7
 	github.com/remyoudompheng/bigfft v0.0.0-20190512091148-babf20351dd7 // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/sethvargo/go-diceware v0.2.0
@@ -80,7 +79,6 @@ require (
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20200121082415-34d275377bf9 // indirect
 	golang.org/x/text v0.3.2
-	golang.org/x/tools v0.0.0-20200129045341-207d3de1faaf // indirect
 	gopkg.in/ini.v1 v1.42.0 // indirect
 	gopkg.in/yaml.v2 v2.2.7
 )
