@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strconv"
 	"time"
 
 	"4d63.com/tz"
@@ -739,8 +740,9 @@ func (ch *ChampionshipsHandler) signedUpEntrants(w http.ResponseWriter, r *http.
 	})
 
 	ch.viewRenderer.MustLoadTemplate(w, r, "championships/signed-up-entrants.html", &signedUpEntrantsTemplateVars{
-		Championship:  championship,
-		DriverRatings: ratings,
+		BaseTemplateVars: BaseTemplateVars{WideContainer: true},
+		Championship:     championship,
+		DriverRatings:    ratings,
 	})
 }
 
@@ -766,6 +768,16 @@ func (ch *ChampionshipsHandler) signedUpEntrantsCSV(w http.ResponseWriter, r *ht
 
 	headers = append(headers, championship.SignUpForm.ExtraFields...)
 
+	ratings, err := ch.championshipManager.LoadACSRRatings(championship)
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't load ratings from ACSR")
+	}
+
+	if ratings != nil {
+		headers = append(headers, "ACSR Skill Rating", "ACSR Safety Rating", "ACSR Provisional?")
+	}
+
 	var out [][]string
 
 	out = append(out, headers)
@@ -790,11 +802,19 @@ func (ch *ChampionshipsHandler) signedUpEntrantsCSV(w http.ResponseWriter, r *ht
 			}
 		}
 
+		if ratings != nil {
+			if rating, ok := ratings[entrant.GUID]; ok {
+				data = append(data, rating.SkillRatingGrade, strconv.Itoa(rating.SafetyRating), strconv.FormatBool(rating.IsProvisional))
+			} else {
+				data = append(data, "Unranked", "Unranked", "Unranked")
+			}
+		}
+
 		out = append(out, data)
 	}
 
 	w.Header().Add("Content-Type", "text/csv")
-	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment;filename=Entrants_%s.csv", championship.Name))
+	w.Header().Add("Content-Disposition", fmt.Sprintf(`attachment;filename="Entrants_%s.csv"`, championship.Name))
 	wr := csv.NewWriter(w)
 	wr.UseCRLF = true
 	_ = wr.WriteAll(out)
