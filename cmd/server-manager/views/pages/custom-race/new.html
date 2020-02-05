@@ -1031,7 +1031,11 @@
                                                             id="DateUnix"
                                                             name="DateUnix"
                                                             class="form-control"
-                                                            value="{{ dateInZone "2006-01-02T15:04" ($weather.UnixToTime $weather.CMWFXDateUnModified) "UTC" }}"
+                                                            {{ if gt $weather.CMWFXDateUnModified 0 }}
+                                                                value="{{ dateInZone "2006-01-02T15:04" ($weather.UnixToTime $weather.CMWFXDateUnModified) "UTC" }}"
+                                                            {{ else }}
+                                                                value="{{ dateInZone "2006-01-02T15:04" now "UTC" }}"
+                                                            {{ end }}
                                                     >
                                                 </div>
                                             </div>

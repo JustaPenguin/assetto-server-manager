@@ -20,6 +20,7 @@ Fixes:
 * Fixes an issue where watching content folder for changes could cause a crash on Windows.
 * The Championship Entrant table is now sorted alphabetically.
 * Championship Event Pitbox overrides are now applied correctly on Championships with Sign Up forms enabled.
+* Fixes an issue where Sol dates could be set to dates before 1st January 1970, leading to a Shaders Patch crash on game launch. Dates before 01/01/1970 are now set to 01/01/1970.
 
 v1.7.2
 ------
