@@ -1633,14 +1633,14 @@
                         </p>
                     {{ end }}
 
-                    <div class="float-right">
+                    <div class="float-right mt-5">
 
                         {{ if not .IsEditing }}
-                            <button class="btn btn-primary mt-5" data-toggle="tooltip" name="action" value="addAnotherRace" type="submit" title="Save this setup and then configure another">Add another Event</button>
-                            <button class="btn btn-success mt-5" data-toggle="tooltip" name="action" value="saveChampionship" type="submit" title="Save this event setup and finish creating the championship">Finish Creating Championship</button>
+                            <button class="btn btn-primary" data-toggle="tooltip" name="action" value="addAnotherRace" type="submit" title="Save this setup and then configure another">Add another Event</button>
+                            <button class="btn btn-success" data-toggle="tooltip" name="action" value="saveChampionship" type="submit" title="Save this event setup and finish creating the championship">Finish Creating Championship</button>
                         {{ else }}
                             <input type="hidden" name="Editing" id="Editing" value="{{ .EditingID }}">
-                            <button class="btn btn-primary mt-5" data-toggle="tooltip" name="action" value="saveChampionship" type="submit">Save Event</button>
+                            <button class="btn btn-primary" data-toggle="tooltip" name="action" value="saveChampionship" type="submit">Save Event</button>
                         {{ end }}
                    </div>
                 </div>

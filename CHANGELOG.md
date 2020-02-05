@@ -19,6 +19,7 @@ Fixes:
 * Fixes an issue where Championship attendance would not work correctly for event with Race Weekends.
 * Fixes an issue where watching content folder for changes could cause a crash on Windows.
 * The Championship Entrant table is now sorted alphabetically.
+* Championship Event Pitbox overrides are now applied correctly on Championships with Sign Up forms enabled.
 
 v1.7.2
 ------
