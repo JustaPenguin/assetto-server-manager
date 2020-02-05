@@ -5,6 +5,7 @@ Added:
 
 * ACSR Ratings are now shown in ACSR enabled Championships, in Driver Standings, the Entrants tables and the Sign Up form responses (including the CSV export).
 * You can now download Server Logs from Server Manager (thanks @mazzn!)
+* You can now run Open Championships with ACSR integration!
 * Server Manager now logs the output of the acServer executable to the logs folder inside your Server Install Path. You can configure this in Server Options -> Miscellaneous
 
 Fixes:
@@ -16,6 +17,7 @@ Fixes:
 * Fixes an issue where Race Weekend Race sessions would have their wait time forced to 120 seconds.
 * Fixes an issue where the progress of a Championship with Race Weekends would be incorrectly reported on the Championship List page.
 * Fixes an issue where Championship attendance would not work correctly for event with Race Weekends.
+* Fixes an issue where watching content folder for changes could cause a crash on Windows.
 * The Championship Entrant table is now sorted alphabetically.
 * Championship Event Pitbox overrides are now applied correctly on Championships with Sign Up forms enabled.
 * Fixes an issue where Sol dates could be set to dates before 1st January 1970, leading to a Shaders Patch crash on game launch. Dates before 01/01/1970 are now set to 01/01/1970.
