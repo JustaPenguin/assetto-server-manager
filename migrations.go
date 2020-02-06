@@ -891,6 +891,12 @@ func convertAccountGroupToServerIDGroupMap(s Store) error {
 	}
 
 	for _, account := range accounts {
+		if account.Groups != nil {
+			if _, ok := account.Groups[serverID]; ok {
+				continue
+			}
+		}
+
 		account.Groups = make(map[ServerID]Group)
 		account.Groups[serverID] = account.DeprecatedGroup
 
