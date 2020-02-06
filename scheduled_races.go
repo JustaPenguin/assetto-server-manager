@@ -472,7 +472,7 @@ type ScheduledEventBase struct {
 	Scheduled         time.Time
 	ScheduledInitial  time.Time
 	Recurrence        string
-	ScheduledServerID string
+	ScheduledServerID ServerID
 }
 
 func (seb *ScheduledEventBase) SetRecurrenceRule(input string) error {

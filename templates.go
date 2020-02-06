@@ -475,7 +475,7 @@ type BaseTemplateVars struct {
 	ACSREnabled        bool
 	BaseURLIsSet       bool
 	BaseURLIsValid     bool
-	ServerID           string
+	ServerID           ServerID
 }
 
 func (b *BaseTemplateVars) Get() *BaseTemplateVars {

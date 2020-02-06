@@ -14,8 +14,10 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
+type ServerID string
+
 var (
-	serverID        string
+	serverID        ServerID
 	serverIDMetaKey = "server_id"
 )
 
@@ -23,7 +25,7 @@ func initServerID(store Store) error {
 	err := store.GetMeta(serverIDMetaKey, &serverID)
 
 	if err == ErrValueNotSet {
-		serverID = uuid.New().String()
+		serverID = ServerID(uuid.New().String())
 		err = store.SetMeta(serverIDMetaKey, serverID)
 
 		if err != nil {
@@ -31,6 +33,13 @@ func initServerID(store Store) error {
 		}
 	} else if err != nil {
 		return err
+	}
+
+	OpenAccount = &Account{
+		Name:            "Free Access",
+		Groups:          map[ServerID]Group{serverID: GroupRead},
+		LastSeenVersion: BuildVersion,
+		Theme:           ThemeDefault,
 	}
 
 	return nil

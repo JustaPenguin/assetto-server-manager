@@ -54,7 +54,7 @@ func (alh *AuditLogHandler) Middleware(next http.Handler) http.Handler {
 		}
 
 		entry := &AuditEntry{
-			UserGroup: account.Group,
+			UserGroup: account.Group(),
 			Method:    r.Method,
 			URL:       r.URL.String(),
 			User:      account.Name,
