@@ -106,7 +106,7 @@ func main() {
 		}
 	}
 
-	if config.Lua.Enabled && servermanager.IsPremium == "true" {
+	if config.Lua.Enabled && servermanager.Premium() {
 		luaPath := os.Getenv("LUA_PATH")
 
 		newPath, err := filepath.Abs("./plugins/?.lua")

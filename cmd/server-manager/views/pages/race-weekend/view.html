@@ -179,7 +179,7 @@
 
                         {{ if WriteAccess }}
                             {{ if not (or $session.InProgress $session.Completed) }}
-                                {{ if eq $.IsPremium "true" }}
+                                {{ if $.IsPremium }}
                                     {{ if $.RaceWeekend.SessionCanBeRun $session }}
                                         <div class="btn-group btn-group-sm">
                                             <a class="btn btn-success btn-sm"
@@ -284,7 +284,7 @@
                                         Edit
                                     </a>
 
-                                    {{ if eq $.IsPremium "true" }}
+                                    {{ if $.IsPremium }}
                                         <a class="dropdown-item" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/import">
                                             Import Results
                                         </a>

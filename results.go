@@ -947,7 +947,7 @@ func LoadResult(fileName string, opts ...LoadResultOpts) (*SessionResults, error
 		}
 	}
 
-	if !skipLua && config.Lua.Enabled && IsPremium == "true" {
+	if !skipLua && config.Lua.Enabled && Premium() {
 		err = resultsLoadPlugin(result)
 
 		if err != nil {

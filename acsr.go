@@ -37,7 +37,7 @@ func NewACSRClient(accountID, apiKey string, enabled bool) *ACSRClient {
 	return &ACSRClient{
 		AccountID: accountID,
 		APIKey:    apiKey,
-		Enabled:   enabled && IsPremium == "true",
+		Enabled:   enabled && Premium(),
 	}
 }
 

@@ -429,7 +429,7 @@ func (rwm *RaceWeekendManager) StartPracticeSession(raceWeekendID string, raceWe
 }
 
 func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSessionID string, isPracticeSession bool) error {
-	if IsPremium != "true" {
+	if Premium() {
 		return errors.New("servermanager: premium required")
 	}
 
@@ -751,7 +751,7 @@ func (rwm *RaceWeekendManager) RestartActiveSession() error {
 }
 
 func (rwm *RaceWeekendManager) ImportSession(raceWeekendID string, raceWeekendSessionID string, r *http.Request) error {
-	if IsPremium != "true" {
+	if Premium() {
 		return errors.New("servermanager: premium required")
 	}
 
@@ -1177,7 +1177,7 @@ func (rwm *RaceWeekendManager) ScheduleSession(raceWeekendID, sessionID string, 
 	session.StartWhenParentHasFinished = startWhenParentFinishes
 	session.ScheduledServerID = serverID
 
-	if config.Lua.Enabled && IsPremium == "true" {
+	if config.Lua.Enabled && Premium() {
 		err = raceWeekendEventSchedulePlugin(raceWeekend, session)
 
 		if err != nil {

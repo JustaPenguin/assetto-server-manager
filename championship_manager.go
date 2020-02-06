@@ -135,7 +135,7 @@ func (cm *ChampionshipManager) ListChampionships() ([]*Championship, error) {
 }
 
 func (cm *ChampionshipManager) LoadACSRRatings(championship *Championship) (map[string]*ACSRDriverRating, error) {
-	if !championship.ACSR || IsPremium != "true" {
+	if !championship.ACSR || !Premium() {
 		return nil, nil
 	}
 
@@ -256,7 +256,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	championship.Info = template.HTML(r.FormValue("ChampionshipInfo"))
 	championship.OverridePassword = r.FormValue("OverridePassword") == "on" || r.FormValue("OverridePassword") == "1"
 
-	if IsPremium == "true" {
+	if Premium() {
 		championship.OGImage = r.FormValue("ChampionshipOGImage")
 	}
 
@@ -588,7 +588,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 
 	event.RaceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
 
-	if config.Lua.Enabled && IsPremium == "true" {
+	if config.Lua.Enabled && Premium() {
 		err = championshipEventStartPlugin(event, championship)
 
 		if err != nil {
@@ -760,7 +760,7 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 			}
 		}
 
-		if config.Lua.Enabled && IsPremium == "true" {
+		if config.Lua.Enabled && Premium() {
 			err = championshipEventSchedulePlugin(championship, event)
 
 			if err != nil {
