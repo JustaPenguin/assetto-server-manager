@@ -507,7 +507,7 @@ type RaceWeekendSession struct {
 	StartedTime                time.Time
 	CompletedTime              time.Time
 	ScheduledTime              time.Time
-	ScheduledServerID          string
+	ScheduledServerID          ServerID
 	Results                    *SessionResults
 	StartWhenParentHasFinished bool
 

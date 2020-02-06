@@ -25,7 +25,7 @@ type CustomRace struct {
 	Starred bool
 	// Deprecated: Replaced by LoopServer
 	Loop       bool
-	LoopServer map[string]bool
+	LoopServer map[ServerID]bool
 
 	ForceStopTime        int
 	ForceStopWithDrivers bool

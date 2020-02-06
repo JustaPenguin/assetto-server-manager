@@ -50,6 +50,7 @@ func NewAccount() *Account {
 		Created:         time.Now(),
 		LastSeenVersion: BuildVersion,
 		Theme:           ThemeDefault,
+		Groups:          map[ServerID]Group{serverID: GroupRead},
 	}
 }
 
@@ -60,8 +61,8 @@ type Account struct {
 	Updated time.Time
 	Deleted time.Time
 
-	Name  string
-	Group Group
+	Name   string
+	Groups map[ServerID]Group
 
 	DriverName, GUID, Team string
 
@@ -72,6 +73,27 @@ type Account struct {
 	LastSeenVersion string
 
 	Theme Theme
+
+	// Deprecated: Use Groups instead.
+	DeprecatedGroup Group `json:"Group"`
+}
+
+func (a Account) Group() Group {
+	if a.Groups == nil {
+		return GroupNoAccess
+	}
+
+	if group, ok := a.Groups[serverID]; ok {
+		return group
+	}
+
+	// in the case where a user has not got any group permissions at all for this server instance
+	// give them the first permission we find from other server instances (if any)
+	for _, group := range a.Groups {
+		return group
+	}
+
+	return GroupNoAccess
 }
 
 func (a Account) ShowDarkTheme(serverManagerDarkThemeEnabled bool) bool {
@@ -111,19 +133,21 @@ func (a Account) NeedsPasswordReset() bool {
 }
 
 func (a Account) HasGroupPrivilege(g Group) bool {
-	if g == a.Group {
+	userGroup := a.Group()
+
+	if g == userGroup {
 		return true
 	}
 
-	if a.Group == GroupAdmin {
+	if userGroup == GroupAdmin {
 		return true
 	}
 
-	if g == GroupWrite && a.Group == GroupDelete {
+	if g == GroupWrite && userGroup == GroupDelete {
 		return true
 	}
 
-	if g == GroupRead && (a.Group == GroupWrite || a.Group == GroupDelete) {
+	if g == GroupRead && (userGroup == GroupWrite || userGroup == GroupDelete) {
 		return true
 	}
 
@@ -133,18 +157,14 @@ func (a Account) HasGroupPrivilege(g Group) bool {
 type Group string
 
 const (
-	GroupRead   Group = "read"
-	GroupWrite  Group = "write"
-	GroupDelete Group = "delete"
-	GroupAdmin  Group = "admin"
+	GroupNoAccess Group = "no_access"
+	GroupRead     Group = "read"
+	GroupWrite    Group = "write"
+	GroupDelete   Group = "delete"
+	GroupAdmin    Group = "admin"
 )
 
-var OpenAccount = &Account{
-	Name:            "Free Access",
-	Group:           GroupRead,
-	LastSeenVersion: BuildVersion,
-	Theme:           ThemeDefault,
-}
+var OpenAccount *Account
 
 // MustLoginMiddleware determines whether an account needs to log in to access a given Group page
 func (ah *AccountHandler) MustLoginMiddleware(requiredGroup Group, next http.Handler) http.Handler {
@@ -168,6 +188,12 @@ func (ah *AccountHandler) MustLoginMiddleware(requiredGroup Group, next http.Han
 			}
 
 			if !account.HasGroupPrivilege(requiredGroup) {
+				if account.Group() == GroupNoAccess {
+					AddErrorFlash(w, r, "You do not have permission to access this Server Manager instance.")
+					http.Redirect(w, r, "/login", http.StatusFound)
+					return
+				}
+
 				AddErrorFlash(w, r, "You do not have permission to view this page.")
 				http.Redirect(w, r, "/", http.StatusFound)
 				return
@@ -637,9 +663,8 @@ func (ah *AccountHandler) createOrEditAccount(w http.ResponseWriter, r *http.Req
 			return
 		}
 
-		account = &Account{
-			DefaultPassword: strings.Join(defaultPass, "-"),
-		}
+		account = NewAccount()
+		account.DefaultPassword = strings.Join(defaultPass, "-")
 	}
 
 	if r.Method == http.MethodPost {
@@ -653,7 +678,13 @@ func (ah *AccountHandler) createOrEditAccount(w http.ResponseWriter, r *http.Req
 		}
 
 		account.Name = username
-		account.Group = Group(group)
+		account.Groups[serverID] = Group(group)
+
+		if formValueAsInt(r.FormValue("UpdateGroupForAllServers")) == 1 {
+			for serverID := range account.Groups {
+				account.Groups[serverID] = Group(group)
+			}
+		}
 
 		err := ah.store.UpsertAccount(account)
 

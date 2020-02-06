@@ -1305,7 +1305,7 @@ func (rm *RaceManager) ToggleLoopCustomRace(uuid string) error {
 	}
 
 	if race.LoopServer == nil {
-		race.LoopServer = make(map[string]bool)
+		race.LoopServer = make(map[ServerID]bool)
 	}
 
 	race.LoopServer[serverID] = !race.LoopServer[serverID]

@@ -77,6 +77,7 @@ var (
 		addLoopServerToCustomRace,
 		amendChampionshipClassIDIncorrectValues,
 		enableLoggingWith5LogsKept,
+		convertAccountGroupToServerIDGroupMap,
 	}
 )
 
@@ -109,6 +110,10 @@ func addEntrantIDToChampionships(rs Store) error {
 }
 
 func addAdminAccount(rs Store) error {
+	if err := initServerID(rs); err != nil {
+		return err
+	}
+
 	accounts, err := rs.ListAccounts()
 
 	if err != nil {
@@ -127,7 +132,7 @@ func addAdminAccount(rs Store) error {
 	account := NewAccount()
 	account.Name = adminUserName
 	account.DefaultPassword = "servermanager"
-	account.Group = GroupAdmin
+	account.Groups[serverID] = GroupAdmin
 
 	return rs.UpsertAccount(account)
 }
@@ -700,9 +705,8 @@ func addLoopServerToCustomRace(s Store) error {
 	}
 
 	for _, customRace := range customRaces {
-
 		if customRace.Loop {
-			customRace.LoopServer = make(map[string]bool)
+			customRace.LoopServer = make(map[ServerID]bool)
 
 			customRace.LoopServer[serverID] = true
 
@@ -871,4 +875,29 @@ func enableLoggingWith5LogsKept(s Store) error {
 	opts.NumberOfACServerLogsToKeep = 5
 
 	return s.UpsertServerOptions(opts)
+}
+
+func convertAccountGroupToServerIDGroupMap(s Store) error {
+	logrus.Infof("Running migration: Convert Account Group to Server ID Group Map")
+
+	if err := initServerID(s); err != nil {
+		return err
+	}
+
+	accounts, err := s.ListAccounts()
+
+	if err != nil {
+		return err
+	}
+
+	for _, account := range accounts {
+		account.Groups = make(map[ServerID]Group)
+		account.Groups[serverID] = account.DeprecatedGroup
+
+		if err := s.UpsertAccount(account); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
