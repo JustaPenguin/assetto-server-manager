@@ -626,6 +626,8 @@ func (rc *RaceControl) nextWeather(timeStamp, timeToApply, nextWeather int) erro
 		rc.weatherIsTransitioning = false
 	}()
 
+	logrus.Debug("successfully sent next weather messages")
+
 	return nil
 }
 
@@ -666,6 +668,8 @@ func (rc *RaceControl) testWeather(timeStamp, timeToApply, currentWeather, nextW
 
 		wg.Wait()
 	}()
+
+	logrus.Debug("successfully sent test next weather messages")
 
 	return nil
 }
