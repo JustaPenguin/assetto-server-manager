@@ -36,6 +36,7 @@
 {{ define "content" }}
     {{ $CMJoinLink := .CMJoinLink }}
     {{ $UseMPH := .UseMPH }}
+    {{ $CSPWeathers := .CSPWeathers }}
 
     {{ with .RaceDetails }}
         <div class="race-control-event-info">
@@ -80,6 +81,8 @@
 
             {{ if AdminAccess }}
                 <button id="admin-panel" data-toggle="popover" class="btn btn-sm btn-info mt-1" data-placement="bottom">Admin Panel</button>
+                <button id="weather-panel" data-toggle="popover" class="btn btn-sm btn-danger mt-1" data-placement="bottom">Weather Panel</button>
+                <button id="weather-panel-test" data-toggle="popover" class="btn btn-sm btn-danger mt-1" data-placement="bottom">Manual Weather (testing)</button>
             {{ end }}
 
             {{ if $.IsStrackerEnabled }}
@@ -104,6 +107,112 @@
                 <li><strong>Width:</strong> <span id="track-width"></span></li>
                 <li><strong>Run:</strong> <span id="track-run"></span></li>
             </ul>
+        </div>
+
+        <div id="popover-content-weather-panel" class="d-none">
+            <form class="form p-1" id="weather-control-form" name="weather-control-form" action="/next-weather">
+
+                <small class="text-danger">This form should calculate the other values automatically to the best of our
+                understanding at this point. If testing probably best to use the other one.</small>
+
+                <div class="form-row">
+                    <label for="timestamp">Timestamp: </label>
+                </div>
+
+                <div class="form-row">
+                    <input type="number" name="timestamp" id="timestamp" class="timestamp form-control form-control-sm">
+                    <small>If left empty server will use CM WFX Date from the first weather in the race setup</small>
+                </div>
+
+                <div class="form-row mt-2">
+                    <label for="time-to-apply">Time to apply: </label>
+                </div>
+
+                <div class="form-row">
+                    <input type="number" name="time-to-apply" id="time-to-apply" class="time-to-apply form-control form-control-sm">
+                    <small>How long the transition should take (in seconds)</small>
+                </div>
+
+                <div class="form-row mt-2">
+                    <label for="send-chat">Next Weather: </label>
+                </div>
+
+                <div class="form-row">
+                    <select class="form-control-sm" name="next-weather" id="next-weather">
+                        {{ range $i, $weather := $CSPWeathers }}
+                            <option value="{{ $weather }}">{{ $weather.String }}</option>
+                        {{ end }}
+                    </select>
+                </div>
+
+                <div class="form-row mt-3">
+                    <button class="btn btn-success btn-sm" type="submit">Send</button>
+                </div>
+
+            </form>
+        </div>
+
+        <div id="popover-content-weather-panel-test" class="d-none">
+            <form class="form p-1" id="weather-test-form" name="weather-test-form" action="/test-weather">
+
+                <small class="text-danger">This form is for testing only, it doesn't do anything fancy, just sends the
+                inputted values to all clients connected to the server</small>
+
+                <div class="form-row">
+                    <label for="timestamp">Timestamp: </label>
+                </div>
+
+                <div class="form-row">
+                    <input type="number" name="timestamp" id="timestamp" class="timestamp form-control form-control-sm">
+                    <small>If left empty server will use CM WFX Date from the first weather in the race setup</small>
+                </div>
+
+                <div class="form-row mt-2">
+                    <label for="time-to-apply">Time to apply: </label>
+                </div>
+
+                <div class="form-row">
+                    <input type="number" name="time-to-apply" id="time-to-apply" class="time-to-apply form-control form-control-sm">
+                    <small>How long the transition should take (in seconds)</small>
+                </div>
+
+                <div class="form-row mt-2">
+                    <label for="send-chat">Current Weather: </label>
+                </div>
+
+                <div class="form-row">
+                    <select class="form-control-sm" name="current-weather" id="current-weather">
+                        {{ range $i, $weather := $CSPWeathers }}
+                            <option value="{{ $weather }}">{{ $weather.String }}</option>
+                        {{ end }}
+                    </select>
+                </div>
+
+                <div class="form-row mt-2">
+                    <label for="send-chat">Next Weather: </label>
+                </div>
+
+                <div class="form-row">
+                    <select class="form-control-sm" name="next-weather" id="next-weather">
+                        {{ range $i, $weather := $CSPWeathers }}
+                            <option value="{{ $weather }}">{{ $weather.String }}</option>
+                        {{ end }}
+                    </select>
+                </div>
+
+                <div class="form-row mt-2">
+                    <label for="transition">Transition: </label>
+                </div>
+
+                <div class="form-row">
+                    <input type="number" step="0.05" name="transition" id="transition" class="transition form-control form-control-sm">
+                </div>
+
+                <div class="form-row mt-3">
+                    <button class="btn btn-success btn-sm" type="submit">Send</button>
+                </div>
+
+            </form>
         </div>
 
         <div id="popover-content-admin-panel" class="d-none">

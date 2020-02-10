@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"strings"
@@ -40,6 +41,9 @@ type RaceControl struct {
 
 	lastUpdateMessage      []byte
 	lastUpdateMessageMutex sync.Mutex
+
+	weatherState           *csp.WeatherConditions
+	weatherIsTransitioning bool
 
 	persistStoreDataMutex sync.Mutex
 }
@@ -475,9 +479,7 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 
 	rc.ConnectedDrivers.Add(driver.CarInfo.DriverGUID, driver)
 
-
 	_, err := rc.broadcaster.Send(client)
-
 
 	return err
 }
@@ -542,6 +544,132 @@ func (rc *RaceControl) findConnectedDriverByCarID(carID udp.CarID) (*RaceControl
 	return driver, nil
 }
 
+var ErrWeatherMidTransition = errors.New("servermanager: weather is currently transitioning, cannot start new transition")
+
+func (rc *RaceControl) nextWeather(timeStamp, timeToApply, nextWeather int) error {
+	var date uint64
+	var current csp.Weather
+
+	cfg := rc.process.Event().GetRaceConfig()
+
+	for _, weather := range cfg.Weather {
+		if weather != nil {
+			date = uint64(weather.CMWFXDate)
+			current = csp.Weather(weather.CMWFXType)
+		}
+		break
+	}
+
+	if timeStamp != 0 {
+		date = uint64(timeStamp)
+	}
+
+	if rc.weatherIsTransitioning {
+		return ErrWeatherMidTransition
+	}
+
+	if rc.weatherState == nil {
+		// first transition
+		rc.weatherState = &csp.WeatherConditions{
+			Timestamp:   date,
+			Current:     current,
+			Next:        csp.Weather(nextWeather),
+			Transition:  0,
+			TimeToApply: float32(timeToApply),
+		}
+	} else {
+		// nth transition
+		rc.weatherState.Timestamp = date
+		rc.weatherState.Current = rc.weatherState.Next
+		rc.weatherState.Next = csp.Weather(nextWeather)
+		rc.weatherState.Transition = 0
+		rc.weatherState.TimeToApply = float32(timeToApply)
+	}
+
+	go func() {
+
+		rc.weatherIsTransitioning = true
+
+		for i := float32(0); i <= 1.1; i += 0.1 {
+			rc.weatherState.Transition = i
+
+			var wg sync.WaitGroup
+
+			for _, driver := range rc.ConnectedDrivers.Drivers {
+				go func() {
+					wg.Add(1)
+
+					message, err := csp.ToChatMessage(driver.CarInfo.CarID, rc.weatherState)
+
+					if err != nil {
+						logrus.WithError(err).Errorf("couldn't build weather change message to driver ID: %d", driver.CarInfo.CarID)
+						return
+					}
+
+					err = rc.process.SendUDPMessage(message)
+
+					if err != nil {
+						logrus.WithError(err).Errorf("couldn't send weather change message to driver ID: %d", driver.CarInfo.CarID)
+						return
+					}
+
+					wg.Done()
+
+				}()
+			}
+
+			wg.Wait()
+
+			time.Sleep(time.Duration(rc.weatherState.TimeToApply/10) * time.Second)
+		}
+
+		rc.weatherIsTransitioning = false
+	}()
+
+	return nil
+}
+
+func (rc *RaceControl) testWeather(timeStamp, timeToApply, currentWeather, nextWeather int, transition float64) error {
+
+	rc.weatherState = &csp.WeatherConditions{
+		Timestamp:   uint64(timeStamp),
+		Current:     csp.Weather(currentWeather),
+		Next:        csp.Weather(nextWeather),
+		Transition:  float32(transition),
+		TimeToApply: float32(timeToApply),
+	}
+
+	go func() {
+		var wg sync.WaitGroup
+
+		for _, driver := range rc.ConnectedDrivers.Drivers {
+			go func() {
+				wg.Add(1)
+
+				message, err := csp.ToChatMessage(driver.CarInfo.CarID, rc.weatherState)
+
+				if err != nil {
+					logrus.WithError(err).Errorf("couldn't build weather change message to driver ID: %d", driver.CarInfo.CarID)
+					return
+				}
+
+				err = rc.process.SendUDPMessage(message)
+
+				if err != nil {
+					logrus.WithError(err).Errorf("couldn't send weather change message to driver ID: %d", driver.CarInfo.CarID)
+					return
+				}
+
+				wg.Done()
+			}()
+		}
+
+		wg.Wait()
+	}()
+
+	return nil
+}
+
 // OnClientLoaded marks a connected client as having loaded in.
 func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 	driver, err := rc.findConnectedDriverByCarID(udp.CarID(loadedCar))
@@ -559,7 +687,7 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 	solWarning := ""
 	liveLink := ""
 
-	go func() {
+	/*go func() {
 		time.Sleep(time.Second * 10)
 
 		current := csp.ScatteredClouds
@@ -613,7 +741,6 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 		current := csp.HeavyRain
 		next := csp.Clear
 
-
 		cfg := rc.process.Event().GetRaceConfig()
 
 		var w *WeatherConfig
@@ -651,41 +778,40 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 			}
 
 			time.Sleep(time.Duration(secondsToApply) * time.Second)
-		}
-/*
-		current = csp.OvercastClouds
-		next = csp.HeavyRain
-
-		weatherChange = csp.WeatherConditions{
-			Timestamp:   uint64(w.CMWFXDate),
-			Current:     current,
-			Next:        next,
-			Transition:  0,
-			TimeToApply: float32(secondsToApply),
-		}
-
-		for ; i <= 1; i += 0.03 {
-			fmt.Println(i)
-			weatherChange.Transition = i
-
-			message, err := csp.ToChatMessage(driver.CarInfo.CarID, weatherChange)
-
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
-
-			err = rc.process.SendUDPMessage(message)
-
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
-
-			time.Sleep(time.Duration(secondsToApply) * time.Second)
 		}*/
-	}()
+		/*
+			current = csp.OvercastClouds
+			next = csp.HeavyRain
 
+			weatherChange = csp.WeatherConditions{
+				Timestamp:   uint64(w.CMWFXDate),
+				Current:     current,
+				Next:        next,
+				Transition:  0,
+				TimeToApply: float32(secondsToApply),
+			}
+
+			for ; i <= 1; i += 0.03 {
+				fmt.Println(i)
+				weatherChange.Transition = i
+
+				message, err := csp.ToChatMessage(driver.CarInfo.CarID, weatherChange)
+
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+
+				err = rc.process.SendUDPMessage(message)
+
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+
+				time.Sleep(time.Duration(secondsToApply) * time.Second)
+			}
+	}()*/
 
 	if rc.process.Event().GetRaceConfig().IsSol == 1 {
 		solWarning = "This server is running Sol. For the best experience please install Sol, and remember the other drivers may be driving in night conditions."

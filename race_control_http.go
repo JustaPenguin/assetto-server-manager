@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"encoding/json"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/csp"
 	"net/http"
 	"strings"
 	"time"
@@ -164,6 +165,7 @@ type liveTimingTemplateVars struct {
 	IsStrackerEnabled           bool
 	IsKissMyRankEnabled         bool
 	KissMyRankWebStatsPublicURL string
+	CSPWeathers                 []csp.Weather
 }
 
 func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request) {
@@ -231,6 +233,7 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		IsStrackerEnabled:           IsStrackerInstalled() && strackerOptions.EnableStracker,
 		IsKissMyRankEnabled:         IsKissMyRankInstalled() && kissMyRankOptions.EnableKissMyRank,
 		KissMyRankWebStatsPublicURL: kissMyRankOptions.WebStatsPublicURL,
+		CSPWeathers:                 csp.AvailableWeathers,
 	})
 }
 
@@ -381,4 +384,42 @@ func (rch *RaceControlHandler) nextSession(w http.ResponseWriter, r *http.Reques
 	}
 
 	http.Redirect(w, r, "/live-timing", http.StatusFound)
+}
+
+func (rch *RaceControlHandler) nextWeather(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		return
+	}
+
+	timeStamp := formValueAsInt(r.FormValue("timestamp"))
+	timeToApply := formValueAsInt(r.FormValue("time-to-apply"))
+	nextWeather := formValueAsInt(r.FormValue("next-weather"))
+
+	err := rch.raceControl.nextWeather(timeStamp, timeToApply, nextWeather)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Unable to make next weather request")
+
+		AddErrorFlash(w, r, "The server was unable to make the weather change request!")
+	}
+}
+
+func (rch *RaceControlHandler) testWeather(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		return
+	}
+
+	timeStamp := formValueAsInt(r.FormValue("timestamp"))
+	timeToApply := formValueAsInt(r.FormValue("time-to-apply"))
+	currentWeather := formValueAsInt(r.FormValue("current-weather"))
+	nextWeather := formValueAsInt(r.FormValue("next-weather"))
+	transition := formValueAsFloat(r.FormValue("transition"))
+
+	err := rch.raceControl.testWeather(timeStamp, timeToApply, currentWeather, nextWeather, transition)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Unable to make next weather request")
+
+		AddErrorFlash(w, r, "The server was unable to make the weather change request!")
+	}
 }
