@@ -156,7 +156,7 @@ function weatherAPI(raceConfig, serverOpts, apiKey)
             weather["CMWFXDate"] = weatherData["dt"] - (3600 * 5 * weather["CMWFXTimeMulti"]) -- don't ask
 
             -- force time 5 hour before sunset (18000) to prevent night
-            --weather["CMWFXDate"] = (weatherData["sys"]["sunset"] - 18000) - (3600 * 5 * weather["CMWFXTimeMulti"]) -- don't ask
+            --weather["CMWFXDate"] = (weatherData["sys"]["sunset"] - 18000) + (weatherData["timezone"]) - (3600 * 5 * weather["CMWFXTimeMulti"]) -- don't ask
 
             -- set graphics (comment this and uncomment the block bellow for no rain)
             if     w == 800 then weather["CMGraphics"] = "sol_01_CLear"; weather["CMWFXType"] = 15;

@@ -154,8 +154,10 @@ func (cmw *ContentManagerWrapper) NewCMContent(cars []string, trackName string, 
 }
 
 func (cmw *ContentManagerWrapper) UDPCallback(message udp.Message) {
-	switch m := message.(type) {
-	case udp.SessionInfo:
+	cmw.mutex.Lock()
+	defer cmw.mutex.Unlock()
+
+	if m, ok := message.(udp.SessionInfo); ok {
 		cmw.sessionInfo = m
 	}
 }
@@ -219,20 +221,27 @@ func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 	return nil
 }
 
-func (cmw *ContentManagerWrapper) Start(process ServerProcess, servePort int, serverConfig ServerConfig, entryList EntryList, event RaceEvent) error {
+func (cmw *ContentManagerWrapper) Start(servePort int, event RaceEvent) error {
 	cmw.mutex.Lock()
-	defer cmw.mutex.Unlock()
 
 	logrus.Infof("Starting content manager wrapper server on port %d", servePort)
 
-	u, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", serverConfig.GlobalServerConfig.HTTPPort))
+	serverOptions, err := cmw.store.LoadServerOptions()
 
 	if err != nil {
+		cmw.mutex.Unlock()
 		return err
 	}
 
-	cmw.serverConfig = serverConfig
-	cmw.entryList = entryList
+	u, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", serverOptions.HTTPPort))
+
+	if err != nil {
+		cmw.mutex.Unlock()
+		return err
+	}
+
+	cmw.serverConfig = ServerConfig{GlobalServerConfig: *serverOptions, CurrentRaceConfig: event.GetRaceConfig()}
+	cmw.entryList = event.GetEntryList()
 	cmw.event = event
 	cmw.reverseProxy = httputil.NewSingleHostReverseProxy(u)
 
@@ -243,6 +252,8 @@ func (cmw *ContentManagerWrapper) Start(process ServerProcess, servePort int, se
 	cmw.srv = &http.Server{Addr: fmt.Sprintf(":%d", servePort)}
 	cmw.srv.Handler = cmw
 
+	cmw.mutex.Unlock()
+
 	if err := cmw.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return err
 	}
@@ -251,6 +262,9 @@ func (cmw *ContentManagerWrapper) Start(process ServerProcess, servePort int, se
 }
 
 func (cmw *ContentManagerWrapper) Stop() {
+	cmw.mutex.Lock()
+	defer cmw.mutex.Unlock()
+
 	if cmw.srv == nil {
 		return
 	}
@@ -348,6 +362,9 @@ func (cmw *ContentManagerWrapper) getPlayers(guid string) (*ACHTTPPlayers, error
 }
 
 func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*ContentManagerWrapperData, error) {
+	cmw.mutex.Lock()
+	defer cmw.mutex.Unlock()
+
 	race := cmw.serverConfig.CurrentRaceConfig
 	global := cmw.serverConfig.GlobalServerConfig
 	live := cmw.sessionInfo
@@ -373,14 +390,27 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 
 	for entrantNum, entrant := range cmw.entryList.AsSlice() {
 		if entrantNum < len(players.Cars) {
-			players.Cars[entrantNum].ID = contentManagerIDChecksum(entrant.GUID)
+			players.Cars[entrantNum].ID, err = contentManagerIDChecksum(entrant.GUID)
+
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	var passwordChecksum [2]string
 
 	if global.Password != "" {
-		passwordChecksum[0] = contentManagerPasswordChecksum(global.Name, global.Password)
-		passwordChecksum[1] = contentManagerPasswordChecksum(global.Name, global.AdminPassword)
+		passwordChecksum[0], err = contentManagerPasswordChecksum(global.Name, global.Password)
+
+		if err != nil {
+			return nil, err
+		}
+
+		passwordChecksum[1], err = contentManagerPasswordChecksum(global.Name, global.AdminPassword)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	geoInfo, err := geoIP()
@@ -481,18 +511,26 @@ func getSolWeatherPrettyName(weatherName string) string {
 	return "Sol: " + solName
 }
 
-func contentManagerPasswordChecksum(serverName, password string) string {
+func contentManagerPasswordChecksum(serverName, password string) (string, error) {
 	h := sha1.New()
-	h.Write([]byte("apatosaur" + serverName + password))
+	_, err := h.Write([]byte("apatosaur" + serverName + password))
 
-	return hex.EncodeToString(h.Sum(nil))
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
-func contentManagerIDChecksum(guid string) string {
+func contentManagerIDChecksum(guid string) (string, error) {
 	h := sha1.New()
-	h.Write([]byte("antarcticfurseal" + guid))
+	_, err := h.Write([]byte("antarcticfurseal" + guid))
 
-	return hex.EncodeToString(h.Sum(nil))
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 var geoIPData *GeoIP
@@ -525,24 +563,30 @@ func geoIP() (*GeoIP, error) {
 	return geoIPData, nil
 }
 
-func getContentManagerJoinLink(config ServerConfig) (*url.URL, error) {
+func getContentManagerJoinLink(config GlobalServerConfig) (*url.URL, error) {
 	geoIP, err := geoIP()
 
 	if err != nil {
 		return nil, err
 	}
 
-	cmUrl, err := url.Parse(ContentManagerJoinLinkBase)
+	cmURL, err := url.Parse(ContentManagerJoinLinkBase)
 
 	if err != nil {
 		return nil, err
 	}
 
-	queryString := cmUrl.Query()
-	queryString.Set("ip", geoIP.IP)
-	queryString.Set("httpPort", strconv.Itoa(config.GlobalServerConfig.HTTPPort))
+	queryString := cmURL.Query()
 
-	cmUrl.RawQuery = queryString.Encode()
+	if config.ContentManagerIPOverride != "" {
+		queryString.Set("ip", config.ContentManagerIPOverride)
+	} else {
+		queryString.Set("ip", geoIP.IP)
+	}
 
-	return cmUrl, nil
+	queryString.Set("httpPort", strconv.Itoa(config.HTTPPort))
+
+	cmURL.RawQuery = queryString.Encode()
+
+	return cmURL, nil
 }

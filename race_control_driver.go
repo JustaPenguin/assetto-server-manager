@@ -38,15 +38,17 @@ type RaceControlDriver struct {
 
 	// Cars is a map of CarModel to the information for that car.
 	Cars map[string]*RaceControlCarLapInfo `json:"Cars"`
+
+	mutex sync.Mutex
 }
 
 func (rcd *RaceControlDriver) CurrentCar() *RaceControlCarLapInfo {
 	if car, ok := rcd.Cars[rcd.CarInfo.CarModel]; ok {
 		return car
-	} else {
-		logrus.Warnf("Could not find current car for driver: %s (current car: %s)", rcd.CarInfo.DriverGUID, rcd.CarInfo.CarModel)
-		return &RaceControlCarLapInfo{}
 	}
+
+	logrus.Warnf("Could not find current car for driver: %s (current car: %s)", rcd.CarInfo.DriverGUID, rcd.CarInfo.CarModel)
+	return &RaceControlCarLapInfo{}
 }
 
 type RaceControlCarLapInfo struct {

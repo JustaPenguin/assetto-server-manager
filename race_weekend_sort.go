@@ -285,9 +285,9 @@ func lessTotalEntrantTime(_ *RaceWeekend, _ *RaceWeekendSession, entrantI, entra
 		entrantJTime := entrantJ.SessionResults.GetTime(entrantJ.EntrantResult.TotalTime, entrantJ.Car.Driver.GUID, entrantJ.Car.Model, true)
 
 		return entrantITime < entrantJTime
-	} else {
-		return entrantI.SessionResults.GetNumLaps(entrantI.Car.Driver.GUID, entrantI.Car.Model) > entrantJ.SessionResults.GetNumLaps(entrantJ.Car.Driver.GUID, entrantJ.Car.Model)
 	}
+
+	return entrantI.SessionResults.GetNumLaps(entrantI.Car.Driver.GUID, entrantI.Car.Model) > entrantJ.SessionResults.GetNumLaps(entrantJ.Car.Driver.GUID, entrantJ.Car.Model)
 }
 
 func lessBestLapTime(_ *RaceWeekend, _ *RaceWeekendSession, entrantI, entrantJ *RaceWeekendSessionEntrant) bool {
@@ -337,9 +337,9 @@ func FewestCollisionsRaceWeekendEntryListSort(rw *RaceWeekend, session *RaceWeek
 		if entrantICrashes == entrantJCrashes {
 			if session.SessionType() == SessionTypeRace {
 				return lessTotalEntrantTime(rw, session, entrantI, entrantJ)
-			} else {
-				return lessBestLapTime(rw, session, entrantI, entrantJ)
 			}
+
+			return lessBestLapTime(rw, session, entrantI, entrantJ)
 		}
 
 		return entrantICrashes < entrantJCrashes
@@ -357,9 +357,9 @@ func FewestCutsRaceWeekendEntryListSort(rw *RaceWeekend, session *RaceWeekendSes
 		if entrantICuts == entrantJCuts {
 			if session.SessionType() == SessionTypeRace {
 				return lessTotalEntrantTime(rw, session, entrantI, entrantJ)
-			} else {
-				return lessBestLapTime(rw, session, entrantI, entrantJ)
 			}
+
+			return lessBestLapTime(rw, session, entrantI, entrantJ)
 		}
 
 		return entrantICuts < entrantJCuts
@@ -380,12 +380,12 @@ func SafetyRaceWeekendEntryListSort(rw *RaceWeekend, session *RaceWeekendSession
 			if entrantICuts == entrantJCuts {
 				if session.SessionType() == SessionTypeRace {
 					return lessTotalEntrantTime(rw, session, entrantI, entrantJ)
-				} else {
-					return lessBestLapTime(rw, session, entrantI, entrantJ)
 				}
-			} else {
-				return entrantICuts < entrantJCuts
+
+				return lessBestLapTime(rw, session, entrantI, entrantJ)
 			}
+
+			return entrantICuts < entrantJCuts
 		}
 
 		return entrantICrashes < entrantJCrashes

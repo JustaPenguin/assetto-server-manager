@@ -188,6 +188,7 @@ type GlobalServerConfig struct {
 	EnableContentManagerWrapper int         `ini:"-" input:"checkbox" help:"When on, this option makes Server Manager provide extra information to Content Manager. This includes more detail about connected clients, event descriptions and download links. A side-effect of this is that your server name will contain a new piece of information (an 'i' character followed by a port - which Content Manager requires). Also - if enabled - this wrapper uses a GeoIP functionality provided by <a href='https://freegeoip.app''>freegeoip.app</a>."`
 	ContentManagerWrapperPort   int         `ini:"-" min:"0" max:"65535" help:"The port on which to serve Content Manager with the above information. Please make sure this port is open on your firewall."`
 	ShowContentManagerJoinLink  int         `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager display Content Manager join links on the Live Timing page and (if enabled) in Discord race start notifications."`
+	ContentManagerIPOverride    string      `ini:"-" show:"open" help:"When set, this overrides the IP address detected by the GeoIP service used for the Content Manager join link. This must be an IPv4 address."`
 	//ContentManagerWrapperContentRequiresPassword int         `ini:"-" input:"checkbox" help:"When on a user will require the server password in order to download linked content through the Content Manager Wrapper."`
 
 	Miscellaneous                     FormHeading `ini:"-" json:"-" input:"heading"`
@@ -196,6 +197,8 @@ type GlobalServerConfig struct {
 	UseMPH                            int         `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager use MPH instead of Km/h for all speed values."`
 	PreventWebCrawlers                int         `ini:"-" input:"checkbox" help:"When on, robots will be prohibited from indexing this manager by the robots.txt. Please note this will only deter well behaved bots, and not malware/spam bots etc."`
 	RestartEventOnServerManagerLaunch int         `ini:"-" input:"checkbox" help:"When on, if Server Manager is stopped while there is an event in progress, Server Manager will try to restart the event when Server Manager is restarted."`
+	LogACServerOutputToFile           bool        `ini:"-" input:"checkbox" help:"When on, Server Manager will output each Assetto Corsa session into a log file in the logs folder."`
+	NumberOfACServerLogsToKeep        int         `ini:"-" help:"The number of AC Server logs to keep in the logs folder. (Oldest files will be deleted first. 0 = keep all files)"`
 
 	// Discord Integration
 	DiscordIntegration FormHeading `ini:"-" json:"-" input:"heading"`

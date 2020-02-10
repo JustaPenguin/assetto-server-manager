@@ -33,9 +33,7 @@ var (
 
 	panicCapture = defaultPanicCapture
 
-	prometheusMonitoringHandler = func() http.Handler {
-		return http.NotFoundHandler()
-	}
+	prometheusMonitoringHandler = http.NotFoundHandler
 
 	prometheusMonitoringWrapper = func(next http.Handler) http.Handler {
 		return next

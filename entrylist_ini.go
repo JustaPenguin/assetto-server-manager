@@ -131,7 +131,7 @@ func (e EntryList) PrettyList() []*Entrant {
 	}
 
 	sort.Slice(entrants, func(i, j int) bool {
-		return entrants[i].PitBox < entrants[j].PitBox
+		return entrants[i].Name < entrants[j].Name
 	})
 
 	entrants = append(entrants, &Entrant{
@@ -232,9 +232,9 @@ type Entrant struct {
 func (e Entrant) ID() string {
 	if e.GUID != "" {
 		return e.GUID
-	} else {
-		return e.Name
 	}
+
+	return e.Name
 }
 
 func (e *Entrant) OverwriteProperties(other *Entrant) {

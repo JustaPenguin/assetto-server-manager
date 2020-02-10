@@ -140,7 +140,7 @@ type ServerExtraConfig struct {
 	DisableWindowsBrowserOpen   bool             `yaml:"dont_open_browser"`
 	ScanContentFolderForChanges bool             `yaml:"scan_content_folder_for_changes"`
 
-	// Deprecated; use Plugins instead
+	// Deprecated: use Plugins instead
 	RunOnStart []string `yaml:"run_on_start"`
 }
 

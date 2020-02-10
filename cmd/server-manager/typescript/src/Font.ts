@@ -44,6 +44,7 @@ import {faStopwatch} from "@fortawesome/free-solid-svg-icons/faStopwatch";
 import {faChartLine} from "@fortawesome/free-solid-svg-icons/faChartLine";
 import {faGasPump} from "@fortawesome/free-solid-svg-icons/faGasPump";
 import {faPuzzlePiece} from "@fortawesome/free-solid-svg-icons/faPuzzlePiece";
+import {faBalanceScale} from "@fortawesome/free-solid-svg-icons/faBalanceScale";
 
 library.add(
     faUser,
@@ -89,6 +90,7 @@ library.add(
     faChartLine,
     faGasPump,
     faPuzzlePiece,
+    faBalanceScale,
 );
 
 dom.watch();

@@ -153,10 +153,10 @@ func (rwh *RaceWeekendHandler) submitSessionConfiguration(w http.ResponseWriter,
 		// end the race creation flow
 		http.Redirect(w, r, "/race-weekend/"+raceWeekend.ID.String(), http.StatusFound)
 		return
-	} else {
-		// add another session
-		http.Redirect(w, r, "/race-weekend/"+raceWeekend.ID.String()+"/session", http.StatusFound)
 	}
+
+	// add another session
+	http.Redirect(w, r, "/race-weekend/"+raceWeekend.ID.String()+"/session", http.StatusFound)
 }
 
 func (rwh *RaceWeekendHandler) startSession(w http.ResponseWriter, r *http.Request) {
@@ -445,7 +445,7 @@ func (rwh *RaceWeekendHandler) export(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s.json", raceWeekend.Name))
+	w.Header().Add("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.json"`, raceWeekend.Name))
 
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")

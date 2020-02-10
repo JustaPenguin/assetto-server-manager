@@ -171,7 +171,7 @@ func cipherKey(filename string) string {
 	for i := 0; i < len(filename)-1; i++ {
 		part2 *= int(filename[i])
 
-		i += 1
+		i++
 
 		part2 -= int(filename[i])
 	}
@@ -181,7 +181,7 @@ func cipherKey(filename string) string {
 	for i := 1; i < len(filename)-3; i += 4 {
 		part3 *= int(filename[i])
 
-		i += 1
+		i++
 
 		part3 /= int(filename[i] + 0x1b)
 
@@ -200,10 +200,10 @@ func cipherKey(filename string) string {
 
 	for i := 1; i < len(filename)-4; i += 4 {
 		n := int(filename[i]+0xf) * part5
-		i -= 1
+		i--
 		x := int(filename[i])
 
-		i += 1
+		i++
 
 		x += 0xf
 		x *= n
@@ -228,10 +228,10 @@ func cipherKey(filename string) string {
 	for i := 0; i < len(filename)-1; i++ {
 		tmp := int(filename[i])
 		part8 /= tmp
-		i += 1
+		i++
 		tmp2 := int(filename[i])
 		part8 += tmp2
-		i -= 1
+		i--
 	}
 
 	part1 &= 0xff
@@ -255,7 +255,7 @@ func decipher(out []byte, key string) {
 			continue
 		}
 
-		out[b] = out[b] - key[x%len(key)]
+		out[b] -= key[x%len(key)]
 		x++
 	}
 }

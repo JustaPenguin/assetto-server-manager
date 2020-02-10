@@ -73,11 +73,20 @@
                         <label for="ACSR" class="col-sm-3 col-form-label">Export to <a href="https://acsr.assettocorsaservers.com">Assetto Corsa Skill Ratings</a></label>
 
                         <div class="col-sm-9">
-                            <input type="checkbox" id="ACSR" name="ACSR" {{ if ne $.RaceTemplateVars.BaseTemplateVars.IsPremium "true" }} disabled="disabled" {{ end }}
-                                    {{ if $f.ACSR }} checked="checked" {{ end }}><br><br>
+                            <input type="checkbox"
+                                   id="ACSR"
+                                   name="ACSR"
+                                {{ if not $.RaceTemplateVars.BaseTemplateVars.IsPremium }}
+                                    disabled="disabled"
+                                {{ end }}
+                                {{ if $f.ACSR }}
+                                    checked="checked"
+                                {{ end }}
+                            >
 
+                            <br><br>
 
-                            {{ if ne $.RaceTemplateVars.BaseTemplateVars.IsPremium "true" }}
+                            {{ if not $.RaceTemplateVars.BaseTemplateVars.IsPremium }}
                                 <small class="text-warning">
                                     Exporting to <a href="https://acsr.assettocorsaservers.com">ACSR</a> is a premium feature! You can access premium features by
                                     <a href="https://assettocorsaservers.com">renting a server</a> or
@@ -98,7 +107,7 @@
                             <br>
 
                             <small>
-                                <strong>Forces Open Championship off, Sign Up Form on and Password off</strong>.
+                                <strong>Forces Sign Up Form on and Password off</strong>.
                             </small>
                         </div>
                     </div>
@@ -182,7 +191,7 @@
 
                 </div>
 
-                {{ if eq $.RaceTemplateVars.BaseTemplateVars.IsPremium "true" }}
+                {{ if $.RaceTemplateVars.BaseTemplateVars.IsPremium }}
                     <div class="form-group row">
                         <label for="ChampionshipOGImage" class="col-sm-3 col-form-label">Championship Open Graph Image</label>
 

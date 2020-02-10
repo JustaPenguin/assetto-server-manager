@@ -9,7 +9,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/JustaPenguin/assetto-server-manager"
+	servermanager "github.com/JustaPenguin/assetto-server-manager"
 	"github.com/OneOfOne/struct2ts"
 )
 
