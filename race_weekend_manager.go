@@ -429,7 +429,7 @@ func (rwm *RaceWeekendManager) StartPracticeSession(raceWeekendID string, raceWe
 }
 
 func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSessionID string, isPracticeSession bool) error {
-	if Premium() {
+	if !Premium() {
 		return errors.New("servermanager: premium required")
 	}
 
@@ -751,7 +751,7 @@ func (rwm *RaceWeekendManager) RestartActiveSession() error {
 }
 
 func (rwm *RaceWeekendManager) ImportSession(raceWeekendID string, raceWeekendSessionID string, r *http.Request) error {
-	if Premium() {
+	if !Premium() {
 		return errors.New("servermanager: premium required")
 	}
 
