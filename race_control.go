@@ -596,9 +596,9 @@ func (rc *RaceControl) nextWeather(timeStamp, timeToApply, nextWeather int) erro
 			var wg sync.WaitGroup
 
 			for _, d := range rc.ConnectedDrivers.Drivers {
-				go func(driver *RaceControlDriver) {
-					wg.Add(1)
+				wg.Add(1)
 
+				go func(driver *RaceControlDriver) {
 					message, err := csp.ToChatMessage(driver.CarInfo.CarID, rc.weatherState)
 
 					if err != nil {
@@ -645,9 +645,9 @@ func (rc *RaceControl) testWeather(timeStamp, timeToApply, currentWeather, nextW
 		var wg sync.WaitGroup
 
 		for _, driver := range rc.ConnectedDrivers.Drivers {
-			go func(driver *RaceControlDriver) {
-				wg.Add(1)
+			wg.Add(1)
 
+			go func(driver *RaceControlDriver) {
 				message, err := csp.ToChatMessage(driver.CarInfo.CarID, rc.weatherState)
 
 				if err != nil {
@@ -783,7 +783,7 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 
 			time.Sleep(time.Duration(secondsToApply) * time.Second)
 		}*/
-		/*
+	/*
 			current = csp.OvercastClouds
 			next = csp.HeavyRain
 

@@ -2,10 +2,11 @@ package servermanager
 
 import (
 	"encoding/json"
-	"github.com/JustaPenguin/assetto-server-manager/pkg/csp"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/JustaPenguin/assetto-server-manager/pkg/csp"
 
 	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 	"github.com/gorilla/websocket"

@@ -60,7 +60,7 @@ func (h HandshakeSend) GetMessageType() uint16 {
 }
 
 type HandshakeResponse struct {
-	Version uint32
+	Version           uint32
 	IsWeatherFXActive bool
 }
 
