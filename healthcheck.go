@@ -74,7 +74,7 @@ func (h *HealthCheck) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		OK:                 true,
 		OS:                 runtime.GOOS + "/" + runtime.GOARCH,
 		Version:            BuildVersion,
-		IsPremium:          IsPremium == "true",
+		IsPremium:          Premium(),
 		IsHosted:           IsHosted,
 		MaxClientsOverride: MaxClientsOverride,
 		NumCPU:             runtime.NumCPU(),

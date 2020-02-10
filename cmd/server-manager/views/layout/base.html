@@ -269,7 +269,7 @@
                 <div class="col-sm-7">
                     <a href="https://github.com/JustaPenguin/assetto-server-manager" class="mr-3"><i class="fab fa-github"></i> GitHub</a>
                     <a href="https://github.com/JustaPenguin/assetto-server-manager/issues" class="mr-3"><i class="fas fa-bug"></i> Submit a Bug Report</a>
-                    {{ if ne $.IsPremium "true" }}
+                    {{ if not $.IsPremium }}
                         <a href="/premium" class="mr-3"><i class="fas fa-heart"></i> Go Premium</a>
                     {{ else }}
                         <a href="https://paypal.me/JustaPenguinUK" class="mr-3"><i class="fas fa-heart"></i> Donate</a>
@@ -279,7 +279,7 @@
                 </div>
                 <div class="col-sm-5 text-right">
                     <img src="/static/img/racer.png" class="img img-footer float-right">
-                    Assetto Corsa Server Manager {{ if eq $.IsPremium "true" }}Premium {{ end }}{{ Version }}<br> &copy; <a href="https://justapengu.in">Just a Penguin</a> 2010-{{ now.Format "2006" }}
+                    Assetto Corsa Server Manager {{ if $.IsPremium }}Premium {{ end }}{{ Version }}<br> &copy; <a href="https://justapengu.in">Just a Penguin</a> 2010-{{ now.Format "2006" }}
                 </div>
             </div>
 
