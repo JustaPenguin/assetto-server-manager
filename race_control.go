@@ -595,8 +595,8 @@ func (rc *RaceControl) nextWeather(timeStamp, timeToApply, nextWeather int) erro
 
 			var wg sync.WaitGroup
 
-			for _, driver := range rc.ConnectedDrivers.Drivers {
-				go func() {
+			for _, d := range rc.ConnectedDrivers.Drivers {
+				go func(driver *RaceControlDriver) {
 					wg.Add(1)
 
 					message, err := csp.ToChatMessage(driver.CarInfo.CarID, rc.weatherState)
@@ -615,7 +615,7 @@ func (rc *RaceControl) nextWeather(timeStamp, timeToApply, nextWeather int) erro
 
 					wg.Done()
 
-				}()
+				}(d)
 			}
 
 			wg.Wait()
@@ -645,7 +645,7 @@ func (rc *RaceControl) testWeather(timeStamp, timeToApply, currentWeather, nextW
 		var wg sync.WaitGroup
 
 		for _, driver := range rc.ConnectedDrivers.Drivers {
-			go func() {
+			go func(driver *RaceControlDriver) {
 				wg.Add(1)
 
 				message, err := csp.ToChatMessage(driver.CarInfo.CarID, rc.weatherState)
@@ -663,7 +663,7 @@ func (rc *RaceControl) testWeather(timeStamp, timeToApply, currentWeather, nextW
 				}
 
 				wg.Done()
-			}()
+			}(driver)
 		}
 
 		wg.Wait()
