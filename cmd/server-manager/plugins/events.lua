@@ -16,6 +16,17 @@ function onEventStart(encodedRaceConfig, encodedServerOpts, encodedEntryList)
     local serverOpts = json.decode(encodedServerOpts)
     local entryList = json.decode(encodedEntryList)
 
+	-- Getting location from track_ui.json
+	location = getTrackInfo(raceConfig, serverOpts)
+
+	-- if you want to manually set the location for tracks without location info uncomment this line and set the location, you can download a city list here: http://bulk.openweathermap.org/sample/
+	-- location = "Manchester,uk"
+
+	if location == nil then
+		--Set location to Manchester UK if no trackinfo is found
+		location = "Manchester,UK"
+	end
+
     -- Uncomment these lines and run the function (start any event) to print out the structure of each object.
     --print("Race Config:", utils.dump(raceConfig))
     --print("Server Options:", utils.dump(serverOpts))
@@ -35,7 +46,7 @@ function onEventStart(encodedRaceConfig, encodedServerOpts, encodedEntryList)
 
     -- Uncomment this line to set Weather API On, don't forget to put your openweathermap API key line 39
     -- in order to use the weatherAPI you need to get a free API key from https://openweathermap.org/
-    raceConfig, serverOpts = weatherAPI(raceConfig, serverOpts, "get-an-api-key-from-https://openweathermap.org/")
+    -- raceConfig, serverOpts = weatherAPI(raceConfig, serverOpts, "get-an-api-key-from-https://openweathermap.org/")
 
     -- Encode block, you probably shouldn't touch these either!
     return json.encode(entryList), json.encode(serverOpts), json.encode(raceConfig)
