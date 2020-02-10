@@ -5,8 +5,10 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -18,6 +20,8 @@ import (
 var acsrURL = "https://acsr.assettocorsaservers.com"
 
 func init() {
+	gob.Register(Championship{})
+
 	if acsrOverrideURL := os.Getenv("ACSR_URL"); acsrOverrideURL != "" {
 		acsrURL = acsrOverrideURL
 	}
@@ -33,13 +37,13 @@ func NewACSRClient(accountID, apiKey string, enabled bool) *ACSRClient {
 	return &ACSRClient{
 		AccountID: accountID,
 		APIKey:    apiKey,
-		Enabled:   enabled && IsPremium == "true",
+		Enabled:   enabled && Premium(),
 	}
 }
 
 // Sends a championship to ACSR, called OnEndSession and when a championship is created
-func (a *ACSRClient) SendChampionship(championship Championship) {
-	if !a.Enabled || len(championship.Events) == 0 {
+func (a *ACSRClient) SendChampionship(inChampionship Championship) {
+	if !a.Enabled || len(inChampionship.Events) == 0 {
 		return
 	}
 
@@ -53,6 +57,15 @@ func (a *ACSRClient) SendChampionship(championship Championship) {
 		return
 	}
 
+	// championships are cloned before being sent to ACSR. this prevents any issues with pointers within the
+	// struct being erroneously modified in our original championship struct.
+	championship, err := cloneChampionship(inChampionship)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Cannot clone Championship for ACSR")
+		return
+	}
+
 	championship.Events = ExtractRaceWeekendSessionsIntoIndividualEvents(championship.Events)
 
 	for _, event := range championship.Events {
@@ -63,51 +76,20 @@ func (a *ACSRClient) SendChampionship(championship Championship) {
 		}
 	}
 
-	output, err := json.Marshal(championship)
-	if err != nil {
-		logrus.WithError(err).Error("acsr: couldn't JSON marshal championship")
-		return
-	}
-
-	key, err := hex.DecodeString(a.APIKey)
-
-	if err != nil {
-		logrus.WithError(err).Error("acsr: api key in config is incorrect")
-		return
-	}
-
-	encryptedChampionship, err := encrypt(output, key)
-
-	if err != nil {
-		logrus.Error("acsr: output encryption failed")
-		return
-	}
-
-	req, err := http.NewRequest("POST", acsrURL+"/submit-result", bytes.NewBuffer(encryptedChampionship))
-
-	if err != nil {
-		logrus.Error(err)
-		return
-	}
-
 	geoIP, err := geoIP()
 
 	if err != nil {
-		logrus.WithError(err).Error("acsr: couldn't get server geoIP for request")
+		logrus.WithError(err).Error("Could not get GeoIP data for server")
 		return
 	}
 
-	q := req.URL.Query()
-	q.Add("baseurl", config.HTTP.BaseURL)
-	q.Add("guid", a.AccountID)
-	q.Add("geoip", geoIP.CountryName)
-	req.URL.RawQuery = q.Encode()
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := a.send("/submit-result", championship, map[string]string{
+		"baseurl": config.HTTP.BaseURL,
+		"geoip":   geoIP.CountryName,
+	})
 
 	if err != nil {
-		logrus.Error(err)
+		logrus.WithError(err).Error("could not submit championship to ACSR")
 		return
 	}
 
@@ -116,8 +98,114 @@ func (a *ACSRClient) SendChampionship(championship Championship) {
 	if resp.StatusCode < 400 {
 		logrus.Debugf("acsr: updated championship: %s sent", championship.ID.String())
 	} else {
-		logrus.Errorf("acsr: sent championship: %s was not accepted. Please check your credentials.", championship.ID.String())
+		logrus.Errorf("acsr: sent championship: %s was not accepted. (status: %d) Please check your credentials.", championship.ID.String(), resp.StatusCode)
 	}
+}
+
+func (a *ACSRClient) send(url string, data interface{}, queryParams map[string]string) (*http.Response, error) {
+	output, err := json.Marshal(data)
+
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := hex.DecodeString(a.APIKey)
+
+	if err != nil {
+		return nil, err
+	}
+
+	encryptedData, err := encrypt(output, key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", acsrURL+url, bytes.NewBuffer(encryptedData))
+
+	if err != nil {
+		return nil, err
+	}
+
+	q := req.URL.Query()
+
+	for key, val := range queryParams {
+		q.Add(key, val)
+	}
+
+	q.Add("guid", a.AccountID)
+	req.URL.RawQuery = q.Encode()
+	req.Header.Set("Content-Type", "application/json")
+
+	return http.DefaultClient.Do(req)
+}
+
+type ACSRDriverRatingRequest struct {
+	GUIDs []string `json:"guids"`
+}
+
+type ACSRDriverRating struct {
+	DriverID         uint    `json:"driver_id"`
+	SkillRatingGrade string  `json:"skill_rating_grade"`
+	SkillRating      float64 `json:"skill_rating"`
+	SafetyRating     int     `json:"safety_rating"`
+	NumEvents        int     `json:"num_events"`
+	IsProvisional    bool    `json:"is_provisional"`
+}
+
+func (a *ACSRClient) GetRating(guids ...string) (map[string]*ACSRDriverRating, error) {
+	data := ACSRDriverRatingRequest{}
+
+	anonymisedGUIDs := make(map[string]string)
+
+	for _, guid := range guids {
+		anonymised := AnonymiseDriverGUID(guid)
+		anonymisedGUIDs[anonymised] = guid
+		data.GUIDs = append(data.GUIDs, anonymised)
+	}
+
+	resp, err := a.send("/api/ratings", data, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("servermanager: acsr request responded with a bad status code (%d). check your credentials", resp.StatusCode)
+	}
+
+	var anonymisedOut map[string]*ACSRDriverRating
+
+	if err := json.NewDecoder(resp.Body).Decode(&anonymisedOut); err != nil {
+		return nil, err
+	}
+
+	normalGUIDMap := make(map[string]*ACSRDriverRating)
+
+	for anonymisedGUID, data := range anonymisedOut {
+		if guid, ok := anonymisedGUIDs[anonymisedGUID]; ok {
+			normalGUIDMap[guid] = data
+		}
+	}
+
+	return normalGUIDMap, nil
+}
+
+// cloneChampionship takes a Championship and returns a complete new copy of it.
+func cloneChampionship(c Championship) (out Championship, err error) {
+	buf := new(bytes.Buffer)
+
+	err = gob.NewEncoder(buf).Encode(c)
+
+	if err != nil {
+		return out, err
+	}
+
+	err = gob.NewDecoder(buf).Decode(&out)
+
+	return out, err
 }
 
 func encrypt(data, key []byte) ([]byte, error) {

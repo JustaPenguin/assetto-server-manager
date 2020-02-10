@@ -1,11 +1,13 @@
 {{/* gotype: github.com/JustaPenguin/assetto-server-manager.createAccountTemplateVars */}}
 
-{{ define "title" }}Manage Accounts{{ end }}
+{{ define "title" }}
+    {{ if $.IsEditing }}Edit{{ else }}Add{{ end }} an Account
+{{ end }}
 
 {{ define "content" }}
     <div class="card">
         <div class="card-header">
-            Add an Account
+            {{ if $.IsEditing }}Edit{{ else }}Add{{ end }} an Account
         </div>
 
         <div class="card-body">
@@ -36,9 +38,30 @@
                             <option value="write" {{ if eq .Account.Group "write" }}selected="selected"{{ end }}>Write - Read and Write races, content and championships</option>
                             <option value="delete" {{ if eq .Account.Group "delete" }}selected="selected"{{ end }}>Delete - Read, Write, Delete races, content and championships</option>
                             <option value="admin" {{ if eq .Account.Group "admin" }}selected="selected"{{ end }}>Admin - Full access</option>
+                            <option value="no_access" {{ if eq .Account.Group "no_access" }}selected="selected"{{ end }}>No Access - user cannot access anything.</option>
                         </select>
+
+                        <small>Please note that Groups are per Server Manager instance. In a Multi-Server environment, you can set different groups for users per server.</small>
                     </div>
                 </div>
+
+
+                {{ if gt (len .Account.Groups) 1 }}
+                    <div class="form-group row">
+                        <label for="UpdateGroupForAllServers" class="col-sm-3 col-form-label">Update Group For All Servers?</label>
+
+                        <div class="col-sm-9">
+                            <input type="checkbox"
+                                   id="UpdateGroupForAllServers"
+                                   name="UpdateGroupForAllServers"
+                            ><br>
+
+                            <small>If on, the group selected above will be applied to the user's account in all servers of this Multi-Server instance.</small>
+                        </div>
+                    </div>
+
+
+                {{ end }}
 
 
                 {{ if $.IsEditing }}

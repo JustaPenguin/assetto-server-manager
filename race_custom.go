@@ -18,11 +18,17 @@ type CustomRace struct {
 	HasCustomName, OverridePassword bool
 	ReplacementPassword             string
 
-	Created       time.Time
-	Updated       time.Time
-	Deleted       time.Time
-	UUID          uuid.UUID
-	Starred, Loop bool
+	Created time.Time
+	Updated time.Time
+	Deleted time.Time
+	UUID    uuid.UUID
+	Starred bool
+	// Deprecated: Replaced by LoopServer
+	Loop       bool
+	LoopServer map[ServerID]bool
+
+	ForceStopTime        int
+	ForceStopWithDrivers bool
 
 	RaceConfig CurrentRaceConfig
 	EntryList  EntryList
@@ -37,15 +43,19 @@ func (cr *CustomRace) GetEntryList() EntryList {
 }
 
 func (cr *CustomRace) IsLooping() bool {
-	return cr.Loop
+	if cr.LoopServer == nil {
+		return false
+	}
+
+	return cr.LoopServer[serverID]
 }
 
 func (cr *CustomRace) EventName() string {
 	if cr.HasCustomName {
 		return cr.Name
-	} else {
-		return trackSummary(cr.RaceConfig.Track, cr.RaceConfig.TrackLayout)
 	}
+
+	return trackSummary(cr.RaceConfig.Track, cr.RaceConfig.TrackLayout)
 }
 
 func (cr *CustomRace) OverrideServerPassword() bool {
@@ -94,6 +104,14 @@ func (cr *CustomRace) EventDescription() string {
 
 func (cr *CustomRace) ReadOnlyEntryList() EntryList {
 	return cr.EntryList
+}
+
+func (cr *CustomRace) GetForceStopTime() time.Duration {
+	return time.Minute * time.Duration(cr.ForceStopTime)
+}
+
+func (cr *CustomRace) GetForceStopWithDrivers() bool {
+	return cr.ForceStopWithDrivers
 }
 
 type CustomRaceHandler struct {

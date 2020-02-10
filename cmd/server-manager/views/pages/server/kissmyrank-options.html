@@ -1,0 +1,38 @@
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.kissMyRankConfigurationTemplateVars*/}}
+
+{{ define "title" }}KissMyRank Options{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">KissMyRank Options</h1>
+
+    <p>
+        <a href="https://www.racedepartment.com/downloads/kissmyrank-local-assetto-corsa-server-plugin.17667/">KissMyRank</a> is the popular server side app
+        designed to promote knowledge of the gentlemen drivers driving etiquette and fair racing.
+    </p>
+
+    {{ if .IsKMRInstalled }}
+        <p>
+            These configuration options are applied globally - they are applied to the KissMyRank configuration file
+            whenever a race setup is started by Server Manager.
+        </p>
+
+        <form method="post" action="/kissmyrank/options">
+            {{ range $k, $v := .Form.Fields }}
+                {{ $v.HTML }}
+            {{ end }}
+
+            <button class="btn btn-success float-right" type="submit">Save</button>
+
+            <div class="clearfix"></div>
+        </form>
+    {{ else }}
+        <p>KissMyRank is not installed. Please follow the instructions below to install KissMyRank, or contact your Server Administrator:</p>
+
+        <ol>
+            <li><a href="https://www.racedepartment.com/downloads/kissmyrank-local-assetto-corsa-server-plugin.17667/">Download KissMyRank</a></li>
+            <li>Extract the correct folder for your platform from the KissMyRank zip into a folder called "kissmyrank" (case sensitive) in your Assetto Corsa Server folder</li>
+            <li>Make sure that you have set UDP Plugin Address and UDP Plugin Local Port in <a href="/server-options">Server Options</a></li>
+            <li>Refresh this page!</li>
+        </ol>
+    {{ end }}
+{{ end }}

@@ -158,26 +158,26 @@ func (nm *NotificationManager) SendRaceStartMessage(config ServerConfig, event R
 	title := fmt.Sprintf("Race starting at %s", trackInfo)
 
 	if config.GlobalServerConfig.ShowContentManagerJoinLink == 1 {
-		link, err := getContentManagerJoinLink(config)
+		link, err := getContentManagerJoinLink(config.GlobalServerConfig)
 		linkText := ""
 
 		if err != nil {
 			logrus.WithError(err).Errorf("could not get CM join link")
 
 			return nm.SendMessage(title, msg)
-		} else {
-			linkText = "Content Manager join link"
-
-			// delay sending message by 20 seconds to give server time to register with lobby so CM link works
-			time.AfterFunc(time.Duration(20)*time.Second, func() {
-				_ = nm.SendMessageWithLink(title, msg, linkText, link)
-			})
-
-			return nil
 		}
-	} else {
-		return nm.SendMessage(title, msg)
+
+		linkText = "Content Manager join link"
+
+		// delay sending message by 20 seconds to give server time to register with lobby so CM link works
+		time.AfterFunc(time.Duration(20)*time.Second, func() {
+			_ = nm.SendMessageWithLink(title, msg, linkText, link)
+		})
+
+		return nil
 	}
+
+	return nm.SendMessage(title, msg)
 }
 
 // GetCarList takes a ; sep string of cars from a race config, returns , sep of UI names with download links added

@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/JustaPenguin/assetto-server-manager/fixtures/default-content"
+	defaultcontent "github.com/JustaPenguin/assetto-server-manager/fixtures/default-content"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -74,6 +74,10 @@ var (
 		changeNotificationTimer,
 		addContentExamples,
 		addServerIDToScheduledEvents,
+		addLoopServerToCustomRace,
+		amendChampionshipClassIDIncorrectValues,
+		enableLoggingWith5LogsKept,
+		convertAccountGroupToServerIDGroupMap,
 	}
 )
 
@@ -106,6 +110,10 @@ func addEntrantIDToChampionships(rs Store) error {
 }
 
 func addAdminAccount(rs Store) error {
+	if err := initServerID(rs); err != nil {
+		return err
+	}
+
 	accounts, err := rs.ListAccounts()
 
 	if err != nil {
@@ -124,7 +132,7 @@ func addAdminAccount(rs Store) error {
 	account := NewAccount()
 	account.Name = adminUserName
 	account.DefaultPassword = "servermanager"
-	account.Group = GroupAdmin
+	account.Groups[serverID] = GroupAdmin
 
 	return rs.UpsertAccount(account)
 }
@@ -676,6 +684,223 @@ func addServerIDToScheduledEvents(s Store) error {
 		err := s.UpsertRaceWeekend(raceWeekend)
 
 		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func addLoopServerToCustomRace(s Store) error {
+	logrus.Infof("Running migration: Add Loop Per Server to Custom Race")
+
+	if err := initServerID(s); err != nil {
+		return err
+	}
+
+	customRaces, err := s.ListCustomRaces()
+
+	if err != nil {
+		return err
+	}
+
+	for _, customRace := range customRaces {
+		if customRace.Loop {
+			customRace.LoopServer = make(map[ServerID]bool)
+
+			customRace.LoopServer[serverID] = true
+
+			err := s.UpsertCustomRace(customRace)
+
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func amendChampionshipClassIDIncorrectValues(s Store) error {
+	logrus.Infof("Running migration: Correcting Multiclass Championship incorrect ClassIDs (if any)")
+
+	championships, err := s.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	for _, championship := range championships {
+		if !championship.IsMultiClass() {
+			continue
+		}
+
+		foundClasses := make(map[uuid.UUID]bool)
+
+		for _, class := range championship.Classes {
+			if _, ok := foundClasses[class.ID]; ok {
+				logrus.Infof("Duplicated class id: %s in Championship: %s", class.ID, championship.ID)
+
+				class.ID = uuid.New()
+
+				for _, event := range championship.Events {
+					if event.IsRaceWeekend() {
+						rw, err := s.LoadRaceWeekend(event.RaceWeekendID.String())
+
+						if err != nil {
+							continue
+						}
+
+						for _, session := range rw.Sessions {
+
+							if session.SessionType() == SessionTypeRace {
+								session.Points[class.ID] = &class.Points
+							} else {
+								var points []int
+
+								for range class.Points.Places {
+									points = append(points, 0)
+								}
+
+								session.Points[class.ID] = &ChampionshipPoints{
+									Places:               points,
+									BestLap:              0,
+									PolePosition:         0,
+									CollisionWithDriver:  0,
+									CollisionWithEnv:     0,
+									CutTrack:             0,
+									SecondRaceMultiplier: 0,
+								}
+							}
+
+							if !session.Completed() {
+								continue
+							}
+
+							for _, car := range session.Results.Cars {
+								class, err := championship.FindClassForCarModel(car.Model)
+
+								if err != nil {
+									continue
+								}
+
+								car.Driver.ClassID = class.ID
+							}
+
+							for _, result := range session.Results.Result {
+								class, err := championship.FindClassForCarModel(result.CarModel)
+
+								if err != nil {
+									continue
+								}
+
+								result.ClassID = class.ID
+							}
+
+							for _, lap := range session.Results.Laps {
+								class, err := championship.FindClassForCarModel(lap.CarModel)
+
+								if err != nil {
+									continue
+								}
+
+								lap.ClassID = class.ID
+							}
+						}
+
+						if err := s.UpsertRaceWeekend(rw); err != nil {
+							return err
+						}
+					} else {
+						for _, session := range event.Sessions {
+							if !session.Completed() {
+								continue
+							}
+
+							for _, car := range session.Results.Cars {
+								class, err := championship.FindClassForCarModel(car.Model)
+
+								if err != nil {
+									continue
+								}
+
+								car.Driver.ClassID = class.ID
+							}
+
+							for _, result := range session.Results.Result {
+								class, err := championship.FindClassForCarModel(result.CarModel)
+
+								if err != nil {
+									continue
+								}
+
+								result.ClassID = class.ID
+							}
+
+							for _, lap := range session.Results.Laps {
+								class, err := championship.FindClassForCarModel(lap.CarModel)
+
+								if err != nil {
+									continue
+								}
+
+								lap.ClassID = class.ID
+							}
+						}
+					}
+				}
+			}
+
+			foundClasses[class.ID] = true
+		}
+
+		if err := s.UpsertChampionship(championship); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func enableLoggingWith5LogsKept(s Store) error {
+	logrus.Infof("Running migration: Enable AC Server Logging")
+
+	opts, err := s.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	opts.LogACServerOutputToFile = true
+	opts.NumberOfACServerLogsToKeep = 5
+
+	return s.UpsertServerOptions(opts)
+}
+
+func convertAccountGroupToServerIDGroupMap(s Store) error {
+	logrus.Infof("Running migration: Convert Account Group to Server ID Group Map")
+
+	if err := initServerID(s); err != nil {
+		return err
+	}
+
+	accounts, err := s.ListAccounts()
+
+	if err != nil {
+		return err
+	}
+
+	for _, account := range accounts {
+		if account.Groups != nil {
+			if _, ok := account.Groups[serverID]; ok {
+				continue
+			}
+		}
+
+		account.Groups = make(map[ServerID]Group)
+		account.Groups[serverID] = account.DeprecatedGroup
+
+		if err := s.UpsertAccount(account); err != nil {
 			return err
 		}
 	}

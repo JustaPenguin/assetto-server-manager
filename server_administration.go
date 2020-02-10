@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/mitchellh/go-wordwrap"
@@ -275,6 +276,34 @@ func (sah *ServerAdministrationHandler) logsAPI(w http.ResponseWriter, r *http.R
 		ManagerLog: logOutput.String(),
 		PluginsLog: pluginsOutput.String(),
 	})
+}
+
+// downloading logfiles
+func (sah *ServerAdministrationHandler) logsDownload(w http.ResponseWriter, r *http.Request) {
+	logFile := chi.URLParam(r, "logFile")
+	var outputString string
+
+	if logFile == "server" {
+		outputString = sah.process.Logs()
+	} else if logFile == "manager" {
+		outputString = logOutput.String()
+	} else if logFile == "plugins" {
+		outputString = pluginsOutput.String()
+	} else {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
+	// tell the browser this is a file download
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", "attachment; filename= \""+logFile+"_"+time.Now().Format(time.RFC3339)+".log\"")
+
+	_, err := w.Write([]byte(outputString))
+
+	if err != nil {
+		logrus.WithError(err).Error("failed to return log " + logFile + " as file via http")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
 }
 
 // serverProcessHandler modifies the server process.

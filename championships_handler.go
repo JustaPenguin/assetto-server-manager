@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strconv"
 	"time"
 
 	"4d63.com/tz"
@@ -95,6 +96,7 @@ type championshipViewTemplateVars struct {
 	EventInProgress bool
 	Account         *Account
 	RaceWeekends    map[uuid.UUID]*RaceWeekend
+	DriverRatings   map[string]*ACSRDriverRating
 }
 
 // view shows details of a given Championship
@@ -116,6 +118,12 @@ func (ch *ChampionshipsHandler) view(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	ratings, err := ch.championshipManager.LoadACSRRatings(championship)
+
+	if err != nil {
+		logrus.WithError(err).Error("could not get driver ratings from ACSR")
+	}
+
 	raceWeekends := make(map[uuid.UUID]*RaceWeekend)
 
 	for _, event := range championship.Events {
@@ -135,6 +143,7 @@ func (ch *ChampionshipsHandler) view(w http.ResponseWriter, r *http.Request) {
 		EventInProgress: eventInProgress,
 		Account:         AccountFromRequest(r),
 		RaceWeekends:    raceWeekends,
+		DriverRatings:   ratings,
 	})
 }
 
@@ -161,7 +170,7 @@ func (ch *ChampionshipsHandler) export(w http.ResponseWriter, r *http.Request) {
 		championship.OverridePassword = false
 	}
 
-	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s.json", championship.Name))
+	w.Header().Add("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.json"`, championship.Name))
 
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
@@ -340,10 +349,10 @@ func (ch *ChampionshipsHandler) submitEventConfiguration(w http.ResponseWriter, 
 		// end the race creation flow
 		http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
 		return
-	} else {
-		// add another event
-		http.Redirect(w, r, "/championship/"+championship.ID.String()+"/event", http.StatusFound)
 	}
+
+	// add another event
+	http.Redirect(w, r, "/championship/"+championship.ID.String()+"/event", http.StatusFound)
 }
 
 // startEvent begins a championship event given by its ID
@@ -678,16 +687,16 @@ func (ch *ChampionshipsHandler) signUpForm(w http.ResponseWriter, r *http.Reques
 				AddFlash(w, r, "Thanks for registering for the championship! Your registration is pending approval by an administrator.")
 				http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
 				return
-			} else {
-				if foundSlot {
-					AddFlash(w, r, "Thanks for registering for the championship!")
-					http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
-					return
-				} else {
-					opts.FormData = signUpResponse
-					opts.ValidationError = fmt.Sprintf("There are no more available slots for the car: %s. Please pick a different car.", prettifyName(signUpResponse.GetCar(), true))
-				}
 			}
+
+			if foundSlot {
+				AddFlash(w, r, "Thanks for registering for the championship!")
+				http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
+				return
+			}
+
+			opts.FormData = signUpResponse
+			opts.ValidationError = fmt.Sprintf("There are no more available slots for the car: %s. Please pick a different car.", prettifyName(signUpResponse.GetCar(), true))
 		}
 	}
 
@@ -702,7 +711,8 @@ func (ch *ChampionshipsHandler) signUpForm(w http.ResponseWriter, r *http.Reques
 type signedUpEntrantsTemplateVars struct {
 	BaseTemplateVars
 
-	Championship *Championship
+	Championship  *Championship
+	DriverRatings map[string]*ACSRDriverRating
 }
 
 func (ch *ChampionshipsHandler) signedUpEntrants(w http.ResponseWriter, r *http.Request) {
@@ -719,12 +729,20 @@ func (ch *ChampionshipsHandler) signedUpEntrants(w http.ResponseWriter, r *http.
 		return
 	}
 
+	ratings, err := ch.championshipManager.LoadACSRRatings(championship)
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't load ratings from ACSR")
+	}
+
 	sort.Slice(championship.SignUpForm.Responses, func(i, j int) bool {
 		return championship.SignUpForm.Responses[i].Created.After(championship.SignUpForm.Responses[j].Created)
 	})
 
 	ch.viewRenderer.MustLoadTemplate(w, r, "championships/signed-up-entrants.html", &signedUpEntrantsTemplateVars{
-		Championship: championship,
+		BaseTemplateVars: BaseTemplateVars{WideContainer: true},
+		Championship:     championship,
+		DriverRatings:    ratings,
 	})
 }
 
@@ -748,8 +766,16 @@ func (ch *ChampionshipsHandler) signedUpEntrantsCSV(w http.ResponseWriter, r *ht
 		"Status",
 	}
 
-	for _, question := range championship.SignUpForm.ExtraFields {
-		headers = append(headers, question)
+	headers = append(headers, championship.SignUpForm.ExtraFields...)
+
+	ratings, err := ch.championshipManager.LoadACSRRatings(championship)
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't load ratings from ACSR")
+	}
+
+	if ratings != nil {
+		headers = append(headers, "ACSR Skill Rating", "ACSR Safety Rating", "ACSR Provisional?")
 	}
 
 	var out [][]string
@@ -776,11 +802,19 @@ func (ch *ChampionshipsHandler) signedUpEntrantsCSV(w http.ResponseWriter, r *ht
 			}
 		}
 
+		if ratings != nil {
+			if rating, ok := ratings[entrant.GUID]; ok {
+				data = append(data, rating.SkillRatingGrade, strconv.Itoa(rating.SafetyRating), strconv.FormatBool(rating.IsProvisional))
+			} else {
+				data = append(data, "Unranked", "Unranked", "Unranked")
+			}
+		}
+
 		out = append(out, data)
 	}
 
 	w.Header().Add("Content-Type", "text/csv")
-	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment;filename=Entrants_%s.csv", championship.Name))
+	w.Header().Add("Content-Disposition", fmt.Sprintf(`attachment;filename="Entrants_%s.csv"`, championship.Name))
 	wr := csv.NewWriter(w)
 	wr.UseCRLF = true
 	_ = wr.WriteAll(out)
@@ -865,5 +899,26 @@ func (ch *ChampionshipsHandler) reorderEvents(w http.ResponseWriter, r *http.Req
 		logrus.WithError(err).Error("couldn't reorder championship events")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
+	}
+}
+
+func (ch *ChampionshipsHandler) duplicateEvent(w http.ResponseWriter, r *http.Request) {
+	championshipID := chi.URLParam(r, "championshipID")
+	eventID := chi.URLParam(r, "eventID")
+
+	newEvent, err := ch.championshipManager.DuplicateEvent(championshipID, eventID)
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't duplicate championship race weekend")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if newEvent.IsRaceWeekend() {
+		AddFlash(w, r, "Championship Race Weekend was successfully duplicated!")
+		http.Redirect(w, r, "/race-weekend/"+newEvent.RaceWeekendID.String(), http.StatusFound)
+	} else {
+		AddFlash(w, r, "Championship Event was successfully duplicated!")
+		http.Redirect(w, r, "/championship/"+championshipID+"/event/"+newEvent.ID.String()+"/edit", http.StatusFound)
 	}
 }
