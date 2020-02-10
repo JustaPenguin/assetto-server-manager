@@ -8,30 +8,39 @@ import (
 	"sort"
 	"time"
 
-	"github.com/JustaPenguin/assetto-server-manager"
+	servermanager "github.com/JustaPenguin/assetto-server-manager"
+
 	"github.com/sirupsen/logrus"
 )
 
 var raceOutFile string
+var nameToGUIDFile string
 
 func init() {
 	flag.StringVar(&raceOutFile, "r", "race_out.json", "race out file")
+	flag.StringVar(&nameToGUIDFile, "n", "name_to_guid.json", "name to GUID file")
 	flag.Parse()
 }
 
-var nameToGUIDMap = map[string]string{
-	// this map must be populated manually with name => guid
-}
-
 func main() {
+	var nameToGUIDMap map[string]string
+
+	f1, err := os.Open(nameToGUIDFile)
+	checkError("open name to guid map", err)
+
+	defer f1.Close()
+
+	err = json.NewDecoder(f1).Decode(&nameToGUIDMap)
+	checkError("decode name to guid map", err)
+
 	var raceOut *RaceOut
 
-	f, err := os.Open(raceOutFile)
+	f2, err := os.Open(raceOutFile)
 	checkError("open race out", err)
 
-	defer f.Close()
+	defer f2.Close()
 
-	err = json.NewDecoder(f).Decode(&raceOut)
+	err = json.NewDecoder(f2).Decode(&raceOut)
 	checkError("decode race out", err)
 
 	for _, session := range raceOut.Sessions {
@@ -153,5 +162,8 @@ func saveResults(r *servermanager.SessionResults) error {
 
 	defer f.Close()
 
-	return json.NewEncoder(f).Encode(r)
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "    ")
+
+	return enc.Encode(r)
 }

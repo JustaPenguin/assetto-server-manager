@@ -14,8 +14,10 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
+type ServerID string
+
 var (
-	serverID        string
+	serverID        ServerID
 	serverIDMetaKey = "server_id"
 )
 
@@ -23,7 +25,7 @@ func initServerID(store Store) error {
 	err := store.GetMeta(serverIDMetaKey, &serverID)
 
 	if err == ErrValueNotSet {
-		serverID = uuid.New().String()
+		serverID = ServerID(uuid.New().String())
 		err = store.SetMeta(serverIDMetaKey, serverID)
 
 		if err != nil {
@@ -31,6 +33,13 @@ func initServerID(store Store) error {
 		}
 	} else if err != nil {
 		return err
+	}
+
+	OpenAccount = &Account{
+		Name:            "Free Access",
+		Groups:          map[ServerID]Group{serverID: GroupRead},
+		LastSeenVersion: BuildVersion,
+		Theme:           ThemeDefault,
 	}
 
 	return nil
@@ -64,6 +73,7 @@ func InitWithResolver(resolver *Resolver) error {
 	championshipManager := resolver.resolveChampionshipManager()
 	raceWeekendManager := resolver.resolveRaceWeekendManager()
 	notificationManager := resolver.resolveNotificationManager()
+	raceControl := resolver.ResolveRaceControl()
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -104,12 +114,14 @@ func InitWithResolver(resolver *Resolver) error {
 				logrus.WithError(err).Errorf("Could not stop notification manager")
 			}
 
+			raceControl.persistTimingData()
+
 			os.Exit(0)
 		}
 	}()
 
 	raceManager := resolver.resolveRaceManager()
-	go raceManager.LoopRaces()
+	go panicCapture(raceManager.LoopRaces)
 
 	err = raceManager.InitScheduledRaces()
 

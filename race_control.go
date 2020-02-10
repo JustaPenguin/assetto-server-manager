@@ -952,9 +952,9 @@ func (rc *RaceControl) SortDrivers(driverGroup RaceControlDriverGroup, driverA, 
 		if driverGroup == ConnectedDrivers {
 			if driverACar.NumLaps == driverBCar.NumLaps {
 				return driverACar.TotalLapTime < driverBCar.TotalLapTime
-			} else {
-				return driverACar.NumLaps > driverBCar.NumLaps
 			}
+
+			return driverACar.NumLaps > driverBCar.NumLaps
 		} else if driverGroup == DisconnectedDrivers {
 			return driverACar.LastLapCompletedTime.After(driverBCar.LastLapCompletedTime)
 		} else {
@@ -964,9 +964,9 @@ func (rc *RaceControl) SortDrivers(driverGroup RaceControlDriverGroup, driverA, 
 		if driverACar.BestLap == 0 && driverBCar.BestLap == 0 {
 			if driverACar.NumLaps == driverBCar.NumLaps {
 				return driverACar.LastLapCompletedTime.Before(driverBCar.LastLapCompletedTime)
-			} else {
-				return driverACar.NumLaps > driverBCar.NumLaps
 			}
+
+			return driverACar.NumLaps > driverBCar.NumLaps
 		}
 
 		if driverACar.BestLap == 0 {
@@ -1144,8 +1144,8 @@ func (rc *RaceControl) splitAndBroadcastChat(message string) error {
 func (rc *RaceControl) splitAndSendChat(message, guid string) error {
 	var carID uint8
 
-	for id, rangeGuid := range rc.CarIDToGUID {
-		if string(rangeGuid) == guid {
+	for id, rangeGUID := range rc.CarIDToGUID {
+		if string(rangeGUID) == guid {
 			carID = uint8(id)
 			break
 		}

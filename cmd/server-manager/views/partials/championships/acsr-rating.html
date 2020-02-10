@@ -1,0 +1,20 @@
+{{ define "acsr-rating" }}
+    {{ with $.DriverRatings }}
+        {{ $driverRating := index $.DriverRatings $.GUID }}
+
+        {{ with $driverRating }}
+            {{ if not $driverRating.IsProvisional }}
+                <a class="acsr-link" href="https://acsr.assettocorsaservers.com/ratings/{{ $driverRating.DriverID }}">
+                    <span data-toggle="tooltip" title="Skill from {{ $driverRating.NumEvents }} Sessions" class="badge badge-primary acsr-badge--skill">{{ $driverRating.SkillRatingGrade }}</span>
+                    <span data-toggle="tooltip" title="Safety from {{ $driverRating.NumEvents }} Sessions" class="badge badge-success acsr-badge--safety">{{ $driverRating.SafetyRating }}</span>
+                </a>
+            {{ else }}
+                <a class="acsr-link" href="https://acsr.assettocorsaservers.com/ratings/{{ $driverRating.DriverID }}">
+                    <span data-toggle="tooltip" title="This driver needs to complete more races for an accurate rating!" class="badge badge-warning acsr-badge--provisional">Provisional</span>
+                </a>
+            {{ end }}
+        {{ else }}
+            <span data-toggle="tooltip" title="There are no ratings for this driver yet!" class="badge badge-warning acsr-badge--unranked">Unranked</span>
+        {{ end }}
+    {{ end }}
+{{ end }}

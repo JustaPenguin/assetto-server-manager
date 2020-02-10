@@ -2087,14 +2087,10 @@ let championships = {
     },
 
     setSwitchesForACSR: function (state) {
-        let $openEntrantsSwitch = $("#ChampionshipOpenEntrants");
         let $signUpFormSwitch = $("#ChampionshipSignUpFormEnabled");
         let $overridePasswordSwitch = $("#OverridePassword");
 
         if (state) {
-            $openEntrantsSwitch.bootstrapSwitch('state', false);
-            $openEntrantsSwitch.bootstrapSwitch('disabled', true);
-
             $signUpFormSwitch.bootstrapSwitch('state', true);
             $signUpFormSwitch.bootstrapSwitch('disabled', true);
 
@@ -2105,7 +2101,6 @@ let championships = {
         } else {
             $overridePasswordSwitch.closest(".card-body").find("#ReplacementPasswordWrapper").show();
 
-            $openEntrantsSwitch.bootstrapSwitch('disabled', false);
             $signUpFormSwitch.bootstrapSwitch('disabled', false);
             $overridePasswordSwitch.bootstrapSwitch('disabled', false);
         }

@@ -28,6 +28,16 @@ dump = function(o, d)
     end
 end
 
+-- Open JSON file
+function utils.jsonOpen(location, filename)
+    local path = (location .."/".. filename)
+    local f = assert(io.open(path, "r"))
+    local result = f:read "*a"
+
+    f:close()
+    return result
+end
+
 -- let's call this future proofing
 -- broadcast chat to all drivers on server
 function utils.broadcastChat(message)

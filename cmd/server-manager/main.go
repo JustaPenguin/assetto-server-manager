@@ -8,22 +8,19 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/JustaPenguin/assetto-server-manager"
+	servermanager "github.com/JustaPenguin/assetto-server-manager"
 	"github.com/JustaPenguin/assetto-server-manager/cmd/server-manager/static"
 	"github.com/JustaPenguin/assetto-server-manager/cmd/server-manager/views"
 	"github.com/JustaPenguin/assetto-server-manager/internal/changelog"
 	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
-	"github.com/JustaPenguin/assetto-server-manager/pkg/udp/replay"
 
 	"github.com/dustin/go-humanize"
-	"github.com/etcd-io/bbolt"
 	"github.com/fatih/color"
 	"github.com/lorenzosaino/go-sysctl"
 	"github.com/pkg/browser"
 	"github.com/sirupsen/logrus"
-	"github.com/yuin/gopher-lua"
+	lua "github.com/yuin/gopher-lua"
 )
 
 var defaultAddress = "0.0.0.0:8772"
@@ -109,7 +106,7 @@ func main() {
 		}
 	}
 
-	if config.Lua.Enabled && servermanager.IsPremium == "true" {
+	if config.Lua.Enabled && servermanager.Premium() {
 		luaPath := os.Getenv("LUA_PATH")
 
 		newPath, err := filepath.Abs("./plugins/?.lua")
@@ -207,22 +204,4 @@ func sysctlAsUint64(val string) (uint64, error) {
 	}
 
 	return strconv.ParseUint(val, 10, 0)
-}
-
-func startUDPReplay(resolver *servermanager.Resolver, file string) {
-	time.Sleep(time.Second * 20)
-
-	db, err := bbolt.Open(file, 0644, nil)
-
-	if err != nil {
-		logrus.WithError(err).Error("Could not open bolt")
-	}
-
-	err = replay.ReplayUDPMessages(db, 1, func(message udp.Message) {
-		resolver.UDPCallback(message)
-	}, time.Millisecond*500)
-
-	if err != nil {
-		logrus.WithError(err).Error("UDP Replay failed")
-	}
 }

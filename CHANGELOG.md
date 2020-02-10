@@ -1,12 +1,47 @@
+v1.7.3
+------
+
+Added:
+
+* ACSR Ratings are now shown in ACSR enabled Championships, in Driver Standings, the Entrants tables and the Sign Up form responses (including the CSV export).
+* You can now download Server Logs from Server Manager (thanks @mazzn!)
+* You can now run Open Championships with ACSR integration!
+* Server Manager now logs the output of the acServer executable to the logs folder inside your Server Install Path. You can configure this in Server Options -> Miscellaneous
+* In a Multi-Server environment, you can now set different account groups per server, for example you could set an Account to have "Write" access on one server and "Delete" access on another.
+* Added a new permission - "No Access" - which blocks a user from doing anything on a server.
+* Open weather API Lua plugin can now automatically find the location of the track (so long as the track json file contains this information) and set the weather accordingly! Thanks to @mike855 for this contribution!
+
+Fixes:
+
+* On Windows, batch files are now stopped correctly by Server Manager.
+* Fixes an issue where Championship Class IDs could overlap causing Multi-class championships to incorrectly report standings.
+* Fixes an issue where Championship and Race Weekend exports on Firefox would not export with their full name.
+* Fixes an issue where Championship/Race Weekend sessions could not be cancelled if the server is not running.
+* Fixes an issue where Race Weekend Race sessions would have their wait time forced to 120 seconds.
+* Fixes an issue where the progress of a Championship with Race Weekends would be incorrectly reported on the Championship List page.
+* Fixes an issue where Championship attendance would not work correctly for event with Race Weekends.
+* Fixes an issue where watching content folder for changes could cause a crash on Windows.
+* The Championship Entrant table is now sorted alphabetically.
+* Championship Event Pitbox overrides are now applied correctly on Championships with Sign Up forms enabled.
+* Fixes an issue where Sol dates could be set to dates before 1st January 1970, leading to a Shaders Patch crash on game launch. Dates before 01/01/1970 are now set to 01/01/1970.
+
+Removed:
+
+* Removed max limit of Damage Multiplier (was 100%). Happy crashing!
+
 v1.7.2
 ------
 
 Added:
 
 * KissMyRank integration! We've even made it so you can use both sTracker and KissMyRank! Go to the new "KissMyRank" page to find out how to set up KissMyRank. We're marking this as "beta" currently. If you find any issues - please report them to us!
+* In a Multiserver setup Auto Loop events are now per-server! You can loop different events on different servers, only have one looping server etc.
 * You can now duplicate any Championship Event (including Race Weekends!)
 * The Championship Sign Up form now allows multiple Steam GUIDs separated by a semi-colon (for driver swaps).
 * You can now set a timer to forcibly stop a Custom Race after a certain time period. This is intended to allow servers to rotate through looped events every x minutes regardless of players being active on the server. The timer can be set to not forcibly stop the server if drivers are online.
+* Server Manager now automatically sets up the sTracker config path and server folder path.
+* You can now manually specify the IP address used by the Content Manager Wrapper. This fixes issues with IPv6 incompatibilities (thanks @mazzn!)
+* Search Index Improvements - the folder name of the cars is now included in the search index. This should help yield more results for searches. Note that you will have to rebuild your search index (at the bottom of the Server Options page) for this to take effect.
 
 Fixes:
 

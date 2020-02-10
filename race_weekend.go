@@ -98,9 +98,9 @@ func (rw *RaceWeekend) GetEntryList() EntryList {
 		}
 
 		return entryList
-	} else {
-		return rw.EntryList
 	}
+
+	return rw.EntryList
 }
 
 func (rw *RaceWeekend) Completed() bool {
@@ -252,7 +252,7 @@ func (rw *RaceWeekend) SessionCanBeRun(s *RaceWeekendSession) bool {
 	for _, parentID := range s.ParentIDs {
 		parent, err := rw.FindSessionByID(parentID.String())
 
-		if err == RaceWeekendSessionNotFound {
+		if err == ErrRaceWeekendSessionNotFound {
 			logrus.Warnf("Race weekend session for id: %s not found", parentID.String())
 			continue
 		} else if err != nil {
@@ -393,8 +393,8 @@ func (rw *RaceWeekend) TrackOverview() string {
 }
 
 var (
-	ErrRaceWeekendNotFound     = errors.New("servermanager: race weekend not found")
-	RaceWeekendSessionNotFound = errors.New("servermanager: race weekend session not found")
+	ErrRaceWeekendNotFound        = errors.New("servermanager: race weekend not found")
+	ErrRaceWeekendSessionNotFound = errors.New("servermanager: race weekend session not found")
 )
 
 // FindSessionByID finds a RaceWeekendSession by its unique identifier
@@ -416,7 +416,7 @@ func (rw *RaceWeekend) FindSessionByID(id string) (*RaceWeekendSession, error) {
 		return sess, nil
 	}
 
-	return nil, RaceWeekendSessionNotFound
+	return nil, ErrRaceWeekendSessionNotFound
 }
 
 // EnhanceResults takes a set of SessionResults and attaches Championship information to them.
@@ -448,7 +448,7 @@ type RaceWeekendSessionEntrant struct {
 
 	IsPlaceholder bool `json:"-"`
 
-	// OverrideSetupFile is a path to an overriden setup for a Race Weekend
+	// OverrideSetupFile is a path to an overridden setup for a Race Weekend
 	OverrideSetupFile string
 }
 
@@ -507,7 +507,7 @@ type RaceWeekendSession struct {
 	StartedTime                time.Time
 	CompletedTime              time.Time
 	ScheduledTime              time.Time
-	ScheduledServerID          string
+	ScheduledServerID          ServerID
 	Results                    *SessionResults
 	StartWhenParentHasFinished bool
 
@@ -583,9 +583,9 @@ func NewRaceWeekendSession() *RaceWeekendSession {
 func (rws *RaceWeekendSession) Name() string {
 	if rws.isBase {
 		return "Entry List"
-	} else {
-		return rws.SessionInfo().Name
 	}
+
+	return rws.SessionInfo().Name
 }
 
 // SessionInfo returns the information about the Assetto Corsa Session (i.e. practice, qualifying, race)
@@ -643,7 +643,7 @@ func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) ([]*RaceW
 				}
 			}
 
-			if !foundEntrant && entrant.Car.GetGUID() != "" {
+			if !foundEntrant && entrant.Car.GetGUID() != "" && (rws.IsBase() || !entrant.IsPlaceholder) {
 				if raceWeekend.HasLinkedChampionship() {
 					// find the class ID for the car
 					class, err := raceWeekend.Championship.FindClassForCarModel(entrant.Car.GetCar())
@@ -941,9 +941,9 @@ func (a ActiveRaceWeekend) EventDescription() string {
 func (a ActiveRaceWeekend) GetURL() string {
 	if config.HTTP.BaseURL != "" {
 		return config.HTTP.BaseURL + "/race-weekend/" + a.RaceWeekendID.String()
-	} else {
-		return ""
 	}
+
+	return ""
 }
 
 func (a ActiveRaceWeekend) GetForceStopTime() time.Duration {

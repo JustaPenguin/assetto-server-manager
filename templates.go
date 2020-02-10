@@ -99,9 +99,9 @@ func shortenDriverName(name string) string {
 func driverName(name string) string {
 	if UseShortenedDriverNames {
 		return shortenDriverName(name)
-	} else {
-		return name
 	}
+
+	return name
 }
 
 func driverInitials(name string) string {
@@ -119,15 +119,15 @@ func driverInitials(name string) string {
 		}
 
 		return strings.ToUpper(strings.Join(nameParts, ""))
-	} else {
-		nameParts := strings.Split(name, " ")
-
-		if len(nameParts) > 0 && len(nameParts[len(nameParts)-1]) >= 3 {
-			return strings.ToUpper(nameParts[len(nameParts)-1][:3])
-		}
-
-		return strings.ToUpper(name)
 	}
+
+	nameParts := strings.Split(name, " ")
+
+	if len(nameParts) > 0 && len(nameParts[len(nameParts)-1]) >= 3 {
+		return strings.ToUpper(nameParts[len(nameParts)-1][:3])
+	}
+
+	return strings.ToUpper(name)
 }
 
 // Renderer is the template engine.
@@ -408,9 +408,9 @@ func stripGeotagCrap(tag string, north bool) string {
 	// Geotags of "lost" - a hamlet in Scotland
 	if north {
 		return "57.2050"
-	} else {
-		return "-3.0774"
 	}
+
+	return "-3.0774"
 }
 
 var nameRegex = regexp.MustCompile(`^[A-Za-z]{0,5}[0-9]+`)
@@ -462,7 +462,7 @@ type BaseTemplateVars struct {
 	CustomCSS          template.CSS
 	User               *Account
 	IsHosted           bool
-	IsPremium          string
+	IsPremium          bool
 	MaxClientsOverride int
 	IsDarkTheme        bool
 	Request            *http.Request
@@ -475,6 +475,7 @@ type BaseTemplateVars struct {
 	ACSREnabled        bool
 	BaseURLIsSet       bool
 	BaseURLIsValid     bool
+	ServerID           ServerID
 }
 
 func (b *BaseTemplateVars) Get() *BaseTemplateVars {
@@ -511,7 +512,7 @@ func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, vars Templat
 	data.CustomCSS = template.CSS(opts.CustomCSS)
 	data.User = AccountFromRequest(r)
 	data.IsHosted = IsHosted
-	data.IsPremium = IsPremium
+	data.IsPremium = Premium()
 	data.MaxClientsOverride = MaxClientsOverride
 	data.IsDarkTheme = opts.DarkTheme == 1
 	data.Request = r
@@ -522,8 +523,9 @@ func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, vars Templat
 	data.BaseURLIsSet = baseURLIsSet()
 	data.BaseURLIsValid = baseURLIsValid()
 	data.ACSREnabled = opts.EnableACSR
+	data.ServerID = serverID
 
-	if IsPremium == "true" {
+	if Premium() {
 		data.OGImage = opts.OGImage
 
 		id := chi.URLParam(r, "championshipID")

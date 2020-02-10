@@ -23,11 +23,13 @@ import (
 )
 
 const (
-	sessionAccountID            = "account_id"
-	requestContextKeyAccount    = "account"
-	adminUserName               = "admin"
-	serverAccountOptionsMetaKey = "server-account-options"
+	sessionAccountID                              = "account_id"
+	requestContextKeyAccount    accountContextKey = iota
+	adminUserName                                 = "admin"
+	serverAccountOptionsMetaKey                   = "server-account-options"
 )
+
+type accountContextKey int
 
 type ServerAccountOptions struct {
 	IsOpen bool
@@ -48,6 +50,7 @@ func NewAccount() *Account {
 		Created:         time.Now(),
 		LastSeenVersion: BuildVersion,
 		Theme:           ThemeDefault,
+		Groups:          map[ServerID]Group{serverID: GroupRead},
 	}
 }
 
@@ -58,8 +61,8 @@ type Account struct {
 	Updated time.Time
 	Deleted time.Time
 
-	Name  string
-	Group Group
+	Name   string
+	Groups map[ServerID]Group
 
 	DriverName, GUID, Team string
 
@@ -70,6 +73,27 @@ type Account struct {
 	LastSeenVersion string
 
 	Theme Theme
+
+	// Deprecated: Use Groups instead.
+	DeprecatedGroup Group `json:"Group"`
+}
+
+func (a Account) Group() Group {
+	if a.Groups == nil {
+		return GroupNoAccess
+	}
+
+	if group, ok := a.Groups[serverID]; ok {
+		return group
+	}
+
+	// in the case where a user has not got any group permissions at all for this server instance
+	// give them the first permission we find from other server instances (if any)
+	for _, group := range a.Groups {
+		return group
+	}
+
+	return GroupNoAccess
 }
 
 func (a Account) ShowDarkTheme(serverManagerDarkThemeEnabled bool) bool {
@@ -109,19 +133,21 @@ func (a Account) NeedsPasswordReset() bool {
 }
 
 func (a Account) HasGroupPrivilege(g Group) bool {
-	if g == a.Group {
+	userGroup := a.Group()
+
+	if g == userGroup {
 		return true
 	}
 
-	if a.Group == GroupAdmin {
+	if userGroup == GroupAdmin {
 		return true
 	}
 
-	if g == GroupWrite && a.Group == GroupDelete {
+	if g == GroupWrite && userGroup == GroupDelete {
 		return true
 	}
 
-	if g == GroupRead && (a.Group == GroupWrite || a.Group == GroupDelete) {
+	if g == GroupRead && (userGroup == GroupWrite || userGroup == GroupDelete) {
 		return true
 	}
 
@@ -131,18 +157,14 @@ func (a Account) HasGroupPrivilege(g Group) bool {
 type Group string
 
 const (
-	GroupRead   Group = "read"
-	GroupWrite  Group = "write"
-	GroupDelete Group = "delete"
-	GroupAdmin  Group = "admin"
+	GroupNoAccess Group = "no_access"
+	GroupRead     Group = "read"
+	GroupWrite    Group = "write"
+	GroupDelete   Group = "delete"
+	GroupAdmin    Group = "admin"
 )
 
-var OpenAccount = &Account{
-	Name:            "Free Access",
-	Group:           GroupRead,
-	LastSeenVersion: BuildVersion,
-	Theme:           ThemeDefault,
-}
+var OpenAccount *Account
 
 // MustLoginMiddleware determines whether an account needs to log in to access a given Group page
 func (ah *AccountHandler) MustLoginMiddleware(requiredGroup Group, next http.Handler) http.Handler {
@@ -154,16 +176,7 @@ func (ah *AccountHandler) MustLoginMiddleware(requiredGroup Group, next http.Han
 		if ok {
 			account, err := ah.store.FindAccountByID(accountID)
 
-			if err == nil {
-				if account.HasGroupPrivilege(requiredGroup) {
-					next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), requestContextKeyAccount, account)))
-					return
-				} else {
-					AddErrorFlash(w, r, "You do not have permission to view this page.")
-					http.Redirect(w, r, "/", http.StatusFound)
-					return
-				}
-			} else {
+			if err != nil {
 				logrus.WithError(err).Errorf("Could not find account for id: %s", accountID)
 				delete(sess.Values, sessionAccountID)
 				_ = sessions.Save(r, w)
@@ -173,6 +186,21 @@ func (ah *AccountHandler) MustLoginMiddleware(requiredGroup Group, next http.Han
 				http.Redirect(w, r, "/", http.StatusFound)
 				return
 			}
+
+			if !account.HasGroupPrivilege(requiredGroup) {
+				if account.Group() == GroupNoAccess {
+					AddErrorFlash(w, r, "You do not have permission to access this Server Manager instance.")
+					http.Redirect(w, r, "/login", http.StatusFound)
+					return
+				}
+
+				AddErrorFlash(w, r, "You do not have permission to view this page.")
+				http.Redirect(w, r, "/", http.StatusFound)
+				return
+			}
+
+			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), requestContextKeyAccount, account)))
+			return
 		}
 
 		if requiredGroup == GroupRead && accountOptions.IsOpen {
@@ -294,17 +322,18 @@ func (ah *AccountHandler) login(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		err := ah.accountManager.login(r, w)
 
-		if err == ErrInvalidUsernameOrPassword {
+		switch {
+		case err == ErrInvalidUsernameOrPassword:
 			AddErrorFlash(w, r, "Invalid username or password. Check your details and try again.")
-		} else if err == ErrAccountNeedsPassword {
+		case err == ErrAccountNeedsPassword:
 			AddFlash(w, r, "Thanks for logging in. We need you to set up a permanent password for your account.")
 			http.Redirect(w, r, "/accounts/new-password", http.StatusFound)
 			return
-		} else if err != nil {
+		case err != nil:
 			logrus.WithError(err).Errorf("Couldn't log in account")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
-		} else { // err == nil, successful auth
+		default: // err == nil, successful auth
 			AddFlash(w, r, "Thanks for logging in!")
 			http.Redirect(w, r, "/", http.StatusFound)
 			return
@@ -368,8 +397,9 @@ func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 		if set {
 			if password == repeatPassword {
 				updateDetails := account.NeedsPasswordReset()
+				err := ah.accountManager.ChangePassword(account, password)
 
-				if err := ah.accountManager.ChangePassword(account, password); err == nil {
+				if err == nil {
 					AddFlash(w, r, "Your password was successfully changed!")
 					if updateDetails {
 						http.Redirect(w, r, "/accounts/update", http.StatusFound)
@@ -377,10 +407,10 @@ func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
 						http.Redirect(w, r, "/", http.StatusFound)
 					}
 					return
-				} else {
-					AddErrorFlash(w, r, "Unable to change your password")
-					logrus.WithError(err).Errorf("Could not change password for account id: %s", account.ID.String())
 				}
+
+				AddErrorFlash(w, r, "Unable to change your password")
+				logrus.WithError(err).Errorf("Could not change password for account id: %s", account.ID.String())
 			} else {
 				AddErrorFlash(w, r, "Your passwords must match")
 			}
@@ -529,9 +559,9 @@ func (am *AccountManager) login(r *http.Request, w http.ResponseWriter) error {
 				sess.Values[sessionAccountID] = account.ID.String()
 
 				return sess.Save(r, w)
-			} else {
-				break
 			}
+
+			break
 		}
 	}
 
@@ -633,9 +663,8 @@ func (ah *AccountHandler) createOrEditAccount(w http.ResponseWriter, r *http.Req
 			return
 		}
 
-		account = &Account{
-			DefaultPassword: strings.Join(defaultPass, "-"),
-		}
+		account = NewAccount()
+		account.DefaultPassword = strings.Join(defaultPass, "-")
 	}
 
 	if r.Method == http.MethodPost {
@@ -649,7 +678,13 @@ func (ah *AccountHandler) createOrEditAccount(w http.ResponseWriter, r *http.Req
 		}
 
 		account.Name = username
-		account.Group = Group(group)
+		account.Groups[serverID] = Group(group)
+
+		if formValueAsInt(r.FormValue("UpdateGroupForAllServers")) == 1 {
+			for serverID := range account.Groups {
+				account.Groups[serverID] = Group(group)
+			}
+		}
 
 		err := ah.store.UpsertAccount(account)
 

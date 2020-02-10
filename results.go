@@ -54,46 +54,46 @@ func (s *SessionResults) FindCarByGUIDAndModel(guid, model string) (*SessionCar,
 
 func (s *SessionResults) Anonymize() {
 	for _, car := range s.Cars {
-		car.Driver.GUID = GetMD5Hash(car.Driver.GUID)
+		car.Driver.GUID = AnonymiseDriverGUID(car.Driver.GUID)
 		car.Driver.Name = shortenDriverName(car.Driver.Name)
 
 		for index := range car.Driver.GuidsList {
-			car.Driver.GuidsList[index] = GetMD5Hash(car.Driver.GuidsList[index])
+			car.Driver.GuidsList[index] = AnonymiseDriverGUID(car.Driver.GuidsList[index])
 		}
 	}
 
 	for _, event := range s.Events {
-		event.Driver.GUID = GetMD5Hash(event.Driver.GUID)
-		event.OtherDriver.GUID = GetMD5Hash(event.OtherDriver.GUID)
+		event.Driver.GUID = AnonymiseDriverGUID(event.Driver.GUID)
+		event.OtherDriver.GUID = AnonymiseDriverGUID(event.OtherDriver.GUID)
 
 		event.Driver.Name = shortenDriverName(event.Driver.Name)
 		event.OtherDriver.Name = shortenDriverName(event.OtherDriver.Name)
 
 		for i, guid := range event.Driver.GuidsList {
-			event.Driver.GuidsList[i] = GetMD5Hash(guid)
+			event.Driver.GuidsList[i] = AnonymiseDriverGUID(guid)
 		}
 
 		for i, guid := range event.OtherDriver.GuidsList {
-			event.Driver.GuidsList[i] = GetMD5Hash(guid)
+			event.Driver.GuidsList[i] = AnonymiseDriverGUID(guid)
 		}
 	}
 
 	for _, lap := range s.Laps {
-		lap.DriverGUID = GetMD5Hash(lap.DriverGUID)
+		lap.DriverGUID = AnonymiseDriverGUID(lap.DriverGUID)
 
 		lap.DriverName = shortenDriverName(lap.DriverName)
 	}
 
 	for _, result := range s.Result {
-		result.DriverGUID = GetMD5Hash(result.DriverGUID)
+		result.DriverGUID = AnonymiseDriverGUID(result.DriverGUID)
 
 		result.DriverName = shortenDriverName(result.DriverName)
 	}
 }
 
-func GetMD5Hash(guid string) string {
+func AnonymiseDriverGUID(guid string) string {
 	hasher := md5.New()
-	hasher.Write([]byte(guid))
+	_, _ = hasher.Write([]byte(guid))
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
@@ -442,10 +442,10 @@ cars:
 
 			return s.GetNumLaps(s.Result[i].DriverGUID, s.Result[i].CarModel) >= s.GetNumLaps(s.Result[j].DriverGUID, s.Result[j].CarModel)
 
-		} else {
-			// driver i is closer to the front than j if they are not disqualified and j is
-			return s.Result[j].Disqualified
 		}
+
+		// driver i is closer to the front than j if they are not disqualified and j is
+		return s.Result[j].Disqualified
 	})
 }
 
@@ -487,8 +487,7 @@ func (s *SessionResults) GetTime(timeINT int, driverGUID, model string, penalty 
 			if driver.DriverGUID == driverGUID && driver.CarModel == model && driver.HasPenalty {
 				d += driver.PenaltyTime
 
-				switch s.Type {
-				case SessionTypeRace:
+				if s.Type == SessionTypeRace {
 					d -= time.Duration(driver.LapPenalty) * s.GetLastLapTime(driverGUID, model)
 				}
 			}
@@ -527,9 +526,9 @@ func (s *SessionResults) GetNumLaps(driverGUID, model string) int {
 	return i
 }
 
-func (s *SessionResults) GetLastLapTime(driverGuid, model string) time.Duration {
+func (s *SessionResults) GetLastLapTime(driverGUID, model string) time.Duration {
 	for i := len(s.Laps) - 1; i >= 0; i-- {
-		if s.Laps[i].DriverGUID == driverGuid && s.Laps[i].CarModel == model {
+		if s.Laps[i].DriverGUID == driverGUID && s.Laps[i].CarModel == model {
 			return s.Laps[i].GetLapTime()
 		}
 	}
@@ -571,21 +570,21 @@ func (s *SessionResults) GetPotentialLap(driverGUID, model string) time.Duration
 	return totalSectorTime
 }
 
-func (s *SessionResults) GetLastLapPos(driverGuid, model string) int {
+func (s *SessionResults) GetLastLapPos(driverGUID, model string) int {
 	var driverLaps int
 
 	for i := range s.Laps {
-		if s.Laps[i].DriverGUID == driverGuid && s.Laps[i].CarModel == model {
+		if s.Laps[i].DriverGUID == driverGUID && s.Laps[i].CarModel == model {
 			driverLaps++
 		}
 	}
 
-	return s.GetPosForLap(driverGuid, model, int64(driverLaps))
+	return s.GetPosForLap(driverGUID, model, int64(driverLaps))
 }
 
-func (s *SessionResults) GetDriverPosition(driverGuid, model string) int {
+func (s *SessionResults) GetDriverPosition(driverGUID, model string) int {
 	for i := range s.Result {
-		if s.Result[i].DriverGUID == driverGuid && s.Result[i].CarModel == model {
+		if s.Result[i].DriverGUID == driverGUID && s.Result[i].CarModel == model {
 			return i + 1
 		}
 	}
@@ -593,11 +592,11 @@ func (s *SessionResults) GetDriverPosition(driverGuid, model string) int {
 	return 0
 }
 
-func (s *SessionResults) GetCuts(driverGuid, model string) int {
+func (s *SessionResults) GetCuts(driverGUID, model string) int {
 	var i int
 
 	for _, lap := range s.Laps {
-		if lap.DriverGUID == driverGuid && lap.CarModel == model {
+		if lap.DriverGUID == driverGUID && lap.CarModel == model {
 			i += lap.Cuts
 		}
 	}
@@ -948,7 +947,7 @@ func LoadResult(fileName string, opts ...LoadResultOpts) (*SessionResults, error
 		}
 	}
 
-	if !skipLua && config.Lua.Enabled && IsPremium == "true" {
+	if !skipLua && config.Lua.Enabled && Premium() {
 		err = resultsLoadPlugin(result)
 
 		if err != nil {

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Clinet/discordgo-embed"
+	embed "github.com/Clinet/discordgo-embed"
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"

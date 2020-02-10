@@ -104,7 +104,7 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 	raceConfig := event.GetRaceConfig()
 	entryList := event.GetEntryList()
 
-	if config.Lua.Enabled && IsPremium == "true" {
+	if config.Lua.Enabled && Premium() {
 		err = eventStartPlugin(&raceConfig, serverOpts, &entryList)
 
 		if err != nil {
@@ -644,6 +644,12 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 			// This is probably a bit hacky, and may need removing with a future Sol update
 			startTimeFinal := startTime.Add(-(time.Duration(timeMultiInt) * 5 * time.Hour))
 
+			unixTime := time.Unix(0, 0)
+
+			if startTimeFinal.Before(unixTime) {
+				startTimeFinal = unixTime
+			}
+
 			raceConfig.AddWeather(&WeatherConfig{
 				Graphics: weatherName + "_type=" + strconv.Itoa(WFXType) + "_time=0_mult=" +
 					timeMulti + "_start=" + strconv.Itoa(int(startTimeFinal.Unix())),
@@ -720,51 +726,51 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		customRace.RaceConfig = *raceConfig
 
 		return rm.store.UpsertCustomRace(customRace)
-	} else {
-		saveAsPresetWithoutStartingRace := r.FormValue("action") == "justSave"
-		schedule := r.FormValue("action") == "schedule"
+	}
 
-		// save the custom race preset
-		race, err := rm.SaveCustomRace(r.FormValue("CustomRaceName"), overridePassword, replacementPassword, *raceConfig, entryList, saveAsPresetWithoutStartingRace, forceStopTime, forceStopWithDrivers)
+	saveAsPresetWithoutStartingRace := r.FormValue("action") == "justSave"
+	schedule := r.FormValue("action") == "schedule"
+
+	// save the custom race preset
+	race, err := rm.SaveCustomRace(r.FormValue("CustomRaceName"), overridePassword, replacementPassword, *raceConfig, entryList, saveAsPresetWithoutStartingRace, forceStopTime, forceStopWithDrivers)
+
+	if err != nil {
+		return err
+	}
+
+	if schedule {
+		dateString := r.FormValue("CustomRaceScheduled")
+		timeString := r.FormValue("CustomRaceScheduledTime")
+		timezone := r.FormValue("CustomRaceScheduledTimezone")
+
+		location, err := tz.LoadLocation(timezone)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("could not find location: %s", location)
+			location = time.Local
+		}
+
+		// Parse time in correct time zone
+		date, err := time.ParseInLocation("2006-01-02-15:04", dateString+"-"+timeString, location)
 
 		if err != nil {
 			return err
 		}
 
-		if schedule {
-			dateString := r.FormValue("CustomRaceScheduled")
-			timeString := r.FormValue("CustomRaceScheduledTime")
-			timezone := r.FormValue("CustomRaceScheduledTimezone")
+		err = rm.ScheduleRace(race.UUID.String(), date, "add", r.FormValue("event-schedule-recurrence"))
 
-			location, err := tz.LoadLocation(timezone)
-
-			if err != nil {
-				logrus.WithError(err).Errorf("could not find location: %s", location)
-				location = time.Local
-			}
-
-			// Parse time in correct time zone
-			date, err := time.ParseInLocation("2006-01-02-15:04", dateString+"-"+timeString, location)
-
-			if err != nil {
-				return err
-			}
-
-			err = rm.ScheduleRace(race.UUID.String(), date, "add", r.FormValue("event-schedule-recurrence"))
-
-			if err != nil {
-				return err
-			}
-
-			return nil
+		if err != nil {
+			return err
 		}
 
-		if saveAsPresetWithoutStartingRace {
-			return nil
-		}
-
-		return rm.applyConfigAndStart(race)
+		return nil
 	}
+
+	if saveAsPresetWithoutStartingRace {
+		return nil
+	}
+
+	return rm.applyConfigAndStart(race)
 }
 
 // applyCurrentRaceSetupToOptions takes current values in race which require more detailed configuration
@@ -941,7 +947,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (*RaceTemplateVars, error)
 
 	// default sol time to now
 	for _, weather := range race.CurrentRaceConfig.Weather {
-		if weather.CMWFXDate == 0 {
+		if weather.CMWFXDate <= 0 {
 			weather.CMWFXDate = int(time.Now().Unix())
 			weather.CMWFXDateUnModified = int(time.Now().Unix())
 		}
@@ -997,7 +1003,7 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*
 	var filteredRecent []*CustomRace
 
 	for _, race := range recent {
-		if race.Loop {
+		if race.IsLooping() {
 			looped = append(looped, race)
 		}
 
@@ -1009,7 +1015,7 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*
 			scheduled = append(scheduled, race)
 		}
 
-		if !race.Starred && !race.Loop && !race.Scheduled.After(time.Now()) {
+		if !race.Starred && !race.IsLooping() && !race.Scheduled.After(time.Now()) {
 			filteredRecent = append(filteredRecent, race)
 		}
 	}
@@ -1103,7 +1109,9 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 		race.RaceConfig.LoopMode = 1
 	}
 
-	race.Loop = forceRestart
+	if race.LoopServer != nil {
+		race.LoopServer[serverID] = forceRestart
+	}
 
 	return rm.applyConfigAndStart(race)
 }
@@ -1149,7 +1157,7 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 			}
 		}
 
-		if config.Lua.Enabled && IsPremium == "true" {
+		if config.Lua.Enabled && Premium() {
 			err = eventSchedulePlugin(race)
 
 			if err != nil {
@@ -1220,11 +1228,11 @@ func (rm *RaceManager) StartScheduledRace(race *CustomRace) error {
 	if race.HasRecurrenceRule() {
 		// this function carries out a save
 		return rm.ScheduleNextFromRecurrence(race)
-	} else {
-		race.Scheduled = time.Time{}
-
-		return rm.store.UpsertCustomRace(race)
 	}
+
+	race.Scheduled = time.Time{}
+
+	return rm.store.UpsertCustomRace(race)
 }
 
 func (rm *RaceManager) ScheduleNextFromRecurrence(race *CustomRace) error {
@@ -1296,7 +1304,11 @@ func (rm *RaceManager) ToggleLoopCustomRace(uuid string) error {
 		return err
 	}
 
-	race.Loop = !race.Loop
+	if race.LoopServer == nil {
+		race.LoopServer = make(map[ServerID]bool)
+	}
+
+	race.LoopServer[serverID] = !race.LoopServer[serverID]
 
 	return rm.store.UpsertCustomRace(race)
 }
@@ -1407,8 +1419,7 @@ func (rm *RaceManager) LoopRaces() {
 // callback check for udp end session, load result file, check session type against sessionTypes
 // if session matches last session in sessionTypes then stop server and clear sessionTypes
 func (rm *RaceManager) LoopCallback(message udp.Message) {
-	switch a := message.(type) {
-	case udp.EndSession:
+	if a, ok := message.(udp.EndSession); ok {
 		if rm.loopedRaceSessionTypes == nil {
 			logrus.Infof("Session types == nil. ignoring end session callback")
 			return
@@ -1433,9 +1444,9 @@ func (rm *RaceManager) LoopCallback(message udp.Message) {
 					if !rm.loopedRaceWaitForSecondRace {
 						rm.loopedRaceWaitForSecondRace = true
 						return
-					} else {
-						rm.loopedRaceWaitForSecondRace = false
 					}
+
+					rm.loopedRaceWaitForSecondRace = false
 				}
 			}
 		}

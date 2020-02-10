@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
+
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -241,6 +242,10 @@ func (c *Championship) FindLastResultForDriver(guid string) (out *SessionResult,
 
 func (c *Championship) GetPlayerSummary(guid string) string {
 	if c.Progress() == 0 {
+		if len(c.Events) <= 1 {
+			return ""
+		}
+
 		return "This is the first event of the Championship!"
 	}
 
@@ -319,9 +324,9 @@ func (c *Championship) GetPlayerSummary(guid string) string {
 func (c *Championship) GetURL() string {
 	if config.HTTP.BaseURL != "" {
 		return config.HTTP.BaseURL + "/championship/" + c.ID.String()
-	} else {
-		return ""
 	}
+
+	return ""
 }
 
 // IsMultiClass is true if the Championship has more than one Class
@@ -464,9 +469,9 @@ func (c *ChampionshipClass) ValidCarIDs() []string {
 		}
 
 		return availableCars
-	} else {
-		return c.AvailableCars
 	}
+
+	return c.AvailableCars
 }
 
 func (c *Championship) ImportEvent(eventToImport interface{}) (*ChampionshipEvent, error) {
@@ -635,7 +640,7 @@ func (c *Championship) AllEntrants() EntryList {
 func (c *Championship) EntrantAttendance(guid string) int {
 	i := 0
 
-	for _, event := range c.Events {
+	for _, event := range ExtractRaceWeekendSessionsIntoIndividualEvents(c.Events) {
 		if event.Completed() {
 			for _, class := range c.Classes {
 				standings := class.StandingsForEvent(event)
@@ -655,7 +660,7 @@ func (c *Championship) EntrantAttendance(guid string) int {
 func (c *Championship) NumCompletedEvents() int {
 	i := 0
 
-	for _, event := range c.Events {
+	for _, event := range ExtractRaceWeekendSessionsIntoIndividualEvents(c.Events) {
 		if event.Completed() {
 			i++
 		}
@@ -967,17 +972,17 @@ func (c *ChampionshipClass) ResultsForClass(results []*SessionResult) (filtered 
 func (c *ChampionshipClass) PenaltyForGUID(guid string) int {
 	if penalty, ok := c.DriverPenalties[guid]; ok {
 		return penalty
-	} else {
-		return 0
 	}
+
+	return 0
 }
 
 func (c *ChampionshipClass) PenaltyForTeam(name string) int {
 	if teamPenalty, ok := c.TeamPenalties[name]; ok {
 		return teamPenalty
-	} else {
-		return 0
 	}
+
+	return 0
 }
 
 type PointsReason int
@@ -1015,9 +1020,9 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 
 				if !ok {
 					logrus.Warnf("Could not find points for Race Weekend Session class: %s", c.ID)
+				} else {
+					points = *classPoints
 				}
-
-				points = *classPoints
 			} else {
 				switch sessionType {
 				case SessionTypeQualifying:
@@ -1351,9 +1356,9 @@ func (cr *ChampionshipEvent) Cars(c *Championship) []string {
 		}
 
 		return out
-	} else {
-		return c.ValidCarIDs()
 	}
+
+	return c.ValidCarIDs()
 }
 
 func (cr *ChampionshipEvent) CombineEntryLists(championship *Championship) EntryList {
@@ -1380,16 +1385,17 @@ func (cr *ChampionshipEvent) CombineEntryLists(championship *Championship) Entry
 // LastSession returns the last configured session in the championship, in the following order:
 // Race, Qualifying, Practice, Booking
 func (cr *ChampionshipEvent) LastSession() SessionType {
-	if cr.RaceSetup.HasMultipleRaces() {
+	switch {
+	case cr.RaceSetup.HasMultipleRaces():
 		// there must be two races as reversed grid positions are on
 		return SessionTypeSecondRace
-	} else if cr.RaceSetup.HasSession(SessionTypeRace) {
+	case cr.RaceSetup.HasSession(SessionTypeRace):
 		return SessionTypeRace
-	} else if cr.RaceSetup.HasSession(SessionTypeQualifying) {
+	case cr.RaceSetup.HasSession(SessionTypeQualifying):
 		return SessionTypeQualifying
-	} else if cr.RaceSetup.HasSession(SessionTypePractice) {
+	case cr.RaceSetup.HasSession(SessionTypePractice):
 		return SessionTypePractice
-	} else {
+	default:
 		return SessionTypeBooking
 	}
 }
@@ -1464,9 +1470,9 @@ func (a *ActiveChampionship) IsPractice() bool {
 func (a *ActiveChampionship) GetURL() string {
 	if config.HTTP.BaseURL != "" {
 		return config.HTTP.BaseURL + "/championship/" + a.ChampionshipID.String()
-	} else {
-		return ""
 	}
+
+	return ""
 }
 
 func (a *ActiveChampionship) IsChampionship() bool {

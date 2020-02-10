@@ -1,6 +1,10 @@
 json = require "json"
 utils = require "utils"
 
+-- Insert json folder path here, required for getTrackInfo
+local jsonPath = "./plugins" -- default should be correct if countryCodes.json is inside plugins folder
+local contentPath = "./assetto/content" -- depends on assetto server location
+
 -- these are lua hooks related to the manager itself, for help please view lua_readme.md!
 -- there are some example functions here to give you an idea of what is possible, feel free to write your own!
 -- if you do and think other people would be interested in them consider making a pull request at https://github.com/JustaPenguin/assetto-server-manager
@@ -12,19 +16,74 @@ function onEventStart(encodedRaceConfig, encodedServerOpts, encodedEntryList)
     local serverOpts = json.decode(encodedServerOpts)
     local entryList = json.decode(encodedEntryList)
 
+	-- Getting location from track_ui.json
+	location = getTrackInfo(raceConfig, serverOpts)
+
+	-- if you want to manually set the location for tracks without location info uncomment this line and set the location, you can download a city list here: http://bulk.openweathermap.org/sample/
+	-- location = "Manchester,uk"
+
+	if location == nil then
+		--Set location to Manchester UK if no trackinfo is found
+		location = "Manchester,UK"
+	end
+
     -- Uncomment these lines and run the function (start any event) to print out the structure of each object.
     --print("Race Config:", utils.dump(raceConfig))
     --print("Server Options:", utils.dump(serverOpts))
     --print("Entry List:", utils.dump(entryList))
 
     -- Function block NOTE: this hook BLOCKS, make sure your functions don't loop forever!
+
+    -- Getting location from track_ui.json, make sure to set jsonPath and contentPath
+    location = getTrackInfo(raceConfig)
+    -- if you want to manually set the location for tracks without location info uncomment this line and set the location, you can download a city list here: http://bulk.openweathermap.org/sample/
+    -- location = "Manchester,uk"
+
+    if location == nil then
+        --Set location manually if no trackinfo is found
+        location = "Manchester,UK"
+    end
+
     -- in order to use the weatherAPI you need to get a free API key from https://openweathermap.org/
-    -- uncomment functions to enable them!
-    --raceConfig, serverOpts = weatherAPI(raceConfig, serverOpts, "get-an-api-key-from-https://openweathermap.org/")
+    -- Uncomment this line to set Weather API On, don't forget to put your openweathermap API key in the function parameters
+    -- raceConfig, serverOpts = weatherAPI(raceConfig, serverOpts, "get-an-api-key-from-https://openweathermap.org/")
 
     -- Encode block, you probably shouldn't touch these either!
     return json.encode(entryList), json.encode(serverOpts), json.encode(raceConfig)
 end
+
+-- get track location from his ui.json file, set dynamic weather on if a location is found
+-- if not, use weather in custom race config
+function getTrackInfo(raceConfig)
+    local track = raceConfig["Track"]
+    local layout = raceConfig["TrackLayout"]
+
+    local trackPath = contentPath .. "/tracks/" .. track .. "/ui/" .. layout
+    local encodedTrackJson = utils.jsonOpen(trackPath, "ui_track.json")
+    local trackJson = json.decode(encodedTrackJson)
+
+    countryFull = trackJson["country"]
+    city = trackJson["city"]
+
+    local encodedCountryCodes = utils.jsonOpen(jsonPath, "countryCodes.json")
+    local countryCodes = json.decode(encodedCountryCodes)
+
+    if city == nil or countryFull == nil then
+        print("events.lua: No location found in track UI file, dynamic weather is OFF")
+        return nil
+    end
+
+    if countryCodes[countryFull] == nil then
+        print("events.lua: Location was found in track UI file (" .. city .. ", " .. countryFull .. "). But was not found in countryCodes.json, please update!")
+        return nil
+    end
+
+    location = city .. "," .. countryCodes[countryFull]
+
+    return location
+end
+
+
 
 -- called when any NON CHAMPIONSHIP/RACE WEEKEND event is scheduled
 function onEventSchedule(encodedRace)
@@ -57,15 +116,12 @@ function onRaceWeekendEventSchedule(encodedRaceWeekendSession, encodedRaceWeeken
     -- Encode block, you probably shouldn't touch these either!
     return json.encode(raceWeekend), json.encode(session)
 end
-
--- set this location to the race location, you can download a city list here: http://bulk.openweathermap.org/sample/
-local location = "Manchester,uk"
-
 -- weather API
 function weatherAPI(raceConfig, serverOpts, apiKey)
     -- set the weather based on the current weather at 'location'
     local body, status = httpRequest("http://api.openweathermap.org/data/2.5/weather?q=" .. location .. "&APPID=" .. apiKey, "GET", "")
 
+    -- If location not found in openWeatherMap, stop the function and use weather configured in web manager
     if status >= 400 then
         return raceConfig, serverOpts
     end
@@ -92,7 +148,7 @@ function weatherAPI(raceConfig, serverOpts, apiKey)
             weather["BaseTemperatureRoad"] = 4
         else
             -- sun is down, base road temp is lower than ambient (large assumption, definitely wrong, please improve!)
-            weather["BaseTemperatureRoad"] = -4
+            weather["BaseTemperatureRoad"] = 0
         end
 
         weather["VariationRoad"] = 1
@@ -101,6 +157,8 @@ function weatherAPI(raceConfig, serverOpts, apiKey)
         local w = weatherData["weather"][1]["id"]
 
         if raceConfig["IsSol"] == 1 then
+            -- with sol (recommended)
+
             -- set time of day
             weather["CMWFUseCustomTime"] = 1
             weather["CMWFXTime"] = 0
@@ -108,11 +166,14 @@ function weatherAPI(raceConfig, serverOpts, apiKey)
             weather["CMWFXDateUnModified"] = weatherData["dt"]
             weather["CMWFXDate"] = weatherData["dt"] - (3600 * 5 * weather["CMWFXTimeMulti"]) -- don't ask
 
-            -- set graphics
+            -- force time 5 hour before sunset (18000) to prevent night
+            --weather["CMWFXDate"] = (weatherData["sys"]["sunset"] - 18000) + (weatherData["timezone"]) - (3600 * 5 * weather["CMWFXTimeMulti"]) -- don't ask
+
+            -- set graphics (comment this and uncomment the block bellow for no rain)
             if     w == 800 then weather["CMGraphics"] = "sol_01_CLear"; weather["CMWFXType"] = 15;
             elseif w == 801 then weather["CMGraphics"] = "sol_02_Few Clouds"; weather["CMWFXType"] = 16
             elseif w == 802 then weather["CMGraphics"] = "sol_03_Scattered Clouds"; weather["CMWFXType"] = 17
-            --elseif w ==  then weather["CMGraphics"] = "sol_04_Windy"; weather["CMWFXType"] = 31 --no real weather for windy
+            --Do not uncomment elseif w ==  then weather["CMGraphics"] = "sol_04_Windy"; weather["CMWFXType"] = 31 --no real weather for windy
             elseif w == 803 then weather["CMGraphics"] = "sol_05_Broken Clouds"; weather["CMWFXType"] = 18
             elseif w == 804 then weather["CMGraphics"] = "sol_06_Overcast"; weather["CMWFXType"] = 19
             elseif w == 701 then weather["CMGraphics"] = "sol_11_Mist"; weather["CMWFXType"] = 21
@@ -132,18 +193,53 @@ function weatherAPI(raceConfig, serverOpts, apiKey)
             elseif w == 202 or w == 212 or w == 221 or w == 232 then weather["CMGraphics"] = "sol_43_Heavy Thunderstorm"; weather["CMWFXType"] = 2
             elseif w == 771 then weather["CMGraphics"] = "sol_44_Squalls"; weather["CMWFXType"] = 26
             elseif w == 781 then weather["CMGraphics"] = "sol_45_Tornado"; weather["CMWFXType"] = 27
-            --elseif w ==  then weather["CMGraphics"] = "sol_46_Hurricane"; weather["CMWFXType"] = 28 --no real weather for hurricane
+            --Do not uncomment elseif w ==  then weather["CMGraphics"] = "sol_46_Hurricane"; weather["CMWFXType"] = 28 --no real weather for hurricane
             elseif w == 600 or w == 620 then weather["CMGraphics"] = "sol_51_Light Snow"; weather["CMWFXType"] = 9
             elseif w == 601 or w == 621 then weather["CMGraphics"] = "sol_52_Snow"; weather["CMWFXType"] = 10
             elseif w == 602 or w == 622 then weather["CMGraphics"] = "sol_53_Heavy Snow"; weather["CMWFXType"] = 11
             elseif w == 611 or w == 615 then weather["CMGraphics"] = "sol_54_Light Sleet"; weather["CMWFXType"] = 12
             elseif w == 612 or w == 616 then weather["CMGraphics"] = "sol_55_Sleet"; weather["CMWFXType"] = 13
             elseif w == 613 then weather["CMGraphics"] = "sol_56_Heavy Sleet"; weather["CMWFXType"] = 14
-            --elseif w ==  then weather["CMGraphics"] = "sol_57_Hail"; weather["CMWFXType"] = 32 --no real weather for hail
+            --Do not uncomment elseif w ==  then weather["CMGraphics"] = "sol_57_Hail"; weather["CMWFXType"] = 32 --no real weather for hail
             end
+
+            -- set graphics no rain (comment the block above and uncomment this one for no rain)
+            --if     w == 800 then weather["CMGraphics"] = "sol_01_CLear"; weather["CMWFXType"] = 15;
+            --elseif w == 801 then weather["CMGraphics"] = "sol_02_Few Clouds"; weather["CMWFXType"] = 16
+            --elseif w == 802 then weather["CMGraphics"] = "sol_03_Scattered Clouds"; weather["CMWFXType"] = 17
+            --Do not uncomment elseif w ==  then weather["CMGraphics"] = "sol_04_Windy"; weather["CMWFXType"] = 31 --no real weather for windy
+            --elseif w == 803 then weather["CMGraphics"] = "sol_05_Broken Clouds"; weather["CMWFXType"] = 18
+            --elseif w == 804 then weather["CMGraphics"] = "sol_06_Overcast"; weather["CMWFXType"] = 19
+            --elseif w == 701 then weather["CMGraphics"] = "sol_11_Mist"; weather["CMWFXType"] = 21
+            --elseif w == 741 then weather["CMGraphics"] = "sol_12_Fog"; weather["CMWFXType"] = 20
+            --elseif w == 721 then weather["CMGraphics"] = "sol_21_Haze"; weather["CMWFXType"] = 23
+            --elseif w == 731 then weather["CMGraphics"] = "sol_22_Dust"; weather["CMWFXType"] = 25
+            --elseif w == 751 then weather["CMGraphics"] = "sol_23_Sand"; weather["CMWFXType"] = 24
+            --elseif w == 711 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 22
+            --elseif w == 300 then weather["CMGraphics"] = "sol_05_Broken Clouds"; weather["CMWFXType"] = 18
+            --elseif w == 301 then weather["CMGraphics"] = "sol_06_Overcast"; weather["CMWFXType"] = 19
+            --elseif w >= 302 and w <= 321 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 22
+            --elseif w == 500 then weather["CMGraphics"] = "sol_05_Broken Clouds"; weather["CMWFXType"] = 18
+            --elseif w == 501 then weather["CMGraphics"] = "sol_06_Overcast"; weather["CMWFXType"] = 19
+            --elseif w >= 502 and w <= 531 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 22
+            --elseif w == 200 or w == 210 or w == 230 then weather["CMGraphics"] = "sol_06_Overcast"; weather["CMWFXType"] = 19
+            --elseif w == 201 or w == 211 or w == 231 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 22
+            --elseif w == 202 or w == 212 or w == 221 or w == 232 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 22
+            --elseif w == 771 then weather["CMGraphics"] = "sol_44_Squalls"; weather["CMWFXType"] = 26
+            --elseif w == 781 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 22
+            --Do not uncomment elseif w ==  then weather["CMGraphics"] = "sol_46_Hurricane"; weather["CMWFXType"] = 28 --no real weather for hurricane
+            --elseif w == 600 or w == 620 then weather["CMGraphics"] = "sol_05_Broken Clouds"; weather["CMWFXType"] = 18
+            --elseif w == 601 or w == 621 then weather["CMGraphics"] = "sol_12_Fog"; weather["CMWFXType"] = 20
+            --elseif w == 602 or w == 622 then weather["CMGraphics"] = "sol_24_Smoke"; weather["CMWFXType"] = 22
+            --elseif w == 611 or w == 615 then weather["CMGraphics"] = "sol_05_Broken Clouds"; weather["CMWFXType"] = 18
+            --elseif w == 612 or w == 616 then weather["CMGraphics"] = "sol_12_Fog"; weather["CMWFXType"] = 20
+            --elseif w == 613 then weather["CMGraphics"] = "sol_06_Overcast"; weather["CMWFXType"] = 19
+            --Do not uncomment elseif w ==  then weather["CMGraphics"] = "sol_57_Hail"; weather["CMWFXType"] = 32 --no real weather for hail
+            --end
 
             weather["Graphics"] = weather["CMGraphics"] .. "_type=" .. weather["CMWFXType"] .. "_time=0_mult=" .. weather["CMWFXTimeMulti"] .. "_start=" .. weather["CMWFXDate"]
         else
+            -- without Sol (not recommended)
             -- you could set sun angle from time of day here, I'm not going to though (just use Sol)
 
             -- set graphics
