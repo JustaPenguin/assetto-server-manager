@@ -44,8 +44,8 @@ function onEventStart(encodedRaceConfig, encodedServerOpts, encodedEntryList)
         location = "Manchester,UK"
     end
 
-    -- Uncomment this line to set Weather API On, don't forget to put your openweathermap API key line 39
     -- in order to use the weatherAPI you need to get a free API key from https://openweathermap.org/
+    -- Uncomment this line to set Weather API On, don't forget to put your openweathermap API key in the function parameters
     -- raceConfig, serverOpts = weatherAPI(raceConfig, serverOpts, "get-an-api-key-from-https://openweathermap.org/")
 
     -- Encode block, you probably shouldn't touch these either!
