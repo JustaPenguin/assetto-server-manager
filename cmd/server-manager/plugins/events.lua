@@ -16,17 +16,6 @@ function onEventStart(encodedRaceConfig, encodedServerOpts, encodedEntryList)
     local serverOpts = json.decode(encodedServerOpts)
     local entryList = json.decode(encodedEntryList)
 
-	-- Getting location from track_ui.json
-	location = getTrackInfo(raceConfig, serverOpts)
-
-	-- if you want to manually set the location for tracks without location info uncomment this line and set the location, you can download a city list here: http://bulk.openweathermap.org/sample/
-	-- location = "Manchester,uk"
-
-	if location == nil then
-		--Set location to Manchester UK if no trackinfo is found
-		location = "Manchester,UK"
-	end
-
     -- Uncomment these lines and run the function (start any event) to print out the structure of each object.
     --print("Race Config:", utils.dump(raceConfig))
     --print("Server Options:", utils.dump(serverOpts))
@@ -34,56 +23,13 @@ function onEventStart(encodedRaceConfig, encodedServerOpts, encodedEntryList)
 
     -- Function block NOTE: this hook BLOCKS, make sure your functions don't loop forever!
 
-    -- Getting location from track_ui.json, make sure to set jsonPath and contentPath
-    location = getTrackInfo(raceConfig)
-    -- if you want to manually set the location for tracks without location info uncomment this line and set the location, you can download a city list here: http://bulk.openweathermap.org/sample/
-    -- location = "Manchester,uk"
-
-    if location == nil then
-        --Set location manually if no trackinfo is found
-        location = "Manchester,UK"
-    end
-
+    -- Uncomment this line to set Weather API On
     -- in order to use the weatherAPI you need to get a free API key from https://openweathermap.org/
-    -- Uncomment this line to set Weather API On, don't forget to put your openweathermap API key in the function parameters
-    -- raceConfig, serverOpts = weatherAPI(raceConfig, serverOpts, "get-an-api-key-from-https://openweathermap.org/")
+    raceConfig, serverOpts = getWeatherForTrack(raceConfig, serverOpts, "ba0839f0537bd93a649a3aac4fe97ca4")
 
     -- Encode block, you probably shouldn't touch these either!
     return json.encode(entryList), json.encode(serverOpts), json.encode(raceConfig)
 end
-
--- get track location from his ui.json file, set dynamic weather on if a location is found
--- if not, use weather in custom race config
-function getTrackInfo(raceConfig)
-    local track = raceConfig["Track"]
-    local layout = raceConfig["TrackLayout"]
-
-    local trackPath = contentPath .. "/tracks/" .. track .. "/ui/" .. layout
-    local encodedTrackJson = utils.jsonOpen(trackPath, "ui_track.json")
-    local trackJson = json.decode(encodedTrackJson)
-
-    countryFull = trackJson["country"]
-    city = trackJson["city"]
-
-    local encodedCountryCodes = utils.jsonOpen(jsonPath, "countryCodes.json")
-    local countryCodes = json.decode(encodedCountryCodes)
-
-    if city == nil or countryFull == nil then
-        print("events.lua: No location found in track UI file, dynamic weather is OFF")
-        return nil
-    end
-
-    if countryCodes[countryFull] == nil then
-        print("events.lua: Location was found in track UI file (" .. city .. ", " .. countryFull .. "). But was not found in countryCodes.json, please update!")
-        return nil
-    end
-
-    location = city .. "," .. countryCodes[countryFull]
-
-    return location
-end
-
-
 
 -- called when any NON CHAMPIONSHIP/RACE WEEKEND event is scheduled
 function onEventSchedule(encodedRace)
@@ -91,7 +37,7 @@ function onEventSchedule(encodedRace)
     local race = json.decode(encodedRace)
 
     -- Uncomment these lines and run the function (start any event) to print out the structure of each object.
-    --print("Race:", dump(race))
+    --print("Race:", utils.dump(race))
 
     -- Function block NOTE: this hook BLOCKS, make sure your functions don't loop forever!
 
@@ -107,15 +53,86 @@ function onRaceWeekendEventSchedule(encodedRaceWeekendSession, encodedRaceWeeken
     local raceWeekend  = json.decode(encodedRaceWeekend)
 
     -- Uncomment these lines and run the function (start any event) to print out the structure of each object.
-    --print("Race Weekend Session:", dump(session))
-    --print("Race Weekend:", dump(raceWeekend))
+    --print("Race Weekend Session:", utils.dump(session))
+    --print("Race Weekend:", utils.dump(raceWeekend))
 
     -- Function block NOTE: this hook BLOCKS, make sure your functions don't loop forever!
-
 
     -- Encode block, you probably shouldn't touch these either!
     return json.encode(raceWeekend), json.encode(session)
 end
+
+function getWeatherForTrack(raceConfig, serverOpts, apiKey)
+    if apiKey == "get-an-api-key-from-https://openweathermap.org/" then
+        print("events.lua: No API key is set, could not activate weather API")
+
+        return raceConfig, serverOpts
+    end
+
+    -- Getting location from track_ui.json
+    location = getTrackInfo(raceConfig, serverOpts)
+
+    -- if you want to manually set the location for tracks without location info uncomment this line and set the location, you can download a city list here: http://bulk.openweathermap.org/sample/
+    -- location = "Manchester,uk"
+
+    if location == nil then
+        --Set location to Manchester UK if no trackinfo is found
+        location = "Manchester,UK"
+    end
+
+    -- Getting location from track_ui.json, make sure to set jsonPath and contentPath
+    location = getTrackInfo(raceConfig)
+    -- if you want to manually set the location for tracks without location info uncomment this line and set the location, you can download a city list here: http://bulk.openweathermap.org/sample/
+    -- location = "Manchester,uk"
+
+    if location == nil then
+        --Set location manually if no trackinfo is found
+        location = "Manchester,UK"
+    end
+
+    return weatherAPI(raceConfig, serverOpts, apiKey)
+end
+
+-- get track location from his ui.json file, set dynamic weather on if a location is found
+-- if not, use weather in custom race config
+function getTrackInfo(raceConfig)
+    local track = raceConfig["Track"]
+    local layout = raceConfig["TrackLayout"]
+
+    local trackPath = contentPath .. "/tracks/" .. track .. "/ui/" .. layout
+    local encodedTrackJson = utils.jsonOpen(trackPath, "ui_track.json")
+    local trackJson
+
+    success = pcall(function ()
+        trackJson = json.decode(encodedTrackJson)
+    end )
+
+    if not success then
+        print("events.lua: Couldn't decode track UI file: ", trackPath .. "/ui_track.json. Falling back to manual setting")
+        return nil
+    end
+
+    countryFull = trackJson["country"]
+    city = trackJson["city"]
+
+    local encodedCountryCodes = utils.jsonOpen(jsonPath, "countryCodes.json")
+    local countryCodes = json.decode(encodedCountryCodes)
+
+    if city == nil or countryFull == nil then
+        print("events.lua: No country/city found in track UI file, falling back to manual setting")
+        return nil
+    end
+
+    if countryCodes[countryFull] == nil then
+        print("events.lua: Location was found in track UI file (" .. city .. ", " .. countryFull .. "). But was not found in countryCodes.json, please update! Falling back to manual setting")
+        return nil
+    end
+
+    location = city .. "," .. countryCodes[countryFull]
+
+    return location
+end
+
 -- weather API
 function weatherAPI(raceConfig, serverOpts, apiKey)
     -- set the weather based on the current weather at 'location'
@@ -123,6 +140,7 @@ function weatherAPI(raceConfig, serverOpts, apiKey)
 
     -- If location not found in openWeatherMap, stop the function and use weather configured in web manager
     if status >= 400 then
+        print("events.lua: Weather API HTTP request returned status ", status, ". Weather API deactivated")
         return raceConfig, serverOpts
     end
 
@@ -254,7 +272,7 @@ function weatherAPI(raceConfig, serverOpts, apiKey)
 
     end
 
-    --add text to server name to indicate this has been done
+    -- Add text to server name to indicate this has been done
     serverOpts["Name"] = serverOpts["Name"] .. " | Weather Live From " .. weatherData["name"]
 
     return raceConfig, serverOpts
