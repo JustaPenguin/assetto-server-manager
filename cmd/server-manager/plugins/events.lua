@@ -69,17 +69,6 @@ function getWeatherForTrack(raceConfig, serverOpts, apiKey)
         return raceConfig, serverOpts
     end
 
-    -- Getting location from track_ui.json
-    location = getTrackInfo(raceConfig, serverOpts)
-
-    -- if you want to manually set the location for tracks without location info uncomment this line and set the location, you can download a city list here: http://bulk.openweathermap.org/sample/
-    -- location = "Manchester,uk"
-
-    if location == nil then
-        --Set location to Manchester UK if no trackinfo is found
-        location = "Manchester,UK"
-    end
-
     -- Getting location from track_ui.json, make sure to set jsonPath and contentPath
     location = getTrackInfo(raceConfig)
     -- if you want to manually set the location for tracks without location info uncomment this line and set the location, you can download a city list here: http://bulk.openweathermap.org/sample/
