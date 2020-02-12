@@ -415,7 +415,7 @@ func checkChampionshipEventCompletion(t *testing.T, championshipID string, event
 		return
 	}
 
-	event, err := loadedChampionship.EventByID(eventID)
+	event, _, err := loadedChampionship.EventByID(eventID)
 
 	if err != nil {
 		t.Error(err)

@@ -941,6 +941,8 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 		})
 	}
 
+	rc.persistTimingData()
+
 	return nil
 }
 
