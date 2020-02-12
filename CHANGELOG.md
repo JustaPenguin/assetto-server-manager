@@ -10,6 +10,7 @@ Added:
 * In a Multi-Server environment, you can now set different account groups per server, for example you could set an Account to have "Write" access on one server and "Delete" access on another.
 * Added a new permission - "No Access" - which blocks a user from doing anything on a server.
 * Open weather API Lua plugin can now automatically find the location of the track (so long as the track json file contains this information) and set the weather accordingly! Thanks to @mike855 for this contribution!
+* Entrants are now written to the entry_list.ini file in the order of their pitboxes (this should make debugging a bit easier!)
 
 Fixes:
 
@@ -22,8 +23,9 @@ Fixes:
 * Fixes an issue where Championship attendance would not work correctly for event with Race Weekends.
 * Fixes an issue where watching content folder for changes could cause a crash on Windows.
 * The Championship Entrant table is now sorted alphabetically.
-* Championship Event Pitbox overrides are now applied correctly on Championships with Sign Up forms enabled.
+* Championship Event Pitbox overrides are now applied correctly on Championships with Sign Up forms enabled. If Entrants in a Championship share the same pitbox, the order of the entrants is normalised so all drivers are added to the grid.
 * Fixes an issue where Sol dates could be set to dates before 1st January 1970, leading to a Shaders Patch crash on game launch. Dates before 01/01/1970 are now set to 01/01/1970.
+* Fixes an issue where the Edit Championship Event form would always say "This edited setup will overwrite the 1st Event in the Championship", rather than the correct index of the Event.
 
 Removed:
 

@@ -854,6 +854,7 @@ type RaceTemplateVars struct {
 	IsChampionship                 bool
 	Championship                   *Championship
 	ChampionshipHasAtLeastOnceRace bool
+	ChampionshipEventIndex         int
 
 	IsRaceWeekend                   bool
 	RaceWeekend                     *RaceWeekend
