@@ -427,7 +427,7 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (*Rac
 
 	if editEventID := chi.URLParam(r, "eventID"); editEventID != "" {
 		// editing a championship event
-		event, err := championship.EventByID(editEventID)
+		event, eventIndex, err := championship.EventByID(editEventID)
 
 		if err != nil {
 			return nil, err
@@ -437,6 +437,7 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (*Rac
 		opts.IsEditing = true
 		opts.EditingID = editEventID
 		opts.CurrentEntrants = event.CombineEntryLists(championship)
+		opts.ChampionshipEventIndex = eventIndex
 	} else {
 		// creating a new championship event
 		opts.IsEditing = false
@@ -514,7 +515,7 @@ func (cm *ChampionshipManager) SaveChampionshipEvent(r *http.Request) (champions
 	if eventID := r.FormValue("Editing"); eventID != "" {
 		edited = true
 
-		event, err = championship.EventByID(eventID)
+		event, _, err = championship.EventByID(eventID)
 
 		if err != nil {
 			return nil, nil, true, err
@@ -601,10 +602,10 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 		filteredEntryList := make(EntryList)
 
 		// a sign up championship (which is not open) should remove all empty entrants before the event starts
-		// here we are building a new filtered entry list so grid positions are not 'missing'
-		for _, entrant := range entryList {
+		// here we are building a new filtered entry list so grid positions are not 'missing'.
+		for pitBox, entrant := range entryList.AsSlice() {
 			if entrant.GUID != "" {
-				filteredEntryList.AddInPitBox(entrant, entrant.PitBox)
+				filteredEntryList.AddInPitBox(entrant, pitBox)
 			}
 		}
 
@@ -708,7 +709,7 @@ func (cm *ChampionshipManager) GetChampionshipAndEvent(championshipID string, ev
 		return nil, nil, err
 	}
 
-	event, err := championship.EventByID(eventID)
+	event, _, err := championship.EventByID(eventID)
 
 	if err != nil {
 		return nil, nil, err
@@ -844,7 +845,7 @@ func (cm *ChampionshipManager) StartScheduledEvent(championship *Championship, e
 			return err
 		}
 
-		event, err = championship.EventByID(event.ID.String())
+		event, _, err = championship.EventByID(event.ID.String())
 
 		if err != nil {
 			return err
@@ -1210,7 +1211,7 @@ func (cm *ChampionshipManager) CancelEvent(championshipID string, eventID string
 		return err
 	}
 
-	event, err := championship.EventByID(eventID)
+	event, _, err := championship.EventByID(eventID)
 
 	if err != nil {
 		return err
@@ -1267,7 +1268,7 @@ func (cm *ChampionshipManager) ListAvailableResultsFilesForEvent(championshipID 
 		return nil, nil, err
 	}
 
-	event, err := championship.EventByID(eventID)
+	event, _, err := championship.EventByID(eventID)
 
 	if err != nil {
 		return nil, nil, err
@@ -1373,7 +1374,7 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 		return err
 	}
 
-	event, err := championship.EventByID(eventID)
+	event, _, err := championship.EventByID(eventID)
 
 	if err != nil {
 		return err
@@ -1597,7 +1598,7 @@ func (cm *ChampionshipManager) ReorderChampionshipEvents(championshipID string, 
 	var orderedEvents []*ChampionshipEvent
 
 	for _, championshipEventID := range championshipEventIDsInOrder {
-		event, err := championship.EventByID(championshipEventID)
+		event, _, err := championship.EventByID(championshipEventID)
 
 		if err != nil {
 			return err
@@ -1781,7 +1782,7 @@ func (cm *ChampionshipManager) DuplicateEvent(championshipID, eventID string) (*
 		return nil, err
 	}
 
-	event, err := championship.EventByID(eventID)
+	event, _, err := championship.EventByID(eventID)
 
 	if err != nil {
 		return nil, err

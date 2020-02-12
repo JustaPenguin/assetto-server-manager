@@ -1626,7 +1626,7 @@
 
                     {{ if .IsEditing }}
                         <p>
-                            This edited setup will overwrite the {{ add .EditingID 1 }}{{ ordinal (add .EditingID 1) }}
+                            This edited setup will overwrite the {{ add .ChampionshipEventIndex 1 }}{{ ordinal (add .ChampionshipEventIndex 1) }}
                             Event in the <strong>{{ .Championship.Name }}</strong> Championship.
                         </p>
                     {{ else }}

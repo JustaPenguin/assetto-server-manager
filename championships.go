@@ -561,14 +561,14 @@ func (c *Championship) ImportEvent(eventToImport interface{}) (*ChampionshipEven
 }
 
 // EventByID finds a ChampionshipEvent by its ID string.
-func (c *Championship) EventByID(id string) (*ChampionshipEvent, error) {
-	for _, e := range c.Events {
+func (c *Championship) EventByID(id string) (*ChampionshipEvent, int, error) {
+	for i, e := range c.Events {
 		if e.ID.String() == id {
-			return e, nil
+			return e, i, nil
 		}
 	}
 
-	return nil, ErrInvalidChampionshipEvent
+	return nil, 0, ErrInvalidChampionshipEvent
 }
 
 // ClassByID finds a ChampionshipClass by its ID string.
