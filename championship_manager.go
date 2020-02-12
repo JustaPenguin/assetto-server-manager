@@ -273,7 +273,6 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	if championship.ACSR {
 		championship.OverridePassword = true
 		championship.ReplacementPassword = ""
-		championship.OpenEntrants = false
 		championship.SignUpForm.Enabled = true
 	} else {
 		championship.ReplacementPassword = r.FormValue("ReplacementPassword")

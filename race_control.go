@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
+
 	"github.com/google/uuid"
 	"github.com/mitchellh/go-wordwrap"
 	"github.com/sirupsen/logrus"
@@ -663,6 +664,8 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 			return nil
 		})
 	}
+
+	rc.persistTimingData()
 
 	return nil
 }
