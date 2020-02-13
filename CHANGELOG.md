@@ -33,6 +33,8 @@ Removed:
 
 * Removed max limit of Damage Multiplier (was 100%). Happy crashing!
 
+---
+
 v1.7.2
 ------
 
@@ -54,6 +56,8 @@ Fixes:
 * Championship Race Weekends now display all sessions in the correct order
 * Fixes issues where stopping the acServer process could cause Server Manager to lock up or crash
 
+---
+
 v1.7.1
 ------
 
@@ -61,6 +65,8 @@ Fixes:
 
 * Fixes an issue where ACSR enabled Championships could cause Championship Event points to be incorrect. If your Championship points are incorrect, re-import the results files in the Championship Event ("Manage Event" -> "Import Results")
 * Fixes an issue where Server Manager sometimes would not detect and handle acServer shutdown correctly.
+
+---
 
 v1.7.0
 ------
