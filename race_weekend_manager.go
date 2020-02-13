@@ -495,7 +495,7 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 	session.RaceConfig.MaxClients = len(entryList)
 	session.RaceConfig.Cars = strings.Join(entryList.CarIDs(), ";")
 	session.RaceConfig.LockedEntryList = 1
-	session.RaceConfig.PickupModeEnabled = 0
+	session.RaceConfig.PickupModeEnabled = 1
 
 	// all race weekend sessions must be open so players can join
 	for _, acSession := range session.RaceConfig.Sessions {
