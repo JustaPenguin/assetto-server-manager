@@ -27,10 +27,13 @@ Fixes:
 * Fixes an issue where Sol dates could be set to dates before 1st January 1970, leading to a Shaders Patch crash on game launch. Dates before 01/01/1970 are now set to 01/01/1970.
 * Fixes an issue where the Edit Championship Event form would always say "This edited setup will overwrite the 1st Event in the Championship", rather than the correct index of the Event.
 * We've changed the way that kicking people works on Live Timings. The kick button now runs the in-game admin command '/kick <name>', rather than using what appears to be a broken UDP Plugin message.
+* Discord notifications now use the term "Event" instead of "Race" when notifying about event changes.
 
 Removed:
 
 * Removed max limit of Damage Multiplier (was 100%). Happy crashing!
+
+---
 
 v1.7.2
 ------
@@ -53,6 +56,8 @@ Fixes:
 * Championship Race Weekends now display all sessions in the correct order
 * Fixes issues where stopping the acServer process could cause Server Manager to lock up or crash
 
+---
+
 v1.7.1
 ------
 
@@ -60,6 +65,8 @@ Fixes:
 
 * Fixes an issue where ACSR enabled Championships could cause Championship Event points to be incorrect. If your Championship points are incorrect, re-import the results files in the Championship Event ("Manage Event" -> "Import Results")
 * Fixes an issue where Server Manager sometimes would not detect and handle acServer shutdown correctly.
+
+---
 
 v1.7.0
 ------
