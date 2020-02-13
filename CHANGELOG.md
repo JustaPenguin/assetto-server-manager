@@ -27,6 +27,7 @@ Fixes:
 * Fixes an issue where Sol dates could be set to dates before 1st January 1970, leading to a Shaders Patch crash on game launch. Dates before 01/01/1970 are now set to 01/01/1970.
 * Fixes an issue where the Edit Championship Event form would always say "This edited setup will overwrite the 1st Event in the Championship", rather than the correct index of the Event.
 * We've changed the way that kicking people works on Live Timings. The kick button now runs the in-game admin command '/kick <name>', rather than using what appears to be a broken UDP Plugin message.
+* Discord notifications now use the term "Event" instead of "Race" when notifying about event changes.
 
 Removed:
 
