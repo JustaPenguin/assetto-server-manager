@@ -323,18 +323,19 @@ func (rch *RaceControlHandler) kickUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var carID uint8
-
-	for id, rangeGUID := range rch.raceControl.CarIDToGUID {
-		if string(rangeGUID) == guid {
-			carID = uint8(id)
-			break
+	err := rch.raceControl.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
+		if string(driverGUID) != guid {
+			return nil
 		}
-	}
 
-	kickUser := udp.NewKickUser(carID)
+		command, err := udp.NewAdminCommand("/kick " + driver.CarInfo.DriverName)
 
-	err := rch.serverProcess.SendUDPMessage(kickUser)
+		if err != nil {
+			return err
+		}
+
+		return rch.serverProcess.SendUDPMessage(command)
+	})
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Unable to send kick command")
