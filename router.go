@@ -66,10 +66,10 @@ func Router(
 	kissMyRankHandler *KissMyRankHandler,
 ) http.Handler {
 	r := chi.NewRouter()
-
+	compressor := middleware.Compress(5)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(middleware.DefaultCompress)
+	r.Use(compressor)
 	r.Use(panicHandler)
 
 	r.HandleFunc("/login", accountHandler.login)
