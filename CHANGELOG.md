@@ -1,3 +1,13 @@
+v1.7.3-1
+--------
+
+Fixes:
+
+* Fixes an issue where new multiserver setups of Server Manager would go into a redirect loop when creating new servers.
+  If you experienced this issue, please try setting the multiserver up from scratch (i.e. delete the shared_store.json and servers folders).
+
+---
+
 v1.7.3
 ------
 
