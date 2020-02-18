@@ -1032,6 +1032,8 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 							continue
 						}
 
+						fmt.Println(fmt.Sprintf("Give %.2f points to: %s", float64(points.PolePosition)*pointsMultiplier, driver.DriverName))
+
 						givePoints(event, driver.DriverGUID, float64(points.PolePosition)*pointsMultiplier, PointsPolePosition)
 					}
 
@@ -1122,6 +1124,8 @@ func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent) []*Champion
 
 	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64, reason PointsReason) {
 		var car *SessionCar
+
+		// @TODO CHECK THIS
 
 		for _, sessionType := range championshipStandingSessionOrder {
 			session, ok := event.Sessions[sessionType]

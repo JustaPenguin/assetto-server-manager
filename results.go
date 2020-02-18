@@ -376,7 +376,7 @@ cars:
 		var bestLap int
 
 		for y := range s.Laps {
-			if (s.Cars[i].Driver.GUID == s.Laps[y].DriverGUID) && s.IsDriversFastestLap(s.Cars[i].Driver.GUID, s.Cars[i].Model, s.Laps[y].LapTime, s.Laps[y].Cuts) {
+			if (s.Cars[i].Driver.GUID == s.Laps[y].DriverGUID) && (s.Cars[i].Model == s.Laps[y].CarModel) && s.IsDriversFastestLap(s.Cars[i].Driver.GUID, s.Cars[i].Model, s.Laps[y].LapTime, s.Laps[y].Cuts) {
 				bestLap = s.Laps[y].LapTime
 				break
 			}
@@ -398,6 +398,41 @@ cars:
 		})
 	}
 
+laps:
+	// in the crazy case that a driver has laps but is in neither car or results list
+	for _, lap := range s.Laps {
+		for _, result := range s.Result {
+			if result.DriverGUID == lap.DriverGUID {
+				continue laps
+			}
+		}
+
+		bestLap := 0
+
+		for _, findBestLap := range s.Laps {
+			if (findBestLap.DriverGUID == lap.DriverGUID) && (findBestLap.CarModel == lap.CarModel) && s.IsDriversFastestLap(findBestLap.DriverGUID, findBestLap.CarModel, findBestLap.LapTime, findBestLap.Cuts) {
+				bestLap = findBestLap.LapTime
+				break
+			}
+		}
+
+		s.Result = append(s.Result, &SessionResult{
+			BallastKG:    lap.BallastKG,
+			BestLap:      bestLap,
+			CarID:        lap.CarID,
+			CarModel:     lap.CarModel,
+			DriverGUID:   lap.DriverGUID,
+			DriverName:   lap.DriverName,
+			Restrictor:   lap.Restrictor,
+			TotalTime:    0,
+			HasPenalty:   false,
+			PenaltyTime:  0,
+			LapPenalty:   0,
+			Disqualified: false,
+			ClassID:      lap.ClassID,
+		})
+	}
+
 	for i := range s.Result {
 		s.Result[i].TotalTime = 0
 
@@ -410,6 +445,45 @@ cars:
 		if s.Result[i].HasPenalty {
 			s.Result[i].TotalTime += int(s.Result[i].PenaltyTime.Seconds())
 		}
+
+		if s.Result[i].BestLap == 0 {
+			for _, findBestLap := range s.Laps {
+				if (findBestLap.DriverGUID == s.Result[i].DriverGUID) && (findBestLap.CarModel == s.Result[i].CarModel) && s.IsDriversFastestLap(findBestLap.DriverGUID, findBestLap.CarModel, findBestLap.LapTime, findBestLap.Cuts) {
+					s.Result[i].BestLap = findBestLap.LapTime
+					break
+				}
+			}
+		}
+	}
+
+results:
+	// is this result car in the car list? If not then add it
+	for _, result := range s.Result {
+		for _, car := range s.Cars {
+			if result.DriverGUID == car.Driver.GUID && result.CarModel == car.Model {
+				continue results
+			}
+		}
+
+		guidList := []string{result.DriverGUID}
+
+		driver := SessionDriver{
+			GUID:      result.DriverGUID,
+			GuidsList: guidList,
+			Name:      result.DriverName,
+			Nation:    "",
+			Team:      "",
+			ClassID:   result.ClassID,
+		}
+
+		s.Cars = append(s.Cars, &SessionCar{
+			BallastKG:  result.BallastKG,
+			CarID:      result.CarID,
+			Driver:     driver,
+			Model:      result.CarModel,
+			Restrictor: result.Restrictor,
+			Skin:       "",
+		})
 	}
 
 	sort.Slice(s.Result, func(i, j int) bool {
