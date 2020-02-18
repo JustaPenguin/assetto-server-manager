@@ -132,6 +132,8 @@ func addAdminAccount(rs Store) error {
 	account := NewAccount()
 	account.Name = adminUserName
 	account.DefaultPassword = "servermanager"
+	// DeprecatedGroup must be assigned to here, since a following migration will just re-set-up Groups.
+	account.DeprecatedGroup = GroupAdmin
 	account.Groups[serverID] = GroupAdmin
 
 	return rs.UpsertAccount(account)
@@ -895,6 +897,10 @@ func convertAccountGroupToServerIDGroupMap(s Store) error {
 			if _, ok := account.Groups[serverID]; ok {
 				continue
 			}
+		}
+
+		if account.DeprecatedGroup == "" {
+			continue
 		}
 
 		account.Groups = make(map[ServerID]Group)
