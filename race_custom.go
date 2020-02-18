@@ -242,7 +242,7 @@ func (crh *CustomRaceHandler) removeSchedule(w http.ResponseWriter, r *http.Requ
 }
 
 func (crh *CustomRaceHandler) start(w http.ResponseWriter, r *http.Request) {
-	err := crh.raceManager.StartCustomRace(chi.URLParam(r, "uuid"), false)
+	_, err := crh.raceManager.StartCustomRace(chi.URLParam(r, "uuid"), false)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("couldn't apply custom race")

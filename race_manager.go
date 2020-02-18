@@ -1098,11 +1098,11 @@ func (rm *RaceManager) SaveCustomRace(
 	return race, nil
 }
 
-func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
+func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) (*CustomRace, error) {
 	race, err := rm.store.FindCustomRaceByID(uuid)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Required for our nice auto loop stuff
@@ -1114,7 +1114,7 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) error {
 		race.LoopServer[serverID] = forceRestart
 	}
 
-	return rm.applyConfigAndStart(race)
+	return race, rm.applyConfigAndStart(race)
 }
 
 func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, recurrence string) error {
@@ -1220,20 +1220,20 @@ func eventSchedulePlugin(race *CustomRace) error {
 }
 
 func (rm *RaceManager) StartScheduledRace(race *CustomRace) error {
-	err := rm.StartCustomRace(race.UUID.String(), false)
+	startedRace, err := rm.StartCustomRace(race.UUID.String(), false)
 
 	if err != nil {
 		return err
 	}
 
-	if race.HasRecurrenceRule() {
+	if startedRace.HasRecurrenceRule() {
 		// this function carries out a save
-		return rm.ScheduleNextFromRecurrence(race)
+		return rm.ScheduleNextFromRecurrence(startedRace)
 	}
 
-	race.Scheduled = time.Time{}
+	startedRace.Scheduled = time.Time{}
 
-	return rm.store.UpsertCustomRace(race)
+	return rm.store.UpsertCustomRace(startedRace)
 }
 
 func (rm *RaceManager) ScheduleNextFromRecurrence(race *CustomRace) error {
@@ -1405,7 +1405,7 @@ func (rm *RaceManager) LoopRaces() {
 				rm.loopedRaceSessionTypes = append(rm.loopedRaceSessionTypes, SessionTypeSecondRace)
 			}
 
-			err := rm.StartCustomRace(looped[i].UUID.String(), true)
+			_, err := rm.StartCustomRace(looped[i].UUID.String(), true)
 
 			if err != nil {
 				logrus.WithError(err).Errorf("couldn't start auto loop custom race")
