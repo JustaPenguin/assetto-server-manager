@@ -5,6 +5,8 @@ Fixes:
 
 * Fixes an issue where new multiserver setups of Server Manager would go into a redirect loop when creating new servers.
   If you experienced this issue, please try setting the multiserver up from scratch (i.e. delete the shared_store.json and servers folders).
+* Fixes an issue where a Scheduled Custom Race may revert to an older copy when being started.
+* Fallback Results now takes account of results files where a driver has laps but is in neither the Cars nor Results lists.
 
 ---
 
