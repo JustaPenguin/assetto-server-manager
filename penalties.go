@@ -79,14 +79,12 @@ func (ph *PenaltiesHandler) managePenalty(w http.ResponseWriter, r *http.Request
 }
 
 type PenaltiesManager struct {
-	championshipManager *ChampionshipManager
-	raceWeekendManager  *RaceWeekendManager
+	store Store
 }
 
-func NewPenaltiesManager(championshipManager *ChampionshipManager, raceWeekendManager *RaceWeekendManager) *PenaltiesManager {
+func NewPenaltiesManager(store Store) *PenaltiesManager {
 	return &PenaltiesManager{
-		championshipManager: championshipManager,
-		raceWeekendManager:  raceWeekendManager,
+		store: store,
 	}
 }
 
@@ -217,7 +215,7 @@ func (pm *PenaltiesManager) applyPenalty(jsonFileName, guid, carModel string, pe
 	}
 
 	if results.ChampionshipID != "" {
-		championship, err := pm.championshipManager.LoadChampionship(results.ChampionshipID)
+		championship, err := pm.store.LoadChampionship(results.ChampionshipID)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Couldn't load championship with ID: %s", results.ChampionshipID)
@@ -226,16 +224,32 @@ func (pm *PenaltiesManager) applyPenalty(jsonFileName, guid, carModel string, pe
 
 	champEvents:
 		for i, event := range championship.Events {
-			for key, session := range event.Sessions {
-				if session.Results.SessionFile == jsonFileName {
-					championship.Events[i].Sessions[key].Results = results
+			if event.IsRaceWeekend() {
+				raceWeekend, err := pm.store.LoadRaceWeekend(event.RaceWeekendID.String())
 
-					break champEvents
+				if err != nil {
+					return err
+				}
+
+				for key, session := range raceWeekend.Sessions {
+					if session.Results.SessionFile == jsonFileName {
+						raceWeekend.Sessions[key].Results = results
+
+						break champEvents
+					}
+				}
+			} else {
+				for key, session := range event.Sessions {
+					if session.Results.SessionFile == jsonFileName {
+						championship.Events[i].Sessions[key].Results = results
+
+						break champEvents
+					}
 				}
 			}
 		}
 
-		err = pm.championshipManager.UpsertChampionship(championship)
+		err = pm.store.UpsertChampionship(championship)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Couldn't save championship with ID: %s", results.ChampionshipID)
@@ -244,7 +258,7 @@ func (pm *PenaltiesManager) applyPenalty(jsonFileName, guid, carModel string, pe
 	}
 
 	if results.RaceWeekendID != "" {
-		raceWeekend, err := pm.raceWeekendManager.LoadRaceWeekend(results.RaceWeekendID)
+		raceWeekend, err := pm.store.LoadRaceWeekend(results.RaceWeekendID)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Couldn't load race weekend with id: %s", results.RaceWeekendID)
@@ -258,7 +272,7 @@ func (pm *PenaltiesManager) applyPenalty(jsonFileName, guid, carModel string, pe
 			}
 		}
 
-		err = pm.raceWeekendManager.UpsertRaceWeekend(raceWeekend)
+		err = pm.store.UpsertRaceWeekend(raceWeekend)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Could not update race weekend: %s", raceWeekend.ID.String())
