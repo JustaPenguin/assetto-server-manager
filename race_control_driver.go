@@ -37,8 +37,8 @@ type RaceControlDriver struct {
 
 	Collisions []Collision `json:"Collisions"`
 
-	driverSwapContext context.Context    `json:"-"`
-	driverSwapCfn     context.CancelFunc `json:"-"`
+	driverSwapContext context.Context
+	driverSwapCfn     context.CancelFunc
 
 	// Cars is a map of CarModel to the information for that car.
 	Cars map[string]*RaceControlCarLapInfo `json:"Cars"`
