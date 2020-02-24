@@ -646,115 +646,112 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config CurrentRaceC
 
 					ticker.Stop()
 					return
-				} else {
+				}
 
-					if !firstPositionUpdate {
-						var nilVec udp.Vec
+				if !firstPositionUpdate {
+					nilVec := udp.Vec{X: 0, Y: 0, Z: 0}
 
-						nilVec = udp.Vec{X: 0, Y: 0, Z: 0}
-
-						if currentDriver.LastPos != nilVec {
-							sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
-								fmt.Sprintf("Hi! You are mid way through a driver swap, please wait %s before leaving the pits", countdown.String()))
-
-							if err == nil {
-								err := rc.process.SendUDPMessage(sendChat)
-
-								if err != nil {
-									logrus.WithError(err).Errorf("Unable to send driver swap welcome message to: %s", currentDriver.CarInfo.DriverName)
-								}
-							} else {
-								logrus.WithError(err).Errorf("Unable to build driver swap welcome message to: %s", currentDriver.CarInfo.DriverName)
-							}
-
-							firstPositionUpdate = true
-						}
-					}
-
-					// if driver has moved
-					if rc.positionHasChanged(position, currentDriver.LastPos) && firstPositionUpdate {
-						// if the time is within the disqualify window
-						if countdown >= (time.Second * time.Duration(config.DriverSwapDisqualifyTime)) {
-							sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
-								fmt.Sprintf("You have been kicked from the session for leaving the pits %s early during a driver swap", countdown.String()))
-
-							if err == nil {
-								err := rc.process.SendUDPMessage(sendChat)
-
-								if err != nil {
-									logrus.WithError(err).Errorf("Unable to send driver swap kicked message to: %s", currentDriver.CarInfo.DriverName)
-								}
-							} else {
-								logrus.WithError(err).Errorf("Unable to build driver swap kicked message to: %s", currentDriver.CarInfo.DriverName)
-							}
-
-							time.Sleep(5 * time.Second)
-
-							kickUser := udp.NewKickUser(uint8(currentDriver.CarInfo.CarID))
-
-							err = rc.process.SendUDPMessage(kickUser)
-
-							if err != nil {
-								logrus.WithError(err).Errorf("Unable to send kick command (driver swaps)")
-							} else {
-								logrus.Infof("Driver: %d has been kicked for leaving the pits %s early during a driver swap", currentDriver.CarInfo.CarID, countdown.String())
-							}
-
-							// don't stop the ticker, when the driver reconnects they should still have to wait
-							firstPositionUpdate = false
-							newDriverConnected = false
-							resumeSwap = true
-							currentDriver.LastPos = udp.Vec{X: 0, Y: 0, Z: 0}
-						} else if countdown >= (time.Second * time.Duration(config.DriverSwapPenaltyTime)) {
-
-							driverSwapPenaltiesMutex.Lock()
-							{
-								if _, ok := driverSwapPenalties[string(currentDriver.CarInfo.DriverGUID)]; ok {
-									driverSwapPenalties[string(currentDriver.CarInfo.DriverGUID)].penalty += countdown + (time.Second * 5)
-								} else {
-									driverSwapPenalties[string(currentDriver.CarInfo.DriverGUID)] = &driverPenalty{
-										penalty:  countdown + (time.Second * 5),
-										carModel: currentDriver.CarInfo.CarModel,
-									}
-								}
-							}
-							driverSwapPenaltiesMutex.Unlock()
-
-							sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
-								fmt.Sprintf("You have been given a %s second penalty for leaving the pits %s early during a driver swap", (countdown+(time.Second*5)).String(), countdown.String()))
-
-							if err == nil {
-								err := rc.process.SendUDPMessage(sendChat)
-
-								if err != nil {
-									logrus.WithError(err).Errorf("Unable to send driver swap penalty message to: %s", currentDriver.CarInfo.DriverName)
-								}
-							} else {
-								logrus.WithError(err).Errorf("Unable to build driver swap penalty message to: %s", currentDriver.CarInfo.DriverName)
-							}
-
-							logrus.Infof("Driver: %d has been given a %s second penalty for leaving the pits %s early during a driver swap", currentDriver.CarInfo.CarID, (countdown + (time.Second * 5)).String(), countdown.String())
-
-							ticker.Stop()
-							return
-						}
-
-					}
-
-					// send countdown messages
-					if firstPositionUpdate {
+					if currentDriver.LastPos != nilVec {
 						sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
-							fmt.Sprintf("Free to leave pits in %s", countdown.String()))
+							fmt.Sprintf("Hi! You are mid way through a driver swap, please wait %s before leaving the pits", countdown.String()))
 
 						if err == nil {
 							err := rc.process.SendUDPMessage(sendChat)
 
 							if err != nil {
-								logrus.WithError(err).Errorf("Unable to send driver swap countdown message to: %s", currentDriver.CarInfo.DriverName)
+								logrus.WithError(err).Errorf("Unable to send driver swap welcome message to: %s", currentDriver.CarInfo.DriverName)
 							}
 						} else {
-							logrus.WithError(err).Errorf("Unable to build driver swap countdown message to: %s", currentDriver.CarInfo.DriverName)
+							logrus.WithError(err).Errorf("Unable to build driver swap welcome message to: %s", currentDriver.CarInfo.DriverName)
 						}
+
+						firstPositionUpdate = true
+					}
+				}
+
+				// if driver has moved
+				if rc.positionHasChanged(position, currentDriver.LastPos) && firstPositionUpdate {
+					// if the time is within the disqualify window
+					if countdown >= (time.Second * time.Duration(config.DriverSwapDisqualifyTime)) {
+						sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
+							fmt.Sprintf("You have been kicked from the session for leaving the pits %s early during a driver swap", countdown.String()))
+
+						if err == nil {
+							err := rc.process.SendUDPMessage(sendChat)
+
+							if err != nil {
+								logrus.WithError(err).Errorf("Unable to send driver swap kicked message to: %s", currentDriver.CarInfo.DriverName)
+							}
+						} else {
+							logrus.WithError(err).Errorf("Unable to build driver swap kicked message to: %s", currentDriver.CarInfo.DriverName)
+						}
+
+						time.Sleep(5 * time.Second)
+
+						kickUser := udp.NewKickUser(uint8(currentDriver.CarInfo.CarID))
+
+						err = rc.process.SendUDPMessage(kickUser)
+
+						if err != nil {
+							logrus.WithError(err).Errorf("Unable to send kick command (driver swaps)")
+						} else {
+							logrus.Infof("Driver: %d has been kicked for leaving the pits %s early during a driver swap", currentDriver.CarInfo.CarID, countdown.String())
+						}
+
+						// don't stop the ticker, when the driver reconnects they should still have to wait
+						firstPositionUpdate = false
+						newDriverConnected = false
+						resumeSwap = true
+						currentDriver.LastPos = udp.Vec{X: 0, Y: 0, Z: 0}
+					} else if countdown >= (time.Second * time.Duration(config.DriverSwapPenaltyTime)) {
+
+						driverSwapPenaltiesMutex.Lock()
+						{
+							if _, ok := driverSwapPenalties[string(currentDriver.CarInfo.DriverGUID)]; ok {
+								driverSwapPenalties[string(currentDriver.CarInfo.DriverGUID)].penalty += countdown + (time.Second * 5)
+							} else {
+								driverSwapPenalties[string(currentDriver.CarInfo.DriverGUID)] = &driverPenalty{
+									penalty:  countdown + (time.Second * 5),
+									carModel: currentDriver.CarInfo.CarModel,
+								}
+							}
+						}
+						driverSwapPenaltiesMutex.Unlock()
+
+						sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
+							fmt.Sprintf("You have been given a %s second penalty for leaving the pits %s early during a driver swap", (countdown+(time.Second*5)).String(), countdown.String()))
+
+						if err == nil {
+							err := rc.process.SendUDPMessage(sendChat)
+
+							if err != nil {
+								logrus.WithError(err).Errorf("Unable to send driver swap penalty message to: %s", currentDriver.CarInfo.DriverName)
+							}
+						} else {
+							logrus.WithError(err).Errorf("Unable to build driver swap penalty message to: %s", currentDriver.CarInfo.DriverName)
+						}
+
+						logrus.Infof("Driver: %d has been given a %s second penalty for leaving the pits %s early during a driver swap", currentDriver.CarInfo.CarID, (countdown + (time.Second * 5)).String(), countdown.String())
+
+						ticker.Stop()
+						return
+					}
+
+				}
+
+				// send countdown messages
+				if firstPositionUpdate {
+					sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
+						fmt.Sprintf("Free to leave pits in %s", countdown.String()))
+
+					if err == nil {
+						err := rc.process.SendUDPMessage(sendChat)
+
+						if err != nil {
+							logrus.WithError(err).Errorf("Unable to send driver swap countdown message to: %s", currentDriver.CarInfo.DriverName)
+						}
+					} else {
+						logrus.WithError(err).Errorf("Unable to build driver swap countdown message to: %s", currentDriver.CarInfo.DriverName)
 					}
 				}
 			}
