@@ -4,20 +4,23 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
-	"time"
 
-	"github.com/cj123/assetto-server-manager"
-	"github.com/cj123/assetto-server-manager/cmd/server-manager/static"
-	"github.com/cj123/assetto-server-manager/cmd/server-manager/views"
-	"github.com/cj123/assetto-server-manager/internal/changelog"
-	"github.com/cj123/assetto-server-manager/pkg/udp"
-	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
+	servermanager "github.com/JustaPenguin/assetto-server-manager"
+	"github.com/JustaPenguin/assetto-server-manager/cmd/server-manager/static"
+	"github.com/JustaPenguin/assetto-server-manager/cmd/server-manager/views"
+	"github.com/JustaPenguin/assetto-server-manager/internal/changelog"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 
-	"github.com/etcd-io/bbolt"
+	"github.com/dustin/go-humanize"
+	"github.com/fatih/color"
+	"github.com/lorenzosaino/go-sysctl"
 	"github.com/pkg/browser"
 	"github.com/sirupsen/logrus"
+	lua "github.com/yuin/gopher-lua"
 )
 
 var defaultAddress = "0.0.0.0:8772"
@@ -85,19 +88,56 @@ func main() {
 		return
 	}
 
-	err = servermanager.InitWithResolver(resolver)
-
-	if err != nil {
-		ServeHTTPWithError(config.HTTP.Hostname, "Initialise server manager (internal error)", err)
-		return
-	}
-
 	if config.LiveMap.IsEnabled() {
 		if config.LiveMap.IntervalMs < udpRealtimePosRefreshIntervalMin {
 			udp.RealtimePosIntervalMs = udpRealtimePosRefreshIntervalMin
 		} else {
 			udp.RealtimePosIntervalMs = config.LiveMap.IntervalMs
 		}
+
+		if runtime.GOOS == "linux" {
+			// check known kernel net memory restrictions. if they're lower than the recommended
+			// values, then print out explaining how to increase them
+			memValues := []string{"net.core.rmem_max", "net.core.rmem_default", "net.core.wmem_max", "net.core.wmem_default"}
+
+			for _, val := range memValues {
+				checkMemValue(val)
+			}
+		}
+	}
+
+	if config.Lua.Enabled && servermanager.Premium() {
+		luaPath := os.Getenv("LUA_PATH")
+
+		newPath, err := filepath.Abs("./plugins/?.lua")
+
+		if err != nil {
+			logrus.WithError(err).Error("Couldn't get absolute path for /plugins folder")
+		} else {
+			if luaPath != "" {
+				luaPath = luaPath + ";" + newPath
+			} else {
+				luaPath = newPath
+			}
+
+			err = os.Setenv("LUA_PATH", luaPath)
+
+			if err != nil {
+				logrus.WithError(err).Error("Couldn't automatically set Lua path, lua will not run! Try setting the environment variable LUA_PATH manually.")
+			}
+		}
+
+		servermanager.Lua = lua.NewState()
+		defer servermanager.Lua.Close()
+
+		servermanager.InitLua(resolver.ResolveRaceControl())
+	}
+
+	err = servermanager.InitWithResolver(resolver)
+
+	if err != nil {
+		ServeHTTPWithError(config.HTTP.Hostname, "Initialise server manager (internal error)", err)
+		return
 	}
 
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
@@ -120,20 +160,48 @@ func main() {
 	}
 }
 
-func startUDPReplay(resolver *servermanager.Resolver, file string) {
-	time.Sleep(time.Second * 20)
+const udpBufferRecommendedSize = uint64(2e6) // 2MB
 
-	db, err := bbolt.Open(file, 0644, nil)
-
-	if err != nil {
-		logrus.WithError(err).Error("Could not open bolt")
-	}
-
-	err = replay.ReplayUDPMessages(db, 1, func(message udp.Message) {
-		resolver.UDPCallback(message)
-	}, time.Millisecond*500)
+func checkMemValue(key string) {
+	val, err := sysctlAsUint64(key)
 
 	if err != nil {
-		logrus.WithError(err).Error("UDP Replay failed")
+		logrus.WithError(err).Errorf("Could not check sysctl val: %s", key)
+		return
 	}
+
+	if val < udpBufferRecommendedSize {
+		d := color.New(color.FgRed)
+		red := d.PrintfFunc()
+		redln := d.PrintlnFunc()
+
+		redln()
+		redln("-------------------------------------------------------------------")
+		redln("                          W A R N I N G")
+		redln("-------------------------------------------------------------------")
+
+		red("System %s value is too small! UDP messages are \n", key)
+		redln("more likely to be lost and the stability of various Server Manager")
+		redln("systems will be greatly affected.")
+		redln()
+
+		red("Your current value is %s. We recommend a value of %s for a \n", humanize.Bytes(val), humanize.Bytes(udpBufferRecommendedSize))
+		redln("more consistent operation.")
+		redln()
+
+		red("You can do this with the command:\n\t sysctl -w %s=%d\n", key, udpBufferRecommendedSize)
+		redln()
+
+		redln("More information can be found on sysctl variables here:\n\t https://www.cyberciti.biz/faq/howto-set-sysctl-variables/")
+	}
+}
+
+func sysctlAsUint64(val string) (uint64, error) {
+	val, err := sysctl.Get(val)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return strconv.ParseUint(val, 10, 0)
 }

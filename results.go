@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -53,46 +54,46 @@ func (s *SessionResults) FindCarByGUIDAndModel(guid, model string) (*SessionCar,
 
 func (s *SessionResults) Anonymize() {
 	for _, car := range s.Cars {
-		car.Driver.GUID = GetMD5Hash(car.Driver.GUID)
+		car.Driver.GUID = AnonymiseDriverGUID(car.Driver.GUID)
 		car.Driver.Name = shortenDriverName(car.Driver.Name)
 
 		for index := range car.Driver.GuidsList {
-			car.Driver.GuidsList[index] = GetMD5Hash(car.Driver.GuidsList[index])
+			car.Driver.GuidsList[index] = AnonymiseDriverGUID(car.Driver.GuidsList[index])
 		}
 	}
 
 	for _, event := range s.Events {
-		event.Driver.GUID = GetMD5Hash(event.Driver.GUID)
-		event.OtherDriver.GUID = GetMD5Hash(event.OtherDriver.GUID)
+		event.Driver.GUID = AnonymiseDriverGUID(event.Driver.GUID)
+		event.OtherDriver.GUID = AnonymiseDriverGUID(event.OtherDriver.GUID)
 
 		event.Driver.Name = shortenDriverName(event.Driver.Name)
 		event.OtherDriver.Name = shortenDriverName(event.OtherDriver.Name)
 
 		for i, guid := range event.Driver.GuidsList {
-			event.Driver.GuidsList[i] = GetMD5Hash(guid)
+			event.Driver.GuidsList[i] = AnonymiseDriverGUID(guid)
 		}
 
 		for i, guid := range event.OtherDriver.GuidsList {
-			event.Driver.GuidsList[i] = GetMD5Hash(guid)
+			event.Driver.GuidsList[i] = AnonymiseDriverGUID(guid)
 		}
 	}
 
 	for _, lap := range s.Laps {
-		lap.DriverGUID = GetMD5Hash(lap.DriverGUID)
+		lap.DriverGUID = AnonymiseDriverGUID(lap.DriverGUID)
 
 		lap.DriverName = shortenDriverName(lap.DriverName)
 	}
 
 	for _, result := range s.Result {
-		result.DriverGUID = GetMD5Hash(result.DriverGUID)
+		result.DriverGUID = AnonymiseDriverGUID(result.DriverGUID)
 
 		result.DriverName = shortenDriverName(result.DriverName)
 	}
 }
 
-func GetMD5Hash(guid string) string {
+func AnonymiseDriverGUID(guid string) string {
 	hasher := md5.New()
-	hasher.Write([]byte(guid))
+	_, _ = hasher.Write([]byte(guid))
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
@@ -375,7 +376,7 @@ cars:
 		var bestLap int
 
 		for y := range s.Laps {
-			if (s.Cars[i].Driver.GUID == s.Laps[y].DriverGUID) && s.IsDriversFastestLap(s.Cars[i].Driver.GUID, s.Cars[i].Model, s.Laps[y].LapTime, s.Laps[y].Cuts) {
+			if (s.Cars[i].Driver.GUID == s.Laps[y].DriverGUID) && (s.Cars[i].Model == s.Laps[y].CarModel) && s.IsDriversFastestLap(s.Cars[i].Driver.GUID, s.Cars[i].Model, s.Laps[y].LapTime, s.Laps[y].Cuts) {
 				bestLap = s.Laps[y].LapTime
 				break
 			}
@@ -397,6 +398,41 @@ cars:
 		})
 	}
 
+laps:
+	// in the crazy case that a driver has laps but is in neither car or results list
+	for _, lap := range s.Laps {
+		for _, result := range s.Result {
+			if result.DriverGUID == lap.DriverGUID {
+				continue laps
+			}
+		}
+
+		bestLap := 0
+
+		for _, findBestLap := range s.Laps {
+			if (findBestLap.DriverGUID == lap.DriverGUID) && (findBestLap.CarModel == lap.CarModel) && s.IsDriversFastestLap(findBestLap.DriverGUID, findBestLap.CarModel, findBestLap.LapTime, findBestLap.Cuts) {
+				bestLap = findBestLap.LapTime
+				break
+			}
+		}
+
+		s.Result = append(s.Result, &SessionResult{
+			BallastKG:    lap.BallastKG,
+			BestLap:      bestLap,
+			CarID:        lap.CarID,
+			CarModel:     lap.CarModel,
+			DriverGUID:   lap.DriverGUID,
+			DriverName:   lap.DriverName,
+			Restrictor:   lap.Restrictor,
+			TotalTime:    0,
+			HasPenalty:   false,
+			PenaltyTime:  0,
+			LapPenalty:   0,
+			Disqualified: false,
+			ClassID:      lap.ClassID,
+		})
+	}
+
 	for i := range s.Result {
 		s.Result[i].TotalTime = 0
 
@@ -409,6 +445,45 @@ cars:
 		if s.Result[i].HasPenalty {
 			s.Result[i].TotalTime += int(s.Result[i].PenaltyTime.Seconds())
 		}
+
+		if s.Result[i].BestLap == 0 {
+			for _, findBestLap := range s.Laps {
+				if (findBestLap.DriverGUID == s.Result[i].DriverGUID) && (findBestLap.CarModel == s.Result[i].CarModel) && s.IsDriversFastestLap(findBestLap.DriverGUID, findBestLap.CarModel, findBestLap.LapTime, findBestLap.Cuts) {
+					s.Result[i].BestLap = findBestLap.LapTime
+					break
+				}
+			}
+		}
+	}
+
+results:
+	// is this result car in the car list? If not then add it
+	for _, result := range s.Result {
+		for _, car := range s.Cars {
+			if result.DriverGUID == car.Driver.GUID && result.CarModel == car.Model {
+				continue results
+			}
+		}
+
+		guidList := []string{result.DriverGUID}
+
+		driver := SessionDriver{
+			GUID:      result.DriverGUID,
+			GuidsList: guidList,
+			Name:      result.DriverName,
+			Nation:    "",
+			Team:      "",
+			ClassID:   result.ClassID,
+		}
+
+		s.Cars = append(s.Cars, &SessionCar{
+			BallastKG:  result.BallastKG,
+			CarID:      result.CarID,
+			Driver:     driver,
+			Model:      result.CarModel,
+			Restrictor: result.Restrictor,
+			Skin:       "",
+		})
 	}
 
 	sort.Slice(s.Result, func(i, j int) bool {
@@ -441,10 +516,10 @@ cars:
 
 			return s.GetNumLaps(s.Result[i].DriverGUID, s.Result[i].CarModel) >= s.GetNumLaps(s.Result[j].DriverGUID, s.Result[j].CarModel)
 
-		} else {
-			// driver i is closer to the front than j if they are not disqualified and j is
-			return s.Result[j].Disqualified
 		}
+
+		// driver i is closer to the front than j if they are not disqualified and j is
+		return s.Result[j].Disqualified
 	})
 }
 
@@ -486,8 +561,7 @@ func (s *SessionResults) GetTime(timeINT int, driverGUID, model string, penalty 
 			if driver.DriverGUID == driverGUID && driver.CarModel == model && driver.HasPenalty {
 				d += driver.PenaltyTime
 
-				switch s.Type {
-				case SessionTypeRace:
+				if s.Type == SessionTypeRace {
 					d -= time.Duration(driver.LapPenalty) * s.GetLastLapTime(driverGUID, model)
 				}
 			}
@@ -526,9 +600,9 @@ func (s *SessionResults) GetNumLaps(driverGUID, model string) int {
 	return i
 }
 
-func (s *SessionResults) GetLastLapTime(driverGuid, model string) time.Duration {
+func (s *SessionResults) GetLastLapTime(driverGUID, model string) time.Duration {
 	for i := len(s.Laps) - 1; i >= 0; i-- {
-		if s.Laps[i].DriverGUID == driverGuid && s.Laps[i].CarModel == model {
+		if s.Laps[i].DriverGUID == driverGUID && s.Laps[i].CarModel == model {
 			return s.Laps[i].GetLapTime()
 		}
 	}
@@ -570,21 +644,21 @@ func (s *SessionResults) GetPotentialLap(driverGUID, model string) time.Duration
 	return totalSectorTime
 }
 
-func (s *SessionResults) GetLastLapPos(driverGuid, model string) int {
+func (s *SessionResults) GetLastLapPos(driverGUID, model string) int {
 	var driverLaps int
 
 	for i := range s.Laps {
-		if s.Laps[i].DriverGUID == driverGuid && s.Laps[i].CarModel == model {
+		if s.Laps[i].DriverGUID == driverGUID && s.Laps[i].CarModel == model {
 			driverLaps++
 		}
 	}
 
-	return s.GetPosForLap(driverGuid, model, int64(driverLaps))
+	return s.GetPosForLap(driverGUID, model, int64(driverLaps))
 }
 
-func (s *SessionResults) GetDriverPosition(driverGuid, model string) int {
+func (s *SessionResults) GetDriverPosition(driverGUID, model string) int {
 	for i := range s.Result {
-		if s.Result[i].DriverGUID == driverGuid && s.Result[i].CarModel == model {
+		if s.Result[i].DriverGUID == driverGUID && s.Result[i].CarModel == model {
 			return i + 1
 		}
 	}
@@ -592,11 +666,11 @@ func (s *SessionResults) GetDriverPosition(driverGuid, model string) int {
 	return 0
 }
 
-func (s *SessionResults) GetCuts(driverGuid, model string) int {
+func (s *SessionResults) GetCuts(driverGUID, model string) int {
 	var i int
 
 	for _, lap := range s.Laps {
-		if lap.DriverGUID == driverGuid && lap.CarModel == model {
+		if lap.DriverGUID == driverGUID && lap.CarModel == model {
 			i += lap.Cuts
 		}
 	}
@@ -864,7 +938,7 @@ func ListAllResults() ([]SessionResults, error) {
 	var results []SessionResults
 
 	for _, resultFile := range resultFiles {
-		result, err := LoadResult(resultFile.Name())
+		result, err := LoadResult(resultFile.Name(), LoadResultWithoutPluginFire)
 
 		if err != nil {
 			return nil, err
@@ -894,7 +968,11 @@ func GetResultDate(name string) (time.Time, error) {
 
 var UseFallBackSorting = false
 
-func LoadResult(fileName string) (*SessionResults, error) {
+type LoadResultOpts int
+
+const LoadResultWithoutPluginFire LoadResultOpts = 0
+
+func LoadResult(fileName string, opts ...LoadResultOpts) (*SessionResults, error) {
 	var result *SessionResults
 
 	resultsPath := filepath.Join(ServerInstallPath, "results")
@@ -935,7 +1013,40 @@ func LoadResult(fileName string) (*SessionResults, error) {
 		result.FallBackSort()
 	}
 
+	var skipLua bool
+
+	for _, opt := range opts {
+		if opt == LoadResultWithoutPluginFire {
+			skipLua = true
+		}
+	}
+
+	if !skipLua && config.Lua.Enabled && Premium() {
+		err = resultsLoadPlugin(result)
+
+		if err != nil {
+			logrus.WithError(err).Error("results load plugin script failed")
+		}
+	}
+
 	return result, nil
+}
+
+func resultsLoadPlugin(results *SessionResults) error {
+	p := &LuaPlugin{}
+
+	newSessionResults := &SessionResults{}
+
+	p.Inputs(results).Outputs(newSessionResults)
+	err := p.Call("./plugins/results.lua", "onResultsLoad")
+
+	if err != nil {
+		return err
+	}
+
+	*results = *newSessionResults
+
+	return nil
 }
 
 type ResultsHandler struct {
@@ -982,6 +1093,75 @@ func (rh *ResultsHandler) list(w http.ResponseWriter, r *http.Request) {
 		Pages:       pages,
 		CurrentPage: page,
 	})
+}
+
+func (rh *ResultsHandler) uploadHandler(w http.ResponseWriter, r *http.Request) {
+	matched, err := rh.upload(r)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("could not parse results form")
+		AddErrorFlash(w, r, "Sorry, we couldn't parse that results file! Please make sure the format is correct.")
+	}
+
+	if !matched {
+		AddErrorFlash(w, r, "Your results file content was correct, but the file name is incorrect! Please make sure the file name matches the AC standard then try again.")
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+const uploadFileSizeLimit = 5e6
+
+func (rh *ResultsHandler) upload(r *http.Request) (bool, error) {
+	err := r.ParseMultipartForm(10 << 20)
+
+	if err != nil {
+		return true, err
+	}
+
+	file, header, err := r.FormFile("resultsFile")
+	if err != nil {
+		return true, err
+	}
+	defer file.Close()
+
+	if header.Size > (uploadFileSizeLimit) {
+		return true, fmt.Errorf("servermanager: file size too large, limit is: %d, this file is: %d", int64(uploadFileSizeLimit), header.Size)
+	}
+
+	fileBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		return true, err
+	}
+
+	// make sure what we've been given is actually a results file
+	var resultTest *SessionResults
+
+	err = json.Unmarshal(fileBytes, &resultTest)
+
+	if err != nil {
+		return true, err
+	}
+
+	matched, err := regexp.MatchString(`\d{4}_\d{1,2}_\d{1,2}_\d{1,2}_\d{1,2}_(RACE|QUALIFY|PRACTICE|BOOK)\.json`, header.Filename)
+
+	if err != nil {
+		return matched, err
+	}
+
+	if !matched {
+		return matched, nil
+	}
+
+	path := filepath.Join(ServerInstallPath, "results", header.Filename)
+
+	err = ioutil.WriteFile(path, fileBytes, 0644)
+
+	if err != nil {
+		return matched, err
+	}
+
+	return matched, nil
 }
 
 type resultsViewTemplateVars struct {

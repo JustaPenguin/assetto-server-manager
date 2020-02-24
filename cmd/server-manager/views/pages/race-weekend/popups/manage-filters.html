@@ -1,4 +1,4 @@
-{{/* gotype:github.com/cj123/assetto-server-manager.raceWeekendFilterTemplateVars */}}
+{{/* gotype:github.com/JustaPenguin/assetto-server-manager.raceWeekendFilterTemplateVars */}}
 
 {{ define "partial" }}
     <div class="modal-dialog modal-lg" role="document">
@@ -69,7 +69,7 @@
 
                                             <div class="col-sm-8">
 
-                                                <select multiple required class="form-control Cars" name="AvailableResults" id="AvailableResults" size="15">
+                                                <select multiple required class="form-control" name="AvailableResults" id="AvailableResults" size="15">
                                                     {{ range $index, $result := $.ResultsAvailableForSorting }}
                                                         {{ $selected := false }}
 
@@ -188,61 +188,59 @@
                                 </div>
                             </div>
 
-                            {{ if not $.ParentSession.IsBase }}
-                                <div class="text-center mt-2 mb-2">
-                                    <i class="fa fa-arrow-down"></i>
-                                </div>
+                            <div class="text-center mt-2 mb-2">
+                                <i class="fa fa-arrow-down"></i>
+                            </div>
 
-                                <div class="card border-success">
-                                    <div class="card-body">
+                            <div class="card border-success">
+                                <div class="card-body">
 
-                                        <p>Then place the resulting drivers into the Entry List for <strong>{{ $.ChildSession.Name }}</strong> from:</p>
+                                    <p>Then place the resulting drivers into the Entry List for <strong>{{ $.ChildSession.Name }}</strong> from:</p>
 
-                                        <div class="form-group row">
-                                            <label for="GridStart" class="col-sm-4 col-form-label">Grid Start</label>
+                                    <div class="form-group row">
+                                        <label for="GridStart" class="col-sm-4 col-form-label">Grid Start</label>
 
-                                            <div class="col-sm-8">
-                                                <input
-                                                        {{ if WriteAccess }}
-                                                            type="number"
-                                                        {{ else }}
-                                                            type="hidden"
-                                                        {{ end }}
-                                                        id="GridStart"
-                                                        name="GridStart"
-                                                        class="form-control"
-                                                        value="{{ $.Filter.EntryListStart }}"
-                                                        step="1"
-                                                        min="1"
-                                                >
+                                        <div class="col-sm-8">
+                                            <input
+                                                    {{ if WriteAccess }}
+                                                        type="number"
+                                                    {{ else }}
+                                                        type="hidden"
+                                                    {{ end }}
+                                                    id="GridStart"
+                                                    name="GridStart"
+                                                    class="form-control"
+                                                    value="{{ $.Filter.EntryListStart }}"
+                                                    step="1"
+                                                    min="1"
+                                            >
 
-                                                {{ if not WriteAccess }}
-                                                    <label class="col-form-label">{{ $.Filter.EntryListStart }}</label>
-                                                {{ end }}
-                                            </div>
+                                            {{ if not WriteAccess }}
+                                                <label class="col-form-label">{{ $.Filter.EntryListStart }}</label>
+                                            {{ end }}
                                         </div>
+                                    </div>
 
 
-                                        <div class="form-group row">
-                                            <label for="ForceUseTyreFromFastestLap" class="col-sm-4 col-form-label">Start on Tyre from Fastest Lap</label>
+                                    <div class="form-group row">
+                                        <label for="ForceUseTyreFromFastestLap" class="col-sm-4 col-form-label">Start on Tyre from Fastest Lap</label>
 
-                                            <div class="col-sm-8">
-                                                <input
-                                                        class="form-control"
-                                                        type="checkbox"
-                                                        id="ForceUseTyreFromFastestLap"
-                                                        name="ForceUseTyreFromFastestLap"
-                                                        {{ if $.Filter.ForceUseTyreFromFastestLap }}
-                                                            checked="checked"
-                                                        {{ end }}
-                                                ><br/>
+                                        <div class="col-sm-8">
+                                            <input
+                                                    class="form-control"
+                                                    type="checkbox"
+                                                    id="ForceUseTyreFromFastestLap"
+                                                    name="ForceUseTyreFromFastestLap"
+                                                    {{ if $.Filter.ForceUseTyreFromFastestLap }}
+                                                        checked="checked"
+                                                    {{ end }}
+                                            ><br/>
 
-                                                <small>If enabled then the entrants for the next session will be forced to start on the same tyres as their fastest lap from the previous session.</small>
-                                            </div>
+                                            <small>If enabled then the entrants for the next session will be forced to start on the same tyres as their fastest lap from the previous session.</small>
                                         </div>
                                     </div>
                                 </div>
-                            {{ end }}
+                            </div>
                         </form>
                     </div>
 

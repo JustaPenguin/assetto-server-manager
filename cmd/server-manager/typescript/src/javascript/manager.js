@@ -64,6 +64,12 @@ $(document).ready(function () {
         $elem.text(moment.parseZone($elem.attr("data-time")).tz(moment.tz.guess()).format('LLLL (z)'));
     });
 
+    $(".time-local-kitchen").each(function (i, elem) {
+        let $elem = $(elem);
+
+        $elem.text(moment.parseZone($elem.attr("data-time")).tz(moment.tz.guess()).calendar());
+    });
+
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     $(".timezone").text(timezone);
@@ -802,7 +808,7 @@ class RaceSetup {
                     skin = availableCars[currentCar][0]
                 }
 
-                let path = "/content/cars/" + currentCar + "/skins/" + skin + "/preview.jpg";
+                let path = "/content/cars/" + encodeURIComponent(currentCar) + "/skins/" + encodeURIComponent(skin) + "/preview.jpg";
 
                 $.get(path)
                     .done(function () {
@@ -2081,14 +2087,10 @@ let championships = {
     },
 
     setSwitchesForACSR: function (state) {
-        let $openEntrantsSwitch = $("#ChampionshipOpenEntrants");
         let $signUpFormSwitch = $("#ChampionshipSignUpFormEnabled");
         let $overridePasswordSwitch = $("#OverridePassword");
 
         if (state) {
-            $openEntrantsSwitch.bootstrapSwitch('state', false);
-            $openEntrantsSwitch.bootstrapSwitch('disabled', true);
-
             $signUpFormSwitch.bootstrapSwitch('state', true);
             $signUpFormSwitch.bootstrapSwitch('disabled', true);
 
@@ -2099,7 +2101,6 @@ let championships = {
         } else {
             $overridePasswordSwitch.closest(".card-body").find("#ReplacementPasswordWrapper").show();
 
-            $openEntrantsSwitch.bootstrapSwitch('disabled', false);
             $signUpFormSwitch.bootstrapSwitch('disabled', false);
             $overridePasswordSwitch.bootstrapSwitch('disabled', false);
         }
@@ -2161,7 +2162,7 @@ let championships = {
         }
 
         function showCarImage(car, skin) {
-            let path = "/content/cars/" + car + "/skins/" + skin + "/preview.jpg";
+            let path = "/content/cars/" + encodeURIComponent(car) + "/skins/" + encodeURIComponent(skin) + "/preview.jpg";
 
             $.get(path)
                 .done(function () {
@@ -2224,6 +2225,12 @@ let championships = {
 
         $document.on("input", ".entrant-team", function () {
             $(this).closest(".entrant").find(".points-transfer").show();
+        });
+
+        $(".Cars").each(function(index, element) {
+            let $target = $(element);
+
+            $target.closest(".race-setup").find("input[name='NumCars']").val($target.val().length);
         });
 
         $document.on("change", ".Cars", function(e) {

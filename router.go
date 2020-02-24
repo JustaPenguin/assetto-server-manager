@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -62,12 +63,14 @@ func Router(
 	raceWeekendHandler *RaceWeekendHandler,
 	strackerHandler *StrackerHandler,
 	healthCheck *HealthCheck,
+	kissMyRankHandler *KissMyRankHandler,
 ) http.Handler {
 	r := chi.NewRouter()
 
+	compressor := middleware.Compress(5)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(middleware.DefaultCompress)
+	r.Use(compressor)
 	r.Use(panicHandler)
 
 	r.HandleFunc("/login", accountHandler.login)
@@ -80,6 +83,22 @@ func Router(
 		r.Mount("/debug/", middleware.Profiler())
 	}
 
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		// if a user comes from an stracker page and hits a 404, the likelihood is that they found a link that does
+		// not have an stracker prefix added to it. Catch it, and forward them back to an URL that has the prefix.
+		u, err := url.Parse(r.Referer())
+
+		if err == nil && strings.HasPrefix(u.Path, "/stracker/") {
+			// try to redirect back to /stracker/<url request>
+			r.URL.Path = "/stracker" + r.URL.Path
+
+			http.Redirect(w, r, r.URL.String(), http.StatusTemporaryRedirect)
+			return
+		}
+
+		http.NotFound(w, r)
+	})
+
 	// readers
 	r.Group(func(r chi.Router) {
 		r.Use(accountHandler.ReadAccessMiddleware)
@@ -87,6 +106,7 @@ func Router(
 		// pages
 		r.Get("/", serverAdministrationHandler.home)
 		r.Get("/changelog", serverAdministrationHandler.changelog)
+		r.Get("/premium", serverAdministrationHandler.premium)
 
 		r.Mount("/stracker/", http.HandlerFunc(strackerHandler.proxy))
 
@@ -174,6 +194,7 @@ func Router(
 		r.Post("/car/{name}/metadata", carsHandler.saveMetadata)
 		r.Post("/car/{name}/skin", carsHandler.uploadSkin)
 		r.Post("/track/{name}/metadata", tracksHandler.saveMetadata)
+		r.Post("/results/upload", resultsHandler.uploadHandler)
 
 		// races
 		r.Get("/quick", quickRaceHandler.create)
@@ -192,6 +213,7 @@ func Router(
 		r.Get("/process/{action}", serverAdministrationHandler.serverProcess)
 		r.Get("/logs", serverAdministrationHandler.logs)
 		r.Get("/api/logs", serverAdministrationHandler.logsAPI)
+		r.Get("/api/log-download/{logFile}", serverAdministrationHandler.logsDownload)
 
 		// championships
 		r.Get("/championships/new", championshipsHandler.createOrEdit)
@@ -206,6 +228,8 @@ func Router(
 		r.Get("/championship/{championshipID}/event/{eventID}/practice", championshipsHandler.startPracticeEvent)
 		r.Get("/championship/{championshipID}/event/{eventID}/cancel", championshipsHandler.cancelEvent)
 		r.Get("/championship/{championshipID}/event/{eventID}/restart", championshipsHandler.restartEvent)
+		r.Get("/championship/{championshipID}/event/{eventID}/duplicate", championshipsHandler.duplicateEvent)
+
 		r.Post("/championship/{championshipID}/driver-penalty/{classID}/{driverGUID}", championshipsHandler.driverPenalty)
 		r.Post("/championship/{championshipID}/team-penalty/{classID}/{team}", championshipsHandler.teamPenalty)
 		r.Get("/championship/{championshipID}/entrants", championshipsHandler.signedUpEntrants)
@@ -217,6 +241,11 @@ func Router(
 		r.Post("/championship/import", championshipsHandler.importChampionship)
 		r.Get("/championship/{championshipID}/event/{eventID}/import", championshipsHandler.eventImport)
 		r.Post("/championship/{championshipID}/event/{eventID}/import", championshipsHandler.eventImport)
+
+		r.Get("/championship/{championshipID}/custom/list", championshipsHandler.listCustomRacesForImport)
+		r.Get("/championship/{championshipID}/custom/{eventID}/import", championshipsHandler.customRaceImport)
+		r.Get("/championship/{championshipID}/race-weekend/list", championshipsHandler.listRaceWeekendsForImport)
+		r.Get("/championship/{championshipID}/race-weekend/{weekendID}/import", championshipsHandler.raceWeekendImport)
 
 		// penalties
 		r.Post("/penalties/{sessionFile}/{driverGUID}", penaltiesHandler.managePenalty)
@@ -302,8 +331,10 @@ func Router(
 		r.HandleFunc("/broadcast-chat", raceControlHandler.broadcastChat)
 		r.HandleFunc("/admin-command", raceControlHandler.adminCommand)
 		r.HandleFunc("/kick-user", raceControlHandler.kickUser)
+		r.HandleFunc("/send-chat", raceControlHandler.sendChat)
 
 		r.HandleFunc("/stracker/options", strackerHandler.options)
+		r.HandleFunc("/kissmyrank/options", kissMyRankHandler.options)
 	})
 
 	FileServer(r, "/static", fs, false)
@@ -324,12 +355,12 @@ func FileServer(r chi.Router, path string, root http.FileSystem, useRevalidation
 	}
 	path += "*"
 
-	r.Get(path, AssetCacheHeaders(fs.ServeHTTP, useRevalidation))
+	r.Get(path, AssetCacheHeaders(fs, useRevalidation))
 }
 
 const maxAge30Days = 2592000
 
-func AssetCacheHeaders(next http.HandlerFunc, useRevalidation bool) http.HandlerFunc {
+func AssetCacheHeaders(next http.Handler, useRevalidation bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if useRevalidation {
 			w.Header().Add("Cache-Control", fmt.Sprintf("public, must-revalidate"))
@@ -337,7 +368,7 @@ func AssetCacheHeaders(next http.HandlerFunc, useRevalidation bool) http.Handler
 		} else {
 			w.Header().Add("Cache-Control", fmt.Sprintf("public, max-age=%d", maxAge30Days))
 
-			next(w, r)
+			next.ServeHTTP(w, r)
 		}
 	}
 }

@@ -1,4 +1,4 @@
-{{/* gotype: github.com/cj123/assetto-server-manager.championshipViewTemplateVars */}}
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.championshipViewTemplateVars */}}
 
 {{ define "title" }}{{ .Championship.Name }}{{ end }}
 
@@ -12,7 +12,13 @@
 
         <h1 class="text-center">{{ $championship.Name }}</h1>
 
-
+        {{ if $championship.ACSR }}
+            <div class="text-center">
+                <em>
+                    An <a href="https://acsr.assettocorsaservers.com">Assetto Corsa Skill Rating</a> Championship
+                </em>
+            </div>
+        {{ end }}
 
         {{ if $championship.SignUpAvailable }}
             <div class="card border-primary mb-3 mt-3">
@@ -89,6 +95,11 @@
                                 {{ if $championship.IsMultiClass }}<th>Class</th>{{ end }}
                                 <th>#</th>
                                 <th>Driver</th>
+                                {{ with $.DriverRatings }}
+                                    <th>
+                                        Rating
+                                    </th>
+                                {{ end }}
 
                                 {{ if $championship.HasTeamNames }}
                                     <th>Team</th>
@@ -124,6 +135,12 @@
                                                 <span class="badge badge-danger ml-2">Points Penalty: {{ $driverPenalty }}</span>
                                             {{ end }}
                                         </td>
+
+                                        {{ with $.DriverRatings }}
+                                            <td>
+                                                {{ template "acsr-rating" dict "DriverRatings" $.DriverRatings "GUID" $entrant.Car.Driver.GUID }}
+                                            </td>
+                                        {{ end }}
 
                                         {{ if $championship.HasTeamNames }}
                                             <td>{{ $entrant.TeamSummary }}</td>
@@ -250,6 +267,9 @@
                             {{ if $championship.IsMultiClass }}<th>Class</th>{{ end }}
                             <th>#</th>
                             <th>Driver</th>
+                            {{ with $.DriverRatings }}
+                                <th>Rating</th>
+                            {{ end }}
                             {{ if $championship.HasTeamNames }}
                                 <th>Team</th>
                             {{ end }}
@@ -275,7 +295,11 @@
                                         {{ end }}
                                         <td><span data-toggle="tooltip" title="Pit Box: {{ $entrant.PitBox }}">{{ add $i 1 }}</span></td>
                                         <td>{{ driverName $entrant.Name }}</td>
-
+                                        {{ with $.DriverRatings }}
+                                            <td>
+                                                {{ template "acsr-rating" dict "DriverRatings" $.DriverRatings "GUID" $entrant.GUID }}
+                                            </td>
+                                        {{ end }}
                                         {{ if $championship.HasTeamNames }}
                                             <td>{{ $entrant.Team }}</td>
                                         {{ end }}
@@ -419,8 +443,29 @@
 
         <div class="float-right">
             {{ if $writeAccess }}
-                <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event">Add more Events</a>
-                <a class="btn btn-info" href="/race-weekends/new?championshipID={{ $championship.ID.String }}">Add a Race Weekend</a>
+                <div class="btn-group">
+
+                    <a class="btn btn-success" href="/championship/{{ $championship.ID.String }}/event">Add Events</a>
+
+                    <a href="#" style="min-width: 38px !important;" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="importCustomDropdown" class="btn btn-success btn-sm custom-race-actions-btn-small dropdown-toggle dropdown-toggle-split"
+                    ></a>
+
+                    <div class="dropdown-menu" aria-labelledby="importCustomDropdown">
+                        <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/custom/list">Import Custom Race</a>
+                    </div>
+                </div>
+
+                <div class="btn-group" style="min-width: 180px">
+
+                    <a class="btn btn-info" href="/race-weekends/new?championshipID={{ $championship.ID.String }}">Add a Race Weekend</a>
+
+                    <a href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="importWeekendDropdown" class="btn btn-info btn-sm custom-race-actions-btn-small dropdown-toggle dropdown-toggle-split"
+                    ></a>
+
+                    <div class="dropdown-menu" aria-labelledby="importWeekendDropdown">
+                        <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/race-weekend/list">Import Race Weekend</a>
+                    </div>
+                </div>
             {{ end }}
 
             <div class="dropdown show" style="display: inline-block">

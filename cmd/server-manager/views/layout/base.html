@@ -3,6 +3,9 @@
     <html lang="en">
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        {{ with $.OGImage }}<meta property="og:image" content="{{ $.OGImage }}">{{ end }}
+
         <link rel="shortcut icon" href="/static/favicon.ico">
         <meta charset="UTF-8">
         <title>{{ block "title" . }}{{ end }} / {{ $.ServerName }}</title>
@@ -47,7 +50,8 @@
 
     <nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-primary">
         <div class="{{ with $.WideContainer }}container-fluid{{ else }}container{{ end }}">
-            <a class="navbar-brand" href="/" data-toggle="tooltip" title="{{ $.ServerName }}">{{ $.ServerName }}</a>
+            <a class="navbar-brand d-none d-sm-block" href="/" data-toggle="tooltip" title="{{ $.ServerName }}">{{ $.ServerName }}</a>
+            <a class="navbar-brand d-sm-none" href="/">{{ $.ServerName }}</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -125,6 +129,7 @@
                                     <a class="dropdown-item" href="/motd">Messages</a>
                                     <a class="dropdown-item" href="/audit-logs">Audit Logs</a>
                                     <a class="dropdown-item" href="/stracker/options">STracker</a>
+                                    <a class="dropdown-item" href="/kissmyrank/options">KissMyRank</a>
                                 {{ end }}
                                 {{ if DeleteAccess }}
                                     <a class="dropdown-item" href="/autofill-entrants">AutoFill Entrants</a>
@@ -219,11 +224,38 @@
     </nav>
 
     <div class="{{ with $.WideContainer }}container-fluid{{ else }}container{{ end }}">
+
+        {{ if WriteAccess }}
+            {{ if and $.ACSREnabled (or (not $.BaseURLIsSet) (not $.BaseURLIsValid)) }}
+                <div class="card border-danger mb-5">
+                    <div class="card-header bg-danger text-white">
+                        ACSR Configuration Issue
+                    </div>
+
+                    <div class="card-body">
+                        <p>
+                            You have enabled ACSR in the Server Options, but your server config.yml does not have
+                            {{ if not $.BaseURLIsSet }}a BaseURL set{{ else if not $.BaseURLIsValid}}a valid BaseURL{{ end }}.
+                            <strong>Server Manager will not be able to connect to ACSR.</strong>
+                            Please ensure that Server Manager is accessible from the web and that you set the BaseURL parameter to
+                            a valid web address.
+                        </p>
+
+                        <p>
+                            <a href="https://github.com/JustaPenguin/assetto-server-manager/wiki/ACSR-Configuration">
+                                View a more detailed configuration guide for ACSR
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            {{ end }}
+        {{ end }}
+
         {{ block "content" . }}{{ end }}
 
 
         {{ block "showpremium" . }}
-            {{ if ne $.Request.URL.Path "/" }}
+            {{ if and (ne $.Request.URL.Path "/") (ne $.Request.URL.Path "/premium") }}
                 <div class="clearfix"></div>
 
                 <div class="mt-5">
@@ -235,17 +267,19 @@
         <footer class="pt-4 my-md-5 pt-md-5 border-top">
             <div class="row">
                 <div class="col-sm-7">
-                    <a href="https://github.com/cj123/assetto-server-manager" class="mr-3"><i class="fab fa-github"></i> GitHub</a>
-                    <a href="https://github.com/cj123/assetto-server-manager/issues" class="mr-3"><i class="fas fa-bug"></i> Submit a Bug Report</a>
-                    {{ if ne $.IsPremium "true" }}
-                        <a href="https://paypal.me/JustaPenguinUK" class="mr-3"><i class="fas fa-heart"></i> Go Premium</a>
+                    <a href="https://github.com/JustaPenguin/assetto-server-manager" class="mr-3"><i class="fab fa-github"></i> GitHub</a>
+                    <a href="https://github.com/JustaPenguin/assetto-server-manager/issues" class="mr-3"><i class="fas fa-bug"></i> Submit a Bug Report</a>
+                    {{ if not $.IsPremium }}
+                        <a href="/premium" class="mr-3"><i class="fas fa-heart"></i> Go Premium</a>
+                    {{ else }}
+                        <a href="https://paypal.me/JustaPenguinUK" class="mr-3"><i class="fas fa-heart"></i> Donate</a>
                     {{ end }}
                     <a href="/changelog" class="mr-3"><i class="fas fa-pencil-alt"></i> Changelog</a>
-                    <a href="https://github.com/cj123/assetto-server-manager/wiki"><i class="fas fa-book"></i> Wiki</a>
+                    <a href="https://github.com/JustaPenguin/assetto-server-manager/wiki"><i class="fas fa-book"></i> Wiki</a>
                 </div>
                 <div class="col-sm-5 text-right">
                     <img src="/static/img/racer.png" class="img img-footer float-right">
-                    Assetto Corsa Server Manager {{ if eq $.IsPremium "true" }}Premium {{ end }}{{ Version }}<br> &copy; <a href="https://justapengu.in">Just a Penguin</a> 2010-{{ now.Format "2006" }}
+                    Assetto Corsa Server Manager {{ if $.IsPremium }}Premium {{ end }}{{ Version }}<br> &copy; <a href="https://justapengu.in">Just a Penguin</a> 2010-{{ now.Format "2006" }}
                 </div>
             </div>
 

@@ -10,7 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
+
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -102,6 +103,9 @@ type Championship struct {
 	// Raw html can be attached to championships, used to share tracks/cars etc.
 	Info template.HTML
 
+	// URL to a specific OG Image for the championship
+	OGImage string
+
 	// OpenEntrants indicates that entrant names do not need to be specified in the EntryList.
 	// As Entrants join a championship, the available Entrant slots will be filled by the information
 	// provided by a join message. The EntryList for each class will still need creating, but
@@ -118,8 +122,6 @@ type Championship struct {
 
 	Classes []*ChampionshipClass
 	Events  []*ChampionshipEvent
-
-	entryListMutex sync.Mutex
 }
 
 type ChampionshipSignUpForm struct {
@@ -240,6 +242,10 @@ func (c *Championship) FindLastResultForDriver(guid string) (out *SessionResult,
 
 func (c *Championship) GetPlayerSummary(guid string) string {
 	if c.Progress() == 0 {
+		if len(c.Events) <= 1 {
+			return ""
+		}
+
 		return "This is the first event of the Championship!"
 	}
 
@@ -318,9 +324,9 @@ func (c *Championship) GetPlayerSummary(guid string) string {
 func (c *Championship) GetURL() string {
 	if config.HTTP.BaseURL != "" {
 		return config.HTTP.BaseURL + "/championship/" + c.ID.String()
-	} else {
-		return ""
 	}
+
+	return ""
 }
 
 // IsMultiClass is true if the Championship has more than one Class
@@ -463,20 +469,106 @@ func (c *ChampionshipClass) ValidCarIDs() []string {
 		}
 
 		return availableCars
-	} else {
-		return c.AvailableCars
 	}
+
+	return c.AvailableCars
+}
+
+func (c *Championship) ImportEvent(eventToImport interface{}) (*ChampionshipEvent, error) {
+	var newEvent *ChampionshipEvent
+
+	switch event := eventToImport.(type) {
+	case *CustomRace:
+		newEvent = &ChampionshipEvent{
+			ID:        uuid.New(),
+			RaceSetup: event.RaceConfig,
+			EntryList: c.AllEntrants(),
+		}
+	case *RaceWeekend:
+		// the filter between Entry List and any events uses the race weekend ID in the map
+		// as we are updating this ID we need to update it in the map too or filters between
+		// the Entry List and any event will fail!
+		oldID := event.ID.String()
+		event.ID = uuid.New()
+
+		if event.Filters != nil {
+			oldFilter := event.Filters[oldID]
+			delete(event.Filters, oldID)
+			event.Filters[event.ID.String()] = oldFilter
+		}
+
+		newEvent = &ChampionshipEvent{
+			ID:            uuid.New(),
+			EntryList:     c.AllEntrants(),
+			RaceWeekendID: event.ID,
+			RaceWeekend:   event,
+		}
+
+		event.Championship = c
+		event.ChampionshipID = c.ID
+
+		// reset session progress
+		for _, session := range event.Sessions {
+			session.CompletedTime = time.Time{}
+			session.StartedTime = time.Time{}
+			session.Results = nil
+			session.ScheduledTime = time.Time{}
+
+			// if a session has the Entry List as a parent we need to replace the old
+			// Race Weekend ID with the new one
+			for i, parentID := range session.ParentIDs {
+				if parentID.String() == oldID {
+					session.ParentIDs[i] = event.ID
+				}
+			}
+
+			for _, class := range c.Classes {
+				if session.SessionType() == SessionTypeRace {
+					session.Points[class.ID] = &class.Points
+				} else {
+					var points []int
+
+					for range class.Points.Places {
+						points = append(points, 0)
+					}
+
+					session.Points[class.ID] = &ChampionshipPoints{
+						Places:               points,
+						BestLap:              0,
+						PolePosition:         0,
+						CollisionWithDriver:  0,
+						CollisionWithEnv:     0,
+						CutTrack:             0,
+						SecondRaceMultiplier: 0,
+					}
+				}
+			}
+		}
+
+	case *ChampionshipEvent:
+		newEvent = &ChampionshipEvent{
+			ID:        uuid.New(),
+			RaceSetup: event.RaceSetup,
+			EntryList: event.EntryList,
+		}
+	default:
+		return nil, errors.New("servermanager: unknown event type")
+	}
+
+	c.Events = append(c.Events, newEvent)
+
+	return newEvent, nil
 }
 
 // EventByID finds a ChampionshipEvent by its ID string.
-func (c *Championship) EventByID(id string) (*ChampionshipEvent, error) {
-	for _, e := range c.Events {
+func (c *Championship) EventByID(id string) (*ChampionshipEvent, int, error) {
+	for i, e := range c.Events {
 		if e.ID.String() == id {
-			return e, nil
+			return e, i, nil
 		}
 	}
 
-	return nil, ErrInvalidChampionshipEvent
+	return nil, 0, ErrInvalidChampionshipEvent
 }
 
 // ClassByID finds a ChampionshipClass by its ID string.
@@ -548,7 +640,7 @@ func (c *Championship) AllEntrants() EntryList {
 func (c *Championship) EntrantAttendance(guid string) int {
 	i := 0
 
-	for _, event := range c.Events {
+	for _, event := range ExtractRaceWeekendSessionsIntoIndividualEvents(c.Events) {
 		if event.Completed() {
 			for _, class := range c.Classes {
 				standings := class.StandingsForEvent(event)
@@ -568,7 +660,7 @@ func (c *Championship) EntrantAttendance(guid string) int {
 func (c *Championship) NumCompletedEvents() int {
 	i := 0
 
-	for _, event := range c.Events {
+	for _, event := range ExtractRaceWeekendSessionsIntoIndividualEvents(c.Events) {
 		if event.Completed() {
 			i++
 		}
@@ -638,9 +730,11 @@ type PotentialChampionshipEntrant interface {
 
 var ErrEntryListFull = errors.New("servermanager: entry list is full")
 
+var entryListMutex = sync.Mutex{}
+
 func (c *Championship) AddEntrantInFirstFreeSlot(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrant *Entrant, entrantClass *ChampionshipClass, err error) {
-	c.entryListMutex.Lock()
-	defer c.entryListMutex.Unlock()
+	entryListMutex.Lock()
+	defer entryListMutex.Unlock()
 
 	for _, class := range c.Classes {
 		for _, entrant := range class.Entrants {
@@ -671,8 +765,8 @@ func (c *Championship) AddEntrantInFirstFreeSlot(potentialEntrant PotentialChamp
 }
 
 func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrant *Entrant, entrantClass *ChampionshipClass, err error) {
-	c.entryListMutex.Lock()
-	defer c.entryListMutex.Unlock()
+	entryListMutex.Lock()
+	defer entryListMutex.Unlock()
 
 	classForCar, err := c.FindClassForCarModel(potentialEntrant.GetCar())
 
@@ -878,17 +972,17 @@ func (c *ChampionshipClass) ResultsForClass(results []*SessionResult) (filtered 
 func (c *ChampionshipClass) PenaltyForGUID(guid string) int {
 	if penalty, ok := c.DriverPenalties[guid]; ok {
 		return penalty
-	} else {
-		return 0
 	}
+
+	return 0
 }
 
 func (c *ChampionshipClass) PenaltyForTeam(name string) int {
 	if teamPenalty, ok := c.TeamPenalties[name]; ok {
 		return teamPenalty
-	} else {
-		return 0
 	}
+
+	return 0
 }
 
 type PointsReason int
@@ -926,9 +1020,9 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 
 				if !ok {
 					logrus.Warnf("Could not find points for Race Weekend Session class: %s", c.ID)
+				} else {
+					points = *classPoints
 				}
-
-				points = *classPoints
 			} else {
 				switch sessionType {
 				case SessionTypeQualifying:
@@ -1101,6 +1195,7 @@ func ExtractRaceWeekendSessionsIntoIndividualEvents(inEvents []*ChampionshipEven
 				e.RaceSetup = session.RaceConfig
 				e.CompletedTime = session.CompletedTime
 				e.StartedTime = session.StartedTime
+				e.Scheduled = session.ScheduledTime
 
 				e.Sessions[session.SessionType()] = &ChampionshipSession{
 					StartedTime:        session.StartedTime,
@@ -1200,7 +1295,7 @@ type ChampionshipEvent struct {
 	RaceSetup CurrentRaceConfig
 	EntryList EntryList
 
-	Sessions map[SessionType]*ChampionshipSession
+	Sessions map[SessionType]*ChampionshipSession `json:",omitempty"`
 
 	// RaceWeekendID is the ID of the linked RaceWeekend for this ChampionshipEvent
 	RaceWeekendID uuid.UUID
@@ -1261,9 +1356,9 @@ func (cr *ChampionshipEvent) Cars(c *Championship) []string {
 		}
 
 		return out
-	} else {
-		return c.ValidCarIDs()
 	}
+
+	return c.ValidCarIDs()
 }
 
 func (cr *ChampionshipEvent) CombineEntryLists(championship *Championship) EntryList {
@@ -1290,16 +1385,17 @@ func (cr *ChampionshipEvent) CombineEntryLists(championship *Championship) Entry
 // LastSession returns the last configured session in the championship, in the following order:
 // Race, Qualifying, Practice, Booking
 func (cr *ChampionshipEvent) LastSession() SessionType {
-	if cr.RaceSetup.HasMultipleRaces() {
+	switch {
+	case cr.RaceSetup.HasMultipleRaces():
 		// there must be two races as reversed grid positions are on
 		return SessionTypeSecondRace
-	} else if cr.RaceSetup.HasSession(SessionTypeRace) {
+	case cr.RaceSetup.HasSession(SessionTypeRace):
 		return SessionTypeRace
-	} else if cr.RaceSetup.HasSession(SessionTypeQualifying) {
+	case cr.RaceSetup.HasSession(SessionTypeQualifying):
 		return SessionTypeQualifying
-	} else if cr.RaceSetup.HasSession(SessionTypePractice) {
+	case cr.RaceSetup.HasSession(SessionTypePractice):
 		return SessionTypePractice
-	} else {
+	default:
 		return SessionTypeBooking
 	}
 }
@@ -1374,9 +1470,9 @@ func (a *ActiveChampionship) IsPractice() bool {
 func (a *ActiveChampionship) GetURL() string {
 	if config.HTTP.BaseURL != "" {
 		return config.HTTP.BaseURL + "/championship/" + a.ChampionshipID.String()
-	} else {
-		return ""
 	}
+
+	return ""
 }
 
 func (a *ActiveChampionship) IsChampionship() bool {
@@ -1405,6 +1501,14 @@ func (a *ActiveChampionship) EventName() string {
 
 func (a *ActiveChampionship) EventDescription() string {
 	return a.Description
+}
+
+func (a *ActiveChampionship) GetForceStopTime() time.Duration {
+	return 0
+}
+
+func (a *ActiveChampionship) GetForceStopWithDrivers() bool {
+	return false
 }
 
 func ChampionshipClassColor(i int) string {

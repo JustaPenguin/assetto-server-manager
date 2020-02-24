@@ -1,4 +1,4 @@
-{{/* gotype: github.com/cj123/assetto-server-manager.resultsViewTemplateVars */}}
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.resultsViewTemplateVars */}}
 
 {{ define "title" }}
     {{ prettify $.Result.TrackName false }} {{ with $.Result.TrackConfig }} - {{ prettify . true }} {{ end }} Results ({{ $.Result.GetDate }})
@@ -19,7 +19,6 @@
 
     <div class="clearfix"></div>
 
-    <a name={{ $sessionResults.GetDate }}></a>
     <div class="card mt-3 border-secondary">
         <div class="card-header">
             <strong>Overview</strong>

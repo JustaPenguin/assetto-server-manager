@@ -14,7 +14,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cj123/assetto-server-manager"
+	servermanager "github.com/JustaPenguin/assetto-server-manager"
+
 	"golang.org/x/net/publicsuffix"
 )
 

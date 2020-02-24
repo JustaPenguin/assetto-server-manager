@@ -13,6 +13,7 @@ addons:
 before_install:
   - nvm install 12
   - nvm use 12
+  - make install-linter
 
 install:
   - node -v
@@ -20,6 +21,8 @@ install:
   - go version
 
 script:
+  - make generate
+  - make vet
   # run a go build before doing deployment to ensure that the package is importable
   - go build
 
@@ -35,5 +38,5 @@ deploy:
       tags: true
 
   - provider: script
-    script: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD && VERSION=${TRAVIS_TAG}; make docker
+    script: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD && VERSION=${TRAVIS_TAG} make docker
     skip_cleanup: true

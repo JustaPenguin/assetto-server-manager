@@ -11,7 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/when"
 
 	"github.com/cj123/ini"
 	"github.com/go-chi/chi"
@@ -26,24 +27,33 @@ type RaceWeekendManager struct {
 	notificationManager NotificationDispatcher
 	store               Store
 	process             ServerProcess
+	acsrClient          *ACSRClient
 
 	activeRaceWeekend *ActiveRaceWeekend
 	mutex             sync.Mutex
 
-	scheduledSessionTimers         map[string]*time.Timer
-	scheduledSessionReminderTimers map[string]*time.Timer
+	scheduledSessionTimers         map[string]*when.Timer
+	scheduledSessionReminderTimers map[string]*when.Timer
 }
 
-func NewRaceWeekendManager(raceManager *RaceManager, championshipManager *ChampionshipManager, store Store, process ServerProcess, notificationManager NotificationDispatcher) *RaceWeekendManager {
+func NewRaceWeekendManager(
+	raceManager *RaceManager,
+	championshipManager *ChampionshipManager,
+	store Store,
+	process ServerProcess,
+	notificationManager NotificationDispatcher,
+	acsrClient *ACSRClient,
+) *RaceWeekendManager {
 	return &RaceWeekendManager{
 		raceManager:         raceManager,
 		championshipManager: championshipManager,
 		notificationManager: notificationManager,
 		store:               store,
 		process:             process,
+		acsrClient:          acsrClient,
 
-		scheduledSessionTimers:         make(map[string]*time.Timer),
-		scheduledSessionReminderTimers: make(map[string]*time.Timer),
+		scheduledSessionTimers:         make(map[string]*when.Timer),
+		scheduledSessionReminderTimers: make(map[string]*when.Timer),
 	}
 }
 
@@ -63,6 +73,15 @@ func (rwm *RaceWeekendManager) LoadRaceWeekend(id string) (*RaceWeekend, error) 
 
 		if err != nil {
 			return nil, err
+		}
+
+		// make sure that session points only exist for classes that exist.
+		for _, session := range raceWeekend.Sessions {
+			for championshipClassID := range session.Points {
+				if _, err := raceWeekend.Championship.ClassByID(championshipClassID.String()); err != nil {
+					delete(session.Points, championshipClassID)
+				}
+			}
 		}
 	}
 
@@ -191,7 +210,7 @@ func (rwm *RaceWeekendManager) UpsertRaceWeekend(raceWeekend *RaceWeekend) error
 		}
 
 		if championship.ACSR {
-			ACSRSendResult(*championship)
+			rwm.acsrClient.SendChampionship(*championship)
 		}
 	}
 
@@ -410,7 +429,7 @@ func (rwm *RaceWeekendManager) StartPracticeSession(raceWeekendID string, raceWe
 }
 
 func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSessionID string, isPracticeSession bool) error {
-	if IsPremium != "true" {
+	if !Premium() {
 		return errors.New("servermanager: premium required")
 	}
 
@@ -476,7 +495,7 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 	session.RaceConfig.MaxClients = len(entryList)
 	session.RaceConfig.Cars = strings.Join(entryList.CarIDs(), ";")
 	session.RaceConfig.LockedEntryList = 1
-	session.RaceConfig.PickupModeEnabled = 0
+	session.RaceConfig.PickupModeEnabled = 1
 
 	// all race weekend sessions must be open so players can join
 	for _, acSession := range session.RaceConfig.Sessions {
@@ -520,9 +539,9 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		raceWeekendRaceEvent.EntryList = entryList
 
 		return rwm.raceManager.applyConfigAndStart(raceWeekendRaceEvent)
-	} else {
-		return rwm.applyConfigAndStart(raceWeekendRaceEvent)
 	}
+
+	return rwm.applyConfigAndStart(raceWeekendRaceEvent)
 }
 
 func (rwm *RaceWeekendManager) UDPCallback(message udp.Message) {
@@ -533,8 +552,7 @@ func (rwm *RaceWeekendManager) UDPCallback(message udp.Message) {
 		return
 	}
 
-	switch m := message.(type) {
-	case udp.EndSession:
+	if m, ok := message.(udp.EndSession); ok {
 		filename := filepath.Base(string(m))
 		logrus.Infof("Race Weekend: End session found, result file: %s", filename)
 
@@ -733,7 +751,7 @@ func (rwm *RaceWeekendManager) RestartActiveSession() error {
 }
 
 func (rwm *RaceWeekendManager) ImportSession(raceWeekendID string, raceWeekendSessionID string, r *http.Request) error {
-	if IsPremium != "true" {
+	if !Premium() {
 		return errors.New("servermanager: premium required")
 	}
 
@@ -789,7 +807,7 @@ func (rwm *RaceWeekendManager) ListAvailableResultsFilesForSorting(raceWeekend *
 
 	carCheck:
 		for _, car := range result.Cars {
-			for _, entryListCar := range raceWeekend.EntryList.CarIDs() {
+			for _, entryListCar := range raceWeekend.GetEntryList().CarIDs() {
 				if car.Model == entryListCar {
 					// result car found in entry list
 					found = true
@@ -1095,7 +1113,9 @@ func (rwm *RaceWeekendManager) clearScheduledSessionTimer(session *RaceWeekendSe
 func (rwm *RaceWeekendManager) setupScheduledSessionTimer(raceWeekend *RaceWeekend, session *RaceWeekendSession) error {
 	rwm.clearScheduledSessionTimer(session)
 
-	rwm.scheduledSessionTimers[session.ID.String()] = time.AfterFunc(time.Until(session.ScheduledTime), func() {
+	var err error
+
+	rwm.scheduledSessionTimers[session.ID.String()], err = when.When(session.ScheduledTime, func() {
 		err := rwm.StartSession(raceWeekend.ID.String(), session.ID.String(), false)
 
 		if err != nil {
@@ -1116,22 +1136,29 @@ func (rwm *RaceWeekendManager) setupScheduledSessionTimer(raceWeekend *RaceWeeke
 		}
 	})
 
+	if err != nil {
+		return err
+	}
+
 	if rwm.notificationManager.HasNotificationReminders() {
 		for _, timer := range rwm.notificationManager.GetNotificationReminders() {
 			reminderTime := session.ScheduledTime.Add(time.Duration(-timer) * time.Minute)
 
 			if reminderTime.After(time.Now()) {
 				// add reminder
-				duration := time.Until(reminderTime)
 				thisTimer := timer
 
-				rwm.scheduledSessionReminderTimers[session.ID.String()] = time.AfterFunc(duration, func() {
+				rwm.scheduledSessionReminderTimers[session.ID.String()], err = when.When(reminderTime, func() {
 					err := rwm.notificationManager.SendRaceWeekendReminderMessage(raceWeekend, session, thisTimer)
 
 					if err != nil {
 						logrus.WithError(err).Errorf("Could not send race weekend reminder message")
 					}
 				})
+
+				if err != nil {
+					logrus.WithError(err).Error("Could not set up race weekend reminder timer")
+				}
 			}
 		}
 	}
@@ -1150,6 +1177,14 @@ func (rwm *RaceWeekendManager) ScheduleSession(raceWeekendID, sessionID string, 
 	session.StartWhenParentHasFinished = startWhenParentFinishes
 	session.ScheduledServerID = serverID
 
+	if config.Lua.Enabled && Premium() {
+		err = raceWeekendEventSchedulePlugin(raceWeekend, session)
+
+		if err != nil {
+			logrus.WithError(err).Error("race weekend session schedule plugin script failed")
+		}
+	}
+
 	if !session.ScheduledTime.IsZero() {
 		err = rwm.setupScheduledSessionTimer(raceWeekend, session)
 
@@ -1159,6 +1194,23 @@ func (rwm *RaceWeekendManager) ScheduleSession(raceWeekendID, sessionID string, 
 	}
 
 	return rwm.UpsertRaceWeekend(raceWeekend)
+}
+
+func raceWeekendEventSchedulePlugin(raceWeekend *RaceWeekend, raceWeekendSession *RaceWeekendSession) error {
+	p := &LuaPlugin{}
+
+	newRaceWeekendSession, newRaceWeekend := NewRaceWeekendSession(), NewRaceWeekend()
+
+	p.Inputs(raceWeekendSession, raceWeekend).Outputs(newRaceWeekendSession, newRaceWeekend)
+	err := p.Call("./plugins/events.lua", "onRaceWeekendEventSchedule")
+
+	if err != nil {
+		return err
+	}
+
+	*raceWeekendSession, *raceWeekend = *newRaceWeekendSession, *newRaceWeekend
+
+	return nil
 }
 
 func (rwm *RaceWeekendManager) DeScheduleSession(raceWeekendID, sessionID string) error {

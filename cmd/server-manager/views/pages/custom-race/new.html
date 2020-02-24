@@ -1,4 +1,4 @@
-{{/* gotype: github.com/cj123/assetto-server-manager.RaceTemplateVars */}}
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.RaceTemplateVars */}}
 
 {{ define "title" }}
     {{ if .IsChampionship }}
@@ -392,7 +392,7 @@
                                                     id="{{ $sessionType }}.WaitTime"
                                                     name="{{ $sessionType }}.WaitTime"
                                                     class="form-control"
-                                                    value="{{ if $.IsRaceWeekend }}120{{ else }}{{ $session.WaitTime }}{{ end }}"
+                                                    value="{{ if and $.IsRaceWeekend (lt $session.WaitTime 120) }}120{{ else }}{{ $session.WaitTime }}{{ end }}"
 
 
                                                     step="1"
@@ -792,7 +792,7 @@
                                 <p>Car, Skin, Ballast, Restrictor and Fixed Setup from the last Entrant will be cloned into new Entrants.</p>
                             </div>
                             <div class="col-md-4 text-right">
-                                <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
+                                <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0">
 
                                 <button class="btn btn-warning addEntrant">Add Entrant(s)</button>
                             </div>
@@ -1115,7 +1115,11 @@
                                                             id="DateUnix"
                                                             name="DateUnix"
                                                             class="form-control"
-                                                            value="{{ dateInZone "2006-01-02T15:04" ($weather.UnixToTime $weather.CMWFXDateUnModified) "UTC" }}"
+                                                            {{ if gt $weather.CMWFXDateUnModified 0 }}
+                                                                value="{{ dateInZone "2006-01-02T15:04" ($weather.UnixToTime $weather.CMWFXDateUnModified) "UTC" }}"
+                                                            {{ else }}
+                                                                value="{{ dateInZone "2006-01-02T15:04" now "UTC" }}"
+                                                            {{ end }}
                                                     >
                                                 </div>
                                             </div>
@@ -1307,7 +1311,6 @@
                                 class="form-control"
                                 value="{{ $f.DamageMultiplier }}"
                                 min="0"
-                                max="100"
                                 step="1"
                         >
 
@@ -1615,7 +1618,7 @@
         {{ if $.ShowOverridePasswordCard }}
             <div class="card mt-3 border-secondary">
                 <div class="card-header">
-                    <strong>Password Override</strong>
+                    <strong>Server Options</strong>
                 </div>
                 <div class="card-body">
                     <div class="form-group row">
@@ -1653,6 +1656,47 @@
                             <small>If left empty then the server will have no password.</small>
                         </div>
                     </div>
+
+                    {{ if and (not .IsChampionship) (not .IsRaceWeekend) }}
+                        <div class="form-group row">
+                            <label for="ForceStopTime" class="col-sm-3 col-form-label">Force Stop Time</label>
+
+                            <div class="col-sm-9">
+                                <input
+                                        type="number"
+                                        id="ForceStopTime"
+                                        name="ForceStopTime"
+                                        class="form-control"
+                                        {{ with .ForceStopTime }}
+                                            value="{{ . }}"
+                                        {{ end }}
+                                        min="0"
+                                >
+
+                                <small>Maximum number of minutes that this event will run for (across all sessions) before the server will forcibly stop. This will allow for auto loop track rotation even if there are no drivers on the server. Disabled if 0. WARNING: results files will not be written out if an event is forcibly stopped!</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="ForceStopWithDrivers" class="col-sm-3 col-form-label">Force Stop With Drivers</label>
+
+                            <div class="col-sm-9">
+
+                                <input
+                                        class="form-control"
+                                        type="checkbox"
+                                        id="ForceStopWithDrivers"
+                                        name="ForceStopWithDrivers"
+                                        {{ if .ForceStopWithDrivers }}
+                                            checked="checked"
+                                        {{ end }}
+                                ><br/>
+
+                                <small>If enabled then the server will forcibly stop after the Force Stop Time even if there are drivers on the server.</small>
+                            </div>
+                        </div>
+                    {{ end }}
+
                 </div>
             </div>
         {{ end }}
@@ -1666,7 +1710,7 @@
 
                     {{ if .IsEditing }}
                         <p>
-                            This edited setup will overwrite the {{ add .EditingID 1 }}{{ ordinal (add .EditingID 1) }}
+                            This edited setup will overwrite the {{ add .ChampionshipEventIndex 1 }}{{ ordinal (add .ChampionshipEventIndex 1) }}
                             Event in the <strong>{{ .Championship.Name }}</strong> Championship.
                         </p>
                     {{ else }}
@@ -1676,14 +1720,14 @@
                         </p>
                     {{ end }}
 
-                    <div class="float-right">
+                    <div class="float-right mt-5">
 
                         {{ if not .IsEditing }}
-                            <button class="btn btn-primary mt-5" data-toggle="tooltip" name="action" value="addAnotherRace" type="submit" title="Save this setup and then configure another">Add another Event</button>
-                            <button class="btn btn-success mt-5" data-toggle="tooltip" name="action" value="saveChampionship" type="submit" title="Save this event setup and finish creating the championship">Finish Creating Championship</button>
+                            <button class="btn btn-primary" data-toggle="tooltip" name="action" value="addAnotherRace" type="submit" title="Save this setup and then configure another">Add another Event</button>
+                            <button class="btn btn-success" data-toggle="tooltip" name="action" value="saveChampionship" type="submit" title="Save this event setup and finish creating the championship">Finish Creating Championship</button>
                         {{ else }}
                             <input type="hidden" name="Editing" id="Editing" value="{{ .EditingID }}">
-                            <button class="btn btn-primary mt-5" data-toggle="tooltip" name="action" value="saveChampionship" type="submit">Save Event</button>
+                            <button class="btn btn-primary" data-toggle="tooltip" name="action" value="saveChampionship" type="submit">Save Event</button>
                         {{ end }}
                    </div>
                 </div>
@@ -1699,7 +1743,7 @@
 
                         <div class="col-sm-9">
                             <select name="ParentSessions" id="ParentSessions" class="form-control" multiple>
-                                <option value="no_parent">No parent</option>
+                                <option value="{{ $.RaceWeekend.ID.String }}" {{ if $.RaceWeekendSession.HasParent $.RaceWeekend.ID.String }}selected="selected"{{ end }}>Race Weekend EntryList</option>
 
                                 {{ $numSessions := len $.RaceWeekend.Sessions }}
 

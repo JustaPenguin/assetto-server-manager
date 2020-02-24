@@ -5,11 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/cj123/assetto-server-manager/pkg/acd"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/acd"
 
 	"github.com/cj123/ini"
 	"github.com/sirupsen/logrus"
@@ -433,17 +434,9 @@ func CarDataFile(carModel, dataFile string) (io.ReadCloser, error) {
 				return nil, err
 			}
 
-			return ByteReaderCloser{bytes.NewReader(b)}, nil
+			return ioutil.NopCloser(bytes.NewReader(b)), nil
 		}
 	}
 
 	return nil, os.ErrNotExist
-}
-
-type ByteReaderCloser struct {
-	*bytes.Reader
-}
-
-func (ByteReaderCloser) Close() error {
-	return nil
 }

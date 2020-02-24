@@ -319,6 +319,7 @@ class LiveMap implements WebsocketHandler {
                     }
                 }
 
+                $(".dot").css({"transition": this.raceControl.status.CurrentRealtimePosInterval + "ms linear"});
                 break;
 
             case EventNewConnection:
@@ -567,12 +568,21 @@ class LiveTimings implements WebsocketHandler {
         $(document).on("submit", "#broadcast-chat-form", this.processChatForm.bind(this));
         $(document).on("submit", "#admin-command-form", this.processAdminCommandForm.bind(this));
         $(document).on("submit", "#kick-user-form", this.processKickUserForm.bind(this));
+        $(document).on("submit", "#send-chat-form", this.processSendChatForm.bind(this));
     }
 
     private processChatForm(e: JQuery.SubmitEvent): boolean {
         this.postForm(e);
 
         $(".broadcast-chat").val('');
+
+        return false
+    }
+
+    private processSendChatForm(e: JQuery.SubmitEvent): boolean {
+        this.postForm(e);
+
+        $(".send-chat").val('');
 
         return false
     }
@@ -612,12 +622,12 @@ class LiveTimings implements WebsocketHandler {
     public handleWebsocketMessage(message: WSMessage): void {
         if (message.EventType === EventRaceControl) {
             this.populateConnectedDrivers();
-            this.initialiseAdminKickSelect();
+            this.initialiseAdminSelects();
             this.populateDisconnectedDrivers();
         } else if (message.EventType === EventConnectionClosed) {
             const closedConnection = message.Message as SessionCarInfo;
 
-            this.removeDriverFromAdminKickSelect(closedConnection);
+            this.removeDriverFromAdminSelects(closedConnection);
 
             if (this.raceControl.status.ConnectedDrivers) {
                 const driver = this.raceControl.status.ConnectedDrivers.Drivers[closedConnection.DriverGUID];
@@ -625,13 +635,13 @@ class LiveTimings implements WebsocketHandler {
                 if (driver && driver.LoadedTime.toString() === "0001-01-01T00:00:00Z") {
                     // a driver joined but never loaded. remove them from the connected drivers table.
                     this.$connectedDriversTable.find("tr[data-guid='" + closedConnection.DriverGUID + "']").remove();
-                    this.removeDriverFromAdminKickSelect(driver.CarInfo)
+                    this.removeDriverFromAdminSelects(driver.CarInfo)
                 }
             }
         } else if (message.EventType === EventNewConnection) {
             const connectedDriver = new SessionCarInfo(message.Message);
 
-            this.addDriverToAdminKickSelect(connectedDriver);
+            this.addDriverToAdminSelects(connectedDriver);
         }
     }
 
@@ -943,10 +953,10 @@ class LiveTimings implements WebsocketHandler {
         $target.find(".dot").toggleClass("dot-inactive");
     }
 
-    private initialisedAdminKick = false;
+    private initialisedAdmin = false;
 
-    private initialiseAdminKickSelect() {
-        if (this.initialisedAdminKick) {
+    private initialiseAdminSelects() {
+        if (this.initialisedAdmin) {
             return
         }
 
@@ -961,29 +971,40 @@ class LiveTimings implements WebsocketHandler {
                 continue;
             }
 
-            this.addDriverToAdminKickSelect(driver.CarInfo);
+            this.addDriverToAdminSelects(driver.CarInfo);
         }
 
-        this.initialisedAdminKick = true
+        this.initialisedAdmin = true
     }
 
-    private addDriverToAdminKickSelect(carInfo: SessionCarInfo) {
+    private addDriverToAdminSelects(carInfo: SessionCarInfo) {
         $(".kick-user option[value='default-driver-spacer']").remove();
+        $(".chat-user option[value='default-driver-spacer']").remove();
 
         if ($(".kick-user option[value=" + carInfo.DriverGUID + "]").length != 0) {
             // driver already exists
-            return;
+        } else {
+            // add driver to admin kick list
+            $('.kick-user').append($('<option>', {
+                value: carInfo.DriverGUID,
+                text: carInfo.DriverName,
+            }));
         }
 
-        // add driver to admin kick list
-        $('.kick-user').append($('<option>', {
-            value: carInfo.DriverGUID,
-            text: carInfo.DriverName,
-        }));
+        if ($(".chat-user option[value=" + carInfo.DriverGUID + "]").length != 0) {
+            // driver already exists
+        } else {
+            // add driver to admin kick list
+            $('.chat-user').append($('<option>', {
+                value: carInfo.DriverGUID,
+                text: carInfo.DriverName,
+            }));
+        }
     }
 
-    private removeDriverFromAdminKickSelect(carInfo: SessionCarInfo) {
+    private removeDriverFromAdminSelects(carInfo: SessionCarInfo) {
         $(".kick-user option[value=" + carInfo.DriverGUID + "]").remove();
+        $(".chat-user option[value=" + carInfo.DriverGUID + "]").remove();
     }
 }
 

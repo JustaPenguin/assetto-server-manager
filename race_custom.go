@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"4d63.com/tz"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -17,11 +18,17 @@ type CustomRace struct {
 	HasCustomName, OverridePassword bool
 	ReplacementPassword             string
 
-	Created       time.Time
-	Updated       time.Time
-	Deleted       time.Time
-	UUID          uuid.UUID
-	Starred, Loop bool
+	Created time.Time
+	Updated time.Time
+	Deleted time.Time
+	UUID    uuid.UUID
+	Starred bool
+	// Deprecated: Replaced by LoopServer
+	Loop       bool
+	LoopServer map[ServerID]bool
+
+	ForceStopTime        int
+	ForceStopWithDrivers bool
 
 	RaceConfig CurrentRaceConfig
 	EntryList  EntryList
@@ -36,15 +43,19 @@ func (cr *CustomRace) GetEntryList() EntryList {
 }
 
 func (cr *CustomRace) IsLooping() bool {
-	return cr.Loop
+	if cr.LoopServer == nil {
+		return false
+	}
+
+	return cr.LoopServer[serverID]
 }
 
 func (cr *CustomRace) EventName() string {
 	if cr.HasCustomName {
 		return cr.Name
-	} else {
-		return trackSummary(cr.RaceConfig.Track, cr.RaceConfig.TrackLayout)
 	}
+
+	return trackSummary(cr.RaceConfig.Track, cr.RaceConfig.TrackLayout)
 }
 
 func (cr *CustomRace) OverrideServerPassword() bool {
@@ -93,6 +104,14 @@ func (cr *CustomRace) EventDescription() string {
 
 func (cr *CustomRace) ReadOnlyEntryList() EntryList {
 	return cr.EntryList
+}
+
+func (cr *CustomRace) GetForceStopTime() time.Duration {
+	return time.Minute * time.Duration(cr.ForceStopTime)
+}
+
+func (cr *CustomRace) GetForceStopWithDrivers() bool {
+	return cr.ForceStopWithDrivers
 }
 
 type CustomRaceHandler struct {
@@ -182,7 +201,7 @@ func (crh *CustomRaceHandler) schedule(w http.ResponseWriter, r *http.Request) {
 	timeString := r.FormValue("event-schedule-time")
 	timezone := r.FormValue("event-schedule-timezone")
 
-	location, err := time.LoadLocation(timezone)
+	location, err := tz.LoadLocation(timezone)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("could not find location: %s", location)
@@ -223,7 +242,7 @@ func (crh *CustomRaceHandler) removeSchedule(w http.ResponseWriter, r *http.Requ
 }
 
 func (crh *CustomRaceHandler) start(w http.ResponseWriter, r *http.Request) {
-	err := crh.raceManager.StartCustomRace(chi.URLParam(r, "uuid"), false)
+	_, err := crh.raceManager.StartCustomRace(chi.URLParam(r, "uuid"), false)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("couldn't apply custom race")

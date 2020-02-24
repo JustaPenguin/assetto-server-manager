@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp"
-	"github.com/cj123/assetto-server-manager/pkg/udp/replay"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp/replay"
 
 	"github.com/etcd-io/bbolt"
 )
@@ -63,12 +63,12 @@ type dummyServerProcess struct {
 	doneCh chan struct{}
 }
 
-func (dummyServerProcess) Logs() string {
-	return ""
+func (dummyServerProcess) Start(event RaceEvent, udpPluginAddress string, udpPluginLocalPort int, forwardingAddress string, forwardListenPort int) error {
+	return nil
 }
 
-func (dummyServerProcess) Start(cfg ServerConfig, entryList EntryList, forwardingAddress string, forwardListenPort int, event RaceEvent) error {
-	return nil
+func (dummyServerProcess) Logs() string {
+	return ""
 }
 
 func (d dummyServerProcess) Stop() error {
@@ -97,8 +97,8 @@ func (dummyServerProcess) SendUDPMessage(message udp.Message) error {
 	return nil
 }
 
-func (d dummyServerProcess) Done() <-chan struct{} {
-	return d.doneCh
+func (d dummyServerProcess) NotifyDone(chan struct{}) {
+
 }
 
 func (dummyServerProcess) GetServerConfig() ServerConfig {
@@ -130,16 +130,24 @@ func (d dummyNotificationManager) SendRaceWeekendReminderMessage(raceWeekend *Ra
 	return nil
 }
 
-func (d dummyNotificationManager) SendMessage(msg string) error {
+func (d dummyNotificationManager) SendMessage(title string, msg string) error {
 	return nil
 }
 
-func (d dummyNotificationManager) SendMessageWithLink(msg string, linkText string, link *url.URL) error {
+func (d dummyNotificationManager) SendMessageWithLink(title string, msg string, linkText string, link *url.URL) error {
 	return nil
 }
 
 func (d dummyNotificationManager) SendRaceStartMessage(config ServerConfig, event RaceEvent) error {
 	return nil
+}
+
+func (d dummyNotificationManager) GetCarList(cars string) string {
+	return "nil"
+}
+
+func (d dummyNotificationManager) GetTrackInfo(track string, layout string, download bool) string {
+	return "nil"
 }
 
 func (d dummyNotificationManager) SendRaceScheduledMessage(event *CustomRace, date time.Time) error {
@@ -163,6 +171,7 @@ func (d dummyNotificationManager) SaveServerOptions(oldServerOpts *GlobalServerC
 }
 
 func init() {
+	config = &Configuration{}
 	championshipManager = NewChampionshipManager(
 		NewRaceManager(
 			NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"), filepath.Join(os.TempDir(), "asm-race-store-shared")),
@@ -170,7 +179,9 @@ func init() {
 			NewCarManager(NewTrackManager(), false),
 			NewTrackManager(),
 			&dummyNotificationManager{},
+			NewRaceControl(NilBroadcaster{}, nilTrackData{}, dummyServerProcess{}, testStore),
 		),
+		&ACSRClient{Enabled: false},
 	)
 }
 
@@ -183,7 +194,7 @@ func doReplay(filename string, multiplier int, callbackFunc udp.CallbackFunc, wa
 
 	defer db.Close()
 
-	return replay.ReplayUDPMessages(db, multiplier, callbackFunc, waitTime)
+	return replay.UDPMessages(db, multiplier, callbackFunc, waitTime)
 }
 
 func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
@@ -404,7 +415,7 @@ func checkChampionshipEventCompletion(t *testing.T, championshipID string, event
 		return
 	}
 
-	event, err := loadedChampionship.EventByID(eventID)
+	event, _, err := loadedChampionship.EventByID(eventID)
 
 	if err != nil {
 		t.Error(err)

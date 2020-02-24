@@ -8,10 +8,10 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/cj123/caldav-go/icalendar"
+	"github.com/cj123/caldav-go/icalendar/components"
+	"github.com/cj123/caldav-go/icalendar/values"
 	"github.com/google/uuid"
-	"github.com/heindl/caldav-go/icalendar"
-	"github.com/heindl/caldav-go/icalendar/components"
-	"github.com/heindl/caldav-go/icalendar/values"
 	"github.com/sirupsen/logrus"
 	"github.com/teambition/rrule-go"
 )
@@ -122,7 +122,7 @@ func (rs *ScheduledRacesHandler) allScheduledRacesICalHandler(w http.ResponseWri
 	}
 }
 
-func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter, r *http.Request) error {
+func (rs *ScheduledRacesHandler) generateJSON(w io.Writer, r *http.Request) error {
 	start, err := time.Parse(time.RFC3339, r.URL.Query().Get("start"))
 
 	if err != nil {
@@ -472,7 +472,7 @@ type ScheduledEventBase struct {
 	Scheduled         time.Time
 	ScheduledInitial  time.Time
 	Recurrence        string
-	ScheduledServerID string
+	ScheduledServerID ServerID
 }
 
 func (seb *ScheduledEventBase) SetRecurrenceRule(input string) error {

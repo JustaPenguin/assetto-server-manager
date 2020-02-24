@@ -1,7 +1,7 @@
 ################################################################################
 #
 #                      Assetto Server Manager Configuration
-#                 https://github.com/cj123/assetto-server-manager
+#             https://github.com/JustaPenguin/assetto-server-manager
 #
 #                       Thanks for using server manager!
 #
@@ -59,7 +59,7 @@ http:
   session_key: RANDOMLY_GENERATE_THIS
 
   # server manager base URL is the URL that the server manager is accessible on
-  # only used for links in championship welcome message in game
+  # used for ACSR integration and links in championship welcome message in game
   # you can leave this blank if not required
   # example: https://opengt3.assettocorsaservers.com <-- requires https:// or
   # http://, no closing / at the end
@@ -129,8 +129,8 @@ store:
   path: server_manager.db
 
   # shared data path: Set the same directory for multiple AC Server Manager
-  # instances to share championship, entrants and custom events across them.
-  # Leave blank to use the same path as the one set up here.
+  # instances to share accounts, race weekend, championship, entrants and custom
+  # events across them. Leave blank to use the same path as the one set up here.
   # works only with JSON database
   shared_data_path: 
 
@@ -152,7 +152,6 @@ accounts:
   # username: admin
   # password: servermanager
   # As soon as you log in, you will be immediately asked to set a new password.
-  #
   admin_password_override:
 
 ################################################################################
@@ -196,21 +195,17 @@ server:
   # note: if you are looking for stracker support, Server Manager supports it via
   # the UI! Go to the "STracker" page in Server Manager for more instructions.
   #
+  # note #2: if you are looking for KissMyRank support, Server Manager supports it
+  # via the UI! Go to the "KissMyRank" page in Server Manager for more instructions.
+  #
   # you can use additional plugins with AC Server Manager, but while configuring
   # them you have to ignore the ports that AC Server Manager writes in the 
   # server_cfg.ini, as the Server Manager provides an interface to the plugins
   # instead. The plugin ports in the Server Options page are the ones that must
-  # be used for the plugin configuration. Here is an example for configuring KMR:
-  #
-  # KMR: 
-  # - ac_server_http_port must equal the value of HTTP Port
-  # - ac_server_plugin_local_port must equal the value of UDP Plugin Local Port
-  # - ac_server_plugin_address_port must equal the port from the UDP Plugin Address
-  # - web_auth_server_port must equal the port specified in UDP Auth Plugin Address
-  # - UDP Auth Plugin Address has to be configured in the way specified by KMR documentation
+  # be used for the plugin configuration.
   #
   # Note that AC Server Manager provides an interface for a single plugin only, 
-  # as the AC gameserver does. If you want to chain multiple plugins, please 
+  # as the AC game server does. If you want to chain multiple plugins, please
   # follow the documentation of the plugins you're using. Plugins usually 
   # feature interfaces so additional plugins can be chained between themselves.
   #
@@ -219,14 +214,15 @@ server:
   # each executable specified is run from the directory it is inside, for example,
   # the command:
   #
-  # ./my/cool/plugin/path/run.sh --some-opt config.json
+  # /my/cool/plugin/path/run.sh --some-opt config.json
   # now actually performs the following two commands:
   #
-  # 1. cd ./my/cool/plugin/path
+  # 1. cd /my/cool/plugin/path
   # 2. ./run.sh --some-opt config.json
-  run_on_start:
-    # e.g. uncomment the line below to run a 'start.sh' for kissmyrank
-    # - ./assetto/kissmyrank/start.sh
+  plugins:
+    # uncomment the two lines below to run the command '/my/cool/plugin/path/run.sh --some-opt config.json'
+    # - executable: /my/cool/plugin/path/run.sh
+    #   arguments: ["--some-opt", "config.json"]
 
 ################################################################################
 #
@@ -244,3 +240,15 @@ championships:
   recaptcha:
     site_key:
     secret_key:
+
+################################################################################
+#
+#  lua config - configure lua plugins
+#
+################################################################################
+lua:
+  # lua plugins allow you to run custom lua scripts through hooks with server
+  # manager! If you're interested have a look at the server-manager/plugins
+  # folder to see some examples!
+  # Lua plugins are a premium feature, they won't run without the premium build!
+  enabled: false

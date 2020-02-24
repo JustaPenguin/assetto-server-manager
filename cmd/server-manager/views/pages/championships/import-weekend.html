@@ -1,0 +1,46 @@
+{{ define "title"}}Import Race Weekend{{ end }}
+
+{{ define "race-weekend-championship-import" }}
+    {{ $writeAccess := WriteAccess }}
+    {{ $championship := .Championship }}
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-championship">
+            <tr>
+                <th>Name</th>
+                <th>Number of Sessions</th>
+                <th>Actions</th>
+            </tr>
+
+            {{ range .RaceWeekends }}
+                {{ if not .HasLinkedChampionship }}
+                    <tr>
+                        <td>
+                            <a href="/race-weekend/{{ .ID.String }}">{{ .Name }}</a>
+                        </td>
+
+                        <td>
+                            {{ len .Sessions }}
+                        </td>
+
+                        {{ if WriteAccess }}
+                        <td class="align-middle custom-race-actions">
+                            <a class="btn btn-sm btn-primary" href="/championship/{{ $championship.ID.String }}/race-weekend/{{ .ID.String }}/import">Import</a>
+                        </td>
+                        {{ end }}
+                    </tr>
+                {{ end }}
+            {{ end }}
+        </table>
+    </div>
+{{ end }}
+
+{{ define "content" }}
+
+    <h2 class="text-center">Import Race Weekend to {{ .Championship.Name }} Championship</h2>
+
+    {{ if gt (len .RaceWeekends) 0 }}
+        {{ template "race-weekend-championship-import" dict "RaceWeekends" .RaceWeekends "Championship" .Championship }}
+    {{ end }}
+
+{{ end }}

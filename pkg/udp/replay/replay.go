@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cj123/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 
 	"github.com/etcd-io/bbolt"
 	"github.com/sirupsen/logrus"
@@ -181,16 +181,21 @@ func RecordUDPMessages(db *bbolt.DB) (callbackFunc udp.CallbackFunc) {
 
 		encoder := json.NewEncoder(buf)
 		encoder.SetIndent("", "  ")
-		encoder.Encode(e)
+		err := encoder.Encode(e)
 
-		err := db.Update(func(tx *bbolt.Tx) error {
+		if err != nil {
+			logrus.WithError(err).Errorf("could not encode json")
+			return
+		}
+
+		err = db.Update(func(tx *bbolt.Tx) error {
 			bkt, err := tx.CreateBucketIfNotExists(BucketName)
 
 			if err != nil {
 				return err
 			}
 
-			return bkt.Put([]byte(e.Received.Format(time.RFC3339Nano)), []byte(buf.String()))
+			return bkt.Put([]byte(e.Received.Format(time.RFC3339Nano)), buf.Bytes())
 		})
 
 		if err != nil {
@@ -199,7 +204,7 @@ func RecordUDPMessages(db *bbolt.DB) (callbackFunc udp.CallbackFunc) {
 	}
 }
 
-func ReplayUDPMessages(db *bbolt.DB, multiplier int, callbackFunc udp.CallbackFunc, waitTime time.Duration) error {
+func UDPMessages(db *bbolt.DB, multiplier int, callbackFunc udp.CallbackFunc, waitTime time.Duration) error {
 	var loadedEntries Entries
 
 	var wg sync.WaitGroup
@@ -231,6 +236,8 @@ func ReplayUDPMessages(db *bbolt.DB, multiplier int, callbackFunc udp.CallbackFu
 		timeStart := loadedEntries[0].Received
 
 		for _, entry := range loadedEntries {
+			entry := entry
+
 			tickDuration := entry.Received.Sub(timeStart) / time.Duration(multiplier)
 
 			if tickDuration > waitTime {
@@ -238,8 +245,9 @@ func ReplayUDPMessages(db *bbolt.DB, multiplier int, callbackFunc udp.CallbackFu
 			}
 
 			if tickDuration > 0 {
-				tickWhenEventOccurs := time.Tick(tickDuration)
-				<-tickWhenEventOccurs
+				tickWhenEventOccurs := time.NewTicker(tickDuration)
+				<-tickWhenEventOccurs.C
+				tickWhenEventOccurs.Stop()
 			}
 
 			wg.Add(1)

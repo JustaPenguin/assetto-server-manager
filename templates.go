@@ -20,6 +20,7 @@ import (
 
 	"github.com/Masterminds/sprig"
 	"github.com/getsentry/raven-go"
+	"github.com/go-chi/chi"
 	"github.com/mattn/go-zglob"
 	"github.com/sirupsen/logrus"
 )
@@ -98,9 +99,9 @@ func shortenDriverName(name string) string {
 func driverName(name string) string {
 	if UseShortenedDriverNames {
 		return shortenDriverName(name)
-	} else {
-		return name
 	}
+
+	return name
 }
 
 func driverInitials(name string) string {
@@ -118,15 +119,15 @@ func driverInitials(name string) string {
 		}
 
 		return strings.ToUpper(strings.Join(nameParts, ""))
-	} else {
-		nameParts := strings.Split(name, " ")
-
-		if len(nameParts) > 0 && len(nameParts[len(nameParts)-1]) >= 3 {
-			return strings.ToUpper(nameParts[len(nameParts)-1][:3])
-		}
-
-		return strings.ToUpper(name)
 	}
+
+	nameParts := strings.Split(name, " ")
+
+	if len(nameParts) > 0 && len(nameParts[len(nameParts)-1]) >= 3 {
+		return strings.ToUpper(nameParts[len(nameParts)-1][:3])
+	}
+
+	return strings.ToUpper(name)
 }
 
 // Renderer is the template engine.
@@ -189,6 +190,8 @@ func (tr *Renderer) init() error {
 	funcs["dateFormat"] = dateFormat
 	funcs["timeZone"] = timeZone
 	funcs["hourAndZone"] = hourAndZoneFormat
+	funcs["localFormatHourAndZone"] = localFormatHelperHourAndZone
+	funcs["addTime"] = addTime
 	funcs["isBefore"] = isBefore
 	funcs["trackInfo"] = trackInfo
 	funcs["multiplyFloats"] = multiplyFloats
@@ -273,6 +276,10 @@ func localFormatHelper(t time.Time) template.HTML {
 	return template.HTML(fmt.Sprintf(`<span class="time-local" data-toggle="tooltip" data-time="%s" title="Translated to your timezone from %s">%s</span>`, t.Format(time.RFC3339), fullTimeFormat(t), fullTimeFormat(t)))
 }
 
+func localFormatHelperHourAndZone(t time.Time) template.HTML {
+	return template.HTML(fmt.Sprintf(`<span class="time-local-kitchen" data-toggle="tooltip" data-time="%s" title="Translated to your timezone from %s">%s</span>`, t.Format(time.RFC3339), fullTimeFormat(t), fullTimeFormat(t)))
+}
+
 func timeFormat(t time.Time) string {
 	return t.Format(time.Kitchen)
 }
@@ -285,6 +292,10 @@ func hourAndZoneFormat(t time.Time, plusMinutes int64) string {
 	t = t.Add(time.Minute * time.Duration(plusMinutes))
 
 	return t.Format("3:04 PM (MST)")
+}
+
+func addTime(t time.Time, plusMinutes int64) time.Time {
+	return t.Add(time.Minute * time.Duration(plusMinutes))
 }
 
 func timeZone(t time.Time) string {
@@ -336,6 +347,10 @@ func carList(cars interface{}) string {
 	var out []string
 
 	for _, s := range split {
+		if s == AnyCarModel {
+			continue
+		}
+
 		out = append(out, prettifyName(s, true))
 	}
 
@@ -393,9 +408,9 @@ func stripGeotagCrap(tag string, north bool) string {
 	// Geotags of "lost" - a hamlet in Scotland
 	if north {
 		return "57.2050"
-	} else {
-		return "-3.0774"
 	}
+
+	return "-3.0774"
 }
 
 var nameRegex = regexp.MustCompile(`^[A-Za-z]{0,5}[0-9]+`)
@@ -447,7 +462,7 @@ type BaseTemplateVars struct {
 	CustomCSS          template.CSS
 	User               *Account
 	IsHosted           bool
-	IsPremium          string
+	IsPremium          bool
 	MaxClientsOverride int
 	IsDarkTheme        bool
 	Request            *http.Request
@@ -456,6 +471,11 @@ type BaseTemplateVars struct {
 	SentryDSN          template.JSStr
 	RecaptchaSiteKey   string
 	WideContainer      bool
+	OGImage            string
+	ACSREnabled        bool
+	BaseURLIsSet       bool
+	BaseURLIsValid     bool
+	ServerID           ServerID
 }
 
 func (b *BaseTemplateVars) Get() *BaseTemplateVars {
@@ -492,7 +512,7 @@ func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, vars Templat
 	data.CustomCSS = template.CSS(opts.CustomCSS)
 	data.User = AccountFromRequest(r)
 	data.IsHosted = IsHosted
-	data.IsPremium = IsPremium
+	data.IsPremium = Premium()
 	data.MaxClientsOverride = MaxClientsOverride
 	data.IsDarkTheme = opts.DarkTheme == 1
 	data.Request = r
@@ -500,6 +520,24 @@ func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, vars Templat
 	data.MonitoringEnabled = config.Monitoring.Enabled
 	data.SentryDSN = sentryJSDSN
 	data.RecaptchaSiteKey = config.Championships.RecaptchaConfig.SiteKey
+	data.BaseURLIsSet = baseURLIsSet()
+	data.BaseURLIsValid = baseURLIsValid()
+	data.ACSREnabled = opts.EnableACSR
+	data.ServerID = serverID
+
+	if Premium() {
+		data.OGImage = opts.OGImage
+
+		id := chi.URLParam(r, "championshipID")
+
+		if id != "" {
+			championship, err := tr.store.LoadChampionship(id)
+
+			if err == nil && championship.OGImage != "" {
+				data.OGImage = championship.OGImage
+			}
+		}
+	}
 
 	return nil
 }

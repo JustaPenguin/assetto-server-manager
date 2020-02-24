@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"math"
+	"math/rand"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -19,13 +20,11 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve"
-	"github.com/blevesearch/bleve/index/scorch"
-	"github.com/blevesearch/bleve/index/store/boltdb"
 	"github.com/blevesearch/bleve/search/query"
+	"github.com/cj123/watcher"
 	"github.com/dimchansky/utfbom"
 	"github.com/go-chi/chi"
 	"github.com/pkg/errors"
-	"github.com/radovskyb/watcher"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
@@ -44,9 +43,9 @@ func (c Car) PrettyName() string {
 func (c Car) IsPaidDLC() bool {
 	if _, ok := isCarPaidDLC[c.Name]; ok {
 		return isCarPaidDLC[c.Name]
-	} else {
-		return false
 	}
+
+	return false
 }
 
 func (c Car) IsMod() bool {
@@ -68,23 +67,25 @@ func (cs Cars) AsMap() map[string][]string {
 }
 
 type CarDetails struct {
-	Author       string          `json:"author"`
-	Brand        string          `json:"brand"`
-	Class        string          `json:"class"`
-	Country      string          `json:"country"`
-	Description  string          `json:"description"`
-	Name         string          `json:"name"`
-	PowerCurve   [][]json.Number `json:"powerCurve"`
-	Specs        CarSpecs        `json:"specs"`
-	SpecsNumeric CarSpecsNumeric `json:"spec"`
-	Tags         []string        `json:"tags"`
-	TorqueCurve  [][]json.Number `json:"torqueCurve"`
-	URL          string          `json:"url"`
-	Version      string          `json:"version"`
-	Year         ShouldBeAnInt   `json:"year"`
-	IsStock      bool            `json:"stock"`
-	IsDLC        bool            `json:"dlc"`
-	IsMod        bool            `json:"mod"`
+	Author        string          `json:"author"`
+	Brand         string          `json:"brand"`
+	Class         string          `json:"class"`
+	Country       string          `json:"country"`
+	Description   string          `json:"description"`
+	Name          string          `json:"name"`
+	PowerCurve    [][]json.Number `json:"powerCurve"`
+	Specs         CarSpecs        `json:"specs"`
+	SpecsNumeric  CarSpecsNumeric `json:"spec"`
+	Tags          []string        `json:"tags"`
+	TorqueCurve   [][]json.Number `json:"torqueCurve"`
+	URL           string          `json:"url"`
+	Version       string          `json:"version"`
+	Year          ShouldBeAnInt   `json:"year"`
+	IsStock       bool            `json:"stock"`
+	IsDLC         bool            `json:"dlc"`
+	IsMod         bool            `json:"mod"`
+	Key           string          `json:"key"`
+	PrettifiedKey string          `json:"prettified_key"`
 
 	DownloadURL string `json:"downloadURL"`
 	Notes       string `json:"notes"`
@@ -236,24 +237,15 @@ func (cs CarSpecs) Numeric() CarSpecsNumeric {
 }
 
 type CarManager struct {
-	carIndex bleve.Index
+	carIndex                     bleve.Index
+	watchFilesystemForCarChanges bool
 
-	searchIndexRebuildMutex sync.Mutex
-	trackManager            *TrackManager
+	searchMutex  sync.Mutex
+	trackManager *TrackManager
 }
 
 func NewCarManager(trackManager *TrackManager, watchForCarChanges bool) *CarManager {
-	cm := &CarManager{trackManager: trackManager}
-
-	if watchForCarChanges {
-		go func() {
-			err := cm.watchForCarChanges()
-
-			if err != nil {
-				logrus.WithError(err).Error("Could not watch for changes in the content/cars directory")
-			}
-		}()
-	}
+	cm := &CarManager{trackManager: trackManager, watchFilesystemForCarChanges: watchForCarChanges}
 
 	return cm
 }
@@ -282,7 +274,7 @@ func (cm *CarManager) watchForCarChanges() error {
 		return watcher.ErrSkip
 	})
 
-	go func() {
+	go panicCapture(func() {
 		for {
 			select {
 			case event := <-w.Event:
@@ -301,6 +293,11 @@ func (cm *CarManager) watchForCarChanges() error {
 					}
 
 					err = cm.IndexCar(car)
+
+					if err != nil {
+						logrus.WithError(err).Errorf("Could not index car: %s", carName)
+						continue
+					}
 				case watcher.Remove:
 					carName = filepath.Base(event.OldPath)
 					logrus.Infof("De-indexing car: %s", carName)
@@ -318,7 +315,7 @@ func (cm *CarManager) watchForCarChanges() error {
 				return
 			}
 		}
-	}()
+	})
 
 	return w.Start(time.Second * 15)
 }
@@ -399,12 +396,30 @@ func (cm *CarManager) LoadCar(name string, tyres Tyres) (*Car, error) {
 		carDetails.Name = prettifyName(name, true)
 	}
 
+	carDetails.Key = name
+	carDetails.PrettifiedKey = prettifyName(name, true)
+
 	return &Car{
 		Name:    name,
 		Skins:   skins,
 		Tyres:   tyres[name],
 		Details: carDetails,
 	}, nil
+}
+
+func (cm *CarManager) RandomSkin(model string) string {
+	car, err := cm.LoadCar(model, nil)
+
+	switch {
+	case err != nil:
+		logrus.WithError(err).Errorf("Could not load car %s. No skin will be specified", model)
+		return ""
+	case len(car.Skins) == 0:
+		logrus.Warnf("Car %s has no skins uploaded. No skin will be specified", model)
+		return ""
+	default:
+		return car.Skins[rand.Intn(len(car.Skins))]
+	}
 }
 
 // ResultsForCar finds results for a given car.
@@ -466,16 +481,18 @@ const searchPageSize = 50
 
 // CreateSearchIndex builds a search index for the cars
 func (cm *CarManager) CreateOrOpenSearchIndex() error {
+	cm.searchMutex.Lock()
 	indexPath := filepath.Join(ServerInstallPath, "search-index", "cars")
 
 	var err error
 
 	cm.carIndex, err = bleve.Open(indexPath)
+	cm.searchMutex.Unlock()
 
 	if err == bleve.ErrorIndexPathDoesNotExist {
 		logrus.Infof("Creating car search index")
 		indexMapping := bleve.NewIndexMapping()
-		cm.carIndex, err = bleve.NewUsing(indexPath, indexMapping, scorch.Name, boltdb.Name, nil)
+		cm.carIndex, err = bleve.New(indexPath, indexMapping)
 
 		if err != nil {
 			return err
@@ -488,6 +505,16 @@ func (cm *CarManager) CreateOrOpenSearchIndex() error {
 		}
 	} else if err != nil {
 		return err
+	}
+
+	if cm.watchFilesystemForCarChanges {
+		go panicCapture(func() {
+			err := cm.watchForCarChanges()
+
+			if err != nil {
+				logrus.WithError(err).Error("Could not watch for changes in the content/cars directory")
+			}
+		})
 	}
 
 	return nil
@@ -505,9 +532,6 @@ func (cm *CarManager) DeIndexCar(name string) error {
 
 // IndexAllCars loads all current cars and adds them to the search index
 func (cm *CarManager) IndexAllCars() error {
-	cm.searchIndexRebuildMutex.Lock()
-	defer cm.searchIndexRebuildMutex.Unlock()
-
 	logrus.Infof("Building search index for all cars")
 	started := time.Now()
 
@@ -551,7 +575,7 @@ func (cm *CarManager) IndexAllCars() error {
 		return err
 	}
 
-	logrus.Infof("Search index build is complete (took: %s)", time.Now().Sub(started).String())
+	logrus.Infof("Search index build is complete (took: %s)", time.Since(started).String())
 
 	return nil
 }
@@ -572,6 +596,9 @@ func (cm *CarManager) rebuildTerm(term string) string {
 
 // Search looks for cars in the search index.
 func (cm *CarManager) Search(ctx context.Context, term string, from, size int) (*bleve.SearchResult, Cars, error) {
+	cm.searchMutex.Lock()
+	defer cm.searchMutex.Unlock()
+
 	var q query.Query
 
 	term = cm.rebuildTerm(term)
@@ -650,8 +677,8 @@ type carDetailsTemplateVars struct {
 	TrackOpts []Track
 }
 
-// LoadCarDetailsForTemplate loads all necessary items to generate the car details template.
-func (cm *CarManager) LoadCarDetailsForTemplate(carName string) (*carDetailsTemplateVars, error) {
+// loadCarDetailsForTemplate loads all necessary items to generate the car details template.
+func (cm *CarManager) loadCarDetailsForTemplate(carName string) (*carDetailsTemplateVars, error) {
 	tyres, err := ListTyres()
 
 	if err != nil {
@@ -784,7 +811,7 @@ func (ch *CarsHandler) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	numPages := int(math.Ceil(float64(float64(results.Total)) / float64(searchPageSize)))
+	numPages := int(math.Ceil(float64(results.Total) / float64(searchPageSize)))
 
 	ch.viewRenderer.MustLoadTemplate(w, r, "content/cars.html", &carListTemplateVars{
 		Results:     results,
@@ -874,7 +901,7 @@ func carSkinURL(car, skin string) string {
 
 func (ch *CarsHandler) view(w http.ResponseWriter, r *http.Request) {
 	carName := chi.URLParam(r, "car_id")
-	templateParams, err := ch.carManager.LoadCarDetailsForTemplate(carName)
+	templateParams, err := ch.carManager.loadCarDetailsForTemplate(carName)
 
 	if os.IsNotExist(err) {
 		http.NotFound(w, r)
@@ -969,13 +996,13 @@ func (ch *CarsHandler) deleteSkin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ch *CarsHandler) rebuildSearchIndex(w http.ResponseWriter, r *http.Request) {
-	go func() {
+	go panicCapture(func() {
 		err := ch.carManager.IndexAllCars()
 
 		if err != nil {
 			logrus.WithError(err).Error("could not rebuild search index")
 		}
-	}()
+	})
 
 	AddFlash(w, r, "Started re-indexing cars!")
 	http.Redirect(w, r, r.Referer(), http.StatusFound)

@@ -41,6 +41,10 @@ import {faArrowDown} from "@fortawesome/free-solid-svg-icons/faArrowDown";
 import {faPencilAlt} from "@fortawesome/free-solid-svg-icons/faPencilAlt";
 import {faCarCrash} from "@fortawesome/free-solid-svg-icons/faCarCrash";
 import {faStopwatch} from "@fortawesome/free-solid-svg-icons/faStopwatch";
+import {faChartLine} from "@fortawesome/free-solid-svg-icons/faChartLine";
+import {faGasPump} from "@fortawesome/free-solid-svg-icons/faGasPump";
+import {faPuzzlePiece} from "@fortawesome/free-solid-svg-icons/faPuzzlePiece";
+import {faBalanceScale} from "@fortawesome/free-solid-svg-icons/faBalanceScale";
 
 library.add(
     faUser,
@@ -83,6 +87,10 @@ library.add(
     faPencilAlt,
     faCarCrash,
     faStopwatch,
+    faChartLine,
+    faGasPump,
+    faPuzzlePiece,
+    faBalanceScale,
 );
 
 dom.watch();

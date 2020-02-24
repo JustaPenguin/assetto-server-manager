@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/text/encoding/unicode/utf32"
@@ -16,6 +17,7 @@ import (
 // RealtimePosIntervalMs is the interval to request real time positional information.
 // Set this to greater than 0 to enable.
 var RealtimePosIntervalMs = -1
+var CurrentRealtimePosIntervalMs = -1
 
 func NewServerClient(addr string, receivePort, sendPort int, forward bool, forwardAddrStr string, forwardListenPort int, callback CallbackFunc) (*AssettoServerUDP, error) {
 	listener, err := net.DialUDP("udp", &net.UDPAddr{IP: net.ParseIP(addr), Port: receivePort}, &net.UDPAddr{IP: net.ParseIP(addr), Port: sendPort})
@@ -132,10 +134,15 @@ func (asu *AssettoServerUDP) forwardServe() {
 }
 
 func (asu *AssettoServerUDP) serve() {
-	messageChan := make(chan []byte)
+	messageChan := make(chan []byte, 1000)
 	defer close(messageChan)
 
+	CurrentRealtimePosIntervalMs = RealtimePosIntervalMs
+	lastQueueSize := 0
+
 	go func() {
+		ticker := time.NewTicker(time.Second)
+
 		for {
 			select {
 			case buf := <-messageChan:
@@ -149,12 +156,46 @@ func (asu *AssettoServerUDP) serve() {
 				asu.callback(msg)
 
 				if asu.forward && asu.forwarder != nil {
-					go func() {
-						// write the message to the forwarding address
-						_, _ = asu.forwarder.Write(buf)
-					}()
+					// write the message to the forwarding address
+					_, _ = asu.forwarder.Write(buf)
 				}
+			case <-ticker.C:
+				if RealtimePosIntervalMs < 0 {
+					// there is no real time pos interval set, we don't need to check if we're keeping up with messages
+					continue
+				}
+
+				currentQueueSize := len(messageChan)
+
+				if currentQueueSize > lastQueueSize {
+					logrus.Warnf("Can't keep up! queue size: %d vs %d: changed by %d", currentQueueSize, lastQueueSize, currentQueueSize-lastQueueSize)
+
+					CurrentRealtimePosIntervalMs += (currentQueueSize * 2) + 1
+
+					logrus.Debugf("Adjusting real time pos interval: %d", CurrentRealtimePosIntervalMs)
+					err := asu.SendMessage(NewEnableRealtimePosInterval(CurrentRealtimePosIntervalMs))
+
+					if err != nil {
+						logrus.WithError(err).Error("Could not send realtime pos interval adjustment")
+					}
+				} else if currentQueueSize <= lastQueueSize && CurrentRealtimePosIntervalMs > RealtimePosIntervalMs {
+					logrus.Debugf("Catching up, queue size: %d vs %d: changed by %d", currentQueueSize, lastQueueSize, currentQueueSize-lastQueueSize)
+
+					if CurrentRealtimePosIntervalMs-1 >= RealtimePosIntervalMs {
+						CurrentRealtimePosIntervalMs--
+
+						logrus.Debugf("Adjusting real time pos interval, is now: %d", CurrentRealtimePosIntervalMs)
+						err := asu.SendMessage(NewEnableRealtimePosInterval(CurrentRealtimePosIntervalMs))
+
+						if err != nil {
+							logrus.WithError(err).Error("Could not send realtime pos interval adjustment")
+						}
+					}
+				}
+
+				lastQueueSize = currentQueueSize
 			case <-asu.ctx.Done():
+				ticker.Stop()
 				return
 			}
 		}
@@ -172,7 +213,7 @@ func (asu *AssettoServerUDP) serve() {
 			n, _, err := asu.listener.ReadFromUDP(buf)
 
 			if err != nil {
-				logrus.WithError(err).Warn("could not read from UDP")
+				logrus.WithError(err).Debug("could not read from UDP")
 				continue
 			}
 
@@ -209,9 +250,9 @@ func readString(r io.Reader, sizeMultiplier int) string {
 		}
 
 		return string(bs)
-	} else {
-		return string(b)
 	}
+
+	return string(b)
 }
 
 func (asu *AssettoServerUDP) SendMessage(message Message) error {
@@ -517,7 +558,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 		response = sessionInfo
 
 		if RealtimePosIntervalMs > 0 && eventType == EventNewSession {
-			err = asu.SendMessage(NewEnableRealtimePosInterval(uint16(RealtimePosIntervalMs)))
+			err = asu.SendMessage(NewEnableRealtimePosInterval(RealtimePosIntervalMs))
 
 			if err != nil {
 				return nil, err
