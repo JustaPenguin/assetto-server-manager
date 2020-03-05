@@ -341,7 +341,7 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 		kissMyRankOptions.ACServerIP = "127.0.0.1"
 		kissMyRankOptions.ACServerHTTPPort = serverOptions.HTTPPort
 		kissMyRankOptions.UpdateInterval = config.LiveMap.IntervalMs
-		kissMyRankOptions.ACServerResultsBasePath = filepath.Join(ServerInstallPath, "results")
+		kissMyRankOptions.ACServerResultsBasePath = ServerInstallPath
 
 		raceConfig := sp.raceEvent.GetRaceConfig()
 		entryList := sp.raceEvent.GetEntryList()
