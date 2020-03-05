@@ -1,3 +1,12 @@
+v1.7.4
+------
+
+Fixes:
+
+* Fixes an incorrect value for ACServerResultsBasePath in the KissMyRank setup. Thanks @blu1111! 
+
+---
+
 v1.7.3-1
 --------
 
