@@ -3,6 +3,7 @@ v1.7.4
 
 Fixes:
 
+* Fixes an issue where the reported tyre for a driver's best lap could sometimes be incorrect.
 * Fixes an incorrect value for ACServerResultsBasePath in the KissMyRank setup. Thanks @blu1111! 
 
 ---
