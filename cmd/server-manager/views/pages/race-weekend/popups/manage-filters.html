@@ -228,13 +228,29 @@
                                         <div class="col-sm-8">
                                             <input
                                                     class="form-control"
-                                                    type="checkbox"
+                                                    {{ if WriteAccess }}
+                                                        type="checkbox"
+                                                    {{ else }}
+                                                        type="hidden"
+                                                    {{ end }}
                                                     id="ForceUseTyreFromFastestLap"
                                                     name="ForceUseTyreFromFastestLap"
                                                     {{ if $.Filter.ForceUseTyreFromFastestLap }}
                                                         checked="checked"
                                                     {{ end }}
-                                            ><br/>
+                                            >
+                                            {{ if not WriteAccess }}
+                                                <label class="col-form-label">
+                                                    {{ if $.Filter.ForceUseTyreFromFastestLap }}
+                                                        Yes
+                                                    {{ else }}
+                                                        No
+                                                    {{ end }}
+                                                </label>
+                                            {{ end }}
+
+                                            <br/>
+
 
                                             <small>If enabled then the entrants for the next session will be forced to start on the same tyres as their fastest lap from the previous session.</small>
                                         </div>
