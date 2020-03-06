@@ -1431,7 +1431,7 @@ func (ce *ChampionshipSession) InProgress() bool {
 
 // Completed ChampionshipSessions have a non-zero CompletedTime
 func (ce *ChampionshipSession) Completed() bool {
-	return !ce.CompletedTime.IsZero()
+	return !ce.CompletedTime.IsZero() && ce.Results != nil
 }
 
 type ActiveChampionship struct {

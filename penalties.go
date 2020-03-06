@@ -198,6 +198,10 @@ func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
 	champEvents:
 		for i, event := range championship.Events {
 			for key, session := range event.Sessions {
+				if !session.Completed() {
+					continue
+				}
+
 				if session.Results.SessionFile == jsonFileName {
 					championship.Events[i].Sessions[key].Results = results
 
@@ -223,6 +227,10 @@ func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
 		}
 
 		for _, session := range raceWeekend.Sessions {
+			if !session.Completed() {
+				continue
+			}
+
 			if session.Results.SessionFile == jsonFileName {
 				session.Results = results
 				break
