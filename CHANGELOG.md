@@ -4,6 +4,7 @@ v1.7.4
 Fixes:
 
 * Fixes an incorrect value for ACServerResultsBasePath in the KissMyRank setup. Thanks @blu1111! 
+* Fixes an issue where applying penalties to Championship or Race Weekend sessions could cause a server crash.
 
 ---
 
