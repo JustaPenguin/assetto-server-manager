@@ -371,12 +371,26 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 			logrus.Infof("Renaming team for entrant: %s (%s)", entrant.Name, entrant.GUID)
 
 			for _, event := range championship.Events {
-				for _, session := range event.Sessions {
-					if session.Results == nil {
-						continue
+				if event.IsRaceWeekend() && event.RaceWeekend != nil {
+					for _, session := range event.RaceWeekend.Sessions {
+						if !session.Completed() {
+							continue
+						}
+
+						class.AttachEntrantToResult(entrant, session.Results)
 					}
 
-					class.AttachEntrantToResult(entrant, session.Results)
+					if err := cm.store.UpsertRaceWeekend(event.RaceWeekend); err != nil {
+						return nil, edited, err
+					}
+				} else {
+					for _, session := range event.Sessions {
+						if session.Results == nil {
+							continue
+						}
+
+						class.AttachEntrantToResult(entrant, session.Results)
+					}
 				}
 			}
 		}
