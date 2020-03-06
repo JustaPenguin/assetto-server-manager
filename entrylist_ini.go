@@ -65,7 +65,7 @@ func (e EntryList) Write() error {
 }
 
 // Add an Entrant to the EntryList
-func (e EntryList) Add(entrant *Entrant) {
+func (e EntryList) AddToBackOfGrid(entrant *Entrant) {
 	e.AddInPitBox(entrant, len(e))
 }
 

@@ -752,7 +752,7 @@ type SessionResult struct {
 
 func (s *SessionResult) BestLapTyre(results *SessionResults) string {
 	for _, lap := range results.Laps {
-		if lap.LapTime == s.BestLap {
+		if lap.DriverGUID == s.DriverGUID && lap.CarModel == s.CarModel && lap.LapTime == s.BestLap {
 			return lap.Tyre
 		}
 	}
