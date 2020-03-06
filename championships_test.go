@@ -173,7 +173,7 @@ func TestChampionship_FindClassForCarModel(t *testing.T) {
 
 			for _, model := range models {
 				for i := 0; i < rand.Intn(20)+1; i++ {
-					class.Entrants.Add(&Entrant{
+					class.Entrants.AddToBackOfGrid(&Entrant{
 						Model: model,
 					})
 				}
@@ -212,7 +212,7 @@ func TestChampionship_AddEntrantFromSession(t *testing.T) {
 		}
 
 		class := NewChampionshipClass("FXX K")
-		class.Entrants.Add(&Entrant{
+		class.Entrants.AddToBackOfGrid(&Entrant{
 			Model: "ferrari_fxx_k",
 		})
 
@@ -256,7 +256,7 @@ func TestChampionship_AddEntrantFromSession(t *testing.T) {
 		}
 
 		class := NewChampionshipClass("FXX K")
-		class.Entrants.Add(&Entrant{
+		class.Entrants.AddToBackOfGrid(&Entrant{
 			Model: "ferrari_fxx_k",
 		})
 
@@ -330,7 +330,7 @@ func TestChampionship_AddEntrantFromSession(t *testing.T) {
 		}
 
 		class := NewChampionshipClass("FXX K")
-		class.Entrants.Add(&Entrant{
+		class.Entrants.AddToBackOfGrid(&Entrant{
 			Model: "ferrari_fxx_k",
 		})
 
@@ -407,13 +407,13 @@ func TestChampionship_AddEntrantFromSession(t *testing.T) {
 		e := NewEntrant()
 		e.Model = "ferrari_fxx_k"
 
-		class.Entrants.Add(e)
+		class.Entrants.AddToBackOfGrid(e)
 
 		e2 := NewEntrant()
 		e2.Model = "ferrari_fxx_k"
 		e2.GUID = "78987656782716273"
 
-		class.Entrants.Add(e2)
+		class.Entrants.AddToBackOfGrid(e2)
 
 		champ := &Championship{}
 		champ.AddClass(class)

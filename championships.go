@@ -630,7 +630,7 @@ func (c *Championship) AllEntrants() EntryList {
 
 	for _, class := range c.Classes {
 		for _, entrant := range class.Entrants {
-			e.Add(entrant)
+			e.AddToBackOfGrid(entrant)
 		}
 	}
 

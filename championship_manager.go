@@ -1479,7 +1479,7 @@ func (cm *ChampionshipManager) AddEntrantFromSessionData(championship *Champions
 
 		e := make(EntryList)
 
-		e.Add(newEntrant)
+		e.AddToBackOfGrid(newEntrant)
 
 		err := cm.SaveEntrantsForAutoFill(e)
 
