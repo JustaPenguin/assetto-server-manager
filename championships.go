@@ -1078,8 +1078,14 @@ var championshipStandingSessionOrder = []SessionType{
 	SessionTypeBooking,
 }
 
+type StandingsOption int
+
+const (
+	StandingsNoPointsPenalties StandingsOption = iota
+)
+
 // Standings returns the current Driver Standings for the Championship.
-func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent) []*ChampionshipStanding {
+func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent, standingOpts ...StandingsOption) []*ChampionshipStanding {
 	var out []*ChampionshipStanding
 
 	// make a copy of events so we do not persist race weekend sessions
@@ -1154,12 +1160,22 @@ func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent) []*Champion
 		}
 	})
 
+	skipPointsPenalties := false
+
+	for _, opt := range standingOpts {
+		if opt == StandingsNoPointsPenalties {
+			skipPointsPenalties = true
+		}
+	}
+
 	for _, standing := range standings {
 		if standing.Car.Driver.Name == "" {
 			continue
 		}
 
-		standing.Points -= float64(c.PenaltyForGUID(standing.Car.Driver.GUID))
+		if !skipPointsPenalties {
+			standing.Points -= float64(c.PenaltyForGUID(standing.Car.Driver.GUID))
+		}
 
 		out = append(out, standing)
 	}
@@ -1175,8 +1191,9 @@ func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent) []*Champion
 	return out
 }
 
+// StandingsForEvent reports the standings for a single event, not including any generic points penalties applied to the championship.
 func (c *ChampionshipClass) StandingsForEvent(event *ChampionshipEvent) []*ChampionshipStanding {
-	return c.Standings([]*ChampionshipEvent{event})
+	return c.Standings([]*ChampionshipEvent{event}, StandingsNoPointsPenalties)
 }
 
 // extractRaceWeekendSessionsIntoIndividualEvents looks for race weekend events, and makes each indiivdual session of that

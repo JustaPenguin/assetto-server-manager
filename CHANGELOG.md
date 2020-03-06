@@ -4,6 +4,7 @@ v1.7.4
 Fixes:
 
 * Fixes an incorrect value for ACServerResultsBasePath in the KissMyRank setup. Thanks @blu1111! 
+* Fixes an issue where Championship Event Points tables would incorrectly report points penalties. Points penalties are now only shown in the main Championship points table.
 
 ---
 
