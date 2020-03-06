@@ -3,8 +3,10 @@ v1.7.4
 
 Fixes:
 
+* Fixes an issue where the reported tyre for a driver's best lap could sometimes be incorrect.
 * Fixes an incorrect value for ACServerResultsBasePath in the KissMyRank setup. Thanks @blu1111! 
 * Removed the "Start on Tyre from Fastest Lap" Checkbox for non-write access users, the word "yes" or "no" is displayed instead.
+* Fixes an issue where applying penalties to Championship or Race Weekend sessions could cause a server crash.
 
 ---
 
