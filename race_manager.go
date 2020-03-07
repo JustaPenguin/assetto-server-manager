@@ -421,7 +421,7 @@ func (rm *RaceManager) SetupQuickRace(r *http.Request) error {
 		e.Model = model
 		e.Skin = skin
 
-		entryList.Add(e)
+		entryList.AddToBackOfGrid(e)
 	}
 
 	quickRace.MaxClients = numPitboxes
@@ -513,7 +513,7 @@ func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (Entry
 			e.OverwriteAllEvents = true
 		}
 
-		entryList.Add(e)
+		entryList.AddInPitBox(e, e.PitBox)
 	}
 
 	return entryList, nil

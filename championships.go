@@ -630,7 +630,7 @@ func (c *Championship) AllEntrants() EntryList {
 
 	for _, class := range c.Classes {
 		for _, entrant := range class.Entrants {
-			e.Add(entrant)
+			e.AddToBackOfGrid(entrant)
 		}
 	}
 
@@ -1431,7 +1431,7 @@ func (ce *ChampionshipSession) InProgress() bool {
 
 // Completed ChampionshipSessions have a non-zero CompletedTime
 func (ce *ChampionshipSession) Completed() bool {
-	return !ce.CompletedTime.IsZero()
+	return !ce.CompletedTime.IsZero() && ce.Results != nil
 }
 
 type ActiveChampionship struct {

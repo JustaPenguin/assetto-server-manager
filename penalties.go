@@ -232,6 +232,10 @@ func (pm *PenaltiesManager) applyPenalty(jsonFileName, guid, carModel string, pe
 				}
 
 				for key, session := range raceWeekend.Sessions {
+					if !session.Completed() {
+						continue
+					}
+
 					if session.Results.SessionFile == jsonFileName {
 						raceWeekend.Sessions[key].Results = results
 
@@ -240,6 +244,10 @@ func (pm *PenaltiesManager) applyPenalty(jsonFileName, guid, carModel string, pe
 				}
 			} else {
 				for key, session := range event.Sessions {
+					if !session.Completed() {
+						continue
+					}
+
 					if session.Results.SessionFile == jsonFileName {
 						championship.Events[i].Sessions[key].Results = results
 
@@ -266,6 +274,10 @@ func (pm *PenaltiesManager) applyPenalty(jsonFileName, guid, carModel string, pe
 		}
 
 		for _, session := range raceWeekend.Sessions {
+			if !session.Completed() {
+				continue
+			}
+
 			if session.Results.SessionFile == jsonFileName {
 				session.Results = results
 				break
