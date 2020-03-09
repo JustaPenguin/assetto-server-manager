@@ -1,6 +1,10 @@
 v1.7.4
 ------
 
+Added:
+
+* Compatibility with KissMyRank v1.6f
+
 Fixes:
 
 * Fixes an issue where the reported tyre for a driver's best lap could sometimes be incorrect.
