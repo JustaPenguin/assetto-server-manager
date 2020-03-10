@@ -5,18 +5,25 @@ Added:
 
 * Driver Swaps! This premium feature adds the ability to do driver swaps, without needing any game plugins to work!
   - Driver Swaps work in Championships and Race Weekends
+  - Configuration of Driver Swaps is done per-race in the Entry List section of the race form
+  - You can configure how long a driver swap should take, and disqualification and post-race penalties if people set off too early!
+  - You can also set a minimum number of driver swaps that each car must make.
   - Driver Swap result files show which lap was completed by which driver (using the AutoFill Entrant list where possible to put names in)
-  - Configuration of Driver Swaps is done per-race in the Entry List section of the race form. 
-    You can configure how long a driver swap should take, and disqualification and post-race penalties if people set off too early!
+  - Driver Swaps require compatible tracks. A compatible track has the timing line before or after all of the pitboxes. 
+    You can follow this guide (written by @mike855 - thanks!) to convert a track to be compatible.
+* Compatibility with KissMyRank v1.6f
 
 Fixes:
 
 * Fixes an issue where the reported tyre for a driver's best lap could sometimes be incorrect.
 * Fixes an incorrect value for ACServerResultsBasePath in the KissMyRank setup. Thanks @blu1111! 
+* Fixes an issue where Championship Event Points tables would incorrectly report points penalties. Points penalties are now only shown in the main Championship points table.
 * Fixes an issue where renaming an Entrant's team in a Championship and using "Transfer Points from previous team" would not transfer points for Race Weekends.
 * Fixes an issue where pitboxes were not correctly assigned to Entrants.
 * Removed the "Start on Tyre from Fastest Lap" Checkbox for non-write access users, the word "yes" or "no" is displayed instead.
 * Fixes an issue where applying penalties to Championship or Race Weekend sessions could cause a server crash.
+* Improved performance when adding lots of cars in a race setup.
+* Completed Championship Events can now be duplicated.
 
 ---
 

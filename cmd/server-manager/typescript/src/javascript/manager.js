@@ -535,7 +535,6 @@ class RaceSetup {
 
                 if ($dropdownTyre.length) {
                     $dropdownTyre.text(carTyres[tyre] + " (" + tyre + ")" + makeCarString(tyreCars[tyre]));
-                    this.$tyresDropdown.multiSelect('refresh');
                     continue; // this has already been added
                 }
 
@@ -548,17 +547,15 @@ class RaceSetup {
             }
         }
 
-        let that = this;
-
         this.$tyresDropdown.find("option").each(function (index, elem) {
             let $elem = $(elem);
 
             if (!allValidTyres.has($elem.val())) {
                 $elem.remove();
-
-                that.$tyresDropdown.multiSelect('refresh');
             }
         });
+
+        this.$tyresDropdown.multiSelect('refresh');
     }
 
     /**

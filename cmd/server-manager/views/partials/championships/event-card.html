@@ -382,6 +382,10 @@
                                             Import Results
                                         </a>
 
+                                        <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/duplicate">
+                                            Duplicate
+                                        </a>
+
                                         {{ if DeleteAccess }}
                                             <a onClick="return confirm('I understand that this will delete this entire event permanently.') "
                                                class="dropdown-item text-danger" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/delete">
