@@ -489,7 +489,8 @@ func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (Entry
 
 		e.Name = r.Form["EntryList.Name"][i]
 		e.Team = r.Form["EntryList.Team"][i]
-		e.GUID = r.Form["EntryList.GUID"][i]
+
+		e.GUID = NormaliseEntrantGUID(r.Form["EntryList.GUID"][i])
 		e.Model = model
 		e.Skin = skin
 		// Despite having the option for SpectatorMode, the server does not support it, and panics if set to 1

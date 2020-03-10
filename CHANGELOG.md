@@ -1,6 +1,14 @@
 v1.7.4
 ------
 
+Added:
+
+* Driver Swaps! This premium feature adds the ability to do driver swaps, without needing any game plugins to work!
+  - Driver Swaps work in Championships and Race Weekends
+  - Driver Swap result files are handled correctly
+  - Configuration of Driver Swaps is done per-race in the Entry List section of the race form. 
+    You can configure how long a driver swap should take, and disqualification and post-race penalties if people set off too early!
+
 Fixes:
 
 * Fixes an issue where the reported tyre for a driver's best lap could sometimes be incorrect.

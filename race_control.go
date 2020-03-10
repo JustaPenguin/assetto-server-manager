@@ -9,11 +9,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 	"github.com/google/uuid"
 	"github.com/mitchellh/go-wordwrap"
 	"github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
+
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 )
 
 type RaceControl struct {
@@ -42,8 +43,12 @@ type RaceControl struct {
 	lastUpdateMessage      []byte
 	lastUpdateMessageMutex sync.Mutex
 
-	driverSwapTimers      map[int]*time.Timer
 	persistStoreDataMutex sync.Mutex
+
+	// driver swap
+	driverSwapTimers         map[int]*time.Timer
+	driverSwapPenaltiesMutex sync.RWMutex
+	driverSwapPenalties      map[udp.DriverGUID]*driverPenalty
 }
 
 // RaceControl piggyback's on the udp.Message interface so that the entire data can be sent to newly connected clients.
@@ -266,9 +271,9 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 
 	emptyCarInfo := true
 
-	driverSwapPenaltiesMutex.Lock()
-	driverSwapPenalties = make(map[string]*driverPenalty)
-	driverSwapPenaltiesMutex.Unlock()
+	rc.driverSwapPenaltiesMutex.Lock()
+	rc.driverSwapPenalties = make(map[udp.DriverGUID]*driverPenalty)
+	rc.driverSwapPenaltiesMutex.Unlock()
 
 	if (rc.ConnectedDrivers.Len() > 0 || rc.DisconnectedDrivers.Len() > 0) && sessionInfo.Type == udp.SessionTypePractice {
 		if oldSessionInfo.Type == sessionInfo.Type && oldSessionInfo.Track == sessionInfo.Track && oldSessionInfo.TrackConfig == sessionInfo.TrackConfig && oldSessionInfo.Name == sessionInfo.Name {
@@ -460,11 +465,11 @@ func (rc *RaceControl) OnEndSession(sessionFile udp.EndSession) error {
 	logrus.Infof("End Session, file outputted at: %s", filename)
 
 	// loop over driverSwapPenalties and apply penalty
-	driverSwapPenaltiesMutex.RLock()
-	defer driverSwapPenaltiesMutex.RUnlock()
+	rc.driverSwapPenaltiesMutex.RLock()
+	defer rc.driverSwapPenaltiesMutex.RUnlock()
 
-	for guid, penalty := range driverSwapPenalties {
-		err := rc.penaltiesManager.applyPenalty(filename, guid, penalty.carModel, penalty.penalty.Seconds(), true)
+	for guid, penalty := range rc.driverSwapPenalties {
+		err := rc.penaltiesManager.applyPenalty(filename, string(guid), penalty.carModel, penalty.penalty.Seconds(), true)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("could not apply driver swap penalty of %s to driver %s", penalty.penalty.String(), guid)
@@ -546,9 +551,7 @@ func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
 	if config.DriverSwapEnabled == 1 /*&& rc.SessionInfo.Type.String() == SessionTypeRace.String()*/ {
 		ticker := time.NewTicker(time.Second)
 
-		go func() {
-			rc.handleDriverSwap(ticker, config, client, driver)
-		}()
+		go rc.handleDriverSwap(ticker, config, client, driver)
 	}
 
 	_, err := rc.broadcaster.Send(client)
@@ -561,24 +564,26 @@ type driverPenalty struct {
 	carModel string
 }
 
-var driverSwapPenalties map[string]*driverPenalty // map of GUID to penalty time
-var driverSwapPenaltiesMutex sync.RWMutex
-
 func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config CurrentRaceConfig, client udp.SessionCarInfo, driver *RaceControlDriver) {
-	var totalTime time.Duration
-	var position udp.Vec
-	var newDriverConnected bool
-	var firstPositionUpdate bool
-	var resumeSwap bool
+	var (
+		totalTime           time.Duration
+		newDriverConnected  bool
+		firstPositionUpdate bool
+		resumeSwap          bool
+	)
 
 	completeTime := time.Second * time.Duration(config.DriverSwapMinTime)
 	initialGUID := client.DriverGUID
 	currentDriver := driver
+	position := currentDriver.LastPos
 
-	position = currentDriver.LastPos
-
-	logrus.Infof("Driver: %d has initiated a driver swap, disconnected in position: %.2f, %.2f, %.2f. Next driver is expected to connect in the same position for a driver swap!",
-		currentDriver.CarInfo.CarID, currentDriver.LastPos.X, currentDriver.LastPos.Y, currentDriver.LastPos.Z)
+	logrus.Infof(
+		"Driver: %d has initiated a driver swap, disconnected in position: %.2f, %.2f, %.2f. Next driver is expected to connect in the same position for a driver swap!",
+		currentDriver.CarInfo.CarID,
+		currentDriver.LastPos.X,
+		currentDriver.LastPos.Y,
+		currentDriver.LastPos.Z,
+	)
 
 	driver.driverSwapContext, driver.driverSwapCfn = context.WithCancel(context.Background())
 
@@ -616,7 +621,6 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config CurrentRaceC
 								logrus.Infof("Driver: %s has reconnected, driver swap aborted", initialGUID)
 								reconnect = true
 							}
-
 						}
 					}
 
@@ -629,8 +633,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config CurrentRaceC
 				}
 			} else {
 				if totalTime.Seconds() >= completeTime.Seconds() {
-					sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
-						fmt.Sprintf("You are clear to leave the pits, go go go!"))
+					sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID, fmt.Sprintf("You are clear to leave the pits, go go go!"))
 
 					if err == nil {
 						err := rc.process.SendUDPMessage(sendChat)
@@ -652,8 +655,13 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config CurrentRaceC
 					nilVec := udp.Vec{X: 0, Y: 0, Z: 0}
 
 					if currentDriver.LastPos != nilVec {
-						sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
-							fmt.Sprintf("Hi! You are mid way through a driver swap, please wait %s before leaving the pits", countdown.String()))
+						sendChat, err := udp.NewSendChat(
+							currentDriver.CarInfo.CarID,
+							fmt.Sprintf(
+								"Hi! You are mid way through a driver swap, please wait %s before leaving the pits",
+								countdown.String(),
+							),
+						)
 
 						if err == nil {
 							err := rc.process.SendUDPMessage(sendChat)
@@ -673,8 +681,13 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config CurrentRaceC
 				if rc.positionHasChanged(position, currentDriver.LastPos) && firstPositionUpdate {
 					// if the time is within the disqualify window
 					if countdown >= (time.Second * time.Duration(config.DriverSwapDisqualifyTime)) {
-						sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
-							fmt.Sprintf("You have been kicked from the session for leaving the pits %s early during a driver swap", countdown.String()))
+						sendChat, err := udp.NewSendChat(
+							currentDriver.CarInfo.CarID,
+							fmt.Sprintf(
+								"You have been kicked from the session for leaving the pits %s early during a driver swap",
+								countdown.String(),
+							),
+						)
 
 						if err == nil {
 							err := rc.process.SendUDPMessage(sendChat)
@@ -688,9 +701,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config CurrentRaceC
 
 						time.Sleep(5 * time.Second)
 
-						kickUser := udp.NewKickUser(uint8(currentDriver.CarInfo.CarID))
-
-						err = rc.process.SendUDPMessage(kickUser)
+						err = rc.process.SendUDPMessage(udp.NewKickUser(uint8(currentDriver.CarInfo.CarID)))
 
 						if err != nil {
 							logrus.WithError(err).Errorf("Unable to send kick command (driver swaps)")
@@ -705,21 +716,27 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config CurrentRaceC
 						currentDriver.LastPos = udp.Vec{X: 0, Y: 0, Z: 0}
 					} else if countdown >= (time.Second * time.Duration(config.DriverSwapPenaltyTime)) {
 
-						driverSwapPenaltiesMutex.Lock()
+						rc.driverSwapPenaltiesMutex.Lock()
 						{
-							if _, ok := driverSwapPenalties[string(currentDriver.CarInfo.DriverGUID)]; ok {
-								driverSwapPenalties[string(currentDriver.CarInfo.DriverGUID)].penalty += countdown + (time.Second * 5)
+							if _, ok := rc.driverSwapPenalties[currentDriver.CarInfo.DriverGUID]; ok {
+								rc.driverSwapPenalties[currentDriver.CarInfo.DriverGUID].penalty += countdown + (time.Second * 5)
 							} else {
-								driverSwapPenalties[string(currentDriver.CarInfo.DriverGUID)] = &driverPenalty{
+								rc.driverSwapPenalties[currentDriver.CarInfo.DriverGUID] = &driverPenalty{
 									penalty:  countdown + (time.Second * 5),
 									carModel: currentDriver.CarInfo.CarModel,
 								}
 							}
 						}
-						driverSwapPenaltiesMutex.Unlock()
+						rc.driverSwapPenaltiesMutex.Unlock()
 
-						sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
-							fmt.Sprintf("You have been given a %s second penalty for leaving the pits %s early during a driver swap", (countdown+(time.Second*5)).String(), countdown.String()))
+						sendChat, err := udp.NewSendChat(
+							currentDriver.CarInfo.CarID,
+							fmt.Sprintf(
+								"You have been given a %s second penalty for leaving the pits %s early during a driver swap",
+								(countdown+(time.Second*5)).String(),
+								countdown.String(),
+							),
+						)
 
 						if err == nil {
 							err := rc.process.SendUDPMessage(sendChat)
@@ -731,18 +748,21 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config CurrentRaceC
 							logrus.WithError(err).Errorf("Unable to build driver swap penalty message to: %s", currentDriver.CarInfo.DriverName)
 						}
 
-						logrus.Infof("Driver: %d has been given a %s second penalty for leaving the pits %s early during a driver swap", currentDriver.CarInfo.CarID, (countdown + (time.Second * 5)).String(), countdown.String())
+						logrus.Infof(
+							"Driver: %d has been given a %s second penalty for leaving the pits %s early during a driver swap",
+							currentDriver.CarInfo.CarID,
+							(countdown + (time.Second * 5)).String(),
+							countdown.String(),
+						)
 
 						ticker.Stop()
 						return
 					}
-
 				}
 
 				// send countdown messages
 				if firstPositionUpdate {
-					sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID,
-						fmt.Sprintf("Free to leave pits in %s", countdown.String()))
+					sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID, fmt.Sprintf("Free to leave pits in %s", countdown.String()))
 
 					if err == nil {
 						err := rc.process.SendUDPMessage(sendChat)
@@ -759,13 +779,15 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config CurrentRaceC
 	}
 }
 
-func (rc *RaceControl) positionHasChanged(initialPosition, currentPosition udp.Vec) bool {
-	fmt.Println(fmt.Sprintf("initial position: %.2f, %.2f, %.2f", initialPosition.X, initialPosition.Y, initialPosition.Z))
-	fmt.Println(fmt.Sprintf("current position: %.2f, %.2f, %.2f", currentPosition.X, currentPosition.Y, currentPosition.Z))
+const allowedDriverSwapPositionDifference = 10.0
 
-	return math.Abs(float64(initialPosition.X-currentPosition.X)) >= 10.0 ||
-		math.Abs(float64(initialPosition.Y-currentPosition.Y)) >= 10.0 ||
-		math.Abs(float64(initialPosition.Z-currentPosition.Z)) >= 10.0
+func (rc *RaceControl) positionHasChanged(initialPosition, currentPosition udp.Vec) bool {
+	logrus.Debugf("initial position: %.2f, %.2f, %.2f", initialPosition.X, initialPosition.Y, initialPosition.Z)
+	logrus.Debugf("current position: %.2f, %.2f, %.2f", currentPosition.X, currentPosition.Y, currentPosition.Z)
+
+	return math.Abs(float64(initialPosition.X-currentPosition.X)) >= allowedDriverSwapPositionDifference ||
+		math.Abs(float64(initialPosition.Y-currentPosition.Y)) >= allowedDriverSwapPositionDifference ||
+		math.Abs(float64(initialPosition.Z-currentPosition.Z)) >= allowedDriverSwapPositionDifference
 }
 
 // findConnectedDriverByCarID looks for a driver in ConnectedDrivers by their CarID. This is the only place CarID

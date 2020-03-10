@@ -215,7 +215,7 @@
                                 {{ $averageLapTime := $sessionResults.GetAverageLapTime $sessionResult.DriverGUID $sessionResult.CarModel }}
 
                                 {{ range $y, $sessionLap := $sessionResults.Laps }}
-                                    {{ if and (eq $sessionLap.DriverGUID $sessionResult.DriverGUID) (eq $sessionLap.CarModel $sessionResult.CarModel) }}
+                                    {{ if $sessionResults.LapAssociatedWithGUIDAndModel $sessionLap $sessionResult.DriverGUID $sessionResult.CarModel }}
                                         {{ $lapCount = add $lapCount 1 }}
                                         <tr>
                                             <td>{{ $lapCount }}</td>

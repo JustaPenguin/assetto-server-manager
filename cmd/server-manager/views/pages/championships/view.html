@@ -151,12 +151,12 @@
                                             <td >
                                                 <button type="button" class="btn {{ if $championship.IsMultiClass}}btn-light{{ else }}btn-warning{{ end }} btn-sm" data-placement="left"
                                                         data-toggle="popover" title="Penalty Details" data-html="true"
-                                                        id="point-penalty-{{ $entrant.Car.Driver.GUID }}"
+                                                        id="point-penalty-{{ sha1sum $entrant.Car.Driver.GUID }}"
                                                 >
                                                     Penalties
                                                 </button>
 
-                                                <div id="popover-content-point-penalty-{{ $entrant.Car.Driver.GUID }}" style="display: none;">
+                                                <div id="popover-content-point-penalty-{{ sha1sum $entrant.Car.Driver.GUID }}" style="display: none;">
                                                     <form action="/championship/{{ $championship.ID.String }}/driver-penalty/{{ $class.ID.String }}/{{ $entrant.Car.Driver.GUID }}" method="POST">
                                                         <div class="form-group">
                                                             <label>

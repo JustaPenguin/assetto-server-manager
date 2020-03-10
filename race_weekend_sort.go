@@ -303,8 +303,8 @@ func lessBestLapTime(_ *RaceWeekend, _ *RaceWeekendSession, entrantI, entrantJ *
 
 	if entrantI.EntrantResult.BestLap == entrantJ.EntrantResult.BestLap {
 		// if equal, compare safety
-		entrantICrashes := entrantI.SessionResults.GetCrashes(entrantI.Car.Driver.GUID)
-		entrantJCrashes := entrantJ.SessionResults.GetCrashes(entrantJ.Car.Driver.GUID)
+		entrantICrashes := entrantI.SessionResults.GetCrashes(entrantI.Car.Driver.GUID, entrantI.Car.Model)
+		entrantJCrashes := entrantJ.SessionResults.GetCrashes(entrantJ.Car.Driver.GUID, entrantJ.Car.Model)
 
 		if entrantICrashes == entrantJCrashes {
 			return entrantI.SessionResults.GetCuts(entrantI.Car.Driver.GUID, entrantI.Car.Model) < entrantJ.SessionResults.GetCuts(entrantJ.Car.Driver.GUID, entrantJ.Car.Model)
@@ -331,8 +331,8 @@ func lessBestLapTimeInResults(bestDriverLaps map[string]int, entrantI, entrantJ 
 func FewestCollisionsRaceWeekendEntryListSort(rw *RaceWeekend, session *RaceWeekendSession, entrants []*RaceWeekendSessionEntrant, _ *RaceWeekendSessionToSessionFilter) error {
 	sort.Slice(entrants, func(i, j int) bool {
 		entrantI, entrantJ := entrants[i], entrants[j]
-		entrantICrashes := entrantI.SessionResults.GetCrashes(entrantI.Car.Driver.GUID)
-		entrantJCrashes := entrantJ.SessionResults.GetCrashes(entrantJ.Car.Driver.GUID)
+		entrantICrashes := entrantI.SessionResults.GetCrashes(entrantI.Car.Driver.GUID, entrantI.Car.Model)
+		entrantJCrashes := entrantJ.SessionResults.GetCrashes(entrantJ.Car.Driver.GUID, entrantJ.Car.Model)
 
 		if entrantICrashes == entrantJCrashes {
 			if session.SessionType() == SessionTypeRace {
@@ -371,8 +371,8 @@ func FewestCutsRaceWeekendEntryListSort(rw *RaceWeekend, session *RaceWeekendSes
 func SafetyRaceWeekendEntryListSort(rw *RaceWeekend, session *RaceWeekendSession, entrants []*RaceWeekendSessionEntrant, _ *RaceWeekendSessionToSessionFilter) error {
 	sort.Slice(entrants, func(i, j int) bool {
 		entrantI, entrantJ := entrants[i], entrants[j]
-		entrantICrashes := entrantI.SessionResults.GetCrashes(entrantI.Car.Driver.GUID)
-		entrantJCrashes := entrantJ.SessionResults.GetCrashes(entrantJ.Car.Driver.GUID)
+		entrantICrashes := entrantI.SessionResults.GetCrashes(entrantI.Car.Driver.GUID, entrantI.Car.Model)
+		entrantJCrashes := entrantJ.SessionResults.GetCrashes(entrantJ.Car.Driver.GUID, entrantJ.Car.Model)
 		entrantICuts := entrantI.SessionResults.GetCuts(entrantI.Car.Driver.GUID, entrantI.Car.Model)
 		entrantJCuts := entrantJ.SessionResults.GetCuts(entrantJ.Car.Driver.GUID, entrantJ.Car.Model)
 
