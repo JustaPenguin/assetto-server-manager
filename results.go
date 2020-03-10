@@ -215,6 +215,44 @@ func (s *SessionResults) GetCrashesOfType(guid, model, collisionType string) int
 	return num
 }
 
+func (s *SessionResults) GetDriverDescriptionForLap(lap *SessionLap, autoFillEntrantList []*Entrant) string {
+	var car *SessionCar
+
+	for _, sessionCar := range s.Cars {
+		if sessionCar.CarID == lap.CarID {
+			car = sessionCar
+			break
+		}
+	}
+
+	if car == nil {
+		return ""
+	}
+
+	if autoFillEntrantList != nil {
+		for _, entrant := range autoFillEntrantList {
+			if entrant.GUID == lap.DriverGUID {
+				return entrant.Name
+			}
+		}
+	}
+
+	driverIndex := -1
+
+	for index, guid := range car.Driver.GuidsList {
+		if guid == lap.DriverGUID {
+			driverIndex = index
+			break
+		}
+	}
+
+	if driverIndex >= 0 {
+		return fmt.Sprintf("Driver #%d", driverIndex+1)
+	}
+
+	return lap.DriverName
+}
+
 func (s *SessionResults) FindCarIDForGUIDAndModel(guid, model string) int {
 	var carID int
 
@@ -764,6 +802,16 @@ func (s *SessionResults) FastestLap() *SessionLap {
 	return laps[0]
 }
 
+func (s *SessionResults) ResultHasMultipleDrivers(result *SessionResult) bool {
+	car, err := s.FindCarByGUIDAndModel(result.DriverGUID, result.CarModel)
+
+	if err != nil {
+		return false
+	}
+
+	return car.HasMultipleDrivers()
+}
+
 func (s *SessionResults) LapAssociatedWithGUIDAndModel(lap *SessionLap, driverGUID, model string) bool {
 	if lap.DriverGUID == driverGUID && lap.CarModel == model {
 		return true
@@ -915,6 +963,10 @@ func (c *SessionCar) GetGUID() string {
 
 func (c *SessionCar) GetTeam() string {
 	return c.Driver.Team
+}
+
+func (c *SessionCar) HasMultipleDrivers() bool {
+	return len(c.Driver.GuidsList) > 1 || strings.Count(c.GetGUID(), driverSwapEntrantSeparator) > 0
 }
 
 type SessionEvent struct {
@@ -1262,9 +1314,10 @@ func (rh *ResultsHandler) upload(r *http.Request) (bool, error) {
 type resultsViewTemplateVars struct {
 	BaseTemplateVars
 
-	Result  *SessionResults
-	Account *Account
-	UseMPH  bool
+	Result           *SessionResults
+	AutoFillEntrants []*Entrant
+	Account          *Account
+	UseMPH           bool
 }
 
 func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
@@ -1287,13 +1340,20 @@ func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
 		logrus.WithError(err).Errorf("couldn't load server options")
 	}
 
+	autoFillEntrants, err := rh.store.ListEntrants()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't load autofill entrant list")
+	}
+
 	rh.viewRenderer.MustLoadTemplate(w, r, "results/result.html", &resultsViewTemplateVars{
 		BaseTemplateVars: BaseTemplateVars{
 			WideContainer: true,
 		},
-		Result:  result,
-		Account: AccountFromRequest(r),
-		UseMPH:  serverOpts.UseMPH == 1,
+		Result:           result,
+		AutoFillEntrants: autoFillEntrants,
+		Account:          AccountFromRequest(r),
+		UseMPH:           serverOpts.UseMPH == 1,
 	})
 }
 

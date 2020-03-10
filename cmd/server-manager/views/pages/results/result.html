@@ -196,10 +196,15 @@
                     <div class="col-md-12">
                         <div class="table-responsive">
                             <table class="table table-bordered table-striped">
+                                {{ $resultHasMultipleDrivers := $sessionResults.ResultHasMultipleDrivers $sessionResult }}
+
                                 <tr>
                                     <th>Lap #</th>
                                     {{ if eq "RACE" $sessionResults.Type.OriginalString }}
                                         <th>Race Position</th>
+                                    {{ end }}
+                                    {{ if $resultHasMultipleDrivers }}
+                                        <th>Driver</th>
                                     {{ end }}
                                     <th>Lap Time</th>
 
@@ -221,6 +226,9 @@
                                             <td>{{ $lapCount }}</td>
                                             {{ if eq "RACE" $sessionResults.Type.OriginalString }}
                                                 <td>{{ $sessionResults.GetPosForLap $sessionResult.DriverGUID $sessionResult.CarModel $lapCount }}</td>
+                                            {{ end }}
+                                            {{ if $resultHasMultipleDrivers }}
+                                                <td>{{ $sessionResults.GetDriverDescriptionForLap $sessionLap $.AutoFillEntrants }}</td>
                                             {{ end }}
                                             <td>
                                                 {{ formatDuration $sessionLap.GetLapTime true }}
