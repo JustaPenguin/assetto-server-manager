@@ -5,11 +5,13 @@ Fixes:
 
 * Fixes an issue where the reported tyre for a driver's best lap could sometimes be incorrect.
 * Fixes an incorrect value for ACServerResultsBasePath in the KissMyRank setup. Thanks @blu1111! 
+* Fixes an issue where Championship Event Points tables would incorrectly report points penalties. Points penalties are now only shown in the main Championship points table.
 * Fixes an issue where renaming an Entrant's team in a Championship and using "Transfer Points from previous team" would not transfer points for Race Weekends.
 * Fixes an issue where pitboxes were not correctly assigned to Entrants.
 * Removed the "Start on Tyre from Fastest Lap" Checkbox for non-write access users, the word "yes" or "no" is displayed instead.
 * Fixes an issue where applying penalties to Championship or Race Weekend sessions could cause a server crash.
 * Improved performance when adding lots of cars in a race setup.
+* Completed Championship Events can now be duplicated.
 
 ---
 
