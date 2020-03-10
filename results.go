@@ -229,11 +229,9 @@ func (s *SessionResults) GetDriverDescriptionForLap(lap *SessionLap, autoFillEnt
 		return ""
 	}
 
-	if autoFillEntrantList != nil {
-		for _, entrant := range autoFillEntrantList {
-			if entrant.GUID == lap.DriverGUID {
-				return entrant.Name
-			}
+	for _, entrant := range autoFillEntrantList {
+		if entrant.GUID == lap.DriverGUID {
+			return entrant.Name
 		}
 	}
 
@@ -271,8 +269,8 @@ func (s *SessionResults) FindCarIDForGUIDAndModel(guid, model string) int {
 			break
 		}
 
-		for _, guid := range car.Driver.GuidsList {
-			if guid == guid {
+		for _, carGUID := range car.Driver.GuidsList {
+			if guid == carGUID {
 				carID = car.CarID
 				break
 			}
