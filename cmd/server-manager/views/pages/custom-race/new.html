@@ -779,6 +779,44 @@
                         </div>
                     </div>
 
+                    <div class="form-group row">
+                        <label for="DriverSwapMinimumNumberOfSwaps" class="col-sm-3 col-form-label">Minimum Number Of Driver Swaps</label>
+
+                        <div class="col-sm-9">
+                            <input
+                                    type="number"
+                                    id="DriverSwapMinimumNumberOfSwaps"
+                                    name="DriverSwapMinimumNumberOfSwaps"
+                                    class="form-control"
+                                    value="{{ $f.DriverSwapMinimumNumberOfSwaps }}"
+                                    step="1"
+                            >
+
+                            <small>
+                                The number of swaps that a driver must complete. If they do not complete the required number of stops, they are penalised (see below).
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="DriverSwapNotEnoughSwapsPenalty" class="col-sm-3 col-form-label">Not Enough Swaps Penalty (seconds)</label>
+
+                        <div class="col-sm-9">
+                            <input
+                                    type="number"
+                                    id="DriverSwapNotEnoughSwapsPenalty"
+                                    name="DriverSwapNotEnoughSwapsPenalty"
+                                    class="form-control"
+                                    value="{{ $f.DriverSwapNotEnoughSwapsPenalty }}"
+                                    step="1"
+                            >
+
+                            <small>
+                                The penalty in seconds that is applied to a driver for each Driver Swap under the required minimum that they missed. If set to 0, the driver is disqualified.
+                            </small>
+                        </div>
+                    </div>
+
                     <br>
                 {{ end }}
 

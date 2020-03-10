@@ -67,10 +67,12 @@ func ConfigIniDefault() ServerConfig {
 			MaxContactsPerKilometer:   -1,
 			ResultScreenTime:          90,
 
-			DriverSwapEnabled:        0,
-			DriverSwapMinTime:        120,
-			DriverSwapDisqualifyTime: 30,
-			DriverSwapPenaltyTime:    0,
+			DriverSwapEnabled:               0,
+			DriverSwapMinTime:               120,
+			DriverSwapDisqualifyTime:        30,
+			DriverSwapPenaltyTime:           0,
+			DriverSwapMinimumNumberOfSwaps:  0,
+			DriverSwapNotEnoughSwapsPenalty: 0,
 
 			Sessions: map[SessionType]*SessionConfig{
 				SessionTypePractice: {

@@ -47,7 +47,7 @@ type RaceControl struct {
 
 	// driver swap
 	driverSwapTimers         map[int]*time.Timer
-	driverSwapPenaltiesMutex sync.RWMutex
+	driverSwapPenaltiesMutex sync.Mutex
 	driverSwapPenalties      map[udp.DriverGUID]*driverPenalty
 }
 
@@ -447,33 +447,68 @@ func (rc *RaceControl) OnSessionUpdate(sessionInfo udp.SessionInfo) (bool, error
 
 // OnEndSession is called at the end of every session.
 func (rc *RaceControl) OnEndSession(sessionFile udp.EndSession) error {
-	for _, driver := range rc.ConnectedDrivers.Drivers {
-		if driver.driverSwapCfn != nil {
-			logrus.Infof("Cancelling active driver swap for driver: %s. Reason: Session ended", driver.CarInfo.DriverGUID)
-			driver.driverSwapCfn()
-		}
-	}
-
-	for _, driver := range rc.DisconnectedDrivers.Drivers {
-		if driver.driverSwapCfn != nil {
-			logrus.Infof("Cancelling active driver swap for driver: %s. Reason: Session ended", driver.CarInfo.DriverGUID)
-			driver.driverSwapCfn()
-		}
-	}
-
 	filename := filepath.Base(string(sessionFile))
 	logrus.Infof("End Session, file outputted at: %s", filename)
 
-	// loop over driverSwapPenalties and apply penalty
-	rc.driverSwapPenaltiesMutex.RLock()
-	defer rc.driverSwapPenaltiesMutex.RUnlock()
+	config := rc.process.Event().GetRaceConfig()
 
-	for guid, penalty := range rc.driverSwapPenalties {
-		err := rc.penaltiesManager.applyPenalty(filename, string(guid), penalty.carModel, penalty.penalty.Seconds(), true)
+	if config.DriverSwapEnabled == 1 {
+		_ = rc.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
+			if driver.driverSwapCfn != nil {
+				logrus.Infof("Cancelling active driver swap for driver: %s. Reason: Session ended", driver.CarInfo.DriverGUID)
+				driver.driverSwapCfn()
+			}
 
-		if err != nil {
-			logrus.WithError(err).Errorf("could not apply driver swap penalty of %s to driver %s", penalty.penalty.String(), guid)
-			continue
+			return nil
+		})
+
+		_ = rc.DisconnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
+			if driver.driverSwapCfn != nil {
+				logrus.Infof("Cancelling active driver swap for driver: %s. Reason: Session ended", driver.CarInfo.DriverGUID)
+				driver.driverSwapCfn()
+			}
+
+			return nil
+		})
+
+		// loop over driverSwapPenalties and apply penalty
+		rc.driverSwapPenaltiesMutex.Lock()
+		defer rc.driverSwapPenaltiesMutex.Unlock()
+
+		if config.DriverSwapMinimumNumberOfSwaps > 0 {
+			results, err := LoadResult(filename, LoadResultWithoutPluginFire)
+
+			if err != nil {
+				logrus.WithError(err).Errorf("Could not load results file to check min driver swaps")
+			} else {
+				for _, result := range results.Result {
+					numSwaps := results.NumberOfDriverSwaps(result.CarID)
+
+					if numSwaps < config.DriverSwapMinimumNumberOfSwaps {
+						guid := udp.DriverGUID(result.DriverGUID)
+						penaltyTime := time.Duration((config.DriverSwapMinimumNumberOfSwaps-numSwaps)*config.DriverSwapNotEnoughSwapsPenalty) * time.Second
+
+						// penalty is needed for the guid
+						if _, ok := rc.driverSwapPenalties[guid]; ok {
+							rc.driverSwapPenalties[guid].penalty += penaltyTime
+						} else {
+							rc.driverSwapPenalties[guid] = &driverPenalty{
+								carModel: result.CarModel,
+								penalty:  penaltyTime,
+							}
+						}
+					}
+				}
+			}
+		}
+
+		for guid, penalty := range rc.driverSwapPenalties {
+			err := rc.penaltiesManager.applyPenalty(filename, string(guid), penalty.carModel, penalty.penalty.Seconds(), true)
+
+			if err != nil {
+				logrus.WithError(err).Errorf("could not apply driver swap penalty of %s to driver %s", penalty.penalty.String(), guid)
+				continue
+			}
 		}
 	}
 
@@ -548,7 +583,7 @@ func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
 	config := rc.process.Event().GetRaceConfig()
 
 	// if this race has driver swaps enabled we should initialise one now
-	if config.DriverSwapEnabled == 1 /*&& rc.SessionInfo.Type.String() == SessionTypeRace.String()*/ {
+	if config.DriverSwapEnabled == 1 && rc.SessionInfo.Type.String() == SessionTypeRace.String() {
 		ticker := time.NewTicker(time.Second)
 
 		go rc.handleDriverSwap(ticker, config, client, driver)

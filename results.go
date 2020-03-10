@@ -810,6 +810,28 @@ func (s *SessionResults) ResultHasMultipleDrivers(result *SessionResult) bool {
 	return car.HasMultipleDrivers()
 }
 
+func (s *SessionResults) NumberOfDriverSwaps(carID int) int {
+	var lastGUID string
+	var numSwaps int
+
+	for _, lap := range s.Laps {
+		if lap.CarID != carID {
+			continue
+		}
+
+		if lastGUID == "" {
+			lastGUID = lap.DriverGUID
+		}
+
+		if lap.DriverGUID != lastGUID {
+			numSwaps++
+			lastGUID = lap.DriverGUID
+		}
+	}
+
+	return numSwaps
+}
+
 func (s *SessionResults) LapAssociatedWithGUIDAndModel(lap *SessionLap, driverGUID, model string) bool {
 	if lap.DriverGUID == driverGUID && lap.CarModel == model {
 		return true

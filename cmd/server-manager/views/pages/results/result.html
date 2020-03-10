@@ -176,14 +176,28 @@
     <div class="clearfix"></div>
 
     {{ range $i, $sessionResult := .Result.Result }}
+        {{ $resultHasMultipleDrivers := $sessionResults.ResultHasMultipleDrivers $sessionResult }}
+
         <a name="{{ $sessionResult.DriverGUID }}-{{ $sessionResult.CarID }}"></a>
         <div class="card mt-3 border-secondary">
             <div class="card-header {{ if eq $account.GUID $sessionResult.DriverGUID }}bg-success text-white{{ end }}">
-                <strong>{{ add $i 1 }}{{ ordinal (add $i 1) }} {{ driverName $sessionResult.DriverName }}
-                {{ if eq $sessionResult.DriverGUID "76561198256908075" }} (Ey up you Southern twit){{ end }}</strong> in <strong>
-                {{ prettify $sessionResult.CarModel true }}</strong>
+                <strong>
+                    {{ add $i 1 }}{{ ordinal (add $i 1) }} {{ driverName $sessionResult.DriverName }}
+                </strong>
+
+                {{ if eq $sessionResult.DriverGUID "76561198256908075" }} (Ey up you Southern twit){{ end }}
+
+                in
+                <strong>
+                    {{ prettify $sessionResult.CarModel true }}
+                </strong>
 
                 <div class="float-right">
+                    {{ if $resultHasMultipleDrivers }}
+                        {{ $numSwaps := $sessionResults.NumberOfDriverSwaps $sessionResult.CarID }}
+                        {{ $numSwaps }} Driver Swap{{ if gt $numSwaps 1 }}s{{ end }}.
+                    {{ end }}
+
                     Best: {{ $bestLap := $sessionResults.GetTime $sessionResult.BestLap $sessionResult.DriverGUID $sessionResult.CarModel false }}
                     {{ formatDuration $bestLap true }},
 
@@ -196,7 +210,6 @@
                     <div class="col-md-12">
                         <div class="table-responsive">
                             <table class="table table-bordered table-striped">
-                                {{ $resultHasMultipleDrivers := $sessionResults.ResultHasMultipleDrivers $sessionResult }}
 
                                 <tr>
                                     <th>Lap #</th>
