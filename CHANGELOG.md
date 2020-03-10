@@ -10,6 +10,7 @@ Fixes:
 * Fixes an issue where pitboxes were not correctly assigned to Entrants.
 * Removed the "Start on Tyre from Fastest Lap" Checkbox for non-write access users, the word "yes" or "no" is displayed instead.
 * Fixes an issue where applying penalties to Championship or Race Weekend sessions could cause a server crash.
+* Completed Championship Events can now be duplicated.
 
 ---
 
