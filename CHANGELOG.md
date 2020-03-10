@@ -3,14 +3,14 @@ v1.7.4
 
 Added:
 
-* Driver Swaps! This premium feature adds the ability to do driver swaps, without needing any game plugins to work!
+* Driver Swaps! This premium feature adds the ability to do driver swaps in race sessions, without needing any game plugins! This leverages Assetto Corsa's "Partial Driver Swap" functionality and adds our own software on top of it to make it fair for everyone!
   - Driver Swaps work in Championships and Race Weekends
-  - Configuration of Driver Swaps is done per-race in the Entry List section of the race form
+  - Configuration of Driver Swaps is done per-race in the Entry List section of the race form. Turn on Driver Swap and add multiple GUIDs to an Entrant, separated by ';'.
   - You can configure how long a driver swap should take, and disqualification and post-race penalties if people set off too early!
-  - You can also set a minimum number of driver swaps that each car must make.
+  - You can also set a minimum number of Driver Swaps that each car must make.
   - Driver Swap result files show which lap was completed by which driver (using the AutoFill Entrant list where possible to put names in)
   - Driver Swaps require compatible tracks. A compatible track has the timing line before or after all of the pitboxes. 
-    You can follow this guide (written by @mike855 - thanks!) to convert a track to be compatible.
+    You can follow this guide (written by @mike855 - thanks!) to modify a track to be compatible: https://github.com/JustaPenguin/assetto-server-manager/wiki/Driver-swap-track-editing
 * Compatibility with KissMyRank v1.6f
 
 Fixes:
