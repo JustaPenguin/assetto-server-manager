@@ -226,7 +226,7 @@ func (s *SessionResults) GetDriverDescriptionForLap(lap *SessionLap, autoFillEnt
 	}
 
 	if car == nil {
-		return ""
+		return lap.DriverName
 	}
 
 	for _, entrant := range autoFillEntrantList {

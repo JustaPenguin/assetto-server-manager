@@ -48,7 +48,7 @@ type RaceControl struct {
 	// driver swap
 	driverSwapTimers         map[int]*time.Timer
 	driverSwapPenaltiesMutex sync.Mutex
-	driverSwapPenalties      map[udp.DriverGUID]*driverPenalty
+	driverSwapPenalties      map[udp.DriverGUID]*driverSwapPenalty
 }
 
 // RaceControl piggyback's on the udp.Message interface so that the entire data can be sent to newly connected clients.
@@ -272,7 +272,7 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 	emptyCarInfo := true
 
 	rc.driverSwapPenaltiesMutex.Lock()
-	rc.driverSwapPenalties = make(map[udp.DriverGUID]*driverPenalty)
+	rc.driverSwapPenalties = make(map[udp.DriverGUID]*driverSwapPenalty)
 	rc.driverSwapPenaltiesMutex.Unlock()
 
 	if (rc.ConnectedDrivers.Len() > 0 || rc.DisconnectedDrivers.Len() > 0) && sessionInfo.Type == udp.SessionTypePractice {
@@ -471,7 +471,6 @@ func (rc *RaceControl) OnEndSession(sessionFile udp.EndSession) error {
 			return nil
 		})
 
-		// loop over driverSwapPenalties and apply penalty
 		rc.driverSwapPenaltiesMutex.Lock()
 		defer rc.driverSwapPenaltiesMutex.Unlock()
 
@@ -488,11 +487,10 @@ func (rc *RaceControl) OnEndSession(sessionFile udp.EndSession) error {
 						guid := udp.DriverGUID(result.DriverGUID)
 						penaltyTime := time.Duration((config.DriverSwapMinimumNumberOfSwaps-numSwaps)*config.DriverSwapNotEnoughSwapsPenalty) * time.Second
 
-						// penalty is needed for the guid
 						if _, ok := rc.driverSwapPenalties[guid]; ok {
 							rc.driverSwapPenalties[guid].penalty += penaltyTime
 						} else {
-							rc.driverSwapPenalties[guid] = &driverPenalty{
+							rc.driverSwapPenalties[guid] = &driverSwapPenalty{
 								carModel: result.CarModel,
 								penalty:  penaltyTime,
 							}
@@ -594,7 +592,7 @@ func (rc *RaceControl) OnClientDisconnect(client udp.SessionCarInfo) error {
 	return err
 }
 
-type driverPenalty struct {
+type driverSwapPenalty struct {
 	penalty  time.Duration
 	carModel string
 }
@@ -756,7 +754,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config CurrentRaceC
 							if _, ok := rc.driverSwapPenalties[currentDriver.CarInfo.DriverGUID]; ok {
 								rc.driverSwapPenalties[currentDriver.CarInfo.DriverGUID].penalty += countdown + (time.Second * 5)
 							} else {
-								rc.driverSwapPenalties[currentDriver.CarInfo.DriverGUID] = &driverPenalty{
+								rc.driverSwapPenalties[currentDriver.CarInfo.DriverGUID] = &driverSwapPenalty{
 									penalty:  countdown + (time.Second * 5),
 									carModel: currentDriver.CarInfo.CarModel,
 								}
