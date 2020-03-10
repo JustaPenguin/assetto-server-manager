@@ -594,12 +594,16 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		MaxContactsPerKilometer:   formValueAsInt(r.FormValue("MaxContactsPerKilometer")),
 		ResultScreenTime:          formValueAsInt(r.FormValue("ResultScreenTime")),
 		DisableDRSZones:           formValueAsInt(r.FormValue("DisableDRSZones")) == 1,
+	}
 
+	if Premium() {
 		// driver swap
-		DriverSwapEnabled:        formValueAsInt(r.FormValue("DriverSwapEnabled")),
-		DriverSwapMinTime:        formValueAsInt(r.FormValue("DriverSwapMinTime")),
-		DriverSwapDisqualifyTime: formValueAsInt(r.FormValue("DriverSwapDisqualifyTime")),
-		DriverSwapPenaltyTime:    formValueAsInt(r.FormValue("DriverSwapPenaltyTime")),
+		raceConfig.DriverSwapEnabled = formValueAsInt(r.FormValue("DriverSwapEnabled"))
+		raceConfig.DriverSwapMinTime = formValueAsInt(r.FormValue("DriverSwapMinTime"))
+		raceConfig.DriverSwapDisqualifyTime = formValueAsInt(r.FormValue("DriverSwapDisqualifyTime"))
+		raceConfig.DriverSwapPenaltyTime = formValueAsInt(r.FormValue("DriverSwapPenaltyTime"))
+	} else {
+		raceConfig.DriverSwapEnabled = 0
 	}
 
 	if isSol {
