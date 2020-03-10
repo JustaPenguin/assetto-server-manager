@@ -291,6 +291,7 @@ func DefaultKissMyRankConfig() *KissMyRankConfig {
 		ParkedCarSeconds:                                    6,
 		ParkedCarDistance:                                   24,
 		RightToBeForgottenChatCommand:                       0,
+		DriveThroughNoKick:                                  0,
 	}
 }
 
@@ -385,6 +386,7 @@ type KissMyRankConfig struct {
 	ParkedCarSeconds                                    int         `json:"parked_car_seconds" help:"The number of seconds for the car parked detection. 6 = 6s (e.g. a driver that is near the track and doesn't move more than the parked_car_distance in 6s will trigger the detection once)."`
 	ParkedCarDistance                                   int         `json:"parked_car_distance" help:"The distance (in meters) a car must travel in parked_car_max_seconds not to trigger the detection. 24 = 24 meters (a car on the track that moves more than 24 meters in parked_car_seconds will not trigger the detection)."`
 	RightToBeForgottenChatCommand                       int         `json:"right_to_be_forgotten_chat_command" input:"checkbox" help:"Whether to enable the 'kmr erase_personal_data_and_ban_myself' chat command which allows drivers to make use of their right to be forgotten and get all of their stats removed."`
+	DriveThroughNoKick                                  int         `json:"drive_through_no_kick" input:"checkbox" help:"Whether to disable kick penalty when a Drive-Through is not cleared or when two Drive-Through events occur in a row."`
 
 	Rules                                               FormHeading `ini:"-" json:"-" input:"heading"`
 	TimeBasedRaceExtraLap                               int         `json:"time_based_race_extra_lap" input:"checkbox" help:"Whether in a time based race the extra lap is enabled in the Assetto Corsa server_cfg.ini. If track rotation is active, the plugin will read the setting directly from the server_cfg.ini and ignore this value."`
