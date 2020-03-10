@@ -16,7 +16,6 @@ const (
 	AnyCarModel       = "any_car_model"
 	entryListFilename = "entry_list.ini"
 
-
 	driverSwapEntrantSeparator = ";"
 )
 

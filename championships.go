@@ -835,21 +835,7 @@ func (c *Championship) EnhanceResults(results *SessionResults) {
 	results.ChampionshipID = c.ID.String()
 
 	c.AttachClassIDToResults(results)
-
-	carIDToGUID := make(map[int]string)
-
-	for _, car := range results.Cars {
-		if len(car.Driver.GuidsList) > 1 {
-			// this car has been subjected to a driver swap.
-			carIDToGUID[car.CarID] = NormaliseEntrantGUIDs(car.Driver.GuidsList)
-		}
-	}
-
-	for _, result := range results.Result {
-		if overrideGUID, ok := carIDToGUID[result.CarID]; ok {
-			result.DriverGUID = overrideGUID
-		}
-	}
+	results.NormaliseDriverSwapGUIDs()
 
 	// update names / teams to the values we know to be correct due to championship setup
 	for _, class := range c.Classes {

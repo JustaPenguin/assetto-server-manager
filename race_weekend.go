@@ -426,6 +426,7 @@ func (rw *RaceWeekend) EnhanceResults(results *SessionResults) {
 	}
 
 	results.RaceWeekendID = rw.ID.String()
+	results.NormaliseDriverSwapGUIDs()
 
 	if rw.HasLinkedChampionship() {
 		// linked championships determine class IDs etc for drivers.
@@ -637,7 +638,7 @@ func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) ([]*RaceW
 			foundEntrant := false
 
 			for _, driver := range out {
-				if driver.Car.GetGUID() == entrant.Car.GetGUID() {
+				if driver.Car.GetGUID() == entrant.Car.GetGUID() || NormaliseEntrantGUIDs(driver.Car.Driver.GuidsList) == entrant.Car.GetGUID() {
 					foundEntrant = true
 					break
 				}

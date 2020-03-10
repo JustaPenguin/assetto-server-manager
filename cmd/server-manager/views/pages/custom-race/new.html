@@ -584,105 +584,107 @@
             </div>
         </div>
 
-        {{ if not $.IsRaceWeekend }}
-            <div class="card mt-3 border-secondary">
+
+        <div class="card mt-3 border-secondary">
             <div class="card-header">
                 <strong>Entry List</strong>
             </div>
 
             <div class="card-body" id="entrants">
-                <div class="form-group row {{ if .IsChampionship }}visible-booking-enabled{{ end }}" {{ if and .IsChampionship (not ($f.HasSession "BOOK")) }}style="display: none;"{{ end }}>
-                    <label for="MaxClients" class="col-sm-3 col-form-label">Max Clients</label>
+                {{ if not $.IsRaceWeekend }}
+                    <div class="form-group row {{ if .IsChampionship }}visible-booking-enabled{{ end }}" {{ if and .IsChampionship (not ($f.HasSession "BOOK")) }}style="display: none;"{{ end }}>
+                        <label for="MaxClients" class="col-sm-3 col-form-label">Max Clients</label>
 
-                    <div class="col-sm-9">
-                            <input
-                                    type="number"
-                                    id="MaxClients"
-                                    name="MaxClients"
-                                    class="form-control"
+                        <div class="col-sm-9">
+                                <input
+                                        type="number"
+                                        id="MaxClients"
+                                        name="MaxClients"
+                                        class="form-control"
 
-                                    {{ if gt $.MaxClientsOverride 0 }}
-                                        data-value-override="{{ $.MaxClientsOverride }}"
-                                        value="{{ $.MaxClientsOverride }}"
+                                        {{ if gt $.MaxClientsOverride 0 }}
+                                            data-value-override="{{ $.MaxClientsOverride }}"
+                                            value="{{ $.MaxClientsOverride }}"
 
-                                        max="{{ $.MaxClientsOverride }}"
-                                    {{ else }}
-                                        value="{{ $f.MaxClients }}"
-                                        {{ with $trackInfo }}max="{{ $trackInfo.Pitboxes }}"{{ end }}
-                                    {{ end }}
-                                    step="1"
-                            >
-
-                        <small>
-                            Maximum number of clients allowed on the server.
-
-                            {{ if gt $.MaxClientsOverride 0 }}
-                                <strong>Cannot be greater than {{ $.MaxClientsOverride }}</strong>. (This value is restricted by your hosting provider.)<br>
-                            {{ end }}
-                        </small>
-                    </div>
-                </div>
-
-                {{ if not .IsChampionship }}
-                    <div class="hidden-booking-enabled">
-
-                        <div class="form-group row">
-                            <label for="PickupModeEnabled" class="col-sm-3 col-form-label">Pickup Mode</label>
-
-
-                            <div class="col-sm-9">
-                                <input type="checkbox"
-                                       id="PickupModeEnabled"
-                                       name="PickupModeEnabled"
-                                       value="{{ $f.PickupModeEnabled }}"
-
-                                        {{ if eq $f.PickupModeEnabled 1 }}
-                                            checked="checked"
+                                            max="{{ $.MaxClientsOverride }}"
+                                        {{ else }}
+                                            value="{{ $f.MaxClients }}"
+                                            {{ with $trackInfo }}max="{{ $trackInfo.Pitboxes }}"{{ end }}
                                         {{ end }}
+                                        step="1"
                                 >
 
-                                <br>
+                            <small>
+                                Maximum number of clients allowed on the server.
 
-                                <small>
-                                    If set to OFF the server starts in booking mode. Warning: in pickup mode you have to
-                                    list at least one car in the entry list. Note, when Pickup Mode is OFF, sessions
-                                    with Loop Mode ON or Reversed Grid Positions will require players to rejoin the server
-                                    when the server loops or progresses to a second race.
-                                </small>
-                            </div>
+                                {{ if gt $.MaxClientsOverride 0 }}
+                                    <strong>Cannot be greater than {{ $.MaxClientsOverride }}</strong>. (This value is restricted by your hosting provider.)<br>
+                                {{ end }}
+                            </small>
                         </div>
-
-                        <div class="form-group row">
-                            <label for="LockedEntryList" class="col-sm-3 col-form-label">Locked Entry List</label>
-
-
-                            <div class="col-sm-9">
-                                <input type="checkbox"
-                                       id="LockedEntryList"
-                                       name="LockedEntryList"
-                                       value="{{ $f.LockedEntryList }}"
-
-                                        {{ if eq $f.LockedEntryList 1 }}
-                                            checked="checked"
-                                        {{ end }}
-                                >
-
-                                <br>
-
-                                <small>Only players already included in the entry list can join the server.</small>
-
-                                <small id="locked-reverse-warning" class="text-danger">The server will crash if
-                                a second race is active (Reverse Grid Race Positions != 0), locked entry list is on
-                                and pickup mode is off. In order to turn on locked entry list for this event turn on
-                                pickup mode too!</small>
-                            </div>
-                        </div>
-
-                        <div id="entrantTemplate" class="entrant">
-                            {{ template "entrant" }}
-                        </div>
-
                     </div>
+
+                    {{ if not .IsChampionship }}
+                        <div class="hidden-booking-enabled">
+
+                            <div class="form-group row">
+                                <label for="PickupModeEnabled" class="col-sm-3 col-form-label">Pickup Mode</label>
+
+
+                                <div class="col-sm-9">
+                                    <input type="checkbox"
+                                           id="PickupModeEnabled"
+                                           name="PickupModeEnabled"
+                                           value="{{ $f.PickupModeEnabled }}"
+
+                                            {{ if eq $f.PickupModeEnabled 1 }}
+                                                checked="checked"
+                                            {{ end }}
+                                    >
+
+                                    <br>
+
+                                    <small>
+                                        If set to OFF the server starts in booking mode. Warning: in pickup mode you have to
+                                        list at least one car in the entry list. Note, when Pickup Mode is OFF, sessions
+                                        with Loop Mode ON or Reversed Grid Positions will require players to rejoin the server
+                                        when the server loops or progresses to a second race.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="LockedEntryList" class="col-sm-3 col-form-label">Locked Entry List</label>
+
+
+                                <div class="col-sm-9">
+                                    <input type="checkbox"
+                                           id="LockedEntryList"
+                                           name="LockedEntryList"
+                                           value="{{ $f.LockedEntryList }}"
+
+                                            {{ if eq $f.LockedEntryList 1 }}
+                                                checked="checked"
+                                            {{ end }}
+                                    >
+
+                                    <br>
+
+                                    <small>Only players already included in the entry list can join the server.</small>
+
+                                    <small id="locked-reverse-warning" class="text-danger">The server will crash if
+                                    a second race is active (Reverse Grid Race Positions != 0), locked entry list is on
+                                    and pickup mode is off. In order to turn on locked entry list for this event turn on
+                                    pickup mode too!</small>
+                                </div>
+                            </div>
+
+                            <div id="entrantTemplate" class="entrant">
+                                {{ template "entrant" }}
+                            </div>
+
+                        </div>
+                    {{ end }}
                 {{ end }}
 
                 <div class="form-group row">
@@ -765,50 +767,52 @@
                     </div>
                 </div>
 
-                {{ if not .IsChampionship }}
-                    <p>If you add an Entrant once, the next time you add an Entrant, the 'name' input will give you suggestions and auto-populate the Entrant's Name, Team and GUID.</p>
-                {{ end }}
-
-                <div class="hidden-booking-enabled">
-
-                    <div class="entrants-block">
-                        {{ range $index, $entrant := .CurrentEntrants.AsSlice }}
-                            <div class="entrant">
-                                {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" $.IsChampionship }}
-                            </div>
-                        {{ else }}
-                            <div class="entrant">
-                                {{ template "entrant" }}
-                            </div>
-                        {{ end }}
-                    </div>
-
+                {{ if not $.IsRaceWeekend }}
 
                     {{ if not .IsChampionship }}
-                        <div class="row">
-                            <div class="col-md-8 pt-2">
-                                <p>Car, Skin, Ballast, Restrictor and Fixed Setup from the last Entrant will be cloned into new Entrants.</p>
-                            </div>
-                            <div class="col-md-4 text-right">
-                                <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0">
-
-                                <button class="btn btn-warning addEntrant">Add Entrant(s)</button>
-                            </div>
-                        </div>
+                        <p>If you add an Entrant once, the next time you add an Entrant, the 'name' input will give you suggestions and auto-populate the Entrant's Name, Team and GUID.</p>
                     {{ end }}
 
-                </div>
+                    <div class="hidden-booking-enabled">
 
-                <div class="visible-booking-enabled">
-                    <p>Booking Mode is enabled. You cannot configure specific drivers in the EntryList. Pickup Mode will be disabled.</p>
-                </div>
+                        <div class="entrants-block">
+                            {{ range $index, $entrant := .CurrentEntrants.AsSlice }}
+                                <div class="entrant">
+                                    {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" $.IsChampionship }}
+                                </div>
+                            {{ else }}
+                                <div class="entrant">
+                                    {{ template "entrant" }}
+                                </div>
+                            {{ end }}
+                        </div>
 
-                <input type="hidden" class="totalNumEntrants" name="EntryList.NumEntrants" value="{{ if gt 0 (len .CurrentEntrants) }}{{ len .CurrentEntrants }}{{ else }}1{{ end }}">
+
+                        {{ if not .IsChampionship }}
+                            <div class="row">
+                                <div class="col-md-8 pt-2">
+                                    <p>Car, Skin, Ballast, Restrictor and Fixed Setup from the last Entrant will be cloned into new Entrants.</p>
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0">
+
+                                    <button class="btn btn-warning addEntrant">Add Entrant(s)</button>
+                                </div>
+                            </div>
+                        {{ end }}
+
+                    </div>
+
+                    <div class="visible-booking-enabled">
+                        <p>Booking Mode is enabled. You cannot configure specific drivers in the EntryList. Pickup Mode will be disabled.</p>
+                    </div>
+
+                    <input type="hidden" class="totalNumEntrants" name="EntryList.NumEntrants" value="{{ if gt 0 (len .CurrentEntrants) }}{{ len .CurrentEntrants }}{{ else }}1{{ end }}">
+                {{ end }}
 
                 <div class="clearfix"></div>
             </div>
         </div>
-        {{ end }}
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">

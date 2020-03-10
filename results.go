@@ -43,8 +43,10 @@ type SessionResults struct {
 var ErrSessionCarNotFound = errors.New("servermanager: session car not found")
 
 func (s *SessionResults) FindCarByGUIDAndModel(guid, model string) (*SessionCar, error) {
+	carID := s.FindCarIDForGUIDAndModel(guid, model)
+
 	for _, car := range s.Cars {
-		if car.GetGUID() == guid && car.GetCar() == model {
+		if car.CarID == carID {
 			return car, nil
 		}
 	}
@@ -88,6 +90,23 @@ func (s *SessionResults) Anonymize() {
 		result.DriverGUID = AnonymiseDriverGUID(result.DriverGUID)
 
 		result.DriverName = shortenDriverName(result.DriverName)
+	}
+}
+
+func (s *SessionResults) NormaliseDriverSwapGUIDs() {
+	carIDToGUID := make(map[int]string)
+
+	for _, car := range s.Cars {
+		if len(car.Driver.GuidsList) > 1 {
+			// this car has been subjected to a driver swap.
+			carIDToGUID[car.CarID] = NormaliseEntrantGUIDs(car.Driver.GuidsList)
+		}
+	}
+
+	for _, result := range s.Result {
+		if overrideGUID, ok := carIDToGUID[result.CarID]; ok {
+			result.DriverGUID = overrideGUID
+		}
 	}
 }
 
@@ -205,6 +224,11 @@ func (s *SessionResults) FindCarIDForGUIDAndModel(guid, model string) int {
 		}
 
 		if car.Driver.GUID == guid {
+			carID = car.CarID
+			break
+		}
+
+		if NormaliseEntrantGUIDs(car.Driver.GuidsList) == guid {
 			carID = car.CarID
 			break
 		}
