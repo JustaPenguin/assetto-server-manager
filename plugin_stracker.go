@@ -237,6 +237,8 @@ type StrackerHTTPConfiguration struct {
 	Enabled       bool   `ini:"enabled" show:"open"`
 	ListenAddress string `ini:"listen_addr" show:"open" help:"Listening address of the http server (normally there is no need to change the default value 0.0.0.0 which means that the whole internet can connect to the server)"`
 	ListenPort    int    `ini:"listen_port" show:"open" help:"TCP listening port of the http server"`
+	PublicURL     string `ini:"-" show:"open" help:"This allows you to manually specify the URL on which the sTracker web interface is running. This link will be displayed on Server Manager's Live Timings page so that anybody can view the sTracker interface. If this is left blank, an older and <em>unrecommended</em> Server Manager proxying method will be used to display the sTracker interface!"`
+
 	AdminUsername string `ini:"admin_username" help:"Username for the stracker admin pages. Leaving empty results in disabled admin pages"`
 	AdminPassword string `ini:"admin_password" input:"password" help:"Password for the stracker admin pages. Leaving empty results in disabled admin pages"`
 
