@@ -4,6 +4,7 @@ v1.7.4
 Added:
 
 * Compatibility with KissMyRank v1.6f
+* Added a "Public URL" option to sTracker's HTTP Configuration to be used when linking to sTracker from Live Timings. If you were having problems with parts of sTracker not working correctly, try setting the Public URL option.
 
 Fixes:
 
