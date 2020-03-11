@@ -4,6 +4,9 @@ v1.7.4
 Added:
 
 * Compatibility with KissMyRank v1.6f
+* You can now control whether weather presets added to championships will be activated only in Practice sessions, only 
+  in Championship events or in either. This is intended to allow for practice sessions with more stable weather/time 
+  progression that the actual event.
 
 Fixes:
 
