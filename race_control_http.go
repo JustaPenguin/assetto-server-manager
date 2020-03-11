@@ -6,9 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
+
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 )
 
 const (
@@ -164,6 +165,7 @@ type liveTimingTemplateVars struct {
 	IsStrackerEnabled           bool
 	IsKissMyRankEnabled         bool
 	KissMyRankWebStatsPublicURL string
+	STrackerInterfacePublicURL  string
 }
 
 func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request) {
@@ -211,6 +213,12 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	sTrackerPublicURL := strackerOptions.HTTPConfiguration.PublicURL
+
+	if sTrackerPublicURL == "" {
+		sTrackerPublicURL = "/stracker/mainpage"
+	}
+
 	kissMyRankOptions, err := rch.store.LoadKissMyRankOptions()
 
 	if err != nil {
@@ -231,6 +239,7 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		IsStrackerEnabled:           IsStrackerInstalled() && strackerOptions.EnableStracker,
 		IsKissMyRankEnabled:         IsKissMyRankInstalled() && kissMyRankOptions.EnableKissMyRank,
 		KissMyRankWebStatsPublicURL: kissMyRankOptions.WebStatsPublicURL,
+		STrackerInterfacePublicURL:  sTrackerPublicURL,
 	})
 }
 
