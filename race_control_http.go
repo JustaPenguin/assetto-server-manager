@@ -157,15 +157,11 @@ func NewRaceControlHandler(baseHandler *BaseHandler, store Store, raceManager *R
 type liveTimingTemplateVars struct {
 	BaseTemplateVars
 
-	RaceDetails                 *CustomRace
-	FrameLinks                  []string
-	CSSDotSmoothing             int
-	CMJoinLink                  string
-	UseMPH                      bool
-	IsStrackerEnabled           bool
-	IsKissMyRankEnabled         bool
-	KissMyRankWebStatsPublicURL string
-	STrackerInterfacePublicURL  string
+	RaceDetails     *CustomRace
+	FrameLinks      []string
+	CSSDotSmoothing int
+	CMJoinLink      string
+	UseMPH          bool
 }
 
 func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request) {
@@ -205,41 +201,15 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	strackerOptions, err := rch.store.LoadStrackerOptions()
-
-	if err != nil {
-		logrus.WithError(err).Errorf("couldn't load stracker options")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	sTrackerPublicURL := strackerOptions.HTTPConfiguration.PublicURL
-
-	if sTrackerPublicURL == "" {
-		sTrackerPublicURL = "/stracker/mainpage"
-	}
-
-	kissMyRankOptions, err := rch.store.LoadKissMyRankOptions()
-
-	if err != nil {
-		logrus.WithError(err).Errorf("couldn't load kissmyrank options")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
 	rch.viewRenderer.MustLoadTemplate(w, r, "live-timing.html", &liveTimingTemplateVars{
 		BaseTemplateVars: BaseTemplateVars{
 			WideContainer: true,
 		},
-		RaceDetails:                 customRace,
-		FrameLinks:                  frameLinks,
-		CSSDotSmoothing:             udp.RealtimePosIntervalMs,
-		CMJoinLink:                  linkString,
-		UseMPH:                      serverOpts.UseMPH == 1,
-		IsStrackerEnabled:           IsStrackerInstalled() && strackerOptions.EnableStracker,
-		IsKissMyRankEnabled:         IsKissMyRankInstalled() && kissMyRankOptions.EnableKissMyRank,
-		KissMyRankWebStatsPublicURL: kissMyRankOptions.WebStatsPublicURL,
-		STrackerInterfacePublicURL:  sTrackerPublicURL,
+		RaceDetails:     customRace,
+		FrameLinks:      frameLinks,
+		CSSDotSmoothing: udp.RealtimePosIntervalMs,
+		CMJoinLink:      linkString,
+		UseMPH:          serverOpts.UseMPH == 1,
 	})
 }
 

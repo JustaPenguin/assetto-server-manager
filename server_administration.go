@@ -22,6 +22,7 @@ type ServerAdministrationHandler struct {
 	raceManager         *RaceManager
 	championshipManager *ChampionshipManager
 	raceWeekendManager  *RaceWeekendManager
+	pluginManager       *PluginManager
 	process             ServerProcess
 	acsrClient          *ACSRClient
 }
@@ -32,6 +33,7 @@ func NewServerAdministrationHandler(
 	raceManager *RaceManager,
 	championshipManager *ChampionshipManager,
 	raceWeekendManager *RaceWeekendManager,
+	pluginManager *PluginManager,
 	process ServerProcess,
 	acsrClient *ACSRClient,
 ) *ServerAdministrationHandler {
@@ -41,6 +43,7 @@ func NewServerAdministrationHandler(
 		raceManager:         raceManager,
 		championshipManager: championshipManager,
 		raceWeekendManager:  raceWeekendManager,
+		pluginManager:       pluginManager,
 		process:             process,
 		acsrClient:          acsrClient,
 	}
@@ -171,6 +174,12 @@ func (sah *ServerAdministrationHandler) options(w http.ResponseWriter, r *http.R
 		sah.acsrClient.AccountID = serverOpts.ACSRAccountID
 		sah.acsrClient.APIKey = serverOpts.ACSRAPIKey
 		sah.acsrClient.Enabled = serverOpts.EnableACSR
+
+		sah.pluginManager.StopPlugins()
+
+		if err := sah.pluginManager.StartPlugins(); err != nil {
+			logrus.WithError(err).Error("Could not start plugins")
+		}
 	}
 
 	sah.viewRenderer.MustLoadTemplate(w, r, "server/options.html", &serverOptionsTemplateVars{

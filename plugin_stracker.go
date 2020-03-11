@@ -147,8 +147,7 @@ func DefaultStrackerIni() *StrackerConfiguration {
 }
 
 type StrackerConfiguration struct {
-	EnableStracker bool `ini:"-" help:"Turn Stracker on or off"`
-
+	EnableStracker        bool                          `ini:"-" help:"Turn Stracker on or off"`
 	InstanceConfiguration StrackerInstanceConfiguration `ini:"STRACKER_CONFIG"`
 	SwearFilter           StrackerSwearFilter           `ini:"SWEAR_FILTER"`
 	SessionManagement     StrackerSessionManagement     `ini:"SESSION_MANAGEMENT"`
@@ -288,12 +287,18 @@ type StrackerLapValidChecks struct {
 type StrackerHandler struct {
 	*BaseHandler
 
-	store        Store
+	store         Store
+	pluginManager *PluginManager
+
 	reverseProxy *httputil.ReverseProxy
 }
 
-func NewStrackerHandler(baseHandler *BaseHandler, store Store) *StrackerHandler {
-	return &StrackerHandler{BaseHandler: baseHandler, store: store}
+func NewStrackerHandler(baseHandler *BaseHandler, store Store, pluginManager *PluginManager) *StrackerHandler {
+	return &StrackerHandler{
+		BaseHandler:   baseHandler,
+		store:         store,
+		pluginManager: pluginManager,
+	}
 }
 
 type strackerConfigurationTemplateVars struct {
@@ -472,6 +477,12 @@ func (sth *StrackerHandler) options(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			logrus.WithError(err).Errorf("couldn't re-init stracker proxy")
+		}
+
+		sth.pluginManager.StopPlugins()
+
+		if err := sth.pluginManager.StartPlugins(); err != nil {
+			logrus.WithError(err).Error("Could not start plugins")
 		}
 	}
 

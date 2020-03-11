@@ -115,6 +115,22 @@
                         <a class="nav-link" href="/calendar">Calendar</a>
                     </li>
 
+                    {{ if or $.IsStrackerEnabled $.IsKissMyRankEnabled }}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navBarPluginsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Plugins
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navBarPluginsDropdown">
+                                {{ if $.IsStrackerEnabled }}
+                                    <a class="dropdown-item" href="{{ $.STrackerInterfacePublicURL }}">STracker Web</a>
+                                {{ end }}
+
+                                {{ if $.IsKissMyRankEnabled }}
+                                    <a class="dropdown-item" href="{{ $.KissMyRankWebStatsPublicURL }}">KissMyRank Web</a>
+                                {{ end }}
+                            </div>
+                        </li>
+                    {{ end }}
 
                     {{ if WriteAccess }}
                         <li class="nav-item dropdown">

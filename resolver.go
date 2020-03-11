@@ -20,6 +20,7 @@ type Resolver struct {
 	notificationManager   *NotificationManager
 	scheduledRacesManager *ScheduledRacesManager
 	raceWeekendManager    *RaceWeekendManager
+	pluginManager         *PluginManager
 
 	viewRenderer          *Renderer
 	serverProcess         ServerProcess
@@ -107,6 +108,16 @@ func (r *Resolver) initACSRClient() error {
 	r.acsrClient = NewACSRClient(serverOptions.ACSRAccountID, serverOptions.ACSRAPIKey, serverOptions.EnableACSR)
 
 	return nil
+}
+
+func (r *Resolver) resolvePluginManager() *PluginManager {
+	if r.pluginManager != nil {
+		return r.pluginManager
+	}
+
+	r.pluginManager = NewPluginManager(r.ResolveStore())
+
+	return r.pluginManager
 }
 
 func (r *Resolver) ResolveStore() Store {
@@ -334,6 +345,7 @@ func (r *Resolver) resolveServerAdministrationHandler() *ServerAdministrationHan
 		r.resolveRaceManager(),
 		r.resolveChampionshipManager(),
 		r.resolveRaceWeekendManager(),
+		r.resolvePluginManager(),
 		r.resolveServerProcess(),
 		r.acsrClient,
 	)
@@ -451,7 +463,11 @@ func (r *Resolver) resolveStrackerHandler() *StrackerHandler {
 		return r.strackerHandler
 	}
 
-	r.strackerHandler = NewStrackerHandler(r.resolveBaseHandler(), r.ResolveStore())
+	r.strackerHandler = NewStrackerHandler(
+		r.resolveBaseHandler(),
+		r.ResolveStore(),
+		r.resolvePluginManager(),
+	)
 
 	return r.strackerHandler
 }
@@ -474,6 +490,7 @@ func (r *Resolver) resolveKissMyRankHandler() *KissMyRankHandler {
 	r.kissMyRankHandler = NewKissMyRankHandler(
 		r.resolveBaseHandler(),
 		r.ResolveStore(),
+		r.resolvePluginManager(),
 	)
 
 	return r.kissMyRankHandler
