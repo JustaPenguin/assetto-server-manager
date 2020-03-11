@@ -119,6 +119,41 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 		raceConfig.MaxBallastKilograms = greatestBallast
 	}
 
+	// if this is a championship practice and some practice weathers exist replace weather in config with them
+	if event.IsChampionship() && event.IsPractice() {
+		practiceWeather := make(map[string]*WeatherConfig)
+
+		id := 0
+
+		for _, weather := range raceConfig.Weather {
+			if weather.ChampionshipPracticeWeather == weatherPractice || weather.ChampionshipPracticeWeather == weatherAny {
+				practiceWeather[fmt.Sprintf("WEATHER_%d", id)] = weather
+
+				id += 1
+			}
+		}
+
+		if len(practiceWeather) > 0 {
+			raceConfig.Weather = practiceWeather
+		}
+	} else if event.IsChampionship() {
+		nonPracticeWeather := make(map[string]*WeatherConfig)
+
+		id := 0
+
+		for _, weather := range raceConfig.Weather {
+			if weather.ChampionshipPracticeWeather == weatherEvent || weather.ChampionshipPracticeWeather == weatherAny {
+				nonPracticeWeather[fmt.Sprintf("WEATHER_%d", id)] = weather
+
+				id += 1
+			}
+		}
+
+		if len(nonPracticeWeather) > 0 {
+			raceConfig.Weather = nonPracticeWeather
+		}
+	}
+
 	config := ServerConfig{
 		CurrentRaceConfig:  raceConfig,
 		GlobalServerConfig: *serverOpts,
@@ -630,6 +665,8 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 				BaseTemperatureRoad:    formValueAsInt(r.Form["BaseTemperatureRoad"][i]),
 				VariationAmbient:       formValueAsInt(r.Form["VariationAmbient"][i]),
 				VariationRoad:          formValueAsInt(r.Form["VariationRoad"][i]),
+
+				ChampionshipPracticeWeather: r.Form["ChampionshipPracticeWeather"][i],
 			})
 		} else {
 			startTime, err := time.ParseInLocation("2006-01-02T15:04", r.Form["DateUnix"][i], time.UTC)
@@ -657,6 +694,8 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 				BaseTemperatureRoad:    formValueAsInt(r.Form["BaseTemperatureRoad"][i]),
 				VariationAmbient:       formValueAsInt(r.Form["VariationAmbient"][i]),
 				VariationRoad:          formValueAsInt(r.Form["VariationRoad"][i]),
+
+				ChampionshipPracticeWeather: r.Form["ChampionshipPracticeWeather"][i],
 
 				CMGraphics:          weatherName,
 				CMWFXType:           WFXType,

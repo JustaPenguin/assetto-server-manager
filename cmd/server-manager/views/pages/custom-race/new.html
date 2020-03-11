@@ -1071,6 +1071,30 @@
                                             </select>
                                         </div>
 
+                                        <div class="form-group row {{ if not $.IsChampionship }}d-none{{ end }}">
+                                            <label class="col-sm-3 col-form-label col-form-label-sm" for="ChampionshipPracticeWeather">Championship Weather Context</label>
+
+                                            <div class="col-sm-9 p-0">
+                                                <select name="ChampionshipPracticeWeather" id="ChampionshipPracticeWeather"
+                                                        class="form-control form-control-sm"
+                                                        {{ if not $.IsChampionship }}readonly="readonly"{{ end }}>
+
+                                                    <option value="weatherPractice" {{ if and $.IsChampionship (eq $weather.ChampionshipPracticeWeather "weatherPractice") }} selected="selected" {{ end }}>
+                                                        Championship Practice Only
+                                                    </option>
+                                                    <option value="weatherEvent" {{ if and $.IsChampionship (eq $weather.ChampionshipPracticeWeather "weatherEvent") }} selected="selected" {{ end }}>
+                                                        Championship Event Only
+                                                    </option>
+                                                    <option value="weatherAny" {{ if and $.IsChampionship (eq $weather.ChampionshipPracticeWeather "weatherAny") }} selected="selected" {{ end }}>
+                                                        Any Session
+                                                    </option>
+                                                </select>
+
+                                                <small>Select whether weather will be used for only Championship practice sessions (started from the Championship overview page),
+                                                only actual championship events, or any session</small>
+                                            </div>
+                                        </div>
+
                                         <div class="row">
                                             <div class="form-group col-sm-6">
                                                 <label><small>Base Temperature Ambient</small></label>
