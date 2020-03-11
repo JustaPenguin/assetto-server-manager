@@ -102,11 +102,12 @@ func ConfigIniDefault() ServerConfig {
 
 			Weather: map[string]*WeatherConfig{
 				"WEATHER_0": {
-					Graphics:               "3_clear",
-					BaseTemperatureAmbient: 26,
-					BaseTemperatureRoad:    11,
-					VariationAmbient:       1,
-					VariationRoad:          1,
+					Graphics:                    "3_clear",
+					ChampionshipPracticeWeather: weatherAny,
+					BaseTemperatureAmbient:      26,
+					BaseTemperatureRoad:         11,
+					VariationAmbient:            1,
+					VariationRoad:               1,
 				},
 			},
 		},

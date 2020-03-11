@@ -62,13 +62,16 @@ type kissMyRankConfigurationTemplateVars struct {
 
 type KissMyRankHandler struct {
 	*BaseHandler
-	store Store
+
+	pluginManager *PluginManager
+	store         Store
 }
 
-func NewKissMyRankHandler(baseHandler *BaseHandler, store Store) *KissMyRankHandler {
+func NewKissMyRankHandler(baseHandler *BaseHandler, store Store, pluginManager *PluginManager) *KissMyRankHandler {
 	return &KissMyRankHandler{
-		BaseHandler: baseHandler,
-		store:       store,
+		BaseHandler:   baseHandler,
+		store:         store,
+		pluginManager: pluginManager,
 	}
 }
 
@@ -99,6 +102,12 @@ func (kmrh *KissMyRankHandler) options(w http.ResponseWriter, r *http.Request) {
 			AddErrorFlash(w, r, "Failed to save KissMyRank options")
 		} else {
 			AddFlash(w, r, "KissMyRank options successfully saved!")
+		}
+
+		kmrh.pluginManager.StopPlugins()
+
+		if err := kmrh.pluginManager.StartPlugins(); err != nil {
+			logrus.WithError(err).Error("Could not start plugins")
 		}
 	}
 

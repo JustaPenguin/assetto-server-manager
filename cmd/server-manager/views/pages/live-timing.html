@@ -83,7 +83,7 @@
             {{ end }}
 
             {{ if $.IsStrackerEnabled }}
-                <a href="/stracker/mainpage" class="btn btn-primary btn-sm mt-1">STracker</a>
+                <a href="{{ $.STrackerInterfacePublicURL }}" class="btn btn-primary btn-sm mt-1">sTracker</a>
             {{ end }}
 
             {{ if and $.IsKissMyRankEnabled (ne $.KissMyRankWebStatsPublicURL "") }}
