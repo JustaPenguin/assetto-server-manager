@@ -129,7 +129,7 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 			if weather.ChampionshipPracticeWeather == weatherPractice || weather.ChampionshipPracticeWeather == weatherAny {
 				practiceWeather[fmt.Sprintf("WEATHER_%d", id)] = weather
 
-				id += 1
+				id++
 			}
 		}
 
@@ -145,7 +145,7 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 			if weather.ChampionshipPracticeWeather == weatherEvent || weather.ChampionshipPracticeWeather == weatherAny {
 				nonPracticeWeather[fmt.Sprintf("WEATHER_%d", id)] = weather
 
-				id += 1
+				id++
 			}
 		}
 
