@@ -1079,14 +1079,14 @@
                                                         class="form-control form-control-sm"
                                                         {{ if not $.IsChampionship }}readonly="readonly"{{ end }}>
 
+                                                    <option value="weatherAny" {{ if and $.IsChampionship (eq $weather.ChampionshipPracticeWeather "weatherAny") }} selected="selected" {{ end }}>
+                                                        Any Session
+                                                    </option>
                                                     <option value="weatherPractice" {{ if and $.IsChampionship (eq $weather.ChampionshipPracticeWeather "weatherPractice") }} selected="selected" {{ end }}>
                                                         Championship Practice Only
                                                     </option>
                                                     <option value="weatherEvent" {{ if and $.IsChampionship (eq $weather.ChampionshipPracticeWeather "weatherEvent") }} selected="selected" {{ end }}>
                                                         Championship Event Only
-                                                    </option>
-                                                    <option value="weatherAny" {{ if and $.IsChampionship (eq $weather.ChampionshipPracticeWeather "weatherAny") }} selected="selected" {{ end }}>
-                                                        Any Session
                                                     </option>
                                                 </select>
 
