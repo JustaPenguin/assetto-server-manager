@@ -46,6 +46,9 @@ type RaceManager struct {
 	// scheduled races
 	customRaceStartTimers    map[string]*when.Timer
 	customRaceReminderTimers map[string]*when.Timer
+
+	udpSendPort, udpListenPort int
+	portSetupOnce              sync.Once
 }
 
 func NewRaceManager(
@@ -1349,24 +1352,28 @@ func (rm *RaceManager) LoadServerOptions() (*GlobalServerConfig, error) {
 		return nil, err
 	}
 
-	udpListenPort, udpSendPort := 0, 0
+	rm.portSetupOnce.Do(func() {
+		for rm.udpListenPort == rm.udpSendPort {
+			rm.udpListenPort, err = FreeUDPPort()
 
-	for udpListenPort == udpSendPort {
-		udpListenPort, err = FreeUDPPort()
+			if err != nil {
+				return
+			}
 
-		if err != nil {
-			return nil, err
+			rm.udpSendPort, err = FreeUDPPort()
+
+			if err != nil {
+				return
+			}
 		}
+	})
 
-		udpSendPort, err = FreeUDPPort()
-
-		if err != nil {
-			return nil, err
-		}
+	if err != nil {
+		return nil, err
 	}
 
-	serverOpts.FreeUDPPluginAddress = fmt.Sprintf("127.0.0.1:%d", udpSendPort)
-	serverOpts.FreeUDPPluginLocalPort = udpListenPort
+	serverOpts.FreeUDPPluginAddress = fmt.Sprintf("127.0.0.1:%d", rm.udpSendPort)
+	serverOpts.FreeUDPPluginLocalPort = rm.udpListenPort
 
 	return serverOpts, nil
 }

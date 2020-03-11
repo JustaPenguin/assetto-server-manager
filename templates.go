@@ -476,6 +476,8 @@ type BaseTemplateVars struct {
 	BaseURLIsSet       bool
 	BaseURLIsValid     bool
 	ServerID           ServerID
+	KissMyRankEnabled  bool
+	STrackerEnabled    bool
 }
 
 func (b *BaseTemplateVars) Get() *BaseTemplateVars {
@@ -505,6 +507,12 @@ func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, vars Templat
 	if err != nil {
 		return err
 	}
+
+	strackerOptions, err := tr.store.LoadStrackerOptions()
+	data.STrackerEnabled = err == nil && strackerOptions.EnableStracker && IsStrackerInstalled()
+
+	kissMyRankOptions, err := tr.store.LoadKissMyRankOptions()
+	data.KissMyRankEnabled = err == nil && kissMyRankOptions.EnableKissMyRank && IsKissMyRankInstalled()
 
 	data.ServerStatus = tr.process.IsRunning()
 	data.ServerEvent = tr.process.Event()
