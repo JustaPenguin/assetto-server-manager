@@ -75,6 +75,16 @@ http:
   # (if using 'filesystem' above)
   session_store_path: ""
 
+  tls:
+    # TLS configuration. Server Manager supports TLS v1.2 upwards. As of 12/03/2020,
+    # the Server Manager configuration yields a perfect score from SSL Labs.
+    # If you enable this, you likely want the hostname (above) to listen on port 443.
+    enabled: false
+    # the path to the SSL certificate file.
+    cert_path: ""
+    # the path to the SSL key file.
+    key_path: ""
+
 ################################################################################
 #
 #  monitoring - enabling monitoring allows us to find out more information
