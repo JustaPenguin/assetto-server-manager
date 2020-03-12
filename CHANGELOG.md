@@ -20,6 +20,7 @@ Fixes:
 * Fixes an issue where applying penalties to Championship or Race Weekend sessions could cause a server crash.
 * Improved performance when adding lots of cars in a race setup.
 * Completed Championship Events can now be duplicated.
+* Fixes an issue where Live Timings would not show all cars driven by a driver (for example if they were switching cars in a session to test them out)
 
 ---
 
