@@ -7,6 +7,7 @@ Added:
 * You can now control whether weather presets added to championships will be activated only in Practice sessions, only in Championship events or in either. This is intended to allow for practice sessions with more stable weather/time progression that the actual event.
 * Added a "Public URL" option to sTracker's HTTP Configuration to be used when linking to sTracker from Live Timings. If you were having problems with parts of sTracker not working correctly, try setting the Public URL option.
 * STracker and KissMyRank now start and stop with Server Manager, not the Assetto Corsa Server, so you can access them all the time.
+* TLS support. You can now specify a certificate and key file in the config.yml to enable TLS support in Server Manager. This feature is requested often, so we've implemented it to a good standard as of the time of release. HTTPS is fast moving, and there are no guarantees that what is secure now will be secure in a year. Reverse proxying with nginx/apache is still an option.
 
 Fixes:
 
