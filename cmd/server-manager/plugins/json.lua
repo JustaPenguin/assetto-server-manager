@@ -22,6 +22,8 @@
 -- SOFTWARE.
 --
 
+utils = require "utils"
+
 local json = { _version = "0.1.2" }
 
 -------------------------------------------------------------------------------
@@ -65,7 +67,7 @@ local function encode_table(val, stack)
 
     stack[val] = true
 
-    if tableLength(val) == 0 then
+    if utils.tableLength(val) == 0 then
         return "null"
     end
 
