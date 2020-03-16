@@ -772,7 +772,7 @@ class LiveTimings implements WebsocketHandler {
             return;
         }
 
-        let $tr = $table.find("[data-guid='" + driver.CarInfo.DriverGUID + "']");
+        let $tr = $table.find("[data-guid='" + driver.CarInfo.DriverGUID + "'][data-car-model='"+ driver.CarInfo.CarModel + "']");
 
         let addTrToTable = false;
 
