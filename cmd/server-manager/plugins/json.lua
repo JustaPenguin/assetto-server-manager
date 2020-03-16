@@ -65,6 +65,10 @@ local function encode_table(val, stack)
 
     stack[val] = true
 
+    if tableLength(val) == 0 then
+        return "null"
+    end
+
     if rawget(val, 1) ~= nil or next(val) == nil then
         -- Treat as array -- check keys are valid and it is not sparse
         local n = 0
