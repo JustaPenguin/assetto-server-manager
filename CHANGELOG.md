@@ -20,6 +20,7 @@ Fixes:
 * Fixes an issue where applying penalties to Championship or Race Weekend sessions could cause a server crash.
 * Improved performance when adding lots of cars in a race setup.
 * Completed Championship Events can now be duplicated.
+* Fixed an issue where empty question fields, penalties (and maybe more things) could cause the Championship event lua plugins to fail
 * Fixes an issue where Live Timings would not show all cars driven by a driver (for example if they were switching cars in a session to test them out)
 
 ---
