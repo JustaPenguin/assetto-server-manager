@@ -933,8 +933,12 @@ class LiveTimings implements WebsocketHandler {
                     return -1;
                 } else if (timeA === timeB) {
                     return 0;
+                } else if (timeA === "") {
+                    return 1; // sort a to the back
+                } else if (timeB === "") {
+                    return -1; // sort b to the back
                 } else {
-                    return 1;
+                    return 1; // who knows, not me
                 }
             }
         })).appendTo($tbody);
