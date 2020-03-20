@@ -139,23 +139,6 @@
                             </div>
                         </li>
                     {{ end }}
-
-                    {{ if or $.STrackerEnabled $.KissMyRankEnabled }}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navBarPluginsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Plugins
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="navBarPluginsDropdown">
-                                {{ if $.STrackerEnabled }}
-                                    <a class="dropdown-item" href="/stracker/options">STracker Web</a>
-                                {{ end }}
-
-                                {{ if $.KissMyRankEnabled }}
-                                    <a class="dropdown-item" href="/kissmyrank/options">KissMyRank Web</a>
-                                {{ end }}
-                            </div>
-                        </li>
-                    {{ end }}
                 </ul>
 
                 <ul class="navbar-nav">
