@@ -74,7 +74,6 @@ func InitWithResolver(resolver *Resolver) error {
 	raceWeekendManager := resolver.resolveRaceWeekendManager()
 	notificationManager := resolver.resolveNotificationManager()
 	raceControl := resolver.ResolveRaceControl()
-	pluginManager := resolver.resolvePluginManager()
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -116,9 +115,6 @@ func InitWithResolver(resolver *Resolver) error {
 			}
 
 			raceControl.persistTimingData()
-
-			logrus.Infof("Waiting for plugins to finish before closing...")
-			pluginManager.StopPlugins()
 
 			os.Exit(0)
 		}
@@ -180,10 +176,6 @@ func InitWithResolver(resolver *Resolver) error {
 				logrus.WithError(err).Errorf("Could not start last running event")
 			}
 		}
-	}
-
-	if err := pluginManager.StartPlugins(); err != nil {
-		logrus.WithError(err).Error("Could not start plugins")
 	}
 
 	return nil
