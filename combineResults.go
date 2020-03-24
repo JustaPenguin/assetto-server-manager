@@ -57,7 +57,7 @@ func combineResults(results []*SessionResults) *SessionResults {
 		output.Date = result.Date
 		output.SessionFile = result.SessionFile
 
-		cars:
+	cars:
 		for _, car := range result.Cars {
 			for _, existingCar := range output.Cars {
 				if existingCar.GetGUID() == car.GetGUID() && existingCar.GetCar() == car.GetCar() {
@@ -69,13 +69,9 @@ func combineResults(results []*SessionResults) *SessionResults {
 			output.Cars = append(output.Cars, car)
 		}
 
-		for _, event := range result.Events {
-			output.Events = append(output.Events, event)
-		}
+		output.Events = append(output.Events, result.Events...)
 
-		for _, lap := range result.Laps {
-			output.Laps = append(output.Laps, lap)
-		}
+		output.Laps = append(output.Laps, result.Laps...)
 
 		// use fallbacksort to build result and sort
 		output.FallBackSort()
