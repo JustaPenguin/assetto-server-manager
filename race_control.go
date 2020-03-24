@@ -434,55 +434,51 @@ func (rc *RaceControl) OnSessionUpdate(sessionInfo udp.SessionInfo) (bool, error
 
 // OnEndSession is called at the end of every session.
 func (rc *RaceControl) OnEndSession(sessionFile udp.EndSession) error {
-	event, err := rc.store.LoadLastRaceEvent()
+	if event, err := rc.store.LoadLastRaceEvent(); err == nil && event != nil {
+		// @TODO is this the right event?
+		logrus.Debugf("Event ended: %s", event.EventName())
 
-	if err != nil {
-		return err
-	}
+		switch e := event.(type) {
+		// @TODO should this happen for other event types?
+		case *CustomRace:
+			if e.RaceConfig.TimeAttack {
+				filename := filepath.Base(string(sessionFile))
+				logrus.Info("Time Attack event completed, combining with any previous results")
 
-	// @TODO is this the right event?
-	logrus.Debugf("Event ended: %s", event.EventName())
-
-	switch e := event.(type) {
-	// @TODO should this happen for other event types?
-	case *CustomRace:
-		if e.RaceConfig.TimeAttack {
-			filename := filepath.Base(string(sessionFile))
-			logrus.Info("Time Attack event completed, combining with any previous results")
-
-			results, err := LoadResult(filename)
-
-			if err != nil {
-				logrus.WithError(err).Errorf("Could not read session results: %s", filename)
-				return err
-			}
-
-			var resultsArray []*SessionResults
-
-			resultsArray = append(resultsArray, results)
-
-			if e.TimeAttackCombinedResultFile != "" {
-				result, err := LoadResult(e.TimeAttackCombinedResultFile)
+				results, err := LoadResult(filename)
 
 				if err != nil {
 					logrus.WithError(err).Errorf("Could not read session results: %s", filename)
 					return err
 				}
 
-				resultsArray = append(resultsArray, result)
+				var resultsArray []*SessionResults
+
+				resultsArray = append(resultsArray, results)
+
+				if e.TimeAttackCombinedResultFile != "" {
+					result, err := LoadResult(e.TimeAttackCombinedResultFile)
+
+					if err != nil {
+						logrus.WithError(err).Errorf("Could not read session results: %s", filename)
+						return err
+					}
+
+					resultsArray = append(resultsArray, result)
+				}
+
+				results = combineResults(resultsArray)
+
+				err = saveResults(results.SessionFile, results)
+
+				if err != nil {
+					return err
+				}
+
+				e.TimeAttackCombinedResultFile = results.SessionFile
+
+				logrus.Infof("Time Attack Event (%s) Finished, results files have been combined", e.EventName())
 			}
-
-			results = combineResults(resultsArray)
-
-			err = saveResults(results.SessionFile, results)
-
-			if err != nil {
-				return err
-			}
-
-			e.TimeAttackCombinedResultFile = results.SessionFile
-
-			logrus.Infof("Time Attack Event (%s) Finished, results files have been combined", e.EventName())
 		}
 	}
 
