@@ -307,6 +307,7 @@ class RaceSetup {
         this.initSurfacePresets();
 
         this.initPickupModeWatcher();
+        this.initTimeAttackWatcher();
     }
 
     initPickupModeWatcher() {
@@ -347,6 +348,53 @@ class RaceSetup {
             $lockedEntryListSwitch.bootstrapSwitch('disabled', false);
 
             $lockedReverseWarning.hide();
+        }
+    }
+
+    initTimeAttackWatcher() {
+        let that = this;
+
+        that.setTimeAttack();
+
+        let $timeAttackSwitch = $("#TimeAttack");
+
+        $timeAttackSwitch.on('switchChange.bootstrapSwitch', function (event, state) {
+            that.setTimeAttack();
+        });
+    }
+
+    setTimeAttack() {
+        let timeAttack = $("#TimeAttack").bootstrapSwitch('state');
+
+        let $loopModeSwitch = $("#LoopMode");
+
+        let $practiceSwitch = $("#Practice\\.Enabled");
+        let $qualifyingSwitch = $("#Qualifying\\.Enabled");
+        let $raceSwitch = $("#Race\\.Enabled");
+        let $bookingSwitch = $("#Booking\\.Enabled");
+
+        if (timeAttack) {
+            // disable sessions other than practice, force loop mode on
+            $loopModeSwitch.bootstrapSwitch('state', true);
+            $loopModeSwitch.bootstrapSwitch('disabled', true);
+
+            $practiceSwitch.bootstrapSwitch('state', true);
+            $practiceSwitch.bootstrapSwitch('disabled', true);
+
+            $qualifyingSwitch.bootstrapSwitch('state', false);
+            $qualifyingSwitch.bootstrapSwitch('disabled', true);
+
+            $raceSwitch.bootstrapSwitch('state', false);
+            $raceSwitch.bootstrapSwitch('disabled', true);
+
+            $bookingSwitch.bootstrapSwitch('state', false);
+            $bookingSwitch.bootstrapSwitch('disabled', true);
+        } else {
+            $loopModeSwitch.bootstrapSwitch('disabled', false);
+            $practiceSwitch.bootstrapSwitch('disabled', false);
+            $qualifyingSwitch.bootstrapSwitch('disabled', false);
+            $raceSwitch.bootstrapSwitch('disabled', false);
+            $bookingSwitch.bootstrapSwitch('disabled', false);
         }
     }
 

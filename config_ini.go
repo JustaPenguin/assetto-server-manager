@@ -271,6 +271,8 @@ type CurrentRaceConfig struct {
 
 	DisableDRSZones bool `ini:"-"`
 
+	TimeAttack bool `ini:"-"` // time attack races will force loop ON and merge all results files (practice only)
+
 	DynamicTrack DynamicTrackConfig `ini:"-"`
 
 	Sessions Sessions                  `ini:"-"`

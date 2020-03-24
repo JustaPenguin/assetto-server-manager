@@ -571,6 +571,14 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		gasPenaltyDisabled = 0
 	}
 
+	timeAttack := formValueAsInt(r.FormValue("TimeAttack")) == 1
+
+	loopMode := formValueAsInt(r.FormValue("LoopMode"))
+
+	if timeAttack {
+		loopMode = 1
+	}
+
 	trackLayout := r.FormValue("TrackLayout")
 
 	if trackLayout == "<default>" {
@@ -623,7 +631,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		RaceGasPenaltyDisabled:    gasPenaltyDisabled,
 		MaxBallastKilograms:       formValueAsInt(r.FormValue("MaxBallastKilograms")),
 		AllowedTyresOut:           formValueAsInt(r.FormValue("AllowedTyresOut")),
-		LoopMode:                  formValueAsInt(r.FormValue("LoopMode")),
+		LoopMode:                  loopMode,
 		RaceOverTime:              formValueAsInt(r.FormValue("RaceOverTime")),
 		StartRule:                 formValueAsInt(r.FormValue("StartRule")),
 		MaxClients:                formValueAsInt(r.FormValue("MaxClients")),
@@ -631,6 +639,8 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		MaxContactsPerKilometer:   formValueAsInt(r.FormValue("MaxContactsPerKilometer")),
 		ResultScreenTime:          formValueAsInt(r.FormValue("ResultScreenTime")),
 		DisableDRSZones:           formValueAsInt(r.FormValue("DisableDRSZones")) == 1,
+
+		TimeAttack: timeAttack,
 	}
 
 	if isSol {
@@ -641,7 +651,15 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 	for _, session := range AvailableSessions {
 		sessName := session.String()
 
-		if r.FormValue(sessName+".Enabled") != "1" {
+		disabled := r.FormValue(sessName+".Enabled") != "1"
+
+		if timeAttack && sessName != SessionTypePractice.String() {
+			continue
+		} else {
+			disabled = false
+		}
+
+		if disabled {
 			continue
 		}
 

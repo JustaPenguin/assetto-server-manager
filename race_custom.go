@@ -27,6 +27,8 @@ type CustomRace struct {
 	Loop       bool
 	LoopServer map[ServerID]bool
 
+	TimeAttackCombinedResultFile string
+
 	ForceStopTime        int
 	ForceStopWithDrivers bool
 
