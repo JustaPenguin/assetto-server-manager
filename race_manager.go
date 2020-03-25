@@ -653,7 +653,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 
 		disabled := r.FormValue(sessName+".Enabled") != "1"
 
-		if timeAttack && sessName != SessionTypePractice.String() {
+		if timeAttack {
 			if sessName != SessionTypePractice.String() {
 				continue
 			} else {
