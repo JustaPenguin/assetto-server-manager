@@ -263,13 +263,7 @@ func (asu *AssettoServerUDP) SendMessage(message Message) error {
 	switch a := message.(type) {
 	case EnableRealtimePosInterval:
 		if PosIntervalModifierEnabled {
-			err := binary.Write(asu.listener, binary.LittleEndian, a)
-
-			if err != nil {
-				return err
-			}
-
-			return err
+			return binary.Write(asu.listener, binary.LittleEndian, a)
 		}
 
 		return nil
