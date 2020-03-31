@@ -280,6 +280,9 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 	strackerOptions, err := sp.store.LoadStrackerOptions()
 	strackerEnabled := err == nil && strackerOptions.EnableStracker && IsStrackerInstalled()
 
+	// if stracker is enabled we need to let it set the interval
+	udp.PosIntervalModifierEnabled = !strackerEnabled
+
 	kissMyRankOptions, err := sp.store.LoadKissMyRankOptions()
 	kissMyRankEnabled := err == nil && kissMyRankOptions.EnableKissMyRank && IsKissMyRankInstalled()
 
