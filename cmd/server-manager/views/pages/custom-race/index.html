@@ -133,7 +133,8 @@
 
     {{ if gt (len .Loop) 0 }}
         {{ template "custom-race-table" dict "Race" .Loop "ServerID" .ServerID }}
-        <p class="text-center">These custom races will be looped on the server whilst it is inactive!</p>
+        <p class="text-center">These custom races will be looped on the server whilst it is inactive! Auto loop races will only
+        work if allowed to start automatically, please don't manually start these events if you want them to loop!</p>
     {{ else }}
         <p class="text-center">No custom races have been added to the auto loop list yet! Use the play icon to add a race to the loop.
             Any added races will loop on the server whilst it is inactive!</p>
