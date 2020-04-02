@@ -80,6 +80,10 @@ func (cr *CustomRace) IsRaceWeekend() bool {
 	return false
 }
 
+func (cr *CustomRace) IsTimeAttack() bool {
+	return cr.RaceConfig.TimeAttack
+}
+
 func (cr *CustomRace) HasSignUpForm() bool {
 	return false
 }

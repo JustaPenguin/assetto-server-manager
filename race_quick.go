@@ -85,6 +85,10 @@ func (q QuickRace) IsRaceWeekend() bool {
 	return false
 }
 
+func (q QuickRace) IsTimeAttack() bool {
+	return q.RaceConfig.TimeAttack
+}
+
 func (q QuickRace) EventName() string {
 	return trackSummary(q.RaceConfig.Track, q.RaceConfig.TrackLayout)
 }

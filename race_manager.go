@@ -91,6 +91,10 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 		rm.clearLoopedRaceSessionTypes()
 	}
 
+	if !event.IsTimeAttack() {
+		rm.raceControl.currentTimeAttackEvent = nil
+	}
+
 	// load server opts
 	serverOpts, err := rm.LoadServerOptions()
 
@@ -1165,6 +1169,10 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) (*CustomR
 
 	if err != nil {
 		return nil, err
+	}
+
+	if race.RaceConfig.TimeAttack {
+		rm.raceControl.currentTimeAttackEvent = race
 	}
 
 	// Required for our nice auto loop stuff

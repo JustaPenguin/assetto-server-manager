@@ -1500,6 +1500,10 @@ func (a *ActiveChampionship) IsRaceWeekend() bool {
 	return false
 }
 
+func (a *ActiveChampionship) IsTimeAttack() bool {
+	return false
+}
+
 func (a *ActiveChampionship) OverrideServerPassword() bool {
 	return a.OverridePassword
 }
