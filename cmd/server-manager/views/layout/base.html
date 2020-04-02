@@ -150,6 +150,8 @@
                                         <span class="badge badge-warning">Championship {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
                                     {{ else if .ServerEvent.IsRaceWeekend }}
                                         <span class="badge badge-info">Race Weekend {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
+                                    {{ else if .ServerEvent.IsLooping }}
+                                        <span class="badge badge-secondary">Auto Loop Event in Progress</span>
                                     {{ else }}
                                         <span class="badge badge-success">Assetto Server Running</span>
                                     {{ end }}
