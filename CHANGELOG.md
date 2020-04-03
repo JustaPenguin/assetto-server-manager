@@ -4,10 +4,11 @@ v1.7.4
 Added:
 
 * Compatibility with KissMyRank v1.6f
-* You can now control whether weather presets added to championships will be activated only in Practice sessions, only in Championship events or in either. This is intended to allow for practice sessions with more stable weather/time progression that the actual event.
+* You can now control whether weather presets added to championships will be activated only in Practice sessions, only in Championship events or in either. This is intended to allow for practice sessions with more stable weather/time progression than the actual event.
 * Added a "Public URL" option to sTracker's HTTP Configuration to be used when linking to sTracker from Live Timings. If you were having problems with parts of sTracker not working correctly, try setting the Public URL option.
 * TLS support. You can now specify a certificate and key file in the config.yml to enable TLS support in Server Manager. This feature is requested often, so we've implemented it to a good standard as of the time of release. HTTPS is fast moving, and there are no guarantees that what is secure now will be secure in a year. Reverse proxying with nginx/apache is still an option.
 * Looped races now indicate when they are running in the "in progress" indicator in the navigation bar. Looped races will only initiate if allowed to start automatically!
+* You now have more control over the Content Manager welcome message using templates (similar to the server name template).
 
 Fixes:
 

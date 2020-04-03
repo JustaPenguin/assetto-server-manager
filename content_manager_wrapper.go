@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha1"
 	"encoding/hex"
@@ -12,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"text/template"
 	"time"
 
 	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
@@ -162,6 +164,18 @@ func (cmw *ContentManagerWrapper) UDPCallback(message udp.Message) {
 	}
 }
 
+type contentManagerDescriptionTemplateOpts struct {
+	EventDescription string
+	ChampionshipPoints string
+	CarDownloads string
+	TrackDownload string
+	ServerName string
+
+	GlobalServerConfig
+	CurrentRaceConfig
+	RaceEvent
+}
+
 func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 	text, err := html2text.FromString(cmw.serverConfig.GlobalServerConfig.ContentManagerWelcomeMessage)
 
@@ -175,17 +189,15 @@ func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 		return err
 	}
 
-	if len(text) > 0 {
-		text += "\n\n"
-	}
-
-	text += eventDescriptionAsText
+	var champPoints string
 
 	if champ, ok := cmw.event.(*ActiveChampionship); ok {
 		if u := champ.GetURL(); u != "" {
-			text += fmt.Sprintf("\n\nView the Championship points here: %s", u)
+			champPoints = fmt.Sprintf("\n\nView the Championship points here: %s", u)
 		}
 	}
+
+	var carDownloads string
 
 	for _, carName := range strings.Split(cmw.serverConfig.CurrentRaceConfig.Cars, ";") {
 		car, err := cmw.carManager.LoadCar(carName, nil)
@@ -199,8 +211,10 @@ func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 			continue
 		}
 
-		text += fmt.Sprintf("\n* %s Download: %s", car.Details.Name, car.Details.DownloadURL)
+		carDownloads += fmt.Sprintf("\n* %s Download: %s", car.Details.Name, car.Details.DownloadURL)
 	}
+
+	var trackDownload string
 
 	track, err := cmw.trackManager.GetTrackFromName(cmw.serverConfig.CurrentRaceConfig.Track)
 
@@ -212,11 +226,38 @@ func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 		if err != nil {
 			logrus.WithError(err).Debugf("Could not load meta data for: %s, skipping attaching download URL to Content Manager Wrapper", cmw.serverConfig.CurrentRaceConfig.Track)
 		} else if track.MetaData.DownloadURL != "" {
-			text += fmt.Sprintf("\n* %s Download: %s", track.Name, track.MetaData.DownloadURL)
+			trackDownload = fmt.Sprintf("\n* %s Download: %s", track.Name, track.MetaData.DownloadURL)
 		}
 	}
 
-	cmw.description = text
+	// interpret the custom template
+	t, err := template.New("cmDescription").Parse(text)
+
+	if err != nil {
+		return err
+	}
+
+	out := new(bytes.Buffer)
+
+	err = t.Execute(out, contentManagerDescriptionTemplateOpts{
+		EventDescription: eventDescriptionAsText,
+		ChampionshipPoints: champPoints,
+		CarDownloads: carDownloads,
+		TrackDownload: trackDownload,
+
+		CurrentRaceConfig: cmw.serverConfig.CurrentRaceConfig,
+		GlobalServerConfig: cmw.serverConfig.GlobalServerConfig,
+		RaceEvent: event,
+		ServerName: cmw.serverConfig.GlobalServerConfig.Name,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(out.String())
+
+	cmw.description = out.String()
 
 	return nil
 }
