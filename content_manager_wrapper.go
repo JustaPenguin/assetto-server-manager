@@ -255,8 +255,6 @@ func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 		return err
 	}
 
-	fmt.Println(out.String())
-
 	cmw.description = out.String()
 
 	return nil
