@@ -250,7 +250,7 @@
                             {{ $hasSession := $f.HasSession $sessionType }}
 
                             <li class="nav-item">
-                                <a class="nav-link {{ if eq $index 0 }}active{{ end }} {{ if $hasSession }} text-success {{ end }}" id="session-{{ $sessionType }}-tab"
+                                <a class="nav-link session-nav-link {{ if eq $index 0 }}active{{ end }} {{ if $hasSession }} text-success {{ end }}" id="session-{{ $sessionType }}-tab"
                                    data-toggle="tab" href="#session-{{ $sessionType }}"
                                    role="tab"
                                    aria-controls="{{ $sessionType }}" aria-selected="true">{{ $sessionType.String }}</a>

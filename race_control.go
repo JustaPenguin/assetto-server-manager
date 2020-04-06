@@ -436,6 +436,8 @@ func (rc *RaceControl) OnSessionUpdate(sessionInfo udp.SessionInfo) (bool, error
 
 // OnEndSession is called at the end of every session.
 func (rc *RaceControl) OnEndSession(sessionFile udp.EndSession) error {
+	logrus.Debug("On end session")
+
 	if rc.currentTimeAttackEvent != nil {
 		filename := filepath.Base(string(sessionFile))
 		logrus.Info("Time Attack event completed, combining with any previous results")

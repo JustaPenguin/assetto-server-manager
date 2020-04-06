@@ -389,6 +389,20 @@ class RaceSetup {
 
             $bookingSwitch.bootstrapSwitch('state', false);
             $bookingSwitch.bootstrapSwitch('disabled', true);
+
+            $(".tab-pane").removeClass("active show");
+
+            let $sessionNavLink = $(".session-nav-link");
+
+            $sessionNavLink.removeClass("active");
+            $sessionNavLink.attr("aria-selected", "false");
+
+            let $sessionPractiveTab = $("#session-Practice-tab");
+
+            $sessionPractiveTab.addClass("active");
+            $sessionPractiveTab.attr("aria-selected", "true");
+
+            $("#session-Practice").addClass("active show");
         } else {
             $loopModeSwitch.bootstrapSwitch('disabled', false);
             $practiceSwitch.bootstrapSwitch('disabled', false);

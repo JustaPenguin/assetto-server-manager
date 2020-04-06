@@ -92,6 +92,7 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 	}
 
 	if !event.IsTimeAttack() {
+		logrus.Debug("event is not time attack, clearing time attack event on race control")
 		rm.raceControl.currentTimeAttackEvent = nil
 	}
 
@@ -1172,6 +1173,7 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) (*CustomR
 	}
 
 	if race.RaceConfig.TimeAttack {
+		logrus.Info("Time Attack event started")
 		rm.raceControl.currentTimeAttackEvent = race
 	}
 
