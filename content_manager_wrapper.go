@@ -165,15 +165,15 @@ func (cmw *ContentManagerWrapper) UDPCallback(message udp.Message) {
 }
 
 type contentManagerDescriptionTemplateOpts struct {
-	EventDescription string
-	ChampionshipPoints string
-	CarDownloads string
-	TrackDownload string
-	ServerName string
-
 	GlobalServerConfig
 	CurrentRaceConfig
 	RaceEvent
+
+	EventDescription   string
+	ChampionshipPoints string
+	CarDownloads       string
+	TrackDownload      string
+	ServerName         string
 }
 
 func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
@@ -240,15 +240,15 @@ func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 	out := new(bytes.Buffer)
 
 	err = t.Execute(out, contentManagerDescriptionTemplateOpts{
-		EventDescription: eventDescriptionAsText,
+		EventDescription:   eventDescriptionAsText,
 		ChampionshipPoints: champPoints,
-		CarDownloads: carDownloads,
-		TrackDownload: trackDownload,
+		CarDownloads:       carDownloads,
+		TrackDownload:      trackDownload,
 
-		CurrentRaceConfig: cmw.serverConfig.CurrentRaceConfig,
+		CurrentRaceConfig:  cmw.serverConfig.CurrentRaceConfig,
 		GlobalServerConfig: cmw.serverConfig.GlobalServerConfig,
-		RaceEvent: event,
-		ServerName: cmw.serverConfig.GlobalServerConfig.Name,
+		RaceEvent:          event,
+		ServerName:         cmw.serverConfig.GlobalServerConfig.Name,
 	})
 
 	if err != nil {
