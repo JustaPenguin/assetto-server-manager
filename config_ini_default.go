@@ -28,6 +28,7 @@ func ConfigIniDefault() ServerConfig {
 			ShowContentManagerJoinLink:        1,
 			SleepTime:                         1,
 			RestartEventOnServerManagerLaunch: 1,
+			ContentManagerWelcomeMessage:      defaultContentManagerDescription,
 		},
 
 		CurrentRaceConfig: CurrentRaceConfig{
@@ -108,3 +109,5 @@ func ConfigIniDefault() ServerConfig {
 }
 
 const defaultServerNameTemplate = "{{ .ServerName }} - {{ .EventName }}"
+const defaultContentManagerDescription = "{{ .Track }} {{ with .TrackLayout }}({{ . }}){{ end }} " +
+	"- an event hosted by {{ .ServerName }}<br><br>{{ .EventDescription }}<br>{{ .ChampionshipPoints }}<br>{{ .CarDownloads }}<br>{{ .TrackDownload }}"
