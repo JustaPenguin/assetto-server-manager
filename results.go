@@ -866,7 +866,7 @@ type SessionPos struct {
 	Z float64 `json:"Z"`
 }
 
-const pageSize = 20
+const pageSize = 25
 
 var ErrResultsPageNotFound = errors.New("servermanager: results page not found")
 
