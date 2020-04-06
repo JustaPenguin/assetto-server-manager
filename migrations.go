@@ -78,6 +78,7 @@ var (
 		amendChampionshipClassIDIncorrectValues,
 		enableLoggingWith5LogsKept,
 		convertAccountGroupToServerIDGroupMap,
+		convertContentManagerDescriptionToNewTemplate,
 	}
 )
 
@@ -910,6 +911,20 @@ func convertAccountGroupToServerIDGroupMap(s Store) error {
 			return err
 		}
 	}
+
+	return nil
+}
+
+func convertContentManagerDescriptionToNewTemplate(s Store) error {
+	logrus.Infof("Running migration: Convert Content Manager Description to New Template")
+
+	serverOpts, err := s.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	serverOpts.ContentManagerWelcomeMessage += defaultContentManagerDescription
 
 	return nil
 }

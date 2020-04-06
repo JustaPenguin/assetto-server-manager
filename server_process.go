@@ -277,6 +277,110 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 		})
 	}
 
+	strackerOptions, err := sp.store.LoadStrackerOptions()
+	strackerEnabled := err == nil && strackerOptions.EnableStracker && IsStrackerInstalled()
+
+	// if stracker is enabled we need to let it set the interval
+	udp.PosIntervalModifierEnabled = !strackerEnabled
+
+	kissMyRankOptions, err := sp.store.LoadKissMyRankOptions()
+	kissMyRankEnabled := err == nil && kissMyRankOptions.EnableKissMyRank && IsKissMyRankInstalled()
+
+	udpPluginPortsSetup := sp.forwardListenPort >= 0 && sp.forwardingAddress != "" || strings.Contains(sp.forwardingAddress, ":")
+
+	if (strackerEnabled || kissMyRankEnabled) && !udpPluginPortsSetup {
+		logrus.WithError(ErrPluginConfigurationRequiresUDPPortSetup).Error("Please check your server configuration")
+	}
+
+	if strackerEnabled && strackerOptions != nil && udpPluginPortsSetup {
+		strackerOptions.InstanceConfiguration.ACServerConfigIni = filepath.Join(ServerInstallPath, "cfg", serverConfigIniPath)
+		strackerOptions.InstanceConfiguration.ACServerWorkingDir = ServerInstallPath
+		strackerOptions.ACPlugin.SendPort = sp.forwardListenPort
+		strackerOptions.ACPlugin.ReceivePort = formValueAsInt(strings.Split(sp.forwardingAddress, ":")[1])
+
+		if kissMyRankEnabled {
+			// kissmyrank uses stracker's forwarding to chain the plugins. make sure that it is set up.
+			if strackerOptions.ACPlugin.ProxyPluginLocalPort <= 0 {
+				strackerOptions.ACPlugin.ProxyPluginLocalPort, err = FreeUDPPort()
+
+				if err != nil {
+					return err
+				}
+			}
+
+			for strackerOptions.ACPlugin.ProxyPluginPort <= 0 || strackerOptions.ACPlugin.ProxyPluginPort == strackerOptions.ACPlugin.ProxyPluginLocalPort {
+				strackerOptions.ACPlugin.ProxyPluginPort, err = FreeUDPPort()
+
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		if err := strackerOptions.Write(); err != nil {
+			return err
+		}
+
+		err = sp.startPlugin(wd, &CommandPlugin{
+			Executable: StrackerExecutablePath(),
+			Arguments: []string{
+				"--stracker_ini",
+				filepath.Join(StrackerFolderPath(), strackerConfigIniFilename),
+			},
+		})
+
+		if err != nil {
+			return err
+		}
+
+		logrus.Infof("Started sTracker. Listening for pTracker connections on port %d", strackerOptions.InstanceConfiguration.ListeningPort)
+	}
+
+	if kissMyRankEnabled && kissMyRankOptions != nil && udpPluginPortsSetup {
+		if err := fixKissMyRankExecutablePermissions(); err != nil {
+			return err
+		}
+
+		kissMyRankOptions.ACServerIP = "127.0.0.1"
+		kissMyRankOptions.ACServerHTTPPort = serverOptions.HTTPPort
+		kissMyRankOptions.UpdateInterval = config.LiveMap.IntervalMs
+		kissMyRankOptions.ACServerResultsBasePath = ServerInstallPath
+
+		raceConfig := sp.raceEvent.GetRaceConfig()
+		entryList := sp.raceEvent.GetEntryList()
+
+		kissMyRankOptions.MaxPlayers = raceConfig.MaxClients
+
+		if len(entryList) > kissMyRankOptions.MaxPlayers {
+			kissMyRankOptions.MaxPlayers = len(entryList)
+		}
+
+		if strackerEnabled {
+			// stracker is enabled, use its forwarding port
+			logrus.Infof("sTracker and KissMyRank both enabled. Using plugin forwarding method: [Server Manager] <-> [sTracker] <-> [KissMyRank]")
+			kissMyRankOptions.ACServerPluginLocalPort = strackerOptions.ACPlugin.ProxyPluginLocalPort
+			kissMyRankOptions.ACServerPluginAddressPort = strackerOptions.ACPlugin.ProxyPluginPort
+		} else {
+			// stracker is disabled, use our forwarding port
+			kissMyRankOptions.ACServerPluginLocalPort = sp.forwardListenPort
+			kissMyRankOptions.ACServerPluginAddressPort = formValueAsInt(strings.Split(sp.forwardingAddress, ":")[1])
+		}
+
+		if err := kissMyRankOptions.Write(); err != nil {
+			return err
+		}
+
+		err = sp.startPlugin(wd, &CommandPlugin{
+			Executable: KissMyRankExecutablePath(),
+		})
+
+		if err != nil {
+			return err
+		}
+
+		logrus.Infof("Started KissMyRank")
+	}
+
 	for _, plugin := range config.Server.Plugins {
 		err = sp.startPlugin(wd, plugin)
 
