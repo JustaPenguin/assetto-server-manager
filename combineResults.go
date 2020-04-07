@@ -1,6 +1,8 @@
 package servermanager
 
-import "time"
+import (
+	"time"
+)
 
 func combineResults(results []*SessionResults) *SessionResults {
 	output := &SessionResults{
@@ -72,11 +74,6 @@ func combineResults(results []*SessionResults) *SessionResults {
 		output.Events = append(output.Events, result.Events...)
 
 		output.Laps = append(output.Laps, result.Laps...)
-
-		// use fallbacksort to build result and sort
-		output.FallBackSort()
-
-		// @TODO write out session file?
 
 	}
 
