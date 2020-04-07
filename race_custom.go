@@ -27,6 +27,8 @@ type CustomRace struct {
 	Loop       bool
 	LoopServer map[ServerID]bool
 
+	TimeAttackCombinedResultFile string
+
 	ForceStopTime        int
 	ForceStopWithDrivers bool
 
@@ -76,6 +78,10 @@ func (cr *CustomRace) IsPractice() bool {
 
 func (cr *CustomRace) IsRaceWeekend() bool {
 	return false
+}
+
+func (cr *CustomRace) IsTimeAttack() bool {
+	return cr.RaceConfig.TimeAttack
 }
 
 func (cr *CustomRace) HasSignUpForm() bool {

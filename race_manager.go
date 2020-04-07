@@ -88,6 +88,15 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 		rm.clearLoopedRaceSessionTypes()
 	}
 
+	if !event.IsTimeAttack() {
+		logrus.Debug("event is not time attack, clearing time attack event on race control")
+		rm.raceControl.currentTimeAttackEvent = nil
+	}
+
+	if !Premium() {
+		rm.raceControl.currentTimeAttackEvent = nil
+	}
+
 	// load server opts
 	serverOpts, err := rm.LoadServerOptions()
 
@@ -568,6 +577,18 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		gasPenaltyDisabled = 0
 	}
 
+	timeAttack := false
+
+	if Premium() {
+		timeAttack = formValueAsInt(r.FormValue("TimeAttack")) == 1
+	}
+
+	loopMode := formValueAsInt(r.FormValue("LoopMode"))
+
+	if timeAttack {
+		loopMode = 1
+	}
+
 	trackLayout := r.FormValue("TrackLayout")
 
 	if trackLayout == "<default>" {
@@ -620,7 +641,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		RaceGasPenaltyDisabled:    gasPenaltyDisabled,
 		MaxBallastKilograms:       formValueAsInt(r.FormValue("MaxBallastKilograms")),
 		AllowedTyresOut:           formValueAsInt(r.FormValue("AllowedTyresOut")),
-		LoopMode:                  formValueAsInt(r.FormValue("LoopMode")),
+		LoopMode:                  loopMode,
 		RaceOverTime:              formValueAsInt(r.FormValue("RaceOverTime")),
 		StartRule:                 formValueAsInt(r.FormValue("StartRule")),
 		MaxClients:                formValueAsInt(r.FormValue("MaxClients")),
@@ -628,6 +649,8 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		MaxContactsPerKilometer:   formValueAsInt(r.FormValue("MaxContactsPerKilometer")),
 		ResultScreenTime:          formValueAsInt(r.FormValue("ResultScreenTime")),
 		DisableDRSZones:           formValueAsInt(r.FormValue("DisableDRSZones")) == 1,
+
+		TimeAttack: timeAttack,
 	}
 
 	if isSol {
@@ -638,7 +661,17 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 	for _, session := range AvailableSessions {
 		sessName := session.String()
 
-		if r.FormValue(sessName+".Enabled") != "1" {
+		disabled := r.FormValue(sessName+".Enabled") != "1"
+
+		if timeAttack {
+			if sessName != SessionTypePractice.String() {
+				continue
+			} else {
+				disabled = false
+			}
+		}
+
+		if disabled {
 			continue
 		}
 
@@ -1142,6 +1175,11 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) (*CustomR
 
 	if err != nil {
 		return nil, err
+	}
+
+	if race.RaceConfig.TimeAttack && Premium() {
+		logrus.Info("Time Attack event started")
+		rm.raceControl.currentTimeAttackEvent = race
 	}
 
 	// Required for our nice auto loop stuff
