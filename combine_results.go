@@ -1,23 +1,7 @@
 package servermanager
 
-import (
-	"time"
-)
-
 func combineResults(results []*SessionResults) *SessionResults {
-	output := &SessionResults{
-		Cars:           nil,
-		Events:         nil,
-		Laps:           nil,
-		Result:         nil,
-		TrackConfig:    "",
-		TrackName:      "",
-		Type:           "",
-		Date:           time.Time{},
-		SessionFile:    "",
-		ChampionshipID: "",
-		RaceWeekendID:  "",
-	}
+	output := &SessionResults{}
 
 	var trackName, trackConfig, championshipID, raceWeekendID string
 	var sessionType SessionType

@@ -93,6 +93,10 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 		rm.raceControl.currentTimeAttackEvent = nil
 	}
 
+	if !Premium() {
+		rm.raceControl.currentTimeAttackEvent = nil
+	}
+
 	// load server opts
 	serverOpts, err := rm.LoadServerOptions()
 
@@ -573,7 +577,11 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		gasPenaltyDisabled = 0
 	}
 
-	timeAttack := formValueAsInt(r.FormValue("TimeAttack")) == 1
+	timeAttack := false
+
+	if Premium() {
+		timeAttack = formValueAsInt(r.FormValue("TimeAttack")) == 1
+	}
 
 	loopMode := formValueAsInt(r.FormValue("LoopMode"))
 
@@ -1169,7 +1177,7 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) (*CustomR
 		return nil, err
 	}
 
-	if race.RaceConfig.TimeAttack {
+	if race.RaceConfig.TimeAttack && Premium() {
 		logrus.Info("Time Attack event started")
 		rm.raceControl.currentTimeAttackEvent = race
 	}

@@ -3,6 +3,7 @@ v1.7.4
 
 Added:
 
+* Time Attack Events (premium). Time attack events let you run a looping session that combines all of the results files into one!
 * Compatibility with KissMyRank v1.6f
 * You can now control whether weather presets added to championships will be activated only in Practice sessions, only in Championship events or in either. This is intended to allow for practice sessions with more stable weather/time progression than the actual event.
 * Added a "Public URL" option to sTracker's HTTP Configuration to be used when linking to sTracker from Live Timings. If you were having problems with parts of sTracker not working correctly, try setting the Public URL option.

@@ -202,26 +202,28 @@
 
             <div class="card-body">
 
-                <div class="form-group row" {{ if or $.IsRaceWeekend .IsChampionship }} style="display: none" {{ end }}>
-                    <label class="col-sm-3 col-form-label">Time Attack</label>
+                {{ if $.IsPremium }}
+                    <div class="form-group row" {{ if or $.IsRaceWeekend .IsChampionship }} style="display: none" {{ end }}>
+                        <label class="col-sm-3 col-form-label">Time Attack</label>
 
-                    <div class="col-sm-9">
-                        <input
-                                type="checkbox"
-                                class="session-enabler"
-                                name="TimeAttack"
-                                id="TimeAttack"
+                        <div class="col-sm-9">
+                            <input
+                                    type="checkbox"
+                                    class="session-enabler"
+                                    name="TimeAttack"
+                                    id="TimeAttack"
 
-                                {{ if $f.TimeAttack }}
-                                    checked="checked"
-                                {{ end }}
-                        >
+                                    {{ if $f.TimeAttack }}
+                                        checked="checked"
+                                    {{ end }}
+                            >
 
-                        <br><br>
-                        <small>Time Attack events will run a looping Practice session and combine all of the results files.
-                        Forces loop mode on and disables all sessions other than Practice.</small>
+                            <br><br>
+                            <small>Time Attack events will run a looping Practice session and combine all of the results files.
+                            Forces loop mode on and disables all sessions other than Practice.</small>
+                        </div>
                     </div>
-                </div>
+                {{ end }}
 
                 {{ if $.IsRaceWeekend }}
                     <div class="form-group row">
