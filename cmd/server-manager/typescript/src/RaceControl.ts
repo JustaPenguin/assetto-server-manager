@@ -772,7 +772,7 @@ class LiveTimings implements WebsocketHandler {
             return;
         }
 
-        let $tr = $table.find("[data-guid='" + driver.CarInfo.DriverGUID + "']");
+        let $tr = $table.find("[data-guid='" + driver.CarInfo.DriverGUID + "'][data-car-model='"+ driver.CarInfo.CarModel + "']");
 
         let addTrToTable = false;
 
@@ -933,8 +933,12 @@ class LiveTimings implements WebsocketHandler {
                     return -1;
                 } else if (timeA === timeB) {
                     return 0;
+                } else if (timeA === "") {
+                    return 1; // sort a to the back
+                } else if (timeB === "") {
+                    return -1; // sort b to the back
                 } else {
-                    return 1;
+                    return 1; // B < A && timeA != "" && timeB != ""
                 }
             }
         })).appendTo($tbody);

@@ -11,10 +11,13 @@ Added:
   - Driver Swap result files show which lap was completed by which driver (using the AutoFill Entrant list where possible to put names in)
   - Driver Swaps require compatible tracks. A compatible track has the timing line before or after all of the pitboxes. 
     You can follow this guide (written by @mike855 - thanks!) to modify a track to be compatible: https://github.com/JustaPenguin/assetto-server-manager/wiki/Driver-swap-track-editing
+* Time Attack Events (premium). Time attack events let you run a looping session that combines all of the results files into one!
 * Compatibility with KissMyRank v1.6f
-* You can now control whether weather presets added to championships will be activated only in Practice sessions, only in Championship events or in either. This is intended to allow for practice sessions with more stable weather/time progression that the actual event.
+* You can now control whether weather presets added to championships will be activated only in Practice sessions, only in Championship events or in either. This is intended to allow for practice sessions with more stable weather/time progression than the actual event.
 * Added a "Public URL" option to sTracker's HTTP Configuration to be used when linking to sTracker from Live Timings. If you were having problems with parts of sTracker not working correctly, try setting the Public URL option.
-* STracker and KissMyRank now start and stop with Server Manager, not the Assetto Corsa Server, so you can access them all the time.
+* TLS support. You can now specify a certificate and key file in the config.yml to enable TLS support in Server Manager. This feature is requested often, so we've implemented it to a good standard as of the time of release. HTTPS is fast moving, and there are no guarantees that what is secure now will be secure in a year. Reverse proxying with nginx/apache is still an option.
+* Looped races now indicate when they are running in the "in progress" indicator in the navigation bar. Looped races will only initiate if allowed to start automatically!
+* You now have more control over the Content Manager welcome message using templates (similar to the server name template).
 
 Fixes:
 
@@ -27,6 +30,10 @@ Fixes:
 * Fixes an issue where applying penalties to Championship or Race Weekend sessions could cause a server crash.
 * Improved performance when adding lots of cars in a race setup.
 * Completed Championship Events can now be duplicated.
+* Fixed an issue where empty question fields, penalties (and maybe more things) could cause the Championship event lua plugins to fail
+* Fixes an issue where Live Timings would not show all cars driven by a driver (for example if they were switching cars in a session to test them out)
+* Fixes an issue where running stracker could cause a server crash when Server Manager changed the real time position interval. In some extreme cases you may find your live map running in slow motion, currently disabling stracker is the only fix for this.
+* Reworked the pagination of Results and Cars pages to make it a bit more usable.
 
 ---
 

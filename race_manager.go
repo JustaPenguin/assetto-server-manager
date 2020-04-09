@@ -46,9 +46,6 @@ type RaceManager struct {
 	// scheduled races
 	customRaceStartTimers    map[string]*when.Timer
 	customRaceReminderTimers map[string]*when.Timer
-
-	udpSendPort, udpListenPort int
-	portSetupOnce              sync.Once
 }
 
 func NewRaceManager(
@@ -89,6 +86,15 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 	// Reset the stored session types if this isn't a looped race
 	if !event.IsLooping() {
 		rm.clearLoopedRaceSessionTypes()
+	}
+
+	if !event.IsTimeAttack() {
+		logrus.Debug("event is not time attack, clearing time attack event on race control")
+		rm.raceControl.currentTimeAttackEvent = nil
+	}
+
+	if !Premium() {
+		rm.raceControl.currentTimeAttackEvent = nil
 	}
 
 	// load server opts
@@ -572,6 +578,18 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		gasPenaltyDisabled = 0
 	}
 
+	timeAttack := false
+
+	if Premium() {
+		timeAttack = formValueAsInt(r.FormValue("TimeAttack")) == 1
+	}
+
+	loopMode := formValueAsInt(r.FormValue("LoopMode"))
+
+	if timeAttack {
+		loopMode = 1
+	}
+
 	trackLayout := r.FormValue("TrackLayout")
 
 	if trackLayout == "<default>" {
@@ -624,7 +642,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		RaceGasPenaltyDisabled:    gasPenaltyDisabled,
 		MaxBallastKilograms:       formValueAsInt(r.FormValue("MaxBallastKilograms")),
 		AllowedTyresOut:           formValueAsInt(r.FormValue("AllowedTyresOut")),
-		LoopMode:                  formValueAsInt(r.FormValue("LoopMode")),
+		LoopMode:                  loopMode,
 		RaceOverTime:              formValueAsInt(r.FormValue("RaceOverTime")),
 		StartRule:                 formValueAsInt(r.FormValue("StartRule")),
 		MaxClients:                formValueAsInt(r.FormValue("MaxClients")),
@@ -632,6 +650,8 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		MaxContactsPerKilometer:   formValueAsInt(r.FormValue("MaxContactsPerKilometer")),
 		ResultScreenTime:          formValueAsInt(r.FormValue("ResultScreenTime")),
 		DisableDRSZones:           formValueAsInt(r.FormValue("DisableDRSZones")) == 1,
+
+		TimeAttack: timeAttack,
 	}
 
 	if Premium() {
@@ -654,7 +674,17 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 	for _, session := range AvailableSessions {
 		sessName := session.String()
 
-		if r.FormValue(sessName+".Enabled") != "1" {
+		disabled := r.FormValue(sessName+".Enabled") != "1"
+
+		if timeAttack {
+			if sessName != SessionTypePractice.String() {
+				continue
+			} else {
+				disabled = false
+			}
+		}
+
+		if disabled {
 			continue
 		}
 
@@ -1160,6 +1190,11 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) (*CustomR
 		return nil, err
 	}
 
+	if race.RaceConfig.TimeAttack && Premium() {
+		logrus.Info("Time Attack event started")
+		rm.raceControl.currentTimeAttackEvent = race
+	}
+
 	// Required for our nice auto loop stuff
 	if forceRestart {
 		race.RaceConfig.LoopMode = 1
@@ -1404,28 +1439,24 @@ func (rm *RaceManager) LoadServerOptions() (*GlobalServerConfig, error) {
 		return nil, err
 	}
 
-	rm.portSetupOnce.Do(func() {
-		for rm.udpListenPort == rm.udpSendPort {
-			rm.udpListenPort, err = FreeUDPPort()
+	udpListenPort, udpSendPort := 0, 0
 
-			if err != nil {
-				return
-			}
+	for udpListenPort == udpSendPort {
+		udpListenPort, err = FreeUDPPort()
 
-			rm.udpSendPort, err = FreeUDPPort()
-
-			if err != nil {
-				return
-			}
+		if err != nil {
+			return nil, err
 		}
-	})
 
-	if err != nil {
-		return nil, err
+		udpSendPort, err = FreeUDPPort()
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	serverOpts.FreeUDPPluginAddress = fmt.Sprintf("127.0.0.1:%d", rm.udpSendPort)
-	serverOpts.FreeUDPPluginLocalPort = rm.udpListenPort
+	serverOpts.FreeUDPPluginAddress = fmt.Sprintf("127.0.0.1:%d", udpSendPort)
+	serverOpts.FreeUDPPluginLocalPort = udpListenPort
 
 	return serverOpts, nil
 }

@@ -410,7 +410,7 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 			return
 		}
 
-		err = raceControl.OnEndSession(udp.EndSession("FILE.json"))
+		err = raceControl.OnEndSession(udp.EndSession("2019_3_2_14_41_PRACTICE.json"))
 
 		if err != nil {
 			t.Error(err)
@@ -426,7 +426,7 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 			ServerName:          "Test Server",
 			Track:               "ks_laguna_seca",
 			TrackConfig:         "",
-			Name:                "Test Practice Session",
+			Name:                "Test Qualifying Session",
 			Type:                udp.SessionTypeQualifying,
 			Time:                10,
 			Laps:                0,
@@ -557,7 +557,7 @@ func TestRaceControl_OnNewSession(t *testing.T) {
 			return
 		}
 
-		err = raceControl.OnEndSession(udp.EndSession("FILE.json"))
+		err = raceControl.OnEndSession(udp.EndSession("2019_3_2_20_48_QUALIFY.json"))
 
 		if err != nil {
 			t.Error(err)

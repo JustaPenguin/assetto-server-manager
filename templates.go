@@ -454,32 +454,28 @@ type TemplateVars interface {
 }
 
 type BaseTemplateVars struct {
-	Messages                    []interface{}
-	Errors                      []interface{}
-	ServerStatus                bool
-	ServerEvent                 RaceEvent
-	ServerName                  string
-	CustomCSS                   template.CSS
-	User                        *Account
-	IsHosted                    bool
-	IsPremium                   bool
-	MaxClientsOverride          int
-	IsDarkTheme                 bool
-	Request                     *http.Request
-	Debug                       bool
-	MonitoringEnabled           bool
-	SentryDSN                   template.JSStr
-	RecaptchaSiteKey            string
-	WideContainer               bool
-	OGImage                     string
-	ACSREnabled                 bool
-	BaseURLIsSet                bool
-	BaseURLIsValid              bool
-	ServerID                    ServerID
-	IsKissMyRankEnabled         bool
-	IsStrackerEnabled           bool
-	KissMyRankWebStatsPublicURL string
-	STrackerInterfacePublicURL  string
+	Messages           []interface{}
+	Errors             []interface{}
+	ServerStatus       bool
+	ServerEvent        RaceEvent
+	ServerName         string
+	CustomCSS          template.CSS
+	User               *Account
+	IsHosted           bool
+	IsPremium          bool
+	MaxClientsOverride int
+	IsDarkTheme        bool
+	Request            *http.Request
+	Debug              bool
+	MonitoringEnabled  bool
+	SentryDSN          template.JSStr
+	RecaptchaSiteKey   string
+	WideContainer      bool
+	OGImage            string
+	ACSREnabled        bool
+	BaseURLIsSet       bool
+	BaseURLIsValid     bool
+	ServerID           ServerID
 }
 
 func (b *BaseTemplateVars) Get() *BaseTemplateVars {
@@ -509,21 +505,6 @@ func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, vars Templat
 	if err != nil {
 		return err
 	}
-
-	strackerOptions, err := tr.store.LoadStrackerOptions()
-	data.IsStrackerEnabled = err == nil && strackerOptions.EnableStracker && IsStrackerInstalled()
-
-	kissMyRankOptions, err := tr.store.LoadKissMyRankOptions()
-	data.IsKissMyRankEnabled = err == nil && kissMyRankOptions.EnableKissMyRank && IsKissMyRankInstalled()
-	data.KissMyRankWebStatsPublicURL = kissMyRankOptions.WebStatsPublicURL
-
-	sTrackerPublicURL := strackerOptions.HTTPConfiguration.PublicURL
-
-	if sTrackerPublicURL == "" {
-		sTrackerPublicURL = "/stracker/mainpage"
-	}
-
-	data.STrackerInterfacePublicURL = sTrackerPublicURL
 
 	data.ServerStatus = tr.process.IsRunning()
 	data.ServerEvent = tr.process.Event()

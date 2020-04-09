@@ -917,6 +917,10 @@ func (a ActiveRaceWeekend) IsPractice() bool {
 	return a.IsPracticeSession
 }
 
+func (a ActiveRaceWeekend) IsTimeAttack() bool {
+	return false
+}
+
 func (a ActiveRaceWeekend) OverrideServerPassword() bool {
 	return a.OverridePassword
 }

@@ -40,6 +40,8 @@ type RaceControl struct {
 	broadcaster      Broadcaster
 	trackDataGateway TrackDataGateway
 
+	currentTimeAttackEvent *CustomRace
+
 	lastUpdateMessage      []byte
 	lastUpdateMessageMutex sync.Mutex
 
@@ -510,7 +512,66 @@ func (rc *RaceControl) OnEndSession(sessionFile udp.EndSession) error {
 		}
 	}
 
+	if rc.currentTimeAttackEvent != nil && Premium() {
+		filename := filepath.Base(string(sessionFile))
+
+		err := rc.addFileToTimeAttackEvent(filename)
+
+		if err != nil {
+			return err
+		}
+
+		logrus.Infof("Time Attack Event (%s) Finished, results files have been combined and saved as %s", rc.currentTimeAttackEvent.EventName(), filename)
+	}
+
 	return nil
+}
+
+const timeAttackSuffix string = "-time-attack"
+
+func (rc *RaceControl) addFileToTimeAttackEvent(file string) error {
+	logrus.Info("Time Attack event completed, combining with any previous results")
+
+	results, err := LoadResult(file)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Could not read session results: %s", file)
+		return err
+	}
+
+	var resultsArray []*SessionResults
+
+	resultsArray = append(resultsArray, results)
+
+	if rc.currentTimeAttackEvent.TimeAttackCombinedResultFile != "" {
+		result, err := LoadResult(rc.currentTimeAttackEvent.TimeAttackCombinedResultFile + ".json")
+
+		if err != nil {
+			logrus.WithError(err).Errorf("Could not read session results: %s", file)
+			return err
+		}
+
+		resultsArray = append(resultsArray, result)
+	}
+
+	results = combineResults(resultsArray)
+
+	// use fallbacksort to build result and sort
+	results.FallBackSort()
+
+	if !strings.HasSuffix(results.SessionFile, timeAttackSuffix) {
+		results.SessionFile = results.SessionFile + timeAttackSuffix
+	}
+
+	err = saveResults(results.SessionFile+".json", results)
+
+	if err != nil {
+		return err
+	}
+
+	rc.currentTimeAttackEvent.TimeAttackCombinedResultFile = results.SessionFile
+
+	return rc.store.UpsertCustomRace(rc.currentTimeAttackEvent)
 }
 
 // OnClientConnect stores CarID -> DriverGUID mappings. if a driver is known to have previously been in this event,

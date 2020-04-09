@@ -115,22 +115,6 @@
                         <a class="nav-link" href="/calendar">Calendar</a>
                     </li>
 
-                    {{ if or $.IsStrackerEnabled $.IsKissMyRankEnabled }}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navBarPluginsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Plugins
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="navBarPluginsDropdown">
-                                {{ if $.IsStrackerEnabled }}
-                                    <a class="dropdown-item" href="{{ $.STrackerInterfacePublicURL }}">STracker Web</a>
-                                {{ end }}
-
-                                {{ if $.IsKissMyRankEnabled }}
-                                    <a class="dropdown-item" href="{{ $.KissMyRankWebStatsPublicURL }}">KissMyRank Web</a>
-                                {{ end }}
-                            </div>
-                        </li>
-                    {{ end }}
 
                     {{ if WriteAccess }}
                         <li class="nav-item dropdown">
@@ -166,6 +150,10 @@
                                         <span class="badge badge-warning">Championship {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
                                     {{ else if .ServerEvent.IsRaceWeekend }}
                                         <span class="badge badge-info">Race Weekend {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
+                                    {{ else if .ServerEvent.IsLooping }}
+                                        <span class="badge badge-secondary">Auto Loop Event in Progress</span>
+                                    {{ else if .ServerEvent.IsTimeAttack }}
+                                        <span class="badge badge-dark">Time Attack Event in Progress</span>
                                     {{ else }}
                                         <span class="badge badge-success">Assetto Server Running</span>
                                     {{ end }}

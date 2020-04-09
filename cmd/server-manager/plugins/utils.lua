@@ -62,4 +62,10 @@ function utils.sleep(n)
     os.execute("sleep " .. tonumber(n))
 end
 
+function utils.tableLength(T)
+    local count = 0
+    for _ in pairs(T) do count = count + 1 end
+    return count
+end
+
 return utils
