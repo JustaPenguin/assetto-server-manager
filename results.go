@@ -91,6 +91,10 @@ func (s *SessionResults) Anonymize() {
 	}
 }
 
+func (s *SessionResults) IsTimeAttack() bool {
+	return strings.HasSuffix(s.SessionFile, timeAttackSuffix)
+}
+
 func AnonymiseDriverGUID(guid string) string {
 	hasher := md5.New()
 	_, _ = hasher.Write([]byte(guid))
