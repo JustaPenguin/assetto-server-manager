@@ -1084,7 +1084,7 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*
 			starred = append(starred, race)
 		}
 
-		if race.Scheduled.After(time.Now()) {
+		if race.Scheduled.After(time.Now()) && race.ScheduledServerID == serverID {
 			scheduled = append(scheduled, race)
 		}
 

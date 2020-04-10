@@ -4,6 +4,7 @@
     {{ $eventIndex := $.EventIndex }}
     {{ $eventInProgress := $.EventInProgress }}
     {{ $account := $.Account }}
+    {{ $serverID := $.ServerID }}
 
     {{ $eventSetup := $event.RaceSetup }}
 
@@ -25,7 +26,9 @@
                 {{ else if $event.InProgress }}
                     <span class="text-primary">In Progress</span>
                 {{ else if isBefore $event.Scheduled }}
-                    <span class="text-warning">Scheduled for {{ localFormat $event.Scheduled }}</span>
+                    <span class="text-warning">Scheduled
+                            (On {{ if eq $event.ScheduledServerID $serverID }}this {{ else }}another {{ end }} server )
+                        for {{ localFormat $event.Scheduled }}</span>
                 {{ else }}
                     <span class="text-danger">Not started</span>
                 {{ end }}

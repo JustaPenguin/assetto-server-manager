@@ -9,6 +9,7 @@
         {{ $writeAccess := WriteAccess }}
         {{ $eventInProgress := .EventInProgress }}
         {{ $account := .Account }}
+        {{ $serverID := .ServerID }}
 
         <h1 class="text-center">{{ $championship.Name }}</h1>
 
@@ -534,7 +535,7 @@
         <div class="championship-events">
             {{ range $eventIndex, $event := $championship.Events }}
                 {{ if not $event.IsRaceWeekend }}
-                    {{ template "event-card" dict "Championship" $championship "Event" $event "EventIndex" $eventIndex "EventInProgress" $eventInProgress "Account" $account }}
+                    {{ template "event-card" dict "Championship" $championship "Event" $event "EventIndex" $eventIndex "EventInProgress" $eventInProgress "Account" $account "ServerID" $serverID }}
                 {{ else }}
                     {{ template "raceweekend-card" dict "Championship" $championship "Event" $event "EventIndex" $eventIndex "EventInProgress" $eventInProgress "Account" $account "RaceWeekend" (index $.RaceWeekends $event.RaceWeekendID) }}
                 {{ end }}
