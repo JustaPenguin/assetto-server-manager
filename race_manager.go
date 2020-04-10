@@ -1089,6 +1089,24 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*
 			starred = append(starred, race)
 		}
 
+		for _, scheduledEvent := range race.ScheduledEvents {
+			if scheduledEvent.Scheduled.IsZero() || scheduledEvent.ScheduledServerID != serverID {
+				race.Scheduled = time.Time{}
+				race.ScheduledInitial = time.Time{}
+				race.ScheduledServerID = ""
+				race.Recurrence = ""
+
+				continue
+			}
+
+			race.ScheduledServerID = scheduledEvent.ScheduledServerID
+			race.Scheduled = scheduledEvent.Scheduled
+			race.ScheduledInitial = scheduledEvent.Scheduled
+			race.Recurrence = scheduledEvent.Recurrence
+
+			break
+		}
+
 		if race.Scheduled.After(time.Now()) && race.ScheduledServerID == serverID {
 			scheduled = append(scheduled, race)
 		}
@@ -1199,6 +1217,7 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) (*CustomR
 	return race, rm.applyConfigAndStart(race)
 }
 
+// @TODO unschedule
 func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, recurrence string) error {
 	race, err := rm.store.FindCustomRaceByID(uuid)
 
@@ -1209,6 +1228,28 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 	originalDate := race.Scheduled
 	race.Scheduled = date
 	race.ScheduledServerID = serverID
+
+	if race.ScheduledEvents != nil {
+		fmt.Println("Schedule, map appended to ", serverID)
+
+		race.ScheduledEvents[serverID] = &ScheduledEventBase{
+			Scheduled:         race.Scheduled,
+			ScheduledInitial:  race.ScheduledInitial,
+			Recurrence:        race.Recurrence,
+			ScheduledServerID: race.ScheduledServerID,
+		}
+	} else {
+		fmt.Println("First schedule, map made ", serverID)
+
+		race.ScheduledEvents = make(map[ServerID]*ScheduledEventBase)
+
+		race.ScheduledEvents[serverID] = &ScheduledEventBase{
+			Scheduled:         race.Scheduled,
+			ScheduledInitial:  race.ScheduledInitial,
+			Recurrence:        race.Recurrence,
+			ScheduledServerID: race.ScheduledServerID,
+		}
+	}
 
 	// if there is an existing schedule timer for this event stop it
 	if timer := rm.customRaceStartTimers[race.UUID.String()]; timer != nil {
@@ -1301,6 +1342,7 @@ func eventSchedulePlugin(race *CustomRace) error {
 	return nil
 }
 
+// @TODO do they actually start?
 func (rm *RaceManager) StartScheduledRace(race *CustomRace) error {
 	startedRace, err := rm.StartCustomRace(race.UUID.String(), false)
 
@@ -1580,6 +1622,19 @@ func (rm *RaceManager) InitScheduledRaces() error {
 
 	for _, race := range races {
 		race := race
+
+		for _, scheduledEvent := range race.ScheduledEvents {
+			if scheduledEvent.Scheduled.IsZero() || scheduledEvent.ScheduledServerID != serverID {
+				continue
+			}
+
+			race.ScheduledServerID = scheduledEvent.ScheduledServerID
+			race.Scheduled = scheduledEvent.Scheduled
+			race.ScheduledInitial = scheduledEvent.Scheduled
+			race.Recurrence = scheduledEvent.Recurrence
+
+			break
+		}
 
 		if race.ScheduledServerID != serverID {
 			continue

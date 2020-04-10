@@ -27,7 +27,7 @@
                     <span class="text-primary">In Progress</span>
                 {{ else if isBefore $event.Scheduled }}
                     <span class="text-warning">Scheduled
-                            (On {{ if eq $event.ScheduledServerID $serverID }}this {{ else }}another {{ end }} server )
+                            (On {{ if eq $event.ScheduledServerID $serverID }}this {{ else }}another {{ end }} server)
                         for {{ localFormat $event.Scheduled }}</span>
                 {{ else }}
                     <span class="text-danger">Not started</span>

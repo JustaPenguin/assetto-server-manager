@@ -12,6 +12,7 @@ import (
 )
 
 type CustomRace struct {
+	ScheduledEvents map[ServerID]*ScheduledEventBase
 	ScheduledEventBase
 
 	Name                            string
