@@ -26,6 +26,7 @@ Fixes:
 * Fixes an issue where Live Timings would not show all cars driven by a driver (for example if they were switching cars in a session to test them out)
 * Fixes an issue where running stracker could cause a server crash when Server Manager changed the real time position interval. In some extreme cases you may find your live map running in slow motion, currently disabling stracker is the only fix for this.
 * Reworked the pagination of Results and Cars pages to make it a bit more usable.
+* Fixes an issue where drivers would be removed from Live Timings if the Live Map was disabled.
 
 ---
 
