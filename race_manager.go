@@ -1217,7 +1217,6 @@ func (rm *RaceManager) StartCustomRace(uuid string, forceRestart bool) (*CustomR
 	return race, rm.applyConfigAndStart(race)
 }
 
-// @TODO unschedule
 func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, recurrence string) error {
 	race, err := rm.store.FindCustomRaceByID(uuid)
 
@@ -1230,8 +1229,6 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 	race.ScheduledServerID = serverID
 
 	if race.ScheduledEvents != nil {
-		fmt.Println("Schedule, map appended to ", serverID)
-
 		race.ScheduledEvents[serverID] = &ScheduledEventBase{
 			Scheduled:         race.Scheduled,
 			ScheduledInitial:  race.ScheduledInitial,
@@ -1239,8 +1236,6 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 			ScheduledServerID: race.ScheduledServerID,
 		}
 	} else {
-		fmt.Println("First schedule, map made ", serverID)
-
 		race.ScheduledEvents = make(map[ServerID]*ScheduledEventBase)
 
 		race.ScheduledEvents[serverID] = &ScheduledEventBase{
