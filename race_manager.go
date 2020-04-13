@@ -1337,7 +1337,6 @@ func eventSchedulePlugin(race *CustomRace) error {
 	return nil
 }
 
-// @TODO do they actually start?
 func (rm *RaceManager) StartScheduledRace(race *CustomRace) error {
 	startedRace, err := rm.StartCustomRace(race.UUID.String(), false)
 
