@@ -364,7 +364,14 @@ class RaceSetup {
     }
 
     setTimeAttack() {
-        let timeAttack = $("#TimeAttack").bootstrapSwitch('state');
+        let $timeAttack = $("#TimeAttack");
+
+        if (!$timeAttack.length > 0) {
+            // don't init time attack at all on non-premium builds
+            return;
+        }
+
+        let timeAttackEnabled = $timeAttack.bootstrapSwitch('state');
 
         let $loopModeSwitch = $("#LoopMode");
 
@@ -373,7 +380,7 @@ class RaceSetup {
         let $raceSwitch = $("#Race\\.Enabled");
         let $bookingSwitch = $("#Booking\\.Enabled");
 
-        if (timeAttack) {
+        if (timeAttackEnabled) {
             // disable sessions other than practice, force loop mode on
             $loopModeSwitch.bootstrapSwitch('state', true);
             $loopModeSwitch.bootstrapSwitch('disabled', true);
