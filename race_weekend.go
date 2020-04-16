@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"html/template"
+	"math/rand"
 	"sort"
 	"strings"
 	"time"
@@ -86,15 +87,22 @@ func (rw *RaceWeekend) GetEntryList() EntryList {
 		count := 0
 
 		// filter out drivers with no GUID (open championships etc...)
-		for _, entrant := range rw.Championship.AllEntrants().AlphaSlice() {
-			if entrant.GUID == "" || entrant.IsPlaceHolder {
-				entrant.GUID = uuid.New().String()
-				entrant.Name = fmt.Sprintf("Placeholder Entrant %d", count)
-				entrant.IsPlaceHolder = true
-			}
+		for _, class := range rw.Championship.Classes {
+			for _, entrant := range class.Entrants {
+				if entrant.GUID == "" || entrant.IsPlaceHolder {
+					entrant.GUID = uuid.New().String()
+					entrant.Name = fmt.Sprintf("Placeholder Entrant %d", count)
+					entrant.IsPlaceHolder = true
 
-			entryList.AddInPitBox(entrant, count)
-			count++
+					if entrant.Model == "" || entrant.Model == AnyCarModel {
+						// assign the entrant some car model for ease of sorting
+						entrant.Model = class.AvailableCars[rand.Intn(len(class.AvailableCars))]
+					}
+				}
+
+				entryList.AddInPitBox(entrant, count)
+				count++
+			}
 		}
 
 		return entryList
@@ -376,7 +384,7 @@ func (rw *RaceWeekend) TrackOverview() string {
 			trackDescription = prettifyName(session.RaceConfig.Track, false)
 
 			if session.RaceConfig.TrackLayout != "" {
-				trackDescription = " (" + prettifyName(session.RaceConfig.TrackLayout, true) + ")"
+				trackDescription += " (" + prettifyName(session.RaceConfig.TrackLayout, true) + ")"
 			}
 		}
 

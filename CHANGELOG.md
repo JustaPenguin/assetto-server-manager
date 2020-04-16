@@ -1,3 +1,18 @@
+v1.7.5
+------
+
+Added:
+
+* You can now sort (and split!) Race Weekend Entry Lists by Championship Class - so you could for example run separate qualifying sessions for each class!
+
+
+Fixed:
+
+* Race Weekend Championship sorters are no longer available in non-Championship Race Weekends.
+* Improved handling of track JSON files
+
+---
+
 v1.7.4
 ------
 
