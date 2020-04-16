@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"image"
@@ -179,17 +180,18 @@ func GetTrackInfo(name, layout string) (*TrackInfo, error) {
 
 	uiDataFile = filepath.Join(uiDataFile, trackInfoJSONName)
 
-	f, err := os.Open(uiDataFile)
+	data, err := ioutil.ReadFile(uiDataFile)
 
 	if err != nil {
 		return nil, err
 	}
 
-	defer f.Close()
+	data = bytes.ReplaceAll(data, []byte("\r"), []byte(""))
+	data = bytes.ReplaceAll(data, []byte("\n"), []byte(""))
 
 	var trackInfo *TrackInfo
 
-	err = json.NewDecoder(utfbom.SkipOnly(f)).Decode(&trackInfo)
+	err = json.NewDecoder(utfbom.SkipOnly(bytes.NewBuffer(data))).Decode(&trackInfo)
 
 	return trackInfo, err
 }
