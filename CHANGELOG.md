@@ -10,6 +10,7 @@ Fixed:
 
 * Race Weekend Championship sorters are no longer available in non-Championship Race Weekends.
 * Improved handling of track JSON files
+* Fixes an issue where the Content Manager Welcome Message disappeared in the previous update.
 
 ---
 

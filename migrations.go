@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strconv"
+	"strings"
 
 	defaultcontent "github.com/JustaPenguin/assetto-server-manager/fixtures/default-content"
 
@@ -78,6 +79,7 @@ var (
 		amendChampionshipClassIDIncorrectValues,
 		enableLoggingWith5LogsKept,
 		convertAccountGroupToServerIDGroupMap,
+		func(Store) error { return nil }, // intentionally left blank.
 		convertContentManagerDescriptionToNewTemplate,
 	}
 )
@@ -924,7 +926,10 @@ func convertContentManagerDescriptionToNewTemplate(s Store) error {
 		return err
 	}
 
-	serverOpts.ContentManagerWelcomeMessage += defaultContentManagerDescription
+	if !strings.Contains(serverOpts.ContentManagerWelcomeMessage, "{{") {
+		// assume that no placeholders have been added.
+		serverOpts.ContentManagerWelcomeMessage += defaultContentManagerDescription
+	}
 
-	return nil
+	return s.UpsertServerOptions(serverOpts)
 }
