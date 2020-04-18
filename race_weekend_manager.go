@@ -75,11 +75,33 @@ func (rwm *RaceWeekendManager) LoadRaceWeekend(id string) (*RaceWeekend, error) 
 			return nil, err
 		}
 
-		// make sure that session points only exist for classes that exist.
 		for _, session := range raceWeekend.Sessions {
+			// make sure that session points only exist for classes that exist.
 			for championshipClassID := range session.Points {
 				if _, err := raceWeekend.Championship.ClassByID(championshipClassID.String()); err != nil {
 					delete(session.Points, championshipClassID)
+				}
+			}
+
+			// make sure that each race weekend session has the correct number of point places
+			// available to match the number of championship entrants.
+			for _, class := range raceWeekend.Championship.Classes {
+				raceWeekendSessionPoints, ok := session.Points[class.ID]
+
+				if !ok {
+					continue
+				}
+
+				if len(class.Points.Places) > len(raceWeekendSessionPoints.Places) {
+					var extendedPlaces []int
+
+					if session.SessionType() == SessionTypeRace {
+						extendedPlaces = class.Points.Places[len(raceWeekendSessionPoints.Places):]
+					} else {
+						extendedPlaces = make([]int, len(class.Points.Places)-len(raceWeekendSessionPoints.Places))
+					}
+
+					raceWeekendSessionPoints.Places = append(raceWeekendSessionPoints.Places, extendedPlaces...)
 				}
 			}
 		}

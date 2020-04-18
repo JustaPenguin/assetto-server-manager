@@ -10,6 +10,7 @@ Fixed:
 
 * Race Weekend Championship sorters are no longer available in non-Championship Race Weekends.
 * Improved handling of track JSON files
+* Fixes an issue where Race Weekend Sessions may not have the correct number of Championship Points fields.
 
 ---
 
