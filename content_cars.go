@@ -1036,19 +1036,19 @@ var isCarPaidDLC = map[string]bool{
 	"ferrari_f40":                        false,
 	"ferrari_f40_s3":                     false,
 	"ferrari_laferrari":                  false,
-	"ks_abarth500_assetto_corse":         false,
+	"ks_abarth500_assetto_corse":         true, // Dream Pack 3 https://steamdb.info/depot/423630/
 	"ks_abarth_595ss":                    false,
 	"ks_abarth_595ss_s1":                 false,
 	"ks_abarth_595ss_s2":                 false,
 	"ks_alfa_33_stradale":                false,
 	"ks_alfa_giulia_qv":                  false,
 	"ks_alfa_mito_qv":                    false,
-	"ks_alfa_romeo_155_v6":               false,
-	"ks_alfa_romeo_4c":                   false,
-	"ks_alfa_romeo_gta":                  false,
+	"ks_alfa_romeo_155_v6":               true, // Dream Pack 1 https://steamdb.info/depot/347990/
+	"ks_alfa_romeo_4c":                   true, // Dream Pack 1 https://steamdb.info/depot/347990/
+	"ks_alfa_romeo_gta":                  true, // Dream Pack 1 https://steamdb.info/depot/347990/
 	"ks_audi_a1s1":                       true,
 	"ks_audi_r18_etron_quattro":          true,
-	"ks_audi_r8_lms":                     false,
+	"ks_audi_r8_lms":                     true, // Dream Pack 2 https://steamdb.info/depot/404430/
 	"ks_audi_r8_lms_2016":                true,
 	"ks_audi_r8_plus":                    true,
 	"ks_audi_sport_quattro":              false,
@@ -1056,11 +1056,11 @@ var isCarPaidDLC = map[string]bool{
 	"ks_audi_sport_quattro_s1":           false,
 	"ks_audi_tt_cup":                     true,
 	"ks_audi_tt_vln":                     true,
-	"ks_bmw_m235i_racing":                false,
+	"ks_bmw_m235i_racing":                true, // Dream Pack 1 https://steamdb.info/depot/347990/
 	"ks_bmw_m4":                          true,
-	"ks_bmw_m4_akrapovic":                false,
+	"ks_bmw_m4_akrapovic":                true, // Dream Pack 2 https://steamdb.info/depot/404430/
 	"ks_corvette_c7_stingray":            true,
-	"ks_corvette_c7r":                    false,
+	"ks_corvette_c7r":                    true, // Dream Pack 1 https://steamdb.info/depot/347990/
 	"ks_ferrari_250_gto":                 true,
 	"ks_ferrari_288_gto":                 true,
 	"ks_ferrari_312_67":                  true,
@@ -1070,26 +1070,26 @@ var isCarPaidDLC = map[string]bool{
 	"ks_ferrari_812_superfast":           true,
 	"ks_ferrari_f138":                    true,
 	"ks_ferrari_f2004":                   true,
-	"ks_ferrari_fxx_k":                   false,
+	"ks_ferrari_fxx_k":                   true, // Tripl3 Pack https://steamdb.info/depot/509350/
 	"ks_ferrari_sf15t":                   true,
 	"ks_ferrari_sf70h":                   true,
-	"ks_ford_escort_mk1":                 false,
-	"ks_ford_gt40":                       false,
+	"ks_ford_escort_mk1":                 true, // Dream Pack 3 https://steamdb.info/depot/423630/
+	"ks_ford_gt40":                       true, // Dream Pack 2 https://steamdb.info/depot/404430/
 	"ks_ford_mustang_2015":               true,
-	"ks_glickenhaus_scg003":              false,
+	"ks_glickenhaus_scg003":              true, // Dream Pack 2 https://steamdb.info/depot/404430/
 	"ks_lamborghini_aventador_sv":        true,
-	"ks_lamborghini_countach":            false,
-	"ks_lamborghini_countach_s1":         false,
+	"ks_lamborghini_countach":            true, // Dream Pack 2 https://steamdb.info/depot/404430/
+	"ks_lamborghini_countach_s1":         true, // Dream Pack 2 https://steamdb.info/depot/404430/
 	"ks_lamborghini_gallardo_sl":         true,
-	"ks_lamborghini_gallardo_sl_s3":      false,
-	"ks_lamborghini_huracan_gt3":         false,
+	"ks_lamborghini_gallardo_sl_s3":      true, // Dream Pack 3 https://steamdb.info/depot/423630/
+	"ks_lamborghini_huracan_gt3":         true, // Dream Pack 2 https://steamdb.info/depot/404430/
 	"ks_lamborghini_huracan_performante": false,
-	"ks_lamborghini_huracan_st":          false,
+	"ks_lamborghini_huracan_st":          true, // Dream Pack 3 https://steamdb.info/depot/423630/
 	"ks_lamborghini_miura_sv":            false,
 	"ks_lamborghini_sesto_elemento":      false,
-	"ks_lotus_25":                        false,
+	"ks_lotus_25":                        true, // Dream Pack 3 https://steamdb.info/depot/423630/
 	"ks_lotus_3_eleven":                  true,
-	"ks_lotus_72d":                       false,
+	"ks_lotus_72d":                       true, // Dream Pack 3 https://steamdb.info/depot/423630/
 	"ks_maserati_250f_12cyl":             true,
 	"ks_maserati_250f_6cyl":              true,
 	"ks_maserati_alfieri":                false,
@@ -1104,16 +1104,16 @@ var isCarPaidDLC = map[string]bool{
 	"ks_mazda_rx7_spirit_r":              true,
 	"ks_mazda_rx7_tuned":                 true,
 	"ks_mclaren_570s":                    true,
-	"ks_mclaren_650_gt3":                 false,
-	"ks_mclaren_f1_gtr":                  false,
-	"ks_mclaren_p1":                      false,
+	"ks_mclaren_650_gt3":                 true, // Dream Pack 3 https://steamdb.info/depot/423630/
+	"ks_mclaren_f1_gtr":                  true, // Dream Pack 1 https://steamdb.info/depot/347990/
+	"ks_mclaren_p1":                      true, // Dream Pack 1 https://steamdb.info/depot/347990/
 	"ks_mclaren_p1_gtr":                  true,
-	"ks_mercedes_190_evo2":               false,
-	"ks_mercedes_amg_gt3":                false,
-	"ks_mercedes_c9":                     false,
+	"ks_mercedes_190_evo2":               true, // Dream Pack 1 https://steamdb.info/depot/347990/
+	"ks_mercedes_amg_gt3":                true, // Dream Pack 3 https://steamdb.info/depot/423630/
+	"ks_mercedes_c9":                     true, // Dream Pack 1 https://steamdb.info/depot/347990/
 	"ks_nissan_370z":                     true,
-	"ks_nissan_gtr":                      true,
-	"ks_nissan_gtr_gt3":                  false,
+	"ks_nissan_gtr":                      false, // Base game https://steamdb.info/depot/244211/
+	"ks_nissan_gtr_gt3":                  true, // Dream Pack 1 https://steamdb.info/depot/347990/
 	"ks_nissan_skyline_r34":              true,
 	"ks_pagani_huayra_bc":                false,
 	"ks_porsche_718_boxster_s":           true,
@@ -1144,8 +1144,8 @@ var isCarPaidDLC = map[string]bool{
 	"ks_porsche_macan":                   false,
 	"ks_porsche_panamera":                false,
 	"ks_praga_r1":                        false,
-	"ks_ruf_rt12r":                       false,
-	"ks_ruf_rt12r_awd":                   false,
+	"ks_ruf_rt12r":                       true, // Dream Pack 2 https://steamdb.info/depot/404430/
+	"ks_ruf_rt12r_awd":                   true, // Dream Pack 2 https://steamdb.info/depot/404430/
 	"ks_toyota_ae86":                     true,
 	"ks_toyota_ae86_drift":               true,
 	"ks_toyota_ae86_tuned":               true,
