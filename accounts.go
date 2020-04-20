@@ -110,6 +110,10 @@ func (a Account) HasSeenCurrentVersion() bool {
 	return a.HasSeenVersion(BuildVersion)
 }
 
+func (a Account) ShouldSeeUpgradePopup() bool {
+	return !a.HasSeenCurrentVersion() && !a.ShouldSeeIntroPopup() && !a.NeedsPasswordReset()
+}
+
 func (a Account) ShouldSeeIntroPopup() bool {
 	return IsHosted && !a.HasSeenIntroPopup && !a.NeedsPasswordReset() && a.IsDefaultHostedAccount()
 }

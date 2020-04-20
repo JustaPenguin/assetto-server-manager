@@ -27,7 +27,7 @@
         {{ end }}
 
         <script type="text/javascript">
-            var ShowUpgradePopup = {{ and (not .User.HasSeenCurrentVersion) (not .User.ShouldSeeIntroPopup) }};
+            var ShowUpgradePopup = {{ .User.ShouldSeeUpgradePopup }};
         </script>
 
         {{ if $.MonitoringEnabled }}
