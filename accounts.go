@@ -23,11 +23,11 @@ import (
 )
 
 const (
-	sessionAccountID                              = "account_id"
-	requestContextKeyAccount    accountContextKey = iota
-	adminUserName                                 = "admin"
-	serverAccountOptionsMetaKey                   = "server-account-options"
-	defaultHostedAdminAccountName				  = "acserver"
+	sessionAccountID                                = "account_id"
+	requestContextKeyAccount      accountContextKey = iota
+	adminUserName                                   = "admin"
+	serverAccountOptionsMetaKey                     = "server-account-options"
+	defaultHostedAdminAccountName                   = "acserver"
 )
 
 type accountContextKey int
