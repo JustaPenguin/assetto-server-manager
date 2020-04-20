@@ -4,6 +4,7 @@ v1.7.5
 Added:
 
 * You can now sort (and split!) Race Weekend Entry Lists by Championship Class - so you could for example run separate qualifying sessions for each class!
+* A landing intro for hosted servers that points users in the right direction.
 
 
 Fixed:

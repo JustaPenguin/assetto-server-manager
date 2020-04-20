@@ -17,6 +17,7 @@ import {CarSearch} from "./CarSearch";
 import {CarList} from "./CarList";
 import {RaceWeekend} from "./RaceWeekend";
 import {ChangelogPopup} from "./ChangelogPopup";
+import {HostedIntroPopup} from "./HostedIntroPopup";
 import {Messages} from "./Messages";
 import {Championship} from "./Championship";
 import {Results} from "./Results";
@@ -29,6 +30,7 @@ $(() => {
     new RaceWeekend.View();
     new RaceWeekend.EditSession();
     new ChangelogPopup();
+    new HostedIntroPopup();
     Messages.initSummerNote();
     new Championship.View();
     new Results();

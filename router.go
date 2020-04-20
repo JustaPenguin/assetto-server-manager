@@ -167,6 +167,7 @@ func Router(
 			return "/accounts/update"
 		}))
 		r.HandleFunc("/accounts/dismiss-changelog", accountHandler.dismissChangelog)
+		r.HandleFunc("/accounts/dismiss-intro", accountHandler.dismissIntro)
 
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")), true)
 		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")), true)

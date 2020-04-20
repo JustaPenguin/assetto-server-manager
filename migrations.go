@@ -81,6 +81,7 @@ var (
 		convertAccountGroupToServerIDGroupMap,
 		func(Store) error { return nil }, // intentionally left blank.
 		convertContentManagerDescriptionToNewTemplate,
+		addHasSeenIntroPopupToAccounts,
 	}
 )
 
@@ -932,4 +933,20 @@ func convertContentManagerDescriptionToNewTemplate(s Store) error {
 	}
 
 	return s.UpsertServerOptions(serverOpts)
+}
+
+func addHasSeenIntroPopupToAccounts(s Store) error {
+	logrus.Infof("Running migration: Add Has Seen Intro Popup to Accounts")
+
+	account, err := s.FindAccountByName("acserver")
+
+	if err == ErrAccountNotFound {
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	account.HasSeenIntroPopup = true
+
+	return s.UpsertAccount(account)
 }

@@ -318,7 +318,68 @@
         </div>
     </div>
 
-    {{ if not $.User.HasSeenCurrentVersion }}
+    {{ if $.User.ShouldSeeIntroPopup }}
+        <div class="modal" tabindex="-1" role="dialog" id="intro-modal">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Welcome to your new Assetto Corsa Server!</h3>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="font-italic">
+                            Here's a few things you should know before you get started:
+                        </p>
+
+                        <div id="changelog-text">
+                            <ol class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    The best place to look first is the Server Options page, get everything set up how
+                                    you want it! All of the options are as descriptive as possible to help guide you
+                                    through.
+                                </li>
+                                <li class="list-group-item">
+                                    You can achieve a lot with the Manager, but it can take some time to learn! It's
+                                    best to start simple (Quick Races, Custom Races) and work your way up to more complex
+                                    events like Championships and Race Weekends!
+                                </li>
+                                <li class="list-group-item">
+                                    Once an event is running (the indicator on the top right will let you know) you should
+                                    be able to see it in the server list. If you're using Content Manager you can use the
+                                    join button on the Live Timings page to get there faster!
+                                </li>
+                                <li class="list-group-item">
+                                    The Live Timings page lets you keep track of drivers on the server. If you run a
+                                    looping event it will store all of the times across the looped session! Make sure to
+                                    have a look at the Admin Control Panel here too, you can use it to do a few useful
+                                    things, such as kicking drivers, sending chat messages and restarting the session.
+                                </li>
+                                <li class="list-group-item">
+                                    If you want to add some mod tracks or cars have a look at the content pages. You can
+                                    upload and manage your mod content there.
+                                </li>
+                                <li class="list-group-item">
+                                    Our
+                                    <a href="https://github.com/JustaPenguin/assetto-server-manager/wiki" target="_blank">Wiki</a>
+                                    is a great source of information! If you have a question make sure it hasn't been
+                                    answered there first.
+                                </li>
+                                <li class="list-group-item">
+                                    The best way to contact us directly is by emailing us at our
+                                    <a href="mailto:support@justapengu.in" target="_top">Support Email</a>!
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {{ else if not $.User.HasSeenCurrentVersion }}
         <div class="modal" tabindex="-1" role="dialog" id="changelog-modal">
             <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
                 <div class="modal-content">
