@@ -4,6 +4,7 @@ v1.7.5
 Added:
 
 * You can now sort (and split!) Race Weekend Entry Lists by Championship Class - so you could for example run separate qualifying sessions for each class!
+* A landing intro for hosted servers that points users in the right direction.
 
 
 Fixed:
@@ -12,6 +13,7 @@ Fixed:
 * Improved handling of track JSON files
 * Fixes an issue where the Content Manager Welcome Message disappeared in the previous update.
 * Fixes an issue where Race Weekend Sessions may not have the correct number of Championship Points fields.
+* Improved accuracy of DLC/Original Game information in content lists.
 
 ---
 
