@@ -938,7 +938,7 @@ func convertContentManagerDescriptionToNewTemplate(s Store) error {
 func addHasSeenIntroPopupToAccounts(s Store) error {
 	logrus.Infof("Running migration: Add Has Seen Intro Popup to Accounts")
 
-	account, err := s.FindAccountByName("acserver")
+	account, err := s.FindAccountByName(defaultHostedAdminAccountName)
 
 	if err == ErrAccountNotFound {
 		return nil

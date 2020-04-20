@@ -27,6 +27,7 @@ const (
 	requestContextKeyAccount    accountContextKey = iota
 	adminUserName                                 = "admin"
 	serverAccountOptionsMetaKey                   = "server-account-options"
+	defaultHostedAdminAccountName				  = "acserver"
 )
 
 type accountContextKey int
@@ -114,7 +115,7 @@ func (a Account) ShouldSeeIntroPopup() bool {
 }
 
 func (a Account) IsDefaultHostedAccount() bool {
-	return a.Name == "acserver"
+	return a.Name == defaultHostedAdminAccountName
 }
 
 func (a Account) HasSeenVersion(version string) bool {
