@@ -565,10 +565,24 @@ class LiveTimings implements WebsocketHandler {
 
         $(document).on("click", ".driver-link", this.toggleDriverSpeed.bind(this));
 
+        $(document).on("click", "#countdown", this.getFromButton.bind(this));
+
         $(document).on("submit", "#broadcast-chat-form", this.processChatForm.bind(this));
         $(document).on("submit", "#admin-command-form", this.processAdminCommandForm.bind(this));
         $(document).on("submit", "#kick-user-form", this.processKickUserForm.bind(this));
         $(document).on("submit", "#send-chat-form", this.processSendChatForm.bind(this));
+    }
+
+    private getFromButton(e: ClickEvent): void {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const $target = $(e.currentTarget);
+        const $href = $target.attr("href")
+
+        $("#countdown-display").val("sending")
+
+        $.get($href)
     }
 
     private processChatForm(e: JQuery.SubmitEvent): boolean {
