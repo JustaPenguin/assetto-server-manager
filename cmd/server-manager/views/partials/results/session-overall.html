@@ -33,9 +33,17 @@
                     {{ with $result.DriverGUID }}
                         <tr {{ if eq $account.GUID $result.DriverGUID }}style="font-weight: bold"{{ end }}>
                             <td>{{ add $pos 1 }}</td>
-                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}-{{ $result.CarID }}">{{ driverName $result.DriverName }}
-                                {{ if $result.HasPenalty }} <span class="badge badge-danger">Time Penalty: {{ $result.PenaltyTime }}</span> {{ end }}
-                                {{ if $result.Disqualified }} <span class="badge badge-danger">Disqualified</span> {{ end }}</td>
+                            <td class="driver-link" data-href="#{{ $result.DriverGUID }}-{{ $result.CarID }}">
+                                {{ driverName $result.DriverName }}
+
+                                {{ if $result.HasPenalty }}
+                                    <span class="badge badge-danger">Time Penalty: {{ $result.PenaltyTime }}</span>
+                                {{ end }}
+
+                                {{ if $result.Disqualified }}
+                                    <span class="badge badge-danger">Disqualified</span>
+                                {{ end }}
+                            </td>
 
                             {{ if $driversHaveTeams }}
                                 <td>{{ $sessionResults.GetTeamName $result.DriverGUID }}</td>
@@ -77,16 +85,18 @@
                                 </td>
                             {{ end }}
 
-                            <td>{{ $sessionResults.GetCrashes $result.DriverGUID }}</td>
+                            <td>{{ $sessionResults.GetCrashes $result.DriverGUID $result.CarModel }}</td>
 
                             {{ if WriteAccess }}
                                 <td>
                                     <button type="button" class="btn btn-warning btn-sm" data-placement="left"
                                        data-toggle="popover" title="Penalty Details" data-html="true"
-                                        id="result-{{ $result.DriverGUID }}-{{ $result.CarModel }}-{{ $sessionResults.SessionFile }}"
-                                        >Penalties</button>
+                                        id="result-{{ sha1sum $result.DriverGUID }}-{{ $result.CarModel }}-{{ $sessionResults.SessionFile }}"
+                                    >
+                                        Penalties
+                                    </button>
 
-                                    <div id="popover-content-result-{{ $result.DriverGUID }}-{{ $result.CarModel }}-{{ $sessionResults.SessionFile }}" style="display: none;">
+                                    <div id="popover-content-result-{{ sha1sum $result.DriverGUID }}-{{ $result.CarModel }}-{{ $sessionResults.SessionFile }}" style="display: none;">
                                         <form action='/penalties/{{ $sessionResults.SessionFile }}/{{ $result.DriverGUID }}?model={{ $result.CarModel }}' method='POST'>
                                             <div class='form-group'>
                                                 <label for='time-penalty'>Time Penalty (seconds)</label>

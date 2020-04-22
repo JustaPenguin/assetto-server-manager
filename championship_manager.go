@@ -1648,7 +1648,7 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 	signUpResponse := &ChampionshipSignUpResponse{
 		Created: time.Now(),
 		Name:    r.FormValue("Name"),
-		GUID:    r.FormValue("GUID"),
+		GUID:    NormaliseEntrantGUID(r.FormValue("GUID")),
 		Team:    r.FormValue("Team"),
 		Email:   r.FormValue("Email"),
 

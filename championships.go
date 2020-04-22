@@ -835,6 +835,7 @@ func (c *Championship) EnhanceResults(results *SessionResults) {
 	results.ChampionshipID = c.ID.String()
 
 	c.AttachClassIDToResults(results)
+	results.NormaliseDriverSwapGUIDs()
 
 	// update names / teams to the values we know to be correct due to championship setup
 	for _, class := range c.Classes {
@@ -1061,8 +1062,8 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 				}
 
 				if sessionType == SessionTypeRace || sessionType == SessionTypeSecondRace {
-					givePoints(event, driver.DriverGUID, float64(points.CollisionWithDriver*session.Results.GetCrashesOfType(driver.DriverGUID, "COLLISION_WITH_CAR"))*pointsMultiplier*-1, PointsCollisionWithCar)
-					givePoints(event, driver.DriverGUID, float64(points.CollisionWithEnv*session.Results.GetCrashesOfType(driver.DriverGUID, "COLLISION_WITH_ENV"))*pointsMultiplier*-1, PointsCollisionWithEnvironment)
+					givePoints(event, driver.DriverGUID, float64(points.CollisionWithDriver*session.Results.GetCrashesOfType(driver.DriverGUID, driver.CarModel, "COLLISION_WITH_CAR"))*pointsMultiplier*-1, PointsCollisionWithCar)
+					givePoints(event, driver.DriverGUID, float64(points.CollisionWithEnv*session.Results.GetCrashesOfType(driver.DriverGUID, driver.CarModel, "COLLISION_WITH_ENV"))*pointsMultiplier*-1, PointsCollisionWithEnvironment)
 					givePoints(event, driver.DriverGUID, float64(points.CutTrack*session.Results.GetCuts(driver.DriverGUID, driver.CarModel))*pointsMultiplier*-1, PointsCutTrack)
 				}
 			}

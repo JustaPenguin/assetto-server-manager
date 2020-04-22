@@ -43,8 +43,10 @@ type SessionResults struct {
 var ErrSessionCarNotFound = errors.New("servermanager: session car not found")
 
 func (s *SessionResults) FindCarByGUIDAndModel(guid, model string) (*SessionCar, error) {
+	carID := s.FindCarIDForGUIDAndModel(guid, model)
+
 	for _, car := range s.Cars {
-		if car.GetGUID() == guid && car.GetCar() == model {
+		if car.CarID == carID {
 			return car, nil
 		}
 	}
@@ -88,6 +90,23 @@ func (s *SessionResults) Anonymize() {
 		result.DriverGUID = AnonymiseDriverGUID(result.DriverGUID)
 
 		result.DriverName = shortenDriverName(result.DriverName)
+	}
+}
+
+func (s *SessionResults) NormaliseDriverSwapGUIDs() {
+	carIDToGUID := make(map[int]string)
+
+	for _, car := range s.Cars {
+		if len(car.Driver.GuidsList) > 1 {
+			// this car has been subjected to a driver swap.
+			carIDToGUID[car.CarID] = NormaliseEntrantGUIDs(car.Driver.GuidsList)
+		}
+	}
+
+	for _, result := range s.Result {
+		if overrideGUID, ok := carIDToGUID[result.CarID]; ok {
+			result.DriverGUID = overrideGUID
+		}
 	}
 }
 
@@ -172,11 +191,13 @@ func (s *SessionResults) GetURL() string {
 	return config.HTTP.BaseURL + "/results/download/" + s.SessionFile + ".json"
 }
 
-func (s *SessionResults) GetCrashes(guid string) int {
+func (s *SessionResults) GetCrashes(guid, model string) int {
+	carID := s.FindCarIDForGUIDAndModel(guid, model)
+
 	var num int
 
 	for _, event := range s.Events {
-		if event.Driver.GUID == guid {
+		if event.CarID == carID {
 			num++
 		}
 	}
@@ -184,23 +205,92 @@ func (s *SessionResults) GetCrashes(guid string) int {
 	return num
 }
 
-func (s *SessionResults) GetCrashesOfType(guid, collisionType string) int {
+func (s *SessionResults) GetCrashesOfType(guid, model, collisionType string) int {
+	carID := s.FindCarIDForGUIDAndModel(guid, model)
+
 	var num int
 
 	for _, event := range s.Events {
-		if event.Driver.GUID == guid && event.Type == collisionType {
+		if event.CarID == carID && event.Type == collisionType {
 			num++
 		}
 	}
 
 	return num
+}
+
+func (s *SessionResults) GetDriverDescriptionForLap(lap *SessionLap, autoFillEntrantList []*Entrant) string {
+	var car *SessionCar
+
+	for _, sessionCar := range s.Cars {
+		if sessionCar.CarID == lap.CarID {
+			car = sessionCar
+			break
+		}
+	}
+
+	if car == nil {
+		return lap.DriverName
+	}
+
+	for _, entrant := range autoFillEntrantList {
+		if entrant.GUID == lap.DriverGUID {
+			return entrant.Name
+		}
+	}
+
+	driverIndex := -1
+
+	for index, guid := range car.Driver.GuidsList {
+		if guid == lap.DriverGUID {
+			driverIndex = index
+			break
+		}
+	}
+
+	if driverIndex >= 0 {
+		return fmt.Sprintf("Driver #%d", driverIndex+1)
+	}
+
+	return lap.DriverName
+}
+
+func (s *SessionResults) FindCarIDForGUIDAndModel(guid, model string) int {
+	var carID int
+
+	for _, car := range s.Cars {
+		if car.Model != model {
+			continue
+		}
+
+		if car.Driver.GUID == guid {
+			carID = car.CarID
+			break
+		}
+
+		if NormaliseEntrantGUIDs(car.Driver.GuidsList) == guid {
+			carID = car.CarID
+			break
+		}
+
+		for _, carGUID := range car.Driver.GuidsList {
+			if guid == carGUID {
+				carID = car.CarID
+				break
+			}
+		}
+	}
+
+	return carID
 }
 
 func (s *SessionResults) GetAverageLapTime(guid, model string) time.Duration {
+	carID := s.FindCarIDForGUIDAndModel(guid, model)
+
 	var totalTime, driverLapCount, lapsForAverage, totalTimeForAverage int
 
 	for _, lap := range s.Laps {
-		if lap.DriverGUID == guid && lap.CarModel == model {
+		if lap.CarID == carID {
 			avgSoFar := (float64(totalTime) / float64(lapsForAverage)) * 1.07
 
 			// if lap doesnt cut and if lap is < 107% of average for that driver so far and if lap isn't lap 1
@@ -269,14 +359,14 @@ func (s *SessionResults) GetConsistency(guid, model string) float64 {
 func (s *SessionResults) GetPosForLap(guid, model string, lapNum int64) int {
 	var pos int
 
-	driverLap := make(map[string]int)
+	driverLap := make(map[int]int)
 
 	for _, lap := range s.Laps {
-		driverLap[lap.DriverGUID+lap.CarModel]++
+		driverLap[lap.CarID]++
 
-		if driverLap[lap.DriverGUID+lap.CarModel] == int(lapNum) && lap.DriverGUID == guid && lap.CarModel == model {
+		if driverLap[lap.CarID] == int(lapNum) && s.LapAssociatedWithGUIDAndModel(lap, guid, model) {
 			return pos + 1
-		} else if driverLap[lap.DriverGUID+lap.CarModel] == int(lapNum) {
+		} else if driverLap[lap.CarID] == int(lapNum) {
 			pos++
 		}
 	}
@@ -558,11 +648,13 @@ func (s *SessionResults) GetTime(timeINT int, driverGUID, model string, penalty 
 		return time.Duration(0)
 	}
 
+	carID := s.FindCarIDForGUIDAndModel(driverGUID, model)
+
 	d, _ := time.ParseDuration(fmt.Sprintf("%dms", timeINT))
 
 	if penalty {
 		for _, driver := range s.Result {
-			if driver.DriverGUID == driverGUID && driver.CarModel == model && driver.HasPenalty {
+			if driver.CarID == carID && driver.HasPenalty {
 				d += driver.PenaltyTime
 
 				if s.Type == SessionTypeRace {
@@ -586,17 +678,19 @@ func (s *SessionResults) GetTeamName(driverGUID string) string {
 }
 
 func (s *SessionResults) GetNumLaps(driverGUID, model string) int {
+	carID := s.FindCarIDForGUIDAndModel(driverGUID, model)
+
 	var i int
 
 	for _, lap := range s.Laps {
-		if lap.DriverGUID == driverGUID && lap.CarModel == model {
+		if lap.CarID == carID {
 			i++
 		}
 	}
 
 	// Apply lap penalty
 	for _, driver := range s.Result {
-		if driver.DriverGUID == driverGUID && driver.CarModel == model && driver.HasPenalty {
+		if driver.CarID == carID {
 			i -= driver.LapPenalty
 		}
 	}
@@ -605,8 +699,10 @@ func (s *SessionResults) GetNumLaps(driverGUID, model string) int {
 }
 
 func (s *SessionResults) GetLastLapTime(driverGUID, model string) time.Duration {
+	carID := s.FindCarIDForGUIDAndModel(driverGUID, model)
+
 	for i := len(s.Laps) - 1; i >= 0; i-- {
-		if s.Laps[i].DriverGUID == driverGUID && s.Laps[i].CarModel == model {
+		if s.Laps[i].CarID == carID {
 			return s.Laps[i].GetLapTime()
 		}
 	}
@@ -671,10 +767,12 @@ func (s *SessionResults) GetDriverPosition(driverGUID, model string) int {
 }
 
 func (s *SessionResults) GetCuts(driverGUID, model string) int {
+	carID := s.FindCarIDForGUIDAndModel(driverGUID, model)
+
 	var i int
 
 	for _, lap := range s.Laps {
-		if lap.DriverGUID == driverGUID && lap.CarModel == model {
+		if lap.CarID == carID {
 			i += lap.Cuts
 		}
 	}
@@ -704,6 +802,71 @@ func (s *SessionResults) FastestLap() *SessionLap {
 	})
 
 	return laps[0]
+}
+
+func (s *SessionResults) ResultHasMultipleDrivers(result *SessionResult) bool {
+	car, err := s.FindCarByGUIDAndModel(result.DriverGUID, result.CarModel)
+
+	if err != nil {
+		return false
+	}
+
+	return car.HasMultipleDrivers()
+}
+
+func (s *SessionResults) NumberOfDriverSwaps(carID int) int {
+	var lastGUID string
+	var numSwaps int
+
+	for _, lap := range s.Laps {
+		if lap.CarID != carID {
+			continue
+		}
+
+		if lastGUID == "" {
+			lastGUID = lap.DriverGUID
+		}
+
+		if lap.DriverGUID != lastGUID {
+			numSwaps++
+			lastGUID = lap.DriverGUID
+		}
+	}
+
+	return numSwaps
+}
+
+func (s *SessionResults) LapAssociatedWithGUIDAndModel(lap *SessionLap, driverGUID, model string) bool {
+	if lap.DriverGUID == driverGUID && lap.CarModel == model {
+		return true
+	}
+
+	for _, driverGUID := range strings.Split(driverGUID, driverSwapEntrantSeparator) {
+		for _, car := range s.Cars {
+			if car.Model != model {
+				continue
+			}
+
+			assoc1 := false
+			assoc2 := false
+
+			for _, guid := range car.Driver.GuidsList {
+				if guid == lap.DriverGUID {
+					assoc1 = true
+				}
+
+				if guid == driverGUID {
+					assoc2 = true
+				}
+			}
+
+			if assoc1 && assoc2 {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (s *SessionResults) FastestLapInClass(classID uuid.UUID) *SessionLap {
@@ -756,7 +919,7 @@ type SessionResult struct {
 
 func (s *SessionResult) BestLapTyre(results *SessionResults) string {
 	for _, lap := range results.Laps {
-		if lap.DriverGUID == s.DriverGUID && lap.CarModel == s.CarModel && lap.LapTime == s.BestLap {
+		if lap.CarID == s.CarID && lap.LapTime == s.BestLap {
 			return lap.Tyre
 		}
 	}
@@ -824,6 +987,10 @@ func (c *SessionCar) GetGUID() string {
 
 func (c *SessionCar) GetTeam() string {
 	return c.Driver.Team
+}
+
+func (c *SessionCar) HasMultipleDrivers() bool {
+	return len(c.Driver.GuidsList) > 1 || strings.Count(c.GetGUID(), driverSwapEntrantSeparator) > 0
 }
 
 type SessionEvent struct {
@@ -1171,9 +1338,10 @@ func (rh *ResultsHandler) upload(r *http.Request) (bool, error) {
 type resultsViewTemplateVars struct {
 	BaseTemplateVars
 
-	Result  *SessionResults
-	Account *Account
-	UseMPH  bool
+	Result           *SessionResults
+	AutoFillEntrants []*Entrant
+	Account          *Account
+	UseMPH           bool
 }
 
 func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
@@ -1196,13 +1364,20 @@ func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
 		logrus.WithError(err).Errorf("couldn't load server options")
 	}
 
+	autoFillEntrants, err := rh.store.ListEntrants()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't load autofill entrant list")
+	}
+
 	rh.viewRenderer.MustLoadTemplate(w, r, "results/result.html", &resultsViewTemplateVars{
 		BaseTemplateVars: BaseTemplateVars{
 			WideContainer: true,
 		},
-		Result:  result,
-		Account: AccountFromRequest(r),
-		UseMPH:  serverOpts.UseMPH == 1,
+		Result:           result,
+		AutoFillEntrants: autoFillEntrants,
+		Account:          AccountFromRequest(r),
+		UseMPH:           serverOpts.UseMPH == 1,
 	})
 }
 

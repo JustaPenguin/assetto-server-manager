@@ -533,7 +533,8 @@ func (rm *RaceManager) BuildEntryList(r *http.Request, start, length int) (Entry
 
 		e.Name = r.Form["EntryList.Name"][i]
 		e.Team = r.Form["EntryList.Team"][i]
-		e.GUID = r.Form["EntryList.GUID"][i]
+
+		e.GUID = NormaliseEntrantGUID(r.Form["EntryList.GUID"][i])
 		e.Model = model
 		e.Skin = skin
 		// Despite having the option for SpectatorMode, the server does not support it, and panics if set to 1
@@ -651,6 +652,18 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		DisableDRSZones:           formValueAsInt(r.FormValue("DisableDRSZones")) == 1,
 
 		TimeAttack: timeAttack,
+	}
+
+	if Premium() {
+		// driver swap
+		raceConfig.DriverSwapEnabled = formValueAsInt(r.FormValue("DriverSwapEnabled"))
+		raceConfig.DriverSwapMinTime = formValueAsInt(r.FormValue("DriverSwapMinTime"))
+		raceConfig.DriverSwapDisqualifyTime = formValueAsInt(r.FormValue("DriverSwapDisqualifyTime"))
+		raceConfig.DriverSwapPenaltyTime = formValueAsInt(r.FormValue("DriverSwapPenaltyTime"))
+		raceConfig.DriverSwapMinimumNumberOfSwaps = formValueAsInt(r.FormValue("DriverSwapMinimumNumberOfSwaps"))
+		raceConfig.DriverSwapNotEnoughSwapsPenalty = formValueAsInt(r.FormValue("DriverSwapNotEnoughSwapsPenalty"))
+	} else {
+		raceConfig.DriverSwapEnabled = 0
 	}
 
 	if isSol {

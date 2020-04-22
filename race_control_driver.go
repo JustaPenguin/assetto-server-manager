@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"context"
 	"sort"
 	"sync"
 	"time"
@@ -35,6 +36,9 @@ type RaceControlDriver struct {
 	LastPos  udp.Vec   `json:"LastPos"`
 
 	Collisions []Collision `json:"Collisions"`
+
+	driverSwapContext context.Context
+	driverSwapCfn     context.CancelFunc
 
 	// Cars is a map of CarModel to the information for that car.
 	Cars map[string]*RaceControlCarLapInfo `json:"Cars"`
