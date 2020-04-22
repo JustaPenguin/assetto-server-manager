@@ -410,7 +410,9 @@ func (rs *JSONStore) FindAccountByName(name string) (*Account, error) {
 
 	err := rs.decodeFile(rs.shared, filepath.Join(accountsDir, name+".json"), &account)
 
-	if err != nil {
+	if os.IsNotExist(err) {
+		return nil, ErrAccountNotFound
+	} else if err != nil {
 		return nil, err
 	}
 
