@@ -419,8 +419,6 @@ func (rch *RaceControlHandler) countdown(w http.ResponseWriter, r *http.Request)
 
 		if err != nil {
 			logrus.WithError(err).Error("Unable to broadcast countdown message")
-
-			AddErrorFlash(w, r, "The server was unable to broadcast the countdown message!")
 		}
 	}
 }
