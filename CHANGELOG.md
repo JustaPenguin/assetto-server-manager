@@ -1,4 +1,4 @@
-v1.7.4
+v1.7.5
 ------
 
 Added:
@@ -11,13 +11,32 @@ Added:
   - Driver Swap result files show which lap was completed by which driver (using the AutoFill Entrant list where possible to put names in)
   - Driver Swaps require compatible tracks. A compatible track has the timing line before or after all of the pitboxes. 
     You can follow this guide (written by @mike855 - thanks!) to modify a track to be compatible: https://github.com/JustaPenguin/assetto-server-manager/wiki/Driver-swap-track-editing
-* Time Attack Events (premium). Time attack events let you run a looping session that combines all of the results files into one!
-* Compatibility with KissMyRank v1.6f
+* You can now sort (and split!) Race Weekend Entry Lists by Championship Class - so you could for example run separate qualifying sessions for each class!
+* A landing intro for hosted servers that points users in the right direction.
+* You can now broadcast a 3-2-1-GO countdown to all drivers from the Live Timings Admin Panel.
+
+Fixed:
+
+* Race Weekend Championship sorters are no longer available in non-Championship Race Weekends.
+* Improved handling of track JSON files
+* Fixes an issue where the Content Manager Welcome Message disappeared in the previous update.
+* Fixes an issue where Race Weekend Sessions may not have the correct number of Championship Points fields.
+* Improved accuracy of DLC/Original Game information in content lists.
+
+---
+
+v1.7.4
+------
+
+Added:
+
+* Time Attack Events (premium). Time Attack events let you run a looping session that combines all of the results files into one!
 * You can now control whether weather presets added to championships will be activated only in Practice sessions, only in Championship events or in either. This is intended to allow for practice sessions with more stable weather/time progression than the actual event.
-* Added a "Public URL" option to sTracker's HTTP Configuration to be used when linking to sTracker from Live Timings. If you were having problems with parts of sTracker not working correctly, try setting the Public URL option.
 * TLS support. You can now specify a certificate and key file in the config.yml to enable TLS support in Server Manager. This feature is requested often, so we've implemented it to a good standard as of the time of release. HTTPS is fast moving, and there are no guarantees that what is secure now will be secure in a year. Reverse proxying with nginx/apache is still an option.
 * Looped races now indicate when they are running in the "in progress" indicator in the navigation bar. Looped races will only initiate if allowed to start automatically!
 * You now have more control over the Content Manager welcome message using templates (similar to the server name template).
+* Compatibility with KissMyRank v1.6f
+* Added a "Public URL" option to sTracker's HTTP Configuration to be used when linking to sTracker from Live Timings. If you were having problems with parts of sTracker not working correctly, try setting the Public URL option.
 
 Fixes:
 
@@ -34,6 +53,7 @@ Fixes:
 * Fixes an issue where Live Timings would not show all cars driven by a driver (for example if they were switching cars in a session to test them out)
 * Fixes an issue where running stracker could cause a server crash when Server Manager changed the real time position interval. In some extreme cases you may find your live map running in slow motion, currently disabling stracker is the only fix for this.
 * Reworked the pagination of Results and Cars pages to make it a bit more usable.
+* Fixes an issue where drivers would be removed from Live Timings if the Live Map was disabled.
 
 ---
 

@@ -167,6 +167,7 @@ func Router(
 			return "/accounts/update"
 		}))
 		r.HandleFunc("/accounts/dismiss-changelog", accountHandler.dismissChangelog)
+		r.HandleFunc("/accounts/dismiss-intro", accountHandler.dismissIntro)
 
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")), true)
 		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")), true)
@@ -332,6 +333,7 @@ func Router(
 		r.HandleFunc("/admin-command", raceControlHandler.adminCommand)
 		r.HandleFunc("/kick-user", raceControlHandler.kickUser)
 		r.HandleFunc("/send-chat", raceControlHandler.sendChat)
+		r.HandleFunc("/countdown", raceControlHandler.countdown)
 
 		r.HandleFunc("/stracker/options", strackerHandler.options)
 		r.HandleFunc("/kissmyrank/options", kissMyRankHandler.options)

@@ -169,6 +169,11 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 var driverTimeout = time.Minute * 5
 
 func (rc *RaceControl) watchForTimedOutDrivers() {
+	if udp.RealtimePosIntervalMs <= 0 {
+		// with no real time pos interval, we have no driver positions, so no last update time.
+		return
+	}
+
 	ticker := time.NewTicker(time.Minute)
 
 	for range ticker.C {

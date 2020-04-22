@@ -851,6 +851,11 @@ func (rm *RaceManager) SetupCustomRace(r *http.Request) error {
 		return nil
 	}
 
+	if race.RaceConfig.TimeAttack && Premium() {
+		logrus.Info("Time Attack event started")
+		rm.raceControl.currentTimeAttackEvent = race
+	}
+
 	if saveAsPresetWithoutStartingRace {
 		return nil
 	}

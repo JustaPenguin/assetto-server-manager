@@ -36,7 +36,11 @@
                     {{ $result.GetDate }}
                 </td>
                 <td>
-                    {{ $result.Type }}
+                    {{ if $result.IsTimeAttack }}
+                        Time Attack
+                    {{ else }}
+                        {{ $result.Type }}
+                    {{ end }}
                 </td>
                 <td>
                     {{ prettify $result.TrackName false }}

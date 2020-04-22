@@ -41,7 +41,7 @@
                                                 {{ if WriteAccess }}
                                                     <select id="ResultsSort" name="ResultsSort" class="form-control">
                                                         {{ range $index, $sorter := $.AvailableSorters }}
-                                                            {{ if or (not $.ParentSession.IsBase) (not $sorter.NeedsParentSession) }}
+                                                            {{ if and (not (and $.ParentSession.IsBase $sorter.NeedsParentSession)) (not (and (not $.RaceWeekend.HasLinkedChampionship) $sorter.NeedsChampionship)) }}
                                                                 <option value="{{ $sorter.Key }}" {{ if eq $sorter.Key $.Filter.SortType }}selected="selected"{{ end }}>{{ $sorter.Name }}</option>
                                                             {{ end }}
                                                         {{ end }}
