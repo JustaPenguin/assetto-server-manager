@@ -30,63 +30,144 @@
                     <div class="col-md-6">
                         <form>
 
-                                <div class="card border-warning">
-                                    <div class="card-body">
-                                        <p>Sort the drivers from the <strong>{{ $.ParentSession.Name }}</strong> Results by:</p>
+                            <div class="card border-warning">
+                                <div class="card-body">
+                                    <p>Sort the drivers from the <strong>{{ $.ParentSession.Name }}</strong>{{ if not $.ParentSession.IsBase}} Results{{ end }} by:</p>
 
-                                        <div class="form-group row">
-                                            <label for="ResultsSort" class="col-sm-4 col-form-label">Sort By</label>
+                                    <div class="form-group row">
+                                        <label for="ResultsSort" class="col-sm-4 col-form-label">Sort By</label>
 
-                                            <div class="col-sm-8">
-                                                {{ if WriteAccess }}
-                                                    <select id="ResultsSort" name="ResultsSort" class="form-control">
-                                                        {{ range $index, $sorter := $.AvailableSorters }}
-                                                            {{ if and (not (and $.ParentSession.IsBase $sorter.NeedsParentSession)) (not (and (not $.RaceWeekend.HasLinkedChampionship) $sorter.NeedsChampionship)) }}
-                                                                <option value="{{ $sorter.Key }}" {{ if eq $sorter.Key $.Filter.SortType }}selected="selected"{{ end }}>{{ $sorter.Name }}</option>
-                                                            {{ end }}
+                                        <div class="col-sm-8">
+                                            {{ if WriteAccess }}
+                                                <select id="ResultsSort" name="ResultsSort" class="form-control">
+                                                    {{ range $index, $sorter := $.AvailableSorters }}
+                                                        {{ if and (not (and $.ParentSession.IsBase $sorter.NeedsParentSession)) (not (and (not $.RaceWeekend.HasLinkedChampionship) $sorter.NeedsChampionship)) }}
+                                                            <option value="{{ $sorter.Key }}" {{ if eq $sorter.Key $.Filter.SortType }}selected="selected"{{ end }}>{{ $sorter.Name }}</option>
                                                         {{ end }}
-                                                    </select>
-                                                {{ else }}
-                                                    <label class="col-form-label">
-                                                        {{ range $index, $sorter := $.AvailableSorters }}
-                                                            {{ if eq $sorter.Key $.Filter.SortType }}
-                                                                {{ $sorter.Name }}
-                                                            {{ end }}
+                                                    {{ end }}
+                                                </select>
+                                            {{ else }}
+                                                <label class="col-form-label">
+                                                    {{ range $index, $sorter := $.AvailableSorters }}
+                                                        {{ if eq $sorter.Key $.Filter.SortType }}
+                                                            {{ $sorter.Name }}
                                                         {{ end }}
-                                                    </label>
-                                                {{ end }}
-                                            </div>
-
-                                            {{ if not $.ParentSession.Completed }}
-                                                <div class="pl-3 pr-3">
-                                                    <small class="text-danger">The Parent Session ({{ $.ParentSession.Name }}) has not been completed. Sorting will not change the live preview, but will apply to the grid when the {{ $.ParentSession.Name }} Session has completed.</small>
-                                                </div>
+                                                    {{ end }}
+                                                </label>
                                             {{ end }}
                                         </div>
 
-                                        <div class="form-group row" id="AvailableResultsWrapper">
-                                            <label for="AvailableResults" class="col-sm-4 col-form-label">Results Files</label>
-
-                                            <div class="col-sm-8">
-
-                                                <select multiple required class="form-control" name="AvailableResults" id="AvailableResults" size="15">
-                                                    {{ range $index, $result := $.ResultsAvailableForSorting }}
-                                                        {{ $selected := false }}
-
-                                                        {{ range $index, $availableResult := $.Filter.AvailableResultsForSorting }}
-                                                            {{ if eq $result.SessionFile $availableResult }}
-                                                                {{ $selected = true }}
-                                                            {{ end }}
-                                                        {{ end}}
-
-                                                        <option value="{{ $result.SessionFile }}" {{ if $selected }} selected="selected" {{ end }}>{{ $result.Type.String }} on {{ dateFormat $result.Date }} at {{ timeFormat $result.Date }}</option>
-                                                    {{ end }}
-                                                </select>
+                                        {{ if not $.ParentSession.Completed }}
+                                            <div class="pl-3 pr-3">
+                                                <small class="text-danger">The Parent Session ({{ $.ParentSession.Name }}) has not been completed. Sorting will not change the live preview, but will apply to the grid when the {{ $.ParentSession.Name }} Session has completed.</small>
                                             </div>
+                                        {{ end }}
+                                    </div>
+
+                                    <div class="form-group row" id="AvailableResultsWrapper">
+                                        <label for="AvailableResults" class="col-sm-4 col-form-label">Results Files</label>
+
+                                        <div class="col-sm-8">
+
+                                            <select multiple required class="form-control" name="AvailableResults" id="AvailableResults" size="15">
+                                                {{ range $index, $result := $.ResultsAvailableForSorting }}
+                                                    {{ $selected := false }}
+
+                                                    {{ range $index, $availableResult := $.Filter.AvailableResultsForSorting }}
+                                                        {{ if eq $result.SessionFile $availableResult }}
+                                                            {{ $selected = true }}
+                                                        {{ end }}
+                                                    {{ end}}
+
+                                                    <option value="{{ $result.SessionFile }}" {{ if $selected }} selected="selected" {{ end }}>{{ $result.Type.String }} on {{ dateFormat $result.Date }} at {{ timeFormat $result.Date }}</option>
+                                                {{ end }}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="ReverseGrid" class="col-sm-4 col-form-label">Reverse?</label>
+
+                                        <div class="col-sm-8">
+                                            <input
+                                                    {{ if WriteAccess }}
+                                                        type="number"
+                                                    {{ else }}
+                                                        type="hidden"
+                                                    {{ end }}
+                                                    class="form-control"
+                                                    id="ReverseGrid"
+                                                    name="ReverseGrid"
+                                                    value="{{ $.Filter.NumEntrantsToReverse }}"
+                                            >
+
+                                            {{ if not WriteAccess }}
+                                                <label class="col-form-label">
+                                                    {{ if eq $.Filter.NumEntrantsToReverse 0 }}
+                                                        No
+                                                    {{ else if lt $.Filter.NumEntrantsToReverse 0 }}
+                                                        All
+                                                    {{ else }}
+                                                        {{ $.Filter.NumEntrantsToReverse }}
+                                                    {{ end }}
+                                                </label>
+                                            {{ end }}
                                         </div>
 
+                                        {{ if WriteAccess }}
+                                            <div class="pl-3">
+                                                <small>
+                                                    0 = Don't Reverse. -1 = Reverse all. N = Reverse the first N.
+                                                </small>
+                                            </div>
+                                        {{ end }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-2 mb-2">
+                                <i class="fa fa-arrow-down"></i>
+                            </div>
+
+
+                            <div class="card border-primary">
+                                <div class="card-body">
+
+                                    {{ if $.ParentSession.IsBase }}
+                                        <p>Take the drivers from the {{ $.RaceWeekend.Name }} Entry List:</p>
+                                    {{ else }}
+                                        <p>Take the drivers from the sorted <strong>{{ $.ParentSession.Name }}</strong> Results:</p>
+                                    {{ end }}
+
+                                    <div class="form-group row">
+                                        <label for="ManualDriverSelection" class="col-sm-8 col-form-label">Manually Choose Drivers</label>
+
+                                        <div class="col-sm-4 text-right">
+                                            <input type="checkbox" id="ManualDriverSelection" name="ManualDriverSelection" {{ if $.Filter.ManualDriverSelection }}checked="checked"{{ end }}>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row" style="display: none;" id="DriverSelectionForm">
+                                        <div class="col-sm-12">
+                                            <select multiple id="Drivers" class="form-control" name="Drivers" style="min-height: 200px;">
+                                                {{ range $index, $result := $.ParentSessionResults }}
+                                                    {{ $driverSelected := false }}
+
+                                                    {{ range $index, $guid := $.Filter.SelectedDriverGUIDs }}
+                                                        {{ if eq $result.Car.Driver.GUID $guid }}
+                                                            {{ $driverSelected = true }}
+                                                        {{ end }}
+                                                    {{ end }}
+
+                                                    <option value="{{ $result.Car.Driver.GUID }}" {{ if $driverSelected }}selected="selected"{{ end }}>{{ $result.Car.Driver.Name }}</option>
+                                                {{ end }}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div id="FilterFromTo">
                                         <div class="form-group row">
-                                            <label for="ReverseGrid" class="col-sm-4 col-form-label">Reverse?</label>
+                                            <label for="ResultsStart" class="col-sm-4 col-form-label">From</label>
 
                                             <div class="col-sm-8">
                                                 <input
@@ -95,94 +176,41 @@
                                                         {{ else }}
                                                             type="hidden"
                                                         {{ end }}
+                                                        id="ResultsStart"
+                                                        name="ResultsStart"
                                                         class="form-control"
-                                                        id="ReverseGrid"
-                                                        name="ReverseGrid"
-                                                        value="{{ $.Filter.NumEntrantsToReverse }}"
+                                                        value="{{ $.Filter.ResultStart }}"
+                                                        step="1"
+                                                        min="1"
                                                 >
 
                                                 {{ if not WriteAccess }}
-                                                    <label class="col-form-label">
-                                                        {{ if eq $.Filter.NumEntrantsToReverse 0 }}
-                                                            No
-                                                        {{ else if lt $.Filter.NumEntrantsToReverse 0 }}
-                                                            All
-                                                        {{ else }}
-                                                            {{ $.Filter.NumEntrantsToReverse }}
-                                                        {{ end }}
-                                                    </label>
+                                                    <label class="col-form-label">{{ $.Filter.ResultStart }}</label>
                                                 {{ end }}
                                             </div>
-
-                                            {{ if WriteAccess }}
-                                                <div class="pl-3">
-                                                    <small>
-                                                        0 = Don't Reverse. -1 = Reverse all. N = Reverse the first N.
-                                                    </small>
-                                                </div>
-                                            {{ end }}
                                         </div>
-                                    </div>
-                                </div>
+                                        <div class="form-group row">
+                                            <label for="ResultsEnd" class="col-sm-4 col-form-label">To</label>
 
-                                <div class="text-center mt-2 mb-2">
-                                    <i class="fa fa-arrow-down"></i>
-                                </div>
+                                            <div class="col-sm-8">
+                                                <input
+                                                        {{ if WriteAccess }}
+                                                            type="number"
+                                                        {{ else }}
+                                                            type="hidden"
+                                                        {{ end }}
+                                                        id="ResultsEnd"
+                                                        name="ResultsEnd"
+                                                        class="form-control"
+                                                        value="{{ $.Filter.ResultEnd }}"
+                                                        step="1"
+                                                        min="1"
+                                                >
 
-
-                            <div class="card border-primary">
-                                <div class="card-body">
-
-                                    {{ if $.ParentSession.IsBase }}
-                                        <p>Take the drivers from the {{ $.RaceWeekend.Name }} Entry List between:</p>
-                                    {{ else }}
-                                        <p>Take the drivers from the sorted <strong>{{ $.ParentSession.Name }}</strong> Results between:</p>
-                                    {{ end }}
-
-                                    <div class="form-group row">
-                                        <label for="ResultsStart" class="col-sm-4 col-form-label">Start</label>
-
-                                        <div class="col-sm-8">
-                                            <input
-                                                    {{ if WriteAccess }}
-                                                        type="number"
-                                                    {{ else }}
-                                                        type="hidden"
-                                                    {{ end }}
-                                                    id="ResultsStart"
-                                                    name="ResultsStart"
-                                                    class="form-control"
-                                                    value="{{ $.Filter.ResultStart }}"
-                                                    step="1"
-                                                    min="1"
-                                            >
-
-                                            {{ if not WriteAccess }}
-                                                <label class="col-form-label">{{ $.Filter.ResultStart }}</label>
-                                            {{ end }}
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="ResultsEnd" class="col-sm-4 col-form-label">End</label>
-
-                                        <div class="col-sm-8">
-                                            <input
-                                                    {{ if WriteAccess }}
-                                                        type="number"
-                                                    {{ else }}
-                                                        type="hidden"
-                                                    {{ end }}
-                                                    id="ResultsEnd"
-                                                    name="ResultsEnd"
-                                                    class="form-control"
-                                                    value="{{ $.Filter.ResultEnd }}"
-                                                    step="1"
-                                                    min="1"
-                                            >
-
-                                            {{ if not WriteAccess }}
-                                                <label class="col-form-label">{{ $.Filter.ResultEnd }}</label>
-                                            {{ end }}
+                                                {{ if not WriteAccess }}
+                                                    <label class="col-form-label">{{ $.Filter.ResultEnd }}</label>
+                                                {{ end }}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
