@@ -1228,22 +1228,15 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 	race.Scheduled = date
 	race.ScheduledServerID = serverID
 
-	if race.ScheduledEvents != nil {
-		race.ScheduledEvents[serverID] = &ScheduledEventBase{
-			Scheduled:         race.Scheduled,
-			ScheduledInitial:  race.ScheduledInitial,
-			Recurrence:        race.Recurrence,
-			ScheduledServerID: race.ScheduledServerID,
-		}
-	} else {
+	if race.ScheduledEvents == nil {
 		race.ScheduledEvents = make(map[ServerID]*ScheduledEventBase)
+	}
 
-		race.ScheduledEvents[serverID] = &ScheduledEventBase{
-			Scheduled:         race.Scheduled,
-			ScheduledInitial:  race.ScheduledInitial,
-			Recurrence:        race.Recurrence,
-			ScheduledServerID: race.ScheduledServerID,
-		}
+	race.ScheduledEvents[serverID] = &ScheduledEventBase{
+		Scheduled:         race.Scheduled,
+		ScheduledInitial:  race.ScheduledInitial,
+		Recurrence:        race.Recurrence,
+		ScheduledServerID: race.ScheduledServerID,
 	}
 
 	// if there is an existing schedule timer for this event stop it
