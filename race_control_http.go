@@ -3,6 +3,7 @@ package servermanager
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -391,4 +392,33 @@ func (rch *RaceControlHandler) nextSession(w http.ResponseWriter, r *http.Reques
 	}
 
 	http.Redirect(w, r, "/live-timing", http.StatusFound)
+}
+
+func (rch *RaceControlHandler) countdown(w http.ResponseWriter, r *http.Request) {
+
+	// broadcast countdown
+	ticker := time.NewTicker(time.Second)
+	i := 4
+
+	for range ticker.C {
+		var countdown string
+
+		i--
+
+		if i > 0 {
+			countdown = strconv.Itoa(i)
+		} else if i == 0 {
+			countdown = "GO"
+		} else {
+			ticker.Stop()
+
+			return
+		}
+
+		err := rch.raceControl.splitAndBroadcastChat(countdown)
+
+		if err != nil {
+			logrus.WithError(err).Error("Unable to broadcast countdown message")
+		}
+	}
 }
