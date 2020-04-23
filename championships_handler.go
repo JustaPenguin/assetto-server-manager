@@ -89,6 +89,19 @@ func (ch *ChampionshipsHandler) submit(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// duplicate duplicates a championship, clearing results
+func (ch *ChampionshipsHandler) duplicate(w http.ResponseWriter, r *http.Request) {
+	err := ch.championshipManager.DuplicateChampionship(chi.URLParam(r, "championshipID"))
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't duplicate championship (id: %s)", chi.URLParam(r, "championshipID"))
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/championships", http.StatusFound)
+}
+
 type championshipViewTemplateVars struct {
 	BaseTemplateVars
 
@@ -906,7 +919,7 @@ func (ch *ChampionshipsHandler) duplicateEvent(w http.ResponseWriter, r *http.Re
 	championshipID := chi.URLParam(r, "championshipID")
 	eventID := chi.URLParam(r, "eventID")
 
-	newEvent, err := ch.championshipManager.DuplicateEvent(championshipID, eventID)
+	newEvent, err := ch.championshipManager.DuplicateEventInChampionship(championshipID, eventID)
 
 	if err != nil {
 		logrus.WithError(err).Error("couldn't duplicate championship race weekend")
