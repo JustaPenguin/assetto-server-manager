@@ -50,6 +50,10 @@
                                     {{ $session.SessionInfo.Laps }} Laps
                                 {{ else }}
                                     {{ $session.SessionInfo.Time }} minutes
+
+                                    {{ if $session.RaceConfig.RaceExtraLap }}
+                                        + 1 lap
+                                    {{ end }}
                                 {{ end }}
                             </li>
                         {{ end }}
