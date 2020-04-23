@@ -953,11 +953,11 @@ func addHasSeenIntroPopupToAccounts(s Store) error {
 }
 
 func forceLoggingWith5LogsKeptForHosted(s Store) error {
-	logrus.Infof("Running migration: Force AC Server Logging On Hosted Instances")
-
 	if !IsHosted {
 		return nil
 	}
+
+	logrus.Infof("Running migration: Force AC Server Logging On Hosted Instances")
 
 	opts, err := s.LoadServerOptions()
 
