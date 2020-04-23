@@ -1102,7 +1102,25 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*
 			starred = append(starred, race)
 		}
 
-		if race.Scheduled.After(time.Now()) {
+		for _, scheduledEvent := range race.ScheduledEvents {
+			if scheduledEvent.Scheduled.IsZero() || scheduledEvent.ScheduledServerID != serverID {
+				race.Scheduled = time.Time{}
+				race.ScheduledInitial = time.Time{}
+				race.ScheduledServerID = ""
+				race.Recurrence = ""
+
+				continue
+			}
+
+			race.ScheduledServerID = scheduledEvent.ScheduledServerID
+			race.Scheduled = scheduledEvent.Scheduled
+			race.ScheduledInitial = scheduledEvent.Scheduled
+			race.Recurrence = scheduledEvent.Recurrence
+
+			break
+		}
+
+		if race.Scheduled.After(time.Now()) && race.ScheduledServerID == serverID {
 			scheduled = append(scheduled, race)
 		}
 
@@ -1222,6 +1240,17 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 	originalDate := race.Scheduled
 	race.Scheduled = date
 	race.ScheduledServerID = serverID
+
+	if race.ScheduledEvents == nil {
+		race.ScheduledEvents = make(map[ServerID]*ScheduledEventBase)
+	}
+
+	race.ScheduledEvents[serverID] = &ScheduledEventBase{
+		Scheduled:         race.Scheduled,
+		ScheduledInitial:  race.ScheduledInitial,
+		Recurrence:        race.Recurrence,
+		ScheduledServerID: race.ScheduledServerID,
+	}
 
 	// if there is an existing schedule timer for this event stop it
 	if timer := rm.customRaceStartTimers[race.UUID.String()]; timer != nil {
@@ -1593,6 +1622,19 @@ func (rm *RaceManager) InitScheduledRaces() error {
 
 	for _, race := range races {
 		race := race
+
+		for _, scheduledEvent := range race.ScheduledEvents {
+			if scheduledEvent.Scheduled.IsZero() || scheduledEvent.ScheduledServerID != serverID {
+				continue
+			}
+
+			race.ScheduledServerID = scheduledEvent.ScheduledServerID
+			race.Scheduled = scheduledEvent.Scheduled
+			race.ScheduledInitial = scheduledEvent.Scheduled
+			race.Recurrence = scheduledEvent.Recurrence
+
+			break
+		}
 
 		if race.ScheduledServerID != serverID {
 			continue

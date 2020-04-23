@@ -4,6 +4,8 @@
 
 {{ define "content" }}
 
+    {{ $serverID := $.ServerID }}
+
     <div class="container">
 
         <h1 class="text-center">{{ $.RaceWeekend.Name }}</h1>
@@ -163,7 +165,9 @@
                                 <br>
 
                                 {{ if isBefore $session.ScheduledTime }}
-                                    <span class="text-warning">Scheduled for {{ localFormat $session.ScheduledTime }}</span><br>
+                                    <span class="text-warning">
+                                        Scheduled (On {{ if eq $session.ScheduledServerID $serverID }}this {{ else }}another {{ end }} server) for {{ localFormat $session.ScheduledTime }}
+                                    </span><br>
                                 {{ end }}
                             </div>
 
