@@ -220,6 +220,7 @@ func Router(
 		r.Get("/championships/new", championshipsHandler.createOrEdit)
 		r.Post("/championships/new/submit", championshipsHandler.submit)
 		r.Get("/championship/{championshipID}/edit", championshipsHandler.createOrEdit)
+		r.Get("/championship/{championshipID}/duplicate", championshipsHandler.duplicate)
 		r.Get("/championship/{championshipID}/event", championshipsHandler.eventConfiguration)
 		r.Post("/championship/{championshipID}/event/submit", championshipsHandler.submitEventConfiguration)
 		r.Get("/championship/{championshipID}/event/{eventID}/start", championshipsHandler.startEvent)

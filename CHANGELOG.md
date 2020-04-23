@@ -13,6 +13,7 @@ Added:
     You can follow this guide (written by @mike855 - thanks!) to modify a track to be compatible: https://github.com/JustaPenguin/assetto-server-manager/wiki/Driver-swap-track-editing
 * A landing intro for hosted servers that points users in the right direction.
 * You can now broadcast a 3-2-1-GO countdown to all drivers from the Live Timings Admin Panel.
+* You can now duplicate Championships using the dropdown next to "Edit" in the Championship list.
 * You can now sort (and split!) Race Weekend Entry Lists by Championship Class - so you could for example run separate qualifying sessions for each class!
 * You can now manually choose drivers when filtering between two Race Weekend sessions, instead of picking split numbers.
 

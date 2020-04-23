@@ -1789,7 +1789,42 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 	return nil
 }
 
-func (cm *ChampionshipManager) DuplicateEvent(championshipID, eventID string) (*ChampionshipEvent, error) {
+func (cm *ChampionshipManager) DuplicateChampionship(championshipID string) error {
+	championship, err := cm.LoadChampionship(championshipID)
+
+	if err != nil {
+		return err
+	}
+
+	var events []ChampionshipEvent
+
+	for _, event := range championship.Events {
+		events = append(events, *event)
+	}
+
+	championship.Events = nil
+
+	duplicateChampionship := championship
+
+	duplicateChampionship.ID = uuid.New()
+	duplicateChampionship.Created = time.Now()
+	duplicateChampionship.Updated = time.Now()
+	duplicateChampionship.Name = championship.Name + " Duplicate"
+
+	for _, event := range events {
+		_, err := duplicateChampionship.ImportEvent(&event)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	logrus.Infof("New Championship: %s, %s. Duplicate of %s", duplicateChampionship.Name, duplicateChampionship.ID.String(), championshipID)
+
+	return cm.UpsertChampionship(duplicateChampionship)
+}
+
+func (cm *ChampionshipManager) DuplicateEventInChampionship(championshipID, eventID string) (*ChampionshipEvent, error) {
 	championship, err := cm.LoadChampionship(championshipID)
 
 	if err != nil {
@@ -1802,7 +1837,22 @@ func (cm *ChampionshipManager) DuplicateEvent(championshipID, eventID string) (*
 		return nil, err
 	}
 
+	newEvent, err := cm.DuplicateEvent(event, championship)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err := cm.UpsertChampionship(championship); err != nil {
+		return nil, err
+	}
+
+	return newEvent, nil
+}
+
+func (cm *ChampionshipManager) DuplicateEvent(event *ChampionshipEvent, championship *Championship) (*ChampionshipEvent, error) {
 	var newEvent *ChampionshipEvent
+	var err error
 
 	if !event.IsRaceWeekend() {
 		newEvent, err = championship.ImportEvent(event)
@@ -1828,10 +1878,6 @@ func (cm *ChampionshipManager) DuplicateEvent(championshipID, eventID string) (*
 		if err := cm.store.UpsertRaceWeekend(newEvent.RaceWeekend); err != nil {
 			return nil, err
 		}
-	}
-
-	if err := cm.UpsertChampionship(championship); err != nil {
-		return nil, err
 	}
 
 	return newEvent, nil
