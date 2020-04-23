@@ -82,6 +82,7 @@ var (
 		func(Store) error { return nil }, // intentionally left blank.
 		convertContentManagerDescriptionToNewTemplate,
 		addHasSeenIntroPopupToAccounts,
+		forceLoggingWith5LogsKeptForHosted,
 	}
 )
 
@@ -949,4 +950,23 @@ func addHasSeenIntroPopupToAccounts(s Store) error {
 	account.HasSeenIntroPopup = true
 
 	return s.UpsertAccount(account)
+}
+
+func forceLoggingWith5LogsKeptForHosted(s Store) error {
+	logrus.Infof("Running migration: Force AC Server Logging On Hosted Instances")
+
+	if !IsHosted {
+		return nil
+	}
+
+	opts, err := s.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	opts.LogACServerOutputToFile = true
+	opts.NumberOfACServerLogsToKeep = 5
+
+	return s.UpsertServerOptions(opts)
 }
