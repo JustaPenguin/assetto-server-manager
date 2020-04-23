@@ -14,6 +14,7 @@ Added:
 * You can now sort (and split!) Race Weekend Entry Lists by Championship Class - so you could for example run separate qualifying sessions for each class!
 * A landing intro for hosted servers that points users in the right direction.
 * You can now broadcast a 3-2-1-GO countdown to all drivers from the Live Timings Admin Panel.
+* You can now duplicate Championships using the dropdown next to "Edit" in the Championship list.
 
 Fixed:
 
