@@ -68,10 +68,10 @@
                                 <div class="btn-group custom-race-actions-btn-group" role="group" aria-label="Edit Championship">
                                     <a class="btn btn-sm btn-warning custom-race-actions-btn-big" href="/championship/{{ $championship.ID }}/edit">Edit</a>
 
-                                    <button id="btnGroupDrop2" type="button" class="btn btn-warning btn-sm custom-race-actions-btn-small dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <button id="btn-group-drop-{{ $championship.ID }}" type="button" class="btn btn-warning btn-sm custom-race-actions-btn-small dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     </button>
 
-                                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="btnGroupDrop2">
+                                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="btn-group-drop-{{ $championship.ID }}">
                                         <a href="/championship/{{ $championship.ID }}/duplicate" class="dropdown-item">Duplicate Championship</a>
                                     </div>
                                 </div>
