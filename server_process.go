@@ -96,6 +96,12 @@ func (sp *AssettoServerProcess) Start(event RaceEvent, udpPluginAddress string, 
 	sp.forwardListenPort = forwardListenPort
 	sp.mutex.Unlock()
 
+	if sp.IsRunning() {
+		if err := sp.Stop(); err != nil {
+			return err
+		}
+	}
+
 	sp.start <- event
 
 	return <-sp.started
@@ -173,13 +179,6 @@ func (sp *AssettoServerProcess) loop() {
 			default:
 			}
 		case raceEvent := <-sp.start:
-			if sp.IsRunning() {
-				if err := sp.Stop(); err != nil {
-					sp.started <- err
-					break
-				}
-			}
-
 			sp.started <- sp.startRaceEvent(raceEvent)
 		}
 	}
