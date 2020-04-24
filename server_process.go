@@ -41,6 +41,7 @@ type AssettoServerProcess struct {
 	contentManagerWrapper *ContentManagerWrapper
 
 	start                 chan RaceEvent
+	startMutex            sync.Mutex
 	started, stopped, run chan error
 	notifyDoneChs         []chan struct{}
 
@@ -89,6 +90,9 @@ func (sp *AssettoServerProcess) UDPCallback(message udp.Message) {
 }
 
 func (sp *AssettoServerProcess) Start(event RaceEvent, udpPluginAddress string, udpPluginLocalPort int, forwardingAddress string, forwardListenPort int) error {
+	sp.startMutex.Lock()
+	defer sp.startMutex.Unlock()
+
 	sp.mutex.Lock()
 	sp.udpPluginAddress = udpPluginAddress
 	sp.udpPluginLocalPort = udpPluginLocalPort
@@ -147,8 +151,6 @@ func (sp *AssettoServerProcess) Stop() error {
 }
 
 func (sp *AssettoServerProcess) Restart() error {
-	running := sp.IsRunning()
-
 	sp.mutex.Lock()
 	raceEvent := sp.raceEvent
 	udpPluginAddress := sp.udpPluginAddress
@@ -156,12 +158,6 @@ func (sp *AssettoServerProcess) Restart() error {
 	forwardingAddress := sp.forwardingAddress
 	forwardListenPort := sp.forwardListenPort
 	sp.mutex.Unlock()
-
-	if running {
-		if err := sp.Stop(); err != nil {
-			return err
-		}
-	}
 
 	return sp.Start(raceEvent, udpPluginAddress, udpLocalPluginPort, forwardingAddress, forwardListenPort)
 }

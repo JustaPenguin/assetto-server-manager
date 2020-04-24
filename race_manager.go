@@ -258,14 +258,6 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 	rm.currentRace = &config
 	rm.currentEntryList = entryList
 
-	if rm.process.IsRunning() {
-		err := rm.process.Stop()
-
-		if err != nil {
-			return err
-		}
-	}
-
 	err = rm.process.Start(event, config.GlobalServerConfig.UDPPluginAddress, config.GlobalServerConfig.UDPPluginLocalPort, forwardingAddress, forwardListenPort)
 
 	if err != nil {
