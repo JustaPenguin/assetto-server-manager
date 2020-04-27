@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strconv"
+	"strings"
 
 	defaultcontent "github.com/JustaPenguin/assetto-server-manager/fixtures/default-content"
 
@@ -78,6 +79,10 @@ var (
 		amendChampionshipClassIDIncorrectValues,
 		enableLoggingWith5LogsKept,
 		convertAccountGroupToServerIDGroupMap,
+		func(Store) error { return nil }, // intentionally left blank.
+		convertContentManagerDescriptionToNewTemplate,
+		addHasSeenIntroPopupToAccounts,
+		forceLoggingWith5LogsKeptForHosted,
 	}
 )
 
@@ -132,6 +137,8 @@ func addAdminAccount(rs Store) error {
 	account := NewAccount()
 	account.Name = adminUserName
 	account.DefaultPassword = "servermanager"
+	// DeprecatedGroup must be assigned to here, since a following migration will just re-set-up Groups.
+	account.DeprecatedGroup = GroupAdmin
 	account.Groups[serverID] = GroupAdmin
 
 	return rs.UpsertAccount(account)
@@ -897,6 +904,10 @@ func convertAccountGroupToServerIDGroupMap(s Store) error {
 			}
 		}
 
+		if account.DeprecatedGroup == "" {
+			continue
+		}
+
 		account.Groups = make(map[ServerID]Group)
 		account.Groups[serverID] = account.DeprecatedGroup
 
@@ -906,4 +917,56 @@ func convertAccountGroupToServerIDGroupMap(s Store) error {
 	}
 
 	return nil
+}
+
+func convertContentManagerDescriptionToNewTemplate(s Store) error {
+	logrus.Infof("Running migration: Convert Content Manager Description to New Template")
+
+	serverOpts, err := s.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	if !strings.Contains(serverOpts.ContentManagerWelcomeMessage, "{{") {
+		// assume that no placeholders have been added.
+		serverOpts.ContentManagerWelcomeMessage += defaultContentManagerDescription
+	}
+
+	return s.UpsertServerOptions(serverOpts)
+}
+
+func addHasSeenIntroPopupToAccounts(s Store) error {
+	logrus.Infof("Running migration: Add Has Seen Intro Popup to Accounts")
+
+	account, err := s.FindAccountByName(defaultHostedAdminAccountName)
+
+	if err == ErrAccountNotFound {
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	account.HasSeenIntroPopup = true
+
+	return s.UpsertAccount(account)
+}
+
+func forceLoggingWith5LogsKeptForHosted(s Store) error {
+	if !IsHosted {
+		return nil
+	}
+
+	logrus.Infof("Running migration: Force AC Server Logging On Hosted Instances")
+
+	opts, err := s.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	opts.LogACServerOutputToFile = true
+	opts.NumberOfACServerLogsToKeep = 5
+
+	return s.UpsertServerOptions(opts)
 }

@@ -3,14 +3,15 @@ package servermanager
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/JustaPenguin/assetto-server-manager/pkg/csp"
-
-	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
+
+	"github.com/JustaPenguin/assetto-server-manager/pkg/csp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 )
 
 const (
@@ -167,6 +168,7 @@ type liveTimingTemplateVars struct {
 	IsKissMyRankEnabled         bool
 	KissMyRankWebStatsPublicURL string
 	CSPWeathers                 []csp.Weather
+	STrackerInterfacePublicURL  string
 }
 
 func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request) {
@@ -214,6 +216,12 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	sTrackerPublicURL := strackerOptions.HTTPConfiguration.PublicURL
+
+	if sTrackerPublicURL == "" {
+		sTrackerPublicURL = "/stracker/mainpage"
+	}
+
 	kissMyRankOptions, err := rch.store.LoadKissMyRankOptions()
 
 	if err != nil {
@@ -235,6 +243,7 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		IsKissMyRankEnabled:         IsKissMyRankInstalled() && kissMyRankOptions.EnableKissMyRank,
 		KissMyRankWebStatsPublicURL: kissMyRankOptions.WebStatsPublicURL,
 		CSPWeathers:                 csp.AvailableWeathers,
+		STrackerInterfacePublicURL:  sTrackerPublicURL,
 	})
 }
 
@@ -327,18 +336,19 @@ func (rch *RaceControlHandler) kickUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var carID uint8
-
-	for id, rangeGUID := range rch.raceControl.CarIDToGUID {
-		if string(rangeGUID) == guid {
-			carID = uint8(id)
-			break
+	err := rch.raceControl.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
+		if string(driverGUID) != guid {
+			return nil
 		}
-	}
 
-	kickUser := udp.NewKickUser(carID)
+		command, err := udp.NewAdminCommand("/kick " + driver.CarInfo.DriverName)
 
-	err := rch.serverProcess.SendUDPMessage(kickUser)
+		if err != nil {
+			return err
+		}
+
+		return rch.serverProcess.SendUDPMessage(command)
+	})
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Unable to send kick command")
@@ -387,6 +397,7 @@ func (rch *RaceControlHandler) nextSession(w http.ResponseWriter, r *http.Reques
 	http.Redirect(w, r, "/live-timing", http.StatusFound)
 }
 
+
 func (rch *RaceControlHandler) nextWeather(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		return
@@ -422,5 +433,33 @@ func (rch *RaceControlHandler) testWeather(w http.ResponseWriter, r *http.Reques
 		logrus.WithError(err).Errorf("Unable to make next weather request")
 
 		AddErrorFlash(w, r, "The server was unable to make the weather change request!")
+	}
+}
+
+func (rch *RaceControlHandler) countdown(w http.ResponseWriter, r *http.Request) {
+	// broadcast countdown
+	ticker := time.NewTicker(time.Second)
+	i := 4
+
+	for range ticker.C {
+		var countdown string
+
+		i--
+
+		if i > 0 {
+			countdown = strconv.Itoa(i)
+		} else if i == 0 {
+			countdown = "GO"
+		} else {
+			ticker.Stop()
+
+			return
+		}
+
+		err := rch.raceControl.splitAndBroadcastChat(countdown)
+
+		if err != nil {
+			logrus.WithError(err).Error("Unable to broadcast countdown message")
+		}
 	}
 }

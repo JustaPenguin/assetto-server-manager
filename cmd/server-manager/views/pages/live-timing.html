@@ -86,7 +86,7 @@
             {{ end }}
 
             {{ if $.IsStrackerEnabled }}
-                <a href="/stracker/mainpage" class="btn btn-primary btn-sm mt-1">STracker</a>
+                <a href="{{ $.STrackerInterfacePublicURL }}" class="btn btn-primary btn-sm mt-1">sTracker</a>
             {{ end }}
 
             {{ if and $.IsKissMyRankEnabled (ne $.KissMyRankWebStatsPublicURL "") }}
@@ -277,6 +277,10 @@
                     <button class="btn btn-danger btn-sm ml-1" type="submit">Kick</button>
                 </div>
             </form>
+
+            <div style="height: 43px">
+                <a id="countdown" href="/countdown" class="btn btn-info btn-sm mt-3">Broadcast Countdown</a>
+            </div>
 
             <a id="next-session" href="/next-session" class="btn btn-success btn-sm mt-3">Next Session</a>
             <a id="restart-session" href="/restart-session" class="btn btn-warning btn-sm mt-3">Restart Session</a>

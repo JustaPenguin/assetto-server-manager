@@ -4,6 +4,7 @@
     {{ $eventIndex := $.EventIndex }}
     {{ $eventInProgress := $.EventInProgress }}
     {{ $account := $.Account }}
+    {{ $serverID := $.ServerID }}
 
     {{ $eventSetup := $event.RaceSetup }}
 
@@ -25,7 +26,9 @@
                 {{ else if $event.InProgress }}
                     <span class="text-primary">In Progress</span>
                 {{ else if isBefore $event.Scheduled }}
-                    <span class="text-warning">Scheduled for {{ localFormat $event.Scheduled }}</span>
+                    <span class="text-warning">Scheduled
+                            (On {{ if eq $event.ScheduledServerID $serverID }}this {{ else }}another {{ end }} server)
+                        for {{ localFormat $event.Scheduled }}</span>
                 {{ else }}
                     <span class="text-danger">Not started</span>
                 {{ end }}
@@ -291,8 +294,8 @@
                                 <div id="popover-content-schedule-{{ $event.ID.String }}" style="display: none;">
                                     <form action='/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/schedule' method='POST'>
                                         <div class='form-group'>
-                                            <input type='date' class='form-control' name='event-schedule-date' id='event-schedule-date' required min=''>
-                                            <input type='time' class='form-control' name='event-schedule-time' id='event-schedule-time' required min=''>
+                                            <input type='date' class='form-control' name='event-schedule-date' id='event-schedule-date' required min='' value="{{ $championship.MostRecentScheduledDateFormat "2006-01-02" }}">
+                                            <input type='time' class='form-control' name='event-schedule-time' id='event-schedule-time' required min='' value="{{ $championship.MostRecentScheduledDateFormat "15:04" }}">
                                             <input type='hidden' name="event-schedule-timezone" class="event-schedule-timezone">
                                             <small class='form-text text-muted'>Please enter the correct date and time to add a scheduled race. This date/time is in your timezone (<span class='timezone'></span>).</small>
 
@@ -380,6 +383,10 @@
                                     <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
                                         <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/import">
                                             Import Results
+                                        </a>
+
+                                        <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/event/{{ $event.ID.String }}/duplicate">
+                                            Duplicate
                                         </a>
 
                                         {{ if DeleteAccess }}

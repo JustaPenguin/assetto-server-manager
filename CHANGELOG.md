@@ -1,3 +1,80 @@
+v1.7.5
+------
+
+Added:
+
+* Driver Swaps! This premium feature adds the ability to do driver swaps in race sessions, without needing any game plugins! This leverages Assetto Corsa's "Partial Driver Swap" functionality and adds our own software on top of it to make it fair for everyone!
+  - Driver Swaps work in Championships and Race Weekends
+  - Configuration of Driver Swaps is done per-race in the Entry List section of the race form. Turn on Driver Swap and add multiple GUIDs to an Entrant, separated by ';'.
+  - You can configure how long a driver swap should take, and disqualification and post-race penalties if people set off too early!
+  - You can also set a minimum number of Driver Swaps that each car must make.
+  - Driver Swap result files show which lap was completed by which driver (using the AutoFill Entrant list where possible to put names in)
+  - Driver Swaps require compatible tracks. A compatible track has the timing line before or after all of the pitboxes. 
+    You can follow this guide (written by @mike855 - thanks!) to modify a track to be compatible: https://github.com/JustaPenguin/assetto-server-manager/wiki/Driver-swap-track-editing
+* A landing intro for hosted servers that points users in the right direction.
+* You can now broadcast a 3-2-1-GO countdown to all drivers from the Live Timings Admin Panel.
+* You can now duplicate Championships using the dropdown next to "Edit" in the Championship list.
+* You can now sort (and split!) Race Weekend Entry Lists by Championship Class - so you could for example run separate qualifying sessions for each class!
+* You can now manually choose drivers when filtering between two Race Weekend sessions, instead of picking split numbers.
+* Championships and Race Weekends now autofill the schedule input with the latest date currently scheduled in that Championship/Race Weekend, hopefully this will make life easier for some admins!
+* Added a new lua plugin function for onChampionshipEventStart that can add ballast to drivers based on their finishing position in some other event in the championship.
+
+Fixed:
+
+* Race Weekend Championship sorters are no longer available in non-Championship Race Weekends.
+* Improved handling of track JSON files
+* Fixes an issue where the Content Manager Welcome Message disappeared in the previous update.
+* Fixes an issue where Race Weekend Sessions may not have the correct number of Championship Points fields.
+* Improved accuracy of DLC/Original Game information in content lists.
+* Race Weekend Sessions now indicate if there is an extra lap at the end of a race.
+* Fixes an issue where starting a race would sometimes cause Server Manager to freeze.
+
+---
+
+v1.7.4
+------
+
+Added:
+
+* Time Attack Events (premium). Time Attack events let you run a looping session that combines all of the results files into one!
+* You can now control whether weather presets added to championships will be activated only in Practice sessions, only in Championship events or in either. This is intended to allow for practice sessions with more stable weather/time progression than the actual event.
+* TLS support. You can now specify a certificate and key file in the config.yml to enable TLS support in Server Manager. This feature is requested often, so we've implemented it to a good standard as of the time of release. HTTPS is fast moving, and there are no guarantees that what is secure now will be secure in a year. Reverse proxying with nginx/apache is still an option.
+* Looped races now indicate when they are running in the "in progress" indicator in the navigation bar. Looped races will only initiate if allowed to start automatically!
+* You now have more control over the Content Manager welcome message using templates (similar to the server name template).
+* Compatibility with KissMyRank v1.6f
+* Added a "Public URL" option to sTracker's HTTP Configuration to be used when linking to sTracker from Live Timings. If you were having problems with parts of sTracker not working correctly, try setting the Public URL option.
+
+Fixes:
+
+* Fixes an issue where the reported tyre for a driver's best lap could sometimes be incorrect.
+* Fixes an incorrect value for ACServerResultsBasePath in the KissMyRank setup. Thanks @blu1111! 
+* Fixes an issue where Championship Event Points tables would incorrectly report points penalties. Points penalties are now only shown in the main Championship points table.
+* Fixes an issue where renaming an Entrant's team in a Championship and using "Transfer Points from previous team" would not transfer points for Race Weekends.
+* Fixes an issue where pitboxes were not correctly assigned to Entrants.
+* Removed the "Start on Tyre from Fastest Lap" Checkbox for non-write access users, the word "yes" or "no" is displayed instead.
+* Fixes an issue where applying penalties to Championship or Race Weekend sessions could cause a server crash.
+* Improved performance when adding lots of cars in a race setup.
+* Completed Championship Events can now be duplicated.
+* Fixed an issue where empty question fields, penalties (and maybe more things) could cause the Championship event lua plugins to fail
+* Fixes an issue where Live Timings would not show all cars driven by a driver (for example if they were switching cars in a session to test them out)
+* Fixes an issue where running stracker could cause a server crash when Server Manager changed the real time position interval. In some extreme cases you may find your live map running in slow motion, currently disabling stracker is the only fix for this.
+* Reworked the pagination of Results and Cars pages to make it a bit more usable.
+* Fixes an issue where drivers would be removed from Live Timings if the Live Map was disabled.
+
+---
+
+v1.7.3-1
+--------
+
+Fixes:
+
+* Fixes an issue where new multiserver setups of Server Manager would go into a redirect loop when creating new servers.
+  If you experienced this issue, please try setting the multiserver up from scratch (i.e. delete the shared_store.json and servers folders).
+* Fixes an issue where a Scheduled Custom Race may revert to an older copy when being started.
+* Fallback Results now takes account of results files where a driver has laps but is in neither the Cars nor Results lists.
+
+---
+
 v1.7.3
 ------
 
@@ -26,10 +103,15 @@ Fixes:
 * Championship Event Pitbox overrides are now applied correctly on Championships with Sign Up forms enabled. If Entrants in a Championship share the same pitbox, the order of the entrants is normalised so all drivers are added to the grid.
 * Fixes an issue where Sol dates could be set to dates before 1st January 1970, leading to a Shaders Patch crash on game launch. Dates before 01/01/1970 are now set to 01/01/1970.
 * Fixes an issue where the Edit Championship Event form would always say "This edited setup will overwrite the 1st Event in the Championship", rather than the correct index of the Event.
+* We've changed the way that kicking people works on Live Timings. The kick button now runs the in-game admin command '/kick <name>', rather than using what appears to be a broken UDP Plugin message.
+* Pickup Mode is now always enabled for Race Weekend sessions, allowing people to rejoin the session.
+* Discord notifications now use the term "Event" instead of "Race" when notifying about event changes.
 
 Removed:
 
 * Removed max limit of Damage Multiplier (was 100%). Happy crashing!
+
+---
 
 v1.7.2
 ------
@@ -52,6 +134,8 @@ Fixes:
 * Championship Race Weekends now display all sessions in the correct order
 * Fixes issues where stopping the acServer process could cause Server Manager to lock up or crash
 
+---
+
 v1.7.1
 ------
 
@@ -59,6 +143,8 @@ Fixes:
 
 * Fixes an issue where ACSR enabled Championships could cause Championship Event points to be incorrect. If your Championship points are incorrect, re-import the results files in the Championship Event ("Manage Event" -> "Import Results")
 * Fixes an issue where Server Manager sometimes would not detect and handle acServer shutdown correctly.
+
+---
 
 v1.7.0
 ------

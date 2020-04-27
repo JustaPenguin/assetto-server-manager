@@ -290,8 +290,10 @@ export namespace RaceWeekend {
         private reverseGrid: number = 0;
         private gridStart!: number;
         private sortType!: string;
-        private availableResultsForSorting!: string[];
+        private availableResultsForSorting: string[] = [];
         private startOnFastestLapTyre: boolean = false;
+        private manualDriverSelection: boolean = false;
+        private selectedDriverGUIDs: string[] = [];
 
         public constructor($elem: JQuery<HTMLElement>, parentSessionID: string, childSessionID: string) {
             super($elem);
@@ -311,7 +313,9 @@ export namespace RaceWeekend {
                 EntryListStart: this.gridStart,
                 SortType: this.sortType,
                 ForceUseTyreFromFastestLap: this.startOnFastestLapTyre,
-                AvailableResultsForSorting: this.availableResultsForSorting
+                AvailableResultsForSorting: this.availableResultsForSorting,
+                ManualDriverSelection: this.manualDriverSelection,
+                SelectedDriverGUIDs: this.selectedDriverGUIDs,
             })
         }
 
@@ -328,6 +332,21 @@ export namespace RaceWeekend {
                 this.$elem.find("#AvailableResultsWrapper").show()
             } else {
                 this.$elem.find("#AvailableResultsWrapper").hide()
+            }
+
+            let $driversMultiSelect = this.$elem.find("#Drivers");
+
+            this.manualDriverSelection = this.$elem.find("#ManualDriverSelection").is(":checked");
+            this.selectedDriverGUIDs = $driversMultiSelect.val() as string[];
+
+            if (this.manualDriverSelection) {
+                this.$elem.find("#DriverSelectionForm").show();
+                this.$elem.find("#FilterFromTo").hide();
+
+                initMultiSelect($driversMultiSelect);
+            } else {
+                this.$elem.find("#DriverSelectionForm").hide();
+                this.$elem.find("#FilterFromTo").show();
             }
 
             $.ajax(`/race-weekend/${RaceWeekendID}/grid-preview?parentSessionID=${this.parentSessionID}&childSessionID=${this.childSessionID}`, {

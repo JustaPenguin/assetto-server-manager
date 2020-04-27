@@ -146,7 +146,7 @@ type GlobalServerConfig struct {
 
 	Name                      string `ini:"NAME" help:"Server Name"`
 	Password                  string `ini:"PASSWORD" input:"password" help:"Server password"`
-	AdminPassword             string `ini:"ADMIN_PASSWORD" input:"password" help:"The password needed to be recognized as server administrator: you can join the server using it to be recognized automatically. Type /help in the game's chat to see the command list"`
+	AdminPassword             string `ini:"ADMIN_PASSWORD" input:"password" help:"The password needed to be recognized as server administrator: you can join the server using it to be recognized automatically. Type /help in the game's chat to see the command list. Warning: Leaving this blank will allow any driver to connect as Admin!"`
 	UDPPort                   int    `ini:"UDP_PORT" show:"open" min:"0" max:"65535" help:"UDP port number: open this port on your server's firewall"`
 	TCPPort                   int    `ini:"TCP_PORT" show:"open" min:"0" max:"65535" help:"TCP port number: open this port on your server's firewall"`
 	HTTPPort                  int    `ini:"HTTP_PORT" show:"open" min:"0" max:"65535" help:"Lobby port number: open these ports (both UDP and TCP) on your server's firewall"`
@@ -186,7 +186,7 @@ type GlobalServerConfig struct {
 
 	ContentManagerIntegration   FormHeading `ini:"-" json:"-" input:"heading"`
 	EnableContentManagerWrapper int         `ini:"-" input:"checkbox" help:"When on, this option makes Server Manager provide extra information to Content Manager. This includes more detail about connected clients, event descriptions and download links. A side-effect of this is that your server name will contain a new piece of information (an 'i' character followed by a port - which Content Manager requires). Also - if enabled - this wrapper uses a GeoIP functionality provided by <a href='https://freegeoip.app''>freegeoip.app</a>."`
-	ContentManagerWrapperPort   int         `ini:"-" min:"0" max:"65535" help:"The port on which to serve Content Manager with the above information. Please make sure this port is open on your firewall."`
+	ContentManagerWrapperPort   int         `ini:"-" show:"open" min:"0" max:"65535" help:"The port on which to serve Content Manager with the above information. Please make sure this port is open on your firewall."`
 	ShowContentManagerJoinLink  int         `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager display Content Manager join links on the Live Timing page and (if enabled) in Discord race start notifications."`
 	ContentManagerIPOverride    string      `ini:"-" show:"open" help:"When set, this overrides the IP address detected by the GeoIP service used for the Content Manager join link. This must be an IPv4 address."`
 	//ContentManagerWrapperContentRequiresPassword int         `ini:"-" input:"checkbox" help:"When on a user will require the server password in order to download linked content through the Content Manager Wrapper."`
@@ -197,8 +197,8 @@ type GlobalServerConfig struct {
 	UseMPH                            int         `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager use MPH instead of Km/h for all speed values."`
 	PreventWebCrawlers                int         `ini:"-" input:"checkbox" help:"When on, robots will be prohibited from indexing this manager by the robots.txt. Please note this will only deter well behaved bots, and not malware/spam bots etc."`
 	RestartEventOnServerManagerLaunch int         `ini:"-" input:"checkbox" help:"When on, if Server Manager is stopped while there is an event in progress, Server Manager will try to restart the event when Server Manager is restarted."`
-	LogACServerOutputToFile           bool        `ini:"-" input:"checkbox" help:"When on, Server Manager will output each Assetto Corsa session into a log file in the logs folder."`
-	NumberOfACServerLogsToKeep        int         `ini:"-" help:"The number of AC Server logs to keep in the logs folder. (Oldest files will be deleted first. 0 = keep all files)"`
+	LogACServerOutputToFile           bool        `ini:"-" show:"open" input:"checkbox" help:"When on, Server Manager will output each Assetto Corsa session into a log file in the logs folder."`
+	NumberOfACServerLogsToKeep        int         `ini:"-" show:"open" help:"The number of AC Server logs to keep in the logs folder. (Oldest files will be deleted first. 0 = keep all files)"`
 
 	// Discord Integration
 	DiscordIntegration FormHeading `ini:"-" json:"-" input:"heading"`
@@ -207,7 +207,7 @@ type GlobalServerConfig struct {
 	DiscordRoleID      string      `ini:"-" help:"If set, this role will be mentioned in all Discord notifications.  Any users with this role and access to the channel will be pinged.  To find the role ID, enable Developer mode (see above)), then Server Settings, Roles, right click on the role and Copy ID."`
 	DiscordRoleCommand string      `ini:"-" help:"If the Discord Role ID is set, you can optionally specify a command string here, like \"notify\" (no ! prefix), which if run as a ! command by a user (on a line by itself) in Discord will cause this server to attempt to add the configured role to the user.  If you run multiple servers with Discord enabled, only set this on one of them.  In order for this to work your bot must have the \"Manage Roles\" permission."`
 
-	NotificationReminderTimer   int    `ini:"-"  show:"-" min:"0" max:"65535" help:"This setting has been deprecated and will be removed in the next release.  Use Notification Reminder Timers instead."`
+	NotificationReminderTimer   int    `ini:"-"  show:"-" min:"0" max:"65535" help:"This setting has been deprecated and will be removed in the next release. Use Notification Reminder Timers instead."`
 	NotificationReminderTimers  string `ini:"-" help:"If Discord is enabled, a reminder will be sent this many minutes prior to race start.  If 0 or empty, only race start messages will be sent.  You may schedule multiple reminders by using a comma separated list like 120,15."`
 	ShowPasswordInNotifications int    `ini:"-" input:"checkbox" help:"Show the server password in race start notifications."`
 	NotifyWhenScheduled         int    `ini:"-" input:"checkbox" help:"Send a notification when a race is scheduled (or cancelled)."`
@@ -258,6 +258,13 @@ type CurrentRaceConfig struct {
 	LockedEntryList   int `ini:"LOCKED_ENTRY_LIST" input:"checkbox" help:"Only players already included in the entry list can join the server"`
 	LoopMode          int `ini:"LOOP_MODE" input:"checkbox" help:"the server restarts from the first track, to disable this set it to 0"`
 
+	DriverSwapEnabled               int `ini:"-" help:"Enable Driver Swaps, in order to carry out a Driver Swap give an entrant two or more GUIDs separated by ;'s'"`
+	DriverSwapMinTime               int `ini:"-" help:"Minimum time for a driver swap, used to avoid giving users with faster computers an advantage. If the second driver sets off before this time they will be disqualified/given a penalty based on configuration"`
+	DriverSwapDisqualifyTime        int `ini:"-" help:"Driver should be disqualified if they set off this many seconds or more before the minimum time during a Driver Swap"`
+	DriverSwapPenaltyTime           int `ini:"-" help:"Driver should be given a penalty of this many seconds if they set off this many seconds or more before the minimum time during a Driver Swap"`
+	DriverSwapMinimumNumberOfSwaps  int `ini:"-" help:"Minimum number of swaps required."`
+	DriverSwapNotEnoughSwapsPenalty int `ini:"-" help:"Penalty to be applied if the minimum number of swaps is not met. Applied once per each swap not taken. (Seconds)"`
+
 	MaxClients   int `ini:"MAX_CLIENTS" help:"max number of clients (must be <= track's number of pits)"`
 	RaceOverTime int `ini:"RACE_OVER_TIME" help:"time remaining in seconds to finish the race from the moment the first one passes on the finish line"`
 	StartRule    int `ini:"START_RULE" min:"0" max:"2" help:"0 is car locked until start;   1 is teleport   ; 2 is drive-through (if race has 3 or less laps then the Teleport penalty is enabled)"`
@@ -270,6 +277,8 @@ type CurrentRaceConfig struct {
 	WindVariationDirection int `ini:"WIND_VARIATION_DIRECTION" help:"variation (+ or -) of the base direction"`
 
 	DisableDRSZones bool `ini:"-"`
+
+	TimeAttack bool `ini:"-"` // time attack races will force loop ON and merge all results files (practice only)
 
 	DynamicTrack DynamicTrackConfig `ini:"-"`
 
@@ -375,12 +384,20 @@ type DynamicTrackConfig struct {
 	LapGain         int `ini:"LAP_GAIN" help:"how many laps are needed to add 1% grip"`
 }
 
+const (
+	weatherPractice = "weatherPractice"
+	weatherEvent    = "weatherEvent"
+	weatherAny      = "weatherAny"
+)
+
 type WeatherConfig struct {
 	Graphics               string `ini:"GRAPHICS" help:"exactly one of the folder names that you find in the 'content\\weather'' directory"`
 	BaseTemperatureAmbient int    `ini:"BASE_TEMPERATURE_AMBIENT" help:"ambient temperature"`                                                                                                                                                               // 0-36
 	BaseTemperatureRoad    int    `ini:"BASE_TEMPERATURE_ROAD" help:"Relative road temperature: this value will be added to the final ambient temp. In this example the road temperature will be between 22 (16 + 6) and 26 (20 + 6). It can be negative."` // 0-36
 	VariationAmbient       int    `ini:"VARIATION_AMBIENT" help:"variation of the ambient's temperature. In this example final ambient's temperature can be 16 or 20"`
 	VariationRoad          int    `ini:"VARIATION_ROAD" help:"variation of the road's temperature. Like the ambient one"`
+
+	ChampionshipPracticeWeather string `ini:"-"`
 
 	CMGraphics          string `ini:"__CM_GRAPHICS" help:"Graphics folder name"`
 	CMWFXType           int    `ini:"__CM_WFX_TYPE" help:"Weather ini file number, inside weather.ini"`

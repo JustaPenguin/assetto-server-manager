@@ -307,6 +307,7 @@ class RaceSetup {
         this.initSurfacePresets();
 
         this.initPickupModeWatcher();
+        this.initTimeAttackWatcher();
     }
 
     initPickupModeWatcher() {
@@ -347,6 +348,74 @@ class RaceSetup {
             $lockedEntryListSwitch.bootstrapSwitch('disabled', false);
 
             $lockedReverseWarning.hide();
+        }
+    }
+
+    initTimeAttackWatcher() {
+        let that = this;
+
+        that.setTimeAttack();
+
+        let $timeAttackSwitch = $("#TimeAttack");
+
+        $timeAttackSwitch.on('switchChange.bootstrapSwitch', function (event, state) {
+            that.setTimeAttack();
+        });
+    }
+
+    setTimeAttack() {
+        let $timeAttack = $("#TimeAttack");
+
+        if (!$timeAttack.length > 0) {
+            // don't init time attack at all on non-premium builds
+            return;
+        }
+
+        let timeAttackEnabled = $timeAttack.bootstrapSwitch('state');
+
+        let $loopModeSwitch = $("#LoopMode");
+
+        let $practiceSwitch = $("#Practice\\.Enabled");
+        let $qualifyingSwitch = $("#Qualifying\\.Enabled");
+        let $raceSwitch = $("#Race\\.Enabled");
+        let $bookingSwitch = $("#Booking\\.Enabled");
+
+        if (timeAttackEnabled) {
+            // disable sessions other than practice, force loop mode on
+            $loopModeSwitch.bootstrapSwitch('state', true);
+            $loopModeSwitch.bootstrapSwitch('disabled', true);
+
+            $practiceSwitch.bootstrapSwitch('state', true);
+            $practiceSwitch.bootstrapSwitch('disabled', true);
+
+            $qualifyingSwitch.bootstrapSwitch('state', false);
+            $qualifyingSwitch.bootstrapSwitch('disabled', true);
+
+            $raceSwitch.bootstrapSwitch('state', false);
+            $raceSwitch.bootstrapSwitch('disabled', true);
+
+            $bookingSwitch.bootstrapSwitch('state', false);
+            $bookingSwitch.bootstrapSwitch('disabled', true);
+
+            $(".tab-pane").removeClass("active show");
+
+            let $sessionNavLink = $(".session-nav-link");
+
+            $sessionNavLink.removeClass("active");
+            $sessionNavLink.attr("aria-selected", "false");
+
+            let $sessionPractiveTab = $("#session-Practice-tab");
+
+            $sessionPractiveTab.addClass("active");
+            $sessionPractiveTab.attr("aria-selected", "true");
+
+            $("#session-Practice").addClass("active show");
+        } else {
+            $loopModeSwitch.bootstrapSwitch('disabled', false);
+            $practiceSwitch.bootstrapSwitch('disabled', false);
+            $qualifyingSwitch.bootstrapSwitch('disabled', false);
+            $raceSwitch.bootstrapSwitch('disabled', false);
+            $bookingSwitch.bootstrapSwitch('disabled', false);
         }
     }
 
@@ -535,7 +604,6 @@ class RaceSetup {
 
                 if ($dropdownTyre.length) {
                     $dropdownTyre.text(carTyres[tyre] + " (" + tyre + ")" + makeCarString(tyreCars[tyre]));
-                    this.$tyresDropdown.multiSelect('refresh');
                     continue; // this has already been added
                 }
 
@@ -548,17 +616,15 @@ class RaceSetup {
             }
         }
 
-        let that = this;
-
         this.$tyresDropdown.find("option").each(function (index, elem) {
             let $elem = $(elem);
 
             if (!allValidTyres.has($elem.val())) {
                 $elem.remove();
-
-                that.$tyresDropdown.multiSelect('refresh');
             }
         });
+
+        this.$tyresDropdown.multiSelect('refresh');
     }
 
     /**

@@ -18,6 +18,7 @@ type RaceWeekendEntryListSorterDescription struct {
 	Key                   string
 	Sorter                RaceWeekendEntryListSorter
 	NeedsParentSession    bool
+	NeedsChampionship     bool
 	ShowInManageEntryList bool
 }
 
@@ -33,6 +34,7 @@ var RaceWeekendEntryListSorters = []RaceWeekendEntryListSorterDescription{
 		Key:                   "", // key intentionally left blank
 		Sorter:                RaceWeekendEntryListSortFunc(UnchangedRaceWeekendEntryListSort),
 		NeedsParentSession:    false,
+		NeedsChampionship:     false,
 		ShowInManageEntryList: true,
 	},
 	{
@@ -40,6 +42,7 @@ var RaceWeekendEntryListSorters = []RaceWeekendEntryListSorterDescription{
 		Key:                   "fastest_lap",
 		Sorter:                RaceWeekendEntryListSortFunc(FastestLapRaceWeekendEntryListSort),
 		NeedsParentSession:    true,
+		NeedsChampionship:     false,
 		ShowInManageEntryList: true,
 	},
 	{
@@ -47,6 +50,7 @@ var RaceWeekendEntryListSorters = []RaceWeekendEntryListSorterDescription{
 		Key:                   "total_race_time",
 		Sorter:                RaceWeekendEntryListSortFunc(TotalRaceTimeRaceWeekendEntryListSort),
 		NeedsParentSession:    true,
+		NeedsChampionship:     false,
 		ShowInManageEntryList: true,
 	},
 	{
@@ -54,6 +58,7 @@ var RaceWeekendEntryListSorters = []RaceWeekendEntryListSorterDescription{
 		Key:                   "fastest_multi_results_lap",
 		Sorter:                RaceWeekendEntryListSortFunc(FastestResultsFileRaceWeekendEntryListSort),
 		NeedsParentSession:    false,
+		NeedsChampionship:     false,
 		ShowInManageEntryList: false,
 	},
 	{
@@ -61,6 +66,7 @@ var RaceWeekendEntryListSorters = []RaceWeekendEntryListSorterDescription{
 		Key:                   "number_multi_results_lap",
 		Sorter:                RaceWeekendEntryListSortFunc(NumberResultsFileRaceWeekendEntryListSort),
 		NeedsParentSession:    false,
+		NeedsChampionship:     false,
 		ShowInManageEntryList: false,
 	},
 	{
@@ -68,6 +74,7 @@ var RaceWeekendEntryListSorters = []RaceWeekendEntryListSorterDescription{
 		Key:                   "fewest_collisions",
 		Sorter:                RaceWeekendEntryListSortFunc(FewestCollisionsRaceWeekendEntryListSort),
 		NeedsParentSession:    true,
+		NeedsChampionship:     false,
 		ShowInManageEntryList: true,
 	},
 	{
@@ -75,6 +82,7 @@ var RaceWeekendEntryListSorters = []RaceWeekendEntryListSorterDescription{
 		Key:                   "fewest_cuts",
 		Sorter:                RaceWeekendEntryListSortFunc(FewestCutsRaceWeekendEntryListSort),
 		NeedsParentSession:    true,
+		NeedsChampionship:     false,
 		ShowInManageEntryList: true,
 	},
 	{
@@ -82,6 +90,7 @@ var RaceWeekendEntryListSorters = []RaceWeekendEntryListSorterDescription{
 		Key:                   "safety",
 		Sorter:                RaceWeekendEntryListSortFunc(SafetyRaceWeekendEntryListSort),
 		NeedsParentSession:    true,
+		NeedsChampionship:     false,
 		ShowInManageEntryList: true,
 	},
 	{
@@ -89,13 +98,23 @@ var RaceWeekendEntryListSorters = []RaceWeekendEntryListSorterDescription{
 		Key:                   "championship_standings_order",
 		Sorter:                &ChampionshipStandingsOrderEntryListSort{},
 		NeedsParentSession:    false,
+		NeedsChampionship:     true,
 		ShowInManageEntryList: true,
+	},
+	{
+		Name:                  "Championship Class",
+		Key:                   "championship_class",
+		Sorter:                &ChampionshipClassSort{},
+		NeedsParentSession:    false,
+		NeedsChampionship:     true,
+		ShowInManageEntryList: false,
 	},
 	{
 		Name:                  "Random",
 		Key:                   "random",
 		Sorter:                RaceWeekendEntryListSortFunc(RandomRaceWeekendEntryListSort),
 		NeedsParentSession:    false,
+		NeedsChampionship:     false,
 		ShowInManageEntryList: true,
 	},
 	{
@@ -103,6 +122,7 @@ var RaceWeekendEntryListSorters = []RaceWeekendEntryListSorterDescription{
 		Key:                   "alphabetical",
 		Sorter:                RaceWeekendEntryListSortFunc(AlphabeticalRaceWeekendEntryListSort),
 		NeedsParentSession:    false,
+		NeedsChampionship:     false,
 		ShowInManageEntryList: true,
 	},
 }
@@ -119,6 +139,11 @@ func GetRaceWeekendEntryListSort(key string) RaceWeekendEntryListSorter {
 
 func PerClassSort(sorter RaceWeekendEntryListSorter) RaceWeekendEntryListSorter {
 	return RaceWeekendEntryListSortFunc(func(rw *RaceWeekend, session *RaceWeekendSession, allEntrants []*RaceWeekendSessionEntrant, filter *RaceWeekendSessionToSessionFilter) error {
+		if _, isChampionshipClassSort := sorter.(*ChampionshipClassSort); isChampionshipClassSort && rw.HasLinkedChampionship() && rw.Championship != nil {
+			// per championship class sort is a stable non-results based sort. If that has been selected, don't run this sorting function at all.
+			return sorter.Sort(rw, session, allEntrants, filter)
+		}
+
 		classMap := make(map[uuid.UUID]bool)
 		fastestLapForClass := make(map[uuid.UUID]int)
 		entrantsForClass := make(map[uuid.UUID][]*RaceWeekendSessionEntrant)
@@ -147,6 +172,12 @@ func PerClassSort(sorter RaceWeekendEntryListSorter) RaceWeekendEntryListSorter 
 			// sort each class by the fastest lap in that class
 			sort.Slice(classes, func(i, j int) bool {
 				return fastestLapForClass[classes[i]] < fastestLapForClass[classes[j]]
+			})
+		} else if session.IsBase() {
+			// base sessions will have no lap data. just sort them by class ID,
+			// the same way every time, so that entrant splits can be consistent
+			sort.Slice(classes, func(i, j int) bool {
+				return classes[i].String() < classes[j].String()
 			})
 		}
 
@@ -303,8 +334,8 @@ func lessBestLapTime(_ *RaceWeekend, _ *RaceWeekendSession, entrantI, entrantJ *
 
 	if entrantI.EntrantResult.BestLap == entrantJ.EntrantResult.BestLap {
 		// if equal, compare safety
-		entrantICrashes := entrantI.SessionResults.GetCrashes(entrantI.Car.Driver.GUID)
-		entrantJCrashes := entrantJ.SessionResults.GetCrashes(entrantJ.Car.Driver.GUID)
+		entrantICrashes := entrantI.SessionResults.GetCrashes(entrantI.Car.Driver.GUID, entrantI.Car.Model)
+		entrantJCrashes := entrantJ.SessionResults.GetCrashes(entrantJ.Car.Driver.GUID, entrantJ.Car.Model)
 
 		if entrantICrashes == entrantJCrashes {
 			return entrantI.SessionResults.GetCuts(entrantI.Car.Driver.GUID, entrantI.Car.Model) < entrantJ.SessionResults.GetCuts(entrantJ.Car.Driver.GUID, entrantJ.Car.Model)
@@ -331,8 +362,8 @@ func lessBestLapTimeInResults(bestDriverLaps map[string]int, entrantI, entrantJ 
 func FewestCollisionsRaceWeekendEntryListSort(rw *RaceWeekend, session *RaceWeekendSession, entrants []*RaceWeekendSessionEntrant, _ *RaceWeekendSessionToSessionFilter) error {
 	sort.Slice(entrants, func(i, j int) bool {
 		entrantI, entrantJ := entrants[i], entrants[j]
-		entrantICrashes := entrantI.SessionResults.GetCrashes(entrantI.Car.Driver.GUID)
-		entrantJCrashes := entrantJ.SessionResults.GetCrashes(entrantJ.Car.Driver.GUID)
+		entrantICrashes := entrantI.SessionResults.GetCrashes(entrantI.Car.Driver.GUID, entrantI.Car.Model)
+		entrantJCrashes := entrantJ.SessionResults.GetCrashes(entrantJ.Car.Driver.GUID, entrantJ.Car.Model)
 
 		if entrantICrashes == entrantJCrashes {
 			if session.SessionType() == SessionTypeRace {
@@ -371,8 +402,8 @@ func FewestCutsRaceWeekendEntryListSort(rw *RaceWeekend, session *RaceWeekendSes
 func SafetyRaceWeekendEntryListSort(rw *RaceWeekend, session *RaceWeekendSession, entrants []*RaceWeekendSessionEntrant, _ *RaceWeekendSessionToSessionFilter) error {
 	sort.Slice(entrants, func(i, j int) bool {
 		entrantI, entrantJ := entrants[i], entrants[j]
-		entrantICrashes := entrantI.SessionResults.GetCrashes(entrantI.Car.Driver.GUID)
-		entrantJCrashes := entrantJ.SessionResults.GetCrashes(entrantJ.Car.Driver.GUID)
+		entrantICrashes := entrantI.SessionResults.GetCrashes(entrantI.Car.Driver.GUID, entrantI.Car.Model)
+		entrantJCrashes := entrantJ.SessionResults.GetCrashes(entrantJ.Car.Driver.GUID, entrantJ.Car.Model)
 		entrantICuts := entrantI.SessionResults.GetCuts(entrantI.Car.Driver.GUID, entrantI.Car.Model)
 		entrantJCuts := entrantJ.SessionResults.GetCuts(entrantJ.Car.Driver.GUID, entrantJ.Car.Model)
 
@@ -445,6 +476,24 @@ func (ChampionshipStandingsOrderEntryListSort) Sort(rw *RaceWeekend, _ *RaceWeek
 		}
 
 		return iPos < jPos
+	})
+
+	return nil
+}
+
+type ChampionshipClassSort struct{}
+
+func (ChampionshipClassSort) Sort(rw *RaceWeekend, _ *RaceWeekendSession, entrants []*RaceWeekendSessionEntrant, _ *RaceWeekendSessionToSessionFilter) error {
+	if !rw.HasLinkedChampionship() || rw.Championship == nil {
+		return nil
+	}
+
+	if len(entrants) == 0 {
+		return nil
+	}
+
+	sort.Slice(entrants, func(i, j int) bool {
+		return entrants[i].ChampionshipClass(rw).ID.String() < entrants[j].ChampionshipClass(rw).ID.String()
 	})
 
 	return nil

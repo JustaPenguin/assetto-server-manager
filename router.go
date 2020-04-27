@@ -67,9 +67,10 @@ func Router(
 ) http.Handler {
 	r := chi.NewRouter()
 
+	compressor := middleware.Compress(5)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(middleware.DefaultCompress)
+	r.Use(compressor)
 	r.Use(panicHandler)
 
 	r.HandleFunc("/login", accountHandler.login)
@@ -166,6 +167,7 @@ func Router(
 			return "/accounts/update"
 		}))
 		r.HandleFunc("/accounts/dismiss-changelog", accountHandler.dismissChangelog)
+		r.HandleFunc("/accounts/dismiss-intro", accountHandler.dismissIntro)
 
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")), true)
 		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")), true)
@@ -218,6 +220,7 @@ func Router(
 		r.Get("/championships/new", championshipsHandler.createOrEdit)
 		r.Post("/championships/new/submit", championshipsHandler.submit)
 		r.Get("/championship/{championshipID}/edit", championshipsHandler.createOrEdit)
+		r.Get("/championship/{championshipID}/duplicate", championshipsHandler.duplicate)
 		r.Get("/championship/{championshipID}/event", championshipsHandler.eventConfiguration)
 		r.Post("/championship/{championshipID}/event/submit", championshipsHandler.submitEventConfiguration)
 		r.Get("/championship/{championshipID}/event/{eventID}/start", championshipsHandler.startEvent)
@@ -333,6 +336,7 @@ func Router(
 		r.HandleFunc("/send-chat", raceControlHandler.sendChat)
 		r.HandleFunc("/next-weather", raceControlHandler.nextWeather)
 		r.HandleFunc("/test-weather", raceControlHandler.testWeather)
+		r.HandleFunc("/countdown", raceControlHandler.countdown)
 
 		r.HandleFunc("/stracker/options", strackerHandler.options)
 		r.HandleFunc("/kissmyrank/options", kissMyRankHandler.options)

@@ -431,6 +431,18 @@ func (c *Championship) FindClassForCarModel(model string) (*ChampionshipClass, e
 	return nil, ErrClassNotFound
 }
 
+func (c *Championship) MostRecentScheduledDateFormat(format string) string {
+	scheduledDate := time.Now()
+
+	for _, event := range c.Events {
+		if event.GetScheduledTime().After(scheduledDate) {
+			scheduledDate = event.GetScheduledTime()
+		}
+	}
+
+	return scheduledDate.Format(format)
+}
+
 // NewChampionshipClass creates a championship class with the default points
 func NewChampionshipClass(name string) *ChampionshipClass {
 	return &ChampionshipClass{
@@ -630,7 +642,7 @@ func (c *Championship) AllEntrants() EntryList {
 
 	for _, class := range c.Classes {
 		for _, entrant := range class.Entrants {
-			e.Add(entrant)
+			e.AddToBackOfGrid(entrant)
 		}
 	}
 
@@ -835,6 +847,7 @@ func (c *Championship) EnhanceResults(results *SessionResults) {
 	results.ChampionshipID = c.ID.String()
 
 	c.AttachClassIDToResults(results)
+	results.NormaliseDriverSwapGUIDs()
 
 	// update names / teams to the values we know to be correct due to championship setup
 	for _, class := range c.Classes {
@@ -1061,8 +1074,8 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 				}
 
 				if sessionType == SessionTypeRace || sessionType == SessionTypeSecondRace {
-					givePoints(event, driver.DriverGUID, float64(points.CollisionWithDriver*session.Results.GetCrashesOfType(driver.DriverGUID, "COLLISION_WITH_CAR"))*pointsMultiplier*-1, PointsCollisionWithCar)
-					givePoints(event, driver.DriverGUID, float64(points.CollisionWithEnv*session.Results.GetCrashesOfType(driver.DriverGUID, "COLLISION_WITH_ENV"))*pointsMultiplier*-1, PointsCollisionWithEnvironment)
+					givePoints(event, driver.DriverGUID, float64(points.CollisionWithDriver*session.Results.GetCrashesOfType(driver.DriverGUID, driver.CarModel, "COLLISION_WITH_CAR"))*pointsMultiplier*-1, PointsCollisionWithCar)
+					givePoints(event, driver.DriverGUID, float64(points.CollisionWithEnv*session.Results.GetCrashesOfType(driver.DriverGUID, driver.CarModel, "COLLISION_WITH_ENV"))*pointsMultiplier*-1, PointsCollisionWithEnvironment)
 					givePoints(event, driver.DriverGUID, float64(points.CutTrack*session.Results.GetCuts(driver.DriverGUID, driver.CarModel))*pointsMultiplier*-1, PointsCutTrack)
 				}
 			}
@@ -1078,8 +1091,14 @@ var championshipStandingSessionOrder = []SessionType{
 	SessionTypeBooking,
 }
 
+type StandingsOption int
+
+const (
+	StandingsNoPointsPenalties StandingsOption = iota
+)
+
 // Standings returns the current Driver Standings for the Championship.
-func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent) []*ChampionshipStanding {
+func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent, standingOpts ...StandingsOption) []*ChampionshipStanding {
 	var out []*ChampionshipStanding
 
 	// make a copy of events so we do not persist race weekend sessions
@@ -1154,12 +1173,22 @@ func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent) []*Champion
 		}
 	})
 
+	skipPointsPenalties := false
+
+	for _, opt := range standingOpts {
+		if opt == StandingsNoPointsPenalties {
+			skipPointsPenalties = true
+		}
+	}
+
 	for _, standing := range standings {
 		if standing.Car.Driver.Name == "" {
 			continue
 		}
 
-		standing.Points -= float64(c.PenaltyForGUID(standing.Car.Driver.GUID))
+		if !skipPointsPenalties {
+			standing.Points -= float64(c.PenaltyForGUID(standing.Car.Driver.GUID))
+		}
 
 		out = append(out, standing)
 	}
@@ -1175,8 +1204,9 @@ func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent) []*Champion
 	return out
 }
 
+// StandingsForEvent reports the standings for a single event, not including any generic points penalties applied to the championship.
 func (c *ChampionshipClass) StandingsForEvent(event *ChampionshipEvent) []*ChampionshipStanding {
-	return c.Standings([]*ChampionshipEvent{event})
+	return c.Standings([]*ChampionshipEvent{event}, StandingsNoPointsPenalties)
 }
 
 // extractRaceWeekendSessionsIntoIndividualEvents looks for race weekend events, and makes each indiivdual session of that
@@ -1431,7 +1461,7 @@ func (ce *ChampionshipSession) InProgress() bool {
 
 // Completed ChampionshipSessions have a non-zero CompletedTime
 func (ce *ChampionshipSession) Completed() bool {
-	return !ce.CompletedTime.IsZero()
+	return !ce.CompletedTime.IsZero() && ce.Results != nil
 }
 
 type ActiveChampionship struct {
@@ -1480,6 +1510,10 @@ func (a *ActiveChampionship) IsChampionship() bool {
 }
 
 func (a *ActiveChampionship) IsRaceWeekend() bool {
+	return false
+}
+
+func (a *ActiveChampionship) IsTimeAttack() bool {
 	return false
 }
 

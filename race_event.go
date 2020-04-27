@@ -15,6 +15,7 @@ type RaceEvent interface {
 	IsChampionship() bool
 	IsRaceWeekend() bool
 	IsPractice() bool
+	IsTimeAttack() bool
 
 	OverrideServerPassword() bool
 	ReplacementServerPassword() string

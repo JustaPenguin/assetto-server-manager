@@ -38,7 +38,7 @@
                                 {{ with $trackInfo }}
                                     {{ .Name }}
                                 {{ else }}
-                                    {{ prettify $eventSetup.Track false }} {{ with $eventSetup.TrackLayout }}({{ prettify . true }}){{ end }}
+                                    {{ prettify $session.RaceConfig.Track false }} {{ with $session.RaceConfig.TrackLayout }}({{ prettify . true }}){{ end }}
                                 {{ end }}
 
 
@@ -50,6 +50,10 @@
                                     {{ $session.SessionInfo.Laps }} Laps
                                 {{ else }}
                                     {{ $session.SessionInfo.Time }} minutes
+
+                                    {{ if $session.RaceConfig.RaceExtraLap }}
+                                        + 1 lap
+                                    {{ end }}
                                 {{ end }}
                             </li>
                         {{ end }}

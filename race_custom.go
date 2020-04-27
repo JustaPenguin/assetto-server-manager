@@ -12,6 +12,7 @@ import (
 )
 
 type CustomRace struct {
+	ScheduledEvents map[ServerID]*ScheduledEventBase
 	ScheduledEventBase
 
 	Name                            string
@@ -26,6 +27,8 @@ type CustomRace struct {
 	// Deprecated: Replaced by LoopServer
 	Loop       bool
 	LoopServer map[ServerID]bool
+
+	TimeAttackCombinedResultFile string
 
 	ForceStopTime        int
 	ForceStopWithDrivers bool
@@ -76,6 +79,10 @@ func (cr *CustomRace) IsPractice() bool {
 
 func (cr *CustomRace) IsRaceWeekend() bool {
 	return false
+}
+
+func (cr *CustomRace) IsTimeAttack() bool {
+	return cr.RaceConfig.TimeAttack
 }
 
 func (cr *CustomRace) HasSignUpForm() bool {
@@ -242,7 +249,7 @@ func (crh *CustomRaceHandler) removeSchedule(w http.ResponseWriter, r *http.Requ
 }
 
 func (crh *CustomRaceHandler) start(w http.ResponseWriter, r *http.Request) {
-	err := crh.raceManager.StartCustomRace(chi.URLParam(r, "uuid"), false)
+	_, err := crh.raceManager.StartCustomRace(chi.URLParam(r, "uuid"), false)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("couldn't apply custom race")

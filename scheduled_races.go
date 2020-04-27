@@ -164,6 +164,20 @@ func (srm *ScheduledRacesManager) getScheduledRaces() ([]ScheduledEvent, error) 
 	var scheduled []ScheduledEvent
 
 	for _, race := range customRaces {
+		for _, scheduledEvent := range race.ScheduledEvents {
+
+			if scheduledEvent.Scheduled.IsZero() || scheduledEvent.ScheduledServerID != serverID {
+				continue
+			}
+
+			race.ScheduledServerID = scheduledEvent.ScheduledServerID
+			race.Scheduled = scheduledEvent.Scheduled
+			race.ScheduledInitial = scheduledEvent.Scheduled
+			race.Recurrence = scheduledEvent.Recurrence
+
+			break
+		}
+
 		if race.Scheduled.IsZero() || race.ScheduledServerID != serverID {
 			continue
 		}

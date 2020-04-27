@@ -565,6 +565,8 @@ class LiveTimings implements WebsocketHandler {
 
         $(document).on("click", ".driver-link", this.toggleDriverSpeed.bind(this));
 
+        $(document).on("click", "#countdown", this.getFromClickEvent.bind(this));
+
         $(document).on("submit", "#broadcast-chat-form", this.processChatForm.bind(this));
         $(document).on("submit", "#admin-command-form", this.processAdminCommandForm.bind(this));
         $(document).on("submit", "#kick-user-form", this.processKickUserForm.bind(this));
@@ -572,6 +574,16 @@ class LiveTimings implements WebsocketHandler {
 
         $(document).on("submit", "#weather-test-form", this.processKickUserForm.bind(this));
         $(document).on("submit", "#weather-control-form", this.processKickUserForm.bind(this));
+    }
+
+    private getFromClickEvent(e: ClickEvent): void {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const $target = $(e.currentTarget);
+        const href = $target.attr("href");
+
+        $.get(href);
     }
 
     private processChatForm(e: JQuery.SubmitEvent): boolean {
@@ -775,7 +787,7 @@ class LiveTimings implements WebsocketHandler {
             return;
         }
 
-        let $tr = $table.find("[data-guid='" + driver.CarInfo.DriverGUID + "']");
+        let $tr = $table.find("[data-guid='" + driver.CarInfo.DriverGUID + "'][data-car-model='"+ driver.CarInfo.CarModel + "']");
 
         let addTrToTable = false;
 
@@ -936,8 +948,12 @@ class LiveTimings implements WebsocketHandler {
                     return -1;
                 } else if (timeA === timeB) {
                     return 0;
+                } else if (timeA === "") {
+                    return 1; // sort a to the back
+                } else if (timeB === "") {
+                    return -1; // sort b to the back
                 } else {
-                    return 1;
+                    return 1; // B < A && timeA != "" && timeB != ""
                 }
             }
         })).appendTo($tbody);

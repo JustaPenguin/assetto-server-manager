@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"html/template"
+	"math/rand"
 	"sort"
 	"strings"
 	"time"
@@ -86,15 +87,22 @@ func (rw *RaceWeekend) GetEntryList() EntryList {
 		count := 0
 
 		// filter out drivers with no GUID (open championships etc...)
-		for _, entrant := range rw.Championship.AllEntrants().AlphaSlice() {
-			if entrant.GUID == "" || entrant.IsPlaceHolder {
-				entrant.GUID = uuid.New().String()
-				entrant.Name = fmt.Sprintf("Placeholder Entrant %d", count)
-				entrant.IsPlaceHolder = true
-			}
+		for _, class := range rw.Championship.Classes {
+			for _, entrant := range class.Entrants {
+				if entrant.GUID == "" || entrant.IsPlaceHolder {
+					entrant.GUID = uuid.New().String()
+					entrant.Name = fmt.Sprintf("Placeholder Entrant %d", count)
+					entrant.IsPlaceHolder = true
 
-			entryList.AddInPitBox(entrant, count)
-			count++
+					if entrant.Model == "" || entrant.Model == AnyCarModel {
+						// assign the entrant some car model for ease of sorting
+						entrant.Model = class.AvailableCars[rand.Intn(len(class.AvailableCars))]
+					}
+				}
+
+				entryList.AddInPitBox(entrant, count)
+				count++
+			}
 		}
 
 		return entryList
@@ -376,7 +384,7 @@ func (rw *RaceWeekend) TrackOverview() string {
 			trackDescription = prettifyName(session.RaceConfig.Track, false)
 
 			if session.RaceConfig.TrackLayout != "" {
-				trackDescription = " (" + prettifyName(session.RaceConfig.TrackLayout, true) + ")"
+				trackDescription += " (" + prettifyName(session.RaceConfig.TrackLayout, true) + ")"
 			}
 		}
 
@@ -426,11 +434,24 @@ func (rw *RaceWeekend) EnhanceResults(results *SessionResults) {
 	}
 
 	results.RaceWeekendID = rw.ID.String()
+	results.NormaliseDriverSwapGUIDs()
 
 	if rw.HasLinkedChampionship() {
 		// linked championships determine class IDs etc for drivers.
 		rw.Championship.EnhanceResults(results)
 	}
+}
+
+func (rw *RaceWeekend) MostRecentScheduledDateFormat(format string) string {
+	scheduledDate := time.Now()
+
+	for _, session := range rw.Sessions {
+		if session.GetScheduledTime().After(scheduledDate) {
+			scheduledDate = session.GetScheduledTime()
+		}
+	}
+
+	return scheduledDate.Format(format)
 }
 
 // A RaceWeekendSessionEntrant is someone who has entered at least one RaceWeekend event.
@@ -637,7 +658,7 @@ func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) ([]*RaceW
 			foundEntrant := false
 
 			for _, driver := range out {
-				if driver.Car.GetGUID() == entrant.Car.GetGUID() {
+				if driver.Car.GetGUID() == entrant.Car.GetGUID() || NormaliseEntrantGUIDs(driver.Car.Driver.GuidsList) == entrant.Car.GetGUID() {
 					foundEntrant = true
 					break
 				}
@@ -914,6 +935,10 @@ func (a ActiveRaceWeekend) IsRaceWeekend() bool {
 
 func (a ActiveRaceWeekend) IsPractice() bool {
 	return a.IsPracticeSession
+}
+
+func (a ActiveRaceWeekend) IsTimeAttack() bool {
+	return false
 }
 
 func (a ActiveRaceWeekend) OverrideServerPassword() bool {

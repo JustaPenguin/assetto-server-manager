@@ -23,10 +23,11 @@ import (
 )
 
 const (
-	sessionAccountID                              = "account_id"
-	requestContextKeyAccount    accountContextKey = iota
-	adminUserName                                 = "admin"
-	serverAccountOptionsMetaKey                   = "server-account-options"
+	sessionAccountID                                = "account_id"
+	requestContextKeyAccount      accountContextKey = iota
+	adminUserName                                   = "admin"
+	serverAccountOptionsMetaKey                     = "server-account-options"
+	defaultHostedAdminAccountName                   = "acserver"
 )
 
 type accountContextKey int
@@ -69,8 +70,9 @@ type Account struct {
 	PasswordHash string
 	PasswordSalt string
 
-	DefaultPassword string
-	LastSeenVersion string
+	DefaultPassword   string
+	LastSeenVersion   string
+	HasSeenIntroPopup bool
 
 	Theme Theme
 
@@ -106,6 +108,18 @@ func (a Account) ShowDarkTheme(serverManagerDarkThemeEnabled bool) bool {
 
 func (a Account) HasSeenCurrentVersion() bool {
 	return a.HasSeenVersion(BuildVersion)
+}
+
+func (a Account) ShouldSeeUpgradePopup() bool {
+	return !a.HasSeenCurrentVersion() && !a.ShouldSeeIntroPopup() && !a.NeedsPasswordReset()
+}
+
+func (a Account) ShouldSeeIntroPopup() bool {
+	return IsHosted && !a.HasSeenIntroPopup && !a.NeedsPasswordReset() && a.IsDefaultHostedAccount()
+}
+
+func (a Account) IsDefaultHostedAccount() bool {
+	return a.Name == defaultHostedAdminAccountName
 }
 
 func (a Account) HasSeenVersion(version string) bool {
@@ -245,6 +259,20 @@ func (ah *AccountHandler) dismissChangelog(w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		logrus.WithError(err).Error("could not save current account version")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (ah *AccountHandler) dismissIntro(w http.ResponseWriter, r *http.Request) {
+	account := AccountFromRequest(r)
+
+	account.HasSeenIntroPopup = true
+
+	err := ah.accountManager.store.UpsertAccount(account)
+
+	if err != nil {
+		logrus.WithError(err).Error("could not save current account (dismiss intro)")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

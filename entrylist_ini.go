@@ -15,6 +15,8 @@ import (
 const (
 	AnyCarModel       = "any_car_model"
 	entryListFilename = "entry_list.ini"
+
+	driverSwapEntrantSeparator = ";"
 )
 
 type EntryList map[string]*Entrant
@@ -65,7 +67,7 @@ func (e EntryList) Write() error {
 }
 
 // Add an Entrant to the EntryList
-func (e EntryList) Add(entrant *Entrant) {
+func (e EntryList) AddToBackOfGrid(entrant *Entrant) {
 	e.AddInPitBox(entrant, len(e))
 }
 
@@ -303,4 +305,21 @@ func (e *Entrant) AsSessionResult() *SessionResult {
 		DriverName: e.Name,
 		Restrictor: e.Restrictor,
 	}
+}
+
+// NormaliseEntrantGUID takes a guid which may have driverSwapEntrantSeparators in it,
+// sorts all GUIDs in the string and then rejoins them by driverSwapEntrantSeparator
+func NormaliseEntrantGUID(guid string) string {
+	split := strings.Split(guid, driverSwapEntrantSeparator)
+
+	sort.Strings(split)
+
+	return strings.Join(split, driverSwapEntrantSeparator)
+}
+
+// NormaliseEntrantGUIDs takes a list of guids, sorts them and joins them by driverSwapEntrantSeparator
+func NormaliseEntrantGUIDs(guids []string) string {
+	sort.Strings(guids)
+
+	return strings.Join(guids, driverSwapEntrantSeparator)
 }

@@ -55,6 +55,14 @@ type HTTPConfig struct {
 	SessionStoreType string `yaml:"session_store_type"`
 	SessionStorePath string `yaml:"session_store_path"`
 	BaseURL          string `yaml:"server_manager_base_URL"`
+
+	TLS TLSConfig `yaml:"tls"`
+}
+
+type TLSConfig struct {
+	Enabled  bool   `yaml:"enabled"`
+	CertPath string `yaml:"cert_path"`
+	KeyPath  string `yaml:"key_path"`
 }
 
 type LuaConfig struct {
