@@ -774,11 +774,11 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 				CMWFXDate:           int(startTimeFinal.Unix()),
 				CMWFXDateUnModified: int(startTime.Unix()),
 
-				WeatherTransition:  weatherTransition,
-				WeatherTransitionTime: transitionTimeFinal,
+				WeatherTransition:            weatherTransition,
+				WeatherTransitionTime:        transitionTimeFinal,
 				WeatherTransitionTimeToApply: weatherTransitionTimeToApply,
-				WeatherTransitionType: weatherTransitionType,
-				WeatherTransitionGraphics: weatherTransitionName,
+				WeatherTransitionType:        weatherTransitionType,
+				WeatherTransitionGraphics:    weatherTransitionName,
 			})
 		}
 	}

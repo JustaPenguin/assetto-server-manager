@@ -397,7 +397,6 @@ func (rch *RaceControlHandler) nextSession(w http.ResponseWriter, r *http.Reques
 	http.Redirect(w, r, "/live-timing", http.StatusFound)
 }
 
-
 func (rch *RaceControlHandler) nextWeather(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		return

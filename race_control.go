@@ -1,10 +1,9 @@
 package servermanager
 
 import (
-	"errors"
 	"context"
+	"errors"
 	"fmt"
-	"github.com/JustaPenguin/assetto-server-manager/pkg/when"
 	"math"
 	"path/filepath"
 	"strings"
@@ -18,6 +17,7 @@ import (
 
 	"github.com/JustaPenguin/assetto-server-manager/pkg/csp"
 	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/when"
 )
 
 type RaceControl struct {
