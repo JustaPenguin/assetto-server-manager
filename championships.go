@@ -1154,6 +1154,11 @@ func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent, standingOpt
 					car = sessionCar
 					break
 				}
+
+				if NormaliseEntrantGUIDs(sessionCar.Driver.GuidsList) == driverGUID {
+					car = sessionCar
+					break
+				}
 			}
 		}
 
@@ -1263,6 +1268,11 @@ func (c *ChampionshipClass) TeamStandings(inEvents []*ChampionshipEvent) []*Team
 			if session.Results != nil {
 				for _, car := range session.Results.Cars {
 					if car.Driver.GUID == driverGUID {
+						team = car.Driver.Team
+						break
+					}
+
+					if NormaliseEntrantGUIDs(car.Driver.GuidsList) == driverGUID {
 						team = car.Driver.Team
 						break
 					}
