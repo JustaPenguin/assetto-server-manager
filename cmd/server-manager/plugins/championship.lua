@@ -21,6 +21,7 @@ function onChampionshipEventStart(encodedEvent, encodedChampionship, encodedClas
     -- Function block NOTE: this hook BLOCKS, make sure your functions don't loop forever!
     -- uncomment functions to enable them!
     --event = addBallastFromChampionshipPosition(event, standings, 50)
+    event = addBallastFromChampionshipEventPosition(championship, event, 75, 1, false)
 
     -- Encode block, you probably shouldn't touch these either!
     return json.encode(championship), json.encode(event)
@@ -57,6 +58,45 @@ function addBallastFromChampionshipPosition(event, standings, maxBallast)
                 if entrant["GUID"] == standing["Car"]["Driver"]["Guid"] then
                     -- add ballast based on championship position
                     entrant["Ballast"] = math.floor(maxBallast/(pos))
+                end
+            end
+        end
+    end
+
+    return event
+end
+
+-- add ballast to drivers for the championship event based on the results of some event
+function addBallastFromChampionshipEventPosition(championship, event, maxBallast, nthMostRecentEvent, reverseRace)
+    table.sort(championship["Events"], function (left, right)
+        return left["CompletedTime"] > right["CompletedTime"]
+    end )
+
+    -- event to apply ballast from is now nth in championship["Events"]
+    for sessionType,session in pairs(championship["Events"][nthMostRecentEvent]["Sessions"]) do
+        if (not (session["CompletedTime"] == "0001-01-01T00:00:00Z")) and (sessionType == "RACE" and (not reverseRace)) or (sessionType == "RACEx2" and reverseRace) then
+            -- start at maxBallast, decrease for each driver by diff
+            local diff = 9
+            local ballast = maxBallast
+
+            for pos,result in pairs(session["Results"]["Result"]) do
+                -- find our entrant and apply ballast
+                for carID, entrant in pairs(event["EntryList"]) do
+                    -- if standing and entrant guids match
+                    if entrant["GUID"] == result["DriverGuid"] then
+                        -- add ballast based on result in nth most recent event
+                        entrant["Ballast"] = ballast
+
+                        print("LUA: applying ", ballast, "kg of ballast to ", result["DriverName"], ". Finished in pos ", pos, " at ", session["Results"]["TrackName"])
+                        break
+                    end
+                end
+
+                ballast = ballast - diff
+
+                -- if you want non-linear ballast, modify the diff here
+                if pos == 4 then
+                    diff = 6
                 end
             end
         end

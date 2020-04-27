@@ -25,7 +25,7 @@ function onEventStart(encodedRaceConfig, encodedServerOpts, encodedEntryList)
 
     -- Uncomment this line to set Weather API On
     -- in order to use the weatherAPI you need to get a free API key from https://openweathermap.org/
-    raceConfig, serverOpts = getWeatherForTrack(raceConfig, serverOpts, "get-an-api-key-from-https://openweathermap.org/")
+    -- raceConfig, serverOpts = getWeatherForTrack(raceConfig, serverOpts, "get-an-api-key-from-https://openweathermap.org/")
 
     -- Encode block, you probably shouldn't touch these either!
     return json.encode(entryList), json.encode(serverOpts), json.encode(raceConfig)
