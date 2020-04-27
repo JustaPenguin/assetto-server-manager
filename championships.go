@@ -431,6 +431,18 @@ func (c *Championship) FindClassForCarModel(model string) (*ChampionshipClass, e
 	return nil, ErrClassNotFound
 }
 
+func (c *Championship) MostRecentScheduledDateFormat(format string) string {
+	scheduledDate := time.Now()
+
+	for _, event := range c.Events {
+		if event.GetScheduledTime().After(scheduledDate) {
+			scheduledDate = event.GetScheduledTime()
+		}
+	}
+
+	return scheduledDate.Format(format)
+}
+
 // NewChampionshipClass creates a championship class with the default points
 func NewChampionshipClass(name string) *ChampionshipClass {
 	return &ChampionshipClass{

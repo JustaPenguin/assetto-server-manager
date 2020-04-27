@@ -243,8 +243,8 @@
                                     <form action="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/schedule" method="POST">
                                         <div class="form-group">
 
-                                            <input type="date" class="form-control" name="session-schedule-date" id="session-schedule-date">
-                                            <input type="time" class="form-control" name="session-schedule-time" id="session-schedule-time">
+                                            <input type="date" class="form-control" name="session-schedule-date" id="session-schedule-date" value="{{ $.RaceWeekend.MostRecentScheduledDateFormat "2006-01-02" }}">
+                                            <input type="time" class="form-control" name="session-schedule-time" id="session-schedule-time" value="{{ $.RaceWeekend.MostRecentScheduledDateFormat "15:04" }}">
                                             <input type="hidden" name="session-schedule-timezone" class="session-schedule-timezone">
                                             <small class="form-text text-muted">
                                                 This date/time is in your timezone (<span class="timezone"></span>).

@@ -442,6 +442,18 @@ func (rw *RaceWeekend) EnhanceResults(results *SessionResults) {
 	}
 }
 
+func (rw *RaceWeekend) MostRecentScheduledDateFormat(format string) string {
+	scheduledDate := time.Now()
+
+	for _, session := range rw.Sessions {
+		if session.GetScheduledTime().After(scheduledDate) {
+			scheduledDate = session.GetScheduledTime()
+		}
+	}
+
+	return scheduledDate.Format(format)
+}
+
 // A RaceWeekendSessionEntrant is someone who has entered at least one RaceWeekend event.
 type RaceWeekendSessionEntrant struct {
 	// SessionID is the last session the Entrant participated in
