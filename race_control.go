@@ -4,6 +4,7 @@ import (
 	"errors"
 	"context"
 	"fmt"
+	"github.com/JustaPenguin/assetto-server-manager/pkg/when"
 	"math"
 	"path/filepath"
 	"strings"
@@ -56,6 +57,8 @@ type RaceControl struct {
 	driverSwapTimers         map[int]*time.Timer
 	driverSwapPenaltiesMutex sync.Mutex
 	driverSwapPenalties      map[udp.DriverGUID]*driverSwapPenalty
+
+	WeatherTransitionTimer *when.Timer
 }
 
 // RaceControl piggyback's on the udp.Message interface so that the entire data can be sent to newly connected clients.
@@ -366,6 +369,66 @@ func (rc *RaceControl) OnNewSession(sessionInfo udp.SessionInfo) error {
 		logrus.WithError(err).Debugf("Could not load persisted live timings practice data")
 	}
 
+	if rc.WeatherTransitionTimer != nil {
+		rc.WeatherTransitionTimer.Stop()
+	}
+
+	// if WeatherTransition start global timer to when the transition starts
+	cfg := rc.process.Event().GetRaceConfig()
+
+	// @TODO could use onNewSession to at least match the graphics, either that or only allow one weather if doing a transition
+
+	for _, weather := range cfg.Weather {
+		if weather.WeatherTransition {
+			weatherChange := csp.WeatherConditions{
+				Timestamp:   uint64(weather.WeatherTransitionTime),
+				Current:     csp.Weather(weather.CMWFXType),
+				Next:        csp.Weather(weather.WeatherTransitionType),
+				Transition:  0,
+				TimeToApply: float32(weather.WeatherTransitionTimeToApply),
+			}
+
+			startTime := time.Unix(int64(weather.CMWFXDate), 0)
+			transitionTime := time.Unix(int64(weather.WeatherTransitionTime), 0)
+
+			// @TODO probably needs to take into account time multiplier
+			timeToTransition := transitionTime.Sub(startTime)
+
+			timer, err := when.When(time.Now().Add(timeToTransition), func() {
+				logrus.Info("Starting scheduled weather transition")
+
+				for _, driver := range rc.ConnectedDrivers.Drivers {
+					i := float32(0.1)
+
+					for ; i <= 1.1; i += 0.1 {
+						time.Sleep(time.Duration(weatherChange.TimeToApply) * time.Second)
+						weatherChange.Transition = i
+
+						message, err := csp.ToChatMessage(driver.CarInfo.CarID, weatherChange)
+
+						if err != nil {
+							logrus.WithError(err).Errorf("Couldn't build weather transition message for driver: %s", driver.CarInfo.DriverGUID)
+							continue
+						}
+
+						err = rc.process.SendUDPMessage(message)
+
+						if err != nil {
+							logrus.WithError(err).Errorf("Couldn't send weather transition message to driver: %s", driver.CarInfo.DriverGUID)
+							continue
+						}
+					}
+				}
+			})
+
+			if err != nil {
+				logrus.WithError(err).Error("Could not start weather transition timer")
+			}
+
+			rc.WeatherTransitionTimer = timer
+		}
+	}
+
 	_, err = rc.broadcaster.Send(sessionInfo)
 
 	return err
@@ -535,6 +598,10 @@ func (rc *RaceControl) OnEndSession(sessionFile udp.EndSession) error {
 		}
 
 		logrus.Infof("Time Attack Event (%s) Finished, results files have been combined and saved as %s", rc.currentTimeAttackEvent.EventName(), filename)
+	}
+
+	if rc.WeatherTransitionTimer != nil {
+		rc.WeatherTransitionTimer.Stop()
 	}
 
 	return nil

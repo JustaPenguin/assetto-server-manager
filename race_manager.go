@@ -725,6 +725,36 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 				startTimeFinal = unixTime
 			}
 
+			// @TODO I don't think this technically requires Sol, should we make it work for default weathers?
+
+			weatherTransition := formValueAsInt(r.Form["WeatherTransition"][i]) == 1
+			weatherTransitionTimeToApply := 0
+			transitionTimeFinal := 0
+			weatherTransitionType := 0
+			weatherTransitionName := ""
+
+			if weatherTransition {
+				weatherTransitionTimeToApply = formValueAsInt(r.Form["WeatherTransitionTimeToApply"][i])
+
+				transitionTime, err := time.ParseInLocation("2006-01-02T15:04", r.Form["WeatherTransitionTime"][i], time.UTC)
+
+				if err != nil {
+					return nil, err
+				}
+
+				// assuming this is necessary here also
+				transitionTimeFinal = int(transitionTime.Add(-(time.Duration(timeMultiInt) * 5 * time.Hour)).Unix())
+
+				weatherTransitionName = r.Form["WeatherTransitionGraphics"][i]
+
+				// @TODO errored with no input, missing __launcher_cm section. Maybe non-sol weathers?
+				weatherTransitionType, err = getWeatherType(weatherTransitionName)
+
+				if err != nil {
+					return nil, err
+				}
+			}
+
 			raceConfig.AddWeather(&WeatherConfig{
 				Graphics: weatherName + "_type=" + strconv.Itoa(WFXType) + "_time=0_mult=" +
 					timeMulti + "_start=" + strconv.Itoa(int(startTimeFinal.Unix())),
@@ -743,6 +773,12 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 				CMWFXUseCustomDate:  1,
 				CMWFXDate:           int(startTimeFinal.Unix()),
 				CMWFXDateUnModified: int(startTime.Unix()),
+
+				WeatherTransition:  weatherTransition,
+				WeatherTransitionTime: transitionTimeFinal,
+				WeatherTransitionTimeToApply: weatherTransitionTimeToApply,
+				WeatherTransitionType: weatherTransitionType,
+				WeatherTransitionGraphics: weatherTransitionName,
 			})
 		}
 	}

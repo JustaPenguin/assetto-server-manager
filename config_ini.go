@@ -407,6 +407,12 @@ type WeatherConfig struct {
 	CMWFXUseCustomDate  int    `ini:"__CM_WFX_USE_CUSTOM_DATE" help:"If Sol is active then this should be too"`
 	CMWFXDate           int    `ini:"__CM_WFX_DATE" help:"Unix timestamp (UTC + 10)"`
 	CMWFXDateUnModified int    `ini:"__CM_WFX_DATE_UNMODIFIED" help:"Unix timestamp (UTC + 10), without multiplier correction"`
+
+	WeatherTransition            bool   `ini:"-" help:"Enable a weather transition mid-session for this weather config"`
+	WeatherTransitionTime        int    `ini:"-" help:"Unix Timestamp of transition start time"`
+	WeatherTransitionTimeToApply int    `ini:"-" help:"How long the transition should take (in seconds)"`
+	WeatherTransitionGraphics    string `ini:"-" help:"The name of the weather to transition to"`
+	WeatherTransitionType        int    `ini:"-" help:"The type of the weather to transition to"`
 }
 
 func (w WeatherConfig) UnixToTime(unix int) time.Time {
