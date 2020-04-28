@@ -18,11 +18,9 @@
                 <strong>{{ prettify $eventSetup.Track false }} {{ with $eventSetup.TrackLayout }}({{ prettify . true }}){{ end }}</strong>
             {{ end }}
 
-            in {{ carList ($event.Cars $championship) }}
-
             <div class="float-right">
                 {{ if $event.Completed }}
-                    <span class="text-success">Complete</span>
+                    <span class="text-success">Completed on {{ localFormat $event.CompletedTime }}</span>
                 {{ else if $event.InProgress }}
                     <span class="text-primary">In Progress</span>
                 {{ else if isBefore $event.Scheduled }}

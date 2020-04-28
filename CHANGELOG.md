@@ -19,6 +19,7 @@ Added:
 * Championships and Race Weekends now autofill the schedule input with the latest date currently scheduled in that Championship/Race Weekend, hopefully this will make life easier for some admins!
 * Added a new lua plugin function for onChampionshipEventStart that can add ballast to drivers based on their finishing position in some other event in the championship.
 * Added the option to toggle on/off exporting a second race to ACSR inside an ACSR enabled championship.
+* Championship Events and Race Weekend Sessions now show the date they were completed on.
 
 Fixed:
 

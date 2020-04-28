@@ -1789,11 +1789,11 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 	return nil
 }
 
-func (cm *ChampionshipManager) DuplicateChampionship(championshipID string) error {
+func (cm *ChampionshipManager) DuplicateChampionship(championshipID string) (*Championship, error) {
 	championship, err := cm.LoadChampionship(championshipID)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var events []ChampionshipEvent
@@ -1815,13 +1815,13 @@ func (cm *ChampionshipManager) DuplicateChampionship(championshipID string) erro
 		_, err := duplicateChampionship.ImportEvent(&event)
 
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	logrus.Infof("New Championship: %s, %s. Duplicate of %s", duplicateChampionship.Name, duplicateChampionship.ID.String(), championshipID)
 
-	return cm.UpsertChampionship(duplicateChampionship)
+	return duplicateChampionship, cm.UpsertChampionship(duplicateChampionship)
 }
 
 func (cm *ChampionshipManager) DuplicateEventInChampionship(championshipID, eventID string) (*ChampionshipEvent, error) {
