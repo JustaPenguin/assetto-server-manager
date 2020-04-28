@@ -23,7 +23,6 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 	"github.com/haisum/recaptcha"
-	"github.com/mitchellh/go-wordwrap"
 	"github.com/sirupsen/logrus"
 )
 
@@ -57,23 +56,7 @@ func (cm *ChampionshipManager) applyConfigAndStart(championship *ActiveChampions
 }
 
 func (cm *ChampionshipManager) LoadChampionship(id string) (*Championship, error) {
-	championship, err := cm.store.LoadChampionship(id)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for _, event := range championship.Events {
-		if event.IsRaceWeekend() {
-			event.RaceWeekend, err = cm.store.LoadRaceWeekend(event.RaceWeekendID.String())
-
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	return championship, nil
+	return cm.store.LoadChampionship(id)
 }
 
 func (cm *ChampionshipManager) UpsertChampionship(c *Championship) error {
@@ -989,17 +972,6 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 	switch a := message.(type) {
 
 	case udp.SessionCarInfo:
-
-		if a.Event() == udp.EventNewConnection {
-
-			if cm.activeChampionship.loadedEntrants == nil {
-				cm.activeChampionship.loadedEntrants = make(map[udp.CarID]udp.SessionCarInfo)
-			}
-
-			cm.activeChampionship.loadedEntrants[a.CarID] = a
-
-		}
-
 		if championship.OpenEntrants && championship.PersistOpenEntrants && a.Event() == udp.EventNewConnection {
 			// a person joined, check to see if they need adding to the championship
 			foundSlot, classForCar, err := cm.AddEntrantFromSessionData(championship, sessionEntrantWrapper(a), false, false)
@@ -1019,51 +991,6 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			}
 		}
 
-	case udp.ClientLoaded:
-
-		entrant, ok := cm.activeChampionship.loadedEntrants[udp.CarID(a)]
-
-		if !ok {
-			return
-		}
-
-		championshipText := " Championship"
-
-		if strings.HasSuffix(strings.ToLower(championship.Name), "championship") {
-			championshipText = ""
-		}
-
-		visitServer := ""
-
-		if config != nil && config.HTTP.BaseURL != "" {
-			visitServer = fmt.Sprintf(" You can check out the results of this championship in detail at %s.",
-				config.HTTP.BaseURL+"/championship/"+championship.ID.String())
-		}
-
-		wrapped := strings.Split(wordwrap.WrapString(
-			fmt.Sprintf(
-				"This event is part of the %s%s! %s%s\n",
-				championship.Name,
-				championshipText,
-				championship.GetPlayerSummary(string(entrant.DriverGUID)),
-				visitServer,
-			),
-			60,
-		), "\n")
-
-		for _, msg := range wrapped {
-			welcomeMessage, err := udp.NewSendChat(entrant.CarID, msg)
-
-			if err == nil {
-				err := cm.process.SendUDPMessage(welcomeMessage)
-
-				if err != nil {
-					logrus.WithError(err).Errorf("Unable to send welcome message to: %s", entrant.DriverName)
-				}
-			} else {
-				logrus.WithError(err).Errorf("Unable to build welcome message to: %s", entrant.DriverName)
-			}
-		}
 	case udp.SessionInfo:
 		if a.Event() == udp.EventNewSession {
 			if championship.Events[currentEventIndex].StartedTime.IsZero() {

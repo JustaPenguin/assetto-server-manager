@@ -526,10 +526,15 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 
 	overridePassword := session.OverridePassword
 	replacementPassword := session.ReplacementPassword
+	description := fmt.Sprintf("This is a session in the '%s' Race Weekend. Please note that the server will restart between each Race Weekend session.", raceWeekend.Name)
+
+	var championshipID uuid.UUID
 
 	if raceWeekend.HasLinkedChampionship() {
 		overridePassword = raceWeekend.Championship.OverridePassword
 		replacementPassword = raceWeekend.Championship.ReplacementPassword
+		description += string(raceWeekend.Championship.Info)
+		championshipID = raceWeekend.ChampionshipID
 	}
 
 	raceWeekendRaceEvent := &ActiveRaceWeekend{
@@ -538,9 +543,10 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 		SessionID:           session.ID,
 		OverridePassword:    overridePassword,
 		ReplacementPassword: replacementPassword,
-		Description:         fmt.Sprintf("This is a session in the '%s' Race Weekend.", raceWeekend.Name),
+		Description:         description,
 		RaceConfig:          session.RaceConfig,
 		EntryList:           entryList,
+		ChampionshipID:      championshipID,
 	}
 
 	if isPracticeSession {

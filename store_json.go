@@ -344,6 +344,10 @@ func (rs *JSONStore) LoadChampionship(id string) (*Championship, error) {
 		return nil, err
 	}
 
+	if err := loadChampionshipRaceWeekends(championship, rs); err != nil {
+		return nil, err
+	}
+
 	return championship, nil
 }
 

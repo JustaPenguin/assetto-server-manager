@@ -960,6 +960,10 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 		}
 	}
 
+	if err := rc.sendChampionshipPlayerSummaryMessage(driver); err != nil {
+		logrus.WithError(err).Errorf("Couldn't send championship welcome message to driver: %s", driver.CarInfo.DriverName)
+	}
+
 	logrus.Debugf("Driver: %s (%s) loaded", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID)
 
 	driver.LoadedTime = time.Now()
@@ -967,6 +971,67 @@ func (rc *RaceControl) OnClientLoaded(loadedCar udp.ClientLoaded) error {
 	_, err = rc.broadcaster.Send(loadedCar)
 
 	return err
+}
+
+func (rc *RaceControl) sendChampionshipPlayerSummaryMessage(driver *RaceControlDriver) error {
+	var championshipID uuid.UUID
+
+	if championship, ok := rc.process.Event().(*ActiveChampionship); ok {
+		championshipID = championship.ChampionshipID
+	} else if raceWeekend, ok := rc.process.Event().(*ActiveRaceWeekend); ok {
+		championshipID = raceWeekend.ChampionshipID
+	} else {
+		return nil
+	}
+
+	if championshipID == uuid.Nil {
+		return nil
+	}
+
+	championship, err := rc.store.LoadChampionship(championshipID.String())
+
+	if err != nil {
+		return err
+	}
+
+	championshipText := " Championship"
+
+	if strings.HasSuffix(strings.ToLower(championship.Name), "championship") {
+		championshipText = ""
+	}
+
+	visitServer := ""
+
+	if config != nil && config.HTTP.BaseURL != "" {
+		visitServer = fmt.Sprintf(" You can check out the results of this championship in detail at %s.", config.HTTP.BaseURL+"/championship/"+championship.ID.String())
+	}
+
+	wrapped := strings.Split(wordwrap.WrapString(
+		fmt.Sprintf(
+			"This event is part of the %s%s! %s%s\n",
+			championship.Name,
+			championshipText,
+			championship.GetPlayerSummary(string(driver.CarInfo.DriverGUID)),
+			visitServer,
+		),
+		60,
+	), "\n")
+
+	for _, msg := range wrapped {
+		welcomeMessage, err := udp.NewSendChat(driver.CarInfo.CarID, msg)
+
+		if err == nil {
+			err := rc.process.SendUDPMessage(welcomeMessage)
+
+			if err != nil {
+				logrus.WithError(err).Errorf("Unable to send welcome message to: %s", driver.CarInfo.DriverName)
+			}
+		} else {
+			logrus.WithError(err).Errorf("Unable to build welcome message to: %s", driver.CarInfo.DriverName)
+		}
+	}
+
+	return nil
 }
 
 // OnLapCompleted occurs every time a driver crosses the line. Lap information is collected for the driver

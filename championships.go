@@ -10,8 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
-
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -208,7 +206,7 @@ func (csr ChampionshipSignUpResponse) GetGUID() string {
 func (c *Championship) FindLastResultForDriver(guid string) (out *SessionResult, teamName string) {
 	events := make([]*ChampionshipEvent, 0)
 
-	for _, event := range c.Events {
+	for _, event := range ExtractRaceWeekendSessionsIntoIndividualEvents(c.Events) {
 		if event.Completed() {
 			events = append(events, event)
 		}
@@ -1484,8 +1482,6 @@ type ActiveChampionship struct {
 	IsPracticeSession       bool
 	RaceConfig              CurrentRaceConfig
 	EntryList               EntryList
-
-	loadedEntrants map[udp.CarID]udp.SessionCarInfo
 
 	NumLapsCompleted   int `json:"-"`
 	NumRaceStartEvents int `json:"-"`
