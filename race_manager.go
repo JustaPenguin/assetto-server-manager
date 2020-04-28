@@ -654,6 +654,8 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		raceConfig.DriverSwapPenaltyTime = formValueAsInt(r.FormValue("DriverSwapPenaltyTime"))
 		raceConfig.DriverSwapMinimumNumberOfSwaps = formValueAsInt(r.FormValue("DriverSwapMinimumNumberOfSwaps"))
 		raceConfig.DriverSwapNotEnoughSwapsPenalty = formValueAsInt(r.FormValue("DriverSwapNotEnoughSwapsPenalty"))
+
+		raceConfig.ExportSecondRaceToACSR = formValueAsInt(r.FormValue("ExportSecondRaceToACSR")) == 1
 	} else {
 		raceConfig.DriverSwapEnabled = 0
 	}
