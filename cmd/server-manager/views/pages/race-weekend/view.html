@@ -144,7 +144,7 @@
                                     Not available
                                 </span>
                             {{ else if $session.Completed }}
-                                <span class="text-success">Complete</span>
+                                <span class="text-success" data-toggle="tooltip" title="Completed on {{ fullTimeFormat $session.CompletedTime }}">Complete</span>
                             {{ else if $session.InProgress }}
                                 <span class="text-primary">In Progress</span>
                             {{ else }}
@@ -358,7 +358,7 @@
                                             Not available
                                         </span>
                                 {{ else if $session.Completed }}
-                                    <span class="text-success">Complete</span>
+                                    <span class="text-success">Completed on {{ localFormat $session.CompletedTime }}</span>
                                 {{ else if $session.InProgress }}
                                     <span class="text-primary">In Progress</span>
                                 {{ else }}

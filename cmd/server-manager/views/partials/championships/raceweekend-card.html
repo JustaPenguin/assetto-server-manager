@@ -14,7 +14,7 @@
 
             <div class="float-right">
                 {{ if $raceWeekend.Completed }}
-                    <span class="text-success">Complete</span>
+                    <span class="text-success">Completed on {{ localFormat $raceWeekend.CompletedTime }}</span>
                 {{ else if (gt $raceWeekend.Progress 0.0) }}
                     <span class="text-primary">{{ printf "%2.f" $raceWeekend.Progress }}% Complete</span>
                 {{ else }}
