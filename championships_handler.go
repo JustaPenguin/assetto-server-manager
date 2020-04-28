@@ -32,7 +32,7 @@ func NewChampionshipsHandler(baseHandler *BaseHandler, championshipManager *Cham
 type championshipListTemplateVars struct {
 	BaseTemplateVars
 
-	Championships []*Championship
+	ActiveChampionships, CompletedChampionships []*Championship
 }
 
 // lists all available Championships known to Server Manager
@@ -45,8 +45,19 @@ func (ch *ChampionshipsHandler) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var activeChampionships, completedChampionships []*Championship
+
+	for _, championship := range championships {
+		if championship.Progress() == 100 {
+			completedChampionships = append(completedChampionships, championship)
+		} else {
+			activeChampionships = append(activeChampionships, championship)
+		}
+	}
+
 	ch.viewRenderer.MustLoadTemplate(w, r, "championships/index.html", &championshipListTemplateVars{
-		Championships: championships,
+		ActiveChampionships:    activeChampionships,
+		CompletedChampionships: completedChampionships,
 	})
 }
 
@@ -91,7 +102,7 @@ func (ch *ChampionshipsHandler) submit(w http.ResponseWriter, r *http.Request) {
 
 // duplicate duplicates a championship, clearing results
 func (ch *ChampionshipsHandler) duplicate(w http.ResponseWriter, r *http.Request) {
-	err := ch.championshipManager.DuplicateChampionship(chi.URLParam(r, "championshipID"))
+	championship, err := ch.championshipManager.DuplicateChampionship(chi.URLParam(r, "championshipID"))
 
 	if err != nil {
 		logrus.WithError(err).Errorf("couldn't duplicate championship (id: %s)", chi.URLParam(r, "championshipID"))
@@ -99,7 +110,8 @@ func (ch *ChampionshipsHandler) duplicate(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	http.Redirect(w, r, "/championships", http.StatusFound)
+	AddFlash(w, r, "Championship successfully duplicated!")
+	http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
 }
 
 type championshipViewTemplateVars struct {

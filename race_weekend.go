@@ -50,6 +50,22 @@ func NewRaceWeekend() *RaceWeekend {
 	}
 }
 
+func (rw *RaceWeekend) CompletedTime() time.Time {
+	t := time.Time{}
+
+	if !rw.Completed() {
+		return t
+	}
+
+	for _, session := range rw.Sessions {
+		if session.CompletedTime.After(t) {
+			t = session.CompletedTime
+		}
+	}
+
+	return t
+}
+
 func (rw *RaceWeekend) Duplicate() (*RaceWeekend, error) {
 	buf := new(bytes.Buffer)
 
