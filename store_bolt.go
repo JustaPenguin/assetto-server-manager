@@ -431,6 +431,10 @@ func (rs *BoltStore) LoadChampionship(id string) (*Championship, error) {
 		return nil, err
 	}
 
+	if err := loadChampionshipRaceWeekends(championship, rs); err != nil {
+		return nil, err
+	}
+
 	return championship, err
 }
 

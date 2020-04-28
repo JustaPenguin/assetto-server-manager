@@ -919,14 +919,14 @@ func (e RaceWeekendEntryList) AsEntryList() EntryList {
 
 // ActiveRaceWeekend indicates which RaceWeekend and RaceWeekendSession are currently running on the server.
 type ActiveRaceWeekend struct {
-	Name                     string
-	RaceWeekendID, SessionID uuid.UUID
-	OverridePassword         bool
-	ReplacementPassword      string
-	Description              string
-	IsPracticeSession        bool
-	RaceConfig               CurrentRaceConfig
-	EntryList                EntryList
+	Name                                     string
+	RaceWeekendID, SessionID, ChampionshipID uuid.UUID
+	OverridePassword                         bool
+	ReplacementPassword                      string
+	Description                              string
+	IsPracticeSession                        bool
+	RaceConfig                               CurrentRaceConfig
+	EntryList                                EntryList
 }
 
 func (a ActiveRaceWeekend) GetRaceConfig() CurrentRaceConfig {
@@ -981,6 +981,10 @@ func (a ActiveRaceWeekend) EventDescription() string {
 
 func (a ActiveRaceWeekend) GetURL() string {
 	if config.HTTP.BaseURL != "" {
+		if a.ChampionshipID != uuid.Nil {
+			return config.HTTP.BaseURL + "/championship/" + a.ChampionshipID.String()
+		}
+
 		return config.HTTP.BaseURL + "/race-weekend/" + a.RaceWeekendID.String()
 	}
 

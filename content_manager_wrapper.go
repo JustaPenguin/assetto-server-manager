@@ -18,6 +18,7 @@ import (
 
 	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 
+	"github.com/google/uuid"
 	"github.com/jaytaylor/html2text"
 	"github.com/sirupsen/logrus"
 )
@@ -193,6 +194,12 @@ func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 
 	if champ, ok := cmw.event.(*ActiveChampionship); ok {
 		if u := champ.GetURL(); u != "" {
+			champPoints = fmt.Sprintf("\n\nView the Championship points here: %s", u)
+		}
+	}
+
+	if raceWeekend, ok := cmw.event.(*ActiveRaceWeekend); ok {
+		if u := raceWeekend.GetURL(); u != "" && raceWeekend.ChampionshipID != uuid.Nil {
 			champPoints = fmt.Sprintf("\n\nView the Championship points here: %s", u)
 		}
 	}
@@ -469,9 +476,18 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 	sessionInfo.Country = []string{geoInfo.CountryName, geoInfo.CountryCode}
 
 	var description string
+	var championshipID uuid.UUID
 
 	if champ, ok := cmw.event.(*ActiveChampionship); ok {
-		championship, err := cmw.store.LoadChampionship(champ.ChampionshipID.String())
+		championshipID = champ.ChampionshipID
+	}
+
+	if raceWeekend, ok := cmw.event.(*ActiveRaceWeekend); ok {
+		championshipID = raceWeekend.ChampionshipID
+	}
+
+	if championshipID != uuid.Nil {
+		championship, err := cmw.store.LoadChampionship(championshipID.String())
 
 		if err == nil {
 			description = championship.GetPlayerSummary(guid) + "\n\n"

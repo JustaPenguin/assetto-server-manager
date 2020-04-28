@@ -29,6 +29,8 @@ Fixed:
 * Improved accuracy of DLC/Original Game information in content lists.
 * Race Weekend Sessions now indicate if there is an extra lap at the end of a race.
 * Fixes an issue where starting a race would sometimes cause Server Manager to freeze.
+* Content Manager now shows Championship descriptions for Championship Race Weekends.
+* Championship Race Weekends now send users their Championship points summary when they join.
 
 ---
 
