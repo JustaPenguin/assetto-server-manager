@@ -370,9 +370,14 @@ export namespace RaceWeekend {
                 $table.find("tr:not(:first-child)").remove();
                 this.buildClassKey(response.Classes);
 
-                for (let i = 0; i < grid.length || i < results.length; i++) {
+                for (let i = 0; i < Math.max(grid.length, results.length); i++) {
                     let $row = $("<tr>");
-                    $row.append(this.buildTableDataForEntrant(results[i], i));
+
+                    if (i < results.length) {
+                        $row.append(this.buildTableDataForEntrant(results[i], i));
+                    } else {
+                        $row.append($("<td>"));
+                    }
 
                     if (i < grid.length) {
                         $row.append(this.buildTableDataForEntrant(grid[i], i));

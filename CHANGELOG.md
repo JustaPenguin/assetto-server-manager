@@ -31,6 +31,7 @@ Fixed:
 * Fixes an issue where starting a race would sometimes cause Server Manager to freeze.
 * Content Manager now shows Championship descriptions for Championship Race Weekends.
 * Championship Race Weekends now send users their Championship points summary when they join.
+* Fixes an issue where the full grid would not be shown in the Race Weekend filter preview.
 
 ---
 
