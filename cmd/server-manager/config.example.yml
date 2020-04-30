@@ -147,7 +147,7 @@ store:
   # check for new scheduled races not created by server manager on a loop. this is an experimental
   # feature, and should not be used by most people. formats look like, e.g. 15s, 1m, 2h
   # 0s == disabled. recommended values are 5m and above.
-  scheduled_event_check_loop: 30s
+  scheduled_event_check_loop: 0s
 
 ################################################################################
 #
