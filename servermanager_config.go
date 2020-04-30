@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/cj123/sessions"
 	"github.com/etcd-io/bbolt"
@@ -110,6 +111,7 @@ type StoreConfig struct {
 	Type       string `yaml:"type"`
 	Path       string `yaml:"path"`
 	SharedPath string `yaml:"shared_data_path"`
+	ScheduledEventCheckLoop time.Duration `yaml:"scheduled_event_check_loop"`
 }
 
 func (s *StoreConfig) BuildStore() (Store, error) {

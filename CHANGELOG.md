@@ -20,6 +20,7 @@ Added:
 * Added a new lua plugin function for onChampionshipEventStart that can add ballast to drivers based on their finishing position in some other event in the championship.
 * Added the option to toggle on/off exporting a second race to ACSR inside an ACSR enabled championship.
 * Championship Events and Race Weekend Sessions now show the date they were completed on.
+* You can now activate a timed scanner for new Scheduled Events that you have created/imported manually. Experimental, and only intended for advanced users.
 
 Fixed:
 
