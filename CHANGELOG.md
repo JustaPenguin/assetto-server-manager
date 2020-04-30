@@ -33,6 +33,7 @@ Fixed:
 * Content Manager now shows Championship descriptions for Championship Race Weekends.
 * Championship Race Weekends now send users their Championship points summary when they join.
 * Fixes an issue where the full grid would not be shown in the Race Weekend filter preview.
+* Made the new password screen a bit more visually unique, and added a paragraph to explain to new users that they should set their own password rather than using the default one.
 
 ---
 
