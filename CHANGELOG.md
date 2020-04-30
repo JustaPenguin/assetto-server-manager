@@ -33,6 +33,7 @@ Fixed:
 * Content Manager now shows Championship descriptions for Championship Race Weekends.
 * Championship Race Weekends now send users their Championship points summary when they join.
 * Fixes an issue where the full grid would not be shown in the Race Weekend filter preview.
+* Tyres with unsafe characters in the name (e.g. sv60's) should no longer cause issues with the Custom Race form.
 
 ---
 

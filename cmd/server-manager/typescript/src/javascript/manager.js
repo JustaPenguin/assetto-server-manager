@@ -571,60 +571,66 @@ class RaceSetup {
      */
     populateTyreDropdown() {
         // quick race doesn't have tyre set up.
-        if (typeof availableTyres === "undefined" || !this.$carsDropdown.length) {
-            return
-        }
+        try {
+            if (typeof availableTyres === "undefined" || !this.$carsDropdown.length) {
+                return
+            }
 
-        let cars = this.$carsDropdown.val();
+            let cars = this.$carsDropdown.val();
 
-        let allValidTyres = new Set();
-        let tyreCars = {};
+            let allValidTyres = new Set();
+            let tyreCars = {};
 
-        for (let index = 0; index < cars.length; index++) {
-            let car = cars[index];
-            let carTyres = availableTyres[car];
+            for (let index = 0; index < cars.length; index++) {
+                let car = cars[index];
+                let carTyres = availableTyres[car];
 
-            for (let tyre in carTyres) {
-                if (!tyreCars[tyre]) {
-                    tyreCars[tyre] = []
+                for (let tyre in carTyres) {
+                    if (!tyreCars[tyre]) {
+                        tyreCars[tyre] = []
+                    }
+
+                    tyreCars[tyre].push(car)
                 }
-
-                tyreCars[tyre].push(car)
             }
-        }
 
-        for (let index = 0; index < cars.length; index++) {
-            let car = cars[index];
-            let carTyres = availableTyres[car];
+            for (let index = 0; index < cars.length; index++) {
+                let car = cars[index];
+                let carTyres = availableTyres[car];
 
-            for (let tyre in carTyres) {
-                allValidTyres.add(tyre);
+                for (let tyre in carTyres) {
+                    let escapedTyre = escape(tyre)
 
-                let $dropdownTyre = this.$tyresDropdown.find("option[value='" + tyre + "']");
+                    allValidTyres.add(escapedTyre);
 
-                if ($dropdownTyre.length) {
-                    $dropdownTyre.text(carTyres[tyre] + " (" + tyre + ")" + makeCarString(tyreCars[tyre]));
-                    continue; // this has already been added
+                    let $dropdownTyre = this.$tyresDropdown.find("option[value='" + escapedTyre + "']");
+
+                    if ($dropdownTyre.length) {
+                        $dropdownTyre.text(carTyres[tyre] + " (" + tyre + ")" + makeCarString(tyreCars[tyre]));
+                        continue; // this has already been added
+                    }
+
+                    this.$tyresDropdown.multiSelect('addOption', {
+                        'value': escapedTyre,
+                        'text': carTyres[tyre] + " (" + tyre + ")" + makeCarString(tyreCars[tyre]),
+                    });
+
+                    this.$tyresDropdown.multiSelect('select', escapedTyre);
                 }
-
-                this.$tyresDropdown.multiSelect('addOption', {
-                    'value': tyre,
-                    'text': carTyres[tyre] + " (" + tyre + ")" + makeCarString(tyreCars[tyre]),
-                });
-
-                this.$tyresDropdown.multiSelect('select', tyre);
             }
+
+            this.$tyresDropdown.find("option").each(function (index, elem) {
+                let $elem = $(elem);
+
+                if (!allValidTyres.has($elem.val())) {
+                    $elem.remove();
+                }
+            });
+
+            this.$tyresDropdown.multiSelect('refresh');
+        } catch(err) {
+            console.log("poopulateTypeDropdown failed: " + err.message)
         }
-
-        this.$tyresDropdown.find("option").each(function (index, elem) {
-            let $elem = $(elem);
-
-            if (!allValidTyres.has($elem.val())) {
-                $elem.remove();
-            }
-        });
-
-        this.$tyresDropdown.multiSelect('refresh');
     }
 
     /**
