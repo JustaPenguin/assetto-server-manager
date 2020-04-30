@@ -119,6 +119,7 @@ func Router(
 		r.Get("/weather", weatherHandler.list)
 
 		r.Get("/events.ics", scheduledRacesHandler.allScheduledRacesICalHandler)
+		r.Get("/event-details", customRaceHandler.view)
 
 		// results
 		r.Get("/results", resultsHandler.list)

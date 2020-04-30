@@ -124,13 +124,17 @@ func (cr *CustomRace) GetForceStopWithDrivers() bool {
 type CustomRaceHandler struct {
 	*BaseHandler
 
-	raceManager *RaceManager
+	raceManager         *RaceManager
+	championshipManager *ChampionshipManager
+	store               Store
 }
 
-func NewCustomRaceHandler(base *BaseHandler, raceManager *RaceManager) *CustomRaceHandler {
+func NewCustomRaceHandler(base *BaseHandler, raceManager *RaceManager, store Store, championshipManager *ChampionshipManager) *CustomRaceHandler {
 	return &CustomRaceHandler{
-		BaseHandler: base,
-		raceManager: raceManager,
+		BaseHandler:         base,
+		raceManager:         raceManager,
+		store:               store,
+		championshipManager: championshipManager,
 	}
 }
 
@@ -154,6 +158,90 @@ func (crh *CustomRaceHandler) list(w http.ResponseWriter, r *http.Request) {
 		Starred:   starred,
 		Loop:      looped,
 		Scheduled: scheduled,
+	})
+}
+
+type eventDetailsTemplateVars struct {
+	BaseTemplateVars
+
+	EventConfig    CurrentRaceConfig
+	EntryList      EntryList
+	EventName      string
+	IsChampionship bool
+}
+
+func (crh *CustomRaceHandler) view(w http.ResponseWriter, r *http.Request) {
+	var eventConfig CurrentRaceConfig
+	var eventName string
+	var entryList EntryList
+	var isChampionship bool
+
+	if customRaceID := r.URL.Query().Get("custom-race"); customRaceID != "" {
+		race, err := crh.store.FindCustomRaceByID(customRaceID)
+
+		if err != nil {
+			panic(err)
+		}
+
+		eventConfig = race.RaceConfig
+		eventName = race.Name
+		entryList = race.EntryList
+	} else if championshipID := r.URL.Query().Get("championshipID"); championshipID != "" {
+		championship, err := crh.store.LoadChampionship(championshipID)
+
+		if err != nil {
+			panic(err)
+		}
+
+		eventID := r.URL.Query().Get("eventID")
+
+		event, _, err := championship.EventByID(eventID)
+
+		if err != nil {
+			panic(err)
+		}
+
+		eventName = "Championship Event"
+		eventConfig, entryList = crh.championshipManager.FinalEventConfigurationFiles(championship, event, false)
+
+		isChampionship = true
+	} else if raceWeekendID := r.URL.Query().Get("raceWeekendID"); raceWeekendID != "" {
+		raceWeekend, err := crh.store.LoadRaceWeekend(raceWeekendID)
+
+		if err != nil {
+			panic(err)
+		}
+
+		sessionID := r.URL.Query().Get("sessionID")
+
+		session, err := raceWeekend.FindSessionByID(sessionID)
+
+		if err != nil {
+			panic(err)
+		}
+
+		eventConfig = session.RaceConfig
+		eventName = session.Name()
+		rwe, err := session.GetRaceWeekendEntryList(raceWeekend, nil, "")
+
+		if err != nil {
+			panic(err)
+		}
+
+		entryList = rwe.AsEntryList()
+		isChampionship = raceWeekend.HasLinkedChampionship()
+	}
+
+	if eventConfig.Track == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	crh.viewRenderer.MustLoadPartial(w, r, "custom-race/popups/view.html", &eventDetailsTemplateVars{
+		EventConfig:    eventConfig,
+		EventName:      eventName,
+		EntryList:      entryList,
+		IsChampionship: isChampionship,
 	})
 }
 

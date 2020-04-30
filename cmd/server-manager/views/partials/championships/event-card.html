@@ -266,7 +266,6 @@
                     {{/* race controls buttons */}}
 
                     <div class="pt-5 championship-button-row">
-
                         {{ if WriteAccess }}
                             {{ if not (or $event.InProgress $event.Completed) }}
 
@@ -397,6 +396,13 @@
                                 </div>
                             {{ end }}
                         {{ end }}
+
+                        <a class="btn btn-info championship-event-details"
+                           href="#"
+                           data-event-id="{{ $event.ID }}"
+                        >
+                            Event Details
+                        </a>
                     </div>
                 </div>
 

@@ -183,6 +183,7 @@ func (tr *Renderer) init() error {
 	}
 	funcs["ordinal"] = ordinal
 	funcs["prettify"] = prettifyName
+	funcs["weatherName"] = weatherName
 	funcs["carList"] = carList
 	funcs["jsonEncode"] = jsonEncode
 	funcs["varSplit"] = varSplit
@@ -219,6 +220,13 @@ func (tr *Renderer) init() error {
 	funcs["formatDuration"] = formatDuration
 	funcs["appendQuery"] = appendQuery
 	funcs["ChangelogHTML"] = changelogHTML
+	funcs["yn"] = func(b bool) string {
+		if b {
+			return "Yes"
+		} else {
+			return "No"
+		}
+	}
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
@@ -435,6 +443,22 @@ func prettifyName(s string, acronyms bool) string {
 	}
 
 	return strings.Join(parts, " ")
+}
+
+func weatherName(key string) string {
+	weathers, err := ListWeather()
+
+	if err != nil {
+		return key
+	}
+
+	key = strings.Split(key, "_type=")[0]
+
+	if name, ok := weathers[key]; ok {
+		return name
+	} else {
+		return prettifyName(key, false)
+	}
 }
 
 func stringArrayToCSV(array []string) string {
