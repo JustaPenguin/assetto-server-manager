@@ -1245,9 +1245,9 @@ func (c *ChampionshipClass) StandingsForEntrantAtEvent(event *ChampionshipEvent,
 			case i == 2:
 				backgroundColour = "#ffde9e"
 			case i > 2 && i <= 9:
-				backgroundColour = fmt.Sprintf("rgb(%d, %d, %d)", 223 - (i*3), 254 - (i*3), 223 - (i*3))
+				backgroundColour = fmt.Sprintf("rgb(%d, %d, %d)", 223-(i*3), 254-(i*3), 223-(i*3))
 			case i > 9:
-				backgroundColour = fmt.Sprintf("rgb(%d, %d, %d)", 208 - (i*3), 206 - (i*3), 255 - (i*3))
+				backgroundColour = fmt.Sprintf("rgb(%d, %d, %d)", 208-(i*3), 206-(i*3), 255-(i*3))
 			}
 
 			outputStanding = standing
