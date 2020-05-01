@@ -767,100 +767,104 @@
                         </div>
                     </div>
 
-                    <div class="form-group row">
-                        <label for="DriverSwapMinTime" class="col-sm-3 col-form-label">Minimum Driver Swap Time (seconds)</label>
 
-                        <div class="col-sm-9">
-                            <input
-                                    type="number"
-                                    id="DriverSwapMinTime"
-                                    name="DriverSwapMinTime"
-                                    class="form-control"
-                                    value="{{ $f.DriverSwapMinTime }}"
-                                    step="1"
-                            >
+                    <div class="visible-driver-swap-enabled">
+                        <div class="form-group row">
+                            <label for="DriverSwapMinTime" class="col-sm-3 col-form-label">Minimum Driver Swap Time (seconds)</label>
 
-                            <small>
-                                Minimum time for a driver swap, used to avoid giving users with faster computers an advantage. If the second driver sets off before this time they will be disqualified/given a penalty based on configuration.
-                            </small>
+                            <div class="col-sm-9">
+                                <input
+                                        type="number"
+                                        id="DriverSwapMinTime"
+                                        name="DriverSwapMinTime"
+                                        class="form-control"
+                                        value="{{ $f.DriverSwapMinTime }}"
+                                        step="1"
+                                >
+
+                                <small>
+                                    Minimum time for a driver swap, used to avoid giving users with faster computers an advantage. If the second driver sets off before this time they will be disqualified/given a penalty based on configuration.
+                                </small>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="form-group row">
-                        <label for="DriverSwapDisqualifyTime" class="col-sm-3 col-form-label">Driver Swap Disqualification Window (seconds)</label>
+                        <div class="form-group row">
+                            <label for="DriverSwapDisqualifyTime" class="col-sm-3 col-form-label">Driver Swap Disqualification Window (seconds)</label>
 
-                        <div class="col-sm-9">
-                            <input
-                                    type="number"
-                                    id="DriverSwapDisqualifyTime"
-                                    name="DriverSwapDisqualifyTime"
-                                    class="form-control"
-                                    value="{{ $f.DriverSwapDisqualifyTime }}"
-                                    step="1"
-                            >
+                            <div class="col-sm-9">
+                                <input
+                                        type="number"
+                                        id="DriverSwapDisqualifyTime"
+                                        name="DriverSwapDisqualifyTime"
+                                        class="form-control"
+                                        value="{{ $f.DriverSwapDisqualifyTime }}"
+                                        step="1"
+                                >
 
-                            <small>
-                                Driver will be kicked from the race and disqualified if they set off this many seconds or more before the minimum time during a Driver Swap.
-                            </small>
+                                <small>
+                                    Driver will be kicked from the race and disqualified if they set off this many seconds or more before the minimum time during a Driver Swap.
+                                </small>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="form-group row">
-                        <label for="DriverSwapPenaltyTime" class="col-sm-3 col-form-label">Driver Swap Penalty Window (seconds)</label>
+                        <div class="form-group row">
+                            <label for="DriverSwapPenaltyTime" class="col-sm-3 col-form-label">Driver Swap Penalty Window (seconds)</label>
 
-                        <div class="col-sm-9">
-                            <input
-                                    type="number"
-                                    id="DriverSwapPenaltyTime"
-                                    name="DriverSwapPenaltyTime"
-                                    class="form-control"
-                                    value="{{ $f.DriverSwapPenaltyTime }}"
-                                    step="1"
-                            >
+                            <div class="col-sm-9">
+                                <input
+                                        type="number"
+                                        id="DriverSwapPenaltyTime"
+                                        name="DriverSwapPenaltyTime"
+                                        class="form-control"
+                                        value="{{ $f.DriverSwapPenaltyTime }}"
+                                        step="1"
+                                >
 
-                            <small>
-                                If a driver sets off this many seconds or more before the minimum time during a Driver Swap,
-                                they will be given a penalty equal to the number of seconds left in the countdown plus 5 seconds.
-                            </small>
+                                <small>
+                                    If a driver sets off this many seconds or more before the minimum time during a Driver Swap,
+                                    they will be given a penalty equal to the number of seconds left in the countdown plus 5 seconds.
+                                </small>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="form-group row">
-                        <label for="DriverSwapMinimumNumberOfSwaps" class="col-sm-3 col-form-label">Minimum Number Of Driver Swaps</label>
+                        <div class="form-group row">
+                            <label for="DriverSwapMinimumNumberOfSwaps" class="col-sm-3 col-form-label">Minimum Number Of Driver Swaps</label>
 
-                        <div class="col-sm-9">
-                            <input
-                                    type="number"
-                                    id="DriverSwapMinimumNumberOfSwaps"
-                                    name="DriverSwapMinimumNumberOfSwaps"
-                                    class="form-control"
-                                    value="{{ $f.DriverSwapMinimumNumberOfSwaps }}"
-                                    step="1"
-                            >
+                            <div class="col-sm-9">
+                                <input
+                                        type="number"
+                                        id="DriverSwapMinimumNumberOfSwaps"
+                                        name="DriverSwapMinimumNumberOfSwaps"
+                                        class="form-control"
+                                        value="{{ $f.DriverSwapMinimumNumberOfSwaps }}"
+                                        step="1"
+                                >
 
-                            <small>
-                                The number of swaps that a driver must complete. If they do not complete the required number of stops, they are penalised (see below).
-                            </small>
+                                <small>
+                                    The number of swaps that a driver must complete. If they do not complete the required number of stops, they are penalised (see below).
+                                </small>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="form-group row">
-                        <label for="DriverSwapNotEnoughSwapsPenalty" class="col-sm-3 col-form-label">Not Enough Driver Swaps Penalty (seconds)</label>
+                        <div class="form-group row">
+                            <label for="DriverSwapNotEnoughSwapsPenalty" class="col-sm-3 col-form-label">Not Enough Driver Swaps Penalty (seconds)</label>
 
-                        <div class="col-sm-9">
-                            <input
-                                    type="number"
-                                    id="DriverSwapNotEnoughSwapsPenalty"
-                                    name="DriverSwapNotEnoughSwapsPenalty"
-                                    class="form-control"
-                                    value="{{ $f.DriverSwapNotEnoughSwapsPenalty }}"
-                                    step="1"
-                            >
+                            <div class="col-sm-9">
+                                <input
+                                        type="number"
+                                        id="DriverSwapNotEnoughSwapsPenalty"
+                                        name="DriverSwapNotEnoughSwapsPenalty"
+                                        class="form-control"
+                                        value="{{ $f.DriverSwapNotEnoughSwapsPenalty }}"
+                                        step="1"
+                                >
 
-                            <small>
-                                The penalty in seconds that is applied to a driver for each Driver Swap under the required minimum that they missed. If set to 0, the driver is disqualified.
-                            </small>
+                                <small>
+                                    The penalty in seconds that is applied to a driver for each Driver Swap under the required minimum that they missed. If set to 0, the driver is disqualified.
+                                </small>
+                            </div>
                         </div>
+
                     </div>
 
                     <br>

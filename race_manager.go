@@ -605,8 +605,8 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		TrackLayout: trackLayout,
 
 		// assists
-		ABSAllowed:              formValueAsInt(r.FormValue("ABSAllowed")),
-		TractionControlAllowed:  formValueAsInt(r.FormValue("TractionControlAllowed")),
+		ABSAllowed:              FactoryAssist(formValueAsInt(r.FormValue("ABSAllowed"))),
+		TractionControlAllowed:  FactoryAssist(formValueAsInt(r.FormValue("TractionControlAllowed"))),
 		StabilityControlAllowed: formValueAsInt(r.FormValue("StabilityControlAllowed")),
 		AutoClutchAllowed:       formValueAsInt(r.FormValue("AutoClutchAllowed")),
 		TyreBlanketsAllowed:     formValueAsInt(r.FormValue("TyreBlanketsAllowed")),
@@ -646,7 +646,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		AllowedTyresOut:           formValueAsInt(r.FormValue("AllowedTyresOut")),
 		LoopMode:                  loopMode,
 		RaceOverTime:              formValueAsInt(r.FormValue("RaceOverTime")),
-		StartRule:                 formValueAsInt(r.FormValue("StartRule")),
+		StartRule:                 StartRule(formValueAsInt(r.FormValue("StartRule"))),
 		MaxClients:                formValueAsInt(r.FormValue("MaxClients")),
 		RaceExtraLap:              formValueAsInt(r.FormValue("RaceExtraLap")),
 		MaxContactsPerKilometer:   formValueAsInt(r.FormValue("MaxContactsPerKilometer")),
@@ -696,7 +696,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 			Name:     r.FormValue(sessName + ".Name"),
 			Time:     formValueAsInt(r.FormValue(sessName + ".Time")),
 			Laps:     formValueAsInt(r.FormValue(sessName + ".Laps")),
-			IsOpen:   formValueAsInt(r.FormValue(sessName + ".IsOpen")),
+			IsOpen:   SessionOpenness(formValueAsInt(r.FormValue(sessName + ".IsOpen"))),
 			WaitTime: formValueAsInt(r.FormValue(sessName + ".WaitTime")),
 		})
 	}

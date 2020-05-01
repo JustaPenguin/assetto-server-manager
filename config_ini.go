@@ -199,6 +199,7 @@ type GlobalServerConfig struct {
 	RestartEventOnServerManagerLaunch int         `ini:"-" input:"checkbox" help:"When on, if Server Manager is stopped while there is an event in progress, Server Manager will try to restart the event when Server Manager is restarted."`
 	LogACServerOutputToFile           bool        `ini:"-" show:"open" input:"checkbox" help:"When on, Server Manager will output each Assetto Corsa session into a log file in the logs folder."`
 	NumberOfACServerLogsToKeep        int         `ini:"-" show:"open" help:"The number of AC Server logs to keep in the logs folder. (Oldest files will be deleted first. 0 = keep all files)"`
+	ShowEventDetailsPopup             bool        `ini:"-" help:"Allows all users to view a popup that describes in detail the setup of Custom Races, Championship Events and Race Weekend Sessions."`
 
 	// Discord Integration
 	DiscordIntegration FormHeading `ini:"-" json:"-" input:"heading"`
@@ -227,32 +228,62 @@ func (gsc GlobalServerConfig) GetName() string {
 	return gsc.Name
 }
 
+type FactoryAssist int
+
+func (a FactoryAssist) String() string {
+	switch a {
+	case 0:
+		return "Off"
+	case 1:
+		return "Factory"
+	case 2:
+		return "On"
+	}
+
+	return ""
+}
+
+type StartRule int
+
+func (s StartRule) String() string {
+	switch s {
+	case 0:
+		return "Car is Locked Until Start"
+	case 1:
+		return "Teleport"
+	case 2:
+		return "Drive Through"
+	}
+
+	return ""
+}
+
 type CurrentRaceConfig struct {
-	Cars                      string `ini:"CARS" show:"quick" input:"multiSelect" formopts:"CarOpts" help:"Models of cars allowed in the server"`
-	Track                     string `ini:"TRACK" show:"quick" input:"dropdown" formopts:"TrackOpts" help:"Track name"`
-	TrackLayout               string `ini:"CONFIG_TRACK" show:"quick" input:"dropdown" formopts:"TrackLayoutOpts" help:"Track layout. Some raceSetup don't have this."`
-	SunAngle                  int    `ini:"SUN_ANGLE" help:"Angle of the position of the sun"`
-	LegalTyres                string `ini:"LEGAL_TYRES" help:"List of tyres short names that are allowed"`
-	FuelRate                  int    `ini:"FUEL_RATE" min:"0" help:"Fuel usage from 0 (no fuel usage) to XXX (100 is the realistic one)"`
-	DamageMultiplier          int    `ini:"DAMAGE_MULTIPLIER" min:"0" max:"100" help:"Damage from 0 (no damage) to 100 (full damage)"`
-	TyreWearRate              int    `ini:"TYRE_WEAR_RATE" min:"0" help:"Tyre wear from 0 (no tyre wear) to XXX (100 is the realistic one)"`
-	AllowedTyresOut           int    `ini:"ALLOWED_TYRES_OUT" help:"TODO: I have no idea"`
-	ABSAllowed                int    `ini:"ABS_ALLOWED" min:"0" max:"2" help:"0 -> no car can use ABS, 1 -> only car provided with ABS can use it; 2-> any car can use ABS"`
-	TractionControlAllowed    int    `ini:"TC_ALLOWED" min:"0" max:"2" help:"0 -> no car can use TC, 1 -> only car provided with TC can use it; 2-> any car can use TC"`
-	StabilityControlAllowed   int    `ini:"STABILITY_ALLOWED" input:"checkbox" help:"Stability assist 0 -> OFF; 1 -> ON"`
-	AutoClutchAllowed         int    `ini:"AUTOCLUTCH_ALLOWED" input:"checkbox" help:"Autoclutch assist 0 -> OFF; 1 -> ON"`
-	TyreBlanketsAllowed       int    `ini:"TYRE_BLANKETS_ALLOWED" input:"checkbox" help:"at the start of the session or after the pitstop the tyre will have the the optimal temperature"`
-	ForceVirtualMirror        int    `ini:"FORCE_VIRTUAL_MIRROR" input:"checkbox" help:"1 virtual mirror will be enabled for every client, 0 for mirror as optional"`
-	RacePitWindowStart        int    `ini:"RACE_PIT_WINDOW_START" help:"pit window opens at lap/minute specified"`
-	RacePitWindowEnd          int    `ini:"RACE_PIT_WINDOW_END" help:"pit window closes at lap/minute specified"`
-	ReversedGridRacePositions int    `ini:"REVERSED_GRID_RACE_POSITIONS" help:" 0 = no additional race, 1toX = only those position will be reversed for the next race, -1 = all the position will be reversed (Retired players will be on the last positions)"`
-	TimeOfDayMultiplier       int    `ini:"TIME_OF_DAY_MULT" help:"multiplier for the time of day"`
-	QualifyMaxWaitPercentage  int    `ini:"QUALIFY_MAX_WAIT_PERC" help:"The factor to calculate the remaining time in a qualify session after the session is ended: 120 means that 120% of the session fastest lap remains to end the current lap."`
-	RaceGasPenaltyDisabled    int    `ini:"RACE_GAS_PENALTY_DISABLED" input:"checkbox" help:"0 = any cut will be penalized with the gas cut message; 1 = no penalization will be forced, but cuts will be saved in the race result json."`
-	MaxBallastKilograms       int    `ini:"MAX_BALLAST_KG" help:"the max total of ballast that can be added to an entrant in the entry list or through the admin command"`
-	RaceExtraLap              int    `ini:"RACE_EXTRA_LAP" input:"checkbox" help:"If the race is timed, force an extra lap after the leader has crossed the line"`
-	MaxContactsPerKilometer   int    `ini:"MAX_CONTACTS_PER_KM" help:"Maximum number times you can make contact with another car in 1 kilometer."`
-	ResultScreenTime          int    `ini:"RESULT_SCREEN_TIME" help:"Seconds of result screen between racing sessions"`
+	Cars                      string        `ini:"CARS" show:"quick" input:"multiSelect" formopts:"CarOpts" help:"Models of cars allowed in the server"`
+	Track                     string        `ini:"TRACK" show:"quick" input:"dropdown" formopts:"TrackOpts" help:"Track name"`
+	TrackLayout               string        `ini:"CONFIG_TRACK" show:"quick" input:"dropdown" formopts:"TrackLayoutOpts" help:"Track layout. Some raceSetup don't have this."`
+	SunAngle                  int           `ini:"SUN_ANGLE" help:"Angle of the position of the sun"`
+	LegalTyres                string        `ini:"LEGAL_TYRES" help:"List of tyres short names that are allowed"`
+	FuelRate                  int           `ini:"FUEL_RATE" min:"0" help:"Fuel usage from 0 (no fuel usage) to XXX (100 is the realistic one)"`
+	DamageMultiplier          int           `ini:"DAMAGE_MULTIPLIER" min:"0" max:"100" help:"Damage from 0 (no damage) to 100 (full damage)"`
+	TyreWearRate              int           `ini:"TYRE_WEAR_RATE" min:"0" help:"Tyre wear from 0 (no tyre wear) to XXX (100 is the realistic one)"`
+	AllowedTyresOut           int           `ini:"ALLOWED_TYRES_OUT" help:"TODO: I have no idea"`
+	ABSAllowed                FactoryAssist `ini:"ABS_ALLOWED" min:"0" max:"2" help:"0 -> no car can use ABS, 1 -> only car provided with ABS can use it; 2-> any car can use ABS"`
+	TractionControlAllowed    FactoryAssist `ini:"TC_ALLOWED" min:"0" max:"2" help:"0 -> no car can use TC, 1 -> only car provided with TC can use it; 2-> any car can use TC"`
+	StabilityControlAllowed   int           `ini:"STABILITY_ALLOWED" input:"checkbox" help:"Stability assist 0 -> OFF; 1 -> ON"`
+	AutoClutchAllowed         int           `ini:"AUTOCLUTCH_ALLOWED" input:"checkbox" help:"Autoclutch assist 0 -> OFF; 1 -> ON"`
+	TyreBlanketsAllowed       int           `ini:"TYRE_BLANKETS_ALLOWED" input:"checkbox" help:"at the start of the session or after the pitstop the tyre will have the the optimal temperature"`
+	ForceVirtualMirror        int           `ini:"FORCE_VIRTUAL_MIRROR" input:"checkbox" help:"1 virtual mirror will be enabled for every client, 0 for mirror as optional"`
+	RacePitWindowStart        int           `ini:"RACE_PIT_WINDOW_START" help:"pit window opens at lap/minute specified"`
+	RacePitWindowEnd          int           `ini:"RACE_PIT_WINDOW_END" help:"pit window closes at lap/minute specified"`
+	ReversedGridRacePositions int           `ini:"REVERSED_GRID_RACE_POSITIONS" help:" 0 = no additional race, 1toX = only those position will be reversed for the next race, -1 = all the position will be reversed (Retired players will be on the last positions)"`
+	TimeOfDayMultiplier       int           `ini:"TIME_OF_DAY_MULT" help:"multiplier for the time of day"`
+	QualifyMaxWaitPercentage  int           `ini:"QUALIFY_MAX_WAIT_PERC" help:"The factor to calculate the remaining time in a qualify session after the session is ended: 120 means that 120% of the session fastest lap remains to end the current lap."`
+	RaceGasPenaltyDisabled    int           `ini:"RACE_GAS_PENALTY_DISABLED" input:"checkbox" help:"0 = any cut will be penalized with the gas cut message; 1 = no penalization will be forced, but cuts will be saved in the race result json."`
+	MaxBallastKilograms       int           `ini:"MAX_BALLAST_KG" help:"the max total of ballast that can be added to an entrant in the entry list or through the admin command"`
+	RaceExtraLap              int           `ini:"RACE_EXTRA_LAP" input:"checkbox" help:"If the race is timed, force an extra lap after the leader has crossed the line"`
+	MaxContactsPerKilometer   int           `ini:"MAX_CONTACTS_PER_KM" help:"Maximum number times you can make contact with another car in 1 kilometer."`
+	ResultScreenTime          int           `ini:"RESULT_SCREEN_TIME" help:"Seconds of result screen between racing sessions"`
 
 	PickupModeEnabled int `ini:"PICKUP_MODE_ENABLED" input:"checkbox" help:"if 0 the server start in booking mode (do not use it). Warning: in pickup mode you have to list only a circuit under TRACK and you need to list a least one car in the entry_list"`
 	LockedEntryList   int `ini:"LOCKED_ENTRY_LIST" input:"checkbox" help:"Only players already included in the entry list can join the server"`
@@ -265,9 +296,9 @@ type CurrentRaceConfig struct {
 	DriverSwapMinimumNumberOfSwaps  int `ini:"-" help:"Minimum number of swaps required."`
 	DriverSwapNotEnoughSwapsPenalty int `ini:"-" help:"Penalty to be applied if the minimum number of swaps is not met. Applied once per each swap not taken. (Seconds)"`
 
-	MaxClients   int `ini:"MAX_CLIENTS" help:"max number of clients (must be <= track's number of pits)"`
-	RaceOverTime int `ini:"RACE_OVER_TIME" help:"time remaining in seconds to finish the race from the moment the first one passes on the finish line"`
-	StartRule    int `ini:"START_RULE" min:"0" max:"2" help:"0 is car locked until start;   1 is teleport   ; 2 is drive-through (if race has 3 or less laps then the Teleport penalty is enabled)"`
+	MaxClients   int       `ini:"MAX_CLIENTS" help:"max number of clients (must be <= track's number of pits)"`
+	RaceOverTime int       `ini:"RACE_OVER_TIME" help:"time remaining in seconds to finish the race from the moment the first one passes on the finish line"`
+	StartRule    StartRule `ini:"START_RULE" min:"0" max:"2" help:"0 is car locked until start;   1 is teleport   ; 2 is drive-through (if race has 3 or less laps then the Teleport penalty is enabled)"`
 
 	IsSol int `ini:"-" help:"Allows for 24 hour time cycles. The server treats time differently if enabled. Clients also require Sol and Content Manager"`
 
@@ -371,12 +402,27 @@ func (c *CurrentRaceConfig) RemoveWeather(weather *WeatherConfig) {
 	}
 }
 
+type SessionOpenness int
+
+func (s SessionOpenness) String() string {
+	switch s {
+	case 0:
+		return "No Join"
+	case 1:
+		return "Free Join"
+	case 2:
+		return "Free join until 20 seconds to the green light"
+	}
+
+	return ""
+}
+
 type SessionConfig struct {
-	Name     string `ini:"NAME" show:"quick"`
-	Time     int    `ini:"TIME" show:"quick" help:"session length in minutes"`
-	Laps     int    `ini:"LAPS" show:"quick" help:"number of laps in the race"`
-	IsOpen   int    `ini:"IS_OPEN" input:"checkbox" help:"0 = no join, 1 = free join, 2 = free join until 20 seconds to the green light"`
-	WaitTime int    `ini:"WAIT_TIME" help:"seconds before the start of the session"`
+	Name     string          `ini:"NAME" show:"quick"`
+	Time     int             `ini:"TIME" show:"quick" help:"session length in minutes"`
+	Laps     int             `ini:"LAPS" show:"quick" help:"number of laps in the race"`
+	IsOpen   SessionOpenness `ini:"IS_OPEN" input:"checkbox" help:"0 = no join, 1 = free join, 2 = free join until 20 seconds to the green light"`
+	WaitTime int             `ini:"WAIT_TIME" help:"seconds before the start of the session"`
 }
 
 type DynamicTrackConfig struct {

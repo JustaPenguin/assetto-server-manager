@@ -530,6 +530,16 @@ func LoadTrackMapData(track, trackLayout string) (*TrackMapData, error) {
 	return &mapData, nil
 }
 
+func TrackMapImageURL(track, trackLayout string) string {
+	p := "/content/tracks/" + track
+
+	if trackLayout != "" {
+		p += "/" + trackLayout
+	}
+
+	return p + "/map.png"
+}
+
 func LoadTrackMapImage(track, trackLayout string) (image.Image, error) {
 	p := filepath.Join(ServerInstallPath, "content", "tracks", track)
 

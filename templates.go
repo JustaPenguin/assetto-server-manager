@@ -199,6 +199,7 @@ func (tr *Renderer) init() error {
 	}
 	funcs["ordinal"] = ordinal
 	funcs["prettify"] = prettifyName
+	funcs["weatherName"] = weatherName
 	funcs["carList"] = carList
 	funcs["jsonEncode"] = jsonEncode
 	funcs["varSplit"] = varSplit
@@ -237,6 +238,14 @@ func (tr *Renderer) init() error {
 	funcs["formatDuration"] = formatDuration
 	funcs["appendQuery"] = appendQuery
 	funcs["ChangelogHTML"] = changelogHTML
+	funcs["yn"] = func(b bool) string {
+		if b {
+			return "Yes"
+		}
+
+		return "No"
+	}
+	funcs["trackMapURL"] = TrackMapImageURL
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
@@ -455,6 +464,22 @@ func prettifyName(s string, acronyms bool) string {
 	return strings.Join(parts, " ")
 }
 
+func weatherName(key string) string {
+	weathers, err := ListWeather()
+
+	if err != nil {
+		return key
+	}
+
+	key = strings.Split(key, "_type=")[0]
+
+	if name, ok := weathers[key]; ok {
+		return name
+	}
+
+	return prettifyName(key, false)
+}
+
 func stringArrayToCSV(array []string) string {
 	return strings.Join(array, ", ")
 }
@@ -472,28 +497,29 @@ type TemplateVars interface {
 }
 
 type BaseTemplateVars struct {
-	Messages           []interface{}
-	Errors             []interface{}
-	ServerStatus       bool
-	ServerEvent        RaceEvent
-	ServerName         string
-	CustomCSS          template.CSS
-	User               *Account
-	IsHosted           bool
-	IsPremium          bool
-	MaxClientsOverride int
-	IsDarkTheme        bool
-	Request            *http.Request
-	Debug              bool
-	MonitoringEnabled  bool
-	SentryDSN          template.JSStr
-	RecaptchaSiteKey   string
-	WideContainer      bool
-	OGImage            string
-	ACSREnabled        bool
-	BaseURLIsSet       bool
-	BaseURLIsValid     bool
-	ServerID           ServerID
+	Messages              []interface{}
+	Errors                []interface{}
+	ServerStatus          bool
+	ServerEvent           RaceEvent
+	ServerName            string
+	CustomCSS             template.CSS
+	User                  *Account
+	IsHosted              bool
+	IsPremium             bool
+	MaxClientsOverride    int
+	IsDarkTheme           bool
+	Request               *http.Request
+	Debug                 bool
+	MonitoringEnabled     bool
+	SentryDSN             template.JSStr
+	RecaptchaSiteKey      string
+	WideContainer         bool
+	OGImage               string
+	ACSREnabled           bool
+	BaseURLIsSet          bool
+	BaseURLIsValid        bool
+	ServerID              ServerID
+	ShowEventDetailsPopup bool
 }
 
 func (b *BaseTemplateVars) Get() *BaseTemplateVars {
@@ -542,6 +568,7 @@ func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, vars Templat
 	data.BaseURLIsValid = baseURLIsValid()
 	data.ACSREnabled = opts.EnableACSR
 	data.ServerID = serverID
+	data.ShowEventDetailsPopup = opts.ShowEventDetailsPopup
 
 	if Premium() {
 		data.OGImage = opts.OGImage

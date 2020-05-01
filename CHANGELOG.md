@@ -21,6 +21,7 @@ Added:
 * Added the option to toggle on/off exporting a second race to ACSR inside an ACSR enabled championship.
 * Championship Events and Race Weekend Sessions now show the date they were completed on.
 * Added a Championship Overview tab that shows colour-coded points across all events in a Championship.
+* Added a popup to Custom Races, Championships and Race Weekends that drivers can use to view details of the event.
 * You can now activate a timed scanner for new Scheduled Events that you have created/imported manually. Experimental, and only intended for advanced users.
 
 Fixed:

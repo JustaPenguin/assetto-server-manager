@@ -170,7 +170,13 @@ func (r *Resolver) resolveCustomRaceHandler() *CustomRaceHandler {
 		return r.customRaceHandler
 	}
 
-	r.customRaceHandler = NewCustomRaceHandler(r.resolveBaseHandler(), r.resolveRaceManager())
+	r.customRaceHandler = NewCustomRaceHandler(
+		r.resolveBaseHandler(),
+		r.resolveRaceManager(),
+		r.ResolveStore(),
+		r.resolveChampionshipManager(),
+		r.resolveRaceWeekendManager(),
+	)
 
 	return r.customRaceHandler
 }
