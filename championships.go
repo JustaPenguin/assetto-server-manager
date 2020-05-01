@@ -1212,6 +1212,21 @@ func (c *ChampionshipClass) StandingsForEvent(event *ChampionshipEvent) []*Champ
 	return c.Standings([]*ChampionshipEvent{event}, StandingsNoPointsPenalties)
 }
 
+func (c *ChampionshipClass) StandingsForEntrantAtEvent(event *ChampionshipEvent, entrant *ChampionshipStanding) *ChampionshipStanding {
+
+	for _, standing := range c.Standings([]*ChampionshipEvent{event}, StandingsNoPointsPenalties) {
+		if standing.Car.Model == entrant.Car.Model && standing.Car.GetGUID() == entrant.Car.GetGUID() {
+			return standing
+		}
+	}
+
+	return &ChampionshipStanding{
+		Car:    entrant.Car,
+		Teams:  entrant.Teams,
+		Points: 0,
+	}
+}
+
 // extractRaceWeekendSessionsIntoIndividualEvents looks for race weekend events, and makes each indiivdual session of that
 // race weekend a Championship Event, to aide with points tallying
 func ExtractRaceWeekendSessionsIntoIndividualEvents(inEvents []*ChampionshipEvent) []*ChampionshipEvent {

@@ -1,0 +1,61 @@
+{{ define "championship-overview" }}
+
+    {{ $championship := .Championship }}
+    {{ $account := .Account }}
+
+    <div class="table-responsive entrant-table-max-height">
+        <table class="table table-bordered table-striped">
+            <tr>
+                <th>Pos</th>
+                <th>Driver</th>
+                {{ range $i, $event := $championship.Events }}
+                    <th>{{ prettify $event.RaceSetup.Track false }}</th>
+                {{ end }}
+                <th>Total Points</th>
+            </tr>
+
+            {{ range $classIndex, $class := $championship.Classes }}
+                {{ $entrants := ($class.Standings $championship.Events) }}
+
+                {{ range $i, $entrant := $entrants }}
+                    <tr style="
+                    {{ if eq $account.GUID $entrant.Car.Driver.GUID }}font-weight: bold;{{ end }}
+                    {{ if $championship.IsMultiClass }}
+                        color: white; background: {{ classColor $classIndex }}
+                    {{ end }}">
+
+                        <td>
+                            {{ add $i 1 }}
+                        </td>
+
+                        <td>
+                            {{ driverName $entrant.Car.Driver.Name }}
+                        </td>
+
+                        {{ range $z, $event := $championship.Events }}
+                            {{ $points := ($class.StandingsForEntrantAtEvent $event $entrant).Points }}
+
+                            <td style="
+                                {{ if eq $points 0.0 }}
+                                    background-color: #f2cdff;
+                                {{ end }}
+                                    ">
+
+                                {{ if eq $points 0.0 }}
+                                    RET
+                                {{ else }}
+                                    {{ $points }}
+                                {{ end }}
+                            </td>
+                        {{ end  }}
+
+                        <td>
+                            {{ $entrant.Points }}
+                        </td>
+
+                    </tr>
+                {{ end }}
+            {{ end }}
+        </table>
+    </div>
+{{ end }}
