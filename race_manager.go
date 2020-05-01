@@ -590,7 +590,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 	}
 
 	legalTyres := strings.Join(r.Form["LegalTyres"], ";")
-	legalTyresUnescaped, err := url.PathUnescape(strings.Join(r.Form["LegalTyres"], ";"))
+	legalTyresUnescaped, err := url.PathUnescape(legalTyres)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Couldn't unescape legal Tyres list, there may be an issue with the name of a tyre: %s", legalTyres)
