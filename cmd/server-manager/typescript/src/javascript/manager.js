@@ -599,7 +599,7 @@ class RaceSetup {
                 let carTyres = availableTyres[car];
 
                 for (let tyre in carTyres) {
-                    let escapedTyre = escape(tyre)
+                    let escapedTyre = escape(tyre);
 
                     allValidTyres.add(escapedTyre);
 

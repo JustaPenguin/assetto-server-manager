@@ -589,11 +589,13 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		trackLayout = ""
 	}
 
-	legalTyres, err := url.PathUnescape(strings.Join(r.Form["LegalTyres"], ";"))
+	legalTyres := strings.Join(r.Form["LegalTyres"], ";")
+	legalTyresUnescaped, err := url.PathUnescape(strings.Join(r.Form["LegalTyres"], ";"))
 
 	if err != nil {
-		logrus.WithError(err).Errorf("Couldn't escape legal Tyres list, there may be an issue with the name of a tyre: %s", strings.Join(r.Form["LegalTyres"], ";"))
-		legalTyres = strings.Join(r.Form["LegalTyres"], ";")
+		logrus.WithError(err).Errorf("Couldn't unescape legal Tyres list, there may be an issue with the name of a tyre: %s", legalTyres, ";")
+	} else {
+		legalTyres = legalTyresUnescaped
 	}
 
 	raceConfig := &CurrentRaceConfig{
