@@ -1212,18 +1212,53 @@ func (c *ChampionshipClass) StandingsForEvent(event *ChampionshipEvent) []*Champ
 	return c.Standings([]*ChampionshipEvent{event}, StandingsNoPointsPenalties)
 }
 
-func (c *ChampionshipClass) StandingsForEntrantAtEvent(event *ChampionshipEvent, entrant *ChampionshipStanding) *ChampionshipStanding {
+type ChampionshipStandingWithTableInfo struct {
+	*ChampionshipStanding
 
-	for _, standing := range c.Standings([]*ChampionshipEvent{event}, StandingsNoPointsPenalties) {
+	BackgroundColour template.CSS
+	NoFinishReason   string
+}
+
+func (c *ChampionshipClass) StandingsForEntrantAtEvent(event *ChampionshipEvent, entrant *ChampionshipStanding) *ChampionshipStandingWithTableInfo {
+
+	outputStanding := &ChampionshipStanding{
+		Car:    entrant.Car,
+		Teams:  entrant.Teams,
+		Points: 0.0,
+	}
+
+	backgroundColour := "#ffffff"
+	noFinishReason := "DNS"
+
+	for i, standing := range c.Standings([]*ChampionshipEvent{event}, StandingsNoPointsPenalties) {
 		if standing.Car.Model == entrant.Car.Model && standing.Car.GetGUID() == entrant.Car.GetGUID() {
-			return standing
+
+			switch {
+			case standing.Points == 0.0:
+				backgroundColour = "#ebcaff"
+				noFinishReason = "0"
+				break
+			case i == 0:
+				backgroundColour = "#fefebe"
+			case i == 1:
+				backgroundColour = "#dce0e1"
+			case i == 2:
+				backgroundColour = "#ffde9e"
+			case i > 2 && i <= 9:
+				backgroundColour = fmt.Sprintf("rgb(%d, %d, %d)", 223 - (i*3), 254 - (i*3), 223 - (i*3))
+			case i > 9:
+				backgroundColour = fmt.Sprintf("rgb(%d, %d, %d)", 208 - (i*3), 206 - (i*3), 255 - (i*3))
+			}
+
+			outputStanding = standing
+			break
 		}
 	}
 
-	return &ChampionshipStanding{
-		Car:    entrant.Car,
-		Teams:  entrant.Teams,
-		Points: 0,
+	return &ChampionshipStandingWithTableInfo{
+		ChampionshipStanding: outputStanding,
+		BackgroundColour:     template.CSS(backgroundColour),
+		NoFinishReason:       noFinishReason,
 	}
 }
 

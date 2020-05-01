@@ -84,6 +84,19 @@ func (fs *filesystemTemplateLoader) Templates(funcs template.FuncMap) (map[strin
 	return templates, nil
 }
 
+func shortenTrackName(name string) string {
+	prettyName := prettifyName(name, false)
+	nameParts := strings.Split(prettyName, " ")
+
+	out := nameParts[0]
+
+	if len(out) > 4 {
+		out = out[0:4]
+	}
+
+	return out
+}
+
 var UseShortenedDriverNames = true
 
 func shortenDriverName(name string) string {
@@ -105,6 +118,9 @@ func driverName(name string) string {
 }
 
 func driverInitials(name string) string {
+
+	name = strings.TrimSpace(name)
+
 	if UseShortenedDriverNames {
 		nameParts := strings.Split(name, " ")
 
@@ -213,6 +229,8 @@ func (tr *Renderer) init() error {
 	funcs["fullTimeFormat"] = fullTimeFormat
 	funcs["localFormat"] = localFormatHelper
 	funcs["driverName"] = driverName
+	funcs["driverInitials"] = driverInitials
+	funcs["shortenTrackName"] = shortenTrackName
 	funcs["trustHTML"] = func(s string) template.HTML {
 		return template.HTML(s)
 	}

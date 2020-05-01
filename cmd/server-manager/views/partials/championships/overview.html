@@ -9,7 +9,9 @@
                 <th>Pos</th>
                 <th>Driver</th>
                 {{ range $i, $event := $championship.Events }}
-                    <th>{{ prettify $event.RaceSetup.Track false }}</th>
+                    <th data-toggle="tooltip" title="{{ prettify $event.RaceSetup.Track false }}">
+                        {{ shortenTrackName $event.RaceSetup.Track }}
+                    </th>
                 {{ end }}
                 <th>Total Points</th>
             </tr>
@@ -28,23 +30,19 @@
                             {{ add $i 1 }}
                         </td>
 
-                        <td>
-                            {{ driverName $entrant.Car.Driver.Name }}
+                        <td data-toggle="tooltip" title="{{ driverName $entrant.Car.Driver.Name }}">
+                            {{ driverInitials $entrant.Car.Driver.Name }}
                         </td>
 
                         {{ range $z, $event := $championship.Events }}
-                            {{ $points := ($class.StandingsForEntrantAtEvent $event $entrant).Points }}
+                            {{ $standingTableInfo := ($class.StandingsForEntrantAtEvent $event $entrant) }}
 
-                            <td style="
-                                {{ if eq $points 0.0 }}
-                                    background-color: #f2cdff;
-                                {{ end }}
-                                    ">
+                            <td style="background-color: {{ $standingTableInfo.BackgroundColour }}; color: black;">
 
-                                {{ if eq $points 0.0 }}
-                                    RET
+                                {{ if eq $standingTableInfo.ChampionshipStanding.Points 0.0 }}
+                                    {{ $standingTableInfo.NoFinishReason }}
                                 {{ else }}
-                                    {{ $points }}
+                                    {{ $standingTableInfo.ChampionshipStanding.Points }}
                                 {{ end }}
                             </td>
                         {{ end  }}
@@ -57,5 +55,14 @@
                 {{ end }}
             {{ end }}
         </table>
+
+        <div class="d-inline-block">
+            <span class="badge" style="background-color: #fefebe;">1st</span>
+            <span class="badge" style="background-color: #dce0e1;">2nd</span>
+            <span class="badge" style="background-color: #ffde9e;">3rd</span>
+            <span class="badge" style="background-color: #dffee0;">4th - 10th</span>
+            <span class="badge" style="background-color: #d0ceff;">> 10th</span>
+            <span class="badge" style="background-color: #ebcaff;">No Points</span>
+        </div>
     </div>
 {{ end }}
