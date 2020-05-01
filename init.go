@@ -178,5 +178,17 @@ func InitWithResolver(resolver *Resolver) error {
 		}
 	}
 
+	if config.Store.ScheduledEventCheckLoop > time.Duration(0) {
+		logrus.Infof("Experimental Scheduled Event Check loop feature enabled. Checking for new scheduled events every %s", config.Store.ScheduledEventCheckLoop)
+
+		go func() {
+			ticker := time.NewTicker(config.Store.ScheduledEventCheckLoop)
+
+			for range ticker.C {
+				err = raceManager.InitScheduledRaces()
+			}
+		}()
+	}
+
 	return nil
 }
