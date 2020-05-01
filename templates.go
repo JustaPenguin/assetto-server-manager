@@ -227,6 +227,7 @@ func (tr *Renderer) init() error {
 			return "No"
 		}
 	}
+	funcs["trackMapURL"] = TrackMapImageURL
 
 	tr.templates, err = tr.loader.Templates(funcs)
 

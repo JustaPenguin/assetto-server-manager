@@ -12,7 +12,6 @@
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-6">
-
                         <div class="row">
                             <div class="col-sm-4"><strong>Track</strong></div>
                             <div class="col-sm-8">
@@ -29,6 +28,13 @@
                                 {{ with $trackInfo }}
                                     - {{ $trackInfo.Pitboxes }} Pit Boxes
                                 {{ end }}
+
+                                <br>
+
+                                <img src="{{ trackMapURL $.EventConfig.Track $.EventConfig.TrackLayout }}"
+                                     class="img img-fluid img-map-preview"
+                                     alt="{{ $.EventConfig.Track }}"
+                                >
                             </div>
                         </div>
 
