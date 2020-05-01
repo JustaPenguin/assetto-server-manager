@@ -59,16 +59,16 @@ type ContentManagerWrapperData struct {
 }
 
 type CMAssists struct {
-	ABSState             int  `json:"absState"`
-	AllowedTyresOut      int  `json:"allowedTyresOut"`
-	AutoClutchAllowed    bool `json:"autoclutchAllowed"`
-	DamageMultiplier     int  `json:"damageMultiplier"`
-	ForceVirtualMirror   bool `json:"forceVirtualMirror"`
-	FuelRate             int  `json:"fuelRate"`
-	StabilityAllowed     bool `json:"stabilityAllowed"`
-	TractionControlState int  `json:"tcState"`
-	TyreBlanketsAllowed  bool `json:"tyreBlanketsAllowed"`
-	TyreWearRate         int  `json:"tyreWearRate"`
+	ABSState             FactoryAssist `json:"absState"`
+	AllowedTyresOut      int           `json:"allowedTyresOut"`
+	AutoClutchAllowed    bool          `json:"autoclutchAllowed"`
+	DamageMultiplier     int           `json:"damageMultiplier"`
+	ForceVirtualMirror   bool          `json:"forceVirtualMirror"`
+	FuelRate             int           `json:"fuelRate"`
+	StabilityAllowed     bool          `json:"stabilityAllowed"`
+	TractionControlState FactoryAssist `json:"tcState"`
+	TyreBlanketsAllowed  bool          `json:"tyreBlanketsAllowed"`
+	TyreWearRate         int           `json:"tyreWearRate"`
 }
 
 type CMContent struct {

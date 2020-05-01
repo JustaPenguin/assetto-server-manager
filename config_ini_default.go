@@ -29,6 +29,7 @@ func ConfigIniDefault() ServerConfig {
 			SleepTime:                         1,
 			RestartEventOnServerManagerLaunch: 1,
 			ContentManagerWelcomeMessage:      defaultContentManagerDescription,
+			ShowEventDetailsPopup:             true,
 		},
 
 		CurrentRaceConfig: CurrentRaceConfig{
