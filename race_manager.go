@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -588,6 +589,15 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		trackLayout = ""
 	}
 
+	legalTyres := strings.Join(r.Form["LegalTyres"], ";")
+	legalTyresUnescaped, err := url.PathUnescape(legalTyres)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Couldn't unescape legal Tyres list, there may be an issue with the name of a tyre: %s", legalTyres)
+	} else {
+		legalTyres = legalTyresUnescaped
+	}
+
 	raceConfig := &CurrentRaceConfig{
 		// general race config
 		Cars:        strings.Join(cars, ";"),
@@ -610,7 +620,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		WindVariationDirection: formValueAsInt(r.FormValue("WindVariationDirection")),
 
 		// realism
-		LegalTyres:          strings.Join(r.Form["LegalTyres"], ";"),
+		LegalTyres:          legalTyres,
 		FuelRate:            formValueAsInt(r.FormValue("FuelRate")),
 		DamageMultiplier:    formValueAsInt(r.FormValue("DamageMultiplier")),
 		TyreWearRate:        formValueAsInt(r.FormValue("TyreWearRate")),
