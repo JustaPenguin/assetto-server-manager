@@ -1237,7 +1237,6 @@ func (c *ChampionshipClass) StandingsForEntrantAtEvent(event *ChampionshipEvent,
 			case standing.Points == 0.0:
 				backgroundColour = "#ebcaff"
 				noFinishReason = "0"
-				break
 			case i == 0:
 				backgroundColour = "#fefebe"
 			case i == 1:
