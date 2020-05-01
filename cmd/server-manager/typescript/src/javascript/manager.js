@@ -308,6 +308,7 @@ class RaceSetup {
 
         this.initPickupModeWatcher();
         this.initTimeAttackWatcher();
+        this.initDriverSwapToggle();
     }
 
     initPickupModeWatcher() {
@@ -416,6 +417,33 @@ class RaceSetup {
             $qualifyingSwitch.bootstrapSwitch('disabled', false);
             $raceSwitch.bootstrapSwitch('disabled', false);
             $bookingSwitch.bootstrapSwitch('disabled', false);
+        }
+    }
+
+    initDriverSwapToggle() {
+        let $driverSwapSwitch = $("#DriverSwapEnabled");
+
+        if (!$driverSwapSwitch.length) {
+            return;
+        }
+
+        this.toggleDriverSwapOptions();
+
+        let that = this;
+
+        $driverSwapSwitch.on('switchChange.bootstrapSwitch', function (event, state) {
+            that.toggleDriverSwapOptions();
+        });
+    }
+
+    toggleDriverSwapOptions() {
+        let $driverSwapSwitch = $("#DriverSwapEnabled");
+        let $driverSwapOptionPanel = $(".visible-driver-swap-enabled");
+
+        if ($driverSwapSwitch.bootstrapSwitch('state')) {
+            $driverSwapOptionPanel.show();
+        } else {
+            $driverSwapOptionPanel.hide();
         }
     }
 
