@@ -397,7 +397,7 @@ func (rch *RaceControlHandler) nextSession(w http.ResponseWriter, r *http.Reques
 func (rch *RaceControlHandler) countdown(w http.ResponseWriter, r *http.Request) {
 
 	// broadcast countdown
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(time.Second * 3)
 	i := 4
 
 	for range ticker.C {

@@ -18,8 +18,11 @@ Added:
 * You can now manually choose drivers when filtering between two Race Weekend sessions, instead of picking split numbers.
 * Championships and Race Weekends now autofill the schedule input with the latest date currently scheduled in that Championship/Race Weekend, hopefully this will make life easier for some admins!
 * Added a new lua plugin function for onChampionshipEventStart that can add ballast to drivers based on their finishing position in some other event in the championship.
+* Added the option to toggle on/off exporting a second race to ACSR inside an ACSR enabled championship.
 * Championship Events and Race Weekend Sessions now show the date they were completed on.
+* Added a Championship Overview tab that shows colour-coded points across all events in a Championship.
 * Added a popup to Custom Races, Championships and Race Weekends that drivers can use to view details of the event.
+* You can now activate a timed scanner for new Scheduled Events that you have created/imported manually. Experimental, and only intended for advanced users.
 
 Fixed:
 
@@ -33,6 +36,8 @@ Fixed:
 * Content Manager now shows Championship descriptions for Championship Race Weekends.
 * Championship Race Weekends now send users their Championship points summary when they join.
 * Fixes an issue where the full grid would not be shown in the Race Weekend filter preview.
+* Made the new password screen a bit more visually unique, and added a paragraph to explain to new users that they should set their own password rather than using the default one.
+* Tyres with unsafe characters in the name (e.g. sv60's) should no longer cause issues with the Custom Race form.
 
 ---
 

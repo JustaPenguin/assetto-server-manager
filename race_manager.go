@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -588,6 +589,15 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		trackLayout = ""
 	}
 
+	legalTyres := strings.Join(r.Form["LegalTyres"], ";")
+	legalTyresUnescaped, err := url.PathUnescape(legalTyres)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Couldn't unescape legal Tyres list, there may be an issue with the name of a tyre: %s", legalTyres)
+	} else {
+		legalTyres = legalTyresUnescaped
+	}
+
 	raceConfig := &CurrentRaceConfig{
 		// general race config
 		Cars:        strings.Join(cars, ";"),
@@ -610,7 +620,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		WindVariationDirection: formValueAsInt(r.FormValue("WindVariationDirection")),
 
 		// realism
-		LegalTyres:          strings.Join(r.Form["LegalTyres"], ";"),
+		LegalTyres:          legalTyres,
 		FuelRate:            formValueAsInt(r.FormValue("FuelRate")),
 		DamageMultiplier:    formValueAsInt(r.FormValue("DamageMultiplier")),
 		TyreWearRate:        formValueAsInt(r.FormValue("TyreWearRate")),
@@ -654,6 +664,8 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		raceConfig.DriverSwapPenaltyTime = formValueAsInt(r.FormValue("DriverSwapPenaltyTime"))
 		raceConfig.DriverSwapMinimumNumberOfSwaps = formValueAsInt(r.FormValue("DriverSwapMinimumNumberOfSwaps"))
 		raceConfig.DriverSwapNotEnoughSwapsPenalty = formValueAsInt(r.FormValue("DriverSwapNotEnoughSwapsPenalty"))
+
+		raceConfig.ExportSecondRaceToACSR = formValueAsInt(r.FormValue("ExportSecondRaceToACSR")) == 1
 	} else {
 		raceConfig.DriverSwapEnabled = 0
 	}
@@ -1644,6 +1656,8 @@ func (rm *RaceManager) InitScheduledRaces() error {
 
 			if err != nil {
 				logrus.WithError(err).Error("Could not set up scheduled race timer")
+			} else {
+				logrus.Infof("Added new race (%s) to scheduled start timers, starts at %s", race.Name, race.Scheduled.String())
 			}
 
 			if rm.notificationManager.HasNotificationReminders() {
@@ -1683,6 +1697,7 @@ func (rm *RaceManager) InitScheduledRaces() error {
 						" Start time: %s. The schedule has been cleared. Start the event manually if you wish to run it.", race.Scheduled.String())
 
 					race.Scheduled = emptyTime
+					race.ScheduledEvents = make(map[ServerID]*ScheduledEventBase)
 
 					err := rm.store.UpsertCustomRace(race)
 

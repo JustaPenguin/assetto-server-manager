@@ -142,7 +142,12 @@ store:
   # instances to share accounts, race weekend, championship, entrants and custom
   # events across them. Leave blank to use the same path as the one set up here.
   # works only with JSON database
-  shared_data_path: 
+  shared_data_path:
+
+  # check for new scheduled races not created by server manager on a loop. this is an experimental
+  # feature, and should not be used by most people. formats look like, e.g. 15s, 1m, 2h
+  # 0s == disabled. recommended values are 5m and above.
+  scheduled_event_check_loop: 0s
 
 ################################################################################
 #

@@ -311,6 +311,8 @@ type CurrentRaceConfig struct {
 
 	TimeAttack bool `ini:"-"` // time attack races will force loop ON and merge all results files (practice only)
 
+	ExportSecondRaceToACSR bool `ini:"-"`
+
 	DynamicTrack DynamicTrackConfig `ini:"-"`
 
 	Sessions Sessions                  `ini:"-"`

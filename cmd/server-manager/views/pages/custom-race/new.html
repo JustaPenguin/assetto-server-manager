@@ -550,6 +550,31 @@
                                                 </small>
                                             </div>
                                         </div>
+
+                                        {{ with  $.Championship }}
+                                            {{ if and $.IsChampionship $.Championship.ACSR }}
+                                                <div class="form-group row col-md-12">
+                                                    <label for="ExportSecondRaceToACSR" class="col-sm-3 col-form-label">Export 2nd Race to ACSR</label>
+
+
+                                                    <div class="col-sm-9">
+                                                        <input type="checkbox"
+                                                               id="ExportSecondRaceToACSR"
+                                                               name="ExportSecondRaceToACSR"
+                                                               value="{{ $f.ExportSecondRaceToACSR }}"
+
+                                                                {{ if $f.ExportSecondRaceToACSR }}
+                                                                    checked="checked"
+                                                                {{ end }}
+                                                        >
+
+                                                        <br>
+
+                                                        <small>The second race can be optionally exported to ACSR as well as the first race.</small>
+                                                    </div>
+                                                </div>
+                                            {{ end }}
+                                        {{ end }}
                                     {{ end }}
 
                                     <div class="form-group row col-md-12 race-extra-lap" {{ if and (eq $session.Time 0) (ne $session.Laps 0) }} style="display: none;" {{ end }}>

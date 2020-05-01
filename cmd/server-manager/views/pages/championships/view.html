@@ -75,6 +75,10 @@
                            aria-selected="false">Team Standings</a>
                     </li>
                 {{ end }}
+                <li class="nav-item">
+                    <a class="nav-link" id="overview-tab" data-toggle="tab" href="#overview" role="tab"
+                       aria-controls="overview" aria-selected="true">Championship Overview</a>
+                </li>
             {{ end }}
             <li class="nav-item">
                 <a class="nav-link {{ if eq $championship.Progress 0.0 }}active{{ end }}" id="entrants-tab" data-toggle="tab" href="#entrants" role="tab" aria-controls="teams"
@@ -258,6 +262,10 @@
                             {{ end }}
                         </table>
                     </div>
+                </div>
+
+                <div class="tab-pane fade" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+                    {{ template "championship-overview" dict "Championship" $championship "Account" $account }}
                 </div>
             {{ end }}
 
