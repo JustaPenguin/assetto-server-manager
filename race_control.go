@@ -677,8 +677,8 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config CurrentRaceC
 	position := currentDriver.LastPos
 
 	logrus.Infof(
-		"Driver: %d has initiated a driver swap, disconnected in position: %.2f, %.2f, %.2f. Next driver is expected to connect in the same position for a driver swap!",
-		currentDriver.CarInfo.CarID,
+		"Driver: %s has initiated a driver swap, disconnected in position: %.2f, %.2f, %.2f. Next driver is expected to connect in the same position for a driver swap!",
+		currentDriver.CarInfo.DriverGUID,
 		currentDriver.LastPos.X,
 		currentDriver.LastPos.Y,
 		currentDriver.LastPos.Z,

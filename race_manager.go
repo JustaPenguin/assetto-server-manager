@@ -1646,6 +1646,8 @@ func (rm *RaceManager) InitScheduledRaces() error {
 
 			if err != nil {
 				logrus.WithError(err).Error("Could not set up scheduled race timer")
+			} else {
+				logrus.Infof("Added new race (%s) to scheduled start timers, starts at %s", race.Name, race.Scheduled.String())
 			}
 
 			if rm.notificationManager.HasNotificationReminders() {
@@ -1685,6 +1687,7 @@ func (rm *RaceManager) InitScheduledRaces() error {
 						" Start time: %s. The schedule has been cleared. Start the event manually if you wish to run it.", race.Scheduled.String())
 
 					race.Scheduled = emptyTime
+					race.ScheduledEvents = make(map[ServerID]*ScheduledEventBase)
 
 					err := rm.store.UpsertCustomRace(race)
 
