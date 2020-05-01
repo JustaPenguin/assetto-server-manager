@@ -1,11 +1,10 @@
 import dragula from "dragula";
+import ClickEvent = JQuery.ClickEvent;
 
 declare var ChampionshipID: string;
 declare var CanMoveChampionshipEvents: boolean;
 
 export namespace Championship {
-    import ClickEvent = JQuery.ClickEvent;
-
     export class View {
         public constructor() {
             this.initDraggableCards();

@@ -298,6 +298,13 @@
                                         </a>
                                     {{ end }}
 
+                                    <a class="dropdown-item race-weekend-session-details"
+                                       href="#"
+                                       data-session-id="{{ $session.ID }}"
+                                    >
+                                        Session Details
+                                    </a>
+
                                     {{ if DeleteAccess }}
                                         <a onClick="return confirm('I understand that this will delete this entire session permanently.') "
                                            class="dropdown-item text-danger" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/delete">
@@ -308,6 +315,15 @@
                             </div>
                         {{ else }}
                             <a class="btn btn-secondary manage-entrylist btn-sm" href="#">View Entry List</a>
+                        {{ end }}
+
+                        {{ if not WriteAccess }}
+                            <a class="btn btn-sm btn-info race-weekend-session-details"
+                               href="#"
+                               data-session-id="{{ $session.ID }}"
+                            >
+                                Session Details
+                            </a>
                         {{ end }}
                     </div>
                 </div>
@@ -464,6 +480,9 @@
         <!-- content controlled by js -->
     </div>
 
+    <div class="modal" tabindex="-1" role="dialog" id="session-details-modal">
+        <!-- content controlled by js -->
+    </div>
 
     <script type="text/javascript">
         var RaceWeekendID = {{ $.RaceWeekend.ID.String }};

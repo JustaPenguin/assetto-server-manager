@@ -127,6 +127,8 @@ func Router(
 		r.HandleFunc("/results/{fileName}/collisions", resultsHandler.renderCollisions)
 		r.HandleFunc("/results/download/{fileName}", resultsHandler.file)
 
+		r.Get("/custom", customRaceHandler.list)
+
 		// championships
 		r.Get("/championships", championshipsHandler.list)
 		r.Get("/championship/{championshipID}", championshipsHandler.view)
@@ -201,7 +203,6 @@ func Router(
 		// races
 		r.Get("/quick", quickRaceHandler.create)
 		r.Post("/quick/submit", quickRaceHandler.submit)
-		r.Get("/custom", customRaceHandler.list)
 		r.Get("/custom/new", customRaceHandler.createOrEdit)
 		r.Get("/custom/load/{uuid}", customRaceHandler.start)
 		r.Post("/custom/schedule/{uuid}", customRaceHandler.schedule)

@@ -8,7 +8,6 @@ import "moment-timezone";
 import "./javascript/manager.js";
 import "./Font";
 import "./Calendar";
-import "./RaceList";
 
 import {RaceControl} from "./RaceControl";
 import {CarDetail} from "./CarDetail";
@@ -21,6 +20,7 @@ import {HostedIntroPopup} from "./HostedIntroPopup";
 import {Messages} from "./Messages";
 import {Championship} from "./Championship";
 import {Results} from "./Results";
+import {RaceList} from "./RaceList";
 
 $(() => {
     new RaceControl();
@@ -34,6 +34,7 @@ $(() => {
     Messages.initSummerNote();
     new Championship.View();
     new Results();
+    new RaceList();
 
     $(".race-setup").each(function (index, elem) {
         new CarSearch($(elem));

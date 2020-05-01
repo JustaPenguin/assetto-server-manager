@@ -126,15 +126,17 @@ type CustomRaceHandler struct {
 
 	raceManager         *RaceManager
 	championshipManager *ChampionshipManager
+	raceWeekendManager  *RaceWeekendManager
 	store               Store
 }
 
-func NewCustomRaceHandler(base *BaseHandler, raceManager *RaceManager, store Store, championshipManager *ChampionshipManager) *CustomRaceHandler {
+func NewCustomRaceHandler(base *BaseHandler, raceManager *RaceManager, store Store, championshipManager *ChampionshipManager, raceWeekendManager *RaceWeekendManager) *CustomRaceHandler {
 	return &CustomRaceHandler{
 		BaseHandler:         base,
 		raceManager:         raceManager,
 		store:               store,
 		championshipManager: championshipManager,
+		raceWeekendManager:  raceWeekendManager,
 	}
 }
 
@@ -171,26 +173,30 @@ type eventDetailsTemplateVars struct {
 }
 
 func (crh *CustomRaceHandler) view(w http.ResponseWriter, r *http.Request) {
-	var eventConfig CurrentRaceConfig
-	var eventName string
-	var entryList EntryList
-	var isChampionship bool
+	var (
+		eventConfig    CurrentRaceConfig
+		eventName      string
+		entryList      EntryList
+		isChampionship bool
+	)
 
 	if customRaceID := r.URL.Query().Get("custom-race"); customRaceID != "" {
 		race, err := crh.store.FindCustomRaceByID(customRaceID)
 
 		if err != nil {
-			panic(err)
+			http.NotFound(w, r)
+			return
 		}
 
 		eventConfig = race.RaceConfig
 		eventName = race.Name
 		entryList = race.EntryList
 	} else if championshipID := r.URL.Query().Get("championshipID"); championshipID != "" {
-		championship, err := crh.store.LoadChampionship(championshipID)
+		championship, err := crh.championshipManager.LoadChampionship(championshipID)
 
 		if err != nil {
-			panic(err)
+			http.NotFound(w, r)
+			return
 		}
 
 		eventID := r.URL.Query().Get("eventID")
@@ -198,7 +204,8 @@ func (crh *CustomRaceHandler) view(w http.ResponseWriter, r *http.Request) {
 		event, _, err := championship.EventByID(eventID)
 
 		if err != nil {
-			panic(err)
+			http.NotFound(w, r)
+			return
 		}
 
 		eventName = "Championship Event"
@@ -206,10 +213,11 @@ func (crh *CustomRaceHandler) view(w http.ResponseWriter, r *http.Request) {
 
 		isChampionship = true
 	} else if raceWeekendID := r.URL.Query().Get("raceWeekendID"); raceWeekendID != "" {
-		raceWeekend, err := crh.store.LoadRaceWeekend(raceWeekendID)
+		raceWeekend, err := crh.raceWeekendManager.LoadRaceWeekend(raceWeekendID)
 
 		if err != nil {
-			panic(err)
+			http.NotFound(w, r)
+			return
 		}
 
 		sessionID := r.URL.Query().Get("sessionID")
@@ -217,15 +225,17 @@ func (crh *CustomRaceHandler) view(w http.ResponseWriter, r *http.Request) {
 		session, err := raceWeekend.FindSessionByID(sessionID)
 
 		if err != nil {
-			panic(err)
+			http.NotFound(w, r)
+			return
 		}
 
 		eventConfig = session.RaceConfig
-		eventName = session.Name()
+		eventName = fmt.Sprintf("%s (%s)", session.Name(), raceWeekend.Name)
 		rwe, err := session.GetRaceWeekendEntryList(raceWeekend, nil, "")
 
 		if err != nil {
-			panic(err)
+			http.NotFound(w, r)
+			return
 		}
 
 		entryList = rwe.AsEntryList()

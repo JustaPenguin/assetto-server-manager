@@ -2,7 +2,6 @@
 
 {{ define "title" }}Custom Races{{ end }}
 
-
 {{ define "custom-race-table" }}
     {{ $writeAccess := WriteAccess }}
     {{ $serverID := $.ServerID }}
@@ -21,33 +20,50 @@
             {{ range $index, $race := $.Race }}
                 <tr>
                     <td class="align-middle">
-                        <a href="/custom/star/{{ $race.UUID.String }}">
-                            {{ if $race.Starred }}
-                                <i class="fas fa-star"></i>
-                            {{ else }}
-                                <i class="far fa-star"></i>
-                            {{ end }}
-                        </a>
-                        <a href="/custom/loop/{{ $race.UUID.String }}">
-                            {{ with $race.LoopServer }}
-                                {{ if index $race.LoopServer $serverID }}
-                                    <i class="fas fa-play-circle"></i>
-                                {{ else }}
-                                    <i class="far fa-play-circle"></i>
-                                {{ end }}
+                        {{ if WriteAccess }}
+                            <a href="/custom/star/{{ $race.UUID.String }}">
+                        {{ end }}
+
+                        {{ if $race.Starred }}
+                            <i class="fas fa-star"></i>
+                        {{ else }}
+                            <i class="far fa-star"></i>
+                        {{ end }}
+
+                        {{ if WriteAccess }}
+                            </a>
+
+                            <a href="/custom/loop/{{ $race.UUID.String }}">
+                        {{ end }}
+
+                        {{ with $race.LoopServer }}
+                            {{ if index $race.LoopServer $serverID }}
+                                <i class="fas fa-play-circle"></i>
                             {{ else }}
                                 <i class="far fa-play-circle"></i>
                             {{ end }}
-                        </a>
+                        {{ else }}
+                            <i class="far fa-play-circle"></i>
+                        {{ end }}
+
+                        {{ if WriteAccess }}
+                            </a>
+                        {{ end }}
                     </td>
                     <td class="align-middle">
-
                         {{ template "race-card" $race }}
 
                         <hr>
                         <strong>Name:</strong> {{ $race.Name }}
 
-
+                        <div class="float-right">
+                            <a class="btn btn-sm btn-info custom-race-details"
+                               href="#"
+                               data-race-id="{{ $race.UUID.String }}"
+                            >
+                                Race Details
+                            </a>
+                        </div>
                     </td>
                     <td class="align-middle">{{ timeFormat $race.Created }}<br> {{ dateFormat $race.Created }}</td>
                     {{ if $writeAccess }}
@@ -89,7 +105,11 @@
                             <a class="btn btn-sm btn-primary" href="/custom/new?from={{ $race.UUID.String }}">Use as Template</a>
                             <a class="btn btn-sm btn-warning" href="/custom/edit/{{ $race.UUID.String }}">Edit Race</a>
                             <a onClick="return confirm('I understand that this will delete this race setup permanently');"
-                               class="btn btn-sm btn-danger {{ if not DeleteAccess}}disabled{{ end }}" href="/custom/delete/{{ $race.UUID.String }}">Delete</a>
+                               class="btn btn-sm btn-danger {{ if not DeleteAccess}}disabled{{ end }}"
+                               href="/custom/delete/{{ $race.UUID.String }}"
+                            >
+                                Delete
+                            </a>
                         </td>
                     {{ end }}
                 </tr>
@@ -103,48 +123,70 @@
         <div class="col-sm-4"></div>
         <div class="col-sm-4"><h1 class="text-center">Custom Races</h1></div>
         <div class="col-sm-4">
-            <a class="btn btn-success float-right" href="/custom/new">Create a new Custom Race</a>
-            <div class="clearfix mb-5"></div>
+            {{ if WriteAccess }}
+                <a class="btn btn-success float-right" href="/custom/new">Create a new Custom Race</a>
+                <div class="clearfix mb-5"></div>
+            {{ end }}
         </div>
     </div>
 
-    <p>Custom races are fully configurable events, once you have created a custom race you can Star it or add it to
-    the automatic race loop. You can use a custom race as a template for a new race, which will create a copy of the
-    custom race, or edit the custom race directly. Custom races can be run quickly on the server using the start race
-    button.</p>
+    {{ if WriteAccess }}
+        <p>
+            Custom races are fully configurable events, once you have created a custom race you can Star it or add it to
+            the automatic race loop. You can use a custom race as a template for a new race, which will create a copy of the
+            custom race, or edit the custom race directly. Custom races can be run quickly on the server using the start race
+            button.
+        </p>
+    {{ end }}
 
     <h2>Scheduled</h2>
 
     {{ if gt (len .Scheduled) 0 }}
         {{ template "custom-race-table" dict "Race" .Scheduled "ServerID" .ServerID }}
+    {{ else if WriteAccess }}
+        <p class="text-center">You haven't scheduled any races!</p>
     {{ else }}
-        <p class="text-center">You haven't Scheduled any races!</p>
+        <p class="text-center">There are no scheduled races.</p>
     {{ end }}
 
     <h2>Starred</h2>
 
     {{ if gt (len .Starred) 0 }}
         {{ template "custom-race-table" dict "Race" .Starred "ServerID" .ServerID }}
-    {{ else }}
+    {{ else if WriteAccess }}
         <p class="text-center">You haven't starred any Custom Races yet. Star some using the table below!</p>
+    {{ else }}
+        <p class="text-center">There aren't any starred custom races yet!</p>
     {{ end }}
 
     <h2>Auto Loop</h2>
 
     {{ if gt (len .Loop) 0 }}
         {{ template "custom-race-table" dict "Race" .Loop "ServerID" .ServerID }}
-        <p class="text-center">These custom races will be looped on the server whilst it is inactive! Auto loop races will only
-        work if allowed to start automatically, please don't manually start these events if you want them to loop!</p>
+        <p class="text-center">
+            These custom races will be looped on the server whilst it is inactive! Auto loop races will only
+            work if allowed to start automatically, please don't manually start these events if you want them to loop!
+        </p>
+    {{ else if WriteAccess }}
+        <p class="text-center">
+            No custom races have been added to the auto loop list yet! Use the play icon to add a race to the loop.
+            Any added races will loop on the server whilst it is inactive!
+        </p>
     {{ else }}
-        <p class="text-center">No custom races have been added to the auto loop list yet! Use the play icon to add a race to the loop.
-            Any added races will loop on the server whilst it is inactive!</p>
+        <p class="text-center">There aren't any looping custom races yet!</p>
     {{ end }}
 
     <h2>Recent</h2>
 
     {{ if gt (len .Recent) 0 }}
         {{ template "custom-race-table" dict "Race" .Recent "ServerID" .ServerID }}
-    {{ else }}
+    {{ else if WriteAccess }}
         <p class="text-center">We couldn't find any recent races. Perhaps you should <a href="/custom/new">create one now</a>?</p>
+    {{ else }}
+        <p class="text-center">We couldn't find any recent races.</p>
     {{ end }}
+
+    <div class="modal" tabindex="-1" role="dialog" id="race-details-modal">
+        <!-- content controlled by js -->
+    </div>
 {{ end }}

@@ -2,6 +2,7 @@ import ChangeEvent = JQuery.ChangeEvent;
 import {Connection, jsPlumb, jsPlumbInstance} from "jsplumb";
 import dagre, {graphlib} from "dagre";
 import {initMultiSelect} from "./javascript/manager";
+import ClickEvent = JQuery.ClickEvent;
 
 declare var RaceWeekendID: string;
 declare var IsEditing: boolean;
@@ -76,6 +77,8 @@ export namespace RaceWeekend {
 
             $(".view-results").on("click", this.onViewResultsClick);
             $(".manage-entrylist").on("click", this.openManageEntryListModal);
+
+            this.initSessionDetailsButtons();
         }
 
         private initJsPlumb(): void {
@@ -213,6 +216,24 @@ export namespace RaceWeekend {
                 scrollTop: ($("#race-weekend-results").offset()!.top) - 200,
             }, 500, () => {
                 $results.collapse('show');
+            });
+        }
+
+        private initSessionDetailsButtons(): void {
+            $(document).on("click", ".race-weekend-session-details", (e: ClickEvent) => {
+                let $this = $(e.currentTarget);
+                let sessionID = $this.attr("data-session-id");
+
+                const modalContentURL = `/event-details?raceWeekendID=${RaceWeekendID}&sessionID=${sessionID}`;
+
+                $.get(modalContentURL).then((data: string) => {
+                    let $eventDetailsModal = $("#session-details-modal");
+                    $eventDetailsModal.html(data);
+                    $eventDetailsModal.find("input[type='checkbox']").bootstrapSwitch();
+                    $eventDetailsModal.modal();
+                });
+
+                return false;
             });
         }
     }

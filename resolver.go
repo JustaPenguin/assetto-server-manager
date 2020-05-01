@@ -175,6 +175,7 @@ func (r *Resolver) resolveCustomRaceHandler() *CustomRaceHandler {
 		r.resolveRaceManager(),
 		r.ResolveStore(),
 		r.resolveChampionshipManager(),
+		r.resolveRaceWeekendManager(),
 	)
 
 	return r.customRaceHandler
