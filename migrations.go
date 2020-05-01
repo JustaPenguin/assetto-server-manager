@@ -83,6 +83,7 @@ var (
 		convertContentManagerDescriptionToNewTemplate,
 		addHasSeenIntroPopupToAccounts,
 		forceLoggingWith5LogsKeptForHosted,
+		showEventDetailsPopupOn,
 	}
 )
 
@@ -967,6 +968,20 @@ func forceLoggingWith5LogsKeptForHosted(s Store) error {
 
 	opts.LogACServerOutputToFile = true
 	opts.NumberOfACServerLogsToKeep = 5
+
+	return s.UpsertServerOptions(opts)
+}
+
+func showEventDetailsPopupOn(s Store) error {
+	logrus.Infof("Running migration: Enable Event Details Popup")
+
+	opts, err := s.LoadServerOptions()
+
+	if err != nil {
+		return err
+	}
+
+	opts.ShowEventDetailsPopup = true
 
 	return s.UpsertServerOptions(opts)
 }

@@ -397,12 +397,14 @@
                             {{ end }}
                         {{ end }}
 
-                        <a class="btn btn-info championship-event-details"
-                           href="#"
-                           data-event-id="{{ $event.ID }}"
-                        >
-                            Event Details
-                        </a>
+                        {{ if $.ShowEventDetailsPopup }}
+                            <a class="btn btn-info championship-event-details"
+                               href="#"
+                               data-event-id="{{ $event.ID }}"
+                            >
+                                Event Details
+                            </a>
+                        {{ end }}
                     </div>
                 </div>
 

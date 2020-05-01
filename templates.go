@@ -223,9 +223,9 @@ func (tr *Renderer) init() error {
 	funcs["yn"] = func(b bool) string {
 		if b {
 			return "Yes"
-		} else {
-			return "No"
 		}
+
+		return "No"
 	}
 	funcs["trackMapURL"] = TrackMapImageURL
 
@@ -457,9 +457,9 @@ func weatherName(key string) string {
 
 	if name, ok := weathers[key]; ok {
 		return name
-	} else {
-		return prettifyName(key, false)
 	}
+
+	return prettifyName(key, false)
 }
 
 func stringArrayToCSV(array []string) string {
@@ -479,28 +479,29 @@ type TemplateVars interface {
 }
 
 type BaseTemplateVars struct {
-	Messages           []interface{}
-	Errors             []interface{}
-	ServerStatus       bool
-	ServerEvent        RaceEvent
-	ServerName         string
-	CustomCSS          template.CSS
-	User               *Account
-	IsHosted           bool
-	IsPremium          bool
-	MaxClientsOverride int
-	IsDarkTheme        bool
-	Request            *http.Request
-	Debug              bool
-	MonitoringEnabled  bool
-	SentryDSN          template.JSStr
-	RecaptchaSiteKey   string
-	WideContainer      bool
-	OGImage            string
-	ACSREnabled        bool
-	BaseURLIsSet       bool
-	BaseURLIsValid     bool
-	ServerID           ServerID
+	Messages              []interface{}
+	Errors                []interface{}
+	ServerStatus          bool
+	ServerEvent           RaceEvent
+	ServerName            string
+	CustomCSS             template.CSS
+	User                  *Account
+	IsHosted              bool
+	IsPremium             bool
+	MaxClientsOverride    int
+	IsDarkTheme           bool
+	Request               *http.Request
+	Debug                 bool
+	MonitoringEnabled     bool
+	SentryDSN             template.JSStr
+	RecaptchaSiteKey      string
+	WideContainer         bool
+	OGImage               string
+	ACSREnabled           bool
+	BaseURLIsSet          bool
+	BaseURLIsValid        bool
+	ServerID              ServerID
+	ShowEventDetailsPopup bool
 }
 
 func (b *BaseTemplateVars) Get() *BaseTemplateVars {
@@ -549,6 +550,7 @@ func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, vars Templat
 	data.BaseURLIsValid = baseURLIsValid()
 	data.ACSREnabled = opts.EnableACSR
 	data.ServerID = serverID
+	data.ShowEventDetailsPopup = opts.ShowEventDetailsPopup
 
 	if Premium() {
 		data.OGImage = opts.OGImage

@@ -199,6 +199,7 @@ type GlobalServerConfig struct {
 	RestartEventOnServerManagerLaunch int         `ini:"-" input:"checkbox" help:"When on, if Server Manager is stopped while there is an event in progress, Server Manager will try to restart the event when Server Manager is restarted."`
 	LogACServerOutputToFile           bool        `ini:"-" show:"open" input:"checkbox" help:"When on, Server Manager will output each Assetto Corsa session into a log file in the logs folder."`
 	NumberOfACServerLogsToKeep        int         `ini:"-" show:"open" help:"The number of AC Server logs to keep in the logs folder. (Oldest files will be deleted first. 0 = keep all files)"`
+	ShowEventDetailsPopup             bool        `ini:"-" help:"Allows all users to view a popup that describes in detail the setup of Custom Races, Championship Events and Race Weekend Sessions."`
 
 	// Discord Integration
 	DiscordIntegration FormHeading `ini:"-" json:"-" input:"heading"`

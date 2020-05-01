@@ -56,14 +56,18 @@
                         <hr>
                         <strong>Name:</strong> {{ $race.Name }}
 
-                        <div class="float-right">
-                            <a class="btn btn-sm btn-info custom-race-details"
-                               href="#"
-                               data-race-id="{{ $race.UUID.String }}"
-                            >
-                                Race Details
-                            </a>
-                        </div>
+                        {{ if $.ShowEventDetailsPopup }}
+                            <div class="float-right">
+                                <a class="btn btn-sm btn-info custom-race-details"
+                                   href="#"
+                                   data-race-id="{{ $race.UUID.String }}"
+                                >
+                                    Race Details
+                                </a>
+                            </div>
+
+                            <div class="clearfix"></div>
+                        {{ end }}
                     </td>
                     <td class="align-middle">{{ timeFormat $race.Created }}<br> {{ dateFormat $race.Created }}</td>
                     {{ if $writeAccess }}
@@ -142,7 +146,7 @@
     <h2>Scheduled</h2>
 
     {{ if gt (len .Scheduled) 0 }}
-        {{ template "custom-race-table" dict "Race" .Scheduled "ServerID" .ServerID }}
+        {{ template "custom-race-table" dict "Race" .Scheduled "ServerID" .ServerID "ShowEventDetailsPopup" $.ShowEventDetailsPopup }}
     {{ else if WriteAccess }}
         <p class="text-center">You haven't scheduled any races!</p>
     {{ else }}
@@ -152,7 +156,7 @@
     <h2>Starred</h2>
 
     {{ if gt (len .Starred) 0 }}
-        {{ template "custom-race-table" dict "Race" .Starred "ServerID" .ServerID }}
+        {{ template "custom-race-table" dict "Race" .Starred "ServerID" .ServerID "ShowEventDetailsPopup" $.ShowEventDetailsPopup }}
     {{ else if WriteAccess }}
         <p class="text-center">You haven't starred any Custom Races yet. Star some using the table below!</p>
     {{ else }}
@@ -162,7 +166,7 @@
     <h2>Auto Loop</h2>
 
     {{ if gt (len .Loop) 0 }}
-        {{ template "custom-race-table" dict "Race" .Loop "ServerID" .ServerID }}
+        {{ template "custom-race-table" dict "Race" .Loop "ServerID" .ServerID "ShowEventDetailsPopup" $.ShowEventDetailsPopup }}
         <p class="text-center">
             These custom races will be looped on the server whilst it is inactive! Auto loop races will only
             work if allowed to start automatically, please don't manually start these events if you want them to loop!
@@ -179,7 +183,7 @@
     <h2>Recent</h2>
 
     {{ if gt (len .Recent) 0 }}
-        {{ template "custom-race-table" dict "Race" .Recent "ServerID" .ServerID }}
+        {{ template "custom-race-table" dict "Race" .Recent "ServerID" .ServerID "ShowEventDetailsPopup" $.ShowEventDetailsPopup }}
     {{ else if WriteAccess }}
         <p class="text-center">We couldn't find any recent races. Perhaps you should <a href="/custom/new">create one now</a>?</p>
     {{ else }}
