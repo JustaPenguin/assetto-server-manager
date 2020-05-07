@@ -17,7 +17,7 @@
             </tr>
 
             {{ range $classIndex, $class := $championship.Classes }}
-                {{ $entrants := ($class.Standings $championship.Events) }}
+                {{ $entrants := ($class.Standings $championship $championship.Events) }}
 
                 {{ range $i, $entrant := $entrants }}
                     <tr style="
@@ -35,7 +35,7 @@
                         </td>
 
                         {{ range $z, $event := $championship.Events }}
-                            {{ $standingTableInfo := ($class.StandingsForEntrantAtEvent $event $entrant) }}
+                            {{ $standingTableInfo := ($class.StandingsForEntrantAtEvent $championship $event $entrant) }}
 
                             <td style="background-color: {{ $standingTableInfo.BackgroundColour }}; color: black;">
 

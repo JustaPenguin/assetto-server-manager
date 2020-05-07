@@ -77,7 +77,7 @@
                 {{ end }}
                 <li class="nav-item">
                     <a class="nav-link" id="overview-tab" data-toggle="tab" href="#overview" role="tab"
-                       aria-controls="overview" aria-selected="true">Championship Overview</a>
+                       aria-controls="overview" aria-selected="true">Overview</a>
                 </li>
             {{ end }}
             <li class="nav-item">
@@ -117,7 +117,7 @@
 
 
                             {{ range $classIndex, $class := $championship.Classes }}
-                                {{ $entrants := ($class.Standings $championship.Events) }}
+                                {{ $entrants := ($class.Standings $championship $championship.Events) }}
 
                                 {{ range $i, $entrant := $entrants }}
                                     <tr style="
@@ -204,7 +204,7 @@
                             </tr>
 
                             {{ range $classIndex, $class := $championship.Classes }}
-                                {{ $teamStandings := ($class.TeamStandings $championship.Events) }}
+                                {{ $teamStandings := ($class.TeamStandings $championship $championship.Events) }}
 
                                 {{ range $i, $team := $teamStandings }}
                                     <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
@@ -406,7 +406,7 @@
                 <div class="row flex-row flex-nowrap pb-3" style="overflow-x: auto;">
 
                     {{ range $classIndex, $class := $championship.Classes }}
-                        {{ $entrants := ($class.Standings $championship.Events) }}
+                        {{ $entrants := ($class.Standings $championship $championship.Events) }}
 
                         {{ range $i, $entrant := $entrants }}
                             <div class="col-6 col-lg-3 col-md-3 col-sm-6 entrant-car">

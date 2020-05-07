@@ -203,7 +203,7 @@
                                                 </tr>
 
                                                 {{ range $classIndex, $class := $championship.Classes }}
-                                                    {{ $eventStandings := $class.StandingsForEvent $event }}
+                                                    {{ $eventStandings := $class.StandingsForEvent $championship $event }}
                                                     {{ range $pos, $standing := $eventStandings }}
                                                         <tr style="
                                                         {{ if eq $account.GUID $standing.Car.Driver.GUID }}font-weight: bold;{{ end }}
@@ -237,3 +237,6 @@
         </div>
     </div>
 {{ end }}
+
+hey Ryan, £35/hour would be our ideal price. I'm not sure what kind of budget Monster have and what other things
+you have going on towards the project, so there's potential for a little wiggle room there.

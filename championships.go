@@ -120,87 +120,15 @@ type Championship struct {
 
 	Classes []*ChampionshipClass
 	Events  []*ChampionshipEvent
+
+	// SpectatorCar is a car defined in the Championship settings that if set up is added to the back of the grid
+	// of every event in the Championship.
+	SpectatorCar        Entrant
+	SpectatorCarEnabled bool
 }
 
-type ChampionshipSignUpForm struct {
-	Enabled          bool
-	AskForEmail      bool
-	AskForTeam       bool
-	HideCarChoice    bool
-	ExtraFields      []string
-	RequiresApproval bool
-
-	Responses []*ChampionshipSignUpResponse
-}
-
-func (c ChampionshipSignUpForm) EmailList(group string) string {
-	var filteredStatus ChampionshipEntrantStatus
-
-	switch group {
-	case "accepted":
-		filteredStatus = ChampionshipEntrantAccepted
-	case "rejected":
-		filteredStatus = ChampionshipEntrantRejected
-	case "pending":
-		filteredStatus = ChampionshipEntrantPending
-	case "all":
-		filteredStatus = ChampionshipEntrantAll
-	default:
-		panic("unknown entrant status: " + group)
-	}
-
-	var filteredEmails []string
-
-	for _, entrant := range c.Responses {
-		if entrant.Status == filteredStatus || filteredStatus == ChampionshipEntrantAll && entrant.Email != "" {
-			filteredEmails = append(filteredEmails, entrant.Email)
-		}
-	}
-
-	return strings.Join(filteredEmails, ",")
-}
-
-type ChampionshipEntrantStatus string
-
-const (
-	ChampionshipEntrantAll      = "All"
-	ChampionshipEntrantAccepted = "Accepted"
-	ChampionshipEntrantRejected = "Rejected"
-	ChampionshipEntrantPending  = "Pending Approval"
-)
-
-type ChampionshipSignUpResponse struct {
-	Created time.Time
-
-	Name      string
-	GUID      string
-	Team      string
-	Email     string
-	Car       string
-	Skin      string
-	Questions map[string]string
-
-	Status ChampionshipEntrantStatus
-}
-
-func (csr ChampionshipSignUpResponse) GetName() string {
-	return csr.Name
-}
-
-func (csr ChampionshipSignUpResponse) GetTeam() string {
-	return csr.Team
-}
-
-func (csr ChampionshipSignUpResponse) GetCar() string {
-	return csr.Car
-}
-
-func (csr ChampionshipSignUpResponse) GetSkin() string {
-	return csr.Skin
-}
-
-func (csr ChampionshipSignUpResponse) GetGUID() string {
-	return csr.GUID
+func (c *Championship) HasSpectatorCar() bool {
+	return c.SpectatorCarEnabled && c.SpectatorCar.GUID != "" && c.SpectatorCar.Model != ""
 }
 
 func (c *Championship) FindLastResultForDriver(guid string) (out *SessionResult, teamName string) {
@@ -260,8 +188,8 @@ func (c *Championship) GetPlayerSummary(guid string) string {
 		return ""
 	}
 
-	standings := class.Standings(c.Events)
-	teamStandings := class.TeamStandings(c.Events)
+	standings := class.Standings(c, c.Events)
+	teamStandings := class.TeamStandings(c, c.Events)
 
 	var driverPos, teamPos int
 	var driverPoints, teamPoints float64
@@ -603,6 +531,10 @@ func (c *Championship) ValidCarIDs() []string {
 		}
 	}
 
+	if c.HasSpectatorCar() {
+		cars[c.SpectatorCar.Model] = true
+	}
+
 	var out []string
 
 	for car := range cars {
@@ -653,7 +585,7 @@ func (c *Championship) EntrantAttendance(guid string) int {
 	for _, event := range ExtractRaceWeekendSessionsIntoIndividualEvents(c.Events) {
 		if event.Completed() {
 			for _, class := range c.Classes {
-				standings := class.StandingsForEvent(event)
+				standings := class.StandingsForEvent(c, event)
 
 				for _, standing := range standings {
 					if standing.Car.GetGUID() == guid {
@@ -970,9 +902,9 @@ func (c *Championship) AttachClassIDToResults(results *SessionResults) {
 	}
 }
 
-func (c *ChampionshipClass) ResultsForClass(results []*SessionResult) (filtered []*SessionResult) {
+func (c *ChampionshipClass) ResultsForClass(results []*SessionResult, championship *Championship) (filtered []*SessionResult) {
 	for _, result := range results {
-		if c.DriverInClass(result) && result.TotalTime > 0 {
+		if c.DriverInClass(result) && result.TotalTime > 0 && result.DriverGUID != championship.SpectatorCar.GUID {
 			filtered = append(filtered, result)
 		}
 	}
@@ -1007,7 +939,7 @@ const (
 	PointsCutTrack
 )
 
-func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints func(event *ChampionshipEvent, driverGUID string, points float64, reason PointsReason)) {
+func (c *ChampionshipClass) standings(championship *Championship, events []*ChampionshipEvent, givePoints func(event *ChampionshipEvent, driverGUID string, points float64, reason PointsReason)) {
 	eventsReverseCompletedOrder := make([]*ChampionshipEvent, len(events))
 
 	copy(eventsReverseCompletedOrder, events)
@@ -1038,7 +970,7 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 				switch sessionType {
 				case SessionTypeQualifying:
 					// non race weekend qualifying results get pole position points
-					for pos, driver := range c.ResultsForClass(session.Results.Result) {
+					for pos, driver := range c.ResultsForClass(session.Results.Result, championship) {
 						if pos != 0 {
 							continue
 						}
@@ -1060,7 +992,7 @@ func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints fu
 
 			fastestLap := session.Results.FastestLapInClass(c.ID)
 
-			for pos, driver := range c.ResultsForClass(session.Results.Result) {
+			for pos, driver := range c.ResultsForClass(session.Results.Result, championship) {
 				if driver.TotalTime <= 0 || driver.Disqualified {
 					continue
 				}
@@ -1096,7 +1028,7 @@ const (
 )
 
 // Standings returns the current Driver Standings for the Championship.
-func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent, standingOpts ...StandingsOption) []*ChampionshipStanding {
+func (c *ChampionshipClass) Standings(championship *Championship, inEvents []*ChampionshipEvent, standingOpts ...StandingsOption) []*ChampionshipStanding {
 	var out []*ChampionshipStanding
 
 	// make a copy of events so we do not persist race weekend sessions
@@ -1137,7 +1069,7 @@ func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent, standingOpt
 
 	standings := make(map[string]*ChampionshipStanding)
 
-	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64, reason PointsReason) {
+	c.standings(championship, events, func(event *ChampionshipEvent, driverGUID string, points float64, reason PointsReason) {
 		var car *SessionCar
 
 		for _, sessionType := range championshipStandingSessionOrder {
@@ -1208,8 +1140,8 @@ func (c *ChampionshipClass) Standings(inEvents []*ChampionshipEvent, standingOpt
 }
 
 // StandingsForEvent reports the standings for a single event, not including any generic points penalties applied to the championship.
-func (c *ChampionshipClass) StandingsForEvent(event *ChampionshipEvent) []*ChampionshipStanding {
-	return c.Standings([]*ChampionshipEvent{event}, StandingsNoPointsPenalties)
+func (c *ChampionshipClass) StandingsForEvent(championship *Championship, event *ChampionshipEvent) []*ChampionshipStanding {
+	return c.Standings(championship, []*ChampionshipEvent{event}, StandingsNoPointsPenalties)
 }
 
 type ChampionshipStandingWithTableInfo struct {
@@ -1219,7 +1151,7 @@ type ChampionshipStandingWithTableInfo struct {
 	NoFinishReason   string
 }
 
-func (c *ChampionshipClass) StandingsForEntrantAtEvent(event *ChampionshipEvent, entrant *ChampionshipStanding) *ChampionshipStandingWithTableInfo {
+func (c *ChampionshipClass) StandingsForEntrantAtEvent(championship *Championship, event *ChampionshipEvent, entrant *ChampionshipStanding) *ChampionshipStandingWithTableInfo {
 
 	outputStanding := &ChampionshipStanding{
 		Car:    entrant.Car,
@@ -1230,7 +1162,7 @@ func (c *ChampionshipClass) StandingsForEntrantAtEvent(event *ChampionshipEvent,
 	backgroundColour := "#ffffff"
 	noFinishReason := "DNS"
 
-	for i, standing := range c.Standings([]*ChampionshipEvent{event}, StandingsNoPointsPenalties) {
+	for i, standing := range c.StandingsForEvent(championship, event) {
 		if standing.Car.Model == entrant.Car.Model && standing.Car.GetGUID() == entrant.Car.GetGUID() {
 
 			switch {
@@ -1301,13 +1233,13 @@ type TeamStanding struct {
 }
 
 // TeamStandings returns the current position of Teams in the Championship.
-func (c *ChampionshipClass) TeamStandings(inEvents []*ChampionshipEvent) []*TeamStanding {
+func (c *ChampionshipClass) TeamStandings(championship *Championship, inEvents []*ChampionshipEvent) []*TeamStanding {
 	teams := make(map[string]float64)
 
 	// make a copy of events so we do not persist race weekend sessions
 	events := ExtractRaceWeekendSessionsIntoIndividualEvents(inEvents)
 
-	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64, reason PointsReason) {
+	c.standings(championship, events, func(event *ChampionshipEvent, driverGUID string, points float64, reason PointsReason) {
 		var team string
 
 		// find the team the driver was in for this race.
@@ -1519,6 +1451,87 @@ func (ce *ChampionshipSession) InProgress() bool {
 // Completed ChampionshipSessions have a non-zero CompletedTime
 func (ce *ChampionshipSession) Completed() bool {
 	return !ce.CompletedTime.IsZero() && ce.Results != nil
+}
+
+type ChampionshipSignUpForm struct {
+	Enabled          bool
+	AskForEmail      bool
+	AskForTeam       bool
+	HideCarChoice    bool
+	ExtraFields      []string
+	RequiresApproval bool
+
+	Responses []*ChampionshipSignUpResponse
+}
+
+func (c ChampionshipSignUpForm) EmailList(group string) string {
+	var filteredStatus ChampionshipEntrantStatus
+
+	switch group {
+	case "accepted":
+		filteredStatus = ChampionshipEntrantAccepted
+	case "rejected":
+		filteredStatus = ChampionshipEntrantRejected
+	case "pending":
+		filteredStatus = ChampionshipEntrantPending
+	case "all":
+		filteredStatus = ChampionshipEntrantAll
+	default:
+		panic("unknown entrant status: " + group)
+	}
+
+	var filteredEmails []string
+
+	for _, entrant := range c.Responses {
+		if entrant.Status == filteredStatus || filteredStatus == ChampionshipEntrantAll && entrant.Email != "" {
+			filteredEmails = append(filteredEmails, entrant.Email)
+		}
+	}
+
+	return strings.Join(filteredEmails, ",")
+}
+
+type ChampionshipEntrantStatus string
+
+const (
+	ChampionshipEntrantAll      = "All"
+	ChampionshipEntrantAccepted = "Accepted"
+	ChampionshipEntrantRejected = "Rejected"
+	ChampionshipEntrantPending  = "Pending Approval"
+)
+
+type ChampionshipSignUpResponse struct {
+	Created time.Time
+
+	Name      string
+	GUID      string
+	Team      string
+	Email     string
+	Car       string
+	Skin      string
+	Questions map[string]string
+
+	Status ChampionshipEntrantStatus
+}
+
+func (csr ChampionshipSignUpResponse) GetName() string {
+	return csr.Name
+}
+
+func (csr ChampionshipSignUpResponse) GetTeam() string {
+	return csr.Team
+}
+
+func (csr ChampionshipSignUpResponse) GetCar() string {
+	return csr.Car
+}
+
+func (csr ChampionshipSignUpResponse) GetSkin() string {
+	return csr.Skin
+}
+
+func (csr ChampionshipSignUpResponse) GetGUID() string {
+	return csr.GUID
 }
 
 type ActiveChampionship struct {

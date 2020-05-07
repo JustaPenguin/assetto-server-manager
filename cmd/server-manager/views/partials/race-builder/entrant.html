@@ -7,7 +7,7 @@
         <div class="card-header">
             <div class="row">
 
-                {{ if not $.IsChampionship }}
+                {{ if and (not $.IsChampionship) (not $.IsSpectatorCar) }}
                     <div class="col-md-3">
                         <div class="row form-group-row">
                             <label class="col-sm-6 col-form-label col-form-label-sm" for="EntryList.EntrantID">Grid/Pit ID</label>
@@ -41,7 +41,9 @@
                                 </div>
                             {{ end }}
 
-                            <a class="text-danger btn-delete-entrant" href="#"><i class="fas fa-trash"></i></a>
+                            {{ if not $.IsSpectatorCar }}
+                                <a class="text-danger btn-delete-entrant" href="#"><i class="fas fa-trash"></i></a>
+                            {{ end }}
                         </div>
                     </div>
                 {{ end }}

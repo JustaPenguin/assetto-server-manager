@@ -457,7 +457,7 @@ func (ChampionshipStandingsOrderEntryListSort) Sort(rw *RaceWeekend, _ *RaceWeek
 	}
 
 	class := entrants[0].ChampionshipClass(rw)
-	standings := class.Standings(rw.Championship.Events)
+	standings := class.Standings(rw.Championship, rw.Championship.Events)
 
 	sort.Slice(entrants, func(i, j int) bool {
 		entrantI, entrantJ := entrants[i], entrants[j]
