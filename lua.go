@@ -38,6 +38,7 @@ func (l *LuaPlugin) Inputs(i ...interface{}) *LuaPlugin {
 	return l
 }
 
+// remember outputs need to be reversed from whatever the plugin returns
 func (l *LuaPlugin) Outputs(o ...interface{}) *LuaPlugin {
 	l.outputs = append(l.outputs, o...)
 

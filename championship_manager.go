@@ -125,7 +125,7 @@ func (cm *ChampionshipManager) LoadACSRRatings(championship *Championship) (map[
 	guidMap := make(map[string]bool)
 
 	for _, class := range championship.Classes {
-		for _, standing := range class.Standings(championship, championship.Events) {
+		for _, standing := range class.Standings(championship.Events) {
 			guidMap[standing.Car.Driver.GUID] = true
 		}
 	}
@@ -264,21 +264,6 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	previousNumEntrants := 0
 	previousNumPoints := 0
 	previousNumCars := 0
-
-	if Premium() {
-		// spectator car
-		entrants, err := cm.BuildEntryList(r, previousNumEntrants, 1)
-
-		if err != nil {
-			return nil, edited, err
-		}
-
-		championship.SpectatorCar = *(entrants.AsSlice()[0])
-
-		previousNumEntrants++
-		previousNumCars += formValueAsInt(r.FormValue("NumAvailableSpectatorCars"))
-		championship.SpectatorCarEnabled = formValueAsInt(r.FormValue("Championship.SpectatorCar.Enabled")) == 1
-	}
 
 	for i := 0; i < len(r.Form["ClassName"]); i++ {
 		class := NewChampionshipClass(r.Form["ClassName"][i])
@@ -598,10 +583,6 @@ func (cm *ChampionshipManager) FinalEventConfigurationFiles(championship *Champi
 
 	entryList := event.CombineEntryLists(championship)
 
-	if championship.HasSpectatorCar() {
-		entryList.AddInPitBox(&championship.SpectatorCar, maxEntryListSize+1)
-	}
-
 	if championship.SignUpForm.Enabled && !championship.OpenEntrants && !isPreChampionshipPracticeEvent {
 		filteredEntryList := make(EntryList)
 
@@ -651,7 +632,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 	raceSetup, entryList := cm.FinalEventConfigurationFiles(championship, event, isPreChampionshipPracticeEvent)
 
 	if config.Lua.Enabled && Premium() {
-		err := championshipEventStartPlugin(event, championship)
+		err := championshipEventStartPlugin(event, championship, &entryList)
 
 		if err != nil {
 			logrus.WithError(err).Error("championship event start plugin script failed")
@@ -703,7 +684,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 	})
 }
 
-func championshipEventStartPlugin(event *ChampionshipEvent, championship *Championship) error {
+func championshipEventStartPlugin(event *ChampionshipEvent, championship *Championship, entryList *EntryList) error {
 	var standings [][]*ChampionshipStanding
 
 	for _, class := range championship.Classes {
@@ -712,16 +693,16 @@ func championshipEventStartPlugin(event *ChampionshipEvent, championship *Champi
 
 	p := &LuaPlugin{}
 
-	newEvent, newChampionship := NewChampionshipEvent(), NewChampionship(championship.Name)
+	newEvent, newChampionship, newEntryList := NewChampionshipEvent(), NewChampionship(championship.Name), &EntryList{}
 
-	p.Inputs(event, championship, standings).Outputs(newEvent, newChampionship)
+	p.Inputs(event, championship, standings, entryList).Outputs(&newEntryList, newEvent, newChampionship)
 	err := p.Call("./plugins/championship.lua", "onChampionshipEventStart")
 
 	if err != nil {
 		return err
 	}
 
-	*event, *championship = *newEvent, *newChampionship
+	*event, *championship, *entryList = *newEvent, *newChampionship, *newEntryList
 
 	return nil
 }
@@ -1000,11 +981,6 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 
 	case udp.SessionCarInfo:
 		if championship.OpenEntrants && championship.PersistOpenEntrants && a.Event() == udp.EventNewConnection {
-			if championship.HasSpectatorCar() && championship.SpectatorCar.GUID == string(a.DriverGUID) {
-				// don't try and add the spectator car to the entrylist.
-				return
-			}
-
 			// a person joined, check to see if they need adding to the championship
 			foundSlot, classForCar, err := cm.AddEntrantFromSessionData(championship, sessionEntrantWrapper(a), false, false)
 
