@@ -9,9 +9,21 @@
                 <th>Pos</th>
                 <th>Driver</th>
                 {{ range $i, $event := $championship.Events }}
-                    <th data-toggle="tooltip" title="{{ prettify $event.RaceSetup.Track false }}">
-                        {{ shortenTrackName $event.RaceSetup.Track }}
-                    </th>
+                    {{ if $event.IsRaceWeekend }}
+                        <th data-toggle="tooltip" title="{{ $event.RaceWeekend.Name }}">
+                            {{ shortenTrackName $event.RaceWeekend.Name }}
+                        </th>
+                    {{ else }}
+                        {{ $trackInfo := trackInfo $event.RaceSetup.Track $event.RaceSetup.TrackLayout }}
+
+                        <th data-toggle="tooltip" title="{{ with $trackInfo }}{{ $trackInfo.Name }}{{ else }}{{ prettify $event.RaceSetup.Track false }}{{ end }}">
+                            {{ with $trackInfo }}
+                                {{ shortenTrackName $trackInfo.Name }}
+                            {{ else }}
+                                {{ shortenTrackName (prettify $event.RaceSetup.Track false) }}
+                            {{ end }}
+                        </th>
+                    {{ end }}
                 {{ end }}
                 <th>Total Points</th>
             </tr>
