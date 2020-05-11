@@ -651,7 +651,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 	raceSetup, entryList := cm.FinalEventConfigurationFiles(championship, event, isPreChampionshipPracticeEvent)
 
 	if config.Lua.Enabled && Premium() {
-		err := championshipEventStartPlugin(event, championship)
+		err := championshipEventStartPlugin(event, championship, &entryList)
 
 		if err != nil {
 			logrus.WithError(err).Error("championship event start plugin script failed")
@@ -703,7 +703,7 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 	})
 }
 
-func championshipEventStartPlugin(event *ChampionshipEvent, championship *Championship) error {
+func championshipEventStartPlugin(event *ChampionshipEvent, championship *Championship, entryList *EntryList) error {
 	var standings [][]*ChampionshipStanding
 
 	for _, class := range championship.Classes {
@@ -712,16 +712,16 @@ func championshipEventStartPlugin(event *ChampionshipEvent, championship *Champi
 
 	p := &LuaPlugin{}
 
-	newEvent, newChampionship := NewChampionshipEvent(), NewChampionship(championship.Name)
+	newEvent, newChampionship, newEntryList := NewChampionshipEvent(), NewChampionship(championship.Name), &EntryList{}
 
-	p.Inputs(event, championship, standings).Outputs(newEvent, newChampionship)
+	p.Inputs(event, championship, standings, entryList).Outputs(&newEntryList, newEvent, newChampionship)
 	err := p.Call("./plugins/championship.lua", "onChampionshipEventStart")
 
 	if err != nil {
 		return err
 	}
 
-	*event, *championship = *newEvent, *newChampionship
+	*event, *championship, *entryList = *newEvent, *newChampionship, *newEntryList
 
 	return nil
 }
