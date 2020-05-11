@@ -939,7 +939,7 @@ class RaceSetup {
         // have an entrant template to work from.
         let $tmpl = this.$parent.find("#entrantTemplate");
 
-        if (!$entrantTemplate) {
+        if (!$entrantTemplate && $tmpl.length > 0) {
             $entrantTemplate = $tmpl.prop("id", "").clone(true, true);
         }
 
@@ -1098,7 +1098,9 @@ class RaceSetup {
             let restrictor = $lastElement.find("[name='EntryList.Restrictor']").val();
 
             for (let i = 0; i < numEntrantsToAdd; i++) {
-                if ($(".entrant:visible").length >= maxClients) {
+                let $visibleEntrants = $(".entrant:visible");
+
+                if ($visibleEntrants.length >= maxClients) {
                     continue;
                 }
 
@@ -1114,7 +1116,7 @@ class RaceSetup {
                 });
 
                 if (chosenCar) {
-                    // dropdowns nead full <option> elements appending to them for populateEntryListCars to function correctly.
+                    // dropdowns need full <option> elements appending to them for populateEntryListCars to function correctly.
                     $elem.find("[name='EntryList.Car']").append($("<option>", {
                         value: chosenCar,
                         text: prettifyName(chosenCar, true),
@@ -1142,7 +1144,7 @@ class RaceSetup {
                 $elem.find("[name='EntryList.Restrictor']").val(restrictor);
                 let $entrantID = $elem.find("[name='EntryList.EntrantID']");
 
-                $entrantID.val($(".entrant:visible").length - 1);
+                $entrantID.val($visibleEntrants.length - 1);
 
                 populateEntryListCars();
                 showEntrantSkin(chosenCar, chosenSkin, $elem);
