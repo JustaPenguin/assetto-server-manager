@@ -128,7 +128,7 @@ type Championship struct {
 }
 
 func (c *Championship) HasSpectatorCar() bool {
-	return c.SpectatorCarEnabled && c.SpectatorCar.GUID != "" && c.SpectatorCar.Model != ""
+	return !c.OpenEntrants && c.SpectatorCarEnabled && c.SpectatorCar.GUID != "" && c.SpectatorCar.Model != ""
 }
 
 func (c *Championship) FindLastResultForDriver(guid string) (out *SessionResult, teamName string) {

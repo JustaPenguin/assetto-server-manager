@@ -200,7 +200,7 @@ func (rwm *RaceWeekendManager) SaveRaceWeekend(r *http.Request) (raceWeekend *Ra
 			}
 		}
 	} else {
-		// entrylist length is -1 to accomodate for spectator car (below)
+		// entrylist length is -1 to accommodate for spectator car (below)
 		entryList, err := rwm.raceManager.BuildEntryList(r, 0, len(r.Form["EntryList.Name"])-1)
 
 		if err != nil {
