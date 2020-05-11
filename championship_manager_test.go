@@ -176,7 +176,7 @@ func init() {
 		NewRaceManager(
 			NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"), filepath.Join(os.TempDir(), "asm-race-store-shared")),
 			dummyServerProcess{},
-			NewCarManager(NewTrackManager(), false),
+			NewCarManager(NewTrackManager(), false, false),
 			NewTrackManager(),
 			&dummyNotificationManager{},
 			NewRaceControl(NilBroadcaster{}, nilTrackData{}, dummyServerProcess{}, testStore, NewPenaltiesManager(testStore)),
