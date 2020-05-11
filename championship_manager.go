@@ -125,7 +125,7 @@ func (cm *ChampionshipManager) LoadACSRRatings(championship *Championship) (map[
 	guidMap := make(map[string]bool)
 
 	for _, class := range championship.Classes {
-		for _, standing := range class.Standings(championship.Events) {
+		for _, standing := range class.Standings(championship, championship.Events) {
 			guidMap[standing.Car.Driver.GUID] = true
 		}
 	}
