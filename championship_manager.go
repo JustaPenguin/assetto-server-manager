@@ -1004,7 +1004,7 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 				// don't try and add the spectator car to the entrylist.
 				return
 			}
-			
+
 			// a person joined, check to see if they need adding to the championship
 			foundSlot, classForCar, err := cm.AddEntrantFromSessionData(championship, sessionEntrantWrapper(a), false, false)
 
