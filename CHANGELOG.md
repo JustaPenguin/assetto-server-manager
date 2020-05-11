@@ -39,6 +39,7 @@ Fixed:
 * Fixes an issue where the full grid would not be shown in the Race Weekend filter preview.
 * Made the new password screen a bit more visually unique, and added a paragraph to explain to new users that they should set their own password rather than using the default one.
 * Tyres with unsafe characters in the name (e.g. sv60's) should no longer cause issues with the Custom Race form.
+* Updated championship event start Lua plugin to take and return the full event entry list.
 
 ---
 
