@@ -244,10 +244,66 @@ type CarManager struct {
 	trackManager *TrackManager
 }
 
-func NewCarManager(trackManager *TrackManager, watchForCarChanges bool) *CarManager {
+func NewCarManager(trackManager *TrackManager, watchForCarChanges, useCarNameCache bool) *CarManager {
 	cm := &CarManager{trackManager: trackManager, watchFilesystemForCarChanges: watchForCarChanges}
 
+	if useCarNameCache {
+		cm.initCarNames()
+	}
+
 	return cm
+}
+
+type carNames map[string]string
+
+// carNameCache provides a map of car key -> actual name of a car
+// this can be used to improve the accuracy of car naming in templates.
+var carNameCache carNames
+
+// adds the name of a car to the car details cache.
+func (c carNames) add(car *Car) {
+	if c == nil {
+		return
+	}
+
+	if car.Details.Name != "" {
+		carNameCache[car.Name] = car.Details.Name
+	}
+}
+
+// get a car name from the cache, if possible.
+// if cache is not enabled, false is always returned.
+func (c carNames) get(car string) (string, bool) {
+	if c == nil {
+		return "", false
+	}
+
+	name, ok := c[car]
+
+	return name, ok
+}
+
+// removes a car name from the cache.
+func (c carNames) remove(car string) {
+	if c == nil {
+		return
+	}
+
+	delete(carNameCache, car)
+}
+
+func (cm *CarManager) initCarNames() {
+	carNameCache = make(carNames)
+
+	cars, err := cm.ListCars()
+
+	if err != nil {
+		return
+	}
+
+	for _, car := range cars {
+		carNameCache.add(car)
+	}
 }
 
 // watchForChanges looks for created/removed files in the cars folder and (de-)indexes them as necessary
@@ -522,11 +578,15 @@ func (cm *CarManager) CreateOrOpenSearchIndex() error {
 
 // IndexCar indexes an individual car.
 func (cm *CarManager) IndexCar(car *Car) error {
+	carNameCache.add(car)
+
 	return cm.carIndex.Index(car.Name, car.Details)
 }
 
 // DeIndexCar removes a car from the index.
 func (cm *CarManager) DeIndexCar(name string) error {
+	carNameCache.remove(name)
+
 	return cm.carIndex.Delete(name)
 }
 

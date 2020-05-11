@@ -446,6 +446,10 @@ func prettifyName(s string, acronyms bool) string {
 		return "Any Car Model"
 	}
 
+	if carName, ok := carNameCache.get(s); ok {
+		return carName
+	}
+
 	parts := strings.Split(s, "_")
 
 	if parts[0] == "ks" {
