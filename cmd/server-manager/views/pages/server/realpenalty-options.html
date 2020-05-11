@@ -1,0 +1,38 @@
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.kissMyRankConfigurationTemplateVars*/}}
+
+{{ define "title" }}Real Penalty Options{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">Real Penalty Options</h1>
+
+    <p>
+        <a href="https://www.racedepartment.com/downloads/real-penalty-tool.29591/updates#resource-update-56177">Real Penalty</a> is the popular server side app
+        designed to manage custom penalties for organised racing.
+    </p>
+
+    {{ if .IsRealPenaltyInstalled }}
+        <p>
+            These configuration options are applied globally - they are applied to the Real Penalty configuration files
+            whenever a race setup is started by Server Manager.
+        </p>
+
+        <form method="post" action="/realpenalty/options">
+            {{ range $k, $v := .Form.Fields }}
+                {{ $v.HTML }}
+            {{ end }}
+
+            <button class="btn btn-success float-right" type="submit">Save</button>
+
+            <div class="clearfix"></div>
+        </form>
+    {{ else }}
+        <p>Real Penalty is not installed. Please follow the instructions below to install Real Penalty, or contact your Server Administrator:</p>
+
+        <ol>
+            <li><a href="https://www.racedepartment.com/downloads/real-penalty-tool.29591/updates#resource-update-56177">Download Real Penalty</a></li>
+            <li>Do some other stuff</li>
+            <li>Make sure that you have set UDP Plugin Address and UDP Plugin Local Port in <a href="/server-options">Server Options</a></li>
+            <li>Refresh this page!</li>
+        </ol>
+    {{ end }}
+{{ end }}

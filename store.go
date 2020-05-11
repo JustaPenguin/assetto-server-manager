@@ -60,6 +60,10 @@ type Store interface {
 	// KissMyRank Options
 	UpsertKissMyRankOptions(kmr *KissMyRankConfig) error
 	LoadKissMyRankOptions() (*KissMyRankConfig, error)
+
+	// RealPenalty options
+	UpsertRealPenaltyOptions(rpc *RealPenaltyConfig) error
+	LoadRealPenaltyOptions() (*RealPenaltyConfig, error)
 }
 
 func loadChampionshipRaceWeekends(championship *Championship, store Store) error {

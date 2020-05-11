@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -281,6 +282,9 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 	kissMyRankOptions, err := sp.store.LoadKissMyRankOptions()
 	kissMyRankEnabled := err == nil && kissMyRankOptions.EnableKissMyRank && IsKissMyRankInstalled()
 
+	realPenaltyOptions, err := sp.store.LoadRealPenaltyOptions()
+	realPenaltyEnabled := err == nil && realPenaltyOptions.RealPenaltyAppConfig.General.EnableRealPenalty && IsRealPenaltyInstalled()
+
 	udpPluginPortsSetup := sp.forwardListenPort >= 0 && sp.forwardingAddress != "" || strings.Contains(sp.forwardingAddress, ":")
 
 	if (strackerEnabled || kissMyRankEnabled) && !udpPluginPortsSetup {
@@ -311,6 +315,8 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 				}
 			}
 		}
+
+		fmt.Println("Stracker ports: ", strackerOptions.ACPlugin.SendPort, strackerOptions.ACPlugin.ReceivePort)
 
 		if err := strackerOptions.Write(); err != nil {
 			return err
@@ -374,6 +380,53 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 		}
 
 		logrus.Infof("Started KissMyRank")
+	}
+
+	if realPenaltyEnabled && realPenaltyOptions != nil && udpPluginPortsSetup {
+		if err := fixRealPenaltyExecutablePermissions(); err != nil {
+			return err
+		}
+
+		var port int
+		var response string
+
+		if !kissMyRankEnabled && !strackerEnabled {
+			// connect to the forwarding address
+			port, err = strconv.Atoi(strings.Split(sp.forwardingAddress, ":")[1])
+
+			if err != nil {
+				return err
+			}
+
+			response = fmt.Sprintf("127.0.0.1:%d", sp.forwardListenPort)
+		} else if strackerEnabled && !kissMyRankEnabled {
+			// connect to stracker's proxy port
+			port = strackerOptions.ACPlugin.ProxyPluginLocalPort
+			response = fmt.Sprintf("127.0.0.1:%d", strackerOptions.ACPlugin.ProxyPluginPort)
+		} else if kissMyRankEnabled  {
+			// connect to kmr's proxy port
+			port = kissMyRankOptions.ACAppLinkUDPPort
+			response = fmt.Sprintf("127.0.0.1:%d", kissMyRankOptions.ACServerPluginAddressPort)
+		}
+
+		fmt.Println("Real Penalty ports: ", port, response)
+
+		realPenaltyOptions.RealPenaltyAppConfig.General.UDPPort = port
+		realPenaltyOptions.RealPenaltyAppConfig.General.UDPResponse = response
+
+		if err := realPenaltyOptions.Write(); err != nil {
+			return err
+		}
+
+		err = sp.startPlugin(wd, &CommandPlugin{
+			Executable: RealPenaltyExecutablePath(),
+		})
+
+		if err != nil {
+			return err
+		}
+
+		logrus.Infof("Started Real Penalty")
 	}
 
 	for _, plugin := range config.Server.Plugins {

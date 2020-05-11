@@ -15,15 +15,16 @@ const (
 	maxAuditEntries = 1000
 
 	// private data
-	accountsDir           = "accounts"
-	serverOptionsFile     = "server_options.json"
-	frameLinksFile        = "frame_links.json"
-	serverMetaDir         = "meta"
-	auditFile             = "audit.json"
-	strackerOptionsFile   = "stracker_options.json"
-	kissMyRankOptionsFile = "kissmyrank_options.json"
-	liveTimingsDataFile   = "live_timings.json"
-	lastRaceEventFile     = "last_race_event.json"
+	accountsDir            = "accounts"
+	serverOptionsFile      = "server_options.json"
+	frameLinksFile         = "frame_links.json"
+	serverMetaDir          = "meta"
+	auditFile              = "audit.json"
+	strackerOptionsFile    = "stracker_options.json"
+	kissMyRankOptionsFile  = "kissmyrank_options.json"
+	realPenaltyOptionsFile = "realpenalty_options.json"
+	liveTimingsDataFile    = "live_timings.json"
+	lastRaceEventFile      = "last_race_event.json"
 
 	// shared data
 	championshipsDir = "championships"
@@ -584,6 +585,26 @@ func (rs *JSONStore) LoadKissMyRankOptions() (*KissMyRankConfig, error) {
 		kmrConfig := DefaultKissMyRankConfig()
 
 		return kmrConfig, rs.UpsertKissMyRankOptions(kmrConfig)
+	} else if err != nil {
+		return nil, err
+	}
+
+	return out, err
+}
+
+func (rs *JSONStore) UpsertRealPenaltyOptions(rpc *RealPenaltyConfig) error {
+	return rs.encodeFile(rs.base, realPenaltyOptionsFile, rpc)
+}
+
+func (rs *JSONStore) LoadRealPenaltyOptions() (*RealPenaltyConfig, error) {
+	var out *RealPenaltyConfig
+
+	err := rs.decodeFile(rs.base, realPenaltyOptionsFile, &out)
+
+	if os.IsNotExist(err) {
+		rpcConfig := DefaultRealPenaltyConfig()
+
+		return rpcConfig, rs.UpsertRealPenaltyOptions(rpcConfig)
 	} else if err != nil {
 		return nil, err
 	}

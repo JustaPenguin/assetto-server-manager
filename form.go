@@ -132,6 +132,7 @@ type FormElement interface {
 	HTML() template.HTML
 }
 
+// @TODO GUI Ds issue on realpenalty page
 func (f Form) buildName(name string) string {
 	return strings.Replace(strings.Join(camelcase.Split(name), " "), "ACSRAPI", "ACSR API", 1)
 }

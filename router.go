@@ -64,6 +64,7 @@ func Router(
 	strackerHandler *StrackerHandler,
 	healthCheck *HealthCheck,
 	kissMyRankHandler *KissMyRankHandler,
+	realPenaltyHandler *RealPenaltyHandler,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -340,6 +341,7 @@ func Router(
 
 		r.HandleFunc("/stracker/options", strackerHandler.options)
 		r.HandleFunc("/kissmyrank/options", kissMyRankHandler.options)
+		r.HandleFunc("/realpenalty/options", realPenaltyHandler.options)
 	})
 
 	FileServer(r, "/static", fs, false)
