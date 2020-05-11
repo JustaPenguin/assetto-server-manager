@@ -86,6 +86,52 @@
             </div>
         </div>
 
+        {{ if not $.RaceWeekend.HasLinkedChampionship }}
+            <div class="card mt-3 border-secondary race-setup">
+                <div class="card-header">
+                    <strong>Spectator Car</strong>
+                </div>
+
+                <div class="d-none">
+                    {{ template "cars" dict "CarOpts" $.CarOpts "Current" nil "SelectAllCars" true }}
+
+                    <input type="hidden" name="NumAvailableSpectatorCars" value="{{ len $.CarOpts }}">
+                </div>
+
+                <div class="card-body" id="entrants">
+                    <p>
+                        You can configure a Spectator Car for this Race Weekend. Spectator Cars are automatically
+                        added to the back of the Entry List for each Race Weekend Session, and discounted from any session results.
+                    </p>
+
+                    {{ if $.IsHosted }}
+                        <p class="text-danger">Please note that the Spectator Car uses 1 slot on your hosted server. Events may fail to start if you have too many slots in use!</p>
+                    {{ end }}
+
+                    <div class="form-group row">
+                        <label for="SpectatorCar.Enabled" class="col-sm-3 col-form-label">Enabled</label>
+
+                        <div class="col-sm-9">
+                            <input type="checkbox"
+                                   id="SpectatorCarEnabled"
+                                   name="SpectatorCar.Enabled"
+                                   class="spectator-toggle"
+                                    {{ if $.RaceWeekend.HasSpectatorCar }}
+                                        checked="checked"
+                                    {{ end }}
+                            ><br><br>
+                        </div>
+                    </div>
+
+
+                    <div class="visible-spectator-enabled" {{ if not $.RaceWeekend.HasSpectatorCar }} style="display: none" {{ end }}>
+                        <div class="entrant">
+                            {{ template "entrant" dict "Entrant" $.RaceWeekend.SpectatorCar "IsChampionshipEvent" false "IsEditing" $.IsEditing "IsChampionship" false "IsSpectatorCar" true }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {{ end }}
 
         <div class="mt-5">
             {{ if .IsEditing }}

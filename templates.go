@@ -85,8 +85,7 @@ func (fs *filesystemTemplateLoader) Templates(funcs template.FuncMap) (map[strin
 }
 
 func shortenTrackName(name string) string {
-	prettyName := prettifyName(name, false)
-	nameParts := strings.Split(prettyName, " ")
+	nameParts := strings.Split(name, " ")
 
 	out := nameParts[0]
 

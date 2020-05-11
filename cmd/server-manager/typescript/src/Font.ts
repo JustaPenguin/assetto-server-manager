@@ -46,6 +46,7 @@ import {faGasPump} from "@fortawesome/free-solid-svg-icons/faGasPump";
 import {faPuzzlePiece} from "@fortawesome/free-solid-svg-icons/faPuzzlePiece";
 import {faBalanceScale} from "@fortawesome/free-solid-svg-icons/faBalanceScale";
 import {faUsers} from "@fortawesome/free-solid-svg-icons/faUsers";
+import {faVideo} from "@fortawesome/free-solid-svg-icons/faVideo";
 
 library.add(
     faUser,
@@ -93,6 +94,7 @@ library.add(
     faPuzzlePiece,
     faBalanceScale,
     faUsers,
+    faVideo,
 );
 
 dom.watch();

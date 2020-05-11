@@ -11,6 +11,7 @@ Added:
   - Driver Swap result files show which lap was completed by which driver (using the AutoFill Entrant list where possible to put names in)
   - Driver Swaps require compatible tracks. A compatible track has the timing line before or after all of the pitboxes. 
     You can follow this guide (written by @mike855 - thanks!) to modify a track to be compatible: https://github.com/JustaPenguin/assetto-server-manager/wiki/Driver-swap-track-editing
+* Premium users can now specify a spectator car slot in Championships and Race Weekends. The spectator car will be added to the back of the grid and excluded from all results files.
 * A landing intro for hosted servers that points users in the right direction.
 * You can now broadcast a 3-2-1-GO countdown to all drivers from the Live Timings Admin Panel.
 * You can now duplicate Championships using the dropdown next to "Edit" in the Championship list.

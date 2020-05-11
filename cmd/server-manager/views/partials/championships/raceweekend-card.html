@@ -203,7 +203,7 @@
                                                 </tr>
 
                                                 {{ range $classIndex, $class := $championship.Classes }}
-                                                    {{ $eventStandings := $class.StandingsForEvent $event }}
+                                                    {{ $eventStandings := $class.StandingsForEvent $championship $event }}
                                                     {{ range $pos, $standing := $eventStandings }}
                                                         <tr style="
                                                         {{ if eq $account.GUID $standing.Car.Driver.GUID }}font-weight: bold;{{ end }}

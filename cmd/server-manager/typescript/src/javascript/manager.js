@@ -805,7 +805,7 @@ class RaceSetup {
     driverNames;
 
     toggleAlreadyAutocompletedDrivers() {
-        $(".entrant-autofill option").each(function (index, elem) {
+        this.$parent.find(".entrant-autofill option").each(function (index, elem) {
             let found = false;
             let $elem = $(elem);
 
@@ -852,19 +852,11 @@ class RaceSetup {
             that.toggleAlreadyAutocompletedDrivers();
         }
 
-        let opts = {
-            source: this.driverNames,
-            select: function (event, ui) {
-                autoFillEntrant(event.target, ui.item.value);
-            }
-        };
-
-
         for (let entrant of possibleEntrants) {
-            $(".entrant-autofill").append($("<option>").val(entrant.Name).text(entrant.Name));
+            this.$parent.find(".entrant-autofill").append($("<option>").val(entrant.Name).text(entrant.Name));
         }
 
-        $(document).on("change", ".entrant-autofill", function (e) {
+        this.$parent.on("change", ".entrant-autofill", function (e) {
             autoFillEntrant(e.currentTarget, $(e.currentTarget).val());
         });
     }
@@ -2170,6 +2162,7 @@ let championships = {
         championships.initConfigureSignUpForm();
         championships.initSignUpForm();
         championships.initACSRWatcher();
+        championships.initOpenChampionshipWatcher();
     },
 
     initACSRWatcher: function () {
@@ -2203,6 +2196,35 @@ let championships = {
 
             $signUpFormSwitch.bootstrapSwitch('disabled', false);
             $overridePasswordSwitch.bootstrapSwitch('disabled', false);
+        }
+    },
+
+    initOpenChampionshipWatcher: function() {
+        let $openChampionshipSwitch = $("#ChampionshipOpenEntrants");
+
+        if (!$openChampionshipSwitch.length) {
+            return;
+        }
+
+        this.setOpenChampionshipOptions($openChampionshipSwitch.bootstrapSwitch('state'));
+
+        let that = this;
+
+        $openChampionshipSwitch.on("switchChange.bootstrapSwitch", function( event, state) {
+            that.setOpenChampionshipOptions(state);
+        });
+    },
+
+    setOpenChampionshipOptions: function(enabled) {
+        let $visibleOpenChampionship = $(".visible-open-championship");
+        let $hiddenOpenChampionship = $(".hidden-open-championship");
+
+        if (enabled) {
+            $visibleOpenChampionship.show();
+            $hiddenOpenChampionship.hide();
+        } else {
+            $visibleOpenChampionship.hide();
+            $hiddenOpenChampionship.show();
         }
     },
 

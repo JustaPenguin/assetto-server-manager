@@ -200,7 +200,8 @@ func (rwm *RaceWeekendManager) SaveRaceWeekend(r *http.Request) (raceWeekend *Ra
 			}
 		}
 	} else {
-		entryList, err := rwm.raceManager.BuildEntryList(r, 0, len(r.Form["EntryList.Name"]))
+		// entrylist length is -1 to accommodate for spectator car (below)
+		entryList, err := rwm.raceManager.BuildEntryList(r, 0, len(r.Form["EntryList.Name"])-1)
 
 		if err != nil {
 			return nil, edited, err
@@ -212,6 +213,15 @@ func (rwm *RaceWeekendManager) SaveRaceWeekend(r *http.Request) (raceWeekend *Ra
 		if err := rwm.raceManager.SaveEntrantsForAutoFill(entryList); err != nil {
 			return raceWeekend, edited, err
 		}
+
+		spectatorEntrants, err := rwm.raceManager.BuildEntryList(r, len(entryList), 1)
+
+		if err != nil {
+			return raceWeekend, edited, err
+		}
+
+		raceWeekend.SpectatorCar = *(spectatorEntrants.AsSlice()[0])
+		raceWeekend.SpectatorCarEnabled = formValueAsInt(r.FormValue("SpectatorCar.Enabled")) == 1
 	}
 
 	return raceWeekend, edited, rwm.UpsertRaceWeekend(raceWeekend)
@@ -512,6 +522,12 @@ func (rwm *RaceWeekendManager) StartSession(raceWeekendID string, raceWeekendSes
 				break
 			}
 		}
+	}
+
+	if raceWeekend.HasSpectatorCar() {
+		car := raceWeekend.GetSpectatorCar()
+
+		entryList.AddInPitBox(&car, maxEntryListSize+1)
 	}
 
 	session.RaceConfig.MaxClients = len(entryList)
