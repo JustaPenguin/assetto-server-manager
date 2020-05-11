@@ -265,6 +265,21 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	previousNumPoints := 0
 	previousNumCars := 0
 
+	if Premium() {
+		// spectator car
+		entrants, err := cm.BuildEntryList(r, previousNumEntrants, 1)
+
+		if err != nil {
+			return nil, edited, err
+		}
+
+		championship.SpectatorCar = *(entrants.AsSlice()[0])
+
+		previousNumEntrants++
+		previousNumCars += formValueAsInt(r.FormValue("NumAvailableSpectatorCars"))
+		championship.SpectatorCarEnabled = formValueAsInt(r.FormValue("Championship.SpectatorCar.Enabled")) == 1
+	}
+
 	for i := 0; i < len(r.Form["ClassName"]); i++ {
 		class := NewChampionshipClass(r.Form["ClassName"][i])
 
@@ -582,6 +597,10 @@ func (cm *ChampionshipManager) FinalEventConfigurationFiles(championship *Champi
 	raceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
 
 	entryList := event.CombineEntryLists(championship)
+
+	if championship.HasSpectatorCar() {
+		entryList.AddInPitBox(&championship.SpectatorCar, maxEntryListSize+1)
+	}
 
 	if championship.SignUpForm.Enabled && !championship.OpenEntrants && !isPreChampionshipPracticeEvent {
 		filteredEntryList := make(EntryList)
@@ -981,6 +1000,11 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 
 	case udp.SessionCarInfo:
 		if championship.OpenEntrants && championship.PersistOpenEntrants && a.Event() == udp.EventNewConnection {
+			if championship.HasSpectatorCar() && championship.SpectatorCar.GUID == string(a.DriverGUID) {
+				// don't try and add the spectator car to the entrylist.
+				return
+			}
+			
 			// a person joined, check to see if they need adding to the championship
 			foundSlot, classForCar, err := cm.AddEntrantFromSessionData(championship, sessionEntrantWrapper(a), false, false)
 
