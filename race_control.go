@@ -588,6 +588,7 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 
 	client.DriverInitials = driverInitials(client.DriverName)
 	client.DriverName = driverName(client.DriverName)
+	client.CarName = prettifyName(client.CarModel, true)
 
 	var driver *RaceControlDriver
 

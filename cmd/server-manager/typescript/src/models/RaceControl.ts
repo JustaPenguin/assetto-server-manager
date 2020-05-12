@@ -188,6 +188,7 @@ class RaceControlDriverMapRaceControlDriverSessionCarInfo {
     CarModel: string;
     CarSkin: string;
     DriverInitials: string;
+    CarName: string;
     EventType: number;
 
     constructor(data?: any) {
@@ -198,6 +199,7 @@ class RaceControlDriverMapRaceControlDriverSessionCarInfo {
         this.CarModel = ('CarModel' in d) ? d.CarModel as string : '';
         this.CarSkin = ('CarSkin' in d) ? d.CarSkin as string : '';
         this.DriverInitials = ('DriverInitials' in d) ? d.DriverInitials as string : '';
+        this.CarName = ('CarName' in d) ? d.CarName as string : '';
         this.EventType = ('EventType' in d) ? d.EventType as number : 0;
     }
 
