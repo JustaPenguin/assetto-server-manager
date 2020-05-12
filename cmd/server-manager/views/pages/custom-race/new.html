@@ -734,7 +734,7 @@
                         </div>
                     {{ end }}
 
-                    {{ if $.IsPremium }}
+                    {{ if and $.IsPremium (not $.IsChampionship) }}
                         <hr>
                     {{ end }}
                 {{ end }}
