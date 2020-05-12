@@ -21,7 +21,7 @@ function onChampionshipEventStart(encodedEvent, encodedChampionship, encodedClas
     -- Function block NOTE: this hook BLOCKS, make sure your functions don't loop forever!
     -- uncomment functions to enable them!
     --event = addBallastFromChampionshipPosition(event, standings, 50)
-    event = addBallastFromChampionshipEventPosition(championship, event, 75, 1, false)
+    --event = addBallastFromChampionshipEventPosition(championship, event, 75, 1, false)
 
     -- Encode block, you probably shouldn't touch these either!
     return json.encode(championship), json.encode(event)
