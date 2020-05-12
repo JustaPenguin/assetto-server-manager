@@ -431,10 +431,8 @@ func (cm *CarManager) LoadCar(name string, tyres Tyres) (*Car, error) {
 		}
 	} else {
 		if os.IsNotExist(err) {
-			if err := os.Mkdir(filepath.Join(carDirectory, "skins"), 0755); err != nil {
+			if err := os.Mkdir(filepath.Join(carDirectory, "skins"), 0755); err != nil && !os.IsNotExist(err) {
 				logrus.WithError(err).Warnf("Could not create skins directory for car: %s", name)
-			} else {
-				logrus.Infof("Created empty skins directory for car: %s", name)
 			}
 		} else {
 			logrus.WithError(err).Warnf("Could not load skins for car: %s", name)

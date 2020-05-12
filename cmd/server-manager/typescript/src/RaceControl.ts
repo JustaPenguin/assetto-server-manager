@@ -644,8 +644,8 @@ class LiveTimings implements WebsocketHandler {
             if (this.raceControl.status.ConnectedDrivers) {
                 const driver = this.raceControl.status.ConnectedDrivers.Drivers[closedConnection.DriverGUID];
 
-                if (driver && driver.LoadedTime.toString() === "0001-01-01T00:00:00Z") {
-                    // a driver joined but never loaded. remove them from the connected drivers table.
+                if (driver && (driver.LoadedTime.toString() === "0001-01-01T00:00:00Z" || !driver.TotalNumLaps)) {
+                    // a driver joined but never loaded, or hasn't completed any laps. remove them from the connected drivers table.
                     this.$connectedDriversTable.find("tr[data-guid='" + closedConnection.DriverGUID + "']").remove();
                     this.removeDriverFromAdminSelects(driver.CarInfo)
                 }
@@ -799,7 +799,7 @@ class LiveTimings implements WebsocketHandler {
         }
 
         // car model
-        $tr.find(".driver-car").text(prettifyName(driver.CarInfo.CarModel, true));
+        $tr.find(".driver-car").text(driver.CarInfo.CarName);
 
         if (addingDriverToConnectedTable) {
             let currentLapTimeText = "";
