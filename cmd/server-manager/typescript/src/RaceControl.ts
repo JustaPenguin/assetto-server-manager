@@ -799,7 +799,7 @@ class LiveTimings implements WebsocketHandler {
         }
 
         // car model
-        $tr.find(".driver-car").text(driver.CarInfo.CarName);
+        $tr.find(".driver-car").text(driver.CarInfo.CarName ? driver.CarInfo.CarName : prettifyName(driver.CarInfo.CarModel, true));
 
         if (addingDriverToConnectedTable) {
             let currentLapTimeText = "";
