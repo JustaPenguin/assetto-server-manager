@@ -17,72 +17,74 @@
 
     {{ template "raceweekend-premium" dict "IsPremium" $.IsPremium }}
 
-    <form action="/race-weekends/new/submit" class="race-setup" method="post" id="raceweekend-form" data-safe-submit>
-        <div class="card mt-3 border-secondary" id="entrants">
-            <div class="card-header">
-                <strong>Race Weekend</strong>
+    <form action="/race-weekends/new/submit" method="post" id="raceweekend-form" data-safe-submit>
+        <div class="race-setup">
+            <div class="card mt-3 border-secondary" id="entrants">
+                <div class="card-header">
+                    <strong>Race Weekend</strong>
 
-                {{ if .IsEditing }}
-                    <button type="submit" class="btn btn-success float-right">Save Race Weekend</button>
-                {{ end }}
-            </div>
-
-            <div class="card-body">
-                <div class="form-group row">
-                    <label for="RaceWeekendName" class="col-sm-3 col-form-label">Name</label>
-
-                    <div class="col-sm-9">
-                        <input type="text" class="form-control" id="RaceWeekendName" name="RaceWeekendName" required
-                               placeholder="My awesome Race Weekend" value="{{ $.RaceWeekend.Name }}">
-                    </div>
+                    {{ if .IsEditing }}
+                        <button type="submit" class="btn btn-success float-right">Save Race Weekend</button>
+                    {{ end }}
                 </div>
 
-                {{ if not $.RaceWeekend.HasLinkedChampionship }}
-
+                <div class="card-body">
                     <div class="form-group row">
-                        <label for="Cars" class="col-sm-3 col-form-label">
-                            Cars
-                        </label>
+                        <label for="RaceWeekendName" class="col-sm-3 col-form-label">Name</label>
 
                         <div class="col-sm-9">
-                            {{ template "cars" dict "CarOpts" $.CarOpts "Current" nil "ValidCarIDs" $.RaceWeekend.GetEntryList.CarIDs  }}
+                            <input type="text" class="form-control" id="RaceWeekendName" name="RaceWeekendName" required
+                                   placeholder="My awesome Race Weekend" value="{{ $.RaceWeekend.Name }}">
                         </div>
                     </div>
 
+                    {{ if not $.RaceWeekend.HasLinkedChampionship }}
 
-                    <div class="entrants-block">
-                        <div id="entrantTemplate" class="entrant">
-                            {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" false "NameAndGUIDRequired" true }}
-                        </div>
+                        <div class="form-group row">
+                            <label for="Cars" class="col-sm-3 col-form-label">
+                                Cars
+                            </label>
 
-                        {{ range $index, $entrant := $.RaceWeekend.GetEntryList.AsSlice }}
-                            <div class="entrant">
-                                {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" false "IsEditing" $.IsEditing "IsChampionship" false "NameAndGUIDRequired" true }}
+                            <div class="col-sm-9">
+                                {{ template "cars" dict "CarOpts" $.CarOpts "Current" nil "ValidCarIDs" $.RaceWeekend.GetEntryList.CarIDs  }}
                             </div>
-                        {{ else }}
-                            {{ if not $.IsEditing }}
+                        </div>
+
+
+                        <div class="entrants-block">
+                            <div id="entrantTemplate" class="entrant">
+                                {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" false "NameAndGUIDRequired" true }}
+                            </div>
+
+                            {{ range $index, $entrant := $.RaceWeekend.GetEntryList.AsSlice }}
                                 <div class="entrant">
-                                    {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" false "NameAndGUIDRequired" true }}
+                                    {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" false "IsEditing" $.IsEditing "IsChampionship" false "NameAndGUIDRequired" true }}
                                 </div>
+                            {{ else }}
+                                {{ if not $.IsEditing }}
+                                    <div class="entrant">
+                                        {{ template "entrant" dict "IsEditing" $.IsEditing "IsChampionship" false "NameAndGUIDRequired" true }}
+                                    </div>
+                                {{ end }}
                             {{ end }}
-                        {{ end }}
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-8 pt-2">
-                            <p>Car, Skin, Ballast, Restrictor and Fixed Setup from the last Entrant will be cloned into new Entrants.</p>
                         </div>
-                        <div class="col-md-4 text-right">
-                            <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
 
-                            <button class="btn btn-warning addEntrant">Add Entrant(s)</button>
+                        <div class="row">
+                            <div class="col-md-8 pt-2">
+                                <p>Car, Skin, Ballast, Restrictor and Fixed Setup from the last Entrant will be cloned into new Entrants.</p>
+                            </div>
+                            <div class="col-md-4 text-right">
+                                <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
+
+                                <button class="btn btn-warning addEntrant">Add Entrant(s)</button>
+                            </div>
                         </div>
-                    </div>
-                {{ else }}
-                    <input type="hidden" name="ChampionshipID" id="ChampionshipID" value="{{ $.Championship.ID }}">
-                {{ end }}
+                    {{ else }}
+                        <input type="hidden" name="ChampionshipID" id="ChampionshipID" value="{{ $.Championship.ID }}">
+                    {{ end }}
 
-                <div class="clearfix"></div>
+                    <div class="clearfix"></div>
+                </div>
             </div>
         </div>
 
