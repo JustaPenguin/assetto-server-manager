@@ -598,6 +598,27 @@ func (sp *AssettoServerProcess) startChildProcess(wd string, command string) err
 }
 
 func (sp *AssettoServerProcess) stopChildProcesses() {
+	// are there any messages in the UDP channel?
+	logrus.Info("Waiting for all UDP messages to be forwarded before stopping child processes")
+
+	ticker := time.NewTicker(time.Second * 5)
+
+waitForUDP:
+	for {
+		select {
+		case <-ticker.C:
+			ticker.Stop()
+
+			break waitForUDP
+		default:
+			if udp.CurrentQueueSize == 0 {
+				ticker.Stop()
+
+				break waitForUDP
+			}
+		}
+	}
+
 	sp.contentManagerWrapper.Stop()
 
 	for _, command := range sp.extraProcesses {

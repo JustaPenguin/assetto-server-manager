@@ -134,6 +134,8 @@ func (asu *AssettoServerUDP) forwardServe() {
 	}
 }
 
+var CurrentQueueSize = 0
+
 func (asu *AssettoServerUDP) serve() {
 	messageChan := make(chan []byte, 1000)
 	defer close(messageChan)
@@ -166,14 +168,14 @@ func (asu *AssettoServerUDP) serve() {
 					continue
 				}
 
-				currentQueueSize := len(messageChan)
+				CurrentQueueSize = len(messageChan)
 
-				if currentQueueSize > lastQueueSize {
-					logrus.Warnf("Can't keep up! queue size: %d vs %d: changed by %d", currentQueueSize, lastQueueSize, currentQueueSize-lastQueueSize)
+				if CurrentQueueSize > lastQueueSize {
+					logrus.Warnf("Can't keep up! queue size: %d vs %d: changed by %d", CurrentQueueSize, lastQueueSize, CurrentQueueSize-lastQueueSize)
 
 					// update as infrequently as we can, within sensible limits
-					if currentQueueSize > 5 { // at this point we are half a second behind
-						CurrentRealtimePosIntervalMs += (currentQueueSize * 2) + 1
+					if CurrentQueueSize > 5 { // at this point we are half a second behind
+						CurrentRealtimePosIntervalMs += (CurrentQueueSize * 2) + 1
 
 						logrus.Debugf("Adjusting real time pos interval: %d", CurrentRealtimePosIntervalMs)
 						err := asu.SendMessage(NewEnableRealtimePosInterval(CurrentRealtimePosIntervalMs))
@@ -182,8 +184,8 @@ func (asu *AssettoServerUDP) serve() {
 							logrus.WithError(err).Error("Could not send realtime pos interval adjustment")
 						}
 					}
-				} else if currentQueueSize <= lastQueueSize && currentQueueSize < 5 && CurrentRealtimePosIntervalMs > RealtimePosIntervalMs {
-					logrus.Debugf("Catching up, queue size: %d vs %d: changed by %d", currentQueueSize, lastQueueSize, currentQueueSize-lastQueueSize)
+				} else if CurrentQueueSize <= lastQueueSize && CurrentQueueSize < 5 && CurrentRealtimePosIntervalMs > RealtimePosIntervalMs {
+					logrus.Debugf("Catching up, queue size: %d vs %d: changed by %d", CurrentQueueSize, lastQueueSize, CurrentQueueSize-lastQueueSize)
 
 					if CurrentRealtimePosIntervalMs-1 >= RealtimePosIntervalMs {
 						CurrentRealtimePosIntervalMs--
@@ -197,7 +199,7 @@ func (asu *AssettoServerUDP) serve() {
 					}
 				}
 
-				lastQueueSize = currentQueueSize
+				lastQueueSize = CurrentQueueSize
 			case <-asu.ctx.Done():
 				ticker.Stop()
 				return
