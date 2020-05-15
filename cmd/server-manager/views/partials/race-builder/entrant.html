@@ -31,11 +31,13 @@
                         </select>
                     </div>
 
-                    <div class="{{ if not $.IsChampionship }}col-md-5{{ else }}col-md-8{{ end }}">
+                    <div class="{{ if not $.IsChampionship }}col-md-5{{ else }}col-md-8{{ end }}" {{ if $.IsSpectatorCar }}style="display: none"{{ end }}>
                         <div class="float-right">
                             {{ if and $.IsChampionship $.IsEditing }}
                                 <div class="d-inline-block mr-4">
-                                    <span data-toggle="tooltip" title="Overwrite all Championship Event specific settings (skin, restrictor, ballast, setup) with the settings defined in this entrant" class="pr-3"><small>Overwrite All Event Settings?</small></span>
+                                    <span data-toggle="tooltip" title="Overwrite all Championship Event specific settings (skin, restrictor, ballast, setup) with the settings defined in this entrant" class="pr-3">
+                                        <small>Overwrite All Event Settings?</small>
+                                    </span>
 
                                     <input type="checkbox" name="EntryList.OverwriteAllEvents">
                                 </div>

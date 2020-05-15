@@ -246,7 +246,7 @@
 
                     <div class="visible-spectator-enabled" {{ if not $.Championship.HasSpectatorCar }} style="display: none" {{ end }}>
                         <div class="entrant">
-                            {{ template "entrant" dict "Entrant" $.Championship.SpectatorCar "IsChampionshipEvent" false "IsEditing" $.IsEditing "IsChampionship" false "IsSpectatorCar" true }}
+                            {{ template "entrant" dict "Entrant" $.Championship.SpectatorCar "IsChampionshipEvent" false "IsEditing" $.IsEditing "IsChampionship" true "IsSpectatorCar" true }}
                         </div>
                     </div>
                 </div>
