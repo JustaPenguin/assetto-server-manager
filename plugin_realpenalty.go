@@ -1,11 +1,12 @@
 package servermanager
 
 import (
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
+
+	"github.com/sirupsen/logrus"
 )
 
 // handles configuration of the realpenalty plugin

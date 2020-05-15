@@ -1,8 +1,9 @@
 package servermanager
 
 import (
-	"github.com/cj123/ini"
 	"path/filepath"
+
+	"github.com/cj123/ini"
 )
 
 const (
@@ -111,7 +112,7 @@ type RealPenaltyConfigGeneral struct {
 	ACTracksFolder  string `ini:"AC_TRACKS_FOLDER" show:"-" help:"Path of the AC server tracks folder. If not found the plugin sets it automatic from AC_SERVER_PATH"`
 	ACWeatherFolder string `ini:"AC_WEATHER_FOLDER" show:"-" help:"Path of the AC server weather folder. If not found the plugin sets it automatic from AC_SERVER_PATH"`
 
-	UDPPort     int    `ini:"UDP_PORT" show:"-" help:"listening UDP port - Set the same port (whitout IP) of cfg of the server, UDP_PLUGIN_ADRESS "`
+	UDPPort     int    `ini:"UDP_PORT" show:"-" help:"listening UDP port - Set the same port (without IP) of cfg of the server, UDP_PLUGIN_ADDRESS "`
 	UDPResponse string `ini:"UDP_RESPONSE" show:"-" help:"destination IP and UDP port for response - Set the same port in the cfg of the AC server, UDP_PLUGIN_LOCAL_PORT"`
 	AppTCPPort  int    `ini:"APP_TCP_PORT" show:"open" help:"listening UDP port from AC app (to open in firewall/router). Must be one of 53000, 53001, 53002 to 530020, or the port of cfg AC server, HTTP_PORT + 27. The app will try all these ports on the ac server's ip address (until the right connection is found)"`
 
@@ -122,8 +123,8 @@ type RealPenaltyConfigGeneral struct {
 }
 
 type RealPenaltyPluginsRelay struct {
-	OtherUDPPlugin string `ini:"OTHER_UDP_PLUGIN" show:"open" help:"list of all other UDP plugins connected to AC Server (format: IP:Ports - seperated by a semicolon)"`
-	UDPPort        int    `ini:"UDP_PORT" show:"open" help:"list of listening UPD ports for all other plugins connected(seperated by a semicolon)"`
+	OtherUDPPlugin string `ini:"OTHER_UDP_PLUGIN" show:"open" help:"list of all other UDP plugins connected to AC Server (format: IP:Ports - separated by a semicolon)"`
+	UDPPort        int    `ini:"UDP_PORT" show:"open" help:"list of listening UPD ports for all other plugins connected(separated by a semicolon)"`
 }
 
 type RealPenaltySettings struct {
@@ -301,11 +302,11 @@ type RealPenaltySettingsGeneral struct {
 	EnableCuttingPenalties  bool `ini:"ENABLE_CUTTING_PENALTIES" help:"Set to true to enable cuttings penalties; false to issue warnings only"`
 	EnableSpeedingPenalties bool `ini:"ENABLE_SPEEDING_PENALTIES" help:"Set to true to enable pit lane speeding penalties"`
 	EnableCrossingPenalties bool `ini:"ENABLE_CROSSING_PENALTIES" help:"Set to true to enable exit pit lane crossing line penalty"`
-	EnableDRSPenalties      bool `ini:"ENABLE_DRS_PENALTIES" help:"Set to true to enable DRS penalty (only for car wiht DRS)"`
+	EnableDRSPenalties      bool `ini:"ENABLE_DRS_PENALTIES" help:"Set to true to enable DRS penalty (only for car with DRS)"`
 
 	LapsToTakePenalty      int `ini:"LAPS_TO_TAKE_PENALTY" help:"How many laps a driver has to take a penalty in. If LAPS_TO_TAKE_PENALTY > 2 --> Jump start is always 2 for AC limit!"`
 	PenaltySeconds         int `ini:"PENALTY_SECONDS" help:"Number of seconds to add manually to the final race result for all penalties not taken during the race"`
-	LastTimeWithoutPenalty int `ini:"LAST_TIME_WITHOUT_PENALTY" help:"Only for Time Race - Seconds at and of race to end race time (remember the optional +1 lap is extra) without mandatory penalty. All penalties not taken ----> Penlty seconds to add to the final race time (in chat and log). Default 360 (6 minutes). IMPORTANT! Adjust this value in according to the track, the cars and the additional lap (ca. 3/5 laps but in according to LAPS_TO_TAKE_PENALTY)"`
+	LastTimeWithoutPenalty int `ini:"LAST_TIME_WITHOUT_PENALTY" help:"Only for Time Race - Seconds at and of race to end race time (remember the optional +1 lap is extra) without mandatory penalty. All penalties not taken ----> Penalty seconds to add to the final race time (in chat and log). Default 360 (6 minutes). IMPORTANT! Adjust this value in according to the track, the cars and the additional lap (ca. 3/5 laps but in according to LAPS_TO_TAKE_PENALTY)"`
 	LastLapsWithoutPenalty int `ini:"LAST_LAPS_WITHOUT_PENALTY" help:"If a divers gets a penalty in the last N laps (N = LAPS_TO_TAKE_PENALTY + LAST_LAPS_WITHOUT_PENALTY) can drive to the end of the race without taking it but receive time penalty! (Drive through = PENALTY_SECONDS, Stop & GO 10 = PENALTY_SECONDS + 10, .......)"`
 }
 
@@ -323,7 +324,7 @@ type RealPenaltySettingsCutting struct {
 	QualifyMaxSectorOutSpeed  int     `ini:"QUALIFY_MAX_SECTOR_OUT_SPEED" help:"Initial qualify max allowed speed on the start line after cutting in the last corner. IMPORTANT! Adjust this value in according to the track and the cars!"`
 	QualifySlowDownSpeedRatio float64 `ini:"QUALIFY_SLOW_DOWN_SPEED_RATIO" help:"Ratio of the QUALIFY_MAX_SECTOR_OUT_SPEED. The max allowed speed on the start line after cutting = QUALIFY_MAX_SECTOR_OUT_SPEED (other new max speed of driver) * QUALIFY_SLOW_DOWN_SPEED_RATIO"`
 
-	PostCuttingTime int    `ini:"POST_CUTTING_TIME" help:"Bonus time after reentering on the track. If speed decreses in this time --> No cutting! Set to 0 to have cutting checks similar to PLP (no check after re-entering the track)"`
+	PostCuttingTime int    `ini:"POST_CUTTING_TIME" help:"Bonus time after reentering on the track. If speed decreases in this time --> No cutting! Set to 0 to have cutting checks similar to PLP (no check after re-entering the track)"`
 	PenaltyType     string `ini:"PENALTY_TYPE" help:"Penalty type for cutting. dt = drive through, sgn = stop and go n seconds, n = n seconds to add at the end of the race"`
 }
 
