@@ -42,6 +42,7 @@ Fixed:
 * Tyres with unsafe characters in the name (e.g. sv60's) should no longer cause issues with the Custom Race form.
 * Updated championship event start Lua plugin to take and return the full event entry list.
 * Fixes an issue where drivers would persist in the connected drivers table in Live Timings when they disconnect without completing a lap.
+* Fixes an issue where car tyres would not be added when cars are manually added to the content folder.
 * Where applicable, server password fields attempt to reject browser autofill.
 
 ---
