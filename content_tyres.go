@@ -228,7 +228,6 @@ func addTyresToModTyres(model string, newTyres map[string]string) error {
 		}
 
 		if !hasNew {
-			logrus.Infof("New car: %s already has all of its tyres configured", model)
 			return nil
 		}
 	}
