@@ -328,7 +328,14 @@ func (f FormOption) renderTextInput() template.HTML {
 				<label for="{{ .Key }}" class="col-sm-3 col-form-label">{{ .Name }}</label>
 
 				<div class="col-sm-9">
-					<input type="{{ if eq .Type "password" }}password{{ else }}text{{ end }}" id="{{ .Key }}" name="{{ .Key }}" class="form-control" value="{{ .Value }}">
+					<input type="{{ if eq .Type "password" }}password{{ else }}text{{ end }}"
+						id="{{ .Key }}" name="{{ .Key }}"
+						class="form-control"
+						value="{{ .Value }}"
+						{{ if eq .Type "password" }}
+							autocomplete="new-password"
+						{{ end }}
+					>
 
 					<small>{{ .HelpText }}</small>
 				</div>
