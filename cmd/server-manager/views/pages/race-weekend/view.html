@@ -166,7 +166,13 @@
 
                                 {{ if isBefore $session.ScheduledTime }}
                                     <span class="text-warning">
-                                        Scheduled (On {{ if eq $session.ScheduledServerID $serverID }}this {{ else }}another {{ end }} server) for {{ localFormat $session.ScheduledTime }}
+                                        Scheduled
+
+                                        {{ if ne $session.ScheduledServerID $serverID }}
+                                            (on <span class="scheduled-server-id" data-server-id="{{ $session.ScheduledServerID }}">another server</span>)
+                                        {{ end }}
+
+                                        for {{ localFormat $session.ScheduledTime }}
                                     </span><br>
                                 {{ end }}
                             </div>
