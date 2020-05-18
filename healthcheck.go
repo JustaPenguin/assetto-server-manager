@@ -51,6 +51,7 @@ type HealthCheckResponse struct {
 	ResultsDirectoryIsWritable bool
 
 	ServerName          string
+	ServerID            ServerID
 	EventInProgress     bool
 	EventIsCritical     bool
 	EventIsChampionship bool
@@ -83,6 +84,7 @@ func (h *HealthCheck) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		GoVersion:          runtime.Version(),
 
 		ServerName:          serverName,
+		ServerID:            serverID,
 		EventInProgress:     h.raceControl.process.IsRunning(),
 		EventIsCritical:     !event.IsPractice() && (event.IsChampionship() || event.IsRaceWeekend() || h.raceControl.SessionInfo.Type == udp.SessionTypeRace || h.raceControl.SessionInfo.Type == udp.SessionTypeQualifying),
 		EventIsChampionship: event.IsChampionship(),

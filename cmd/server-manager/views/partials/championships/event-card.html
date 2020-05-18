@@ -24,9 +24,15 @@
                 {{ else if $event.InProgress }}
                     <span class="text-primary">In Progress</span>
                 {{ else if isBefore $event.Scheduled }}
-                    <span class="text-warning">Scheduled
-                            (On {{ if eq $event.ScheduledServerID $serverID }}this {{ else }}another {{ end }} server)
-                        for {{ localFormat $event.Scheduled }}</span>
+                    <span class="text-warning">
+                        Scheduled
+
+                        {{ if ne $event.ScheduledServerID $serverID }}
+                            (on <span class="scheduled-server-id" data-server-id="{{ $event.ScheduledServerID }}">another server</span>)
+                        {{ end }}
+
+                        for {{ localFormat $event.Scheduled }}
+                    </span>
                 {{ else }}
                     <span class="text-danger">Not started</span>
                 {{ end }}
