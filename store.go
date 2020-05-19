@@ -25,8 +25,8 @@ type Store interface {
 	// Live Timings
 	UpsertLiveTimingsData(*LiveTimingsPersistedData) error
 	LoadLiveTimingsData() (*LiveTimingsPersistedData, error)
-	UpsertLastRaceEvent(r RaceEvent) error
 
+	UpsertLastRaceEvent(r RaceEvent) error
 	LoadLastRaceEvent() (RaceEvent, error)
 	ClearLastRaceEvent() error
 

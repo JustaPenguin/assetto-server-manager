@@ -224,5 +224,30 @@ func convertStore(old servermanager.Store, new servermanager.Store) error {
 		return err
 	}
 
+	// kissmyrank
+	kissmyrank, err := old.LoadKissMyRankOptions()
+
+	if err != nil {
+		return err
+	}
+
+	err = new.UpsertKissMyRankOptions(kissmyrank)
+
+	if err != nil {
+		return err
+	}
+
+	raceEvent, err := old.LoadLastRaceEvent()
+
+	if err != nil {
+		return err
+	}
+
+	err = new.UpsertLastRaceEvent(raceEvent)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
