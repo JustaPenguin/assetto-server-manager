@@ -21,6 +21,7 @@ import {Messages} from "./Messages";
 import {Championship} from "./Championship";
 import {Results} from "./Results";
 import {RaceList} from "./RaceList";
+import {SpectatorCar} from "./SpectatorCar";
 
 $(() => {
     new RaceControl();
@@ -35,6 +36,7 @@ $(() => {
     new Championship.View();
     new Results();
     new RaceList();
+    new SpectatorCar();
 
     $(".race-setup").each(function (index, elem) {
         new CarSearch($(elem));

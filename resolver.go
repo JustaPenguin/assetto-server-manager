@@ -227,7 +227,11 @@ func (r *Resolver) resolveCarManager() *CarManager {
 		return r.carManager
 	}
 
-	r.carManager = NewCarManager(r.resolveTrackManager(), config.Server.ScanContentFolderForChanges)
+	r.carManager = NewCarManager(
+		r.resolveTrackManager(),
+		config.Server.ScanContentFolderForChanges,
+		config.Server.UseCarNameCache,
+	)
 
 	return r.carManager
 }

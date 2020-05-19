@@ -85,8 +85,7 @@ func (fs *filesystemTemplateLoader) Templates(funcs template.FuncMap) (map[strin
 }
 
 func shortenTrackName(name string) string {
-	prettyName := prettifyName(name, false)
-	nameParts := strings.Split(prettyName, " ")
+	nameParts := strings.Split(name, " ")
 
 	out := nameParts[0]
 
@@ -445,6 +444,10 @@ var nameRegex = regexp.MustCompile(`^[A-Za-z]{0,5}[0-9]+`)
 func prettifyName(s string, acronyms bool) string {
 	if s == AnyCarModel {
 		return "Any Car Model"
+	}
+
+	if carName, ok := carNameCache.get(s); ok {
+		return carName
 	}
 
 	parts := strings.Split(s, "_")

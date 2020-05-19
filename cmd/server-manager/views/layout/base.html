@@ -1,3 +1,17 @@
+{{ define "ServerEventBadge" }}
+    {{ if .IsChampionship }}
+        <span class="badge badge-warning">Championship {{ if .IsPractice }}Practice{{ end }} in Progress</span>
+    {{ else if .IsRaceWeekend }}
+        <span class="badge badge-info">Race Weekend {{ if .IsPractice }}Practice{{ end }} in Progress</span>
+    {{ else if .IsLooping }}
+        <span class="badge badge-secondary">Auto Loop Event in Progress</span>
+    {{ else if .IsTimeAttack }}
+        <span class="badge badge-dark">Time Attack Event in Progress</span>
+    {{ else }}
+        <span class="badge badge-success">Assetto Server Running</span>
+    {{ end }}
+{{ end }}
+
 {{ define "base" }}
     <!DOCTYPE html>
     <html lang="en">
@@ -151,17 +165,7 @@
                         <li class="nav-item dropdown mr-2 {{ if not WriteAccess }} mt-2 {{ end }}">
                             {{ if WriteAccess }}
                                 <a class="nav-link dropdown-toggle" href="#" id="navBarStatusDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    {{ if .ServerEvent.IsChampionship }}
-                                        <span class="badge badge-warning">Championship {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
-                                    {{ else if .ServerEvent.IsRaceWeekend }}
-                                        <span class="badge badge-info">Race Weekend {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
-                                    {{ else if .ServerEvent.IsLooping }}
-                                        <span class="badge badge-secondary">Auto Loop Event in Progress</span>
-                                    {{ else if .ServerEvent.IsTimeAttack }}
-                                        <span class="badge badge-dark">Time Attack Event in Progress</span>
-                                    {{ else }}
-                                        <span class="badge badge-success">Assetto Server Running</span>
-                                    {{ end }}
+                                    {{ template "ServerEventBadge" $.ServerEvent }}
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navBarStatusDropdown">
                                     <a
@@ -194,13 +198,7 @@
                                     </a>
                                 </div>
                             {{ else }}
-                                {{ if .ServerEvent.IsChampionship }}
-                                    <span class="badge badge-warning">Championship {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
-                                {{ else if .ServerEvent.IsRaceWeekend }}
-                                    <span class="badge badge-info">Race Weekend {{ if .ServerEvent.IsPractice }}Practice{{ end }} in Progress</span>
-                                {{ else }}
-                                    <span class="badge badge-success">Assetto Server Running</span>
-                                {{ end }}
+                                {{ template "ServerEventBadge" $.ServerEvent }}
                             {{ end }}
                         </li>
                     {{ else }}
@@ -370,6 +368,9 @@
                                     <a href="https://github.com/JustaPenguin/assetto-server-manager/wiki" target="_blank">Wiki</a>
                                     is a great source of information! If you have a question make sure it hasn't been
                                     answered there first.
+                                </li>
+                                <li class="list-group-item">
+                                    Your server comes with sTracker and KissMyRank ready to enable! Just visit the sTracker / KissMyRank options pages to enable them!
                                 </li>
                                 <li class="list-group-item">
                                     The best way to contact us directly is by emailing us at our

@@ -192,17 +192,26 @@ server:
   # Only Admins can access the logs, they are intended for tracking if users
   # have deleted content, started/stopped events when they shouldn't have etc.
   audit_logging: true
+
   # performance mode disables live timing entirely, and prioritises low cpu
   # usage.
   performance_mode: false
+
   # set this to 'true' if you don't want server manager to open a browser window
   # on launch on windows
   dont_open_browser: false
+
   # set this to 'true' if you want server manager to scan content folders for
   # changes every 15 seconds and update the search index with changes
   # this is useful for multi-server setups with a shared content folder so that
   # each server manager instance can see added/removed cars as they change
   scan_content_folder_for_changes: false
+
+  # when use_car_name_cache is enabled, server manager will scan the cars in the
+  # content folder and save their names to memory. this will lead to more
+  # accurate car names, at the cost of slightly increased memory usage and slightly
+  # longer 'boot time' of server manager. I recommend it though!
+  use_car_name_cache: true
 
   # list of commands to run on server start and kill on server stop. this should
   # contain the full command with arguments to run the given program.

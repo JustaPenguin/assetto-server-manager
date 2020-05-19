@@ -240,14 +240,85 @@ type CarManager struct {
 	carIndex                     bleve.Index
 	watchFilesystemForCarChanges bool
 
-	searchMutex  sync.Mutex
+	searchMutex     sync.Mutex
+	tyreUpdateMutex sync.Mutex
+
 	trackManager *TrackManager
 }
 
-func NewCarManager(trackManager *TrackManager, watchForCarChanges bool) *CarManager {
+func NewCarManager(trackManager *TrackManager, watchForCarChanges, useCarNameCache bool) *CarManager {
 	cm := &CarManager{trackManager: trackManager, watchFilesystemForCarChanges: watchForCarChanges}
 
+	if useCarNameCache {
+		cm.initCarNames()
+	}
+
 	return cm
+}
+
+type carNames map[string]string
+
+var (
+	// carNameCache provides a map of car key -> actual name of a car
+	// this can be used to improve the accuracy of car naming in templates.
+	carNameCache carNames
+
+	carNameMutex sync.RWMutex
+)
+
+// adds the name of a car to the car details cache.
+func (c carNames) add(car *Car) {
+	if c == nil {
+		return
+	}
+
+	carNameMutex.Lock()
+	defer carNameMutex.Unlock()
+
+	if car.Details.Name != "" {
+		carNameCache[car.Name] = car.Details.Name
+	}
+}
+
+// get a car name from the cache, if possible.
+// if cache is not enabled, false is always returned.
+func (c carNames) get(car string) (string, bool) {
+	if c == nil {
+		return "", false
+	}
+
+	carNameMutex.RLock()
+	defer carNameMutex.RUnlock()
+
+	name, ok := c[car]
+
+	return name, ok
+}
+
+// removes a car name from the cache.
+func (c carNames) remove(car string) {
+	if c == nil {
+		return
+	}
+
+	carNameMutex.Lock()
+	defer carNameMutex.Unlock()
+
+	delete(carNameCache, car)
+}
+
+func (cm *CarManager) initCarNames() {
+	carNameCache = make(carNames)
+
+	cars, err := cm.ListCars()
+
+	if err != nil {
+		return
+	}
+
+	for _, car := range cars {
+		carNameCache.add(car)
+	}
 }
 
 // watchForChanges looks for created/removed files in the cars folder and (de-)indexes them as necessary
@@ -375,10 +446,8 @@ func (cm *CarManager) LoadCar(name string, tyres Tyres) (*Car, error) {
 		}
 	} else {
 		if os.IsNotExist(err) {
-			if err := os.Mkdir(filepath.Join(carDirectory, "skins"), 0755); err != nil {
+			if err := os.Mkdir(filepath.Join(carDirectory, "skins"), 0755); err != nil && !os.IsNotExist(err) {
 				logrus.WithError(err).Warnf("Could not create skins directory for car: %s", name)
-			} else {
-				logrus.Infof("Created empty skins directory for car: %s", name)
 			}
 		} else {
 			logrus.WithError(err).Warnf("Could not load skins for car: %s", name)
@@ -520,13 +589,51 @@ func (cm *CarManager) CreateOrOpenSearchIndex() error {
 	return nil
 }
 
+func (cm *CarManager) UpdateTyres(car *Car) error {
+	if car.Name == "" {
+		return nil
+	}
+
+	cm.tyreUpdateMutex.Lock()
+	defer cm.tyreUpdateMutex.Unlock()
+
+	carPath := filepath.Join(ServerInstallPath, "content", "cars", car.Name)
+	acdPath := filepath.Join(carPath, "data.acd")
+
+	b, err := ioutil.ReadFile(acdPath)
+
+	if err == nil {
+		return addTyresFromDataACD(acdPath, b)
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
+	tyresIniPath := filepath.Join(carPath, "data", "tyres.ini")
+
+	b, err = ioutil.ReadFile(tyresIniPath)
+
+	if err != nil {
+		return err
+	}
+
+	return addTyresFromTyresIni(tyresIniPath, b)
+}
+
 // IndexCar indexes an individual car.
 func (cm *CarManager) IndexCar(car *Car) error {
+	carNameCache.add(car)
+
+	if err := cm.UpdateTyres(car); err != nil {
+		logrus.WithError(err).Errorf("Could not update tyres for car: %s", car.Name)
+	}
+
 	return cm.carIndex.Index(car.Name, car.Details)
 }
 
 // DeIndexCar removes a car from the index.
 func (cm *CarManager) DeIndexCar(name string) error {
+	carNameCache.remove(name)
+
 	return cm.carIndex.Delete(name)
 }
 

@@ -3,6 +3,7 @@ package servermanager
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -90,12 +91,17 @@ func (h *HTTPConfig) createSessionStore() (sessions.Store, error) {
 			return nil, errors.New("servermanager: session store location must be a directory")
 		}
 
-		return sessions.NewFilesystemStore(h.SessionStorePath, []byte(h.SessionKey)), nil
+		fsStore := sessions.NewFilesystemStore(h.SessionStorePath, []byte(h.SessionKey))
+		fsStore.Options.SameSite = http.SameSiteStrictMode
 
+		return fsStore, nil
 	case sessionStoreCookie:
 		fallthrough
 	default:
-		return sessions.NewCookieStore([]byte(h.SessionKey)), nil
+		cookieStore := sessions.NewCookieStore([]byte(h.SessionKey))
+		cookieStore.Options.SameSite = http.SameSiteStrictMode
+
+		return cookieStore, nil
 	}
 }
 
@@ -149,6 +155,7 @@ type ServerExtraConfig struct {
 	PerformanceMode             bool             `yaml:"performance_mode"`
 	DisableWindowsBrowserOpen   bool             `yaml:"dont_open_browser"`
 	ScanContentFolderForChanges bool             `yaml:"scan_content_folder_for_changes"`
+	UseCarNameCache             bool             `yaml:"use_car_name_cache"`
 
 	// Deprecated: use Plugins instead
 	RunOnStart []string `yaml:"run_on_start"`

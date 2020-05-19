@@ -17,6 +17,8 @@ const (
 	entryListFilename = "entry_list.ini"
 
 	driverSwapEntrantSeparator = ";"
+
+	maxEntryListSize = 255
 )
 
 type EntryList map[string]*Entrant

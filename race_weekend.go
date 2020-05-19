@@ -33,13 +33,17 @@ type RaceWeekend struct {
 
 	// Deprecated: use GetEntryList() instead
 	EntryList EntryList
-	Sessions  []*RaceWeekendSession
+
+	Sessions []*RaceWeekendSession
 
 	// ChampionshipID links a RaceWeekend to a Championship. It can be uuid.Nil
 	ChampionshipID uuid.UUID
 	// Championship is the Championship that is linked to the RaceWeekend.
 	// If ChampionshipID is uuid.Nil, Championship will also be nil
 	Championship *Championship `json:"-"`
+
+	SpectatorCar        Entrant
+	SpectatorCarEnabled bool
 }
 
 // NewRaceWeekend creates a RaceWeekend
@@ -84,6 +88,24 @@ func (rw *RaceWeekend) Duplicate() (*RaceWeekend, error) {
 
 func (rw *RaceWeekend) HasLinkedChampionship() bool {
 	return rw.ChampionshipID != uuid.Nil
+}
+
+func (rw *RaceWeekend) GetSpectatorCar() Entrant {
+	if rw.HasLinkedChampionship() && rw.Championship != nil {
+		return rw.Championship.SpectatorCar
+	}
+
+	return rw.SpectatorCar
+}
+
+func (rw *RaceWeekend) HasSpectatorCar() bool {
+	car := rw.GetSpectatorCar()
+
+	if rw.HasLinkedChampionship() && rw.Championship != nil {
+		return rw.Championship.SpectatorCarEnabled && car.GUID != "" && car.Model != ""
+	}
+
+	return rw.SpectatorCarEnabled && car.GUID != "" && car.Model != ""
 }
 
 func (rw *RaceWeekend) InProgress() bool {
@@ -655,7 +677,7 @@ func (rws *RaceWeekendSession) FinishingGrid(raceWeekend *RaceWeekend) ([]*RaceW
 
 	if rws.Completed() {
 		for _, result := range rws.Results.Result {
-			if result.DriverGUID == "" || result.Disqualified {
+			if result.DriverGUID == "" || result.Disqualified || (raceWeekend.HasSpectatorCar() && result.DriverGUID == raceWeekend.GetSpectatorCar().GUID) {
 				// filter out invalid results
 				continue
 			}

@@ -64,7 +64,7 @@
                                             {{ $sessionType.String }} -
 
                                             {{ if gt $session.Time 0 }}
-                                                {{ $session.Time }} minutes{{ if and (eq $sessionType "RACE") (eq $.EventConfig.RaceExtraLap 1) }}+ 1 lap{{ end }},
+                                                {{ $session.Time }} minutes{{ if and (eq $sessionType "RACE") (eq $.EventConfig.RaceExtraLap 1) }} + 1 lap{{ end }},
                                             {{ else }}
                                                 {{ $session.Laps }} laps,
                                             {{ end }}

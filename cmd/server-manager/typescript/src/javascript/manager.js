@@ -805,7 +805,7 @@ class RaceSetup {
     driverNames;
 
     toggleAlreadyAutocompletedDrivers() {
-        $(".entrant-autofill option").each(function (index, elem) {
+        this.$parent.find(".entrant-autofill option").each(function (index, elem) {
             let found = false;
             let $elem = $(elem);
 
@@ -852,19 +852,11 @@ class RaceSetup {
             that.toggleAlreadyAutocompletedDrivers();
         }
 
-        let opts = {
-            source: this.driverNames,
-            select: function (event, ui) {
-                autoFillEntrant(event.target, ui.item.value);
-            }
-        };
-
-
         for (let entrant of possibleEntrants) {
-            $(".entrant-autofill").append($("<option>").val(entrant.Name).text(entrant.Name));
+            this.$parent.find(".entrant-autofill").append($("<option>").val(entrant.Name).text(entrant.Name));
         }
 
-        $(document).on("change", ".entrant-autofill", function (e) {
+        this.$parent.on("change", ".entrant-autofill", function (e) {
             autoFillEntrant(e.currentTarget, $(e.currentTarget).val());
         });
     }
@@ -947,7 +939,7 @@ class RaceSetup {
         // have an entrant template to work from.
         let $tmpl = this.$parent.find("#entrantTemplate");
 
-        if (!$entrantTemplate) {
+        if (!$entrantTemplate && $tmpl.length > 0) {
             $entrantTemplate = $tmpl.prop("id", "").clone(true, true);
         }
 
@@ -1106,7 +1098,9 @@ class RaceSetup {
             let restrictor = $lastElement.find("[name='EntryList.Restrictor']").val();
 
             for (let i = 0; i < numEntrantsToAdd; i++) {
-                if ($(".entrant:visible").length >= maxClients) {
+                let $visibleEntrants = $(".entrant:visible");
+
+                if ($visibleEntrants.length >= maxClients) {
                     continue;
                 }
 
@@ -1122,7 +1116,7 @@ class RaceSetup {
                 });
 
                 if (chosenCar) {
-                    // dropdowns nead full <option> elements appending to them for populateEntryListCars to function correctly.
+                    // dropdowns need full <option> elements appending to them for populateEntryListCars to function correctly.
                     $elem.find("[name='EntryList.Car']").append($("<option>", {
                         value: chosenCar,
                         text: prettifyName(chosenCar, true),
@@ -1150,7 +1144,7 @@ class RaceSetup {
                 $elem.find("[name='EntryList.Restrictor']").val(restrictor);
                 let $entrantID = $elem.find("[name='EntryList.EntrantID']");
 
-                $entrantID.val($(".entrant:visible").length - 1);
+                $entrantID.val($visibleEntrants.length - 1);
 
                 populateEntryListCars();
                 showEntrantSkin(chosenCar, chosenSkin, $elem);
@@ -2170,6 +2164,7 @@ let championships = {
         championships.initConfigureSignUpForm();
         championships.initSignUpForm();
         championships.initACSRWatcher();
+        championships.initOpenChampionshipWatcher();
     },
 
     initACSRWatcher: function () {
@@ -2203,6 +2198,35 @@ let championships = {
 
             $signUpFormSwitch.bootstrapSwitch('disabled', false);
             $overridePasswordSwitch.bootstrapSwitch('disabled', false);
+        }
+    },
+
+    initOpenChampionshipWatcher: function() {
+        let $openChampionshipSwitch = $("#ChampionshipOpenEntrants");
+
+        if (!$openChampionshipSwitch.length) {
+            return;
+        }
+
+        this.setOpenChampionshipOptions($openChampionshipSwitch.bootstrapSwitch('state'));
+
+        let that = this;
+
+        $openChampionshipSwitch.on("switchChange.bootstrapSwitch", function( event, state) {
+            that.setOpenChampionshipOptions(state);
+        });
+    },
+
+    setOpenChampionshipOptions: function(enabled) {
+        let $visibleOpenChampionship = $(".visible-open-championship");
+        let $hiddenOpenChampionship = $(".hidden-open-championship");
+
+        if (enabled) {
+            $visibleOpenChampionship.show();
+            $hiddenOpenChampionship.hide();
+        } else {
+            $visibleOpenChampionship.hide();
+            $hiddenOpenChampionship.show();
         }
     },
 

@@ -11,6 +11,7 @@ Added:
   - Driver Swap result files show which lap was completed by which driver (using the AutoFill Entrant list where possible to put names in)
   - Driver Swaps require compatible tracks. A compatible track has the timing line before or after all of the pitboxes. 
     You can follow this guide (written by @mike855 - thanks!) to modify a track to be compatible: https://github.com/JustaPenguin/assetto-server-manager/wiki/Driver-swap-track-editing
+* Premium users can now specify a spectator car slot in Championships and Race Weekends. The spectator car will be added to the back of the grid and excluded from all results files.
 * A landing intro for hosted servers that points users in the right direction.
 * You can now broadcast a 3-2-1-GO countdown to all drivers from the Live Timings Admin Panel.
 * You can now duplicate Championships using the dropdown next to "Edit" in the Championship list.
@@ -23,6 +24,7 @@ Added:
 * Added a Championship Overview tab that shows colour-coded points across all events in a Championship.
 * Added a popup to Custom Races, Championships and Race Weekends that drivers can use to view details of the event.
 * You can now activate a timed scanner for new Scheduled Events that you have created/imported manually. Experimental, and only intended for advanced users.
+* Added a new option in config.yml (`use_car_name_cache`). When enabled, this loads the name for all cars into memory and uses them where possible in web pages. This improves the accuracy of car names (e.g. "Mercedes 190 EVO2" becomes "Mercedes-Benz 190E EVO II") 
 
 Fixed:
 
@@ -38,6 +40,10 @@ Fixed:
 * Fixes an issue where the full grid would not be shown in the Race Weekend filter preview.
 * Made the new password screen a bit more visually unique, and added a paragraph to explain to new users that they should set their own password rather than using the default one.
 * Tyres with unsafe characters in the name (e.g. sv60's) should no longer cause issues with the Custom Race form.
+* Updated championship event start Lua plugin to take and return the full event entry list.
+* Fixes an issue where drivers would persist in the connected drivers table in Live Timings when they disconnect without completing a lap.
+* Fixes an issue where car tyres would not be added when cars are manually added to the content folder.
+* Where applicable, server password fields attempt to reject browser autofill.
 
 ---
 

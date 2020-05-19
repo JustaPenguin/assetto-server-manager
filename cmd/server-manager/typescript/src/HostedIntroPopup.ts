@@ -3,7 +3,7 @@ export class HostedIntroPopup {
         const $introModal = $("#intro-modal");
 
         if (!$introModal.length) {
-            return
+            return;
         }
 
         $introModal.on('shown.bs.modal', () => {
