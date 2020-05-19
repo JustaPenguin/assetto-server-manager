@@ -307,6 +307,8 @@ class RaceSetup {
         this.initSurfacePresets();
 
         this.initPickupModeWatcher();
+        this.initTimeAttackWatcher();
+        this.initDriverSwapToggle();
     }
 
     initPickupModeWatcher() {
@@ -347,6 +349,101 @@ class RaceSetup {
             $lockedEntryListSwitch.bootstrapSwitch('disabled', false);
 
             $lockedReverseWarning.hide();
+        }
+    }
+
+    initTimeAttackWatcher() {
+        let that = this;
+
+        that.setTimeAttack();
+
+        let $timeAttackSwitch = $("#TimeAttack");
+
+        $timeAttackSwitch.on('switchChange.bootstrapSwitch', function (event, state) {
+            that.setTimeAttack();
+        });
+    }
+
+    setTimeAttack() {
+        let $timeAttack = $("#TimeAttack");
+
+        if (!$timeAttack.length > 0) {
+            // don't init time attack at all on non-premium builds
+            return;
+        }
+
+        let timeAttackEnabled = $timeAttack.bootstrapSwitch('state');
+
+        let $loopModeSwitch = $("#LoopMode");
+
+        let $practiceSwitch = $("#Practice\\.Enabled");
+        let $qualifyingSwitch = $("#Qualifying\\.Enabled");
+        let $raceSwitch = $("#Race\\.Enabled");
+        let $bookingSwitch = $("#Booking\\.Enabled");
+
+        if (timeAttackEnabled) {
+            // disable sessions other than practice, force loop mode on
+            $loopModeSwitch.bootstrapSwitch('state', true);
+            $loopModeSwitch.bootstrapSwitch('disabled', true);
+
+            $practiceSwitch.bootstrapSwitch('state', true);
+            $practiceSwitch.bootstrapSwitch('disabled', true);
+
+            $qualifyingSwitch.bootstrapSwitch('state', false);
+            $qualifyingSwitch.bootstrapSwitch('disabled', true);
+
+            $raceSwitch.bootstrapSwitch('state', false);
+            $raceSwitch.bootstrapSwitch('disabled', true);
+
+            $bookingSwitch.bootstrapSwitch('state', false);
+            $bookingSwitch.bootstrapSwitch('disabled', true);
+
+            $(".tab-pane").removeClass("active show");
+
+            let $sessionNavLink = $(".session-nav-link");
+
+            $sessionNavLink.removeClass("active");
+            $sessionNavLink.attr("aria-selected", "false");
+
+            let $sessionPractiveTab = $("#session-Practice-tab");
+
+            $sessionPractiveTab.addClass("active");
+            $sessionPractiveTab.attr("aria-selected", "true");
+
+            $("#session-Practice").addClass("active show");
+        } else {
+            $loopModeSwitch.bootstrapSwitch('disabled', false);
+            $practiceSwitch.bootstrapSwitch('disabled', false);
+            $qualifyingSwitch.bootstrapSwitch('disabled', false);
+            $raceSwitch.bootstrapSwitch('disabled', false);
+            $bookingSwitch.bootstrapSwitch('disabled', false);
+        }
+    }
+
+    initDriverSwapToggle() {
+        let $driverSwapSwitch = $("#DriverSwapEnabled");
+
+        if (!$driverSwapSwitch.length) {
+            return;
+        }
+
+        this.toggleDriverSwapOptions();
+
+        let that = this;
+
+        $driverSwapSwitch.on('switchChange.bootstrapSwitch', function (event, state) {
+            that.toggleDriverSwapOptions();
+        });
+    }
+
+    toggleDriverSwapOptions() {
+        let $driverSwapSwitch = $("#DriverSwapEnabled");
+        let $driverSwapOptionPanel = $(".visible-driver-swap-enabled");
+
+        if ($driverSwapSwitch.bootstrapSwitch('state')) {
+            $driverSwapOptionPanel.show();
+        } else {
+            $driverSwapOptionPanel.hide();
         }
     }
 
@@ -502,63 +599,66 @@ class RaceSetup {
      */
     populateTyreDropdown() {
         // quick race doesn't have tyre set up.
-        if (typeof availableTyres === "undefined" || !this.$carsDropdown.length) {
-            return
-        }
+        try {
+            if (typeof availableTyres === "undefined" || !this.$carsDropdown.length) {
+                return
+            }
 
-        let cars = this.$carsDropdown.val();
+            let cars = this.$carsDropdown.val();
 
-        let allValidTyres = new Set();
-        let tyreCars = {};
+            let allValidTyres = new Set();
+            let tyreCars = {};
 
-        for (let index = 0; index < cars.length; index++) {
-            let car = cars[index];
-            let carTyres = availableTyres[car];
+            for (let index = 0; index < cars.length; index++) {
+                let car = cars[index];
+                let carTyres = availableTyres[car];
 
-            for (let tyre in carTyres) {
-                if (!tyreCars[tyre]) {
-                    tyreCars[tyre] = []
+                for (let tyre in carTyres) {
+                    if (!tyreCars[tyre]) {
+                        tyreCars[tyre] = []
+                    }
+
+                    tyreCars[tyre].push(car)
                 }
-
-                tyreCars[tyre].push(car)
             }
-        }
 
-        for (let index = 0; index < cars.length; index++) {
-            let car = cars[index];
-            let carTyres = availableTyres[car];
+            for (let index = 0; index < cars.length; index++) {
+                let car = cars[index];
+                let carTyres = availableTyres[car];
 
-            for (let tyre in carTyres) {
-                allValidTyres.add(tyre);
+                for (let tyre in carTyres) {
+                    let escapedTyre = escape(tyre);
 
-                let $dropdownTyre = this.$tyresDropdown.find("option[value='" + tyre + "']");
+                    allValidTyres.add(escapedTyre);
 
-                if ($dropdownTyre.length) {
-                    $dropdownTyre.text(carTyres[tyre] + " (" + tyre + ")" + makeCarString(tyreCars[tyre]));
-                    this.$tyresDropdown.multiSelect('refresh');
-                    continue; // this has already been added
+                    let $dropdownTyre = this.$tyresDropdown.find("option[value='" + escapedTyre + "']");
+
+                    if ($dropdownTyre.length) {
+                        $dropdownTyre.text(carTyres[tyre] + " (" + tyre + ")" + makeCarString(tyreCars[tyre]));
+                        continue; // this has already been added
+                    }
+
+                    this.$tyresDropdown.multiSelect('addOption', {
+                        'value': escapedTyre,
+                        'text': carTyres[tyre] + " (" + tyre + ")" + makeCarString(tyreCars[tyre]),
+                    });
+
+                    this.$tyresDropdown.multiSelect('select', escapedTyre);
                 }
-
-                this.$tyresDropdown.multiSelect('addOption', {
-                    'value': tyre,
-                    'text': carTyres[tyre] + " (" + tyre + ")" + makeCarString(tyreCars[tyre]),
-                });
-
-                this.$tyresDropdown.multiSelect('select', tyre);
             }
+
+            this.$tyresDropdown.find("option").each(function (index, elem) {
+                let $elem = $(elem);
+
+                if (!allValidTyres.has($elem.val())) {
+                    $elem.remove();
+                }
+            });
+
+            this.$tyresDropdown.multiSelect('refresh');
+        } catch(err) {
+            console.log("poopulateTypeDropdown failed: " + err.message)
         }
-
-        let that = this;
-
-        this.$tyresDropdown.find("option").each(function (index, elem) {
-            let $elem = $(elem);
-
-            if (!allValidTyres.has($elem.val())) {
-                $elem.remove();
-
-                that.$tyresDropdown.multiSelect('refresh');
-            }
-        });
     }
 
     /**
@@ -705,7 +805,7 @@ class RaceSetup {
     driverNames;
 
     toggleAlreadyAutocompletedDrivers() {
-        $(".entrant-autofill option").each(function (index, elem) {
+        this.$parent.find(".entrant-autofill option").each(function (index, elem) {
             let found = false;
             let $elem = $(elem);
 
@@ -752,19 +852,11 @@ class RaceSetup {
             that.toggleAlreadyAutocompletedDrivers();
         }
 
-        let opts = {
-            source: this.driverNames,
-            select: function (event, ui) {
-                autoFillEntrant(event.target, ui.item.value);
-            }
-        };
-
-
         for (let entrant of possibleEntrants) {
-            $(".entrant-autofill").append($("<option>").val(entrant.Name).text(entrant.Name));
+            this.$parent.find(".entrant-autofill").append($("<option>").val(entrant.Name).text(entrant.Name));
         }
 
-        $(document).on("change", ".entrant-autofill", function (e) {
+        this.$parent.on("change", ".entrant-autofill", function (e) {
             autoFillEntrant(e.currentTarget, $(e.currentTarget).val());
         });
     }
@@ -847,7 +939,7 @@ class RaceSetup {
         // have an entrant template to work from.
         let $tmpl = this.$parent.find("#entrantTemplate");
 
-        if (!$entrantTemplate) {
+        if (!$entrantTemplate && $tmpl.length > 0) {
             $entrantTemplate = $tmpl.prop("id", "").clone(true, true);
         }
 
@@ -1006,7 +1098,9 @@ class RaceSetup {
             let restrictor = $lastElement.find("[name='EntryList.Restrictor']").val();
 
             for (let i = 0; i < numEntrantsToAdd; i++) {
-                if ($(".entrant:visible").length >= maxClients) {
+                let $visibleEntrants = $(".entrant:visible");
+
+                if ($visibleEntrants.length >= maxClients) {
                     continue;
                 }
 
@@ -1022,7 +1116,7 @@ class RaceSetup {
                 });
 
                 if (chosenCar) {
-                    // dropdowns nead full <option> elements appending to them for populateEntryListCars to function correctly.
+                    // dropdowns need full <option> elements appending to them for populateEntryListCars to function correctly.
                     $elem.find("[name='EntryList.Car']").append($("<option>", {
                         value: chosenCar,
                         text: prettifyName(chosenCar, true),
@@ -1050,7 +1144,7 @@ class RaceSetup {
                 $elem.find("[name='EntryList.Restrictor']").val(restrictor);
                 let $entrantID = $elem.find("[name='EntryList.EntrantID']");
 
-                $entrantID.val($(".entrant:visible").length - 1);
+                $entrantID.val($visibleEntrants.length - 1);
 
                 populateEntryListCars();
                 showEntrantSkin(chosenCar, chosenSkin, $elem);
@@ -2070,6 +2164,7 @@ let championships = {
         championships.initConfigureSignUpForm();
         championships.initSignUpForm();
         championships.initACSRWatcher();
+        championships.initOpenChampionshipWatcher();
     },
 
     initACSRWatcher: function () {
@@ -2087,14 +2182,10 @@ let championships = {
     },
 
     setSwitchesForACSR: function (state) {
-        let $openEntrantsSwitch = $("#ChampionshipOpenEntrants");
         let $signUpFormSwitch = $("#ChampionshipSignUpFormEnabled");
         let $overridePasswordSwitch = $("#OverridePassword");
 
         if (state) {
-            $openEntrantsSwitch.bootstrapSwitch('state', false);
-            $openEntrantsSwitch.bootstrapSwitch('disabled', true);
-
             $signUpFormSwitch.bootstrapSwitch('state', true);
             $signUpFormSwitch.bootstrapSwitch('disabled', true);
 
@@ -2105,9 +2196,37 @@ let championships = {
         } else {
             $overridePasswordSwitch.closest(".card-body").find("#ReplacementPasswordWrapper").show();
 
-            $openEntrantsSwitch.bootstrapSwitch('disabled', false);
             $signUpFormSwitch.bootstrapSwitch('disabled', false);
             $overridePasswordSwitch.bootstrapSwitch('disabled', false);
+        }
+    },
+
+    initOpenChampionshipWatcher: function() {
+        let $openChampionshipSwitch = $("#ChampionshipOpenEntrants");
+
+        if (!$openChampionshipSwitch.length) {
+            return;
+        }
+
+        this.setOpenChampionshipOptions($openChampionshipSwitch.bootstrapSwitch('state'));
+
+        let that = this;
+
+        $openChampionshipSwitch.on("switchChange.bootstrapSwitch", function( event, state) {
+            that.setOpenChampionshipOptions(state);
+        });
+    },
+
+    setOpenChampionshipOptions: function(enabled) {
+        let $visibleOpenChampionship = $(".visible-open-championship");
+        let $hiddenOpenChampionship = $(".hidden-open-championship");
+
+        if (enabled) {
+            $visibleOpenChampionship.show();
+            $hiddenOpenChampionship.hide();
+        } else {
+            $visibleOpenChampionship.hide();
+            $hiddenOpenChampionship.show();
         }
     },
 

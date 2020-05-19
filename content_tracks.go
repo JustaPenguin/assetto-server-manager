@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"image"
@@ -86,9 +87,9 @@ func (t Track) PrettyName() string {
 func (t Track) IsPaidDLC() bool {
 	if _, ok := isTrackPaidDLC[t.Name]; ok {
 		return isTrackPaidDLC[t.Name]
-	} else {
-		return false
 	}
+
+	return false
 }
 
 func (t Track) IsMod() bool {
@@ -179,17 +180,18 @@ func GetTrackInfo(name, layout string) (*TrackInfo, error) {
 
 	uiDataFile = filepath.Join(uiDataFile, trackInfoJSONName)
 
-	f, err := os.Open(uiDataFile)
+	data, err := ioutil.ReadFile(uiDataFile)
 
 	if err != nil {
 		return nil, err
 	}
 
-	defer f.Close()
+	data = bytes.ReplaceAll(data, []byte("\r"), []byte(""))
+	data = bytes.ReplaceAll(data, []byte("\n"), []byte(""))
 
 	var trackInfo *TrackInfo
 
-	err = json.NewDecoder(utfbom.SkipOnly(f)).Decode(&trackInfo)
+	err = json.NewDecoder(utfbom.SkipOnly(bytes.NewBuffer(data))).Decode(&trackInfo)
 
 	return trackInfo, err
 }
@@ -269,7 +271,7 @@ func (th *TracksHandler) delete(w http.ResponseWriter, r *http.Request) {
 
 func (th *TracksHandler) view(w http.ResponseWriter, r *http.Request) {
 	trackName := chi.URLParam(r, "track_id")
-	templateParams, err := th.trackManager.LoadTrackDetailsForTemplate(trackName)
+	templateParams, err := th.trackManager.loadTrackDetailsForTemplate(trackName)
 
 	if os.IsNotExist(err) {
 		http.NotFound(w, r)
@@ -311,7 +313,7 @@ type trackDetailsTemplateVars struct {
 	Results   map[string][]SessionResults
 }
 
-func (tm *TrackManager) LoadTrackDetailsForTemplate(trackName string) (*trackDetailsTemplateVars, error) {
+func (tm *TrackManager) loadTrackDetailsForTemplate(trackName string) (*trackDetailsTemplateVars, error) {
 	trackInfoMap := make(map[string]*TrackInfo)
 	resultsMap := make(map[string][]SessionResults)
 
@@ -416,12 +418,12 @@ func (tm *TrackManager) GetTrackFromName(name string) (*Track, error) {
 	if len(files) > 1 {
 		for _, layout := range files {
 			if layout.IsDir() {
-				if layout.Name() == "data" {
+				switch layout.Name() {
+				case "data":
 					layouts = append(layouts, defaultLayoutName)
-				} else if layout.Name() == "ui" {
-					// ui folder, not a layout
+				case "ui":
 					continue
-				} else {
+				default:
 					// valid layouts must contain a surfaces.ini
 					_, err := os.Stat(filepath.Join(tracksPath, name, layout.Name(), "data", "surfaces.ini"))
 
@@ -528,6 +530,16 @@ func LoadTrackMapData(track, trackLayout string) (*TrackMapData, error) {
 	return &mapData, nil
 }
 
+func TrackMapImageURL(track, trackLayout string) string {
+	p := "/content/tracks/" + track
+
+	if trackLayout != "" {
+		p += "/" + trackLayout
+	}
+
+	return p + "/map.png"
+}
+
 func LoadTrackMapImage(track, trackLayout string) (image.Image, error) {
 	p := filepath.Join(ServerInstallPath, "content", "tracks", track)
 
@@ -627,15 +639,15 @@ func trackSummary(track, layout string) string {
 
 	if info != nil {
 		return info.Name
-	} else {
-		track := prettifyName(track, false)
-
-		if layout != "" {
-			track += fmt.Sprintf(" (%s)", prettifyName(layout, true))
-		}
-
-		return track
 	}
+
+	track = prettifyName(track, false)
+
+	if layout != "" {
+		track += fmt.Sprintf(" (%s)", prettifyName(layout, true))
+	}
+
+	return track
 }
 
 func trackDownloadLink(track string) string {

@@ -28,6 +28,8 @@ func ConfigIniDefault() ServerConfig {
 			ShowContentManagerJoinLink:        1,
 			SleepTime:                         1,
 			RestartEventOnServerManagerLaunch: 1,
+			ContentManagerWelcomeMessage:      defaultContentManagerDescription,
+			ShowEventDetailsPopup:             true,
 		},
 
 		CurrentRaceConfig: CurrentRaceConfig{
@@ -67,6 +69,13 @@ func ConfigIniDefault() ServerConfig {
 			MaxContactsPerKilometer:   -1,
 			ResultScreenTime:          90,
 
+			DriverSwapEnabled:               0,
+			DriverSwapMinTime:               120,
+			DriverSwapDisqualifyTime:        30,
+			DriverSwapPenaltyTime:           0,
+			DriverSwapMinimumNumberOfSwaps:  0,
+			DriverSwapNotEnoughSwapsPenalty: 0,
+
 			Sessions: map[SessionType]*SessionConfig{
 				SessionTypePractice: {
 					Name:   "Practice",
@@ -95,11 +104,12 @@ func ConfigIniDefault() ServerConfig {
 
 			Weather: map[string]*WeatherConfig{
 				"WEATHER_0": {
-					Graphics:               "3_clear",
-					BaseTemperatureAmbient: 26,
-					BaseTemperatureRoad:    11,
-					VariationAmbient:       1,
-					VariationRoad:          1,
+					Graphics:                    "3_clear",
+					ChampionshipPracticeWeather: weatherAny,
+					BaseTemperatureAmbient:      26,
+					BaseTemperatureRoad:         11,
+					VariationAmbient:            1,
+					VariationRoad:               1,
 				},
 			},
 		},
@@ -107,3 +117,5 @@ func ConfigIniDefault() ServerConfig {
 }
 
 const defaultServerNameTemplate = "{{ .ServerName }} - {{ .EventName }}"
+const defaultContentManagerDescription = "{{ .Track }} {{ with .TrackLayout }}({{ . }}){{ end }} " +
+	"- an event hosted by {{ .ServerName }}<br><br>{{ .EventDescription }}<br>{{ .ChampionshipPoints }}<br>{{ .CarDownloads }}<br>{{ .TrackDownload }}"

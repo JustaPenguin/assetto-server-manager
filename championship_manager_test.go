@@ -63,12 +63,12 @@ type dummyServerProcess struct {
 	doneCh chan struct{}
 }
 
-func (dummyServerProcess) Logs() string {
-	return ""
+func (dummyServerProcess) Start(event RaceEvent, udpPluginAddress string, udpPluginLocalPort int, forwardingAddress string, forwardListenPort int) error {
+	return nil
 }
 
-func (dummyServerProcess) Start(cfg ServerConfig, entryList EntryList, forwardingAddress string, forwardListenPort int, event RaceEvent) error {
-	return nil
+func (dummyServerProcess) Logs() string {
+	return ""
 }
 
 func (d dummyServerProcess) Stop() error {
@@ -97,8 +97,8 @@ func (dummyServerProcess) SendUDPMessage(message udp.Message) error {
 	return nil
 }
 
-func (d dummyServerProcess) Done() <-chan struct{} {
-	return d.doneCh
+func (d dummyServerProcess) NotifyDone(chan struct{}) {
+
 }
 
 func (dummyServerProcess) GetServerConfig() ServerConfig {
@@ -176,10 +176,12 @@ func init() {
 		NewRaceManager(
 			NewJSONStore(filepath.Join(os.TempDir(), "asm-race-store"), filepath.Join(os.TempDir(), "asm-race-store-shared")),
 			dummyServerProcess{},
-			NewCarManager(NewTrackManager(), false),
+			NewCarManager(NewTrackManager(), false, false),
 			NewTrackManager(),
 			&dummyNotificationManager{},
+			NewRaceControl(NilBroadcaster{}, nilTrackData{}, dummyServerProcess{}, testStore, NewPenaltiesManager(testStore)),
 		),
+		&ACSRClient{Enabled: false},
 	)
 }
 
@@ -192,7 +194,7 @@ func doReplay(filename string, multiplier int, callbackFunc udp.CallbackFunc, wa
 
 	defer db.Close()
 
-	return replay.ReplayUDPMessages(db, multiplier, callbackFunc, waitTime)
+	return replay.UDPMessages(db, multiplier, callbackFunc, waitTime)
 }
 
 func TestChampionshipManager_ChampionshipEventCallback(t *testing.T) {
@@ -413,7 +415,7 @@ func checkChampionshipEventCompletion(t *testing.T, championshipID string, event
 		return
 	}
 
-	event, err := loadedChampionship.EventByID(eventID)
+	event, _, err := loadedChampionship.EventByID(eventID)
 
 	if err != nil {
 		t.Error(err)

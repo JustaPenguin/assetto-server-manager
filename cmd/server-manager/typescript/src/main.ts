@@ -8,7 +8,6 @@ import "moment-timezone";
 import "./javascript/manager.js";
 import "./Font";
 import "./Calendar";
-import "./RaceList";
 
 import {RaceControl} from "./RaceControl";
 import {CarDetail} from "./CarDetail";
@@ -17,9 +16,12 @@ import {CarSearch} from "./CarSearch";
 import {CarList} from "./CarList";
 import {RaceWeekend} from "./RaceWeekend";
 import {ChangelogPopup} from "./ChangelogPopup";
+import {HostedIntroPopup} from "./HostedIntroPopup";
 import {Messages} from "./Messages";
 import {Championship} from "./Championship";
 import {Results} from "./Results";
+import {RaceList} from "./RaceList";
+import {SpectatorCar} from "./SpectatorCar";
 
 $(() => {
     new RaceControl();
@@ -29,9 +31,12 @@ $(() => {
     new RaceWeekend.View();
     new RaceWeekend.EditSession();
     new ChangelogPopup();
+    new HostedIntroPopup();
     Messages.initSummerNote();
     new Championship.View();
     new Results();
+    new RaceList();
+    new SpectatorCar();
 
     $(".race-setup").each(function (index, elem) {
         new CarSearch($(elem));

@@ -23,12 +23,12 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 	"github.com/haisum/recaptcha"
-	"github.com/mitchellh/go-wordwrap"
 	"github.com/sirupsen/logrus"
 )
 
 type ChampionshipManager struct {
 	*RaceManager
+	acsrClient *ACSRClient
 
 	activeChampionship *ActiveChampionship
 	mutex              sync.Mutex
@@ -37,9 +37,10 @@ type ChampionshipManager struct {
 	championshipEventReminderTimers map[string]*when.Timer
 }
 
-func NewChampionshipManager(raceManager *RaceManager) *ChampionshipManager {
+func NewChampionshipManager(raceManager *RaceManager, acsrClient *ACSRClient) *ChampionshipManager {
 	return &ChampionshipManager{
 		RaceManager: raceManager,
+		acsrClient:  acsrClient,
 	}
 }
 
@@ -55,23 +56,7 @@ func (cm *ChampionshipManager) applyConfigAndStart(championship *ActiveChampions
 }
 
 func (cm *ChampionshipManager) LoadChampionship(id string) (*Championship, error) {
-	championship, err := cm.store.LoadChampionship(id)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for _, event := range championship.Events {
-		if event.IsRaceWeekend() {
-			event.RaceWeekend, err = cm.store.LoadRaceWeekend(event.RaceWeekendID.String())
-
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	return championship, nil
+	return cm.store.LoadChampionship(id)
 }
 
 func (cm *ChampionshipManager) UpsertChampionship(c *Championship) error {
@@ -81,8 +66,8 @@ func (cm *ChampionshipManager) UpsertChampionship(c *Championship) error {
 		return err
 	}
 
-	if config != nil && config.ACSR.Enabled && c.ACSR {
-		ACSRSendResult(*c)
+	if c.ACSR {
+		cm.acsrClient.SendChampionship(*c)
 	}
 
 	return nil
@@ -98,24 +83,64 @@ func (cm *ChampionshipManager) DeleteChampionship(id string) error {
 	if championship.ACSR {
 		championship.ACSR = false
 
-		ACSRSendResult(*championship)
+		cm.acsrClient.SendChampionship(*championship)
 	}
 
 	return cm.store.DeleteChampionship(id)
 }
 
 func (cm *ChampionshipManager) ListChampionships() ([]*Championship, error) {
-	champs, err := cm.store.ListChampionships()
+	championships, err := cm.store.ListChampionships()
 
 	if err != nil {
 		return nil, err
 	}
 
-	sort.Slice(champs, func(i, j int) bool {
-		return champs[i].Updated.After(champs[j].Updated)
+	sort.Slice(championships, func(i, j int) bool {
+		return championships[i].Updated.After(championships[j].Updated)
 	})
 
-	return champs, nil
+	for _, championship := range championships {
+		for _, event := range championship.Events {
+			if event.IsRaceWeekend() {
+				event.RaceWeekend, err = cm.store.LoadRaceWeekend(event.RaceWeekendID.String())
+
+				if err == ErrRaceWeekendNotFound {
+					continue
+				} else if err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+
+	return championships, nil
+}
+
+func (cm *ChampionshipManager) LoadACSRRatings(championship *Championship) (map[string]*ACSRDriverRating, error) {
+	if !championship.ACSR || !Premium() {
+		return nil, nil
+	}
+
+	guidMap := make(map[string]bool)
+
+	for _, class := range championship.Classes {
+		for _, standing := range class.Standings(championship, championship.Events) {
+			guidMap[standing.Car.Driver.GUID] = true
+		}
+	}
+
+	for _, entrant := range championship.AllEntrants() {
+		guidMap[entrant.GUID] = true
+	}
+
+	var guids []string
+
+	for guid := range guidMap {
+		guids = append(guids, guid)
+	}
+
+	return cm.acsrClient.GetRating(guids...)
 }
 
 type ChampionshipTemplateVars struct {
@@ -133,10 +158,13 @@ func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (champions
 		return nil, nil, err
 	}
 
+	defaultClass := NewChampionshipClass("")
+	defaultClass.ID = uuid.Nil
+
 	opts = &ChampionshipTemplateVars{
 		RaceTemplateVars: raceOpts,
 		DefaultPoints:    DefaultChampionshipPoints,
-		DefaultClass:     NewChampionshipClass(""),
+		DefaultClass:     defaultClass,
 	}
 
 	championshipID := chi.URLParam(r, "championshipID")
@@ -155,7 +183,7 @@ func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (champions
 	}
 
 	opts.Championship = championship
-	opts.ACSREnabled = config.ACSR.Enabled
+	opts.ACSREnabled = cm.acsrClient.Enabled
 
 	return championship, opts, nil
 }
@@ -211,7 +239,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	championship.Info = template.HTML(r.FormValue("ChampionshipInfo"))
 	championship.OverridePassword = r.FormValue("OverridePassword") == "on" || r.FormValue("OverridePassword") == "1"
 
-	if IsPremium == "true" {
+	if Premium() {
 		championship.OGImage = r.FormValue("ChampionshipOGImage")
 	}
 
@@ -220,7 +248,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	if championship.ACSR && !newACSR {
 		championship.ACSR = newACSR
 
-		ACSRSendResult(*championship)
+		cm.acsrClient.SendChampionship(*championship)
 	} else {
 		championship.ACSR = newACSR
 	}
@@ -228,7 +256,6 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	if championship.ACSR {
 		championship.OverridePassword = true
 		championship.ReplacementPassword = ""
-		championship.OpenEntrants = false
 		championship.SignUpForm.Enabled = true
 	} else {
 		championship.ReplacementPassword = r.FormValue("ReplacementPassword")
@@ -237,6 +264,21 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	previousNumEntrants := 0
 	previousNumPoints := 0
 	previousNumCars := 0
+
+	if Premium() {
+		// spectator car
+		entrants, err := cm.BuildEntryList(r, previousNumEntrants, 1)
+
+		if err != nil {
+			return nil, edited, err
+		}
+
+		championship.SpectatorCar = *(entrants.AsSlice()[0])
+
+		previousNumEntrants++
+		previousNumCars += formValueAsInt(r.FormValue("NumAvailableSpectatorCars"))
+		championship.SpectatorCarEnabled = formValueAsInt(r.FormValue("Championship.SpectatorCar.Enabled")) == 1
+	}
 
 	for i := 0; i < len(r.Form["ClassName"]); i++ {
 		class := NewChampionshipClass(r.Form["ClassName"][i])
@@ -278,6 +320,35 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 
 		championship.AddClass(class)
 
+		// ensure that linked race weekends (if any) have points set up for this class
+		for _, event := range championship.Events {
+			if !event.IsRaceWeekend() {
+				continue
+			}
+
+			updatedRaceWeekend := false
+
+			for _, session := range event.RaceWeekend.Sessions {
+				if _, ok := session.Points[class.ID]; ok {
+					continue
+				}
+
+				if session.SessionType() == SessionTypeRace {
+					session.Points[class.ID] = &class.Points
+				} else {
+					session.Points[class.ID] = &ChampionshipPoints{Places: make([]int, len(class.Points.Places))}
+				}
+
+				updatedRaceWeekend = true
+			}
+
+			if updatedRaceWeekend {
+				if err := cm.store.UpsertRaceWeekend(event.RaceWeekend); err != nil {
+					return nil, edited, err
+				}
+			}
+		}
+
 		previousNumEntrants += numEntrantsForClass
 		previousNumPoints += numPointsForClass
 		previousNumCars += numCarsForClass
@@ -298,12 +369,26 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 			logrus.Infof("Renaming team for entrant: %s (%s)", entrant.Name, entrant.GUID)
 
 			for _, event := range championship.Events {
-				for _, session := range event.Sessions {
-					if session.Results == nil {
-						continue
+				if event.IsRaceWeekend() && event.RaceWeekend != nil {
+					for _, session := range event.RaceWeekend.Sessions {
+						if !session.Completed() {
+							continue
+						}
+
+						class.AttachEntrantToResult(entrant, session.Results)
 					}
 
-					class.AttachEntrantToResult(entrant, session.Results)
+					if err := cm.store.UpsertRaceWeekend(event.RaceWeekend); err != nil {
+						return nil, edited, err
+					}
+				} else {
+					for _, session := range event.Sessions {
+						if session.Results == nil {
+							continue
+						}
+
+						class.AttachEntrantToResult(entrant, session.Results)
+					}
 				}
 			}
 		}
@@ -354,7 +439,7 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (*Rac
 
 	if editEventID := chi.URLParam(r, "eventID"); editEventID != "" {
 		// editing a championship event
-		event, err := championship.EventByID(editEventID)
+		event, eventIndex, err := championship.EventByID(editEventID)
 
 		if err != nil {
 			return nil, err
@@ -364,6 +449,7 @@ func (cm *ChampionshipManager) BuildChampionshipEventOpts(r *http.Request) (*Rac
 		opts.IsEditing = true
 		opts.EditingID = editEventID
 		opts.CurrentEntrants = event.CombineEntryLists(championship)
+		opts.ChampionshipEventIndex = eventIndex
 	} else {
 		// creating a new championship event
 		opts.IsEditing = false
@@ -441,7 +527,7 @@ func (cm *ChampionshipManager) SaveChampionshipEvent(r *http.Request) (champions
 	if eventID := r.FormValue("Editing"); eventID != "" {
 		edited = true
 
-		event, err = championship.EventByID(eventID)
+		event, _, err = championship.EventByID(eventID)
 
 		if err != nil {
 			return nil, nil, true, err
@@ -505,6 +591,56 @@ func (cm *ChampionshipManager) StartPracticeEvent(championshipID string, eventID
 	return cm.StartEvent(championshipID, eventID, true)
 }
 
+func (cm *ChampionshipManager) FinalEventConfigurationFiles(championship *Championship, event *ChampionshipEvent, isPreChampionshipPracticeEvent bool) (CurrentRaceConfig, EntryList) {
+	raceSetup := event.RaceSetup
+
+	raceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
+
+	entryList := event.CombineEntryLists(championship)
+
+	if championship.HasSpectatorCar() {
+		entryList.AddInPitBox(&championship.SpectatorCar, maxEntryListSize+1)
+	}
+
+	if championship.SignUpForm.Enabled && !championship.OpenEntrants && !isPreChampionshipPracticeEvent {
+		filteredEntryList := make(EntryList)
+
+		// a sign up championship (which is not open) should remove all empty entrants before the event starts
+		// here we are building a new filtered entry list so grid positions are not 'missing'.
+		for pitBox, entrant := range entryList.AsSlice() {
+			if entrant.GUID != "" {
+				filteredEntryList.AddInPitBox(entrant, pitBox)
+			}
+		}
+
+		entryList = filteredEntryList
+
+		raceSetup.PickupModeEnabled = 1
+		raceSetup.LockedEntryList = 1
+	} else {
+		if championship.OpenEntrants {
+			raceSetup.PickupModeEnabled = 1
+			raceSetup.LockedEntryList = 0
+		} else {
+			raceSetup.PickupModeEnabled = 1
+			raceSetup.LockedEntryList = 1
+		}
+	}
+
+	raceSetup.LoopMode = 1
+
+	if raceSetup.HasSession(SessionTypeBooking) {
+		logrus.Infof("Championship event has a booking session. Disabling PickupMode, clearing EntryList")
+		// championship events with booking do not have an entry list. pick up mode is disabled.
+		raceSetup.PickupModeEnabled = 0
+		entryList = nil
+	} else {
+		raceSetup.MaxClients = len(entryList)
+	}
+
+	return raceSetup, entryList
+}
+
 func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string, isPreChampionshipPracticeEvent bool) error {
 	championship, event, err := cm.GetChampionshipAndEvent(championshipID, eventID)
 
@@ -512,56 +648,18 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 		return err
 	}
 
-	event.RaceSetup.Cars = strings.Join(championship.ValidCarIDs(), ";")
+	raceSetup, entryList := cm.FinalEventConfigurationFiles(championship, event, isPreChampionshipPracticeEvent)
 
-	if config.Lua.Enabled && IsPremium == "true" {
-		err = championshipEventStartPlugin(event, championship)
+	if config.Lua.Enabled && Premium() {
+		err := championshipEventStartPlugin(event, championship, &entryList)
 
 		if err != nil {
 			logrus.WithError(err).Error("championship event start plugin script failed")
 		}
 	}
 
-	entryList := event.CombineEntryLists(championship)
-
-	if championship.SignUpForm.Enabled && !championship.OpenEntrants && !isPreChampionshipPracticeEvent {
-		filteredEntryList := make(EntryList)
-
-		// a sign up championship (which is not open) should remove all empty entrants before the event starts
-		// here we are building a new filtered entry list so grid positions are not 'missing'
-		for _, entrant := range entryList {
-			if entrant.GUID != "" {
-				filteredEntryList.Add(entrant)
-			}
-		}
-
-		entryList = filteredEntryList
-
-		event.RaceSetup.PickupModeEnabled = 1
-		event.RaceSetup.LockedEntryList = 1
-	} else {
-		if championship.OpenEntrants {
-			event.RaceSetup.PickupModeEnabled = 1
-			event.RaceSetup.LockedEntryList = 0
-		} else {
-			event.RaceSetup.PickupModeEnabled = 1
-			event.RaceSetup.LockedEntryList = 1
-		}
-	}
-
-	event.RaceSetup.LoopMode = 1
-
-	if event.RaceSetup.HasSession(SessionTypeBooking) {
-		logrus.Infof("Championship event has a booking session. Disabling PickupMode, clearing EntryList")
-		// championship events with booking do not have an entry list. pick up mode is disabled.
-		event.RaceSetup.PickupModeEnabled = 0
-		entryList = nil
-	} else {
-		event.RaceSetup.MaxClients = len(entryList)
-	}
-
 	if !isPreChampionshipPracticeEvent {
-		logrus.Infof("Starting Championship Event: %s at %s (%s) with %d entrants", event.RaceSetup.Cars, event.RaceSetup.Track, event.RaceSetup.TrackLayout, event.RaceSetup.MaxClients)
+		logrus.Infof("Starting Championship Event: %s at %s (%s) with %d entrants", raceSetup.Cars, raceSetup.Track, raceSetup.TrackLayout, raceSetup.MaxClients)
 
 		// track that this is the current event
 		return cm.applyConfigAndStart(&ActiveChampionship{
@@ -571,59 +669,59 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 			OverridePassword:    championship.OverridePassword,
 			ReplacementPassword: championship.ReplacementPassword,
 			Description:         string(championship.Info),
-			RaceConfig:          event.RaceSetup,
-			EntryList:           entryList,
-		})
-	} else {
-		// delete all sessions other than booking (if there is a booking session)
-		delete(event.RaceSetup.Sessions, SessionTypePractice)
-		delete(event.RaceSetup.Sessions, SessionTypeQualifying)
-		delete(event.RaceSetup.Sessions, SessionTypeRace)
-
-		event.RaceSetup.Sessions[SessionTypePractice] = &SessionConfig{
-			Name:   "Practice",
-			Time:   120,
-			IsOpen: 1,
-		}
-
-		if !event.RaceSetup.HasSession(SessionTypeBooking) {
-			// #271: override pickup mode to ON for practice sessions
-			event.RaceSetup.PickupModeEnabled = 1
-		}
-
-		return cm.RaceManager.applyConfigAndStart(&ActiveChampionship{
-			ChampionshipID:      championship.ID,
-			EventID:             event.ID,
-			Name:                championship.Name,
-			OverridePassword:    championship.OverridePassword,
-			ReplacementPassword: championship.ReplacementPassword,
-			Description:         string(championship.Info),
-			IsPracticeSession:   true,
-			RaceConfig:          event.RaceSetup,
+			RaceConfig:          raceSetup,
 			EntryList:           entryList,
 		})
 	}
+
+	// delete all sessions other than booking (if there is a booking session)
+	delete(raceSetup.Sessions, SessionTypePractice)
+	delete(raceSetup.Sessions, SessionTypeQualifying)
+	delete(raceSetup.Sessions, SessionTypeRace)
+
+	raceSetup.Sessions[SessionTypePractice] = &SessionConfig{
+		Name:   "Practice",
+		Time:   120,
+		IsOpen: 1,
+	}
+
+	if !raceSetup.HasSession(SessionTypeBooking) {
+		// #271: override pickup mode to ON for practice sessions
+		raceSetup.PickupModeEnabled = 1
+	}
+
+	return cm.RaceManager.applyConfigAndStart(&ActiveChampionship{
+		ChampionshipID:      championship.ID,
+		EventID:             event.ID,
+		Name:                championship.Name,
+		OverridePassword:    championship.OverridePassword,
+		ReplacementPassword: championship.ReplacementPassword,
+		Description:         string(championship.Info),
+		IsPracticeSession:   true,
+		RaceConfig:          raceSetup,
+		EntryList:           entryList,
+	})
 }
 
-func championshipEventStartPlugin(event *ChampionshipEvent, championship *Championship) error {
+func championshipEventStartPlugin(event *ChampionshipEvent, championship *Championship, entryList *EntryList) error {
 	var standings [][]*ChampionshipStanding
 
 	for _, class := range championship.Classes {
-		standings = append(standings, class.Standings(championship.Events))
+		standings = append(standings, class.Standings(championship, championship.Events))
 	}
 
 	p := &LuaPlugin{}
 
-	newEvent, newChampionship := NewChampionshipEvent(), NewChampionship(championship.Name)
+	newEvent, newChampionship, newEntryList := NewChampionshipEvent(), NewChampionship(championship.Name), &EntryList{}
 
-	p.Inputs(event, championship, standings).Outputs(newEvent, newChampionship)
+	p.Inputs(event, championship, standings, entryList).Outputs(&newEntryList, newEvent, newChampionship)
 	err := p.Call("./plugins/championship.lua", "onChampionshipEventStart")
 
 	if err != nil {
 		return err
 	}
 
-	*event, *championship = *newEvent, *newChampionship
+	*event, *championship, *entryList = *newEvent, *newChampionship, *newEntryList
 
 	return nil
 }
@@ -635,7 +733,7 @@ func (cm *ChampionshipManager) GetChampionshipAndEvent(championshipID string, ev
 		return nil, nil, err
 	}
 
-	event, err := championship.EventByID(eventID)
+	event, _, err := championship.EventByID(eventID)
 
 	if err != nil {
 		return nil, nil, err
@@ -686,7 +784,7 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 			}
 		}
 
-		if config.Lua.Enabled && IsPremium == "true" {
+		if config.Lua.Enabled && Premium() {
 			err = championshipEventSchedulePlugin(championship, event)
 
 			if err != nil {
@@ -711,8 +809,16 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 				thisTimer := timer
 
 				cm.championshipEventReminderTimers[event.ID.String()], err = when.When(date.Add(time.Duration(0-timer)*time.Minute), func() {
-					cm.notificationManager.SendChampionshipReminderMessage(championship, event, thisTimer)
+					err := cm.notificationManager.SendChampionshipReminderMessage(championship, event, thisTimer)
+
+					if err != nil {
+						logrus.WithError(err).Errorf("couldn't send championship reminder message")
+					}
 				})
+
+				if err != nil {
+					logrus.WithError(err).Errorf("couldn't send championship reminder message")
+				}
 			}
 		}
 	} else {
@@ -728,7 +834,7 @@ func championshipEventSchedulePlugin(championship *Championship, event *Champion
 	var standings [][]*ChampionshipStanding
 
 	for _, class := range championship.Classes {
-		standings = append(standings, class.Standings(championship.Events))
+		standings = append(standings, class.Standings(championship, championship.Events))
 	}
 
 	newEvent, newChampionship := NewChampionshipEvent(), NewChampionship(championship.Name)
@@ -763,7 +869,7 @@ func (cm *ChampionshipManager) StartScheduledEvent(championship *Championship, e
 			return err
 		}
 
-		event, err = championship.EventByID(event.ID.String())
+		event, _, err = championship.EventByID(event.ID.String())
 
 		if err != nil {
 			return err
@@ -771,7 +877,7 @@ func (cm *ChampionshipManager) StartScheduledEvent(championship *Championship, e
 
 		event.Scheduled = time.Time{}
 
-		err = cm.store.UpsertChampionship(championship)
+		err = cm.UpsertChampionship(championship)
 
 		if err != nil {
 			return err
@@ -789,7 +895,7 @@ func (cm *ChampionshipManager) ScheduleNextEventFromRecurrence(championship *Cha
 	eventCopy := DuplicateChampionshipEvent(event)
 	championship.Events = append(championship.Events, eventCopy)
 
-	err := cm.store.UpsertChampionship(championship)
+	err := cm.UpsertChampionship(championship)
 
 	if err != nil {
 		return err
@@ -810,9 +916,9 @@ func (cm *ChampionshipManager) FindNextEventRecurrence(event *ChampionshipEvent,
 
 	if next.After(time.Now()) {
 		return next
-	} else {
-		return cm.FindNextEventRecurrence(event, next)
 	}
+
+	return cm.FindNextEventRecurrence(event, next)
 }
 
 func (cm *ChampionshipManager) ChampionshipEventCallback(message udp.Message) {
@@ -893,18 +999,12 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 	switch a := message.(type) {
 
 	case udp.SessionCarInfo:
-
-		if a.Event() == udp.EventNewConnection {
-
-			if cm.activeChampionship.loadedEntrants == nil {
-				cm.activeChampionship.loadedEntrants = make(map[udp.CarID]udp.SessionCarInfo)
+		if championship.OpenEntrants && championship.PersistOpenEntrants && a.Event() == udp.EventNewConnection {
+			if championship.HasSpectatorCar() && championship.SpectatorCar.GUID == string(a.DriverGUID) {
+				// don't try and add the spectator car to the entrylist.
+				return
 			}
 
-			cm.activeChampionship.loadedEntrants[a.CarID] = a
-
-		}
-
-		if championship.OpenEntrants && championship.PersistOpenEntrants && a.Event() == udp.EventNewConnection {
 			// a person joined, check to see if they need adding to the championship
 			foundSlot, classForCar, err := cm.AddEntrantFromSessionData(championship, sessionEntrantWrapper(a), false, false)
 
@@ -923,51 +1023,6 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			}
 		}
 
-	case udp.ClientLoaded:
-
-		entrant, ok := cm.activeChampionship.loadedEntrants[udp.CarID(a)]
-
-		if !ok {
-			return
-		}
-
-		championshipText := " Championship"
-
-		if strings.HasSuffix(strings.ToLower(championship.Name), "championship") {
-			championshipText = ""
-		}
-
-		visitServer := ""
-
-		if config != nil && config.HTTP.BaseURL != "" {
-			visitServer = fmt.Sprintf(" You can check out the results of this championship in detail at %s.",
-				config.HTTP.BaseURL+"/championship/"+championship.ID.String())
-		}
-
-		wrapped := strings.Split(wordwrap.WrapString(
-			fmt.Sprintf(
-				"This event is part of the %s%s! %s%s\n",
-				championship.Name,
-				championshipText,
-				championship.GetPlayerSummary(string(entrant.DriverGUID)),
-				visitServer,
-			),
-			60,
-		), "\n")
-
-		for _, msg := range wrapped {
-			welcomeMessage, err := udp.NewSendChat(entrant.CarID, msg)
-
-			if err == nil {
-				err := cm.process.SendUDPMessage(welcomeMessage)
-
-				if err != nil {
-					logrus.WithError(err).Errorf("Unable to send welcome message to: %s", entrant.DriverName)
-				}
-			} else {
-				logrus.WithError(err).Errorf("Unable to build welcome message to: %s", entrant.DriverName)
-			}
-		}
 	case udp.SessionInfo:
 		if a.Event() == udp.EventNewSession {
 			if championship.Events[currentEventIndex].StartedTime.IsZero() {
@@ -1017,6 +1072,8 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 					return
 				}
 			}
+		} else {
+			saveChampionship = false
 		}
 	case udp.LapCompleted:
 		cm.activeChampionship.NumLapsCompleted++
@@ -1068,8 +1125,10 @@ func (cm *ChampionshipManager) handleSessionChanges(message udp.Message, champio
 			}
 		}
 
-		if championship.ACSR && config != nil && config.ACSR.Enabled {
-			go ACSRSendResult(*championship)
+		if championship.ACSR {
+			go panicCapture(func() {
+				cm.acsrClient.SendChampionship(*championship)
+			})
 		}
 	default:
 		saveChampionship = false
@@ -1125,7 +1184,7 @@ func (cm *ChampionshipManager) CancelEvent(championshipID string, eventID string
 		return err
 	}
 
-	event, err := championship.EventByID(eventID)
+	event, _, err := championship.EventByID(eventID)
 
 	if err != nil {
 		return err
@@ -1182,7 +1241,7 @@ func (cm *ChampionshipManager) ListAvailableResultsFilesForEvent(championshipID 
 		return nil, nil, err
 	}
 
-	event, err := championship.EventByID(eventID)
+	event, _, err := championship.EventByID(eventID)
 
 	if err != nil {
 		return nil, nil, err
@@ -1240,7 +1299,7 @@ func (cm *ChampionshipManager) ImportEventSetup(championshipID string, eventID s
 		return err
 	}
 
-	err = championship.ImportEvent(race)
+	_, err = championship.ImportEvent(race)
 
 	if err != nil {
 		return err
@@ -1262,7 +1321,7 @@ func (cm *ChampionshipManager) ImportRaceWeekendSetup(championshipID string, eve
 		return err
 	}
 
-	err = championship.ImportEvent(weekend)
+	_, err = championship.ImportEvent(weekend)
 
 	if err != nil {
 		return err
@@ -1288,7 +1347,7 @@ func (cm *ChampionshipManager) ImportEvent(championshipID string, eventID string
 		return err
 	}
 
-	event, err := championship.EventByID(eventID)
+	event, _, err := championship.EventByID(eventID)
 
 	if err != nil {
 		return err
@@ -1393,7 +1452,7 @@ func (cm *ChampionshipManager) AddEntrantFromSessionData(championship *Champions
 
 		e := make(EntryList)
 
-		e.Add(newEntrant)
+		e.AddToBackOfGrid(newEntrant)
 
 		err := cm.SaveEntrantsForAutoFill(e)
 
@@ -1512,7 +1571,7 @@ func (cm *ChampionshipManager) ReorderChampionshipEvents(championshipID string, 
 	var orderedEvents []*ChampionshipEvent
 
 	for _, championshipEventID := range championshipEventIDsInOrder {
-		event, err := championship.EventByID(championshipEventID)
+		event, _, err := championship.EventByID(championshipEventID)
 
 		if err != nil {
 			return err
@@ -1532,7 +1591,7 @@ func (e ValidationError) Error() string {
 	return string(e)
 }
 
-var steamGUIDRegex = regexp.MustCompile("^[0-9]{17}$")
+var steamGUIDRegex = regexp.MustCompile("^[0-9]{17}(;[0-9]{17})*$")
 
 func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (response *ChampionshipSignUpResponse, foundSlot bool, err error) {
 	if err := r.ParseForm(); err != nil {
@@ -1548,7 +1607,7 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 	signUpResponse := &ChampionshipSignUpResponse{
 		Created: time.Now(),
 		Name:    r.FormValue("Name"),
-		GUID:    r.FormValue("GUID"),
+		GUID:    NormaliseEntrantGUID(r.FormValue("GUID")),
 		Team:    r.FormValue("Team"),
 		Email:   r.FormValue("Email"),
 
@@ -1652,11 +1711,14 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 				if cm.notificationManager.HasNotificationReminders() {
 					for _, timer := range cm.notificationManager.GetNotificationReminders() {
 						if event.Scheduled.Add(time.Duration(0-timer) * time.Minute).After(time.Now()) {
-							// add reminder
 							thisTimer := timer
 
 							cm.championshipEventReminderTimers[event.ID.String()], err = when.When(event.Scheduled.Add(time.Duration(0-timer)*time.Minute), func() {
-								cm.notificationManager.SendChampionshipReminderMessage(championship, event, thisTimer)
+								err := cm.notificationManager.SendChampionshipReminderMessage(championship, event, thisTimer)
+
+								if err != nil {
+									logrus.WithError(err).Errorf("Could not send championship reminder message for event: %s", event.ID.String())
+								}
 							})
 
 							if err != nil {
@@ -1668,19 +1730,114 @@ func (cm *ChampionshipManager) InitScheduledChampionships() error {
 				}
 
 				return cm.UpsertChampionship(championship)
-			} else {
-				emptyTime := time.Time{}
-				if event.Scheduled != emptyTime {
-					logrus.Infof("Looks like the server was offline whilst a scheduled event was meant to start!"+
-						" Start time: %s. The schedule has been cleared. Start the event manually if you wish to run it.", event.Scheduled.String())
+			}
 
-					event.Scheduled = emptyTime
+			zeroTime := time.Time{}
 
-					return cm.UpsertChampionship(championship)
-				}
+			if event.Scheduled != zeroTime {
+				logrus.Infof("Looks like the server was offline whilst a scheduled event was meant to start!"+
+					" Start time: %s. The schedule has been cleared. Start the event manually if you wish to run it.", event.Scheduled.String())
+
+				event.Scheduled = zeroTime
+
+				return cm.UpsertChampionship(championship)
 			}
 		}
 	}
 
 	return nil
+}
+
+func (cm *ChampionshipManager) DuplicateChampionship(championshipID string) (*Championship, error) {
+	championship, err := cm.LoadChampionship(championshipID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var events []ChampionshipEvent
+
+	for _, event := range championship.Events {
+		events = append(events, *event)
+	}
+
+	championship.Events = nil
+
+	duplicateChampionship := championship
+
+	duplicateChampionship.ID = uuid.New()
+	duplicateChampionship.Created = time.Now()
+	duplicateChampionship.Updated = time.Now()
+	duplicateChampionship.Name = championship.Name + " Duplicate"
+
+	for _, event := range events {
+		_, err := duplicateChampionship.ImportEvent(&event)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	logrus.Infof("New Championship: %s, %s. Duplicate of %s", duplicateChampionship.Name, duplicateChampionship.ID.String(), championshipID)
+
+	return duplicateChampionship, cm.UpsertChampionship(duplicateChampionship)
+}
+
+func (cm *ChampionshipManager) DuplicateEventInChampionship(championshipID, eventID string) (*ChampionshipEvent, error) {
+	championship, err := cm.LoadChampionship(championshipID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	event, _, err := championship.EventByID(eventID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	newEvent, err := cm.DuplicateEvent(event, championship)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err := cm.UpsertChampionship(championship); err != nil {
+		return nil, err
+	}
+
+	return newEvent, nil
+}
+
+func (cm *ChampionshipManager) DuplicateEvent(event *ChampionshipEvent, championship *Championship) (*ChampionshipEvent, error) {
+	var newEvent *ChampionshipEvent
+	var err error
+
+	if !event.IsRaceWeekend() {
+		newEvent, err = championship.ImportEvent(event)
+
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		duplicateRaceWeekend, err := event.RaceWeekend.Duplicate()
+
+		if err != nil {
+			return nil, err
+		}
+
+		newEvent, err = championship.ImportEvent(duplicateRaceWeekend)
+
+		if err != nil {
+			return nil, err
+		}
+
+		newEvent.RaceWeekend.Name = "Duplicate: " + newEvent.RaceWeekend.Name
+
+		if err := cm.store.UpsertRaceWeekend(newEvent.RaceWeekend); err != nil {
+			return nil, err
+		}
+	}
+
+	return newEvent, nil
 }

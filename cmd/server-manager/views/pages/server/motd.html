@@ -26,7 +26,14 @@
             {{ if and $.Opts.EnableContentManagerWrapper (gt $.Opts.ContentManagerWrapperPort 0) }}
                 <div class="d-none" id="ContentManagerMessageContent">{{ trustHTML $.Opts.ContentManagerWelcomeMessage }}</div>
 
-                <label for="contentManagerWelcomeMessage">Shown to Content Manager users before they join the server.</label><br>
+                <label for="contentManagerWelcomeMessage">
+                    Shown to Content Manager users before they join the server.
+
+                    This input is a template, in which you can access data about your manager/the current event.
+                    You can enter anything you like in here. If you put <code>&lbrace;&lbrace; .ServerName &rbrace;&rbrace;</code> in, the Server Name will replace it.
+                    If you put <code>&lbrace;&lbrace; .EventName &rbrace;&rbrace;</code>, then the Event Name will replace it.
+                    You can <a href='https://github.com/JustaPenguin/assetto-server-manager/wiki/Content-Manager-Description-Templates'>view some examples</a> on the Server Manager Wiki!
+                </label><br>
                 <textarea id="contentManagerWelcomeMessage" name="contentManagerWelcomeMessage"></textarea>
             {{ else }}
                 Enable Content Manager Wrapper in <a href="/server-options">Server Options</a> to show this message.

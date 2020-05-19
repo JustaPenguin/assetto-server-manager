@@ -102,6 +102,14 @@
   filter: drop-shadow(0 0 2px #000);
 }
 
+.img-map-preview {
+  -webkit-filter: drop-shadow(0 0 1px #000);
+  filter: drop-shadow(0 0 1px #000);
+  max-height: 200px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
 .dot {
   position: absolute;
   transform: translate(-50%, -50%);

@@ -202,6 +202,29 @@
 
             <div class="card-body">
 
+                {{ if $.IsPremium }}
+                    <div class="form-group row" {{ if or $.IsRaceWeekend .IsChampionship }} style="display: none" {{ end }}>
+                        <label class="col-sm-3 col-form-label">Time Attack</label>
+
+                        <div class="col-sm-9">
+                            <input
+                                    type="checkbox"
+                                    class="session-enabler"
+                                    name="TimeAttack"
+                                    id="TimeAttack"
+
+                                    {{ if $f.TimeAttack }}
+                                        checked="checked"
+                                    {{ end }}
+                            >
+
+                            <br><br>
+                            <small>Time Attack events will run a looping Practice session and combine all of the results files.
+                            Forces loop mode on and disables all sessions other than Practice.</small>
+                        </div>
+                    </div>
+                {{ end }}
+
                 {{ if $.IsRaceWeekend }}
                     <div class="form-group row">
                         <label for="SessionType" class="col-sm-3 col-form-label">Session Type</label>
@@ -229,7 +252,7 @@
                             {{ $hasSession := $f.HasSession $sessionType }}
 
                             <li class="nav-item">
-                                <a class="nav-link {{ if eq $index 0 }}active{{ end }} {{ if $hasSession }} text-success {{ end }}" id="session-{{ $sessionType }}-tab"
+                                <a class="nav-link session-nav-link {{ if eq $index 0 }}active{{ end }} {{ if $hasSession }} text-success {{ end }}" id="session-{{ $sessionType }}-tab"
                                    data-toggle="tab" href="#session-{{ $sessionType }}"
                                    role="tab"
                                    aria-controls="{{ $sessionType }}" aria-selected="true">{{ $sessionType.String }}</a>
@@ -392,7 +415,7 @@
                                                     id="{{ $sessionType }}.WaitTime"
                                                     name="{{ $sessionType }}.WaitTime"
                                                     class="form-control"
-                                                    value="{{ if $.IsRaceWeekend }}120{{ else }}{{ $session.WaitTime }}{{ end }}"
+                                                    value="{{ if and $.IsRaceWeekend (lt $session.WaitTime 120) }}120{{ else }}{{ $session.WaitTime }}{{ end }}"
 
 
                                                     step="1"
@@ -527,6 +550,31 @@
                                                 </small>
                                             </div>
                                         </div>
+
+                                        {{ with  $.Championship }}
+                                            {{ if and $.IsChampionship $.Championship.ACSR }}
+                                                <div class="form-group row col-md-12">
+                                                    <label for="ExportSecondRaceToACSR" class="col-sm-3 col-form-label">Export 2nd Race to ACSR</label>
+
+
+                                                    <div class="col-sm-9">
+                                                        <input type="checkbox"
+                                                               id="ExportSecondRaceToACSR"
+                                                               name="ExportSecondRaceToACSR"
+                                                               value="{{ $f.ExportSecondRaceToACSR }}"
+
+                                                                {{ if $f.ExportSecondRaceToACSR }}
+                                                                    checked="checked"
+                                                                {{ end }}
+                                                        >
+
+                                                        <br>
+
+                                                        <small>The second race can be optionally exported to ACSR as well as the first race.</small>
+                                                    </div>
+                                                </div>
+                                            {{ end }}
+                                        {{ end }}
                                     {{ end }}
 
                                     <div class="form-group row col-md-12 race-extra-lap" {{ if and (eq $session.Time 0) (ne $session.Laps 0) }} style="display: none;" {{ end }}>
@@ -584,149 +632,285 @@
             </div>
         </div>
 
-        {{ if not $.IsRaceWeekend }}
-            <div class="card mt-3 border-secondary">
+
+        <div class="card mt-3 border-secondary">
             <div class="card-header">
                 <strong>Entry List</strong>
             </div>
 
             <div class="card-body" id="entrants">
-                <div class="form-group row {{ if .IsChampionship }}visible-booking-enabled{{ end }}" {{ if and .IsChampionship (not ($f.HasSession "BOOK")) }}style="display: none;"{{ end }}>
-                    <label for="MaxClients" class="col-sm-3 col-form-label">Max Clients</label>
+                {{ if not $.IsRaceWeekend }}
+                    <div class="form-group row {{ if .IsChampionship }}visible-booking-enabled{{ end }}" {{ if and .IsChampionship (not ($f.HasSession "BOOK")) }}style="display: none;"{{ end }}>
+                        <label for="MaxClients" class="col-sm-3 col-form-label">Max Clients</label>
 
-                    <div class="col-sm-9">
-                            <input
-                                    type="number"
-                                    id="MaxClients"
-                                    name="MaxClients"
-                                    class="form-control"
+                        <div class="col-sm-9">
+                                <input
+                                        type="number"
+                                        id="MaxClients"
+                                        name="MaxClients"
+                                        class="form-control"
 
-                                    {{ if gt $.MaxClientsOverride 0 }}
-                                        data-value-override="{{ $.MaxClientsOverride }}"
-                                        value="{{ $.MaxClientsOverride }}"
+                                        {{ if gt $.MaxClientsOverride 0 }}
+                                            data-value-override="{{ $.MaxClientsOverride }}"
+                                            value="{{ $.MaxClientsOverride }}"
 
-                                        max="{{ $.MaxClientsOverride }}"
-                                    {{ else }}
-                                        value="{{ $f.MaxClients }}"
-                                        {{ with $trackInfo }}max="{{ $trackInfo.Pitboxes }}"{{ end }}
-                                    {{ end }}
-                                    step="1"
-                            >
-
-                        <small>
-                            Maximum number of clients allowed on the server.
-
-                            {{ if gt $.MaxClientsOverride 0 }}
-                                <strong>Cannot be greater than {{ $.MaxClientsOverride }}</strong>. (This value is restricted by your hosting provider.)<br>
-                            {{ end }}
-                        </small>
-                    </div>
-                </div>
-
-                {{ if not .IsChampionship }}
-                    <div class="hidden-booking-enabled">
-
-                        <div class="form-group row">
-                            <label for="PickupModeEnabled" class="col-sm-3 col-form-label">Pickup Mode</label>
-
-
-                            <div class="col-sm-9">
-                                <input type="checkbox"
-                                       id="PickupModeEnabled"
-                                       name="PickupModeEnabled"
-                                       value="{{ $f.PickupModeEnabled }}"
-
-                                        {{ if eq $f.PickupModeEnabled 1 }}
-                                            checked="checked"
+                                            max="{{ $.MaxClientsOverride }}"
+                                        {{ else }}
+                                            value="{{ $f.MaxClients }}"
+                                            {{ with $trackInfo }}max="{{ $trackInfo.Pitboxes }}"{{ end }}
                                         {{ end }}
+                                        step="1"
                                 >
 
-                                <br>
+                            <small>
+                                Maximum number of clients allowed on the server.
+
+                                {{ if gt $.MaxClientsOverride 0 }}
+                                    <strong>Cannot be greater than {{ $.MaxClientsOverride }}</strong>. (This value is restricted by your hosting provider.)<br>
+                                {{ end }}
+                            </small>
+                        </div>
+                    </div>
+
+                    {{ if not .IsChampionship }}
+                        <div class="hidden-booking-enabled">
+
+                            <div class="form-group row">
+                                <label for="PickupModeEnabled" class="col-sm-3 col-form-label">Pickup Mode</label>
+
+
+                                <div class="col-sm-9">
+                                    <input type="checkbox"
+                                           id="PickupModeEnabled"
+                                           name="PickupModeEnabled"
+                                           value="{{ $f.PickupModeEnabled }}"
+
+                                            {{ if eq $f.PickupModeEnabled 1 }}
+                                                checked="checked"
+                                            {{ end }}
+                                    >
+
+                                    <br>
+
+                                    <small>
+                                        If set to OFF the server starts in booking mode. Warning: in pickup mode you have to
+                                        list at least one car in the entry list. Note, when Pickup Mode is OFF, sessions
+                                        with Loop Mode ON or Reversed Grid Positions will require players to rejoin the server
+                                        when the server loops or progresses to a second race.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="LockedEntryList" class="col-sm-3 col-form-label">Locked Entry List</label>
+
+
+                                <div class="col-sm-9">
+                                    <input type="checkbox"
+                                           id="LockedEntryList"
+                                           name="LockedEntryList"
+                                           value="{{ $f.LockedEntryList }}"
+
+                                            {{ if eq $f.LockedEntryList 1 }}
+                                                checked="checked"
+                                            {{ end }}
+                                    >
+
+                                    <br>
+
+                                    <small>Only players already included in the entry list can join the server.</small>
+
+                                    <small id="locked-reverse-warning" class="text-danger">The server will crash if
+                                    a second race is active (Reverse Grid Race Positions != 0), locked entry list is on
+                                    and pickup mode is off. In order to turn on locked entry list for this event turn on
+                                    pickup mode too!</small>
+                                </div>
+                            </div>
+
+                            <div id="entrantTemplate" class="entrant">
+                                {{ template "entrant" }}
+                            </div>
+
+                        </div>
+                    {{ end }}
+
+                    {{ if and $.IsPremium (not $.IsChampionship) }}
+                        <hr>
+                    {{ end }}
+                {{ end }}
+
+                {{ if $.IsPremium }}
+                    <div class="form-group row">
+                        <label for="DriverSwapEnabled" class="col-sm-3 col-form-label">Driver Swaps</label>
+
+
+                        <div class="col-sm-9">
+                            <input type="checkbox"
+                                   id="DriverSwapEnabled"
+                                   name="DriverSwapEnabled"
+                                   value="{{ $f.DriverSwapEnabled }}"
+
+                                    {{ if eq $f.DriverSwapEnabled 1 }}
+                                        checked="checked"
+                                    {{ end }}
+                            >
+
+                            <br>
+                            <small>
+                                Server Manager Driver Swaps will allow multiple drivers in one entrant who can perform driver swaps. Add multiple GUIDs separated by ;'s to an entrant to allow this.
+                                <strong>
+                                    Note: Driver Swaps will only yield valid results files if the timing line for a track is before or after all of the pitboxes.
+                                </strong>
+
+                                Follow this <a href="https://github.com/JustaPenguin/assetto-server-manager/wiki/Driver-swap-track-editing">guide on how to edit tracks to work with Driver Swaps</a>.
+                            </small>
+                        </div>
+                    </div>
+
+
+                    <div class="visible-driver-swap-enabled">
+                        <div class="form-group row">
+                            <label for="DriverSwapMinTime" class="col-sm-3 col-form-label">Minimum Driver Swap Time (seconds)</label>
+
+                            <div class="col-sm-9">
+                                <input
+                                        type="number"
+                                        id="DriverSwapMinTime"
+                                        name="DriverSwapMinTime"
+                                        class="form-control"
+                                        value="{{ $f.DriverSwapMinTime }}"
+                                        step="1"
+                                >
 
                                 <small>
-                                    If set to OFF the server starts in booking mode. Warning: in pickup mode you have to
-                                    list at least one car in the entry list. Note, when Pickup Mode is OFF, sessions
-                                    with Loop Mode ON or Reversed Grid Positions will require players to rejoin the server
-                                    when the server loops or progresses to a second race.
+                                    Minimum time for a driver swap, used to avoid giving users with faster computers an advantage. If the second driver sets off before this time they will be disqualified/given a penalty based on configuration.
                                 </small>
                             </div>
                         </div>
 
                         <div class="form-group row">
-                            <label for="LockedEntryList" class="col-sm-3 col-form-label">Locked Entry List</label>
-
+                            <label for="DriverSwapDisqualifyTime" class="col-sm-3 col-form-label">Driver Swap Disqualification Window (seconds)</label>
 
                             <div class="col-sm-9">
-                                <input type="checkbox"
-                                       id="LockedEntryList"
-                                       name="LockedEntryList"
-                                       value="{{ $f.LockedEntryList }}"
-
-                                        {{ if eq $f.LockedEntryList 1 }}
-                                            checked="checked"
-                                        {{ end }}
+                                <input
+                                        type="number"
+                                        id="DriverSwapDisqualifyTime"
+                                        name="DriverSwapDisqualifyTime"
+                                        class="form-control"
+                                        value="{{ $f.DriverSwapDisqualifyTime }}"
+                                        step="1"
                                 >
 
-                                <br>
-
-                                <small>Only players already included in the entry list can join the server.</small>
-
-                                <small id="locked-reverse-warning" class="text-danger">The server will crash if
-                                a second race is active (Reverse Grid Race Positions != 0), locked entry list is on
-                                and pickup mode is off. In order to turn on locked entry list for this event turn on
-                                pickup mode too!</small>
+                                <small>
+                                    Driver will be kicked from the race and disqualified if they set off this many seconds or more before the minimum time during a Driver Swap.
+                                </small>
                             </div>
                         </div>
 
-                        <p>If you add an Entrant once, the next time you add an Entrant, the 'name' input will give you suggestions and auto-populate the Entrant's Name, Team and GUID.</p>
+                        <div class="form-group row">
+                            <label for="DriverSwapPenaltyTime" class="col-sm-3 col-form-label">Driver Swap Penalty Window (seconds)</label>
 
-                        <div id="entrantTemplate" class="entrant">
-                            {{ template "entrant" }}
+                            <div class="col-sm-9">
+                                <input
+                                        type="number"
+                                        id="DriverSwapPenaltyTime"
+                                        name="DriverSwapPenaltyTime"
+                                        class="form-control"
+                                        value="{{ $f.DriverSwapPenaltyTime }}"
+                                        step="1"
+                                >
+
+                                <small>
+                                    If a driver sets off this many seconds or more before the minimum time during a Driver Swap,
+                                    they will be given a penalty equal to the number of seconds left in the countdown plus 5 seconds.
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="DriverSwapMinimumNumberOfSwaps" class="col-sm-3 col-form-label">Minimum Number Of Driver Swaps</label>
+
+                            <div class="col-sm-9">
+                                <input
+                                        type="number"
+                                        id="DriverSwapMinimumNumberOfSwaps"
+                                        name="DriverSwapMinimumNumberOfSwaps"
+                                        class="form-control"
+                                        value="{{ $f.DriverSwapMinimumNumberOfSwaps }}"
+                                        step="1"
+                                >
+
+                                <small>
+                                    The number of swaps that a driver must complete. If they do not complete the required number of stops, they are penalised (see below).
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="DriverSwapNotEnoughSwapsPenalty" class="col-sm-3 col-form-label">Not Enough Driver Swaps Penalty (seconds)</label>
+
+                            <div class="col-sm-9">
+                                <input
+                                        type="number"
+                                        id="DriverSwapNotEnoughSwapsPenalty"
+                                        name="DriverSwapNotEnoughSwapsPenalty"
+                                        class="form-control"
+                                        value="{{ $f.DriverSwapNotEnoughSwapsPenalty }}"
+                                        step="1"
+                                >
+
+                                <small>
+                                    The penalty in seconds that is applied to a driver for each Driver Swap under the required minimum that they missed. If set to 0, the driver is disqualified.
+                                </small>
+                            </div>
                         </div>
 
                     </div>
+
+                    <br>
                 {{ end }}
 
-                <div class="hidden-booking-enabled">
+                {{ if not $.IsRaceWeekend }}
+                    <div class="hidden-booking-enabled">
 
-                    <div class="entrants-block">
-                        {{ range $index, $entrant := .CurrentEntrants.AsSlice }}
-                            <div class="entrant">
-                                {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" $.IsChampionship }}
-                            </div>
-                        {{ else }}
-                            <div class="entrant">
-                                {{ template "entrant" }}
+                        <div class="entrants-block">
+                            {{ range $index, $entrant := .CurrentEntrants.AsSlice }}
+                                <div class="entrant">
+                                    {{ template "entrant" dict "Entrant" $entrant "IsChampionshipEvent" $.IsChampionship }}
+                                </div>
+                            {{ else }}
+                                <div class="entrant">
+                                    {{ template "entrant" }}
+                                </div>
+                            {{ end }}
+                        </div>
+
+
+                        {{ if not .IsChampionship }}
+                            <div class="row">
+                                <div class="col-md-8 pt-2">
+                                    <p>Car, Skin, Ballast, Restrictor and Fixed Setup from the last Entrant will be cloned into new Entrants.</p>
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0">
+
+                                    <button class="btn btn-warning addEntrant">Add Entrant(s)</button>
+                                </div>
                             </div>
                         {{ end }}
+
                     </div>
 
+                    <div class="visible-booking-enabled">
+                        <p>Booking Mode is enabled. You cannot configure specific drivers in the EntryList. Pickup Mode will be disabled.</p>
+                    </div>
 
-                    {{ if not .IsChampionship }}
-                        <div class="row">
-                            <div class="col-md-8 pt-2">
-                                <p>Car, Skin, Ballast, Restrictor and Fixed Setup from the last Entrant will be cloned into new Entrants.</p>
-                            </div>
-                            <div class="col-md-4 text-right">
-                                <input class="form-control numEntrantsToAdd" type="number" name="NumEntrantsToAdd" value="1" min="0" max="40">
-
-                                <button class="btn btn-warning addEntrant">Add Entrant(s)</button>
-                            </div>
-                        </div>
-                    {{ end }}
-
-                </div>
-
-                <div class="visible-booking-enabled">
-                    <p>Booking Mode is enabled. You cannot configure specific drivers in the EntryList. Pickup Mode will be disabled.</p>
-                </div>
-
-                <input type="hidden" class="totalNumEntrants" name="EntryList.NumEntrants" value="{{ if gt 0 (len .CurrentEntrants) }}{{ len .CurrentEntrants }}{{ else }}1{{ end }}">
+                    <input type="hidden" class="totalNumEntrants" name="EntryList.NumEntrants" value="{{ if gt 0 (len .CurrentEntrants) }}{{ len .CurrentEntrants }}{{ else }}1{{ end }}">
+                {{ end }}
 
                 <div class="clearfix"></div>
             </div>
         </div>
-        {{ end }}
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">
@@ -1031,7 +1215,11 @@
                                                             id="DateUnix"
                                                             name="DateUnix"
                                                             class="form-control"
-                                                            value="{{ dateInZone "2006-01-02T15:04" ($weather.UnixToTime $weather.CMWFXDateUnModified) "UTC" }}"
+                                                            {{ if gt $weather.CMWFXDateUnModified 0 }}
+                                                                value="{{ dateInZone "2006-01-02T15:04" ($weather.UnixToTime $weather.CMWFXDateUnModified) "UTC" }}"
+                                                            {{ else }}
+                                                                value="{{ dateInZone "2006-01-02T15:04" now "UTC" }}"
+                                                            {{ end }}
                                                     >
                                                 </div>
                                             </div>
@@ -1065,6 +1253,30 @@
                                                     </option>
                                                 {{ end }}
                                             </select>
+                                        </div>
+
+                                        <div class="form-group row {{ if not $.IsChampionship }}d-none{{ end }}">
+                                            <label class="col-sm-3 col-form-label col-form-label-sm" for="ChampionshipPracticeWeather">Championship Weather Context</label>
+
+                                            <div class="col-sm-9 p-0">
+                                                <select name="ChampionshipPracticeWeather" id="ChampionshipPracticeWeather"
+                                                        class="form-control form-control-sm"
+                                                        {{ if not $.IsChampionship }}readonly="readonly"{{ end }}>
+
+                                                    <option value="weatherAny" {{ if and $.IsChampionship (eq $weather.ChampionshipPracticeWeather "weatherAny") }} selected="selected" {{ end }}>
+                                                        Any Session
+                                                    </option>
+                                                    <option value="weatherPractice" {{ if and $.IsChampionship (eq $weather.ChampionshipPracticeWeather "weatherPractice") }} selected="selected" {{ end }}>
+                                                        Championship Practice Only
+                                                    </option>
+                                                    <option value="weatherEvent" {{ if and $.IsChampionship (eq $weather.ChampionshipPracticeWeather "weatherEvent") }} selected="selected" {{ end }}>
+                                                        Championship Event Only
+                                                    </option>
+                                                </select>
+
+                                                <small>Select whether weather will be used for only Championship practice sessions (started from the Championship overview page),
+                                                only actual championship events, or any session</small>
+                                            </div>
                                         </div>
 
                                         <div class="row">
@@ -1223,7 +1435,6 @@
                                 class="form-control"
                                 value="{{ $f.DamageMultiplier }}"
                                 min="0"
-                                max="100"
                                 step="1"
                         >
 
@@ -1531,7 +1742,7 @@
         {{ if $.ShowOverridePasswordCard }}
             <div class="card mt-3 border-secondary">
                 <div class="card-header">
-                    <strong>Password Override</strong>
+                    <strong>Server Options</strong>
                 </div>
                 <div class="card-body">
                     <div class="form-group row">
@@ -1561,6 +1772,7 @@
                             <input
                                     class="form-control"
                                     type="password"
+                                    autocomplete="new-password"
                                     id="ReplacementPassword"
                                     name="ReplacementPassword"
                                     value="{{ .ReplacementPassword }}"
@@ -1569,6 +1781,47 @@
                             <small>If left empty then the server will have no password.</small>
                         </div>
                     </div>
+
+                    {{ if and (not .IsChampionship) (not .IsRaceWeekend) }}
+                        <div class="form-group row">
+                            <label for="ForceStopTime" class="col-sm-3 col-form-label">Force Stop Time</label>
+
+                            <div class="col-sm-9">
+                                <input
+                                        type="number"
+                                        id="ForceStopTime"
+                                        name="ForceStopTime"
+                                        class="form-control"
+                                        {{ with .ForceStopTime }}
+                                            value="{{ . }}"
+                                        {{ end }}
+                                        min="0"
+                                >
+
+                                <small>Maximum number of minutes that this event will run for (across all sessions) before the server will forcibly stop. This will allow for auto loop track rotation even if there are no drivers on the server. Disabled if 0. WARNING: results files will not be written out if an event is forcibly stopped!</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="ForceStopWithDrivers" class="col-sm-3 col-form-label">Force Stop With Drivers</label>
+
+                            <div class="col-sm-9">
+
+                                <input
+                                        class="form-control"
+                                        type="checkbox"
+                                        id="ForceStopWithDrivers"
+                                        name="ForceStopWithDrivers"
+                                        {{ if .ForceStopWithDrivers }}
+                                            checked="checked"
+                                        {{ end }}
+                                ><br/>
+
+                                <small>If enabled then the server will forcibly stop after the Force Stop Time even if there are drivers on the server.</small>
+                            </div>
+                        </div>
+                    {{ end }}
+
                 </div>
             </div>
         {{ end }}
@@ -1582,7 +1835,7 @@
 
                     {{ if .IsEditing }}
                         <p>
-                            This edited setup will overwrite the {{ add .EditingID 1 }}{{ ordinal (add .EditingID 1) }}
+                            This edited setup will overwrite the {{ add .ChampionshipEventIndex 1 }}{{ ordinal (add .ChampionshipEventIndex 1) }}
                             Event in the <strong>{{ .Championship.Name }}</strong> Championship.
                         </p>
                     {{ else }}
@@ -1592,14 +1845,14 @@
                         </p>
                     {{ end }}
 
-                    <div class="float-right">
+                    <div class="float-right mt-5">
 
                         {{ if not .IsEditing }}
-                            <button class="btn btn-primary mt-5" data-toggle="tooltip" name="action" value="addAnotherRace" type="submit" title="Save this setup and then configure another">Add another Event</button>
-                            <button class="btn btn-success mt-5" data-toggle="tooltip" name="action" value="saveChampionship" type="submit" title="Save this event setup and finish creating the championship">Finish Creating Championship</button>
+                            <button class="btn btn-primary" data-toggle="tooltip" name="action" value="addAnotherRace" type="submit" title="Save this setup and then configure another">Add another Event</button>
+                            <button class="btn btn-success" data-toggle="tooltip" name="action" value="saveChampionship" type="submit" title="Save this event setup and finish creating the championship">Finish Creating Championship</button>
                         {{ else }}
                             <input type="hidden" name="Editing" id="Editing" value="{{ .EditingID }}">
-                            <button class="btn btn-primary mt-5" data-toggle="tooltip" name="action" value="saveChampionship" type="submit">Save Event</button>
+                            <button class="btn btn-primary" data-toggle="tooltip" name="action" value="saveChampionship" type="submit">Save Event</button>
                         {{ end }}
                    </div>
                 </div>
@@ -1615,7 +1868,7 @@
 
                         <div class="col-sm-9">
                             <select name="ParentSessions" id="ParentSessions" class="form-control" multiple>
-                                <option value="no_parent">No parent</option>
+                                <option value="{{ $.RaceWeekend.ID.String }}" {{ if $.RaceWeekendSession.HasParent $.RaceWeekend.ID.String }}selected="selected"{{ end }}>Race Weekend EntryList</option>
 
                                 {{ $numSessions := len $.RaceWeekend.Sessions }}
 

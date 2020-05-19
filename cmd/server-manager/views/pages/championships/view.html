@@ -9,10 +9,17 @@
         {{ $writeAccess := WriteAccess }}
         {{ $eventInProgress := .EventInProgress }}
         {{ $account := .Account }}
+        {{ $serverID := .ServerID }}
 
         <h1 class="text-center">{{ $championship.Name }}</h1>
 
-
+        {{ if $championship.ACSR }}
+            <div class="text-center">
+                <em>
+                    An <a href="https://acsr.assettocorsaservers.com">Assetto Corsa Skill Rating</a> Championship
+                </em>
+            </div>
+        {{ end }}
 
         {{ if $championship.SignUpAvailable }}
             <div class="card border-primary mb-3 mt-3">
@@ -68,6 +75,10 @@
                            aria-selected="false">Team Standings</a>
                     </li>
                 {{ end }}
+                <li class="nav-item">
+                    <a class="nav-link" id="overview-tab" data-toggle="tab" href="#overview" role="tab"
+                       aria-controls="overview" aria-selected="true">Overview</a>
+                </li>
             {{ end }}
             <li class="nav-item">
                 <a class="nav-link {{ if eq $championship.Progress 0.0 }}active{{ end }}" id="entrants-tab" data-toggle="tab" href="#entrants" role="tab" aria-controls="teams"
@@ -89,6 +100,11 @@
                                 {{ if $championship.IsMultiClass }}<th>Class</th>{{ end }}
                                 <th>#</th>
                                 <th>Driver</th>
+                                {{ with $.DriverRatings }}
+                                    <th>
+                                        Rating
+                                    </th>
+                                {{ end }}
 
                                 {{ if $championship.HasTeamNames }}
                                     <th>Team</th>
@@ -101,7 +117,7 @@
 
 
                             {{ range $classIndex, $class := $championship.Classes }}
-                                {{ $entrants := ($class.Standings $championship.Events) }}
+                                {{ $entrants := ($class.Standings $championship $championship.Events) }}
 
                                 {{ range $i, $entrant := $entrants }}
                                     <tr style="
@@ -125,6 +141,12 @@
                                             {{ end }}
                                         </td>
 
+                                        {{ with $.DriverRatings }}
+                                            <td>
+                                                {{ template "acsr-rating" dict "DriverRatings" $.DriverRatings "GUID" $entrant.Car.Driver.GUID }}
+                                            </td>
+                                        {{ end }}
+
                                         {{ if $championship.HasTeamNames }}
                                             <td>{{ $entrant.TeamSummary }}</td>
                                         {{ end }}
@@ -134,12 +156,12 @@
                                             <td >
                                                 <button type="button" class="btn {{ if $championship.IsMultiClass}}btn-light{{ else }}btn-warning{{ end }} btn-sm" data-placement="left"
                                                         data-toggle="popover" title="Penalty Details" data-html="true"
-                                                        id="point-penalty-{{ $entrant.Car.Driver.GUID }}"
+                                                        id="point-penalty-{{ sha1sum $entrant.Car.Driver.GUID }}"
                                                 >
                                                     Penalties
                                                 </button>
 
-                                                <div id="popover-content-point-penalty-{{ $entrant.Car.Driver.GUID }}" style="display: none;">
+                                                <div id="popover-content-point-penalty-{{ sha1sum $entrant.Car.Driver.GUID }}" style="display: none;">
                                                     <form action="/championship/{{ $championship.ID.String }}/driver-penalty/{{ $class.ID.String }}/{{ $entrant.Car.Driver.GUID }}" method="POST">
                                                         <div class="form-group">
                                                             <label>
@@ -182,7 +204,7 @@
                             </tr>
 
                             {{ range $classIndex, $class := $championship.Classes }}
-                                {{ $teamStandings := ($class.TeamStandings $championship.Events) }}
+                                {{ $teamStandings := ($class.TeamStandings $championship $championship.Events) }}
 
                                 {{ range $i, $team := $teamStandings }}
                                     <tr {{ if $championship.IsMultiClass }} style="color: white; background: {{ classColor $classIndex }}" {{ end }}>
@@ -241,6 +263,10 @@
                         </table>
                     </div>
                 </div>
+
+                <div class="tab-pane fade" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+                    {{ template "championship-overview" dict "Championship" $championship "Account" $account }}
+                </div>
             {{ end }}
 
             <div class="tab-pane fade {{ if eq $championship.Progress 0.0 }}show active{{ end }}" id="entrants" role="tabpanel" aria-labelledby="entrants-tab">
@@ -250,6 +276,9 @@
                             {{ if $championship.IsMultiClass }}<th>Class</th>{{ end }}
                             <th>#</th>
                             <th>Driver</th>
+                            {{ with $.DriverRatings }}
+                                <th>Rating</th>
+                            {{ end }}
                             {{ if $championship.HasTeamNames }}
                                 <th>Team</th>
                             {{ end }}
@@ -275,7 +304,11 @@
                                         {{ end }}
                                         <td><span data-toggle="tooltip" title="Pit Box: {{ $entrant.PitBox }}">{{ add $i 1 }}</span></td>
                                         <td>{{ driverName $entrant.Name }}</td>
-
+                                        {{ with $.DriverRatings }}
+                                            <td>
+                                                {{ template "acsr-rating" dict "DriverRatings" $.DriverRatings "GUID" $entrant.GUID }}
+                                            </td>
+                                        {{ end }}
                                         {{ if $championship.HasTeamNames }}
                                             <td>{{ $entrant.Team }}</td>
                                         {{ end }}
@@ -288,7 +321,7 @@
                                             {{ if $championship.IsMultiClass }}
                                                 <td>{{ $class.Name }}</td>
                                             {{ end }}
-                                            <td colspan="4">
+                                            <td colspan="100%">
                                                 <em>{{ $entrant.Name }}</em>
                                             </td>
                                         </tr>
@@ -373,7 +406,7 @@
                 <div class="row flex-row flex-nowrap pb-3" style="overflow-x: auto;">
 
                     {{ range $classIndex, $class := $championship.Classes }}
-                        {{ $entrants := ($class.Standings $championship.Events) }}
+                        {{ $entrants := ($class.Standings $championship $championship.Events) }}
 
                         {{ range $i, $entrant := $entrants }}
                             <div class="col-6 col-lg-3 col-md-3 col-sm-6 entrant-car">
@@ -439,7 +472,7 @@
                     ></a>
 
                     <div class="dropdown-menu" aria-labelledby="importWeekendDropdown">
-                        <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/weekend/list">Import Race Weekend</a>
+                        <a class="dropdown-item" href="/championship/{{ $championship.ID.String }}/race-weekend/list">Import Race Weekend</a>
                     </div>
                 </div>
             {{ end }}
@@ -510,12 +543,16 @@
         <div class="championship-events">
             {{ range $eventIndex, $event := $championship.Events }}
                 {{ if not $event.IsRaceWeekend }}
-                    {{ template "event-card" dict "Championship" $championship "Event" $event "EventIndex" $eventIndex "EventInProgress" $eventInProgress "Account" $account }}
+                    {{ template "event-card" dict "Championship" $championship "Event" $event "EventIndex" $eventIndex "EventInProgress" $eventInProgress "Account" $account "ServerID" $serverID "ShowEventDetailsPopup" $.ShowEventDetailsPopup }}
                 {{ else }}
                     {{ template "raceweekend-card" dict "Championship" $championship "Event" $event "EventIndex" $eventIndex "EventInProgress" $eventInProgress "Account" $account "RaceWeekend" (index $.RaceWeekends $event.RaceWeekendID) }}
                 {{ end }}
             {{ end }}
         </div>
+    </div>
+
+    <div class="modal" tabindex="-1" role="dialog" id="event-details-modal">
+        <!-- content controlled by js -->
     </div>
 
     <script type="text/javascript">

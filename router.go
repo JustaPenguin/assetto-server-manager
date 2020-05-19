@@ -63,12 +63,14 @@ func Router(
 	raceWeekendHandler *RaceWeekendHandler,
 	strackerHandler *StrackerHandler,
 	healthCheck *HealthCheck,
+	kissMyRankHandler *KissMyRankHandler,
 ) http.Handler {
 	r := chi.NewRouter()
 
+	compressor := middleware.Compress(5)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(middleware.DefaultCompress)
+	r.Use(compressor)
 	r.Use(panicHandler)
 
 	r.HandleFunc("/login", accountHandler.login)
@@ -104,6 +106,7 @@ func Router(
 		// pages
 		r.Get("/", serverAdministrationHandler.home)
 		r.Get("/changelog", serverAdministrationHandler.changelog)
+		r.Get("/premium", serverAdministrationHandler.premium)
 
 		r.Mount("/stracker/", http.HandlerFunc(strackerHandler.proxy))
 
@@ -116,12 +119,15 @@ func Router(
 		r.Get("/weather", weatherHandler.list)
 
 		r.Get("/events.ics", scheduledRacesHandler.allScheduledRacesICalHandler)
+		r.Get("/event-details", customRaceHandler.view)
 
 		// results
 		r.Get("/results", resultsHandler.list)
 		r.Get("/results/{fileName}", resultsHandler.view)
 		r.HandleFunc("/results/{fileName}/collisions", resultsHandler.renderCollisions)
 		r.HandleFunc("/results/download/{fileName}", resultsHandler.file)
+
+		r.Get("/custom", customRaceHandler.list)
 
 		// championships
 		r.Get("/championships", championshipsHandler.list)
@@ -164,6 +170,7 @@ func Router(
 			return "/accounts/update"
 		}))
 		r.HandleFunc("/accounts/dismiss-changelog", accountHandler.dismissChangelog)
+		r.HandleFunc("/accounts/dismiss-intro", accountHandler.dismissIntro)
 
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")), true)
 		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")), true)
@@ -196,7 +203,6 @@ func Router(
 		// races
 		r.Get("/quick", quickRaceHandler.create)
 		r.Post("/quick/submit", quickRaceHandler.submit)
-		r.Get("/custom", customRaceHandler.list)
 		r.Get("/custom/new", customRaceHandler.createOrEdit)
 		r.Get("/custom/load/{uuid}", customRaceHandler.start)
 		r.Post("/custom/schedule/{uuid}", customRaceHandler.schedule)
@@ -210,11 +216,13 @@ func Router(
 		r.Get("/process/{action}", serverAdministrationHandler.serverProcess)
 		r.Get("/logs", serverAdministrationHandler.logs)
 		r.Get("/api/logs", serverAdministrationHandler.logsAPI)
+		r.Get("/api/log-download/{logFile}", serverAdministrationHandler.logsDownload)
 
 		// championships
 		r.Get("/championships/new", championshipsHandler.createOrEdit)
 		r.Post("/championships/new/submit", championshipsHandler.submit)
 		r.Get("/championship/{championshipID}/edit", championshipsHandler.createOrEdit)
+		r.Get("/championship/{championshipID}/duplicate", championshipsHandler.duplicate)
 		r.Get("/championship/{championshipID}/event", championshipsHandler.eventConfiguration)
 		r.Post("/championship/{championshipID}/event/submit", championshipsHandler.submitEventConfiguration)
 		r.Get("/championship/{championshipID}/event/{eventID}/start", championshipsHandler.startEvent)
@@ -224,6 +232,8 @@ func Router(
 		r.Get("/championship/{championshipID}/event/{eventID}/practice", championshipsHandler.startPracticeEvent)
 		r.Get("/championship/{championshipID}/event/{eventID}/cancel", championshipsHandler.cancelEvent)
 		r.Get("/championship/{championshipID}/event/{eventID}/restart", championshipsHandler.restartEvent)
+		r.Get("/championship/{championshipID}/event/{eventID}/duplicate", championshipsHandler.duplicateEvent)
+
 		r.Post("/championship/{championshipID}/driver-penalty/{classID}/{driverGUID}", championshipsHandler.driverPenalty)
 		r.Post("/championship/{championshipID}/team-penalty/{classID}/{team}", championshipsHandler.teamPenalty)
 		r.Get("/championship/{championshipID}/entrants", championshipsHandler.signedUpEntrants)
@@ -238,8 +248,8 @@ func Router(
 
 		r.Get("/championship/{championshipID}/custom/list", championshipsHandler.listCustomRacesForImport)
 		r.Get("/championship/{championshipID}/custom/{eventID}/import", championshipsHandler.customRaceImport)
-		r.Get("/championship/{championshipID}/weekend/list", championshipsHandler.listRaceWeekendsForImport)
-		r.Get("/championship/{championshipID}/weekend/{weekendID}/import", championshipsHandler.raceWeekendImport)
+		r.Get("/championship/{championshipID}/race-weekend/list", championshipsHandler.listRaceWeekendsForImport)
+		r.Get("/championship/{championshipID}/race-weekend/{weekendID}/import", championshipsHandler.raceWeekendImport)
 
 		// penalties
 		r.Post("/penalties/{sessionFile}/{driverGUID}", penaltiesHandler.managePenalty)
@@ -326,8 +336,10 @@ func Router(
 		r.HandleFunc("/admin-command", raceControlHandler.adminCommand)
 		r.HandleFunc("/kick-user", raceControlHandler.kickUser)
 		r.HandleFunc("/send-chat", raceControlHandler.sendChat)
+		r.HandleFunc("/countdown", raceControlHandler.countdown)
 
 		r.HandleFunc("/stracker/options", strackerHandler.options)
+		r.HandleFunc("/kissmyrank/options", kissMyRankHandler.options)
 	})
 
 	FileServer(r, "/static", fs, false)
@@ -348,12 +360,12 @@ func FileServer(r chi.Router, path string, root http.FileSystem, useRevalidation
 	}
 	path += "*"
 
-	r.Get(path, AssetCacheHeaders(fs.ServeHTTP, useRevalidation))
+	r.Get(path, AssetCacheHeaders(fs, useRevalidation))
 }
 
 const maxAge30Days = 2592000
 
-func AssetCacheHeaders(next http.HandlerFunc, useRevalidation bool) http.HandlerFunc {
+func AssetCacheHeaders(next http.Handler, useRevalidation bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if useRevalidation {
 			w.Header().Add("Cache-Control", fmt.Sprintf("public, must-revalidate"))
@@ -361,7 +373,7 @@ func AssetCacheHeaders(next http.HandlerFunc, useRevalidation bool) http.Handler
 		} else {
 			w.Header().Add("Cache-Control", fmt.Sprintf("public, max-age=%d", maxAge30Days))
 
-			next(w, r)
+			next.ServeHTTP(w, r)
 		}
 	}
 }

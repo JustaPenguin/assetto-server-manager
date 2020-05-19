@@ -18,6 +18,7 @@ import (
 // Set this to greater than 0 to enable.
 var RealtimePosIntervalMs = -1
 var CurrentRealtimePosIntervalMs = -1
+var PosIntervalModifierEnabled = false
 
 func NewServerClient(addr string, receivePort, sendPort int, forward bool, forwardAddrStr string, forwardListenPort int, callback CallbackFunc) (*AssettoServerUDP, error) {
 	listener, err := net.DialUDP("udp", &net.UDPAddr{IP: net.ParseIP(addr), Port: receivePort}, &net.UDPAddr{IP: net.ParseIP(addr), Port: sendPort})
@@ -156,14 +157,12 @@ func (asu *AssettoServerUDP) serve() {
 				asu.callback(msg)
 
 				if asu.forward && asu.forwarder != nil {
-					go func() {
-						// write the message to the forwarding address
-						_, _ = asu.forwarder.Write(buf)
-					}()
+					// write the message to the forwarding address
+					_, _ = asu.forwarder.Write(buf)
 				}
 			case <-ticker.C:
-				if RealtimePosIntervalMs < 0 {
-					// there is no real time pos interval set, we don't need to check if we're keeping up with messages
+				if RealtimePosIntervalMs < 0 || !PosIntervalModifierEnabled {
+					// there is no real time pos interval set or stracker is enabled, we don't need to check if we're keeping up with messages
 					continue
 				}
 
@@ -172,19 +171,22 @@ func (asu *AssettoServerUDP) serve() {
 				if currentQueueSize > lastQueueSize {
 					logrus.Warnf("Can't keep up! queue size: %d vs %d: changed by %d", currentQueueSize, lastQueueSize, currentQueueSize-lastQueueSize)
 
-					CurrentRealtimePosIntervalMs += (currentQueueSize * 2) + 1
+					// update as infrequently as we can, within sensible limits
+					if currentQueueSize > 5 { // at this point we are half a second behind
+						CurrentRealtimePosIntervalMs += (currentQueueSize * 2) + 1
 
-					logrus.Debugf("Adjusting real time pos interval: %d", CurrentRealtimePosIntervalMs)
-					err := asu.SendMessage(NewEnableRealtimePosInterval(CurrentRealtimePosIntervalMs))
+						logrus.Debugf("Adjusting real time pos interval: %d", CurrentRealtimePosIntervalMs)
+						err := asu.SendMessage(NewEnableRealtimePosInterval(CurrentRealtimePosIntervalMs))
 
-					if err != nil {
-						logrus.WithError(err).Error("Could not send realtime pos interval adjustment")
+						if err != nil {
+							logrus.WithError(err).Error("Could not send realtime pos interval adjustment")
+						}
 					}
-				} else if currentQueueSize <= lastQueueSize && CurrentRealtimePosIntervalMs > RealtimePosIntervalMs {
-					logrus.Infof("Catching up, queue size: %d vs %d: changed by %d", currentQueueSize, lastQueueSize, currentQueueSize-lastQueueSize)
+				} else if currentQueueSize <= lastQueueSize && currentQueueSize < 5 && CurrentRealtimePosIntervalMs > RealtimePosIntervalMs {
+					logrus.Debugf("Catching up, queue size: %d vs %d: changed by %d", currentQueueSize, lastQueueSize, currentQueueSize-lastQueueSize)
 
 					if CurrentRealtimePosIntervalMs-1 >= RealtimePosIntervalMs {
-						CurrentRealtimePosIntervalMs -= 1
+						CurrentRealtimePosIntervalMs--
 
 						logrus.Debugf("Adjusting real time pos interval, is now: %d", CurrentRealtimePosIntervalMs)
 						err := asu.SendMessage(NewEnableRealtimePosInterval(CurrentRealtimePosIntervalMs))
@@ -252,21 +254,19 @@ func readString(r io.Reader, sizeMultiplier int) string {
 		}
 
 		return string(bs)
-	} else {
-		return string(b)
 	}
+
+	return string(b)
 }
 
 func (asu *AssettoServerUDP) SendMessage(message Message) error {
 	switch a := message.(type) {
 	case EnableRealtimePosInterval:
-		err := binary.Write(asu.listener, binary.LittleEndian, a)
-
-		if err != nil {
-			return err
+		if PosIntervalModifierEnabled {
+			return binary.Write(asu.listener, binary.LittleEndian, a)
 		}
 
-		return err
+		return nil
 
 	case GetSessionInfo, *RestartSession, *NextSession:
 		err := binary.Write(asu.listener, binary.LittleEndian, a.Event())

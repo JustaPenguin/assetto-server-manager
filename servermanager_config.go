@@ -3,8 +3,10 @@ package servermanager
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/cj123/sessions"
 	"github.com/etcd-io/bbolt"
@@ -23,7 +25,6 @@ type Configuration struct {
 	Accounts      AccountsConfig      `yaml:"accounts"`
 	Monitoring    MonitoringConfig    `yaml:"monitoring"`
 	Championships ChampionshipsConfig `yaml:"championships"`
-	ACSR          ACSRConfig          `yaml:"acsr"`
 	Lua           LuaConfig           `yaml:"lua"`
 }
 
@@ -56,6 +57,14 @@ type HTTPConfig struct {
 	SessionStoreType string `yaml:"session_store_type"`
 	SessionStorePath string `yaml:"session_store_path"`
 	BaseURL          string `yaml:"server_manager_base_URL"`
+
+	TLS TLSConfig `yaml:"tls"`
+}
+
+type TLSConfig struct {
+	Enabled  bool   `yaml:"enabled"`
+	CertPath string `yaml:"cert_path"`
+	KeyPath  string `yaml:"key_path"`
 }
 
 type LuaConfig struct {
@@ -82,20 +91,18 @@ func (h *HTTPConfig) createSessionStore() (sessions.Store, error) {
 			return nil, errors.New("servermanager: session store location must be a directory")
 		}
 
-		return sessions.NewFilesystemStore(h.SessionStorePath, []byte(h.SessionKey)), nil
+		fsStore := sessions.NewFilesystemStore(h.SessionStorePath, []byte(h.SessionKey))
+		fsStore.Options.SameSite = http.SameSiteStrictMode
 
+		return fsStore, nil
 	case sessionStoreCookie:
 		fallthrough
 	default:
-		return sessions.NewCookieStore([]byte(h.SessionKey)), nil
-	}
-}
+		cookieStore := sessions.NewCookieStore([]byte(h.SessionKey))
+		cookieStore.Options.SameSite = http.SameSiteStrictMode
 
-type ACSRConfig struct {
-	URL       string `yaml:"url"`
-	Enabled   bool   `yaml:"enabled"`
-	APIKey    string `yaml:"api_key"`
-	AccountID string `yaml:"account_id"`
+		return cookieStore, nil
+	}
 }
 
 type SteamConfig struct {
@@ -107,9 +114,10 @@ type SteamConfig struct {
 }
 
 type StoreConfig struct {
-	Type       string `yaml:"type"`
-	Path       string `yaml:"path"`
-	SharedPath string `yaml:"shared_data_path"`
+	Type                    string        `yaml:"type"`
+	Path                    string        `yaml:"path"`
+	SharedPath              string        `yaml:"shared_data_path"`
+	ScheduledEventCheckLoop time.Duration `yaml:"scheduled_event_check_loop"`
 }
 
 func (s *StoreConfig) BuildStore() (Store, error) {
@@ -147,8 +155,9 @@ type ServerExtraConfig struct {
 	PerformanceMode             bool             `yaml:"performance_mode"`
 	DisableWindowsBrowserOpen   bool             `yaml:"dont_open_browser"`
 	ScanContentFolderForChanges bool             `yaml:"scan_content_folder_for_changes"`
+	UseCarNameCache             bool             `yaml:"use_car_name_cache"`
 
-	// Deprecated; use Plugins instead
+	// Deprecated: use Plugins instead
 	RunOnStart []string `yaml:"run_on_start"`
 }
 
@@ -163,8 +172,6 @@ func (c *CommandPlugin) String() string {
 
 	return out
 }
-
-const acsrURL = "https://acsr.assettocorsaservers.com"
 
 func ReadConfig(location string) (conf *Configuration, err error) {
 	f, err := os.Open(location)
@@ -184,10 +191,6 @@ func ReadConfig(location string) (conf *Configuration, err error) {
 
 	if err != nil {
 		return nil, err
-	}
-
-	if config.ACSR.URL == "" {
-		config.ACSR.URL = acsrURL
 	}
 
 	if config.Accounts.AdminPasswordOverride != "" {

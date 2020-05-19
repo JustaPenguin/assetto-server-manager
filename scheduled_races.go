@@ -122,7 +122,7 @@ func (rs *ScheduledRacesHandler) allScheduledRacesICalHandler(w http.ResponseWri
 	}
 }
 
-func (rs *ScheduledRacesHandler) generateJSON(w http.ResponseWriter, r *http.Request) error {
+func (rs *ScheduledRacesHandler) generateJSON(w io.Writer, r *http.Request) error {
 	start, err := time.Parse(time.RFC3339, r.URL.Query().Get("start"))
 
 	if err != nil {
@@ -164,6 +164,20 @@ func (srm *ScheduledRacesManager) getScheduledRaces() ([]ScheduledEvent, error) 
 	var scheduled []ScheduledEvent
 
 	for _, race := range customRaces {
+		for _, scheduledEvent := range race.ScheduledEvents {
+
+			if scheduledEvent.Scheduled.IsZero() || scheduledEvent.ScheduledServerID != serverID {
+				continue
+			}
+
+			race.ScheduledServerID = scheduledEvent.ScheduledServerID
+			race.Scheduled = scheduledEvent.Scheduled
+			race.ScheduledInitial = scheduledEvent.Scheduled
+			race.Recurrence = scheduledEvent.Recurrence
+
+			break
+		}
+
 		if race.Scheduled.IsZero() || race.ScheduledServerID != serverID {
 			continue
 		}
@@ -472,7 +486,7 @@ type ScheduledEventBase struct {
 	Scheduled         time.Time
 	ScheduledInitial  time.Time
 	Recurrence        string
-	ScheduledServerID string
+	ScheduledServerID ServerID
 }
 
 func (seb *ScheduledEventBase) SetRecurrenceRule(input string) error {

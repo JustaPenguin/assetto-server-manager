@@ -59,7 +59,7 @@ http:
   session_key: RANDOMLY_GENERATE_THIS
 
   # server manager base URL is the URL that the server manager is accessible on
-  # only used for links in championship welcome message in game
+  # used for ACSR integration and links in championship welcome message in game
   # you can leave this blank if not required
   # example: https://opengt3.assettocorsaservers.com <-- requires https:// or
   # http://, no closing / at the end
@@ -74,6 +74,16 @@ http:
   # session store path is where to save the session store
   # (if using 'filesystem' above)
   session_store_path: ""
+
+  tls:
+    # TLS configuration. Server Manager supports TLS v1.2 upwards. As of 12/03/2020,
+    # the Server Manager configuration yields a perfect score from SSL Labs.
+    # If you enable this, you likely want the hostname (above) to listen on port 443.
+    enabled: false
+    # the path to the SSL certificate file.
+    cert_path: ""
+    # the path to the SSL key file.
+    key_path: ""
 
 ################################################################################
 #
@@ -132,7 +142,12 @@ store:
   # instances to share accounts, race weekend, championship, entrants and custom
   # events across them. Leave blank to use the same path as the one set up here.
   # works only with JSON database
-  shared_data_path: 
+  shared_data_path:
+
+  # check for new scheduled races not created by server manager on a loop. this is an experimental
+  # feature, and should not be used by most people. formats look like, e.g. 15s, 1m, 2h
+  # 0s == disabled. recommended values are 5m and above.
+  scheduled_event_check_loop: 0s
 
 ################################################################################
 #
@@ -152,7 +167,6 @@ accounts:
   # username: admin
   # password: servermanager
   # As soon as you log in, you will be immediately asked to set a new password.
-  #
   admin_password_override:
 
 ################################################################################
@@ -178,17 +192,26 @@ server:
   # Only Admins can access the logs, they are intended for tracking if users
   # have deleted content, started/stopped events when they shouldn't have etc.
   audit_logging: true
+
   # performance mode disables live timing entirely, and prioritises low cpu
   # usage.
   performance_mode: false
+
   # set this to 'true' if you don't want server manager to open a browser window
   # on launch on windows
   dont_open_browser: false
+
   # set this to 'true' if you want server manager to scan content folders for
   # changes every 15 seconds and update the search index with changes
   # this is useful for multi-server setups with a shared content folder so that
   # each server manager instance can see added/removed cars as they change
   scan_content_folder_for_changes: false
+
+  # when use_car_name_cache is enabled, server manager will scan the cars in the
+  # content folder and save their names to memory. this will lead to more
+  # accurate car names, at the cost of slightly increased memory usage and slightly
+  # longer 'boot time' of server manager. I recommend it though!
+  use_car_name_cache: true
 
   # list of commands to run on server start and kill on server stop. this should
   # contain the full command with arguments to run the given program.
@@ -196,21 +219,17 @@ server:
   # note: if you are looking for stracker support, Server Manager supports it via
   # the UI! Go to the "STracker" page in Server Manager for more instructions.
   #
+  # note #2: if you are looking for KissMyRank support, Server Manager supports it
+  # via the UI! Go to the "KissMyRank" page in Server Manager for more instructions.
+  #
   # you can use additional plugins with AC Server Manager, but while configuring
   # them you have to ignore the ports that AC Server Manager writes in the 
   # server_cfg.ini, as the Server Manager provides an interface to the plugins
   # instead. The plugin ports in the Server Options page are the ones that must
-  # be used for the plugin configuration. Here is an example for configuring KMR:
-  #
-  # KMR: 
-  # - ac_server_http_port must equal the value of HTTP Port
-  # - ac_server_plugin_local_port must equal the value of UDP Plugin Local Port
-  # - ac_server_plugin_address_port must equal the port from the UDP Plugin Address
-  # - web_auth_server_port must equal the port specified in UDP Auth Plugin Address
-  # - UDP Auth Plugin Address has to be configured in the way specified by KMR documentation
+  # be used for the plugin configuration.
   #
   # Note that AC Server Manager provides an interface for a single plugin only, 
-  # as the AC gameserver does. If you want to chain multiple plugins, please 
+  # as the AC game server does. If you want to chain multiple plugins, please
   # follow the documentation of the plugins you're using. Plugins usually 
   # feature interfaces so additional plugins can be chained between themselves.
   #

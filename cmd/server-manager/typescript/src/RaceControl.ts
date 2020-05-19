@@ -565,10 +565,22 @@ class LiveTimings implements WebsocketHandler {
 
         $(document).on("click", ".driver-link", this.toggleDriverSpeed.bind(this));
 
+        $(document).on("click", "#countdown", this.getFromClickEvent.bind(this));
+
         $(document).on("submit", "#broadcast-chat-form", this.processChatForm.bind(this));
         $(document).on("submit", "#admin-command-form", this.processAdminCommandForm.bind(this));
         $(document).on("submit", "#kick-user-form", this.processKickUserForm.bind(this));
         $(document).on("submit", "#send-chat-form", this.processSendChatForm.bind(this));
+    }
+
+    private getFromClickEvent(e: ClickEvent): void {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const $target = $(e.currentTarget);
+        const href = $target.attr("href");
+
+        $.get(href);
     }
 
     private processChatForm(e: JQuery.SubmitEvent): boolean {
@@ -632,8 +644,8 @@ class LiveTimings implements WebsocketHandler {
             if (this.raceControl.status.ConnectedDrivers) {
                 const driver = this.raceControl.status.ConnectedDrivers.Drivers[closedConnection.DriverGUID];
 
-                if (driver && driver.LoadedTime.toString() === "0001-01-01T00:00:00Z") {
-                    // a driver joined but never loaded. remove them from the connected drivers table.
+                if (driver && (driver.LoadedTime.toString() === "0001-01-01T00:00:00Z" || !driver.TotalNumLaps)) {
+                    // a driver joined but never loaded, or hasn't completed any laps. remove them from the connected drivers table.
                     this.$connectedDriversTable.find("tr[data-guid='" + closedConnection.DriverGUID + "']").remove();
                     this.removeDriverFromAdminSelects(driver.CarInfo)
                 }
@@ -772,7 +784,7 @@ class LiveTimings implements WebsocketHandler {
             return;
         }
 
-        let $tr = $table.find("[data-guid='" + driver.CarInfo.DriverGUID + "']");
+        let $tr = $table.find("[data-guid='" + driver.CarInfo.DriverGUID + "'][data-car-model='"+ driver.CarInfo.CarModel + "']");
 
         let addTrToTable = false;
 
@@ -787,7 +799,7 @@ class LiveTimings implements WebsocketHandler {
         }
 
         // car model
-        $tr.find(".driver-car").text(prettifyName(driver.CarInfo.CarModel, true));
+        $tr.find(".driver-car").text(driver.CarInfo.CarName ? driver.CarInfo.CarName : prettifyName(driver.CarInfo.CarModel, true));
 
         if (addingDriverToConnectedTable) {
             let currentLapTimeText = "";
@@ -933,8 +945,12 @@ class LiveTimings implements WebsocketHandler {
                     return -1;
                 } else if (timeA === timeB) {
                     return 0;
+                } else if (timeA === "") {
+                    return 1; // sort a to the back
+                } else if (timeB === "") {
+                    return -1; // sort b to the back
                 } else {
-                    return 1;
+                    return 1; // B < A && timeA != "" && timeB != ""
                 }
             }
         })).appendTo($tbody);

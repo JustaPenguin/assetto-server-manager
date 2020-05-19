@@ -153,10 +153,10 @@ func (rwh *RaceWeekendHandler) submitSessionConfiguration(w http.ResponseWriter,
 		// end the race creation flow
 		http.Redirect(w, r, "/race-weekend/"+raceWeekend.ID.String(), http.StatusFound)
 		return
-	} else {
-		// add another session
-		http.Redirect(w, r, "/race-weekend/"+raceWeekend.ID.String()+"/session", http.StatusFound)
 	}
+
+	// add another session
+	http.Redirect(w, r, "/race-weekend/"+raceWeekend.ID.String()+"/session", http.StatusFound)
 }
 
 func (rwh *RaceWeekendHandler) startSession(w http.ResponseWriter, r *http.Request) {
@@ -281,6 +281,7 @@ type raceWeekendFilterTemplateVars struct {
 	ResultsAvailableForSorting  []SessionResults
 	Filter                      *RaceWeekendSessionToSessionFilter
 	AvailableSorters            []RaceWeekendEntryListSorterDescription
+	ParentSessionResults        []*RaceWeekendSessionEntrant
 }
 
 func (rwh *RaceWeekendHandler) manageFilters(w http.ResponseWriter, r *http.Request) {
@@ -310,6 +311,14 @@ func (rwh *RaceWeekendHandler) manageFilters(w http.ResponseWriter, r *http.Requ
 		logrus.WithError(err).Error("Couldn't list results files for sorting")
 	}
 
+	parentSessionResults, err := parentSession.FinishingGrid(raceWeekend)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Couldn't load previous session results")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
 	rwh.viewRenderer.MustLoadPartial(w, r, "race-weekend/popups/manage-filters.html", &raceWeekendFilterTemplateVars{
 		RaceWeekend:                raceWeekend,
 		ParentSession:              parentSession,
@@ -317,6 +326,7 @@ func (rwh *RaceWeekendHandler) manageFilters(w http.ResponseWriter, r *http.Requ
 		ResultsAvailableForSorting: sessionResults,
 		Filter:                     filter,
 		AvailableSorters:           RaceWeekendEntryListSorters,
+		ParentSessionResults:       parentSessionResults,
 	})
 }
 
@@ -445,7 +455,7 @@ func (rwh *RaceWeekendHandler) export(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s.json", raceWeekend.Name))
+	w.Header().Add("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.json"`, raceWeekend.Name))
 
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")

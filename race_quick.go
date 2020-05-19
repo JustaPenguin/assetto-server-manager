@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -84,6 +85,10 @@ func (q QuickRace) IsRaceWeekend() bool {
 	return false
 }
 
+func (q QuickRace) IsTimeAttack() bool {
+	return q.RaceConfig.TimeAttack
+}
+
 func (q QuickRace) EventName() string {
 	return trackSummary(q.RaceConfig.Track, q.RaceConfig.TrackLayout)
 }
@@ -102,4 +107,12 @@ func (q QuickRace) EventDescription() string {
 
 func (q QuickRace) GetURL() string {
 	return ""
+}
+
+func (q QuickRace) GetForceStopTime() time.Duration {
+	return 0
+}
+
+func (q QuickRace) GetForceStopWithDrivers() bool {
+	return false
 }

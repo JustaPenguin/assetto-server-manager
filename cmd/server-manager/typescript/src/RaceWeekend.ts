@@ -2,6 +2,7 @@ import ChangeEvent = JQuery.ChangeEvent;
 import {Connection, jsPlumb, jsPlumbInstance} from "jsplumb";
 import dagre, {graphlib} from "dagre";
 import {initMultiSelect} from "./javascript/manager";
+import ClickEvent = JQuery.ClickEvent;
 
 declare var RaceWeekendID: string;
 declare var IsEditing: boolean;
@@ -76,6 +77,8 @@ export namespace RaceWeekend {
 
             $(".view-results").on("click", this.onViewResultsClick);
             $(".manage-entrylist").on("click", this.openManageEntryListModal);
+
+            this.initSessionDetailsButtons();
         }
 
         private initJsPlumb(): void {
@@ -215,6 +218,24 @@ export namespace RaceWeekend {
                 $results.collapse('show');
             });
         }
+
+        private initSessionDetailsButtons(): void {
+            $(document).on("click", ".race-weekend-session-details", (e: ClickEvent) => {
+                let $this = $(e.currentTarget);
+                let sessionID = $this.attr("data-session-id");
+
+                const modalContentURL = `/event-details?raceWeekendID=${RaceWeekendID}&sessionID=${sessionID}`;
+
+                $.get(modalContentURL).then((data: string) => {
+                    let $eventDetailsModal = $("#session-details-modal");
+                    $eventDetailsModal.html(data);
+                    $eventDetailsModal.find("input[type='checkbox']").bootstrapSwitch();
+                    $eventDetailsModal.modal();
+                });
+
+                return false;
+            });
+        }
     }
 
     /**
@@ -290,8 +311,10 @@ export namespace RaceWeekend {
         private reverseGrid: number = 0;
         private gridStart!: number;
         private sortType!: string;
-        private availableResultsForSorting!: string[];
+        private availableResultsForSorting: string[] = [];
         private startOnFastestLapTyre: boolean = false;
+        private manualDriverSelection: boolean = false;
+        private selectedDriverGUIDs: string[] = [];
 
         public constructor($elem: JQuery<HTMLElement>, parentSessionID: string, childSessionID: string) {
             super($elem);
@@ -311,7 +334,9 @@ export namespace RaceWeekend {
                 EntryListStart: this.gridStart,
                 SortType: this.sortType,
                 ForceUseTyreFromFastestLap: this.startOnFastestLapTyre,
-                AvailableResultsForSorting: this.availableResultsForSorting
+                AvailableResultsForSorting: this.availableResultsForSorting,
+                ManualDriverSelection: this.manualDriverSelection,
+                SelectedDriverGUIDs: this.selectedDriverGUIDs,
             })
         }
 
@@ -328,6 +353,21 @@ export namespace RaceWeekend {
                 this.$elem.find("#AvailableResultsWrapper").show()
             } else {
                 this.$elem.find("#AvailableResultsWrapper").hide()
+            }
+
+            let $driversMultiSelect = this.$elem.find("#Drivers");
+
+            this.manualDriverSelection = this.$elem.find("#ManualDriverSelection").is(":checked");
+            this.selectedDriverGUIDs = $driversMultiSelect.val() as string[];
+
+            if (this.manualDriverSelection) {
+                this.$elem.find("#DriverSelectionForm").show();
+                this.$elem.find("#FilterFromTo").hide();
+
+                initMultiSelect($driversMultiSelect);
+            } else {
+                this.$elem.find("#DriverSelectionForm").hide();
+                this.$elem.find("#FilterFromTo").show();
             }
 
             $.ajax(`/race-weekend/${RaceWeekendID}/grid-preview?parentSessionID=${this.parentSessionID}&childSessionID=${this.childSessionID}`, {
@@ -351,9 +391,14 @@ export namespace RaceWeekend {
                 $table.find("tr:not(:first-child)").remove();
                 this.buildClassKey(response.Classes);
 
-                for (let i = 0; i < grid.length || i < results.length; i++) {
+                for (let i = 0; i < Math.max(grid.length, results.length); i++) {
                     let $row = $("<tr>");
-                    $row.append(this.buildTableDataForEntrant(results[i], i));
+
+                    if (i < results.length) {
+                        $row.append(this.buildTableDataForEntrant(results[i], i));
+                    } else {
+                        $row.append($("<td>"));
+                    }
 
                     if (i < grid.length) {
                         $row.append(this.buildTableDataForEntrant(grid[i], i));

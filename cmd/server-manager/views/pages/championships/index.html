@@ -2,14 +2,68 @@
 
 {{ define "title" }}Championships{{ end }}
 
-{{ define "content" }}
-    {{ $writeAccess := WriteAccess }}
+{{ define "championships-list" }}
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-championship">
+            <tr>
+                <th>Name</th>
+                <th>Progress</th>
+                <th>Number of Events</th>
+                <th>Number of Classes</th>
+                <th>Number of Entrants</th>
+                <th>Actions</th>
+            </tr>
 
+            {{ range $index, $championship := .Championships }}
+                <tr>
+                    <td>
+                        <a href="/championship/{{ $championship.ID }}">{{ $championship.Name }}</a>
+                    </td>
+                    <td>
+                        {{ int $championship.Progress }}%
+                    </td>
+                    <td>
+                        {{ len $championship.Events }}
+                    </td>
+                    <td>
+                        {{ len $championship.Classes }}
+                    </td>
+                    <td>
+                        {{ $championship.NumEntrants }}
+                    </td>
+                    <td class="align-middle custom-race-actions">
+                        <a class="btn btn-sm btn-success" href="/championship/{{ $championship.ID }}">View</a>
+                        <a class="btn btn-sm btn-primary" href="/championship/{{ $championship.ID }}/export">Export</a>
+
+                        {{ if WriteAccess }}
+                            <div class="btn-group custom-race-actions-btn-group" role="group" aria-label="Edit Championship">
+                                <a class="btn btn-sm btn-warning custom-race-actions-btn-big championship-edit-button" href="/championship/{{ $championship.ID }}/edit">Edit</a>
+
+                                <button id="btn-group-drop-{{ $championship.ID }}" type="button" class="btn btn-warning btn-sm custom-race-actions-btn-small dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                </button>
+
+                                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="btn-group-drop-{{ $championship.ID }}">
+                                    <a href="/championship/{{ $championship.ID }}/duplicate" class="dropdown-item">Duplicate Championship</a>
+                                </div>
+                            </div>
+
+
+                            <a onClick="return confirm('I understand that this will delete the entire championship permanently.') "
+                               class="btn btn-sm btn-danger {{ if not DeleteAccess}}disabled{{ end }}" href="/championship/{{ $championship.ID }}/delete">Delete</a>
+                        {{ end }}
+                    </td>
+                </tr>
+            {{ end}}
+        </table>
+    </div>
+{{ end }}
+
+{{ define "content" }}
     <div class="row">
         <div class="col-sm-4"></div>
         <div class="col-sm-4"><h1 class="text-center">Championships</h1></div>
         <div class="col-sm-4">
-            {{ if $writeAccess }}
+            {{ if WriteAccess }}
 
                 <div class="btn-group float-right" role="group" aria-label="New Championship">
                     <a href="/championships/new" class="btn btn-success">Create a new Championship</a>
@@ -31,96 +85,13 @@
 
     <h2>Active</h2>
 
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped table-championship">
-            <tr>
-                <th>Name</th>
-                <th>Progress</th>
-                <th>Number of Events</th>
-                <th>Number of Classes</th>
-                <th>Number of Entrants</th>
-                <th>Actions</th>
-            </tr>
-
-            {{ range $index, $championship := .Championships }}
-                {{ if ne $championship.Progress 100.0 }}
-                    <tr>
-                        <td>
-                            <a href="/championship/{{ $championship.ID }}">{{ $championship.Name }}</a>
-                        </td>
-                        <td>
-                            {{ int $championship.Progress }}%
-                        </td>
-                        <td>
-                            {{ len $championship.Events }}
-                        </td>
-                        <td>
-                            {{ len $championship.Classes }}
-                        </td>
-                        <td>
-                            {{ $championship.NumEntrants }}
-                        </td>
-                        <td class="align-middle custom-race-actions">
-                            <a class="btn btn-sm btn-success" href="/championship/{{ $championship.ID }}">View</a>
-                            <a class="btn btn-sm btn-primary" href="/championship/{{ $championship.ID }}/export">Export</a>
-
-                            {{ if $writeAccess }}
-                                <a class="btn btn-sm btn-warning" href="/championship/{{ $championship.ID }}/edit">Edit</a>
-                                <a onClick="return confirm('I understand that this will delete the entire championship permanently.') "
-                                   class="btn btn-sm btn-danger {{ if not DeleteAccess}}disabled{{ end }}" href="/championship/{{ $championship.ID }}/delete">Delete</a>
-                            {{ end }}
-                        </td>
-                    </tr>
-                {{ end}}
-            {{ end }}
-        </table>
-    </div>
+    {{ template "championships-list" dict "Championships" $.ActiveChampionships }}
 
     <hr>
 
     <h2>Completed</h2>
 
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped table-championship">
-            <tr>
-                <th>Name</th>
-                <th>Number of Events</th>
-                <th>Number of Classes</th>
-                <th>Number of Entrants</th>
-                <th>Actions</th>
-            </tr>
-
-            {{ range $index, $championship := .Championships }}
-                {{ if eq $championship.Progress 100.0 }}
-                    <tr>
-                        <td>
-                            <a href="/championship/{{ $championship.ID }}">{{ $championship.Name }}</a>
-                        </td>
-                        <td>
-                            {{ len $championship.Events }}
-                        </td>
-                        <td>
-                            {{ len $championship.Classes }}
-                        </td>
-                        <td>
-                            {{ $championship.NumEntrants }}
-                        </td>
-                        <td class="align-middle custom-race-actions">
-                            <a class="btn btn-sm btn-success" href="/championship/{{ $championship.ID }}">View</a>
-                            <a class="btn btn-sm btn-primary" href="/championship/{{ $championship.ID }}/export">Export</a>
-
-                            {{ if $writeAccess }}
-                                <a class="btn btn-sm btn-warning" href="/championship/{{ $championship.ID }}/edit">Edit</a>
-                                <a onClick="return confirm('I understand that this will delete the entire championship permanently.') "
-                                   class="btn btn-sm btn-danger {{ if not DeleteAccess}}disabled{{ end }}" href="/championship/{{ $championship.ID }}/delete">Delete</a>
-                            {{ end }}
-                        </td>
-                    </tr>
-                {{ end }}
-            {{ end }}
-        </table>
-    </div>
-
+    {{ template "championships-list" dict "Championships" $.CompletedChampionships }}
 
     <div class="clearfix"></div>
 {{ end }}

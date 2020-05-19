@@ -1,0 +1,80 @@
+{{ define "championship-overview" }}
+
+    {{ $championship := .Championship }}
+    {{ $account := .Account }}
+
+    <div class="table-responsive entrant-table-max-height">
+        <table class="table table-bordered table-striped">
+            <tr>
+                <th>Pos</th>
+                <th>Driver</th>
+                {{ range $i, $event := $championship.Events }}
+                    {{ if $event.IsRaceWeekend }}
+                        <th data-toggle="tooltip" title="{{ $event.RaceWeekend.Name }}">
+                            {{ shortenTrackName $event.RaceWeekend.Name }}
+                        </th>
+                    {{ else }}
+                        {{ $trackInfo := trackInfo $event.RaceSetup.Track $event.RaceSetup.TrackLayout }}
+
+                        <th data-toggle="tooltip" title="{{ with $trackInfo }}{{ $trackInfo.Name }}{{ else }}{{ prettify $event.RaceSetup.Track false }}{{ end }}">
+                            {{ with $trackInfo }}
+                                {{ shortenTrackName $trackInfo.Name }}
+                            {{ else }}
+                                {{ shortenTrackName (prettify $event.RaceSetup.Track false) }}
+                            {{ end }}
+                        </th>
+                    {{ end }}
+                {{ end }}
+                <th>Total Points</th>
+            </tr>
+
+            {{ range $classIndex, $class := $championship.Classes }}
+                {{ $entrants := ($class.Standings $championship $championship.Events) }}
+
+                {{ range $i, $entrant := $entrants }}
+                    <tr style="
+                    {{ if eq $account.GUID $entrant.Car.Driver.GUID }}font-weight: bold;{{ end }}
+                    {{ if $championship.IsMultiClass }}
+                        color: white; background: {{ classColor $classIndex }}
+                    {{ end }}">
+
+                        <td>
+                            {{ add $i 1 }}
+                        </td>
+
+                        <td data-toggle="tooltip" title="{{ driverName $entrant.Car.Driver.Name }}">
+                            {{ driverInitials $entrant.Car.Driver.Name }}
+                        </td>
+
+                        {{ range $z, $event := $championship.Events }}
+                            {{ $standingTableInfo := ($class.StandingsForEntrantAtEvent $championship $event $entrant) }}
+
+                            <td style="background-color: {{ $standingTableInfo.BackgroundColour }}; color: black;">
+
+                                {{ if eq $standingTableInfo.ChampionshipStanding.Points 0.0 }}
+                                    {{ $standingTableInfo.NoFinishReason }}
+                                {{ else }}
+                                    {{ $standingTableInfo.ChampionshipStanding.Points }}
+                                {{ end }}
+                            </td>
+                        {{ end  }}
+
+                        <td>
+                            {{ $entrant.Points }}
+                        </td>
+
+                    </tr>
+                {{ end }}
+            {{ end }}
+        </table>
+
+        <div class="d-inline-block">
+            <span class="badge" style="background-color: #fefebe;">1st</span>
+            <span class="badge" style="background-color: #dce0e1;">2nd</span>
+            <span class="badge" style="background-color: #ffde9e;">3rd</span>
+            <span class="badge" style="background-color: #dffee0;">4th - 10th</span>
+            <span class="badge" style="background-color: #d0ceff;">> 10th</span>
+            <span class="badge" style="background-color: #ebcaff;">No Points</span>
+        </div>
+    </div>
+{{ end }}

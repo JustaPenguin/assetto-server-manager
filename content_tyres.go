@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -227,7 +228,6 @@ func addTyresToModTyres(model string, newTyres map[string]string) error {
 		}
 
 		if !hasNew {
-			logrus.Infof("New car: %s already has all of its tyres configured", model)
 			return nil
 		}
 	}
@@ -433,17 +433,9 @@ func CarDataFile(carModel, dataFile string) (io.ReadCloser, error) {
 				return nil, err
 			}
 
-			return ByteReaderCloser{bytes.NewReader(b)}, nil
+			return ioutil.NopCloser(bytes.NewReader(b)), nil
 		}
 	}
 
 	return nil, os.ErrNotExist
-}
-
-type ByteReaderCloser struct {
-	*bytes.Reader
-}
-
-func (ByteReaderCloser) Close() error {
-	return nil
 }

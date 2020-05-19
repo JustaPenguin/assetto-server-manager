@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -14,20 +15,53 @@ import (
 type PenaltiesHandler struct {
 	*BaseHandler
 
-	championshipManager *ChampionshipManager
-	raceWeekendManager  *RaceWeekendManager
+	penaltiesManager *PenaltiesManager
 }
 
-func NewPenaltiesHandler(baseHandler *BaseHandler, championshipManager *ChampionshipManager, raceWeekendManager *RaceWeekendManager) *PenaltiesHandler {
+func NewPenaltiesHandler(baseHandler *BaseHandler, penaltiesManager *PenaltiesManager) *PenaltiesHandler {
 	return &PenaltiesHandler{
-		BaseHandler:         baseHandler,
-		championshipManager: championshipManager,
-		raceWeekendManager:  raceWeekendManager,
+		BaseHandler:      baseHandler,
+		penaltiesManager: penaltiesManager,
 	}
 }
 
 func (ph *PenaltiesHandler) managePenalty(w http.ResponseWriter, r *http.Request) {
-	remove, err := ph.applyPenalty(r)
+	jsonFileName := chi.URLParam(r, "sessionFile")
+	guid := chi.URLParam(r, "driverGUID")
+	carModel := r.URL.Query().Get("model")
+
+	err := r.ParseForm()
+
+	if err != nil {
+		AddErrorFlash(w, r, "Could not parse penalty form")
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+		return
+	}
+
+	add := r.FormValue("action") == "add"
+
+	penalty := 0.0
+
+	if add {
+		penaltyString := r.FormValue("time-penalty")
+
+		if penaltyString == "" {
+			penalty = 0
+		} else {
+			pen, err := strconv.ParseFloat(penaltyString, 64)
+
+			if err != nil {
+				logrus.WithError(err).Errorf("could not parse penalty time")
+				AddErrorFlash(w, r, "Could not parse penalty time")
+				http.Redirect(w, r, r.Referer(), http.StatusFound)
+				return
+			}
+
+			penalty = pen
+		}
+	}
+
+	err = ph.penaltiesManager.applyPenalty(jsonFileName, guid, carModel, penalty, add)
 
 	if err != nil {
 		AddErrorFlash(w, r, "Could not add/remove penalty")
@@ -35,7 +69,7 @@ func (ph *PenaltiesHandler) managePenalty(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if remove {
+	if !add {
 		AddFlash(w, r, "Penalty Removed!")
 	} else {
 		AddFlash(w, r, "Penalty Added!")
@@ -44,70 +78,61 @@ func (ph *PenaltiesHandler) managePenalty(w http.ResponseWriter, r *http.Request
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
+type PenaltiesManager struct {
+	store Store
+}
+
+func NewPenaltiesManager(store Store) *PenaltiesManager {
+	return &PenaltiesManager{
+		store: store,
+	}
+}
+
+func (pm *PenaltiesManager) applyPenalty(jsonFileName, guid, carModel string, penalty float64, add bool) error {
 	var results *SessionResults
-	var remove bool
-	var penaltyTime float64
 
-	jsonFileName := chi.URLParam(r, "sessionFile")
-	guid := chi.URLParam(r, "driverGUID")
-	carModel := r.URL.Query().Get("model")
+	var fullFileName string
 
-	results, err := LoadResult(jsonFileName + ".json")
+	if !strings.HasSuffix(jsonFileName, ".json") {
+		fullFileName = jsonFileName + ".json"
+	} else {
+		fullFileName = jsonFileName
+
+		jsonFileName = strings.TrimSuffix(jsonFileName, ".json")
+	}
+
+	results, err := LoadResult(fullFileName)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("could not load session result file")
-		return false, err
-	}
-
-	err = r.ParseForm()
-
-	if err != nil {
-		logrus.WithError(err).Errorf("could not load parse form")
-		return false, err
-	}
-
-	if r.FormValue("action") == "add" {
-		penaltyString := r.FormValue("time-penalty")
-
-		if penaltyString == "" {
-			penaltyTime = 0
-		} else {
-			pen, err := strconv.ParseFloat(penaltyString, 64)
-
-			if err != nil {
-				logrus.WithError(err).Errorf("could not parse penalty time")
-				return false, err
-			}
-
-			penaltyTime = pen
-		}
-	} else {
-		// remove penalty
-		remove = true
+		return err
 	}
 
 	for _, result := range results.Result {
 		if result.DriverGUID == guid && result.CarModel == carModel {
-			if remove {
+			if !add {
 				result.HasPenalty = false
 				result.Disqualified = false
 				result.PenaltyTime = 0
 				result.LapPenalty = 0
+
+				logrus.Infof("All penalties cleared from Driver: %s", guid)
 			} else {
-				if penaltyTime == 0 {
+				if penalty == 0 {
 					result.Disqualified = true
 					result.HasPenalty = false
 					result.LapPenalty = 0
+
+					logrus.Infof("Driver: %s disqualified", guid)
 				} else {
 					result.HasPenalty = true
 					result.Disqualified = false
 
-					timeParsed, err := time.ParseDuration(fmt.Sprintf("%.1fs", penaltyTime))
+					timeParsed, err := time.ParseDuration(fmt.Sprintf("%.1fs", penalty))
 
 					if err != nil {
 						logrus.WithError(err).Errorf("could not parse penalty time")
-						return false, err
+						return err
 					}
 
 					result.PenaltyTime = timeParsed
@@ -118,6 +143,8 @@ func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
 					if result.PenaltyTime > lastLapTime {
 						result.LapPenalty = int(result.PenaltyTime / lastLapTime)
 					}
+
+					logrus.Infof("%s penalty applied to driver: %s", timeParsed.String(), guid)
 				}
 			}
 
@@ -142,10 +169,10 @@ func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
 				return results.GetTime(results.Result[i].BestLap, results.Result[i].DriverGUID, results.Result[i].CarModel, true) <
 					results.GetTime(results.Result[j].BestLap, results.Result[j].DriverGUID, results.Result[j].CarModel, true)
 
-			} else {
-				// driver i is closer to the front than j if they are not disqualified and j is
-				return results.Result[j].Disqualified
 			}
+
+			// driver i is closer to the front than j if they are not disqualified and j is
+			return results.Result[j].Disqualified
 		})
 	case SessionTypeRace:
 		// sort results.Result, if disqualified go to back, if time penalty sort by laps completed then lap time
@@ -180,62 +207,90 @@ func (ph *PenaltiesHandler) applyPenalty(r *http.Request) (bool, error) {
 		})
 	}
 
-	err = saveResults(jsonFileName+".json", results)
+	err = saveResults(fullFileName, results)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("could not encode to session result file")
-		return false, err
+		return err
 	}
 
 	if results.ChampionshipID != "" {
-		championship, err := ph.championshipManager.LoadChampionship(results.ChampionshipID)
+		championship, err := pm.store.LoadChampionship(results.ChampionshipID)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Couldn't load championship with ID: %s", results.ChampionshipID)
-			return false, err
+			return err
 		}
 
 	champEvents:
 		for i, event := range championship.Events {
-			for key, session := range event.Sessions {
-				if session.Results.SessionFile == jsonFileName {
-					championship.Events[i].Sessions[key].Results = results
+			if event.IsRaceWeekend() {
+				raceWeekend, err := pm.store.LoadRaceWeekend(event.RaceWeekendID.String())
 
-					break champEvents
+				if err != nil {
+					return err
+				}
+
+				for key, session := range raceWeekend.Sessions {
+					if !session.Completed() {
+						continue
+					}
+
+					if session.Results.SessionFile == jsonFileName {
+						raceWeekend.Sessions[key].Results = results
+
+						break champEvents
+					}
+				}
+			} else {
+				for key, session := range event.Sessions {
+					if !session.Completed() {
+						continue
+					}
+
+					if session.Results.SessionFile == jsonFileName {
+						championship.Events[i].Sessions[key].Results = results
+
+						break champEvents
+					}
 				}
 			}
 		}
 
-		err = ph.championshipManager.UpsertChampionship(championship)
+		err = pm.store.UpsertChampionship(championship)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Couldn't save championship with ID: %s", results.ChampionshipID)
-			return false, err
+			return err
 		}
 	}
 
 	if results.RaceWeekendID != "" {
-		raceWeekend, err := ph.raceWeekendManager.LoadRaceWeekend(results.RaceWeekendID)
+		raceWeekend, err := pm.store.LoadRaceWeekend(results.RaceWeekendID)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Couldn't load race weekend with id: %s", results.RaceWeekendID)
-			return false, err
+			return err
 		}
 
 		for _, session := range raceWeekend.Sessions {
+			if !session.Completed() {
+				continue
+			}
+
 			if session.Results.SessionFile == jsonFileName {
 				session.Results = results
 				break
 			}
 		}
 
-		err = ph.raceWeekendManager.UpsertRaceWeekend(raceWeekend)
+		err = pm.store.UpsertRaceWeekend(raceWeekend)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Could not update race weekend: %s", raceWeekend.ID.String())
-			return false, err
+			return err
 		}
 	}
 
-	return remove, nil
+	return nil
 }

@@ -33,7 +33,14 @@
                 {{ end }}
             {{ end }}
 
-            <option class="{{ if $car.IsPaidDLC }}bg-dlc{{ end }}{{ if $car.IsMod }}bg-mod{{ end }}" value="{{ $car.Name }}" {{ if $selected }} selected="selected" {{ end }}>{{ prettify $car.Name true }}</option>
+            <option class="{{ if $car.IsPaidDLC }}bg-dlc{{ end }}{{ if $car.IsMod }}bg-mod{{ end }}"
+                    value="{{ $car.Name }}"
+                    {{ if or $selected $.SelectAllCars }}
+                        selected="selected"
+                    {{ end }}
+            >
+                {{ prettify $car.Name true }}
+            </option>
         {{ end }}
     </select>
 

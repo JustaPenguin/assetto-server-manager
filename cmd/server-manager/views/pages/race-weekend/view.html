@@ -4,6 +4,8 @@
 
 {{ define "content" }}
 
+    {{ $serverID := $.ServerID }}
+
     <div class="container">
 
         <h1 class="text-center">{{ $.RaceWeekend.Name }}</h1>
@@ -125,6 +127,10 @@
                         <div class="float-right">
                             {{ if ne $acSession.Time 0 }}
                                 {{ $acSession.Time }} minutes
+
+                                {{ if $session.RaceConfig.RaceExtraLap }}
+                                    + 1 lap
+                                {{ end }}
                             {{ else }}
                                 {{ with $acSession.Laps }}
                                     {{ . }} laps
@@ -138,7 +144,7 @@
                                     Not available
                                 </span>
                             {{ else if $session.Completed }}
-                                <span class="text-success">Complete</span>
+                                <span class="text-success" data-toggle="tooltip" title="Completed on {{ fullTimeFormat $session.CompletedTime }}">Complete</span>
                             {{ else if $session.InProgress }}
                                 <span class="text-primary">In Progress</span>
                             {{ else }}
@@ -159,7 +165,15 @@
                                 <br>
 
                                 {{ if isBefore $session.ScheduledTime }}
-                                    <span class="text-warning">Scheduled for {{ localFormat $session.ScheduledTime }}</span><br>
+                                    <span class="text-warning">
+                                        Scheduled
+
+                                        {{ if ne $session.ScheduledServerID $serverID }}
+                                            (on <span class="scheduled-server-id" data-server-id="{{ $session.ScheduledServerID }}">another server</span>)
+                                        {{ end }}
+
+                                        for {{ localFormat $session.ScheduledTime }}
+                                    </span><br>
                                 {{ end }}
                             </div>
 
@@ -179,7 +193,7 @@
 
                         {{ if WriteAccess }}
                             {{ if not (or $session.InProgress $session.Completed) }}
-                                {{ if eq $.IsPremium "true" }}
+                                {{ if $.IsPremium }}
                                     {{ if $.RaceWeekend.SessionCanBeRun $session }}
                                         <div class="btn-group btn-group-sm">
                                             <a class="btn btn-success btn-sm"
@@ -235,8 +249,8 @@
                                     <form action="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/schedule" method="POST">
                                         <div class="form-group">
 
-                                            <input type="date" class="form-control" name="session-schedule-date" id="session-schedule-date">
-                                            <input type="time" class="form-control" name="session-schedule-time" id="session-schedule-time">
+                                            <input type="date" class="form-control" name="session-schedule-date" id="session-schedule-date" value="{{ $.RaceWeekend.MostRecentScheduledDateFormat "2006-01-02" }}">
+                                            <input type="time" class="form-control" name="session-schedule-time" id="session-schedule-time" value="{{ $.RaceWeekend.MostRecentScheduledDateFormat "15:04" }}">
                                             <input type="hidden" name="session-schedule-timezone" class="session-schedule-timezone">
                                             <small class="form-text text-muted">
                                                 This date/time is in your timezone (<span class="timezone"></span>).
@@ -284,9 +298,18 @@
                                         Edit
                                     </a>
 
-                                    {{ if eq $.IsPremium "true" }}
+                                    {{ if $.IsPremium }}
                                         <a class="dropdown-item" href="/race-weekend/{{ $.RaceWeekend.ID.String }}/session/{{ $session.ID.String }}/import">
                                             Import Results
+                                        </a>
+                                    {{ end }}
+
+                                    {{ if $.ShowEventDetailsPopup }}
+                                        <a class="dropdown-item race-weekend-session-details"
+                                           href="#"
+                                           data-session-id="{{ $session.ID }}"
+                                        >
+                                            Session Details
                                         </a>
                                     {{ end }}
 
@@ -300,6 +323,15 @@
                             </div>
                         {{ else }}
                             <a class="btn btn-secondary manage-entrylist btn-sm" href="#">View Entry List</a>
+                        {{ end }}
+
+                        {{ if and (not WriteAccess) $.ShowEventDetailsPopup }}
+                            <a class="btn btn-sm btn-info race-weekend-session-details"
+                               href="#"
+                               data-session-id="{{ $session.ID }}"
+                            >
+                                Session Details
+                            </a>
                         {{ end }}
                     </div>
                 </div>
@@ -333,6 +365,10 @@
                             <div class="float-right">
                                 {{ if ne $acSession.Time 0 }}
                                     {{ $acSession.Time }} minutes
+
+                                    {{ if $session.RaceConfig.RaceExtraLap }}
+                                        + 1 lap
+                                    {{ end }}
                                 {{ else }}
                                     {{ with $acSession.Laps }}
                                         {{ . }} laps
@@ -346,7 +382,7 @@
                                             Not available
                                         </span>
                                 {{ else if $session.Completed }}
-                                    <span class="text-success">Complete</span>
+                                    <span class="text-success">Completed on {{ localFormat $session.CompletedTime }}</span>
                                 {{ else if $session.InProgress }}
                                     <span class="text-primary">In Progress</span>
                                 {{ else }}
@@ -452,6 +488,9 @@
         <!-- content controlled by js -->
     </div>
 
+    <div class="modal" tabindex="-1" role="dialog" id="session-details-modal">
+        <!-- content controlled by js -->
+    </div>
 
     <script type="text/javascript">
         var RaceWeekendID = {{ $.RaceWeekend.ID.String }};

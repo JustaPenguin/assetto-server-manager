@@ -9,11 +9,16 @@ import (
 
 	"github.com/cj123/ini"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 const (
 	AnyCarModel       = "any_car_model"
 	entryListFilename = "entry_list.ini"
+
+	driverSwapEntrantSeparator = ";"
+
+	maxEntryListSize = 255
 )
 
 type EntryList map[string]*Entrant
@@ -46,7 +51,7 @@ func (e EntryList) Write() error {
 		return err
 	}
 
-	for _, v := range e {
+	for _, v := range e.AsSlice() {
 		s, err := f.NewSection(fmt.Sprintf("CAR_%d", v.PitBox))
 
 		if err != nil {
@@ -64,14 +69,20 @@ func (e EntryList) Write() error {
 }
 
 // Add an Entrant to the EntryList
-func (e EntryList) Add(entrant *Entrant) {
+func (e EntryList) AddToBackOfGrid(entrant *Entrant) {
 	e.AddInPitBox(entrant, len(e))
 }
 
 // AddInPitBox adds an Entrant in a specific pitbox - overwriting any entrant that was in that pitbox previously.
 func (e EntryList) AddInPitBox(entrant *Entrant, pitBox int) {
+	pitBoxKey := fmt.Sprintf("CAR_%d", pitBox)
+
+	if existingEntrant, ok := e[pitBoxKey]; ok {
+		logrus.Warnf("Car already present in pitbox: %d! Driver: %s (%s) in %s will be overwritten!", pitBox, existingEntrant.Name, existingEntrant.GUID, existingEntrant.Model)
+	}
+
 	entrant.PitBox = pitBox
-	e[fmt.Sprintf("CAR_%d", pitBox)] = entrant
+	e[pitBoxKey] = entrant
 }
 
 // Remove an Entrant from the EntryList
@@ -91,6 +102,7 @@ func (e EntryList) AsSlice() []*Entrant {
 		entrants = append(entrants, x)
 	}
 
+	// note: pitbox sorting here is crucial
 	sort.Slice(entrants, func(i, j int) bool {
 		return entrants[i].PitBox < entrants[j].PitBox
 	})
@@ -131,7 +143,7 @@ func (e EntryList) PrettyList() []*Entrant {
 	}
 
 	sort.Slice(entrants, func(i, j int) bool {
-		return entrants[i].PitBox < entrants[j].PitBox
+		return entrants[i].Name < entrants[j].Name
 	})
 
 	entrants = append(entrants, &Entrant{
@@ -232,9 +244,9 @@ type Entrant struct {
 func (e Entrant) ID() string {
 	if e.GUID != "" {
 		return e.GUID
-	} else {
-		return e.Name
 	}
+
+	return e.Name
 }
 
 func (e *Entrant) OverwriteProperties(other *Entrant) {
@@ -295,4 +307,21 @@ func (e *Entrant) AsSessionResult() *SessionResult {
 		DriverName: e.Name,
 		Restrictor: e.Restrictor,
 	}
+}
+
+// NormaliseEntrantGUID takes a guid which may have driverSwapEntrantSeparators in it,
+// sorts all GUIDs in the string and then rejoins them by driverSwapEntrantSeparator
+func NormaliseEntrantGUID(guid string) string {
+	split := strings.Split(guid, driverSwapEntrantSeparator)
+
+	sort.Strings(split)
+
+	return strings.Join(split, driverSwapEntrantSeparator)
+}
+
+// NormaliseEntrantGUIDs takes a list of guids, sorts them and joins them by driverSwapEntrantSeparator
+func NormaliseEntrantGUIDs(guids []string) string {
+	sort.Strings(guids)
+
+	return strings.Join(guids, driverSwapEntrantSeparator)
 }

@@ -1,15 +1,16 @@
 package servermanager
 
 import (
+	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
-	"github.com/mitchellh/go-wordwrap"
-
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
+
+	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 )
 
 const (
@@ -18,14 +19,14 @@ const (
 )
 
 type Broadcaster interface {
-	Send(message udp.Message) error
+	Send(message udp.Message) ([]byte, error)
 }
 
 type NilBroadcaster struct{}
 
-func (NilBroadcaster) Send(message udp.Message) error {
-	logrus.WithField("message", message).Infof("Message send %d", message.Event())
-	return nil
+func (NilBroadcaster) Send(message udp.Message) ([]byte, error) {
+	logrus.WithField("message", message).Debugf("Message send %d", message.Event())
+	return nil, nil
 }
 
 var upgrader = websocket.Upgrader{
@@ -33,11 +34,13 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-func newRaceControlMessage(message udp.Message) raceControlMessage {
-	return raceControlMessage{
+func encodeRaceControlMessage(message udp.Message) ([]byte, error) {
+	m := raceControlMessage{
 		EventType: message.Event(),
 		Message:   message,
 	}
+
+	return json.Marshal(m)
 }
 
 type raceControlMessage struct {
@@ -47,19 +50,25 @@ type raceControlMessage struct {
 
 type RaceControlHub struct {
 	clients   map[*raceControlClient]bool
-	broadcast chan raceControlMessage
+	broadcast chan []byte
 	register  chan *raceControlClient
 }
 
-func (h *RaceControlHub) Send(message udp.Message) error {
-	h.broadcast <- newRaceControlMessage(message)
+func (h *RaceControlHub) Send(message udp.Message) ([]byte, error) {
+	encoded, err := encodeRaceControlMessage(message)
 
-	return nil
+	if err != nil {
+		return nil, err
+	}
+
+	h.broadcast <- encoded
+
+	return encoded, nil
 }
 
 func newRaceControlHub() *RaceControlHub {
 	return &RaceControlHub{
-		broadcast: make(chan raceControlMessage, 1000),
+		broadcast: make(chan []byte, 1000),
 		register:  make(chan *raceControlClient),
 		clients:   make(map[*raceControlClient]bool),
 	}
@@ -87,7 +96,7 @@ type raceControlClient struct {
 	hub *RaceControlHub
 
 	conn    *websocket.Conn
-	receive chan raceControlMessage
+	receive chan []byte
 }
 
 func (c *raceControlClient) writePump() {
@@ -97,27 +106,27 @@ func (c *raceControlClient) writePump() {
 			logrus.WithField("panic", rvr).Errorf("Recovered from panic")
 		}
 		ticker.Stop()
-		c.conn.Close()
+		_ = c.conn.Close()
 	}()
 
 	for {
 		select {
 		case message, ok := <-c.receive:
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The hub closed the channel.
-				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 
-			err := c.conn.WriteJSON(message)
+			err := c.conn.WriteMessage(websocket.TextMessage, message)
 
 			if err != nil && !strings.HasSuffix(err.Error(), "write: broken pipe") {
 				logrus.WithError(err).Errorf("Could not send websocket message")
 				return
 			}
 		case <-ticker.C:
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
@@ -149,12 +158,15 @@ func NewRaceControlHandler(baseHandler *BaseHandler, store Store, raceManager *R
 type liveTimingTemplateVars struct {
 	BaseTemplateVars
 
-	RaceDetails       *CustomRace
-	FrameLinks        []string
-	CSSDotSmoothing   int
-	CMJoinLink        string
-	UseMPH            bool
-	IsStrackerEnabled bool
+	RaceDetails                 *CustomRace
+	FrameLinks                  []string
+	CSSDotSmoothing             int
+	CMJoinLink                  string
+	UseMPH                      bool
+	IsStrackerEnabled           bool
+	IsKissMyRankEnabled         bool
+	KissMyRankWebStatsPublicURL string
+	STrackerInterfacePublicURL  string
 }
 
 func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request) {
@@ -174,18 +186,6 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	linkString := ""
-
-	if rch.serverProcess.GetServerConfig().GlobalServerConfig.ShowContentManagerJoinLink == 1 {
-		link, err := getContentManagerJoinLink(rch.serverProcess.GetServerConfig())
-
-		if err != nil {
-			logrus.WithError(err).Errorf("could not get content manager join link")
-		} else {
-			linkString = link.String()
-		}
-	}
-
 	serverOpts, err := rch.store.LoadServerOptions()
 
 	if err != nil {
@@ -194,10 +194,36 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	linkString := ""
+
+	if serverOpts.ShowContentManagerJoinLink == 1 {
+		link, err := getContentManagerJoinLink(*serverOpts)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("could not get content manager join link")
+		} else {
+			linkString = link.String()
+		}
+	}
+
 	strackerOptions, err := rch.store.LoadStrackerOptions()
 
 	if err != nil {
-		logrus.WithError(err).Errorf("couldn't load server options")
+		logrus.WithError(err).Errorf("couldn't load stracker options")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	sTrackerPublicURL := strackerOptions.HTTPConfiguration.PublicURL
+
+	if sTrackerPublicURL == "" {
+		sTrackerPublicURL = "/stracker/mainpage"
+	}
+
+	kissMyRankOptions, err := rch.store.LoadKissMyRankOptions()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't load kissmyrank options")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -206,12 +232,15 @@ func (rch *RaceControlHandler) liveTiming(w http.ResponseWriter, r *http.Request
 		BaseTemplateVars: BaseTemplateVars{
 			WideContainer: true,
 		},
-		RaceDetails:       customRace,
-		FrameLinks:        frameLinks,
-		CSSDotSmoothing:   udp.RealtimePosIntervalMs,
-		CMJoinLink:        linkString,
-		UseMPH:            serverOpts.UseMPH == 1,
-		IsStrackerEnabled: IsStrackerInstalled() && strackerOptions.EnableStracker,
+		RaceDetails:                 customRace,
+		FrameLinks:                  frameLinks,
+		CSSDotSmoothing:             udp.RealtimePosIntervalMs,
+		CMJoinLink:                  linkString,
+		UseMPH:                      serverOpts.UseMPH == 1,
+		IsStrackerEnabled:           IsStrackerInstalled() && strackerOptions.EnableStracker,
+		IsKissMyRankEnabled:         IsKissMyRankInstalled() && kissMyRankOptions.EnableKissMyRank,
+		KissMyRankWebStatsPublicURL: kissMyRankOptions.WebStatsPublicURL,
+		STrackerInterfacePublicURL:  sTrackerPublicURL,
 	})
 }
 
@@ -252,13 +281,15 @@ func (rch *RaceControlHandler) websocket(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	client := &raceControlClient{hub: rch.raceControlHub, conn: c, receive: make(chan raceControlMessage, 256)}
+	client := &raceControlClient{hub: rch.raceControlHub, conn: c, receive: make(chan []byte, 256)}
 	client.hub.register <- client
 
 	go client.writePump()
 
 	// new client, send them an initial race control message.
-	client.receive <- newRaceControlMessage(rch.raceControl)
+	rch.raceControl.lastUpdateMessageMutex.Lock()
+	client.receive <- rch.raceControl.lastUpdateMessage
+	rch.raceControl.lastUpdateMessageMutex.Unlock()
 }
 
 func (rch *RaceControlHandler) broadcastChat(w http.ResponseWriter, r *http.Request) {
@@ -266,23 +297,10 @@ func (rch *RaceControlHandler) broadcastChat(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	wrapped := strings.Split(wordwrap.WrapString(
-		r.FormValue("broadcast-chat"),
-		60,
-	), "\n")
+	err := rch.raceControl.splitAndBroadcastChat(r.FormValue("broadcast-chat"))
 
-	for _, msg := range wrapped {
-		broadcastMessage, err := udp.NewBroadcastChat(msg)
-
-		if err == nil {
-			err := rch.serverProcess.SendUDPMessage(broadcastMessage)
-
-			if err != nil {
-				logrus.WithError(err).Errorf("Unable to broadcast chat message")
-			}
-		} else {
-			logrus.WithError(err).Errorf("Unable to build chat message")
-		}
+	if err != nil {
+		logrus.WithError(err).Errorf("Unable to broadcast chat message")
 	}
 }
 
@@ -315,18 +333,19 @@ func (rch *RaceControlHandler) kickUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var carID uint8
-
-	for id, rangeGuid := range rch.raceControl.CarIDToGUID {
-		if string(rangeGuid) == guid {
-			carID = uint8(id)
-			break
+	err := rch.raceControl.ConnectedDrivers.Each(func(driverGUID udp.DriverGUID, driver *RaceControlDriver) error {
+		if string(driverGUID) != guid {
+			return nil
 		}
-	}
 
-	kickUser := udp.NewKickUser(carID)
+		command, err := udp.NewAdminCommand("/kick " + driver.CarInfo.DriverName)
 
-	err := rch.serverProcess.SendUDPMessage(kickUser)
+		if err != nil {
+			return err
+		}
+
+		return rch.serverProcess.SendUDPMessage(command)
+	})
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Unable to send kick command")
@@ -344,32 +363,10 @@ func (rch *RaceControlHandler) sendChat(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var carID uint8
+	err := rch.raceControl.splitAndSendChat(r.FormValue("send-chat"), guid)
 
-	for id, rangeGuid := range rch.raceControl.CarIDToGUID {
-		if string(rangeGuid) == guid {
-			carID = uint8(id)
-			break
-		}
-	}
-
-	wrapped := strings.Split(wordwrap.WrapString(
-		r.FormValue("send-chat"),
-		60,
-	), "\n")
-
-	for _, msg := range wrapped {
-		welcomeMessage, err := udp.NewSendChat(udp.CarID(carID), msg)
-
-		if err == nil {
-			err := rch.serverProcess.SendUDPMessage(welcomeMessage)
-
-			if err != nil {
-				logrus.WithError(err).Errorf("Unable to send chat message to car: %d", carID)
-			}
-		} else {
-			logrus.WithError(err).Errorf("Unable to build chat message to car: %d", carID)
-		}
+	if err != nil {
+		logrus.WithError(err).Errorf("Unable to send chat message to driver: %s", guid)
 	}
 }
 
@@ -395,4 +392,33 @@ func (rch *RaceControlHandler) nextSession(w http.ResponseWriter, r *http.Reques
 	}
 
 	http.Redirect(w, r, "/live-timing", http.StatusFound)
+}
+
+func (rch *RaceControlHandler) countdown(w http.ResponseWriter, r *http.Request) {
+
+	// broadcast countdown
+	ticker := time.NewTicker(time.Second * 3)
+	i := 4
+
+	for range ticker.C {
+		var countdown string
+
+		i--
+
+		if i > 0 {
+			countdown = strconv.Itoa(i)
+		} else if i == 0 {
+			countdown = "GO"
+		} else {
+			ticker.Stop()
+
+			return
+		}
+
+		err := rch.raceControl.splitAndBroadcastChat(countdown)
+
+		if err != nil {
+			logrus.WithError(err).Error("Unable to broadcast countdown message")
+		}
+	}
 }

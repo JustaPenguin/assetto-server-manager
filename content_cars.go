@@ -21,10 +21,10 @@ import (
 
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/search/query"
+	"github.com/cj123/watcher"
 	"github.com/dimchansky/utfbom"
 	"github.com/go-chi/chi"
 	"github.com/pkg/errors"
-	"github.com/radovskyb/watcher"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
@@ -43,9 +43,9 @@ func (c Car) PrettyName() string {
 func (c Car) IsPaidDLC() bool {
 	if _, ok := isCarPaidDLC[c.Name]; ok {
 		return isCarPaidDLC[c.Name]
-	} else {
-		return false
 	}
+
+	return false
 }
 
 func (c Car) IsMod() bool {
@@ -67,23 +67,25 @@ func (cs Cars) AsMap() map[string][]string {
 }
 
 type CarDetails struct {
-	Author       string          `json:"author"`
-	Brand        string          `json:"brand"`
-	Class        string          `json:"class"`
-	Country      string          `json:"country"`
-	Description  string          `json:"description"`
-	Name         string          `json:"name"`
-	PowerCurve   [][]json.Number `json:"powerCurve"`
-	Specs        CarSpecs        `json:"specs"`
-	SpecsNumeric CarSpecsNumeric `json:"spec"`
-	Tags         []string        `json:"tags"`
-	TorqueCurve  [][]json.Number `json:"torqueCurve"`
-	URL          string          `json:"url"`
-	Version      string          `json:"version"`
-	Year         ShouldBeAnInt   `json:"year"`
-	IsStock      bool            `json:"stock"`
-	IsDLC        bool            `json:"dlc"`
-	IsMod        bool            `json:"mod"`
+	Author        string          `json:"author"`
+	Brand         string          `json:"brand"`
+	Class         string          `json:"class"`
+	Country       string          `json:"country"`
+	Description   string          `json:"description"`
+	Name          string          `json:"name"`
+	PowerCurve    [][]json.Number `json:"powerCurve"`
+	Specs         CarSpecs        `json:"specs"`
+	SpecsNumeric  CarSpecsNumeric `json:"spec"`
+	Tags          []string        `json:"tags"`
+	TorqueCurve   [][]json.Number `json:"torqueCurve"`
+	URL           string          `json:"url"`
+	Version       string          `json:"version"`
+	Year          ShouldBeAnInt   `json:"year"`
+	IsStock       bool            `json:"stock"`
+	IsDLC         bool            `json:"dlc"`
+	IsMod         bool            `json:"mod"`
+	Key           string          `json:"key"`
+	PrettifiedKey string          `json:"prettified_key"`
 
 	DownloadURL string `json:"downloadURL"`
 	Notes       string `json:"notes"`
@@ -235,26 +237,88 @@ func (cs CarSpecs) Numeric() CarSpecsNumeric {
 }
 
 type CarManager struct {
-	carIndex bleve.Index
+	carIndex                     bleve.Index
+	watchFilesystemForCarChanges bool
 
-	searchIndexRebuildMutex sync.Mutex
-	trackManager            *TrackManager
+	searchMutex     sync.Mutex
+	tyreUpdateMutex sync.Mutex
+
+	trackManager *TrackManager
 }
 
-func NewCarManager(trackManager *TrackManager, watchForCarChanges bool) *CarManager {
-	cm := &CarManager{trackManager: trackManager}
+func NewCarManager(trackManager *TrackManager, watchForCarChanges, useCarNameCache bool) *CarManager {
+	cm := &CarManager{trackManager: trackManager, watchFilesystemForCarChanges: watchForCarChanges}
 
-	if watchForCarChanges {
-		go func() {
-			err := cm.watchForCarChanges()
-
-			if err != nil {
-				logrus.WithError(err).Error("Could not watch for changes in the content/cars directory")
-			}
-		}()
+	if useCarNameCache {
+		cm.initCarNames()
 	}
 
 	return cm
+}
+
+type carNames map[string]string
+
+var (
+	// carNameCache provides a map of car key -> actual name of a car
+	// this can be used to improve the accuracy of car naming in templates.
+	carNameCache carNames
+
+	carNameMutex sync.RWMutex
+)
+
+// adds the name of a car to the car details cache.
+func (c carNames) add(car *Car) {
+	if c == nil {
+		return
+	}
+
+	carNameMutex.Lock()
+	defer carNameMutex.Unlock()
+
+	if car.Details.Name != "" {
+		carNameCache[car.Name] = car.Details.Name
+	}
+}
+
+// get a car name from the cache, if possible.
+// if cache is not enabled, false is always returned.
+func (c carNames) get(car string) (string, bool) {
+	if c == nil {
+		return "", false
+	}
+
+	carNameMutex.RLock()
+	defer carNameMutex.RUnlock()
+
+	name, ok := c[car]
+
+	return name, ok
+}
+
+// removes a car name from the cache.
+func (c carNames) remove(car string) {
+	if c == nil {
+		return
+	}
+
+	carNameMutex.Lock()
+	defer carNameMutex.Unlock()
+
+	delete(carNameCache, car)
+}
+
+func (cm *CarManager) initCarNames() {
+	carNameCache = make(carNames)
+
+	cars, err := cm.ListCars()
+
+	if err != nil {
+		return
+	}
+
+	for _, car := range cars {
+		carNameCache.add(car)
+	}
 }
 
 // watchForChanges looks for created/removed files in the cars folder and (de-)indexes them as necessary
@@ -281,7 +345,7 @@ func (cm *CarManager) watchForCarChanges() error {
 		return watcher.ErrSkip
 	})
 
-	go func() {
+	go panicCapture(func() {
 		for {
 			select {
 			case event := <-w.Event:
@@ -300,6 +364,11 @@ func (cm *CarManager) watchForCarChanges() error {
 					}
 
 					err = cm.IndexCar(car)
+
+					if err != nil {
+						logrus.WithError(err).Errorf("Could not index car: %s", carName)
+						continue
+					}
 				case watcher.Remove:
 					carName = filepath.Base(event.OldPath)
 					logrus.Infof("De-indexing car: %s", carName)
@@ -317,7 +386,7 @@ func (cm *CarManager) watchForCarChanges() error {
 				return
 			}
 		}
-	}()
+	})
 
 	return w.Start(time.Second * 15)
 }
@@ -377,10 +446,8 @@ func (cm *CarManager) LoadCar(name string, tyres Tyres) (*Car, error) {
 		}
 	} else {
 		if os.IsNotExist(err) {
-			if err := os.Mkdir(filepath.Join(carDirectory, "skins"), 0755); err != nil {
+			if err := os.Mkdir(filepath.Join(carDirectory, "skins"), 0755); err != nil && !os.IsNotExist(err) {
 				logrus.WithError(err).Warnf("Could not create skins directory for car: %s", name)
-			} else {
-				logrus.Infof("Created empty skins directory for car: %s", name)
 			}
 		} else {
 			logrus.WithError(err).Warnf("Could not load skins for car: %s", name)
@@ -398,6 +465,9 @@ func (cm *CarManager) LoadCar(name string, tyres Tyres) (*Car, error) {
 		carDetails.Name = prettifyName(name, true)
 	}
 
+	carDetails.Key = name
+	carDetails.PrettifiedKey = prettifyName(name, true)
+
 	return &Car{
 		Name:    name,
 		Skins:   skins,
@@ -409,13 +479,14 @@ func (cm *CarManager) LoadCar(name string, tyres Tyres) (*Car, error) {
 func (cm *CarManager) RandomSkin(model string) string {
 	car, err := cm.LoadCar(model, nil)
 
-	if err != nil {
+	switch {
+	case err != nil:
 		logrus.WithError(err).Errorf("Could not load car %s. No skin will be specified", model)
 		return ""
-	} else if len(car.Skins) == 0 {
+	case len(car.Skins) == 0:
 		logrus.Warnf("Car %s has no skins uploaded. No skin will be specified", model)
 		return ""
-	} else {
+	default:
 		return car.Skins[rand.Intn(len(car.Skins))]
 	}
 }
@@ -479,11 +550,13 @@ const searchPageSize = 50
 
 // CreateSearchIndex builds a search index for the cars
 func (cm *CarManager) CreateOrOpenSearchIndex() error {
+	cm.searchMutex.Lock()
 	indexPath := filepath.Join(ServerInstallPath, "search-index", "cars")
 
 	var err error
 
 	cm.carIndex, err = bleve.Open(indexPath)
+	cm.searchMutex.Unlock()
 
 	if err == bleve.ErrorIndexPathDoesNotExist {
 		logrus.Infof("Creating car search index")
@@ -503,24 +576,69 @@ func (cm *CarManager) CreateOrOpenSearchIndex() error {
 		return err
 	}
 
+	if cm.watchFilesystemForCarChanges {
+		go panicCapture(func() {
+			err := cm.watchForCarChanges()
+
+			if err != nil {
+				logrus.WithError(err).Error("Could not watch for changes in the content/cars directory")
+			}
+		})
+	}
+
 	return nil
+}
+
+func (cm *CarManager) UpdateTyres(car *Car) error {
+	if car.Name == "" {
+		return nil
+	}
+
+	cm.tyreUpdateMutex.Lock()
+	defer cm.tyreUpdateMutex.Unlock()
+
+	carPath := filepath.Join(ServerInstallPath, "content", "cars", car.Name)
+	acdPath := filepath.Join(carPath, "data.acd")
+
+	b, err := ioutil.ReadFile(acdPath)
+
+	if err == nil {
+		return addTyresFromDataACD(acdPath, b)
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
+	tyresIniPath := filepath.Join(carPath, "data", "tyres.ini")
+
+	b, err = ioutil.ReadFile(tyresIniPath)
+
+	if err != nil {
+		return err
+	}
+
+	return addTyresFromTyresIni(tyresIniPath, b)
 }
 
 // IndexCar indexes an individual car.
 func (cm *CarManager) IndexCar(car *Car) error {
+	carNameCache.add(car)
+
+	if err := cm.UpdateTyres(car); err != nil {
+		logrus.WithError(err).Errorf("Could not update tyres for car: %s", car.Name)
+	}
+
 	return cm.carIndex.Index(car.Name, car.Details)
 }
 
 // DeIndexCar removes a car from the index.
 func (cm *CarManager) DeIndexCar(name string) error {
+	carNameCache.remove(name)
+
 	return cm.carIndex.Delete(name)
 }
 
 // IndexAllCars loads all current cars and adds them to the search index
 func (cm *CarManager) IndexAllCars() error {
-	cm.searchIndexRebuildMutex.Lock()
-	defer cm.searchIndexRebuildMutex.Unlock()
-
 	logrus.Infof("Building search index for all cars")
 	started := time.Now()
 
@@ -564,7 +682,7 @@ func (cm *CarManager) IndexAllCars() error {
 		return err
 	}
 
-	logrus.Infof("Search index build is complete (took: %s)", time.Now().Sub(started).String())
+	logrus.Infof("Search index build is complete (took: %s)", time.Since(started).String())
 
 	return nil
 }
@@ -585,6 +703,9 @@ func (cm *CarManager) rebuildTerm(term string) string {
 
 // Search looks for cars in the search index.
 func (cm *CarManager) Search(ctx context.Context, term string, from, size int) (*bleve.SearchResult, Cars, error) {
+	cm.searchMutex.Lock()
+	defer cm.searchMutex.Unlock()
+
 	var q query.Query
 
 	term = cm.rebuildTerm(term)
@@ -663,8 +784,8 @@ type carDetailsTemplateVars struct {
 	TrackOpts []Track
 }
 
-// LoadCarDetailsForTemplate loads all necessary items to generate the car details template.
-func (cm *CarManager) LoadCarDetailsForTemplate(carName string) (*carDetailsTemplateVars, error) {
+// loadCarDetailsForTemplate loads all necessary items to generate the car details template.
+func (cm *CarManager) loadCarDetailsForTemplate(carName string) (*carDetailsTemplateVars, error) {
 	tyres, err := ListTyres()
 
 	if err != nil {
@@ -797,7 +918,7 @@ func (ch *CarsHandler) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	numPages := int(math.Ceil(float64(float64(results.Total)) / float64(searchPageSize)))
+	numPages := int(math.Ceil(float64(results.Total) / float64(searchPageSize)))
 
 	ch.viewRenderer.MustLoadTemplate(w, r, "content/cars.html", &carListTemplateVars{
 		Results:     results,
@@ -887,7 +1008,7 @@ func carSkinURL(car, skin string) string {
 
 func (ch *CarsHandler) view(w http.ResponseWriter, r *http.Request) {
 	carName := chi.URLParam(r, "car_id")
-	templateParams, err := ch.carManager.LoadCarDetailsForTemplate(carName)
+	templateParams, err := ch.carManager.loadCarDetailsForTemplate(carName)
 
 	if os.IsNotExist(err) {
 		http.NotFound(w, r)
@@ -982,13 +1103,13 @@ func (ch *CarsHandler) deleteSkin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ch *CarsHandler) rebuildSearchIndex(w http.ResponseWriter, r *http.Request) {
-	go func() {
+	go panicCapture(func() {
 		err := ch.carManager.IndexAllCars()
 
 		if err != nil {
 			logrus.WithError(err).Error("could not rebuild search index")
 		}
-	}()
+	})
 
 	AddFlash(w, r, "Started re-indexing cars!")
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
@@ -1022,31 +1143,31 @@ var isCarPaidDLC = map[string]bool{
 	"ferrari_f40":                        false,
 	"ferrari_f40_s3":                     false,
 	"ferrari_laferrari":                  false,
-	"ks_abarth500_assetto_corse":         false,
+	"ks_abarth500_assetto_corse":         true,
 	"ks_abarth_595ss":                    false,
 	"ks_abarth_595ss_s1":                 false,
 	"ks_abarth_595ss_s2":                 false,
 	"ks_alfa_33_stradale":                false,
 	"ks_alfa_giulia_qv":                  false,
 	"ks_alfa_mito_qv":                    false,
-	"ks_alfa_romeo_155_v6":               false,
-	"ks_alfa_romeo_4c":                   false,
-	"ks_alfa_romeo_gta":                  false,
+	"ks_alfa_romeo_155_v6":               true,
+	"ks_alfa_romeo_4c":                   true,
+	"ks_alfa_romeo_gta":                  true,
 	"ks_audi_a1s1":                       true,
 	"ks_audi_r18_etron_quattro":          true,
-	"ks_audi_r8_lms":                     false,
+	"ks_audi_r8_lms":                     true,
 	"ks_audi_r8_lms_2016":                true,
-	"ks_audi_r8_plus":                    true,
+	"ks_audi_r8_plus":                    false,
 	"ks_audi_sport_quattro":              false,
 	"ks_audi_sport_quattro_rally":        false,
 	"ks_audi_sport_quattro_s1":           false,
 	"ks_audi_tt_cup":                     true,
 	"ks_audi_tt_vln":                     true,
-	"ks_bmw_m235i_racing":                false,
+	"ks_bmw_m235i_racing":                true,
 	"ks_bmw_m4":                          true,
-	"ks_bmw_m4_akrapovic":                false,
-	"ks_corvette_c7_stingray":            true,
-	"ks_corvette_c7r":                    false,
+	"ks_bmw_m4_akrapovic":                true,
+	"ks_corvette_c7_stingray":            false,
+	"ks_corvette_c7r":                    true,
 	"ks_ferrari_250_gto":                 true,
 	"ks_ferrari_288_gto":                 true,
 	"ks_ferrari_312_67":                  true,
@@ -1056,26 +1177,26 @@ var isCarPaidDLC = map[string]bool{
 	"ks_ferrari_812_superfast":           true,
 	"ks_ferrari_f138":                    true,
 	"ks_ferrari_f2004":                   true,
-	"ks_ferrari_fxx_k":                   false,
+	"ks_ferrari_fxx_k":                   true,
 	"ks_ferrari_sf15t":                   true,
 	"ks_ferrari_sf70h":                   true,
-	"ks_ford_escort_mk1":                 false,
-	"ks_ford_gt40":                       false,
-	"ks_ford_mustang_2015":               true,
-	"ks_glickenhaus_scg003":              false,
+	"ks_ford_escort_mk1":                 true,
+	"ks_ford_gt40":                       true,
+	"ks_ford_mustang_2015":               false,
+	"ks_glickenhaus_scg003":              true,
 	"ks_lamborghini_aventador_sv":        true,
-	"ks_lamborghini_countach":            false,
-	"ks_lamborghini_countach_s1":         false,
+	"ks_lamborghini_countach":            true,
+	"ks_lamborghini_countach_s1":         true,
 	"ks_lamborghini_gallardo_sl":         true,
-	"ks_lamborghini_gallardo_sl_s3":      false,
-	"ks_lamborghini_huracan_gt3":         false,
+	"ks_lamborghini_gallardo_sl_s3":      true,
+	"ks_lamborghini_huracan_gt3":         true,
 	"ks_lamborghini_huracan_performante": false,
-	"ks_lamborghini_huracan_st":          false,
+	"ks_lamborghini_huracan_st":          true,
 	"ks_lamborghini_miura_sv":            false,
 	"ks_lamborghini_sesto_elemento":      false,
-	"ks_lotus_25":                        false,
+	"ks_lotus_25":                        true,
 	"ks_lotus_3_eleven":                  true,
-	"ks_lotus_72d":                       false,
+	"ks_lotus_72d":                       true,
 	"ks_maserati_250f_12cyl":             true,
 	"ks_maserati_250f_6cyl":              true,
 	"ks_maserati_alfieri":                false,
@@ -1090,16 +1211,16 @@ var isCarPaidDLC = map[string]bool{
 	"ks_mazda_rx7_spirit_r":              true,
 	"ks_mazda_rx7_tuned":                 true,
 	"ks_mclaren_570s":                    true,
-	"ks_mclaren_650_gt3":                 false,
-	"ks_mclaren_f1_gtr":                  false,
-	"ks_mclaren_p1":                      false,
+	"ks_mclaren_650_gt3":                 true,
+	"ks_mclaren_f1_gtr":                  true,
+	"ks_mclaren_p1":                      true,
 	"ks_mclaren_p1_gtr":                  true,
-	"ks_mercedes_190_evo2":               false,
-	"ks_mercedes_amg_gt3":                false,
-	"ks_mercedes_c9":                     false,
+	"ks_mercedes_190_evo2":               true,
+	"ks_mercedes_amg_gt3":                true,
+	"ks_mercedes_c9":                     true,
 	"ks_nissan_370z":                     true,
-	"ks_nissan_gtr":                      true,
-	"ks_nissan_gtr_gt3":                  false,
+	"ks_nissan_gtr":                      false,
+	"ks_nissan_gtr_gt3":                  true,
 	"ks_nissan_skyline_r34":              true,
 	"ks_pagani_huayra_bc":                false,
 	"ks_porsche_718_boxster_s":           true,
@@ -1130,13 +1251,13 @@ var isCarPaidDLC = map[string]bool{
 	"ks_porsche_macan":                   false,
 	"ks_porsche_panamera":                false,
 	"ks_praga_r1":                        false,
-	"ks_ruf_rt12r":                       false,
-	"ks_ruf_rt12r_awd":                   false,
+	"ks_ruf_rt12r":                       true,
+	"ks_ruf_rt12r_awd":                   true,
 	"ks_toyota_ae86":                     true,
 	"ks_toyota_ae86_drift":               true,
 	"ks_toyota_ae86_tuned":               true,
 	"ks_toyota_celica_st185":             true,
-	"ks_toyota_gt86":                     true,
+	"ks_toyota_gt86":                     false,
 	"ks_toyota_supra_mkiv":               true,
 	"ks_toyota_supra_mkiv_drift":         true,
 	"ks_toyota_supra_mkiv_tuned":         true,

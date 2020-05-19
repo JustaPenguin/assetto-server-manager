@@ -1,4 +1,5 @@
 import dragula from "dragula";
+import ClickEvent = JQuery.ClickEvent;
 
 declare var ChampionshipID: string;
 declare var CanMoveChampionshipEvents: boolean;
@@ -7,6 +8,7 @@ export namespace Championship {
     export class View {
         public constructor() {
             this.initDraggableCards();
+            this.initEventDetailsButtons();
         }
 
         private initDraggableCards(): void {
@@ -41,6 +43,24 @@ export namespace Championship {
                 url: `/championship/${ChampionshipID}/reorder-events`,
                 data: JSON.stringify(championshipEventIDs),
                 dataType: "json"
+            });
+        }
+
+        private initEventDetailsButtons(): void {
+            $(document).on("click", ".championship-event-details", (e: ClickEvent) => {
+                let $this = $(e.currentTarget);
+                let eventID = $this.attr("data-event-id");
+
+                const modalContentURL = `/event-details?championshipID=${ChampionshipID}&eventID=${eventID}`;
+
+                $.get(modalContentURL).then((data: string) => {
+                    let $eventDetailsModal = $("#event-details-modal");
+                    $eventDetailsModal.html(data);
+                    $eventDetailsModal.find("input[type='checkbox']").bootstrapSwitch();
+                    $eventDetailsModal.modal();
+                });
+
+                return false;
             });
         }
     }

@@ -15,6 +15,7 @@ A web interface to manage an Assetto Corsa Server.
 * Sol Integration - Sol weather is compatible, including 24 hour time cycles (session start may advance/reverse time really fast before it syncs up - requires drivers to launch from content manager)
 * Championship mode - configure multiple race events and keep track of driver, class and team points
 * Race Weekends - a group of sequential sessions that can be run at any time. For example, you could set up a Qualifying session to run on a Saturday, then the Race to follow it on a Sunday. Server Manager handles the starting grid for you, and lets you organise Entrants into splits based on their results and other factors!
+* Integration with [Assetto Corsa Skill Ratings](https://acsr.assettocorsaservers.com)!
 * Automatic event looping
 * Server Logs / Options Editing
 * Accounts system with different permissions levels
@@ -100,7 +101,7 @@ Follow the steps below to update Server Manager:
 _This is written with Linux in mind. Note that for other platforms this general flow should work, but specific commands may differ._
 
 1. Install Go 1.13; follow https://golang.org/doc/install#install
-2. Install Node js 11; this varies a lot based on os/distribution, Google is your friend.
+2. Install Node js 12; this varies a lot based on os/distribution, Google is your friend.
 3. Enter the following commands in your terminal:
 
     ```

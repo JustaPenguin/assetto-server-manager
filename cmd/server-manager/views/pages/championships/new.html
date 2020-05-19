@@ -73,11 +73,20 @@
                         <label for="ACSR" class="col-sm-3 col-form-label">Export to <a href="https://acsr.assettocorsaservers.com">Assetto Corsa Skill Ratings</a></label>
 
                         <div class="col-sm-9">
-                            <input type="checkbox" id="ACSR" name="ACSR" {{ if ne $.RaceTemplateVars.BaseTemplateVars.IsPremium "true" }} disabled="disabled" {{ end }}
-                                    {{ if $f.ACSR }} checked="checked" {{ end }}><br><br>
+                            <input type="checkbox"
+                                   id="ACSR"
+                                   name="ACSR"
+                                {{ if not $.RaceTemplateVars.BaseTemplateVars.IsPremium }}
+                                    disabled="disabled"
+                                {{ end }}
+                                {{ if $f.ACSR }}
+                                    checked="checked"
+                                {{ end }}
+                            >
 
+                            <br><br>
 
-                            {{ if ne $.RaceTemplateVars.BaseTemplateVars.IsPremium "true" }}
+                            {{ if not $.RaceTemplateVars.BaseTemplateVars.IsPremium }}
                                 <small class="text-warning">
                                     Exporting to <a href="https://acsr.assettocorsaservers.com">ACSR</a> is a premium feature! You can access premium features by
                                     <a href="https://assettocorsaservers.com">renting a server</a> or
@@ -98,7 +107,7 @@
                             <br>
 
                             <small>
-                                <strong>Forces Open Championship off, Sign Up Form on and Password off</strong>.
+                                <strong>Forces Sign Up Form on and Password off</strong>.
                             </small>
                         </div>
                     </div>
@@ -120,7 +129,7 @@
                     </div>
                 </div>
 
-                <div class="form-group row">
+                <div class="form-group row visible-open-championship">
                     <label for="ChampionshipPersistOpenEntrants" class="col-sm-3 col-form-label">Persist Open Championship Entrants</label>
 
                     <div class="col-sm-9">
@@ -159,6 +168,7 @@
                         <input
                                 class="form-control"
                                 type="password"
+                                autocomplete="new-password"
                                 id="ReplacementPassword"
                                 name="ReplacementPassword"
                                 value="{{ $f.ReplacementPassword }}"
@@ -182,7 +192,7 @@
 
                 </div>
 
-                {{ if eq $.RaceTemplateVars.BaseTemplateVars.IsPremium "true" }}
+                {{ if $.RaceTemplateVars.BaseTemplateVars.IsPremium }}
                     <div class="form-group row">
                         <label for="ChampionshipOGImage" class="col-sm-3 col-form-label">Championship Open Graph Image</label>
 
@@ -197,9 +207,52 @@
             </div>
         </div>
 
+        {{ if $.IsPremium }}
+            <div class="card mt-3 border-secondary race-setup hidden-open-championship">
+                <div class="card-header">
+                    <strong>Spectator Car</strong>
+                </div>
+
+                <div class="d-none">
+                    {{ template "cars" dict "CarOpts" $.CarOpts "Current" nil "SelectAllCars" true }}
+
+                    <input type="hidden" name="NumAvailableSpectatorCars" value="{{ len $.CarOpts }}">
+                </div>
+
+                <div class="card-body" id="entrants">
+                    <p>
+                        You can configure a Spectator Car for this Championship. Spectator Cars are automatically
+                        added to the back of the Entry List for each Championship Event, and ignored when calculating Championship Points.
+                    </p>
+
+                    {{ if $.IsHosted }}
+                        <p class="text-danger">Please note that the Spectator Car uses 1 slot on your hosted server. Events may fail to start if you have too many slots in use!</p>
+                    {{ end }}
+
+                    <div class="form-group row">
+                        <label for="Championship.SpectatorCar.Enabled" class="col-sm-3 col-form-label">Enabled</label>
+
+                        <div class="col-sm-9">
+                            <input type="checkbox"
+                                   class="spectator-toggle"
+                                   id="ChampionshipSpectatorCarEnabled"
+                                   name="Championship.SpectatorCar.Enabled"
+                                    {{ if $.Championship.HasSpectatorCar }}
+                                        checked="checked"
+                                    {{ end }}
+                            ><br><br>
+                        </div>
+                    </div>
 
 
-
+                    <div class="visible-spectator-enabled" {{ if not $.Championship.HasSpectatorCar }} style="display: none" {{ end }}>
+                        <div class="entrant">
+                            {{ template "entrant" dict "Entrant" $.Championship.SpectatorCar "IsChampionshipEvent" false "IsEditing" $.IsEditing "IsChampionship" true "IsSpectatorCar" true }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {{ end }}
 
         <div class="card mt-3 border-secondary">
             <div class="card-header">

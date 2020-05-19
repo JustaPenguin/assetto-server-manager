@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/mitchellh/go-wordwrap"
@@ -22,6 +23,7 @@ type ServerAdministrationHandler struct {
 	championshipManager *ChampionshipManager
 	raceWeekendManager  *RaceWeekendManager
 	process             ServerProcess
+	acsrClient          *ACSRClient
 }
 
 func NewServerAdministrationHandler(
@@ -31,6 +33,7 @@ func NewServerAdministrationHandler(
 	championshipManager *ChampionshipManager,
 	raceWeekendManager *RaceWeekendManager,
 	process ServerProcess,
+	acsrClient *ACSRClient,
 ) *ServerAdministrationHandler {
 	return &ServerAdministrationHandler{
 		BaseHandler:         baseHandler,
@@ -39,6 +42,7 @@ func NewServerAdministrationHandler(
 		championshipManager: championshipManager,
 		raceWeekendManager:  raceWeekendManager,
 		process:             process,
+		acsrClient:          acsrClient,
 	}
 }
 
@@ -63,6 +67,10 @@ func (sah *ServerAdministrationHandler) home(w http.ResponseWriter, r *http.Requ
 		RaceDetails:     customRace,
 		PerformanceMode: config.Server.PerformanceMode,
 	})
+}
+
+func (sah *ServerAdministrationHandler) premium(w http.ResponseWriter, r *http.Request) {
+	sah.viewRenderer.MustLoadTemplate(w, r, "premium.html", nil)
 }
 
 const MOTDFilename = "motd.txt"
@@ -158,6 +166,11 @@ func (sah *ServerAdministrationHandler) options(w http.ResponseWriter, r *http.R
 		} else {
 			AddFlash(w, r, "Server options successfully saved!")
 		}
+
+		// update ACSR options to the client
+		sah.acsrClient.AccountID = serverOpts.ACSRAccountID
+		sah.acsrClient.APIKey = serverOpts.ACSRAPIKey
+		sah.acsrClient.Enabled = serverOpts.EnableACSR
 	}
 
 	sah.viewRenderer.MustLoadTemplate(w, r, "server/options.html", &serverOptionsTemplateVars{
@@ -263,6 +276,34 @@ func (sah *ServerAdministrationHandler) logsAPI(w http.ResponseWriter, r *http.R
 		ManagerLog: logOutput.String(),
 		PluginsLog: pluginsOutput.String(),
 	})
+}
+
+// downloading logfiles
+func (sah *ServerAdministrationHandler) logsDownload(w http.ResponseWriter, r *http.Request) {
+	logFile := chi.URLParam(r, "logFile")
+	var outputString string
+
+	if logFile == "server" {
+		outputString = sah.process.Logs()
+	} else if logFile == "manager" {
+		outputString = logOutput.String()
+	} else if logFile == "plugins" {
+		outputString = pluginsOutput.String()
+	} else {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
+	// tell the browser this is a file download
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", "attachment; filename= \""+logFile+"_"+time.Now().Format(time.RFC3339)+".log\"")
+
+	_, err := w.Write([]byte(outputString))
+
+	if err != nil {
+		logrus.WithError(err).Error("failed to return log " + logFile + " as file via http")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
 }
 
 // serverProcessHandler modifies the server process.

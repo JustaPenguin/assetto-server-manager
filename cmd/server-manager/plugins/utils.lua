@@ -28,4 +28,44 @@ dump = function(o, d)
     end
 end
 
+-- Open JSON file
+function utils.jsonOpen(location, filename)
+    local path = (location .."/".. filename)
+    local f = assert(io.open(path, "r"))
+    local result = f:read "*a"
+
+    f:close()
+    return result
+end
+
+-- let's call this future proofing
+-- broadcast chat to all drivers on server
+function utils.broadcastChat(message)
+    local success = broadcastChat(message)
+
+    if not success or success == nil then
+        print("lua: failed to broadcast chat")
+    end
+end
+
+-- send chat to specific driver on server, by guid
+function utils.sendChat(message, guid)
+    local success = sendChatChat(message, guid)
+
+    if not success or success == nil then
+        print("lua: failed to broadcast chat")
+    end
+end
+
+-- probably only works on Linux
+function utils.sleep(n)
+    os.execute("sleep " .. tonumber(n))
+end
+
+function utils.tableLength(T)
+    local count = 0
+    for _ in pairs(T) do count = count + 1 end
+    return count
+end
+
 return utils

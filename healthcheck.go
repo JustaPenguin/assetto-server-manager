@@ -16,13 +16,15 @@ var LaunchTime = time.Now()
 
 type HealthCheck struct {
 	raceControl *RaceControl
+	process     ServerProcess
 	store       Store
 }
 
-func NewHealthCheck(raceControl *RaceControl, store Store) *HealthCheck {
+func NewHealthCheck(raceControl *RaceControl, store Store, process ServerProcess) *HealthCheck {
 	return &HealthCheck{
 		store:       store,
 		raceControl: raceControl,
+		process:     process,
 	}
 }
 
@@ -49,6 +51,7 @@ type HealthCheckResponse struct {
 	ResultsDirectoryIsWritable bool
 
 	ServerName          string
+	ServerID            ServerID
 	EventInProgress     bool
 	EventIsCritical     bool
 	EventIsChampionship bool
@@ -59,7 +62,7 @@ type HealthCheckResponse struct {
 }
 
 func (h *HealthCheck) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	event := h.raceControl.process.Event()
+	event := h.process.Event()
 	opts, err := h.store.LoadServerOptions()
 
 	var serverName string
@@ -72,7 +75,7 @@ func (h *HealthCheck) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		OK:                 true,
 		OS:                 runtime.GOOS + "/" + runtime.GOARCH,
 		Version:            BuildVersion,
-		IsPremium:          IsPremium == "true",
+		IsPremium:          Premium(),
 		IsHosted:           IsHosted,
 		MaxClientsOverride: MaxClientsOverride,
 		NumCPU:             runtime.NumCPU(),
@@ -81,6 +84,7 @@ func (h *HealthCheck) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		GoVersion:          runtime.Version(),
 
 		ServerName:          serverName,
+		ServerID:            serverID,
 		EventInProgress:     h.raceControl.process.IsRunning(),
 		EventIsCritical:     !event.IsPractice() && (event.IsChampionship() || event.IsRaceWeekend() || h.raceControl.SessionInfo.Type == udp.SessionTypeRace || h.raceControl.SessionInfo.Type == udp.SessionTypeQualifying),
 		EventIsChampionship: event.IsChampionship(),

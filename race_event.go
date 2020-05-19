@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 )
 
 type RaceEvent interface {
@@ -14,9 +15,13 @@ type RaceEvent interface {
 	IsChampionship() bool
 	IsRaceWeekend() bool
 	IsPractice() bool
+	IsTimeAttack() bool
 
 	OverrideServerPassword() bool
 	ReplacementServerPassword() string
+
+	GetForceStopTime() time.Duration
+	GetForceStopWithDrivers() bool
 
 	EventName() string
 	EventDescription() string
@@ -94,4 +99,10 @@ func unmarshalRaceEvent(data []byte) (RaceEvent, error) {
 	}
 
 	return raceEvent, err
+}
+
+func describeRaceEvent(raceEvent RaceEvent) string {
+	cfg := raceEvent.GetRaceConfig()
+
+	return fmt.Sprintf("%d sessions with %d entrants at %s (%s)", len(cfg.Sessions), len(raceEvent.GetEntryList()), cfg.Track, cfg.TrackLayout)
 }

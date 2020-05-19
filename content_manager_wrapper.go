@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha1"
 	"encoding/hex"
@@ -12,10 +13,12 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"text/template"
 	"time"
 
 	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 
+	"github.com/google/uuid"
 	"github.com/jaytaylor/html2text"
 	"github.com/sirupsen/logrus"
 )
@@ -56,21 +59,24 @@ type ContentManagerWrapperData struct {
 }
 
 type CMAssists struct {
-	ABSState             int  `json:"absState"`
-	AllowedTyresOut      int  `json:"allowedTyresOut"`
-	AutoClutchAllowed    bool `json:"autoclutchAllowed"`
-	DamageMultiplier     int  `json:"damageMultiplier"`
-	ForceVirtualMirror   bool `json:"forceVirtualMirror"`
-	FuelRate             int  `json:"fuelRate"`
-	StabilityAllowed     bool `json:"stabilityAllowed"`
-	TractionControlState int  `json:"tcState"`
-	TyreBlanketsAllowed  bool `json:"tyreBlanketsAllowed"`
-	TyreWearRate         int  `json:"tyreWearRate"`
+	ABSState             FactoryAssist `json:"absState"`
+	AllowedTyresOut      int           `json:"allowedTyresOut"`
+	AutoClutchAllowed    bool          `json:"autoclutchAllowed"`
+	DamageMultiplier     int           `json:"damageMultiplier"`
+	ForceVirtualMirror   bool          `json:"forceVirtualMirror"`
+	FuelRate             int           `json:"fuelRate"`
+	StabilityAllowed     bool          `json:"stabilityAllowed"`
+	TractionControlState FactoryAssist `json:"tcState"`
+	TyreBlanketsAllowed  bool          `json:"tyreBlanketsAllowed"`
+	TyreWearRate         int           `json:"tyreWearRate"`
 }
 
 type CMContent struct {
 	Cars  map[string]ContentURL `json:"cars"`
 	Track ContentURL            `json:"track"`
+
+	// @TODO not functional
+	Password bool `json:"password"`
 }
 
 type ContentURL struct {
@@ -118,7 +124,7 @@ func NewContentManagerWrapper(store Store, carManager *CarManager, trackManager 
 	}
 }
 
-func (cmw *ContentManagerWrapper) NewCMContent(cars []string, trackName string) (*CMContent, error) {
+func (cmw *ContentManagerWrapper) NewCMContent(cars []string, trackName string, requirePassword bool) (*CMContent, error) {
 	carsMap := make(map[string]ContentURL)
 	var trackDownload string
 
@@ -146,14 +152,29 @@ func (cmw *ContentManagerWrapper) NewCMContent(cars []string, trackName string) 
 		Track: ContentURL{
 			URL: trackDownload,
 		},
+		Password: requirePassword,
 	}, nil
 }
 
 func (cmw *ContentManagerWrapper) UDPCallback(message udp.Message) {
-	switch m := message.(type) {
-	case udp.SessionInfo:
+	cmw.mutex.Lock()
+	defer cmw.mutex.Unlock()
+
+	if m, ok := message.(udp.SessionInfo); ok {
 		cmw.sessionInfo = m
 	}
+}
+
+type contentManagerDescriptionTemplateOpts struct {
+	GlobalServerConfig
+	CurrentRaceConfig
+	RaceEvent
+
+	EventDescription   string
+	ChampionshipPoints string
+	CarDownloads       string
+	TrackDownload      string
+	ServerName         string
 }
 
 func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
@@ -169,17 +190,21 @@ func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 		return err
 	}
 
-	if len(text) > 0 {
-		text += "\n\n"
-	}
-
-	text += eventDescriptionAsText
+	var champPoints string
 
 	if champ, ok := cmw.event.(*ActiveChampionship); ok {
 		if u := champ.GetURL(); u != "" {
-			text += fmt.Sprintf("\n\nView the Championship points here: %s", u)
+			champPoints = fmt.Sprintf("\n\nView the Championship points here: %s", u)
 		}
 	}
+
+	if raceWeekend, ok := cmw.event.(*ActiveRaceWeekend); ok {
+		if u := raceWeekend.GetURL(); u != "" && raceWeekend.ChampionshipID != uuid.Nil {
+			champPoints = fmt.Sprintf("\n\nView the Championship points here: %s", u)
+		}
+	}
+
+	var carDownloads string
 
 	for _, carName := range strings.Split(cmw.serverConfig.CurrentRaceConfig.Cars, ";") {
 		car, err := cmw.carManager.LoadCar(carName, nil)
@@ -193,8 +218,10 @@ func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 			continue
 		}
 
-		text += fmt.Sprintf("\n* %s Download: %s", car.Details.Name, car.Details.DownloadURL)
+		carDownloads += fmt.Sprintf("\n* %s Download: %s", car.Details.Name, car.Details.DownloadURL)
 	}
+
+	var trackDownload string
 
 	track, err := cmw.trackManager.GetTrackFromName(cmw.serverConfig.CurrentRaceConfig.Track)
 
@@ -206,29 +233,61 @@ func (cmw *ContentManagerWrapper) setDescriptionText(event RaceEvent) error {
 		if err != nil {
 			logrus.WithError(err).Debugf("Could not load meta data for: %s, skipping attaching download URL to Content Manager Wrapper", cmw.serverConfig.CurrentRaceConfig.Track)
 		} else if track.MetaData.DownloadURL != "" {
-			text += fmt.Sprintf("\n* %s Download: %s", track.Name, track.MetaData.DownloadURL)
+			trackDownload = fmt.Sprintf("\n* %s Download: %s", track.Name, track.MetaData.DownloadURL)
 		}
 	}
 
-	cmw.description = text
-
-	return nil
-}
-
-func (cmw *ContentManagerWrapper) Start(process ServerProcess, servePort int, serverConfig ServerConfig, entryList EntryList, event RaceEvent) error {
-	cmw.mutex.Lock()
-	defer cmw.mutex.Unlock()
-
-	logrus.Infof("Starting content manager wrapper server on port %d", servePort)
-
-	u, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", serverConfig.GlobalServerConfig.HTTPPort))
+	// interpret the custom template
+	t, err := template.New("cmDescription").Parse(text)
 
 	if err != nil {
 		return err
 	}
 
-	cmw.serverConfig = serverConfig
-	cmw.entryList = entryList
+	out := new(bytes.Buffer)
+
+	err = t.Execute(out, contentManagerDescriptionTemplateOpts{
+		EventDescription:   eventDescriptionAsText,
+		ChampionshipPoints: champPoints,
+		CarDownloads:       carDownloads,
+		TrackDownload:      trackDownload,
+
+		CurrentRaceConfig:  cmw.serverConfig.CurrentRaceConfig,
+		GlobalServerConfig: cmw.serverConfig.GlobalServerConfig,
+		RaceEvent:          event,
+		ServerName:         cmw.serverConfig.GlobalServerConfig.Name,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	cmw.description = out.String()
+
+	return nil
+}
+
+func (cmw *ContentManagerWrapper) Start(servePort int, event RaceEvent) error {
+	cmw.mutex.Lock()
+
+	logrus.Infof("Starting content manager wrapper server on port %d", servePort)
+
+	serverOptions, err := cmw.store.LoadServerOptions()
+
+	if err != nil {
+		cmw.mutex.Unlock()
+		return err
+	}
+
+	u, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", serverOptions.HTTPPort))
+
+	if err != nil {
+		cmw.mutex.Unlock()
+		return err
+	}
+
+	cmw.serverConfig = ServerConfig{GlobalServerConfig: *serverOptions, CurrentRaceConfig: event.GetRaceConfig()}
+	cmw.entryList = event.GetEntryList()
 	cmw.event = event
 	cmw.reverseProxy = httputil.NewSingleHostReverseProxy(u)
 
@@ -239,6 +298,8 @@ func (cmw *ContentManagerWrapper) Start(process ServerProcess, servePort int, se
 	cmw.srv = &http.Server{Addr: fmt.Sprintf(":%d", servePort)}
 	cmw.srv.Handler = cmw
 
+	cmw.mutex.Unlock()
+
 	if err := cmw.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return err
 	}
@@ -247,6 +308,9 @@ func (cmw *ContentManagerWrapper) Start(process ServerProcess, servePort int, se
 }
 
 func (cmw *ContentManagerWrapper) Stop() {
+	cmw.mutex.Lock()
+	defer cmw.mutex.Unlock()
+
 	if cmw.srv == nil {
 		return
 	}
@@ -344,6 +408,9 @@ func (cmw *ContentManagerWrapper) getPlayers(guid string) (*ACHTTPPlayers, error
 }
 
 func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*ContentManagerWrapperData, error) {
+	cmw.mutex.Lock()
+	defer cmw.mutex.Unlock()
+
 	race := cmw.serverConfig.CurrentRaceConfig
 	global := cmw.serverConfig.GlobalServerConfig
 	live := cmw.sessionInfo
@@ -369,14 +436,27 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 
 	for entrantNum, entrant := range cmw.entryList.AsSlice() {
 		if entrantNum < len(players.Cars) {
-			players.Cars[entrantNum].ID = contentManagerIDChecksum(entrant.GUID)
+			players.Cars[entrantNum].ID, err = contentManagerIDChecksum(entrant.GUID)
+
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	var passwordChecksum [2]string
 
 	if global.Password != "" {
-		passwordChecksum[0] = contentManagerPasswordChecksum(global.Name, global.Password)
-		passwordChecksum[1] = contentManagerPasswordChecksum(global.Name, global.AdminPassword)
+		passwordChecksum[0], err = contentManagerPasswordChecksum(global.Name, global.Password)
+
+		if err != nil {
+			return nil, err
+		}
+
+		passwordChecksum[1], err = contentManagerPasswordChecksum(global.Name, global.AdminPassword)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	geoInfo, err := geoIP()
@@ -396,9 +476,18 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 	sessionInfo.Country = []string{geoInfo.CountryName, geoInfo.CountryCode}
 
 	var description string
+	var championshipID uuid.UUID
 
 	if champ, ok := cmw.event.(*ActiveChampionship); ok {
-		championship, err := cmw.store.LoadChampionship(champ.ChampionshipID.String())
+		championshipID = champ.ChampionshipID
+	}
+
+	if raceWeekend, ok := cmw.event.(*ActiveRaceWeekend); ok {
+		championshipID = raceWeekend.ChampionshipID
+	}
+
+	if championshipID != uuid.Nil {
+		championship, err := cmw.store.LoadChampionship(championshipID.String())
 
 		if err == nil {
 			description = championship.GetPlayerSummary(guid) + "\n\n"
@@ -409,7 +498,8 @@ func (cmw *ContentManagerWrapper) buildContentManagerDetails(guid string) (*Cont
 
 	description += cmw.description
 
-	cmContent, err := cmw.NewCMContent(sessionInfo.Cars, race.Track)
+	// @TODO ContentManagerWrapperContentRequiresPassword from config_ini.go
+	cmContent, err := cmw.NewCMContent(sessionInfo.Cars, race.Track, false)
 
 	if err != nil {
 		logrus.Errorf("Couldn't attach content download URL(s) through CM Wrapper!")
@@ -476,18 +566,26 @@ func getSolWeatherPrettyName(weatherName string) string {
 	return "Sol: " + solName
 }
 
-func contentManagerPasswordChecksum(serverName, password string) string {
+func contentManagerPasswordChecksum(serverName, password string) (string, error) {
 	h := sha1.New()
-	h.Write([]byte("apatosaur" + serverName + password))
+	_, err := h.Write([]byte("apatosaur" + serverName + password))
 
-	return hex.EncodeToString(h.Sum(nil))
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
-func contentManagerIDChecksum(guid string) string {
+func contentManagerIDChecksum(guid string) (string, error) {
 	h := sha1.New()
-	h.Write([]byte("antarcticfurseal" + guid))
+	_, err := h.Write([]byte("antarcticfurseal" + guid))
 
-	return hex.EncodeToString(h.Sum(nil))
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 var geoIPData *GeoIP
@@ -520,24 +618,30 @@ func geoIP() (*GeoIP, error) {
 	return geoIPData, nil
 }
 
-func getContentManagerJoinLink(config ServerConfig) (*url.URL, error) {
+func getContentManagerJoinLink(config GlobalServerConfig) (*url.URL, error) {
 	geoIP, err := geoIP()
 
 	if err != nil {
 		return nil, err
 	}
 
-	cmUrl, err := url.Parse(ContentManagerJoinLinkBase)
+	cmURL, err := url.Parse(ContentManagerJoinLinkBase)
 
 	if err != nil {
 		return nil, err
 	}
 
-	queryString := cmUrl.Query()
-	queryString.Set("ip", geoIP.IP)
-	queryString.Set("httpPort", strconv.Itoa(config.GlobalServerConfig.HTTPPort))
+	queryString := cmURL.Query()
 
-	cmUrl.RawQuery = queryString.Encode()
+	if config.ContentManagerIPOverride != "" {
+		queryString.Set("ip", config.ContentManagerIPOverride)
+	} else {
+		queryString.Set("ip", geoIP.IP)
+	}
 
-	return cmUrl, nil
+	queryString.Set("httpPort", strconv.Itoa(config.HTTPPort))
+
+	cmURL.RawQuery = queryString.Encode()
+
+	return cmURL, nil
 }
