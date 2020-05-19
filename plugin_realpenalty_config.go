@@ -55,7 +55,7 @@ func DefaultRealPenaltyAppConfig() RealPenaltyAppConfig {
 		},
 		PluginsRelay: RealPenaltyPluginsRelay{
 			OtherUDPPlugin: "",
-			UDPPort:        0,
+			UDPPort:        "",
 		},
 	}
 }
@@ -124,7 +124,7 @@ type RealPenaltyConfigGeneral struct {
 
 type RealPenaltyPluginsRelay struct {
 	OtherUDPPlugin string `ini:"OTHER_UDP_PLUGIN" show:"open" help:"list of all other UDP plugins connected to AC Server (format: IP:Ports - separated by a semicolon)"`
-	UDPPort        int    `ini:"UDP_PORT" show:"open" help:"list of listening UPD ports for all other plugins connected(separated by a semicolon)"`
+	UDPPort        string `ini:"UDP_PORT" show:"open" help:"list of listening UDP ports for all other plugins connected (separated by a semicolon)"`
 }
 
 type RealPenaltySettings struct {

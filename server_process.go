@@ -362,11 +362,13 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 
 		if kissMyRankEnabled {
 			// proxy from real penalty to kmr
-			realPenaltyOptions.RealPenaltyAppConfig.PluginsRelay.UDPPort, err = FreeUDPPort()
+			freeUDPPort, err := FreeUDPPort()
 
 			if err != nil {
 				return err
 			}
+
+			realPenaltyOptions.RealPenaltyAppConfig.PluginsRelay.UDPPort = strconv.Itoa(freeUDPPort)
 
 			pluginPort, err := FreeUDPPort()
 
@@ -417,7 +419,8 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 		if realPenaltyEnabled && realPenaltyOptions != nil {
 			// realPenalty is enabled, use its relay port
 			logrus.Infof("Real Penalty and KissMyRank both enabled. Using plugin forwarding method: [Previous Plugin/Server Manager] <-> [Real Penalty] <-> [KissMyRank]")
-			kissMyRankOptions.ACServerPluginLocalPort = realPenaltyOptions.RealPenaltyAppConfig.PluginsRelay.UDPPort
+
+			kissMyRankOptions.ACServerPluginLocalPort = formValueAsInt(realPenaltyOptions.RealPenaltyAppConfig.PluginsRelay.UDPPort)
 			kissMyRankOptions.ACServerPluginAddressPort = formValueAsInt(strings.Split(realPenaltyOptions.RealPenaltyAppConfig.PluginsRelay.OtherUDPPlugin, ":")[1])
 		} else if strackerEnabled {
 			// stracker is enabled, use its forwarding port
