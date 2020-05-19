@@ -388,6 +388,9 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 
 		err = sp.startPlugin(wd, &CommandPlugin{
 			Executable: RealPenaltyExecutablePath(),
+			Arguments: []string{
+				"--print_on",
+			},
 		})
 
 		if err != nil {
@@ -746,7 +749,7 @@ func (lb *logBuffer) String() string {
 	lb.mutex.Lock()
 	defer lb.mutex.Unlock()
 
-	return lb.buf.String()
+	return strings.Replace(lb.buf.String(), "\n\n", "\n", -1)
 }
 
 func FreeUDPPort() (int, error) {
