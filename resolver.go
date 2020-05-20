@@ -49,6 +49,7 @@ type Resolver struct {
 	strackerHandler             *StrackerHandler
 	healthCheck                 *HealthCheck
 	kissMyRankHandler           *KissMyRankHandler
+	realPenaltyHandler          *RealPenaltyHandler
 }
 
 func NewResolver(templateLoader TemplateLoader, reloadTemplates bool, store Store) (*Resolver, error) {
@@ -505,6 +506,19 @@ func (r *Resolver) resolveKissMyRankHandler() *KissMyRankHandler {
 	return r.kissMyRankHandler
 }
 
+func (r *Resolver) resolveRealPenaltyHandler() *RealPenaltyHandler {
+	if r.realPenaltyHandler != nil {
+		return r.realPenaltyHandler
+	}
+
+	r.realPenaltyHandler = NewRealPenaltyHandler(
+		r.resolveBaseHandler(),
+		r.ResolveStore(),
+	)
+
+	return r.realPenaltyHandler
+}
+
 func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
 	return Router(
 		fs,
@@ -526,6 +540,7 @@ func (r *Resolver) ResolveRouter(fs http.FileSystem) http.Handler {
 		r.resolveStrackerHandler(),
 		r.resolveHealthCheck(),
 		r.resolveKissMyRankHandler(),
+		r.resolveRealPenaltyHandler(),
 	)
 }
 

@@ -15,7 +15,7 @@ require (
 	github.com/bwmarrin/discordgo v0.20.2
 	github.com/certifi/gocertifi v0.0.0-20200104152315-a6d78f326758 // indirect
 	github.com/cj123/caldav-go v0.0.0-20191202141705-5d30c27975e9
-	github.com/cj123/ini v1.43.0
+	github.com/cj123/ini v1.44.0
 	github.com/cj123/sessions v1.1.5
 	github.com/cj123/watcher v1.0.9
 	github.com/couchbase/vellum v0.0.0-20190829182332-ef2e028c01fd // indirect

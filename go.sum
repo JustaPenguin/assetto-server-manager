@@ -44,8 +44,8 @@ github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5P
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/cj123/caldav-go v0.0.0-20191202141705-5d30c27975e9 h1:xZlbepPe910UkjXnCnx+e6q2CuekYhOk9qeslTjjt70=
 github.com/cj123/caldav-go v0.0.0-20191202141705-5d30c27975e9/go.mod h1:qZv/7clqXmcRq9V5WBnibPqGV9O4NBHDTYZ1Mg9XOvc=
-github.com/cj123/ini v1.43.0 h1:ww0t1Kcz1tAyIPjU/BcsZuyOPvOVVgb1Q7YF7Y3cbrE=
-github.com/cj123/ini v1.43.0/go.mod h1:tgCpjdB9zHO3U/5Gnh3eDcjqfeevlVH2kmheMOnPiFc=
+github.com/cj123/ini v1.44.0 h1:fHj1qCrRgvNQZzX/omjsVKgDXqh1uevEriKWj3sJQIU=
+github.com/cj123/ini v1.44.0/go.mod h1:tgCpjdB9zHO3U/5Gnh3eDcjqfeevlVH2kmheMOnPiFc=
 github.com/cj123/sessions v1.1.5 h1:wWbgh9FwU/o53QJ6f/8PUEIHKQCghm9nZnGNOReUz2o=
 github.com/cj123/sessions v1.1.5/go.mod h1:DZy9PjoRy0ESlWywkQPAPlgZ5fAb3v+srKSSihnIKVU=
 github.com/cj123/watcher v1.0.9 h1:MmrpcW2QPxMsXfioURP4pXHrHlmSp1kWY+sVD/qd1no=

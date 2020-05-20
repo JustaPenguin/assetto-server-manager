@@ -21,6 +21,7 @@ function onChampionshipEventStart(encodedEvent, encodedChampionship, encodedClas
 
     -- Function block NOTE: this hook BLOCKS, make sure your functions don't loop forever!
     -- uncomment functions to enable them!
+
     --entryList = addBallastFromChampionshipPosition(entryList, standings, 50)
     --entryList = addBallastFromChampionshipEventPosition(championship, entryList, 100, 1, false)
 

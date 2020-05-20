@@ -46,6 +46,7 @@ import {faGasPump} from "@fortawesome/free-solid-svg-icons/faGasPump";
 import {faPuzzlePiece} from "@fortawesome/free-solid-svg-icons/faPuzzlePiece";
 import {faBalanceScale} from "@fortawesome/free-solid-svg-icons/faBalanceScale";
 import {faUsers} from "@fortawesome/free-solid-svg-icons/faUsers";
+import {faShieldAlt} from "@fortawesome/free-solid-svg-icons/faShieldAlt"
 import {faVideo} from "@fortawesome/free-solid-svg-icons/faVideo";
 
 library.add(
@@ -94,6 +95,7 @@ library.add(
     faPuzzlePiece,
     faBalanceScale,
     faUsers,
+    faShieldAlt,
     faVideo,
 );
 
