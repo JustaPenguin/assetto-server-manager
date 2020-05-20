@@ -340,8 +340,10 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 			return err
 		}
 
-		var port int
-		var response string
+		var (
+			port     int
+			response string
+		)
 
 		if !strackerEnabled {
 			// connect to the forwarding address
