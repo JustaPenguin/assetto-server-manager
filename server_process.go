@@ -383,6 +383,14 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 
 		realPenaltyOptions.RealPenaltyAppConfig.General.UDPPort = port
 		realPenaltyOptions.RealPenaltyAppConfig.General.UDPResponse = response
+		realPenaltyOptions.RealPenaltyAppConfig.General.ACServerPath = ServerInstallPath
+		realPenaltyOptions.RealPenaltyAppConfig.General.ACCFGFile = filepath.Join(ServerInstallPath, "cfg", "server_cfg.ini")
+		realPenaltyOptions.RealPenaltyAppConfig.General.ACTracksFolder = filepath.Join(ServerInstallPath, "content", "tracks")
+		realPenaltyOptions.RealPenaltyAppConfig.General.ACWeatherFolder = filepath.Join(ServerInstallPath, "content", "weather")
+		realPenaltyOptions.RealPenaltyAppConfig.General.AppFile = filepath.Join(RealPenaltyFolderPath(), "files", "app")
+		realPenaltyOptions.RealPenaltyAppConfig.General.ImagesFile = filepath.Join(RealPenaltyFolderPath(), "files", "images")
+		realPenaltyOptions.RealPenaltyAppConfig.General.SoundsFile = filepath.Join(RealPenaltyFolderPath(), "files", "sounds")
+		realPenaltyOptions.RealPenaltyAppConfig.General.TracksFolder = filepath.Join(RealPenaltyFolderPath(), "tracks")
 
 		if err := realPenaltyOptions.Write(); err != nil {
 			return err

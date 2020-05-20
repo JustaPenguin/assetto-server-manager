@@ -41,17 +41,9 @@ func DefaultRealPenaltyAppConfig() RealPenaltyAppConfig {
 	return RealPenaltyAppConfig{
 		General: RealPenaltyConfigGeneral{
 			EnableRealPenalty: false,
-			ACServerPath:      ServerInstallPath,
-			ACCFGFile:         filepath.Join(ServerInstallPath, "cfg", "server_cfg.ini"),
-			ACTracksFolder:    filepath.Join(ServerInstallPath, "content", "tracks"),
-			ACWeatherFolder:   filepath.Join(ServerInstallPath, "content", "weather"),
 			UDPPort:           0,
 			UDPResponse:       "",
 			AppTCPPort:        53000,
-			AppFile:           filepath.Join(RealPenaltyFolderPath(), "files", "app"),
-			ImagesFile:        filepath.Join(RealPenaltyFolderPath(), "files", "images"),
-			SoundsFile:        filepath.Join(RealPenaltyFolderPath(), "files", "sounds"),
-			TracksFolder:      filepath.Join(RealPenaltyFolderPath(), "tracks"),
 		},
 		PluginsRelay: RealPenaltyPluginsRelay{
 			OtherUDPPlugin: "",
@@ -116,10 +108,10 @@ type RealPenaltyConfigGeneral struct {
 	UDPResponse string `ini:"UDP_RESPONSE" show:"-" help:"Destination IP and UDP port for response - Set the same port in the cfg of the AC server, UDP_PLUGIN_LOCAL_PORT"`
 	AppTCPPort  int    `ini:"APP_TCP_PORT" show:"open" help:"Listening UDP port from AC app (to open in firewall/router). Must be one of 53000, 53001, 53002 to 530020, or the port of cfg AC server, HTTP_PORT + 27. The app will try all these ports on the ac server's ip address (until the right connection is found)"`
 
-	AppFile      string `ini:"APP_FILE" show:"open" help:"Path and file names of the app from the plugin package"`
-	ImagesFile   string `ini:"IMAGES_FILE" show:"open" help:"Path and file names of the images from the plugin package"`
-	SoundsFile   string `ini:"SOUNDS_FILE" show:"open" help:"Path and file names of the sounds from the plugin package"`
-	TracksFolder string `ini:"TRACKS_FOLDER" show:"open" help:"Folder of the additional .ini track files"`
+	AppFile      string `ini:"APP_FILE" show:"-" help:"Path and file names of the app from the plugin package"`
+	ImagesFile   string `ini:"IMAGES_FILE" show:"-" help:"Path and file names of the images from the plugin package"`
+	SoundsFile   string `ini:"SOUNDS_FILE" show:"-" help:"Path and file names of the sounds from the plugin package"`
+	TracksFolder string `ini:"TRACKS_FOLDER" show:"-" help:"Folder of the additional .ini track files"`
 }
 
 type RealPenaltyPluginsRelay struct {
