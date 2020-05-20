@@ -10,7 +10,7 @@ import (
 )
 
 // handles configuration of the realpenalty plugin
-// https://www.racedepartment.com/downloads/real-penalty-tool.29591/updates#resource-update-56177
+// https://www.racedepartment.com/downloads/real-penalty-tool.29591/
 
 const (
 	realPenaltyBaseFolderName = "realpenalty"

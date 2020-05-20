@@ -25,6 +25,7 @@ Added:
 * Added a popup to Custom Races, Championships and Race Weekends that drivers can use to view details of the event.
 * You can now activate a timed scanner for new Scheduled Events that you have created/imported manually. Experimental, and only intended for advanced users.
 * Added a new option in config.yml (`use_car_name_cache`). When enabled, this loads the name for all cars into memory and uses them where possible in web pages. This improves the accuracy of car names (e.g. "Mercedes 190 EVO2" becomes "Mercedes-Benz 190E EVO II") 
+* Real Penalty Tool integration! You can now use Server Manager to configure [Real Penalty Tool](https://www.racedepartment.com/downloads/real-penalty-tool.29591/). Much like the sTracker and KissMyRank integration, the ports and forwarding for this plugin will be automatically configured.
 
 Fixed:
 
