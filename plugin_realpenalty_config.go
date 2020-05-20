@@ -112,19 +112,19 @@ type RealPenaltyConfigGeneral struct {
 	ACTracksFolder  string `ini:"AC_TRACKS_FOLDER" show:"-" help:"Path of the AC server tracks folder. If not found the plugin sets it automatic from AC_SERVER_PATH"`
 	ACWeatherFolder string `ini:"AC_WEATHER_FOLDER" show:"-" help:"Path of the AC server weather folder. If not found the plugin sets it automatic from AC_SERVER_PATH"`
 
-	UDPPort     int    `ini:"UDP_PORT" show:"-" help:"listening UDP port - Set the same port (without IP) of cfg of the server, UDP_PLUGIN_ADDRESS "`
-	UDPResponse string `ini:"UDP_RESPONSE" show:"-" help:"destination IP and UDP port for response - Set the same port in the cfg of the AC server, UDP_PLUGIN_LOCAL_PORT"`
-	AppTCPPort  int    `ini:"APP_TCP_PORT" show:"open" help:"listening UDP port from AC app (to open in firewall/router). Must be one of 53000, 53001, 53002 to 530020, or the port of cfg AC server, HTTP_PORT + 27. The app will try all these ports on the ac server's ip address (until the right connection is found)"`
+	UDPPort     int    `ini:"UDP_PORT" show:"-" help:"Listening UDP port - Set the same port (without IP) of cfg of the server, UDP_PLUGIN_ADDRESS "`
+	UDPResponse string `ini:"UDP_RESPONSE" show:"-" help:"Destination IP and UDP port for response - Set the same port in the cfg of the AC server, UDP_PLUGIN_LOCAL_PORT"`
+	AppTCPPort  int    `ini:"APP_TCP_PORT" show:"open" help:"Listening UDP port from AC app (to open in firewall/router). Must be one of 53000, 53001, 53002 to 530020, or the port of cfg AC server, HTTP_PORT + 27. The app will try all these ports on the ac server's ip address (until the right connection is found)"`
 
-	AppFile      string `ini:"APP_FILE" show:"open" help:"path and file names of the app from the plugin package"`
-	ImagesFile   string `ini:"IMAGES_FILE" show:"open" help:"path and file names of the images from the plugin package"`
-	SoundsFile   string `ini:"SOUNDS_FILE" show:"open" help:"path and file names of the sounds from the plugin package"`
-	TracksFolder string `ini:"TRACKS_FOLDER" show:"open" help:"folder of the additional .ini track files"`
+	AppFile      string `ini:"APP_FILE" show:"open" help:"Path and file names of the app from the plugin package"`
+	ImagesFile   string `ini:"IMAGES_FILE" show:"open" help:"Path and file names of the images from the plugin package"`
+	SoundsFile   string `ini:"SOUNDS_FILE" show:"open" help:"Path and file names of the sounds from the plugin package"`
+	TracksFolder string `ini:"TRACKS_FOLDER" show:"open" help:"Folder of the additional .ini track files"`
 }
 
 type RealPenaltyPluginsRelay struct {
-	OtherUDPPlugin string `ini:"OTHER_UDP_PLUGIN" show:"open" help:"list of all other UDP plugins connected to AC Server (format: IP:Ports - separated by a semicolon)"`
-	UDPPort        string `ini:"UDP_PORT" show:"open" help:"list of listening UDP ports for all other plugins connected (separated by a semicolon)"`
+	OtherUDPPlugin string `ini:"OTHER_UDP_PLUGIN" show:"open" help:"List of all other UDP plugins connected to AC Server (format: IP:Ports - separated by a semicolon)"`
+	UDPPort        string `ini:"UDP_PORT" show:"open" help:"List of listening UDP ports for all other plugins connected (separated by a semicolon)"`
 }
 
 type RealPenaltySettings struct {
@@ -334,11 +334,11 @@ type RealPenaltySettingsSpeeding struct {
 	PenaltyType0       string `ini:"PENALTY_TYPE_0" help:"Penalty type for speeding. dt = drive through, sgn = stop and go n seconds, n = n seconds to add at the end of the race, dsq = disqualification --> kick"`
 	SpeedLimitPenalty0 int    `ini:"SPEED_LIMIT_PENALTY_0" help:""`
 
-	PenaltyType1       string `ini:"PENALTY_TYPE_0" help:"Penalty type for speeding. dt = drive through, sgn = stop and go n seconds, n = n seconds to add at the end of the race, dsq = disqualification --> kick"`
-	SpeedLimitPenalty1 int    `ini:"SPEED_LIMIT_PENALTY_0" help:""`
+	PenaltyType1       string `ini:"PENALTY_TYPE_1" help:"Penalty type for speeding. dt = drive through, sgn = stop and go n seconds, n = n seconds to add at the end of the race, dsq = disqualification --> kick"`
+	SpeedLimitPenalty1 int    `ini:"SPEED_LIMIT_PENALTY_1" help:""`
 
-	PenaltyType2       string `ini:"PENALTY_TYPE_0" help:"Penalty type for speeding. dt = drive through, sgn = stop and go n seconds, n = n seconds to add at the end of the race, dsq = disqualification --> kick"`
-	SpeedLimitPenalty2 int    `ini:"SPEED_LIMIT_PENALTY_0" help:""`
+	PenaltyType2       string `ini:"PENALTY_TYPE_2" help:"Penalty type for speeding. dt = drive through, sgn = stop and go n seconds, n = n seconds to add at the end of the race, dsq = disqualification --> kick"`
+	SpeedLimitPenalty2 int    `ini:"SPEED_LIMIT_PENALTY_2" help:""`
 }
 
 type RealPenaltySettingsCrossing struct {
@@ -566,6 +566,6 @@ type RealPenaltyACSettingsHelicorsa struct {
 	FrontFadeOutArc   float64 `ini:"FRONT_FADE_OUT_ARC" help:"Fade out cars in front of the player in an arc of X degrees (0 to disable)"`
 	FrontFadeAngle    float64 `ini:"FRONT_FADE_ANGLE" help:"If a car in front is faded out, how soft should it fade? (again in degrees, 0 to disable = on/off)"`
 
-	CarLength float64 `ini:"CAR_LENGHT" help:"how long are the cars (in meters). Sorry, no data from AC available"` // this is misspelt in the example ac_settings.ini
-	CarWidth  float64 `ini:"CAR_WIDTH" help:"how wide are the cars (in meters). Sorry, no data from AC available"`
+	CarLength float64 `ini:"CAR_LENGHT" help:"How long are the cars (in meters). Sorry, no data from AC available"` // this is misspelt in the example ac_settings.ini
+	CarWidth  float64 `ini:"CAR_WIDTH" help:"How wide are the cars (in meters). Sorry, no data from AC available"`
 }
