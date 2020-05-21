@@ -12,7 +12,6 @@ import (
 )
 
 type CustomRace struct {
-	ScheduledEvents map[ServerID]*ScheduledEventBase
 	ScheduledEventBase
 
 	Name                            string
@@ -35,6 +34,8 @@ type CustomRace struct {
 
 	RaceConfig CurrentRaceConfig
 	EntryList  EntryList
+
+	ScheduledEvents map[ServerID]*ScheduledEventBase
 }
 
 func (cr *CustomRace) GetRaceConfig() CurrentRaceConfig {
