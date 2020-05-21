@@ -58,12 +58,14 @@ func NewRaceManager(
 	raceControl *RaceControl,
 ) *RaceManager {
 	return &RaceManager{
-		store:               store,
-		process:             process,
-		carManager:          carManager,
-		trackManager:        trackManager,
-		notificationManager: notificationManager,
-		raceControl:         raceControl,
+		store:                    store,
+		process:                  process,
+		carManager:               carManager,
+		trackManager:             trackManager,
+		notificationManager:      notificationManager,
+		raceControl:              raceControl,
+		customRaceStartTimers:    make(map[string]*when.Timer),
+		customRaceReminderTimers: make(map[string]*when.Timer),
 	}
 }
 
@@ -1615,9 +1617,6 @@ func (rm *RaceManager) clearLoopedRaceSessionTypes() {
 }
 
 func (rm *RaceManager) InitScheduledRaces() error {
-	rm.customRaceStartTimers = make(map[string]*when.Timer)
-	rm.customRaceReminderTimers = make(map[string]*when.Timer)
-
 	races, err := rm.store.ListCustomRaces()
 
 	if err != nil {
@@ -1644,7 +1643,25 @@ func (rm *RaceManager) InitScheduledRaces() error {
 			continue
 		}
 
+		newScheduledEvent := false
+
+		if timer, ok := rm.customRaceStartTimers[race.UUID.String()]; ok {
+			timer.Stop()
+			delete(rm.customRaceStartTimers, race.UUID.String())
+		} else {
+			newScheduledEvent = true
+		}
+
+		if timer, ok := rm.customRaceReminderTimers[race.UUID.String()]; ok {
+			timer.Stop()
+			delete(rm.customRaceReminderTimers, race.UUID.String())
+		}
+
 		if race.Scheduled.After(time.Now()) {
+			if newScheduledEvent {
+				logrus.Infof("Adding new event (%s) to scheduled start timers, starts at %s", race.Name, race.Scheduled.String())
+			}
+
 			// add a scheduled event on date
 			rm.customRaceStartTimers[race.UUID.String()], err = when.When(race.Scheduled, func() {
 				err := rm.StartScheduledRace(race)
@@ -1656,8 +1673,6 @@ func (rm *RaceManager) InitScheduledRaces() error {
 
 			if err != nil {
 				logrus.WithError(err).Error("Could not set up scheduled race timer")
-			} else {
-				logrus.Infof("Added new race (%s) to scheduled start timers, starts at %s", race.Name, race.Scheduled.String())
 			}
 
 			if rm.notificationManager.HasNotificationReminders() {
