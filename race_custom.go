@@ -5,34 +5,76 @@ import (
 	"net/http"
 	"time"
 
+	"4d63.com/tz"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
 type CustomRace struct {
+<<<<<<< Updated upstream
+=======
+	ScheduledEvents map[ServerID]*ScheduledEventBase
+>>>>>>> Stashed changes
 	ScheduledEventBase
 
 	Name                            string
 	HasCustomName, OverridePassword bool
 	ReplacementPassword             string
 
+<<<<<<< Updated upstream
 	Created       time.Time
 	Updated       time.Time
 	Deleted       time.Time
 	UUID          uuid.UUID
 	Starred, Loop bool
+=======
+	Created time.Time
+	Updated time.Time
+	Deleted time.Time
+	UUID    uuid.UUID
+	Starred bool
+	// Deprecated: Replaced by LoopServer
+	Loop       bool
+	LoopServer map[ServerID]bool
+
+	TimeAttackCombinedResultFile string
+
+	ForceStopTime        int
+	ForceStopWithDrivers bool
+>>>>>>> Stashed changes
 
 	RaceConfig CurrentRaceConfig
 	EntryList  EntryList
 }
 
+func (cr *CustomRace) GetRaceConfig() CurrentRaceConfig {
+	return cr.RaceConfig
+}
+
+func (cr *CustomRace) GetEntryList() EntryList {
+	return cr.EntryList
+}
+
+func (cr *CustomRace) IsLooping() bool {
+	if cr.LoopServer == nil {
+		return false
+	}
+
+	return cr.LoopServer[serverID]
+}
+
 func (cr *CustomRace) EventName() string {
 	if cr.HasCustomName {
 		return cr.Name
+<<<<<<< Updated upstream
 	} else {
 		return trackSummary(cr.RaceConfig.Track, cr.RaceConfig.TrackLayout)
+=======
+>>>>>>> Stashed changes
 	}
+
+	return trackSummary(cr.RaceConfig.Track, cr.RaceConfig.TrackLayout)
 }
 
 func (cr *CustomRace) OverrideServerPassword() bool {
@@ -47,10 +89,24 @@ func (cr *CustomRace) IsChampionship() bool {
 	return false
 }
 
+<<<<<<< Updated upstream
+=======
+func (cr *CustomRace) IsPractice() bool {
+	return false
+}
+
+>>>>>>> Stashed changes
 func (cr *CustomRace) IsRaceWeekend() bool {
 	return false
 }
 
+<<<<<<< Updated upstream
+=======
+func (cr *CustomRace) IsTimeAttack() bool {
+	return cr.RaceConfig.TimeAttack
+}
+
+>>>>>>> Stashed changes
 func (cr *CustomRace) HasSignUpForm() bool {
 	return false
 }
@@ -79,6 +135,17 @@ func (cr *CustomRace) ReadOnlyEntryList() EntryList {
 	return cr.EntryList
 }
 
+<<<<<<< Updated upstream
+=======
+func (cr *CustomRace) GetForceStopTime() time.Duration {
+	return time.Minute * time.Duration(cr.ForceStopTime)
+}
+
+func (cr *CustomRace) GetForceStopWithDrivers() bool {
+	return cr.ForceStopWithDrivers
+}
+
+>>>>>>> Stashed changes
 type CustomRaceHandler struct {
 	*BaseHandler
 
@@ -131,7 +198,11 @@ func (crh *CustomRaceHandler) submit(w http.ResponseWriter, r *http.Request) {
 	err := crh.raceManager.SetupCustomRace(r)
 
 	if err != nil {
+<<<<<<< Updated upstream
 		logrus.WithError(err).Errorf("couldn't apply quick race")
+=======
+		logrus.WithError(err).Errorf("couldn't apply custom race")
+>>>>>>> Stashed changes
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -166,7 +237,7 @@ func (crh *CustomRaceHandler) schedule(w http.ResponseWriter, r *http.Request) {
 	timeString := r.FormValue("event-schedule-time")
 	timezone := r.FormValue("event-schedule-timezone")
 
-	location, err := time.LoadLocation(timezone)
+	location, err := tz.LoadLocation(timezone)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("could not find location: %s", location)
@@ -207,7 +278,11 @@ func (crh *CustomRaceHandler) removeSchedule(w http.ResponseWriter, r *http.Requ
 }
 
 func (crh *CustomRaceHandler) start(w http.ResponseWriter, r *http.Request) {
+<<<<<<< Updated upstream
 	err := crh.raceManager.StartCustomRace(chi.URLParam(r, "uuid"), false)
+=======
+	_, err := crh.raceManager.StartCustomRace(chi.URLParam(r, "uuid"), false)
+>>>>>>> Stashed changes
 
 	if err != nil {
 		logrus.WithError(err).Errorf("couldn't apply custom race")

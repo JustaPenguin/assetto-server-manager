@@ -295,6 +295,13 @@ func Router(
 		r.HandleFunc("/broadcast-chat", raceControlHandler.broadcastChat)
 		r.HandleFunc("/admin-command", raceControlHandler.adminCommand)
 		r.HandleFunc("/kick-user", raceControlHandler.kickUser)
+<<<<<<< Updated upstream
+=======
+		r.HandleFunc("/send-chat", raceControlHandler.sendChat)
+		r.HandleFunc("/next-weather", raceControlHandler.nextWeather)
+		r.HandleFunc("/test-weather", raceControlHandler.testWeather)
+		r.HandleFunc("/countdown", raceControlHandler.countdown)
+>>>>>>> Stashed changes
 
 		r.HandleFunc("/stracker/options", strackerHandler.options)
 	})
