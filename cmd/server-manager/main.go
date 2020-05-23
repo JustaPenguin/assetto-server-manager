@@ -86,6 +86,8 @@ func main() {
 
 	//go startUDPReplay("./assetto/session-logs/brandshatch_sillyold.db")
 
+	servermanager.ExampleLocaliser()
+
 	listener, err := net.Listen("tcp", config.HTTP.Hostname)
 
 	if err != nil {
