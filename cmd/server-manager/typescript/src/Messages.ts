@@ -1,5 +1,9 @@
 export class Messages {
-    public static initSummerNote() {
+    public constructor() {
+        this.initSummerNote();
+    }
+
+    private initSummerNote(): void {
         let $contentManagerMessageContent = $("#ContentManagerMessageContent");
 
         if (!$contentManagerMessageContent.length) {

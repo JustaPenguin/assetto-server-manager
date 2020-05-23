@@ -3,27 +3,45 @@ import moment = require("moment");
 const nameRegex = /^[A-Za-z]{0,5}[0-9]+/;
 
 export function prettifyName(name: string, acronyms: boolean = true): string {
-    if (!name || name.length === 0) {
-        return "";
+    try {
+        if (!name || name.length === 0) {
+            return "";
+        }
+
+        let parts = name.split("_");
+
+        if (parts[0] === "ks") {
+            parts.shift();
+        }
+
+        for (let i = 0; i < parts.length; i++) {
+            if ((acronyms && parts[i].length <= 3) || (acronyms && parts[i].match(nameRegex))) {
+                parts[i] = parts[i].toUpperCase();
+            } else {
+                let split = parts[i].split(' ');
+
+                parts[i] = split.map(w => w.length > 0 ? w[0].toUpperCase() + w.substr(1).toLowerCase() : "").join(' ');
+            }
+        }
+
+        return parts.join(" ");
+    } catch (error) {
+        return name;
     }
+}
 
-    let parts = name.split("_");
+export function makeCarString(cars) {
+    let out = "";
 
-    if (parts[0] === "ks") {
-        parts.shift();
-    }
-
-    for (let i = 0; i < parts.length; i++) {
-        if ((acronyms && parts[i].length <= 3) || (acronyms && parts[i].match(nameRegex))) {
-            parts[i] = parts[i].toUpperCase();
+    for (let index = 0; index < cars.length; index++) {
+        if (index === 0) {
+            out = " - " + prettifyName(cars[index], true)
         } else {
-            parts[i] = parts[i].split(' ')
-                .map(w => w[0].toUpperCase() + w.substr(1).toLowerCase())
-                .join(' ');
+            out = out + ", " + prettifyName(cars[index], true)
         }
     }
 
-    return parts.join(" ")
+    return out;
 }
 
 export function msToTime(s: number, millisecondPrecision: boolean = true, trimLeadingZeroes: boolean = true): string {
@@ -43,10 +61,10 @@ export function msToTime(s: number, millisecondPrecision: boolean = true, trimLe
 
     if (trimLeadingZeroes && formatted.startsWith("00:")) {
         // remove leading hours
-        return out+formatted.substring(3);
+        return out + formatted.substring(3);
     }
 
-    return out+formatted;
+    return out + formatted;
 }
 
 function pad(num, size) {
@@ -55,4 +73,20 @@ function pad(num, size) {
         s = "0" + s;
     }
     return s;
+}
+
+export function ordinalSuffix(i: number): string {
+    let j = i % 10,
+        k = i % 100;
+    if (j === 1 && k !== 11) {
+        return i + "st";
+    }
+    if (j === 2 && k !== 12) {
+        return i + "nd";
+    }
+    if (j === 3 && k !== 13) {
+        return i + "rd";
+    }
+
+    return i + "th";
 }
