@@ -123,13 +123,10 @@ func InitWithResolver(resolver *Resolver) error {
 	raceManager := resolver.resolveRaceManager()
 	go panicCapture(raceManager.LoopRaces)
 
-	err = raceManager.InitScheduledRaces()
 
-	if err != nil {
-		return err
-	}
+	scheduler := resolver.resolveScheduler()
 
-	err = championshipManager.InitScheduledChampionships()
+	err = scheduler.Init()
 
 	if err != nil {
 		return err

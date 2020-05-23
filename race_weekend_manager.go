@@ -110,6 +110,22 @@ func (rwm *RaceWeekendManager) LoadRaceWeekend(id string) (*RaceWeekend, error) 
 	return raceWeekend, nil
 }
 
+func (rwm *RaceWeekendManager) FindRaceWeekendForSession(sessionID string) (*RaceWeekend, *RaceWeekendSession, error) {
+	raceWeekends, err := rwm.ListRaceWeekends()
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, raceWeekend := range raceWeekends {
+		if session, err := raceWeekend.FindSessionByID(sessionID); err == nil {
+			return raceWeekend, session, nil
+		}
+	}
+
+	return nil, nil, ErrRaceWeekendNotFound
+}
+
 func (rwm *RaceWeekendManager) BuildRaceWeekendTemplateOpts(r *http.Request) (*RaceTemplateVars, error) {
 	opts, err := rwm.raceManager.BuildRaceOpts(r)
 

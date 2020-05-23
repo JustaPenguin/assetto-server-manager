@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"github.com/teambition/rrule-go"
 	"html/template"
 	"math/rand"
 	"sort"
@@ -570,6 +571,8 @@ type RaceWeekendSession struct {
 	Results                    *SessionResults
 	StartWhenParentHasFinished bool
 
+	Scheduled     time.Time
+
 	Points map[uuid.UUID]*ChampionshipPoints
 
 	isBase bool
@@ -623,6 +626,55 @@ func (rws *RaceWeekendSession) GetRecurrenceRule() (*rrule.RRule, error) {
 
 func (rws *RaceWeekendSession) SetRecurrenceRule(input string) error {
 	return nil // no-op
+}
+
+func (rws *RaceWeekendSession) ClearRecurrenceRule() {
+	// no-op
+}
+
+func (rws *RaceWeekendSession) EventName() string {
+	return fmt.Sprintf("Race Weekend Session at %s", trackSummary(rws.RaceConfig.Track, rws.RaceConfig.TrackLayout))
+}
+
+func (rws *RaceWeekendSession) GetID() uuid.UUID {
+	return rws.ID
+}
+
+func (rws *RaceWeekendSession) GetRaceSetup() CurrentRaceConfig {
+	return rws.RaceConfig
+}
+
+func (rws *RaceWeekendSession) GetScheduledTime() time.Time {
+	return rws.Scheduled
+}
+
+func (rws *RaceWeekendSession) GetSummary() string {
+	return ""
+}
+
+func (rws *RaceWeekendSession) GetURL() string {
+	panic("implement me")
+}
+
+func (rws *RaceWeekendSession) HasSignUpForm() bool {
+	return false
+}
+
+func (rws *RaceWeekendSession) ReadOnlyEntryList() EntryList {
+	return make(EntryList) // @TODO?
+}
+
+func (rws *RaceWeekendSession) HasRecurrenceRule() bool {
+	return false
+}
+
+func (rws *RaceWeekendSession) GetRecurrenceRule() (*rrule.RRule, error) {
+	return nil, nil
+}
+
+func (rws *RaceWeekendSession) SetRecurrenceRule(input string) error {
+	// no-op
+	return nil
 }
 
 func (rws *RaceWeekendSession) ClearRecurrenceRule() {
