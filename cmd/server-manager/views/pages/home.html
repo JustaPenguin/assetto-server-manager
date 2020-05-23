@@ -1,4 +1,4 @@
-{{/* gotype: github.com/JustaPenguin/assetto-server-manager.homeTemplateVars */}}
+{{/* gotype: github.com/cj123/assetto-server-manager.homeTemplateVars */}}
 
 {{ define "title" }}Home{{ end }}
 
@@ -8,9 +8,9 @@
     {{ with .RaceDetails }}
         <div class="card mb-4">
             {{ if $.ServerEvent.IsChampionship }}
-                <h5 class="card-header">Championship {{ if $.ServerEvent.IsPractice }}Practice{{ else }}Event{{ end }} in Progress</h5>
+                <h5 class="card-header">Championship Event in Progress</h5>
             {{ else if $.ServerEvent.IsRaceWeekend }}
-                <h5 class="card-header">Race Weekend {{ if $.ServerEvent.IsPractice }}Practice{{ end }} in Progress</h5>
+                <h5 class="card-header">Race Weekend in Progress</h5>
             {{ else }}
                 <h5 class="card-header">Event in Progress</h5>
             {{ end }}
@@ -32,12 +32,10 @@
                                     href="/process/restart"
                                     class="btn btn-warning"
 
-                                    {{ if not $.ServerEvent.IsPractice }}
-                                        {{ if $.ServerEvent.IsChampionship }}
-                                            onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
-                                        {{ else if $.ServerEvent.IsRaceWeekend }}
-                                            onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
-                                        {{ end }}
+                                    {{ if $.ServerEvent.IsChampionship }}
+                                        onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                    {{ else if $.ServerEvent.IsRaceWeekend }}
+                                        onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
                                     {{ end }}
                                 >
                                     Restart Event
@@ -46,12 +44,10 @@
                                     href="/process/stop"
                                     class="btn btn-danger"
 
-                                    {{ if not $.ServerEvent.IsPractice }}
-                                        {{ if $.ServerEvent.IsChampionship }}
-                                            onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
-                                        {{ else if $.ServerEvent.IsRaceWeekend }}
-                                            onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
-                                        {{ end }}
+                                    {{ if $.ServerEvent.IsChampionship }}
+                                        onClick="return confirm('I understand that this will cancel the current championship event and all progress will be permanently lost');"
+                                    {{ else if $.ServerEvent.IsRaceWeekend }}
+                                        onClick="return confirm('I understand that this will cancel the current race weekend session and all progress will be permanently lost');"
                                     {{ end }}
                                 >
                                     Stop Event
@@ -74,6 +70,7 @@
     <h2>Races</h2>
 
     <div class="row">
+
         {{ if WriteAccess }}
             <div class="col-md-6 col-lg-4 mt-4">
                 <a class="card" href="/quick">
@@ -90,23 +87,22 @@
                     </div>
                 </a>
             </div>
-        {{ end }}
+            <div class="col-md-6 col-lg-4 mt-4">
+                <a class="card" href="/custom">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-5">
+                                <h1 class="text-center"><i class="fas fa-palette fa-2x"></i></h1>
+                            </div>
 
-        <div class="col-md-6 col-lg-4 mt-4">
-            <a class="card" href="/custom">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-5">
-                            <h1 class="text-center"><i class="fas fa-palette fa-2x"></i></h1>
-                        </div>
-
-                        <div class="col-7">
-                            <h3>Custom Races</h3>
+                            <div class="col-7">
+                                <h3>Custom Races</h3>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </a>
-        </div>
+                </a>
+            </div>
+        {{ end }}
 
         <div class="col-md-6 col-lg-4 mt-4">
             <a class="card" href="/championships">
@@ -345,43 +341,11 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-5">
-                                    <h1 class="text-center"><i class="fas fa-stopwatch fa-2x"></i></h1>
+                                    <h1 class="text-center"><i class="fas fa-chart-bar fa-2x"></i></h1>
                                 </div>
 
                                 <div class="col-7">
                                     <h3>STracker</h3>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-
-                <div class="col-md-6 col-lg-4 mt-4">
-                    <a class="card" href="/kissmyrank/options">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-5">
-                                    <h1 class="text-center"><i class="fas fa-balance-scale fa-2x"></i></h1>
-                                </div>
-
-                                <div class="col-7">
-                                    <h3>KissMyRank</h3>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-
-                <div class="col-md-6 col-lg-4 mt-4">
-                    <a class="card" href="/realpenalty/options">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-5">
-                                    <h1 class="text-center"><i class="fas fa-shield-alt fa-2x"></i></h1>
-                                </div>
-
-                                <div class="col-7">
-                                    <h3>Real Penalty</h3>
                                 </div>
                             </div>
                         </div>
