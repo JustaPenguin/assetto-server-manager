@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"net"
 	"net/http"
 	"net/url"
 	"path"
@@ -19,14 +18,12 @@ import (
 	"time"
 
 	"github.com/Masterminds/sprig"
-	"github.com/getsentry/raven-go"
-	"github.com/go-chi/chi"
 	"github.com/mattn/go-zglob"
 	"github.com/sirupsen/logrus"
 )
 
-// BuildVersion is the time Server Manager was built at
-var BuildVersion string
+// BuildTime is the time Server Manager was built at
+var BuildTime string
 
 type TemplateLoader interface {
 	Init() error
@@ -84,86 +81,20 @@ func (fs *filesystemTemplateLoader) Templates(funcs template.FuncMap) (map[strin
 	return templates, nil
 }
 
-func shortenTrackName(name string) string {
-	nameParts := strings.Split(name, " ")
-
-	out := nameParts[0]
-
-	if len(out) > 4 {
-		out = out[0:4]
-	}
-
-	return out
-}
-
-var UseShortenedDriverNames = true
-
-func shortenDriverName(name string) string {
-	nameParts := strings.Split(name, " ")
-
-	if len(nameParts) > 1 && len(nameParts[len(nameParts)-1]) > 1 {
-		nameParts[len(nameParts)-1] = nameParts[len(nameParts)-1][:1] + "."
-	}
-
-	return strings.Join(nameParts, " ")
-}
-
-func driverName(name string) string {
-	if UseShortenedDriverNames {
-		return shortenDriverName(name)
-	}
-
-	return name
-}
-
-func driverInitials(name string) string {
-
-	name = strings.TrimSpace(name)
-
-	if UseShortenedDriverNames {
-		nameParts := strings.Split(name, " ")
-
-		if len(nameParts) == 1 {
-			return name
-		}
-
-		for i := range nameParts {
-			if len(nameParts[i]) > 0 {
-				nameParts[i] = nameParts[i][:1]
-			}
-		}
-
-		return strings.ToUpper(strings.Join(nameParts, ""))
-	}
-
-	nameParts := strings.Split(name, " ")
-
-	if len(nameParts) > 0 && len(nameParts[len(nameParts)-1]) >= 3 {
-		return strings.ToUpper(nameParts[len(nameParts)-1][:3])
-	}
-
-	return strings.ToUpper(name)
-}
-
 // Renderer is the template engine.
 type Renderer struct {
-	store   Store
-	process ServerProcess
-	loader  TemplateLoader
-
 	templates map[string]*template.Template
+
+	loader TemplateLoader
 
 	reload bool
 	mutex  sync.Mutex
 }
 
-func NewRenderer(loader TemplateLoader, store Store, process ServerProcess, reload bool) (*Renderer, error) {
+func NewRenderer(loader TemplateLoader, reload bool) (*Renderer, error) {
 	tr := &Renderer{
-		store:   store,
-		process: process,
-		loader:  loader,
-
 		templates: make(map[string]*template.Template),
+		loader:    loader,
 		reload:    reload,
 	}
 
@@ -193,58 +124,33 @@ func (tr *Renderer) init() error {
 	}
 
 	funcs := sprig.FuncMap()
-	funcs["htmlAttr"] = func(s string) template.HTMLAttr {
-		return template.HTMLAttr(s)
-	}
 	funcs["ordinal"] = ordinal
 	funcs["prettify"] = prettifyName
-	funcs["weatherName"] = weatherName
 	funcs["carList"] = carList
 	funcs["jsonEncode"] = jsonEncode
 	funcs["varSplit"] = varSplit
 	funcs["timeFormat"] = timeFormat
 	funcs["dateFormat"] = dateFormat
 	funcs["timeZone"] = timeZone
-	funcs["hourAndZone"] = hourAndZoneFormat
-	funcs["localFormatHourAndZone"] = localFormatHelperHourAndZone
-	funcs["addTime"] = addTime
 	funcs["isBefore"] = isBefore
 	funcs["trackInfo"] = trackInfo
-	funcs["multiplyFloats"] = multiplyFloats
 	funcs["stripGeotagCrap"] = stripGeotagCrap
 	funcs["ReadAccess"] = dummyAccessFunc
 	funcs["WriteAccess"] = dummyAccessFunc
 	funcs["DeleteAccess"] = dummyAccessFunc
 	funcs["AdminAccess"] = dummyAccessFunc
 	funcs["LoggedIn"] = dummyAccessFunc
-	funcs["classColor"] = ChampionshipClassColor
+	funcs["classColor"] = func(i int) string {
+		return ChampionshipClassColors[i%len(ChampionshipClassColors)]
+	}
 	funcs["carSkinURL"] = carSkinURL
-	funcs["trackLayoutURL"] = trackLayoutURL
-	funcs["stringArrayToCSV"] = stringArrayToCSV
 	funcs["dict"] = templateDict
-	funcs["asset"] = NewAssetHelper("/", "", "", map[string]string{"cb": BuildVersion}).GetURL
+	funcs["asset"] = NewAssetHelper("/", "", "", map[string]string{"cb": BuildTime}).GetURL
 	funcs["SessionType"] = func(s string) SessionType { return SessionType(s) }
 	funcs["Config"] = func() *Configuration { return config }
-	funcs["Version"] = func() string { return BuildVersion }
+	funcs["Version"] = func() string { return BuildTime }
 	funcs["fullTimeFormat"] = fullTimeFormat
 	funcs["localFormat"] = localFormatHelper
-	funcs["driverName"] = driverName
-	funcs["driverInitials"] = driverInitials
-	funcs["shortenTrackName"] = shortenTrackName
-	funcs["trustHTML"] = func(s string) template.HTML {
-		return template.HTML(s)
-	}
-	funcs["formatDuration"] = formatDuration
-	funcs["appendQuery"] = appendQuery
-	funcs["ChangelogHTML"] = changelogHTML
-	funcs["yn"] = func(b bool) string {
-		if b {
-			return "Yes"
-		}
-
-		return "No"
-	}
-	funcs["trackMapURL"] = TrackMapImageURL
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
@@ -253,34 +159,6 @@ func (tr *Renderer) init() error {
 	}
 
 	return nil
-}
-
-var Changelog template.HTML
-
-func changelogHTML() template.HTML {
-	return Changelog
-}
-
-func appendQuery(r *http.Request, query, value string) string {
-	q := r.URL.Query()
-	q.Set(query, value)
-	r.URL.RawQuery = q.Encode()
-
-	return r.URL.String()
-}
-
-func formatDuration(d time.Duration, trimLeadingZeroes bool) string {
-	hours := d.Hours()
-	minutes := d.Minutes() - float64(int(hours)*60)
-	seconds := d.Seconds() - float64(int(hours)*60*60) - float64(int(minutes)*60)
-
-	duration := fmt.Sprintf("%02d:%02d:%06.3f", int(hours), int(minutes), seconds)
-
-	if trimLeadingZeroes && strings.HasPrefix(duration, "00:") {
-		return duration[3:]
-	}
-
-	return duration
 }
 
 func templateDict(values ...interface{}) (map[string]interface{}, error) {
@@ -302,26 +180,12 @@ func localFormatHelper(t time.Time) template.HTML {
 	return template.HTML(fmt.Sprintf(`<span class="time-local" data-toggle="tooltip" data-time="%s" title="Translated to your timezone from %s">%s</span>`, t.Format(time.RFC3339), fullTimeFormat(t), fullTimeFormat(t)))
 }
 
-func localFormatHelperHourAndZone(t time.Time) template.HTML {
-	return template.HTML(fmt.Sprintf(`<span class="time-local-kitchen" data-toggle="tooltip" data-time="%s" title="Translated to your timezone from %s">%s</span>`, t.Format(time.RFC3339), fullTimeFormat(t), fullTimeFormat(t)))
-}
-
 func timeFormat(t time.Time) string {
 	return t.Format(time.Kitchen)
 }
 
 func dateFormat(t time.Time) string {
 	return t.Format("02/01/2006")
-}
-
-func hourAndZoneFormat(t time.Time, plusMinutes int64) string {
-	t = t.Add(time.Minute * time.Duration(plusMinutes))
-
-	return t.Format("3:04 PM (MST)")
-}
-
-func addTime(t time.Time, plusMinutes int64) time.Time {
-	return t.Add(time.Minute * time.Duration(plusMinutes))
 }
 
 func timeZone(t time.Time) string {
@@ -346,16 +210,6 @@ func carList(cars interface{}) string {
 		split = strings.Split(cars, ";")
 	case []string:
 		split = cars
-	case []*SessionCar:
-		carMap := make(map[string]bool)
-
-		for _, entrant := range cars {
-			carMap[entrant.Model] = true
-		}
-
-		for car := range carMap {
-			split = append(split, car)
-		}
 	case EntryList:
 		carMap := make(map[string]bool)
 
@@ -373,10 +227,6 @@ func carList(cars interface{}) string {
 	var out []string
 
 	for _, s := range split {
-		if s == AnyCarModel {
-			continue
-		}
-
 		out = append(out, prettifyName(s, true))
 	}
 
@@ -399,17 +249,13 @@ func trackInfo(track, layout string) *TrackInfo {
 	t, err := GetTrackInfo(track, layout)
 
 	if err != nil {
-		logrus.WithError(err).Errorf("Could not get track info for %s (%s)", track, layout)
+		logrus.Errorf("Could not get track info for %s (%s), err: %s", track, layout, err)
 		return nil
 	}
 
 	trackInfoCache[track+layout] = t
 
 	return t
-}
-
-func multiplyFloats(a, b float64) float64 {
-	return a * b
 }
 
 func stripGeotagCrap(tag string, north bool) string {
@@ -423,9 +269,9 @@ func stripGeotagCrap(tag string, north bool) string {
 		return geoTags[0] + "." + geoTags[1]
 	} else if len(geoTags) == 3 {
 		// "50� 13' 57 N" format
-		/*for _, thing := range geoTags {
+		for _, thing := range geoTags {
 			println(thing)
-		}*/
+		}
 	} else if len(geoTags) == 1 {
 		// dunno, some crazy format, just return
 		return geoTags[0]
@@ -434,22 +280,15 @@ func stripGeotagCrap(tag string, north bool) string {
 	// Geotags of "lost" - a hamlet in Scotland
 	if north {
 		return "57.2050"
+	} else {
+		return "-3.0774"
 	}
 
-	return "-3.0774"
 }
 
 var nameRegex = regexp.MustCompile(`^[A-Za-z]{0,5}[0-9]+`)
 
 func prettifyName(s string, acronyms bool) string {
-	if s == AnyCarModel {
-		return "Any Car Model"
-	}
-
-	if carName, ok := carNameCache.get(s); ok {
-		return carName
-	}
-
 	parts := strings.Split(s, "_")
 
 	if parts[0] == "ks" {
@@ -467,26 +306,6 @@ func prettifyName(s string, acronyms bool) string {
 	return strings.Join(parts, " ")
 }
 
-func weatherName(key string) string {
-	weathers, err := ListWeather()
-
-	if err != nil {
-		return key
-	}
-
-	key = strings.Split(key, "_type=")[0]
-
-	if name, ok := weathers[key]; ok {
-		return name
-	}
-
-	return prettifyName(key, false)
-}
-
-func stringArrayToCSV(array []string) string {
-	return strings.Join(array, ", ")
-}
-
 func jsonEncode(v interface{}) template.JS {
 	buf := new(bytes.Buffer)
 
@@ -495,103 +314,8 @@ func jsonEncode(v interface{}) template.JS {
 	return template.JS(buf.String())
 }
 
-type TemplateVars interface {
-	Get() *BaseTemplateVars
-}
-
-type BaseTemplateVars struct {
-	Messages              []interface{}
-	Errors                []interface{}
-	ServerStatus          bool
-	ServerEvent           RaceEvent
-	ServerName            string
-	CustomCSS             template.CSS
-	User                  *Account
-	IsHosted              bool
-	IsPremium             bool
-	MaxClientsOverride    int
-	IsDarkTheme           bool
-	Request               *http.Request
-	Debug                 bool
-	MonitoringEnabled     bool
-	SentryDSN             template.JSStr
-	RecaptchaSiteKey      string
-	WideContainer         bool
-	OGImage               string
-	ACSREnabled           bool
-	BaseURLIsSet          bool
-	BaseURLIsValid        bool
-	ServerID              ServerID
-	ShowEventDetailsPopup bool
-}
-
-func (b *BaseTemplateVars) Get() *BaseTemplateVars {
-	return b
-}
-
-func (tr *Renderer) addData(w http.ResponseWriter, r *http.Request, vars TemplateVars) error {
-	session := getSession(r)
-
-	data := vars.Get()
-
-	if flashes := session.Flashes(); len(flashes) > 0 {
-		data.Messages = flashes
-	}
-
-	errSession := getErrSession(r)
-
-	if flashes := errSession.Flashes(); len(flashes) > 0 {
-		data.Errors = flashes
-	}
-
-	_ = session.Save(r, w)
-	_ = errSession.Save(r, w)
-
-	opts, err := tr.store.LoadServerOptions()
-
-	if err != nil {
-		return err
-	}
-
-	data.ServerStatus = tr.process.IsRunning()
-	data.ServerEvent = tr.process.Event()
-	data.ServerName = opts.Name
-	data.CustomCSS = template.CSS(opts.CustomCSS)
-	data.User = AccountFromRequest(r)
-	data.IsHosted = IsHosted
-	data.IsPremium = Premium()
-	data.MaxClientsOverride = MaxClientsOverride
-	data.IsDarkTheme = opts.DarkTheme == 1
-	data.Request = r
-	data.Debug = Debug
-	data.MonitoringEnabled = config.Monitoring.Enabled
-	data.SentryDSN = sentryJSDSN
-	data.RecaptchaSiteKey = config.Championships.RecaptchaConfig.SiteKey
-	data.BaseURLIsSet = baseURLIsSet()
-	data.BaseURLIsValid = baseURLIsValid()
-	data.ACSREnabled = opts.EnableACSR
-	data.ServerID = serverID
-	data.ShowEventDetailsPopup = opts.ShowEventDetailsPopup
-
-	if Premium() {
-		data.OGImage = opts.OGImage
-
-		id := chi.URLParam(r, "championshipID")
-
-		if id != "" {
-			championship, err := tr.store.LoadChampionship(id)
-
-			if err == nil && championship.OGImage != "" {
-				data.OGImage = championship.OGImage
-			}
-		}
-	}
-
-	return nil
-}
-
 // LoadTemplate reads a template from templates and renders it with data to the given io.Writer
-func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view string, vars TemplateVars) error {
+func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view string, data map[string]interface{}) error {
 	if tr.reload {
 		// reload templates on every request if enabled, so
 		// that we don't have to constantly restart the website
@@ -608,13 +332,48 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 		return fmt.Errorf("unable to find template: %s", filepath.ToSlash(view))
 	}
 
-	if vars == nil {
-		vars = &BaseTemplateVars{}
+	if data == nil {
+		data = make(map[string]interface{})
 	}
 
-	if err := tr.addData(w, r, vars); err != nil {
+	session := getSession(r)
+
+	if flashes := session.Flashes(); len(flashes) > 0 {
+		data["messages"] = flashes
+	}
+
+	errSession := getErrSession(r)
+
+	if flashes := errSession.Flashes(); len(flashes) > 0 {
+		data["errors"] = flashes
+	}
+
+	_ = session.Save(r, w)
+	_ = errSession.Save(r, w)
+
+	// @TODO properly load server
+
+	server := AnyServer()
+
+	opts, err := server.raceManager.LoadServerOptions()
+
+	if err != nil {
 		return err
 	}
+
+	data["server_status"] = server.process.IsRunning()
+	data["server_event_type"] = server.process.EventType()
+	data["server_name"] = opts.Name
+	data["custom_css"] = template.CSS(opts.CustomCSS)
+	data["User"] = AccountFromRequest(r)
+	data["IsHosted"] = IsHosted
+	data["IsPremium"] = IsPremium
+	data["MaxClientsOverride"] = MaxClientsOverride
+	data["_request"] = r
+	data["Debug"] = Debug
+	data["MonitoringEnabled"] = config.Monitoring.Enabled
+	data["SentryDSN"] = template.JSStr(sentryJSDSN)
+	data["RecaptchaSiteKey"] = config.Championships.RecaptchaConfig.SiteKey
 
 	t.Funcs(map[string]interface{}{
 		"ReadAccess":   ReadAccess(r),
@@ -624,66 +383,16 @@ func (tr *Renderer) LoadTemplate(w http.ResponseWriter, r *http.Request, view st
 		"LoggedIn":     LoggedIn(r),
 	})
 
-	return t.ExecuteTemplate(w, "base", vars)
+	return t.ExecuteTemplate(w, "base", data)
 }
 
 // MustLoadTemplate asserts that a LoadTemplate call must succeed or be dealt with via the http.ResponseWriter
-func (tr *Renderer) MustLoadTemplate(w http.ResponseWriter, r *http.Request, view string, vars TemplateVars) {
-	err := tr.LoadTemplate(w, r, view, vars)
+func (tr *Renderer) MustLoadTemplate(w http.ResponseWriter, r *http.Request, view string, data map[string]interface{}) {
+	err := tr.LoadTemplate(w, r, view, data)
 
 	if err != nil {
-		if _, ok := err.(*net.OpError); !ok {
-			// don't capture OpErrors, they flood sentry with non-errors
-			raven.CaptureError(err, nil)
-		}
-		logrus.WithError(err).Errorf("Unable to load template: %s", view)
+		logrus.Errorf("Unable to load template: %s, err: %s", view, err)
 		http.Error(w, "unable to load template", http.StatusInternalServerError)
-		return
-	}
-}
-
-func (tr *Renderer) LoadPartial(w http.ResponseWriter, r *http.Request, partial string, vars TemplateVars) error {
-	if tr.reload {
-		// reload templates on every request if enabled, so
-		// that we don't have to constantly restart the website
-		err := tr.init()
-
-		if err != nil {
-			return err
-		}
-	}
-
-	t, ok := tr.templates[filepath.ToSlash(partial)]
-
-	if !ok {
-		return errors.New("partial not found")
-	}
-
-	if vars == nil {
-		vars = &BaseTemplateVars{}
-	}
-
-	if err := tr.addData(w, r, vars); err != nil {
-		return err
-	}
-
-	t.Funcs(map[string]interface{}{
-		"ReadAccess":   ReadAccess(r),
-		"WriteAccess":  WriteAccess(r),
-		"DeleteAccess": DeleteAccess(r),
-		"AdminAccess":  AdminAccess(r),
-		"LoggedIn":     LoggedIn(r),
-	})
-
-	return t.ExecuteTemplate(w, "partial", vars)
-}
-
-func (tr *Renderer) MustLoadPartial(w http.ResponseWriter, r *http.Request, partial string, vars TemplateVars) {
-	err := tr.LoadPartial(w, r, partial, vars)
-
-	if err != nil {
-		logrus.WithError(err).Errorf("Unable to load partial: %s", partial)
-		http.Error(w, "unable to load partial", http.StatusInternalServerError)
 		return
 	}
 }

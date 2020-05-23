@@ -1,15 +1,18 @@
 package servermanager
 
 import (
+	"encoding/csv"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
-	"math/rand"
+	"net/http"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -45,10 +48,6 @@ var DefaultChampionshipPoints = ChampionshipPoints{
 	BestLap:              0,
 	PolePosition:         0,
 	SecondRaceMultiplier: 1,
-
-	CollisionWithDriver: 0,
-	CollisionWithEnv:    0,
-	CutTrack:            0,
 }
 
 // ChampionshipPoints represent the potential points for positions as well as other awards in a Championship.
@@ -57,30 +56,15 @@ type ChampionshipPoints struct {
 	BestLap      int
 	PolePosition int
 
-	CollisionWithDriver int
-	CollisionWithEnv    int
-	CutTrack            int
-
 	SecondRaceMultiplier float64
-}
-
-// PointForPos uses the Championship's Points to determine what number should be awarded to a given position
-func (pts *ChampionshipPoints) ForPos(i int) float64 {
-	if i >= len(pts.Places) {
-		return 0
-	}
-
-	return float64(pts.Places[i])
 }
 
 // NewChampionship creates a Championship with a given name, creating a UUID for the championship as well.
 func NewChampionship(name string) *Championship {
 	return &Championship{
-		ID:                  uuid.New(),
-		Name:                name,
-		Created:             time.Now(),
-		OpenEntrants:        false,
-		PersistOpenEntrants: true,
+		ID:      uuid.New(),
+		Name:    name,
+		Created: time.Now(),
 	}
 }
 
@@ -95,24 +79,16 @@ type Championship struct {
 	OverridePassword    bool
 	ReplacementPassword string
 
-	// acsr integration - sends the championship to acsr on save and event complete
-	ACSR bool
-
 	// Raw html can be attached to championships, used to share tracks/cars etc.
 	Info template.HTML
-
-	// URL to a specific OG Image for the championship
-	OGImage string
+	// Deprecated, replaced with Info above.
+	Links map[string]string
 
 	// OpenEntrants indicates that entrant names do not need to be specified in the EntryList.
 	// As Entrants join a championship, the available Entrant slots will be filled by the information
 	// provided by a join message. The EntryList for each class will still need creating, but
 	// can omit names/GUIDs/teams as necessary. These can then be edited after the fact.
 	OpenEntrants bool
-
-	// PersistOpenEntrants (used with OpenEntrants) indicates that drivers who join the Championship
-	// should be added to the Championship EntryList. This is ON by default.
-	PersistOpenEntrants bool
 
 	// SignUpForm gives anyone on the web access to a Championship Sign Up Form so that they can
 	// mark themselves for participation in this Championship.
@@ -121,1336 +97,7 @@ type Championship struct {
 	Classes []*ChampionshipClass
 	Events  []*ChampionshipEvent
 
-	// SpectatorCar is a car defined in the Championship settings that if set up is added to the back of the grid
-	// of every event in the Championship.
-	SpectatorCar        Entrant
-	SpectatorCarEnabled bool
-}
-
-func (c *Championship) HasSpectatorCar() bool {
-	return !c.OpenEntrants && c.SpectatorCarEnabled && c.SpectatorCar.GUID != "" && c.SpectatorCar.Model != ""
-}
-
-func (c *Championship) FindLastResultForDriver(guid string) (out *SessionResult, teamName string) {
-	events := make([]*ChampionshipEvent, 0)
-
-	for _, event := range ExtractRaceWeekendSessionsIntoIndividualEvents(c.Events) {
-		if event.Completed() {
-			events = append(events, event)
-		}
-	}
-
-	sort.Slice(events, func(i, j int) bool {
-		return events[i].CompletedTime.Before(events[j].CompletedTime)
-	})
-
-	for _, event := range events {
-		startedTime := time.Time{}
-
-		for _, session := range event.Sessions {
-			if session.StartedTime.After(startedTime) && session.Results != nil {
-				startedTime = session.StartedTime
-
-				for _, result := range session.Results.Result {
-					if result.DriverGUID == guid {
-						out = result
-						break
-					}
-				}
-
-				teamName = session.Results.GetTeamName(guid)
-			}
-		}
-	}
-
-	return out, teamName
-}
-
-func (c *Championship) GetPlayerSummary(guid string) string {
-	if c.Progress() == 0 {
-		if len(c.Events) <= 1 {
-			return ""
-		}
-
-		return "This is the first event of the Championship!"
-	}
-
-	result, teamName := c.FindLastResultForDriver(guid)
-
-	if result == nil {
-		return ""
-	}
-
-	class, err := c.ClassByID(result.ClassID.String())
-
-	if err != nil {
-		logrus.WithError(err).Warnf("Could not find class by id: %s", result.ClassID.String())
-		return ""
-	}
-
-	standings := class.Standings(c, c.Events)
-	teamStandings := class.TeamStandings(c, c.Events)
-
-	var driverPos, teamPos int
-	var driverPoints, teamPoints float64
-
-	for pos, standing := range standings {
-		if standing.Car.Driver.GUID == guid {
-			driverPos = pos + 1
-			driverPoints = standing.Points
-		}
-	}
-
-	var driverAhead string
-	var driverAheadPoints float64
-
-	if driverPos >= 2 {
-		driverAhead = standings[driverPos-2].Car.Driver.Name
-		driverAheadPoints = standings[driverPos-2].Points
-	}
-
-	for pos, standing := range teamStandings {
-		if standing.Team == teamName {
-			teamPos = pos + 1
-			teamPoints = standing.Points
-		}
-	}
-
-	classText := ""
-
-	if class.Name != "" {
-		classText = fmt.Sprintf("in the class '%s' ", class.Name)
-	}
-
-	out := fmt.Sprintf("You are currently %d%s %swith %.2f points. ", driverPos, ordinal(int64(driverPos)), classText, driverPoints)
-
-	if driverAhead != "" {
-		out += fmt.Sprintf("The driver ahead of you is %s with %.2f points. ", driverAhead, driverAheadPoints)
-	}
-
-	if teamName != "" {
-		var teamAhead string
-		var teamAheadPoints float64
-
-		if teamPos >= 2 {
-			teamAhead = teamStandings[teamPos-2].Team
-			teamAheadPoints = teamStandings[teamPos-2].Points
-		}
-
-		out += fmt.Sprintf("Your team '%s' has %.2f points. ", teamName, teamPoints)
-
-		if teamAhead != "" {
-			out += fmt.Sprintf("The team ahead is '%s' with %.2f points. ", teamAhead, teamAheadPoints)
-		}
-	}
-
-	return out
-}
-
-func (c *Championship) GetURL() string {
-	if config.HTTP.BaseURL != "" {
-		return config.HTTP.BaseURL + "/championship/" + c.ID.String()
-	}
-
-	return ""
-}
-
-// IsMultiClass is true if the Championship has more than one Class
-func (c *Championship) IsMultiClass() bool {
-	return len(c.Classes) > 1
-}
-
-func (c *Championship) SignUpAvailable() bool {
-	numTotalEntrants := 0
-	numFilledSlots := 0
-
-	for _, class := range c.Classes {
-		for _, entrant := range class.Entrants {
-			if entrant.GUID != "" {
-				numFilledSlots++
-			}
-
-			numTotalEntrants++
-		}
-	}
-
-	return c.SignUpForm.Enabled && c.Progress() < 100.0 && numFilledSlots < numTotalEntrants
-}
-
-func (c *Championship) HasTeamNames() bool {
-	for _, class := range c.Classes {
-		for _, entrant := range class.Entrants {
-			if entrant.Team != "" {
-				return true
-			}
-		}
-	}
-	for _, event := range c.Events {
-		for _, session := range event.Sessions {
-			if session.Completed() && session.Results != nil {
-				for _, car := range session.Results.Cars {
-					if car.Driver.Team != "" {
-						return true
-					}
-				}
-			}
-		}
-	}
-
-	return false
-}
-
-func (c *Championship) HasScheduledEvents() bool {
-	for _, event := range c.Events {
-		if !event.Scheduled.IsZero() {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (c *Championship) ClearEntrant(entrantGUID string) {
-	for _, class := range c.Classes {
-		for _, classEntrant := range class.Entrants {
-			if entrantGUID == classEntrant.GUID {
-				// remove the entrant from the championship.
-				classEntrant.Name = ""
-				classEntrant.GUID = ""
-				classEntrant.Team = ""
-				return
-			}
-		}
-	}
-}
-
-var ErrClassNotFound = errors.New("servermanager: championship class not found")
-
-func (c *Championship) FindClassForCarModel(model string) (*ChampionshipClass, error) {
-	for _, class := range c.Classes {
-		for _, car := range class.ValidCarIDs() {
-			if car == model {
-				return class, nil
-			}
-		}
-	}
-
-	if model == AnyCarModel {
-		// randomly assign a class based from whatever classes we have with AnyCarModel in their entrylist.
-		classes := make([]*ChampionshipClass, len(c.Classes))
-
-		copy(classes, c.Classes)
-
-		rand.Shuffle(len(classes), func(i, j int) {
-			classes[i], classes[j] = classes[j], classes[i]
-		})
-
-		for _, class := range classes {
-			for _, entrant := range class.Entrants {
-				if entrant.Model == AnyCarModel {
-					return class, nil
-				}
-			}
-		}
-	}
-
-	return nil, ErrClassNotFound
-}
-
-func (c *Championship) MostRecentScheduledDateFormat(format string) string {
-	scheduledDate := time.Now()
-
-	for _, event := range c.Events {
-		if event.GetScheduledTime().After(scheduledDate) {
-			scheduledDate = event.GetScheduledTime()
-		}
-	}
-
-	return scheduledDate.Format(format)
-}
-
-// NewChampionshipClass creates a championship class with the default points
-func NewChampionshipClass(name string) *ChampionshipClass {
-	return &ChampionshipClass{
-		ID:       uuid.New(),
-		Name:     name,
-		Points:   DefaultChampionshipPoints,
-		Entrants: make(EntryList),
-	}
-}
-
-// ChampionshipClass contains a Name, Entrants (including Cars, Skins) and Points for those Entrants
-type ChampionshipClass struct {
-	ID   uuid.UUID
-	Name string
-
-	Entrants      EntryList
-	Points        ChampionshipPoints
-	AvailableCars []string
-
-	DriverPenalties, TeamPenalties map[string]int
-}
-
-// ValidCarIDs returns a set of all cars chosen within the given class
-func (c *ChampionshipClass) ValidCarIDs() []string {
-	if len(c.AvailableCars) == 0 {
-		cars := make(map[string]bool)
-
-		for _, e := range c.Entrants {
-			cars[e.Model] = true
-		}
-
-		var availableCars []string
-
-		for car := range cars {
-			availableCars = append(availableCars, car)
-		}
-
-		return availableCars
-	}
-
-	return c.AvailableCars
-}
-
-func (c *Championship) ImportEvent(eventToImport interface{}) (*ChampionshipEvent, error) {
-	var newEvent *ChampionshipEvent
-
-	switch event := eventToImport.(type) {
-	case *CustomRace:
-		newEvent = &ChampionshipEvent{
-			ID:        uuid.New(),
-			RaceSetup: event.RaceConfig,
-			EntryList: c.AllEntrants(),
-		}
-	case *RaceWeekend:
-		// the filter between Entry List and any events uses the race weekend ID in the map
-		// as we are updating this ID we need to update it in the map too or filters between
-		// the Entry List and any event will fail!
-		oldID := event.ID.String()
-		event.ID = uuid.New()
-
-		if event.Filters != nil {
-			oldFilter := event.Filters[oldID]
-			delete(event.Filters, oldID)
-			event.Filters[event.ID.String()] = oldFilter
-		}
-
-		newEvent = &ChampionshipEvent{
-			ID:            uuid.New(),
-			EntryList:     c.AllEntrants(),
-			RaceWeekendID: event.ID,
-			RaceWeekend:   event,
-		}
-
-		event.Championship = c
-		event.ChampionshipID = c.ID
-
-		// reset session progress
-		for _, session := range event.Sessions {
-			session.CompletedTime = time.Time{}
-			session.StartedTime = time.Time{}
-			session.Results = nil
-			session.ScheduledTime = time.Time{}
-
-			// if a session has the Entry List as a parent we need to replace the old
-			// Race Weekend ID with the new one
-			for i, parentID := range session.ParentIDs {
-				if parentID.String() == oldID {
-					session.ParentIDs[i] = event.ID
-				}
-			}
-
-			for _, class := range c.Classes {
-				if session.SessionType() == SessionTypeRace {
-					session.Points[class.ID] = &class.Points
-				} else {
-					var points []int
-
-					for range class.Points.Places {
-						points = append(points, 0)
-					}
-
-					session.Points[class.ID] = &ChampionshipPoints{
-						Places:               points,
-						BestLap:              0,
-						PolePosition:         0,
-						CollisionWithDriver:  0,
-						CollisionWithEnv:     0,
-						CutTrack:             0,
-						SecondRaceMultiplier: 0,
-					}
-				}
-			}
-		}
-
-	case *ChampionshipEvent:
-		newEvent = &ChampionshipEvent{
-			ID:        uuid.New(),
-			RaceSetup: event.RaceSetup,
-			EntryList: event.EntryList,
-		}
-	default:
-		return nil, errors.New("servermanager: unknown event type")
-	}
-
-	c.Events = append(c.Events, newEvent)
-
-	return newEvent, nil
-}
-
-// EventByID finds a ChampionshipEvent by its ID string.
-func (c *Championship) EventByID(id string) (*ChampionshipEvent, int, error) {
-	for i, e := range c.Events {
-		if e.ID.String() == id {
-			return e, i, nil
-		}
-	}
-
-	return nil, 0, ErrInvalidChampionshipEvent
-}
-
-// ClassByID finds a ChampionshipClass by its ID string.
-func (c *Championship) ClassByID(id string) (*ChampionshipClass, error) {
-	for _, x := range c.Classes {
-		if x.ID.String() == id {
-			return x, nil
-		}
-	}
-
-	return nil, ErrInvalidChampionshipClass
-}
-
-// ValidCarIDs returns a set of all of the valid cars in the Championship - that is, the smallest possible list
-// of Cars driven by the Entrants.
-func (c *Championship) ValidCarIDs() []string {
-	cars := make(map[string]bool)
-
-	for _, class := range c.Classes {
-		for _, model := range class.ValidCarIDs() {
-			cars[model] = true
-		}
-	}
-
-	if c.HasSpectatorCar() {
-		cars[c.SpectatorCar.Model] = true
-	}
-
-	var out []string
-
-	for car := range cars {
-		out = append(out, car)
-	}
-
-	return out
-}
-
-// NumEntrants is the number of entrants across all Classes in a Championship.
-func (c *Championship) NumEntrants() int {
-	entrants := 0
-
-	if c.SignUpForm.Enabled && !c.OpenEntrants {
-		// closed sign up form championships report only the taken slots as their num entrants
-		for _, class := range c.Classes {
-			for _, entrant := range class.Entrants {
-				if entrant.GUID != "" && !entrant.IsPlaceHolder {
-					entrants++
-				}
-			}
-		}
-	} else {
-		for _, class := range c.Classes {
-			entrants += len(class.Entrants)
-		}
-	}
-
-	return entrants
-}
-
-// AllEntrants returns the list of all entrants in the championship (across ALL classes)
-func (c *Championship) AllEntrants() EntryList {
-	e := make(EntryList)
-
-	for _, class := range c.Classes {
-		for _, entrant := range class.Entrants {
-			e.AddToBackOfGrid(entrant)
-		}
-	}
-
-	return e
-}
-
-func (c *Championship) EntrantAttendance(guid string) int {
-	i := 0
-
-	for _, event := range ExtractRaceWeekendSessionsIntoIndividualEvents(c.Events) {
-		if event.Completed() {
-			for _, class := range c.Classes {
-				standings := class.StandingsForEvent(c, event)
-
-				for _, standing := range standings {
-					if standing.Car.GetGUID() == guid {
-						i++
-					}
-				}
-			}
-		}
-	}
-
-	return i
-}
-
-func (c *Championship) NumCompletedEvents() int {
-	i := 0
-
-	for _, event := range ExtractRaceWeekendSessionsIntoIndividualEvents(c.Events) {
-		if event.Completed() {
-			i++
-		}
-	}
-
-	return i
-}
-
-// AddClass to the championship
-func (c *Championship) AddClass(class *ChampionshipClass) {
-	c.Classes = append(c.Classes, class)
-}
-
-// Progress of the Championship as a percentage
-func (c *Championship) Progress() float64 {
-	numEvents := float64(len(c.Events))
-
-	for _, event := range c.Events {
-		if event.IsRaceWeekend() && event.RaceWeekend != nil {
-			numEvents += float64(len(event.RaceWeekend.Sessions)) - 1
-		}
-	}
-
-	if numEvents == 0 {
-		return 0
-	}
-
-	numCompletedEvents := float64(0)
-
-	for _, event := range c.Events {
-
-		if event.Completed() {
-			numCompletedEvents++
-		}
-
-		if event.IsRaceWeekend() && event.RaceWeekend != nil {
-			for _, session := range event.RaceWeekend.Sessions {
-				if session.Completed() {
-					numCompletedEvents++
-				}
-			}
-		}
-	}
-
-	return (numCompletedEvents / numEvents) * 100
-}
-
-func (c *Championship) NumPendingSignUps() int {
-	num := 0
-
-	for _, response := range c.SignUpForm.Responses {
-		if response.Status == ChampionshipEntrantPending {
-			num++
-		}
-	}
-
-	return num
-}
-
-type PotentialChampionshipEntrant interface {
-	GetName() string
-	GetTeam() string
-	GetCar() string
-	GetSkin() string
-	GetGUID() string
-}
-
-var ErrEntryListFull = errors.New("servermanager: entry list is full")
-
-var entryListMutex = sync.Mutex{}
-
-func (c *Championship) AddEntrantInFirstFreeSlot(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrant *Entrant, entrantClass *ChampionshipClass, err error) {
-	entryListMutex.Lock()
-	defer entryListMutex.Unlock()
-
-	for _, class := range c.Classes {
-		for _, entrant := range class.Entrants {
-			if entrant.GUID == potentialEntrant.GetGUID() {
-				// update the entrant details
-				entrant.Name = potentialEntrant.GetName()
-				entrant.Team = potentialEntrant.GetTeam()
-
-				return true, entrant, class, nil
-			}
-		}
-	}
-
-	for _, class := range c.Classes {
-		for _, entrant := range class.Entrants {
-			if entrant.Name == "" && entrant.GUID == "" {
-				// take the slot
-				entrant.Name = potentialEntrant.GetName()
-				entrant.GUID = potentialEntrant.GetGUID()
-				entrant.Team = potentialEntrant.GetTeam()
-
-				return true, entrant, class, nil
-			}
-		}
-	}
-
-	return false, nil, nil, ErrEntryListFull
-}
-
-func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrant *Entrant, entrantClass *ChampionshipClass, err error) {
-	entryListMutex.Lock()
-	defer entryListMutex.Unlock()
-
-	classForCar, err := c.FindClassForCarModel(potentialEntrant.GetCar())
-
-	if err != nil {
-		logrus.Errorf("Could not find class for car: %s in championship", potentialEntrant.GetCar())
-
-		return false, nil, nil, err
-	}
-
-	var oldEntrant *Entrant
-	var oldEntrantClass *ChampionshipClass
-
-	for _, class := range c.Classes {
-		for _, entrant := range class.Entrants {
-			if entrant.GUID == potentialEntrant.GetGUID() {
-				// we found the entrant, but there's a possibility that they changed cars
-				// keep the old entrant so we can swap its properties with the one that is being written to
-				oldEntrant = entrant
-				oldEntrantClass = class
-
-				entrant.GUID = ""
-				entrant.Name = ""
-			}
-		}
-	}
-
-	// now look for empty Entrants in the Entrylist with a matching car
-	for carNum, entrant := range classForCar.Entrants {
-		if entrant.Name == "" && entrant.GUID == "" && entrant.Model == potentialEntrant.GetCar() {
-			if oldEntrant != nil {
-				// swap the old entrant properties
-				oldEntrant.SwapProperties(entrant, oldEntrantClass == classForCar)
-			}
-
-			classForCar.AssignToFreeEntrantSlot(entrant, potentialEntrant)
-			logrus.Infof("Championship entrant: %s (%s) has been assigned to %s in %s (matching car)", entrant.Name, entrant.GUID, carNum, c.Name)
-
-			return true, entrant, classForCar, nil
-		}
-	}
-
-	// now look for empty Entrants in the Entrylist with an 'any free car' slot
-	for carNum, entrant := range classForCar.Entrants {
-		if entrant.Name == "" && entrant.GUID == "" && entrant.Model == AnyCarModel {
-			if oldEntrant != nil {
-				// swap the old entrant properties
-				oldEntrant.SwapProperties(entrant, oldEntrantClass == classForCar)
-			}
-
-			classForCar.AssignToFreeEntrantSlot(entrant, potentialEntrant)
-			logrus.Infof("Championship entrant: %s (%s) has been assigned an to %s in %s (any car slot)", entrant.Name, entrant.GUID, carNum, c.Name)
-
-			return true, entrant, classForCar, nil
-		}
-	}
-
-	return false, nil, classForCar, nil
-}
-
-// EnhanceResults takes a set of SessionResults and attaches Championship information to them.
-func (c *Championship) EnhanceResults(results *SessionResults) {
-	if results == nil {
-		return
-	}
-
-	results.ChampionshipID = c.ID.String()
-
-	c.AttachClassIDToResults(results)
-	results.NormaliseDriverSwapGUIDs()
-
-	// update names / teams to the values we know to be correct due to championship setup
-	for _, class := range c.Classes {
-		for _, entrant := range class.Entrants {
-			class.AttachEntrantToResult(entrant, results)
-		}
-	}
-}
-
-func NewChampionshipStanding(car *SessionCar) *ChampionshipStanding {
-	return &ChampionshipStanding{
-		Car:   car,
-		Teams: make(map[string]int),
-	}
-}
-
-// ChampionshipStanding is the current number of Points an Entrant in the Championship has.
-type ChampionshipStanding struct {
-	Car *SessionCar
-
-	// Teams is a map of Team Name to how many Events per team were completed.
-	Teams  map[string]int
-	Points float64
-}
-
-func (cs *ChampionshipStanding) AddEventForTeam(team string) {
-	if _, ok := cs.Teams[team]; ok {
-		cs.Teams[team]++
-	} else {
-		cs.Teams[team] = 1
-	}
-}
-
-func (cs *ChampionshipStanding) TeamSummary() string {
-	if len(cs.Teams) == 1 {
-		for team := range cs.Teams {
-			return team
-		}
-	} else {
-		// more than one team
-		var summary []string
-
-		for team, races := range cs.Teams {
-			summary = append(summary, fmt.Sprintf("%s (%d races)", team, races))
-		}
-
-		return strings.Join(summary, ", ")
-	}
-
-	return ""
-}
-
-func (c *ChampionshipClass) DriverInClass(result *SessionResult) bool {
-	return result.ClassID == c.ID
-}
-
-func (c *ChampionshipClass) AssignToFreeEntrantSlot(entrant *Entrant, potentialEntrant PotentialChampionshipEntrant) {
-	entrant.Name = potentialEntrant.GetName()
-	entrant.GUID = potentialEntrant.GetGUID()
-	entrant.Model = potentialEntrant.GetCar()
-	entrant.Skin = potentialEntrant.GetSkin()
-
-	// #386: don't replace a team with no team.
-	if potentialEntrant.GetTeam() != "" {
-		entrant.Team = potentialEntrant.GetTeam()
-	}
-}
-
-func (c *ChampionshipClass) AttachEntrantToResult(entrant *Entrant, results *SessionResults) {
-	for _, car := range results.Cars {
-		if car.Driver.GUID == entrant.GUID {
-			car.Driver.AssignEntrant(entrant, c.ID)
-		}
-	}
-
-	for _, event := range results.Events {
-		if event.Driver.GUID == entrant.GUID {
-			event.Driver.AssignEntrant(entrant, c.ID)
-		}
-
-		if event.OtherDriver.GUID == entrant.GUID {
-			event.OtherDriver.AssignEntrant(entrant, c.ID)
-		}
-	}
-
-	for _, lap := range results.Laps {
-		if lap.DriverGUID == entrant.GUID {
-			lap.DriverName = entrant.Name
-			lap.ClassID = c.ID
-		}
-	}
-
-	for _, result := range results.Result {
-		if result.DriverGUID == entrant.GUID {
-			result.DriverName = entrant.Name
-			result.ClassID = c.ID
-		}
-	}
-}
-
-func (c *Championship) AttachClassIDToResults(results *SessionResults) {
-	for _, lap := range results.Laps {
-		class, err := c.FindClassForCarModel(lap.CarModel)
-
-		if err != nil {
-			logrus.Warnf("Couldn't find class for car model: %s (entrant: %s/%s)", lap.CarModel, lap.DriverName, lap.DriverGUID)
-			continue
-		}
-
-		lap.ClassID = class.ID
-	}
-
-	for _, result := range results.Result {
-		class, err := c.FindClassForCarModel(result.CarModel)
-
-		if err != nil {
-			logrus.Warnf("Couldn't find class for car model: %s (entrant: %s/%s)", result.CarModel, result.DriverName, result.DriverGUID)
-			continue
-		}
-
-		result.ClassID = class.ID
-	}
-}
-
-func (c *ChampionshipClass) ResultsForClass(results []*SessionResult, championship *Championship) (filtered []*SessionResult) {
-	for _, result := range results {
-		if c.DriverInClass(result) && result.TotalTime > 0 && result.DriverGUID != championship.SpectatorCar.GUID {
-			filtered = append(filtered, result)
-		}
-	}
-
-	return filtered
-}
-
-func (c *ChampionshipClass) PenaltyForGUID(guid string) int {
-	if penalty, ok := c.DriverPenalties[guid]; ok {
-		return penalty
-	}
-
-	return 0
-}
-
-func (c *ChampionshipClass) PenaltyForTeam(name string) int {
-	if teamPenalty, ok := c.TeamPenalties[name]; ok {
-		return teamPenalty
-	}
-
-	return 0
-}
-
-type PointsReason int
-
-const (
-	PointsEventFinish PointsReason = iota
-	PointsPolePosition
-	PointsFastestLap
-	PointsCollisionWithCar
-	PointsCollisionWithEnvironment
-	PointsCutTrack
-)
-
-func (c *ChampionshipClass) standings(championship *Championship, events []*ChampionshipEvent, givePoints func(event *ChampionshipEvent, driverGUID string, points float64, reason PointsReason)) {
-	eventsReverseCompletedOrder := make([]*ChampionshipEvent, len(events))
-
-	copy(eventsReverseCompletedOrder, events)
-
-	sort.Slice(eventsReverseCompletedOrder, func(i, j int) bool {
-		return eventsReverseCompletedOrder[i].CompletedTime.After(eventsReverseCompletedOrder[j].CompletedTime)
-	})
-
-	for _, event := range eventsReverseCompletedOrder {
-		for sessionType, session := range event.Sessions {
-			if !session.Completed() || session.Results == nil {
-				continue
-			}
-
-			points := c.Points
-			pointsMultiplier := 1.0
-
-			if session.IsRaceWeekend() {
-				// race weekend sessions are valid points, as specified by the session itself.
-				classPoints, ok := session.RaceWeekendSession.Points[c.ID]
-
-				if !ok {
-					logrus.Warnf("Could not find points for Race Weekend Session class: %s", c.ID)
-				} else {
-					points = *classPoints
-				}
-			} else {
-				switch sessionType {
-				case SessionTypeQualifying:
-					// non race weekend qualifying results get pole position points
-					for pos, driver := range c.ResultsForClass(session.Results.Result, championship) {
-						if pos != 0 {
-							continue
-						}
-
-						givePoints(event, driver.DriverGUID, float64(points.PolePosition)*pointsMultiplier, PointsPolePosition)
-					}
-
-					continue
-
-				case SessionTypeSecondRace:
-					pointsMultiplier = points.SecondRaceMultiplier
-				case SessionTypeBooking, SessionTypePractice:
-					continue
-
-				default:
-					// race sessions fall through
-				}
-			}
-
-			fastestLap := session.Results.FastestLapInClass(c.ID)
-
-			for pos, driver := range c.ResultsForClass(session.Results.Result, championship) {
-				if driver.TotalTime <= 0 || driver.Disqualified {
-					continue
-				}
-
-				givePoints(event, driver.DriverGUID, points.ForPos(pos)*pointsMultiplier, PointsEventFinish)
-
-				if fastestLap.DriverGUID == driver.DriverGUID {
-					givePoints(event, driver.DriverGUID, float64(points.BestLap)*pointsMultiplier, PointsFastestLap)
-				}
-
-				if sessionType == SessionTypeRace || sessionType == SessionTypeSecondRace {
-					givePoints(event, driver.DriverGUID, float64(points.CollisionWithDriver*session.Results.GetCrashesOfType(driver.DriverGUID, driver.CarModel, "COLLISION_WITH_CAR"))*pointsMultiplier*-1, PointsCollisionWithCar)
-					givePoints(event, driver.DriverGUID, float64(points.CollisionWithEnv*session.Results.GetCrashesOfType(driver.DriverGUID, driver.CarModel, "COLLISION_WITH_ENV"))*pointsMultiplier*-1, PointsCollisionWithEnvironment)
-					givePoints(event, driver.DriverGUID, float64(points.CutTrack*session.Results.GetCuts(driver.DriverGUID, driver.CarModel))*pointsMultiplier*-1, PointsCutTrack)
-				}
-			}
-		}
-	}
-}
-
-var championshipStandingSessionOrder = []SessionType{
-	SessionTypeSecondRace,
-	SessionTypeRace,
-	SessionTypeQualifying,
-	SessionTypePractice,
-	SessionTypeBooking,
-}
-
-type StandingsOption int
-
-const (
-	StandingsNoPointsPenalties StandingsOption = iota
-)
-
-// Standings returns the current Driver Standings for the Championship.
-func (c *ChampionshipClass) Standings(championship *Championship, inEvents []*ChampionshipEvent, standingOpts ...StandingsOption) []*ChampionshipStanding {
-	var out []*ChampionshipStanding
-
-	// make a copy of events so we do not persist race weekend sessions
-	events := ExtractRaceWeekendSessionsIntoIndividualEvents(inEvents)
-
-	for _, event := range events {
-		for _, session := range event.Sessions {
-			if session.Results == nil {
-				continue
-			}
-
-			// sort session result cars by the last car they completed a lap in (reversed).
-			// this means that below when we're looking for the car that matches a driver, we find
-			// the most recent car that they drove.
-
-			// sorting occurs outside the standings call below for performance reasons.
-			sort.Slice(session.Results.Cars, func(i, j int) bool {
-				carI := session.Results.Cars[i]
-				carJ := session.Results.Cars[j]
-
-				carILastLap := 0
-				carJLastLap := 0
-
-				for _, lap := range session.Results.Laps {
-					if lap.CarID == carI.CarID && lap.Timestamp > carILastLap {
-						carILastLap = lap.Timestamp
-					}
-
-					if lap.CarID == carJ.CarID && lap.Timestamp > carJLastLap {
-						carJLastLap = lap.Timestamp
-					}
-				}
-
-				return carILastLap > carJLastLap
-			})
-		}
-	}
-
-	standings := make(map[string]*ChampionshipStanding)
-
-	c.standings(championship, events, func(event *ChampionshipEvent, driverGUID string, points float64, reason PointsReason) {
-		var car *SessionCar
-
-		for _, sessionType := range championshipStandingSessionOrder {
-			session, ok := event.Sessions[sessionType]
-
-			if !ok || session.Results == nil {
-				continue
-			}
-
-			for _, sessionCar := range session.Results.Cars {
-				if sessionCar.Driver.GUID == driverGUID {
-					car = sessionCar
-					break
-				}
-
-				if NormaliseEntrantGUIDs(sessionCar.Driver.GuidsList) == driverGUID {
-					car = sessionCar
-					break
-				}
-			}
-		}
-
-		if car == nil {
-			return
-		}
-
-		if _, ok := standings[driverGUID]; !ok {
-			standings[driverGUID] = NewChampionshipStanding(car)
-		}
-
-		standings[driverGUID].Points += points
-
-		if reason == PointsEventFinish {
-			// only increment team finishes for a 'finish' reason
-			standings[driverGUID].AddEventForTeam(car.Driver.Team)
-		}
-	})
-
-	skipPointsPenalties := false
-
-	for _, opt := range standingOpts {
-		if opt == StandingsNoPointsPenalties {
-			skipPointsPenalties = true
-		}
-	}
-
-	for _, standing := range standings {
-		if standing.Car.Driver.Name == "" {
-			continue
-		}
-
-		if !skipPointsPenalties {
-			standing.Points -= float64(c.PenaltyForGUID(standing.Car.Driver.GUID))
-		}
-
-		out = append(out, standing)
-	}
-
-	sort.Slice(out, func(i, j int) bool {
-		if out[i].Points == out[j].Points {
-			return out[i].Car.Driver.Name < out[j].Car.Driver.Name
-		}
-
-		return out[i].Points > out[j].Points
-	})
-
-	return out
-}
-
-// StandingsForEvent reports the standings for a single event, not including any generic points penalties applied to the championship.
-func (c *ChampionshipClass) StandingsForEvent(championship *Championship, event *ChampionshipEvent) []*ChampionshipStanding {
-	return c.Standings(championship, []*ChampionshipEvent{event}, StandingsNoPointsPenalties)
-}
-
-type ChampionshipStandingWithTableInfo struct {
-	*ChampionshipStanding
-
-	BackgroundColour template.CSS
-	NoFinishReason   string
-}
-
-func (c *ChampionshipClass) StandingsForEntrantAtEvent(championship *Championship, event *ChampionshipEvent, entrant *ChampionshipStanding) *ChampionshipStandingWithTableInfo {
-
-	outputStanding := &ChampionshipStanding{
-		Car:    entrant.Car,
-		Teams:  entrant.Teams,
-		Points: 0.0,
-	}
-
-	backgroundColour := "#ffffff"
-	noFinishReason := "DNS"
-
-	for i, standing := range c.StandingsForEvent(championship, event) {
-		if standing.Car.Model == entrant.Car.Model && standing.Car.GetGUID() == entrant.Car.GetGUID() {
-
-			switch {
-			case standing.Points == 0.0:
-				backgroundColour = "#ebcaff"
-				noFinishReason = "0"
-			case i == 0:
-				backgroundColour = "#fefebe"
-			case i == 1:
-				backgroundColour = "#dce0e1"
-			case i == 2:
-				backgroundColour = "#ffde9e"
-			case i > 2 && i <= 9:
-				backgroundColour = fmt.Sprintf("rgb(%d, %d, %d)", 223-(i*3), 254-(i*3), 223-(i*3))
-			case i > 9:
-				backgroundColour = fmt.Sprintf("rgb(%d, %d, %d)", 208-(i*3), 206-(i*3), 255-(i*3))
-			}
-
-			outputStanding = standing
-			break
-		}
-	}
-
-	return &ChampionshipStandingWithTableInfo{
-		ChampionshipStanding: outputStanding,
-		BackgroundColour:     template.CSS(backgroundColour),
-		NoFinishReason:       noFinishReason,
-	}
-}
-
-// extractRaceWeekendSessionsIntoIndividualEvents looks for race weekend events, and makes each indiivdual session of that
-// race weekend a Championship Event, to aide with points tallying
-func ExtractRaceWeekendSessionsIntoIndividualEvents(inEvents []*ChampionshipEvent) []*ChampionshipEvent {
-	events := make([]*ChampionshipEvent, 0)
-
-	for _, event := range inEvents {
-		if !event.IsRaceWeekend() {
-			events = append(events, event)
-		} else if event.RaceWeekend != nil {
-			for _, session := range event.RaceWeekend.Sessions {
-				e := NewChampionshipEvent()
-
-				e.ID = session.ID
-				e.RaceSetup = session.RaceConfig
-				e.CompletedTime = session.CompletedTime
-				e.StartedTime = session.StartedTime
-				e.Scheduled = session.ScheduledTime
-
-				e.Sessions[session.SessionType()] = &ChampionshipSession{
-					StartedTime:        session.StartedTime,
-					CompletedTime:      session.CompletedTime,
-					Results:            session.Results,
-					RaceWeekendSession: session,
-				}
-
-				events = append(events, e)
-			}
-		}
-	}
-
-	return events
-}
-
-// TeamStanding is the current number of Points a Team has.
-type TeamStanding struct {
-	Team   string
-	Points float64
-}
-
-// TeamStandings returns the current position of Teams in the Championship.
-func (c *ChampionshipClass) TeamStandings(championship *Championship, inEvents []*ChampionshipEvent) []*TeamStanding {
-	teams := make(map[string]float64)
-
-	// make a copy of events so we do not persist race weekend sessions
-	events := ExtractRaceWeekendSessionsIntoIndividualEvents(inEvents)
-
-	c.standings(championship, events, func(event *ChampionshipEvent, driverGUID string, points float64, reason PointsReason) {
-		var team string
-
-		// find the team the driver was in for this race.
-		for _, session := range event.Sessions {
-			if session.Results != nil {
-				for _, car := range session.Results.Cars {
-					if car.Driver.GUID == driverGUID {
-						team = car.Driver.Team
-						break
-					}
-
-					if NormaliseEntrantGUIDs(car.Driver.GuidsList) == driverGUID {
-						team = car.Driver.Team
-						break
-					}
-				}
-				break
-			}
-		}
-
-		if _, ok := teams[team]; !ok {
-			teams[team] = points
-		} else {
-			teams[team] += points
-		}
-	})
-
-	var out []*TeamStanding
-
-	for name, pts := range teams {
-		out = append(out, &TeamStanding{
-			Team:   name,
-			Points: pts - float64(c.PenaltyForTeam(name)),
-		})
-	}
-
-	sort.Slice(out, func(i, j int) bool {
-		return out[i].Team < out[j].Team
-	})
-
-	sort.Slice(out, func(i, j int) bool {
-		return out[i].Points > out[j].Points
-	})
-
-	return out
-}
-
-// NewChampionshipEvent creates a ChampionshipEvent with an ID
-func NewChampionshipEvent() *ChampionshipEvent {
-	return &ChampionshipEvent{
-		ID:       uuid.New(),
-		Sessions: make(map[SessionType]*ChampionshipSession),
-	}
-}
-
-// copied an existing ChampionshipEvent but assigns a new ID
-func DuplicateChampionshipEvent(event *ChampionshipEvent) *ChampionshipEvent {
-	newEvent := *event
-
-	newEvent.ID = uuid.New()
-	newEvent.CompletedTime = time.Time{}
-
-	return &newEvent
-}
-
-// A ChampionshipEvent is a given RaceSetup with Sessions.
-type ChampionshipEvent struct {
-	ScheduledEventBase
-
-	ID uuid.UUID
-
-	RaceSetup CurrentRaceConfig
-	EntryList EntryList
-
-	Sessions map[SessionType]*ChampionshipSession `json:",omitempty"`
-
-	// RaceWeekendID is the ID of the linked RaceWeekend for this ChampionshipEvent
-	RaceWeekendID uuid.UUID
-	// If RaceWeekendID is non-nil, RaceWeekend will be populated on loading the Championship.
-	RaceWeekend *RaceWeekend
-
-	StartedTime   time.Time
-	CompletedTime time.Time
-
-	championship *Championship
-}
-
-func (cr *ChampionshipEvent) IsRaceWeekend() bool {
-	return cr.RaceWeekendID != uuid.Nil
-}
-
-func (cr *ChampionshipEvent) GetSummary() string {
-	return fmt.Sprintf("(%s)", cr.championship.Name)
-}
-
-func (cr *ChampionshipEvent) GetURL() string {
-	return "/championship/" + cr.championship.ID.String()
-}
-
-func (cr *ChampionshipEvent) HasSignUpForm() bool {
-	return cr.championship.SignUpForm.Enabled
-}
-
-func (cr *ChampionshipEvent) ReadOnlyEntryList() EntryList {
-	return cr.CombineEntryLists(cr.championship)
-}
-
-func (cr *ChampionshipEvent) GetID() uuid.UUID {
-	return cr.ID
-}
-
-func (cr *ChampionshipEvent) GetRaceSetup() CurrentRaceConfig {
-	return cr.RaceSetup
-}
-
-func (cr *ChampionshipEvent) Cars(c *Championship) []string {
-	if cr.Completed() {
-		cars := make(map[string]bool)
-
-		// look for cars in the session results
-		for _, session := range cr.Sessions {
-			if session.Results != nil {
-				for _, car := range session.Results.Cars {
-					cars[car.Model] = true
-				}
-			}
-		}
-
-		var out []string
-
-		for car := range cars {
-			out = append(out, car)
-		}
-
-		return out
-	}
-
-	return c.ValidCarIDs()
-}
-
-func (cr *ChampionshipEvent) CombineEntryLists(championship *Championship) EntryList {
-	entryList := championship.AllEntrants()
-
-	if cr.EntryList == nil {
-		// no specific entry list for this event, just use the default
-		return entryList
-	}
-
-	for _, entrant := range entryList {
-		for _, eventEntrant := range cr.EntryList {
-			if entrant.InternalUUID != uuid.Nil && entrant.InternalUUID == eventEntrant.InternalUUID && entrant.Model == eventEntrant.Model {
-				entrant.OverwriteProperties(eventEntrant)
-
-				break
-			}
-		}
-	}
-
-	return entryList
-}
-
-// LastSession returns the last configured session in the championship, in the following order:
-// Race, Qualifying, Practice, Booking
-func (cr *ChampionshipEvent) LastSession() SessionType {
-	switch {
-	case cr.RaceSetup.HasMultipleRaces():
-		// there must be two races as reversed grid positions are on
-		return SessionTypeSecondRace
-	case cr.RaceSetup.HasSession(SessionTypeRace):
-		return SessionTypeRace
-	case cr.RaceSetup.HasSession(SessionTypeQualifying):
-		return SessionTypeQualifying
-	case cr.RaceSetup.HasSession(SessionTypePractice):
-		return SessionTypePractice
-	default:
-		return SessionTypeBooking
-	}
-}
-
-// InProgress indicates whether a ChampionshipEvent has been started but not stopped
-func (cr *ChampionshipEvent) InProgress() bool {
-	return !cr.StartedTime.IsZero() && cr.CompletedTime.IsZero()
-}
-
-// Completed ChampionshipEvents have a non-zero CompletedTime
-func (cr *ChampionshipEvent) Completed() bool {
-	return !cr.CompletedTime.IsZero()
-}
-
-// A ChampionshipSession contains information found from the live portion of the Championship tool
-type ChampionshipSession struct {
-	StartedTime   time.Time
-	CompletedTime time.Time
-
-	Results *SessionResults
-
-	RaceWeekendSession *RaceWeekendSession
-}
-
-func (ce *ChampionshipSession) IsRaceWeekend() bool {
-	return ce.RaceWeekendSession != nil
-}
-
-// InProgress indicates whether a ChampionshipSession has been started but not stopped
-func (ce *ChampionshipSession) InProgress() bool {
-	return !ce.StartedTime.IsZero() && ce.CompletedTime.IsZero()
-}
-
-// Completed ChampionshipSessions have a non-zero CompletedTime
-func (ce *ChampionshipSession) Completed() bool {
-	return !ce.CompletedTime.IsZero() && ce.Results != nil
+	entryListMutex sync.Mutex
 }
 
 type ChampionshipSignUpForm struct {
@@ -1534,85 +181,1394 @@ func (csr ChampionshipSignUpResponse) GetGUID() string {
 	return csr.GUID
 }
 
-type ActiveChampionship struct {
-	Name                    string
-	ChampionshipID, EventID uuid.UUID
-	SessionType             SessionType
-	OverridePassword        bool
-	ReplacementPassword     string
-	Description             string
-	IsPracticeSession       bool
-	RaceConfig              CurrentRaceConfig
-	EntryList               EntryList
+func (c *Championship) GetPlayerSummary(guid string) string {
+	if c.Progress() == 0 {
+		return "This is the first event of the Championship!"
+	}
 
-	NumLapsCompleted   int `json:"-"`
-	NumRaceStartEvents int `json:"-"`
-}
+	for _, class := range c.Classes {
+		for _, entrant := range class.Entrants {
+			if entrant.GUID == guid {
+				standings := class.Standings(c.Events)
+				teamstandings := class.TeamStandings(c.Events)
 
-func (a *ActiveChampionship) GetRaceConfig() CurrentRaceConfig {
-	return a.RaceConfig
-}
+				var driverPos, teamPos int
+				var driverPoints, teamPoints float64
 
-func (a *ActiveChampionship) GetEntryList() EntryList {
-	return a.EntryList
-}
+				for pos, standing := range standings {
+					if standing.Car.Driver.GUID == guid {
+						driverPos = pos + 1
+						driverPoints = standing.Points
+					}
+				}
 
-func (a *ActiveChampionship) IsLooping() bool {
-	return false
-}
+				var driverAhead string
+				var driverAheadPoints float64
 
-func (a *ActiveChampionship) IsPractice() bool {
-	return a.IsPracticeSession
-}
+				if driverPos >= 2 {
+					driverAhead = standings[driverPos-2].Car.Driver.Name
+					driverAheadPoints = standings[driverPos-2].Points
+				}
 
-func (a *ActiveChampionship) GetURL() string {
-	if config.HTTP.BaseURL != "" {
-		return config.HTTP.BaseURL + "/championship/" + a.ChampionshipID.String()
+				for pos, standing := range teamstandings {
+					if standing.Team == entrant.Team {
+						teamPos = pos + 1
+						teamPoints = standing.Points
+					}
+				}
+
+				var teamAhead string
+				var teamAheadPoints float64
+
+				if teamPos >= 2 {
+					teamAhead = teamstandings[teamPos-2].Team
+					teamAheadPoints = teamstandings[teamPos-2].Points
+				}
+
+				out := fmt.Sprintf("You are currently %d%s with %.2f points. ", driverPos, ordinal(int64(driverPos)), driverPoints)
+
+				if driverAhead != "" {
+					out += fmt.Sprintf("The driver ahead of you is %s with %.2f points. ", driverAhead, driverAheadPoints)
+				}
+
+				if entrant.Team != "" {
+					out += fmt.Sprintf("Your team '%s' has %.2f points. ", entrant.Team, teamPoints)
+
+					if teamAhead != "" {
+						out += fmt.Sprintf("The team ahead is '%s' with %.2f points. ", teamAhead, teamAheadPoints)
+					}
+				}
+
+				return out
+			}
+		}
 	}
 
 	return ""
 }
 
-func (a *ActiveChampionship) IsChampionship() bool {
-	return true
+// IsMultiClass is true if the Championship has more than one Class
+func (c *Championship) IsMultiClass() bool {
+	return len(c.Classes) > 1
 }
 
-func (a *ActiveChampionship) IsRaceWeekend() bool {
-	return false
-}
-
-func (a *ActiveChampionship) IsTimeAttack() bool {
-	return false
-}
-
-func (a *ActiveChampionship) OverrideServerPassword() bool {
-	return a.OverridePassword
-}
-
-func (a *ActiveChampionship) ReplacementServerPassword() string {
-	return a.ReplacementPassword
-}
-
-func (a *ActiveChampionship) EventName() string {
-	if a.IsPracticeSession {
-		return a.Name + " - Looping Practice"
+func (c *Championship) HasScheduledEvents() bool {
+	for _, event := range c.Events {
+		if !event.Scheduled.IsZero() {
+			return true
+		}
 	}
 
-	return a.Name
-}
-
-func (a *ActiveChampionship) EventDescription() string {
-	return a.Description
-}
-
-func (a *ActiveChampionship) GetForceStopTime() time.Duration {
-	return 0
-}
-
-func (a *ActiveChampionship) GetForceStopWithDrivers() bool {
 	return false
 }
 
-func ChampionshipClassColor(i int) string {
-	return ChampionshipClassColors[i%len(ChampionshipClassColors)]
+var ErrClassNotFound = errors.New("servermanager: championship class not found")
+
+func (c *Championship) FindClassForCarModel(model string) (*ChampionshipClass, error) {
+	for _, class := range c.Classes {
+		for _, car := range class.ValidCarIDs() {
+			if car == model {
+				return class, nil
+			}
+		}
+	}
+
+	return nil, ErrClassNotFound
+}
+
+// NewChampionshipClass creates a championship class with the default points
+func NewChampionshipClass(name string) *ChampionshipClass {
+	return &ChampionshipClass{
+		ID:       uuid.New(),
+		Name:     name,
+		Points:   DefaultChampionshipPoints,
+		Entrants: make(EntryList),
+	}
+}
+
+// ChampionshipClass contains a Name, Entrants (including Cars, Skins) and Points for those Entrants
+type ChampionshipClass struct {
+	ID   uuid.UUID
+	Name string
+
+	Entrants EntryList
+	Points   ChampionshipPoints
+
+	DriverPenalties, TeamPenalties map[string]int
+}
+
+// ValidCarIDs returns a set of all cars chosen within the given class
+func (c *ChampionshipClass) ValidCarIDs() []string {
+	cars := make(map[string]bool)
+
+	for _, e := range c.Entrants {
+		cars[e.Model] = true
+	}
+
+	var out []string
+
+	for car := range cars {
+		out = append(out, car)
+	}
+
+	return out
+}
+
+// EventByID finds a ChampionshipEvent by its ID string.
+func (c *Championship) EventByID(id string) (*ChampionshipEvent, error) {
+	for _, e := range c.Events {
+		if e.ID.String() == id {
+			return e, nil
+		}
+	}
+
+	return nil, ErrInvalidChampionshipEvent
+}
+
+// ClassByID finds a ChampionshipClass by its ID string.
+func (c *Championship) ClassByID(id string) (*ChampionshipClass, error) {
+	for _, x := range c.Classes {
+		if x.ID.String() == id {
+			return x, nil
+		}
+	}
+
+	return nil, ErrInvalidChampionshipClass
+}
+
+// ValidCarIDs returns a set of all of the valid cars in the Championship - that is, the smallest possible list
+// of Cars driven by the Entrants.
+func (c *Championship) ValidCarIDs() []string {
+	cars := make(map[string]bool)
+
+	for _, class := range c.Classes {
+		for _, e := range class.Entrants {
+			cars[e.Model] = true
+		}
+	}
+
+	var out []string
+
+	for car := range cars {
+		out = append(out, car)
+	}
+
+	return out
+}
+
+// NumEntrants is the number of entrants across all Classes in a Championship.
+func (c *Championship) NumEntrants() int {
+	entrants := 0
+
+	for _, class := range c.Classes {
+		entrants += len(class.Entrants)
+	}
+
+	return entrants
+}
+
+// AllEntrants returns the list of all entrants in the championship (across ALL classes)
+func (c *Championship) AllEntrants() EntryList {
+	e := make(EntryList)
+
+	for _, class := range c.Classes {
+		for _, entrant := range class.Entrants {
+			e.Add(entrant)
+		}
+	}
+
+	return e
+}
+
+// AddClass to the championship
+func (c *Championship) AddClass(class *ChampionshipClass) {
+	c.Classes = append(c.Classes, class)
+}
+
+// Progress of the Championship as a percentage
+func (c *Championship) Progress() float64 {
+	numRaces := float64(len(c.Events))
+
+	if numRaces == 0 {
+		return 0
+	}
+
+	numCompletedRaces := float64(0)
+
+	for _, race := range c.Events {
+		if race.Completed() {
+			numCompletedRaces++
+		}
+	}
+
+	return (numCompletedRaces / numRaces) * 100
+}
+
+type PotentialChampionshipEntrant interface {
+	GetName() string
+	GetTeam() string
+	GetCar() string
+	GetSkin() string
+	GetGUID() string
+}
+
+func (c *Championship) AddEntrantFromSessionData(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
+	foundFreeSlot, class, err := c.AddEntrantFromSession(potentialEntrant)
+
+	if err != nil {
+		return foundFreeSlot, class, err
+	}
+
+	if foundFreeSlot {
+		newEntrant := NewEntrant()
+
+		newEntrant.GUID = potentialEntrant.GetGUID()
+		newEntrant.Name = potentialEntrant.GetName()
+		newEntrant.Team = potentialEntrant.GetTeam()
+
+		err := accountManager.store.UpsertEntrant(*newEntrant)
+
+		if err != nil {
+			logrus.Errorf("Couldn't add entrant (GUID; %s, Name; %s) to autofill list", newEntrant.GUID, newEntrant.Name)
+		}
+	}
+
+	return foundFreeSlot, class, nil
+}
+
+func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampionshipEntrant) (foundFreeEntrantSlot bool, entrantClass *ChampionshipClass, err error) {
+	c.entryListMutex.Lock()
+	defer c.entryListMutex.Unlock()
+
+	classForCar, err := c.FindClassForCarModel(potentialEntrant.GetCar())
+
+	if err != nil {
+		logrus.Errorf("Could not find class for car: %s in championship", potentialEntrant.GetCar())
+
+		return false, nil, err
+	}
+
+classLoop:
+	for _, class := range c.Classes {
+		for entrantKey, entrant := range class.Entrants {
+			if entrant.GUID == potentialEntrant.GetGUID() {
+				if class == classForCar {
+					// the person is already in the EntryList and this class, update their information
+					logrus.Debugf("Entrant: %s (%s) already found in EntryList. updating their info...", potentialEntrant.GetName(), potentialEntrant.GetGUID())
+					entrant.Model = potentialEntrant.GetCar()
+					entrant.Skin = potentialEntrant.GetSkin()
+
+					return true, class, nil
+				} else {
+					// the user needs removing from this class
+					logrus.Infof("Entrant: %s (%s) found in EntryList, but changed classes (%s -> %s). removing from original class.", potentialEntrant.GetName(), potentialEntrant.GetGUID(), class.Name, classForCar.Name)
+					delete(class.Entrants, entrantKey)
+					break classLoop
+				}
+			}
+		}
+	}
+	// now look for empty Entrants in the Entrylist
+	for carNum, entrant := range classForCar.Entrants {
+		if entrant.Name == "" && entrant.GUID == "" {
+			entrant.Name = potentialEntrant.GetName()
+			entrant.GUID = potentialEntrant.GetGUID()
+			entrant.Model = potentialEntrant.GetCar()
+			entrant.Skin = potentialEntrant.GetSkin()
+			entrant.Team = potentialEntrant.GetTeam()
+
+			logrus.Infof("New championship entrant: %s (%s) has been assigned to %s in %s", entrant.Name, entrant.GUID, carNum, classForCar.Name)
+
+			return true, classForCar, nil
+		}
+	}
+
+	return false, classForCar, nil
+}
+
+// EnhanceResults takes a set of SessionResults and attaches Championship information to them.
+func (c *Championship) EnhanceResults(results *SessionResults) {
+	if results == nil {
+		return
+	}
+
+	results.ChampionshipID = c.ID.String()
+
+	// update names / teams to the values we know to be correct due to championship setup
+	for _, class := range c.Classes {
+		for _, entrant := range class.Entrants {
+			class.AttachEntrantToResult(entrant, results)
+		}
+	}
+}
+
+func NewChampionshipStanding(car *SessionCar) *ChampionshipStanding {
+	return &ChampionshipStanding{
+		Car:   car,
+		Teams: make(map[string]int),
+	}
+}
+
+// ChampionshipStanding is the current number of Points an Entrant in the Championship has.
+type ChampionshipStanding struct {
+	Car *SessionCar
+
+	// Teams is a map of Team Name to how many Events per team were completed.
+	Teams  map[string]int
+	Points float64
+}
+
+func (cs *ChampionshipStanding) AddEventForTeam(team string) {
+	if _, ok := cs.Teams[team]; ok {
+		cs.Teams[team]++
+	} else {
+		cs.Teams[team] = 1
+	}
+}
+
+func (cs *ChampionshipStanding) TeamSummary() string {
+	if len(cs.Teams) == 1 {
+		for team := range cs.Teams {
+			return team
+		}
+	} else {
+		// more than one team
+		var summary []string
+
+		for team, races := range cs.Teams {
+			summary = append(summary, fmt.Sprintf("%s (%d races)", team, races))
+		}
+
+		return strings.Join(summary, ", ")
+	}
+
+	return ""
+}
+
+// PointForPos uses the Championship's Points to determine what number should be awarded to a given position
+func (c *ChampionshipClass) PointForPos(i int) float64 {
+	if i >= len(c.Points.Places) {
+		return 0
+	}
+
+	return float64(c.Points.Places[i])
+}
+
+func (c *ChampionshipClass) DriverInClass(result *SessionResult) bool {
+	return result.ClassID == c.ID
+}
+
+func (c *ChampionshipClass) AttachEntrantToResult(entrant *Entrant, results *SessionResults) {
+	for _, car := range results.Cars {
+		if car.Driver.GUID == entrant.GUID {
+			car.Driver.AssignEntrant(entrant, c.ID)
+		}
+	}
+
+	for _, event := range results.Events {
+		if event.Driver.GUID == entrant.GUID {
+			event.Driver.AssignEntrant(entrant, c.ID)
+		}
+
+		if event.OtherDriver.GUID == entrant.GUID {
+			event.OtherDriver.AssignEntrant(entrant, c.ID)
+		}
+	}
+
+	for _, lap := range results.Laps {
+		if lap.DriverGUID == entrant.GUID {
+			lap.DriverName = entrant.Name
+			lap.ClassID = c.ID
+		}
+	}
+
+	for _, result := range results.Result {
+		if result.DriverGUID == entrant.GUID {
+			result.DriverName = entrant.Name
+			result.ClassID = c.ID
+		}
+	}
+}
+
+func (c *ChampionshipClass) ResultsForClass(results []*SessionResult) (filtered []*SessionResult) {
+	for _, result := range results {
+		if c.DriverInClass(result) && result.TotalTime > 0 {
+			filtered = append(filtered, result)
+		}
+	}
+
+	return filtered
+}
+
+func (c *ChampionshipClass) PenaltyForGUID(guid string) int {
+	if penalty, ok := c.DriverPenalties[guid]; ok {
+		return penalty
+	} else {
+		return 0
+	}
+}
+
+func (c *ChampionshipClass) PenaltyForTeam(name string) int {
+	if teamPenalty, ok := c.TeamPenalties[name]; ok {
+		return teamPenalty
+	} else {
+		return 0
+	}
+}
+
+func (c *ChampionshipClass) standings(events []*ChampionshipEvent, givePoints func(event *ChampionshipEvent, driverGUID string, points float64)) {
+	eventsReverseCompletedOrder := make([]*ChampionshipEvent, len(events))
+
+	copy(eventsReverseCompletedOrder, events)
+
+	sort.Slice(eventsReverseCompletedOrder, func(i, j int) bool {
+		return eventsReverseCompletedOrder[i].CompletedTime.After(eventsReverseCompletedOrder[j].CompletedTime)
+	})
+
+	for _, event := range eventsReverseCompletedOrder {
+		qualifying, qualifyingOK := event.Sessions[SessionTypeQualifying]
+
+		if qualifyingOK && qualifying.Results != nil {
+			for pos, driver := range c.ResultsForClass(qualifying.Results.Result) {
+				if pos != 0 {
+					continue
+				}
+
+				givePoints(event, driver.DriverGUID, float64(c.Points.PolePosition))
+			}
+		}
+
+		race, raceOK := event.Sessions[SessionTypeRace]
+
+		if raceOK && race.Results != nil {
+			fastestLap := race.Results.FastestLap()
+
+			for pos, driver := range c.ResultsForClass(race.Results.Result) {
+				if driver.TotalTime <= 0 || driver.Disqualified {
+					continue
+				}
+
+				givePoints(event, driver.DriverGUID, c.PointForPos(pos))
+
+				if fastestLap.DriverGUID == driver.DriverGUID {
+					givePoints(event, driver.DriverGUID, float64(c.Points.BestLap))
+				}
+			}
+		}
+
+		race2, race2OK := event.Sessions[SessionTypeSecondRace]
+
+		if race2OK && race2.Results != nil {
+			fastestLap := race2.Results.FastestLap()
+
+			for pos, driver := range c.ResultsForClass(race2.Results.Result) {
+				if driver.TotalTime <= 0 || driver.Disqualified {
+					continue
+				}
+
+				givePoints(event, driver.DriverGUID, c.PointForPos(pos)*c.Points.SecondRaceMultiplier)
+
+				if fastestLap.DriverGUID == driver.DriverGUID {
+					givePoints(event, driver.DriverGUID, float64(c.Points.BestLap)*c.Points.SecondRaceMultiplier)
+				}
+			}
+		}
+	}
+}
+
+// Standings returns the current Driver Standings for the Championship.
+func (c *ChampionshipClass) Standings(events []*ChampionshipEvent) []*ChampionshipStanding {
+	var out []*ChampionshipStanding
+
+	standings := make(map[string]*ChampionshipStanding)
+
+	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64) {
+		var car *SessionCar
+
+		for _, session := range event.Sessions {
+			if session.Results == nil {
+				continue
+			}
+
+			for _, sessionCar := range session.Results.Cars {
+				if sessionCar.Driver.GUID == driverGUID {
+					car = sessionCar
+					break
+				}
+			}
+		}
+
+		if car == nil {
+			return
+		}
+
+		if _, ok := standings[driverGUID]; !ok {
+			standings[driverGUID] = NewChampionshipStanding(car)
+		}
+
+		standings[driverGUID].Points += points
+		standings[driverGUID].AddEventForTeam(car.Driver.Team)
+	})
+
+	for _, standing := range standings {
+		if standing.Car.Driver.Name == "" {
+			continue
+		}
+
+		standing.Points -= float64(c.PenaltyForGUID(standing.Car.Driver.GUID))
+
+		out = append(out, standing)
+	}
+
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Points == out[j].Points {
+			return out[i].Car.Driver.Name < out[j].Car.Driver.Name
+		}
+
+		return out[i].Points > out[j].Points
+	})
+
+	return out
+}
+
+// TeamStanding is the current number of Points a Team has.
+type TeamStanding struct {
+	Team   string
+	Points float64
+}
+
+// TeamStandings returns the current position of Teams in the Championship.
+func (c *ChampionshipClass) TeamStandings(events []*ChampionshipEvent) []*TeamStanding {
+	teams := make(map[string]float64)
+
+	c.standings(events, func(event *ChampionshipEvent, driverGUID string, points float64) {
+		var team string
+
+		// find the team the driver was in for this race.
+		for _, session := range event.Sessions {
+			if session.Results != nil {
+				for _, car := range session.Results.Cars {
+					if car.Driver.GUID == driverGUID {
+						team = car.Driver.Team
+						break
+					}
+				}
+				break
+			}
+		}
+
+		if _, ok := teams[team]; !ok {
+			teams[team] = points
+		} else {
+			teams[team] += points
+		}
+	})
+
+	var out []*TeamStanding
+
+	for name, pts := range teams {
+		out = append(out, &TeamStanding{
+			Team:   name,
+			Points: pts - float64(c.PenaltyForTeam(name)),
+		})
+	}
+
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Team < out[j].Team
+	})
+
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Points > out[j].Points
+	})
+
+	return out
+}
+
+// NewChampionshipEvent creates a ChampionshipEvent with an ID
+func NewChampionshipEvent() *ChampionshipEvent {
+	return &ChampionshipEvent{
+		ID: uuid.New(),
+	}
+}
+
+// A ChampionshipEvent is a given RaceSetup with Sessions.
+type ChampionshipEvent struct {
+	ID uuid.UUID
+
+	RaceSetup CurrentRaceConfig
+	EntryList EntryList
+
+	Sessions map[SessionType]*ChampionshipSession
+
+	StartedTime   time.Time
+	CompletedTime time.Time
+	Scheduled     time.Time
+
+	championship *Championship
+}
+
+func (cr *ChampionshipEvent) GetSummary() string {
+	return fmt.Sprintf("(%s)", cr.championship.Name)
+}
+
+func (cr *ChampionshipEvent) GetURL() string {
+	return "/championship/" + cr.championship.ID.String()
+}
+
+func (cr *ChampionshipEvent) GetEntryList() EntryList {
+	return cr.CombineEntryLists(cr.championship)
+}
+
+func (cr *ChampionshipEvent) GetID() uuid.UUID {
+	return cr.ID
+}
+
+func (cr *ChampionshipEvent) GetRaceSetup() CurrentRaceConfig {
+	return cr.RaceSetup
+}
+
+func (cr *ChampionshipEvent) GetScheduledTime() time.Time {
+	return cr.Scheduled
+}
+
+func (cr *ChampionshipEvent) Cars(c *Championship) []string {
+	if cr.Completed() {
+		cars := make(map[string]bool)
+
+		// look for cars in the session results
+		for _, session := range cr.Sessions {
+			if session.Results != nil {
+				for _, car := range session.Results.Cars {
+					cars[car.Model] = true
+				}
+			}
+		}
+
+		var out []string
+
+		for car := range cars {
+			out = append(out, car)
+		}
+
+		return out
+	} else {
+		return c.ValidCarIDs()
+	}
+}
+
+func (cr *ChampionshipEvent) CombineEntryLists(championship *Championship) EntryList {
+	entryList := championship.AllEntrants()
+
+	if cr.EntryList == nil {
+		// no specific entry list for this event, just use the default
+		return entryList
+	}
+
+	for _, entrant := range entryList {
+		for _, eventEntrant := range cr.EntryList {
+			if entrant.InternalUUID != uuid.Nil && entrant.InternalUUID == eventEntrant.InternalUUID && entrant.Model == eventEntrant.Model {
+				entrant.OverwriteProperties(eventEntrant)
+
+				break
+			}
+		}
+	}
+
+	return entryList
+}
+
+// LastSession returns the last configured session in the championship, in the following order:
+// Race, Qualifying, Practice, Booking
+func (cr *ChampionshipEvent) LastSession() SessionType {
+	if cr.RaceSetup.HasMultipleRaces() {
+		// there must be two races as reversed grid positions are on
+		return SessionTypeSecondRace
+	} else if cr.RaceSetup.HasSession(SessionTypeRace) {
+		return SessionTypeRace
+	} else if cr.RaceSetup.HasSession(SessionTypeQualifying) {
+		return SessionTypeQualifying
+	} else if cr.RaceSetup.HasSession(SessionTypePractice) {
+		return SessionTypePractice
+	} else {
+		return SessionTypeBooking
+	}
+}
+
+// InProgress indicates whether a ChampionshipEvent has been started but not stopped
+func (cr *ChampionshipEvent) InProgress() bool {
+	return !cr.StartedTime.IsZero() && cr.CompletedTime.IsZero()
+}
+
+// Completed ChampionshipEvents have a non-zero CompletedTime
+func (cr *ChampionshipEvent) Completed() bool {
+	return !cr.CompletedTime.IsZero()
+}
+
+// A ChampionshipSession contains information found from the live portion of the Championship tool
+type ChampionshipSession struct {
+	StartedTime   time.Time
+	CompletedTime time.Time
+
+	Results *SessionResults
+}
+
+// InProgress indicates whether a ChampionshipSession has been started but not stopped
+func (ce *ChampionshipSession) InProgress() bool {
+	return !ce.StartedTime.IsZero() && ce.CompletedTime.IsZero()
+}
+
+// Completed ChampionshipSessions have a non-zero CompletedTime
+func (ce *ChampionshipSession) Completed() bool {
+	return !ce.CompletedTime.IsZero()
+}
+
+// listChampionshipsHandler lists all available Championships known to Server Manager
+func (ms *MultiServer) listChampionshipsHandler(w http.ResponseWriter, r *http.Request) {
+	championships, err := ms.championshipManager.ListChampionships()
+
+	if err != nil {
+		logrus.Errorf("couldn't list championships, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "championships/index.html", map[string]interface{}{
+		"championships": championships,
+	})
+}
+
+// newOrEditChampionshipHandler builds a Championship form for the user to create a Championship.
+func (ms *MultiServer) newOrEditChampionshipHandler(w http.ResponseWriter, r *http.Request) {
+	_, opts, err := ms.championshipManager.BuildChampionshipOpts(r)
+
+	if err != nil {
+		logrus.Errorf("couldn't build championship form, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "championships/new.html", opts)
+}
+
+// submitNewChampionshipHandler creates a given Championship and redirects the user to begin
+// the flow of adding events to the new Championship
+func (ms *MultiServer) submitNewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
+	championship, edited, err := ms.championshipManager.HandleCreateChampionship(r)
+
+	if err != nil {
+		logrus.Errorf("couldn't create championship, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if edited {
+		AddFlashQuick(w, r, "Championship successfully edited!")
+		http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
+	} else {
+		AddFlashQuick(w, r, "We've created the Championship. Now you need to add some Events!")
+		http.Redirect(w, r, "/championship/"+championship.ID.String()+"/event", http.StatusFound)
+	}
+}
+
+// viewChampionshipHandler shows details of a given Championship
+func (ms *MultiServer) viewChampionshipHandler(w http.ResponseWriter, r *http.Request) {
+	championship, err := ms.championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
+
+	if err != nil {
+		logrus.Errorf("couldn't load championship, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	eventInProgress := false
+
+	for _, event := range championship.Events {
+		if event.InProgress() {
+			eventInProgress = true
+			break
+		}
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "championships/view.html", map[string]interface{}{
+		"Championship":    championship,
+		"EventInProgress": eventInProgress,
+	})
+}
+
+// exportChampionshipHandler returns all known data about a Championship in JSON format.
+func (ms *MultiServer) exportChampionshipHandler(w http.ResponseWriter, r *http.Request) {
+	championship, err := ms.championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
+
+	if err != nil {
+		logrus.Errorf("couldn't export championship, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	// sign up responses are hidden for data protection reasons
+	championship.SignUpForm.Responses = nil
+
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	enc.Encode(championship)
+}
+
+// importChampionshipHandler reads Championship data from JSON.
+func (ms *MultiServer) importChampionshipHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		championshipID, err := ms.championshipManager.ImportChampionship(r.FormValue("import"))
+
+		if err != nil {
+			logrus.Errorf("couldn't import championship, err: %s", err)
+			AddErrFlashQuick(w, r, "Sorry, we couldn't import that championship! Check your JSON formatting.")
+		} else {
+			AddFlashQuick(w, r, "Championship successfully imported!")
+			http.Redirect(w, r, "/championship/"+championshipID, http.StatusFound)
+		}
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "championships/import-championship.html", nil)
+}
+
+type championshipResultsCollection struct {
+	Name    string                `json:"name"`
+	Results []championshipResults `json:"results"`
+}
+
+type championshipResults struct {
+	Name string   `json:"name"`
+	Log  []string `json:"log"`
+}
+
+// exportChampionshipResults returns championship result files in JSON format.
+func (ms *MultiServer) exportChampionshipResultsHandler(w http.ResponseWriter, r *http.Request) {
+	championship, err := ms.championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
+
+	if err != nil {
+		logrus.Errorf("couldn't export championship, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	var results []championshipResults
+
+	for _, event := range championship.Events {
+
+		if !event.Completed() {
+			continue
+		}
+
+		var sessionFiles []string
+
+		for _, session := range event.Sessions {
+			sessionFiles = append(sessionFiles, session.Results.GetURL())
+		}
+
+		results = append(results, championshipResults{
+			Name: "Event at " + prettifyName(event.RaceSetup.Track, false) + ", completed on " + event.CompletedTime.Format("Monday, January 2, 2006 3:04 PM (MST)"),
+			Log:  sessionFiles,
+		})
+	}
+
+	champResultsCollection := championshipResultsCollection{
+		Name:    championship.Name,
+		Results: results,
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	enc.Encode(champResultsCollection)
+}
+
+// deleteChampionshipHandler soft deletes a Championship.
+func (ms *MultiServer) deleteChampionshipHandler(w http.ResponseWriter, r *http.Request) {
+	err := ms.championshipManager.DeleteChampionship(chi.URLParam(r, "championshipID"))
+
+	if err != nil {
+		logrus.Errorf("couldn't delete championship, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	AddFlashQuick(w, r, "Championship deleted!")
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (ms *MultiServer) championshipEventImportHandler(w http.ResponseWriter, r *http.Request) {
+	championshipID := chi.URLParam(r, "championshipID")
+	eventID := chi.URLParam(r, "eventID")
+
+	if r.Method == http.MethodPost {
+		err := ms.championshipManager.ImportEvent(championshipID, eventID, r)
+
+		if err != nil {
+			logrus.Errorf("Could not import championship event, error: %s", err)
+			AddErrFlashQuick(w, r, "Could not import session files")
+		} else {
+			AddFlashQuick(w, r, "Successfully imported session files!")
+			http.Redirect(w, r, "/championship/"+championshipID, http.StatusFound)
+			return
+		}
+	}
+
+	event, results, err := ms.championshipManager.ListAvailableResultsFilesForEvent(championshipID, eventID)
+
+	if err != nil {
+		logrus.Errorf("Couldn't load session files, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "championships/import-event.html", map[string]interface{}{
+		"Results":        results,
+		"ChampionshipID": championshipID,
+		"Event":          event,
+	})
+}
+
+// championshipEventConfigurationHandler builds a Custom Race form with slight modifications
+// to allow a user to configure a ChampionshipEvent.
+func (ms *MultiServer) championshipEventConfigurationHandler(w http.ResponseWriter, r *http.Request) {
+	championshipRaceOpts, err := ms.championshipManager.BuildChampionshipEventOpts(r)
+
+	if err != nil {
+		logrus.Errorf("couldn't build championship race, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "custom-race/new.html", championshipRaceOpts)
+}
+
+// championshipSubmitEventConfigurationHandler takes an Event Configuration from a form and
+// builds an event optionally, this is used for editing ChampionshipEvents.
+func (ms *MultiServer) championshipSubmitEventConfigurationHandler(w http.ResponseWriter, r *http.Request) {
+	championship, event, edited, err := ms.championshipManager.SaveChampionshipEvent(r)
+
+	if err != nil {
+		logrus.Errorf("couldn't build championship race, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if edited {
+		AddFlashQuick(w, r,
+			fmt.Sprintf(
+				"Championship race at %s was successfully edited!",
+				prettifyName(event.RaceSetup.Track, false),
+			),
+		)
+	} else {
+		AddFlashQuick(w, r,
+			fmt.Sprintf(
+				"Championship race at %s was successfully added!",
+				prettifyName(event.RaceSetup.Track, false),
+			),
+		)
+	}
+
+	if r.FormValue("action") == "saveChampionship" {
+		// end the race creation flow
+		http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
+		return
+	} else {
+		// add another event
+		http.Redirect(w, r, "/championship/"+championship.ID.String()+"/event", http.StatusFound)
+	}
+}
+
+// championshipStartEventHandler begins a championship event given by its ID
+func (ms *MultiServer) championshipStartEventHandler(w http.ResponseWriter, r *http.Request) {
+	err := ms.championshipManager.StartEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
+
+	if err != nil {
+		logrus.Errorf("Could not start championship event, err: %s", err)
+
+		AddErrFlashQuick(w, r, "Couldn't start the Event")
+	} else {
+		AddFlashQuick(w, r, "Event started successfully!")
+		time.Sleep(time.Second * 1)
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (ms *MultiServer) championshipScheduleEventHandler(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		logrus.Errorf("couldn't parse schedule race form, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	championshipID := chi.URLParam(r, "championshipID")
+	championshipEventID := chi.URLParam(r, "eventID")
+	dateString := r.FormValue("event-schedule-date")
+	timeString := r.FormValue("event-schedule-time")
+	timezone := r.FormValue("event-schedule-timezone")
+
+	location, err := time.LoadLocation(timezone)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("could not find location: %s", location)
+		location = time.Local
+	}
+
+	// Parse time in correct time zone
+	date, err := time.ParseInLocation("2006-01-02-15:04", dateString+"-"+timeString, location)
+
+	if err != nil {
+		logrus.Errorf("couldn't parse schedule championship event date, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	err = ms.raceScheduler.ScheduleEvent(championshipID, championshipEventID, date, r.FormValue("action"))
+
+	if err != nil {
+		logrus.Errorf("couldn't schedule championship event, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	AddFlashQuick(w, r, fmt.Sprintf("We have scheduled the Championship Event to begin at %s", date.Format(time.RFC1123)))
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (ms *MultiServer) championshipScheduleEventRemoveHandler(w http.ResponseWriter, r *http.Request) {
+	err := ms.raceScheduler.ScheduleEvent(
+		chi.URLParam(r, "championshipID"),
+		chi.URLParam(r, "eventID"),
+		time.Time{},
+		"remove",
+	)
+
+	if err != nil {
+		logrus.Errorf("couldn't schedule championship event, err: %s", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+// championshipDeleteEventHandler soft deletes a championship event
+func (ms *MultiServer) championshipDeleteEventHandler(w http.ResponseWriter, r *http.Request) {
+	err := ms.championshipManager.DeleteEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
+
+	if err != nil {
+		logrus.Errorf("Could not delete championship event, err: %s", err)
+
+		AddErrFlashQuick(w, r, "Couldn't delete the Event")
+	} else {
+		AddFlashQuick(w, r, "Event deleted successfully!")
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+// championshipStartPracticeEventHandler starts a Practice session for a given event
+func (ms *MultiServer) championshipStartPracticeEventHandler(w http.ResponseWriter, r *http.Request) {
+	err := ms.championshipManager.StartPracticeEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
+
+	if err != nil {
+		logrus.Errorf("Could not start practice championship event, err: %s", err)
+
+		AddErrFlashQuick(w, r, "Couldn't start the Practice Event")
+	} else {
+		AddFlashQuick(w, r, "Practice Event started successfully!")
+		time.Sleep(time.Second * 1)
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+// championshipCancelEventHandler stops a running championship event and clears any saved results
+func (ms *MultiServer) championshipCancelEventHandler(w http.ResponseWriter, r *http.Request) {
+	err := ms.championshipManager.CancelEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
+
+	if err != nil {
+		logrus.Errorf("Could not cancel championship event, err: %s", err)
+
+		AddErrFlashQuick(w, r, "Couldn't cancel the Championship Event")
+	} else {
+		AddFlashQuick(w, r, "Event cancelled successfully!")
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+// championshipCancelEventHandler stops a running championship event and clears any saved results
+// then starts the event again.
+func (ms *MultiServer) championshipRestartEventHandler(w http.ResponseWriter, r *http.Request) {
+	err := ms.championshipManager.RestartEvent(chi.URLParam(r, "championshipID"), chi.URLParam(r, "eventID"))
+
+	if err != nil {
+		logrus.Errorf("Could not restart championship event, err: %s", err)
+
+		AddErrFlashQuick(w, r, "Couldn't restart the Championship Event")
+	} else {
+		AddFlashQuick(w, r, "Event restarted successfully!")
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (ms *MultiServer) championshipICalHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "text/calendar; charset=utf-8")
+	w.Header().Add("Content-Disposition", "inline; filename=championship.ics")
+
+	err := ms.championshipManager.BuildICalFeed(chi.URLParam(r, "championshipID"), w)
+
+	if err != nil {
+		logrus.WithError(err).Error("could not build scheduled races feed")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (ms *MultiServer) championshipDriverPenaltyHandler(w http.ResponseWriter, r *http.Request) {
+	err := ms.championshipManager.ModifyDriverPenalty(
+		chi.URLParam(r, "championshipID"),
+		chi.URLParam(r, "classID"),
+		chi.URLParam(r, "driverGUID"),
+		PenaltyAction(r.FormValue("action")),
+		formValueAsInt(r.FormValue("PointsPenalty")),
+	)
+
+	if err != nil {
+		logrus.Errorf("Could not modify championship driver penalty, err: %s", err)
+
+		AddErrFlashQuick(w, r, "Couldn't modify driver penalty")
+	} else {
+		AddFlashQuick(w, r, "Driver penalty successfully modified")
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (ms *MultiServer) championshipTeamPenaltyHandler(w http.ResponseWriter, r *http.Request) {
+	err := ms.championshipManager.ModifyTeamPenalty(
+		chi.URLParam(r, "championshipID"),
+		chi.URLParam(r, "classID"),
+		chi.URLParam(r, "team"),
+		PenaltyAction(r.FormValue("action")),
+		formValueAsInt(r.FormValue("PointsPenalty")),
+	)
+
+	if err != nil {
+		logrus.Errorf("Could not modify championship penalty, err: %s", err)
+
+		AddErrFlashQuick(w, r, "Couldn't modify team penalty")
+	} else {
+		AddFlashQuick(w, r, "Team penalty successfully modified")
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func (ms *MultiServer) championshipSignUpFormHandler(w http.ResponseWriter, r *http.Request) {
+	championship, opts, err := ms.championshipManager.BuildChampionshipOpts(r)
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't load championship")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if !championship.SignUpForm.Enabled {
+		http.NotFound(w, r)
+		return
+	}
+
+	opts["FormData"] = &ChampionshipSignUpResponse{}
+
+	if r.Method == http.MethodPost {
+		signUpResponse, foundSlot, err := ms.championshipManager.HandleChampionshipSignUp(r)
+
+		if err != nil {
+			switch err.(type) {
+			case ValidationError:
+				opts["FormData"] = signUpResponse
+				opts["ValidationError"] = err.Error()
+			default:
+				logrus.WithError(err).Error("couldn't handle championship")
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
+			}
+		} else {
+			if championship.SignUpForm.RequiresApproval {
+				AddFlashQuick(w, r, "Thanks for registering for the championship! Your registration is pending approval by an administrator.")
+				http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
+				return
+			} else {
+				if foundSlot {
+					AddFlashQuick(w, r, "Thanks for registering for the championship!")
+					http.Redirect(w, r, "/championship/"+championship.ID.String(), http.StatusFound)
+					return
+				} else {
+					opts["FormData"] = signUpResponse
+					opts["ValidationError"] = fmt.Sprintf("There are no more available slots for the car: %s. Please pick a different car.", prettifyName(signUpResponse.GetCar(), true))
+				}
+			}
+		}
+	}
+
+	ViewRenderer.MustLoadTemplate(w, r, "championships/sign-up.html", opts)
+}
+
+func (ms *MultiServer) championshipSignedUpEntrantsHandler(w http.ResponseWriter, r *http.Request) {
+	championship, err := ms.championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't load championship")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if !championship.SignUpForm.Enabled {
+		http.NotFound(w, r)
+		return
+	}
+
+	sort.Slice(championship.SignUpForm.Responses, func(i, j int) bool {
+		return championship.SignUpForm.Responses[i].Created.After(championship.SignUpForm.Responses[j].Created)
+	})
+
+	ViewRenderer.MustLoadTemplate(w, r, "championships/signed-up-entrants.html", map[string]interface{}{
+		"Championship": championship,
+	})
+}
+
+func (ms *MultiServer) championshipSignedUpEntrantsCSVHandler(w http.ResponseWriter, r *http.Request) {
+	championship, err := ms.championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't load championship")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	headers := []string{
+		"Created",
+		"Name",
+		"Team",
+		"GUID",
+		"Email",
+		"Car",
+		"Skin",
+		"Status",
+	}
+
+	for _, question := range championship.SignUpForm.ExtraFields {
+		headers = append(headers, question)
+	}
+
+	var out [][]string
+
+	out = append(out, headers)
+
+	for _, entrant := range championship.SignUpForm.Responses {
+		data := []string{
+			entrant.Created.String(),
+			entrant.Name,
+			entrant.Team,
+			entrant.GUID,
+			entrant.Email,
+			entrant.Car,
+			entrant.Skin,
+			string(entrant.Status),
+		}
+
+		for _, question := range championship.SignUpForm.ExtraFields {
+			if response, ok := entrant.Questions[question]; ok {
+				data = append(data, response)
+			} else {
+				data = append(data, "")
+			}
+		}
+
+		out = append(out, data)
+	}
+
+	w.Header().Add("Content-Type", "text/csv")
+	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment;filename=Entrants_%s.csv", championship.Name))
+	wr := csv.NewWriter(w)
+	wr.UseCRLF = true
+	_ = wr.WriteAll(out)
+}
+
+func (ms *MultiServer) championshipModifyEntrantStatusHandler(w http.ResponseWriter, r *http.Request) {
+	championship, err := ms.championshipManager.LoadChampionship(chi.URLParam(r, "championshipID"))
+
+	if err != nil {
+		logrus.WithError(err).Error("couldn't load championship")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if !championship.SignUpForm.Enabled {
+		http.NotFound(w, r)
+		return
+	}
+
+	entrantGUID := chi.URLParam(r, "entrantGUID")
+
+	for _, entrant := range championship.SignUpForm.Responses {
+		if entrant.GUID != entrantGUID {
+			continue
+		}
+
+		switch r.URL.Query().Get("action") {
+		case "accept":
+			if entrant.Status == ChampionshipEntrantAccepted {
+				AddFlashQuick(w, r, "This entrant has already been accepted.")
+				break
+			}
+
+			// add the entrant to the entrylist
+			foundSlot, _, err := championship.AddEntrantFromSessionData(entrant)
+
+			if err != nil {
+				logrus.WithError(err).Error("couldn't add entrant to championship")
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
+			}
+
+			if foundSlot {
+				entrant.Status = ChampionshipEntrantAccepted
+
+				AddFlashQuick(w, r, "The entrant was successfully accepted!")
+			} else {
+				AddErrFlashQuick(w, r, "There are no more slots available for the given entrant and car. Please check the Championship configuration.")
+			}
+		case "reject":
+			entrant.Status = ChampionshipEntrantRejected
+
+		classLoop:
+			for _, class := range championship.Classes {
+				for _, classEntrant := range class.Entrants {
+					if entrantGUID == classEntrant.GUID {
+						// remove the entrant from the championship.
+						classEntrant.Name = ""
+						classEntrant.GUID = ""
+						classEntrant.Team = ""
+						break classLoop
+					}
+				}
+			}
+		default:
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+	}
+
+	if err := ms.championshipManager.UpsertChampionship(championship); err != nil {
+		logrus.WithError(err).Error("couldn't save championship")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }

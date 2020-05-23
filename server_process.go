@@ -4,250 +4,150 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
-	"io"
-	"io/ioutil"
 	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
+	"github.com/cj123/assetto-server-manager/pkg/udp"
 
+	"github.com/go-chi/chi"
+	"github.com/mitchellh/go-ps"
 	"github.com/sirupsen/logrus"
 )
 
 const MaxLogSizeBytes = 1e6
 
+type ServerEventType string
+
+const (
+	EventTypeRace         ServerEventType = "RACE"
+	EventTypeChampionship ServerEventType = "CHAMPIONSHIP"
+)
+
 type ServerProcess interface {
-	Start(event RaceEvent, udpPluginAddress string, udpPluginLocalPort int, forwardingAddress string, forwardListenPort int) error
+	Logs() string
+	Start(event RaceEvent, cfg ServerConfig, forwardingAddress string, forwardListenPort int) error
 	Stop() error
 	Restart() error
 	IsRunning() bool
-	Event() RaceEvent
-	UDPCallback(message udp.Message)
+	EventType() ServerEventType
+	SetUDPCallback(callbackFunc udp.CallbackFunc)
 	SendUDPMessage(message udp.Message) error
-	NotifyDone(chan struct{})
-	Logs() string
+
+	Done() <-chan struct{}
 }
 
-// AssettoServerProcess manages the Assetto Corsa Server process.
-type AssettoServerProcess struct {
-	store                 Store
-	contentManagerWrapper *ContentManagerWrapper
+// serverProcessHandler modifies the server process.
+// @TODO this needs to know _which_ server process to modify
+func (ms *MultiServer) serverProcessHandler(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var txt string
+	eventType := ms.process.EventType()
 
-	start                 chan RaceEvent
-	startMutex            sync.Mutex
-	started, stopped, run chan error
-	notifyDoneChs         []chan struct{}
+	switch chi.URLParam(r, "action") {
+	case "stop":
+		if eventType == EventTypeChampionship {
+			err = ms.championshipManager.StopActiveEvent()
+		} else {
+			err = ms.process.Stop()
+		}
+		txt = "stopped"
+	case "restart":
+		if eventType == EventTypeChampionship {
+			err = ms.championshipManager.RestartActiveEvent()
+		} else {
+			err = ms.process.Restart()
+		}
+		txt = "restarted"
+	}
+
+	noun := "Server"
+
+	if eventType == EventTypeChampionship {
+		noun = "Championship"
+	}
+
+	if err != nil {
+		logrus.Errorf("could not change "+noun+" status, err: %s", err)
+		AddErrFlashQuick(w, r, "Unable to change "+noun+" status")
+	} else {
+		AddFlashQuick(w, r, noun+" successfully "+txt)
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+var ErrServerAlreadyRunning = errors.New("servermanager: assetto corsa server is already running")
+
+// AssettoServerProcess manages the assetto corsa server process.
+type AssettoServerProcess struct {
+	cmd *exec.Cmd
+
+	out   *logBuffer
+	mutex sync.Mutex
 
 	ctx context.Context
 	cfn context.CancelFunc
 
-	logBuffer *logBuffer
+	doneCh chan struct{}
 
-	raceEvent      RaceEvent
-	cmd            *exec.Cmd
-	mutex          sync.Mutex
 	extraProcesses []*exec.Cmd
 
-	logFile, errorLogFile io.WriteCloser
-
-	// udp
-	callbackFunc       udp.CallbackFunc
-	udpServerConn      *udp.AssettoServerUDP
-	udpPluginAddress   string
-	udpPluginLocalPort int
-	forwardingAddress  string
-	forwardListenPort  int
+	raceEvent RaceEvent
+	serverConfig      ServerConfig
+	forwardingAddress string
+	forwardListenPort int
+	udpServerConn     *udp.AssettoServerUDP
+	udpStatusMutex    sync.Mutex
+	udpCallback udp.CallbackFunc
 }
 
-func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, store Store, contentManagerWrapper *ContentManagerWrapper) *AssettoServerProcess {
-	sp := &AssettoServerProcess{
-		start:                 make(chan RaceEvent),
-		started:               make(chan error),
-		stopped:               make(chan error),
-		run:                   make(chan error),
-		logBuffer:             newLogBuffer(MaxLogSizeBytes),
-		callbackFunc:          callbackFunc,
-		store:                 store,
-		contentManagerWrapper: contentManagerWrapper,
-	}
+func NewAssettoServerProcess() *AssettoServerProcess {
+	ctx, cfn := context.WithCancel(context.Background())
 
-	go sp.loop()
-
-	return sp
-}
-
-func (sp *AssettoServerProcess) UDPCallback(message udp.Message) {
-	panicCapture(func() {
-		sp.callbackFunc(message)
-	})
-}
-
-func (sp *AssettoServerProcess) Start(event RaceEvent, udpPluginAddress string, udpPluginLocalPort int, forwardingAddress string, forwardListenPort int) error {
-	sp.startMutex.Lock()
-	defer sp.startMutex.Unlock()
-
-	sp.mutex.Lock()
-	sp.udpPluginAddress = udpPluginAddress
-	sp.udpPluginLocalPort = udpPluginLocalPort
-	sp.forwardingAddress = forwardingAddress
-	sp.forwardListenPort = forwardListenPort
-	sp.mutex.Unlock()
-
-	if sp.IsRunning() {
-		if err := sp.Stop(); err != nil {
-			return err
-		}
-	}
-
-	sp.start <- event
-
-	return <-sp.started
-}
-
-var ErrPluginConfigurationRequiresUDPPortSetup = errors.New("servermanager: kissmyrank and stracker configuration requires UDP plugin configuration in Server Options")
-
-func (sp *AssettoServerProcess) IsRunning() bool {
-	sp.mutex.Lock()
-	defer sp.mutex.Unlock()
-
-	return sp.raceEvent != nil
-}
-
-var ErrServerProcessTimeout = errors.New("servermanager: server process did not stop even after manual kill. please check your server configuration")
-
-func (sp *AssettoServerProcess) Stop() error {
-	if !sp.IsRunning() {
-		return nil
-	}
-
-	timeout := time.After(time.Second * 10)
-	errCh := make(chan error)
-
-	go func() {
-		select {
-		case err := <-sp.stopped:
-			errCh <- err
-			return
-		case <-timeout:
-			errCh <- ErrServerProcessTimeout
-			return
-		}
-	}()
-
-	if err := kill(sp.cmd.Process); err != nil {
-		logrus.WithError(err).Error("Could not forcibly kill command")
-	}
-
-	sp.cfn()
-
-	return <-errCh
-}
-
-func (sp *AssettoServerProcess) Restart() error {
-	sp.mutex.Lock()
-	raceEvent := sp.raceEvent
-	udpPluginAddress := sp.udpPluginAddress
-	udpLocalPluginPort := sp.udpPluginLocalPort
-	forwardingAddress := sp.forwardingAddress
-	forwardListenPort := sp.forwardListenPort
-	sp.mutex.Unlock()
-
-	return sp.Start(raceEvent, udpPluginAddress, udpLocalPluginPort, forwardingAddress, forwardListenPort)
-}
-
-func (sp *AssettoServerProcess) loop() {
-	for {
-		select {
-		case err := <-sp.run:
-			if err != nil {
-				logrus.WithError(err).Warn("acServer process ended with error. If everything seems fine, you can safely ignore this error.")
-			}
-
-			select {
-			case sp.stopped <- sp.onStop():
-			default:
-			}
-		case raceEvent := <-sp.start:
-			sp.started <- sp.startRaceEvent(raceEvent)
-		}
+	return &AssettoServerProcess{
+		ctx:    ctx,
+		cfn:    cfn,
+		doneCh: make(chan struct{}),
 	}
 }
 
-func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
-	sp.mutex.Lock()
-	defer sp.mutex.Unlock()
+func (as *AssettoServerProcess) Done() <-chan struct{} {
+	return as.doneCh
+}
 
-	logrus.Infof("Starting Server Process with event: %s", describeRaceEvent(raceEvent))
-	var executablePath string
-
-	if filepath.IsAbs(config.Steam.ExecutablePath) {
-		executablePath = config.Steam.ExecutablePath
-	} else {
-		executablePath = filepath.Join(ServerInstallPath, config.Steam.ExecutablePath)
+// Logs outputs the server logs
+func (as *AssettoServerProcess) Logs() string {
+	if as.out == nil {
+		return ""
 	}
 
-	serverOptions, err := sp.store.LoadServerOptions()
+	return as.out.String()
+}
 
-	if err != nil {
-		return err
+// Start the assetto server. If it's already running, an ErrServerAlreadyRunning is returned.
+func (as *AssettoServerProcess) Start(event RaceEvent, cfg ServerConfig, forwardingAddress string, forwardListenPort int) error {
+	if as.IsRunning() {
+		return ErrServerAlreadyRunning
 	}
 
-	sp.ctx, sp.cfn = context.WithCancel(context.Background())
-	sp.cmd = buildCommand(sp.ctx, executablePath)
-	sp.cmd.Dir = ServerInstallPath
+	as.mutex.Lock()
+	defer as.mutex.Unlock()
 
-	var logOutput io.Writer
-	var errorOutput io.Writer
+	logrus.Debugf("Starting assetto server process")
 
-	if serverOptions.LogACServerOutputToFile {
-		logDirectory := filepath.Join(ServerInstallPath, "logs", "session")
-		errorDirectory := filepath.Join(ServerInstallPath, "logs", "error")
+	as.raceEvent = event
+	as.serverConfig = cfg
+	as.forwardingAddress = forwardingAddress
+	as.forwardListenPort = forwardListenPort
 
-		if err := os.MkdirAll(logDirectory, 0755); err != nil {
-			return err
-		}
-
-		if err := os.MkdirAll(errorDirectory, 0755); err != nil {
-			return err
-		}
-
-		if err := sp.deleteOldLogFiles(serverOptions.NumberOfACServerLogsToKeep); err != nil {
-			return err
-		}
-
-		timestamp := time.Now().Format("2006-02-01_15-04-05")
-
-		sp.logFile, err = os.Create(filepath.Join(logDirectory, "output_"+timestamp+".log"))
-
-		if err != nil {
-			return err
-		}
-
-		sp.errorLogFile, err = os.Create(filepath.Join(errorDirectory, "error_"+timestamp+".log"))
-
-		if err != nil {
-			return err
-		}
-
-		logOutput = io.MultiWriter(sp.logBuffer, sp.logFile)
-		errorOutput = io.MultiWriter(sp.logBuffer, sp.errorLogFile)
-	} else {
-		logOutput = sp.logBuffer
-		errorOutput = sp.logBuffer
-	}
-
-	sp.cmd.Stdout = logOutput
-	sp.cmd.Stderr = errorOutput
-
-	if err := sp.startUDPListener(); err != nil {
+	if err := as.startUDPListener(); err != nil {
 		return err
 	}
 
@@ -257,473 +157,95 @@ func (sp *AssettoServerProcess) startRaceEvent(raceEvent RaceEvent) error {
 		return err
 	}
 
-	sp.raceEvent = raceEvent
+	var executablePath string
 
-	go func() {
-		sp.run <- sp.cmd.Run()
-	}()
-
-	if serverOptions.EnableContentManagerWrapper == 1 && serverOptions.ContentManagerWrapperPort > 0 {
-		go panicCapture(func() {
-			err := sp.contentManagerWrapper.Start(serverOptions.ContentManagerWrapperPort, sp.raceEvent)
-
-			if err != nil {
-				logrus.WithError(err).Error("Could not start Content Manager wrapper server")
-			}
-		})
-	}
-
-	strackerOptions, err := sp.store.LoadStrackerOptions()
-	strackerEnabled := err == nil && strackerOptions.EnableStracker && IsStrackerInstalled()
-
-	// if stracker is enabled we need to let it set the interval
-	udp.PosIntervalModifierEnabled = !strackerEnabled
-
-	kissMyRankOptions, err := sp.store.LoadKissMyRankOptions()
-	kissMyRankEnabled := err == nil && kissMyRankOptions.EnableKissMyRank && IsKissMyRankInstalled()
-
-	realPenaltyOptions, err := sp.store.LoadRealPenaltyOptions()
-	realPenaltyEnabled := err == nil && realPenaltyOptions.RealPenaltyAppConfig.General.EnableRealPenalty && IsRealPenaltyInstalled()
-
-	udpPluginPortsSetup := sp.forwardListenPort >= 0 && sp.forwardingAddress != "" || strings.Contains(sp.forwardingAddress, ":")
-
-	if (strackerEnabled || kissMyRankEnabled) && !udpPluginPortsSetup {
-		logrus.WithError(ErrPluginConfigurationRequiresUDPPortSetup).Error("Please check your server configuration")
-	}
-
-	if strackerEnabled && strackerOptions != nil && udpPluginPortsSetup {
-		strackerOptions.InstanceConfiguration.ACServerConfigIni = filepath.Join(ServerInstallPath, "cfg", serverConfigIniPath)
-		strackerOptions.InstanceConfiguration.ACServerWorkingDir = ServerInstallPath
-		strackerOptions.ACPlugin.SendPort = sp.forwardListenPort
-		strackerOptions.ACPlugin.ReceivePort = formValueAsInt(strings.Split(sp.forwardingAddress, ":")[1])
-
-		if kissMyRankEnabled || realPenaltyEnabled {
-			// kissmyrank and real penalty use stracker's forwarding to chain the plugins. make sure that it is set up.
-			if strackerOptions.ACPlugin.ProxyPluginLocalPort <= 0 {
-				strackerOptions.ACPlugin.ProxyPluginLocalPort, err = FreeUDPPort()
-
-				if err != nil {
-					return err
-				}
-			}
-
-			for strackerOptions.ACPlugin.ProxyPluginPort <= 0 || strackerOptions.ACPlugin.ProxyPluginPort == strackerOptions.ACPlugin.ProxyPluginLocalPort {
-				strackerOptions.ACPlugin.ProxyPluginPort, err = FreeUDPPort()
-
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		if err := strackerOptions.Write(); err != nil {
-			return err
-		}
-
-		err = sp.startPlugin(wd, &CommandPlugin{
-			Executable: StrackerExecutablePath(),
-			Arguments: []string{
-				"--stracker_ini",
-				filepath.Join(StrackerFolderPath(), strackerConfigIniFilename),
-			},
-		})
-
-		if err != nil {
-			return err
-		}
-
-		logrus.Infof("Started sTracker. Listening for pTracker connections on port %d", strackerOptions.InstanceConfiguration.ListeningPort)
-	}
-
-	if realPenaltyEnabled && realPenaltyOptions != nil && udpPluginPortsSetup {
-		if err := fixRealPenaltyExecutablePermissions(); err != nil {
-			return err
-		}
-
-		var (
-			port     int
-			response string
-		)
-
-		if !strackerEnabled {
-			// connect to the forwarding address
-			port, err = strconv.Atoi(strings.Split(sp.forwardingAddress, ":")[1])
-
-			if err != nil {
-				return err
-			}
-
-			response = fmt.Sprintf("127.0.0.1:%d", sp.forwardListenPort)
-		} else {
-			logrus.Infof("sTracker and Real Penalty both enabled. Using plugin forwarding method: [Server Manager] <-> [sTracker] <-> [Real Penalty]")
-
-			// connect to stracker's proxy port
-			port = strackerOptions.ACPlugin.ProxyPluginPort
-			response = fmt.Sprintf("127.0.0.1:%d", strackerOptions.ACPlugin.ProxyPluginLocalPort)
-		}
-
-		if kissMyRankEnabled {
-			// proxy from real penalty to kmr
-			freeUDPPort, err := FreeUDPPort()
-
-			if err != nil {
-				return err
-			}
-
-			realPenaltyOptions.RealPenaltyAppConfig.PluginsRelay.UDPPort = strconv.Itoa(freeUDPPort)
-
-			pluginPort, err := FreeUDPPort()
-
-			if err != nil {
-				return err
-			}
-
-			realPenaltyOptions.RealPenaltyAppConfig.PluginsRelay.OtherUDPPlugin = fmt.Sprintf("127.0.0.1:%d", pluginPort)
-		}
-
-		realPenaltyOptions.RealPenaltyAppConfig.General.UDPPort = port
-		realPenaltyOptions.RealPenaltyAppConfig.General.UDPResponse = response
-		realPenaltyOptions.RealPenaltyAppConfig.General.ACServerPath = ServerInstallPath
-		realPenaltyOptions.RealPenaltyAppConfig.General.ACCFGFile = filepath.Join(ServerInstallPath, "cfg", "server_cfg.ini")
-		realPenaltyOptions.RealPenaltyAppConfig.General.ACTracksFolder = filepath.Join(ServerInstallPath, "content", "tracks")
-		realPenaltyOptions.RealPenaltyAppConfig.General.ACWeatherFolder = filepath.Join(ServerInstallPath, "content", "weather")
-		realPenaltyOptions.RealPenaltyAppConfig.General.AppFile = filepath.Join(RealPenaltyFolderPath(), "files", "app")
-		realPenaltyOptions.RealPenaltyAppConfig.General.ImagesFile = filepath.Join(RealPenaltyFolderPath(), "files", "images")
-		realPenaltyOptions.RealPenaltyAppConfig.General.SoundsFile = filepath.Join(RealPenaltyFolderPath(), "files", "sounds")
-		realPenaltyOptions.RealPenaltyAppConfig.General.TracksFolder = filepath.Join(RealPenaltyFolderPath(), "tracks")
-
-		if err := realPenaltyOptions.Write(); err != nil {
-			return err
-		}
-
-		err = sp.startPlugin(wd, &CommandPlugin{
-			Executable: RealPenaltyExecutablePath(),
-			Arguments: []string{
-				"--print_on",
-			},
-		})
-
-		if err != nil {
-			return err
-		}
-
-		logrus.Infof("Started Real Penalty")
-	}
-
-	if kissMyRankEnabled && kissMyRankOptions != nil && udpPluginPortsSetup {
-		if err := fixKissMyRankExecutablePermissions(); err != nil {
-			return err
-		}
-
-		kissMyRankOptions.ACServerIP = "127.0.0.1"
-		kissMyRankOptions.ACServerHTTPPort = serverOptions.HTTPPort
-		kissMyRankOptions.UpdateInterval = config.LiveMap.IntervalMs
-		kissMyRankOptions.ACServerResultsBasePath = ServerInstallPath
-
-		raceConfig := sp.raceEvent.GetRaceConfig()
-		entryList := sp.raceEvent.GetEntryList()
-
-		kissMyRankOptions.MaxPlayers = raceConfig.MaxClients
-
-		if len(entryList) > kissMyRankOptions.MaxPlayers {
-			kissMyRankOptions.MaxPlayers = len(entryList)
-		}
-
-		if realPenaltyEnabled && realPenaltyOptions != nil {
-			// realPenalty is enabled, use its relay port
-			logrus.Infof("Real Penalty and KissMyRank both enabled. Using plugin forwarding method: [Previous Plugin/Server Manager] <-> [Real Penalty] <-> [KissMyRank]")
-
-			kissMyRankOptions.ACServerPluginLocalPort = formValueAsInt(realPenaltyOptions.RealPenaltyAppConfig.PluginsRelay.UDPPort)
-			kissMyRankOptions.ACServerPluginAddressPort = formValueAsInt(strings.Split(realPenaltyOptions.RealPenaltyAppConfig.PluginsRelay.OtherUDPPlugin, ":")[1])
-		} else if strackerEnabled {
-			// stracker is enabled, use its forwarding port
-			logrus.Infof("sTracker and KissMyRank both enabled. Using plugin forwarding method: [Server Manager] <-> [sTracker] <-> [KissMyRank]")
-			kissMyRankOptions.ACServerPluginLocalPort = strackerOptions.ACPlugin.ProxyPluginLocalPort
-			kissMyRankOptions.ACServerPluginAddressPort = strackerOptions.ACPlugin.ProxyPluginPort
-		} else {
-			// stracker and real penalty are disabled, use our forwarding port
-			kissMyRankOptions.ACServerPluginLocalPort = sp.forwardListenPort
-			kissMyRankOptions.ACServerPluginAddressPort = formValueAsInt(strings.Split(sp.forwardingAddress, ":")[1])
-		}
-
-		if err := kissMyRankOptions.Write(); err != nil {
-			return err
-		}
-
-		err = sp.startPlugin(wd, &CommandPlugin{
-			Executable: KissMyRankExecutablePath(),
-		})
-
-		if err != nil {
-			return err
-		}
-
-		logrus.Infof("Started KissMyRank")
-	}
-
-	for _, plugin := range config.Server.Plugins {
-		err = sp.startPlugin(wd, plugin)
-
-		if err != nil {
-			logrus.WithError(err).Errorf("Could not run extra command: %s", plugin.String())
-		}
-	}
-
-	if len(config.Server.RunOnStart) > 0 {
-		logrus.Warnf("Use of run_on_start in config.yml is deprecated. Please use 'plugins' instead")
-
-		for _, command := range config.Server.RunOnStart {
-			err = sp.startChildProcess(wd, command)
-
-			if err != nil {
-				logrus.WithError(err).Errorf("Could not run extra command: %s", command)
-			}
-		}
-	}
-
-	return nil
-}
-
-func (sp *AssettoServerProcess) deleteOldLogFiles(numFilesToKeep int) error {
-	if numFilesToKeep <= 0 {
-		return nil
-	}
-
-	tidyFunc := func(directory string) error {
-		logFiles, err := ioutil.ReadDir(directory)
-
-		if err != nil {
-			return err
-		}
-
-		if len(logFiles) >= numFilesToKeep {
-			sort.Slice(logFiles, func(i, j int) bool {
-				return logFiles[i].ModTime().After(logFiles[j].ModTime())
-			})
-
-			for _, f := range logFiles[numFilesToKeep-1:] {
-				if err := os.Remove(filepath.Join(directory, f.Name())); err != nil {
-					return err
-				}
-			}
-
-			logrus.Debugf("Successfully cleared %d log files from %s", len(logFiles[numFilesToKeep-1:]), directory)
-		}
-
-		return nil
-	}
-
-	logDirectory := filepath.Join(ServerInstallPath, "logs", "session")
-	errorDirectory := filepath.Join(ServerInstallPath, "logs", "error")
-
-	if err := tidyFunc(logDirectory); err != nil {
-		return err
-	}
-
-	if err := tidyFunc(errorDirectory); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (sp *AssettoServerProcess) onStop() error {
-	sp.mutex.Lock()
-	defer sp.mutex.Unlock()
-	logrus.Debugf("Server stopped. Stopping UDP listener and child processes.")
-
-	sp.raceEvent = nil
-
-	if err := sp.stopUDPListener(); err != nil {
-		return err
-	}
-
-	sp.stopChildProcesses()
-
-	for _, doneCh := range sp.notifyDoneChs {
-		select {
-		case doneCh <- struct{}{}:
-		default:
-		}
-	}
-
-	if sp.logFile != nil {
-		if err := sp.logFile.Close(); err != nil {
-			return err
-		}
-
-		sp.logFile = nil
-	}
-
-	if sp.errorLogFile != nil {
-		if err := sp.errorLogFile.Close(); err != nil {
-			return err
-		}
-
-		sp.errorLogFile = nil
-	}
-
-	return nil
-}
-
-func (sp *AssettoServerProcess) Logs() string {
-	return sp.logBuffer.String()
-}
-
-func (sp *AssettoServerProcess) Event() RaceEvent {
-	sp.mutex.Lock()
-	defer sp.mutex.Unlock()
-
-	if sp.raceEvent == nil {
-		return QuickRace{}
-	}
-
-	return sp.raceEvent
-}
-
-var ErrNoOpenUDPConnection = errors.New("servermanager: no open UDP connection found")
-
-func (sp *AssettoServerProcess) SendUDPMessage(message udp.Message) error {
-	sp.mutex.Lock()
-	defer sp.mutex.Unlock()
-
-	if sp.udpServerConn == nil {
-		return ErrNoOpenUDPConnection
-	}
-
-	return sp.udpServerConn.SendMessage(message)
-}
-
-func (sp *AssettoServerProcess) NotifyDone(ch chan struct{}) {
-	sp.mutex.Lock()
-	defer sp.mutex.Unlock()
-
-	sp.notifyDoneChs = append(sp.notifyDoneChs, ch)
-}
-
-func (sp *AssettoServerProcess) startPlugin(wd string, plugin *CommandPlugin) error {
-	commandFullPath, err := filepath.Abs(plugin.Executable)
-
-	if err != nil {
-		return err
-	}
-
-	ctx := context.Background()
-
-	cmd := buildCommand(ctx, commandFullPath, plugin.Arguments...)
-
-	pluginDir, err := filepath.Abs(filepath.Dir(commandFullPath))
-
-	if err != nil {
-		logrus.WithError(err).Warnf("Could not determine plugin directory. Setting working dir to: %s", wd)
-		pluginDir = wd
-	}
-
-	cmd.Stdout = pluginsOutput
-	cmd.Stderr = pluginsOutput
-
-	cmd.Dir = pluginDir
-
-	err = cmd.Start()
-
-	if err != nil {
-		return err
-	}
-
-	sp.extraProcesses = append(sp.extraProcesses, cmd)
-
-	return nil
-}
-
-// Deprecated: use startPlugin instead
-func (sp *AssettoServerProcess) startChildProcess(wd string, command string) error {
-	// BUG(cj): splitting commands on spaces breaks child processes that have a space in their path name
-	parts := strings.Split(command, " ")
-
-	if len(parts) == 0 {
-		return nil
-	}
-
-	commandFullPath, err := filepath.Abs(parts[0])
-
-	if err != nil {
-		return err
-	}
-
-	var cmd *exec.Cmd
-	ctx := context.Background()
-
-	if len(parts) > 1 {
-		cmd = buildCommand(ctx, commandFullPath, parts[1:]...)
+	if filepath.IsAbs(config.Steam.ExecutablePath) {
+		executablePath = config.Steam.ExecutablePath
 	} else {
-		cmd = buildCommand(ctx, commandFullPath)
+		executablePath = filepath.Join(ServerInstallPath, config.Steam.ExecutablePath)
 	}
 
-	pluginDir, err := filepath.Abs(filepath.Dir(commandFullPath))
+	as.cmd = buildCommand(as.ctx, executablePath)
+	as.cmd.Dir = ServerInstallPath
 
-	if err != nil {
-		logrus.WithError(err).Warnf("Could not determine plugin directory. Setting working dir to: %s", wd)
-		pluginDir = wd
+	if as.out == nil {
+		as.out = newLogBuffer(MaxLogSizeBytes)
 	}
 
-	cmd.Stdout = pluginsOutput
-	cmd.Stderr = pluginsOutput
+	as.cmd.Stdout = as.out
+	as.cmd.Stderr = as.out
 
-	cmd.Dir = pluginDir
-
-	err = cmd.Start()
+	err = as.cmd.Start()
 
 	if err != nil {
+		as.cmd = nil
 		return err
 	}
 
-	sp.extraProcesses = append(sp.extraProcesses, cmd)
+	for _, command := range config.Server.RunOnStart {
+		parts := strings.Split(command, " ")
 
-	return nil
-}
+		var cmd *exec.Cmd
 
-func (sp *AssettoServerProcess) stopChildProcesses() {
-	// are there any messages in the UDP channel?
-	logrus.Info("Waiting for all UDP messages to be forwarded before stopping child processes")
-
-	ticker := time.NewTicker(time.Second * 5)
-
-waitForUDP:
-	for {
-		select {
-		case <-ticker.C:
-			ticker.Stop()
-
-			break waitForUDP
-		default:
-			if udp.CurrentQueueSize == 0 {
-				ticker.Stop()
-
-				break waitForUDP
-			}
+		if len(parts) > 1 {
+			cmd = buildCommand(as.ctx, parts[0], parts[1:]...)
+		} else {
+			cmd = buildCommand(as.ctx, parts[0])
 		}
-	}
 
-	sp.contentManagerWrapper.Stop()
+		cmd.Stdout = pluginsOutput
+		cmd.Stderr = pluginsOutput
+		cmd.Dir = wd
 
-	for _, command := range sp.extraProcesses {
-		err := kill(command.Process)
+		err := cmd.Start()
 
 		if err != nil {
-			logrus.WithError(err).Errorf("Can't kill process: %d", command.Process.Pid)
+			logrus.Errorf("Could not run extra command: %s, err: %s", command, err)
 			continue
 		}
 
-		_ = command.Process.Release()
+		as.extraProcesses = append(as.extraProcesses, cmd)
 	}
 
-	sp.extraProcesses = make([]*exec.Cmd, 0)
+	go func() {
+		_ = as.cmd.Wait()
+		as.stopChildProcesses()
+		as.closeUDPConnection()
+	}()
+
+	return nil
 }
 
-func (sp *AssettoServerProcess) startUDPListener() error {
+func (as *AssettoServerProcess) closeUDPConnection() {
+	as.udpStatusMutex.Lock()
+	defer as.udpStatusMutex.Unlock()
+
+	if as.udpServerConn == nil {
+		return
+	}
+
+	logrus.Debugf("Closing UDP connection")
+
+	err := as.udpServerConn.Close()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Couldn't close UDP connection")
+	}
+
+	as.udpServerConn = nil
+}
+
+func (as *AssettoServerProcess) startUDPListener() error {
+	as.udpStatusMutex.Lock()
+	defer as.udpStatusMutex.Unlock()
+
+	if as.udpServerConn != nil {
+		return nil
+	}
+
 	var err error
 
-	host, portStr, err := net.SplitHostPort(sp.udpPluginAddress)
+	host, portStr, err := net.SplitHostPort(as.serverConfig.GlobalServerConfig.FreeUDPPluginAddress)
 
 	if err != nil {
 		return err
@@ -735,7 +257,7 @@ func (sp *AssettoServerProcess) startUDPListener() error {
 		return err
 	}
 
-	sp.udpServerConn, err = udp.NewServerClient(host, int(port), sp.udpPluginLocalPort, true, sp.forwardingAddress, sp.forwardListenPort, sp.UDPCallback)
+	as.udpServerConn, err = udp.NewServerClient(host, int(port), as.serverConfig.GlobalServerConfig.FreeUDPPluginLocalPort, true, as.forwardingAddress, as.forwardListenPort, as.udpCallback)
 
 	if err != nil {
 		return err
@@ -744,43 +266,113 @@ func (sp *AssettoServerProcess) startUDPListener() error {
 	return nil
 }
 
-func (sp *AssettoServerProcess) stopUDPListener() error {
-	return sp.udpServerConn.Close()
+func (as *AssettoServerProcess) SetUDPCallback(fn udp.CallbackFunc) {
+	as.udpCallback = fn
 }
 
-func newLogBuffer(maxSize int) *logBuffer {
-	return &logBuffer{
-		size: maxSize,
-		buf:  new(bytes.Buffer),
+var ErrNoOpenUDPConnection = errors.New("servermanager: no open UDP connection found")
+
+func (as *AssettoServerProcess) SendUDPMessage(message udp.Message) error {
+	if as.udpServerConn == nil {
+		return ErrNoOpenUDPConnection
+	}
+
+	return as.udpServerConn.SendMessage(message)
+}
+
+func (as *AssettoServerProcess) stopChildProcesses() {
+	for _, command := range as.extraProcesses {
+		err := kill(command.Process)
+
+		if err != nil {
+			logrus.Errorf("Can't kill process: %d, err: %s", command.Process.Pid, err)
+			continue
+		}
+
+		_ = command.Process.Release()
+	}
+
+	as.extraProcesses = make([]*exec.Cmd, 0)
+}
+
+// Restart the assetto server.
+func (as *AssettoServerProcess) Restart() error {
+	if as.IsRunning() {
+		err := as.Stop()
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return as.Start(as.raceEvent, as.serverConfig, as.forwardingAddress, as.forwardListenPort)
+}
+
+// IsRunning of the server. returns true if running
+func (as *AssettoServerProcess) IsRunning() bool {
+	as.mutex.Lock()
+	defer as.mutex.Unlock()
+
+	return as.cmd != nil && as.cmd.Process != nil
+}
+
+func (as *AssettoServerProcess) EventType() ServerEventType {
+	if as.raceEvent != nil && as.raceEvent.IsChampionship() {
+		return EventTypeChampionship
+	} else {
+		return EventTypeRace
 	}
 }
 
-type logBuffer struct {
-	buf *bytes.Buffer
-
-	size int
-
-	mutex sync.Mutex
-}
-
-func (lb *logBuffer) Write(p []byte) (n int, err error) {
-	lb.mutex.Lock()
-	defer lb.mutex.Unlock()
-
-	b := lb.buf.Bytes()
-
-	if len(b) > lb.size {
-		lb.buf = bytes.NewBuffer(b[len(b)-lb.size:])
+// Stop the assetto server.
+func (as *AssettoServerProcess) Stop() error {
+	if !as.IsRunning() {
+		return nil
 	}
 
-	return lb.buf.Write(p)
-}
+	as.mutex.Lock()
+	defer as.mutex.Unlock()
 
-func (lb *logBuffer) String() string {
-	lb.mutex.Lock()
-	defer lb.mutex.Unlock()
+	err := kill(as.cmd.Process)
 
-	return strings.Replace(lb.buf.String(), "\n\n", "\n", -1)
+	if err != nil && !strings.Contains(err.Error(), "process already finished") {
+		logrus.WithError(err).Errorf("Stopping server reported an error (continuing anyway...)")
+	}
+
+	as.stopChildProcesses()
+
+	loopNum := 0
+
+	for {
+		if loopNum > 50 {
+			break
+		}
+
+		proc, err := ps.FindProcess(as.cmd.Process.Pid)
+
+		if err != nil {
+			logrus.WithError(err).Warnf("Could not find process: %d", as.cmd.Process.Pid)
+		}
+
+		if proc == nil {
+			break
+		}
+
+		logrus.Debugf("Waiting for Assetto Corsa Server process to finish...")
+		time.Sleep(time.Millisecond * 500)
+		loopNum++
+	}
+
+	as.cmd = nil
+	go func() {
+		as.doneCh <- struct{}{}
+	}()
+
+	if liveInfo.endSessionFunc != nil {
+		liveInfo.endSessionFunc()
+	}
+
+	return nil
 }
 
 func FreeUDPPort() (int, error) {
@@ -799,4 +391,31 @@ func FreeUDPPort() (int, error) {
 	defer l.Close()
 
 	return l.LocalAddr().(*net.UDPAddr).Port, nil
+}
+
+func newLogBuffer(maxSize int) *logBuffer {
+	return &logBuffer{
+		size: maxSize,
+		buf:  new(bytes.Buffer),
+	}
+}
+
+type logBuffer struct {
+	buf *bytes.Buffer
+
+	size int
+}
+
+func (lb *logBuffer) Write(p []byte) (n int, err error) {
+	b := lb.buf.Bytes()
+
+	if len(b) > lb.size {
+		lb.buf = bytes.NewBuffer(b[len(b)-lb.size:])
+	}
+
+	return lb.buf.Write(p)
+}
+
+func (lb *logBuffer) String() string {
+	return lb.buf.String()
 }

@@ -13,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Masterminds/semver"
 	"github.com/cj123/sessions"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
@@ -23,14 +22,13 @@ import (
 )
 
 const (
-	sessionAccountID                                = "account_id"
-	requestContextKeyAccount      accountContextKey = iota
-	adminUserName                                   = "admin"
-	serverAccountOptionsMetaKey                     = "server-account-options"
-	defaultHostedAdminAccountName                   = "acserver"
+	sessionAccountID            = "account_id"
+	requestContextKeyAccount    = "account"
+	adminUserName               = "admin"
+	serverAccountOptionsMetaKey = "server-account-options"
 )
 
-type accountContextKey int
+var accountManager *AccountManager
 
 type ServerAccountOptions struct {
 	IsOpen bool
@@ -47,11 +45,8 @@ func init() {
 
 func NewAccount() *Account {
 	return &Account{
-		ID:              uuid.New(),
-		Created:         time.Now(),
-		LastSeenVersion: BuildVersion,
-		Theme:           ThemeDefault,
-		Groups:          map[ServerID]Group{serverID: GroupRead},
+		ID:      uuid.New(),
+		Created: time.Now(),
 	}
 }
 
@@ -62,106 +57,33 @@ type Account struct {
 	Updated time.Time
 	Deleted time.Time
 
-	Name   string
-	Groups map[ServerID]Group
-
-	DriverName, GUID, Team string
+	Name  string
+	Group Group
 
 	PasswordHash string
 	PasswordSalt string
 
-	DefaultPassword   string
-	LastSeenVersion   string
-	HasSeenIntroPopup bool
-
-	Theme Theme
-
-	// Deprecated: Use Groups instead.
-	DeprecatedGroup Group `json:"Group"`
-}
-
-func (a Account) Group() Group {
-	if a.Groups == nil {
-		return GroupNoAccess
-	}
-
-	if group, ok := a.Groups[serverID]; ok {
-		return group
-	}
-
-	// in the case where a user has not got any group permissions at all for this server instance
-	// give them the first permission we find from other server instances (if any)
-	for _, group := range a.Groups {
-		return group
-	}
-
-	return GroupNoAccess
-}
-
-func (a Account) ShowDarkTheme(serverManagerDarkThemeEnabled bool) bool {
-	if (a.Theme == "" || a.Theme == ThemeDefault) && serverManagerDarkThemeEnabled {
-		return true
-	}
-
-	return a.Theme == ThemeDark
-}
-
-func (a Account) HasSeenCurrentVersion() bool {
-	return a.HasSeenVersion(BuildVersion)
-}
-
-func (a Account) ShouldSeeUpgradePopup() bool {
-	return !a.HasSeenCurrentVersion() && !a.ShouldSeeIntroPopup() && !a.NeedsPasswordReset()
-}
-
-func (a Account) ShouldSeeIntroPopup() bool {
-	return IsHosted && !a.HasSeenIntroPopup && !a.NeedsPasswordReset() && a.IsDefaultHostedAccount()
-}
-
-func (a Account) IsDefaultHostedAccount() bool {
-	return a.Name == defaultHostedAdminAccountName
-}
-
-func (a Account) HasSeenVersion(version string) bool {
-	if a.Name == OpenAccount.Name {
-		return true // open accounts don't see version releases
-	}
-
-	newVersion, err := semver.NewVersion(version)
-
-	if err != nil {
-		return true
-	}
-
-	currentVersion, err := semver.NewVersion(a.LastSeenVersion)
-
-	if err != nil {
-		return true
-	}
-
-	return newVersion.Equal(currentVersion) || newVersion.LessThan(currentVersion)
+	DefaultPassword string
 }
 
 func (a Account) NeedsPasswordReset() bool {
-	return a.DefaultPassword != "" || (a.Name == adminUserName && config.Accounts.AdminPasswordOverride != "")
+	return a.DefaultPassword != ""
 }
 
 func (a Account) HasGroupPrivilege(g Group) bool {
-	userGroup := a.Group()
-
-	if g == userGroup {
+	if g == a.Group {
 		return true
 	}
 
-	if userGroup == GroupAdmin {
+	if a.Group == GroupAdmin {
 		return true
 	}
 
-	if g == GroupWrite && userGroup == GroupDelete {
+	if g == GroupWrite && a.Group == GroupDelete {
 		return true
 	}
 
-	if g == GroupRead && (userGroup == GroupWrite || userGroup == GroupDelete) {
+	if g == GroupRead && (a.Group == GroupWrite || a.Group == GroupDelete) {
 		return true
 	}
 
@@ -171,50 +93,46 @@ func (a Account) HasGroupPrivilege(g Group) bool {
 type Group string
 
 const (
-	GroupNoAccess Group = "no_access"
-	GroupRead     Group = "read"
-	GroupWrite    Group = "write"
-	GroupDelete   Group = "delete"
-	GroupAdmin    Group = "admin"
+	GroupRead   Group = "read"
+	GroupWrite  Group = "write"
+	GroupDelete Group = "delete"
+	GroupAdmin  Group = "admin"
 )
 
-var OpenAccount *Account
+var OpenAccount = &Account{
+	Name:  "Free Access",
+	Group: GroupRead,
+}
 
 // MustLoginMiddleware determines whether an account needs to log in to access a given Group page
-func (ah *AccountHandler) MustLoginMiddleware(requiredGroup Group, next http.Handler) http.Handler {
+func MustLoginMiddleware(requiredGroup Group, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sess := getSession(r)
 
 		accountID, ok := sess.Values[sessionAccountID].(string)
 
 		if ok {
-			account, err := ah.store.FindAccountByID(accountID)
+			account, err := accountManager.store.FindAccountByID(accountID)
 
-			if err != nil {
+			if err == nil {
+				if account.HasGroupPrivilege(requiredGroup) {
+					next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), requestContextKeyAccount, account)))
+					return
+				} else {
+					AddErrFlashQuick(w, r, "You do not have permission to view this page.")
+					http.Redirect(w, r, "/", http.StatusFound)
+					return
+				}
+			} else {
 				logrus.WithError(err).Errorf("Could not find account for id: %s", accountID)
 				delete(sess.Values, sessionAccountID)
 				_ = sessions.Save(r, w)
 
-				AddFlash(w, r, "You have been logged out")
+				AddFlashQuick(w, r, "You have been logged out")
 
 				http.Redirect(w, r, "/", http.StatusFound)
 				return
 			}
-
-			if !account.HasGroupPrivilege(requiredGroup) {
-				if account.Group() == GroupNoAccess {
-					AddErrorFlash(w, r, "You do not have permission to access this Server Manager instance.")
-					http.Redirect(w, r, "/login", http.StatusFound)
-					return
-				}
-
-				AddErrorFlash(w, r, "You do not have permission to view this page.")
-				http.Redirect(w, r, "/", http.StatusFound)
-				return
-			}
-
-			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), requestContextKeyAccount, account)))
-			return
 		}
 
 		if requiredGroup == GroupRead && accountOptions.IsOpen {
@@ -224,58 +142,27 @@ func (ah *AccountHandler) MustLoginMiddleware(requiredGroup Group, next http.Han
 		}
 
 		if !ok {
-			AddErrorFlash(w, r, "You do not have permission to view this page. Please login first.")
+			AddErrFlashQuick(w, r, "You do not have permission to view this page. Please login first.")
 			http.Redirect(w, r, "/login", http.StatusFound)
 			return
 		}
 	})
 }
 
-func (ah *AccountHandler) ReadAccessMiddleware(next http.Handler) http.Handler {
-	return ah.MustLoginMiddleware(GroupRead, next)
+func ReadAccessMiddleware(next http.Handler) http.Handler {
+	return MustLoginMiddleware(GroupRead, next)
 }
 
-func (ah *AccountHandler) WriteAccessMiddleware(next http.Handler) http.Handler {
-	return ah.MustLoginMiddleware(GroupWrite, next)
+func WriteAccessMiddleware(next http.Handler) http.Handler {
+	return MustLoginMiddleware(GroupWrite, next)
 }
 
-func (ah *AccountHandler) DeleteAccessMiddleware(next http.Handler) http.Handler {
-	return ah.MustLoginMiddleware(GroupDelete, next)
+func DeleteAccessMiddleware(next http.Handler) http.Handler {
+	return MustLoginMiddleware(GroupDelete, next)
 }
 
-func (ah *AccountHandler) AdminAccessMiddleware(next http.Handler) http.Handler {
-	return ah.MustLoginMiddleware(GroupAdmin, next)
-}
-
-func (ah *AccountHandler) dismissChangelog(w http.ResponseWriter, r *http.Request) {
-	account := AccountFromRequest(r)
-
-	if account.Name == OpenAccount.Name {
-		// don't save the open account
-		return
-	}
-
-	err := ah.accountManager.SetCurrentVersion(account)
-
-	if err != nil {
-		logrus.WithError(err).Error("could not save current account version")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-}
-
-func (ah *AccountHandler) dismissIntro(w http.ResponseWriter, r *http.Request) {
-	account := AccountFromRequest(r)
-
-	account.HasSeenIntroPopup = true
-
-	err := ah.accountManager.store.UpsertAccount(account)
-
-	if err != nil {
-		logrus.WithError(err).Error("could not save current account (dismiss intro)")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
+func AdminAccessMiddleware(next http.Handler) http.Handler {
+	return MustLoginMiddleware(GroupAdmin, next)
 }
 
 func AccountFromRequest(r *http.Request) *Account {
@@ -330,51 +217,34 @@ func AdminAccess(r *http.Request) func() bool {
 	}
 }
 
-type AccountHandler struct {
-	*BaseHandler
-	SteamLoginHandler
-
-	store          Store
-	accountManager *AccountManager
-}
-
-func NewAccountHandler(baseHandler *BaseHandler, store Store, accountManager *AccountManager) *AccountHandler {
-	return &AccountHandler{
-		BaseHandler:    baseHandler,
-		store:          store,
-		accountManager: accountManager,
-	}
-}
-
-func (ah *AccountHandler) login(w http.ResponseWriter, r *http.Request) {
+func loginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		err := ah.accountManager.login(r, w)
+		err := accountManager.login(r, w)
 
-		switch {
-		case err == ErrInvalidUsernameOrPassword:
-			AddErrorFlash(w, r, "Invalid username or password. Check your details and try again.")
-		case err == ErrAccountNeedsPassword:
-			AddFlash(w, r, "Thanks for logging in. We need you to set up a permanent password for your account.")
+		if err == ErrInvalidUsernameOrPassword {
+			AddErrFlashQuick(w, r, "Invalid username or password. Check your details and try again.")
+		} else if err == ErrAccountNeedsPassword {
+			AddFlashQuick(w, r, "Thanks for logging in. We need you to set up a permanent password for your account.")
 			http.Redirect(w, r, "/accounts/new-password", http.StatusFound)
 			return
-		case err != nil:
-			logrus.WithError(err).Errorf("Couldn't log in account")
+		} else if err != nil {
+			logrus.Errorf("Couldn't log in account, err: %s", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
-		default: // err == nil, successful auth
-			AddFlash(w, r, "Thanks for logging in!")
+		} else { // err == nil, successful auth
+			AddFlashQuick(w, r, "Thanks for logging in!")
 			http.Redirect(w, r, "/", http.StatusFound)
 			return
 		}
 	}
 
-	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/login.html", nil)
+	ViewRenderer.MustLoadTemplate(w, r, "accounts/login.html", nil)
 }
 
-func (ah *AccountHandler) toggleServerOpenStatus(w http.ResponseWriter, r *http.Request) {
-	err := ah.store.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
+func toggleServerOpenStatusHandler(w http.ResponseWriter, r *http.Request) {
+	err := accountManager.store.GetMeta(serverAccountOptionsMetaKey, &accountOptions)
 
-	if err != nil && err != ErrValueNotSet {
+	if err != nil && err != ErrMetaValueNotSet {
 		logrus.WithError(err).Errorf("Could not determine server open status")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
@@ -382,7 +252,7 @@ func (ah *AccountHandler) toggleServerOpenStatus(w http.ResponseWriter, r *http.
 
 	accountOptions.IsOpen = !accountOptions.IsOpen
 
-	err = ah.store.SetMeta(serverAccountOptionsMetaKey, accountOptions)
+	err = accountManager.store.SetMeta(serverAccountOptionsMetaKey, accountOptions)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Could not save server open status")
@@ -390,144 +260,56 @@ func (ah *AccountHandler) toggleServerOpenStatus(w http.ResponseWriter, r *http.
 		return
 	}
 
-	AddFlash(w, r, "Server openness successfully changed")
+	AddFlashQuick(w, r, "Server openness successfully changed")
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-type newPasswordTemplateVars struct {
-	BaseTemplateVars
-
-	NewAccount bool
-}
-
-func (ah *AccountHandler) newPassword(w http.ResponseWriter, r *http.Request) {
-	account := AccountFromRequest(r)
-
+func newPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		set := true
+		password, repeatPassword := r.FormValue("Password"), r.FormValue("RepeatPassword")
 
-		password, repeatPassword, currentPassword := r.FormValue("Password"), r.FormValue("RepeatPassword"), r.FormValue("CurrentPassword")
+		if password == repeatPassword {
+			account := AccountFromRequest(r)
 
-		if !account.NeedsPasswordReset() {
-			currentPasswordHash, err := hashPassword([]byte(currentPassword), []byte(account.PasswordSalt))
-
-			if err != nil {
-				AddErrorFlash(w, r, "Unable to change your password")
-				set = false
-			}
-
-			if !(subtle.ConstantTimeCompare([]byte(currentPasswordHash), []byte(account.PasswordHash)) == 1) {
-				AddErrorFlash(w, r, "Unable to change your password")
-				set = false
-			}
-		}
-
-		if set {
-			if password == repeatPassword {
-				updateDetails := account.NeedsPasswordReset()
-				err := ah.accountManager.ChangePassword(account, password)
-
-				if err == nil {
-					AddFlash(w, r, "Your password was successfully changed!")
-					if updateDetails {
-						http.Redirect(w, r, "/accounts/update", http.StatusFound)
-					} else {
-						http.Redirect(w, r, "/", http.StatusFound)
-					}
-					return
-				}
-
-				AddErrorFlash(w, r, "Unable to change your password")
-				logrus.WithError(err).Errorf("Could not change password for account id: %s", account.ID.String())
-			} else {
-				AddErrorFlash(w, r, "Your passwords must match")
-			}
-		}
-	}
-
-	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new-password.html", &newPasswordTemplateVars{
-		NewAccount: account.NeedsPasswordReset(),
-	})
-}
-
-type updateAccountTemplateVars struct {
-	BaseTemplateVars
-
-	Account           *Account
-	ThemeOptions      []ThemeDetails
-	SteamGUIDOverride string
-}
-
-func (ah *AccountHandler) update(w http.ResponseWriter, r *http.Request) {
-	account := AccountFromRequest(r)
-
-	if r.Method == http.MethodPost {
-		driverName, guid, team := r.FormValue("DriverName"), r.FormValue("DriverGUID"), r.FormValue("DriverTeam")
-		theme := r.FormValue("Theme")
-
-		if driverName != "" || guid != "" || team != "" || theme != "" {
-			err := ah.accountManager.updateDetails(account, driverName, guid, team, theme)
-
-			if err != nil {
-				AddErrorFlash(w, r, "Unable to update account details")
-				logrus.WithError(err).Errorf("Could not update details for account id: %s", account.ID.String())
-			} else {
-				err := ah.store.UpsertEntrant(Entrant{
-					Name: account.DriverName,
-					GUID: account.GUID,
-					Team: account.Team,
-				})
-
-				if err != nil {
-					logrus.WithError(err).Errorf("Successfully updated details, but could not add to autofill "+
-						"entry list. Account id: %s", account.ID.String())
-				}
-
-				AddFlash(w, r, "Your details were successfully changed!")
+			if err := accountManager.changePassword(account, password); err == nil {
+				AddFlashQuick(w, r, "Your password was successfully changed!")
 				http.Redirect(w, r, "/", http.StatusFound)
 				return
+			} else {
+				AddErrFlashQuick(w, r, "Unable to change your password")
+				logrus.WithError(err).Errorf("Could not change password for account id: %s", account.ID.String())
 			}
+		} else {
+			AddErrFlashQuick(w, r, "Your passwords must match")
 		}
 	}
 
-	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/update.html", &updateAccountTemplateVars{
-		Account:           account,
-		ThemeOptions:      ThemeOptions,
-		SteamGUIDOverride: r.URL.Query().Get("steamGUID"),
-	})
+	ViewRenderer.MustLoadTemplate(w, r, "accounts/new-password.html", nil)
 }
 
-func (ah *AccountHandler) deleteAccount(w http.ResponseWriter, r *http.Request) {
-	requestAccount := AccountFromRequest(r)
-
+func deleteAccountHandler(w http.ResponseWriter, r *http.Request) {
 	accountID := chi.URLParam(r, "id")
 
-	if requestAccount.ID.String() == accountID {
-		AddErrorFlash(w, r, "You can't delete your own account!")
-		http.Redirect(w, r, r.Referer(), http.StatusFound)
-		return
-	}
-
-	if err := ah.store.DeleteAccount(accountID); err != nil {
+	if err := accountManager.store.DeleteAccount(accountID); err != nil {
 		logrus.WithError(err).Errorf("Could not delete account")
-		AddErrorFlash(w, r, "Could not delete account")
+		AddErrFlashQuick(w, r, "Could not delete account")
 	} else {
-		AddFlash(w, r, "Account successfully deleted")
+		AddFlashQuick(w, r, "Account successfully deleted")
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-func (ah *AccountHandler) resetPassword(w http.ResponseWriter, r *http.Request) {
+func resetPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	accountID := chi.URLParam(r, "id")
 
-	account, err := ah.accountManager.resetPassword(accountID)
+	account, err := accountManager.resetPassword(accountID)
 
 	if err != nil {
-		AddErrorFlash(w, r, "Unable to reset account password")
+		AddErrFlashQuick(w, r, "Unable to reset account password")
 		logrus.WithError(err).Errorf("Could not reset password for account id: %s", accountID)
 	} else {
-		AddFlash(w, r, fmt.Sprintf("We have autogenerated a new password for %s, it is: %s", account.Name, account.DefaultPassword))
+		AddFlashQuick(w, r, fmt.Sprintf("We have autogenerated a new password for %s, it is: %s", account.Name, account.DefaultPassword))
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
@@ -553,7 +335,7 @@ func (am *AccountManager) login(r *http.Request, w http.ResponseWriter) error {
 
 	username, password := r.FormValue("Username"), r.FormValue("Password")
 
-	accounts, err := am.store.ListAccounts()
+	accounts, err := accountManager.store.ListAccounts()
 
 	if err != nil {
 		return err
@@ -587,9 +369,9 @@ func (am *AccountManager) login(r *http.Request, w http.ResponseWriter) error {
 				sess.Values[sessionAccountID] = account.ID.String()
 
 				return sess.Save(r, w)
+			} else {
+				break
 			}
-
-			break
 		}
 	}
 
@@ -597,7 +379,7 @@ func (am *AccountManager) login(r *http.Request, w http.ResponseWriter) error {
 }
 
 func (am *AccountManager) resetPassword(accountID string) (*Account, error) {
-	account, err := am.store.FindAccountByID(accountID)
+	account, err := accountManager.store.FindAccountByID(accountID)
 
 	if err != nil {
 		return nil, err
@@ -613,16 +395,10 @@ func (am *AccountManager) resetPassword(accountID string) (*Account, error) {
 	account.PasswordSalt = ""
 	account.PasswordHash = ""
 
-	return account, am.store.UpsertAccount(account)
+	return account, accountManager.store.UpsertAccount(account)
 }
 
-func (am *AccountManager) SetCurrentVersion(account *Account) error {
-	account.LastSeenVersion = BuildVersion
-
-	return am.store.UpsertAccount(account)
-}
-
-func (am *AccountManager) ChangePassword(account *Account, password string) error {
+func (am *AccountManager) changePassword(account *Account, password string) error {
 	salt, err := generateSalt()
 
 	if err != nil {
@@ -639,19 +415,10 @@ func (am *AccountManager) ChangePassword(account *Account, password string) erro
 	account.PasswordSalt = salt
 	account.PasswordHash = pass
 
-	return am.store.UpsertAccount(account)
+	return accountManager.store.UpsertAccount(account)
 }
 
-func (am *AccountManager) updateDetails(account *Account, name, guid, team, theme string) error {
-	account.DriverName = name
-	account.GUID = guid
-	account.Team = team
-	account.Theme = Theme(theme)
-
-	return am.store.UpsertAccount(account)
-}
-
-func (ah *AccountHandler) logout(w http.ResponseWriter, r *http.Request) {
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	sess := getSession(r)
 	delete(sess.Values, sessionAccountID)
 
@@ -660,20 +427,13 @@ func (ah *AccountHandler) logout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
-type createAccountTemplateVars struct {
-	BaseTemplateVars
-
-	Account   *Account
-	IsEditing bool
-}
-
-func (ah *AccountHandler) createOrEditAccount(w http.ResponseWriter, r *http.Request) {
+func createOrEditAccountHandler(w http.ResponseWriter, r *http.Request) {
 	var account *Account
 	isEditing := false
 
 	if id := chi.URLParam(r, "id"); id != "" {
 		var err error
-		account, err = ah.store.FindAccountByID(id)
+		account, err = accountManager.store.FindAccountByID(id)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Could not find account for id: %s", id)
@@ -691,8 +451,9 @@ func (ah *AccountHandler) createOrEditAccount(w http.ResponseWriter, r *http.Req
 			return
 		}
 
-		account = NewAccount()
-		account.DefaultPassword = strings.Join(defaultPass, "-")
+		account = &Account{
+			DefaultPassword: strings.Join(defaultPass, "-"),
+		}
 	}
 
 	if r.Method == http.MethodPost {
@@ -706,15 +467,9 @@ func (ah *AccountHandler) createOrEditAccount(w http.ResponseWriter, r *http.Req
 		}
 
 		account.Name = username
-		account.Groups[serverID] = Group(group)
+		account.Group = Group(group)
 
-		if formValueAsInt(r.FormValue("UpdateGroupForAllServers")) == 1 {
-			for serverID := range account.Groups {
-				account.Groups[serverID] = Group(group)
-			}
-		}
-
-		err := ah.store.UpsertAccount(account)
+		err := accountManager.store.UpsertAccount(account)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("Could save account with id: %s", account.ID)
@@ -723,30 +478,23 @@ func (ah *AccountHandler) createOrEditAccount(w http.ResponseWriter, r *http.Req
 		}
 
 		if isEditing {
-			AddFlash(w, r, "Account successfully edited")
+			AddFlashQuick(w, r, "Account successfully edited")
 		} else {
-			AddFlash(w, r, "Account successfully created")
+			AddFlashQuick(w, r, "Account successfully created")
 		}
 
 		http.Redirect(w, r, "/accounts", http.StatusFound)
 		return
 	}
 
-	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/new.html", &createAccountTemplateVars{
-		Account:   account,
-		IsEditing: isEditing,
+	ViewRenderer.MustLoadTemplate(w, r, "accounts/new.html", map[string]interface{}{
+		"Account":   account,
+		"IsEditing": isEditing,
 	})
 }
 
-type manageAccountsTemplateVars struct {
-	BaseTemplateVars
-
-	Accounts         []*Account
-	ServerReadIsOpen bool
-}
-
-func (ah *AccountHandler) manageAccounts(w http.ResponseWriter, r *http.Request) {
-	accounts, err := ah.store.ListAccounts()
+func manageAccountsHandler(w http.ResponseWriter, r *http.Request) {
+	accounts, err := accountManager.store.ListAccounts()
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Could not list accounts")
@@ -754,9 +502,9 @@ func (ah *AccountHandler) manageAccounts(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	ah.viewRenderer.MustLoadTemplate(w, r, "accounts/manage.html", &manageAccountsTemplateVars{
-		Accounts:         accounts,
-		ServerReadIsOpen: accountOptions.IsOpen,
+	ViewRenderer.MustLoadTemplate(w, r, "accounts/manage.html", map[string]interface{}{
+		"Accounts":         accounts,
+		"ServerReadIsOpen": accountOptions.IsOpen,
 	})
 }
 
