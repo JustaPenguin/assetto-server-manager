@@ -337,6 +337,8 @@ func Router(
 		r.HandleFunc("/admin-command", raceControlHandler.adminCommand)
 		r.HandleFunc("/kick-user", raceControlHandler.kickUser)
 		r.HandleFunc("/send-chat", raceControlHandler.sendChat)
+		r.HandleFunc("/next-weather", raceControlHandler.nextWeather)
+		r.HandleFunc("/test-weather", raceControlHandler.testWeather)
 		r.HandleFunc("/countdown", raceControlHandler.countdown)
 
 		r.HandleFunc("/stracker/options", strackerHandler.options)

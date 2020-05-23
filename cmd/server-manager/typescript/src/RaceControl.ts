@@ -571,6 +571,9 @@ class LiveTimings implements WebsocketHandler {
         $(document).on("submit", "#admin-command-form", this.processAdminCommandForm.bind(this));
         $(document).on("submit", "#kick-user-form", this.processKickUserForm.bind(this));
         $(document).on("submit", "#send-chat-form", this.processSendChatForm.bind(this));
+
+        $(document).on("submit", "#weather-test-form", this.processKickUserForm.bind(this));
+        $(document).on("submit", "#weather-control-form", this.processKickUserForm.bind(this));
     }
 
     private getFromClickEvent(e: ClickEvent): void {

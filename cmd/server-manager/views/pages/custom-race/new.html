@@ -1353,12 +1353,97 @@
                                                 <small>Variation of the road&#39;s temperature. Like the ambient one</small>
                                             </div>
                                         </div>
+
                                     </div>
 
 
                                     <div class="col-sm-5">
                                         <img class="img img-fluid weather-preview mb-3" src="/content/weather/{{ $weather.TrimName $weather.Graphics }}/preview.jpg" alt="{{ $weather.TrimName $weather.Graphics }}">
                                     </div>
+
+                                    <div class="col-sm-12">
+                                        <div class="card card-body border-warning col-sm-12">
+                                            <div class="form-group row col-sm-7">
+                                                <label class="col-sm-3 col-form-label"><small>Weather Transition</small></label>
+
+                                                <div class="col-sm-9">
+                                                    <input
+                                                            type="checkbox"
+                                                            class="WeatherTransition"
+                                                            name="WeatherTransition"
+                                                            id="WeatherTransition"
+
+                                                            {{ if $weather.WeatherTransition }}
+                                                                checked="checked"
+                                                            {{ end }}
+                                                    >
+
+                                                    <br>
+                                                    <small>Enable a weather transition mid-session for this weather config. <strong>Requires up-to-date Content Manager</strong></small>
+                                                </div>
+                                            </div>
+
+                                            <div id="WeatherTransitionOptions row">
+                                                <div class="col-sm-7">
+
+                                                    <div class="form-group row">
+                                                        <label class="col-sm-3 col-form-label col-form-label-sm" for="WeatherTransitionGraphics">Transition Graphics</label>
+
+                                                        <select name="WeatherTransitionGraphics" id="WeatherTransitionGraphics" class="form-control form-control-sm weather-transition-graphics col-sm-9">
+                                                            {{ range $weatherKey, $weatherName := $weatherOptions }}
+                                                                <option value="{{ $weatherKey }}" {{ if eq $weatherKey ($weather.TrimName $weather.WeatherTransitionGraphics) }} selected="selected" {{ end }}>
+                                                                    {{ $weatherName }}
+                                                                </option>
+                                                            {{ end }}
+                                                        </select>
+                                                    </div>
+
+                                                    <div class="form-group row">
+                                                        <label class="col-sm-3 col-form-label col-form-label-sm">Transition Start Date/Time</label>
+
+                                                        <div class="col-sm-9 p-0" id='date-time-picker'>
+                                                            <input
+                                                                    type='datetime-local'
+                                                                    id="WeatherTransitionTime"
+                                                                    name="WeatherTransitionTime"
+                                                                    class="form-control"
+                                                                    {{ if gt $weather.WeatherTransitionTime 0 }}
+                                                                        value="{{ dateInZone "2006-01-02T15:04" ($weather.UnixToTime $weather.WeatherTransitionTime) "UTC" }}"
+                                                                    {{ else }}
+                                                                        value="{{ dateInZone "2006-01-02T15:04" now "UTC" }}"
+                                                                    {{ end }}
+                                                            >
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="form-group row">
+                                                        <label class="col-sm-3 col-form-label col-form-label-sm">Transition Time To Apply</label>
+
+                                                        <div class="col-sm-9 p-0">
+                                                            <input
+                                                                    type="number"
+                                                                    id="WeatherTransitionTimeToApply"
+                                                                    name="WeatherTransitionTimeToApply"
+                                                                    class="form-control"
+                                                                    value="{{ $weather.WeatherTransitionTimeToApply }}"
+                                                                    step="1"
+                                                            >
+
+                                                            <small>How long the transition should take (in seconds)</small>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+
+
+                                                <div class="col-sm-5">
+                                                    <img class="img img-fluid weather-transition-preview mb-3" src="/content/weather/{{ $weather.TrimName $weather.WeatherTransitionGraphics }}/preview.jpg" alt="{{ $weather.TrimName $weather.WeatherTransitionGraphics }}">
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+
 
                                 </div>
                             </div>
