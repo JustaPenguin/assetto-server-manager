@@ -18,9 +18,15 @@ func NewRaceControlDriver(carInfo udp.SessionCarInfo) *RaceControlDriver {
 		LastSeen: time.Now(),
 	}
 
-	driver.Cars[carInfo.CarModel] = &RaceControlCarLapInfo{}
+	driver.Cars[carInfo.CarModel] = NewRaceControlCarLapInfo(carInfo.CarModel)
 
 	return driver
+}
+
+func NewRaceControlCarLapInfo(carModel string) *RaceControlCarLapInfo {
+	return &RaceControlCarLapInfo{
+		CarName: prettifyName(carModel, true),
+	}
 }
 
 type RaceControlDriver struct {
@@ -63,6 +69,7 @@ type RaceControlCarLapInfo struct {
 	LastLap              time.Duration `json:"LastLap"`
 	LastLapCompletedTime time.Time     `json:"LastLapCompletedTime" ts:"date"`
 	TotalLapTime         time.Duration `json:"TotalLapTime"`
+	CarName              string        `json:"CarName"`
 }
 
 type DriverMap struct {
