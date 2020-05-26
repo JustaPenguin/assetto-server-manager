@@ -84,6 +84,7 @@ var (
 		addHasSeenIntroPopupToAccounts,
 		forceLoggingWith5LogsKeptForHosted,
 		showEventDetailsPopupOn,
+		addCorrectCarNameToLiveTimingsData,
 	}
 )
 
@@ -984,4 +985,26 @@ func showEventDetailsPopupOn(s Store) error {
 	opts.ShowEventDetailsPopup = true
 
 	return s.UpsertServerOptions(opts)
+}
+
+func addCorrectCarNameToLiveTimingsData(s Store) error {
+	timings, err := s.LoadLiveTimingsData()
+
+	if err != nil || timings == nil {
+		return nil
+	}
+
+	logrus.Infof("Running migration: Correct Live Timings Car Names")
+
+	for _, driver := range timings.Drivers {
+		for key, car := range driver.Cars {
+			car.CarName = prettifyName(key, true)
+		}
+	}
+
+	if err := s.UpsertLiveTimingsData(timings); err != nil {
+		return err
+	}
+
+	return nil
 }
