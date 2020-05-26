@@ -606,7 +606,7 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 	driver.CarInfo = client
 
 	if _, ok := driver.Cars[driver.CarInfo.CarModel]; !ok {
-		driver.Cars[driver.CarInfo.CarModel] = &RaceControlCarLapInfo{}
+		driver.Cars[driver.CarInfo.CarModel] = NewRaceControlCarLapInfo(driver.CarInfo.CarModel)
 	}
 
 	driver.ConnectedTime = time.Now()

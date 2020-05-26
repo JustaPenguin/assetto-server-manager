@@ -1,3 +1,10 @@
+v1.7.6
+------
+
+Fixed:
+
+* Fixes an issue where the car name would be incorrectly set in Race Control for drivers who have swapped cars.
+
 v1.7.5
 ------
 

@@ -269,6 +269,7 @@ class RaceControlDriverMapRaceControlDriverRaceControlCarLapInfo {
     LastLap: number;
     LastLapCompletedTime: Date;
     TotalLapTime: number;
+    CarName: string;
 
     constructor(data?: any) {
         const d: any = (data && typeof data === 'object') ? ToObject(data) : {};
@@ -279,6 +280,7 @@ class RaceControlDriverMapRaceControlDriverRaceControlCarLapInfo {
         this.LastLap = ('LastLap' in d) ? d.LastLap as number : 0;
         this.LastLapCompletedTime = ('LastLapCompletedTime' in d) ? ParseDate(d.LastLapCompletedTime) : new Date();
         this.TotalLapTime = ('TotalLapTime' in d) ? d.TotalLapTime as number : 0;
+        this.CarName = ('CarName' in d) ? d.CarName as string : '';
     }
 
     toObject(): any {
