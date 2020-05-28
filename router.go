@@ -200,6 +200,7 @@ func Router(
 		r.Post("/car/{name}/skin", carsHandler.uploadSkin)
 		r.Post("/track/{name}/metadata", tracksHandler.saveMetadata)
 		r.Post("/results/upload", resultsHandler.uploadHandler)
+		r.HandleFunc("/results/combine", resultsHandler.combineResults)
 
 		// races
 		r.Get("/quick", quickRaceHandler.create)
