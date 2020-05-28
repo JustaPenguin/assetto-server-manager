@@ -454,6 +454,11 @@ func (s *SessionResults) IsDriversFastestSector(guid, model string, sector, time
 	return fastest
 }
 
+func (s *SessionResults) UpdateDate(date time.Time) {
+	s.Date = date
+	s.SessionFile = fmt.Sprintf("%d_%d_%d_%d_%d_%s.json", date.Year(), date.Month(), date.Day(), date.Hour(), date.Minute(), s.Type.OriginalString())
+}
+
 func (s *SessionResults) FallBackSort() {
 	// sort the results by laps completed then race time
 	// this is a fall back for when assetto's sorting is terrible
@@ -1279,6 +1284,72 @@ func (rh *ResultsHandler) uploadHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+type combineResultsTemplateVars struct {
+	BaseTemplateVars
+
+	Results []SessionResults
+}
+
+const combinedSuffix string = "-combined"
+
+func (rh *ResultsHandler) combineResults(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		if err := r.ParseForm(); err != nil {
+			logrus.WithError(err).Error("Combine Results: Couldn't parse form")
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		CombineResultsSessionFiles := r.Form["CombineResults"]
+
+		var resultsToCombine []*SessionResults
+
+		for _, resultSessionFile := range CombineResultsSessionFiles {
+			result, err := LoadResult(resultSessionFile + ".json")
+
+			if err != nil {
+				logrus.WithError(err).Error("Combine Results: Couldn't load result")
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
+			}
+
+			resultsToCombine = append(resultsToCombine, result)
+		}
+
+		combinedResult := combineResults(resultsToCombine)
+
+		combinedResult.FallBackSort()
+		combinedResult.UpdateDate(time.Now())
+
+		if !strings.HasSuffix(combinedResult.SessionFile, combinedSuffix) {
+			combinedResult.SessionFile = combinedResult.SessionFile + combinedSuffix
+		}
+
+		err := saveResults(combinedResult.SessionFile+".json", combinedResult)
+
+		if err != nil {
+			logrus.WithError(err).Error("Combine Results: Couldn't save result")
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, "/results", http.StatusFound)
+		return
+	}
+
+	results, err := ListAllResults()
+
+	if err != nil {
+		logrus.WithError(err).Error("Combine Results: Couldn't list results")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	rh.viewRenderer.MustLoadTemplate(w, r, "results/combine.html", &resultsListTemplateVars{
+		Results: results,
+	})
 }
 
 const uploadFileSizeLimit = 5e6
