@@ -532,7 +532,7 @@ func (rc *RaceControl) OnEndSession(sessionFile udp.EndSession) error {
 	return nil
 }
 
-const timeAttackSuffix string = "-time-attack"
+const timeAttackSuffix = "-time-attack"
 
 func (rc *RaceControl) addFileToTimeAttackEvent(file string) error {
 	logrus.Info("Time Attack event completed, combining with any previous results")

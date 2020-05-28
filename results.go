@@ -1292,7 +1292,7 @@ type combineResultsTemplateVars struct {
 	Results []SessionResults
 }
 
-const combinedSuffix string = "-combined"
+const combinedSuffix = "-combined"
 
 func (rh *ResultsHandler) combineResults(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
@@ -1302,11 +1302,11 @@ func (rh *ResultsHandler) combineResults(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		CombineResultsSessionFiles := r.Form["CombineResults"]
+		combineResultsSessionFiles := r.Form["CombineResults"]
 
 		var resultsToCombine []*SessionResults
 
-		for _, resultSessionFile := range CombineResultsSessionFiles {
+		for _, resultSessionFile := range combineResultsSessionFiles {
 			result, err := LoadResult(resultSessionFile + ".json")
 
 			if err != nil {
@@ -1347,7 +1347,7 @@ func (rh *ResultsHandler) combineResults(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	rh.viewRenderer.MustLoadTemplate(w, r, "results/combine.html", &resultsListTemplateVars{
+	rh.viewRenderer.MustLoadTemplate(w, r, "results/combine.html", &combineResultsTemplateVars{
 		Results: results,
 	})
 }
