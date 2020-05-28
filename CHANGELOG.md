@@ -1,6 +1,10 @@
 v1.7.6
 ------
 
+Added:
+
+* Added a "combine results" button to the results index page, allowing you to manually combine any results (you should probably only combine results of the same type and track, but there is no hard restriction in place)
+
 Fixed:
 
 * Fixes an issue where the car name would be incorrectly set in Race Control for drivers who have swapped cars.

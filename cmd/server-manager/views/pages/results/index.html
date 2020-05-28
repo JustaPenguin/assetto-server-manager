@@ -5,7 +5,9 @@
 {{ define "content" }}
     <div class="row">
         <div class="col-md-4">
-
+            {{ if WriteAccess }}
+                <a href="/results/combine" class="btn btn-primary">Combine Results</a>
+            {{ end }}
         </div>
 
         <div class="col-md-4">
@@ -13,12 +15,14 @@
         </div>
 
         <div class="col-md-4">
-            <form class="form-inline" method="post" action="/results/upload" enctype="multipart/form-data">
-                <div class="custom-file">
-                    <input onchange="this.form.submit();" type="file" class="custom-file-input" accept=".json, application/json" id="resultsFile" name="resultsFile" required>
-                    <label class="custom-file-label justify-content-start" for="resultsFile">Upload Results File</label>
-                </div>
-            </form>
+            {{ if WriteAccess }}
+                <form class="form-inline" method="post" action="/results/upload" enctype="multipart/form-data">
+                    <div class="custom-file">
+                        <input onchange="this.form.submit();" type="file" class="custom-file-input" accept=".json, application/json" id="resultsFile" name="resultsFile" required>
+                        <label class="custom-file-label justify-content-start" for="resultsFile">Upload Results File</label>
+                    </div>
+                </form>
+            {{ end }}
         </div>
 
     </div>
