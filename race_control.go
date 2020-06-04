@@ -607,7 +607,7 @@ func (rc *RaceControl) OnEndSession(sessionFile udp.EndSession) error {
 	return nil
 }
 
-const timeAttackSuffix string = "-time-attack"
+const timeAttackSuffix = "-time-attack"
 
 func (rc *RaceControl) addFileToTimeAttackEvent(file string) error {
 	logrus.Info("Time Attack event completed, combining with any previous results")
@@ -681,7 +681,7 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 	driver.CarInfo = client
 
 	if _, ok := driver.Cars[driver.CarInfo.CarModel]; !ok {
-		driver.Cars[driver.CarInfo.CarModel] = &RaceControlCarLapInfo{}
+		driver.Cars[driver.CarInfo.CarModel] = NewRaceControlCarLapInfo(driver.CarInfo.CarModel)
 	}
 
 	driver.ConnectedTime = time.Now()

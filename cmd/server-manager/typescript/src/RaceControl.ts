@@ -692,6 +692,7 @@ class LiveTimings implements WebsocketHandler {
             // be removed from the disconnected drivers table and placed into the connected drivers table.
             const dummyDriver = JSON.parse(JSON.stringify(driver));
             dummyDriver.CarInfo.CarModel = carName;
+            dummyDriver.CarInfo.CarName = driver.Cars[carName].CarName;
 
             this.addDriverToTable(dummyDriver, this.$disconnectedDriversTable);
         }
@@ -802,7 +803,7 @@ class LiveTimings implements WebsocketHandler {
         }
 
         // car model
-        $tr.find(".driver-car").text(driver.CarInfo.CarName ? driver.CarInfo.CarName : prettifyName(driver.CarInfo.CarModel, true));
+        $tr.find(".driver-car").text(carInfo.CarName ? carInfo.CarName : prettifyName(driver.CarInfo.CarModel, true));
 
         if (addingDriverToConnectedTable) {
             let currentLapTimeText = "";
