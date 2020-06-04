@@ -12,9 +12,11 @@ type Store interface {
 	ListEntrants() ([]*Entrant, error)
 	DeleteEntrant(id string) error
 
-	// Server Options
-	UpsertServerOptions(so *GlobalServerConfig) error
-	LoadServerOptions() (*GlobalServerConfig, error)
+	// Servers
+	ListServers() ([]*Server, error)
+	FindServerByID(uuid string) (*Server, error)
+	DeleteServer(uuid string) error
+	UpsertServer(server *Server) error
 
 	// Championships
 	UpsertChampionship(c *Championship) error
@@ -23,13 +25,6 @@ type Store interface {
 	DeleteChampionship(id string) error
 
 	// Live Timings
-	UpsertLiveTimingsData(*LiveTimingsPersistedData) error
-	LoadLiveTimingsData() (*LiveTimingsPersistedData, error)
-
-	UpsertLastRaceEvent(r RaceEvent) error
-	LoadLastRaceEvent() (RaceEvent, error)
-	ClearLastRaceEvent() error
-
 	UpsertLiveFrames([]string) error
 	ListPrevFrames() ([]string, error)
 
@@ -54,31 +49,9 @@ type Store interface {
 	LoadRaceWeekend(id string) (*RaceWeekend, error)
 	DeleteRaceWeekend(id string) error
 
-	// Stracker Options
-	UpsertStrackerOptions(sto *StrackerConfiguration) error
-	LoadStrackerOptions() (*StrackerConfiguration, error)
+	// Deprecated: Use the XXXServer methods below.
+	//UpsertServerOptions(so *GlobalServerConfig) error
 
-	// KissMyRank Options
-	UpsertKissMyRankOptions(kmr *KissMyRankConfig) error
-	LoadKissMyRankOptions() (*KissMyRankConfig, error)
-
-	// RealPenalty options
-	UpsertRealPenaltyOptions(rpc *RealPenaltyConfig) error
-	LoadRealPenaltyOptions() (*RealPenaltyConfig, error)
-}
-
-func loadChampionshipRaceWeekends(championship *Championship, store Store) error {
-	var err error
-
-	for _, event := range championship.Events {
-		if event.IsRaceWeekend() {
-			event.RaceWeekend, err = store.LoadRaceWeekend(event.RaceWeekendID.String())
-
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+	// Deprecated: Use the XXXServer methods below.
+	//LoadServerOptions() (*GlobalServerConfig, error)
 }

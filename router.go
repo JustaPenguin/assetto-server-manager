@@ -45,22 +45,15 @@ func InitLogging() {
 
 func Router(
 	fs http.FileSystem,
-	quickRaceHandler *QuickRaceHandler,
-	customRaceHandler *CustomRaceHandler,
-	championshipsHandler *ChampionshipsHandler,
+	multiServerManager *MultiServerManager,
 	accountHandler *AccountHandler,
 	auditLogHandler *AuditLogHandler,
 	carsHandler *CarsHandler,
 	tracksHandler *TracksHandler,
 	weatherHandler *WeatherHandler,
-	penaltiesHandler *PenaltiesHandler,
 	resultsHandler *ResultsHandler,
 	contentUploadHandler *ContentUploadHandler,
-	serverAdministrationHandler *ServerAdministrationHandler,
-	raceControlHandler *RaceControlHandler,
 	scheduledRacesHandler *ScheduledRacesHandler,
-	raceWeekendHandler *RaceWeekendHandler,
-	strackerHandler *StrackerHandler,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -81,10 +74,6 @@ func Router(
 	r.Group(func(r chi.Router) {
 		r.Use(accountHandler.ReadAccessMiddleware)
 
-		// pages
-		r.Get("/", serverAdministrationHandler.home)
-		r.Get("/changelog", serverAdministrationHandler.changelog)
-
 		// content
 		r.Get("/cars", carsHandler.list)
 		r.Get("/cars/search.json", carsHandler.searchJSON)
@@ -100,36 +89,6 @@ func Router(
 		r.HandleFunc("/results/{fileName}/collisions", resultsHandler.renderCollisions)
 		r.HandleFunc("/results/download/{fileName}", resultsHandler.file)
 
-		// championships
-		r.Get("/championships", championshipsHandler.list)
-		r.Get("/championship/{championshipID}", championshipsHandler.view)
-		r.Get("/championship/{championshipID}/export", championshipsHandler.export)
-		r.HandleFunc("/championship/{championshipID}/export-results", championshipsHandler.exportResults)
-		r.Get("/championship/{championshipID}/ics", championshipsHandler.icalFeed)
-		r.Get("/championship/{championshipID}/sign-up", championshipsHandler.signUpForm)
-		r.Post("/championship/{championshipID}/sign-up", championshipsHandler.signUpForm)
-		r.Get("/championship/{championshipID}/sign-up/steam", championshipsHandler.redirectToSteamLogin(func(r *http.Request) string {
-			return fmt.Sprintf("/championship/%s/sign-up", chi.URLParam(r, "championshipID"))
-		}))
-
-		// race control
-		r.Group(func(r chi.Router) {
-			r.Use(func(next http.Handler) http.Handler {
-				fn := func(w http.ResponseWriter, req *http.Request) {
-					if config.Server.PerformanceMode {
-						http.NotFound(w, req)
-					} else {
-						next.ServeHTTP(w, req)
-					}
-				}
-
-				return http.HandlerFunc(fn)
-			})
-
-			r.Get("/live-timing", raceControlHandler.liveTiming)
-			r.Get("/api/race-control", raceControlHandler.websocket)
-		})
-
 		// calendar
 		r.Get("/calendar", scheduledRacesHandler.calendar)
 		r.Get("/calendar.json", scheduledRacesHandler.calendarJSON)
@@ -137,22 +96,13 @@ func Router(
 		// account management
 		r.HandleFunc("/accounts/new-password", accountHandler.newPassword)
 		r.HandleFunc("/accounts/update", accountHandler.update)
-		r.Get("/accounts/update/steam", championshipsHandler.redirectToSteamLogin(func(r *http.Request) string {
+		r.Get("/accounts/update/steam", accountHandler.redirectToSteamLogin(func(r *http.Request) string {
 			return "/accounts/update"
 		}))
 		r.HandleFunc("/accounts/dismiss-changelog", accountHandler.dismissChangelog)
 
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")), true)
 		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")), true)
-
-		// race weekends
-		r.Get("/race-weekends", raceWeekendHandler.list)
-		r.Get("/race-weekend/{raceWeekendID}", raceWeekendHandler.view)
-		r.Get("/race-weekend/{raceWeekendID}/filters", raceWeekendHandler.manageFilters)
-		r.Get("/race-weekend/{raceWeekendID}/entrylist", raceWeekendHandler.manageEntryList)
-		r.Post("/race-weekend/{raceWeekendID}/grid-preview", raceWeekendHandler.gridPreview)
-		r.Get("/race-weekend/{raceWeekendID}/entrylist-preview", raceWeekendHandler.entryListPreview)
-		r.Get("/race-weekend/{raceWeekendID}/export", raceWeekendHandler.export)
 	})
 
 	// writers
@@ -168,83 +118,14 @@ func Router(
 		r.Post("/car/{name}/metadata", carsHandler.saveMetadata)
 		r.Post("/car/{name}/skin", carsHandler.uploadSkin)
 
-		// races
-		r.Get("/quick", quickRaceHandler.create)
-		r.Post("/quick/submit", quickRaceHandler.submit)
-		r.Get("/custom", customRaceHandler.list)
-		r.Get("/custom/new", customRaceHandler.createOrEdit)
-		r.Get("/custom/load/{uuid}", customRaceHandler.start)
-		r.Post("/custom/schedule/{uuid}", customRaceHandler.schedule)
-		r.Get("/custom/schedule/{uuid}/remove", customRaceHandler.removeSchedule)
-		r.Get("/custom/edit/{uuid}", customRaceHandler.createOrEdit)
-		r.Get("/custom/star/{uuid}", customRaceHandler.star)
-		r.Get("/custom/loop/{uuid}", customRaceHandler.loop)
-		r.Post("/custom/new/submit", customRaceHandler.submit)
-
-		// server management
-		r.Get("/process/{action}", serverAdministrationHandler.serverProcess)
-		r.Get("/logs", serverAdministrationHandler.logs)
-		r.Get("/api/logs", serverAdministrationHandler.logsAPI)
-
-		// championships
-		r.Get("/championships/new", championshipsHandler.createOrEdit)
-		r.Post("/championships/new/submit", championshipsHandler.submit)
-		r.Get("/championship/{championshipID}/edit", championshipsHandler.createOrEdit)
-		r.Get("/championship/{championshipID}/event", championshipsHandler.eventConfiguration)
-		r.Post("/championship/{championshipID}/event/submit", championshipsHandler.submitEventConfiguration)
-		r.Get("/championship/{championshipID}/event/{eventID}/start", championshipsHandler.startEvent)
-		r.Post("/championship/{championshipID}/event/{eventID}/schedule", championshipsHandler.scheduleEvent)
-		r.Get("/championship/{championshipID}/event/{eventID}/schedule/remove", championshipsHandler.scheduleEventRemove)
-		r.Get("/championship/{championshipID}/event/{eventID}/edit", championshipsHandler.eventConfiguration)
-		r.Get("/championship/{championshipID}/event/{eventID}/practice", championshipsHandler.startPracticeEvent)
-		r.Get("/championship/{championshipID}/event/{eventID}/cancel", championshipsHandler.cancelEvent)
-		r.Get("/championship/{championshipID}/event/{eventID}/restart", championshipsHandler.restartEvent)
-		r.Post("/championship/{championshipID}/driver-penalty/{classID}/{driverGUID}", championshipsHandler.driverPenalty)
-		r.Post("/championship/{championshipID}/team-penalty/{classID}/{team}", championshipsHandler.teamPenalty)
-		r.Get("/championship/{championshipID}/entrants", championshipsHandler.signedUpEntrants)
-		r.Get("/championship/{championshipID}/entrants.csv", championshipsHandler.signedUpEntrantsCSV)
-		r.Get("/championship/{championshipID}/entrant/{entrantGUID}", championshipsHandler.modifyEntrantStatus)
-		r.Post("/championship/{championshipID}/reorder-events", championshipsHandler.reorderEvents)
-
-		r.Get("/championship/import", championshipsHandler.importChampionship)
-		r.Post("/championship/import", championshipsHandler.importChampionship)
-		r.Get("/championship/{championshipID}/event/{eventID}/import", championshipsHandler.eventImport)
-		r.Post("/championship/{championshipID}/event/{eventID}/import", championshipsHandler.eventImport)
-
-		// penalties
-		r.Post("/penalties/{sessionFile}/{driverGUID}", penaltiesHandler.managePenalty)
-
 		// results
 		r.Post("/results/{fileName}/edit", resultsHandler.edit)
-
-		// live timings
-		r.Post("/live-timing/save-frames", raceControlHandler.saveIFrames)
 
 		// endpoints
 		r.Post("/api/track/upload", contentUploadHandler.upload(ContentTypeTrack))
 		r.Post("/api/car/upload", contentUploadHandler.upload(ContentTypeCar))
 		r.Post("/api/weather/upload", contentUploadHandler.upload(ContentTypeWeather))
 
-		// race weekend
-		r.Get("/race-weekends/new", raceWeekendHandler.createOrEdit)
-		r.Post("/race-weekends/new/submit", raceWeekendHandler.submit)
-		r.Get("/race-weekend/{raceWeekendID}/delete", raceWeekendHandler.delete)
-		r.Get("/race-weekend/{raceWeekendID}/edit", raceWeekendHandler.createOrEdit)
-		r.Get("/race-weekend/{raceWeekendID}/session", raceWeekendHandler.sessionConfiguration)
-		r.Post("/race-weekend/{raceWeekendID}/session/submit", raceWeekendHandler.submitSessionConfiguration)
-		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/edit", raceWeekendHandler.sessionConfiguration)
-		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/start", raceWeekendHandler.startSession)
-		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/practice", raceWeekendHandler.startPracticeSession)
-		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/restart", raceWeekendHandler.restartSession)
-		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/cancel", raceWeekendHandler.cancelSession)
-		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/import", raceWeekendHandler.importSessionResults)
-		r.Post("/race-weekend/{raceWeekendID}/session/{sessionID}/import", raceWeekendHandler.importSessionResults)
-		r.Post("/race-weekend/{raceWeekendID}/update-grid", raceWeekendHandler.updateGrid)
-		r.Get("/race-weekend/{raceWeekendID}/update-entrylist", raceWeekendHandler.updateEntryList)
-		r.Get("/race-weekend/import", raceWeekendHandler.importRaceWeekend)
-		r.Post("/race-weekend/import", raceWeekendHandler.importRaceWeekend)
-		r.Post("/race-weekend/{raceWeekendID}/session/{sessionID}/schedule", raceWeekendHandler.scheduleSession)
-		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/schedule/remove", raceWeekendHandler.removeSessionSchedule)
 	})
 
 	// deleters
@@ -254,21 +135,12 @@ func Router(
 			r.Use(auditLogHandler.Middleware)
 		}
 
-		r.Get("/championship/{championshipID}/event/{eventID}/delete", championshipsHandler.deleteEvent)
-		r.Get("/championship/{championshipID}/delete", championshipsHandler.delete)
-		r.Get("/custom/delete/{uuid}", customRaceHandler.delete)
-
 		r.Get("/track/delete/{name}", tracksHandler.delete)
 		r.Get("/car/{name}/delete", carsHandler.delete)
 		r.Post("/car/{name}/skin/delete", carsHandler.deleteSkin)
 		r.Get("/weather/delete/{key}", weatherHandler.delete)
 		r.Get("/setups/delete/{car}/{track}/{setup}", carSetupDeleteHandler)
 
-		r.Get("/autofill-entrants", serverAdministrationHandler.autoFillEntrantList)
-		r.Get("/autofill-entrants/delete/{entrantID}", serverAdministrationHandler.autoFillEntrantDelete)
-
-		// race weekend
-		r.Get("/race-weekend/{raceWeekendID}/session/{sessionID}/delete", raceWeekendHandler.deleteSession)
 	})
 
 	// admins
@@ -278,9 +150,6 @@ func Router(
 			r.Use(auditLogHandler.Middleware)
 		}
 
-		r.HandleFunc("/server-options", serverAdministrationHandler.options)
-		r.HandleFunc("/blacklist", serverAdministrationHandler.blacklist)
-		r.HandleFunc("/motd", serverAdministrationHandler.motd)
 		r.HandleFunc("/audit-logs", auditLogHandler.viewLogs)
 		r.HandleFunc("/accounts/new", accountHandler.createOrEditAccount)
 		r.HandleFunc("/accounts/edit/{id}", accountHandler.createOrEditAccount)
@@ -290,23 +159,12 @@ func Router(
 		r.HandleFunc("/accounts", accountHandler.manageAccounts)
 		r.HandleFunc("/search-index", carsHandler.rebuildSearchIndex)
 
-		r.HandleFunc("/restart-session", raceControlHandler.restartSession)
-		r.HandleFunc("/next-session", raceControlHandler.nextSession)
-		r.HandleFunc("/broadcast-chat", raceControlHandler.broadcastChat)
-		r.HandleFunc("/admin-command", raceControlHandler.adminCommand)
-		r.HandleFunc("/kick-user", raceControlHandler.kickUser)
-<<<<<<< Updated upstream
-=======
-		r.HandleFunc("/send-chat", raceControlHandler.sendChat)
-		r.HandleFunc("/next-weather", raceControlHandler.nextWeather)
-		r.HandleFunc("/test-weather", raceControlHandler.testWeather)
-		r.HandleFunc("/countdown", raceControlHandler.countdown)
->>>>>>> Stashed changes
-
-		r.HandleFunc("/stracker/options", strackerHandler.options)
 	})
 
 	FileServer(r, "/static", fs, false)
+
+	// routes which are not found are passed on to multiserver handling.
+	r.NotFound(multiServerManager.ServerHandler)
 
 	return prometheusMonitoringWrapper(r)
 }

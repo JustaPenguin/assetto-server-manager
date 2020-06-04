@@ -10,8 +10,6 @@ import (
 
 type BoltStore struct {
 	db *bbolt.DB
-
-	ShowDeleted bool
 }
 
 func NewBoltStore(db *bbolt.DB) Store {
@@ -26,14 +24,9 @@ var (
 	accountsBucketName      = []byte("accounts")
 	frameLinksBucketName    = []byte("frameLinks")
 	raceWeekendsBucketName  = []byte("raceWeekends")
-	liveTimingsBucketName   = []byte("liveTimings")
+	serversBucketName  = []byte("servers")
 
-	serverOptionsKey      = []byte("serverOptions")
-	strackerOptionsKey    = []byte("strackerOptions")
-	kissMyRankOptionsKey  = []byte("kissMyRankOptions")
-	realPenaltyOptionsKey = []byte("realPenaltyOptions")
-	liveTimingsKey        = []byte("liveTimings")
-	lastRaceEventKey      = []byte("lastRaceEvent")
+	serverOptionsKey = []byte("serverOptions")
 )
 
 func (rs *BoltStore) customRaceBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
@@ -121,7 +114,7 @@ func (rs *BoltStore) ListCustomRaces() ([]*CustomRace, error) {
 				return err
 			}
 
-			if !race.Deleted.IsZero() && !rs.ShowDeleted {
+			if !race.Deleted.IsZero() {
 				// soft deleted race, move on
 				return nil
 			}
@@ -395,7 +388,7 @@ func (rs *BoltStore) ListChampionships() ([]*Championship, error) {
 				return err
 			}
 
-			if !championship.Deleted.IsZero() && !rs.ShowDeleted {
+			if !championship.Deleted.IsZero() {
 				// championship deleted
 				return nil // continue
 			}
@@ -431,10 +424,6 @@ func (rs *BoltStore) LoadChampionship(id string) (*Championship, error) {
 	})
 
 	if err != nil {
-		return nil, err
-	}
-
-	if err := loadChampionshipRaceWeekends(championship, rs); err != nil {
 		return nil, err
 	}
 
@@ -488,7 +477,7 @@ func (rs *BoltStore) ListAccounts() ([]*Account, error) {
 				return err
 			}
 
-			if !account.Deleted.IsZero() && !rs.ShowDeleted {
+			if !account.Deleted.IsZero() {
 				// account deleted
 				return nil // continue
 			}
@@ -765,7 +754,7 @@ func (rs *BoltStore) ListRaceWeekends() ([]*RaceWeekend, error) {
 				return err
 			}
 
-			if !raceWeekend.Deleted.IsZero() && !rs.ShowDeleted {
+			if !raceWeekend.Deleted.IsZero() {
 				// race weekend deleted
 				return nil // continue
 			}
@@ -817,132 +806,10 @@ func (rs *BoltStore) DeleteRaceWeekend(id string) error {
 	return rs.UpsertRaceWeekend(raceWeekend)
 }
 
-func (rs *BoltStore) UpsertStrackerOptions(sto *StrackerConfiguration) error {
-	return rs.db.Update(func(tx *bbolt.Tx) error {
-		bkt, err := rs.serverOptionsBucket(tx)
 
-		if err != nil {
-			return err
-		}
-
-		encoded, err := rs.encode(sto)
-
-		if err != nil {
-			return err
-		}
-
-		return bkt.Put(strackerOptionsKey, encoded)
-	})
-}
-
-func (rs *BoltStore) LoadStrackerOptions() (*StrackerConfiguration, error) {
-	// start with defaults
-	sto := DefaultStrackerIni()
-
-	err := rs.db.View(func(tx *bbolt.Tx) error {
-		bkt, err := rs.serverOptionsBucket(tx)
-
-		if err != nil {
-			return err
-		}
-
-		data := bkt.Get(strackerOptionsKey)
-
-		if data == nil {
-			return nil
-		}
-
-		return rs.decode(data, &sto)
-	})
-
-	return sto, err
-}
-
-func (rs *BoltStore) UpsertKissMyRankOptions(kmr *KissMyRankConfig) error {
-	return rs.db.Update(func(tx *bbolt.Tx) error {
-		bkt, err := rs.serverOptionsBucket(tx)
-
-		if err != nil {
-			return err
-		}
-
-		encoded, err := rs.encode(kmr)
-
-		if err != nil {
-			return err
-		}
-
-		return bkt.Put(kissMyRankOptionsKey, encoded)
-	})
-}
-
-func (rs *BoltStore) LoadKissMyRankOptions() (*KissMyRankConfig, error) {
-	// start with defaults
-	kmr := DefaultKissMyRankConfig()
-
-	err := rs.db.View(func(tx *bbolt.Tx) error {
-		bkt, err := rs.serverOptionsBucket(tx)
-
-		if err != nil {
-			return err
-		}
-
-		data := bkt.Get(kissMyRankOptionsKey)
-
-		if data == nil {
-			return nil
-		}
-
-		return rs.decode(data, &kmr)
-	})
-
-	return kmr, err
-}
-
-func (rs *BoltStore) UpsertRealPenaltyOptions(rpc *RealPenaltyConfig) error {
-	return rs.db.Update(func(tx *bbolt.Tx) error {
-		bkt, err := rs.serverOptionsBucket(tx)
-
-		if err != nil {
-			return err
-		}
-
-		encoded, err := rs.encode(rpc)
-
-		if err != nil {
-			return err
-		}
-
-		return bkt.Put(realPenaltyOptionsKey, encoded)
-	})
-}
-
-func (rs *BoltStore) LoadRealPenaltyOptions() (*RealPenaltyConfig, error) {
-	// start with defaults
-	rpc := DefaultRealPenaltyConfig()
-
-	err := rs.db.View(func(tx *bbolt.Tx) error {
-		bkt, err := rs.serverOptionsBucket(tx)
-
-		if err != nil {
-			return err
-		}
-
-		data := bkt.Get(realPenaltyOptionsKey)
-
-		if data == nil {
-			return nil
-		}
-
-		return rs.decode(data, &rpc)
-	})
-
-	return rpc, err
-}
-
-func (rs *BoltStore) liveTimingsDataBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
+func (rs *BoltStore) serversBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	if !tx.Writable() {
-		bkt := tx.Bucket(liveTimingsBucketName)
+		bkt := tx.Bucket(serversBucketName)
 
 		if bkt == nil {
 			return nil, bbolt.ErrBucketNotFound
@@ -951,99 +818,99 @@ func (rs *BoltStore) liveTimingsDataBucket(tx *bbolt.Tx) (*bbolt.Bucket, error) 
 		return bkt, nil
 	}
 
-	return tx.CreateBucketIfNotExists(liveTimingsBucketName)
+	return tx.CreateBucketIfNotExists(serversBucketName)
 }
 
-func (rs *BoltStore) UpsertLiveTimingsData(lt *LiveTimingsPersistedData) error {
-	return rs.db.Update(func(tx *bbolt.Tx) error {
-		bkt, err := rs.liveTimingsDataBucket(tx)
-
-		if err != nil {
-			return err
-		}
-
-		encoded, err := rs.encode(lt)
-
-		if err != nil {
-			return err
-		}
-
-		return bkt.Put(liveTimingsKey, encoded)
-	})
-}
-
-func (rs *BoltStore) LoadLiveTimingsData() (*LiveTimingsPersistedData, error) {
-	var lt *LiveTimingsPersistedData
+func (rs *BoltStore) ListServers() ([]*Server, error) {
+	var servers []*Server
 
 	err := rs.db.View(func(tx *bbolt.Tx) error {
-		bkt, err := rs.liveTimingsDataBucket(tx)
+		b, err := rs.serversBucket(tx)
 
-		if err != nil {
-			return err
-		}
-
-		data := bkt.Get(liveTimingsKey)
-
-		if data == nil {
+		if err == bbolt.ErrBucketNotFound {
 			return nil
-		}
-
-		return rs.decode(data, &lt)
-	})
-
-	return lt, err
-}
-
-func (rs *BoltStore) UpsertLastRaceEvent(r RaceEvent) error {
-	return rs.db.Update(func(tx *bbolt.Tx) error {
-		bkt, err := rs.liveTimingsDataBucket(tx)
-
-		if err != nil {
+		} else if err != nil {
 			return err
 		}
 
-		encoded, err := marshalRaceEvent(r)
+		return b.ForEach(func(k, v []byte) error {
+			var server *Server
 
-		if err != nil {
-			return err
-		}
+			err := rs.decode(v, &server)
 
-		return bkt.Put(lastRaceEventKey, encoded)
+			if err != nil {
+				return err
+			}
+
+			if !server.Deleted.IsZero() {
+				return nil
+			}
+
+			servers = append(servers, server)
+
+			return nil
+		})
 	})
+
+	return servers, err
 }
 
-func (rs *BoltStore) LoadLastRaceEvent() (RaceEvent, error) {
-	var re RaceEvent
+var ErrServerNotFound = errors.New("servermanager: server not found")
+
+func (rs *BoltStore) FindServerByID(uuid string) (*Server, error) {
+	var server *Server
 
 	err := rs.db.View(func(tx *bbolt.Tx) error {
-		bkt, err := rs.liveTimingsDataBucket(tx)
+		b, err := rs.serversBucket(tx)
 
 		if err != nil {
 			return err
 		}
 
-		data := bkt.Get(lastRaceEventKey)
+		data := b.Get([]byte(uuid))
 
 		if data == nil {
-			return nil
+			return ErrServerNotFound
 		}
 
-		re, err = unmarshalRaceEvent(data)
+		return rs.decode(data, &server)
+	})
 
+	if err != nil {
+		return nil, err
+	}
+
+	return server, err
+}
+
+func (rs *BoltStore) DeleteServer(uuid string) error {
+	server, err := rs.FindServerByID(uuid)
+
+	if err != nil {
 		return err
-	})
+	}
 
-	return re, err
+	server.Deleted = time.Now()
+
+	return rs.UpsertServer(server)
 }
 
-func (rs *BoltStore) ClearLastRaceEvent() error {
+func (rs *BoltStore) UpsertServer(server *Server) error {
+	server.Updated = time.Now()
+
 	return rs.db.Update(func(tx *bbolt.Tx) error {
-		bkt, err := rs.liveTimingsDataBucket(tx)
+		b, err := rs.serversBucket(tx)
 
 		if err != nil {
 			return err
 		}
 
-		return bkt.Delete(lastRaceEventKey)
+		data, err := rs.encode(server)
+
+		if err != nil {
+			return err
+		}
+
+		return b.Put([]byte(server.ID.String()), data)
 	})
 }
