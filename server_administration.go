@@ -261,7 +261,9 @@ func (sah *ServerAdministrationHandler) autoFillEntrantDelete(w http.ResponseWri
 }
 
 func (sah *ServerAdministrationHandler) logs(w http.ResponseWriter, r *http.Request) {
-	sah.viewRenderer.MustLoadTemplate(w, r, "server/logs.html", nil)
+	sah.viewRenderer.MustLoadTemplate(w, r, "server/logs.html", &BaseTemplateVars{
+		WideContainer: true,
+	})
 }
 
 type logData struct {
