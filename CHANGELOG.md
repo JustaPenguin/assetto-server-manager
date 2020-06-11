@@ -8,6 +8,7 @@ Added:
 Fixed:
 
 * Fixes an issue where the car name would be incorrectly set in Race Control for drivers who have swapped cars.
+* Fixes an issue where kicked drivers could become linked to the $#@@!$kicked GUID that AC assigns to kicked drivers in results files. This issue could affect ACSR, penalties, page renders and more.
 
 ---
 

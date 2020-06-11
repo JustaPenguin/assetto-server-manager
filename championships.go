@@ -768,6 +768,8 @@ func (c *Championship) AddEntrantFromSession(potentialEntrant PotentialChampions
 	return false, nil, classForCar, nil
 }
 
+const kickedGUID = "$#@@!$kicked"
+
 // EnhanceResults takes a set of SessionResults and attaches Championship information to them.
 func (c *Championship) EnhanceResults(results *SessionResults) {
 	if results == nil {
@@ -783,6 +785,44 @@ func (c *Championship) EnhanceResults(results *SessionResults) {
 	for _, class := range c.Classes {
 		for _, entrant := range class.Entrants {
 			class.AttachEntrantToResult(entrant, results)
+		}
+	}
+
+	// remove any instances of kickedGUID in result
+	for _, result := range results.Result {
+		if result.DriverGUID == kickedGUID {
+			for _, car := range results.Cars {
+				if car.CarID == result.CarID {
+					// check if guid isn't kickedGUID, if not try using guidsList
+					if car.Driver.GUID != kickedGUID {
+						result.DriverGUID = car.Driver.GUID
+					} else {
+						if len(car.Driver.GuidsList) >= 1 {
+							result.DriverGUID = car.Driver.GuidsList[0]
+							car.Driver.GUID = car.Driver.GuidsList[0]
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// remove any instances of kickedGUID in cars
+	for _, car := range results.Cars {
+		if car.Driver.GUID == kickedGUID {
+			for _, result := range results.Result {
+				if car.CarID == result.CarID {
+					// check if guid isn't kickedGUID, if not try using guidsList
+					if result.DriverGUID != kickedGUID {
+						car.Driver.GUID = result.DriverGUID
+					} else {
+						if len(car.Driver.GuidsList) >= 1 {
+							result.DriverGUID = car.Driver.GuidsList[0]
+							car.Driver.GUID = car.Driver.GuidsList[0]
+						}
+					}
+				}
+			}
 		}
 	}
 }
