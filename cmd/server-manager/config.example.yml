@@ -213,6 +213,16 @@ server:
   # longer 'boot time' of server manager. I recommend it though!
   use_car_name_cache: true
 
+  # the following option aims to prevent the loss of results files for sessions
+  # which were not fully completed. it works by sending a "Next Session" message
+  # to the acServer, and then waiting for one of the following to happen:
+  #  1) a "new session" message from acServer
+  #  2) the acServer to stop
+  #  3) a timeout of 2 seconds
+  # set to 'true' if you want to try it out, this may become the default eventually,
+  # but for now this feature is considered 'beta'.
+  persist_mid_session_results: false
+
   # list of commands to run on server start and kill on server stop. this should
   # contain the full command with arguments to run the given program.
   #
