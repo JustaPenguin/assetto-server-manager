@@ -65,6 +65,8 @@ type AssettoServerProcess struct {
 	udpPluginLocalPort int
 	forwardingAddress  string
 	forwardListenPort  int
+
+	sessionStartedChan chan struct{}
 }
 
 func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, store Store, contentManagerWrapper *ContentManagerWrapper) *AssettoServerProcess {
@@ -77,6 +79,7 @@ func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, store Store, content
 		callbackFunc:          callbackFunc,
 		store:                 store,
 		contentManagerWrapper: contentManagerWrapper,
+		sessionStartedChan:    make(chan struct{}),
 	}
 
 	go sp.loop()
@@ -87,6 +90,15 @@ func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, store Store, content
 func (sp *AssettoServerProcess) UDPCallback(message udp.Message) {
 	panicCapture(func() {
 		sp.callbackFunc(message)
+
+		if config.Server.PersistMidSessionResults && message.Event() == udp.EventNewSession {
+			// on new session, push down the sessionStartedChan so that if server stop is waiting to hear about
+			// a new session (so results files have been persisted correctly), it can then stop the server.
+			select {
+			case sp.sessionStartedChan <- struct{}{}:
+			default:
+			}
+		}
 	})
 }
 
@@ -126,6 +138,28 @@ var ErrServerProcessTimeout = errors.New("servermanager: server process did not 
 func (sp *AssettoServerProcess) Stop() error {
 	if !sp.IsRunning() {
 		return nil
+	}
+
+	if config.Server.PersistMidSessionResults {
+		nextSessionTimeout := time.After(time.Second * 2)
+
+		go func() {
+			logrus.Info("Attempting to advance to next session to force acServer to persist results file")
+
+			if err := sp.SendUDPMessage(&udp.NextSession{}); err != nil {
+				logrus.WithError(err).Errorf("Tried to send NextSession message to ensure results persistence, but an error occurred")
+			}
+		}()
+
+		select {
+		case <-sp.sessionStartedChan:
+			logrus.Info("Session advanced, shutting down server")
+		case <-nextSessionTimeout:
+			logrus.Info("Session timeout reached, shutting down server")
+		case err := <-sp.stopped:
+			logrus.Info("Server stopped of its own accord - likely was the last session in a non loop mode race")
+			return err
+		}
 	}
 
 	timeout := time.After(time.Second * 10)
