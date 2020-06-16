@@ -561,8 +561,9 @@ func (rc *RaceControl) addFileToTimeAttackEvent(file string) error {
 
 	results = combineResults(resultsArray)
 
-	// use fallbacksort to build result and sort
 	results.FallBackSort()
+	results.ClearKickedGUIDs()
+	results.NormaliseCarIDs()
 
 	if !strings.HasSuffix(results.SessionFile, timeAttackSuffix) {
 		results.SessionFile = results.SessionFile + timeAttackSuffix
