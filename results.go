@@ -42,6 +42,7 @@ type SessionResults struct {
 
 var ErrSessionCarNotFound = errors.New("servermanager: session car not found")
 
+// Clear Kicked GUIDs removes any instances of the kicked guid from the results
 func (s *SessionResults) ClearKickedGUIDs() {
 	// remove any instances of kickedGUID in result
 	for _, result := range s.Result {
@@ -82,6 +83,7 @@ func (s *SessionResults) ClearKickedGUIDs() {
 	}
 }
 
+// NormaliseCarIDs fixes any instances where CarID may have changed in some laps
 func (s *SessionResults) NormaliseCarIDs() {
 	var carIDsNeedNormalising bool
 
