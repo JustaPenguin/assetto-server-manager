@@ -9,7 +9,7 @@ export GO111MODULE=on
 all: clean vet test assets build
 
 install-linter:
-	which golangci-lint || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin v1.23.8
+	which golangci-lint || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin v1.27.0
 
 clean:
 	rm -rf changelog_embed.go

@@ -844,11 +844,7 @@ type ChampionshipStanding struct {
 }
 
 func (cs *ChampionshipStanding) AddEventForTeam(team string) {
-	if _, ok := cs.Teams[team]; ok {
-		cs.Teams[team]++
-	} else {
-		cs.Teams[team] = 1
-	}
+	cs.Teams[team]++
 }
 
 func (cs *ChampionshipStanding) TeamSummary() string {

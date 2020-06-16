@@ -19,6 +19,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/fatih/color"
 	"github.com/lorenzosaino/go-sysctl"
+	_ "github.com/mjibson/esc/embed"
 	"github.com/pkg/browser"
 	"github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
