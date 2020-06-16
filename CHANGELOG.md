@@ -11,6 +11,7 @@ Fixed:
 
 * Fixes an issue where the car name would be incorrectly set in Race Control for drivers who have swapped cars.
 * Fixes an issue where kicked drivers could become linked to the $#@@!$kicked GUID that AC assigns to kicked drivers in results files. This issue could affect ACSR, penalties, page renders and more.
+* Fixes an issue in Time Attack events where drivers connecting in different slots in multiple sessions would result in broken results files. We strongly recommend using locked entry lists in conjunction with Time Attack events.
 
 ---
 
