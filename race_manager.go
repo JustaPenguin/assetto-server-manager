@@ -614,12 +614,8 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 		TyreBlanketsAllowed:     formValueAsInt(r.FormValue("TyreBlanketsAllowed")),
 
 		// weather
-		IsSol:                  formValueAsInt(r.FormValue("Sol.Enabled")),
-		SunAngle:               formValueAsInt(r.FormValue("SunAngle")),
-		WindBaseSpeedMin:       formValueAsInt(r.FormValue("WindBaseSpeedMin")),
-		WindBaseSpeedMax:       formValueAsInt(r.FormValue("WindBaseSpeedMax")),
-		WindBaseDirection:      formValueAsInt(r.FormValue("WindBaseDirection")),
-		WindVariationDirection: formValueAsInt(r.FormValue("WindVariationDirection")),
+		IsSol:    formValueAsInt(r.FormValue("Sol.Enabled")),
+		SunAngle: formValueAsInt(r.FormValue("SunAngle")),
 
 		// realism
 		LegalTyres:          legalTyres,
@@ -717,6 +713,10 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 				BaseTemperatureRoad:    formValueAsInt(r.Form["BaseTemperatureRoad"][i]),
 				VariationAmbient:       formValueAsInt(r.Form["VariationAmbient"][i]),
 				VariationRoad:          formValueAsInt(r.Form["VariationRoad"][i]),
+				WindBaseSpeedMin:       formValueAsInt(r.Form["WindBaseSpeedMin"][i]),
+				WindBaseSpeedMax:       formValueAsInt(r.Form["WindBaseSpeedMax"][i]),
+				WindBaseDirection:      formValueAsInt(r.Form["WindBaseDirection"][i]),
+				WindVariationDirection: formValueAsInt(r.Form["WindVariationDirection"][i]),
 
 				ChampionshipPracticeWeather: r.Form["ChampionshipPracticeWeather"][i],
 			})
@@ -746,6 +746,10 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 				BaseTemperatureRoad:    formValueAsInt(r.Form["BaseTemperatureRoad"][i]),
 				VariationAmbient:       formValueAsInt(r.Form["VariationAmbient"][i]),
 				VariationRoad:          formValueAsInt(r.Form["VariationRoad"][i]),
+				WindBaseSpeedMin:       formValueAsInt(r.Form["WindBaseSpeedMin"][i]),
+				WindBaseSpeedMax:       formValueAsInt(r.Form["WindBaseSpeedMax"][i]),
+				WindBaseDirection:      formValueAsInt(r.Form["WindBaseDirection"][i]),
+				WindVariationDirection: formValueAsInt(r.Form["WindVariationDirection"][i]),
 
 				ChampionshipPracticeWeather: r.Form["ChampionshipPracticeWeather"][i],
 
