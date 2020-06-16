@@ -371,7 +371,7 @@ const maxAge30Days = 2592000
 func AssetCacheHeaders(next http.Handler, useRevalidation bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if useRevalidation {
-			w.Header().Add("Cache-Control", fmt.Sprintf("public, must-revalidate"))
+			w.Header().Add("Cache-Control", "public, must-revalidate")
 			etag.Handler(next, false).ServeHTTP(w, r)
 		} else {
 			w.Header().Add("Cache-Control", fmt.Sprintf("public, max-age=%d", maxAge30Days))
