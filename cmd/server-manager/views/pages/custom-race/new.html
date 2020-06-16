@@ -1096,84 +1096,6 @@
                     </div>
                 </div>
 
-                <div class="form-group row">
-                    <label for="WindBaseSpeedMin" class="col-sm-3 col-form-label">Wind Base Speed Min</label>
-
-                    <div class="col-sm-9">
-                        <input
-                                type="number"
-                                id="WindBaseSpeedMin"
-                                name="WindBaseSpeedMin"
-                                class="form-control"
-                                value="{{ $f.WindBaseSpeedMin }}"
-                                min="0"
-                                step="1"
-                        >
-
-                        <small>Min speed of the session possible</small>
-                    </div>
-                </div>
-
-
-                <div class="form-group row">
-                    <label for="WindBaseSpeedMax" class="col-sm-3 col-form-label">Wind Base Speed Max</label>
-
-                    <div class="col-sm-9">
-                        <input
-                                type="number"
-                                id="WindBaseSpeedMax"
-                                name="WindBaseSpeedMax"
-                                class="form-control"
-                                value="{{ $f.WindBaseSpeedMax }}"
-                                max="40"
-
-                                step="1"
-                        >
-
-                        <small>Max speed of session possible (max 40)</small>
-                    </div>
-                </div>
-
-
-                <div class="form-group row">
-                    <label for="WindBaseDirection" class="col-sm-3 col-form-label">Wind Base Direction</label>
-
-                    <div class="col-sm-9">
-                        <input
-                                type="number"
-                                id="WindBaseDirection"
-                                name="WindBaseDirection"
-                                class="form-control"
-                                value="{{ $f.WindBaseDirection }}"
-
-
-                                step="1"
-                        >
-
-                        <small>Base direction of the wind (wind is pointing at); 0 = North, 90 = East etc</small>
-                    </div>
-                </div>
-
-
-                <div class="form-group row">
-                    <label for="WindVariationDirection" class="col-sm-3 col-form-label">Wind Variation Direction</label>
-
-                    <div class="col-sm-9">
-                        <input
-                                type="number"
-                                id="WindVariationDirection"
-                                name="WindVariationDirection"
-                                class="form-control"
-                                value="{{ $f.WindVariationDirection }}"
-
-
-                                step="1"
-                        >
-
-                        <small>Variation (&#43; or -) of the base direction</small>
-                    </div>
-                </div>
-
                 <hr>
 
                 <p>Each new session will <strong>randomly select</strong> its weather configuration from the below options.</p>
@@ -1208,11 +1130,11 @@
                                         <div class="sol-settings" {{ if not $f.IsSol }} style="display: none;" {{ end }}>
 
                                             <div class="form-group row">
-                                                <label class="col-sm-3 col-form-label col-form-label-sm">Session Start Date/Time</label>
+                                                <label class="col-sm-3 col-form-label">Session Start Date/Time</label>
 
-                                                <div class="col-sm-9 p-0" id='date-time-picker'>
+                                                <div class="col-sm-9 p-0" id="date-time-picker">
                                                     <input
-                                                            type='datetime-local'
+                                                            type="datetime-local"
                                                             id="DateUnix"
                                                             name="DateUnix"
                                                             class="form-control"
@@ -1226,7 +1148,7 @@
                                             </div>
 
                                             <div class="form-group row">
-                                                <label class="col-sm-3 col-form-label col-form-label-sm">Time Progression Multiplier</label>
+                                                <label class="col-sm-3 col-form-label">Time Progression Multiplier</label>
 
                                                 <div class="col-sm-9 p-0">
                                                     <input
@@ -1245,9 +1167,9 @@
                                         </div>
 
                                         <div class="form-group row">
-                                            <label class="col-sm-3 col-form-label col-form-label-sm" for="Graphics">Graphics</label>
+                                            <label class="col-sm-3 col-form-label" for="Graphics">Graphics</label>
 
-                                            <select name="Graphics" id="Graphics" class="form-control form-control-sm weather-graphics col-sm-9">
+                                            <select name="Graphics" id="Graphics" class="form-control weather-graphics col-sm-9">
                                                 {{ range $weatherKey, $weatherName := $weatherOptions }}
                                                     <option value="{{ $weatherKey }}" {{ if eq $weatherKey ($weather.TrimName $weather.Graphics) }} selected="selected" {{ end }}>
                                                         {{ $weatherName }}
@@ -1257,11 +1179,11 @@
                                         </div>
 
                                         <div class="form-group row {{ if not $.IsChampionship }}d-none{{ end }}">
-                                            <label class="col-sm-3 col-form-label col-form-label-sm" for="ChampionshipPracticeWeather">Championship Weather Context</label>
+                                            <label class="col-sm-3 col-form-label" for="ChampionshipPracticeWeather">Championship Weather Context</label>
 
                                             <div class="col-sm-9 p-0">
                                                 <select name="ChampionshipPracticeWeather" id="ChampionshipPracticeWeather"
-                                                        class="form-control form-control-sm"
+                                                        class="form-control"
                                                         {{ if not $.IsChampionship }}readonly="readonly"{{ end }}>
 
                                                     <option value="weatherAny" {{ if and $.IsChampionship (eq $weather.ChampionshipPracticeWeather "weatherAny") }} selected="selected" {{ end }}>
@@ -1280,85 +1202,154 @@
                                             </div>
                                         </div>
 
-                                        <div class="row">
-                                            <div class="form-group col-sm-6">
-                                                <label><small>Base Temperature Ambient</small></label>
-                                                <input
-                                                        type="number"
-                                                        id="BaseTemperatureAmbient"
-                                                        name="BaseTemperatureAmbient"
-                                                        class="form-control form-control-sm"
-                                                        value="{{ $weather.BaseTemperatureAmbient }}"
-
-
-                                                        step="1"
-                                                >
-                                            </div>
-
-
-                                            <div class="form-group col-sm-6">
-                                                <label><small>Base Temperature Road</small></label>
-                                                <input
-                                                        type="number"
-                                                        id="BaseTemperatureRoad"
-                                                        name="BaseTemperatureRoad"
-                                                        class="form-control form-control-sm"
-                                                        value="{{ $weather.BaseTemperatureRoad }}"
-
-
-                                                        step="1"
-                                                >
-
-                                                <small>This value will be added to the final ambient
-                                                    temp. Value can be negative.
-                                                </small>
-                                            </div>
-                                        </div>
-
-
-                                        <div class="row">
-                                            <div class="form-group col-sm-6">
-                                                <label><small>Variation Ambient</small></label>
-
-                                                <input
-                                                        type="number"
-                                                        id="VariationAmbient"
-                                                        name="VariationAmbient"
-                                                        class="form-control form-control-sm"
-                                                        value="{{ $weather.VariationAmbient }}"
-
-
-                                                        step="1"
-                                                >
-
-                                                <small>Variation of the ambient&#39;s temperature. In this example final ambient&#39;s
-                                                    temperature can be 16 or 20
-                                                </small>
-                                            </div>
-
-
-                                            <div class="form-group col-sm-6">
-                                                <label><small>Variation Road</small></label>
-
-                                                <input
-                                                        type="number"
-                                                        id="VariationRoad"
-                                                        name="VariationRoad"
-                                                        class="form-control form-control-sm"
-                                                        value="{{ $weather.VariationRoad }}"
-
-
-                                                        step="1"
-                                                >
-
-                                                <small>Variation of the road&#39;s temperature. Like the ambient one</small>
-                                            </div>
-                                        </div>
                                     </div>
-
 
                                     <div class="col-sm-5">
                                         <img class="img img-fluid weather-preview mb-3" src="/content/weather/{{ $weather.TrimName $weather.Graphics }}/preview.jpg" alt="{{ $weather.TrimName $weather.Graphics }}">
+                                    </div>
+
+                                    <div class="form-group col-sm-6">
+                                        <label>Base Temperature Ambient</label>
+                                        <input
+                                                type="number"
+                                                id="BaseTemperatureAmbient"
+                                                name="BaseTemperatureAmbient"
+                                                class="form-control"
+                                                value="{{ $weather.BaseTemperatureAmbient }}"
+
+
+                                                step="1"
+                                        >
+                                    </div>
+
+
+                                    <div class="form-group col-sm-6">
+                                        <label>Base Temperature Road</label>
+                                        <input
+                                                type="number"
+                                                id="BaseTemperatureRoad"
+                                                name="BaseTemperatureRoad"
+                                                class="form-control"
+                                                value="{{ $weather.BaseTemperatureRoad }}"
+
+
+                                                step="1"
+                                        >
+
+                                        <small>
+                                            This value will be added to the final ambient
+                                            temp. Value can be negative.
+                                        </small>
+                                    </div>
+
+
+                                    <div class="form-group col-sm-6">
+                                        <label>Variation Ambient</label>
+
+                                        <input
+                                                type="number"
+                                                id="VariationAmbient"
+                                                name="VariationAmbient"
+                                                class="form-control"
+                                                value="{{ $weather.VariationAmbient }}"
+
+
+                                                step="1"
+                                        >
+
+                                        <small>
+                                            Variation of the ambient&#39;s temperature. In this example final ambient&#39;s
+                                            temperature can be 16 or 20
+                                        </small>
+                                    </div>
+
+
+                                    <div class="form-group col-sm-6">
+                                        <label>Variation Road</label>
+
+                                        <input
+                                                type="number"
+                                                id="VariationRoad"
+                                                name="VariationRoad"
+                                                class="form-control"
+                                                value="{{ $weather.VariationRoad }}"
+
+
+                                                step="1"
+                                        >
+
+                                        <small>Variation of the road&#39;s temperature. Like the ambient one</small>
+                                    </div>
+
+
+                                    <div class="form-group col-sm-6">
+                                        <label>Wind Base Speed Min</label>
+
+                                        <input
+                                                type="number"
+                                                id="WindBaseSpeedMin"
+                                                name="WindBaseSpeedMin"
+                                                class="form-control"
+                                                value="{{ $weather.WindBaseSpeedMin }}"
+                                                min="0"
+                                                step="1"
+                                        >
+
+                                        <small>Min speed of the session possible</small>
+                                    </div>
+
+
+                                    <div class="form-group col-sm-6">
+                                        <label>Wind Base Speed Max</label>
+
+                                        <input
+                                                type="number"
+                                                id="WindBaseSpeedMax"
+                                                name="WindBaseSpeedMax"
+                                                class="form-control"
+                                                value="{{ $weather.WindBaseSpeedMax }}"
+                                                max="40"
+
+                                                step="1"
+                                        >
+
+                                        <small>Max speed of session possible (max 40)</small>
+                                    </div>
+
+
+                                    <div class="form-group col-sm-6">
+                                        <label>Wind Base Direction</label>
+
+                                        <input
+                                                type="number"
+                                                id="WindBaseDirection"
+                                                name="WindBaseDirection"
+                                                class="form-control"
+                                                value="{{ $weather.WindBaseDirection }}"
+
+
+                                                step="1"
+                                        >
+
+                                        <small>Base direction of the wind (wind is pointing at); 0 = North, 90 = East etc</small>
+                                    </div>
+
+
+                                    <div class="form-group col-sm-6">
+                                        <label>Wind Variation Direction</label>
+
+                                        <input
+                                                type="number"
+                                                id="WindVariationDirection"
+                                                name="WindVariationDirection"
+                                                class="form-control"
+                                                value="{{ $weather.WindVariationDirection }}"
+
+
+                                                step="1"
+                                        >
+
+                                        <small>Variation (&#43; or -) of the base direction</small>
                                     </div>
 
                                 </div>

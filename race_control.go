@@ -734,7 +734,7 @@ func (rc *RaceControl) handleDriverSwap(ticker *time.Ticker, config CurrentRaceC
 				}
 			} else {
 				if totalTime.Seconds() >= completeTime.Seconds() {
-					sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID, fmt.Sprintf("You are clear to leave the pits, go go go!"))
+					sendChat, err := udp.NewSendChat(currentDriver.CarInfo.CarID, "You are clear to leave the pits, go go go!")
 
 					if err == nil {
 						err := rc.process.SendUDPMessage(sendChat)

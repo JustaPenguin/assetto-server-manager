@@ -302,11 +302,6 @@ type CurrentRaceConfig struct {
 
 	IsSol int `ini:"-" help:"Allows for 24 hour time cycles. The server treats time differently if enabled. Clients also require Sol and Content Manager"`
 
-	WindBaseSpeedMin       int `ini:"WIND_BASE_SPEED_MIN" help:"Min speed of the session possible"`
-	WindBaseSpeedMax       int `ini:"WIND_BASE_SPEED_MAX" help:"Max speed of session possible (max 40)"`
-	WindBaseDirection      int `ini:"WIND_BASE_DIRECTION" help:"base direction of the wind (wind is pointing at); 0 = North, 90 = East etc"`
-	WindVariationDirection int `ini:"WIND_VARIATION_DIRECTION" help:"variation (+ or -) of the base direction"`
-
 	DisableDRSZones bool `ini:"-"`
 
 	TimeAttack bool `ini:"-"` // time attack races will force loop ON and merge all results files (practice only)
@@ -444,6 +439,11 @@ type WeatherConfig struct {
 	BaseTemperatureRoad    int    `ini:"BASE_TEMPERATURE_ROAD" help:"Relative road temperature: this value will be added to the final ambient temp. In this example the road temperature will be between 22 (16 + 6) and 26 (20 + 6). It can be negative."` // 0-36
 	VariationAmbient       int    `ini:"VARIATION_AMBIENT" help:"variation of the ambient's temperature. In this example final ambient's temperature can be 16 or 20"`
 	VariationRoad          int    `ini:"VARIATION_ROAD" help:"variation of the road's temperature. Like the ambient one"`
+
+	WindBaseSpeedMin       int `ini:"WIND_BASE_SPEED_MIN" help:"Min speed of the session possible"`
+	WindBaseSpeedMax       int `ini:"WIND_BASE_SPEED_MAX" help:"Max speed of session possible (max 40)"`
+	WindBaseDirection      int `ini:"WIND_BASE_DIRECTION" help:"base direction of the wind (wind is pointing at); 0 = North, 90 = East etc"`
+	WindVariationDirection int `ini:"WIND_VARIATION_DIRECTION" help:"variation (+ or -) of the base direction"`
 
 	ChampionshipPracticeWeather string `ini:"-"`
 

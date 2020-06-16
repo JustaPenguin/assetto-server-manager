@@ -61,7 +61,14 @@
                                 <ul class="list-unstyled">
                                     {{ range $sessionType, $session := $.EventConfig.Sessions }}
                                         <li>
-                                            {{ $sessionType.String }} -
+                                            <em>
+                                                {{ if and (eq $sessionType "RACE") (ne $.EventConfig.ReversedGridRacePositions 0) }}
+                                                    1st
+                                                {{ end }}
+
+                                                {{ $sessionType.String }}
+                                            </em>
+                                            -
 
                                             {{ if gt $session.Time 0 }}
                                                 {{ $session.Time }} minutes{{ if and (eq $sessionType "RACE") (eq $.EventConfig.RaceExtraLap 1) }} + 1 lap{{ end }},
@@ -75,7 +82,7 @@
                                                 <br>Wait Time: {{ $session.WaitTime }} seconds
                                             {{ end }}
 
-                                            {{ if eq $sessionType "RACE "}}
+                                            {{ if eq $sessionType "RACE" }}
                                                 {{ if or (gt $.EventConfig.RacePitWindowStart 0) (gt $.EventConfig.RacePitWindowEnd 0) }}
                                                     <br>
 
@@ -89,6 +96,18 @@
                                                 <br>Race Gas Penalty: {{ yn (eq $.EventConfig.RaceGasPenaltyDisabled 0) }}
                                             {{ end }}
                                         </li>
+
+                                        {{ if and (eq $sessionType "RACE") (ne $.EventConfig.ReversedGridRacePositions 0) }}
+                                            <li>
+                                                <em>2nd Race</em> - Identical setup to Race 1 above.
+
+                                                {{ if eq $.EventConfig.ReversedGridRacePositions -1 }}
+                                                    Full results from 1st Race will be reversed to form starting grid.
+                                                {{ else }}
+                                                    Top {{ $.EventConfig.ReversedGridRacePositions }} results from 1st race will be reversed to form starting grid.
+                                                {{ end }}
+                                            </li>
+                                        {{ end }}
                                     {{ end }}
 
                                     {{ if and (eq $.EventConfig.LoopMode 1) (not $.IsChampionship) }}
@@ -133,7 +152,6 @@
                                         <li>Time Of Day Multiplier: {{ $.EventConfig.TimeOfDayMultiplier }}x</li>
                                     {{ end }}
 
-                                    <li>Wind: {{ $.EventConfig.WindBaseSpeedMin }}-{{ $.EventConfig.WindBaseSpeedMax }}kph at {{ $.EventConfig.WindBaseDirection }}&deg; (&plusmn;{{ $.EventConfig.WindVariationDirection }}&deg;)</li>
                                 </ul>
 
                                 <p>Each session will randomly select from one of the below options:</p>
@@ -149,7 +167,10 @@
                                                 {{ end }}
 
                                                 Ambient: {{ $weather.BaseTemperatureAmbient }}&deg;C (variation {{ $weather.VariationAmbient }})<br>
-                                                Road: {{ add $weather.BaseTemperatureAmbient $weather.BaseTemperatureRoad }}&deg;C (variation {{ $weather.VariationRoad }})
+                                                Road: {{ add $weather.BaseTemperatureAmbient $weather.BaseTemperatureRoad }}&deg;C (variation {{ $weather.VariationRoad }})<br>
+
+
+                                                Wind: {{ $weather.WindBaseSpeedMin }}-{{ $weather.WindBaseSpeedMax }}kph at {{ $weather.WindBaseDirection }}&deg; (&plusmn;{{ $weather.WindVariationDirection }}&deg;)
                                             </small>
                                         </li>
                                     {{ end }}

@@ -517,7 +517,7 @@ func (rwh *RaceWeekendHandler) scheduleSession(w http.ResponseWriter, r *http.Re
 		message = fmt.Sprintf("We have scheduled the Race Weekend Session to begin at %s", date.Format(time.RFC1123))
 
 	} else {
-		message = fmt.Sprintf("We have scheduled the Race Weekend Session to begin after the parent session(s) complete.")
+		message = "We have scheduled the Race Weekend Session to begin after the parent session(s) complete."
 	}
 
 	err := rwh.raceWeekendManager.ScheduleSession(championshipID, championshipEventID, date, startWhenParentFinished)
