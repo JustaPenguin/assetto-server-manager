@@ -42,6 +42,102 @@ type SessionResults struct {
 
 var ErrSessionCarNotFound = errors.New("servermanager: session car not found")
 
+func (s *SessionResults) ClearKickedGUIDs() {
+	// remove any instances of kickedGUID in result
+	for _, result := range s.Result {
+		if result.DriverGUID == kickedGUID {
+			for _, car := range s.Cars {
+				if car.CarID == result.CarID {
+					// check if guid isn't kickedGUID, if not try using guidsList
+					if car.Driver.GUID != kickedGUID {
+						result.DriverGUID = car.Driver.GUID
+					} else {
+						if len(car.Driver.GuidsList) >= 1 {
+							result.DriverGUID = car.Driver.GuidsList[0]
+							car.Driver.GUID = car.Driver.GuidsList[0]
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// remove any instances of kickedGUID in cars
+	for _, car := range s.Cars {
+		if car.Driver.GUID == kickedGUID {
+			for _, result := range s.Result {
+				if car.CarID == result.CarID {
+					// check if guid isn't kickedGUID, if not try using guidsList
+					if result.DriverGUID != kickedGUID {
+						car.Driver.GUID = result.DriverGUID
+					} else {
+						if len(car.Driver.GuidsList) >= 1 {
+							result.DriverGUID = car.Driver.GuidsList[0]
+							car.Driver.GUID = car.Driver.GuidsList[0]
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+func (s *SessionResults) NormaliseCarIDs() {
+	var carIDsNeedNormalising bool
+
+resultCarIDCheck:
+	for _, result := range s.Result {
+		for _, car := range s.Cars {
+			if car.Driver.GUID == result.DriverGUID && car.Model == result.CarModel && car.CarID != result.CarID {
+				carIDsNeedNormalising = true
+				break resultCarIDCheck
+			}
+		}
+
+		for _, lap := range s.Laps {
+			if lap.DriverGUID == result.DriverGUID && lap.CarModel == result.CarModel && lap.CarID != result.CarID {
+				carIDsNeedNormalising = true
+				break resultCarIDCheck
+			}
+		}
+	}
+
+	if !carIDsNeedNormalising {
+		return
+	}
+
+	logrus.Infof("CarIDs in event results do not match, attempting automatic fix.")
+
+	for i, result := range s.Result {
+		result.CarID = i
+	}
+
+	for _, result := range s.Result {
+		for _, car := range s.Cars {
+			if car.Driver.GUID == result.DriverGUID && car.Model == result.CarModel {
+				car.CarID = result.CarID
+			}
+		}
+
+		// events might get mixed up, not a lot we can do
+		for _, event := range s.Events {
+			if event.Driver.GUID == result.DriverGUID {
+				event.CarID = result.CarID
+			}
+
+			if event.OtherDriver.GUID == result.DriverGUID {
+				event.OtherCarID = result.CarID
+			}
+		}
+
+		for _, lap := range s.Laps {
+			if lap.DriverGUID == result.DriverGUID && lap.CarModel == result.CarModel {
+				lap.CarID = result.CarID
+			}
+		}
+	}
+}
+
 func (s *SessionResults) FindCarByGUIDAndModel(guid, model string) (*SessionCar, error) {
 	carID := s.FindCarIDForGUIDAndModel(guid, model)
 
@@ -1440,6 +1536,9 @@ func (rh *ResultsHandler) view(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logrus.WithError(err).Errorf("couldn't load autofill entrant list")
 	}
+
+	result.ClearKickedGUIDs()
+	result.NormaliseCarIDs()
 
 	rh.viewRenderer.MustLoadTemplate(w, r, "results/result.html", &resultsViewTemplateVars{
 		BaseTemplateVars: BaseTemplateVars{
