@@ -13,6 +13,7 @@ Fixed:
 * Fixes an issue where kicked drivers could become linked to the $#@@!$kicked GUID that AC assigns to kicked drivers in results files. This issue could affect ACSR, penalties, page renders and more.
 * Fixes an issue where Wind settings were not written out correctly to the server configuration file, resulting in 0 wind speed/direction. Please note that you will need to re-edit any races to add wind settings to them.
 * The race details popup now shows details about a second race (if configured).
+* Fixes pitbox numbers being incorrect when initially setting up an event.
 
 ---
 

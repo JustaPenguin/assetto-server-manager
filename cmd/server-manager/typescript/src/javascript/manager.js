@@ -1144,7 +1144,7 @@ class RaceSetup {
                 $elem.find("[name='EntryList.Restrictor']").val(restrictor);
                 let $entrantID = $elem.find("[name='EntryList.EntrantID']");
 
-                $entrantID.val($visibleEntrants.length - 1);
+                $entrantID.val($visibleEntrants.length);
 
                 populateEntryListCars();
                 showEntrantSkin(chosenCar, chosenSkin, $elem);
