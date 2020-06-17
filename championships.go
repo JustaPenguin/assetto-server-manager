@@ -1163,7 +1163,7 @@ func (c *ChampionshipClass) StandingsForEntrantAtEvent(championship *Championshi
 	noFinishReason := "DNS"
 
 	for i, standing := range c.StandingsForEvent(championship, event) {
-		if standing.Car.Model == entrant.Car.Model && standing.Car.GetGUID() == entrant.Car.GetGUID() {
+		if standing.Car.GetGUID() == entrant.Car.GetGUID() {
 
 			switch {
 			case standing.Points == 0.0:
