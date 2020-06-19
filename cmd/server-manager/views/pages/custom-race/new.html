@@ -702,6 +702,30 @@
                             </div>
 
                             <div class="form-group row">
+                                <label for="SplitCarsEvenlyEnabled" class="col-sm-3 col-form-label">Split Cars Evenly</label>
+
+
+                                <div class="col-sm-9">
+                                    <input type="checkbox"
+                                           id="SplitCarsEvenlyEnabled"
+                                           name="SplitCarsEvenlyEnabled"
+                                           value="{{ $f.SplitCarsEvenlyEnabled }}"
+
+                                            {{ if eq $f.SplitCarsEvenlyEnabled 1 }}
+                                                checked="checked"
+                                            {{ end }}
+                                    >
+
+                                    <br>
+
+                                    <small>
+                                        If set to OFF the entries will be filled randomly with available cars. If set to ON, the entries will be filled evenly for each available cars.
+                                    </small>
+                                </div>
+                            </div>
+
+
+                            <div class="form-group row">
                                 <label for="LockedEntryList" class="col-sm-3 col-form-label">Locked Entry List</label>
 
 

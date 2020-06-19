@@ -38,6 +38,7 @@ func ConfigIniDefault() ServerConfig {
 			TrackLayout:               "gp",
 			SunAngle:                  48,
 			PickupModeEnabled:         1,
+			SplitCarsEvenlyEnabled:    0,
 			LoopMode:                  1,
 			RaceOverTime:              180,
 			FuelRate:                  100,

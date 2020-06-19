@@ -233,25 +233,41 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 		return err
 	}
 
-	// any available car should make sure you have one of each before randomising (#678)
-	for _, car := range finalCars {
-		for _, entrant := range entryList {
-			if entrant.Model == AnyCarModel {
-				entrant.Model = car
-				entrant.Skin = rm.carManager.RandomSkin(entrant.Model)
-				break
+	if(config.raceConfig.splitCarsEvenlyEnabled == 0){
+		// any available car should make sure you have one of each before randomising (#678)
+		for _, car := range finalCars {
+			for _, entrant := range entryList {
+				if entrant.Model == AnyCarModel {
+					entrant.Model = car
+					entrant.Skin = rm.carManager.RandomSkin(entrant.Model)
+					break
+				}
 			}
 		}
-	}
 
-	for _, entrant := range entryList {
-		if entrant.Model == AnyCarModel {
-			// cars with 'any car model' become random in the entry list.
-			entrant.Model = finalCars[rand.Intn(len(finalCars))]
-			entrant.Skin = rm.carManager.RandomSkin(entrant.Model)
+		for _, entrant := range entryList {
+			if entrant.Model == AnyCarModel {
+				// cars with 'any car model' become random in the entry list.
+				entrant.Model = finalCars[rand.Intn(len(finalCars))]
+				entrant.Skin = rm.carManager.RandomSkin(entrant.Model)
+			}
 		}
+	} else {
+		// an array containing all available cars. For each AnyCarModel entrant, we pick and remove 
+		// a car from this array. Once the array is empty, we refill it with all the available cars 
+		carsAvailable := finalCars
+		for _, entrant := range entryList {
+			if entrant.Model == AnyCarModel {
+				if(len(carsAvailable) == 0){
+					carsAvailable = finalCars
+				}
+				index := rand.Intn(len(carsAvailable))
+				entrant.Model = carsAvailable[index]
+				carsAvailable = append(carsAvailable[:index], carsAvailable[index+1:]...)
+				entrant.Skin = rm.carManager.RandomSkin(entrant.Model)
+			}
+		}		
 	}
-
 	err = entryList.Write()
 
 	if err != nil {
@@ -566,6 +582,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 	gasPenaltyDisabled := formValueAsInt(r.FormValue("RaceGasPenaltyDisabled"))
 	lockedEntryList := formValueAsInt(r.FormValue("LockedEntryList"))
 	pickupModeEnabled := formValueAsInt(r.FormValue("PickupModeEnabled"))
+	splitCarsEvenlyEnabled := formValueAsInt(r.FormValue("SplitCarsEvenlyEnabled"))
 
 	if gasPenaltyDisabled == 0 {
 		gasPenaltyDisabled = 1
@@ -638,6 +655,7 @@ func (rm *RaceManager) BuildCustomRaceFromForm(r *http.Request) (*CurrentRaceCon
 
 		// rules
 		PickupModeEnabled:         pickupModeEnabled,
+		SplitCarsEvenlyEnabled:    splitCarsEvenlyEnabled,
 		LockedEntryList:           lockedEntryList,
 		RacePitWindowStart:        formValueAsInt(r.FormValue("RacePitWindowStart")),
 		RacePitWindowEnd:          formValueAsInt(r.FormValue("RacePitWindowEnd")),

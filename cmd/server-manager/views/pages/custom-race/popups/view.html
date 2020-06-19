@@ -105,6 +105,7 @@
                                     <li>{{ len $.EntryList }} entrants</li>
                                     <li>Locked Entry List: {{ yn (eq $.EventConfig.LockedEntryList 1) }}</li>
                                     <li>Pickup Mode: {{ yn (eq $.EventConfig.PickupModeEnabled 1) }}</li>
+                                    <li>Split Cars Evenly: {{ yn (eq $.EventConfig.SplitCarsEvenlyEnabled 1) }}</li>
 
                                     {{ if $.IsPremium }}
                                         <li>
