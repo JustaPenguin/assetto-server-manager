@@ -234,7 +234,6 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 	}
 
 	if config.CurrentRaceConfig.SplitCarsEvenlyEnabled == 0 {
-		fmt.Printf("No split cars\n")
 		// any available car should make sure you have one of each before randomising (#678)
 		for _, car := range finalCars {
 			for _, entrant := range entryList {
