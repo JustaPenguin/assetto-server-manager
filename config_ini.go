@@ -285,10 +285,10 @@ type CurrentRaceConfig struct {
 	MaxContactsPerKilometer   int           `ini:"MAX_CONTACTS_PER_KM" help:"Maximum number times you can make contact with another car in 1 kilometer."`
 	ResultScreenTime          int           `ini:"RESULT_SCREEN_TIME" help:"Seconds of result screen between racing sessions"`
 
-	PickupModeEnabled int `ini:"PICKUP_MODE_ENABLED" input:"checkbox" help:"if 0 the server start in booking mode (do not use it). Warning: in pickup mode you have to list only a circuit under TRACK and you need to list a least one car in the entry_list"`
+	PickupModeEnabled      int `ini:"PICKUP_MODE_ENABLED" input:"checkbox" help:"if 0 the server start in booking mode (do not use it). Warning: in pickup mode you have to list only a circuit under TRACK and you need to list a least one car in the entry_list"`
 	SplitCarsEvenlyEnabled int `ini:"SPLIT_CARS_EVENLY_ENABLED" input:"checkbox" help:"If set to OFF the entries will be filled randomly with available cars. If set to ON, the entries will be filled evenly for each available cars."`
-	LockedEntryList   int `ini:"LOCKED_ENTRY_LIST" input:"checkbox" help:"Only players already included in the entry list can join the server"`
-	LoopMode          int `ini:"LOOP_MODE" input:"checkbox" help:"the server restarts from the first track, to disable this set it to 0"`
+	LockedEntryList        int `ini:"LOCKED_ENTRY_LIST" input:"checkbox" help:"Only players already included in the entry list can join the server"`
+	LoopMode               int `ini:"LOOP_MODE" input:"checkbox" help:"the server restarts from the first track, to disable this set it to 0"`
 
 	DriverSwapEnabled               int `ini:"-" help:"Enable Driver Swaps, in order to carry out a Driver Swap give an entrant two or more GUIDs separated by ;'s'"`
 	DriverSwapMinTime               int `ini:"-" help:"Minimum time for a driver swap, used to avoid giving users with faster computers an advantage. If the second driver sets off before this time they will be disqualified/given a penalty based on configuration"`

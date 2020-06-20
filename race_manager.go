@@ -233,7 +233,7 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 		return err
 	}
 
-	if(config.CurrentRaceConfig.SplitCarsEvenlyEnabled == 0){
+	if config.CurrentRaceConfig.SplitCarsEvenlyEnabled == 0 {
 		fmt.Printf("No split cars\n")
 		// any available car should make sure you have one of each before randomising (#678)
 		for _, car := range finalCars {
@@ -254,13 +254,13 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 			}
 		}
 	} else {
-		// an array containing all available cars. For each AnyCarModel entrant, we pick and remove 
-		// a car from this array. Once the array is empty, we refill it with all the available cars 
+		// an array containing all available cars. For each AnyCarModel entrant, we pick and remove
+		// a car from this array. Once the array is empty, we refill it with all the available cars
 		carsAvailable := make([]string, len(finalCars))
 		copy(carsAvailable, finalCars)
 		for _, entrant := range entryList {
 			if entrant.Model == AnyCarModel {
-				if(len(carsAvailable) == 0){
+				if len(carsAvailable) == 0 {
 					// refill caravailables
 					carsAvailable = make([]string, len(finalCars))
 					copy(carsAvailable, finalCars)
@@ -269,11 +269,11 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 				entrant.Model = carsAvailable[index]
 				// remove picked car from array
 				carsAvailable[index] = carsAvailable[len(carsAvailable)-1] // Copy last element to index.
-				carsAvailable[len(carsAvailable)-1] = ""   // Erase last element (write nil value).
-				carsAvailable = carsAvailable[:len(carsAvailable)-1]   // Truncate slice.
+				carsAvailable[len(carsAvailable)-1] = ""                   // Erase last element (write nil value).
+				carsAvailable = carsAvailable[:len(carsAvailable)-1]       // Truncate slice.
 				entrant.Skin = rm.carManager.RandomSkin(entrant.Model)
 			}
-		}		
+		}
 	}
 	err = entryList.Write()
 
