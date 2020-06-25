@@ -245,6 +245,7 @@ func (tr *Renderer) init() error {
 		return "No"
 	}
 	funcs["trackMapURL"] = TrackMapImageURL
+	funcs["sunAngleToTimeOfDay"] = sunAngleToTimeOfDay
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
@@ -336,6 +337,13 @@ func fullTimeFormat(t time.Time) string {
 
 func isBefore(t time.Time) bool {
 	return time.Now().Before(t)
+}
+
+func sunAngleToTimeOfDay(angle int) string {
+	t := time.Date(2000, 1, 1, 13, 00, 00, 0, time.UTC)
+	t = t.Add(time.Minute * time.Duration((angle/16)*60))
+
+	return t.Format("15:04")
 }
 
 func carList(cars interface{}) string {
