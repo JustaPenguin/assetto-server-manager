@@ -6,6 +6,7 @@ Added:
 * Added a "combine results" button to the results index page, allowing you to manually combine any results (you should probably only combine results of the same type and track, but there is no hard restriction in place)
 * Added functionality that aims to persist results information for sessions that do not complete fully. This works by sending a "Next Session" message to the acServer to tell it to write out results files for the current session. This feature is disabled by default - look for the `persist_mid_session_results` option in the config.example.yml included with this release.
 * Server Logs and Audit Logs now display using the full width of the browser window.
+* Added the user group to the body class. This should allow you to customise the CSS for different user groups.
 * Race Details popup now displays the time of day calculated from the sun angle (if Sol is disabled)
 
 Fixed:
