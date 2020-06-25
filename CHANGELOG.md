@@ -7,6 +7,7 @@ Added:
 * Added functionality that aims to persist results information for sessions that do not complete fully. This works by sending a "Next Session" message to the acServer to tell it to write out results files for the current session. This feature is disabled by default - look for the `persist_mid_session_results` option in the config.example.yml included with this release.
 * Server Logs and Audit Logs now display using the full width of the browser window.
 * Added the user group to the body class. This should allow you to customise the CSS for different user groups.
+* Race Details popup now displays the time of day calculated from the sun angle (if Sol is disabled)
 
 Fixed:
 
@@ -16,6 +17,7 @@ Fixed:
 * Fixes an issue where Wind settings were not written out correctly to the server configuration file, resulting in 0 wind speed/direction. Please note that you will need to re-edit any races to add wind settings to them.
 * The race details popup now shows details about a second race (if configured).
 * Fixes pitbox numbers being incorrect when initially setting up an event.
+* Improved handling of results files with non-standard names.
 
 ---
 
