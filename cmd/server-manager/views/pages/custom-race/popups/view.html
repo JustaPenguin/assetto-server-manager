@@ -149,6 +149,7 @@
                                         <li><span class="text-success">Sol is enabled.</span></li>
                                     {{ else }}
                                         <li>Sun Angle: {{ $.EventConfig.SunAngle }}</li>
+                                        <li>Time of Day {{ sunAngleToTimeOfDay $.EventConfig.SunAngle }}</li>
                                         <li>Time Of Day Multiplier: {{ $.EventConfig.TimeOfDayMultiplier }}x</li>
                                     {{ end }}
 

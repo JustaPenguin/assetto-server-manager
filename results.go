@@ -1185,7 +1185,8 @@ func listResults(page int) ([]SessionResults, []int, error) {
 		result, err := LoadResult(resultFile.Name())
 
 		if err != nil {
-			return nil, nil, err
+			logrus.WithError(err).Errorf("Could not load results file: %s", resultFile.Name())
+			continue
 		}
 
 		results = append(results, *result)
@@ -1215,7 +1216,8 @@ func ListAllResults() ([]SessionResults, error) {
 		result, err := LoadResult(resultFile.Name(), LoadResultWithoutPluginFire)
 
 		if err != nil {
-			return nil, err
+			logrus.WithError(err).Errorf("Could not load results file: %s", resultFile.Name())
+			continue
 		}
 
 		results = append(results, *result)
@@ -1265,11 +1267,20 @@ func LoadResult(fileName string, opts ...LoadResultOpts) (*SessionResults, error
 
 	date, err := GetResultDate(fileName)
 
-	if err != nil {
-		return nil, err
+	if err == nil {
+		result.Date = date
+	} else {
+		logrus.WithError(err).Errorf("Could not parse results date from filename: %s. Using mod time.", fileName)
+
+		f, err := os.Stat(filepath.Join(resultsPath, fileName))
+
+		if err != nil {
+			return nil, err
+		}
+
+		result.Date = f.ModTime()
 	}
 
-	result.Date = date
 	result.SessionFile = strings.Trim(fileName, ".json")
 
 	var validResults []*SessionResult
