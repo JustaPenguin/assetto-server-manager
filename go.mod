@@ -15,6 +15,7 @@ require (
 	github.com/bwmarrin/discordgo v0.20.2
 	github.com/certifi/gocertifi v0.0.0-20200104152315-a6d78f326758 // indirect
 	github.com/cj123/caldav-go v0.0.0-20191202141705-5d30c27975e9
+	github.com/cj123/formulate v0.0.0-20200626200103-8e3e5d80d55b
 	github.com/cj123/ini v1.44.0
 	github.com/cj123/sessions v1.1.5
 	github.com/cj123/watcher v1.0.9
@@ -28,7 +29,6 @@ require (
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/facebookgo/subset v0.0.0-20150612182917-8dac2c3c4870 // indirect
-	github.com/fatih/camelcase v1.0.0
 	github.com/fatih/color v1.7.0
 	github.com/getsentry/raven-go v0.2.0
 	github.com/glycerine/go-unsnap-stream v0.0.0-20190901134440-81cf024a9e0a // indirect
@@ -75,13 +75,12 @@ require (
 	github.com/tinylib/msgp v1.1.1 // indirect
 	github.com/yuin/gopher-lua v0.0.0-20191220021717-ab39c6098bdb
 	go.etcd.io/bbolt v1.3.2 // indirect
-	golang.org/x/crypto v0.0.0-20200117160349-530e935923ad
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/mod v0.3.0 // indirect
-	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
+	golang.org/x/net v0.0.0-20200625001655-4c5254603344
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/sys v0.0.0-20200121082415-34d275377bf9 // indirect
 	golang.org/x/text v0.3.2
-	golang.org/x/tools v0.0.0-20200626032829-bcbc01e07a20 // indirect
+	golang.org/x/tools v0.0.0-20200626171337-aa94e735be7f // indirect
 	gopkg.in/ini.v1 v1.42.0 // indirect
 	gopkg.in/yaml.v2 v2.2.7
 )

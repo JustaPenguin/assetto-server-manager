@@ -17,9 +17,7 @@
         </p>
 
         <form method="post" action="/realpenalty/options">
-            {{ range $k, $v := .Form.Fields }}
-                {{ $v.HTML }}
-            {{ end }}
+            {{ $.Form }}
 
             <button class="btn btn-success float-right" type="submit">Save</button>
 

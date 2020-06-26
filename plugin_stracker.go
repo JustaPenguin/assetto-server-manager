@@ -3,6 +3,7 @@ package servermanager
 import (
 	"bytes"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
@@ -231,7 +232,7 @@ type StrackerDatabase struct {
 type StrackerDatabaseCompression struct {
 	Interval         int    `ini:"interval" show:"open" help:"Interval of database compression in minutes"`
 	Mode             string `ini:"mode" show:"open" help:"Various options to minimize database size. Valid values are 'none' (no compression, save all available infos), 'remove_slow_laps' (save detailed infos for fast laps only) and 'remove_all' (save no detailed lap info)."`
-	NeedsEmptyServer int    `ini:"needs_empty_server" show:"open" input:"checkbox" help:"If set to ON database compression will only take place if the server is empty."`
+	NeedsEmptyServer int    `ini:"needs_empty_server" show:"open" type:"checkbox" help:"If set to ON database compression will only take place if the server is empty."`
 }
 
 type StrackerHTTPConfiguration struct {
@@ -241,7 +242,7 @@ type StrackerHTTPConfiguration struct {
 	PublicURL     string `ini:"-" show:"open" help:"This allows you to manually specify the URL on which the sTracker web interface is running. This link will be displayed on Server Manager's Live Timings page so that anybody can view the sTracker interface. If this is left blank, an older and <em>unrecommended</em> Server Manager proxying method will be used to display the sTracker interface!"`
 
 	AdminUsername string `ini:"admin_username" help:"Username for the stracker admin pages. Leaving empty results in disabled admin pages"`
-	AdminPassword string `ini:"admin_password" input:"password" help:"Password for the stracker admin pages. Leaving empty results in disabled admin pages"`
+	AdminPassword string `ini:"admin_password" type:"password" help:"Password for the stracker admin pages. Leaving empty results in disabled admin pages"`
 
 	TemperatureUnit string `ini:"temperature_unit" help:"Valid values are 'degc' or 'degf'"`
 	VelocityUnit    string `ini:"velocity_unit" help:"Valid values are 'kmh' or 'mph'"`
@@ -299,7 +300,7 @@ func NewStrackerHandler(baseHandler *BaseHandler, store Store) *StrackerHandler 
 type strackerConfigurationTemplateVars struct {
 	BaseTemplateVars
 
-	Form                *Form
+	Form                template.HTML
 	IsStrackerInstalled bool
 }
 
@@ -448,10 +449,8 @@ func (sth *StrackerHandler) options(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	form := NewForm(strackerOptions, nil, "", AccountFromRequest(r).Name == "admin")
-
 	if r.Method == http.MethodPost {
-		err := form.Submit(r)
+		err := DecodeFormData(strackerOptions, r)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("couldn't submit form")
@@ -473,6 +472,14 @@ func (sth *StrackerHandler) options(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			logrus.WithError(err).Errorf("couldn't re-init stracker proxy")
 		}
+	}
+
+	form, err := EncodeFormData(strackerOptions, r)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Couldn't encode form data")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	sth.viewRenderer.MustLoadTemplate(w, r, "server/stracker-options.html", &strackerConfigurationTemplateVars{

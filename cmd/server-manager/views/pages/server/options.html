@@ -8,9 +8,7 @@
     <p>These configuration options are applied globally - they are applied to each race setup started by Server Manager.</p>
 
     <form method="post" action="/server-options">
-        {{ range $k, $v := .Form.Fields }}
-            {{ $v.HTML }}
-        {{ end }}
+        {{ $.Form }}
 
         <button class="btn btn-success float-right" type="submit">Save</button>
 

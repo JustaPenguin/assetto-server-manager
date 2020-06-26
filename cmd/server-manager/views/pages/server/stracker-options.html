@@ -18,9 +18,7 @@
         </p>
 
         <form method="post" action="/stracker/options">
-            {{ range $k, $v := .Form.Fields }}
-                {{ $v.HTML }}
-            {{ end }}
+            {{ $.Form }}
 
             <button class="btn btn-success float-right" type="submit">Save</button>
 

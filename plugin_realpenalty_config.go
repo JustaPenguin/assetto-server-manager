@@ -524,8 +524,8 @@ type RealPenaltyACSettingsGeneral struct {
 }
 
 type RealPenaltyACSettingsApp struct {
-	Mandatory      string `ini:"MANDATORY" help:"true = Real Penalty app is mandatory, false = Real Penalty app is not mandatory"`
-	CheckFrequency int    `ini:"CHECK_FREQUENCY" help:"Frequency (seconds) for app check"`
+	Mandatory      boolString `ini:"MANDATORY" help:"on = Real Penalty app is mandatory, off = Real Penalty app is not mandatory"`
+	CheckFrequency int        `ini:"CHECK_FREQUENCY" help:"Frequency (seconds) for app check"`
 }
 
 type RealPenaltyACSettingsSol struct {
@@ -543,11 +543,11 @@ type RealPenaltyACSettingsSafetyCar struct {
 }
 
 type RealPenaltyACSettingsNoPenalty struct {
-	GUIDs string `ini:"GUIDs" help:"List of Steam GUIDs (separated by a semicolon) that can connect to the server without the app and sol (for example 'Race Direction' or for 'Live')"`
+	GUIDs string `ini:"GUIDs" name:"GUIDs" help:"List of Steam GUIDs (separated by a semicolon) that can connect to the server without the app and sol (for example 'Race Direction' or for 'Live')"`
 }
 
 type RealPenaltyACSettingsAdmin struct {
-	GUIDs string `ini:"GUIDs" help:"List of Steam GUIDs (separated by a semicolon) that can send commands to the server via chat"`
+	GUIDs string `ini:"GUIDs" name:"GUIDs" help:"List of Steam GUIDs (separated by a semicolon) that can send commands to the server via chat"`
 }
 
 type RealPenaltyACSettingsHelicorsa struct {
