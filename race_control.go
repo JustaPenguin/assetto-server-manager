@@ -27,6 +27,7 @@ type RaceControl struct {
 	TrackInfo                  TrackInfo       `json:"TrackInfo"`
 	SessionStartTime           time.Time       `json:"SessionStartTime"`
 	CurrentRealtimePosInterval int             `json:"CurrentRealtimePosInterval"`
+	ChatMessages               []string        `json:"ChatMessages"`
 
 	ConnectedDrivers    *DriverMap `json:"ConnectedDrivers"`
 	DisconnectedDrivers *DriverMap `json:"DisconnectedDrivers"`
@@ -139,8 +140,42 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 		err = rc.OnLapCompleted(m)
 
 		sendUpdatedRaceControlStatus = true
+	case udp.Chat:
+		// received a chat message
+		var driver *RaceControlDriver
+
+		driver, err = rc.findConnectedDriverByCarID(m.CarID)
+
+		if err == nil {
+			m.DriverGUID = driver.CarInfo.DriverGUID
+			m.DriverName = driver.CarInfo.DriverName
+		} else {
+			m.DriverGUID = "0"
+			m.DriverName = "Server"
+		}
+
+		err = rc.OnChatMessage(m)
 	default:
 		// unhandled event
+		/*chatEvent := udp.Chat{ //@TODO remove, just for testing
+			CarID:   0,
+			Message: "Fake chat message",
+		}
+
+		var driver *RaceControlDriver
+
+		driver, err = rc.findConnectedDriverByCarID(chatEvent.CarID)
+
+		if err == nil {
+			chatEvent.DriverGUID = driver.CarInfo.DriverGUID
+			chatEvent.DriverName = driver.CarInfo.DriverName
+		} else {
+			chatEvent.DriverGUID = "0"
+			chatEvent.DriverName = "Server"
+		}
+
+		err = rc.OnChatMessage(chatEvent)*/
+
 		return
 	}
 
@@ -1120,6 +1155,12 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 	rc.persistTimingData()
 
 	return nil
+}
+
+func (rc *RaceControl) OnChatMessage(chat udp.Chat) error {
+	_, err := rc.broadcaster.Send(chat)
+
+	return err
 }
 
 func (rc *RaceControl) SortDrivers(driverGroup RaceControlDriverGroup, driverA, driverB *RaceControlDriver) bool {

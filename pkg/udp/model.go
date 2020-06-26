@@ -150,8 +150,10 @@ func (s SessionCarInfo) Event() Event {
 }
 
 type Chat struct {
-	CarID   CarID  `json:"CarID"`
-	Message string `json:"Message"`
+	CarID      CarID      `json:"CarID"`
+	Message    string     `json:"Message"`
+	DriverGUID DriverGUID `json:"DriverGUID"` // used for driver name colour in live timings
+	DriverName string     `json:"DriverName"`
 }
 
 func (Chat) Event() Event {

@@ -116,6 +116,35 @@ export class RaceControl {
             case EventNewSession:
                 this.showTrackWeatherImage();
                 break;
+            case EventChat:
+                let $chatContainer = $("#chat-container");
+
+                let chatMessage = $("#chat-message-template").first().clone();
+                let chatMessageSender = $(document.createElement("SPAN"));
+
+                let dt = new Date();
+
+                chatMessageSender.attr(
+                    "style", "color: " + randomColorForDriver(message.Message.DriverGUID)
+                ).text(
+                    dt.getHours() + ":" + dt.getUTCMinutes() + " " + message.Message.DriverName + ": "
+                )
+
+                chatMessage.text(message.Message.Message)
+                chatMessage.addClass("chat-message")
+                chatMessageSender.addClass("chat-message-sender")
+
+                $chatContainer.append(chatMessageSender)
+                $chatContainer.append(chatMessage)
+
+                if ($chatContainer.find(".chat-message").length > 8) { //@TODO bigger number
+                    $chatContainer.find(".chat-message").first().remove()
+                    $chatContainer.find(".chat-message-sender").first().remove()
+                }
+
+                $chatContainer.scrollTop($chatContainer.prop('scrollHeight'));
+
+                break
         }
 
         this.liveMap.handleWebsocketMessage(message);

@@ -205,6 +205,17 @@ td .dot-inactive {
     width: auto;
 }
 
+#chat-container {
+  overflow-y: scroll;
+  max-height: 120px;
+  scroll-behavior: smooth;
+  padding-left: 3rem;
+}
+
+.chat-message-sender {
+  margin-left: -2.5rem;
+}
+
 @keyframes cssAnimation {
   0% {
     opacity: 1;
