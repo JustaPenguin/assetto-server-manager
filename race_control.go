@@ -569,6 +569,8 @@ func (rc *RaceControl) addFileToTimeAttackEvent(file string) error {
 		results.SessionFile = results.SessionFile + timeAttackSuffix
 	}
 
+	results.Date = time.Now()
+
 	err = saveResults(results.SessionFile+".json", results)
 
 	if err != nil {

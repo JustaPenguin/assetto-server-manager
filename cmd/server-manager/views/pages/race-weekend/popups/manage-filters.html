@@ -142,14 +142,14 @@
                                     <div class="form-group row">
                                         <label for="ManualDriverSelection" class="col-sm-8 col-form-label">Manually Choose Drivers</label>
 
-                                        <div class="col-sm-4 text-right">
-                                            <input type="checkbox" id="ManualDriverSelection" name="ManualDriverSelection" {{ if $.Filter.ManualDriverSelection }}checked="checked"{{ end }}>
+                                        <div class="col-sm-4 {{ if WriteAccess }}text-right{{ end }}">
+                                            <input type="checkbox" id="ManualDriverSelection" name="ManualDriverSelection" {{ if not WriteAccess }}disabled{{ end }} {{ if $.Filter.ManualDriverSelection }}checked="checked"{{ end }}>
                                         </div>
                                     </div>
 
                                     <div class="form-group row" style="display: none;" id="DriverSelectionForm">
                                         <div class="col-sm-12">
-                                            <select multiple id="Drivers" class="form-control" name="Drivers" style="min-height: 200px;">
+                                            <select multiple id="Drivers" class="form-control" {{ if not WriteAccess }}disabled{{ end }} name="Drivers" style="min-height: 200px;">
                                                 {{ range $index, $result := $.ParentSessionResults }}
                                                     {{ $driverSelected := false }}
 
