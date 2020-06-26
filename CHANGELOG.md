@@ -18,6 +18,7 @@ Fixed:
 * The race details popup now shows details about a second race (if configured).
 * Fixes pitbox numbers being incorrect when initially setting up an event.
 * Improved handling of results files with non-standard names.
+* Improved some help text on the Real Penalty options page.
 
 ---
 
