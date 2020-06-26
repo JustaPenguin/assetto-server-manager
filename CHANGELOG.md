@@ -18,6 +18,9 @@ Fixed:
 * The race details popup now shows details about a second race (if configured).
 * Fixes pitbox numbers being incorrect when initially setting up an event.
 * Improved handling of results files with non-standard names.
+* Time Attack events should now be moved to the top of the results list each time they are updated.
+* Read users are no longer able to access the UI controls for the Manually Choose Drivers option in Race Weekends.
+* Improved some help text on the Real Penalty options page.
 
 ---
 

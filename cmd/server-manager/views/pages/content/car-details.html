@@ -138,7 +138,7 @@
                         <p>You can upload setups for this car using the form below.</p>
                     {{ end }}
                 {{ else }}
-                    <p>There are no setups for this car. You can upload one below.</p>
+                    <p>There are no setups for this car.{{ if WriteAccess }} You can upload one below.{{ end }}</p>
                 {{ end }}
 
 
