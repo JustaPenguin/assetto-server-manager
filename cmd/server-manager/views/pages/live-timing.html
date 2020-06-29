@@ -232,12 +232,22 @@
             </div>
         </div>
 
-        <div class="row">
+        <div class="row mt-2">
             <div class="col-lg-7 col-md-12"></div>
             <div class="col-lg-5 col-md-12">
                 <div class="card card-body" id="chat-container">
-                    <p class="card-text" id="chat-message-template"><span id="chat-message-sender"></span>Game chat!</p>
+                    <div class="card-text" id="chat-message-template"><span id="chat-message-sender"></span>Game chat!</div>
                 </div>
+
+                {{ if AdminAccess }}
+
+                    <form class="form mt-2" id="broadcast-chat-form" name="broadcast-chat-form" action="/broadcast-chat" autocomplete="off">
+                        <div class="form-group">
+                            <input type="text" name="broadcast-chat" id="broadcast-chat" class="broadcast-chat form-control form-control-sm" placeholder="Broadcast chat">
+                        </div>
+                    </form>
+
+                {{ end }}
             </div>
         </div>
 

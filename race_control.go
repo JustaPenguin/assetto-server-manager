@@ -27,7 +27,9 @@ type RaceControl struct {
 	TrackInfo                  TrackInfo       `json:"TrackInfo"`
 	SessionStartTime           time.Time       `json:"SessionStartTime"`
 	CurrentRealtimePosInterval int             `json:"CurrentRealtimePosInterval"`
-	ChatMessages               []string        `json:"ChatMessages"`
+
+	ChatMessages      []udp.Chat
+	ChatMessagesMutex sync.Mutex
 
 	ConnectedDrivers    *DriverMap `json:"ConnectedDrivers"`
 	DisconnectedDrivers *DriverMap `json:"DisconnectedDrivers"`
@@ -156,26 +158,6 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 
 		err = rc.OnChatMessage(m)
 	default:
-		// unhandled event
-		/*chatEvent := udp.Chat{ //@TODO remove, just for testing
-			CarID:   0,
-			Message: "Fake chat message",
-		}
-
-		var driver *RaceControlDriver
-
-		driver, err = rc.findConnectedDriverByCarID(chatEvent.CarID)
-
-		if err == nil {
-			chatEvent.DriverGUID = driver.CarInfo.DriverGUID
-			chatEvent.DriverName = driver.CarInfo.DriverName
-		} else {
-			chatEvent.DriverGUID = "0"
-			chatEvent.DriverName = "Server"
-		}
-
-		err = rc.OnChatMessage(chatEvent)*/
-
 		return
 	}
 
@@ -1159,10 +1141,26 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 	return nil
 }
 
+const chatMessageLimit = 20
+
 func (rc *RaceControl) OnChatMessage(chat udp.Chat) error {
 	_, err := rc.broadcaster.Send(chat)
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	rc.ChatMessagesMutex.Lock()
+
+	rc.ChatMessages = append(rc.ChatMessages, chat)
+
+	if len(rc.ChatMessages) > chatMessageLimit {
+		rc.ChatMessages = rc.ChatMessages[len(rc.ChatMessages)-chatMessageLimit:]
+	}
+
+	rc.ChatMessagesMutex.Unlock()
+
+	return nil
 }
 
 func (rc *RaceControl) SortDrivers(driverGroup RaceControlDriverGroup, driverA, driverB *RaceControlDriver) bool {
@@ -1357,6 +1355,14 @@ func (rc *RaceControl) splitAndBroadcastChat(message string) error {
 		} else {
 			return err
 		}
+	}
+
+	chat, err := udp.NewChat(message, 0, "Server", "")
+
+	if err == nil {
+		return rc.OnChatMessage(chat)
+	} else {
+		logrus.WithError(err).Error("Chat broadcasted successfully but could not be added to the live timings chat window!")
 	}
 
 	return nil

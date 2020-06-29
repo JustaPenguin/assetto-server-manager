@@ -290,6 +290,21 @@ func (rch *RaceControlHandler) websocket(w http.ResponseWriter, r *http.Request)
 	rch.raceControl.lastUpdateMessageMutex.Lock()
 	client.receive <- rch.raceControl.lastUpdateMessage
 	rch.raceControl.lastUpdateMessageMutex.Unlock()
+
+	// send stored chat messages to new client
+	rch.raceControl.ChatMessagesMutex.Lock()
+
+	for _, message := range rch.raceControl.ChatMessages {
+		encoded, err := encodeRaceControlMessage(message)
+
+		if err != nil {
+			continue
+		}
+
+		client.receive <- encoded
+	}
+
+	rch.raceControl.ChatMessagesMutex.Unlock()
 }
 
 func (rch *RaceControlHandler) broadcastChat(w http.ResponseWriter, r *http.Request) {

@@ -2,6 +2,7 @@ package udp
 
 import (
 	"regexp"
+	"time"
 
 	"golang.org/x/text/encoding/unicode/utf32"
 )
@@ -154,10 +155,24 @@ type Chat struct {
 	Message    string     `json:"Message"`
 	DriverGUID DriverGUID `json:"DriverGUID"` // used for driver name colour in live timings
 	DriverName string     `json:"DriverName"`
+	Time       time.Time  `json:"Time"`
 }
 
 func (Chat) Event() Event {
 	return EventChat
+}
+
+func NewChat(message string, carID CarID, driverName string, driverGUID DriverGUID) (Chat, error) {
+	// the Assetto Corsa chat seems to not cope well with non-ascii characters. remove them.
+	message = regexp.MustCompile("[[:^ascii:]]").ReplaceAllLiteralString(message, "")
+
+	return Chat{
+		CarID:      carID,
+		Message:    message,
+		DriverGUID: driverGUID,
+		DriverName: driverName,
+		Time:       time.Now(),
+	}, nil
 }
 
 type CarInfo struct {

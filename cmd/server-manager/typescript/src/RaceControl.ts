@@ -122,12 +122,26 @@ export class RaceControl {
                 let chatMessage = $("#chat-message-template").first().clone();
                 let chatMessageSender = $(document.createElement("SPAN"));
 
-                let dt = new Date();
+                let dt = new Date(message.Message.Time);
+
+                let minutes = dt.getMinutes()
+                let minutesString = ""
+
+                let hours = dt.getHours()
+                let hoursString = ""
+
+                if (minutes < 10) {minutesString = "0"+minutes;} else {
+                    minutesString = minutes.toLocaleString()
+                }
+
+                if (hours < 10) {hoursString = "0"+hours;} else {
+                    hoursString = hours.toLocaleString()
+                }
 
                 chatMessageSender.attr(
                     "style", "color: " + randomColorForDriver(message.Message.DriverGUID)
                 ).text(
-                    dt.getHours() + ":" + dt.getUTCMinutes() + " " + message.Message.DriverName + ": "
+                    hoursString + ":" + minutesString + " " + message.Message.DriverName + ": "
                 )
 
                 chatMessage.text(message.Message.Message)
@@ -137,7 +151,7 @@ export class RaceControl {
                 $chatContainer.append(chatMessageSender)
                 $chatContainer.append(chatMessage)
 
-                if ($chatContainer.find(".chat-message").length > 8) { //@TODO bigger number
+                if ($chatContainer.find(".chat-message").length > 20) {
                     $chatContainer.find(".chat-message").first().remove()
                     $chatContainer.find(".chat-message-sender").first().remove()
                 }
