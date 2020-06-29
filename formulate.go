@@ -137,6 +137,19 @@ func (d *decorator) col9(n *html.Node) {
 	formulate.AppendClass(n, "col-sm-9 col-12")
 }
 
+func (d *decorator) TextField(n *html.Node, field formulate.StructField) {
+	d.BootstrapDecorator.TextField(n, field)
+
+	for _, attr := range n.Attr {
+		if attr.Key == "type" && attr.Val == "password" {
+			n.Attr = append(n.Attr, html.Attribute{
+				Key: "autocomplete",
+				Val: "new-password",
+			})
+		}
+	}
+}
+
 func (d *decorator) TextareaField(n *html.Node, field formulate.StructField) {
 	d.BootstrapDecorator.TextareaField(n, field)
 
