@@ -8,6 +8,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/cj123/formulate"
 	"github.com/cj123/ini"
 	"github.com/sirupsen/logrus"
 )
@@ -144,25 +145,25 @@ func (sc ServerConfig) Write() error {
 type GlobalServerConfig struct {
 	AssettoCorsaServer FormHeading `ini:"-" json:"-" input:"heading"`
 
-	Name                      string `ini:"NAME" help:"Server Name"`
-	Password                  string `ini:"PASSWORD" input:"password" help:"Server password"`
-	AdminPassword             string `ini:"ADMIN_PASSWORD" input:"password" help:"The password needed to be recognized as server administrator: you can join the server using it to be recognized automatically. Type /help in the game's chat to see the command list. Warning: Leaving this blank will allow any driver to connect as Admin!"`
-	UDPPort                   int    `ini:"UDP_PORT" show:"open" min:"0" max:"65535" help:"UDP port number: open this port on your server's firewall"`
-	TCPPort                   int    `ini:"TCP_PORT" show:"open" min:"0" max:"65535" help:"TCP port number: open this port on your server's firewall"`
-	HTTPPort                  int    `ini:"HTTP_PORT" show:"open" min:"0" max:"65535" help:"Lobby port number: open these ports (both UDP and TCP) on your server's firewall"`
-	UDPPluginLocalPort        int    `ini:"UDP_PLUGIN_LOCAL_PORT" show:"open" min:"0" max:"65535" help:"The port on which to listen for UDP messages from a plugin. Please note that Server Manager proxies UDP ports so that it can use them as well, for things such as Championships, Live Timings and the Map. This means that the UDP ports you see in the server_cfg.ini will be different to the ones you specify here. This is not an issue, and messages will be correctly sent/received on the UDP ports you specify here as well."`
-	UDPPluginAddress          string `ini:"UDP_PLUGIN_ADDRESS" show:"open" help:"The address of the plugin to which UDP messages are sent.  Please note that Server Manager proxies UDP ports so that it can use them as well, for things such as Championships, Live Timings and the Map. This means that the UDP ports you see in the server_cfg.ini will be different to the ones you specify here. This is not an issue, and messages will be correctly sent/received on the UDP ports you specify here as well."`
-	AuthPluginAddress         string `ini:"AUTH_PLUGIN_ADDRESS" show:"open" help:"The address of the auth plugin"`
-	RegisterToLobby           int    `ini:"REGISTER_TO_LOBBY" show:"open" input:"checkbox" help:"Register the AC Server to the main lobby"`
-	ClientSendIntervalInHertz int    `ini:"CLIENT_SEND_INTERVAL_HZ" show:"open" help:"Refresh rate of packet sending by the server. 10Hz = ~100ms. Higher number = higher MP quality = higher bandwidth resources needed. Really high values can create connection issues"`
-	SendBufferSize            int    `ini:"SEND_BUFFER_SIZE" show:"open" help:""`
-	ReceiveBufferSize         int    `ini:"RECV_BUFFER_SIZE" show:"open" help:""`
-	KickQuorum                int    `ini:"KICK_QUORUM" help:"Percentage that is required for the kick vote to pass"`
-	VotingQuorum              int    `ini:"VOTING_QUORUM" min:"0" max:"100" help:"Percentage that is required for the session vote to pass"`
-	VoteDuration              int    `ini:"VOTE_DURATION" min:"0" help:"Vote length in seconds"`
-	BlacklistMode             int    `ini:"BLACKLIST_MODE" min:"0" max:"2" help:"0 = normal kick, kicked player can rejoin; 1 = kicked player cannot rejoin until server restart; 2 = kick player and add to blacklist.txt, kicked player can not rejoin unless removed from blacklist (Better to use ban_id command rather than set this)."`
-	NumberOfThreads           int    `ini:"NUM_THREADS" show:"open" min:"1" help:"Number of threads to run on"`
-	WelcomeMessage            string `ini:"WELCOME_MESSAGE" show:"-" help:"Path to the file that contains the server welcome message"`
+	Name                      string               `ini:"NAME" help:"Server Name"`
+	Password                  string               `ini:"PASSWORD" type:"password" help:"Server password"`
+	AdminPassword             string               `ini:"ADMIN_PASSWORD" type:"password" help:"The password needed to be recognized as server administrator: you can join the server using it to be recognized automatically. Type /help in the game's chat to see the command list. Warning: Leaving this blank will allow any driver to connect as Admin!"`
+	UDPPort                   int                  `ini:"UDP_PORT" show:"open" min:"0" max:"65535" help:"UDP port number: open this port on your server's firewall"`
+	TCPPort                   int                  `ini:"TCP_PORT" show:"open" min:"0" max:"65535" help:"TCP port number: open this port on your server's firewall"`
+	HTTPPort                  int                  `ini:"HTTP_PORT" show:"open" min:"0" max:"65535" help:"Lobby port number: open these ports (both UDP and TCP) on your server's firewall"`
+	UDPPluginLocalPort        int                  `ini:"UDP_PLUGIN_LOCAL_PORT" show:"open" min:"0" max:"65535" help:"The port on which to listen for UDP messages from a plugin. Please note that Server Manager proxies UDP ports so that it can use them as well, for things such as Championships, Live Timings and the Map. This means that the UDP ports you see in the server_cfg.ini will be different to the ones you specify here. This is not an issue, and messages will be correctly sent/received on the UDP ports you specify here as well."`
+	UDPPluginAddress          string               `ini:"UDP_PLUGIN_ADDRESS" show:"open" help:"The address of the plugin to which UDP messages are sent.  Please note that Server Manager proxies UDP ports so that it can use them as well, for things such as Championships, Live Timings and the Map. This means that the UDP ports you see in the server_cfg.ini will be different to the ones you specify here. This is not an issue, and messages will be correctly sent/received on the UDP ports you specify here as well."`
+	AuthPluginAddress         string               `ini:"AUTH_PLUGIN_ADDRESS" show:"open" help:"The address of the auth plugin"`
+	RegisterToLobby           formulate.BoolNumber `ini:"REGISTER_TO_LOBBY" show:"open" help:"Register the AC Server to the main lobby"`
+	ClientSendIntervalInHertz int                  `ini:"CLIENT_SEND_INTERVAL_HZ" show:"open" help:"Refresh rate of packet sending by the server. 10Hz = ~100ms. Higher number = higher MP quality = higher bandwidth resources needed. Really high values can create connection issues"`
+	SendBufferSize            int                  `ini:"SEND_BUFFER_SIZE" show:"open" help:""`
+	ReceiveBufferSize         int                  `ini:"RECV_BUFFER_SIZE" show:"open" help:""`
+	KickQuorum                int                  `ini:"KICK_QUORUM" help:"Percentage that is required for the kick vote to pass"`
+	VotingQuorum              int                  `ini:"VOTING_QUORUM" min:"0" help:"Percentage that is required for the session vote to pass"`
+	VoteDuration              int                  `ini:"VOTE_DURATION" min:"0" help:"Vote length in seconds"`
+	BlacklistMode             int                  `ini:"BLACKLIST_MODE" min:"0" max:"2" help:"0 = normal kick, kicked player can rejoin; 1 = kicked player cannot rejoin until server restart; 2 = kick player and add to blacklist.txt, kicked player can not rejoin unless removed from blacklist (Better to use ban_id command rather than set this)."`
+	NumberOfThreads           int                  `ini:"NUM_THREADS" show:"open" min:"1" help:"Number of threads to run on"`
+	WelcomeMessage            string               `ini:"WELCOME_MESSAGE" show:"-" help:"Path to the file that contains the server welcome message"`
 
 	SleepTime int `ini:"SLEEP_TIME" help:"The use of this setting is not fully known. Leave the value as 1 unless you really know what you're doing. (Values other than 1 cause excessive CPU usage)"`
 
@@ -170,48 +171,48 @@ type GlobalServerConfig struct {
 	FreeUDPPluginAddress   string `ini:"-" show:"-"`
 
 	// ACSR
-	AssettoCorsaSkillRating FormHeading `ini:"-" json:"-" show:"premium" input:"heading"`
-	EnableACSR              bool        `ini:"-" show:"premium" input:"checkbox" help:"Enable ACSR integration. <a href='https://acsr.assettocorsaservers.com'>You can read more about ACSR here</a>."`
+	AssettoCorsaSkillRating FormHeading `ini:"-" json:"-" show:"premium"`
+	EnableACSR              bool        `ini:"-" show:"premium" help:"Enable ACSR integration. <a href='https://acsr.assettocorsaservers.com'>You can read more about ACSR here</a>."`
 	ACSRAccountID           string      `ini:"-" show:"premium" help:"Your ACSR account ID. You can <a href='https://acsr.assettocorsaservers.com/account'>request an ACSR key here</a>."`
 	ACSRAPIKey              string      `ini:"-" show:"premium" help:"Your ACSR API Key. You can <a href='https://acsr.assettocorsaservers.com/account'>request an ACSR key here</a>."`
 
-	ServerName                FormHeading `ini:"-" json:"-" input:"heading"`
-	ShowRaceNameInServerLobby int         `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager append the Custom Race or Championship name to the Server name in the lobby."`
-	ServerNameTemplate        string      `ini:"-" help:"You can enter anything you like in here. If you put <code>{{ .ServerName }}</code> in, the Server Name will replace it. If you put <code>{{ .EventName }}</code>, then the Event Name will replace it. Note this only works if 'Show Race Name In Server Lobby' (above) is enabled. You can <a href='https://github.com/JustaPenguin/assetto-server-manager/wiki/Server-Name-Template-Examples'>view some examples</a> on the Server Manager Wiki!"`
+	ServerName                FormHeading          `ini:"-" json:"-"`
+	ShowRaceNameInServerLobby formulate.BoolNumber `ini:"-" help:"When on, this option will make Server Manager append the Custom Race or Championship name to the Server name in the lobby."`
+	ServerNameTemplate        string               `ini:"-" help:"You can enter anything you like in here. If you put <code>{{ .ServerName }}</code> in, the Server Name will replace it. If you put <code>{{ .EventName }}</code>, then the Event Name will replace it. Note this only works if 'Show Race Name In Server Lobby' (above) is enabled. You can <a href='https://github.com/JustaPenguin/assetto-server-manager/wiki/Server-Name-Template-Examples'>view some examples</a> on the Server Manager Wiki!"`
 
-	Theme     FormHeading `ini:"-" json:"-" input:"heading"`
-	DarkTheme int         `ini:"-" input:"checkbox" help:"Enable Server Manager's Dark Theme by default"`
-	CustomCSS string      `ini:"-" input:"textarea" help:"Customise the style of Server Manager! You can <a href='https://github.com/JustaPenguin/assetto-server-manager/wiki/Custom-CSS-Examples'>view some examples</a> on the Server Manager Wiki!"`
-	OGImage   string      `ini:"-" show:"premium" help:"Link to an image on the web here to set it as your default Open Graph image (will show in links)"`
+	Theme     FormHeading          `ini:"-" json:"-"`
+	DarkTheme formulate.BoolNumber `ini:"-" help:"Enable Server Manager's Dark Theme by default"`
+	CustomCSS string               `ini:"-" elem:"textarea" help:"Customise the style of Server Manager! You can <a href='https://github.com/JustaPenguin/assetto-server-manager/wiki/Custom-CSS-Examples'>view some examples</a> on the Server Manager Wiki!"`
+	OGImage   string               `ini:"-" show:"premium" help:"Link to an image on the web here to set it as your default Open Graph image (will show in links)"`
 
-	ContentManagerIntegration   FormHeading `ini:"-" json:"-" input:"heading"`
-	EnableContentManagerWrapper int         `ini:"-" input:"checkbox" help:"When on, this option makes Server Manager provide extra information to Content Manager. This includes more detail about connected clients, event descriptions and download links. A side-effect of this is that your server name will contain a new piece of information (an 'i' character followed by a port - which Content Manager requires). Also - if enabled - this wrapper uses a GeoIP functionality provided by <a href='https://freegeoip.app''>freegeoip.app</a>."`
-	ContentManagerWrapperPort   int         `ini:"-" show:"open" min:"0" max:"65535" help:"The port on which to serve Content Manager with the above information. Please make sure this port is open on your firewall."`
-	ShowContentManagerJoinLink  int         `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager display Content Manager join links on the Live Timing page and (if enabled) in Discord race start notifications."`
-	ContentManagerIPOverride    string      `ini:"-" show:"open" help:"When set, this overrides the IP address detected by the GeoIP service used for the Content Manager join link. This must be an IPv4 address."`
-	//ContentManagerWrapperContentRequiresPassword int         `ini:"-" input:"checkbox" help:"When on a user will require the server password in order to download linked content through the Content Manager Wrapper."`
+	ContentManagerIntegration   FormHeading          `ini:"-" json:"-"`
+	EnableContentManagerWrapper formulate.BoolNumber `ini:"-" help:"When on, this option makes Server Manager provide extra information to Content Manager. This includes more detail about connected clients, event descriptions and download links. A side-effect of this is that your server name will contain a new piece of information (an 'i' character followed by a port - which Content Manager requires). Also - if enabled - this wrapper uses a GeoIP functionality provided by <a href='https://freegeoip.app''>freegeoip.app</a>."`
+	ContentManagerWrapperPort   int                  `ini:"-" show:"open" min:"0" max:"65535" help:"The port on which to serve Content Manager with the above information. Please make sure this port is open on your firewall."`
+	ShowContentManagerJoinLink  formulate.BoolNumber `ini:"-" help:"When on, this option will make Server Manager display Content Manager join links on the Live Timing page and (if enabled) in Discord race start notifications."`
+	ContentManagerIPOverride    string               `ini:"-" show:"open" help:"When set, this overrides the IP address detected by the GeoIP service used for the Content Manager join link. This must be an IPv4 address."`
+	//ContentManagerWrapperContentRequiresPassword formulate.BoolNumber `ini:"-" help:"When on a user will require the server password in order to download linked content through the Content Manager Wrapper."`
 
-	Miscellaneous                     FormHeading `ini:"-" json:"-" input:"heading"`
-	UseShortenedDriverNames           int         `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager hide driver's last names, for example 'John Smith' becomes 'John S.'"`
-	FallBackResultsSorting            int         `ini:"-" input:"checkbox" help:"When on results will use a fallback method of sorting. Only enable this if you are experiencing results that are in the wrong order in the json file."`
-	UseMPH                            int         `ini:"-" input:"checkbox" help:"When on, this option will make Server Manager use MPH instead of Km/h for all speed values."`
-	PreventWebCrawlers                int         `ini:"-" input:"checkbox" help:"When on, robots will be prohibited from indexing this manager by the robots.txt. Please note this will only deter well behaved bots, and not malware/spam bots etc."`
-	RestartEventOnServerManagerLaunch int         `ini:"-" input:"checkbox" help:"When on, if Server Manager is stopped while there is an event in progress, Server Manager will try to restart the event when Server Manager is restarted."`
-	LogACServerOutputToFile           bool        `ini:"-" show:"open" input:"checkbox" help:"When on, Server Manager will output each Assetto Corsa session into a log file in the logs folder."`
-	NumberOfACServerLogsToKeep        int         `ini:"-" show:"open" help:"The number of AC Server logs to keep in the logs folder. (Oldest files will be deleted first. 0 = keep all files)"`
-	ShowEventDetailsPopup             bool        `ini:"-" help:"Allows all users to view a popup that describes in detail the setup of Custom Races, Championship Events and Race Weekend Sessions."`
+	Miscellaneous                     FormHeading          `ini:"-" json:"-"`
+	UseShortenedDriverNames           formulate.BoolNumber `ini:"-" help:"When on, this option will make Server Manager hide driver's last names, for example 'John Smith' becomes 'John S.'"`
+	FallBackResultsSorting            formulate.BoolNumber `ini:"-" help:"When on results will use a fallback method of sorting. Only enable this if you are experiencing results that are in the wrong order in the json file."`
+	UseMPH                            formulate.BoolNumber `ini:"-" help:"When on, this option will make Server Manager use MPH instead of Km/h for all speed values."`
+	PreventWebCrawlers                formulate.BoolNumber `ini:"-" help:"When on, robots will be prohibited from indexing this manager by the robots.txt. Please note this will only deter well behaved bots, and not malware/spam bots etc."`
+	RestartEventOnServerManagerLaunch formulate.BoolNumber `ini:"-" help:"When on, if Server Manager is stopped while there is an event in progress, Server Manager will try to restart the event when Server Manager is restarted."`
+	LogACServerOutputToFile           bool                 `ini:"-" show:"open" help:"When on, Server Manager will output each Assetto Corsa session into a log file in the logs folder."`
+	NumberOfACServerLogsToKeep        int                  `ini:"-" show:"open" help:"The number of AC Server logs to keep in the logs folder. (Oldest files will be deleted first. 0 = keep all files)"`
+	ShowEventDetailsPopup             bool                 `ini:"-" help:"Allows all users to view a popup that describes in detail the setup of Custom Races, Championship Events and Race Weekend Sessions."`
 
 	// Discord Integration
-	DiscordIntegration FormHeading `ini:"-" json:"-" input:"heading"`
+	DiscordIntegration FormHeading `ini:"-" json:"-"`
 	DiscordAPIToken    string      `ini:"-" help:"If set, will enable race start and scheduled reminder messages to the Discord channel ID specified below.  Use your bot's user token, not the OAuth token."`
 	DiscordChannelID   string      `ini:"-" help:"If Discord is enabled, this is the channel ID it will send messages to.  To find the channel ID, enable Developer mode in Discord (user settings, Appearance), then Server Settings, Roles, and right click on the channel and Copy ID."`
 	DiscordRoleID      string      `ini:"-" help:"If set, this role will be mentioned in all Discord notifications.  Any users with this role and access to the channel will be pinged.  To find the role ID, enable Developer mode (see above)), then Server Settings, Roles, right click on the role and Copy ID."`
 	DiscordRoleCommand string      `ini:"-" help:"If the Discord Role ID is set, you can optionally specify a command string here, like \"notify\" (no ! prefix), which if run as a ! command by a user (on a line by itself) in Discord will cause this server to attempt to add the configured role to the user.  If you run multiple servers with Discord enabled, only set this on one of them.  In order for this to work your bot must have the \"Manage Roles\" permission."`
 
-	NotificationReminderTimer   int    `ini:"-"  show:"-" min:"0" max:"65535" help:"This setting has been deprecated and will be removed in the next release. Use Notification Reminder Timers instead."`
-	NotificationReminderTimers  string `ini:"-" help:"If Discord is enabled, a reminder will be sent this many minutes prior to race start.  If 0 or empty, only race start messages will be sent.  You may schedule multiple reminders by using a comma separated list like 120,15."`
-	ShowPasswordInNotifications int    `ini:"-" input:"checkbox" help:"Show the server password in race start notifications."`
-	NotifyWhenScheduled         int    `ini:"-" input:"checkbox" help:"Send a notification when a race is scheduled (or cancelled)."`
+	NotificationReminderTimer   int                  `ini:"-"  show:"-" min:"0" max:"65535" help:"This setting has been deprecated and will be removed in the next release. Use Notification Reminder Timers instead."`
+	NotificationReminderTimers  string               `ini:"-" help:"If Discord is enabled, a reminder will be sent this many minutes prior to race start.  If 0 or empty, only race start messages will be sent.  You may schedule multiple reminders by using a comma separated list like 120,15."`
+	ShowPasswordInNotifications formulate.BoolNumber `ini:"-" help:"Show the server password in race start notifications."`
+	NotifyWhenScheduled         formulate.BoolNumber `ini:"-" help:"Send a notification when a race is scheduled (or cancelled)."`
 
 	// Messages
 	ContentManagerWelcomeMessage string `ini:"-" show:"-"`

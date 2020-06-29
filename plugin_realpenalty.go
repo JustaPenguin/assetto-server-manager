@@ -1,6 +1,7 @@
 package servermanager
 
 import (
+	"html/template"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -60,7 +61,7 @@ func NewRealPenaltyHandler(baseHandler *BaseHandler, store Store) *RealPenaltyHa
 type realPenaltyConfigurationTemplateVars struct {
 	BaseTemplateVars
 
-	Form                   *Form
+	Form                   template.HTML
 	IsRealPenaltyInstalled bool
 }
 
@@ -73,10 +74,8 @@ func (rph *RealPenaltyHandler) options(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	form := NewForm(realPenaltyOptions, nil, "", AccountFromRequest(r).Name == "admin")
-
 	if r.Method == http.MethodPost {
-		err := form.Submit(r)
+		err := DecodeFormData(realPenaltyOptions, r)
 
 		if err != nil {
 			logrus.WithError(err).Errorf("couldn't submit form")
@@ -92,6 +91,14 @@ func (rph *RealPenaltyHandler) options(w http.ResponseWriter, r *http.Request) {
 		} else {
 			AddFlash(w, r, "Real Penalty options successfully saved!")
 		}
+	}
+
+	form, err := EncodeFormData(realPenaltyOptions, r)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Couldn't encode form data")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	rph.viewRenderer.MustLoadTemplate(w, r, "server/realpenalty-options.html", &realPenaltyConfigurationTemplateVars{
