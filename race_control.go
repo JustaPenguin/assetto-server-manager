@@ -1361,9 +1361,9 @@ func (rc *RaceControl) splitAndBroadcastChat(message string) error {
 
 	if err == nil {
 		return rc.OnChatMessage(chat)
-	} else {
-		logrus.WithError(err).Error("Chat broadcasted successfully but could not be added to the live timings chat window!")
 	}
+
+	logrus.WithError(err).Error("Chat broadcasted successfully but could not be added to the live timings chat window!")
 
 	return nil
 }
