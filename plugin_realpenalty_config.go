@@ -22,9 +22,9 @@ func DefaultRealPenaltyConfig() *RealPenaltyConfig {
 
 // each of these is a separate ini file
 type RealPenaltyConfig struct {
-	RealPenaltyAppConfig  RealPenaltyAppConfig
-	RealPenaltySettings   RealPenaltySettings
-	RealPenaltyACSettings RealPenaltyACSettings
+	RealPenaltyAppConfig  RealPenaltyAppConfig  `show:"contents"`
+	RealPenaltySettings   RealPenaltySettings   `show:"contents"`
+	RealPenaltyACSettings RealPenaltyACSettings `show:"contents"`
 }
 
 func (rpc *RealPenaltyConfig) Write() error {

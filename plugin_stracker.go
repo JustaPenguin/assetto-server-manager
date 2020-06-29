@@ -150,15 +150,15 @@ func DefaultStrackerIni() *StrackerConfiguration {
 type StrackerConfiguration struct {
 	EnableStracker bool `ini:"-" help:"Turn Stracker on or off"`
 
-	InstanceConfiguration StrackerInstanceConfiguration `ini:"STRACKER_CONFIG"`
+	InstanceConfiguration StrackerInstanceConfiguration `ini:"STRACKER_CONFIG" show:"open"`
 	SwearFilter           StrackerSwearFilter           `ini:"SWEAR_FILTER"`
 	SessionManagement     StrackerSessionManagement     `ini:"SESSION_MANAGEMENT"`
 	Messages              StrackerMessages              `ini:"MESSAGES"`
-	Database              StrackerDatabase              `ini:"DATABASE"`
-	DatabaseCompression   StrackerDatabaseCompression   `ini:"DB_COMPRESSION"`
+	Database              StrackerDatabase              `ini:"DATABASE" show:"open"`
+	DatabaseCompression   StrackerDatabaseCompression   `ini:"DB_COMPRESSION" show:"open"`
 	HTTPConfiguration     StrackerHTTPConfiguration     `ini:"HTTP_CONFIG"`
 	WelcomeMessage        StrackerWelcomeMessage        `ini:"WELCOME_MSG"`
-	ACPlugin              StrackerACPlugin              `ini:"ACPLUGIN"`
+	ACPlugin              StrackerACPlugin              `ini:"ACPLUGIN" show:"open"`
 	LapValidChecks        StrackerLapValidChecks        `ini:"LAP_VALID_CHECKS"`
 }
 
