@@ -1338,16 +1338,22 @@ func (rc *RaceControl) LuaSendChat(L *lua.LState) int {
 }
 
 func (rc *RaceControl) splitAndBroadcastChat(message string, account *Account) error {
+	name := "Server"
+	guid := ""
+
+	if account != nil {
+		name = account.Name
+		guid = account.GUID
+	}
+
+	messageWithUser := "(" + name + ") " + message
+
 	wrapped := strings.Split(wordwrap.WrapString(
-		message,
+		messageWithUser,
 		60,
 	), "\n")
 
-	for i, msg := range wrapped {
-		if i == 0 && account != nil {
-			msg = "(" + account.Name + ") " + msg
-		}
-
+	for _, msg := range wrapped {
 		broadcastMessage, err := udp.NewBroadcastChat(msg)
 
 		if err == nil {
@@ -1359,14 +1365,6 @@ func (rc *RaceControl) splitAndBroadcastChat(message string, account *Account) e
 		} else {
 			return err
 		}
-	}
-
-	name := "Server"
-	guid := ""
-
-	if account != nil {
-		name = account.Name
-		guid = account.GUID
 	}
 
 	chat, err := udp.NewChat(message, 0, name, udp.DriverGUID(guid))
