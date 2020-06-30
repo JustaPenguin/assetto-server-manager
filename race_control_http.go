@@ -312,7 +312,7 @@ func (rch *RaceControlHandler) broadcastChat(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err := rch.raceControl.splitAndBroadcastChat(r.FormValue("broadcast-chat"))
+	err := rch.raceControl.splitAndBroadcastChat(r.FormValue("broadcast-chat"), AccountFromRequest(r))
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Unable to broadcast chat message")
@@ -430,7 +430,7 @@ func (rch *RaceControlHandler) countdown(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		err := rch.raceControl.splitAndBroadcastChat(countdown)
+		err := rch.raceControl.splitAndBroadcastChat(countdown, nil)
 
 		if err != nil {
 			logrus.WithError(err).Error("Unable to broadcast countdown message")

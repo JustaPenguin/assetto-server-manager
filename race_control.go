@@ -151,7 +151,7 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 		if err == nil {
 			m.DriverGUID = driver.CarInfo.DriverGUID
 			m.DriverName = driver.CarInfo.DriverName
-		} else {
+		} else if m.DriverGUID == "" && m.DriverName == "" {
 			m.DriverGUID = "0"
 			m.DriverName = "Server"
 		}
@@ -1141,7 +1141,7 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 	return nil
 }
 
-const chatMessageLimit = 20
+const chatMessageLimit = 50
 
 func (rc *RaceControl) OnChatMessage(chat udp.Chat) error {
 	_, err := rc.broadcaster.Send(chat)
@@ -1309,7 +1309,7 @@ func (rc *RaceControl) AllLapTimes() map[udp.DriverGUID]*RaceControlDriver {
 func (rc *RaceControl) LuaBroadcastChat(L *lua.LState) int {
 	message := L.ToString(1)
 
-	err := rc.splitAndBroadcastChat(message)
+	err := rc.splitAndBroadcastChat(message, nil)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Unable to broadcast chat message")
@@ -1337,13 +1337,17 @@ func (rc *RaceControl) LuaSendChat(L *lua.LState) int {
 	return 1
 }
 
-func (rc *RaceControl) splitAndBroadcastChat(message string) error {
+func (rc *RaceControl) splitAndBroadcastChat(message string, account *Account) error {
 	wrapped := strings.Split(wordwrap.WrapString(
 		message,
 		60,
 	), "\n")
 
-	for _, msg := range wrapped {
+	for i, msg := range wrapped {
+		if i == 0 && account != nil {
+			msg = "(" + account.Name + ") " + msg
+		}
+
 		broadcastMessage, err := udp.NewBroadcastChat(msg)
 
 		if err == nil {
@@ -1357,7 +1361,15 @@ func (rc *RaceControl) splitAndBroadcastChat(message string) error {
 		}
 	}
 
-	chat, err := udp.NewChat(message, 0, "Server", "")
+	name := "Server"
+	guid := ""
+
+	if account != nil {
+		name = account.Name
+		guid = account.GUID
+	}
+
+	chat, err := udp.NewChat(message, 0, name, udp.DriverGUID(guid))
 
 	if err == nil {
 		return rc.OnChatMessage(chat)

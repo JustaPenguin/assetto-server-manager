@@ -119,23 +119,27 @@ export class RaceControl {
             case EventChat:
                 let $chatContainer = $("#chat-container");
 
-                let chatMessage = $("#chat-message-template").first().clone();
-                let chatMessageSender = $(document.createElement("SPAN"));
+                let chatMessage = $(".chat-message-template").first().clone();
+                let chatMessageSender = $("<span>");
 
                 let dt = new Date(message.Message.Time);
 
-                let minutes = dt.getMinutes()
-                let minutesString = ""
+                let minutes = dt.getMinutes();
+                let minutesString = "";
 
-                let hours = dt.getHours()
-                let hoursString = ""
+                let hours = dt.getHours();
+                let hoursString = "";
 
-                if (minutes < 10) {minutesString = "0"+minutes;} else {
-                    minutesString = minutes.toLocaleString()
+                if (minutes < 10) {
+                    minutesString = "0"+minutes;
+                } else {
+                    minutesString = minutes.toLocaleString();
                 }
 
-                if (hours < 10) {hoursString = "0"+hours;} else {
-                    hoursString = hours.toLocaleString()
+                if (hours < 10) {
+                    hoursString = "0"+hours;
+                } else {
+                    hoursString = hours.toLocaleString();
                 }
 
                 chatMessageSender.attr(
@@ -144,16 +148,16 @@ export class RaceControl {
                     hoursString + ":" + minutesString + " " + message.Message.DriverName + ": "
                 )
 
-                chatMessage.text(message.Message.Message)
-                chatMessage.addClass("chat-message")
-                chatMessageSender.addClass("chat-message-sender")
+                chatMessage.text(message.Message.Message);
+                chatMessage.addClass("chat-message");
+                chatMessageSender.addClass("chat-message-sender");
 
-                $chatContainer.append(chatMessageSender)
-                $chatContainer.append(chatMessage)
+                $chatContainer.append(chatMessageSender);
+                $chatContainer.append(chatMessage);
 
-                if ($chatContainer.find(".chat-message").length > 20) {
-                    $chatContainer.find(".chat-message").first().remove()
-                    $chatContainer.find(".chat-message-sender").first().remove()
+                if ($chatContainer.find(".chat-message").length > 50) {
+                    $chatContainer.find(".chat-message").first().remove();
+                    $chatContainer.find(".chat-message-sender").first().remove();
                 }
 
                 $chatContainer.scrollTop($chatContainer.prop('scrollHeight'));
