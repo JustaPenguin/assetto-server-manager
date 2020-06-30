@@ -28,6 +28,9 @@ type RaceControl struct {
 	SessionStartTime           time.Time       `json:"SessionStartTime"`
 	CurrentRealtimePosInterval int             `json:"CurrentRealtimePosInterval"`
 
+	ChatMessages      []udp.Chat
+	ChatMessagesMutex sync.Mutex
+
 	ConnectedDrivers    *DriverMap `json:"ConnectedDrivers"`
 	DisconnectedDrivers *DriverMap `json:"DisconnectedDrivers"`
 
@@ -139,8 +142,22 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 		err = rc.OnLapCompleted(m)
 
 		sendUpdatedRaceControlStatus = true
+	case udp.Chat:
+		// received a chat message
+		var driver *RaceControlDriver
+
+		driver, err = rc.findConnectedDriverByCarID(m.CarID)
+
+		if err == nil {
+			m.DriverGUID = driver.CarInfo.DriverGUID
+			m.DriverName = driver.CarInfo.DriverName
+		} else if m.DriverGUID == "" && m.DriverName == "" {
+			m.DriverGUID = "0"
+			m.DriverName = "Server"
+		}
+
+		err = rc.OnChatMessage(m)
 	default:
-		// unhandled event
 		return
 	}
 
@@ -1124,6 +1141,28 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 	return nil
 }
 
+const chatMessageLimit = 50
+
+func (rc *RaceControl) OnChatMessage(chat udp.Chat) error {
+	_, err := rc.broadcaster.Send(chat)
+
+	if err != nil {
+		return err
+	}
+
+	rc.ChatMessagesMutex.Lock()
+
+	rc.ChatMessages = append(rc.ChatMessages, chat)
+
+	if len(rc.ChatMessages) > chatMessageLimit {
+		rc.ChatMessages = rc.ChatMessages[len(rc.ChatMessages)-chatMessageLimit:]
+	}
+
+	rc.ChatMessagesMutex.Unlock()
+
+	return nil
+}
+
 func (rc *RaceControl) SortDrivers(driverGroup RaceControlDriverGroup, driverA, driverB *RaceControlDriver) bool {
 	driverACar := driverA.CurrentCar()
 	driverBCar := driverB.CurrentCar()
@@ -1270,7 +1309,7 @@ func (rc *RaceControl) AllLapTimes() map[udp.DriverGUID]*RaceControlDriver {
 func (rc *RaceControl) LuaBroadcastChat(L *lua.LState) int {
 	message := L.ToString(1)
 
-	err := rc.splitAndBroadcastChat(message)
+	err := rc.splitAndBroadcastChat(message, nil)
 
 	if err != nil {
 		logrus.WithError(err).Errorf("Unable to broadcast chat message")
@@ -1298,9 +1337,19 @@ func (rc *RaceControl) LuaSendChat(L *lua.LState) int {
 	return 1
 }
 
-func (rc *RaceControl) splitAndBroadcastChat(message string) error {
+func (rc *RaceControl) splitAndBroadcastChat(message string, account *Account) error {
+	name := "Server"
+	guid := ""
+
+	if account != nil {
+		name = account.Name
+		guid = account.GUID
+	}
+
+	messageWithUser := "(" + name + ") " + message
+
 	wrapped := strings.Split(wordwrap.WrapString(
-		message,
+		messageWithUser,
 		60,
 	), "\n")
 
@@ -1317,6 +1366,14 @@ func (rc *RaceControl) splitAndBroadcastChat(message string) error {
 			return err
 		}
 	}
+
+	chat, err := udp.NewChat(message, 0, name, udp.DriverGUID(guid))
+
+	if err == nil {
+		return rc.OnChatMessage(chat)
+	}
+
+	logrus.WithError(err).Error("Chat broadcasted successfully but could not be added to the live timings chat window!")
 
 	return nil
 }

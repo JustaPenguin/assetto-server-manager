@@ -228,10 +228,23 @@
                             <img src="" class="img img-fluid img-bordered" id="trackMapImage">
                         </div>
                     </div>
+
+                    <div class="card card-body mt-2" id="chat-container">
+                        <div class="card-text chat-message-template"><span id="chat-message-sender"></span>Game chat!</div>
+                    </div>
+
+                    {{ if AdminAccess }}
+
+                        <form class="form mt-2" id="broadcast-chat-form" name="broadcast-chat-form" action="/broadcast-chat" autocomplete="off">
+                            <div class="form-group">
+                                <input type="text" name="broadcast-chat" id="broadcast-chat" class="broadcast-chat form-control form-control-sm" placeholder="Broadcast chat">
+                            </div>
+                        </form>
+
+                    {{ end }}
                 {{ end }}
             </div>
         </div>
-
 
         <form action="/live-timing/save-frames" method="post" class="live-frames row mt-2">
             <!-- Hidden, used for cloning -->
