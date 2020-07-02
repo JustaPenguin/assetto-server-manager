@@ -20,8 +20,6 @@ interface ACSRDriverRating {
 
 export namespace Championship {
 
-    declare var championshipID: string;
-
     export class View {
         public constructor() {
             this.initDraggableCards();
@@ -102,7 +100,7 @@ export namespace Championship {
                 if (valString.length == 17) {
                     $.ajax({
                         type: "POST",
-                        url: `/championship/${championshipID}/${valString}/acsr-rating`,
+                        url: `/championship/${ChampionshipID}/${valString}/acsr-rating`,
                         data: "",
                         dataType: "json"
                     }).then((response: ACSRDriverRatingGateMet) => {

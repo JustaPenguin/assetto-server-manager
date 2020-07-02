@@ -2,8 +2,6 @@ package servermanager
 
 import (
 	"bytes"
-	"crypto/md5"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -249,7 +247,7 @@ func (tr *Renderer) init() error {
 	}
 	funcs["trackMapURL"] = TrackMapImageURL
 	funcs["sunAngleToTimeOfDay"] = sunAngleToTimeOfDay
-	funcs["anonymiseDriverGUID"] = anonymiseDriverGUID
+	funcs["anonymiseDriverGUID"] = AnonymiseDriverGUID
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
@@ -348,12 +346,6 @@ func sunAngleToTimeOfDay(angle int) string {
 	t = t.Add(time.Minute * time.Duration((angle/16)*60))
 
 	return t.Format("15:04")
-}
-
-func anonymiseDriverGUID(guid string) string {
-	hasher := md5.New()
-	_, _ = hasher.Write([]byte(guid))
-	return hex.EncodeToString(hasher.Sum(nil))
 }
 
 func carList(cars interface{}) string {

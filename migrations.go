@@ -1019,6 +1019,12 @@ func addDefaultACSRGateOptionsToChampionships(s Store) error {
 
 	for _, championship := range championships {
 		championship.ACSRSkillGate = "E"
+
+		err := s.UpsertChampionship(championship)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

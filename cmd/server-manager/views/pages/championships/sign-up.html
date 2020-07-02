@@ -215,7 +215,7 @@
 
     <script type="text/javascript">
         const availableCars = {{ jsonEncode .CarOpts.AsMap }};
-        const championshipID = {{ .Championship.ID.String }};
+        const ChampionshipID = {{ .Championship.ID.String }};
     </script>
 
     {{ if ne $.RecaptchaSiteKey "" }}
