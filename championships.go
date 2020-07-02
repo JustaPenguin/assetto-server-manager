@@ -96,7 +96,10 @@ type Championship struct {
 	ReplacementPassword string
 
 	// acsr integration - sends the championship to acsr on save and event complete
-	ACSR bool
+	ACSR                 bool
+	ACSRSkillGate        string
+	ACSRSafetyGate       int
+	EnableACSRSafetyGate bool
 
 	// Raw html can be attached to championships, used to share tracks/cars etc.
 	Info template.HTML
@@ -275,6 +278,49 @@ func (c *Championship) SignUpAvailable() bool {
 	}
 
 	return c.SignUpForm.Enabled && c.Progress() < 100.0 && numFilledSlots < numTotalEntrants
+}
+
+func (c *Championship) DriverMeetsACSRGates(rating *ACSRDriverRating) bool {
+	if rating == nil {
+		return true
+	}
+
+	if c.EnableACSRSafetyGate && rating.SafetyRating < c.ACSRSafetyGate {
+		return false
+	}
+
+	switch c.ACSRSkillGate {
+	case "E":
+		return true
+	case "D":
+		if rating.SkillRatingGrade != "E" {
+			return true
+		}
+	case "C":
+		if rating.SkillRatingGrade != "E" && rating.SkillRatingGrade != "D" {
+			return true
+		}
+	case "B":
+		if rating.SkillRatingGrade != "E" && rating.SkillRatingGrade != "D" && rating.SkillRatingGrade != "C" {
+			return true
+		}
+	case "A":
+		if rating.SkillRatingGrade == "A" || rating.SkillRatingGrade == "A+" || rating.SkillRatingGrade == "A*" {
+			return true
+		}
+	case "A+":
+		if rating.SkillRatingGrade == "A+" || rating.SkillRatingGrade == "A*" {
+			return true
+		}
+	case "A*":
+		if rating.SkillRatingGrade == "A*" {
+			return true
+		}
+	default:
+		return false
+	}
+
+	return false
 }
 
 func (c *Championship) HasTeamNames() bool {

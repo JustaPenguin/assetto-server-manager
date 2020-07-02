@@ -141,6 +141,7 @@ func Router(
 		r.Get("/championship/{championshipID}/sign-up/steam", championshipsHandler.redirectToSteamLogin(func(r *http.Request) string {
 			return fmt.Sprintf("/championship/%s/sign-up", chi.URLParam(r, "championshipID"))
 		}))
+		r.Post("/championship/{championshipID}/{guid}/acsr-rating", championshipsHandler.acsrRating)
 
 		// race control
 		r.Group(func(r chi.Router) {

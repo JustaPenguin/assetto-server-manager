@@ -211,6 +211,7 @@ func (tr *Renderer) init() error {
 	funcs["isBefore"] = isBefore
 	funcs["trackInfo"] = trackInfo
 	funcs["multiplyFloats"] = multiplyFloats
+	funcs["percentage"] = percentage
 	funcs["stripGeotagCrap"] = stripGeotagCrap
 	funcs["ReadAccess"] = dummyAccessFunc
 	funcs["WriteAccess"] = dummyAccessFunc
@@ -246,6 +247,7 @@ func (tr *Renderer) init() error {
 	}
 	funcs["trackMapURL"] = TrackMapImageURL
 	funcs["sunAngleToTimeOfDay"] = sunAngleToTimeOfDay
+	funcs["anonymiseDriverGUID"] = AnonymiseDriverGUID
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
@@ -418,6 +420,10 @@ func trackInfo(track, layout string) *TrackInfo {
 
 func multiplyFloats(a, b float64) float64 {
 	return a * b
+}
+
+func percentage(a, b int) int {
+	return int(100 * (float64(a) / float64(b)))
 }
 
 func stripGeotagCrap(tag string, north bool) string {

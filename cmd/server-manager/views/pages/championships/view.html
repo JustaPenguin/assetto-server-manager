@@ -11,6 +11,8 @@
         {{ $account := .Account }}
         {{ $serverID := .ServerID }}
 
+        {{ $meetsACSRGates := $championship.DriverMeetsACSRGates $.AccountRating }}
+
         <h1 class="text-center">{{ $championship.Name }}</h1>
 
         {{ if $championship.ACSR }}
@@ -26,17 +28,49 @@
                 <div class="card-header bg-primary text-white"><strong>Register to this Championship</strong></div>
 
                 <div class="card-body">
-                    You can register for a place in this Championship!
-                    {{ if $championship.SignUpForm.RequiresApproval }}
-                        Pending admin approval, you will be added to the grid!
+                    <p>
+                        You can register for a place in this Championship!
+                        {{ if $championship.SignUpForm.RequiresApproval }}
+                            Pending admin approval, you will be added to the grid!
+                        {{ end }}
+                    </p>
+
+                    {{ if $championship.ACSR }}
+                        You need to meet the following minimum ACSR ratings to join this Championship:
+
+                        <span data-toggle="tooltip" title="Skill" class="badge badge-primary acsr-badge--skill">{{ $championship.ACSRSkillGate }}</span>
+                        {{ if $championship.EnableACSRSafetyGate }}
+                            <span data-toggle="tooltip" title="Safety" class="badge badge-success acsr-badge--safety">{{ $championship.ACSRSafetyGate }} </span>
+                        {{ end }}
+                        {{ with $account }}
+                            <p>
+                                Your Rating:
+                                {{ with $.AccountRating }}
+                                    <a class="acsr-link" href="https://acsr.assettocorsaservers.com/ratings/{{ anonymiseDriverGUID $account.GUID }}">
+                                        <span data-toggle="tooltip" title="Skill from {{ .NumEvents }} Sessions" class="badge badge-primary acsr-badge--skill">{{ .SkillRatingGrade }}</span>
+                                        {{ if $championship.EnableACSRSafetyGate }}
+                                            <span data-toggle="tooltip" title="Safety from {{ .NumEvents }} Sessions" class="badge badge-success acsr-badge--safety">{{ .SafetyRating }}</span>
+                                        {{ end }}
+                                    </a>
+
+                                    {{ if $meetsACSRGates }}
+                                        <span class="text-success">You meet the requirements!</span>
+                                    {{ else }}
+                                        <span class="text-danger">Sorry, you don't meet the requirements!</span>
+                                    {{ end }}
+                                {{ else }}
+                                    <span class="text-danger">Unknown! Please set your GUID on your account page or click register and enter your guid on the registration page!</span>
+                                {{ end }}
+                            </p>
+                        {{ end }}
                     {{ end }}
 
                     <div class="float-right">
-                        <a class="btn btn-info" href="/championship/{{ $championship.ID.String }}/sign-up/steam">Register with Steam</a>
+                        <a class="btn btn-info {{ if not $meetsACSRGates }}disabled{{ end }}" href="/championship/{{ $championship.ID.String }}/sign-up/steam">Register with Steam</a>
 
                         <small class="pl-2 pr-2">or</small>
 
-                        <a class="btn btn-primary" href="/championship/{{ $championship.ID.String }}/sign-up">Register Now</a>
+                        <a class="btn btn-primary {{ if not $meetsACSRGates }}disabled{{ end }}" href="/championship/{{ $championship.ID.String }}/sign-up">Register Now</a>
                     </div>
                 </div>
             </div>

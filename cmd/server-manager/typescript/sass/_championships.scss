@@ -87,6 +87,28 @@
   }
 }
 
+.acsr-range {
+  width: 50px;
+  text-align: center;
+}
+
+.acsr-safety-range {
+  width: 50px;
+  text-align: center;
+  font-size: xx-small;
+}
+
+.acsr-graph {
+  display: block;
+  background: #127ba3;
+}
+
+.acsr-graph-wrapper {
+  height: 60px;
+  transform: scaleY(-1);
+  background: aliceblue;
+}
+
 .championship-edit-button {
   padding-left: 30px;
 }

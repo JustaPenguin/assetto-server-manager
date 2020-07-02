@@ -122,6 +122,7 @@ type championshipViewTemplateVars struct {
 	Account         *Account
 	RaceWeekends    map[uuid.UUID]*RaceWeekend
 	DriverRatings   map[string]*ACSRDriverRating
+	AccountRating   *ACSRDriverRating
 }
 
 // view shows details of a given Championship
@@ -163,13 +164,60 @@ func (ch *ChampionshipsHandler) view(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var rating *ACSRDriverRating
+	account := AccountFromRequest(r)
+
+	if account.GUID != "" {
+		rating, err = ch.championshipManager.LoadACSRRating(account.GUID)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("Couldn't load ACSR rating for guid: %s", account.GUID)
+		}
+	}
+
 	ch.viewRenderer.MustLoadTemplate(w, r, "championships/view.html", &championshipViewTemplateVars{
 		Championship:    championship,
 		EventInProgress: eventInProgress,
-		Account:         AccountFromRequest(r),
+		Account:         account,
 		RaceWeekends:    raceWeekends,
 		DriverRatings:   ratings,
+		AccountRating:   rating,
 	})
+}
+
+type ACSRRatingGateMet struct {
+	ACSRDriverRating *ACSRDriverRating `json:"acsr_driver_rating"`
+	GateMet          bool              `json:"gate_met"`
+}
+
+func (ch *ChampionshipsHandler) acsrRating(w http.ResponseWriter, r *http.Request) {
+	guid := chi.URLParam(r, "guid")
+	championshipID := chi.URLParam(r, "championshipID")
+
+	championship, err := ch.championshipManager.LoadChampionship(championshipID)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("acsr rating: couldn't load championship for ID: %s", championshipID)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	rating, err := ch.championshipManager.LoadACSRRating(guid)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Couldn't load ACSR rating for guid: %s", guid)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	gateMet := championship.DriverMeetsACSRGates(rating)
+
+	ratingGateMet := &ACSRRatingGateMet{
+		ACSRDriverRating: rating,
+		GateMet:          gateMet,
+	}
+
+	_ = json.NewEncoder(w).Encode(ratingGateMet)
 }
 
 // export returns all known data about a Championship in JSON format.

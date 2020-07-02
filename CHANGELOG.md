@@ -3,6 +3,7 @@ v1.7.6
 
 Added:
 
+* Added the ability to gate ACSR exported events based on ACSR skill and safety ratings!
 * Added a chat box to Live Timings, showing the in-game chat and messages broadcast from the server!
 * Added a "combine results" button to the results index page, allowing you to manually combine any results (you should probably only combine results of the same type and track, but there is no hard restriction in place)
 * Added functionality that aims to persist results information for sessions that do not complete fully. This works by sending a "Next Session" message to the acServer to tell it to write out results files for the current session. This feature is disabled by default - look for the `persist_mid_session_results` option in the config.example.yml included with this release.

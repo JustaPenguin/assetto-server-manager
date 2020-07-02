@@ -17,7 +17,6 @@ import (
 
 	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 	"github.com/JustaPenguin/assetto-server-manager/pkg/when"
-
 	"github.com/cj123/caldav-go/icalendar"
 	"github.com/cj123/caldav-go/icalendar/components"
 	"github.com/go-chi/chi"
@@ -143,12 +142,41 @@ func (cm *ChampionshipManager) LoadACSRRatings(championship *Championship) (map[
 	return cm.acsrClient.GetRating(guids...)
 }
 
+func (cm *ChampionshipManager) LoadACSRRating(guid string) (*ACSRDriverRating, error) {
+	if !Premium() {
+		return nil, nil
+	}
+
+	ratingMap, err := cm.acsrClient.GetRating(guid)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ratingMap[guid], nil
+}
+
+func (cm *ChampionshipManager) LoadACSRRanges() ([]*ACSRRatingRanges, error) {
+	if !Premium() {
+		return nil, nil
+	}
+
+	return cm.acsrClient.GetRanges()
+}
+
 type ChampionshipTemplateVars struct {
 	*RaceTemplateVars
 
 	DefaultPoints ChampionshipPoints
 	DefaultClass  *ChampionshipClass
 	ACSREnabled   bool
+	ACSRRanges    *ACSRRanges
+}
+
+type ACSRRanges struct {
+	Ranges             []*ACSRRatingRanges
+	HighestSkillCount  int
+	HighestSafetyCount int
 }
 
 func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (championship *Championship, opts *ChampionshipTemplateVars, err error) {
@@ -184,6 +212,34 @@ func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (champions
 
 	opts.Championship = championship
 	opts.ACSREnabled = cm.acsrClient.Enabled
+
+	ranges, err := cm.LoadACSRRanges()
+
+	if err != nil {
+		logrus.WithError(err).Errorf("couldn't load ACSR skill/safety range information")
+	} else {
+		highestSkillCount := 0
+		highestSafetyCount := 0
+
+		for _, acsrRange := range ranges {
+			switch acsrRange.RatingType {
+			case "skill":
+				if acsrRange.Count > highestSkillCount {
+					highestSkillCount = acsrRange.Count
+				}
+			case "safety":
+				if acsrRange.Count > highestSafetyCount {
+					highestSafetyCount = acsrRange.Count
+				}
+			}
+		}
+
+		opts.ACSRRanges = &ACSRRanges{
+			Ranges:             ranges,
+			HighestSkillCount:  highestSkillCount,
+			HighestSafetyCount: highestSafetyCount,
+		}
+	}
 
 	return championship, opts, nil
 }
@@ -257,6 +313,10 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		championship.OverridePassword = true
 		championship.ReplacementPassword = ""
 		championship.SignUpForm.Enabled = true
+
+		championship.ACSRSkillGate = r.FormValue("SkillGate")
+		championship.ACSRSafetyGate = formValueAsInt(r.FormValue("SafetyGate"))
+		championship.EnableACSRSafetyGate = r.FormValue("EnableACSRSafetyGate") == "on" || r.FormValue("EnableACSRSafetyGate") == "1"
 	} else {
 		championship.ReplacementPassword = r.FormValue("ReplacementPassword")
 	}
@@ -1634,6 +1694,17 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 
 	if !steamGUIDRegex.MatchString(signUpResponse.GUID) {
 		return signUpResponse, false, ValidationError("Please enter a valid SteamID64.")
+	}
+
+	rating, err := cm.LoadACSRRating(signUpResponse.GUID)
+
+	if err != nil {
+		logrus.WithError(err).Errorf("Couldn't load ACSR rating for guid: %s", signUpResponse.GUID)
+		return signUpResponse, false, ValidationError("Please register your GUID to an account with ACSR.")
+	}
+
+	if !championship.DriverMeetsACSRGates(rating) {
+		return signUpResponse, false, ValidationError("You do not meet the minimum ACSR skill/safety requirements.")
 	}
 
 	for _, entrant := range championship.SignUpForm.Responses {
