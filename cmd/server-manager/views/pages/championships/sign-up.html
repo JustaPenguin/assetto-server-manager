@@ -71,7 +71,7 @@
                     <label for="GUID" class="col-sm-4 col-form-label">Steam GUID</label>
 
                     <div class="col-sm-8">
-                        <input type="text" class="form-control" id="GUID" name="GUID"
+                        <input type="text" class="form-control acsrGUID" id="GUID" name="GUID"
                                placeholder="" value="{{ .FormData.GUID }}" {{ if .LockSteamGUID }} readonly{{ end }}>
                         {{ if not .LockSteamGUID }}
                             <small>
@@ -95,7 +95,6 @@
                 {{ end }}
 
                 {{ if ne $.RecaptchaSiteKey "" }}
-
                     <div class="form-group row">
                         <div class="col-sm-8 offset-sm-4">
                             <div class="g-recaptcha" data-sitekey="{{ $.RecaptchaSiteKey }}"></div>
@@ -190,18 +189,33 @@
                     </ul>
 
                     <p>By signing up to this Championship, you agree that this data can be shared with ACSR.</p>
+
+                    <p>You need to meet the following minimum ACSR ratings to join this Championship:</p>
+
+                    <span data-toggle="tooltip" title="Skill" class="badge badge-primary acsr-badge--skill">{{ $championship.ACSRSkillGate }}</span>
+                    {{ if $championship.EnableACSRSafetyGate }}
+                        <span data-toggle="tooltip" title="Safety" class="badge badge-success acsr-badge--safety">{{ $championship.ACSRSafetyGate }} </span>
+                    {{ end }}
+
+                    <div class="mt-3 mb-3">Your Rating:</div>
+
+                    <div id="acsr-rating-container">
+                        <!-- Rating information is appended by JS! -->
+                        <span class="text-danger">Unknown! Please enter your GUID in the Steam GUID input above!</span>
+                    </div>
                 </div>
             </div>
         {{ end }}
 
         <div class="mt-5">
-            <button type="submit" class="btn btn-success float-right">Register</button>
+            <button type="submit" disabled class="btn btn-success float-right" id="register-for-championship">Register</button>
         </div>
     </form>
 
 
     <script type="text/javascript">
         const availableCars = {{ jsonEncode .CarOpts.AsMap }};
+        const championshipID = {{ .Championship.ID.String }};
     </script>
 
     {{ if ne $.RecaptchaSiteKey "" }}

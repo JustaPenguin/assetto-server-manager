@@ -85,6 +85,7 @@ var (
 		forceLoggingWith5LogsKeptForHosted,
 		showEventDetailsPopupOn,
 		addCorrectCarNameToLiveTimingsData,
+		addDefaultACSRGateOptionsToChampionships,
 	}
 )
 
@@ -1004,6 +1005,20 @@ func addCorrectCarNameToLiveTimingsData(s Store) error {
 
 	if err := s.UpsertLiveTimingsData(timings); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func addDefaultACSRGateOptionsToChampionships(s Store) error {
+	championships, err := s.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	for _, championship := range championships {
+		championship.ACSRSkillGate = "E"
 	}
 
 	return nil

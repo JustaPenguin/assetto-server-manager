@@ -2184,8 +2184,11 @@ let championships = {
     setSwitchesForACSR: function (state) {
         let $signUpFormSwitch = $("#ChampionshipSignUpFormEnabled");
         let $overridePasswordSwitch = $("#OverridePassword");
+        let $acsrOptions = $("#acsr-options")
 
         if (state) {
+            $acsrOptions.removeClass("d-none")
+
             $signUpFormSwitch.bootstrapSwitch('state', true);
             $signUpFormSwitch.bootstrapSwitch('disabled', true);
 
@@ -2194,6 +2197,8 @@ let championships = {
 
             $overridePasswordSwitch.closest(".card-body").find("#ReplacementPasswordWrapper").hide();
         } else {
+            $acsrOptions.addClass("d-none")
+
             $overridePasswordSwitch.closest(".card-body").find("#ReplacementPasswordWrapper").show();
 
             $signUpFormSwitch.bootstrapSwitch('disabled', false);

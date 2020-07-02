@@ -111,6 +111,96 @@
                             </small>
                         </div>
                     </div>
+
+                    <div id="acsr-options" {{ if not $f.ACSR }}class="d-none"{{ end }}>
+                        <div class="form-group row">
+                            <label for="SkillGate" class="col-sm-3 col-form-label">Skill Gate</label>
+
+                            <div class="col-sm-9">
+                                <select id="SkillGate" name="SkillGate" class="form-control">
+                                    <option value="A" {{ if eq $f.ACSRSkillGate "A" }}selected{{ end }}>A</option>
+                                    <option value="B" {{ if eq $f.ACSRSkillGate "B" }}selected{{ end }}>B</option>
+                                    <option value="C" {{ if eq $f.ACSRSkillGate "C" }}selected{{ end }}>C</option>
+                                    <option value="D" {{ if eq $f.ACSRSkillGate "D" }}selected{{ end }}>D</option>
+                                    <option value="E" {{ if or (eq $f.ACSRSkillGate "E") (eq $f.ACSRSkillGate "") }}selected{{ end }}>E</option>
+                                </select>
+
+                                <small>
+                                    Only allows driver with the selected skill rating and up from joining the Championship. You
+                                    can see a graphical representation of the current skill spread of drivers below.
+                                </small>
+
+                                {{ with $.ACSRRanges }}
+                                    <div id="acsr-skill-range-container" class="mt-2">
+                                        {{ range $index, $ratingRange := $.ACSRRanges.Ranges }}
+                                            {{ if eq $ratingRange.RatingType "skill" }}
+                                                <div class="acsr-range d-inline-block">
+                                                    <div class="acsr-graph-wrapper">
+                                                        <div class="acsr-graph" style="height: {{ percentage $ratingRange.Count $.ACSRRanges.HighestSkillCount }}%"></div>
+                                                    </div>
+
+                                                    <div class="acsr-label">
+                                                        {{ $ratingRange.Name }}
+                                                    </div>
+                                                </div>
+                                            {{ end }}
+                                        {{ end }}
+                                    </div>
+                                {{ end }}
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="EnableACSRSafetyGate" class="col-sm-3 col-form-label">Enable Safety Gate</label>
+
+                            <div class="col-sm-9">
+                                <input type="checkbox"
+                                       id="EnableACSRSafetyGate"
+                                       name="EnableACSRSafetyGate"
+                                        {{ if $f.EnableACSRSafetyGate }}
+                                            checked="checked"
+                                        {{ end }}
+                                >
+
+                                <br><br>
+
+                                <small>
+                                    If enabled then the safety gate will be activated.
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="SafetyGate" class="col-sm-3 col-form-label">Safety Gate</label>
+
+                            <div class="col-sm-9">
+                                <input type="number" id="SafetyGate" name="SafetyGate" class="form-control" {{ with $f.ACSRSafetyGate }} value="{{.}}" {{ end }}>
+
+                                <small>
+                                    Only allows driver with the inputted safety rating and up from joining the Championship. You
+                                    can see a graphical representation of the current safety spread of drivers below.
+                                </small>
+
+                                {{ with $.ACSRRanges }}
+                                    <div id="acsr-safety-range-container" class="mt-2">
+                                        {{ range $index, $ratingRange := $.ACSRRanges.Ranges }}
+                                            {{ if eq $ratingRange.RatingType "safety" }}
+                                                <div class="acsr-safety-range d-inline-block">
+                                                    <div class="acsr-graph-wrapper">
+                                                        <div class="acsr-graph" style="height: {{ percentage $ratingRange.Count $.ACSRRanges.HighestSafetyCount }}%"></div>
+                                                    </div>
+
+                                                    <div class="acsr-label">
+                                                        {{ $ratingRange.Name }}
+                                                    </div>
+                                                </div>
+                                            {{ end }}
+                                        {{ end }}
+                                    </div>
+                                {{ end }}
+                            </div>
+                        </div>
+                    </div>
                 {{ end }}
 
                 <div class="form-group row">

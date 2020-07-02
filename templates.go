@@ -2,6 +2,8 @@ package servermanager
 
 import (
 	"bytes"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -211,6 +213,7 @@ func (tr *Renderer) init() error {
 	funcs["isBefore"] = isBefore
 	funcs["trackInfo"] = trackInfo
 	funcs["multiplyFloats"] = multiplyFloats
+	funcs["percentage"] = percentage
 	funcs["stripGeotagCrap"] = stripGeotagCrap
 	funcs["ReadAccess"] = dummyAccessFunc
 	funcs["WriteAccess"] = dummyAccessFunc
@@ -246,6 +249,7 @@ func (tr *Renderer) init() error {
 	}
 	funcs["trackMapURL"] = TrackMapImageURL
 	funcs["sunAngleToTimeOfDay"] = sunAngleToTimeOfDay
+	funcs["anonymiseDriverGUID"] = anonymiseDriverGUID
 
 	tr.templates, err = tr.loader.Templates(funcs)
 
@@ -346,6 +350,12 @@ func sunAngleToTimeOfDay(angle int) string {
 	return t.Format("15:04")
 }
 
+func anonymiseDriverGUID(guid string) string {
+	hasher := md5.New()
+	_, _ = hasher.Write([]byte(guid))
+	return hex.EncodeToString(hasher.Sum(nil))
+}
+
 func carList(cars interface{}) string {
 	var split []string
 
@@ -418,6 +428,10 @@ func trackInfo(track, layout string) *TrackInfo {
 
 func multiplyFloats(a, b float64) float64 {
 	return a * b
+}
+
+func percentage(a, b int) int {
+	return int(100 * (float64(a) / float64(b)))
 }
 
 func stripGeotagCrap(tag string, north bool) string {

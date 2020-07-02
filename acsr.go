@@ -17,7 +17,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var acsrURL = "https://acsr.assettocorsaservers.com"
+var acsrURL = "http://localhost:8128"
 
 func init() {
 	gob.Register(Championship{})
@@ -191,6 +191,36 @@ func (a *ACSRClient) GetRating(guids ...string) (map[string]*ACSRDriverRating, e
 	}
 
 	return normalGUIDMap, nil
+}
+
+type ACSRRatingRanges struct {
+	Name       string `json:"name"`
+	RatingType string `json:"rating_type"`
+	Count      int    `json:"count"`
+	Min        int    `json:"min"`
+	Max        int    `json:"max"`
+}
+
+func (a *ACSRClient) GetRanges() ([]*ACSRRatingRanges, error) {
+	resp, err := a.send("/api/ranges", nil, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("servermanager: acsr request responded with a bad status code (%d). check your credentials", resp.StatusCode)
+	}
+
+	var out []*ACSRRatingRanges
+
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return nil, err
+	}
+
+	return out, nil
 }
 
 // cloneChampionship takes a Championship and returns a complete new copy of it.
