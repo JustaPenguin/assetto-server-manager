@@ -17,7 +17,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var acsrURL = "http://localhost:8128"
+var acsrURL = "https://acsr.assettocorsaservers.com"
 
 func init() {
 	gob.Register(Championship{})
