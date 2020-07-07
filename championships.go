@@ -290,6 +290,8 @@ func (c *Championship) DriverMeetsACSRGates(rating *ACSRDriverRating) bool {
 	}
 
 	switch c.ACSRSkillGate {
+	case "":
+		return true
 	case "E":
 		return true
 	case "D":
@@ -317,7 +319,7 @@ func (c *Championship) DriverMeetsACSRGates(rating *ACSRDriverRating) bool {
 			return true
 		}
 	default:
-		return false
+		return true
 	}
 
 	return false
