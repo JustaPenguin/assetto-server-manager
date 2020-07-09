@@ -11,12 +11,12 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-var Lua *lua.LState
+var luaFunctions = make(map[string]lua.LGFunction)
 
 func InitLua(raceControl *RaceControl) {
-	Lua.SetGlobal("httpRequest", Lua.NewFunction(LuaHTTPRequest))
-	Lua.SetGlobal("broadcastChat", Lua.NewFunction(raceControl.LuaBroadcastChat))
-	Lua.SetGlobal("sendChat", Lua.NewFunction(raceControl.LuaSendChat))
+	luaFunctions["httpRequest"] = LuaHTTPRequest
+	luaFunctions["broadcastChat"] = raceControl.LuaBroadcastChat
+	luaFunctions["sendChat"] = raceControl.LuaSendChat
 
 	go func() {
 		err := managerStartPlugin()
@@ -28,8 +28,22 @@ func InitLua(raceControl *RaceControl) {
 }
 
 type LuaPlugin struct {
+	state *lua.LState
+
 	inputs  []interface{}
 	outputs []interface{}
+}
+
+func NewLuaPlugin() *LuaPlugin {
+	state := lua.NewState()
+
+	for name, fn := range luaFunctions {
+		state.SetGlobal(name, state.NewFunction(fn))
+	}
+
+	return &LuaPlugin{
+		state: state,
+	}
 }
 
 func (l *LuaPlugin) Inputs(i ...interface{}) *LuaPlugin {
@@ -46,9 +60,11 @@ func (l *LuaPlugin) Outputs(o ...interface{}) *LuaPlugin {
 }
 
 func (l *LuaPlugin) Call(fileName, functionName string) error {
+	defer l.state.Close()
+
 	var jsonInputs []lua.LValue
 
-	err := Lua.DoFile(fileName)
+	err := l.state.DoFile(fileName)
 
 	if err != nil {
 		return err
@@ -61,25 +77,25 @@ func (l *LuaPlugin) Call(fileName, functionName string) error {
 			return err
 		}
 
-		jsonInputs = append(jsonInputs, lua.LString(string(jsonInput)))
+		jsonInputs = append(jsonInputs, lua.LString(jsonInput))
 	}
 
-	if err := Lua.CallByParam(lua.P{
-		Fn:      Lua.GetGlobal(functionName), // name of Lua function
-		NRet:    len(l.outputs),              // number of returned values
-		Protect: true,                        // return err or panic
+	if err := l.state.CallByParam(lua.P{
+		Fn:      l.state.GetGlobal(functionName), // name of Lua function
+		NRet:    len(l.outputs),                  // number of returned values
+		Protect: true,                            // return err or panic
 	}, jsonInputs...); err != nil {
 		return err
 	}
 
 	for i := range l.outputs {
-		err := json.Unmarshal([]byte(Lua.Get(-1).String()), l.outputs[i])
+		err := json.Unmarshal([]byte(l.state.Get(-1).String()), l.outputs[i])
 
 		if err != nil {
 			return err
 		}
 
-		Lua.Pop(1)
+		l.state.Pop(1)
 	}
 
 	return nil
@@ -131,7 +147,7 @@ func LuaHTTPRequest(l *lua.LState) int {
 }
 
 func managerStartPlugin() error {
-	p := &LuaPlugin{}
+	p := NewLuaPlugin()
 
 	err := p.Call("./plugins/manager.lua", "onManagerStart")
 

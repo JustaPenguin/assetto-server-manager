@@ -22,7 +22,6 @@ import (
 	_ "github.com/mjibson/esc/embed"
 	"github.com/pkg/browser"
 	"github.com/sirupsen/logrus"
-	lua "github.com/yuin/gopher-lua"
 )
 
 var defaultAddress = "0.0.0.0:8772"
@@ -128,9 +127,6 @@ func main() {
 				logrus.WithError(err).Error("Couldn't automatically set Lua path, lua will not run! Try setting the environment variable LUA_PATH manually.")
 			}
 		}
-
-		servermanager.Lua = lua.NewState()
-		defer servermanager.Lua.Close()
 
 		servermanager.InitLua(resolver.ResolveRaceControl())
 	}

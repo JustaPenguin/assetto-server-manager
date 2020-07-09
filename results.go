@@ -1318,7 +1318,7 @@ func LoadResult(fileName string, opts ...LoadResultOpts) (*SessionResults, error
 }
 
 func resultsLoadPlugin(results *SessionResults) error {
-	p := &LuaPlugin{}
+	p := NewLuaPlugin()
 
 	newSessionResults := &SessionResults{}
 

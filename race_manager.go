@@ -317,7 +317,7 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 }
 
 func eventStartPlugin(raceConfig *CurrentRaceConfig, serverOpts *GlobalServerConfig, entryList *EntryList) error {
-	p := &LuaPlugin{}
+	p := NewLuaPlugin()
 
 	newRaceConfig, newServerOpts, newEntryList := &CurrentRaceConfig{}, &GlobalServerConfig{}, &EntryList{}
 
@@ -1337,7 +1337,7 @@ func (rm *RaceManager) ScheduleRace(uuid string, date time.Time, action string, 
 }
 
 func eventSchedulePlugin(race *CustomRace) error {
-	p := &LuaPlugin{}
+	p := NewLuaPlugin()
 
 	newRace := &CustomRace{}
 

@@ -23,6 +23,8 @@ Fixed:
 * Time Attack events should now be moved to the top of the results list each time they are updated.
 * Read users are no longer able to access the UI controls for the Manually Choose Drivers option in Race Weekends.
 * Improved some help text on the Real Penalty options page.
+* Championship and Race Weekend looping practice sessions now force the Result Screen Time to 30 seconds, rather than using the event's Result Screen Time.
+* Fixes an issue where lua plugins running concurrently may cause a server crash.
 
 ---
 

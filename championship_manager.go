@@ -750,6 +750,8 @@ func (cm *ChampionshipManager) StartEvent(championshipID string, eventID string,
 		raceSetup.PickupModeEnabled = 1
 	}
 
+	raceSetup.ResultScreenTime = 30
+
 	return cm.RaceManager.applyConfigAndStart(&ActiveChampionship{
 		ChampionshipID:      championship.ID,
 		EventID:             event.ID,
@@ -770,7 +772,7 @@ func championshipEventStartPlugin(event *ChampionshipEvent, championship *Champi
 		standings = append(standings, class.Standings(championship, championship.Events))
 	}
 
-	p := &LuaPlugin{}
+	p := NewLuaPlugin()
 
 	newEvent, newChampionship, newEntryList := NewChampionshipEvent(), NewChampionship(championship.Name), &EntryList{}
 
@@ -889,7 +891,7 @@ func (cm *ChampionshipManager) ScheduleEvent(championshipID string, eventID stri
 }
 
 func championshipEventSchedulePlugin(championship *Championship, event *ChampionshipEvent) error {
-	p := &LuaPlugin{}
+	p := NewLuaPlugin()
 
 	var standings [][]*ChampionshipStanding
 
