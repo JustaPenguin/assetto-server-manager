@@ -7,6 +7,7 @@ declare var CanMoveChampionshipEvents: boolean;
 interface ACSRDriverRatingGateMet {
     acsr_driver_rating: ACSRDriverRating;
     gate_met: boolean;
+    acsr_enabled: boolean;
 }
 
 interface ACSRDriverRating {
@@ -104,6 +105,10 @@ export namespace Championship {
                         data: "",
                         dataType: "json"
                     }).then((response: ACSRDriverRatingGateMet) => {
+                        if (!response.acsr_enabled) {
+                            return
+                        }
+
                         if (response.acsr_driver_rating == null) {
                             let notFoundSpan = $('<span />');
                             let notFoundLink = $(`<a />`);
