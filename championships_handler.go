@@ -188,9 +188,30 @@ func (ch *ChampionshipsHandler) view(w http.ResponseWriter, r *http.Request) {
 type ACSRRatingGateMet struct {
 	ACSRDriverRating *ACSRDriverRating `json:"acsr_driver_rating"`
 	GateMet          bool              `json:"gate_met"`
+	ACSREnabled      bool              `json:"acsr_enabled"`
 }
 
 func (ch *ChampionshipsHandler) acsrRating(w http.ResponseWriter, r *http.Request) {
+	serverOptions, err := ch.championshipManager.store.LoadServerOptions()
+
+	if err != nil {
+		logrus.WithError(err).Error("acsr rating: couldn't load server options")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if !serverOptions.EnableACSR {
+		ratingGateMet := &ACSRRatingGateMet{
+			ACSRDriverRating: &ACSRDriverRating{},
+			GateMet:          true,
+			ACSREnabled:      false,
+		}
+
+		_ = json.NewEncoder(w).Encode(ratingGateMet)
+
+		return
+	}
+
 	guid := chi.URLParam(r, "guid")
 	championshipID := chi.URLParam(r, "championshipID")
 
@@ -215,6 +236,7 @@ func (ch *ChampionshipsHandler) acsrRating(w http.ResponseWriter, r *http.Reques
 	ratingGateMet := &ACSRRatingGateMet{
 		ACSRDriverRating: rating,
 		GateMet:          gateMet,
+		ACSREnabled:      true,
 	}
 
 	_ = json.NewEncoder(w).Encode(ratingGateMet)

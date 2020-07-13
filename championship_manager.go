@@ -213,31 +213,33 @@ func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (champions
 	opts.Championship = championship
 	opts.ACSREnabled = cm.acsrClient.Enabled
 
-	ranges, err := cm.LoadACSRRanges()
+	if opts.ACSREnabled {
+		ranges, err := cm.LoadACSRRanges()
 
-	if err != nil {
-		logrus.WithError(err).Errorf("couldn't load ACSR skill/safety range information")
-	} else {
-		highestSkillCount := 0
-		highestSafetyCount := 0
+		if err != nil {
+			logrus.WithError(err).Errorf("couldn't load ACSR skill/safety range information")
+		} else {
+			highestSkillCount := 0
+			highestSafetyCount := 0
 
-		for _, acsrRange := range ranges {
-			switch acsrRange.RatingType {
-			case "skill":
-				if acsrRange.Count > highestSkillCount {
-					highestSkillCount = acsrRange.Count
-				}
-			case "safety":
-				if acsrRange.Count > highestSafetyCount {
-					highestSafetyCount = acsrRange.Count
+			for _, acsrRange := range ranges {
+				switch acsrRange.RatingType {
+				case "skill":
+					if acsrRange.Count > highestSkillCount {
+						highestSkillCount = acsrRange.Count
+					}
+				case "safety":
+					if acsrRange.Count > highestSafetyCount {
+						highestSafetyCount = acsrRange.Count
+					}
 				}
 			}
-		}
 
-		opts.ACSRRanges = &ACSRRanges{
-			Ranges:             ranges,
-			HighestSkillCount:  highestSkillCount,
-			HighestSafetyCount: highestSafetyCount,
+			opts.ACSRRanges = &ACSRRanges{
+				Ranges:             ranges,
+				HighestSkillCount:  highestSkillCount,
+				HighestSafetyCount: highestSafetyCount,
+			}
 		}
 	}
 
@@ -1698,15 +1700,23 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 		return signUpResponse, false, ValidationError("Please enter a valid SteamID64.")
 	}
 
-	rating, err := cm.LoadACSRRating(signUpResponse.GUID)
+	serverOptions, err := cm.store.LoadServerOptions()
 
 	if err != nil {
-		logrus.WithError(err).Errorf("Couldn't load ACSR rating for guid: %s", signUpResponse.GUID)
-		return signUpResponse, false, ValidationError("Please register your GUID to an account with ACSR.")
+		return signUpResponse, false, err
 	}
 
-	if !championship.DriverMeetsACSRGates(rating) {
-		return signUpResponse, false, ValidationError("You do not meet the minimum ACSR skill/safety requirements.")
+	if serverOptions.EnableACSR {
+		rating, err := cm.LoadACSRRating(signUpResponse.GUID)
+
+		if err != nil {
+			logrus.WithError(err).Errorf("Couldn't load ACSR rating for guid: %s", signUpResponse.GUID)
+			return signUpResponse, false, ValidationError("Please register your GUID to an account with ACSR.")
+		}
+
+		if !championship.DriverMeetsACSRGates(rating) {
+			return signUpResponse, false, ValidationError("You do not meet the minimum ACSR skill/safety requirements.")
+		}
 	}
 
 	for _, entrant := range championship.SignUpForm.Responses {

@@ -208,7 +208,7 @@
         {{ end }}
 
         <div class="mt-5">
-            <button type="submit" disabled class="btn btn-success float-right" id="register-for-championship">Register</button>
+            <button type="submit" {{ if $championship.ACSR }}disabled id="register-for-championship"{{ end }} class="btn btn-success float-right">Register</button>
         </div>
     </form>
 
