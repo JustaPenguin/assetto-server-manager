@@ -1,3 +1,12 @@
+v1.7.7
+------
+
+Fixed:
+
+* Sign Up Forms should now work as intended for non-ACSR enabled events.
+
+---
+
 v1.7.6
 ------
 
