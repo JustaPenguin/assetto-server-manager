@@ -211,8 +211,8 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 
 	sessions, sessionTypes := config.CurrentRaceConfig.Sessions.AsSliceWithSessionTypes()
 
-	for sessionIndex, session := range sessions {
-		sessionType := sessionTypes[sessionIndex]
+	if len(sessions) > 0 {
+		session, sessionType := sessions[0], sessionTypes[0]
 
 		if session.IsOpen == SessionOpennessNoJoin {
 			if sessionType == SessionTypeRace {
@@ -223,8 +223,6 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 				session.IsOpen = SessionOpennessFreeJoin
 			}
 		}
-
-		break
 	}
 
 	// drs zones management
