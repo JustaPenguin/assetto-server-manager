@@ -330,23 +330,31 @@ type Sessions map[SessionType]*SessionConfig
 func (s Sessions) AsSlice() []*SessionConfig {
 	var out []*SessionConfig
 
-	if x, ok := s[SessionTypeBooking]; ok {
-		out = append(out, x)
-	}
+	for i := len(AvailableSessions) - 1; i >= 0; i-- {
+		sessionType := AvailableSessions[i]
 
-	if x, ok := s[SessionTypePractice]; ok {
-		out = append(out, x)
-	}
-
-	if x, ok := s[SessionTypeQualifying]; ok {
-		out = append(out, x)
-	}
-
-	if x, ok := s[SessionTypeRace]; ok {
-		out = append(out, x)
+		if x, ok := s[sessionType]; ok {
+			out = append(out, x)
+		}
 	}
 
 	return out
+}
+
+func (s Sessions) AsSliceWithSessionTypes() ([]*SessionConfig, []SessionType) {
+	var out []*SessionConfig
+	var types []SessionType
+
+	for i := len(AvailableSessions) - 1; i >= 0; i-- {
+		sessionType := AvailableSessions[i]
+
+		if x, ok := s[sessionType]; ok {
+			out = append(out, x)
+			types = append(types, sessionType)
+		}
+	}
+
+	return out, types
 }
 
 func (c CurrentRaceConfig) HasMultipleRaces() bool {
@@ -400,13 +408,19 @@ func (c *CurrentRaceConfig) RemoveWeather(weather *WeatherConfig) {
 
 type SessionOpenness int
 
+const (
+	SessionOpennessNoJoin                                = 0
+	SessionOpennessFreeJoin                              = 1
+	SessionOpennessFreeJoinUntil20SecondsToTheGreenLight = 2
+)
+
 func (s SessionOpenness) String() string {
 	switch s {
-	case 0:
+	case SessionOpennessNoJoin:
 		return "No Join"
-	case 1:
+	case SessionOpennessFreeJoin:
 		return "Free Join"
-	case 2:
+	case SessionOpennessFreeJoinUntil20SecondsToTheGreenLight:
 		return "Free join until 20 seconds to the green light"
 	}
 

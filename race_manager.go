@@ -209,6 +209,22 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 		config.CurrentRaceConfig.PickupModeEnabled = 0
 	}
 
+	sessions, sessionTypes := config.CurrentRaceConfig.Sessions.AsSliceWithSessionTypes()
+
+	if len(sessions) > 0 {
+		session, sessionType := sessions[0], sessionTypes[0]
+
+		if session.IsOpen == SessionOpennessNoJoin {
+			if sessionType == SessionTypeRace {
+				logrus.Warnf("Session openness was set to no join on the first session of this event! Corrected to 'Free Join until 20 seconds to the green light'")
+				session.IsOpen = SessionOpennessFreeJoinUntil20SecondsToTheGreenLight
+			} else {
+				logrus.Warnf("Session openness was set to no join on the first session of this event! Corrected to 'Free Join'")
+				session.IsOpen = SessionOpennessFreeJoin
+			}
+		}
+	}
+
 	// drs zones management
 	err = ToggleDRSForTrack(config.CurrentRaceConfig.Track, config.CurrentRaceConfig.TrackLayout, !config.CurrentRaceConfig.DisableDRSZones)
 
