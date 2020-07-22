@@ -437,6 +437,7 @@ func (r *Resolver) resolveRaceWeekendManager() *RaceWeekendManager {
 		r.resolveServerProcess(),
 		r.resolveNotificationManager(),
 		r.acsrClient,
+		r.resolveCarManager(),
 	)
 
 	return r.raceWeekendManager

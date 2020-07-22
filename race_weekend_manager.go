@@ -13,7 +13,6 @@ import (
 
 	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
 	"github.com/JustaPenguin/assetto-server-manager/pkg/when"
-
 	"github.com/cj123/ini"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
@@ -25,6 +24,7 @@ type RaceWeekendManager struct {
 	raceManager         *RaceManager
 	championshipManager *ChampionshipManager
 	notificationManager NotificationDispatcher
+	carManager          *CarManager
 	store               Store
 	process             ServerProcess
 	acsrClient          *ACSRClient
@@ -43,6 +43,7 @@ func NewRaceWeekendManager(
 	process ServerProcess,
 	notificationManager NotificationDispatcher,
 	acsrClient *ACSRClient,
+	carManager *CarManager,
 ) *RaceWeekendManager {
 	return &RaceWeekendManager{
 		raceManager:         raceManager,
@@ -51,6 +52,7 @@ func NewRaceWeekendManager(
 		store:               store,
 		process:             process,
 		acsrClient:          acsrClient,
+		carManager:          carManager,
 
 		scheduledSessionTimers:         make(map[string]*when.Timer),
 		scheduledSessionReminderTimers: make(map[string]*when.Timer),
@@ -205,6 +207,40 @@ func (rwm *RaceWeekendManager) SaveRaceWeekend(r *http.Request) (raceWeekend *Ra
 
 		if err != nil {
 			return nil, edited, err
+		}
+
+		numAvailableSpectatorCars := formValueAsInt(r.FormValue("NumAvailableSpectatorCars"))
+		cars := r.Form["Cars"]
+		carSelectionRange := len(cars) - numAvailableSpectatorCars
+
+		if len(cars) > 0 && carSelectionRange < len(cars) {
+			// look through all cars and if they have 'any car model', split all chosen cars between the entrants
+			cars = cars[:carSelectionRange]
+
+			allCars, err := rwm.carManager.ListCars()
+
+			if err != nil {
+				return nil, edited, err
+			}
+
+			carMap := allCars.AsMap()
+
+			availableCarIndex := 0
+			carSkinChoice := make(map[string]int)
+
+			for _, entrant := range entryList {
+				if entrant.Model == AnyCarModel {
+					entrant.Model = cars[availableCarIndex%len(cars)]
+
+					if skins, ok := carMap[entrant.Model]; ok && len(skins) > 0 {
+						entrant.Skin = skins[carSkinChoice[entrant.Model]%len(skins)]
+
+						carSkinChoice[entrant.Model]++
+					}
+
+					availableCarIndex++
+				}
+			}
 		}
 
 		raceWeekend.EntryList = entryList
