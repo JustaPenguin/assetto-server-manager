@@ -8,6 +8,10 @@ Fixed:
 v1.7.7
 ------
 
+Added:
+
+* Added the ability to toggle on/off the ACSR skill gate for ACSR exported championships.
+
 Fixed:
 
 * Sign Up Forms should now work as intended for non-ACSR enabled events.
