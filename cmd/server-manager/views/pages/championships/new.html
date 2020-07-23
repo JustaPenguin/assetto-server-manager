@@ -114,6 +114,26 @@
 
                     <div id="acsr-options" {{ if not $f.ACSR }}class="d-none"{{ end }}>
                         <div class="form-group row">
+                            <label for="EnableACSRSkillGate" class="col-sm-3 col-form-label">Enable Skill Gate</label>
+
+                            <div class="col-sm-9">
+                                <input type="checkbox"
+                                       id="EnableACSRSkillGate"
+                                       name="EnableACSRSkillGate"
+                                        {{ if $f.EnableACSRSkillGate }}
+                                            checked="checked"
+                                        {{ end }}
+                                >
+
+                                <br>
+
+                                <small>
+                                    If enabled then the skill gate will be activated.
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
                             <label for="SkillGate" class="col-sm-3 col-form-label">Skill Gate</label>
 
                             <div class="col-sm-9">
@@ -162,7 +182,7 @@
                                         {{ end }}
                                 >
 
-                                <br><br>
+                                <br>
 
                                 <small>
                                     If enabled then the safety gate will be activated.

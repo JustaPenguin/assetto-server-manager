@@ -36,32 +36,38 @@
                     </p>
 
                     {{ if $championship.ACSR }}
-                        You need to meet the following minimum ACSR ratings to join this Championship:
+                        {{ if or $championship.EnableACSRSkillGate $championship.EnableACSRSafetyGate }}
+                            You need to meet the following minimum ACSR ratings to join this Championship:
 
-                        <span data-toggle="tooltip" title="Skill" class="badge badge-primary acsr-badge--skill">{{ $championship.ACSRSkillGate }}</span>
-                        {{ if $championship.EnableACSRSafetyGate }}
-                            <span data-toggle="tooltip" title="Safety" class="badge badge-success acsr-badge--safety">{{ $championship.ACSRSafetyGate }} </span>
-                        {{ end }}
-                        {{ with $account }}
-                            <p>
-                                Your Rating:
-                                {{ with $.AccountRating }}
-                                    <a class="acsr-link" href="https://acsr.assettocorsaservers.com/ratings/{{ anonymiseDriverGUID $account.GUID }}">
-                                        <span data-toggle="tooltip" title="Skill from {{ .NumEvents }} Sessions" class="badge badge-primary acsr-badge--skill">{{ .SkillRatingGrade }}</span>
-                                        {{ if $championship.EnableACSRSafetyGate }}
-                                            <span data-toggle="tooltip" title="Safety from {{ .NumEvents }} Sessions" class="badge badge-success acsr-badge--safety">{{ .SafetyRating }}</span>
+                            {{ if $championship.EnableACSRSkillGate }}
+                                <span data-toggle="tooltip" title="Skill" class="badge badge-primary acsr-badge--skill">{{ $championship.ACSRSkillGate }}</span>
+                            {{ end }}
+                            {{ if $championship.EnableACSRSafetyGate }}
+                                <span data-toggle="tooltip" title="Safety" class="badge badge-success acsr-badge--safety">{{ $championship.ACSRSafetyGate }} </span>
+                            {{ end }}
+                            {{ with $account }}
+                                <p>
+                                    Your Rating:
+                                    {{ with $.AccountRating }}
+                                        <a class="acsr-link" href="https://acsr.assettocorsaservers.com/ratings/{{ anonymiseDriverGUID $account.GUID }}">
+                                            {{ if $championship.EnableACSRSkillGate }}
+                                                <span data-toggle="tooltip" title="Skill from {{ .NumEvents }} Sessions" class="badge badge-primary acsr-badge--skill">{{ .SkillRatingGrade }}</span>
+                                            {{ end }}
+                                            {{ if $championship.EnableACSRSafetyGate }}
+                                                <span data-toggle="tooltip" title="Safety from {{ .NumEvents }} Sessions" class="badge badge-success acsr-badge--safety">{{ .SafetyRating }}</span>
+                                            {{ end }}
+                                        </a>
+
+                                        {{ if $meetsACSRGates }}
+                                            <span class="text-success">You meet the requirements!</span>
+                                        {{ else }}
+                                            <span class="text-danger">Sorry, you don't meet the requirements!</span>
                                         {{ end }}
-                                    </a>
-
-                                    {{ if $meetsACSRGates }}
-                                        <span class="text-success">You meet the requirements!</span>
                                     {{ else }}
-                                        <span class="text-danger">Sorry, you don't meet the requirements!</span>
+                                        <span class="text-danger">Unknown! Please set your GUID on your account page or click register and enter your guid on the registration page!</span>
                                     {{ end }}
-                                {{ else }}
-                                    <span class="text-danger">Unknown! Please set your GUID on your account page or click register and enter your guid on the registration page!</span>
-                                {{ end }}
-                            </p>
+                                </p>
+                            {{ end }}
                         {{ end }}
                     {{ end }}
 

@@ -190,25 +190,33 @@
 
                     <p>By signing up to this Championship, you agree that this data can be shared with ACSR.</p>
 
-                    <p>You need to meet the following minimum ACSR ratings to join this Championship:</p>
+                    {{ if or $championship.EnableACSRSkillGate $championship.EnableACSRSafetyGate }}
+                        <p>You need to meet the following minimum ACSR ratings to join this Championship:</p>
 
-                    <span data-toggle="tooltip" title="Skill" class="badge badge-primary acsr-badge--skill">{{ $championship.ACSRSkillGate }}</span>
-                    {{ if $championship.EnableACSRSafetyGate }}
-                        <span data-toggle="tooltip" title="Safety" class="badge badge-success acsr-badge--safety">{{ $championship.ACSRSafetyGate }} </span>
+                        {{ if $championship.EnableACSRSkillGate }}
+                            <span data-toggle="tooltip" title="Skill" class="badge badge-primary acsr-badge--skill">{{ $championship.ACSRSkillGate }}</span>
+                        {{ end }}
+                        {{ if $championship.EnableACSRSafetyGate }}
+                            <span data-toggle="tooltip" title="Safety" class="badge badge-success acsr-badge--safety">{{ $championship.ACSRSafetyGate }} </span>
+                        {{ end }}
+
+                        <div class="mt-3 mb-3">Your Rating:</div>
+
+                        <div id="acsr-rating-container">
+                            <!-- Rating information is appended by JS! -->
+                            <span class="text-danger">Unknown! Please enter your GUID in the Steam GUID input above!</span>
+                        </div>
                     {{ end }}
-
-                    <div class="mt-3 mb-3">Your Rating:</div>
-
-                    <div id="acsr-rating-container">
-                        <!-- Rating information is appended by JS! -->
-                        <span class="text-danger">Unknown! Please enter your GUID in the Steam GUID input above!</span>
-                    </div>
                 </div>
             </div>
         {{ end }}
 
         <div class="mt-5">
-            <button type="submit" {{ if $championship.ACSR }}disabled id="register-for-championship"{{ end }} class="btn btn-success float-right">Register</button>
+            <button type="submit"
+                    {{ if and ($championship.ACSR) (or $championship.EnableACSRSkillGate $championship.EnableACSRSafetyGate) }}
+                        disabled id="register-for-championship"
+                    {{ end }}
+                    class="btn btn-success float-right">Register</button>
         </div>
     </form>
 

@@ -319,6 +319,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 		championship.ACSRSkillGate = r.FormValue("SkillGate")
 		championship.ACSRSafetyGate = formValueAsInt(r.FormValue("SafetyGate"))
 		championship.EnableACSRSafetyGate = r.FormValue("EnableACSRSafetyGate") == "on" || r.FormValue("EnableACSRSafetyGate") == "1"
+		championship.EnableACSRSkillGate = r.FormValue("EnableACSRSkillGate") == "on" || r.FormValue("EnableACSRSkillGate") == "1"
 	} else {
 		championship.ReplacementPassword = r.FormValue("ReplacementPassword")
 	}
