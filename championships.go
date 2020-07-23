@@ -100,6 +100,7 @@ type Championship struct {
 	ACSRSkillGate        string
 	ACSRSafetyGate       int
 	EnableACSRSafetyGate bool
+	EnableACSRSkillGate  bool
 
 	// Raw html can be attached to championships, used to share tracks/cars etc.
 	Info template.HTML
@@ -287,6 +288,10 @@ func (c *Championship) DriverMeetsACSRGates(rating *ACSRDriverRating) bool {
 
 	if c.EnableACSRSafetyGate && rating.SafetyRating < c.ACSRSafetyGate {
 		return false
+	}
+
+	if !c.EnableACSRSkillGate {
+		return true
 	}
 
 	switch c.ACSRSkillGate {
