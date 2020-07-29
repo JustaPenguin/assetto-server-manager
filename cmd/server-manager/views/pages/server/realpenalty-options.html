@@ -27,8 +27,8 @@
         <p>Real Penalty is not installed. Please follow the instructions below to install Real Penalty, or contact your Server Administrator:</p>
 
         <ol>
-            <li><a href="https://www.racedepartment.com/downloads/real-penalty-tool.29591/updates#resource-update-56177">Download Real Penalty</a></li>
-            <li>Extract <code>AC_Penalty_Tool_ver.zip</code></li>
+            <li><a href="https://www.racedepartment.com/downloads/real-penalty-tool.29591/history">Download Real Penalty {{ $.RealPenaltySupportedVersion }}</a></li>
+            <li>Extract <code>AC_Penalty_Tool_{{ $.RealPenaltySupportedVersion }}.zip</code></li>
             <li>Navigate to the <code>Server_Plugin</code> folder inside the extracted folder</li>
             <li>Move the <code>tracks</code> and <code>files</code> folders into the <code>plugin</code> folder</li>
             <li>Create a new folder called <code>realpenalty</code> (case sensitive) in your Assetto Corsa Server Folder</li>
@@ -37,8 +37,8 @@
             <li>Refresh this page!</li>
         </ol>
 
-        <p><small>Note: these instructions and the integration provided are known to be compatible with <code>V.2.04.04</code> of Real Penalty.
+        <p>Note: these instructions and the integration provided are known to be compatible with <code>{{ $.RealPenaltySupportedVersion }}</code> of Real Penalty.
         Other versions may work. If you have problems with a more recent version than this,
-        please <a href="https://github.com/JustaPenguin/assetto-server-manager/issues">File an issue</a>.</small></p>
+        please <a href="https://github.com/JustaPenguin/assetto-server-manager/issues">File an issue</a>.</p>
     {{ end }}
 {{ end }}

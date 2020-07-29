@@ -7,6 +7,8 @@ import (
 )
 
 const (
+	RealPenaltySupportedVersion = "v3.00.02"
+
 	realPenaltyAppConfigIniPath  = "settings.ini"
 	realPenaltySettingsIniPath   = "penalty_settings.ini"
 	realPenaltyACSettingsIniPath = "ac_settings.ini"
@@ -276,12 +278,14 @@ func DefaultRealPenaltySettings() RealPenaltySettings {
 			SpeedLimitPenalty2: 9999,
 		},
 		DRS: RealPenaltySettingsDRS{
-			PenaltyType:      "dt",
-			Gap:              1.0,
-			EnabledAfterLaps: 0,
-			MinSpeed:         50,
-			BonusTime:        0.8,
-			MaxIllegalUses:   2,
+			PenaltyType:            "dt",
+			Gap:                    1.0,
+			EnabledAfterLaps:       0,
+			MinSpeed:               50,
+			BonusTime:              0.8,
+			MaxIllegalUses:         2,
+			EnabledDuringSafetyCar: false,
+			OmitCars:               "",
 		},
 		BlueFlag: RealPenaltySettingsBlueFlag{
 			QualifyTimeThreshold: 2.5,
@@ -349,12 +353,14 @@ type RealPenaltySettingsJumpStart struct {
 }
 
 type RealPenaltySettingsDRS struct {
-	PenaltyType      string  `ini:"PENALTY_TYPE" help:"Penalty type for illegal DRS use. dt = drive through, sgn = stop and go n seconds, n = n seconds to add at the end of the race"`
-	Gap              float64 `ini:"GAP" help:"Max gap in seconds from front car"`
-	EnabledAfterLaps int     `ini:"ENABLED_AFTER_LAPS" help:"DRS enabled after N lap from start (+1 if rolling start with SC - file ac_settings.ini)"`
-	MinSpeed         int     `ini:"MIN_SPEED" help:"If the car speed < MIN SPEED no penalty for illegal DRS use"`
-	BonusTime        float64 `ini:"BONUS_TIME" help:"How many seconds the DRS can remain open during each illegal use before the penalty"`
-	MaxIllegalUses   int     `ini:"MAX_ILLEGAL_USES" help:"How many time the driver can open the illegal DRS in each sector before the penalty"`
+	PenaltyType            string  `ini:"PENALTY_TYPE" help:"Penalty type for illegal DRS use. dt = drive through, sgn = stop and go n seconds, n = n seconds to add at the end of the race"`
+	Gap                    float64 `ini:"GAP" help:"Max gap in seconds from front car"`
+	EnabledAfterLaps       int     `ini:"ENABLED_AFTER_LAPS" help:"DRS enabled after N lap from start (+1 if rolling start with SC - file ac_settings.ini)"`
+	MinSpeed               int     `ini:"MIN_SPEED" help:"If the car speed < MIN SPEED no penalty for illegal DRS use"`
+	BonusTime              float64 `ini:"BONUS_TIME" help:"How many seconds the DRS can remain open during each illegal use before the penalty"`
+	MaxIllegalUses         int     `ini:"MAX_ILLEGAL_USES" help:"How many time the driver can open the illegal DRS in each sector before the penalty"`
+	EnabledDuringSafetyCar bool    `ini:"ENABLED_DURING_SAFETY_CAR" help:"DRS penalty enabled during Safety Car or Virtual Safety Car"`
+	OmitCars               string  `ini:"OMIT_CARS" help:"List of cars without DRS, semicolon separated."`
 }
 
 type RealPenaltySettingsBlueFlag struct {
@@ -363,13 +369,14 @@ type RealPenaltySettingsBlueFlag struct {
 }
 
 type RealPenaltyACSettings struct {
-	General   RealPenaltyACSettingsGeneral   `ini:"General" help:""`
-	App       RealPenaltyACSettingsApp       `ini:"App" help:""`
-	Sol       RealPenaltyACSettingsSol       `ini:"Sol" help:""`
-	SafetyCar RealPenaltyACSettingsSafetyCar `ini:"Safety_Car" help:""`
-	NoPenalty RealPenaltyACSettingsNoPenalty `ini:"No_Penalty" help:""`
-	Admin     RealPenaltyACSettingsAdmin     `ini:"Admin" help:""`
-	Helicorsa RealPenaltyACSettingsHelicorsa `ini:"Helicorsa" help:""`
+	General            RealPenaltyACSettingsGeneral            `ini:"General" help:""`
+	App                RealPenaltyACSettingsApp                `ini:"App" help:""`
+	Sol                RealPenaltyACSettingsSol                `ini:"Sol" help:""`
+	CustomShadersPatch RealPenaltyACSettingsCustomShadersPatch `ini:"Custom_Shaders_Patch"`
+	SafetyCar          RealPenaltyACSettingsSafetyCar          `ini:"Safety_Car" help:""`
+	NoPenalty          RealPenaltyACSettingsNoPenalty          `ini:"No_Penalty" help:""`
+	Admin              RealPenaltyACSettingsAdmin              `ini:"Admin" help:""`
+	Helicorsa          RealPenaltyACSettingsHelicorsa          `ini:"Helicorsa" help:""`
 }
 
 func (rpac *RealPenaltyACSettings) write() error {
@@ -478,6 +485,7 @@ func DefaultRealPenaltyACSettings() RealPenaltyACSettings {
 			CockpitCamera:   false,
 			TrackChecksum:   false,
 			WeatherChecksum: false,
+			CarChecksum:     false,
 		},
 		App: RealPenaltyACSettingsApp{
 			Mandatory:      "true",
@@ -487,6 +495,10 @@ func DefaultRealPenaltyACSettings() RealPenaltyACSettings {
 			Mandatory:              false,
 			PerformanceModeAllowed: true,
 			CheckFrequency:         60,
+		},
+		CustomShadersPatch: RealPenaltyACSettingsCustomShadersPatch{
+			Mandatory:      false,
+			CheckFrequency: 60,
 		},
 		SafetyCar: RealPenaltyACSettingsSafetyCar{
 			CarModel:                   "",
@@ -521,6 +533,7 @@ type RealPenaltyACSettingsGeneral struct {
 
 	TrackChecksum   bool `ini:"TRACK_CHECKSUM" help:"Set to true if you want an additional checksum of the track (model + kn5 files if they exist on the server)"`
 	WeatherChecksum bool `ini:"WEATHER_CHECKSUM" help:"Set to true if you want the weather checksum (if the weather exists on the server)"`
+	CarChecksum     bool `ini:"CAR_CHECKSUM" help:"Set to true if you want the additional car checksum (data.acd + collider.kn5, if these two files exist on the server)"`
 }
 
 type RealPenaltyACSettingsApp struct {
@@ -532,6 +545,11 @@ type RealPenaltyACSettingsSol struct {
 	Mandatory              bool `ini:"MANDATORY" help:"Set to true if the event is with mod Sol day to night transition"`
 	PerformanceModeAllowed bool `ini:"PERFORMACE_MODE_ALLOWED" help:"Set to true if Sol performance mode is allowed"` // misspelt in real penalty INI
 	CheckFrequency         int  `ini:"CHECK_FREQUENCY" help:"Frequency (seconds) for Sol check"`
+}
+
+type RealPenaltyACSettingsCustomShadersPatch struct {
+	Mandatory      bool `ini:"MANDATORY" help:"Set to ON if you want to force all drivers to have Custom Shaders Patch (version 0.1.46 or newer) to drive on the server. If you set this option true the app invalidates the lap time automatically"`
+	CheckFrequency int  `ini:"CHECK_FREQUENCY" help:"Frequency (seconds) for Custom Shaders Patch check"`
 }
 
 type RealPenaltyACSettingsSafetyCar struct {

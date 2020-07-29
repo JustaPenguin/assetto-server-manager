@@ -1,16 +1,19 @@
 v1.7.8
 ------
 
+Added:
+
+* Added the ability to toggle on/off the ACSR skill gate for ACSR exported championships.
+* Added compatibility with Real Penalty v3.00.02
+
 Fixed:
 
 * Added a check for "Session Openness" when starting events. If the first event of a session is set to "No Join", Server Manager will correct it to "Free Join" (for Practice/Qualifying) and "Free join until 20 seconds to the Green Light" for Race sessions. This fixes an issue where the acServer will constantly loop sessions if the first session is not joinable.
 
+---
+
 v1.7.7
 ------
-
-Added:
-
-* Added the ability to toggle on/off the ACSR skill gate for ACSR exported championships.
 
 Fixed:
 
