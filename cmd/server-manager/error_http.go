@@ -41,9 +41,9 @@ We're really active on the support thread helping everybody with their problems 
 Please don't post a negative review if you get stuck on this screen. We worked really hard on server manager and
 we want people to see an accurate representation of the awesome tool we know server manager is.
 
-- The Just a Penguin Team
+- The Emperor Servers Team
 
-Email: support@justapengu.in
+Email: support@emperorservers.com
 GitHub: https://github.com/JustaPenguin/assetto-server-manager
 
 `

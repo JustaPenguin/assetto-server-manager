@@ -314,6 +314,20 @@
                         </div>
                     </div>
                 {{ end }}
+
+                <div class="form-group row">
+                    <label for="ChampionshipDefaultTab" class="col-sm-3 col-form-label">Default Tab</label>
+
+                    <div class="col-sm-9">
+                        <select name="ChampionshipDefaultTab" id="ChampionshipDefaultTab" class="form-control">
+                            {{ range $index, $tab := $.AvailableChampionshipTabs }}
+                                <option value="{{ $tab }}" {{ if eq $tab $f.DefaultTab }}selected="selected"{{ end }}>{{ $tab }}</option>
+                            {{ end }}
+                        </select>
+
+                        <small>The default tab shown when the Championship information page is loaded.</small>
+                    </div>
+                </div>
             </div>
         </div>
 

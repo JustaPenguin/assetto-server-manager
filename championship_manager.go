@@ -167,10 +167,11 @@ func (cm *ChampionshipManager) LoadACSRRanges() ([]*ACSRRatingRanges, error) {
 type ChampionshipTemplateVars struct {
 	*RaceTemplateVars
 
-	DefaultPoints ChampionshipPoints
-	DefaultClass  *ChampionshipClass
-	ACSREnabled   bool
-	ACSRRanges    *ACSRRanges
+	DefaultPoints             ChampionshipPoints
+	DefaultClass              *ChampionshipClass
+	ACSREnabled               bool
+	ACSRRanges                *ACSRRanges
+	AvailableChampionshipTabs []ChampionshipTab
 }
 
 type ACSRRanges struct {
@@ -190,9 +191,10 @@ func (cm *ChampionshipManager) BuildChampionshipOpts(r *http.Request) (champions
 	defaultClass.ID = uuid.Nil
 
 	opts = &ChampionshipTemplateVars{
-		RaceTemplateVars: raceOpts,
-		DefaultPoints:    DefaultChampionshipPoints,
-		DefaultClass:     defaultClass,
+		RaceTemplateVars:          raceOpts,
+		DefaultPoints:             DefaultChampionshipPoints,
+		DefaultClass:              defaultClass,
+		AvailableChampionshipTabs: AvailableChampionshipTabs,
 	}
 
 	championshipID := chi.URLParam(r, "championshipID")
@@ -295,6 +297,7 @@ func (cm *ChampionshipManager) HandleCreateChampionship(r *http.Request) (champi
 	}
 
 	championship.Info = template.HTML(r.FormValue("ChampionshipInfo"))
+	championship.DefaultTab = ChampionshipTab(r.FormValue("ChampionshipDefaultTab"))
 	championship.OverridePassword = r.FormValue("OverridePassword") == "on" || r.FormValue("OverridePassword") == "1"
 
 	if Premium() {
