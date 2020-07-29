@@ -61,8 +61,9 @@ func NewRealPenaltyHandler(baseHandler *BaseHandler, store Store) *RealPenaltyHa
 type realPenaltyConfigurationTemplateVars struct {
 	BaseTemplateVars
 
-	Form                   template.HTML
-	IsRealPenaltyInstalled bool
+	Form                        template.HTML
+	IsRealPenaltyInstalled      bool
+	RealPenaltySupportedVersion string
 }
 
 func (rph *RealPenaltyHandler) options(w http.ResponseWriter, r *http.Request) {
@@ -102,7 +103,8 @@ func (rph *RealPenaltyHandler) options(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rph.viewRenderer.MustLoadTemplate(w, r, "server/realpenalty-options.html", &realPenaltyConfigurationTemplateVars{
-		Form:                   form,
-		IsRealPenaltyInstalled: IsRealPenaltyInstalled(),
+		Form:                        form,
+		IsRealPenaltyInstalled:      IsRealPenaltyInstalled(),
+		RealPenaltySupportedVersion: RealPenaltySupportedVersion,
 	})
 }
