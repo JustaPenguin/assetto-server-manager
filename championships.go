@@ -81,6 +81,7 @@ func NewChampionship(name string) *Championship {
 		Created:             time.Now(),
 		OpenEntrants:        false,
 		PersistOpenEntrants: true,
+		DefaultTab:          ChampionshipTabDriverStandings,
 	}
 }
 
@@ -129,6 +130,8 @@ type Championship struct {
 	// of every event in the Championship.
 	SpectatorCar        Entrant
 	SpectatorCarEnabled bool
+
+	DefaultTab ChampionshipTab
 }
 
 func (c *Championship) HasSpectatorCar() bool {
@@ -1668,4 +1671,22 @@ func (a *ActiveChampionship) GetForceStopWithDrivers() bool {
 
 func ChampionshipClassColor(i int) string {
 	return ChampionshipClassColors[i%len(ChampionshipClassColors)]
+}
+
+type ChampionshipTab string
+
+const (
+	ChampionshipTabDriverStandings ChampionshipTab = "Driver Standings"
+	ChampionshipTabTeamStandings   ChampionshipTab = "Team Standings"
+	ChampionshipTabOverview        ChampionshipTab = "Overview"
+	ChampionshipTabEntrants        ChampionshipTab = "Entrants"
+	ChampionshipTabPointsReference ChampionshipTab = "Points Reference"
+)
+
+var AvailableChampionshipTabs = []ChampionshipTab{
+	ChampionshipTabDriverStandings,
+	ChampionshipTabTeamStandings,
+	ChampionshipTabOverview,
+	ChampionshipTabEntrants,
+	ChampionshipTabPointsReference,
 }
