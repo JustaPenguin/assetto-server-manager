@@ -1436,7 +1436,6 @@ function submitFiles(path) {
         if (val !== "") {
             newFiles.push({
                 'name': "tags",
-                'filepath': "",
                 'dataBase64': val
             })
         }
