@@ -1428,6 +1428,20 @@ function submitFiles(path) {
     let newFiles = [];
     let count = 0;
 
+    let tags = $("#tags")
+
+    if (tags) {
+        let val = tags.val()
+
+        if (val !== "") {
+            newFiles.push({
+                'name': "tags",
+                'filepath': "",
+                'dataBase64': val
+            })
+        }
+    }
+
     for (let x = 0; x < filesToUpload.length; x++) {
         // Encode and upload, don't post until all files are read
         let reader = new FileReader();

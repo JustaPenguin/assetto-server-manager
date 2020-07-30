@@ -83,7 +83,14 @@ func (cuh *ContentUploadHandler) addFiles(files []ContentFile, contentType Conte
 
 	uploadedCars := make(map[string]bool)
 
+	var tags []string
+
 	for _, file := range files {
+		if file.Name == "tags" {
+			tags = strings.Split(file.Data, ",")
+			continue
+		}
+
 		var fileDecoded []byte
 
 		if file.Size > 0 {
@@ -140,7 +147,17 @@ func (cuh *ContentUploadHandler) addFiles(files []ContentFile, contentType Conte
 				return err
 			}
 
+			for _, tag := range tags {
+				car.Details.AddTag(strings.TrimSpace(tag))
+			}
+
 			err = cuh.carManager.IndexCar(car)
+
+			if err != nil {
+				return err
+			}
+
+			err = cuh.carManager.SaveCarDetails(car.Name, car)
 
 			if err != nil {
 				return err
