@@ -79,7 +79,7 @@ require (
 	golang.org/x/net v0.0.0-20200625001655-4c5254603344
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	golang.org/x/text v0.3.2
-	golang.org/x/tools v0.0.0-20200713011307-fd294ab11aed // indirect
+	golang.org/x/tools v0.0.0-20200729041821-df70183b1872 // indirect
 	gopkg.in/ini.v1 v1.42.0 // indirect
 	gopkg.in/yaml.v2 v2.2.7
 )

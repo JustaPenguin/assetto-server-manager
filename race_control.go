@@ -156,6 +156,8 @@ func (rc *RaceControl) UDPCallback(message udp.Message) {
 			m.DriverName = "Server"
 		}
 
+		m.Time = time.Now()
+
 		err = rc.OnChatMessage(m)
 	default:
 		return
