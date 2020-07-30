@@ -132,6 +132,39 @@ func (sah *ServerAdministrationHandler) motd(w http.ResponseWriter, r *http.Requ
 	})
 }
 
+type currentCFGTemplateVars struct {
+	BaseTemplateVars
+
+	ConfigText    string
+	EntryListText string
+}
+
+func (sah *ServerAdministrationHandler) currentConfig(w http.ResponseWriter, r *http.Request) {
+	config := &ServerConfig{}
+	entryList := &EntryList{}
+
+	configText, err := config.ReadString()
+
+	if err != nil {
+		logrus.WithError(err).Error("Couldn't load server config")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	entryListText, err := entryList.ReadString()
+
+	if err != nil {
+		logrus.WithError(err).Error("Couldn't load entry list")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	sah.viewRenderer.MustLoadTemplate(w, r, "server/current-config.html", &currentCFGTemplateVars{
+		ConfigText:    configText,
+		EntryListText: entryListText,
+	})
+}
+
 type serverOptionsTemplateVars struct {
 	BaseTemplateVars
 

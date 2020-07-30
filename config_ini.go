@@ -3,6 +3,7 @@ package servermanager
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -140,6 +141,15 @@ func (sc ServerConfig) Write() error {
 	}
 
 	return f.SaveTo(filepath.Join(ServerInstallPath, ServerConfigPath, serverConfigIniPath))
+}
+
+func (sc ServerConfig) ReadString() (string, error) {
+	content, err := ioutil.ReadFile(filepath.Join(ServerInstallPath, ServerConfigPath, serverConfigIniPath))
+	if err != nil {
+		return "", err
+	}
+
+	return string(content), nil
 }
 
 type GlobalServerConfig struct {

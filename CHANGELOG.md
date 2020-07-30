@@ -6,6 +6,7 @@ Added:
 * Added the ability to toggle on/off the ACSR skill gate for ACSR exported championships.
 * Added compatibility with Real Penalty v3.00.02
 * You can now specify which tab in a Championship is active by default on page load.
+* Added a page that allows admins to view a read-only copy of the server_cfg.ini and entry_list.ini currently applied to the server.
 
 Fixed:
 

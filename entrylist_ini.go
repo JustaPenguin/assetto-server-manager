@@ -2,6 +2,7 @@ package servermanager
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -66,6 +67,15 @@ func (e EntryList) Write() error {
 	}
 
 	return f.SaveTo(filepath.Join(ServerInstallPath, ServerConfigPath, entryListFilename))
+}
+
+func (e EntryList) ReadString() (string, error) {
+	content, err := ioutil.ReadFile(filepath.Join(ServerInstallPath, ServerConfigPath, entryListFilename))
+	if err != nil {
+		return "", err
+	}
+
+	return string(content), nil
 }
 
 // Add an Entrant to the EntryList

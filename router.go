@@ -324,6 +324,7 @@ func Router(
 		r.HandleFunc("/server-options", serverAdministrationHandler.options)
 		r.HandleFunc("/blacklist", serverAdministrationHandler.blacklist)
 		r.HandleFunc("/motd", serverAdministrationHandler.motd)
+		r.HandleFunc("/current-config", serverAdministrationHandler.currentConfig)
 		r.HandleFunc("/audit-logs", auditLogHandler.viewLogs)
 		r.HandleFunc("/accounts/new", accountHandler.createOrEditAccount)
 		r.HandleFunc("/accounts/edit/{id}", accountHandler.createOrEditAccount)
