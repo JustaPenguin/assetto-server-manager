@@ -1,0 +1,16 @@
+{{/* gotype: github.com/JustaPenguin/assetto-server-manager.serverBlacklistTemplateVars */}}
+
+{{ define "title" }}Current Config{{ end }}
+
+{{ define "content" }}
+    <h1 class="text-center">Current Config</h1>
+
+    <p><small>This page contains the <code>server_cfg.ini</code> and <code>entry_list.ini</code> that are currently
+        applied to the server. This information is intended for troubleshooting and so is read-only.</small></p>
+
+    <label for="current-config">Server Config</label>
+    <textarea readonly id="current-config" name="current-config" class="form-control md-textarea text-area mb-1">{{ .ConfigText }}</textarea>
+
+    <label for="entry-list">Entry List</label>
+    <textarea readonly id="entry-list" name="entry-list" class="form-control md-textarea text-area">{{ .EntryListText }}</textarea>
+{{ end }}
