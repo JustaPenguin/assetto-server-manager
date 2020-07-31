@@ -1428,16 +1428,16 @@ function submitFiles(path) {
     let newFiles = [];
     let count = 0;
 
-    let tags = $("#tags")
+    let tags = $("#tags");
 
     if (tags) {
-        let val = tags.val()
+        let val = tags.val();
 
         if (val !== "") {
             newFiles.push({
                 'name': "tags",
                 'dataBase64': val
-            })
+            });
         }
     }
 
