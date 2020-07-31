@@ -7,6 +7,7 @@ Added:
 * Added compatibility with Real Penalty v3.00.02
 * You can now specify which tab in a Championship is active by default on page load.
 * Added a page that allows admins to view a read-only copy of the server_cfg.ini and entry_list.ini currently applied to the server.
+* You can now add tags to a group of cars before uploading them on the car list page!
 
 Fixed:
 
