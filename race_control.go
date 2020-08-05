@@ -1166,7 +1166,7 @@ func (rc *RaceControl) OnChatMessage(chat udp.Chat) error {
 		go func() {
 			chat := chat
 
-			err = chatMessagePlugin(chat)
+			err := chatMessagePlugin(chat)
 
 			if err != nil {
 				logrus.WithError(err).Error("chat message plugin script failed")
