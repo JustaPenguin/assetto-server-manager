@@ -1272,7 +1272,11 @@ func (c *ChampionshipClass) Standings(championship *Championship, inEvents []*Ch
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].Points == out[j].Points {
 			// sort by number of wins
-			return c.HadBetterFinishingPositions(out[i].Car.Driver.GUID, out[j].Car.Driver.GUID, inEvents, numPositions)
+			if len(inEvents) > 1 {
+				return c.HadBetterFinishingPositions(out[i].Car.Driver.GUID, out[j].Car.Driver.GUID, inEvents, numPositions)
+			}
+
+			return out[i].Car.GetName() < out[j].Car.GetName()
 		}
 
 		return out[i].Points > out[j].Points
@@ -1423,7 +1427,11 @@ func (c *ChampionshipClass) TeamStandings(championship *Championship, inEvents [
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].Points == out[j].Points {
 			// sort by number of wins
-			return c.TeamHadBetterFinishingPositions(out[i].Team, out[j].Team, inEvents, numPositions)
+			if len(inEvents) > 1 {
+				return c.TeamHadBetterFinishingPositions(out[i].Team, out[j].Team, inEvents, numPositions)
+			}
+
+			return out[i].Team < out[j].Team
 		}
 
 		return out[i].Points > out[j].Points
