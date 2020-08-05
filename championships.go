@@ -138,8 +138,8 @@ func (c *Championship) HasSpectatorCar() bool {
 	return !c.OpenEntrants && c.SpectatorCarEnabled && c.SpectatorCar.GUID != "" && c.SpectatorCar.Model != ""
 }
 
-func (c *Championship) HadBetterFinishingPositions(guidA, guidB string, inEvents []*ChampionshipEvent) bool {
-	for i := 1; i <= len(c.AllEntrants().AsSlice()); i++ {
+func (c *ChampionshipClass) HadBetterFinishingPositions(guidA, guidB string, inEvents []*ChampionshipEvent, numPositions int) bool {
+	for i := 1; i <= numPositions; i++ {
 		countDriverA := c.CountPositionsForDriver(i, guidA, inEvents)
 		countDriverB := c.CountPositionsForDriver(i, guidB, inEvents)
 
@@ -153,19 +153,21 @@ func (c *Championship) HadBetterFinishingPositions(guidA, guidB string, inEvents
 	return false
 }
 
-func (c *Championship) CountPositionsForDriver(i int, guid string, inEvents []*ChampionshipEvent) int {
+func (c *ChampionshipClass) CountPositionsForDriver(i int, guid string, inEvents []*ChampionshipEvent) int {
 	count := 0
-
-	if inEvents == nil {
-		inEvents = c.Events
-	}
 
 	for _, event := range inEvents {
 		for sessionType, session := range event.Sessions {
 			if session.Completed() && (sessionType == SessionTypeRace || sessionType == SessionTypeSecondRace) {
-				for pos, result := range session.Results.Result {
-					if guid == result.DriverGUID && pos == i {
-						count++
+				pos := 0
+
+				for _, result := range session.Results.Result {
+					if result.ClassID == c.ID {
+						pos += 1
+
+						if guid == result.DriverGUID && pos == i {
+							count++
+						}
 					}
 				}
 			}
@@ -175,8 +177,8 @@ func (c *Championship) CountPositionsForDriver(i int, guid string, inEvents []*C
 	return count
 }
 
-func (c *Championship) TeamHadBetterFinishingPositions(teamA, teamB string, inEvents []*ChampionshipEvent) bool {
-	for i := 1; i <= len(c.AllEntrants().AsSlice()); i++ {
+func (c *ChampionshipClass) TeamHadBetterFinishingPositions(teamA, teamB string, inEvents []*ChampionshipEvent, numPositions int) bool {
+	for i := 1; i <= numPositions; i++ {
 		countTeamA := c.CountPositionsForTeam(i, teamA, inEvents)
 		countTeamB := c.CountPositionsForTeam(i, teamB, inEvents)
 
@@ -190,19 +192,20 @@ func (c *Championship) TeamHadBetterFinishingPositions(teamA, teamB string, inEv
 	return teamA < teamB
 }
 
-func (c *Championship) CountPositionsForTeam(i int, team string, inEvents []*ChampionshipEvent) int {
+func (c *ChampionshipClass) CountPositionsForTeam(i int, team string, inEvents []*ChampionshipEvent) int {
 	count := 0
-
-	if inEvents == nil {
-		inEvents = c.Events
-	}
 
 	for _, event := range inEvents {
 		for sessionType, session := range event.Sessions {
 			if session.Completed() && (sessionType == SessionTypeRace || sessionType == SessionTypeSecondRace) {
-				for pos, result := range session.Results.Result {
+				pos := 0
+
+				for _, result := range session.Results.Result {
 					for _, car := range session.Results.Cars {
 						if car.Driver.GUID == result.DriverGUID && car.Driver.ClassID == result.ClassID {
+
+							pos += 1
+
 							if team == car.Driver.Team && pos == i {
 								count++
 							}
@@ -1264,12 +1267,12 @@ func (c *ChampionshipClass) Standings(championship *Championship, inEvents []*Ch
 		out = append(out, standing)
 	}
 
+	numPositions := len(out)
+
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].Points == out[j].Points {
 			// sort by number of wins
-			if out[i].Car.Driver.ClassID == out[j].Car.Driver.ClassID {
-				return championship.HadBetterFinishingPositions(out[i].Car.Driver.GUID, out[j].Car.Driver.GUID, inEvents)
-			}
+			c.HadBetterFinishingPositions(out[i].Car.Driver.GUID, out[j].Car.Driver.GUID, inEvents, numPositions)
 
 			return out[i].Car.Driver.Name < out[j].Car.Driver.Name
 		}
@@ -1417,10 +1420,12 @@ func (c *ChampionshipClass) TeamStandings(championship *Championship, inEvents [
 		})
 	}
 
+	numPositions := len(out)
+
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].Points == out[j].Points {
 			// sort by number of wins
-			return championship.TeamHadBetterFinishingPositions(out[i].Team, out[j].Team, inEvents)
+			return c.TeamHadBetterFinishingPositions(out[i].Team, out[j].Team, inEvents, numPositions)
 		}
 
 		return out[i].Points > out[j].Points
