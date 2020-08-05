@@ -15,6 +15,7 @@ Fixed:
 * Added a check for "Session Openness" when starting events. If the first event of a session is set to "No Join", Server Manager will correct it to "Free Join" (for Practice/Qualifying) and "Free join until 20 seconds to the Green Light" for Race sessions. This fixes an issue where the acServer will constantly loop sessions if the first session is not joinable.
 * Race Weekends now correctly handle entrants which have their car choice set to "Any Available Car"
 * Chat messages displayed on the Live Timings page will now show the correct timestamp for messages sent by drivers on the server.
+* Race session wait time should now be included in live timings session time
 
 ---
 
