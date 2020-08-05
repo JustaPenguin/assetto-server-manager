@@ -1162,6 +1162,32 @@ func (rc *RaceControl) OnChatMessage(chat udp.Chat) error {
 
 	rc.ChatMessagesMutex.Unlock()
 
+	if config.Lua.Enabled && Premium() {
+		go func() {
+			chat := chat
+
+			err = chatMessagePlugin(chat)
+
+			if err != nil {
+				logrus.WithError(err).Error("chat message plugin script failed")
+			}
+		}()
+	}
+
+	return nil
+}
+
+func chatMessagePlugin(chat udp.Chat) error {
+	p := NewLuaPlugin()
+
+	p.Inputs(chat)
+
+	err := p.Call("./plugins/race-control.lua", "onChat")
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
