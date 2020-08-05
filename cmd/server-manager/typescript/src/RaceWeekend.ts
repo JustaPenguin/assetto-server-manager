@@ -1,8 +1,8 @@
 import ChangeEvent = JQuery.ChangeEvent;
+import ClickEvent = JQuery.ClickEvent;
 import {Connection, jsPlumb, jsPlumbInstance} from "jsplumb";
 import dagre, {graphlib} from "dagre";
 import {initMultiSelect} from "./javascript/manager";
-import ClickEvent = JQuery.ClickEvent;
 
 declare var RaceWeekendID: string;
 declare var IsEditing: boolean;
@@ -299,6 +299,12 @@ export namespace RaceWeekend {
         }
     }
 
+    enum SplitType {
+        Numeric = "Numeric",
+        ManualDriverSelection = "Manual Driver Selection",
+        ChampionshipClass = "Championship Class",
+    }
+
     /**
      * SessionTransition is the modal shown when a user clicks on an arrow between two Race Weekend Sessions.
      */
@@ -313,8 +319,9 @@ export namespace RaceWeekend {
         private sortType!: string;
         private availableResultsForSorting: string[] = [];
         private startOnFastestLapTyre: boolean = false;
-        private manualDriverSelection: boolean = false;
+        private splitType: SplitType = SplitType.Numeric;
         private selectedDriverGUIDs: string[] = [];
+        private SelectedChampionshipClassIDs: object = {};
 
         public constructor($elem: JQuery<HTMLElement>, parentSessionID: string, childSessionID: string) {
             super($elem);
@@ -335,8 +342,9 @@ export namespace RaceWeekend {
                 SortType: this.sortType,
                 ForceUseTyreFromFastestLap: this.startOnFastestLapTyre,
                 AvailableResultsForSorting: this.availableResultsForSorting,
-                ManualDriverSelection: this.manualDriverSelection,
+                SplitType: this.splitType,
                 SelectedDriverGUIDs: this.selectedDriverGUIDs,
+                SelectedChampionshipClassIDs: this.SelectedChampionshipClassIDs,
             })
         }
 
@@ -356,18 +364,37 @@ export namespace RaceWeekend {
             }
 
             let $driversMultiSelect = this.$elem.find("#Drivers");
+            let $classesMultiSelect = this.$elem.find("#Classes");
 
-            this.manualDriverSelection = this.$elem.find("#ManualDriverSelection").is(":checked");
+            this.splitType = this.$elem.find("#SplitType").val() as SplitType;
             this.selectedDriverGUIDs = $driversMultiSelect.val() as string[];
 
-            if (this.manualDriverSelection) {
-                this.$elem.find("#DriverSelectionForm").show();
-                this.$elem.find("#FilterFromTo").hide();
+            this.SelectedChampionshipClassIDs = {};
 
-                initMultiSelect($driversMultiSelect);
-            } else {
-                this.$elem.find("#DriverSelectionForm").hide();
-                this.$elem.find("#FilterFromTo").show();
+            for (let classID of $classesMultiSelect.val() as string[]) {
+                this.SelectedChampionshipClassIDs[classID] = true;
+            }
+
+            switch (this.splitType) {
+                case SplitType.Numeric:
+                    this.$elem.find("#DriverSelectionForm").hide();
+                    this.$elem.find("#ClassSelectionForm").hide();
+                    this.$elem.find("#FilterFromTo").show();
+
+                    break;
+                case SplitType.ManualDriverSelection:
+                    this.$elem.find("#DriverSelectionForm").show();
+                    this.$elem.find("#ClassSelectionForm").hide();
+                    this.$elem.find("#FilterFromTo").hide();
+
+                    initMultiSelect($driversMultiSelect);
+                    break;
+                case SplitType.ChampionshipClass:
+                    this.$elem.find("#DriverSelectionForm").hide();
+                    this.$elem.find("#FilterFromTo").hide();
+                    this.$elem.find("#ClassSelectionForm").show();
+                    initMultiSelect($classesMultiSelect);
+                    break;
             }
 
             $.ajax(`/race-weekend/${RaceWeekendID}/grid-preview?parentSessionID=${this.parentSessionID}&childSessionID=${this.childSessionID}`, {

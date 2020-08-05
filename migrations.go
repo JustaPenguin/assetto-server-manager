@@ -86,6 +86,7 @@ var (
 		showEventDetailsPopupOn,
 		addCorrectCarNameToLiveTimingsData,
 		addDefaultACSRGateOptionsToChampionships,
+		addSplitTypeToRaceWeekends,
 	}
 )
 
@@ -1011,6 +1012,8 @@ func addCorrectCarNameToLiveTimingsData(s Store) error {
 }
 
 func addDefaultACSRGateOptionsToChampionships(s Store) error {
+	logrus.Infof("Running migration: Add Default ACSR Gate Options to Championships")
+
 	championships, err := s.ListChampionships()
 
 	if err != nil {
@@ -1024,6 +1027,66 @@ func addDefaultACSRGateOptionsToChampionships(s Store) error {
 
 		if err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+func addSplitTypeToRaceWeekends(s Store) error {
+	logrus.Infof("Running migration: Add Split Type to Race Weekends")
+
+	raceWeekends, err := s.ListRaceWeekends()
+
+	if err != nil {
+		return err
+	}
+
+	for _, raceWeekend := range raceWeekends {
+		for _, childSessionFilters := range raceWeekend.Filters {
+			for _, filter := range childSessionFilters {
+				if filter.ManualDriverSelection {
+					filter.SplitType = SplitTypeManualDriverSelection
+				} else {
+					filter.SplitType = SplitTypeNumeric
+				}
+			}
+		}
+
+		if err := s.UpsertRaceWeekend(raceWeekend); err != nil {
+			return err
+		}
+	}
+
+	championships, err := s.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	for _, championship := range championships {
+		for _, event := range championship.Events {
+			if event.IsRaceWeekend() {
+				raceWeekend, err := s.LoadRaceWeekend(event.RaceWeekendID.String())
+
+				if err != nil {
+					return err
+				}
+
+				for _, childSessionFilters := range raceWeekend.Filters {
+					for _, filter := range childSessionFilters {
+						if filter.ManualDriverSelection {
+							filter.SplitType = SplitTypeManualDriverSelection
+						} else {
+							filter.SplitType = SplitTypeNumeric
+						}
+					}
+				}
+
+				if err := s.UpsertRaceWeekend(raceWeekend); err != nil {
+					return err
+				}
+			}
 		}
 	}
 
