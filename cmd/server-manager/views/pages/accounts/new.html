@@ -33,7 +33,7 @@
                     <label for="Group" class="col-sm-3 col-form-label">Group</label>
 
                     <div class="col-sm-9">
-                        <select class="form-control" id="Group" name="Group">
+                        <select class="form-control" id="Group" name="Group" {{ if and (eq .Account.Name "acserver") $.BaseTemplateVars.IsHosted }}disabled{{ end }}>
                             <option value="read" {{ if eq .Account.Group "read" }}selected="selected"{{ end }}>Read - Read races, content, and championships</option>
                             <option value="write" {{ if eq .Account.Group "write" }}selected="selected"{{ end }}>Write - Read and Write races, content and championships</option>
                             <option value="delete" {{ if eq .Account.Group "delete" }}selected="selected"{{ end }}>Delete - Read, Write, Delete races, content and championships</option>
