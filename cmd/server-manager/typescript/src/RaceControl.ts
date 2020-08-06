@@ -189,7 +189,7 @@ export class RaceControl {
 
         // Get lap/laps or time/totalTime
         if (this.status.SessionInfo.Time > 0) {
-            timeRemaining = msToTime(this.status.SessionInfo.Time * 60 * 1000 - moment.duration(moment().utc().diff(moment(this.status.SessionStartTime).utc())).asMilliseconds(), false, false);
+            timeRemaining = msToTime((this.status.SessionInfo.Time * 60 * 1000) + (this.status.SessionInfo.WaitTime/126.166667 * 1000) - moment.duration(moment().utc().diff(moment(this.status.SessionStartTime).utc())).asMilliseconds(), false, false);
         } else if (this.status.SessionInfo.Laps > 0) {
             let lapsCompleted = 0;
 

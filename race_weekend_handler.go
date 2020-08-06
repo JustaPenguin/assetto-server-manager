@@ -8,6 +8,7 @@ import (
 
 	"4d63.com/tz"
 	"github.com/go-chi/chi"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -282,6 +283,7 @@ type raceWeekendFilterTemplateVars struct {
 	Filter                      *RaceWeekendSessionToSessionFilter
 	AvailableSorters            []RaceWeekendEntryListSorterDescription
 	ParentSessionResults        []*RaceWeekendSessionEntrant
+	ChampionshipClasses         map[uuid.UUID]*ChampionshipClass
 }
 
 func (rwh *RaceWeekendHandler) manageFilters(w http.ResponseWriter, r *http.Request) {
@@ -319,6 +321,18 @@ func (rwh *RaceWeekendHandler) manageFilters(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	var championshipClasses map[uuid.UUID]*ChampionshipClass
+
+	if raceWeekend.HasLinkedChampionship() {
+		championshipClasses = make(map[uuid.UUID]*ChampionshipClass)
+
+		for _, result := range parentSessionResults {
+			class := result.ChampionshipClass(raceWeekend)
+
+			championshipClasses[class.ID] = class
+		}
+	}
+
 	rwh.viewRenderer.MustLoadPartial(w, r, "race-weekend/popups/manage-filters.html", &raceWeekendFilterTemplateVars{
 		RaceWeekend:                raceWeekend,
 		ParentSession:              parentSession,
@@ -327,6 +341,7 @@ func (rwh *RaceWeekendHandler) manageFilters(w http.ResponseWriter, r *http.Requ
 		Filter:                     filter,
 		AvailableSorters:           RaceWeekendEntryListSorters,
 		ParentSessionResults:       parentSessionResults,
+		ChampionshipClasses:        championshipClasses,
 	})
 }
 

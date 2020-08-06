@@ -9,8 +9,8 @@
         applied to the server. This information is intended for troubleshooting and so is read-only.</small></p>
 
     <label for="current-config">Server Config</label>
-    <textarea readonly id="current-config" name="current-config" class="form-control md-textarea text-area mb-1">{{ .ConfigText }}</textarea>
+    <textarea readonly id="current-config" name="current-config" class="form-control md-textarea text-area mb-1" rows="40">{{ .ConfigText }}</textarea>
 
     <label for="entry-list">Entry List</label>
-    <textarea readonly id="entry-list" name="entry-list" class="form-control md-textarea text-area">{{ .EntryListText }}</textarea>
+    <textarea readonly id="entry-list" name="entry-list" class="form-control md-textarea text-area" rows="40">{{ .EntryListText }}</textarea>
 {{ end }}

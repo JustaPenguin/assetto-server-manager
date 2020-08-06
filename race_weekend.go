@@ -207,6 +207,7 @@ func (rw *RaceWeekend) GetFilterOrUseDefault(parentID, childID string) (*RaceWee
 		// filter not found, load defaults
 		if parentSession.Completed() && parentSession.Results != nil && !parentSession.IsBase() {
 			filter = &RaceWeekendSessionToSessionFilter{
+				SplitType:            SplitTypeNumeric,
 				ResultStart:          1,
 				ResultEnd:            len(parentSession.Results.Cars),
 				NumEntrantsToReverse: 0,
@@ -214,6 +215,7 @@ func (rw *RaceWeekend) GetFilterOrUseDefault(parentID, childID string) (*RaceWee
 			}
 		} else {
 			filter = &RaceWeekendSessionToSessionFilter{
+				SplitType:            SplitTypeNumeric,
 				ResultStart:          1,
 				ResultEnd:            len(rw.GetEntryList()),
 				NumEntrantsToReverse: 0,
@@ -490,6 +492,19 @@ func (rw *RaceWeekend) MostRecentScheduledDateFormat(format string) string {
 	}
 
 	return scheduledDate.Format(format)
+}
+
+func (rw *RaceWeekend) GetAvailableSplitTypes() []RaceWeekendFilterSplitType {
+	splitTypes := []RaceWeekendFilterSplitType{
+		SplitTypeNumeric,
+		SplitTypeManualDriverSelection,
+	}
+
+	if rw.HasLinkedChampionship() {
+		splitTypes = append(splitTypes, SplitTypeChampionshipClass)
+	}
+
+	return splitTypes
 }
 
 // A RaceWeekendSessionEntrant is someone who has entered at least one RaceWeekend event.
