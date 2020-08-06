@@ -9,6 +9,7 @@ Added:
 * Added a page that allows admins to view a read-only copy of the server_cfg.ini and entry_list.ini currently applied to the server.
 * You can now add tags to a group of cars before uploading them on the car list page!
 * Added new "Split Type" functionality to Race Weekend filters, allowing you to split entire sessions by Championship Class.
+* New lua plugin file (race-control.lua) containing onChat function which is called whenever a chat message is sent in-game, from the live timings page or from a lua script
 
 Fixed:
 
