@@ -697,7 +697,11 @@ func (ah *AccountHandler) createOrEditAccount(w http.ResponseWriter, r *http.Req
 
 	if r.Method == http.MethodPost {
 		username := r.FormValue("Username")
-		group := r.FormValue("Group")
+		group := Group(r.FormValue("Group"))
+
+		if isEditing && IsHosted && account.Name == defaultHostedAdminAccountName {
+			group = GroupAdmin
+		}
 
 		if !isEditing {
 			// creating new account
@@ -706,18 +710,18 @@ func (ah *AccountHandler) createOrEditAccount(w http.ResponseWriter, r *http.Req
 		}
 
 		account.Name = username
-		account.Groups[serverID] = Group(group)
+		account.Groups[serverID] = group
 
 		if formValueAsInt(r.FormValue("UpdateGroupForAllServers")) == 1 {
 			for serverID := range account.Groups {
-				account.Groups[serverID] = Group(group)
+				account.Groups[serverID] = group
 			}
 		}
 
 		err := ah.store.UpsertAccount(account)
 
 		if err != nil {
-			logrus.WithError(err).Errorf("Could save account with id: %s", account.ID)
+			logrus.WithError(err).Errorf("Couldn't save account with id: %s", account.ID)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
