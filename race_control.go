@@ -1164,8 +1164,6 @@ func (rc *RaceControl) OnChatMessage(chat udp.Chat) error {
 
 	if config.Lua.Enabled && Premium() {
 		go func() {
-			chat := chat
-
 			err := chatMessagePlugin(chat)
 
 			if err != nil {
