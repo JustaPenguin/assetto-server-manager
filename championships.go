@@ -1504,6 +1504,10 @@ func (cr *ChampionshipEvent) GetID() uuid.UUID {
 	return cr.ID
 }
 
+func (cr *ChampionshipEvent) GetScheduledServerID() ServerID {
+	return cr.ScheduledServerID
+}
+
 func (cr *ChampionshipEvent) GetRaceSetup() CurrentRaceConfig {
 	return cr.RaceSetup
 }

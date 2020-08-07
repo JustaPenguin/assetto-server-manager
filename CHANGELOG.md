@@ -11,6 +11,7 @@ Added:
 * Drivers/Teams in a Championship with equal points will now be automatically sorted by their number of top finishes (the highest number of 1st place finishes, if equal then highest number of 2nd place finishes etc.)
 * Added new "Split Type" functionality to Race Weekend filters, allowing you to split entire sessions by Championship Class.
 * New lua plugin file (race-control.lua) containing onChat function which is called whenever a chat message is sent in-game, from the live timings page or from a lua script
+* (Multiserver) Events across all servers will now be shown on the Calendar, events on other servers will be marked as so. 
 
 Fixed:
 

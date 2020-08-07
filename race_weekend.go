@@ -597,6 +597,10 @@ func (rws *RaceWeekendSession) GetID() uuid.UUID {
 	return rws.ID
 }
 
+func (rws *RaceWeekendSession) GetScheduledServerID() ServerID {
+	return rws.ScheduledServerID
+}
+
 func (rws *RaceWeekendSession) GetRaceSetup() CurrentRaceConfig {
 	return rws.RaceConfig
 }

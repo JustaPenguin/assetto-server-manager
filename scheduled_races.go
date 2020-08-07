@@ -18,6 +18,7 @@ import (
 
 type ScheduledEvent interface {
 	GetID() uuid.UUID
+	GetScheduledServerID() ServerID
 	GetRaceSetup() CurrentRaceConfig
 	GetScheduledTime() time.Time
 	GetSummary() string
@@ -154,7 +155,7 @@ func NewScheduledRacesManager(store Store) *ScheduledRacesManager {
 	}
 }
 
-func (srm *ScheduledRacesManager) getScheduledRaces() ([]ScheduledEvent, error) {
+func (srm *ScheduledRacesManager) getScheduledRaces(forAllServers bool) ([]ScheduledEvent, error) {
 	customRaces, err := srm.store.ListCustomRaces()
 
 	if err != nil {
@@ -166,7 +167,7 @@ func (srm *ScheduledRacesManager) getScheduledRaces() ([]ScheduledEvent, error) 
 	for _, race := range customRaces {
 		for _, scheduledEvent := range race.ScheduledEvents {
 
-			if scheduledEvent.Scheduled.IsZero() || scheduledEvent.ScheduledServerID != serverID {
+			if scheduledEvent.Scheduled.IsZero() || (!forAllServers && scheduledEvent.ScheduledServerID != serverID) {
 				continue
 			}
 
@@ -178,7 +179,7 @@ func (srm *ScheduledRacesManager) getScheduledRaces() ([]ScheduledEvent, error) 
 			break
 		}
 
-		if race.Scheduled.IsZero() || race.ScheduledServerID != serverID {
+		if race.Scheduled.IsZero() || (!forAllServers && race.ScheduledServerID != serverID) {
 			continue
 		}
 
@@ -193,7 +194,7 @@ func (srm *ScheduledRacesManager) getScheduledRaces() ([]ScheduledEvent, error) 
 
 	for _, championship := range championships {
 		for _, event := range championship.Events {
-			if event.Scheduled.IsZero() || event.ScheduledServerID != serverID {
+			if event.Scheduled.IsZero() || (!forAllServers && event.ScheduledServerID != serverID) {
 				continue
 			}
 
@@ -219,7 +220,7 @@ func (srm *ScheduledRacesManager) getScheduledRaces() ([]ScheduledEvent, error) 
 		}
 
 		for _, session := range raceWeekend.Sessions {
-			if session.ScheduledTime.IsZero() || session.ScheduledServerID != serverID {
+			if session.ScheduledTime.IsZero() || (!forAllServers && session.ScheduledServerID != serverID) {
 				continue
 			}
 
@@ -232,7 +233,7 @@ func (srm *ScheduledRacesManager) getScheduledRaces() ([]ScheduledEvent, error) 
 }
 
 func (srm *ScheduledRacesManager) buildScheduledRaces(w io.Writer) error {
-	scheduled, err := srm.getScheduledRaces()
+	scheduled, err := srm.getScheduledRaces(true)
 
 	if err != nil {
 		return err
@@ -258,22 +259,23 @@ func (srm *ScheduledRacesManager) buildScheduledRaces(w io.Writer) error {
 }
 
 type CalendarObject struct {
-	ID               string    `json:"id"`
-	GroupID          string    `json:"groupId"`
-	AllDay           bool      `json:"allDay"`
-	Start            time.Time `json:"start"`
-	End              time.Time `json:"end"`
-	Title            string    `json:"title"`
-	Description      string    `json:"description"`
-	URL              string    `json:"url"`
-	SignUpURL        string    `json:"signUpURL"`
-	ClassNames       []string  `json:"classNames"`
-	Editable         bool      `json:"editable"`
-	StartEditable    bool      `json:"startEditable"`
-	DurationEditable bool      `json:"durationEditable"`
-	ResourceEditable bool      `json:"resourceEditable"`
-	Rendering        string    `json:"rendering"`
-	Overlap          bool      `json:"overlap"`
+	ID                string    `json:"id"`
+	ScheduledServerID ServerID  `json:"scheduledServerID"`
+	GroupID           string    `json:"groupId"`
+	AllDay            bool      `json:"allDay"`
+	Start             time.Time `json:"start"`
+	End               time.Time `json:"end"`
+	Title             string    `json:"title"`
+	Description       string    `json:"description"`
+	URL               string    `json:"url"`
+	SignUpURL         string    `json:"signUpURL"`
+	ClassNames        []string  `json:"classNames"`
+	Editable          bool      `json:"editable"`
+	StartEditable     bool      `json:"startEditable"`
+	DurationEditable  bool      `json:"durationEditable"`
+	ResourceEditable  bool      `json:"resourceEditable"`
+	Rendering         string    `json:"rendering"`
+	Overlap           bool      `json:"overlap"`
 
 	Constraint      string `json:"constraint"`
 	BackgroundColor string `json:"backgroundColor"`
@@ -282,7 +284,7 @@ type CalendarObject struct {
 }
 
 func (srm *ScheduledRacesManager) buildCalendar(start time.Time, end time.Time) ([]CalendarObject, error) {
-	scheduled, err := srm.getScheduledRaces()
+	scheduled, err := srm.getScheduledRaces(true)
 
 	if err != nil {
 		return nil, err
@@ -436,27 +438,34 @@ func BuildCalObject(scheduled []ScheduledEvent, calendarObjects []CalendarObject
 
 			textColor = "#303030"
 
+			scheduledServerID := scheduledEvent.GetScheduledServerID()
+
+			if serverID == scheduledServerID {
+				scheduledServerID = ""
+			}
+
 			calendarObjects = append(calendarObjects, CalendarObject{
-				ID:               scheduledEvent.GetID().String() + session.Name,
-				GroupID:          scheduledEvent.GetID().String(),
-				AllDay:           false,
-				Start:            start,
-				End:              end,
-				Title:            GenerateSummary(scheduledEvent.GetRaceSetup(), session.Name) + " " + scheduledEvent.GetSummary(),
-				Description:      carList(scheduledEvent.GetRaceSetup().Cars) + ": " + scheduledEvent.ReadOnlyEntryList().Entrants(),
-				URL:              pageURL,
-				SignUpURL:        signUpURL,
-				ClassNames:       classNames,
-				Editable:         false,
-				StartEditable:    false,
-				DurationEditable: false,
-				ResourceEditable: false,
-				Rendering:        "",
-				Overlap:          true,
-				Constraint:       "",
-				BackgroundColor:  backgroundColor,
-				BorderColor:      borderColor,
-				TextColor:        textColor,
+				ID:                scheduledEvent.GetID().String() + session.Name,
+				ScheduledServerID: scheduledServerID,
+				GroupID:           scheduledEvent.GetID().String(),
+				AllDay:            false,
+				Start:             start,
+				End:               end,
+				Title:             GenerateSummary(scheduledEvent.GetRaceSetup(), session.Name) + " " + scheduledEvent.GetSummary(),
+				Description:       carList(scheduledEvent.GetRaceSetup().Cars) + ": " + scheduledEvent.ReadOnlyEntryList().Entrants(),
+				URL:               pageURL,
+				SignUpURL:         signUpURL,
+				ClassNames:        classNames,
+				Editable:          false,
+				StartEditable:     false,
+				DurationEditable:  false,
+				ResourceEditable:  false,
+				Rendering:         "",
+				Overlap:           true,
+				Constraint:        "",
+				BackgroundColor:   backgroundColor,
+				BorderColor:       borderColor,
+				TextColor:         textColor,
 			})
 		}
 	}

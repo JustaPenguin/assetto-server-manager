@@ -94,6 +94,10 @@ func (cr *CustomRace) GetID() uuid.UUID {
 	return cr.UUID
 }
 
+func (cr *CustomRace) GetScheduledServerID() ServerID {
+	return cr.ScheduledServerID
+}
+
 func (cr *CustomRace) GetRaceSetup() CurrentRaceConfig {
 	return cr.RaceConfig
 }
