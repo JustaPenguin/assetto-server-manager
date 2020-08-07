@@ -10,8 +10,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return
     }
 
-    console.log("calendar page load")
-
     let calendar = new Calendar(calendarEl, {
         plugins: [ timeGridPlugin, listPlugin, bootstrapPlugin ],
         defaultView: 'timeGridThreeDay',
