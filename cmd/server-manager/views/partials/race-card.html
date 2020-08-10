@@ -14,11 +14,6 @@
 
         {{ with $trackInfo }} {{ $trackInfo.City }}, {{ $trackInfo.Country }}{{ end }}
 
-        <strong>
-            {{if isBefore .Scheduled }} - Scheduled for {{ localFormat .Scheduled }}{{ end }}
-        </strong>
-
-
         <div class="float-right text-right">
             {{ range $sessionName, $session := .RaceConfig.Sessions }}
                 <span data-toggle="tooltip" title="{{ $sessionName.String }}" class="badge badge-primary">{{ trunc 1 $sessionName.String }}</span>
