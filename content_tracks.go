@@ -5,17 +5,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"image"
+	"image/draw"
 	"image/png"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
+
+	"github.com/JustaPenguin/assetto-server-manager/cmd/server-manager/static"
 
 	"github.com/cj123/ini"
 	"github.com/dimchansky/utfbom"
 	"github.com/go-chi/chi"
+	"github.com/nfnt/resize"
 	"github.com/sirupsen/logrus"
 )
 
@@ -298,6 +304,21 @@ func (th *TracksHandler) saveMetadata(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
+func (th *TracksHandler) trackImage(w http.ResponseWriter, r *http.Request) {
+	track := chi.URLParam(r, "track")
+	layout := chi.URLParam(r, "layout")
+
+	w.Header().Add("Content-Type", "image/png")
+	n, err := th.trackManager.GetTrackImage(w, track, layout)
+
+	if err != nil {
+		image := static.FSMustByte(false, "/img/no-preview-general.png")
+		_, _ = w.Write(image)
+	} else {
+		w.Header().Add("Content-Length", strconv.Itoa(int(n)))
+	}
+}
+
 type TrackManager struct {
 }
 
@@ -401,6 +422,105 @@ func (tm *TrackManager) ListTracks() ([]Track, error) {
 	})
 
 	return tracks, nil
+}
+
+func (tm *TrackManager) decodeTrackImage(path string) (image.Image, error) {
+	f, err := os.Open(path)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+
+	data, _, err := image.Decode(f)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return data, err
+}
+
+func (tm *TrackManager) GetTrackImage(w io.Writer, track, layout string) (int64, error) {
+	trackContentPath := filepath.Join(ServerInstallPath, "content", "tracks", track, "ui")
+	trackMapPath := filepath.Join(ServerInstallPath, "content", "tracks", track, "map.png")
+
+	if layout != "" {
+		trackContentPath = filepath.Join(trackContentPath, layout)
+		trackMapPath = filepath.Join(ServerInstallPath, "content", "tracks", track, layout, "map.png")
+	}
+
+	trackImagePath := filepath.Join(trackContentPath, "preview.png")
+	trackOutlinePath := filepath.Join(trackContentPath, "outline.png")
+
+	combinedImageMapPath := filepath.Join(trackContentPath, "server-manager_preview.png")
+	combinedImageMap, err := os.Open(combinedImageMapPath)
+
+	if err == nil {
+		defer combinedImageMap.Close()
+
+		return io.Copy(w, combinedImageMap)
+	} else if !os.IsNotExist(err) {
+		return -1, err
+	}
+
+	trackImage, err := tm.decodeTrackImage(trackImagePath)
+
+	if err != nil {
+		return -1, err
+	}
+
+	trackMap, err := tm.decodeTrackImage(trackMapPath)
+
+	if os.IsNotExist(err) {
+		trackMap, err = tm.decodeTrackImage(trackOutlinePath)
+
+		if err != nil {
+			return -1, err
+		}
+	} else if err != nil {
+		return -1, err
+	}
+
+	trackImageBounds := trackImage.Bounds()
+	trackMapBounds := trackMap.Bounds()
+
+	mapScale := 2.0
+
+	var resizedMap image.Image
+
+	marginX, marginY := 10, 10
+
+	if trackMapBounds.Dx() > trackMapBounds.Dy() {
+		resizedMap = resize.Resize(uint(float64(trackImageBounds.Dx())/mapScale), 0, trackMap, resize.Bilinear)
+	} else {
+		resizedMap = resize.Resize(0, uint(float64(trackImageBounds.Dy())/mapScale), trackMap, resize.Bilinear)
+		marginX = 20
+		marginY = 20
+	}
+
+	combined := image.NewRGBA(trackImageBounds)
+	draw.Draw(combined, trackImageBounds, trackImage, image.Point{}, draw.Src)
+	draw.Draw(combined, trackImageBounds, resizedMap, image.Pt(-trackImageBounds.Dx()+resizedMap.Bounds().Dx()+marginX, -trackImageBounds.Dy()+resizedMap.Bounds().Dy()+marginY), draw.Over)
+
+	combinedImageMap, err = os.Create(combinedImageMapPath)
+
+	if err != nil {
+		return -1, err
+	}
+
+	defer combinedImageMap.Close()
+
+	if err := png.Encode(combinedImageMap, combined); err != nil {
+		return -1, err
+	}
+
+	if _, err := combinedImageMap.Seek(0, 0); err != nil {
+		return -1, err
+	}
+
+	return io.Copy(w, combinedImageMap)
 }
 
 func (tm *TrackManager) GetTrackFromName(name string) (*Track, error) {

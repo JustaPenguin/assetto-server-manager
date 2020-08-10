@@ -1114,7 +1114,7 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*
 	}
 
 	sort.Slice(recent, func(i, j int) bool {
-		return recent[i].Created.After(recent[j].Created)
+		return recent[i].Updated.After(recent[j].Updated)
 	})
 
 	var filteredRecent []*CustomRace
