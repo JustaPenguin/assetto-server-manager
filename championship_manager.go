@@ -133,6 +133,12 @@ func (cm *ChampionshipManager) LoadACSRRatings(championship *Championship) (map[
 		guidMap[entrant.GUID] = true
 	}
 
+	if championship.SignUpForm.Enabled {
+		for _, entrant := range championship.SignUpForm.Responses {
+			guidMap[entrant.GUID] = true
+		}
+	}
+
 	var guids []string
 
 	for guid := range guidMap {
