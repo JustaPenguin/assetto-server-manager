@@ -442,6 +442,10 @@ func (tm *TrackManager) decodeTrackImage(path string) (image.Image, error) {
 	return data, err
 }
 
+const (
+	trackMapOverlayScale = 2.0
+)
+
 func (tm *TrackManager) GetTrackImage(w io.Writer, track, layout string) (int64, error) {
 	trackContentPath := filepath.Join(ServerInstallPath, "content", "tracks", track, "ui")
 	trackMapPath := filepath.Join(ServerInstallPath, "content", "tracks", track, "map.png")
@@ -486,16 +490,14 @@ func (tm *TrackManager) GetTrackImage(w io.Writer, track, layout string) (int64,
 	trackImageBounds := trackImage.Bounds()
 	trackMapBounds := trackMap.Bounds()
 
-	mapScale := 2.0
-
 	var resizedMap image.Image
 
 	marginX, marginY := 10, 10
 
 	if trackMapBounds.Dx() > trackMapBounds.Dy() {
-		resizedMap = resize.Resize(uint(float64(trackImageBounds.Dx())/mapScale), 0, trackMap, resize.Bilinear)
+		resizedMap = resize.Resize(uint(float64(trackImageBounds.Dx())/trackMapOverlayScale), 0, trackMap, resize.Bilinear)
 	} else {
-		resizedMap = resize.Resize(0, uint(float64(trackImageBounds.Dy())/mapScale), trackMap, resize.Bilinear)
+		resizedMap = resize.Resize(0, uint(float64(trackImageBounds.Dy())/trackMapOverlayScale), trackMap, resize.Bilinear)
 		marginX = 20
 		marginY = 20
 	}
