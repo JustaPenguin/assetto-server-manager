@@ -175,29 +175,29 @@
 
     <nav>
         <div class="nav nav-tabs" id="nav-tab" role="tablist">
-            <a class="nav-item nav-link active" id="nav-starred-tab" data-toggle="tab" href="#nav-starred" role="tab" aria-controls="nav-starred" aria-selected="true">Starred</a>
-            <a class="nav-item nav-link" id="nav-recent-tab" data-toggle="tab" href="#nav-recent" role="tab" aria-controls="nav-recent" aria-selected="false">Recent</a>
+            <a class="nav-item nav-link active" id="nav-recent-tab" data-toggle="tab" href="#nav-recent" role="tab" aria-controls="nav-recent" aria-selected="false">Recent</a>
+            <a class="nav-item nav-link" id="nav-starred-tab" data-toggle="tab" href="#nav-starred" role="tab" aria-controls="nav-starred" aria-selected="true">Starred</a>
             <a class="nav-item nav-link" id="nav-scheduled-tab" data-toggle="tab" href="#nav-scheduled" role="tab" aria-controls="nav-scheduled" aria-selected="false">Scheduled</a>
             <a class="nav-item nav-link" id="nav-autoloop-tab" data-toggle="tab" href="#nav-autoloop" role="tab" aria-controls="nav-autoloop" aria-selected="false">Auto Loop</a>
         </div>
     </nav>
     <div class="tab-content" id="nav-tabContent">
-        <div class="tab-pane fade show active" id="nav-starred" role="tabpanel" aria-labelledby="nav-starred-tab">
-            {{ if gt (len .Starred) 0 }}
-                {{ template "custom-race-list" dict "Race" .Starred "ServerID" .ServerID "ShowEventDetailsPopup" $.ShowEventDetailsPopup }}
-            {{ else if WriteAccess }}
-                <p class="text-center mt-5">You haven't starred any Custom Races yet. Star some using the table below!</p>
-            {{ else }}
-                <p class="text-center mt-5">There aren't any starred custom races yet!</p>
-            {{ end }}
-        </div>
-        <div class="tab-pane fade" id="nav-recent" role="tabpanel" aria-labelledby="nav-recent-tab">
+        <div class="tab-pane fade show active" id="nav-recent" role="tabpanel" aria-labelledby="nav-recent-tab">
             {{ if gt (len .Recent) 0 }}
                 {{ template "custom-race-list" dict "Race" .Recent "ServerID" .ServerID "ShowEventDetailsPopup" $.ShowEventDetailsPopup }}
             {{ else if WriteAccess }}
                 <p class="text-center mt-5">We couldn't find any recent races. Perhaps you should <a href="/custom/new">create one now</a>?</p>
             {{ else }}
                 <p class="text-center mt-5">We couldn't find any recent races.</p>
+            {{ end }}
+        </div>
+        <div class="tab-pane fade" id="nav-starred" role="tabpanel" aria-labelledby="nav-starred-tab">
+            {{ if gt (len .Starred) 0 }}
+                {{ template "custom-race-list" dict "Race" .Starred "ServerID" .ServerID "ShowEventDetailsPopup" $.ShowEventDetailsPopup }}
+            {{ else if WriteAccess }}
+                <p class="text-center mt-5">You haven't starred any Custom Races yet. You can star them in the Recent tab!</p>
+            {{ else }}
+                <p class="text-center mt-5">There aren't any starred custom races yet!</p>
             {{ end }}
         </div>
         <div class="tab-pane fade" id="nav-scheduled" role="tabpanel" aria-labelledby="nav-scheduled-tab">
