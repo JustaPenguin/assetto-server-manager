@@ -38,6 +38,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             $title.append('<div class="hr-line-solid-no-margin"></div><span class="calendar-small">'+info.event.extendedProps.description+'</span></div>');
 
+            if (info.event.extendedProps.scheduledServerID) {
+                $title.append('<div class="calendar-small">On <span class="scheduled-server-id" data-server-id="'+info.event.extendedProps.scheduledServerID+'">another server</span></div>');
+            }
+
             let $listTitle = $(info.el).find('.fc-list-item-title');
 
             if (info.event.extendedProps.signUpURL) {
@@ -45,6 +49,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             $listTitle.append('<div class="ml-2"></div><span class="calendar-small">'+info.event.extendedProps.description+'</span></div>');
+
+            if (info.event.extendedProps.scheduledServerID) {
+                $listTitle.append('<div class="calendar-small">On <span class="scheduled-server-id" data-server-id="'+info.event.extendedProps.scheduledServerID+'">another server</span></div>');
+            }
         },
 
         nowIndicator: true,

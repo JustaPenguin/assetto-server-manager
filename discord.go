@@ -137,7 +137,7 @@ func (dm *DiscordManager) CommandSchedule() (string, error) {
 
 	start := time.Now()
 	end := start.AddDate(0, 0, 7)
-	scheduled, err := dm.scheduledRacesManager.getScheduledRaces()
+	scheduled, err := dm.scheduledRacesManager.getScheduledRaces(true)
 
 	if err != nil {
 		return "A server error occurred, please try again later", err
