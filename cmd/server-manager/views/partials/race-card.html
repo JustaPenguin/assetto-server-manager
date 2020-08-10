@@ -14,14 +14,6 @@
 
         {{ with $trackInfo }} {{ $trackInfo.City }}, {{ $trackInfo.Country }}{{ end }}
 
-        <strong>
-            {{if isBefore .Scheduled }} - Scheduled for {{ localFormat .Scheduled }}{{ end }}
-        </strong>
-        {{if .HasRecurrenceRule }}
-            <span class="font-italic">Recurring: </span>
-            <span class="rrule-text font-italic" data-rrule="{{ .Recurrence }}"></span>
-        {{ end }}
-
         <div class="float-right text-right">
             {{ range $sessionName, $session := .RaceConfig.Sessions }}
                 <span data-toggle="tooltip" title="{{ $sessionName.String }}" class="badge badge-primary">{{ trunc 1 $sessionName.String }}</span>

@@ -10,6 +10,8 @@ Added:
 * You can now add tags to a group of cars before uploading them on the car list page!
 * Drivers/Teams in a Championship with equal points will now be automatically sorted by their number of top finishes (the highest number of 1st place finishes, if equal then highest number of 2nd place finishes etc.)
 * Added new "Split Type" functionality to Race Weekend filters, allowing you to split entire sessions by Championship Class.
+* We've redesigned the Custom Races page! Hopefully it's easier to find things in it!
+* Track images now show the track map in the bottom right corner.
 * New lua plugin file (race-control.lua) containing onChat function which is called whenever a chat message is sent in-game, from the live timings page or from a lua script
 
 Fixed:

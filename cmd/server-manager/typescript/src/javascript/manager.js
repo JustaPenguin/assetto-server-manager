@@ -45,6 +45,12 @@ $(document).ready(function () {
     initUploaders();
 
     $document.find('[data-toggle="tooltip"]').tooltip();
+    $document.find('[data-toggle="tooltip-div"]').tooltip({
+        html: true,
+        title: function() {
+            return $("#"+$(this).data("tooltip-content")).html();
+        }
+    });
 
     $("[data-toggle=popover]").each(function (i, obj) {
         $(this).popover({

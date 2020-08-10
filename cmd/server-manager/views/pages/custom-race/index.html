@@ -2,124 +2,154 @@
 
 {{ define "title" }}Custom Races{{ end }}
 
-{{ define "custom-race-table" }}
-    {{ $writeAccess := WriteAccess }}
-    {{ $serverID := $.ServerID }}
+{{ define "custom-race" }}
+    <div class="card mt-4 mb-4">
+        <div class="card-header">
+            <div class="float-left">
+                <strong>{{ $.Race.Name }}</strong>
+            </div>
 
-    <div class="table-responsive">
-        <table class="table table-striped table-bordered mt-4 table-custom-race">
-            <tr>
-                <td></td>
-                <th>Details</th>
-                <th>Created</th>
-                {{ if $writeAccess }}
-                    <th>Actions</th>
+            <div class="float-right">
+                {{ if isBefore $.Race.Scheduled }}
+                    <span class="text-primary mr-1">
+                        Scheduled
+
+                        {{ if ne $.Race.ScheduledServerID $.ServerID }}
+                            (on <span class="scheduled-server-id" data-server-id="{{ $.Race.ScheduledServerID }}">another server</span>)
+                        {{ end }}
+
+                        for {{ localFormat $.Race.Scheduled }}
+
+                        {{ if $.Race.HasRecurrenceRule }}
+                            <i class="fa fa-redo-alt ml-1" data-toggle="tooltip-div" data-tooltip-content="{{ $.Race.UUID.String }}-recurrence"></i>
+
+                            <div style="display: none" id="{{ $.Race.UUID.String }}-recurrence">
+                                Recurring
+                                <span class="rrule-text" data-rrule="{{ $.Race.Recurrence }}"></span>
+                            </div>
+                        {{ end }}
+                    </span>
                 {{ end }}
-            </tr>
 
-            {{ range $index, $race := $.Race }}
-                <tr>
-                    <td class="align-middle">
-                        {{ if WriteAccess }}
-                            <a href="/custom/star/{{ $race.UUID.String }}">
-                        {{ end }}
+                {{ if WriteAccess }}
+                    <a class="text-decoration-none" href="/custom/star/{{ $.Race.UUID.String }}">
+                {{ end }}
 
-                        {{ if $race.Starred }}
-                            <i class="fas fa-star"></i>
+                    {{ if $.Race.Starred }}
+                        <i class="fas fa-star ml-1 mr-1 text-success" data-toggle="tooltip" title="Starred"></i>
+                    {{ else }}
+                        <i class="far fa-star ml-1 mr-1 text-body" data-toggle="tooltip" title="Not Starred"></i>
+                    {{ end }}
+
+                {{ if WriteAccess }}
+                    </a>
+
+                    <a class="text-decoration-none" href="/custom/loop/{{ $.Race.UUID.String }}">
+                {{ end }}
+
+                    {{ with $.Race.LoopServer }}
+                        {{ if index $.Race.LoopServer $.ServerID }}
+                            <i class="fas fa-play-circle ml-1 mr-1 text-success" data-toggle="tooltip" title="Looping"></i>
                         {{ else }}
-                            <i class="far fa-star"></i>
+                            <i class="far fa-play-circle ml-1 mr-1 text-body" data-toggle="tooltip" title="Not Looping"></i>
                         {{ end }}
+                    {{ else }}
+                        <i class="far fa-play-circle ml-1 mr-1 text-body" data-toggle="tooltip" title="Not Looping"></i>
+                    {{ end }}
 
-                        {{ if WriteAccess }}
-                            </a>
+                {{ if WriteAccess }}
+                    </a>
+                {{ end }}
+            </div>
+        </div>
 
-                            <a href="/custom/loop/{{ $race.UUID.String }}">
-                        {{ end }}
+        <div class="card-body">
+            <div class="row">
+                <div class="col-12 col-sm-9">
+                    {{ template "race-card" $.Race }}
+                </div>
 
-                        {{ with $race.LoopServer }}
-                            {{ if index $race.LoopServer $serverID }}
-                                <i class="fas fa-play-circle"></i>
-                            {{ else }}
-                                <i class="far fa-play-circle"></i>
-                            {{ end }}
-                        {{ else }}
-                            <i class="far fa-play-circle"></i>
-                        {{ end }}
+                <div class="d-none d-sm-inline-block col-sm-3">
+                    <img class="img img-fluid ml-2 float-right image-track mb-2"
+                         src="/content/tracks/{{ $.Race.RaceConfig.Track }}/ui{{ with $.Race.RaceConfig.TrackLayout }}/{{.}}{{ end }}/preview.png"
+                         alt="{{ $.Race.RaceConfig.Track }} {{ $.Race.RaceConfig.TrackLayout }}"
+                    >
+                </div>
+            </div>
 
-                        {{ if WriteAccess }}
-                            </a>
-                        {{ end }}
-                    </td>
-                    <td class="align-middle">
-                        {{ template "race-card" $race }}
+            <div class="row">
+                <div class="col-12 mt-3">
+                    {{ if WriteAccess }}
+                        <div class="btn-group">
+                            <a class="btn btn-success" href="/custom/load/{{ $.Race.UUID.String }}">Start</a>
 
-                        <hr>
-                        <strong>Name:</strong> {{ $race.Name }}
+                            <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split popover-external-html" data-placement="bottom"
+                                    data-toggle="popover" title="Schedule Event" data-html="true"
+                                    id="schedule-{{ $.Race.UUID.String }}"
+                            ></button>
 
-                        {{ if $.ShowEventDetailsPopup }}
-                            <div class="float-right">
-                                <a class="btn btn-sm btn-info custom-race-details"
-                                   href="#"
-                                   data-race-id="{{ $race.UUID.String }}"
-                                >
-                                    Race Details
-                                </a>
+                            <div id="popover-content-schedule-{{ $.Race.UUID.String }}" style="display: none;">
+                                <form action="/custom/schedule/{{ $.Race.UUID.String }}" method="POST">
+                                    <div class="form-group">
+                                        <input type="date" class="form-control" name="event-schedule-date" id="event-schedule-date" required>
+                                        <input type="time" class="form-control" name="event-schedule-time" id="event-schedule-time" required>
+                                        <small class="form-text text-muted">
+                                            Please enter the correct date and time to add a scheduled event.
+                                            This date/time is in your timezone (<span class='timezone'></span>).
+                                        </small>
+
+                                        <label for="event-schedule-recurrence" class="col-form-label">Recurrence Rule</label>
+                                        <input type="text" class="form-control" name="event-schedule-recurrence" id="event-schedule-recurrence">
+
+                                        <small class="form-text text-muted">
+                                            Visit
+                                            <a target="_blank" href="https://www.textmagic.com/free-tools/rrule-generator">RRule Generator</a>
+                                            to generate a recurrence rule. Leave blank if not required. Only valid alongside scheduled time.
+                                        </small>
+
+                                        <input type="hidden" name="event-schedule-timezone" class="event-schedule-timezone">
+                                    </div>
+
+                                    <button type="submit" name="action" value="add" class="btn btn-sm btn-primary">Schedule</button>
+                                    <a href="/custom/schedule/{{ $.Race.UUID.String }}/remove" class="btn btn-sm btn-danger">
+                                        Remove Scheduled Event
+                                    </a>
+                                </form>
                             </div>
+                        </div>
 
-                            <div class="clearfix"></div>
-                        {{ end }}
-                    </td>
-                    <td class="align-middle">{{ timeFormat $race.Created }}<br> {{ dateFormat $race.Created }}</td>
-                    {{ if $writeAccess }}
-                        <td class="align-middle custom-race-actions">
-                            <div class="btn-group custom-race-actions-btn-group">
+                        <a class="btn btn-warning" href="/custom/edit/{{ $.Race.UUID.String }}">Edit</a>
+                        <a class="btn btn-primary" href="/custom/new?from={{ $.Race.UUID.String }}">Use as Template</a>
 
-                                <a class="btn btn-sm btn-success custom-race-actions-btn-big" href="/custom/load/{{ $race.UUID.String }}">Start Race</a>
-
-                                <button type="button" class="btn btn-success btn-sm custom-race-actions-btn-small dropdown-toggle dropdown-toggle-split popover-external-html" data-placement="bottom"
-                                        data-toggle="popover" title="Schedule Race" data-html="true"
-                                        id="schedule-{{ $race.UUID.String }}"
-                                ></button>
-
-                                <div id="popover-content-schedule-{{ $race.UUID.String }}" style="display: none;">
-                                    <form action='/custom/schedule/{{ $race.UUID.String }}' method='POST'>
-                                        <div class='form-group'>
-                                            <input type='date' class='form-control' name='event-schedule-date' id='event-schedule-date' required min=''>
-                                            <input type='time' class='form-control' name='event-schedule-time' id='event-schedule-time' required min=''>
-                                            <small class='form-text text-muted'>Please enter the correct date and time to add a scheduled race. This date/time is in your timezone (<span class='timezone'></span>).</small>
-
-                                            <label for="event-schedule-recurrence" class="col-form-label">Recurrence Rule</label>
-                                            <input type='text' class='form-control' name='event-schedule-recurrence' id='event-schedule-recurrence'>
-                                            <small class='form-text text-muted'>
-                                                Visit
-                                                <a target="_blank" href="https://www.textmagic.com/free-tools/rrule-generator">RRule Generator</a>
-                                                to generate a recurrence rule. Leave blank if not required. Only valid alongside scheduled time.
-                                            </small>
-                                            <input type='hidden' name="event-schedule-timezone" class="event-schedule-timezone">
-
-                                        </div>
-
-                                        <button type='submit' name='action' value='add' class='btn btn-sm btn-primary'>Schedule</button>
-                                        <a href='/custom/schedule/{{ $race.UUID.String }}/remove' class='btn btn-sm btn-danger'>Remove Scheduled Race</a>
-
-                                    </form>
-                                </div>
-                            </div>
-
-                            <a class="btn btn-sm btn-primary" href="/custom/new?from={{ $race.UUID.String }}">Use as Template</a>
-                            <a class="btn btn-sm btn-warning" href="/custom/edit/{{ $race.UUID.String }}">Edit Race</a>
+                        {{ if DeleteAccess }}
                             <a onClick="return confirm('I understand that this will delete this race setup permanently');"
-                               class="btn btn-sm btn-danger {{ if not DeleteAccess}}disabled{{ end }}"
-                               href="/custom/delete/{{ $race.UUID.String }}"
+                               class="btn btn-danger"
+                               href="/custom/delete/{{ $.Race.UUID.String }}"
                             >
                                 Delete
                             </a>
-                        </td>
+                        {{ end }}
                     {{ end }}
-                </tr>
-            {{ end }}
-        </table>
+
+
+                    {{ if $.ShowEventDetailsPopup }}
+                        <a class="btn btn-info custom-race-details"
+                           href="#"
+                           data-race-id="{{ $.Race.UUID.String }}"
+                        >
+                            Race Details
+                        </a>
+                    {{ end }}
+                </div>
+            </div>
+        </div>
     </div>
+{{ end }}
+
+{{ define "custom-race-list" }}
+    {{ range $index, $race := $.Race }}
+        {{ template "custom-race" dict "Race" $race "ServerID" $.ServerID "ShowEventDetailsPopup" $.ShowEventDetailsPopup }}
+    {{ end }}
 {{ end }}
 
 {{ define "content" }}
@@ -136,59 +166,68 @@
 
     {{ if WriteAccess }}
         <p>
-            Custom races are fully configurable events, once you have created a custom race you can Star it or add it to
+            Custom races are fully configurable events, once you have created a custom race you can star it or add it to
             the automatic race loop. You can use a custom race as a template for a new race, which will create a copy of the
             custom race, or edit the custom race directly. Custom races can be run quickly on the server using the start race
             button.
         </p>
     {{ end }}
 
-    <h2>Scheduled</h2>
+    <nav>
+        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+            <a class="nav-item nav-link active" id="nav-starred-tab" data-toggle="tab" href="#nav-starred" role="tab" aria-controls="nav-starred" aria-selected="true">Starred</a>
+            <a class="nav-item nav-link" id="nav-recent-tab" data-toggle="tab" href="#nav-recent" role="tab" aria-controls="nav-recent" aria-selected="false">Recent</a>
+            <a class="nav-item nav-link" id="nav-scheduled-tab" data-toggle="tab" href="#nav-scheduled" role="tab" aria-controls="nav-scheduled" aria-selected="false">Scheduled</a>
+            <a class="nav-item nav-link" id="nav-autoloop-tab" data-toggle="tab" href="#nav-autoloop" role="tab" aria-controls="nav-autoloop" aria-selected="false">Auto Loop</a>
+        </div>
+    </nav>
+    <div class="tab-content" id="nav-tabContent">
+        <div class="tab-pane fade show active" id="nav-starred" role="tabpanel" aria-labelledby="nav-starred-tab">
+            {{ if gt (len .Starred) 0 }}
+                {{ template "custom-race-list" dict "Race" .Starred "ServerID" .ServerID "ShowEventDetailsPopup" $.ShowEventDetailsPopup }}
+            {{ else if WriteAccess }}
+                <p class="text-center mt-5">You haven't starred any Custom Races yet. Star some using the table below!</p>
+            {{ else }}
+                <p class="text-center mt-5">There aren't any starred custom races yet!</p>
+            {{ end }}
+        </div>
+        <div class="tab-pane fade" id="nav-recent" role="tabpanel" aria-labelledby="nav-recent-tab">
+            {{ if gt (len .Recent) 0 }}
+                {{ template "custom-race-list" dict "Race" .Recent "ServerID" .ServerID "ShowEventDetailsPopup" $.ShowEventDetailsPopup }}
+            {{ else if WriteAccess }}
+                <p class="text-center mt-5">We couldn't find any recent races. Perhaps you should <a href="/custom/new">create one now</a>?</p>
+            {{ else }}
+                <p class="text-center mt-5">We couldn't find any recent races.</p>
+            {{ end }}
+        </div>
+        <div class="tab-pane fade" id="nav-scheduled" role="tabpanel" aria-labelledby="nav-scheduled-tab">
+            {{ if gt (len .Scheduled) 0 }}
+                {{ template "custom-race-list" dict "Race" .Scheduled "ServerID" .ServerID "ShowEventDetailsPopup" $.ShowEventDetailsPopup }}
+            {{ else if WriteAccess }}
+                <p class="text-center mt-5">You haven't scheduled any races!</p>
+            {{ else }}
+                <p class="text-center mt-5">There are no scheduled races.</p>
+            {{ end }}
+        </div>
+        <div class="tab-pane fade" id="nav-autoloop" role="tabpanel" aria-labelledby="nav-autoloop-tab">
+            {{ if gt (len .Loop) 0 }}
+                <p class="mt-3">
+                    These custom races will be looped on the server whilst it is inactive! Auto loop races will only
+                    work if allowed to start automatically, please don't manually start these events if you want them to loop!
+                </p>
 
-    {{ if gt (len .Scheduled) 0 }}
-        {{ template "custom-race-table" dict "Race" .Scheduled "ServerID" .ServerID "ShowEventDetailsPopup" $.ShowEventDetailsPopup }}
-    {{ else if WriteAccess }}
-        <p class="text-center">You haven't scheduled any races!</p>
-    {{ else }}
-        <p class="text-center">There are no scheduled races.</p>
-    {{ end }}
+                {{ template "custom-race-list" dict "Race" .Loop "ServerID" .ServerID "ShowEventDetailsPopup" $.ShowEventDetailsPopup }}
+            {{ else if WriteAccess }}
+                <p class="text-center mt-5">
+                    No custom races have been added to the auto loop list yet! Use the play icon to add a race to the loop.
+                    Any added races will loop on the server whilst it is inactive!
+                </p>
+            {{ else }}
+                <p class="text-center mt-5">There aren't any looping custom races yet!</p>
+            {{ end }}
+        </div>
+    </div>
 
-    <h2>Starred</h2>
-
-    {{ if gt (len .Starred) 0 }}
-        {{ template "custom-race-table" dict "Race" .Starred "ServerID" .ServerID "ShowEventDetailsPopup" $.ShowEventDetailsPopup }}
-    {{ else if WriteAccess }}
-        <p class="text-center">You haven't starred any Custom Races yet. Star some using the table below!</p>
-    {{ else }}
-        <p class="text-center">There aren't any starred custom races yet!</p>
-    {{ end }}
-
-    <h2>Auto Loop</h2>
-
-    {{ if gt (len .Loop) 0 }}
-        {{ template "custom-race-table" dict "Race" .Loop "ServerID" .ServerID "ShowEventDetailsPopup" $.ShowEventDetailsPopup }}
-        <p class="text-center">
-            These custom races will be looped on the server whilst it is inactive! Auto loop races will only
-            work if allowed to start automatically, please don't manually start these events if you want them to loop!
-        </p>
-    {{ else if WriteAccess }}
-        <p class="text-center">
-            No custom races have been added to the auto loop list yet! Use the play icon to add a race to the loop.
-            Any added races will loop on the server whilst it is inactive!
-        </p>
-    {{ else }}
-        <p class="text-center">There aren't any looping custom races yet!</p>
-    {{ end }}
-
-    <h2>Recent</h2>
-
-    {{ if gt (len .Recent) 0 }}
-        {{ template "custom-race-table" dict "Race" .Recent "ServerID" .ServerID "ShowEventDetailsPopup" $.ShowEventDetailsPopup }}
-    {{ else if WriteAccess }}
-        <p class="text-center">We couldn't find any recent races. Perhaps you should <a href="/custom/new">create one now</a>?</p>
-    {{ else }}
-        <p class="text-center">We couldn't find any recent races.</p>
-    {{ end }}
 
     <div class="modal" tabindex="-1" role="dialog" id="race-details-modal">
         <!-- content controlled by js -->

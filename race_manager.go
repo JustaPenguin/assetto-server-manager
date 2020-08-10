@@ -1114,7 +1114,7 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*
 	}
 
 	sort.Slice(recent, func(i, j int) bool {
-		return recent[i].Created.After(recent[j].Created)
+		return recent[i].Updated.After(recent[j].Updated)
 	})
 
 	var filteredRecent []*CustomRace
@@ -1448,11 +1448,11 @@ func (rm *RaceManager) ToggleStarCustomRace(uuid string) error {
 	return rm.store.UpsertCustomRace(race)
 }
 
-func (rm *RaceManager) ToggleLoopCustomRace(uuid string) error {
+func (rm *RaceManager) ToggleLoopCustomRace(uuid string) (bool, error) {
 	race, err := rm.store.FindCustomRaceByID(uuid)
 
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if race.LoopServer == nil {
@@ -1461,7 +1461,7 @@ func (rm *RaceManager) ToggleLoopCustomRace(uuid string) error {
 
 	race.LoopServer[serverID] = !race.LoopServer[serverID]
 
-	return rm.store.UpsertCustomRace(race)
+	return race.LoopServer[serverID], rm.store.UpsertCustomRace(race)
 }
 
 func (rm *RaceManager) SaveServerOptions(newServerOpts *GlobalServerConfig) error {

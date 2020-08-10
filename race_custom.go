@@ -387,16 +387,23 @@ func (crh *CustomRaceHandler) star(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	AddFlash(w, r, "Custom race starred")
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
 func (crh *CustomRaceHandler) loop(w http.ResponseWriter, r *http.Request) {
-	err := crh.raceManager.ToggleLoopCustomRace(chi.URLParam(r, "uuid"))
+	loopStatus, err := crh.raceManager.ToggleLoopCustomRace(chi.URLParam(r, "uuid"))
 
 	if err != nil {
 		logrus.WithError(err).Errorf("couldn't add custom race to loop")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
+	}
+
+	if loopStatus {
+		AddFlash(w, r, "Custom race added to loop")
+	} else {
+		AddFlash(w, r, "Custom race removed from loop")
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)

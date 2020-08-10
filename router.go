@@ -177,6 +177,9 @@ func Router(
 		FileServer(r, "/content", http.Dir(filepath.Join(ServerInstallPath, "content")), true)
 		FileServer(r, "/setups/download", http.Dir(filepath.Join(ServerInstallPath, "setups")), true)
 
+		r.Get("/content/tracks/{track}/ui/preview.png", tracksHandler.trackImage)
+		r.Get("/content/tracks/{track}/ui/{layout}/preview.png", tracksHandler.trackImage)
+
 		// race weekends
 		r.Get("/race-weekends", raceWeekendHandler.list)
 		r.Get("/race-weekend/{raceWeekendID}", raceWeekendHandler.view)
