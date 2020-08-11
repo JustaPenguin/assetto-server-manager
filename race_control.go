@@ -1144,7 +1144,7 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 }
 
 const (
-	chatMessageLimit = 50
+	chatMessageLimit  = 50
 	chatCommandPrefix = "/"
 )
 
