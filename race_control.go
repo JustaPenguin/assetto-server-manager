@@ -1143,9 +1143,16 @@ func (rc *RaceControl) OnLapCompleted(lap udp.LapCompleted) error {
 	return nil
 }
 
-const chatMessageLimit = 50
+const (
+	chatMessageLimit  = 50
+	chatCommandPrefix = "/"
+)
 
 func (rc *RaceControl) OnChatMessage(chat udp.Chat) error {
+	if strings.HasPrefix(chat.Message, chatCommandPrefix) {
+		return nil
+	}
+
 	_, err := rc.broadcaster.Send(chat)
 
 	if err != nil {

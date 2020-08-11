@@ -22,6 +22,7 @@ Fixed:
 * Chat messages displayed on the Live Timings page will now show the correct timestamp for messages sent by drivers on the server.
 * Race session wait time should now be included in live timings session time
 * Fixes an issue where signed up Championship Entrants would show as 'Unranked' in ACSR.
+* Commands (anything starting with a /) will no longer be displayed in the Live Timings chat window.
 
 ---
 
