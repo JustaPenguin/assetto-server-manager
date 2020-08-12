@@ -50,6 +50,7 @@ import {faShieldAlt} from "@fortawesome/free-solid-svg-icons/faShieldAlt"
 import {faVideo} from "@fortawesome/free-solid-svg-icons/faVideo";
 import {faScroll} from "@fortawesome/free-solid-svg-icons/faScroll"
 import {faRedoAlt} from "@fortawesome/free-solid-svg-icons/faRedoAlt";
+import {faClock} from "@fortawesome/free-solid-svg-icons/faClock";
 
 library.add(
     faUser,
@@ -101,6 +102,7 @@ library.add(
     faVideo,
     faScroll,
     faRedoAlt,
+    faClock,
 );
 
 dom.watch();

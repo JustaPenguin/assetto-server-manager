@@ -14,6 +14,7 @@ Added:
 * Track images now show the track map in the bottom right corner.
 * New lua plugin file (race-control.lua) containing onChat function which is called whenever a chat message is sent in-game, from the live timings page or from a lua script
 * (Multiserver) Events across all servers will now be shown on the Calendar, events on other servers will be marked as so. 
+* Events using "Any Available Car" now split the car types evenly between the number of entrants.
 
 Fixed:
 

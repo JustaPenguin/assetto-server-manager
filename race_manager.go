@@ -249,22 +249,15 @@ func (rm *RaceManager) applyConfigAndStart(event RaceEvent) error {
 		return err
 	}
 
-	// any available car should make sure you have one of each before randomising (#678)
-	for _, car := range finalCars {
-		for _, entrant := range entryList {
-			if entrant.Model == AnyCarModel {
-				entrant.Model = car
-				entrant.Skin = rm.carManager.RandomSkin(entrant.Model)
-				break
-			}
-		}
-	}
+	numEntrantsWithAnyCar := 0
 
 	for _, entrant := range entryList {
 		if entrant.Model == AnyCarModel {
 			// cars with 'any car model' become random in the entry list.
-			entrant.Model = finalCars[rand.Intn(len(finalCars))]
+			entrant.Model = finalCars[numEntrantsWithAnyCar%len(finalCars)]
 			entrant.Skin = rm.carManager.RandomSkin(entrant.Model)
+
+			numEntrantsWithAnyCar++
 		}
 	}
 
