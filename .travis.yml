@@ -1,6 +1,6 @@
 language: go
 go:
-  - 1.14
+  - 1.15
 
 services:
   - docker
@@ -40,3 +40,5 @@ deploy:
   - provider: script
     script: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD && VERSION=${TRAVIS_TAG} make docker
     skip_cleanup: true
+    on:
+      tags: true

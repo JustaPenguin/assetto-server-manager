@@ -1,4 +1,4 @@
-FROM golang:1.14 AS build
+FROM golang:1.15 AS build
 
 ARG SM_VERSION
 ENV DEBIAN_FRONTEND noninteractive
