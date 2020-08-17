@@ -24,6 +24,7 @@ Fixed:
 * Race session wait time should now be included in live timings session time
 * Fixes an issue where signed up Championship Entrants would show as 'Unranked' in ACSR.
 * Commands (anything starting with a /) will no longer be displayed in the Live Timings chat window.
+* The Live Timings timer will now show the number of days remaining in an event if it is longer than a day.
 
 ---
 
