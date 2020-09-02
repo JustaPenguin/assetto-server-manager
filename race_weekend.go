@@ -73,9 +73,13 @@ func (rw *RaceWeekend) CompletedTime() time.Time {
 func (rw *RaceWeekend) Duplicate() (*RaceWeekend, error) {
 	buf := new(bytes.Buffer)
 
+	x := *rw
+	// make the championship nil so we don't get an infinite loop calling gob.Encode
+	x.Championship = nil
+
 	var newRaceWeekend RaceWeekend
 
-	if err := gob.NewEncoder(buf).Encode(rw); err != nil {
+	if err := gob.NewEncoder(buf).Encode(x); err != nil {
 		return nil, err
 	}
 
