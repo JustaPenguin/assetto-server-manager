@@ -227,6 +227,12 @@ func (a *ACSRClient) GetRanges() ([]*ACSRRatingRanges, error) {
 func cloneChampionship(c Championship) (out Championship, err error) {
 	buf := new(bytes.Buffer)
 
+	for _, event := range c.Events {
+		if event.IsRaceWeekend() {
+			event.RaceWeekend.Championship = nil
+		}
+	}
+
 	err = gob.NewEncoder(buf).Encode(c)
 
 	if err != nil {
