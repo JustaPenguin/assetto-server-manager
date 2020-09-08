@@ -15,7 +15,7 @@ require (
 	github.com/bwmarrin/discordgo v0.20.2
 	github.com/certifi/gocertifi v0.0.0-20200104152315-a6d78f326758 // indirect
 	github.com/cj123/caldav-go v0.0.0-20191202141705-5d30c27975e9
-	github.com/cj123/formulate v0.0.0-20200629122111-50d9427874c0
+	github.com/cj123/formulate v0.0.0-20200906120731-1cd9cd8fdf1d
 	github.com/cj123/ini v1.44.0
 	github.com/cj123/sessions v1.1.5
 	github.com/cj123/watcher v1.0.9
@@ -77,7 +77,7 @@ require (
 	github.com/yuin/gopher-lua v0.0.0-20191220021717-ab39c6098bdb
 	go.etcd.io/bbolt v1.3.2 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/net v0.0.0-20200822124328-c89045814202
+	golang.org/x/net v0.0.0-20200904194848-62affa334b73
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	golang.org/x/text v0.3.2
 	golang.org/x/tools v0.0.0-20200904140424-93eecc3576be // indirect
