@@ -171,7 +171,7 @@ type GlobalServerConfig struct {
 	KickQuorum                int                  `ini:"KICK_QUORUM" help:"Percentage that is required for the kick vote to pass"`
 	VotingQuorum              int                  `ini:"VOTING_QUORUM" min:"0" help:"Percentage that is required for the session vote to pass"`
 	VoteDuration              int                  `ini:"VOTE_DURATION" min:"0" help:"Vote length in seconds"`
-	BlacklistMode             int                  `ini:"BLACKLIST_MODE" min:"0" max:"2" help:"0 = normal kick, kicked player can rejoin; 1 = kicked player cannot rejoin until server restart; 2 = kick player and add to blacklist.txt, kicked player can not rejoin unless removed from blacklist (Better to use ban_id command rather than set this)."`
+	BlacklistMode             BlockListMode        `ini:"BLACKLIST_MODE" name:"BlockList mode" help:"How to handle blocklisting of players."`
 	NumberOfThreads           int                  `ini:"NUM_THREADS" show:"open" min:"1" help:"Number of threads to run on"`
 	WelcomeMessage            string               `ini:"WELCOME_MESSAGE" show:"-" help:"Path to the file that contains the server welcome message"`
 
@@ -184,7 +184,7 @@ type GlobalServerConfig struct {
 	AssettoCorsaSkillRating FormHeading `ini:"-" json:"-" show:"premium"`
 	EnableACSR              bool        `ini:"-" show:"premium" help:"Enable ACSR integration. <a href='https://acsr.assettocorsaservers.com'>You can read more about ACSR here</a>."`
 	ACSRAccountID           string      `ini:"-" show:"premium" help:"Your ACSR account ID. You can <a href='https://acsr.assettocorsaservers.com/account'>request an ACSR key here</a>."`
-	ACSRAPIKey              string      `ini:"-" show:"premium" help:"Your ACSR API Key. You can <a href='https://acsr.assettocorsaservers.com/account'>request an ACSR key here</a>."`
+	ACSRAPIKey              string      `ini:"-" show:"premium" name:"ACSR API Key" help:"Your ACSR API Key. You can <a href='https://acsr.assettocorsaservers.com/account'>request an ACSR key here</a>."`
 
 	ServerName                FormHeading          `ini:"-" json:"-"`
 	ShowRaceNameInServerLobby formulate.BoolNumber `ini:"-" help:"When on, this option will make Server Manager append the Custom Race or Championship name to the Server name in the lobby."`
@@ -268,6 +268,35 @@ func (s StartRule) String() string {
 
 	return ""
 }
+
+type BlockListMode uint8
+
+func (b BlockListMode) SelectMultiple() bool {
+	return false
+}
+
+func (b BlockListMode) SelectOptions() []formulate.Option {
+	return []formulate.Option{
+		{
+			Value: BlockListModeNormalKick,
+			Label: "Normal kick, player can rejoin",
+		},
+		{
+			Value: BlockListModeNoRejoin,
+			Label: "Kicked player cannot rejoin until server restart",
+		},
+		{
+			Value: BlockListModeAddToList,
+			Label: "Kick player and add to blacklist.txt, kicked player can not rejoin unless removed from blacklist",
+		},
+	}
+}
+
+const (
+	BlockListModeNormalKick BlockListMode = 0
+	BlockListModeNoRejoin   BlockListMode = 1
+	BlockListModeAddToList  BlockListMode = 2
+)
 
 type CurrentRaceConfig struct {
 	Cars                      string        `ini:"CARS" show:"quick" input:"multiSelect" formopts:"CarOpts" help:"Models of cars allowed in the server"`

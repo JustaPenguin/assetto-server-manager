@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"runtime"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -27,8 +28,10 @@ func NewServerClient(addr string, receivePort, sendPort int, forward bool, forwa
 		return nil, err
 	}
 
-	if err := listener.SetReadBuffer(1e8); err != nil {
-		logrus.WithError(err).Error("unable to set read buffer")
+	if runtime.GOOS != "darwin" {
+		if err := listener.SetReadBuffer(1e8); err != nil {
+			logrus.WithError(err).Error("unable to set read buffer")
+		}
 	}
 
 	ctx, cfn := context.WithCancel(context.Background())
@@ -41,7 +44,7 @@ func NewServerClient(addr string, receivePort, sendPort int, forward bool, forwa
 		listener: listener,
 	}
 
-	if forward {
+	if forward && forwardAddrStr != "" && forwardListenPort != 0 {
 		forwardAddr, err := net.ResolveUDPAddr("udp", forwardAddrStr)
 
 		if err != nil {
@@ -640,7 +643,7 @@ func (asu *AssettoServerUDP) handleMessage(r io.Reader) (Message, error) {
 		}
 
 		fmt.Println("Unknown response type", eventType)
-		fmt.Println(buf.String())
+		fmt.Printf("%x\n", buf)
 
 		return nil, errors.New("unknown response type")
 	}
