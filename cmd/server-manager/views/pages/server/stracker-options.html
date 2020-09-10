@@ -1,14 +1,19 @@
 {{/* gotype: github.com/JustaPenguin/assetto-server-manager.strackerConfigurationTemplateVars*/}}
 
-{{ define "title" }}STracker Options{{ end }}
+{{ define "title" }}sTracker Options{{ end }}
 
 {{ define "content" }}
-    <h1 class="text-center">STracker Options</h1>
+    <h1 class="text-center">sTracker Options</h1>
 
     <p>
-        <a href="https://www.racedepartment.com/downloads/stracker.3510/">STracker</a> is the popular server side app
-        companion to <a href="https://www.racedepartment.com/downloads/ptracker.3509/">PTracker</a>, for lap and race
-        tracking.
+        <a href="https://www.racedepartment.com/downloads/stracker.3510/">sTracker</a> is the popular server side app
+        companion to <a href="https://www.racedepartment.com/downloads/ptracker.3509/">pTracker</a>, for lap and race
+        tracking.<br><br>
+
+        <em>sTracker is not developed or maintained by
+        {{ if $.IsHosted }}Emperor Servers{{ else }}the Server Manager authors{{ end }}.
+        If you have questions related to the operation of the sTracker tool itself, please ask on the
+            <a href="https://www.racedepartment.com/threads/stracker.93956/">sTracker support thread</a>.</em>
     </p>
 
     {{ if .IsStrackerInstalled }}
