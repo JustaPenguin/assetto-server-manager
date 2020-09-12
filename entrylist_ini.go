@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -319,10 +320,26 @@ func (e *Entrant) AsSessionResult() *SessionResult {
 	}
 }
 
+var guidCleanupRegex = regexp.MustCompile(`[^0-9]+`)
+
+func CleanGUIDs(guids []string) []string {
+	var cleaned []string
+
+	for _, guid := range guids {
+		g := guidCleanupRegex.ReplaceAllLiteralString(guid, "")
+
+		if len(g) > 0 {
+			cleaned = append(cleaned, g)
+		}
+	}
+
+	return cleaned
+}
+
 // NormaliseEntrantGUID takes a guid which may have driverSwapEntrantSeparators in it,
 // sorts all GUIDs in the string and then rejoins them by driverSwapEntrantSeparator
 func NormaliseEntrantGUID(guid string) string {
-	split := strings.Split(guid, driverSwapEntrantSeparator)
+	split := CleanGUIDs(strings.Split(guid, driverSwapEntrantSeparator))
 
 	sort.Strings(split)
 
@@ -331,6 +348,8 @@ func NormaliseEntrantGUID(guid string) string {
 
 // NormaliseEntrantGUIDs takes a list of guids, sorts them and joins them by driverSwapEntrantSeparator
 func NormaliseEntrantGUIDs(guids []string) string {
+	guids = CleanGUIDs(guids)
+
 	sort.Strings(guids)
 
 	return strings.Join(guids, driverSwapEntrantSeparator)
