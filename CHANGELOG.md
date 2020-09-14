@@ -27,6 +27,7 @@ Fixed:
 * The Live Timings timer will now show the number of days remaining in an event if it is longer than a day.
 * Fixes an issue where duplicating a Race Weekend in a Championship could cause Server Manager to crash.
 * Fixes an issue where decimal values could not be modified in Real Penalty Options.
+* Race Weekend sessions with multiple parents now filter out any duplicate entrants, keeping the entrant with the lowest sort position.
 
 ---
 
