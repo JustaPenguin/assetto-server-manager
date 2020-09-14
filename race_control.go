@@ -233,6 +233,11 @@ func (rc *RaceControl) watchForTimedOutDrivers() {
 func (rc *RaceControl) OnVersion(version udp.Version) error {
 	go panicCapture(rc.requestSessionInfo)
 
+	// clear chat messages on new server start
+	rc.ChatMessagesMutex.Lock()
+	rc.ChatMessages = []udp.Chat{}
+	rc.ChatMessagesMutex.Unlock()
+
 	_, err := rc.broadcaster.Send(version)
 
 	return err
