@@ -1095,7 +1095,7 @@ func (rm *RaceManager) BuildRaceOpts(r *http.Request) (*RaceTemplateVars, error)
 	return opts, nil
 }
 
-const maxRecentRaces = 30
+const maxRecentRaces = 40
 
 func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*CustomRace, err error) {
 	recent, err = rm.store.ListCustomRaces()
@@ -1109,8 +1109,6 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*
 	sort.Slice(recent, func(i, j int) bool {
 		return recent[i].Updated.After(recent[j].Updated)
 	})
-
-	var filteredRecent []*CustomRace
 
 	for _, race := range recent {
 		if race.IsLooping() {
@@ -1142,17 +1140,13 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*
 		if race.Scheduled.After(time.Now()) && race.ScheduledServerID == serverID {
 			scheduled = append(scheduled, race)
 		}
-
-		if !race.Starred && !race.IsLooping() && !race.Scheduled.After(time.Now()) {
-			filteredRecent = append(filteredRecent, race)
-		}
 	}
 
-	if len(filteredRecent) > maxRecentRaces {
-		filteredRecent = filteredRecent[:maxRecentRaces]
+	if len(recent) > maxRecentRaces {
+		recent = recent[:maxRecentRaces]
 	}
 
-	return filteredRecent, starred, looped, scheduled, nil
+	return recent, starred, looped, scheduled, nil
 }
 
 func (rm *RaceManager) SaveEntrantsForAutoFill(entryList EntryList) error {
