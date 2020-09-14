@@ -877,10 +877,25 @@ func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, override
 			return nil, err
 		}
 
+		var finalEntryList RaceWeekendEntryList
+		existingGUIDs := make(map[string]bool)
+
+		// filter out duplicate entrants, keeping their highest ranking in the entry list
+		for _, entrant := range entryList {
+			if _, guidAlreadyInEntryList := existingGUIDs[entrant.Car.GetGUID()]; guidAlreadyInEntryList {
+				continue
+			}
+
+			finalEntryList = append(finalEntryList, entrant)
+			existingGUIDs[entrant.Car.GetGUID()] = true
+		}
+
 		// amend pitboxes post-sort
-		for i, entrant := range entryList {
+		for i, entrant := range finalEntryList {
 			entrant.PitBox = i
 		}
+
+		entryList = finalEntryList
 	}
 
 	return entryList, nil
