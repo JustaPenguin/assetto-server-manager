@@ -1,11 +1,16 @@
 package servermanager
 
 import (
+	"archive/zip"
+	"fmt"
 	"html/template"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -107,4 +112,54 @@ func (rph *RealPenaltyHandler) options(w http.ResponseWriter, r *http.Request) {
 		IsRealPenaltyInstalled:      IsRealPenaltyInstalled(),
 		RealPenaltySupportedVersion: RealPenaltySupportedVersion,
 	})
+}
+
+func (rph *RealPenaltyHandler) downloadLogs(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Disposition", fmt.Sprintf(`attachment;filename="realpenalty_logs_%s.zip"`, time.Now().Format("2006-01-02_15_04")))
+	w.Header().Set("Content-Type", "application/zip")
+
+	if err := rph.buildLogZip(w); err != nil {
+		logrus.WithError(err).Errorf("Could not create real penalty log zip")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (rph *RealPenaltyHandler) buildLogZip(w io.Writer) error {
+	z := zip.NewWriter(w)
+	defer z.Close()
+
+	logFiles, err := ioutil.ReadDir(filepath.Join(RealPenaltyFolderPath(), "logs"))
+
+	if err != nil {
+		return err
+	}
+
+	for _, file := range logFiles {
+		if err := rph.writeRealPenaltyLogFileToZip(z, file); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (rph *RealPenaltyHandler) writeRealPenaltyLogFileToZip(z *zip.Writer, info os.FileInfo) error {
+	zf, err := z.Create(info.Name())
+
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Open(filepath.Join(filepath.Join(RealPenaltyFolderPath(), "logs"), info.Name()))
+
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	_, err = io.Copy(zf, f)
+
+	return err
 }
