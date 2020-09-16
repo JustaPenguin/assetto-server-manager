@@ -348,6 +348,7 @@ func Router(
 		r.HandleFunc("/stracker/options", strackerHandler.options)
 		r.HandleFunc("/kissmyrank/options", kissMyRankHandler.options)
 		r.HandleFunc("/realpenalty/options", realPenaltyHandler.options)
+		r.HandleFunc("/realpenalty/logs", realPenaltyHandler.downloadLogs)
 	})
 
 	FileServer(r, "/static", fs, false)

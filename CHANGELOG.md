@@ -15,6 +15,7 @@ Added:
 * New lua plugin file (race-control.lua) containing onChat function which is called whenever a chat message is sent in-game, from the live timings page or from a lua script
 * (Multiserver) Events across all servers will now be shown on the Calendar, events on other servers will be marked as so. 
 * Events using "Any Available Car" now split the car types evenly between the number of entrants.
+* Added a "Download Logs" button to the Real Penalty Options page. You can use this to view logs from your previous Real Penalty sessions, including the penalties applied by the tool.
 
 Fixed:
 
@@ -28,6 +29,7 @@ Fixed:
 * Fixes an issue where duplicating a Race Weekend in a Championship could cause Server Manager to crash.
 * Fixes an issue where decimal values could not be modified in Real Penalty Options.
 * Fixes an issue where scheduled Championship Race Weekends could cause excessive CPU load when rendering the calendar.
+* Race Weekend sessions with multiple parents now filter out any duplicate entrants, keeping the entrant with the lowest sort position.
 
 ---
 
