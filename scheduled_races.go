@@ -193,7 +193,7 @@ func (srm *ScheduledRacesManager) getScheduledRaces(forAllServers bool) ([]Sched
 	}
 
 	for _, championship := range championships {
-		for _, event := range championship.Events {
+		for _, event := range ExtractRaceWeekendSessionsIntoIndividualEvents(championship.Events) {
 			if event.Scheduled.IsZero() || (!forAllServers && event.ScheduledServerID != serverID) {
 				continue
 			}
@@ -211,12 +211,7 @@ func (srm *ScheduledRacesManager) getScheduledRaces(forAllServers bool) ([]Sched
 
 	for _, raceWeekend := range raceWeekends {
 		if raceWeekend.HasLinkedChampionship() {
-			raceWeekend.Championship, err = srm.store.LoadChampionship(raceWeekend.ChampionshipID.String())
-
-			if err != nil {
-				logrus.WithError(err).Warnf("Could not load linked Championship for Race Weekend")
-				continue
-			}
+			continue // they'll be picked up from championship events
 		}
 
 		for _, session := range raceWeekend.Sessions {
