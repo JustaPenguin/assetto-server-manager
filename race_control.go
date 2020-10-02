@@ -624,8 +624,13 @@ func (rc *RaceControl) OnClientConnect(client udp.SessionCarInfo) error {
 		logrus.Debugf("Driver %s (%s) reconnected in %s (car id: %d)", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID, driver.CarInfo.CarModel, client.CarID)
 		rc.DisconnectedDrivers.Del(client.DriverGUID)
 	} else {
-		driver = NewRaceControlDriver(client)
-		logrus.Debugf("Driver %s (%s) connected in %s (car id: %d)", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID, driver.CarInfo.CarModel, client.CarID)
+		if connectedDriver, ok := rc.ConnectedDrivers.Get(client.DriverGUID); ok {
+			driver = connectedDriver
+			logrus.Debugf("Driver %s (%s) reconnected (but was already connected...) in %s (car id: %d)", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID, driver.CarInfo.CarModel, client.CarID)
+		} else {
+			driver = NewRaceControlDriver(client)
+			logrus.Debugf("Driver %s (%s) connected in %s (car id: %d)", driver.CarInfo.DriverName, driver.CarInfo.DriverGUID, driver.CarInfo.CarModel, client.CarID)
+		}
 	}
 
 	driver.mutex.Lock()
