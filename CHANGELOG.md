@@ -4,6 +4,7 @@ v1.7.9
 Fixed:
 
 * Fixes an issue where Live Timings lap counts could reset if a driver does not cleanly disconnect from the Assetto Corsa Server.
+* Fixes an issue where Real Penalty config values for Jump Start would not be assigned correctly.
 
 ---
 
