@@ -345,11 +345,11 @@ type RealPenaltySettingsJumpStart struct {
 	PenaltyType0       string `ini:"PENALTY_TYPE_0" help:"Penalty type for jump start. Don't set seconds penalty! dt = drive through, sgn = stop and go n seconds, dsq = disqualification --> kick"`
 	SpeedLimitPenalty0 int    `ini:"SPEED_LIMIT_PENALTY_0" help:""`
 
-	PenaltyType1       string `ini:"PENALTY_TYPE_0" help:""`
-	SpeedLimitPenalty1 int    `ini:"SPEED_LIMIT_PENALTY_0" help:"Penalty type for jump start. Don't set seconds penalty! dt = drive through, sgn = stop and go n seconds, dsq = disqualification --> kick"`
+	PenaltyType1       string `ini:"PENALTY_TYPE_1" help:""`
+	SpeedLimitPenalty1 int    `ini:"SPEED_LIMIT_PENALTY_1" help:"Penalty type for jump start. Don't set seconds penalty! dt = drive through, sgn = stop and go n seconds, dsq = disqualification --> kick"`
 
-	PenaltyType2       string `ini:"PENALTY_TYPE_0" help:""`
-	SpeedLimitPenalty2 int    `ini:"SPEED_LIMIT_PENALTY_0" help:"Penalty type for jump start. Don't set seconds penalty! dt = drive through, sgn = stop and go n seconds, dsq = disqualification --> kick"`
+	PenaltyType2       string `ini:"PENALTY_TYPE_2" help:""`
+	SpeedLimitPenalty2 int    `ini:"SPEED_LIMIT_PENALTY_2" help:"Penalty type for jump start. Don't set seconds penalty! dt = drive through, sgn = stop and go n seconds, dsq = disqualification --> kick"`
 }
 
 type RealPenaltySettingsDRS struct {
