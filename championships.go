@@ -1043,7 +1043,7 @@ func (c *Championship) AttachClassIDToResults(results *SessionResults) {
 
 func (c *ChampionshipClass) ResultsForClass(results []*SessionResult, championship *Championship) (filtered []*SessionResult) {
 	for _, result := range results {
-		if c.DriverInClass(result) && result.TotalTime > 0 && result.DriverGUID != championship.SpectatorCar.GUID {
+		if c.DriverInClass(result) && result.TotalTime > 0 && (!championship.SpectatorCarEnabled || result.DriverGUID != championship.SpectatorCar.GUID) {
 			filtered = append(filtered, result)
 		}
 	}
