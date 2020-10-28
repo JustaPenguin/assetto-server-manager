@@ -6,6 +6,7 @@ Fixed:
 * Fixes an issue where Live Timings lap counts could reset if a driver does not cleanly disconnect from the Assetto Corsa Server.
 * Fixes an issue where Real Penalty config values for Jump Start would not be assigned correctly.
 * The Spectator Car will only be filtered out from Championship Points calculations if Spectator Car is enabled in the Championship settings.
+* Fixes an issue where cars could be duplicated in race setups
 
 ---
 
