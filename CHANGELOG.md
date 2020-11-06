@@ -7,6 +7,7 @@ Fixed:
 * Fixes an issue where Real Penalty config values for Jump Start would not be assigned correctly.
 * The Spectator Car will only be filtered out from Championship Points calculations if Spectator Car is enabled in the Championship settings.
 * Fixes an issue where cars could be duplicated in race setups
+* Fixes a crash that could occur when displaying information about a track.
 
 ---
 
