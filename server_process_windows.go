@@ -4,7 +4,6 @@ package servermanager
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/exec"
 )
