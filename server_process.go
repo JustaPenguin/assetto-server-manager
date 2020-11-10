@@ -162,7 +162,7 @@ func (sp *AssettoServerProcess) Stop() error {
 		}
 	}
 
-	timeout := time.After(time.Second * 10)
+	timeout := time.After(time.Second * 60)
 	errCh := make(chan error)
 
 	go func() {
