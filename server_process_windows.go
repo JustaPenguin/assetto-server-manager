@@ -4,6 +4,7 @@ package servermanager
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 )
@@ -20,7 +21,8 @@ func terminate(ps *os.Process) error {
 }
 
 func kill(ps *os.Process) error {
-	return ps.Kill()
+	// Process.Kill() is unreliable for Windows.  Use less aesthetic but reliable method...
+	return exec.Command("TASKKILL", "/T", "/F", "/PID", fmt.Sprintf("%d", ps.Pid)).Run()
 }
 
 func buildCommand(ctx context.Context, command string, args ...string) *exec.Cmd {
