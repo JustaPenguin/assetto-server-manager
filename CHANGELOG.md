@@ -8,6 +8,7 @@ Fixed:
 * The Spectator Car will only be filtered out from Championship Points calculations if Spectator Car is enabled in the Championship settings.
 * Fixes an issue where cars could be duplicated in race setups
 * Fixes a crash that could occur when displaying information about a track.
+* Fixes an issue where multiservers could omit scanning new cars if they were added in groups, rather than one at once. If your server is missing cars in the car list, please "Rebuild Search Index" on the Server Options page!
 
 ---
 
