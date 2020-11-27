@@ -372,7 +372,7 @@ func (r *Resolver) resolveContentUploadHandler() *ContentUploadHandler {
 		return r.contentUploadHandler
 	}
 
-	r.contentUploadHandler = NewContentUploadHandler(r.resolveBaseHandler(), r.resolveCarManager())
+	r.contentUploadHandler = NewContentUploadHandler(r.resolveBaseHandler(), r.resolveCarManager(), r.resolveTrackManager())
 
 	return r.contentUploadHandler
 }

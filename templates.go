@@ -424,6 +424,13 @@ func trackInfo(track, layout string) *TrackInfo {
 	return t
 }
 
+func clearFromTrackInfoCache(track, layout string) {
+	trackInfoCacheMutex.Lock()
+	defer trackInfoCacheMutex.Unlock()
+
+	delete(trackInfoCache, track+layout)
+}
+
 func multiplyFloats(a, b float64) float64 {
 	return a * b
 }
