@@ -260,6 +260,10 @@ func (th *TracksHandler) delete(w http.ResponseWriter, r *http.Request) {
 				logrus.WithError(err).Errorf("could not remove track files")
 			}
 
+			for _, layout := range track.Layouts {
+				clearFromTrackInfoCache(track.Name, layout)
+			}
+
 			break
 		}
 	}
