@@ -43,7 +43,9 @@
     "randomcolor": "^0.5.4",
     "reconnecting-websocket": "^4.2.0",
     "rrule": "^2.6.4",
-    "summernote": "^0.8.15"
+    "summernote": "^0.8.15",
+    "select2": "^4.0.13",
+    "@ttskch/select2-bootstrap4-theme": "^1.4.0"
   },
   "devDependencies": {
     "@babel/core": "^7.10",

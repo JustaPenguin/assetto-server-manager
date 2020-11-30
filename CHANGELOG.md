@@ -1,6 +1,10 @@
 v1.7.9
 ------
 
+Added:
+
+* Improved the Track selection dropdowns in all Race Setup pages. You can now see more readable track names, and filter all tracks and layouts.
+
 Fixed:
 
 * Fixes an issue where Live Timings lap counts could reset if a driver does not cleanly disconnect from the Assetto Corsa Server.
