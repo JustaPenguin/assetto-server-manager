@@ -323,6 +323,15 @@ func (th *TracksHandler) trackImage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (th *TracksHandler) trackInfo(w http.ResponseWriter, r *http.Request) {
+	track := chi.URLParam(r, "track")
+	layout := chi.URLParam(r, "layout")
+
+	w.Header().Add("Content-Type", "application/json")
+
+	_ = json.NewEncoder(w).Encode(trackInfo(track, layout))
+}
+
 type TrackManager struct {
 }
 

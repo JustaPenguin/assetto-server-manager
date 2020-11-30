@@ -180,6 +180,9 @@ func Router(
 		r.Get("/content/tracks/{track}/ui/preview.png", AssetCacheHeaders(http.HandlerFunc(tracksHandler.trackImage), true))
 		r.Get("/content/tracks/{track}/ui/{layout}/preview.png", AssetCacheHeaders(http.HandlerFunc(tracksHandler.trackImage), true))
 
+		r.Get("/content/tracks/{track}/ui/ui_track.json", AssetCacheHeaders(http.HandlerFunc(tracksHandler.trackInfo), true))
+		r.Get("/content/tracks/{track}/ui/{layout}/ui_track.json", AssetCacheHeaders(http.HandlerFunc(tracksHandler.trackInfo), true))
+
 		// race weekends
 		r.Get("/race-weekends", raceWeekendHandler.list)
 		r.Get("/race-weekend/{raceWeekendID}", raceWeekendHandler.view)
