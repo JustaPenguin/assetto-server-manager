@@ -785,7 +785,7 @@ class RaceSetup {
             this.$trackLayoutDropdownParent.show();
         } else {
             // add an option with an empty value
-            this.$trackLayoutDropdown.append(this.buildTrackLayoutOption(""));
+            this.$trackLayoutDropdown.append(this.buildTrackLayoutOption("", ""));
             this.$trackLayoutDropdownParent.hide();
         }
 
@@ -797,6 +797,7 @@ class RaceSetup {
     /**
      * buildTrackLayoutOption: builds an <option> containing track layout information
      * @param layout
+     * @param name
      * @returns {HTMLElement}
      */
     buildTrackLayoutOption(layout, name) {
