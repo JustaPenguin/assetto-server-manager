@@ -1,13 +1,14 @@
 "use strict";
 
 import {CarSearch} from "../CarSearch";
+import {Form} from "../Form";
 
 let $document;
 
 let moment = require("moment");
 
 // entry-point
-$(document).ready(function () {
+export function EntryPoint() {
     console.log("initialising server manager javascript");
 
     $document = $(document);
@@ -156,7 +157,7 @@ $(document).ready(function () {
             $document.find("#save-race-button").val("justSave");
         }
     });
-});
+}
 
 const nameRegex = /^[A-Za-z]{0,5}[0-9]+/;
 
@@ -285,10 +286,10 @@ class RaceSetup {
                 let trackLayout = $optValSplit[1];
 
                 if (!that.trackLayoutOpts[trackName]) {
-                    that.trackLayoutOpts[trackName] = [];
+                    that.trackLayoutOpts[trackName] = {};
                 }
 
-                that.trackLayoutOpts[trackName].push(trackLayout);
+                that.trackLayoutOpts[trackName][trackLayout] = $(opt).text();
 
                 if ($optValSplit.length > 2) {
                     that.currentLayout = trackLayout;
@@ -296,11 +297,14 @@ class RaceSetup {
             });
 
             that.$trackLayoutDropdownParent.hide();
+
+            Form.initialiseSelect2OnElement(that.$trackDropdown);
+            Form.initialiseSelect2OnElement(that.$trackLayoutDropdown);
+
             that.loadTrackLayouts();
 
             that.$trackDropdown.change(that.loadTrackLayouts.bind(this));
             that.$trackLayoutDropdown.change(that.showTrackDetails.bind(this));
-
         }
 
         this.raceLaps();
@@ -757,10 +761,9 @@ class RaceSetup {
                 $maxClients.attr("max", overrideAmount);
                 $maxClients.val(overrideAmount);
             }
-        })
-            .fail(function () {
-                $pitBoxes.closest(".row").hide()
-            })
+        }).fail(function () {
+            $pitBoxes.closest(".row").hide()
+        });
     }
 
     /**
@@ -772,19 +775,21 @@ class RaceSetup {
 
         let selectedTrack = this.$trackDropdown.find("option:selected").val();
         let availableLayouts = this.trackLayoutOpts[selectedTrack];
+        let availableLayoutKeys = Object.keys(availableLayouts);
 
-        if (availableLayouts && !(availableLayouts.length === 1 && availableLayouts[0] === "<default>")) {
-            for (let i = 0; i < availableLayouts.length; i++) {
-                this.$trackLayoutDropdown.append(this.buildTrackLayoutOption(availableLayouts[i]));
+        if (availableLayouts && !(availableLayoutKeys.length === 1 && availableLayoutKeys[0] === "<default>")) {
+            for (const [layout, name] of Object.entries(availableLayouts)) {
+                this.$trackLayoutDropdown.append(this.buildTrackLayoutOption(layout, name));
             }
 
             this.$trackLayoutDropdownParent.show();
         } else {
             // add an option with an empty value
-            this.$trackLayoutDropdown.append(this.buildTrackLayoutOption(""));
+            this.$trackLayoutDropdown.append(this.buildTrackLayoutOption("", ""));
             this.$trackLayoutDropdownParent.hide();
         }
 
+        Form.initialiseSelect2OnElement(this.$trackLayoutDropdown);
 
         this.showTrackDetails();
     }
@@ -792,12 +797,14 @@ class RaceSetup {
     /**
      * buildTrackLayoutOption: builds an <option> containing track layout information
      * @param layout
+     * @param name
      * @returns {HTMLElement}
      */
-    buildTrackLayoutOption(layout) {
+    buildTrackLayoutOption(layout, name) {
         let $opt = $("<option/>");
         $opt.attr({'value': layout});
-        $opt.text(prettifyName(layout, true));
+        $opt.text(name);
+        $opt.data("track-name", layout);
 
         if (layout === this.currentLayout) {
             $opt.prop("selected", true);

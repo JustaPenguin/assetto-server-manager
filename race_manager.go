@@ -936,11 +936,32 @@ func (rm *RaceManager) ListAutoFillEntrants() ([]*Entrant, error) {
 	return entrants, nil
 }
 
+type TrackOptsGrouped []Track
+
+type TracksSplit struct {
+	Stock, DLC, Mod []Track
+}
+
+func (tog TrackOptsGrouped) Split() TracksSplit {
+	var split TracksSplit
+	for _, t := range tog {
+		if t.IsMod() {
+			split.Mod = append(split.Mod, t)
+		} else if t.IsPaidDLC() {
+			split.DLC = append(split.DLC, t)
+		} else {
+			split.Stock = append(split.Stock, t)
+		}
+	}
+
+	return split
+}
+
 type RaceTemplateVars struct {
 	BaseTemplateVars
 
 	CarOpts             Cars
-	TrackOpts           []Track
+	TrackOpts           TrackOptsGrouped
 	AvailableSessions   []SessionType
 	Weather             Weather
 	SolIsInstalled      bool

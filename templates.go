@@ -415,7 +415,6 @@ func trackInfo(track, layout string) *TrackInfo {
 	t, err := GetTrackInfo(track, layout)
 
 	if err != nil {
-		logrus.WithError(err).Errorf("Could not get track info for %s (%s)", track, layout)
 		return nil
 	}
 

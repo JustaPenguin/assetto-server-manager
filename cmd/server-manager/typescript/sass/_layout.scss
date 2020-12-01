@@ -157,3 +157,19 @@ footer a {
     align-items: start;
   }
 }
+
+.select2-selection {
+  box-shadow: $input-box-shadow;
+}
+
+.select2, .select2-container {
+  font-size: 14px;
+}
+
+.entrant .select2 {
+  font-size: 12px;
+}
+
+.select2-dropdown {
+  z-index: 999;
+}
