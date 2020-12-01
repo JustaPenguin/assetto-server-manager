@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
-
 	"github.com/sirupsen/logrus"
 )
 
@@ -571,12 +570,10 @@ func (sp *AssettoServerProcess) onStop() error {
 	sp.raceEvent = nil
 
 	if err := sp.stopUDPListener(); err != nil {
-		return err
+		logrus.WithError(err).Error("UDP listener close errored")
 	}
 
-	if err := sp.stopChildProcesses(); err != nil {
-		return err
-	}
+	sp.stopChildProcesses()
 
 	for _, doneCh := range sp.notifyDoneChs {
 		select {
@@ -720,7 +717,7 @@ func (sp *AssettoServerProcess) startChildProcess(wd string, command string) err
 	return nil
 }
 
-func (sp *AssettoServerProcess) stopChildProcesses() error {
+func (sp *AssettoServerProcess) stopChildProcesses() {
 	sp.contentManagerWrapper.Stop()
 
 	for _, command := range sp.extraProcesses {
@@ -737,7 +734,6 @@ func (sp *AssettoServerProcess) stopChildProcesses() error {
 	}
 
 	sp.extraProcesses = make([]*exec.Cmd, 0)
-	return nil
 }
 
 func (sp *AssettoServerProcess) startUDPListener() error {

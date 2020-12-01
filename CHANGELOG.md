@@ -15,6 +15,7 @@ Fixed:
 * Fixes an issue where multiservers could omit scanning new cars if they were added in groups, rather than one at once. If your server is missing cars in the car list, please "Rebuild Search Index" on the Server Options page!
 * Fixes an issue where track names would not update when a track was reuploaded.
 * Fixes an issue where pitboxes could not be loaded for a track with an invalid JSON file.
+* Improved process management for plugins and acServer itself. Thanks to @mayfield for this one!
 
 ---
 
