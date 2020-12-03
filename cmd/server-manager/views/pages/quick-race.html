@@ -1,5 +1,19 @@
 {{ define "title" }}Quick Race{{ end }}
 
+
+{{ define "track-options" }}
+    {{ $tracks := .Tracks }}
+
+    {{ range $index, $track := $tracks }}
+        <option value="{{ $track.Name }}"
+                data-track-name="{{ $track.Name }}"
+        >
+            {{ $track.PrettyName }}
+        </option>
+    {{ end }}
+{{ end }}
+
+
 {{ define "content" }}
     <h1 class="text-center">Quick Race</h1>
 
@@ -16,16 +30,27 @@
 
                     <div class="col-sm-9">
                         <select class="form-control" name="Track" id="Track">
-                            {{ range $index, $track := .TrackOpts }}
-                                <option value="{{ $track.Name }}" class="{{ if $track.IsPaidDLC }}bg-dlc{{ end }}{{ if $track.IsMod }}bg-mod{{ end }}"
-                                >{{ prettify $track.Name false }}</option>
+                            {{ $split := .TrackOpts.Split }}
+
+
+                            {{ with $split.Stock }}
+                                <optgroup label="Stock">
+                                    {{ template "track-options" dict "Tracks" . }}
+                                </optgroup>
+                            {{ end }}
+
+                            {{ with $split.DLC }}
+                                <optgroup label="DLC">
+                                    {{ template "track-options" dict "Tracks" . }}
+                                </optgroup>
+                            {{ end }}
+
+                            {{ with $split.Mod }}
+                                <optgroup label="Mod">
+                                    {{ template "track-options" dict "Tracks" . }}
+                                </optgroup>
                             {{ end }}
                         </select>
-
-                        <small style="cursor: default;">
-                            <span class="badge bg-dlc">DLC</span>
-                            <span class="badge bg-mod">Mod</span>
-                        </small>
                     </div>
                 </div>
 
@@ -39,7 +64,14 @@
                         <select class="form-control" name="TrackLayout" id="TrackLayout">
                             {{ range $index, $track := .TrackOpts }}
                                 {{ range $layoutIndex, $layout := $track.Layouts }}
-                                    <option value="{{ $track.Name }}:{{ $layout }}">{{ $layout }}</option>
+                                    {{ $name := $layout }}
+                                    {{ $trackInfo := trackInfo $track.Name $layout }}
+
+                                    {{ with $trackInfo }}
+                                        {{ $name = $trackInfo.Name }}
+                                    {{ end }}
+
+                                    <option value="{{ $track.Name }}:{{ $layout }}" data-track-name="{{ $layout }}">{{ $name }}</option>
                                 {{ end }}
                             {{ end }}
                         </select>
