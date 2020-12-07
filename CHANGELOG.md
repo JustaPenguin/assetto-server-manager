@@ -4,6 +4,7 @@ v1.7.9
 Added:
 
 * Improved the Track selection dropdowns in all Race Setup pages. You can now see more readable track names, and filter all tracks and layouts.
+* Adds missing Real Penalty 'APP_UDP_PORT' option.
 
 Fixed:
 
