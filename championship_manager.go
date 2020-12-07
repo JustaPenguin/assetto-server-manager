@@ -1680,10 +1680,10 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 
 	signUpResponse := &ChampionshipSignUpResponse{
 		Created: time.Now(),
-		Name:    r.FormValue("Name"),
+		Name:    strings.TrimSpace(r.FormValue("Name")),
 		GUID:    NormaliseEntrantGUID(r.FormValue("GUID")),
-		Team:    r.FormValue("Team"),
-		Email:   r.FormValue("Email"),
+		Team:    strings.TrimSpace(r.FormValue("Team")),
+		Email:   strings.TrimSpace(r.FormValue("Email")),
 
 		Car:  r.FormValue("Car"),
 		Skin: r.FormValue("Skin"),
@@ -1870,6 +1870,9 @@ func (cm *ChampionshipManager) DuplicateChampionship(championshipID string) (*Ch
 			return nil, err
 		}
 	}
+
+	// clear sign up form responses
+	duplicateChampionship.SignUpForm.Responses = nil
 
 	logrus.Infof("New Championship: %s, %s. Duplicate of %s", duplicateChampionship.Name, duplicateChampionship.ID.String(), championshipID)
 
