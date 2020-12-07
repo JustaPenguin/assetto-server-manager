@@ -17,6 +17,7 @@ Fixed:
 * Fixes an issue where track names would not update when a track was reuploaded.
 * Fixes an issue where pitboxes could not be loaded for a track with an invalid JSON file.
 * Improved process management for plugins and acServer itself. Thanks to @mayfield for this one!
+* Duplicating a Championship now clears all registration requests.
 
 ---
 

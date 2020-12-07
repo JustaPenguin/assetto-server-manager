@@ -580,6 +580,9 @@
                         Export
                     </a>
 
+
+                    <a href="/championship/{{ $championship.ID }}/duplicate" class="dropdown-item">Duplicate</a>
+
                     {{ if gt $championship.Progress 0.0 }}
                         <a class="dropdown-item" id="simres-group" target="_blank" href="/championship/{{ $championship.ID.String }}/export-results">
                             View in Simresults
