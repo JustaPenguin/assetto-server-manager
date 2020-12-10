@@ -1864,10 +1864,22 @@ func (cm *ChampionshipManager) DuplicateChampionship(championshipID string) (*Ch
 	duplicateChampionship.Name = championship.Name + " Duplicate"
 
 	for _, event := range events {
-		_, err := duplicateChampionship.ImportEvent(&event)
+		if event.IsRaceWeekend() {
+			newEvent, err := duplicateChampionship.ImportEvent(event.RaceWeekend)
 
-		if err != nil {
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
+
+			if err := cm.store.UpsertRaceWeekend(newEvent.RaceWeekend); err != nil {
+				return nil, err
+			}
+		} else {
+			_, err = duplicateChampionship.ImportEvent(&event)
+
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
