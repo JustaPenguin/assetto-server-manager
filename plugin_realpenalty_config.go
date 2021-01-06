@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	RealPenaltySupportedVersion = "v3.00.02"
+	RealPenaltySupportedVersion = "v3.02.01b"
 
 	realPenaltyAppConfigIniPath  = "settings.ini"
 	realPenaltySettingsIniPath   = "penalty_settings.ini"
