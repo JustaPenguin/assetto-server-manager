@@ -263,7 +263,7 @@
 
 
         {{ block "showpremium" . }}
-            {{ if and (ne $.Request.URL.Path "/") (ne $.Request.URL.Path "/premium") }}
+            {{ if ne $.Request.URL.Path "/" }}
                 <div class="clearfix"></div>
 
                 <div class="mt-5">
@@ -278,7 +278,7 @@
                     <a href="https://github.com/JustaPenguin/assetto-server-manager" class="mr-3"><i class="fab fa-github"></i> GitHub</a>
                     <a href="https://github.com/JustaPenguin/assetto-server-manager/issues" class="mr-3"><i class="fas fa-bug"></i> Submit a Bug Report</a>
                     {{ if not $.IsPremium }}
-                        <a href="/premium" class="mr-3"><i class="fas fa-heart"></i> Go Premium</a>
+                        <a href="https://emperorservers.com/products/acsm" class="mr-3"><i class="fas fa-heart"></i> Go Premium</a>
                     {{ else }}
                         <a href="https://paypal.me/JustaPenguinUK" class="mr-3"><i class="fas fa-heart"></i> Donate</a>
                     {{ end }}
