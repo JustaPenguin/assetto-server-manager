@@ -7,35 +7,34 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
+
+	"github.com/sirupsen/logrus"
 )
 
 const ServerExecutablePath = "acServer"
 
-func kill(process *os.Process) error {
-	pgid, err := syscall.Getpgid(process.Pid)
-
-	if err != nil {
-		return err
+func getProcess(cmd *exec.Cmd) *os.Process {
+	if pgid, err := syscall.Getpgid(cmd.Process.Pid); err != nil {
+		logrus.WithError(err).Warnf("Failed to get process group for %d. Using pid instead.", pgid)
+		return cmd.Process
+	} else if ps, err := os.FindProcess(pgid); err != nil {
+		logrus.WithError(err).Warnf("Failed to find process for %d. Using pid instead.", pgid)
+		return cmd.Process
+	} else {
+		return ps
 	}
+}
 
-	err = syscall.Kill(-pgid, syscall.SIGKILL)
+func terminate(ps *os.Process) error {
+	return syscall.Kill(-ps.Pid, syscall.SIGINT)
+}
 
-	if err != nil {
-		return err
-	}
-
-	err = syscall.Kill(-pgid, syscall.SIGINT)
-
-	if err != nil {
-		return err
-	}
-
-	return syscall.Kill(-process.Pid, syscall.SIGKILL|syscall.SIGINT)
+func kill(ps *os.Process) error {
+	return syscall.Kill(-ps.Pid, syscall.SIGKILL)
 }
 
 func buildCommand(ctx context.Context, command string, args ...string) *exec.Cmd {
 	cmd := exec.CommandContext(ctx, command, args...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-
 	return cmd
 }

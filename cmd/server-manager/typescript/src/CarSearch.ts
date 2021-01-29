@@ -51,6 +51,10 @@ export class CarSearch {
             }
 
             for (const car of data) {
+                if ($carsSelect.find("option[value='" + car.CarID + "']").length) {
+                    continue;
+                }
+
                 $carsSelect.append('<option value=' + car.CarID + " class=" + car.Class + ">" + car.CarName + "</option>")
             }
 

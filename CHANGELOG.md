@@ -1,3 +1,38 @@
+v1.7.10
+-------
+
+Fixed:
+
+* Fixes an issue where duplicating a Championship with Race Weekends inside it would result in the Race Weekends not copying across correctly.
+* KissMyRank is now instructed to stop using a command in its console. This should hopefully prevent issues with data files corrupting on stop.
+* Fixes an issue where Race Weekend sessions could incorrectly sort splits out of order.
+
+---
+
+v1.7.9
+------
+
+Added:
+
+* Improved the Track selection dropdowns in all Race Setup pages. You can now see more readable track names, and filter all tracks and layouts.
+* Adds missing Real Penalty 'APP_UDP_PORT' option.
+
+Fixed:
+
+* Fixes an issue where Live Timings lap counts could reset if a driver does not cleanly disconnect from the Assetto Corsa Server.
+* Fixes an issue where Real Penalty config values for Jump Start would not be assigned correctly.
+* The Spectator Car will only be filtered out from Championship Points calculations if Spectator Car is enabled in the Championship settings.
+* Fixes an issue where cars could be duplicated in race setups
+* Fixes a crash that could occur when displaying information about a track.
+* Fixes an issue where multiservers could omit scanning new cars if they were added in groups, rather than one at once. If your server is missing cars in the car list, please "Rebuild Search Index" on the Server Options page!
+* Fixes an issue where track names would not update when a track was reuploaded.
+* Fixes an issue where pitboxes could not be loaded for a track with an invalid JSON file.
+* Improved process management for plugins and acServer itself. Thanks to @mayfield for this one!
+* Duplicating a Championship now clears all registration requests.
+* Fixes a crash that could occur when concurrently reading weather configurations.
+
+---
+
 v1.7.8
 ------
 

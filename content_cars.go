@@ -331,7 +331,7 @@ func (cm *CarManager) watchForCarChanges() error {
 		return err
 	}
 
-	w.SetMaxEvents(1)
+	w.SetMaxEvents(0)
 	w.FilterOps(watcher.Create, watcher.Remove)
 	w.AddFilterHook(func(info os.FileInfo, fullPath string) error {
 		if info.IsDir() && info.Name() != "cars" {

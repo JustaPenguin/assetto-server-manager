@@ -158,8 +158,20 @@ $pre-color:                         inherit;
   color: $white !important;
 }
 
-.form-control, .ms-selectable, .ms-selection, .ms-container *:not(.ms-hover):not(span):not(.bg-mod):not(.bg-dlc) {
+.form-control, .ms-selectable, .ms-selection, .ms-container *:not(.ms-hover):not(span):not(.bg-mod):not(.bg-dlc), .select2-selection, .select2-dropdown, .select2-dropdown input.select2-search__field {
   background: $gray-700 !important;
+  color: $white !important;
+}
+
+.select2-dropdown .select2-results__option[aria-selected="true"] {
+  color: $black;
+}
+
+.select2-selection__arrow b {
+  border-color: $white transparent transparent transparent !important;
+}
+
+strong.select2-results__group {
   color: $white !important;
 }
 
@@ -200,3 +212,4 @@ svg path.race-weekend-arrow {
 .table-secondary {
   color: $black !important;
 }
+

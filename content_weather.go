@@ -15,18 +15,18 @@ const weatherInfoFile = "weather.ini"
 
 type Weather map[string]string
 
-// defaultWeather is loaded if there aren't any weather options on the server
-var defaultWeather = Weather{
-	"1_heavy_fog":    "Heavy Fog",
-	"2_light_fog":    "Light Fog",
-	"3_clear":        "Clear",
-	"4_mid_clear":    "Mid Clear",
-	"5_light_clouds": "Light Clouds",
-	"6_mid_clouds":   "Mid Clouds",
-	"7_heavy_clouds": "Heavy Clouds",
-}
-
 func ListWeather() (Weather, error) {
+	// defaultWeather is loaded if there aren't any weather options on the server
+	defaultWeather := Weather{
+		"1_heavy_fog":    "Heavy Fog",
+		"2_light_fog":    "Light Fog",
+		"3_clear":        "Clear",
+		"4_mid_clear":    "Mid Clear",
+		"5_light_clouds": "Light Clouds",
+		"6_mid_clouds":   "Mid Clouds",
+		"7_heavy_clouds": "Heavy Clouds",
+	}
+
 	baseDir := filepath.Join(ServerInstallPath, "content", "weather")
 
 	weatherFolders, err := ioutil.ReadDir(baseDir)

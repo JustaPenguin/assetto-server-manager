@@ -87,6 +87,8 @@ var (
 		addCorrectCarNameToLiveTimingsData,
 		addDefaultACSRGateOptionsToChampionships,
 		addSplitTypeToRaceWeekends,
+		fixCarDuplicationInRaceSetups,
+		addRealPenaltyAppUDPPort,
 	}
 )
 
@@ -1091,4 +1093,106 @@ func addSplitTypeToRaceWeekends(s Store) error {
 	}
 
 	return nil
+}
+
+func fixCarDuplicationInRaceSetups(s Store) error {
+	uniq := func(s []string) []string {
+		filtered := make(map[string]bool)
+
+		for _, x := range s {
+			filtered[x] = true
+		}
+
+		var out []string
+
+		for x := range filtered {
+			out = append(out, x)
+		}
+
+		return out
+	}
+
+	fix := func(cars string) string {
+		return strings.Join(uniq(strings.Split(cars, ";")), ";")
+	}
+
+	logrus.Infof("Running migration: Fix duplicate cars in race setups")
+
+	customRaces, err := s.ListCustomRaces()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(customRaces, func(i, j int) bool {
+		return customRaces[i].Updated.Before(customRaces[j].Updated)
+	})
+
+	for _, race := range customRaces {
+		race.RaceConfig.Cars = fix(race.RaceConfig.Cars)
+
+		if err := s.UpsertCustomRace(race); err != nil {
+			return err
+		}
+	}
+
+	championships, err := s.ListChampionships()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(championships, func(i, j int) bool {
+		return championships[i].Updated.Before(championships[j].Updated)
+	})
+
+	for _, championship := range championships {
+		for _, event := range championship.Events {
+			if event.IsRaceWeekend() {
+				continue
+			}
+
+			event.RaceSetup.Cars = fix(event.RaceSetup.Cars)
+		}
+
+		if err := s.UpsertChampionship(championship); err != nil {
+			return err
+		}
+	}
+
+	raceWeekends, err := s.ListRaceWeekends()
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(raceWeekends, func(i, j int) bool {
+		return raceWeekends[i].Updated.Before(raceWeekends[j].Updated)
+	})
+
+	for _, raceWeekend := range raceWeekends {
+		for _, session := range raceWeekend.Sessions {
+			session.RaceConfig.Cars = fix(session.RaceConfig.Cars)
+		}
+
+		if err := s.UpsertRaceWeekend(raceWeekend); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func addRealPenaltyAppUDPPort(s Store) error {
+	logrus.Infof("Running migration: Add Real Penalty App UDP Port")
+
+	rpOpts, err := s.LoadRealPenaltyOptions()
+
+	if err != nil {
+		return err
+	}
+
+	rpOpts.RealPenaltyAppConfig.General.AppUDPPort = rpOpts.RealPenaltyAppConfig.General.AppTCPPort
+
+	return s.UpsertRealPenaltyOptions(rpOpts)
 }

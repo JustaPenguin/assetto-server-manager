@@ -15,12 +15,14 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/JustaPenguin/assetto-server-manager/cmd/server-manager/static"
 
 	"github.com/cj123/ini"
 	"github.com/dimchansky/utfbom"
 	"github.com/go-chi/chi"
+	"github.com/jpillora/longestcommon"
 	"github.com/nfnt/resize"
 	"github.com/sirupsen/logrus"
 )
@@ -28,6 +30,8 @@ import (
 type Track struct {
 	Name    string
 	Layouts []string
+
+	CalculatedPrettyName string
 
 	MetaData TrackMetaData
 }
@@ -87,6 +91,10 @@ func (t *Track) LoadMetaData() error {
 }
 
 func (t Track) PrettyName() string {
+	if t.CalculatedPrettyName != "" {
+		return t.CalculatedPrettyName
+	}
+
 	return prettifyName(t.Name, false)
 }
 
@@ -260,6 +268,10 @@ func (th *TracksHandler) delete(w http.ResponseWriter, r *http.Request) {
 				logrus.WithError(err).Errorf("could not remove track files")
 			}
 
+			for _, layout := range track.Layouts {
+				clearFromTrackInfoCache(track.Name, layout)
+			}
+
 			break
 		}
 	}
@@ -317,6 +329,15 @@ func (th *TracksHandler) trackImage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Header().Add("Content-Length", strconv.Itoa(int(n)))
 	}
+}
+
+func (th *TracksHandler) trackInfo(w http.ResponseWriter, r *http.Request) {
+	track := chi.URLParam(r, "track")
+	layout := chi.URLParam(r, "layout")
+
+	w.Header().Add("Content-Type", "application/json")
+
+	_ = json.NewEncoder(w).Encode(trackInfo(track, layout))
 }
 
 type TrackManager struct {
@@ -561,7 +582,39 @@ func (tm *TrackManager) GetTrackFromName(name string) (*Track, error) {
 		}
 	}
 
-	return &Track{Name: name, Layouts: layouts}, nil
+	track := &Track{Name: name, Layouts: layouts}
+
+	var layoutNames []string
+
+	for _, layout := range layouts {
+		info := trackInfo(track.Name, layout)
+
+		if info == nil {
+			continue
+		}
+
+		layoutNames = append(layoutNames, info.Name)
+	}
+
+	if len(layoutNames) > 0 {
+		if len(layoutNames) == 1 {
+			track.CalculatedPrettyName = strings.Title(layoutNames[0])
+		} else {
+			sort.Slice(layoutNames, func(i, j int) bool {
+				return len(layoutNames[i]) < len(layoutNames[j])
+			})
+
+			commonPrefix := strings.TrimRightFunc(longestcommon.Prefix(layoutNames), func(r rune) bool {
+				return !unicode.IsLetter(r) && !unicode.IsNumber(r) && r != ']' && r != ')' && r != '}'
+			})
+
+			if commonPrefix != "" {
+				track.CalculatedPrettyName = strings.Title(commonPrefix)
+			}
+		}
+	}
+
+	return track, nil
 }
 
 func (tm *TrackManager) UpdateTrackMetadata(name string, r *http.Request) error {

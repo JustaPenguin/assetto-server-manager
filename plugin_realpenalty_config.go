@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	RealPenaltySupportedVersion = "v3.00.02"
+	RealPenaltySupportedVersion = "v3.02.01b"
 
 	realPenaltyAppConfigIniPath  = "settings.ini"
 	realPenaltySettingsIniPath   = "penalty_settings.ini"
@@ -46,6 +46,7 @@ func DefaultRealPenaltyAppConfig() RealPenaltyAppConfig {
 			UDPPort:           0,
 			UDPResponse:       "",
 			AppTCPPort:        53000,
+			AppUDPPort:        53000,
 		},
 		PluginsRelay: RealPenaltyPluginsRelay{
 			OtherUDPPlugin: "",
@@ -109,6 +110,7 @@ type RealPenaltyConfigGeneral struct {
 	UDPPort     int    `ini:"UDP_PORT" show:"-" help:"Listening UDP port - Set the same port (without IP) of cfg of the server, UDP_PLUGIN_ADDRESS "`
 	UDPResponse string `ini:"UDP_RESPONSE" show:"-" help:"Destination IP and UDP port for response - Set the same port in the cfg of the AC server, UDP_PLUGIN_LOCAL_PORT"`
 	AppTCPPort  int    `ini:"APP_TCP_PORT" show:"open" help:"Listening TCP port from AC app (to open in firewall/router). Must be one of 53000, 53001, 53002 to 53020, or the port of cfg AC server, HTTP_PORT + 27. The app will try all these ports on the ac server's ip address (until the right connection is found)"`
+	AppUDPPort  int    `ini:"APP_UDP_PORT" show:"open" help:"Listening UDP port from AC app (to open in firewall/router). Any free UDP port is OK"`
 
 	AppFile      string `ini:"APP_FILE" show:"-" help:"Path and file names of the app from the plugin package"`
 	ImagesFile   string `ini:"IMAGES_FILE" show:"-" help:"Path and file names of the images from the plugin package"`
@@ -345,11 +347,11 @@ type RealPenaltySettingsJumpStart struct {
 	PenaltyType0       string `ini:"PENALTY_TYPE_0" help:"Penalty type for jump start. Don't set seconds penalty! dt = drive through, sgn = stop and go n seconds, dsq = disqualification --> kick"`
 	SpeedLimitPenalty0 int    `ini:"SPEED_LIMIT_PENALTY_0" help:""`
 
-	PenaltyType1       string `ini:"PENALTY_TYPE_0" help:""`
-	SpeedLimitPenalty1 int    `ini:"SPEED_LIMIT_PENALTY_0" help:"Penalty type for jump start. Don't set seconds penalty! dt = drive through, sgn = stop and go n seconds, dsq = disqualification --> kick"`
+	PenaltyType1       string `ini:"PENALTY_TYPE_1" help:""`
+	SpeedLimitPenalty1 int    `ini:"SPEED_LIMIT_PENALTY_1" help:"Penalty type for jump start. Don't set seconds penalty! dt = drive through, sgn = stop and go n seconds, dsq = disqualification --> kick"`
 
-	PenaltyType2       string `ini:"PENALTY_TYPE_0" help:""`
-	SpeedLimitPenalty2 int    `ini:"SPEED_LIMIT_PENALTY_0" help:"Penalty type for jump start. Don't set seconds penalty! dt = drive through, sgn = stop and go n seconds, dsq = disqualification --> kick"`
+	PenaltyType2       string `ini:"PENALTY_TYPE_2" help:""`
+	SpeedLimitPenalty2 int    `ini:"SPEED_LIMIT_PENALTY_2" help:"Penalty type for jump start. Don't set seconds penalty! dt = drive through, sgn = stop and go n seconds, dsq = disqualification --> kick"`
 }
 
 type RealPenaltySettingsDRS struct {

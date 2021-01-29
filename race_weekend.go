@@ -869,6 +869,11 @@ func (rws *RaceWeekendSession) GetRaceWeekendEntryList(rw *RaceWeekend, override
 		}
 	}
 
+	// do an initial sort of the entrylist by pitboxes, as sessions may add drivers out of order.
+	sort.Slice(entryList, func(i, j int) bool {
+		return entryList[i].PitBox < entryList[j].PitBox
+	})
+
 	if rw.SessionCanBeRun(rws) {
 		// sorting can only be run if a session is ready to be run.
 		sorter := GetRaceWeekendEntryListSort(rws.SortType)

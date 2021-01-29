@@ -1680,10 +1680,10 @@ func (cm *ChampionshipManager) HandleChampionshipSignUp(r *http.Request) (respon
 
 	signUpResponse := &ChampionshipSignUpResponse{
 		Created: time.Now(),
-		Name:    r.FormValue("Name"),
+		Name:    strings.TrimSpace(r.FormValue("Name")),
 		GUID:    NormaliseEntrantGUID(r.FormValue("GUID")),
-		Team:    r.FormValue("Team"),
-		Email:   r.FormValue("Email"),
+		Team:    strings.TrimSpace(r.FormValue("Team")),
+		Email:   strings.TrimSpace(r.FormValue("Email")),
 
 		Car:  r.FormValue("Car"),
 		Skin: r.FormValue("Skin"),
@@ -1864,12 +1864,27 @@ func (cm *ChampionshipManager) DuplicateChampionship(championshipID string) (*Ch
 	duplicateChampionship.Name = championship.Name + " Duplicate"
 
 	for _, event := range events {
-		_, err := duplicateChampionship.ImportEvent(&event)
+		if event.IsRaceWeekend() {
+			newEvent, err := duplicateChampionship.ImportEvent(event.RaceWeekend)
 
-		if err != nil {
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
+
+			if err := cm.store.UpsertRaceWeekend(newEvent.RaceWeekend); err != nil {
+				return nil, err
+			}
+		} else {
+			_, err = duplicateChampionship.ImportEvent(&event)
+
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
+
+	// clear sign up form responses
+	duplicateChampionship.SignUpForm.Responses = nil
 
 	logrus.Infof("New Championship: %s, %s. Duplicate of %s", duplicateChampionship.Name, duplicateChampionship.ID.String(), championshipID)
 

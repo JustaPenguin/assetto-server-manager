@@ -399,9 +399,15 @@ func varSplit(str string) []string {
 	return strings.Split(str, ";")
 }
 
-var trackInfoCache = make(map[string]*TrackInfo)
+var (
+	trackInfoCache      = make(map[string]*TrackInfo)
+	trackInfoCacheMutex sync.Mutex
+)
 
 func trackInfo(track, layout string) *TrackInfo {
+	trackInfoCacheMutex.Lock()
+	defer trackInfoCacheMutex.Unlock()
+
 	if t, ok := trackInfoCache[track+layout]; ok {
 		return t
 	}
@@ -409,13 +415,19 @@ func trackInfo(track, layout string) *TrackInfo {
 	t, err := GetTrackInfo(track, layout)
 
 	if err != nil {
-		logrus.WithError(err).Errorf("Could not get track info for %s (%s)", track, layout)
 		return nil
 	}
 
 	trackInfoCache[track+layout] = t
 
 	return t
+}
+
+func clearFromTrackInfoCache(track, layout string) {
+	trackInfoCacheMutex.Lock()
+	defer trackInfoCacheMutex.Unlock()
+
+	delete(trackInfoCache, track+layout)
 }
 
 func multiplyFloats(a, b float64) float64 {

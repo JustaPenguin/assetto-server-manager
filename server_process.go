@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/JustaPenguin/assetto-server-manager/pkg/udp"
-
 	"github.com/sirupsen/logrus"
 )
 
@@ -54,7 +53,7 @@ type AssettoServerProcess struct {
 	raceEvent      RaceEvent
 	cmd            *exec.Cmd
 	mutex          sync.Mutex
-	extraProcesses []*exec.Cmd
+	extraProcesses []*pluginProcess
 
 	logFile, errorLogFile io.WriteCloser
 
@@ -67,6 +66,11 @@ type AssettoServerProcess struct {
 	forwardListenPort  int
 
 	sessionStartedChan chan struct{}
+}
+
+type pluginProcess struct {
+	cmd   *exec.Cmd
+	stdin io.WriteCloser
 }
 
 func NewAssettoServerProcess(callbackFunc udp.CallbackFunc, store Store, contentManagerWrapper *ContentManagerWrapper) *AssettoServerProcess {
@@ -162,7 +166,7 @@ func (sp *AssettoServerProcess) Stop() error {
 		}
 	}
 
-	timeout := time.After(time.Second * 10)
+	timeout := time.After(time.Second * 60)
 	errCh := make(chan error)
 
 	go func() {
@@ -176,13 +180,15 @@ func (sp *AssettoServerProcess) Stop() error {
 		}
 	}()
 
-	if err := kill(sp.cmd.Process); err != nil {
-		logrus.WithError(err).Error("Could not forcibly kill command")
+	logrus.Infof("Shutting down server process: %d", sp.cmd.Process.Pid)
+	stopErr := stopCommand(sp.cmd, errCh, 30)
+	if stopErr != nil {
+		logrus.WithError(stopErr).Errorf("Failed to stop server process: %d", sp.cmd.Process.Pid)
 	}
 
 	sp.cfn()
 
-	return <-errCh
+	return stopErr
 }
 
 func (sp *AssettoServerProcess) Restart() error {
@@ -569,7 +575,7 @@ func (sp *AssettoServerProcess) onStop() error {
 	sp.raceEvent = nil
 
 	if err := sp.stopUDPListener(); err != nil {
-		return err
+		logrus.WithError(err).Error("UDP listener close errored")
 	}
 
 	sp.stopChildProcesses()
@@ -658,13 +664,22 @@ func (sp *AssettoServerProcess) startPlugin(wd string, plugin *CommandPlugin) er
 
 	cmd.Dir = pluginDir
 
+	stdin, err := cmd.StdinPipe()
+
+	if err != nil {
+		return err
+	}
+
 	err = cmd.Start()
 
 	if err != nil {
 		return err
 	}
 
-	sp.extraProcesses = append(sp.extraProcesses, cmd)
+	sp.extraProcesses = append(sp.extraProcesses, &pluginProcess{
+		cmd:   cmd,
+		stdin: stdin,
+	})
 
 	return nil
 }
@@ -704,6 +719,11 @@ func (sp *AssettoServerProcess) startChildProcess(wd string, command string) err
 	cmd.Stderr = pluginsOutput
 
 	cmd.Dir = pluginDir
+	stdin, err := cmd.StdinPipe()
+
+	if err != nil {
+		return err
+	}
 
 	err = cmd.Start()
 
@@ -711,7 +731,10 @@ func (sp *AssettoServerProcess) startChildProcess(wd string, command string) err
 		return err
 	}
 
-	sp.extraProcesses = append(sp.extraProcesses, cmd)
+	sp.extraProcesses = append(sp.extraProcesses, &pluginProcess{
+		cmd:   cmd,
+		stdin: stdin,
+	})
 
 	return nil
 }
@@ -720,17 +743,38 @@ func (sp *AssettoServerProcess) stopChildProcesses() {
 	sp.contentManagerWrapper.Stop()
 
 	for _, command := range sp.extraProcesses {
-		err := kill(command.Process)
+		waitDone := make(chan error, 1)
+		go func() {
+			waitDone <- command.cmd.Wait()
+		}()
 
-		if err != nil {
-			logrus.WithError(err).Errorf("Can't kill process: %d", command.Process.Pid)
-			continue
+		if command.cmd.Dir == filepath.Join(ServerInstallPath, "kissmyrank") {
+			_, _ = fmt.Fprintf(command.stdin, "exit\r\n")
+
+			kmrStopTimeout := time.After(time.Second * 15)
+
+			select {
+			case err := <-waitDone:
+				if err != nil {
+					logrus.WithError(err).Errorf("KissMyRank stopped with an error")
+				} else {
+					logrus.Infof("KissMyRank stopped correctly")
+				}
+				continue
+			case <-kmrStopTimeout:
+				logrus.Infof("KissMyRank did not stop correctly, manually killing...")
+			}
 		}
 
-		_ = command.Process.Release()
+		if err := stopCommand(command.cmd, waitDone, 30); err != nil {
+			if _, isExit := err.(*exec.ExitError); !isExit {
+				name := filepath.Base(command.cmd.Path)
+				logrus.WithError(err).Warnf("Command stop problem: %s [pid: %d]", name, command.cmd.Process.Pid)
+			}
+		}
 	}
 
-	sp.extraProcesses = make([]*exec.Cmd, 0)
+	sp.extraProcesses = make([]*pluginProcess, 0)
 }
 
 func (sp *AssettoServerProcess) startUDPListener() error {
@@ -812,4 +856,36 @@ func FreeUDPPort() (int, error) {
 	defer l.Close()
 
 	return l.LocalAddr().(*net.UDPAddr).Port, nil
+}
+
+var ErrCommandUnstoppable = errors.New("servermanager: command is unstoppable")
+
+func stopCommand(cmd *exec.Cmd, waiter chan error, timeout float32) error {
+	name := filepath.Base(cmd.Path)
+	proc := getProcess(cmd)
+	pid := proc.Pid
+	logrus.Infof("Terminating command: %s [pid: %d]...", name, pid)
+	if err := terminate(proc); err != nil {
+		logrus.WithError(err).Errorf("Failed to terminate command: %s [pid: %d]", name, pid)
+		return err
+	}
+	termWait := timeout / 2
+	killWait := timeout - termWait
+	select {
+	case <-time.After(time.Duration(termWait) * time.Second):
+		logrus.Warnf("Process %d did not terminate after %g seconds. Killing...", pid, termWait)
+		if err := kill(proc); err != nil {
+			logrus.WithError(err).Warnf("Failed to kill command: %s [pid: %d]", name, pid)
+			return err
+		}
+		select {
+		case <-time.After(time.Duration(killWait) * time.Second):
+			logrus.Errorf("Process %d could not be killed after %g seconds.", pid, timeout)
+			return ErrCommandUnstoppable
+		case err := <-waiter:
+			return err
+		}
+	case err := <-waiter:
+		return err
+	}
 }
