@@ -1,14 +1,3 @@
-v1.7.10
--------
-
-Fixed:
-
-* Fixes an issue where duplicating a Championship with Race Weekends inside it would result in the Race Weekends not copying across correctly.
-* KissMyRank is now instructed to stop using a command in its console. This should hopefully prevent issues with data files corrupting on stop.
-* Fixes an issue where Race Weekend sessions could incorrectly sort splits out of order.
-
----
-
 v1.7.9
 ------
 
@@ -30,6 +19,9 @@ Fixed:
 * Improved process management for plugins and acServer itself. Thanks to @mayfield for this one!
 * Duplicating a Championship now clears all registration requests.
 * Fixes a crash that could occur when concurrently reading weather configurations.
+* Fixes an issue where duplicating a Championship with Race Weekends inside it would result in the Race Weekends not copying across correctly.
+* KissMyRank is now instructed to stop using a command in its console. This should hopefully prevent issues with data files corrupting on stop.
+* Fixes an issue where Race Weekend sessions could incorrectly sort splits out of order.
 
 ---
 
