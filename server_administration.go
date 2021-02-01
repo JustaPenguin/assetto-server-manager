@@ -69,10 +69,6 @@ func (sah *ServerAdministrationHandler) home(w http.ResponseWriter, r *http.Requ
 	})
 }
 
-func (sah *ServerAdministrationHandler) premium(w http.ResponseWriter, r *http.Request) {
-	sah.viewRenderer.MustLoadTemplate(w, r, "premium.html", nil)
-}
-
 const MOTDFilename = "motd.txt"
 
 type motdTemplateVars struct {
