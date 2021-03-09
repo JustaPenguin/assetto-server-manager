@@ -561,7 +561,7 @@ func (am *AccountManager) login(r *http.Request, w http.ResponseWriter) error {
 
 	for _, account := range accounts {
 		if username == account.Name {
-			if (account.NeedsPasswordReset() && password == account.DefaultPassword) ||
+			if (account.NeedsPasswordReset() && password == account.DefaultPassword && account.DefaultPassword != "") ||
 				(account.Name == adminUserName && config.Accounts.AdminPasswordOverride != "" && password == config.Accounts.AdminPasswordOverride) {
 				// first log in of the account, direct them to a reset password form
 				sess := getSession(r)
