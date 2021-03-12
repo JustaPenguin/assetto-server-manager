@@ -4,6 +4,7 @@ v1.7.10
 Fixed:
 
 * Fixes an issue with password management when the admin_password_override config variable is set.
+* The Championships track pitbox warning no longer displays on completed events, or for non-write access users.
 
 ---
 
