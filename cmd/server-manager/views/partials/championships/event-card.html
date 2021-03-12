@@ -44,16 +44,16 @@
         <div class="card-body">
             <div class="row" style="min-height: 200px;">
                 <div class="col-md-8 mb-3">
-                    <div class="row">
-                        {{ with $trackInfo }}
-                            {{ if lt (int $trackInfo.Pitboxes.Int64) (int $championship.NumEntrants) }}
-                                <div class="col-sm-12 text-warning">
+                    {{ with $trackInfo }}
+                        {{ if and (and WriteAccess (lt (int $trackInfo.Pitboxes.Int64) (int $championship.NumEntrants))) (not $event.Completed) }}
+                            <div class="row">
+                                <div class="col-sm-12 text-warning mb-2">
                                     This track has fewer pit boxes than the configured number of entrants in the
                                     current championship, and therefore is not eligible for this championship.
                                 </div>
-                            {{ end }}
+                            </div>
                         {{ end }}
-                    </div>
+                    {{ end }}
 
                     <div class="row">
                         <div class="{{ if isBefore $scheduled }}col-sm-8{{ else }}col-sm-4{{ end }}">
