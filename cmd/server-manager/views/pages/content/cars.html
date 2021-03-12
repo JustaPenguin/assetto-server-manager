@@ -108,7 +108,7 @@
                             </div>
 
                             {{ if DeleteAccess }}
-                                <a class="delete-car" href="/car/{{ $car.Name }}/delete" style="z-index: 101;"><i class="fa fa-trash"></i></a>
+                                <a class="delete-car" href="/car/{{ $car.Name }}/delete"><i class="fa fa-trash"></i></a>
                             {{ end }}
 
                             {{ range $index, $tag := $car.Details.Tags }}
