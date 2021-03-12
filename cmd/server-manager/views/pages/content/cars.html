@@ -87,39 +87,47 @@
 
         {{ range $index, $car := $.Cars }}
 
-            <div class="card mt-2 mb-2 pt-0 pb-0 card-car" data-href="/car/{{ $car.Name }}">
-                <div class="card-body row">
-                    {{ with $car.Skins }}
-                        <div class="col-12 col-sm-4 col-md-2">
-                            <img class="img img-fluid car-image" src="{{ carSkinURL $car.Name (index $car.Skins 0) }}" alt="">
-                        </div>
-                    {{ end }}
-
-                    <div class="d-block d-sm-none pt-2">&nbsp;</div>
-
-                    <div class="col-12 col-sm-8 col-md-10">
-                        <h3 class="mb-0">{{ $car.Details.Name }}</h3>
-
-                        <div class="mb-2">
-                            {{ if $car.IsPaidDLC }}<span class="badge bg-dlc">DLC</span>{{ end }}
-                            {{ if $car.IsMod }}<span class="badge bg-mod">Mod</span>{{ end }}
-                            {{ if not (or $car.IsPaidDLC $car.IsMod) }}<span class="badge bg-default-content">Default</span>{{ end }}
-                        </div>
-
-                        {{ if DeleteAccess }}
-                            <a class="delete-car" href="/car/{{ $car.Name }}/delete"><i class="fa fa-trash"></i></a>
+            <div class="car-wrapper">
+                <div class="card mt-2 mb-2 pt-0 pb-0 card-car">
+                    <div class="card-body row">
+                        {{ with $car.Skins }}
+                            <div class="col-12 col-sm-4 col-md-2">
+                                <img class="img img-fluid car-image" src="{{ carSkinURL $car.Name (index $car.Skins 0) }}" alt="">
+                            </div>
                         {{ end }}
 
-                        {{ range $index, $tag := $car.Details.Tags }}
-                            <span class="badge badge-secondary">
+                        <div class="d-block d-sm-none pt-2">&nbsp;</div>
+
+                        <div class="col-12 col-sm-8 col-md-10">
+                            <h3 class="mb-0">{{ $car.Details.Name }}</h3>
+
+                            <div class="mb-2">
+                                {{ if $car.IsPaidDLC }}<span class="badge bg-dlc">DLC</span>{{ end }}
+                                {{ if $car.IsMod }}<span class="badge bg-mod">Mod</span>{{ end }}
+                                {{ if not (or $car.IsPaidDLC $car.IsMod) }}<span class="badge bg-default-content">Default</span>{{ end }}
+                            </div>
+
+                            {{ if DeleteAccess }}
+                                <a class="delete-car" href="/car/{{ $car.Name }}/delete"><i class="fa fa-trash"></i></a>
+                            {{ end }}
+
+                            {{ range $index, $tag := $car.Details.Tags }}
+                                <span class="badge badge-secondary">
                                 <a class="text-black-50"
                                    href="/cars?q=%2Btags:%22{{ urlquery $tag }}%22"
                                 >{{ $tag }}</a>
                             </span>
-                        {{ end }}
+                            {{ end }}
+                        </div>
                     </div>
                 </div>
+
+                <a href="/car/{{ $car.Name }}" class="car-link">
+                    <!-- overlaid atop the above div -->
+                </a>
             </div>
+
+
         {{ else }}
             <p>Your search returned no results. Please try a different query.</p>
         {{ end }}

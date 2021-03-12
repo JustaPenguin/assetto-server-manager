@@ -1,7 +1,15 @@
-.card-car {
-  h3 {
-    color: $link-color;
+.car-wrapper {
+  position: relative;
+  display: block;
+
+  .car-link {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    z-index: 3;
   }
+
 
   &:hover {
     cursor: pointer;
@@ -10,6 +18,13 @@
       color: $link-hover-color;
     }
   }
+}
+
+
+.card-car {
+  h3 {
+    color: $link-color;
+  }
 
   .delete-car {
     color: $danger;
@@ -17,6 +32,7 @@
     position: absolute;
     top: 0;
     right: 15px;
+    z-index: 4;
   }
 }
 

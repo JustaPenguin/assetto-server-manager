@@ -4,6 +4,7 @@ v1.7.10
 Fixed:
 
 * Fixes an issue with password management when the admin_password_override config variable is set.
+* Cars in the car list are now proper links, allowing you to (for example) open them in a new tab.
 * The Championships track pitbox warning no longer displays on completed events, or for non-write access users.
 
 ---
