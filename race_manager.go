@@ -1172,7 +1172,7 @@ func (rm *RaceManager) ListCustomRaces() (recent, starred, looped, scheduled []*
 
 func (rm *RaceManager) SaveEntrantsForAutoFill(entryList EntryList) error {
 	for _, entrant := range entryList {
-		if entrant.Name == "" {
+		if entrant.Name == "" || entrant.GUID == "" {
 			continue // only save entrants that have a name
 		}
 
