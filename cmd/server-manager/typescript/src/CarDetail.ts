@@ -1,4 +1,5 @@
 import ClickEvent = JQuery.ClickEvent;
+import {SummernoteWrapper} from "./forms/SummernoteWrapper";
 
 export class CarDetail {
     public constructor() {
@@ -34,15 +35,19 @@ export class CarDetail {
         let $summerNote = $("#summernote");
         let $carNotes = $("#CarNotes");
 
+        let html = "";
+
         if ($carNotes.length > 0) {
-            $summerNote.summernote('code', $carNotes.html());
+            html = $carNotes.html();
         }
 
-        $summerNote.summernote({
+        let wrapper = new SummernoteWrapper($summerNote, {
             placeholder: 'You can use this text input to attach notes to each car!',
             tabsize: 2,
             height: 200,
-        });
+        }, html);
+
+        wrapper.render();
     }
 
     private static initSkinUpload() {

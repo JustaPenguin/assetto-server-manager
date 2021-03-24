@@ -2,6 +2,7 @@
 
 import {CarSearch} from "../CarSearch";
 import {Form} from "../Form";
+import {SummernoteWrapper} from "../forms/SummernoteWrapper";
 
 let $document;
 
@@ -2405,18 +2406,22 @@ let championships = {
         let $summerNote = $document.find("#summernote");
         let $ChampionshipInfoHolder = $document.find("#ChampionshipInfoHolder");
 
+        let html = "";
+
         if ($ChampionshipInfoHolder.length > 0) {
-            $summerNote.summernote('code', $ChampionshipInfoHolder.html());
+            html = $ChampionshipInfoHolder.html();
         }
 
-        $summerNote.summernote({
+        let wrapper = new SummernoteWrapper($summerNote, {
             placeholder: 'You can use this text input to share links to tracks/cars or any other resources, outline' +
                 ' Championship rules and anything else you can think of with the entrants of your championship!' +
                 ' You can just leave this blank if you don\'t want any info! Large images will degrade the load time' +
                 ' of this edit championship page, it shouldn\'t affect the view page too much though.',
             tabsize: 2,
-            height: 200,
-        });
+            height: 400,
+        }, html);
+
+        wrapper.render();
     },
 
     initDisplayOrder: function () {
