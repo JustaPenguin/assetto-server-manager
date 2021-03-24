@@ -499,8 +499,8 @@ func (kmr *KissMyRankConfig) Write() error {
 }
 
 type RaceMassAccidentResponse struct {
-	FirstLap  string
-	OtherLaps string
+	FirstLap  string `json:"first_lap"`
+	OtherLaps string `json:"other_laps"`
 }
 
 type NewLineSeparatedList string
