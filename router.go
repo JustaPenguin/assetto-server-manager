@@ -272,6 +272,7 @@ func Router(
 		r.Post("/api/track/upload", contentUploadHandler.upload(ContentTypeTrack))
 		r.Post("/api/car/upload", contentUploadHandler.upload(ContentTypeCar))
 		r.Post("/api/weather/upload", contentUploadHandler.upload(ContentTypeWeather))
+		r.Post("/api/image-upload", contentUploadHandler.imageUpload)
 
 		// race weekend
 		r.Get("/race-weekends/new", raceWeekendHandler.createOrEdit)

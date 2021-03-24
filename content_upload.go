@@ -3,6 +3,8 @@ package servermanager
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -10,6 +12,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -183,4 +186,61 @@ func (cuh *ContentUploadHandler) addFiles(files []ContentFile, contentType Conte
 	}
 
 	return nil
+}
+
+func (cuh *ContentUploadHandler) imageUpload(w http.ResponseWriter, r *http.Request) {
+	file, header, err := r.FormFile("image")
+
+	onError := func(err error, what string) {
+		logrus.WithError(err).Errorf(what)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+
+	if err != nil {
+		onError(err, "Read form file")
+		return
+	}
+
+	defer file.Close()
+
+	if !strings.HasPrefix(header.Header.Get("Content-Type"), "image/") {
+		onError(nil, "Invalid MIME type")
+		return
+	}
+
+	uploadDirectory := filepath.Join(ServerInstallPath, "content", "server-manager", "images")
+
+	if _, err := os.Stat(uploadDirectory); os.IsNotExist(err) {
+		if err := os.MkdirAll(uploadDirectory, 0755); err != nil {
+			onError(err, "Create upload directory")
+			return
+		}
+	} else if err != nil {
+		onError(err, "Check upload directory")
+		return
+	}
+
+	imageName := uuid.New().String() + filepath.Ext(header.Filename)
+
+	uploadFilename := filepath.Join(uploadDirectory, imageName)
+
+	f, err := os.OpenFile(uploadFilename, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+
+	if err != nil {
+		onError(err, "Create uploaded file")
+		return
+	}
+
+	defer f.Close()
+
+	n, err := io.Copy(f, file)
+
+	if err != nil {
+		onError(err, "Upload file")
+		return
+	}
+
+	logrus.Debugf("Image uploader wrote %s to %s (%d bytes)", header.Filename, uploadFilename, n)
+
+	_, _ = fmt.Fprintf(w, "/content/server-manager/images/%s", imageName)
 }

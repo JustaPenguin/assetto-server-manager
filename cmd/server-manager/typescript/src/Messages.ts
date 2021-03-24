@@ -1,3 +1,5 @@
+import {SummernoteWrapper} from "./forms/SummernoteWrapper";
+
 export class Messages {
     public static initSummerNote() {
         let $contentManagerMessageContent = $("#ContentManagerMessageContent");
@@ -7,15 +9,18 @@ export class Messages {
         }
 
         let $summerNote = $("#contentManagerWelcomeMessage");
+        let html = "";
 
         if ($contentManagerMessageContent.length > 0) {
-            $summerNote.summernote('code', $contentManagerMessageContent.html());
+            html = $contentManagerMessageContent.html();
         }
 
-        $summerNote.summernote({
+        let wrapper = new SummernoteWrapper($summerNote, {
             placeholder: 'A message that Content Manager users can see!',
             tabsize: 2,
             height: 400,
-        });
+        }, html);
+
+        wrapper.render();
     }
 }

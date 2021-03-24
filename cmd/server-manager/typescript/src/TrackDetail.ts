@@ -1,4 +1,5 @@
 import ClickEvent = JQuery.ClickEvent;
+import {SummernoteWrapper} from "./forms/SummernoteWrapper";
 
 export class TrackDetail {
     public constructor() {
@@ -32,14 +33,18 @@ export class TrackDetail {
         let $summerNote = $("#summernote");
         let $trackNotes = $("#TrackNotes");
 
+        let html = "";
+
         if ($trackNotes.length > 0) {
-            $summerNote.summernote('code', $trackNotes.html());
+            html = $trackNotes.html();
         }
 
-        $summerNote.summernote({
+        let wrapper = new SummernoteWrapper($summerNote, {
             placeholder: 'You can use this text input to attach notes to each track!',
             tabsize: 2,
             height: 200,
-        });
+        }, html);
+
+        wrapper.render();
     }
 }
