@@ -7,6 +7,7 @@ Fixed:
 * Cars in the car list are now proper links, allowing you to (for example) open them in a new tab.
 * The Championships track pitbox warning no longer displays on completed events, or for non-write access users.
 * Fixes an incorrect option name for RaceMassAccidentResponse in the Kiss My Rank configuration.
+* Added extra checks to prevent an empty autofill entrant from being added.
 
 ---
 

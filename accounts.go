@@ -472,15 +472,16 @@ func (ah *AccountHandler) update(w http.ResponseWriter, r *http.Request) {
 				AddErrorFlash(w, r, "Unable to update account details")
 				logrus.WithError(err).Errorf("Could not update details for account id: %s", account.ID.String())
 			} else {
-				err := ah.store.UpsertEntrant(Entrant{
-					Name: account.DriverName,
-					GUID: account.GUID,
-					Team: account.Team,
-				})
+				if account.GUID != "" {
+					err := ah.store.UpsertEntrant(Entrant{
+						Name: account.DriverName,
+						GUID: account.GUID,
+						Team: account.Team,
+					})
 
-				if err != nil {
-					logrus.WithError(err).Errorf("Successfully updated details, but could not add to autofill "+
-						"entry list. Account id: %s", account.ID.String())
+					if err != nil {
+						logrus.WithError(err).Errorf("Successfully updated details, but could not add to autofill entry list. Account id: %s", account.ID.String())
+					}
 				}
 
 				AddFlash(w, r, "Your details were successfully changed!")
