@@ -9,6 +9,7 @@ Fixed:
 * Fixes an incorrect option name for RaceMassAccidentResponse in the Kiss My Rank configuration.
 * Images uploaded in Championship descriptions are now uploaded to the content folder instead of being stored as a base64 blob in the Championship page. This will make Championship pages with images load quicker.
 * Added extra checks to prevent an empty autofill entrant from being added.
+* Fixes an issue where Steam login could cause Server Manager login details to be forgotten.
 
 ---
 
