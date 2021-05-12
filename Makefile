@@ -23,7 +23,7 @@ test:
 
 vet: install-linter generate
 	go vet ./...
-	golangci-lint -E bodyclose,misspell,gofmt,golint,unconvert,goimports,depguard,interfacer run --skip-files content_cars_skins.go,plugin_kissmyrank_config.go,plugin_realpenalty_config.go
+	golangci-lint -E bodyclose,misspell,gofmt,golint,unconvert,goimports,depguard,interfacer run --timeout 30m --skip-files content_cars_skins.go,plugin_kissmyrank_config.go,plugin_realpenalty_config.go
 
 generate:
 	go get -u github.com/mjibson/esc
