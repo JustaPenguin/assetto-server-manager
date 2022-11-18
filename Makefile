@@ -26,7 +26,7 @@ vet: install-linter generate
 	golangci-lint -E bodyclose,misspell,gofmt,golint,unconvert,goimports,depguard,interfacer run --timeout 30m --skip-files content_cars_skins.go,plugin_kissmyrank_config.go,plugin_realpenalty_config.go
 
 generate:
-	go get -u github.com/mjibson/esc
+	go install github.com/mjibson/esc@latest
 	go generate ./...
 
 assets:
@@ -38,7 +38,7 @@ asset-embed: generate
 build:
 	$(MAKE) -C cmd/server-manager build
 
-deploy: clean generate vet test
+deploy: clean generate
 	$(MAKE) -C cmd/server-manager deploy
 
 run:
