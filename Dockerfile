@@ -1,12 +1,20 @@
-FROM golang:1.15 AS build
+FROM node:14-buster AS build
+
+RUN curl -fsSL https://go.dev/dl/go1.15.15.linux-amd64.tar.gz | tar -C /usr/ -xzf -
+ENV GOROOT=/usr/go
+ENV GOPATH=/go
+ENV PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 
 ARG SM_VERSION
 ENV DEBIAN_FRONTEND noninteractive
 ENV BUILD_DIR ${GOPATH}/src/github.com/JustaPenguin/assetto-server-manager
 ENV GO111MODULE on
 
-RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -
-RUN apt-get update && apt-get install -y build-essential libssl-dev curl nodejs tofrodos dos2unix zip
+RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
+    sed -i 's/security.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
+    sed -i '/stretch-updates/d' /etc/apt/sources.list
+
+RUN apt-get update && apt-get install -y build-essential libssl-dev curl tofrodos dos2unix zip
 
 ADD . ${BUILD_DIR}
 WORKDIR ${BUILD_DIR}
