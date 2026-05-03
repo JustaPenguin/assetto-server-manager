@@ -26,7 +26,7 @@ vet: install-linter generate
 	golangci-lint -E bodyclose,misspell,gofmt,golint,unconvert,goimports,depguard,interfacer run --timeout 30m --skip-files content_cars_skins.go,plugin_kissmyrank_config.go,plugin_realpenalty_config.go
 
 generate:
-	go get -u github.com/mjibson/esc
+	go get github.com/mjibson/esc
 	go generate ./...
 
 assets:

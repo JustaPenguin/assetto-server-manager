@@ -20,7 +20,7 @@ assets:
 	$(MAKE) -C typescript build
 
 asset-embed:
-	go get -u github.com/mjibson/esc
+	go get github.com/mjibson/esc
 	go generate ./...
 
 deploy: clean assets asset-embed
